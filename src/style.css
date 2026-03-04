@@ -1,0 +1,125 @@
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #1e1e1e;
+  color: #333;
+}
+
+.sheet-background {
+  background-color: #b92518; /* The classic Pokerole Red */
+  padding: 10px;
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 10px; 
+}
+
+/* Base style for all white panels */
+.panel {
+  background-color: #f4f4f4;
+  border: 2px solid #333;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+/* -- BLOCK 1: IDENTITY -- */
+.identity-block {
+  display: flex;
+  gap: 10px;
+}
+
+.portrait-placeholder {
+  width: 100px;
+  height: 100px;
+  background-color: white;
+  border: 2px solid #00bcd4; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #aaa;
+}
+
+.basic-info {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-row {
+  display: flex;
+  border: 1px solid #ccc;
+  background-color: white;
+}
+
+.info-row .label {
+  background-color: #e0e0e0;
+  font-weight: bold;
+  padding: 2px 6px;
+  width: 70px;
+  border-right: 1px solid #ccc;
+  font-size: 0.85rem;
+}
+
+/* This line fixes the text inputs AND dropdown menus! */
+.info-row input, .info-row select {
+  border: none;
+  padding: 2px 6px;
+  flex-grow: 1;
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: transparent;
+  width: 100%;
+}
+
+/* -- BLOCK 2: HEALTH & STATUS -- */
+.health-block {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.health-box, .status-box {
+  flex: 1;
+  background-color: white;
+  border: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.health-header, .status-header {
+  background-color: #444;
+  color: white;
+  font-weight: bold;
+  font-size: 0.8rem;
+  padding: 2px 0;
+}
+
+.health-inputs {
+  padding: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+}
+
+.health-inputs input {
+  width: 30px;
+  text-align: center;
+  border: none;
+  border-bottom: 1px solid #ccc;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.status-dropdown {
+  margin: 4px;
+  padding: 2px;
+  font-size: 0.9rem;
+  color: #4caf50; 
+  font-weight: bold;
+  border: 1px solid #ccc;
+}

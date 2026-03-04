@@ -1,0 +1,12 @@
+{
+  "name": "Pokerole PMD Extension",
+  "version": "1.0.0",
+  "manifest_version": 1,
+  "action": {
+    "title": "Pokerole",
+    "icon": "/vite.svg",
+    "popover": "/",
+    "width": 750,
+    "height": 650
+  }
+}
