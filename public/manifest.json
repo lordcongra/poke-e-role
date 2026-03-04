@@ -4,7 +4,7 @@
   "manifest_version": 1,
   "action": {
     "title": "Pokerole",
-    "icon": "https://lordcongra.github.io/poke-e-role/vite.svg",
+    "icon": "https://lordcongra.github.io/poke-e-role/pokeball.svg",
     "popover": "https://lordcongra.github.io/poke-e-role/",
     "width": 750,
     "height": 650
