@@ -202,6 +202,49 @@ function getDerivedVal(id: string): number {
   return element ? parseInt(element.innerText) || 0 : 0;
 }
 
+// NEW FUNCTION: Actively calculates and updates the move displays
+function updateMoveDisplays() {
+    const extraAccDice = getVal('global-acc-mod');
+    const extraDmgDice = getVal('global-dmg-mod');
+    const typingStr = (document.getElementById('typing') as HTMLInputElement)?.value || "";
+    const abilityStr = (document.getElementById('ability') as HTMLInputElement)?.value || "";
+    const isProtean = abilityStr.toLowerCase().includes("protean") || abilityStr.toLowerCase().includes("libero");
+
+    currentMoves.forEach(move => {
+        // Calculate Accuracy Pool
+        let attrTotal = 0;
+        if (move.attr === 'will') {
+            attrTotal = getDerivedVal('will-max-display');
+        } else {
+            attrTotal = getDerivedVal(`${move.attr}-total`);
+        }
+        const skillTotal = getDerivedVal(`${move.skill}-total`);
+        const accPool = attrTotal + skillTotal + extraAccDice;
+
+        // Calculate Damage Pool
+        let dmgPool = 0;
+        if (move.cat !== "Supp") {
+            const attrMap: any = { "str": "str", "dex": "dex", "vit": "vit", "spe": "spe", "ins": "ins", "Strength": "str", "Dexterity": "dex", "Vitality": "vit", "Special": "spe", "Insight": "ins", "Tough": "tou", "Cool": "coo", "Beauty": "bea", "Cute": "cut", "Clever": "cle", "Will": "will" };
+            let scalingVal = 0;
+            if (move.dmgStat && attrMap[move.dmgStat]) {
+                scalingVal = getDerivedVal(`${attrMap[move.dmgStat]}-total`);
+            }
+            let stabBonus = 0;
+            if (move.type && (typingStr.includes(move.type) || isProtean)) {
+                stabBonus = 1;
+            }
+            dmgPool = move.power + scalingVal + extraDmgDice + stabBonus;
+        }
+
+        // Push to HTML elements
+        const accDisplay = document.querySelector(`.acc-total-display[data-id="${move.id}"]`);
+        if (accDisplay) accDisplay.textContent = accPool.toString();
+
+        const dmgDisplay = document.querySelector(`.dmg-total-display[data-id="${move.id}"]`);
+        if (dmgDisplay) dmgDisplay.textContent = move.cat === "Supp" ? "-" : dmgPool.toString();
+    });
+}
+
 function calculateStats() {
   const str = getVal('str-base') + getVal('str-rank') + getVal('str-buff') - getVal('str-debuff');
   const dex = getVal('dex-base') + getVal('dex-rank') + getVal('dex-buff') - getVal('dex-debuff');
@@ -243,6 +286,8 @@ function calculateStats() {
   setText('evasion-derived', dex + evasionSkill);
   setText('clash-p-derived', str + clashSkill);
   setText('clash-s-derived', spe + clashSkill);
+  
+  updateMoveDisplays();
 }
 
 document.getElementById('sheet-type')?.addEventListener('change', (e) => {
@@ -399,7 +444,10 @@ function renderMoves() {
 
     tr.innerHTML = `
       <td style="text-align: center;">
-        <button type="button" class="acc-btn" data-id="${move.id}" style="cursor:pointer; background:#444; color:white; border:none; border-radius:3px; font-weight:bold; padding: 2px 6px;" title="Roll Accuracy">🎯</button>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+            <span class="acc-total-display" data-id="${move.id}" style="font-weight: bold; font-size: 0.9em; color: #555; min-width: 1em;" title="Base Acc Dice">0</span>
+            <button type="button" class="acc-btn" data-id="${move.id}" style="cursor:pointer; background:#444; color:white; border:none; border-radius:3px; font-weight:bold; padding: 2px 6px;" title="Roll Accuracy">🎯</button>
+        </div>
       </td>
       <td><input type="text" list="move-list" class="move-input" data-field="name" data-id="${move.id}" value="${move.name}" style="width: 90%; border:1px solid transparent; background:transparent;" placeholder="Move Name"></td>
       <td>
@@ -433,7 +481,10 @@ function renderMoves() {
       </td>
       <td><input type="text" class="move-input" data-field="dmg" data-id="${move.id}" value="${move.dmg}" style="width: 80%; border:none; background:transparent;" placeholder="Dmg"></td>
       <td style="text-align: center;">
-        <button type="button" class="dmg-btn" data-id="${move.id}" style="cursor:pointer; background:#b92518; color:white; border:none; border-radius:3px; font-weight:bold; padding: 2px 6px;" title="Roll Damage">💥</button>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+            <span class="dmg-total-display" data-id="${move.id}" style="font-weight: bold; font-size: 0.9em; color: #b92518; min-width: 1em;" title="Base Dmg Dice">0</span>
+            <button type="button" class="dmg-btn" data-id="${move.id}" style="cursor:pointer; background:#b92518; color:white; border:none; border-radius:3px; font-weight:bold; padding: 2px 6px;" title="Roll Damage">💥</button>
+        </div>
       </td>
       <td>
         <div style="display: flex; align-items: center; justify-content: center; gap: 4px; padding-top: 4px;">
@@ -493,6 +544,7 @@ function renderMoves() {
                 } catch(err) { console.error("Could not fetch specific move stats"); }
             }
         }
+        updateMoveDisplays();
         saveMovesToToken();
       }
     });
@@ -560,6 +612,7 @@ function renderMoves() {
   });
 
   setupSpinners();
+  updateMoveDisplays();
 }
 
 function renderInventory() {
@@ -695,7 +748,7 @@ function rollDamage(move: Move) {
   const abilityStr = (document.getElementById('ability') as HTMLInputElement).value || ""; 
   
   const extraDice = getVal('global-dmg-mod'); 
-  const attrMap: any = { "str": "str", "dex": "dex", "vit": "vit", "spe": "spe", "ins": "ins", "Strength": "str", "Dexterity": "dex", "Vitality": "vit", "Special": "spe", "Insight": "ins" };
+  const attrMap: any = { "str": "str", "dex": "dex", "vit": "vit", "spe": "spe", "ins": "ins", "Strength": "str", "Dexterity": "dex", "Vitality": "vit", "Special": "spe", "Insight": "ins", "Tough": "tou", "Cool": "coo", "Beauty": "bea", "Cute": "cut", "Clever": "cle", "Will": "will" };
   let scalingVal = 0;
   if (move.dmgStat && attrMap[move.dmgStat]) {
       scalingVal = getDerivedVal(`${attrMap[move.dmgStat]}-total`);
