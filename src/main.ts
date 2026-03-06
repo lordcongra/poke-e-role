@@ -156,8 +156,8 @@ async function initDatabase() {
             ALL_SKILLS.forEach(skill => {
                 const baseInput = document.getElementById(`${skill}-base`) as HTMLInputElement;
                 const buffInput = document.getElementById(`${skill}-buff`) as HTMLInputElement;
-                if(baseInput) { baseInput.value = "0"; batchUpdates[`${skill}-base`] = "0"; }
-                if(buffInput) { buffInput.value = "0"; batchUpdates[`${skill}-buff`] = "0"; }
+                if(baseInput) { baseInput.value = "0"; batchUpdates[`skill-base`] = "0"; }
+                if(buffInput) { buffInput.value = "0"; batchUpdates[`skill-buff`] = "0"; }
             });
             currentMoves = [];
             renderMoves();
@@ -924,27 +924,36 @@ async function saveBatchDataToToken(updates: Record<string, string>) {
           meta[key] = value;
       }
 
-      let trackers = item.metadata["com.owl-trackers/trackers"] as any[];
+      let trackers = (item.metadata["com.owl-trackers/trackers"] as any[]) || [];
       
-      if (!trackers || !Array.isArray(trackers) || trackers.length === 0) {
-          trackers = [
-              { id: Date.now() + "-1", variant: "value-max", color: 6, value: willCurr, max: willMax, name: "Will" },
-              { id: Date.now() + "-2", variant: "value-max", color: 2, value: hpCurr, max: hpMax, name: "HP" },
-              { id: Date.now() + "-3", variant: "counter", color: 6, inlineMath: false, value: actions, name: "Actions" },
-              { id: Date.now() + "-4", variant: "counter", color: 5, inlineMath: false, value: def, name: "DEF" },
-              { id: Date.now() + "-5", variant: "counter", color: 1, inlineMath: false, value: spdef, name: "SP DEF" },
-              { id: Date.now() + "-6", variant: "checkbox", color: 4, checked: evade, name: "Evade" },
-              { id: Date.now() + "-7", variant: "checkbox", color: 3, checked: clash, name: "Clash" }
-          ];
+      const defaultTrackers = [
+          { id: Date.now() + "-1", variant: "value-max", color: 6, value: willCurr, max: willMax, name: "Will" },
+          { id: Date.now() + "-2", variant: "value-max", color: 2, value: hpCurr, max: hpMax, name: "HP" },
+          { id: Date.now() + "-3", variant: "counter", color: 6, inlineMath: false, value: actions, name: "Actions" },
+          { id: Date.now() + "-4", variant: "counter", color: 5, inlineMath: false, value: def, name: "DEF" },
+          { id: Date.now() + "-5", variant: "counter", color: 1, inlineMath: false, value: spdef, name: "SP DEF" },
+          { id: Date.now() + "-6", variant: "checkbox", color: 4, checked: evade, name: "Evade" },
+          { id: Date.now() + "-7", variant: "checkbox", color: 3, checked: clash, name: "Clash" }
+      ];
+
+      if (trackers.length === 0) {
+          trackers = defaultTrackers;
       } else {
-          trackers.forEach(t => {
-              if (t.name === 'HP') { t.value = hpCurr; t.max = hpMax; }
-              if (t.name === 'Will') { t.value = willCurr; t.max = willMax; }
-              if (t.name === 'Actions') { t.value = actions; }
-              if (t.name === 'DEF') { t.value = def; }
-              if (t.name === 'SP DEF') { t.value = spdef; }
-              if (t.name === 'Evade') { t.checked = evade; }
-              if (t.name === 'Clash') { t.checked = clash; }
+          trackers = JSON.parse(JSON.stringify(trackers));
+          
+          defaultTrackers.forEach(dt => {
+              const existing = trackers.find((t: any) => t.name === dt.name);
+              if (existing) {
+                  if (existing.name === 'HP') { existing.value = hpCurr; existing.max = hpMax; }
+                  if (existing.name === 'Will') { existing.value = willCurr; existing.max = willMax; }
+                  if (existing.name === 'Actions') { existing.value = actions; }
+                  if (existing.name === 'DEF') { existing.value = def; }
+                  if (existing.name === 'SP DEF') { existing.value = spdef; }
+                  if (existing.name === 'Evade') { existing.checked = evade; }
+                  if (existing.name === 'Clash') { existing.checked = clash; }
+              } else {
+                  trackers.push(dt);
+              }
           });
       }
       item.metadata["com.owl-trackers/trackers"] = trackers;
