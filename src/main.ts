@@ -410,6 +410,12 @@ function renderMoves() {
             <option value="vit" ${move.attr === 'vit' ? 'selected' : ''}>VIT</option>
             <option value="spe" ${move.attr === 'spe' ? 'selected' : ''}>SPE</option>
             <option value="ins" ${move.attr === 'ins' ? 'selected' : ''}>INS</option>
+            <option value="tou" ${move.attr === 'tou' ? 'selected' : ''}>TOU</option>
+            <option value="coo" ${move.attr === 'coo' ? 'selected' : ''}>COO</option>
+            <option value="bea" ${move.attr === 'bea' ? 'selected' : ''}>BEA</option>
+            <option value="cut" ${move.attr === 'cut' ? 'selected' : ''}>CUT</option>
+            <option value="cle" ${move.attr === 'cle' ? 'selected' : ''}>CLE</option>
+            <option value="will" ${move.attr === 'will' ? 'selected' : ''}>WILL</option>
             </select>
             +
             <select class="move-input" data-field="skill" data-id="${move.id}" style="border:1px solid #ccc; background:white; padding: 1px;">
@@ -479,7 +485,7 @@ function renderMoves() {
                     let uiStat = shortStatMap[move.dmgStat] || move.dmgStat;
                     move.dmg = move.power + (uiStat ? ` + ${uiStat}` : "");
                     
-                    const attrMap: any = { "Strength": "str", "Dexterity": "dex", "Vitality": "vit", "Special": "spe", "Insight": "ins" };
+                    const attrMap: any = { "Strength": "str", "Dexterity": "dex", "Vitality": "vit", "Special": "spe", "Insight": "ins", "Tough": "tou", "Cool": "coo", "Beauty": "bea", "Cute": "cut", "Clever": "cle", "Will": "will" };
                     move.attr = attrMap[mData.Accuracy1] || "str";
                     move.skill = (mData.Accuracy2 || "brawl").toLowerCase();
                     
@@ -643,6 +649,7 @@ document.getElementById('roll-init-btn')?.addEventListener('click', async () => 
     const initBonus = getDerivedVal('init-total');
     const nickname = (document.getElementById('nickname') as HTMLInputElement).value || "Someone";
     
+    // Pure math, exactly what Dice+ wants for basic addition. NO COMMENTS.
     const notation = initBonus > 0 ? `1d6+${initBonus}` : `1d6`;
     OBR.notification.show(`🎲 ${nickname} rolled Initiative!`);
     sendToDicePlus(notation, "init"); 
@@ -654,7 +661,15 @@ function rollAccuracy(move: Move) {
   const requiredSuccesses = actions + 1;
   
   const extraDice = getVal('global-acc-mod'); 
-  const attrTotal = getDerivedVal(`${move.attr}-total`);
+  
+  // NEW MAX WILL & SOCIAL STAT CHECKER
+  let attrTotal = 0;
+  if (move.attr === 'will') {
+      attrTotal = getDerivedVal('will-max-display');
+  } else {
+      attrTotal = getDerivedVal(`${move.attr}-total`);
+  }
+
   const skillTotal = getDerivedVal(`${move.skill}-total`);
   const dicePool = attrTotal + skillTotal + extraDice;
   
@@ -665,7 +680,7 @@ function rollAccuracy(move: Move) {
   }
 
   if (dicePool > 0) {
-      sendToDicePlus(`${dicePool}d6>3 # ${nickname} ${move.name} Acc (Needs ${requiredSuccesses})`);
+      sendToDicePlus(`${dicePool}d6>3 # ${nickname}: ${move.name} Acc (Needs ${requiredSuccesses})`);
   }
 }
 
@@ -706,14 +721,14 @@ function rollDamage(move: Move) {
   if (finalPool < 0) finalPool = 0;
 
   if (finalPool > 0) {
-      sendToDicePlus(`${finalPool}d6>3 # ${nickname} ${move.name} Dmg${stabTag}`);
+      sendToDicePlus(`${finalPool}d6>3 # ${nickname}: ${move.name} Dmg${stabTag}`);
   }
 }
 
 function rollChance(move: Move) {
     if (move.chanceDice <= 0) return;
     const nickname = (document.getElementById('nickname') as HTMLInputElement).value || "Someone";
-    sendToDicePlus(`${move.chanceDice}d6>5 # ${nickname} ${move.name} Chance`, "chance"); 
+    sendToDicePlus(`${move.chanceDice}d6>5 # ${nickname}: ${move.name} Chance`, "chance"); 
 }
 
 function rollGeneric(actionName: string, pool: number, incrementEvade = false, incrementClash = false, incrementAction = false) {
@@ -745,7 +760,7 @@ function rollGeneric(actionName: string, pool: number, incrementEvade = false, i
    }
 
    if (pool > 0) {
-       sendToDicePlus(`${pool}d6>3 # ${nickname} ${actionName}`);
+       sendToDicePlus(`${pool}d6>3 # ${nickname}: ${actionName}`);
    }
 }
 
