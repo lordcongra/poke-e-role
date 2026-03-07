@@ -186,6 +186,7 @@ interface ExtraCategory { id: string; name: string; skills: ExtraSkill[]; }
 let currentMoves: Move[] = [];
 let currentInventory: InventoryItem[] = [];
 let currentExtraCategories: ExtraCategory[] = [];
+let isLoading = false; // SAFETY LOCK FLAG
 
 function getVal(id: string): number {
   const element = document.getElementById(id) as HTMLInputElement;
@@ -202,7 +203,6 @@ function getDerivedVal(id: string): number {
   return element ? parseInt(element.innerText) || 0 : 0;
 }
 
-// NEW FUNCTION: Actively calculates and updates the move displays
 function updateMoveDisplays() {
     const extraAccDice = getVal('global-acc-mod');
     const extraDmgDice = getVal('global-dmg-mod');
@@ -211,7 +211,6 @@ function updateMoveDisplays() {
     const isProtean = abilityStr.toLowerCase().includes("protean") || abilityStr.toLowerCase().includes("libero");
 
     currentMoves.forEach(move => {
-        // Calculate Accuracy Pool
         let attrTotal = 0;
         if (move.attr === 'will') {
             attrTotal = getDerivedVal('will-max-display');
@@ -221,7 +220,6 @@ function updateMoveDisplays() {
         const skillTotal = getDerivedVal(`${move.skill}-total`);
         const accPool = attrTotal + skillTotal + extraAccDice;
 
-        // Calculate Damage Pool
         let dmgPool = 0;
         if (move.cat !== "Supp") {
             const attrMap: any = { "str": "str", "dex": "dex", "vit": "vit", "spe": "spe", "ins": "ins", "Strength": "str", "Dexterity": "dex", "Vitality": "vit", "Special": "spe", "Insight": "ins", "Tough": "tou", "Cool": "coo", "Beauty": "bea", "Cute": "cut", "Clever": "cle", "Will": "will" };
@@ -236,7 +234,6 @@ function updateMoveDisplays() {
             dmgPool = move.power + scalingVal + extraDmgDice + stabBonus;
         }
 
-        // Push to HTML elements
         const accDisplay = document.querySelector(`.acc-total-display[data-id="${move.id}"]`);
         if (accDisplay) accDisplay.textContent = accPool.toString();
 
@@ -702,7 +699,6 @@ document.getElementById('roll-init-btn')?.addEventListener('click', async () => 
     const initBonus = getDerivedVal('init-total');
     const nickname = (document.getElementById('nickname') as HTMLInputElement).value || "Someone";
     
-    // Pure math, exactly what Dice+ wants for basic addition. NO COMMENTS.
     const notation = initBonus > 0 ? `1d6+${initBonus}` : `1d6`;
     OBR.notification.show(`🎲 ${nickname} rolled Initiative!`);
     sendToDicePlus(notation, "init"); 
@@ -715,7 +711,6 @@ function rollAccuracy(move: Move) {
   
   const extraDice = getVal('global-acc-mod'); 
   
-  // NEW MAX WILL & SOCIAL STAT CHECKER
   let attrTotal = 0;
   if (move.attr === 'will') {
       attrTotal = getDerivedVal('will-max-display');
@@ -868,6 +863,8 @@ const METADATA_ID = "pokerole-extension/stats";
 let currentTokenId: string | null = null;
 
 async function loadDataFromToken(tokenId: string) {
+  isLoading = true; // TURN ON THE SAFETY LOCK
+  
   const items = await OBR.scene.items.getItems([tokenId]);
   if (items.length > 0) {
     const token = items[0];
@@ -882,6 +879,7 @@ async function loadDataFromToken(tokenId: string) {
     } else if (role === 'PLAYER' && isNPC) {
         document.getElementById('app')!.style.display = 'none';
         document.getElementById('gm-lock-screen')!.style.display = 'block';
+        isLoading = false; 
         return;
     } 
     
@@ -954,10 +952,12 @@ async function loadDataFromToken(tokenId: string) {
     renderExtraSkills();
     calculateStats();
   }
+  
+  isLoading = false; // TURN OFF THE SAFETY LOCK
 }
 
 async function saveBatchDataToToken(updates: Record<string, string>) {
-  if (!currentTokenId) return; 
+  if (!currentTokenId || isLoading) return; 
 
   const hpCurr = getVal('hp-curr');
   const hpMax = getDerivedVal('hp-max-display');
@@ -1019,7 +1019,7 @@ function saveDataToToken(id: string, value: string) {
 }
 
 async function saveMovesToToken() {
-  if (!currentTokenId) return;
+  if (!currentTokenId || isLoading) return;
   await OBR.scene.items.updateItems([currentTokenId], (items) => {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
@@ -1029,7 +1029,7 @@ async function saveMovesToToken() {
 }
 
 async function saveInventoryToToken() {
-  if (!currentTokenId) return;
+  if (!currentTokenId || isLoading) return;
   await OBR.scene.items.updateItems([currentTokenId], (items) => {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
@@ -1039,7 +1039,7 @@ async function saveInventoryToToken() {
 }
 
 async function saveExtraSkillsToToken() {
-  if (!currentTokenId) return;
+  if (!currentTokenId || isLoading) return;
   await OBR.scene.items.updateItems([currentTokenId], (items) => {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
