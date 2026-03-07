@@ -186,7 +186,8 @@ interface ExtraCategory { id: string; name: string; skills: ExtraSkill[]; }
 let currentMoves: Move[] = [];
 let currentInventory: InventoryItem[] = [];
 let currentExtraCategories: ExtraCategory[] = [];
-let isLoading = false; // SAFETY LOCK FLAG
+let isLoading = false;
+let lastKnownMetadataStr = ""; // NEW LIVE SYNC TRACKER
 
 function getVal(id: string): number {
   const element = document.getElementById(id) as HTMLInputElement;
@@ -287,8 +288,8 @@ function calculateStats() {
   updateMoveDisplays();
 }
 
-document.getElementById('sheet-type')?.addEventListener('change', (e) => {
-    const val = (e.target as HTMLSelectElement).value;
+// Extract Sheet Type toggling so we don't fire an event during loading
+function updateSheetTypeUI(val: string) {
     const speRow = document.getElementById('spe-row');
     const clashPRow = document.getElementById('clash-p-row');
     const clashSRow = document.getElementById('clash-s-row');
@@ -313,6 +314,11 @@ document.getElementById('sheet-type')?.addEventListener('change', (e) => {
         (document.getElementById('label-magic') as HTMLInputElement).value = "Magic";
         if(knowledgeHeader) knowledgeHeader.innerText = "KNOWLEDGE (PMD)";
     }
+}
+
+document.getElementById('sheet-type')?.addEventListener('change', (e) => {
+    const val = (e.target as HTMLSelectElement).value;
+    updateSheetTypeUI(val);
     saveDataToToken('sheet-type', val);
     calculateStats();
 });
@@ -864,11 +870,14 @@ let currentTokenId: string | null = null;
 
 async function loadDataFromToken(tokenId: string) {
   isLoading = true; // TURN ON THE SAFETY LOCK
-  
   const items = await OBR.scene.items.getItems([tokenId]);
+  
   if (items.length > 0) {
     const token = items[0];
     const data = (token.metadata[METADATA_ID] as Record<string, string>) || {};
+    
+    // SAVE A SNAPSHOT SO WE DONT TRIGGER AN ACCIDENTAL RELOAD LOOP
+    lastKnownMetadataStr = JSON.stringify(data); 
 
     const role = await OBR.player.getRole();
     const isNPC = data['is-npc'] === 'true';
@@ -915,8 +924,9 @@ async function loadDataFromToken(tokenId: string) {
           }
           input.value = val;
 
+          // NO MORE FAKE MOUSE CLICKING TO TRIGGER THE UI UPDATE
           if (id === 'sheet-type') {
-              input.dispatchEvent(new Event('change'));
+              updateSheetTypeUI(val);
           }
       }
     });
@@ -977,6 +987,9 @@ async function saveBatchDataToToken(updates: Record<string, string>) {
           meta[key] = value;
       }
 
+      // UPDATE OUR SNAPSHOT SO THE LIVE SYNC TRACKER DOESNT FREAK OUT
+      lastKnownMetadataStr = JSON.stringify(meta);
+
       let trackers = (item.metadata["com.owl-trackers/trackers"] as any[]) || [];
       
       const defaultTrackers = [
@@ -1024,6 +1037,7 @@ async function saveMovesToToken() {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
       (item.metadata[METADATA_ID] as Record<string, string>)['moves-data'] = JSON.stringify(currentMoves);
+      lastKnownMetadataStr = JSON.stringify(item.metadata[METADATA_ID]);
     }
   });
 }
@@ -1034,6 +1048,7 @@ async function saveInventoryToToken() {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
       (item.metadata[METADATA_ID] as Record<string, string>)['inv-data'] = JSON.stringify(currentInventory);
+      lastKnownMetadataStr = JSON.stringify(item.metadata[METADATA_ID]);
     }
   });
 }
@@ -1044,6 +1059,7 @@ async function saveExtraSkillsToToken() {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
       (item.metadata[METADATA_ID] as Record<string, string>)['extra-skills-data'] = JSON.stringify(currentExtraCategories);
+      lastKnownMetadataStr = JSON.stringify(item.metadata[METADATA_ID]);
     }
   });
 }
@@ -1062,6 +1078,21 @@ OBR.onReady(async () => {
         loadDataFromToken(currentTokenId);
       }
     }
+  });
+
+  // THE LIVE SYNC TRACKER
+  OBR.scene.items.onChange((items) => {
+     if (!currentTokenId) return;
+     const currentItem = items.find(i => i.id === currentTokenId);
+     if (currentItem) {
+         const newMeta = currentItem.metadata[METADATA_ID] || {};
+         const newMetaStr = JSON.stringify(newMeta);
+         
+         // If the GM changes a stat, instantly force the player's sheet to reload
+         if (newMetaStr !== lastKnownMetadataStr && !isLoading) {
+             loadDataFromToken(currentTokenId);
+         }
+     }
   });
 
   OBR.broadcast.onMessage(`${MY_EXTENSION_ID}/roll-result`, async (event) => {
