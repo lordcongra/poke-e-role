@@ -80,6 +80,9 @@ export function buildMoveRow(move: Move, index: number, extraCategories: ExtraCa
         });
     });
 
+    // We clean the description here to ensure quotes don't break the HTML string!
+    const cleanDesc = (move.desc || 'Enter move name to fetch data...').replace(/"/g, '&quot;');
+
     return `
         <td style="text-align: center; vertical-align: middle;">
         <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
@@ -87,7 +90,7 @@ export function buildMoveRow(move: Move, index: number, extraCategories: ExtraCa
             <button type="button" class="acc-btn btn-dark" data-id="${move.id}" style="padding: 2px 6px;" title="Roll Accuracy">🎯</button>
         </div>
         </td>
-        <td style="vertical-align: middle;"><input type="text" list="move-list" class="move-input" data-field="name" data-id="${move.id}" value="${move.name}" title="${move.desc || 'Enter move name to fetch data...'}" style="width: 90%; border:1px solid transparent; background:transparent;" placeholder="Move Name"></td>
+        <td style="vertical-align: middle;"><input type="text" list="move-list" class="move-input" data-field="name" data-id="${move.id}" value="${move.name}" title="${cleanDesc}" style="width: 90%; border:1px solid transparent; background:transparent;" placeholder="Move Name"></td>
         <td style="vertical-align: middle;">
         <div style="display: flex; gap: 4px; align-items: center; justify-content: flex-start; padding-top: 4px;">
             <select class="move-input" data-field="attr" data-id="${move.id}" style="border:1px solid var(--border); background:white; padding: 1px;">
@@ -149,7 +152,6 @@ export function buildMoveRow(move: Move, index: number, extraCategories: ExtraCa
     `;
 }
 
-// THIS FUNCTION HAS THE NEW EXPANDABLE TEXTAREA
 export function buildInventoryRow(item: InventoryItem): string {
     return `
         <td style="text-align: center; padding: 2px; vertical-align: top; padding-top: 6px;">

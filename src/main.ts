@@ -115,11 +115,14 @@ document.getElementById('sheet-type')?.addEventListener('change', (e) => {
     calculateStats(currentExtraCategories, currentMoves);
 });
 
-// --- NEW DATA REFRESH BUTTON ---
+// --- FIXED DATA REFRESH BUTTON (NO RACE CONDITIONS!) ---
 document.getElementById('refresh-data-btn')?.addEventListener('click', async () => {
     const btn = document.getElementById('refresh-data-btn') as HTMLButtonElement;
     btn.innerText = "⏳ Refreshing...";
     btn.disabled = true;
+
+    // We build ONE single object to save to the database
+    const batchUpdates: Record<string, string> = {};
 
     // Refresh Typing Box
     const typingInput = document.getElementById('typing') as HTMLInputElement;
@@ -131,7 +134,6 @@ document.getElementById('refresh-data-btn')?.addEventListener('click', async () 
     const speciesName = (document.getElementById('species') as HTMLInputElement).value;
     const abilitySelect = document.getElementById('ability') as HTMLSelectElement;
     const currentAbility = abilitySelect.value;
-    let newAbilityList = "";
 
     if (speciesName) {
         const monData = await fetchPokemonData(speciesName);
@@ -158,9 +160,9 @@ document.getElementById('refresh-data-btn')?.addEventListener('click', async () 
                 abilitySelect.value = currentAbility;
             } else if (abilities.length > 0) {
                 abilitySelect.value = abilities[0].replace(" (HA)", "");
-                saveDataToToken('ability', abilitySelect.value);
+                batchUpdates['ability'] = abilitySelect.value;
             }
-            newAbilityList = abilities.join(',');
+            batchUpdates['ability-list'] = abilities.join(',');
         }
     }
 
@@ -169,11 +171,12 @@ document.getElementById('refresh-data-btn')?.addEventListener('click', async () 
         if (abData) abilitySelect.title = abData.Effect || abData.Description || "No description found.";
     }
 
-    // Refresh Moves
+    // Refresh Moves (Safely trimming whitespace just in case)
     for (let move of currentMoves) {
         if (move.name) {
-            const mData = await fetchMoveData(move.name);
+            const mData = await fetchMoveData(move.name.trim());
             if (mData) {
+                // Update basic data, but DO NOT overwrite their selected Accuracy/Skill!
                 move.type = mData.Type || "Normal";
                 let rawCat = mData.Category || "Physical";
                 if (rawCat === "Physical") move.cat = "Phys";
@@ -186,17 +189,15 @@ document.getElementById('refresh-data-btn')?.addEventListener('click', async () 
                 const rawDmg = mData.Damage1 === "None" ? "" : (mData.Damage1 || "");
                 const attrMapDmg: any = { "Strength": "str", "Dexterity": "dex", "Vitality": "vit", "Special": "spe", "Insight": "ins" };
                 move.dmgStat = attrMapDmg[rawDmg] || rawDmg;
-                
-                const attrMap: any = { "Strength": "str", "Dexterity": "dex", "Vitality": "vit", "Special": "spe", "Insight": "ins", "Tough": "tou", "Cool": "coo", "Beauty": "bea", "Cute": "cut", "Clever": "cle", "Will": "will" };
-                move.attr = attrMap[mData.Accuracy1] || "str";
-                move.skill = (mData.Accuracy2 || "brawl").toLowerCase();
             }
         }
     }
 
     renderMoves();
-    saveMovesToToken(currentMoves);
-    if (newAbilityList) saveBatchDataToToken({ 'ability-list': newAbilityList });
+    batchUpdates['moves-data'] = JSON.stringify(currentMoves);
+    
+    // SEND THE SINGLE SAVE BATCH!
+    saveBatchDataToToken(batchUpdates); 
     
     btn.innerText = "✅ Done!";
     setTimeout(() => {
@@ -319,7 +320,7 @@ function renderMoves() {
         }
         
         if (field === 'name') {
-            const mData = await fetchMoveData(target.value);
+            const mData = await fetchMoveData(target.value.trim());
             if (mData) {
                 move.type = mData.Type || "Normal";
                 let rawCat = mData.Category || "Physical";
@@ -599,6 +600,7 @@ async function loadDataFromToken(tokenId: string) {
           const sel = element as HTMLSelectElement;
           sel.innerHTML = '';
           
+          // Use the saved list of abilities if it exists!
           if (data['ability-list']) {
               data['ability-list'].split(',').forEach((ab: string) => {
                   const opt = document.createElement('option');
