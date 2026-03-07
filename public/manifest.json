@@ -7,11 +7,11 @@
   "author": "lordcongra",
   "action": {
     "title": "Poke-e-Role",
-    "icon": "/pokeball.svg",
+    "icon": "/poke-e-role/pokeball.svg",
     "popover": {
       "width": 850,
       "height": 700
     },
-    "url": "/"
+    "url": "/poke-e-role/"
   }
 }
