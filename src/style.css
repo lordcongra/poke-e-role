@@ -1,125 +1,101 @@
-body {
-  margin: 0;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #1e1e1e;
-  color: #333;
+/* --- GLOBAL VARIABLES --- */
+:root {
+  --primary: #b92518;
+  --dark: #555;
+  --bg: #f0f2f5;
+  --border: #ccc;
 }
 
-.sheet-background {
-  background-color: #b92518; /* The classic Pokerole Red */
-  padding: 10px;
-  min-height: 100vh;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 10px; 
+body { 
+  background: var(--bg); 
+  font-family: sans-serif; 
+  color: #222; 
+  margin: 0; 
+  padding: 10px; 
 }
 
-/* Base style for all white panels */
-.panel {
-  background-color: #f4f4f4;
-  border: 2px solid #333;
-  border-radius: 4px;
-  padding: 8px;
+/* --- LAYOUT WRAPPERS --- */
+.sheet-layout { display: flex; flex-direction: column; gap: 10px; }
+.row { display: flex; gap: 10px; width: 100%; }
+.col { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+
+.panel { 
+  background: white; 
+  border: 1px solid var(--border); 
+  border-radius: 6px; 
+  padding: 8px; 
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
 }
 
-/* -- BLOCK 1: IDENTITY -- */
-.identity-block {
-  display: flex;
-  gap: 10px;
+/* --- IDENTITY BLOCK --- */
+.id-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-items: center; }
+.info-row { 
+  display: flex; align-items: center; gap: 6px; 
+  background: #fdfdfd; border: 1px solid #eee; padding: 2px 4px; border-radius: 4px; 
+}
+.info-row input, .info-row select { 
+  border: none; background: transparent; font-family: inherit; 
+  width: 100%; outline: none; font-size: 0.85rem; color: #333;
+}
+.label { 
+  background: #e0e0e0; color: #333; padding: 2px 6px; 
+  border-radius: 4px; font-size: 0.8rem; font-weight: bold; white-space: nowrap; 
+}
+.label.blue { background: #bbdefb; color: #0d47a1; }
+.label.green { background: #dcedc8; color: #1a5e20; }
+
+/* --- HEALTH & STAT BOXES --- */
+.health-row { display: flex; gap: 10px; justify-content: space-between; }
+.health-box { 
+  border: 2px solid var(--border); border-radius: 4px; flex: 1; 
+  text-align: center; overflow: hidden; background: #fafafa; 
+}
+.health-header { background: var(--primary); color: white; font-weight: bold; padding: 4px; font-size: 0.85rem; }
+.health-header.dark { background: var(--dark); }
+.health-inputs { display: flex; justify-content: center; align-items: center; padding: 6px 4px; gap: 4px; font-size: 0.85rem; }
+
+/* --- TRACKER --- */
+.tracker-box { border: 2px solid var(--primary); background: #ffebee; border-radius: 4px; padding: 6px; }
+
+/* --- TABLES --- */
+.theme-table { width: 100%; text-align: center; border-collapse: collapse; font-size: 0.85rem; }
+.theme-table th { background: var(--dark); color: white; padding: 4px; }
+.theme-table.red-th th { background: var(--primary); }
+.theme-table td { border-bottom: 1px solid #eee; padding: 4px 2px; }
+
+.panel-header {
+  font-weight: bold; color: var(--primary); margin-bottom: 6px;
+  display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;
 }
 
-.portrait-placeholder {
-  width: 100px;
-  height: 100px;
-  background-color: white;
-  border: 2px solid #00bcd4; 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  color: #aaa;
+/* --- BUTTONS --- */
+.btn-dark { background: var(--dark); color: white; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; padding: 2px 6px; }
+.btn-red { background: var(--primary); color: white; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; padding: 2px 6px; }
+.btn-full { width: 100%; padding: 4px; margin-top: 5px; border-radius: 4px; }
+
+/* --- SPINNERS --- */
+.spin-wrapper { 
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); border-radius: 4px; 
+  background: white; height: 22px; overflow: hidden; 
 }
 
-.basic-info {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.spin-btn { 
+  background: #eee; border: none; width: 16px; height: 100%; 
+  display: flex; align-items: center; justify-content: center; 
+  cursor: pointer; font-weight: bold; color: var(--dark); 
+  padding: 0; margin: 0; outline: none; 
 }
 
-.info-row {
-  display: flex;
-  border: 1px solid #ccc;
-  background-color: white;
+.spin-btn:hover { background: #d4d4d4; color: black; }
+
+.spin-input { 
+  border: none; text-align: center; width: 22px; height: 100%; 
+  appearance: textfield; -moz-appearance: textfield; /* This kills the browser arrows! */
+  outline: none; background: transparent; font-family: inherit; 
+  font-size: 0.85rem; padding: 0; margin: 0; font-weight: bold; color: #222; 
 }
 
-.info-row .label {
-  background-color: #e0e0e0;
-  font-weight: bold;
-  padding: 2px 6px;
-  width: 70px;
-  border-right: 1px solid #ccc;
-  font-size: 0.85rem;
-}
-
-/* This line fixes the text inputs AND dropdown menus! */
-.info-row input, .info-row select {
-  border: none;
-  padding: 2px 6px;
-  flex-grow: 1;
-  font-family: inherit;
-  font-size: 0.9rem;
-  background: transparent;
-  width: 100%;
-}
-
-/* -- BLOCK 2: HEALTH & STATUS -- */
-.health-block {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.health-box, .status-box {
-  flex: 1;
-  background-color: white;
-  border: 1px solid #333;
-  display: flex;
-  flex-direction: column;
-  text-align: center;
-}
-
-.health-header, .status-header {
-  background-color: #444;
-  color: white;
-  font-weight: bold;
-  font-size: 0.8rem;
-  padding: 2px 0;
-}
-
-.health-inputs {
-  padding: 4px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 4px;
-}
-
-.health-inputs input {
-  width: 30px;
-  text-align: center;
-  border: none;
-  border-bottom: 1px solid #ccc;
-  font-family: inherit;
-  font-size: 1rem;
-}
-
-.status-dropdown {
-  margin: 4px;
-  padding: 2px;
-  font-size: 0.9rem;
-  color: #4caf50; 
-  font-weight: bold;
-  border: 1px solid #ccc;
+.spin-input::-webkit-outer-spin-button, .spin-input::-webkit-inner-spin-button { 
+  -webkit-appearance: none; margin: 0; 
 }

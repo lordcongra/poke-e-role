@@ -1,12 +1,17 @@
 {
-  "name": "Pokerole PMD Extension",
+  "name": "Poke-e-Role Sheet",
+  "id": "lordcongra.poke-e-role",
   "version": "1.0.0",
   "manifest_version": 1,
+  "description": "A fully automated Pokerole 3.0 / PMD character sheet.",
+  "author": "lordcongra",
   "action": {
-    "title": "Pokerole",
-    "icon": "https://lordcongra.github.io/poke-e-role/pokeball.svg",
-    "popover": "https://lordcongra.github.io/poke-e-role/",
-    "width": 750,
-    "height": 650
+    "title": "Poke-e-Role",
+    "icon": "/pokeball.svg",
+    "popover": {
+      "width": 850,
+      "height": 700
+    },
+    "url": "/"
   }
 }

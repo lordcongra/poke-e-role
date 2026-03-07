@@ -1,46 +1,46 @@
-# Owlbear Rodeo: PokéRole PMD Extension
+# Poke-e-Role (Owlbear Rodeo Extension)
 
-A custom character sheet extension for Owlbear Rodeo designed specifically for the PokéRole TTRPG system (with full support for Pokémon Mystery Dungeon and standard Trainer campaigns).
+A highly automated, modular character sheet extension for playing **Pokerole 3.0** (and Pokemon Mystery Dungeon) within the Owlbear Rodeo VTT.
 
-## Features
-* **Live Token Sync:** Instantly saves all HP, Will, stats, moves, and inventory directly to the selected Owlbear token's metadata.
-* **Auto-Calculating Stats:** Automatically derives Max HP, Will, Evasion, Clash, Initiative, and Dice Pools based on Base Stats, Rank, and Buffs/Debuffs.
-* **Smart STAB Integration:** Checks the Pokémon's typing (and abilities like Protean/Libero) against the move type to automatically inject STAB dice into damage rolls.
-* **Third-Party Integrations:**
-  * **Dice+:** Formats and sends all Accuracy, Damage, and Skill rolls directly to the 3D Dice+ extension.
-  * **Pretty Sordid (Initiative):** Rolls Initiative, handles automatic 1d6 decimal tie-breakers (e.g., `7.4`), and pushes the final value to the Pretty Sordid turn tracker.
-  * **Owl Trackers:** Mirrors the HP, Will, Action, and Defense inputs directly into the floating token stat bubbles.
-* **Dynamic UI:** Toggleable "Trainer Mode" swaps skill names and hides the Special stat. Includes a dynamic Custom Skill Category generator.
+## ⚠️ REQUIRED PLUGINS
+To use all the features of this character sheet, you **MUST** install the following Owlbear Rodeo extensions in your room:
+1. **[Dice+](https://extensions.owlbear.rodeo/dice-plus):** Handles all 1-click 3D dice rolling (Accuracy, Damage, Evasion, Clashes, etc.)
+2. **[Owl Trackers](https://extensions.owlbear.rodeo/owl-trackers):** Syncs the token's HP, Willpower, Defenses, and Action economy directly to the Owlbear map rings.
+3. **[Pretty Sordid (Initiative)](https://extensions.owlbear.rodeo/pretty-sordid):** Grabs Initiative rolls from the sheet and automatically sorts the combat order (including decimal tie-breakers!).
 
-## Tech Stack
-* Vanilla HTML / CSS / TypeScript
-* Built with [Vite](https://vitejs.dev/)
-* [Owlbear Rodeo SDK](https://docs.owlbear.rodeo/docs/getting-started)
+---
 
-## Running the Extension Locally
+## 🌟 Features
 
-To test and modify this extension on your local machine, follow these steps:
+### 📊 Fully Automated Stat Calculation
+* Enter your Base Stats, Ranks, Buffs, and Debuffs, and the sheet automatically calculates all Derived Stats (HP, Will, Defenses, Evasion, Clashes).
+* Supports both **Pokemon** and **Trainer** modes, dynamically toggling relevant skills and clashes.
 
-### 1. Install Dependencies
-Make sure you have [Node.js](https://nodejs.org/) installed. Open your terminal in the project directory and run:
-`npm install`
+### ⚔️ Combat Economy Tracking
+* Keep track of your actions in the "Round Tracker" panel. 
+* Automatically increases your Action count when rolling attacks or maneuvers.
+* Includes 1-click buttons for generic combat maneuvers (Grapple, Cover Ally, Ambush, etc.).
 
-### 2. Start the Local Dev Server
-Run the Vite development server:
-`npm run dev`
-*This will usually host the extension at `http://localhost:5173`.*
+### 🌐 Live Database Fetching
+* Type in the name of a Pokemon species, and the sheet will securely fetch its Base Stats, Typings, and Abilities directly from the official Pokerole 3.0 GitHub Database.
+* Automatically color-codes your Typings with beautiful CSS gradients.
+* Type in a Move name to automatically pull its Base Power, Category, Accuracy stats, and mechanical Effects.
 
-### 3. Connect to Owlbear Rodeo
-To test the sheet inside an actual VTT environment:
-1. Open an [Owlbear Rodeo](https://www.owlbear.rodeo/) room in your browser.
-2. Click on your **Profile icon** (bottom left) -> **Extensions**.
-3. Click the **+** (Add Extension) button.
-4. Paste your local manifest URL: `http://localhost:5173/manifest.json`
-5. Click **Add**.
+### 💡 Dynamic Tooltips
+* No more digging through PDFs during combat! Hover your mouse over your equipped Ability or any Move on your sheet to see a native tooltip explaining its exact mechanical effect. 
+* Click the **"🔄 Refresh Token Data"** button to automatically backfill missing descriptions on older tokens!
 
-*Note: For the full experience, ensure you also have the **Dice+** and **Pretty Sordid** extensions installed in your Owlbear room.*
+### 🎲 1-Click Dice+ Integration
+* Click the 🎯 or 💥 icons next to a move to instantly roll Accuracy or Damage.
+* Automatically accounts for global Accuracy/Damage modifiers, STAB bonuses, and even the Protean/Libero abilities!
+* Need a flat modifier to your successes? Use the "Succ" global modifier box for things like the *Low Accuracy* penalty.
 
-## Architecture Notes for Reviewers
-* **DOM & Event Listeners:** Because the DOM is rebuilt dynamically (especially in the Moves and Inventory tables), we use a generic `document.querySelectorAll` event listener at the bottom of `main.ts` to attach auto-saving functions to all inputs.
-* **Token Memory:** All data is stored in the token metadata under the `pokerole-extension/stats` key.
-* **Network Throttling:** To prevent network lag during rapid input (like typing a word or using a number spinner), state calculations happen on the `input` event locally, but the actual OBR metadata sync is deferred to the `change` event.
+### 🔒 GM Tools
+* Built-in NPC Toggle. Mark a sheet as a "Private NPC" to instantly hide the sheet's contents from players, preventing meta-gaming.
+
+---
+
+## 🛠️ Installation
+To install this extension into your Owlbear Rodeo room, use the following Manifest URL:
+\`https://lordcongra.github.io/poke-e-role/manifest.json\`
+*(Make sure GitHub Pages is enabled in your repository settings!)*
