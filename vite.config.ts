@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  base: '/poke-e-role/',
+  base: './',
   server: {
     cors: {
       origin: "https://www.owlbear.rodeo",
