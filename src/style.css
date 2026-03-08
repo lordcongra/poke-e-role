@@ -15,11 +15,11 @@ body {
 }
 
 /* --- LAYOUT WRAPPERS --- */
-.sheet-layout { display: flex; flex-direction: column; gap: 10px; }
-.row { display: flex; gap: 10px; width: 100%; }
-.col { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.sheet-container { display: flex; flex-direction: column; gap: 10px; }
+.sheet-container__row { display: flex; gap: 10px; width: 100%; }
+.sheet-container__column { flex: 1; display: flex; flex-direction: column; gap: 10px; }
 
-.panel { 
+.sheet-panel { 
   background: white; 
   border: 1px solid var(--border); 
   border-radius: 6px; 
@@ -27,108 +27,102 @@ body {
   box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
 }
 
-/* --- IDENTITY BLOCK --- */
-.id-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-items: center; }
-.info-row { 
-  display: flex; align-items: center; gap: 6px; 
-  background: #fdfdfd; border: 1px solid #eee; padding: 2px 4px; border-radius: 4px; 
-}
-.info-row input, .info-row select { 
-  border: none; background: transparent; font-family: inherit; 
-  width: 100%; outline: none; font-size: 0.85rem; color: #333;
-}
-.label { 
-  background: #e0e0e0; color: #333; padding: 2px 6px; 
-  border-radius: 4px; font-size: 0.8rem; font-weight: bold; white-space: nowrap; 
-}
-.label.blue { background: #bbdefb; color: #0d47a1; }
-.label.green { background: #dcedc8; color: #1a5e20; }
-
-/* --- HEALTH & STAT BOXES --- */
-.health-row { display: flex; gap: 10px; justify-content: space-between; }
-.health-box { 
-  border: 2px solid var(--border); border-radius: 4px; flex: 1; 
-  text-align: center; overflow: hidden; background: #fafafa; 
-}
-.health-header { background: var(--primary); color: white; font-weight: bold; padding: 4px; font-size: 0.85rem; }
-.health-header.dark { background: var(--dark); }
-.health-inputs { display: flex; justify-content: center; align-items: center; padding: 6px 4px; gap: 4px; font-size: 0.85rem; }
-
-/* --- TRACKER --- */
-.tracker-box { border: 2px solid var(--primary); background: #ffebee; border-radius: 4px; padding: 6px; }
-
-/* --- TABLES --- */
-.theme-table { width: 100%; text-align: center; border-collapse: collapse; font-size: 0.85rem; }
-.theme-table th { background: var(--dark); color: white; padding: 4px; }
-.theme-table.red-th th { background: var(--primary); }
-.theme-table td { border-bottom: 1px solid #eee; padding: 4px 2px; }
-
-.panel-header {
+.sheet-panel__header {
   font-weight: bold; color: var(--primary); margin-bottom: 6px;
   display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;
 }
 
+/* --- IDENTITY BLOCK --- */
+.identity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-items: center; }
+.identity-grid__row { 
+  display: flex; align-items: center; gap: 6px; 
+  background: #fdfdfd; border: 1px solid #eee; padding: 2px 4px; border-radius: 4px; 
+}
+.identity-grid__input, .identity-grid__select { 
+  border: none; background: transparent; font-family: inherit; 
+  width: 100%; outline: none; font-size: 0.85rem; color: #333;
+}
+.identity-grid__label { 
+  background: #e0e0e0; color: #333; padding: 2px 6px; 
+  border-radius: 4px; font-size: 0.8rem; font-weight: bold; white-space: nowrap; 
+}
+.identity-grid__label--blue { background: #bbdefb; color: #0d47a1; }
+.identity-grid__label--green { background: #dcedc8; color: #1a5e20; }
+
+/* --- HEALTH & STAT BOXES --- */
+.health-section__row { display: flex; gap: 10px; justify-content: space-between; }
+.health-section__box { 
+  border: 2px solid var(--border); border-radius: 4px; flex: 1; 
+  text-align: center; overflow: hidden; background: #fafafa; 
+}
+.health-section__header { background: var(--primary); color: white; font-weight: bold; padding: 4px; font-size: 0.85rem; }
+.health-section__header--dark { background: var(--dark); }
+.health-section__inputs { display: flex; justify-content: center; align-items: center; padding: 6px 4px; gap: 4px; font-size: 0.85rem; }
+
+/* --- TRACKER --- */
+.tracker-section { border: 2px solid var(--primary); background: #ffebee; border-radius: 4px; padding: 6px; }
+
+/* --- TABLES --- */
+.data-table { width: 100%; text-align: center; border-collapse: collapse; font-size: 0.85rem; }
+.data-table th { background: var(--dark); color: white; padding: 4px; }
+.data-table--red-header th { background: var(--primary); }
+.data-table td { border-bottom: 1px solid #eee; padding: 4px 2px; }
+
+.data-table__row--dynamic { border-bottom: 1px solid #eee; }
+.data-table__row--dynamic:nth-child(even) { background-color: #fafafa; }
+
+.data-table__cell--middle { vertical-align: middle; text-align: center; }
+.data-table__cell--middle-left { vertical-align: middle; text-align: left; }
+.data-table__cell--top { vertical-align: top; padding-top: 6px; text-align: center; }
+.data-table__cell--top-left { vertical-align: top; padding-top: 6px; text-align: left; padding-left: 5px; }
+
 /* --- BUTTONS --- */
-.btn-dark { background: var(--dark); color: white; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; padding: 2px 6px; }
-.btn-red { background: var(--primary); color: white; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; padding: 2px 6px; }
-.btn-full { width: 100%; padding: 4px; margin-top: 5px; border-radius: 4px; }
+.action-button { border: none; border-radius: 3px; cursor: pointer; font-weight: bold; padding: 2px 6px; }
+.action-button--dark { background: var(--dark); color: white; }
+.action-button--red { background: var(--primary); color: white; }
+.action-button--full-width { width: 100%; padding: 4px; margin-top: 5px; border-radius: 4px; }
+.action-button--transparent-white { background: transparent; border: none; color: white; cursor: pointer; font-weight: bold; }
+.action-button--sort { cursor: pointer; background: #e0e0e0; border: 1px solid var(--border); border-radius: 2px; font-size: 0.7rem; padding: 0 4px; }
 
 /* --- SPINNERS --- */
-.spin-wrapper { 
+.number-spinner { 
   display: inline-flex; align-items: center; justify-content: center;
   border: 1px solid var(--border); border-radius: 4px; 
   background: white; height: 22px; overflow: hidden; 
 }
 
-.spin-btn { 
+.number-spinner__button { 
   background: #eee; border: none; width: 16px; height: 100%; 
   display: flex; align-items: center; justify-content: center; 
   cursor: pointer; font-weight: bold; color: var(--dark); 
   padding: 0; margin: 0; outline: none; 
 }
 
-.spin-btn:hover { background: #d4d4d4; color: black; }
+.number-spinner__button:hover { background: #d4d4d4; color: black; }
 
-.spin-input { 
+.number-spinner__input { 
   border: none; text-align: center; width: 22px; height: 100%; 
-  appearance: textfield; -moz-appearance: textfield; /* This kills the browser arrows! */
+  appearance: textfield; -moz-appearance: textfield;
   outline: none; background: transparent; font-family: inherit; 
   font-size: 0.85rem; padding: 0; margin: 0; font-weight: bold; color: #222; 
 }
 
-.spin-input::-webkit-outer-spin-button, .spin-input::-webkit-inner-spin-button { 
+.number-spinner__input::-webkit-outer-spin-button, .number-spinner__input::-webkit-inner-spin-button { 
   -webkit-appearance: none; margin: 0; 
 }
-/* --- PHASE 4: UI COMPONENT CLASSES --- */
 
-/* Table Cell Alignments */
-.table-cell-middle { vertical-align: middle; text-align: center; }
-.table-cell-middle-left { vertical-align: middle; text-align: left; }
-.table-cell-top { vertical-align: top; padding-top: 6px; text-align: center; }
-.table-cell-top-left { vertical-align: top; padding-top: 6px; text-align: left; padding-left: 5px; }
+/* --- FORM INPUTS & UTILS --- */
+.flex-layout--row-center { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.flex-layout--row-start { display: flex; align-items: center; justify-content: flex-start; gap: 4px; padding-top: 4px; }
+.flex-layout--column-center { display: flex; flex-direction: column; gap: 2px; padding: 2px; align-items: center; }
 
-/* Flexbox Layouts */
-.flex-row-center { display: flex; align-items: center; justify-content: center; gap: 4px; }
-.flex-row-start { display: flex; align-items: center; justify-content: flex-start; gap: 4px; padding-top: 4px; }
-.flex-col-center { display: flex; flex-direction: column; gap: 2px; padding: 2px; align-items: center; }
+.form-input--transparent { border: 1px solid transparent; background: transparent; width: 90%; }
+.form-input--transparent:focus { border: 1px solid var(--primary); outline: none; }
+.form-input--transparent-bold { border: none; background: transparent; font-weight: bold; font-family: inherit; width: 65px; }
+.form-input--transparent-white { border: none; background: transparent; color: white; font-weight: bold; font-family: inherit; width: 80px; }
+.form-input--item-name { width: 95%; border: none; background: transparent; font-family: inherit; outline: none; }
+.form-input--item-desc { width: 95%; border: 1px solid var(--border); border-radius: 3px; background: transparent; font-family: inherit; resize: vertical; padding: 4px; box-sizing: border-box; outline: none; }
+.form-input--power { width: 30px; text-align: center; border: 1px solid var(--border); padding: 1px; }
 
-/* Clean Inputs */
-.input-transparent { border: 1px solid transparent; background: transparent; width: 90%; }
-.input-transparent:focus { border: 1px solid var(--primary); outline: none; }
-.input-transparent-bold { border: none; background: transparent; font-weight: bold; font-family: inherit; width: 65px; }
-.input-transparent-white { border: none; background: transparent; color: white; font-weight: bold; font-family: inherit; width: 80px; }
-
-/* Dropdowns & Buttons */
-.stat-select { border: 1px solid var(--border); background: white; padding: 1px; }
-.cat-select { border: none; background: transparent; }
-.power-input { width: 30px; text-align: center; border: 1px solid var(--border); padding: 1px; }
-.sort-btn { cursor: pointer; background: #e0e0e0; border: 1px solid var(--border); border-radius: 2px; font-size: 0.7rem; padding: 0 4px; }
-.btn-transparent-white { background: transparent; border: none; color: white; cursor: pointer; font-weight: bold; }
-
-/* Inventory Items */
-.textarea-desc { width: 95%; border: 1px solid var(--border); border-radius: 3px; background: transparent; font-family: inherit; resize: vertical; padding: 4px; box-sizing: border-box; outline: none; }
-.item-name-input { width: 95%; border: none; background: transparent; font-family: inherit; outline: none; }
-
-/* Dynamic Table Rows (Replaces JS striping) */
-.dynamic-row { border-bottom: 1px solid #eee; }
-.dynamic-row:nth-child(even) { background-color: #fafafa; }
+.form-select--bordered { border: 1px solid var(--border); background: white; padding: 1px; }
+.form-select--transparent { border: none; background: transparent; }

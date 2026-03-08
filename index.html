@@ -14,346 +14,358 @@
         <h3>This sheet is hidden by the GM.</h3>
     </div>
 
-    <div id="app" class="sheet-layout">
+    <div id="app" class="sheet-container">
         
-        <div class="panel">
-            <div class="id-grid">
-                <div class="info-row"><span class="label">Nickname</span><input type="text" id="nickname" class="sheet-save" /></div>
-                <div class="info-row"><span class="label">Species</span><input type="text" id="species" list="species-list" class="sheet-save" /></div>
-                <div class="info-row"><span class="label">Nature</span><input type="text" id="nature" class="sheet-save" /></div>
-                <div class="info-row">
-                    <span class="label">Rank</span>
-                    <select id="rank" class="sheet-save">
+        <div class="sheet-panel">
+            <div class="identity-grid">
+                <div class="identity-grid__row"><span class="identity-grid__label">Nickname</span><input type="text" id="nickname" class="identity-grid__input sheet-save" /></div>
+                <div class="identity-grid__row"><span class="identity-grid__label">Species</span><input type="text" id="species" list="species-list" class="identity-grid__input sheet-save" /></div>
+                <div class="identity-grid__row"><span class="identity-grid__label">Nature</span><input type="text" id="nature" class="identity-grid__input sheet-save" /></div>
+                <div class="identity-grid__row">
+                    <span class="identity-grid__label">Rank</span>
+                    <select id="rank" class="identity-grid__select sheet-save">
                         <option>Starter</option><option>Rookie</option><option>Standard</option>
                         <option>Advanced</option><option>Expert</option><option>Ace</option>
                         <option>Master</option><option>Champion</option>
                     </select>
                 </div>
-                <div class="info-row"><span class="label">Typing</span><input type="text" id="typing" class="sheet-save" readonly style="font-weight: bold; color: var(--dark);" /></div>
-                <div class="info-row"><span class="label">Ability</span><select id="ability" class="sheet-save" style="width: 100%; border:none; background:transparent; font-family: inherit; font-size: 0.85rem; color: #333;" title="Select an ability to see its description..."></select></div>
-                <div class="info-row">
-                    <span class="label blue">Mode</span>
-                    <select id="sheet-type" class="sheet-save">
+                <div class="identity-grid__row"><span class="identity-grid__label">Typing</span><input type="text" id="typing" class="identity-grid__input sheet-save" readonly style="font-weight: bold; color: var(--dark);" /></div>
+                <div class="identity-grid__row"><span class="identity-grid__label">Ability</span><select id="ability" class="identity-grid__select sheet-save" style="font-size: 0.85rem; color: #333;" title="Select an ability to see its description..."></select></div>
+                <div class="identity-grid__row">
+                    <span class="identity-grid__label identity-grid__label--blue">Mode</span>
+                    <select id="sheet-type" class="identity-grid__select sheet-save">
                         <option value="pokemon">Pokémon</option><option value="trainer">Trainer</option>
                     </select>
                 </div>
-                <div class="info-row">
-                    <span class="label blue">Age</span>
-                    <select id="age" class="sheet-save">
+                <div class="identity-grid__row">
+                    <span class="identity-grid__label identity-grid__label--blue">Age</span>
+                    <select id="age" class="identity-grid__select sheet-save">
                         <option value="Child">Child</option><option value="Teen">Teen</option>
                         <option value="Adult">Adult</option><option value="Senior">Senior</option>
                     </select>
                 </div>
-                <div class="info-row"><span class="label green">Combat</span><input type="text" id="combat-item" class="sheet-save" /></div>
-                <div class="info-row"><span class="label green">Social</span><input type="text" id="social-item" class="sheet-save" /></div>
-                <div class="info-row"><span class="label green">Hand</span><input type="text" id="hand-item" class="sheet-save" /></div>
-                <div class="info-row">
-                    <span class="label">Rolls</span>
-                    <select id="roll-target" class="sheet-save">
+                <div class="identity-grid__row"><span class="identity-grid__label identity-grid__label--green">Combat</span><input type="text" id="combat-item" class="identity-grid__input sheet-save" /></div>
+                <div class="identity-grid__row"><span class="identity-grid__label identity-grid__label--green">Social</span><input type="text" id="social-item" class="identity-grid__input sheet-save" /></div>
+                <div class="identity-grid__row"><span class="identity-grid__label identity-grid__label--green">Hand</span><input type="text" id="hand-item" class="identity-grid__input sheet-save" /></div>
+                <div class="identity-grid__row">
+                    <span class="identity-grid__label">Rolls</span>
+                    <select id="roll-target" class="identity-grid__select sheet-save">
                         <option value="everyone">Public (Everyone)</option><option value="gm_only">Private (GM Only)</option>
                     </select>
                 </div>
+                <div id="custom-info-container" style="display: contents;"></div>
             </div>
+            
             <div style="display: flex; gap: 8px; margin-top: 8px;">
-                <button type="button" id="refresh-data-btn" class="btn-dark" style="flex: 1; margin: 0; padding: 4px; border-radius: 4px; font-size: 0.85rem;">🔄 Refresh Token Data</button>
-                <div id="gm-tools" style="display: none; flex: 1; background: #ffebee; border: 1px solid var(--primary); padding: 4px; border-radius: 4px; text-align: center;">
+                <button type="button" id="refresh-data-btn" class="action-button action-button--dark" style="flex: 1; margin: 0; padding: 4px; border-radius: 4px; font-size: 0.85rem;">🔄 Refresh Token Data</button>
+                <button type="button" id="add-custom-info-btn" class="action-button action-button--dark" style="background: #1976d2; flex: 1; margin: 0; padding: 4px; border-radius: 4px; font-size: 0.85rem;">➕ Add Custom Field</button>
+                <div id="gm-tools" style="flex: 1; background: #ffebee; border: 1px solid var(--primary); padding: 4px; border-radius: 4px; text-align: center;">
                     <label style="color: var(--primary); font-weight: bold; cursor: pointer; font-size: 0.85rem;">
-                        <input type="checkbox" id="is-npc"> 🔒 Private NPC
+                        <input type="checkbox" id="is-npc" class="sheet-save"> 🔒 Private NPC
                     </label>
                 </div>
             </div>
         </div>
 
-        <div class="panel">
-            <div class="health-row">
-                <div class="health-box">
-                    <div class="health-header">HP</div>
-                    <div class="health-inputs">Base: <input type="number" value="4" id="hp-base" class="spin-input sheet-save" /> Max: <span id="hp-max-display" style="font-weight:bold;">5</span></div>
-                    <div class="health-inputs">Curr: <input type="number" value="5" id="hp-curr" class="spin-input sheet-save" /></div>
+        <div class="sheet-panel">
+            <div class="health-section__row">
+                <div class="health-section__box">
+                    <div class="health-section__header">HP</div>
+                    <div class="health-section__inputs">Base: <input type="number" value="4" id="hp-base" class="number-spinner__input sheet-save" /> Max: <span id="hp-max-display" style="font-weight:bold;">5</span></div>
+                    <div class="health-section__inputs">Curr: <input type="number" value="5" id="hp-curr" class="number-spinner__input sheet-save" /></div>
                 </div>
-                <div class="health-box">
-                    <div class="health-header">WILL</div>
-                    <div class="health-inputs">Base: <input type="number" value="3" id="will-base" class="spin-input sheet-save" /> Max: <span id="will-max-display" style="font-weight:bold;">4</span></div>
-                    <div class="health-inputs">Curr: <input type="number" value="4" id="will-curr" class="spin-input sheet-save" /></div>
+                <div class="health-section__box">
+                    <div class="health-section__header">WILL</div>
+                    <div class="health-section__inputs">Base: <input type="number" value="3" id="will-base" class="number-spinner__input sheet-save" /> Max: <span id="will-max-display" style="font-weight:bold;">4</span></div>
+                    <div class="health-section__inputs">Curr: <input type="number" value="4" id="will-curr" class="number-spinner__input sheet-save" /></div>
                 </div>
-                <div class="health-box">
-                    <div class="health-header dark">Status</div>
-                    <div class="health-inputs" style="height: 100%; padding-bottom: 12px;">
-                        <select id="status" class="sheet-save" style="width: 100%; border:1px solid #ccc; border-radius:3px;">
-                            <option>Healthy</option><option>1st Degree Burn</option><option>2nd Degree Burn</option>
-                            <option>3rd Degree Burn</option><option>Badly Poisoned</option><option>Confusion</option>
-                            <option>Disable</option><option>Flinch</option><option>Frozen Solid</option>
-                            <option>In Love</option><option>Paralysis</option><option>Poison</option><option>Sleep</option>
-                        </select>
+                
+                <div class="health-section__box" style="display: flex; flex-direction: column; overflow: hidden;">
+                    <div class="health-section__header health-section__header--dark" style="position: relative; text-align: center; padding: 0 6px;">
+                        <span>STATUS</span>
+                        <button type="button" id="add-status-btn" class="action-button action-button--dark" style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; padding: 2px 5px; margin: 0; line-height: 1;">+ Add</button>
+                    </div>
+                    <div class="health-section__inputs" style="flex: 1; display: block; padding: 4px; padding-top: 2px;">
+                        <div id="status-container" style="display: flex; flex-direction: column; gap: 4px; overflow-y: auto; max-height: 76px; width: 100%;">
+                            </div>
                     </div>
                 </div>
             </div>
 
-            <div class="health-row" style="margin-top: 10px;">
-                <div class="health-box">
-                    <div class="health-header">DEFENSE</div>
-                    <div class="health-inputs">Total: <span id="def-total" style="font-weight:bold; margin-right:5px;">2</span>+<input type="number" value="0" id="def-buff" class="spin-input sheet-save"/>-<input type="number" value="0" id="def-debuff" class="spin-input sheet-save"/></div>
+            <div class="health-section__row" style="margin-top: 10px;">
+                <div class="health-section__box">
+                    <div class="health-section__header">DEFENSE</div>
+                    <div class="health-section__inputs">Total: <span id="def-total" style="font-weight:bold; margin-right:5px;">2</span>+<input type="number" value="0" id="def-buff" class="number-spinner__input sheet-save"/>-<input type="number" value="0" id="def-debuff" class="number-spinner__input sheet-save"/></div>
                 </div>
-                <div class="health-box">
-                    <div class="health-header">SPEC. DEFENSE</div>
-                    <div class="health-inputs">Total: <span id="spd-total" style="font-weight:bold; margin-right:5px;">1</span>+<input type="number" value="0" id="spd-buff" class="spin-input sheet-save"/>-<input type="number" value="0" id="spd-debuff" class="spin-input sheet-save"/></div>
+                <div class="health-section__box">
+                    <div class="health-section__header">SPEC. DEFENSE</div>
+                    <div class="health-section__inputs">Total: <span id="spd-total" style="font-weight:bold; margin-right:5px;">1</span>+<input type="number" value="0" id="spd-buff" class="number-spinner__input sheet-save"/>-<input type="number" value="0" id="spd-debuff" class="number-spinner__input sheet-save"/></div>
                 </div>
             </div>
 
-            <div class="health-row" style="margin-top: 10px;">
-                <div class="health-box">
-                    <div class="health-header dark">INITIATIVE</div>
-                    <div class="health-inputs">1d6 + <span id="init-total" style="font-weight:bold;">0</span> <button type="button" id="roll-init-btn" class="btn-dark">🎲</button></div>
+            <div class="health-section__row" style="margin-top: 10px;">
+                <div class="health-section__box">
+                    <div class="health-section__header health-section__header--dark">INITIATIVE</div>
+                    <div class="health-section__inputs">1d6 + <span id="init-total" style="font-weight:bold;">0</span> <button type="button" id="roll-init-btn" class="action-button action-button--dark">🎲</button></div>
                 </div>
-                <div class="health-box"><div class="health-header dark">EVASION</div><div class="health-inputs" style="font-weight:bold; padding-bottom: 8px;"><span id="evasion-derived">0</span></div></div>
-                <div class="health-box" id="clash-p-row"><div class="health-header dark">CLASH (P)</div><div class="health-inputs" style="font-weight:bold; padding-bottom: 8px;"><span id="clash-p-derived">0</span></div></div>
-                <div class="health-box" id="clash-s-row"><div class="health-header dark">CLASH (S)</div><div class="health-inputs" style="font-weight:bold; padding-bottom: 8px;"><span id="clash-s-derived">0</span></div></div>
+                <div class="health-section__box"><div class="health-section__header health-section__header--dark">EVASION</div><div class="health-section__inputs" style="font-weight:bold; padding-bottom: 8px;"><span id="evasion-derived">0</span></div></div>
+                <div class="health-section__box" id="clash-p-row"><div class="health-section__header health-section__header--dark">CLASH (P)</div><div class="health-section__inputs" style="font-weight:bold; padding-bottom: 8px;"><span id="clash-p-derived">0</span></div></div>
+                <div class="health-section__box" id="clash-s-row"><div class="health-section__header health-section__header--dark">CLASH (S)</div><div class="health-section__inputs" style="font-weight:bold; padding-bottom: 8px;"><span id="clash-s-derived">0</span></div></div>
             </div>
         </div>
 
-        <div class="row">
-            <div class="col">
-                <div class="tracker-box">
+        <div class="sheet-container__row">
+            <div class="sheet-container__column">
+                <div class="tracker-section">
                     <div style="text-align: center; font-weight: bold; color: var(--primary); font-size: 0.85rem; margin-bottom: 4px;">ROUND TRACKER</div>
                     <div style="display: flex; justify-content: space-between; font-size: 0.8rem; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 4px;">Action: <input type="number" id="actions-used" value="0" min="0" max="5" class="spin-input sheet-save"></div>
-                        <div style="display: flex; align-items: center; gap: 4px;">Evade: <input type="number" id="evasions-used" value="0" min="0" class="spin-input sheet-save"><button type="button" id="roll-evade-btn" class="btn-dark">🎲</button></div>
-                        <div style="display: flex; align-items: center; gap: 4px;">Clash: <input type="number" id="clashes-used" value="0" min="0" class="spin-input sheet-save"><button type="button" id="roll-clash-btn" class="btn-dark">🎲</button></div>
+                        <div style="display: flex; align-items: center; gap: 4px;">Action: <input type="number" id="actions-used" value="0" min="0" max="5" class="number-spinner__input sheet-save"></div>
+                        <div style="display: flex; align-items: center; gap: 4px;">Evade: <input type="number" id="evasions-used" value="0" min="0" class="number-spinner__input sheet-save"><button type="button" id="roll-evade-btn" class="action-button action-button--dark">🎲</button></div>
+                        <div style="display: flex; align-items: center; gap: 4px;">Clash: <input type="number" id="clashes-used" value="0" min="0" class="number-spinner__input sheet-save"><button type="button" id="roll-clash-btn" class="action-button action-button--dark">🎲</button></div>
                     </div>
                     <div style="display: flex; gap: 4px; justify-content: space-between; align-items: center; margin-top: 4px;">
                         <select id="maneuver-select" style="padding: 1px; font-family: inherit; border: 1px solid var(--border); font-size: 0.75rem; flex: 1;">
                             <option value="none">-- Maneuver --</option><option value="ambush">Ambush (Dex+Stl)</option><option value="cover">Cover Ally (Will)</option>
                             <option value="grapple">Grapple (Str+Bwl)</option><option value="run">Run (Dex+Ath)</option><option value="stabilize">Stabilize (Cle+Med)</option><option value="struggle">Struggle (Dex+Bwl)</option>
                         </select>
-                        <button type="button" id="roll-maneuver-btn" class="btn-dark">🎲</button>
-                        <button type="button" id="reset-round-btn" class="btn-red">Reset</button>
+                        <button type="button" id="roll-maneuver-btn" class="action-button action-button--dark">🎲</button>
+                        <button type="button" id="reset-round-btn" class="action-button action-button--red">Reset</button>
                     </div>
                 </div>
 
-                <div class="panel">
-                    <table class="theme-table">
+                <div class="sheet-panel">
+                    <table class="data-table">
                         <tr><th>ATTR</th><th>Base</th><th>Rank</th><th>Buff</th><th>Debuff</th><th>Total</th></tr>
                         <tr>
                             <td style="background:#E65100; color:white; font-weight:bold;">STR</td>
-                            <td><input type="number" value="2" id="str-base" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="str-rank" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="str-buff" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="str-debuff" class="spin-input sheet-save"></td>
+                            <td><input type="number" value="2" id="str-base" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="str-rank" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="str-buff" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="str-debuff" class="number-spinner__input sheet-save"></td>
                             <td style="font-weight: bold;" id="str-total">2</td>
                         </tr>
                         <tr>
                             <td style="background:#2E7D32; color:white; font-weight:bold;">DEX</td>
-                            <td><input type="number" value="2" id="dex-base" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="dex-rank" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="dex-buff" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="dex-debuff" class="spin-input sheet-save"></td>
+                            <td><input type="number" value="2" id="dex-base" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="dex-rank" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="dex-buff" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="dex-debuff" class="number-spinner__input sheet-save"></td>
                             <td style="font-weight: bold;" id="dex-total">2</td>
                         </tr>
                         <tr>
                             <td style="background:#C62828; color:white; font-weight:bold;">VIT</td>
-                            <td><input type="number" value="2" id="vit-base" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="vit-rank" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="vit-buff" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="vit-debuff" class="spin-input sheet-save"></td>
+                            <td><input type="number" value="2" id="vit-base" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="vit-rank" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="vit-buff" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="vit-debuff" class="number-spinner__input sheet-save"></td>
                             <td style="font-weight: bold;" id="vit-total">2</td>
                         </tr>
                         <tr id="spe-row">
                             <td style="background:#1565C0; color:white; font-weight:bold;">SPE</td>
-                            <td><input type="number" value="2" id="spe-base" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="spe-rank" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="spe-buff" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="spe-debuff" class="spin-input sheet-save"></td>
+                            <td><input type="number" value="2" id="spe-base" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="spe-rank" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="spe-buff" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="spe-debuff" class="number-spinner__input sheet-save"></td>
                             <td style="font-weight: bold;" id="spe-total">2</td>
                         </tr>
                         <tr>
                             <td style="background:#6A1B9A; color:white; font-weight:bold;">INS</td>
-                            <td><input type="number" value="1" id="ins-base" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="ins-rank" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="ins-buff" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="ins-debuff" class="spin-input sheet-save"></td>
+                            <td><input type="number" value="1" id="ins-base" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="ins-rank" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="ins-buff" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="ins-debuff" class="number-spinner__input sheet-save"></td>
                             <td style="font-weight: bold;" id="ins-total">1</td>
                         </tr>
                     </table>
                 </div>
 
-                <div class="panel">
-                    <table class="theme-table">
+                <div class="sheet-panel">
+                    <table class="data-table">
                         <tr><th>SOCIAL</th><th>Base</th><th>Rank</th><th>Buff</th><th>Debuff</th><th>Total</th></tr>
                         <tr>
                             <td style="background:#F9E79F; font-weight:bold;">TOUGH</td>
-                            <td><input type="number" value="1" id="tou-base" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="tou-rank" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="tou-buff" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="tou-debuff" class="spin-input sheet-save"></td>
+                            <td><input type="number" value="1" id="tou-base" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="tou-rank" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="tou-buff" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="tou-debuff" class="number-spinner__input sheet-save"></td>
                             <td style="font-weight: bold;" id="tou-total">1</td>
                         </tr>
                         <tr>
                             <td style="background:#F5CBA7; font-weight:bold;">COOL</td>
-                            <td><input type="number" value="1" id="coo-base" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="coo-rank" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="coo-buff" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="coo-debuff" class="spin-input sheet-save"></td>
+                            <td><input type="number" value="1" id="coo-base" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="coo-rank" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="coo-buff" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="coo-debuff" class="number-spinner__input sheet-save"></td>
                             <td style="font-weight: bold;" id="coo-total">1</td>
                         </tr>
                         <tr>
                             <td style="background:#AED6F1; font-weight:bold;">BEAUTY</td>
-                            <td><input type="number" value="1" id="bea-base" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="bea-rank" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="bea-buff" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="bea-debuff" class="spin-input sheet-save"></td>
+                            <td><input type="number" value="1" id="bea-base" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="bea-rank" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="bea-buff" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="bea-debuff" class="number-spinner__input sheet-save"></td>
                             <td style="font-weight: bold;" id="bea-total">1</td>
                         </tr>
                         <tr>
                             <td style="background:#F5B7B1; font-weight:bold;">CUTE</td>
-                            <td><input type="number" value="1" id="cut-base" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="cut-rank" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="cut-buff" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="cut-debuff" class="spin-input sheet-save"></td>
+                            <td><input type="number" value="1" id="cut-base" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="cut-rank" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="cut-buff" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="cut-debuff" class="number-spinner__input sheet-save"></td>
                             <td style="font-weight: bold;" id="cut-total">1</td>
                         </tr>
                         <tr>
                             <td style="background:#A9DFBF; font-weight:bold;">CLEVER</td>
-                            <td><input type="number" value="1" id="cle-base" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="cle-rank" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="cle-buff" class="spin-input sheet-save"></td>
-                            <td><input type="number" value="0" id="cle-debuff" class="spin-input sheet-save"></td>
+                            <td><input type="number" value="1" id="cle-base" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="cle-rank" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="cle-buff" class="number-spinner__input sheet-save"></td>
+                            <td><input type="number" value="0" id="cle-debuff" class="number-spinner__input sheet-save"></td>
                             <td style="font-weight: bold;" id="cle-total">1</td>
                         </tr>
                     </table>
                 </div>
+
+                <div class="sheet-panel">
+                    <div class="sheet-panel__header" style="margin-bottom: 2px;">
+                        <span>TYPE MATCHUPS</span>
+                    </div>
+                    <div id="type-matchup-container" style="font-size: 0.8rem; padding: 4px; border: 1px solid var(--border); border-radius: 4px; background: #fafafa; min-height: 40px;">
+                        </div>
+                </div>
+
             </div>
 
-            <div class="col">
-                <div class="panel">
-                    <table class="theme-table red-th" id="skills-table">
+            <div class="sheet-container__column">
+                <div class="sheet-panel">
+                    <table class="data-table data-table--red-header" id="skills-table">
                         <tbody id="base-skills-body">
                             <tr><th style="text-align: left;">FIGHT</th><th>Base</th><th>Buff</th><th>Total</th></tr>
                             <tr>
-                                <td style="text-align: left;"><input type="text" class="skill-label sheet-save" id="label-brawl" value="Brawl" style="width:65px; border:none; font-weight:bold; font-family:inherit; background: transparent;"></td>
-                                <td><input type="number" value="0" id="brawl-base" class="spin-input sheet-save"></td>
-                                <td><input type="number" value="0" id="brawl-buff" class="spin-input sheet-save"></td>
+                                <td style="text-align: left;"><input type="text" class="skill-label form-input--transparent-bold sheet-save" id="label-brawl" value="Brawl"></td>
+                                <td><input type="number" value="0" id="brawl-base" class="number-spinner__input sheet-save"></td>
+                                <td><input type="number" value="0" id="brawl-buff" class="number-spinner__input sheet-save"></td>
                                 <td style="font-weight: bold;" id="brawl-total">0</td>
                             </tr>
                             <tr>
-                                <td style="text-align: left;"><input type="text" class="skill-label sheet-save" id="label-channel" value="Channel" style="width:65px; border:none; font-weight:bold; font-family:inherit; background: transparent;"></td>
-                                <td><input type="number" value="0" id="channel-base" class="spin-input sheet-save"></td>
-                                <td><input type="number" value="0" id="channel-buff" class="spin-input sheet-save"></td>
+                                <td style="text-align: left;"><input type="text" class="skill-label form-input--transparent-bold sheet-save" id="label-channel" value="Channel"></td>
+                                <td><input type="number" value="0" id="channel-base" class="number-spinner__input sheet-save"></td>
+                                <td><input type="number" value="0" id="channel-buff" class="number-spinner__input sheet-save"></td>
                                 <td style="font-weight: bold;" id="channel-total">0</td>
                             </tr>
                             <tr>
-                                <td style="text-align: left;"><input type="text" class="skill-label sheet-save" id="label-clash" value="Clash" style="width:65px; border:none; font-weight:bold; font-family:inherit; background: transparent;"></td>
-                                <td><input type="number" value="0" id="clash-base" class="spin-input sheet-save"></td>
-                                <td><input type="number" value="0" id="clash-buff" class="spin-input sheet-save"></td>
+                                <td style="text-align: left;"><input type="text" class="skill-label form-input--transparent-bold sheet-save" id="label-clash" value="Clash"></td>
+                                <td><input type="number" value="0" id="clash-base" class="number-spinner__input sheet-save"></td>
+                                <td><input type="number" value="0" id="clash-buff" class="number-spinner__input sheet-save"></td>
                                 <td style="font-weight: bold;" id="clash-total">0</td>
                             </tr>
                             <tr>
-                                <td style="text-align: left;"><input type="text" class="skill-label sheet-save" id="label-evasion" value="Evasion" style="width:65px; border:none; font-weight:bold; font-family:inherit; background: transparent;"></td>
-                                <td><input type="number" value="0" id="evasion-base" class="spin-input sheet-save"></td>
-                                <td><input type="number" value="0" id="evasion-buff" class="spin-input sheet-save"></td>
+                                <td style="text-align: left;"><input type="text" class="skill-label form-input--transparent-bold sheet-save" id="label-evasion" value="Evasion"></td>
+                                <td><input type="number" value="0" id="evasion-base" class="number-spinner__input sheet-save"></td>
+                                <td><input type="number" value="0" id="evasion-buff" class="number-spinner__input sheet-save"></td>
                                 <td style="font-weight: bold;" id="evasion-total">0</td>
                             </tr>
 
                             <tr><th style="text-align: left;">SURVIVE</th><th></th><th></th><th></th></tr>
                             <tr>
-                                <td style="text-align: left;"><input type="text" class="skill-label sheet-save" id="label-alert" value="Alert" style="width:65px; border:none; font-weight:bold; font-family:inherit; background: transparent;"></td>
-                                <td><input type="number" value="0" id="alert-base" class="spin-input sheet-save"></td>
-                                <td><input type="number" value="0" id="alert-buff" class="spin-input sheet-save"></td>
+                                <td style="text-align: left;"><input type="text" class="skill-label form-input--transparent-bold sheet-save" id="label-alert" value="Alert"></td>
+                                <td><input type="number" value="0" id="alert-base" class="number-spinner__input sheet-save"></td>
+                                <td><input type="number" value="0" id="alert-buff" class="number-spinner__input sheet-save"></td>
                                 <td style="font-weight: bold;" id="alert-total">0</td>
                             </tr>
                             <tr>
-                                <td style="text-align: left;"><input type="text" class="skill-label sheet-save" id="label-athletic" value="Athletic" style="width:65px; border:none; font-weight:bold; font-family:inherit; background: transparent;"></td>
-                                <td><input type="number" value="0" id="athletic-base" class="spin-input sheet-save"></td>
-                                <td><input type="number" value="0" id="athletic-buff" class="spin-input sheet-save"></td>
+                                <td style="text-align: left;"><input type="text" class="skill-label form-input--transparent-bold sheet-save" id="label-athletic" value="Athletic"></td>
+                                <td><input type="number" value="0" id="athletic-base" class="number-spinner__input sheet-save"></td>
+                                <td><input type="number" value="0" id="athletic-buff" class="number-spinner__input sheet-save"></td>
                                 <td style="font-weight: bold;" id="athletic-total">0</td>
                             </tr>
                             <tr>
-                                <td style="text-align: left;"><input type="text" class="skill-label sheet-save" id="label-nature" value="Nature" style="width:65px; border:none; font-weight:bold; font-family:inherit; background: transparent;"></td>
-                                <td><input type="number" value="0" id="nature-base" class="spin-input sheet-save"></td>
-                                <td><input type="number" value="0" id="nature-buff" class="spin-input sheet-save"></td>
+                                <td style="text-align: left;"><input type="text" class="skill-label form-input--transparent-bold sheet-save" id="label-nature" value="Nature"></td>
+                                <td><input type="number" value="0" id="nature-base" class="number-spinner__input sheet-save"></td>
+                                <td><input type="number" value="0" id="nature-buff" class="number-spinner__input sheet-save"></td>
                                 <td style="font-weight: bold;" id="nature-total">0</td>
                             </tr>
                             <tr>
-                                <td style="text-align: left;"><input type="text" class="skill-label sheet-save" id="label-stealth" value="Stealth" style="width:65px; border:none; font-weight:bold; font-family:inherit; background: transparent;"></td>
-                                <td><input type="number" value="0" id="stealth-base" class="spin-input sheet-save"></td>
-                                <td><input type="number" value="0" id="stealth-buff" class="spin-input sheet-save"></td>
+                                <td style="text-align: left;"><input type="text" class="skill-label form-input--transparent-bold sheet-save" id="label-stealth" value="Stealth"></td>
+                                <td><input type="number" value="0" id="stealth-base" class="number-spinner__input sheet-save"></td>
+                                <td><input type="number" value="0" id="stealth-buff" class="number-spinner__input sheet-save"></td>
                                 <td style="font-weight: bold;" id="stealth-total">0</td>
                             </tr>
 
                             <tr><th style="text-align: left;">SOCIAL</th><th></th><th></th><th></th></tr>
                             <tr>
-                                <td style="text-align: left;"><input type="text" class="skill-label sheet-save" id="label-charm" value="Charm" style="width:65px; border:none; font-weight:bold; font-family:inherit; background: transparent;"></td>
-                                <td><input type="number" value="0" id="charm-base" class="spin-input sheet-save"></td>
-                                <td><input type="number" value="0" id="charm-buff" class="spin-input sheet-save"></td>
+                                <td style="text-align: left;"><input type="text" class="skill-label form-input--transparent-bold sheet-save" id="label-charm" value="Charm"></td>
+                                <td><input type="number" value="0" id="charm-base" class="number-spinner__input sheet-save"></td>
+                                <td><input type="number" value="0" id="charm-buff" class="number-spinner__input sheet-save"></td>
                                 <td style="font-weight: bold;" id="charm-total">0</td>
                             </tr>
                             <tr>
-                                <td style="text-align: left;"><input type="text" class="skill-label sheet-save" id="label-etiquette" value="Etiquette" style="width:65px; border:none; font-weight:bold; font-family:inherit; background: transparent;"></td>
-                                <td><input type="number" value="0" id="etiquette-base" class="spin-input sheet-save"></td>
-                                <td><input type="number" value="0" id="etiquette-buff" class="spin-input sheet-save"></td>
+                                <td style="text-align: left;"><input type="text" class="skill-label form-input--transparent-bold sheet-save" id="label-etiquette" value="Etiquette"></td>
+                                <td><input type="number" value="0" id="etiquette-base" class="number-spinner__input sheet-save"></td>
+                                <td><input type="number" value="0" id="etiquette-buff" class="number-spinner__input sheet-save"></td>
                                 <td style="font-weight: bold;" id="etiquette-total">0</td>
                             </tr>
                             <tr>
-                                <td style="text-align: left;"><input type="text" class="skill-label sheet-save" id="label-intimidate" value="Intimidate" style="width:65px; border:none; font-weight:bold; font-family:inherit; background: transparent;"></td>
-                                <td><input type="number" value="0" id="intimidate-base" class="spin-input sheet-save"></td>
-                                <td><input type="number" value="0" id="intimidate-buff" class="spin-input sheet-save"></td>
+                                <td style="text-align: left;"><input type="text" class="skill-label form-input--transparent-bold sheet-save" id="label-intimidate" value="Intimidate"></td>
+                                <td><input type="number" value="0" id="intimidate-base" class="number-spinner__input sheet-save"></td>
+                                <td><input type="number" value="0" id="intimidate-buff" class="number-spinner__input sheet-save"></td>
                                 <td style="font-weight: bold;" id="intimidate-total">0</td>
                             </tr>
                             <tr>
-                                <td style="text-align: left;"><input type="text" class="skill-label sheet-save" id="label-perform" value="Perform" style="width:65px; border:none; font-weight:bold; font-family:inherit; background: transparent;"></td>
-                                <td><input type="number" value="0" id="perform-base" class="spin-input sheet-save"></td>
-                                <td><input type="number" value="0" id="perform-buff" class="spin-input sheet-save"></td>
+                                <td style="text-align: left;"><input type="text" class="skill-label form-input--transparent-bold sheet-save" id="label-perform" value="Perform"></td>
+                                <td><input type="number" value="0" id="perform-base" class="number-spinner__input sheet-save"></td>
+                                <td><input type="number" value="0" id="perform-buff" class="number-spinner__input sheet-save"></td>
                                 <td style="font-weight: bold;" id="perform-total">0</td>
                             </tr>
 
                             <tr><th id="knowledge-header" style="text-align: left;">KNOWLEDGE (PMD)</th><th></th><th></th><th></th></tr>
                             <tr>
-                                <td style="text-align: left;"><input type="text" class="skill-label sheet-save" id="label-crafts" value="Crafts" style="width:65px; border:none; font-weight:bold; font-family:inherit; background: transparent;"></td>
-                                <td><input type="number" value="0" id="crafts-base" class="spin-input sheet-save"></td>
-                                <td><input type="number" value="0" id="crafts-buff" class="spin-input sheet-save"></td>
+                                <td style="text-align: left;"><input type="text" class="skill-label form-input--transparent-bold sheet-save" id="label-crafts" value="Crafts"></td>
+                                <td><input type="number" value="0" id="crafts-base" class="number-spinner__input sheet-save"></td>
+                                <td><input type="number" value="0" id="crafts-buff" class="number-spinner__input sheet-save"></td>
                                 <td style="font-weight: bold;" id="crafts-total">0</td>
                             </tr>
                             <tr>
-                                <td style="text-align: left;"><input type="text" class="skill-label sheet-save" id="label-lore" value="Lore" style="width:65px; border:none; font-weight:bold; font-family:inherit; background: transparent;"></td>
-                                <td><input type="number" value="0" id="lore-base" class="spin-input sheet-save"></td>
-                                <td><input type="number" value="0" id="lore-buff" class="spin-input sheet-save"></td>
+                                <td style="text-align: left;"><input type="text" class="skill-label form-input--transparent-bold sheet-save" id="label-lore" value="Lore"></td>
+                                <td><input type="number" value="0" id="lore-base" class="number-spinner__input sheet-save"></td>
+                                <td><input type="number" value="0" id="lore-buff" class="number-spinner__input sheet-save"></td>
                                 <td style="font-weight: bold;" id="lore-total">0</td>
                             </tr>
                             <tr>
-                                <td style="text-align: left;"><input type="text" class="skill-label sheet-save" id="label-medicine" value="Medicine" style="width:65px; border:none; font-weight:bold; font-family:inherit; background: transparent;"></td>
-                                <td><input type="number" value="0" id="medicine-base" class="spin-input sheet-save"></td>
-                                <td><input type="number" value="0" id="medicine-buff" class="spin-input sheet-save"></td>
+                                <td style="text-align: left;"><input type="text" class="skill-label form-input--transparent-bold sheet-save" id="label-medicine" value="Medicine"></td>
+                                <td><input type="number" value="0" id="medicine-base" class="number-spinner__input sheet-save"></td>
+                                <td><input type="number" value="0" id="medicine-buff" class="number-spinner__input sheet-save"></td>
                                 <td style="font-weight: bold;" id="medicine-total">0</td>
                             </tr>
                             <tr>
-                                <td style="text-align: left;"><input type="text" class="skill-label sheet-save" id="label-magic" value="Magic" style="width:65px; border:none; font-weight:bold; font-family:inherit; background: transparent;"></td>
-                                <td><input type="number" value="0" id="magic-base" class="spin-input sheet-save"></td>
-                                <td><input type="number" value="0" id="magic-buff" class="spin-input sheet-save"></td>
+                                <td style="text-align: left;"><input type="text" class="skill-label form-input--transparent-bold sheet-save" id="label-magic" value="Magic"></td>
+                                <td><input type="number" value="0" id="magic-base" class="number-spinner__input sheet-save"></td>
+                                <td><input type="number" value="0" id="magic-buff" class="number-spinner__input sheet-save"></td>
                                 <td style="font-weight: bold;" id="magic-total">0</td>
                             </tr>
                         </tbody>
                         <tbody id="extra-skills-body">
                         </tbody>
                     </table>
-                    <button type="button" id="add-cat-btn" class="btn-dark btn-full">+ Add Skill Category</button>
+                    <button type="button" id="add-cat-btn" class="action-button action-button--dark action-button--full-width">+ Add Skill Category</button>
                 </div>
             </div>
         </div>
 
-        <div class="panel">
-            <div class="panel-header">
+        <div class="sheet-panel">
+            <div class="sheet-panel__header">
                 <span>ATTACKS & MOVES</span>
                 <div style="font-size: 0.8rem; display: flex; gap: 10px; background: #e0e0e0; padding: 2px 6px; border-radius: 3px; align-items: center; font-weight: normal; color: #222;">
-                    <span style="display: flex; align-items: center; gap: 4px;">Acc: <input type="number" id="global-acc-mod" value="0" class="spin-input sheet-save"></span>
-                    <span style="display: flex; align-items: center; gap: 4px;">Dmg: <input type="number" id="global-dmg-mod" value="0" class="spin-input sheet-save"></span>
-                    <span style="display: flex; align-items: center; gap: 4px;" title="Flat Bonus/Penalty to final Successes (e.g. Low Accuracy = -1)">Succ: <input type="number" id="global-succ-mod" value="0" class="spin-input sheet-save"></span>
+                    <span style="display: flex; align-items: center; gap: 4px;" title="Adds or removes bonus dice to all Accuracy rolls">Acc: <input type="number" id="global-acc-mod" value="0" class="number-spinner__input sheet-save"></span>
+                    <span style="display: flex; align-items: center; gap: 4px;" title="Adds or removes bonus dice to all Damage rolls">Dmg: <input type="number" id="global-dmg-mod" value="0" class="number-spinner__input sheet-save"></span>
+                    <span style="display: flex; align-items: center; gap: 4px;" title="Flat Bonus/Penalty to final Successes (e.g. Low Accuracy = -1)">Succ: <input type="number" id="global-succ-mod" value="0" class="number-spinner__input sheet-save"></span>
                     <span style="display: flex; align-items: center; gap: 4px;">
-                        Chance: <input type="number" id="global-chance-mod" value="0" min="0" class="spin-input sheet-save">
-                        <button type="button" id="roll-global-chance-btn" class="btn-dark" style="padding: 1px 4px;">🎲</button>
+                        Chance: <input type="number" id="global-chance-mod" value="0" min="0" class="number-spinner__input sheet-save">
+                        <button type="button" id="roll-global-chance-btn" class="action-button action-button--dark" style="padding: 1px 4px;">🎲</button>
                     </span>
                 </div>
             </div>
             
-            <table class="theme-table" style="text-align: left;">
+            <table class="data-table" style="text-align: left;">
                 <thead>
                     <tr>
                         <th style="width: 35px; text-align: center;">Acc</th>
@@ -370,17 +382,17 @@
                 <tbody id="moves-table-body">
                 </tbody>
             </table>
-            <button type="button" id="add-move-btn" class="btn-red btn-full">+ Add Move Slot</button>
+            <button type="button" id="add-move-btn" class="action-button action-button--red action-button--full-width">+ Add Move Slot</button>
         </div>
 
-        <div class="panel">
-            <div class="panel-header">
+        <div class="sheet-panel">
+            <div class="sheet-panel__header">
                 <span>INVENTORY (BAG)</span>
                 <div style="font-size: 0.85rem; color: #1a5e20;">
                     Poké (PD): <input type="number" id="currency" class="sheet-save" value="0" style="width: 70px; text-align: right; border: 1px solid var(--border); border-radius: 3px; padding: 2px;">
                 </div>
             </div>
-            <table class="theme-table" style="text-align: left;">
+            <table class="data-table" style="text-align: left;">
                 <thead>
                     <tr>
                         <th style="width: 55px; text-align: center;">Qty</th>
@@ -392,10 +404,10 @@
                 <tbody id="inventory-table-body">
                 </tbody>
             </table>
-            <button type="button" id="add-item-btn" class="btn-dark btn-full">+ Add Item</button>
+            <button type="button" id="add-item-btn" class="action-button action-button--dark action-button--full-width">+ Add Item</button>
         </div>
 
-        <div class="panel">
+        <div class="sheet-panel">
             <div style="font-weight: bold; color: var(--primary); margin-bottom: 4px;">NOTES</div>
             <textarea id="notes" class="sheet-save" style="width: 100%; height: 80px; border: 1px solid var(--border); border-radius: 4px; padding: 4px; font-family: inherit; font-size: 0.85rem; resize: vertical; box-sizing: border-box;" placeholder="Add any extra notes, traits, or character backstory here..."></textarea>
         </div>

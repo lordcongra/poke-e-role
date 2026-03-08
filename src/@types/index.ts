@@ -70,3 +70,75 @@ export const DAMAGE_STAT_MAPPING: Record<string, string> = {
     "Special": "spe",
     "Insight": "ins"
 };
+export interface OwlTracker {
+    id: string;
+    variant: string;
+    color: number;
+    value?: number;
+    max?: number;
+    checked?: boolean;
+    inlineMath?: boolean;
+    name: string;
+}
+
+export interface PrettyInitMetadata {
+    count?: string;
+    active?: boolean;
+    group?: number;
+}
+
+export interface DicePlusData {
+    playerId?: string;
+    rollId?: string;
+    result?: {
+        totalValue: string | number;
+    };
+    error?: string;
+}
+export interface PokemonStats {
+    HP?: number;
+    Strength?: number;
+    Dexterity?: number;
+    Vitality?: number;
+    Special?: number;
+    Insight?: number;
+}
+
+export interface PokemonData {
+    Type1?: string;
+    Type2?: string;
+    BaseStats?: PokemonStats;
+    Attributes?: PokemonStats;
+    BaseAttributes?: PokemonStats;
+    Strength?: number;
+    Dexterity?: number;
+    Vitality?: number;
+    Special?: number;
+    Insight?: number;
+    BaseHP?: number;
+    Ability1?: string;
+    Ability2?: string;
+    HiddenAbility?: string;
+    Abilities?: Array<string | { Name: string }>;
+}
+
+export interface MoveData {
+    Type?: string;
+    Category?: string;
+    Power?: number | string;
+    Effect?: string;
+    Description?: string;
+    Damage1?: string;
+    Accuracy1?: string;
+    Accuracy2?: string;
+}
+
+export interface AbilityData {
+    Effect?: string;
+    Description?: string;
+}
+export interface CustomInfo {
+    id: string;
+    label: string;
+    value: string;
+}

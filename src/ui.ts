@@ -1,5 +1,5 @@
-import type { Move, InventoryItem, ExtraCategory, ExtraSkill } from './@types/index';
-import { ALL_SKILLS } from './utils';
+import type { Move, InventoryItem, ExtraCategory, ExtraSkill, CustomInfo } from './@types/index';
+import { ALL_SKILLS, calculateMatchups } from './utils';
 
 // --- POKEMON TYPE COLORS ---
 export const TYPE_COLORS: Record<string, string> = {
@@ -24,167 +24,222 @@ export function getTypeStyle(typeStr: string): string {
 
 export function applyTypeStyle(element: HTMLElement | null, typeStr: string) {
     if (!element) return;
-    const types = typeStr ? typeStr.split('/').map((t: string) => t.trim()) : [];
-    if (types.length === 1 && TYPE_COLORS[types[0]]) {
-        element.style.background = TYPE_COLORS[types[0]];
-        element.style.color = 'white';
-        element.style.textShadow = '1px 1px 1px rgba(0,0,0,0.8)';
-        element.style.borderRadius = '4px';
-        element.style.textAlign = 'center';
-        element.style.fontWeight = 'bold';
-    } else if (types.length === 2 && TYPE_COLORS[types[0]] && TYPE_COLORS[types[1]]) {
-        element.style.background = `linear-gradient(90deg, ${TYPE_COLORS[types[0]]} 50%, ${TYPE_COLORS[types[1]]} 50%)`;
-        element.style.color = 'white';
-        element.style.textShadow = '1px 1px 1px rgba(0,0,0,0.8)';
-        element.style.borderRadius = '4px';
-        element.style.textAlign = 'center';
-        element.style.fontWeight = 'bold';
-    } else {
-        element.style.background = 'transparent';
-        element.style.color = '';
-        element.style.textShadow = 'none';
-        element.style.textAlign = 'left';
-        element.style.fontWeight = 'normal';
+    element.style.cssText = getTypeStyle(typeStr);
+}
+
+// --- DOM GENERATOR HELPER ---
+export function createEl<K extends keyof HTMLElementTagNameMap>(
+    tag: K,
+    props: Record<string, any> = {},
+    children: (HTMLElement | string)[] = []
+): HTMLElementTagNameMap[K] {
+    const el = document.createElement(tag);
+    for (const [key, val] of Object.entries(props)) {
+        if (key === 'className') el.className = val;
+        else if (key === 'dataset') {
+            for (const dKey in val) el.dataset[dKey] = String(val[dKey]);
+        }
+        else if (key === 'style') el.style.cssText = val;
+        else if (key === 'list') el.setAttribute('list', val); 
+        else (el as any)[key] = val;
     }
-}
-
-// --- SUB-COMPONENTS FOR MOVES ---
-function buildAttrSelect(move: Move): string {
-    const attrs = ['str', 'dex', 'vit', 'spe', 'ins', 'tou', 'coo', 'bea', 'cut', 'cle', 'will'];
-    const options = attrs.map(a => `<option value="${a}" ${move.attr === a ? 'selected' : ''}>${a.toUpperCase()}</option>`).join('');
-    return `<select class="move-input stat-select" data-field="attr" data-id="${move.id}">${options}</select>`;
-}
-
-function buildSkillSelect(move: Move, extraCategories: ExtraCategory[]): string {
-    let options = ALL_SKILLS.map((s: string) => {
-        const customLabel = (document.getElementById(`label-${s}`) as HTMLInputElement)?.value || s.charAt(0).toUpperCase() + s.slice(1);
-        return `<option value="${s}" ${move.skill === s ? 'selected' : ''}>${customLabel}</option>`;
-    }).join('');
-
-    extraCategories.forEach((category: ExtraCategory) => {
-        category.skills.forEach((skill: ExtraSkill) => {
-            options += `<option value="${skill.id}" ${move.skill === skill.id ? 'selected' : ''}>${skill.name || 'Unnamed'}</option>`;
-        });
+    children.forEach(c => {
+        if (typeof c === 'string') el.appendChild(document.createTextNode(c));
+        else el.appendChild(c);
     });
-    return `<select class="move-input stat-select" data-field="skill" data-id="${move.id}">${options}</select>`;
-}
-
-function buildDmgStatSelect(move: Move): string {
-    const attrs = [
-        { val: "", label: "-" }, { val: "str", label: "STR" }, { val: "dex", label: "DEX" }, 
-        { val: "vit", label: "VIT" }, { val: "spe", label: "SPE" }, { val: "ins", label: "INS" }
-    ];
-    const options = attrs.map(a => `<option value="${a.val}" ${(move.dmgStat === a.val || move.dmgStat?.toLowerCase().startsWith(a.val)) ? 'selected' : ''}>${a.label}</option>`).join('');
-    return `<select class="move-input stat-select" data-field="dmgStat" data-id="${move.id}">${options}</select>`;
+    return el;
 }
 
 // --- ROW GENERATORS ---
-export function buildExtraCategoryHeader(category: ExtraCategory): string {
-    return `
-        <th class="table-cell-top-left">
-            <input type="text" class="cat-name-input input-transparent-white" data-catid="${category.id}" value="${category.name}" placeholder="CAT NAME">
-        </th>
-        <th></th><th></th>
-        <th class="table-cell-middle">
-            <button type="button" class="del-cat-btn btn-transparent-white" data-catid="${category.id}" title="Delete Category">X</button>
-        </th>
-    `;
+export function buildExtraCategoryHeader(tr: HTMLTableRowElement, category: ExtraCategory) {
+    const input = createEl('input', { type: 'text', className: 'cat-name-input form-input--transparent-white', value: category.name, placeholder: 'CAT NAME', dataset: { catid: category.id } });
+    const btn = createEl('button', { type: 'button', className: 'del-cat-btn action-button action-button--transparent-white', title: 'Delete Category', innerText: 'X', dataset: { catid: category.id } });
+
+    tr.append(
+        createEl('th', { className: 'data-table__cell--top-left' }, [input]),
+        createEl('th'), createEl('th'),
+        createEl('th', { className: 'data-table__cell--middle' }, [btn])
+    );
 }
 
-export function buildExtraSkillRow(categoryId: string, skill: ExtraSkill): string {
-    return `
-        <td class="table-cell-middle-left" style="padding-left: 5px;">
-            <input type="text" class="extra-skill-name input-transparent-bold" data-catid="${categoryId}" data-skid="${skill.id}" value="${skill.name}" placeholder="Skill">
-        </td>
-        <td><input type="number" class="extra-skill-base spin-input" data-catid="${categoryId}" data-skid="${skill.id}" value="${skill.base}" id="${skill.id}-base"></td>
-        <td><input type="number" class="extra-skill-buff spin-input" data-catid="${categoryId}" data-skid="${skill.id}" value="${skill.buff}" id="${skill.id}-buff"></td>
-        <td style="font-weight: bold;" id="${skill.id}-total">${skill.base + skill.buff}</td>
-    `;
+export function buildExtraSkillRow(tr: HTMLTableRowElement, categoryId: string, skill: ExtraSkill) {
+    const nameInput = createEl('input', { type: 'text', className: 'extra-skill-name form-input--transparent-bold', value: skill.name, placeholder: 'Skill', dataset: { catid: categoryId, skid: skill.id } });
+    const baseInput = createEl('input', { type: 'number', className: 'extra-skill-base number-spinner__input', value: skill.base, id: `${skill.id}-base`, dataset: { catid: categoryId, skid: skill.id } });
+    const buffInput = createEl('input', { type: 'number', className: 'extra-skill-buff number-spinner__input', value: skill.buff, id: `${skill.id}-buff`, dataset: { catid: categoryId, skid: skill.id } });
+    const totalDisplay = createEl('td', { id: `${skill.id}-total`, style: 'font-weight: bold;' }, [String(skill.base + skill.buff)]);
+
+    tr.append(
+        createEl('td', { className: 'data-table__cell--middle-left', style: 'padding-left: 5px;' }, [nameInput]),
+        createEl('td', {}, [baseInput]),
+        createEl('td', {}, [buffInput]),
+        totalDisplay
+    );
 }
 
-export function buildMoveRow(move: Move, index: number, extraCategories: ExtraCategory[]): string {
-    const cleanDesc = (move.desc || 'Enter move name to fetch data...').replace(/"/g, '&quot;');
+export function buildMoveRow(tr: HTMLTableRowElement, move: Move, index: number, extraCategories: ExtraCategory[]) {
+    // 1. Acc
+    const accSpan = createEl('span', { className: 'acc-total-display', title: 'Base Acc Dice', innerText: '0', style: 'font-weight: bold; font-size: 0.9em; color: var(--dark); min-width: 1em;', dataset: { id: move.id }});
+    const accBtn = createEl('button', { type: 'button', className: 'acc-btn action-button action-button--dark', title: 'Roll Accuracy', innerText: '🎯', style: 'padding: 2px 6px;', dataset: { id: move.id }});
+    const td1 = createEl('td', { className: 'data-table__cell--middle' }, [createEl('div', { className: 'flex-layout--row-center' }, [accSpan, accBtn])]);
 
-    return `
-        <td class="table-cell-middle">
-            <div class="flex-row-center">
-                <span class="acc-total-display" data-id="${move.id}" style="font-weight: bold; font-size: 0.9em; color: var(--dark); min-width: 1em;" title="Base Acc Dice">0</span>
-                <button type="button" class="acc-btn btn-dark" data-id="${move.id}" style="padding: 2px 6px;" title="Roll Accuracy">🎯</button>
-            </div>
-        </td>
-        <td class="table-cell-middle">
-            <input type="text" list="move-list" class="move-input input-transparent" data-field="name" data-id="${move.id}" value="${move.name}" title="${cleanDesc}" placeholder="Move Name">
-        </td>
-        <td class="table-cell-middle">
-            <div class="flex-row-start">
-                ${buildAttrSelect(move)} + ${buildSkillSelect(move, extraCategories)}
-            </div>
-        </td>
-        <td class="table-cell-middle" style="padding: 2px;">
-            <input type="text" class="move-input input-transparent" data-field="type" data-id="${move.id}" value="${move.type}" style="${getTypeStyle(move.type)}" placeholder="Type">
-        </td>
-        <td class="table-cell-middle">
-            <select class="move-input cat-select" data-field="cat" data-id="${move.id}">
-                <option value="Phys" ${move.cat === 'Phys' ? 'selected' : ''}>Phys</option>
-                <option value="Spec" ${move.cat === 'Spec' ? 'selected' : ''}>Spec</option>
-                <option value="Supp" ${move.cat === 'Supp' ? 'selected' : ''}>Supp</option>
-            </select>
-        </td>
-        <td class="table-cell-middle">
-            <div class="flex-row-start">
-                <input type="number" class="spin-input move-input power-input" data-field="power" data-id="${move.id}" value="${move.power}" placeholder="Pwr">
-                + ${buildDmgStatSelect(move)}
-            </div>
-        </td>
-        <td class="table-cell-middle">
-            <div class="flex-row-center">
-                <span class="dmg-total-display" data-id="${move.id}" style="font-weight: bold; font-size: 0.9em; color: var(--primary); min-width: 1em;" title="Base Dmg Dice">0</span>
-                <button type="button" class="dmg-btn btn-red" data-id="${move.id}" style="padding: 2px 6px;" title="Roll Damage">💥</button>
-            </div>
-        </td>
-        <td class="table-cell-middle">
-            <div class="flex-col-center">
-                <button type="button" class="move-up-btn sort-btn" data-index="${index}">▲</button>
-                <button type="button" class="move-down-btn sort-btn" data-index="${index}">▼</button>
-            </div>
-        </td>
-        <td class="table-cell-middle">
-            <button type="button" class="delete-btn btn-red" data-id="${move.id}" style="padding: 2px 6px;">X</button>
-        </td>
-    `;
+    // 2. Name
+    const nameInp = createEl('input', { type: 'text', className: 'move-input form-input--transparent', list: 'move-list', value: move.name, placeholder: 'Move Name', title: move.desc || 'Enter move name to fetch data...', dataset: { field: 'name', id: move.id }});
+    const td2 = createEl('td', { className: 'data-table__cell--middle' }, [nameInp]);
+
+    // 3. Attr + Skill
+    const attrSel = createEl('select', { className: 'move-input form-select--bordered', dataset: { field: 'attr', id: move.id }});
+    ['str', 'dex', 'vit', 'spe', 'ins', 'tou', 'coo', 'bea', 'cut', 'cle', 'will'].forEach(a => {
+        attrSel.appendChild(createEl('option', { value: a, text: a.toUpperCase(), selected: move.attr === a }));
+    });
+
+    const skillSel = createEl('select', { className: 'move-input form-select--bordered', dataset: { field: 'skill', id: move.id }});
+    ALL_SKILLS.forEach(s => {
+        const cLabel = (document.getElementById(`label-${s}`) as HTMLInputElement)?.value || s.charAt(0).toUpperCase() + s.slice(1);
+        skillSel.appendChild(createEl('option', { value: s, text: cLabel, selected: move.skill === s }));
+    });
+    extraCategories.forEach(cat => cat.skills.forEach(sk => {
+        skillSel.appendChild(createEl('option', { value: sk.id, text: sk.name || 'Unnamed', selected: move.skill === sk.id }));
+    }));
+    const td3 = createEl('td', { className: 'data-table__cell--middle' }, [createEl('div', { className: 'flex-layout--row-start' }, [attrSel, " + ", skillSel])]);
+
+    // 4. Type
+    const typeInp = createEl('input', { type: 'text', className: 'move-input form-input--transparent', value: move.type, placeholder: 'Type', style: getTypeStyle(move.type), dataset: { field: 'type', id: move.id }});
+    const td4 = createEl('td', { className: 'data-table__cell--middle', style: 'padding: 2px;' }, [typeInp]);
+
+    // 5. Category
+    const catSel = createEl('select', { className: 'move-input form-select--transparent', dataset: { field: 'cat', id: move.id }});
+    ['Phys', 'Spec', 'Supp'].forEach(c => catSel.appendChild(createEl('option', { value: c, text: c, selected: move.cat === c })));
+    const td5 = createEl('td', { className: 'data-table__cell--middle' }, [catSel]);
+
+    // 6. Power + Dmg Stat
+    const pwrInp = createEl('input', { type: 'number', className: 'number-spinner__input move-input form-input--power', value: move.power, placeholder: 'Pwr', dataset: { field: 'power', id: move.id }});
+    const dmgStatSel = createEl('select', { className: 'move-input form-select--bordered', dataset: { field: 'dmgStat', id: move.id }});
+    [{v:"", l:"-"}, {v:"str", l:"STR"}, {v:"dex", l:"DEX"}, {v:"vit", l:"VIT"}, {v:"spe", l:"SPE"}, {v:"ins", l:"INS"}].forEach(opt => {
+        dmgStatSel.appendChild(createEl('option', { value: opt.v, text: opt.l, selected: (move.dmgStat === opt.v || move.dmgStat?.toLowerCase().startsWith(opt.v)) }));
+    });
+    const td6 = createEl('td', { className: 'data-table__cell--middle' }, [createEl('div', { className: 'flex-layout--row-start' }, [pwrInp, " + ", dmgStatSel])]);
+
+    // 7. Damage
+    const dmgSpan = createEl('span', { className: 'dmg-total-display', title: 'Base Dmg Dice', innerText: '0', style: 'font-weight: bold; font-size: 0.9em; color: var(--primary); min-width: 1em;', dataset: { id: move.id }});
+    const dmgBtn = createEl('button', { type: 'button', className: 'dmg-btn action-button action-button--red', title: 'Roll Damage', innerText: '💥', style: 'padding: 2px 6px;', dataset: { id: move.id }});
+    const td7 = createEl('td', { className: 'data-table__cell--middle' }, [createEl('div', { className: 'flex-layout--row-center' }, [dmgSpan, dmgBtn])]);
+
+    // 8. Sort
+    const upBtn = createEl('button', { type: 'button', className: 'move-up-btn action-button action-button--sort', innerText: '▲', dataset: { index: index }});
+    const dnBtn = createEl('button', { type: 'button', className: 'move-down-btn action-button action-button--sort', innerText: '▼', dataset: { index: index }});
+    const td8 = createEl('td', { className: 'data-table__cell--middle' }, [createEl('div', { className: 'flex-layout--column-center' }, [upBtn, dnBtn])]);
+
+    // 9. Delete
+    const delBtn = createEl('button', { type: 'button', className: 'delete-btn action-button action-button--red', innerText: 'X', style: 'padding: 2px 6px;', dataset: { id: move.id }});
+    const td9 = createEl('td', { className: 'data-table__cell--middle' }, [delBtn]);
+
+    tr.append(td1, td2, td3, td4, td5, td6, td7, td8, td9);
 }
 
-export function buildInventoryRow(item: InventoryItem): string {
-    return `
-        <td class="table-cell-top">
-            <div style="display: flex; justify-content: center;">
-                <input type="number" class="inv-input spin-input" data-field="qty" data-id="${item.id}" value="${item.qty}">
-            </div>
-        </td>
-        <td class="table-cell-top">
-            <input type="text" class="inv-input item-name-input" data-field="name" data-id="${item.id}" value="${item.name}" placeholder="Item Name">
-        </td>
-        <td style="padding: 4px 2px;">
-            <textarea class="inv-input textarea-desc" data-field="desc" data-id="${item.id}" rows="1" placeholder="Effect / Notes...">${item.desc}</textarea>
-        </td>
-        <td class="table-cell-top">
-            <button type="button" class="del-item-btn btn-red" data-id="${item.id}" style="padding: 2px 6px;">X</button>
-        </td>
-    `;
+export function buildInventoryRow(tr: HTMLTableRowElement, item: InventoryItem) {
+    const qtyInp = createEl('input', { type: 'number', className: 'inv-input number-spinner__input', value: item.qty, dataset: { field: 'qty', id: item.id }});
+    const td1 = createEl('td', { className: 'data-table__cell--top' }, [createEl('div', { style: 'display: flex; justify-content: center;' }, [qtyInp])]);
+
+    const nameInp = createEl('input', { type: 'text', className: 'inv-input form-input--item-name', value: item.name, placeholder: 'Item Name', dataset: { field: 'name', id: item.id }});
+    const td2 = createEl('td', { className: 'data-table__cell--top' }, [nameInp]);
+
+    const descInp = createEl('textarea', { className: 'inv-input form-input--item-desc', rows: 1, value: item.desc, placeholder: 'Effect / Notes...', dataset: { field: 'desc', id: item.id }});
+    const td3 = createEl('td', { style: 'padding: 4px 2px;' }, [descInp]);
+
+    const delBtn = createEl('button', { type: 'button', className: 'del-item-btn action-button action-button--red', innerText: 'X', style: 'padding: 2px 6px;', dataset: { id: item.id }});
+    const td4 = createEl('td', { className: 'data-table__cell--top' }, [delBtn]);
+
+    tr.append(td1, td2, td3, td4);
 }
 
-// --- SPINNER & UI TOGGLES ---
+export function buildCustomInfoRow(container: HTMLElement, info: CustomInfo) {
+    const labelInp = createEl('input', { 
+        type: 'text', 
+        className: 'identity-grid__label', 
+        value: info.label, 
+        placeholder: 'Label', 
+        style: 'width: 70px; border: none; background: transparent; outline: none; cursor: text;', 
+        dataset: { id: info.id, field: 'label' } 
+    });
+    
+    const valInp = createEl('input', { 
+        type: 'text', 
+        className: 'identity-grid__input', 
+        value: info.value, 
+        placeholder: 'Value', 
+        dataset: { id: info.id, field: 'value' } 
+    });
+    
+    const delBtn = createEl('button', { 
+        type: 'button', 
+        className: 'action-button action-button--red del-info-btn', 
+        innerText: 'X', 
+        style: 'padding: 0 4px;', 
+        dataset: { id: info.id } 
+    });
+
+    const row = createEl('div', { className: 'identity-grid__row' }, [labelInp, valInp, delBtn]);
+    container.appendChild(row);
+}
+
+export function renderTypeMatchups(typeStr: string) {
+    const container = document.getElementById('type-matchup-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!typeStr || (typeStr === "Normal" && !(document.getElementById('species') as HTMLInputElement)?.value)) {
+        container.appendChild(createEl('div', { style: 'color: #888; font-style: italic; text-align: center; padding-top: 10px;' }, ["Load a Pokémon to see matchups..."]));
+        return;
+    }
+
+    const matchups = calculateMatchups(typeStr);
+    const groups: Record<number, string[]> = { 4: [], 2: [], 0.5: [], 0.25: [], 0: [] };
+
+    for (const [type, mult] of Object.entries(matchups)) {
+        if (groups[mult]) groups[mult].push(type);
+    }
+
+    const buildGroup = (label: string, mult: number) => {
+        if (groups[mult].length === 0) return;
+        
+        // Main row layout: align-items to the top so the label stays aligned if badges wrap
+        const groupDiv = createEl('div', { style: 'display: flex; gap: 8px; align-items: flex-start; margin-bottom: 6px;' });
+        
+        // Fixed-width label column
+        const labelSpan = createEl('span', { innerText: label, style: 'width: 40px; font-weight: bold; color: var(--dark); text-align: right; flex-shrink: 0; padding-top: 2px;' });
+        
+        // Flexible badge column that handles the wrapping
+        const badgesContainer = createEl('div', { style: 'display: flex; gap: 4px; flex-wrap: wrap; flex: 1;' });
+        
+        groups[mult].forEach(t => {
+            const badge = createEl('div', { innerText: t, style: getTypeStyle(t) + ' padding: 2px 6px; font-size: 0.75rem; border-radius: 4px;' });
+            badgesContainer.appendChild(badge);
+        });
+
+        groupDiv.appendChild(labelSpan);
+        groupDiv.appendChild(badgesContainer);
+        container.appendChild(groupDiv);
+    }
+
+    buildGroup('4x', 4);
+    buildGroup('2x', 2);
+    buildGroup('0.5x', 0.5);
+    buildGroup('0.25x', 0.25);
+    buildGroup('0x', 0);
+}
+
+// --- SPINNERS & TOGGLES ---
 export function setupSpinners() {
-  document.querySelectorAll('input[type="number"].spin-input').forEach(input => {
-    if (input.parentElement?.classList.contains('spin-wrapper')) return;
+  document.querySelectorAll('input[type="number"].number-spinner__input').forEach(input => {
+    if (input.parentElement?.classList.contains('number-spinner')) return;
 
     const wrapper = document.createElement('div');
-    wrapper.className = 'spin-wrapper';
+    wrapper.className = 'number-spinner';
     input.parentNode?.insertBefore(wrapper, input);
     
     const minus = document.createElement('button');
     minus.type = 'button';
-    minus.className = 'spin-btn';
+    minus.className = 'number-spinner__button';
     minus.innerText = '-';
     minus.onclick = () => { 
         (input as HTMLInputElement).stepDown(); 
@@ -194,7 +249,7 @@ export function setupSpinners() {
     
     const plus = document.createElement('button');
     plus.type = 'button';
-    plus.className = 'spin-btn';
+    plus.className = 'number-spinner__button';
     plus.innerText = '+';
     plus.onclick = () => { 
         (input as HTMLInputElement).stepUp(); 

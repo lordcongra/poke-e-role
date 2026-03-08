@@ -1,11 +1,11 @@
 import './style.css';
 import OBR from "@owlbear-rodeo/sdk";
-import type { Move, InventoryItem, ExtraCategory, ExtraSkill } from './@types/index';
+import type { Move, InventoryItem, ExtraCategory, ExtraSkill, CustomInfo } from './@types/index';
 import { ATTRIBUTE_MAPPING } from './@types/index';
 import { ALL_SKILLS, getVal, getDerivedVal, generateId } from './utils';
 import { calculateStats, updateMoveDisplays } from './math';
 import { loadUrlLists, fetchPokemonData, fetchMoveData, fetchAbilityData } from './api';
-import { buildMoveRow, buildInventoryRow, buildExtraCategoryHeader, buildExtraSkillRow, setupSpinners, updateSheetTypeUI, applyTypeStyle } from './ui';
+import { buildMoveRow, buildInventoryRow, buildExtraCategoryHeader, buildExtraSkillRow, setupSpinners, updateSheetTypeUI, applyTypeStyle, buildCustomInfoRow, renderTypeMatchups } from './ui';
 import { 
     METADATA_ID, setLoading, setLastMetadataStr, 
     sendToDicePlus, saveBatchDataToToken, saveMovesToToken, 
@@ -15,10 +15,108 @@ import {
 let currentMoves: Move[] = [];
 let currentInventory: InventoryItem[] = [];
 let currentExtraCategories: ExtraCategory[] = [];
+let currentStatuses: string[] = ["Healthy"];
+let currentCustomInfo: CustomInfo[] = [];
 
 function saveDataToToken(id: string, value: string) {
     saveBatchDataToToken({ [id]: value });
 }
+
+// --- DYNAMIC STATUS SYSTEM ---
+function renderStatuses() {
+    const container = document.getElementById('status-container');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    const options = ["Healthy", "1st Degree Burn", "2nd Degree Burn", "3rd Degree Burn", "Badly Poisoned", "Confusion", "Disable", "Flinch", "Frozen Solid", "In Love", "Paralysis", "Poison", "Sleep"];
+
+    currentStatuses.forEach((status, index) => {
+        const wrapper = document.createElement('div');
+        wrapper.style.display = 'flex';
+        wrapper.style.gap = '2px';
+
+        const select = document.createElement('select');
+        select.style.flex = '1';
+        select.style.border = '1px solid var(--border)';
+        select.style.fontSize = '0.75rem';
+        
+        options.forEach(opt => {
+            const el = document.createElement('option');
+            el.value = opt;
+            el.text = opt;
+            if (opt === status) el.selected = true;
+            select.appendChild(el);
+        });
+
+        select.addEventListener('change', (e) => {
+            currentStatuses[index] = (e.target as HTMLSelectElement).value;
+            saveDataToToken('status-list', JSON.stringify(currentStatuses));
+        });
+
+        wrapper.appendChild(select);
+
+        if (index > 0) {
+            const delBtn = document.createElement('button');
+            delBtn.innerText = 'X';
+            delBtn.className = 'action-button action-button--red';
+            delBtn.style.padding = '0 4px';
+            delBtn.onclick = () => {
+                currentStatuses.splice(index, 1);
+                renderStatuses();
+                saveDataToToken('status-list', JSON.stringify(currentStatuses));
+            };
+            wrapper.appendChild(delBtn);
+        }
+        
+        container.appendChild(wrapper);
+    });
+}
+
+document.getElementById('add-status-btn')?.addEventListener('click', () => {
+    currentStatuses.push("Healthy");
+    renderStatuses();
+    saveDataToToken('status-list', JSON.stringify(currentStatuses));
+});
+
+// --- CUSTOM INFO SYSTEM ---
+function renderCustomInfo() {
+    const container = document.getElementById('custom-info-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    currentCustomInfo.forEach(info => {
+        buildCustomInfoRow(container, info);
+    });
+
+    container.querySelectorAll('input').forEach(input => {
+        input.addEventListener('change', (e) => {
+            const target = e.target as HTMLInputElement;
+            const id = target.dataset.id;
+            const field = target.dataset.field as keyof CustomInfo;
+            const item = currentCustomInfo.find(i => i.id === id);
+            if (item) {
+                item[field] = target.value;
+                saveDataToToken('custom-info-data', JSON.stringify(currentCustomInfo));
+            }
+        });
+    });
+
+    container.querySelectorAll('.del-info-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = (e.currentTarget as HTMLButtonElement).dataset.id;
+            currentCustomInfo = currentCustomInfo.filter(i => i.id !== id);
+            renderCustomInfo();
+            saveDataToToken('custom-info-data', JSON.stringify(currentCustomInfo));
+        });
+    });
+}
+
+document.getElementById('add-custom-info-btn')?.addEventListener('click', () => {
+    currentCustomInfo.push({ id: generateId(), label: 'New Field', value: '' });
+    renderCustomInfo();
+    saveDataToToken('custom-info-data', JSON.stringify(currentCustomInfo));
+});
+
 
 // --- DATABASE BINDINGS ---
 document.getElementById('species')?.addEventListener('change', async (e) => {
@@ -31,8 +129,8 @@ document.getElementById('species')?.addEventListener('change', async (e) => {
     const hasSecondType = type2 && type2 !== "None" && type2 !== "null";
     const typing = hasSecondType ? `${type1} / ${type2}` : type1;
     
-    const baseStats = pokemonData.BaseStats as Record<string, number> | undefined;
-    const baseAttrs = (pokemonData.Attributes || pokemonData.BaseAttributes || pokemonData) as Record<string, number>;
+    const baseStats = pokemonData.BaseStats;
+    const baseAttrs = pokemonData.Attributes || pokemonData.BaseAttributes || pokemonData;
     const hp = pokemonData.BaseHP || (baseStats && baseStats.HP) || 4;
     
     const abilitySelect = document.getElementById('ability') as HTMLSelectElement;
@@ -48,7 +146,9 @@ document.getElementById('species')?.addEventListener('change', async (e) => {
     if (hasHiddenAbility) abilities.push(String(pokemonData.HiddenAbility) + " (HA)");
 
     if (abilities.length === 0 && Array.isArray(pokemonData.Abilities)) {
-        pokemonData.Abilities.forEach((a: any) => abilities.push(typeof a === 'string' ? a : a.Name));
+        pokemonData.Abilities.forEach((a: string | { Name: string }) => {
+            abilities.push(typeof a === 'string' ? a : a.Name);
+        });
     }
 
     abilities.forEach((ab: string) => {
@@ -68,6 +168,7 @@ document.getElementById('species')?.addEventListener('change', async (e) => {
     const typingInput = document.getElementById('typing') as HTMLInputElement;
     typingInput.value = typing;
     applyTypeStyle(typingInput, typing); 
+    renderTypeMatchups(typing); // Update Type Matchups visualizer
 
     (document.getElementById('hp-base') as HTMLInputElement).value = String(hp);
     (document.getElementById('str-base') as HTMLInputElement).value = String(baseAttrs.Strength || 2);
@@ -135,7 +236,10 @@ document.getElementById('refresh-data-btn')?.addEventListener('click', async () 
     const batchUpdates: Record<string, string> = {};
 
     const typingInput = document.getElementById('typing') as HTMLInputElement;
-    if (typingInput && typingInput.value) applyTypeStyle(typingInput, typingInput.value);
+    if (typingInput && typingInput.value) {
+        applyTypeStyle(typingInput, typingInput.value);
+        renderTypeMatchups(typingInput.value); // Refresh Matchups!
+    }
 
     const pokemonName = (document.getElementById('species') as HTMLInputElement).value;
     const abilitySelect = document.getElementById('ability') as HTMLSelectElement;
@@ -156,7 +260,9 @@ document.getElementById('refresh-data-btn')?.addEventListener('click', async () 
             if (hasHiddenAbility) abilities.push(String(pokemonData.HiddenAbility) + " (HA)");
 
             if (abilities.length === 0 && Array.isArray(pokemonData.Abilities)) {
-                pokemonData.Abilities.forEach((a: any) => abilities.push(typeof a === 'string' ? a : a.Name));
+                pokemonData.Abilities.forEach((a: string | { Name: string }) => {
+                    abilities.push(typeof a === 'string' ? a : a.Name);
+                });
             }
 
             abilities.forEach((ab: string) => {
@@ -221,12 +327,12 @@ function renderExtraSkills() {
         const headTr = document.createElement('tr');
         headTr.style.backgroundColor = 'var(--primary)';
         headTr.style.color = 'white';
-        headTr.innerHTML = buildExtraCategoryHeader(category);
+        buildExtraCategoryHeader(headTr, category);
         tbody.appendChild(headTr);
 
         category.skills.forEach((skill: ExtraSkill) => {
             const tr = document.createElement('tr');
-            tr.innerHTML = buildExtraSkillRow(category.id, skill);
+            buildExtraSkillRow(tr, category.id, skill);
             tbody.appendChild(tr);
         });
     });
@@ -302,8 +408,8 @@ function renderMoves() {
     if (move.dmgStat === undefined) move.dmgStat = "";
 
     const tr = document.createElement('tr');
-    tr.className = 'dynamic-row'; // THE FIX: Handing styles over to CSS
-    tr.innerHTML = buildMoveRow(move, index, currentExtraCategories);
+    tr.className = 'data-table__row--dynamic'; 
+    buildMoveRow(tr, move, index, currentExtraCategories);
     tbody.appendChild(tr);
   });
 
@@ -416,11 +522,10 @@ function renderInventory() {
     if (!tbody) return;
     tbody.innerHTML = '';
     
-    // FIX: Removed the unused 'index: number' parameter!
     currentInventory.forEach((item: InventoryItem) => {
         const tr = document.createElement('tr');
-        tr.className = 'dynamic-row'; 
-        tr.innerHTML = buildInventoryRow(item);
+        tr.className = 'data-table__row--dynamic'; 
+        buildInventoryRow(tr, item);
         tbody.appendChild(tr);
     });
 
@@ -596,6 +701,9 @@ async function loadDataFromToken(tokenId: string) {
     const sheetInputs = document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('.sheet-save');
     
     sheetInputs.forEach(element => {
+      const isDynamic = ['move-input', 'inv-input', 'cat-name-input', 'extra-skill-name', 'extra-skill-base', 'extra-skill-buff', 'skill-label'].some((cls: string) => element.classList.contains(cls));
+      if (isDynamic || element.id === 'is-npc') return;
+      
       const id = element.id;
       const val = data[id];
 
@@ -643,10 +751,16 @@ async function loadDataFromToken(tokenId: string) {
     try { currentMoves = data['moves-data'] ? JSON.parse(data['moves-data']) : []; } catch(e) { currentMoves = []; }
     try { currentInventory = data['inv-data'] ? JSON.parse(data['inv-data']) : []; } catch(e) { currentInventory = []; }
     try { currentExtraCategories = data['extra-skills-data'] ? JSON.parse(data['extra-skills-data']) : []; } catch(e) { currentExtraCategories = []; }
+    
+    try { currentStatuses = data['status-list'] ? JSON.parse(data['status-list']) : ["Healthy"]; } catch(e) { currentStatuses = ["Healthy"]; }
+    try { currentCustomInfo = data['custom-info-data'] ? JSON.parse(data['custom-info-data']) : []; } catch(e) { currentCustomInfo = []; }
 
     renderMoves();
     renderInventory();
     renderExtraSkills();
+    renderStatuses();
+    renderCustomInfo();
+    renderTypeMatchups(data['typing'] || ""); 
     calculateStats(currentExtraCategories, currentMoves);
   }
   setLoading(false); 
@@ -670,5 +784,9 @@ listenerInputs.forEach(element => {
 // INITIALIZE
 loadUrlLists();
 setupSpinners();
+renderStatuses(); 
+renderCustomInfo();
+const initialTyping = (document.getElementById('typing') as HTMLInputElement)?.value || "";
+renderTypeMatchups(initialTyping);
 calculateStats(currentExtraCategories, currentMoves);
 setupOBR(loadDataFromToken);

@@ -1,13 +1,11 @@
-import type { GithubTreeResponse, GithubTreeItem } from './@types/index';
+import type { GithubTreeResponse, GithubTreeItem, PokemonData, MoveData, AbilityData } from './@types/index';
 
 export const GITHUB_TREE_URL = "https://api.github.com/repos/Pokerole-Software-Development/Pokerole-Data/git/trees/master?recursive=1";
 
-// Renamed from _DB to _URLS for accuracy
 export const MOVES_URLS: Record<string, string> = {};
 export const SPECIES_URLS: Record<string, string> = {};
 export const ABILITIES_URLS: Record<string, string> = {};
 
-// Added explicit Promise<void> return type
 export async function loadUrlLists(): Promise<void> {
   const speciesInput = document.getElementById('species') as HTMLInputElement | null;
   if (!speciesInput) return;
@@ -16,10 +14,8 @@ export async function loadUrlLists(): Promise<void> {
     const response = await fetch(GITHUB_TREE_URL);
     if (!response.ok) return;
     
-    // Cast the response to our new Type
     const data = (await response.json()) as GithubTreeResponse;
 
-    // Using Regular Expressions to cleanly find paths!
     const versionRegex = /(v|(version\s?))3\.0/i;
     const pokemonRegex = /\/(Pokemon|Pokedex)\//i;
     const moveRegex = /\/Moves\//i;
@@ -71,24 +67,23 @@ export async function loadUrlLists(): Promise<void> {
   }
 }
 
-// Explicitly returning Record<string, unknown> instead of 'any'
-export async function fetchPokemonData(monName: string): Promise<Record<string, unknown> | null> {
+export async function fetchPokemonData(monName: string): Promise<PokemonData | null> {
   const selectedUrl = SPECIES_URLS[monName];
   if (!selectedUrl) return null;
-  try { const res = await fetch(selectedUrl); return (await res.json()) as Record<string, unknown>; } 
+  try { const res = await fetch(selectedUrl); return (await res.json()) as PokemonData; } 
   catch (err) { return null; }
 }
 
-export async function fetchMoveData(moveName: string): Promise<Record<string, unknown> | null> {
+export async function fetchMoveData(moveName: string): Promise<MoveData | null> {
   const selectedUrl = MOVES_URLS[moveName.toLowerCase()];
   if (!selectedUrl) return null;
-  try { const res = await fetch(selectedUrl); return (await res.json()) as Record<string, unknown>; } 
+  try { const res = await fetch(selectedUrl); return (await res.json()) as MoveData; } 
   catch (err) { return null; }
 }
 
-export async function fetchAbilityData(abilityName: string): Promise<Record<string, unknown> | null> {
+export async function fetchAbilityData(abilityName: string): Promise<AbilityData | null> {
   const selectedUrl = ABILITIES_URLS[abilityName.toLowerCase()];
   if (!selectedUrl) return null;
-  try { const res = await fetch(selectedUrl); return (await res.json()) as Record<string, unknown>; } 
+  try { const res = await fetch(selectedUrl); return (await res.json()) as AbilityData; } 
   catch (err) { return null; }
 }

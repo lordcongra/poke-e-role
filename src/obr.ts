@@ -1,6 +1,7 @@
 import OBR from "@owlbear-rodeo/sdk";
+import type { Item } from "@owlbear-rodeo/sdk";
 import { getVal, getDerivedVal, generateId } from './utils';
-import type { Move, InventoryItem, ExtraCategory } from './@types/index';
+import type { Move, InventoryItem, ExtraCategory, OwlTracker, PrettyInitMetadata, DicePlusData } from './@types/index';
 
 export const MY_EXTENSION_ID = "pokerole-pmd-extension";
 export const METADATA_ID = "pokerole-extension/stats";
@@ -51,7 +52,7 @@ export async function saveBatchDataToToken(updates: Record<string, string>) {
   const evade = getVal('evasions-used') > 0;
   const clash = getVal('clashes-used') > 0;
 
-  await OBR.scene.items.updateItems([currentTokenId], (items: any[]) => {
+  await OBR.scene.items.updateItems([currentTokenId], (items: Item[]) => {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
       const meta = item.metadata[METADATA_ID] as Record<string, string>;
@@ -61,8 +62,8 @@ export async function saveBatchDataToToken(updates: Record<string, string>) {
 
       lastKnownMetadataStr = JSON.stringify(meta);
 
-      let trackers = (item.metadata["com.owl-trackers/trackers"] as any[]) || [];
-      const defaultTrackers = [
+      let trackers = (item.metadata["com.owl-trackers/trackers"] as OwlTracker[]) || [];
+      const defaultTrackers: OwlTracker[] = [
           { id: generateId(), variant: "value-max", color: 6, value: willCurr, max: willMax, name: "Will" },
           { id: generateId(), variant: "value-max", color: 2, value: hpCurr, max: hpMax, name: "HP" },
           { id: generateId(), variant: "counter", color: 6, inlineMath: false, value: actions, name: "Actions" },
@@ -77,7 +78,7 @@ export async function saveBatchDataToToken(updates: Record<string, string>) {
       } else {
           trackers = JSON.parse(JSON.stringify(trackers));
           defaultTrackers.forEach(dt => {
-              const existing = trackers.find((t: any) => t.name === dt.name);
+              const existing = trackers.find((t: OwlTracker) => t.name === dt.name);
               if (existing) {
                   if (existing.name === 'HP') { existing.value = hpCurr; existing.max = hpMax; }
                   if (existing.name === 'Will') { existing.value = willCurr; existing.max = willMax; }
@@ -98,7 +99,7 @@ export async function saveBatchDataToToken(updates: Record<string, string>) {
 
 export async function saveMovesToToken(currentMoves: Move[]) {
   if (!currentTokenId || isLoading) return;
-  await OBR.scene.items.updateItems([currentTokenId], (items: any[]) => {
+  await OBR.scene.items.updateItems([currentTokenId], (items: Item[]) => {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
       (item.metadata[METADATA_ID] as Record<string, string>)['moves-data'] = JSON.stringify(currentMoves);
@@ -109,7 +110,7 @@ export async function saveMovesToToken(currentMoves: Move[]) {
 
 export async function saveInventoryToToken(currentInventory: InventoryItem[]) {
   if (!currentTokenId || isLoading) return;
-  await OBR.scene.items.updateItems([currentTokenId], (items: any[]) => {
+  await OBR.scene.items.updateItems([currentTokenId], (items: Item[]) => {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
       (item.metadata[METADATA_ID] as Record<string, string>)['inv-data'] = JSON.stringify(currentInventory);
@@ -120,7 +121,7 @@ export async function saveInventoryToToken(currentInventory: InventoryItem[]) {
 
 export async function saveExtraSkillsToToken(currentExtraCategories: ExtraCategory[]) {
   if (!currentTokenId || isLoading) return;
-  await OBR.scene.items.updateItems([currentTokenId], (items: any[]) => {
+  await OBR.scene.items.updateItems([currentTokenId], (items: Item[]) => {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
       (item.metadata[METADATA_ID] as Record<string, string>)['extra-skills-data'] = JSON.stringify(currentExtraCategories);
@@ -146,9 +147,9 @@ export function setupOBR(onTokenLoad: (tokenId: string) => void) {
             }
         });
 
-        OBR.scene.items.onChange((items: any[]) => {
+        OBR.scene.items.onChange((items: Item[]) => {
             if (!currentTokenId) return;
-            const currentItem = items.find((i: any) => i.id === currentTokenId);
+            const currentItem = items.find(i => i.id === currentTokenId);
             if (currentItem) {
                 const newMeta = currentItem.metadata[METADATA_ID] || {};
                 const newMetaStr = JSON.stringify(newMeta);
@@ -159,20 +160,20 @@ export function setupOBR(onTokenLoad: (tokenId: string) => void) {
         });
 
         OBR.broadcast.onMessage(`${MY_EXTENSION_ID}/roll-result`, async (event) => {
-            const data = event.data as any;
+            const data = event.data as DicePlusData;
             const myId = await OBR.player.getId();
             
             if (data.playerId !== myId) return; 
 
-            if (data.rollId && data.rollId.startsWith("init_")) {
-                const total = parseInt(data.result.totalValue) || 0;
+            if (data.rollId && data.rollId.startsWith("init_") && data.result) {
+                const total = parseInt(String(data.result.totalValue)) || 0;
                 const tiebreaker = Math.floor(Math.random() * 6) + 1;
                 const finalInit = total + (tiebreaker / 10); 
                 
                 if (currentTokenId) {
-                    await OBR.scene.items.updateItems([currentTokenId], (items: any[]) => {
+                    await OBR.scene.items.updateItems([currentTokenId], (items: Item[]) => {
                         for (let item of items) {
-                            const existing = (item.metadata["com.pretty-initiative/metadata"] as any) || {};
+                            const existing = (item.metadata["com.pretty-initiative/metadata"] as PrettyInitMetadata) || {};
                             item.metadata["com.pretty-initiative/metadata"] = {
                                 ...existing,
                                 count: finalInit.toString(),
@@ -186,7 +187,7 @@ export function setupOBR(onTokenLoad: (tokenId: string) => void) {
         });
 
         OBR.broadcast.onMessage(`${MY_EXTENSION_ID}/roll-error`, async (event) => {
-            const data = event.data as any;
+            const data = event.data as DicePlusData;
             OBR.notification.show(`Dice+ Error: ${data.error || 'Unknown syntax error.'}`);
         });
     });
