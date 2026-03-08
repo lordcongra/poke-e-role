@@ -1,7 +1,6 @@
 {
   "name": "Poke-e-Role Sheet",
-  "id": "lordcongra.poke-e-role",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "manifest_version": 1,
   "description": "A fully automated Pokerole 3.0 / PMD character sheet.",
   "author": "lordcongra",
