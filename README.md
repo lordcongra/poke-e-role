@@ -59,5 +59,7 @@ While these extensions do not tie directly into the character sheet, they are hi
 
 ## 🛠️ Installation
 To install this extension into your Owlbear Rodeo room, copy the Manifest URL below and paste it into your Owlbear Rodeo extension manager:
-```text
-[https://lordcongra.github.io/poke-e-role/manifest.json](https://lordcongra.github.io/poke-e-role/manifest.json)
+
+`https://lordcongra.github.io/poke-e-role/manifest.json`
+
+*(Note: If the sheet updates, you can force Owlbear to fetch the newest version by adding a version tag to the end of the URL, like `?v=1.1`)*
