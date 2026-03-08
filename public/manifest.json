@@ -1,12 +1,14 @@
 {
   "name": "Poke-e-Role Sheet",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "manifest_version": 1,
   "description": "A fully automated Pokerole 3.0 / PMD character sheet.",
   "author": "lordcongra",
   "action": {
     "title": "Poke-e-Role",
     "icon": "https://lordcongra.github.io/poke-e-role/pokeball.svg",
-    "popover": "https://lordcongra.github.io/poke-e-role/"
+    "popover": "https://lordcongra.github.io/poke-e-role/",
+    "width": 850,
+    "height": 700
   }
 }
