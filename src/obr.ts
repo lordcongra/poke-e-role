@@ -1,6 +1,6 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { getVal, getDerivedVal, generateId } from './utils';
-import type { Move, InventoryItem, ExtraCategory } from './types';
+import type { Move, InventoryItem, ExtraCategory } from './@types/index';
 
 export const MY_EXTENSION_ID = "pokerole-pmd-extension";
 export const METADATA_ID = "pokerole-extension/stats";
@@ -51,7 +51,7 @@ export async function saveBatchDataToToken(updates: Record<string, string>) {
   const evade = getVal('evasions-used') > 0;
   const clash = getVal('clashes-used') > 0;
 
-  await OBR.scene.items.updateItems([currentTokenId], (items) => {
+  await OBR.scene.items.updateItems([currentTokenId], (items: any[]) => {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
       const meta = item.metadata[METADATA_ID] as Record<string, string>;
@@ -98,7 +98,7 @@ export async function saveBatchDataToToken(updates: Record<string, string>) {
 
 export async function saveMovesToToken(currentMoves: Move[]) {
   if (!currentTokenId || isLoading) return;
-  await OBR.scene.items.updateItems([currentTokenId], (items) => {
+  await OBR.scene.items.updateItems([currentTokenId], (items: any[]) => {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
       (item.metadata[METADATA_ID] as Record<string, string>)['moves-data'] = JSON.stringify(currentMoves);
@@ -109,7 +109,7 @@ export async function saveMovesToToken(currentMoves: Move[]) {
 
 export async function saveInventoryToToken(currentInventory: InventoryItem[]) {
   if (!currentTokenId || isLoading) return;
-  await OBR.scene.items.updateItems([currentTokenId], (items) => {
+  await OBR.scene.items.updateItems([currentTokenId], (items: any[]) => {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
       (item.metadata[METADATA_ID] as Record<string, string>)['inv-data'] = JSON.stringify(currentInventory);
@@ -120,7 +120,7 @@ export async function saveInventoryToToken(currentInventory: InventoryItem[]) {
 
 export async function saveExtraSkillsToToken(currentExtraCategories: ExtraCategory[]) {
   if (!currentTokenId || isLoading) return;
-  await OBR.scene.items.updateItems([currentTokenId], (items) => {
+  await OBR.scene.items.updateItems([currentTokenId], (items: any[]) => {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
       (item.metadata[METADATA_ID] as Record<string, string>)['extra-skills-data'] = JSON.stringify(currentExtraCategories);
@@ -146,9 +146,9 @@ export function setupOBR(onTokenLoad: (tokenId: string) => void) {
             }
         });
 
-        OBR.scene.items.onChange((items) => {
+        OBR.scene.items.onChange((items: any[]) => {
             if (!currentTokenId) return;
-            const currentItem = items.find(i => i.id === currentTokenId);
+            const currentItem = items.find((i: any) => i.id === currentTokenId);
             if (currentItem) {
                 const newMeta = currentItem.metadata[METADATA_ID] || {};
                 const newMetaStr = JSON.stringify(newMeta);
@@ -162,7 +162,6 @@ export function setupOBR(onTokenLoad: (tokenId: string) => void) {
             const data = event.data as any;
             const myId = await OBR.player.getId();
             
-            // SECURITY CHECK: Only the person who clicked roll will save the initiative!
             if (data.playerId !== myId) return; 
 
             if (data.rollId && data.rollId.startsWith("init_")) {
@@ -171,7 +170,7 @@ export function setupOBR(onTokenLoad: (tokenId: string) => void) {
                 const finalInit = total + (tiebreaker / 10); 
                 
                 if (currentTokenId) {
-                    await OBR.scene.items.updateItems([currentTokenId], (items) => {
+                    await OBR.scene.items.updateItems([currentTokenId], (items: any[]) => {
                         for (let item of items) {
                             const existing = (item.metadata["com.pretty-initiative/metadata"] as any) || {};
                             item.metadata["com.pretty-initiative/metadata"] = {

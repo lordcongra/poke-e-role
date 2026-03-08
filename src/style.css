@@ -99,3 +99,36 @@ body {
 .spin-input::-webkit-outer-spin-button, .spin-input::-webkit-inner-spin-button { 
   -webkit-appearance: none; margin: 0; 
 }
+/* --- PHASE 4: UI COMPONENT CLASSES --- */
+
+/* Table Cell Alignments */
+.table-cell-middle { vertical-align: middle; text-align: center; }
+.table-cell-middle-left { vertical-align: middle; text-align: left; }
+.table-cell-top { vertical-align: top; padding-top: 6px; text-align: center; }
+.table-cell-top-left { vertical-align: top; padding-top: 6px; text-align: left; padding-left: 5px; }
+
+/* Flexbox Layouts */
+.flex-row-center { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.flex-row-start { display: flex; align-items: center; justify-content: flex-start; gap: 4px; padding-top: 4px; }
+.flex-col-center { display: flex; flex-direction: column; gap: 2px; padding: 2px; align-items: center; }
+
+/* Clean Inputs */
+.input-transparent { border: 1px solid transparent; background: transparent; width: 90%; }
+.input-transparent:focus { border: 1px solid var(--primary); outline: none; }
+.input-transparent-bold { border: none; background: transparent; font-weight: bold; font-family: inherit; width: 65px; }
+.input-transparent-white { border: none; background: transparent; color: white; font-weight: bold; font-family: inherit; width: 80px; }
+
+/* Dropdowns & Buttons */
+.stat-select { border: 1px solid var(--border); background: white; padding: 1px; }
+.cat-select { border: none; background: transparent; }
+.power-input { width: 30px; text-align: center; border: 1px solid var(--border); padding: 1px; }
+.sort-btn { cursor: pointer; background: #e0e0e0; border: 1px solid var(--border); border-radius: 2px; font-size: 0.7rem; padding: 0 4px; }
+.btn-transparent-white { background: transparent; border: none; color: white; cursor: pointer; font-weight: bold; }
+
+/* Inventory Items */
+.textarea-desc { width: 95%; border: 1px solid var(--border); border-radius: 3px; background: transparent; font-family: inherit; resize: vertical; padding: 4px; box-sizing: border-box; outline: none; }
+.item-name-input { width: 95%; border: none; background: transparent; font-family: inherit; outline: none; }
+
+/* Dynamic Table Rows (Replaces JS striping) */
+.dynamic-row { border-bottom: 1px solid #eee; }
+.dynamic-row:nth-child(even) { background-color: #fafafa; }

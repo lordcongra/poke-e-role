@@ -1,9 +1,10 @@
 import './style.css';
 import OBR from "@owlbear-rodeo/sdk";
-import type { Move, InventoryItem, ExtraCategory } from './types';
+import type { Move, InventoryItem, ExtraCategory, ExtraSkill } from './@types/index';
+import { ATTRIBUTE_MAPPING } from './@types/index';
 import { ALL_SKILLS, getVal, getDerivedVal, generateId } from './utils';
 import { calculateStats, updateMoveDisplays } from './math';
-import { loadDatabaseLists, fetchPokemonData, fetchMoveData, fetchAbilityData } from './api';
+import { loadUrlLists, fetchPokemonData, fetchMoveData, fetchAbilityData } from './api';
 import { buildMoveRow, buildInventoryRow, buildExtraCategoryHeader, buildExtraSkillRow, setupSpinners, updateSheetTypeUI, applyTypeStyle } from './ui';
 import { 
     METADATA_ID, setLoading, setLastMetadataStr, 
@@ -21,29 +22,36 @@ function saveDataToToken(id: string, value: string) {
 
 // --- DATABASE BINDINGS ---
 document.getElementById('species')?.addEventListener('change', async (e) => {
-    const monName = (e.target as HTMLInputElement).value;
-    const monData = await fetchPokemonData(monName);
-    if (!monData) return;
+    const pokemonName = (e.target as HTMLInputElement).value;
+    const pokemonData = await fetchPokemonData(pokemonName);
+    if (!pokemonData) return;
 
-    const type1 = monData.Type1 || "Normal";
-    const type2 = monData.Type2 || "";
-    const typing = (type2 && type2 !== "None" && type2 !== "null") ? `${type1} / ${type2}` : type1;
-    const hp = monData.BaseHP || (monData.BaseStats && monData.BaseStats.HP) || 4;
-    const attrs = monData.Attributes || monData.BaseAttributes || monData;
+    const type1 = String(pokemonData.Type1 || "Normal");
+    const type2 = String(pokemonData.Type2 || "");
+    const hasSecondType = type2 && type2 !== "None" && type2 !== "null";
+    const typing = hasSecondType ? `${type1} / ${type2}` : type1;
+    
+    const baseStats = pokemonData.BaseStats as Record<string, number> | undefined;
+    const baseAttrs = (pokemonData.Attributes || pokemonData.BaseAttributes || pokemonData) as Record<string, number>;
+    const hp = pokemonData.BaseHP || (baseStats && baseStats.HP) || 4;
     
     const abilitySelect = document.getElementById('ability') as HTMLSelectElement;
     abilitySelect.innerHTML = '';
     const abilities: string[] = [];
     
-    if (monData.Ability1) abilities.push(monData.Ability1);
-    if (monData.Ability2 && monData.Ability2 !== "None" && monData.Ability2 !== "null") abilities.push(monData.Ability2);
-    if (monData.HiddenAbility && monData.HiddenAbility !== "None" && monData.HiddenAbility !== "null") abilities.push(monData.HiddenAbility + " (HA)");
+    const hasAbility1 = !!pokemonData.Ability1;
+    const hasAbility2 = pokemonData.Ability2 && pokemonData.Ability2 !== "None" && pokemonData.Ability2 !== "null";
+    const hasHiddenAbility = pokemonData.HiddenAbility && pokemonData.HiddenAbility !== "None" && pokemonData.HiddenAbility !== "null";
 
-    if (abilities.length === 0 && Array.isArray(monData.Abilities)) {
-        monData.Abilities.forEach((a:any) => abilities.push(typeof a === 'string' ? a : a.Name));
+    if (hasAbility1) abilities.push(String(pokemonData.Ability1));
+    if (hasAbility2) abilities.push(String(pokemonData.Ability2));
+    if (hasHiddenAbility) abilities.push(String(pokemonData.HiddenAbility) + " (HA)");
+
+    if (abilities.length === 0 && Array.isArray(pokemonData.Abilities)) {
+        pokemonData.Abilities.forEach((a: any) => abilities.push(typeof a === 'string' ? a : a.Name));
     }
 
-    abilities.forEach(ab => {
+    abilities.forEach((ab: string) => {
         const opt = document.createElement('option');
         opt.value = ab.replace(" (HA)", "");
         opt.text = ab;
@@ -53,38 +61,41 @@ document.getElementById('species')?.addEventListener('change', async (e) => {
     let defaultAbility = "";
     if (abilities.length > 0) {
         defaultAbility = abilities[0].replace(" (HA)", "");
-        const abData = await fetchAbilityData(defaultAbility);
-        if (abData) abilitySelect.title = abData.Effect || abData.Description || "No description found.";
+        const abilityData = await fetchAbilityData(defaultAbility);
+        if (abilityData) abilitySelect.title = String(abilityData.Effect || abilityData.Description || "No description found.");
     }
 
     const typingInput = document.getElementById('typing') as HTMLInputElement;
     typingInput.value = typing;
-    applyTypeStyle(typingInput, typing); // Colorize!
+    applyTypeStyle(typingInput, typing); 
 
-    (document.getElementById('hp-base') as HTMLInputElement).value = hp.toString();
-    (document.getElementById('str-base') as HTMLInputElement).value = (attrs.Strength || 2).toString();
-    (document.getElementById('dex-base') as HTMLInputElement).value = (attrs.Dexterity || 2).toString();
-    (document.getElementById('vit-base') as HTMLInputElement).value = (attrs.Vitality || 2).toString();
-    (document.getElementById('spe-base') as HTMLInputElement).value = (attrs.Special || 2).toString();
-    (document.getElementById('ins-base') as HTMLInputElement).value = (attrs.Insight || 1).toString();
+    (document.getElementById('hp-base') as HTMLInputElement).value = String(hp);
+    (document.getElementById('str-base') as HTMLInputElement).value = String(baseAttrs.Strength || 2);
+    (document.getElementById('dex-base') as HTMLInputElement).value = String(baseAttrs.Dexterity || 2);
+    (document.getElementById('vit-base') as HTMLInputElement).value = String(baseAttrs.Vitality || 2);
+    (document.getElementById('spe-base') as HTMLInputElement).value = String(baseAttrs.Special || 2);
+    (document.getElementById('ins-base') as HTMLInputElement).value = String(baseAttrs.Insight || 1);
 
     const batchUpdates: Record<string, string> = {
-        'species': monName, 'typing': typing, 'hp-base': hp.toString(),
-        'str-base': (attrs.Strength || 2).toString(), 'dex-base': (attrs.Dexterity || 2).toString(), 
-        'vit-base': (attrs.Vitality || 2).toString(), 'spe-base': (attrs.Special || 2).toString(), 
-        'ins-base': (attrs.Insight || 1).toString(), 'ability': defaultAbility,
+        'species': pokemonName, 'typing': typing, 'hp-base': String(hp),
+        'str-base': String(baseAttrs.Strength || 2), 'dex-base': String(baseAttrs.Dexterity || 2), 
+        'vit-base': String(baseAttrs.Vitality || 2), 'spe-base': String(baseAttrs.Special || 2), 
+        'ins-base': String(baseAttrs.Insight || 1), 'ability': defaultAbility,
         'ability-list': abilities.join(',')
     };
 
+    const hasExistingSkills = ALL_SKILLS.some((skill: string) => getVal(`${skill}-base`) > 0 || getVal(`${skill}-buff`) > 0);
+    const hasExistingMoves = currentMoves.length > 0;
+    
     let shouldWipe = false;
-    if (ALL_SKILLS.some(skill => getVal(`${skill}-base`) > 0 || getVal(`${skill}-buff`) > 0) || currentMoves.length > 0) {
+    if (hasExistingSkills || hasExistingMoves) {
         shouldWipe = confirm("Warning: This token already has Skills/Moves setup.\n\nClick OK if loading a BRAND NEW Pokemon (Wipes Skills).\n\nClick CANCEL if Mega-Evolving/Form change (Keeps Skills).");
     } else {
         shouldWipe = true; 
     }
 
     if (shouldWipe) {
-        ALL_SKILLS.forEach(skill => {
+        ALL_SKILLS.forEach((skill: string) => {
             const baseInput = document.getElementById(`${skill}-base`) as HTMLInputElement;
             const buffInput = document.getElementById(`${skill}-buff`) as HTMLInputElement;
             if(baseInput) { baseInput.value = "0"; batchUpdates[`skill-base`] = "0"; }
@@ -101,9 +112,9 @@ document.getElementById('species')?.addEventListener('change', async (e) => {
 
 document.getElementById('ability')?.addEventListener('change', async (e) => {
     const val = (e.target as HTMLSelectElement).value;
-    const abData = await fetchAbilityData(val);
-    if (abData) {
-        (e.target as HTMLSelectElement).title = abData.Effect || abData.Description || "No description found.";
+    const abilityData = await fetchAbilityData(val);
+    if (abilityData) {
+        (e.target as HTMLSelectElement).title = String(abilityData.Effect || abilityData.Description || "No description found.");
     }
     saveDataToToken('ability', val);
 });
@@ -115,48 +126,47 @@ document.getElementById('sheet-type')?.addEventListener('change', (e) => {
     calculateStats(currentExtraCategories, currentMoves);
 });
 
-// --- FIXED DATA REFRESH BUTTON (NO RACE CONDITIONS!) ---
+// --- FIXED DATA REFRESH BUTTON ---
 document.getElementById('refresh-data-btn')?.addEventListener('click', async () => {
     const btn = document.getElementById('refresh-data-btn') as HTMLButtonElement;
     btn.innerText = "⏳ Refreshing...";
     btn.disabled = true;
 
-    // We build ONE single object to save to the database
     const batchUpdates: Record<string, string> = {};
 
-    // Refresh Typing Box
     const typingInput = document.getElementById('typing') as HTMLInputElement;
-    if (typingInput && typingInput.value) {
-        applyTypeStyle(typingInput, typingInput.value);
-    }
+    if (typingInput && typingInput.value) applyTypeStyle(typingInput, typingInput.value);
 
-    // Refresh Ability Dropdown completely
-    const speciesName = (document.getElementById('species') as HTMLInputElement).value;
+    const pokemonName = (document.getElementById('species') as HTMLInputElement).value;
     const abilitySelect = document.getElementById('ability') as HTMLSelectElement;
     const currentAbility = abilitySelect.value;
 
-    if (speciesName) {
-        const monData = await fetchPokemonData(speciesName);
-        if (monData) {
+    if (pokemonName) {
+        const pokemonData = await fetchPokemonData(pokemonName);
+        if (pokemonData) {
             abilitySelect.innerHTML = '';
             const abilities: string[] = [];
             
-            if (monData.Ability1) abilities.push(monData.Ability1);
-            if (monData.Ability2 && monData.Ability2 !== "None" && monData.Ability2 !== "null") abilities.push(monData.Ability2);
-            if (monData.HiddenAbility && monData.HiddenAbility !== "None" && monData.HiddenAbility !== "null") abilities.push(monData.HiddenAbility + " (HA)");
+            const hasAbility1 = !!pokemonData.Ability1;
+            const hasAbility2 = pokemonData.Ability2 && pokemonData.Ability2 !== "None" && pokemonData.Ability2 !== "null";
+            const hasHiddenAbility = pokemonData.HiddenAbility && pokemonData.HiddenAbility !== "None" && pokemonData.HiddenAbility !== "null";
 
-            if (abilities.length === 0 && Array.isArray(monData.Abilities)) {
-                monData.Abilities.forEach((a:any) => abilities.push(typeof a === 'string' ? a : a.Name));
+            if (hasAbility1) abilities.push(String(pokemonData.Ability1));
+            if (hasAbility2) abilities.push(String(pokemonData.Ability2));
+            if (hasHiddenAbility) abilities.push(String(pokemonData.HiddenAbility) + " (HA)");
+
+            if (abilities.length === 0 && Array.isArray(pokemonData.Abilities)) {
+                pokemonData.Abilities.forEach((a: any) => abilities.push(typeof a === 'string' ? a : a.Name));
             }
 
-            abilities.forEach(ab => {
+            abilities.forEach((ab: string) => {
                 const opt = document.createElement('option');
                 opt.value = ab.replace(" (HA)", "");
                 opt.text = ab;
                 abilitySelect.appendChild(opt);
             });
 
-            if (currentAbility && abilities.some(a => a.replace(" (HA)", "") === currentAbility)) {
+            if (currentAbility && abilities.some((a: string) => a.replace(" (HA)", "") === currentAbility)) {
                 abilitySelect.value = currentAbility;
             } else if (abilities.length > 0) {
                 abilitySelect.value = abilities[0].replace(" (HA)", "");
@@ -167,36 +177,31 @@ document.getElementById('refresh-data-btn')?.addEventListener('click', async () 
     }
 
     if (abilitySelect.value) {
-        const abData = await fetchAbilityData(abilitySelect.value);
-        if (abData) abilitySelect.title = abData.Effect || abData.Description || "No description found.";
+        const abilityData = await fetchAbilityData(abilitySelect.value);
+        if (abilityData) abilitySelect.title = String(abilityData.Effect || abilityData.Description || "No description found.");
     }
 
-    // Refresh Moves (Safely trimming whitespace just in case)
     for (let move of currentMoves) {
         if (move.name) {
-            const mData = await fetchMoveData(move.name.trim());
-            if (mData) {
-                // Update basic data, but DO NOT overwrite their selected Accuracy/Skill!
-                move.type = mData.Type || "Normal";
-                let rawCat = mData.Category || "Physical";
+            const moveData = await fetchMoveData(move.name.trim());
+            if (moveData) {
+                move.type = String(moveData.Type || "Normal");
+                let rawCat = String(moveData.Category || "Physical");
                 if (rawCat === "Physical") move.cat = "Phys";
                 else if (rawCat === "Special") move.cat = "Spec";
                 else move.cat = "Supp";
                 
-                move.power = mData.Power || 0;
-                move.desc = mData.Effect || mData.Description || "";
+                move.power = Number(moveData.Power) || 0;
+                move.desc = String(moveData.Effect || moveData.Description || "");
                 
-                const rawDmg = mData.Damage1 === "None" ? "" : (mData.Damage1 || "");
-                const attrMapDmg: any = { "Strength": "str", "Dexterity": "dex", "Vitality": "vit", "Special": "spe", "Insight": "ins" };
-                move.dmgStat = attrMapDmg[rawDmg] || rawDmg;
+                const rawDmg = String(moveData.Damage1 === "None" ? "" : (moveData.Damage1 || ""));
+                move.dmgStat = ATTRIBUTE_MAPPING[rawDmg] || rawDmg;
             }
         }
     }
 
     renderMoves();
     batchUpdates['moves-data'] = JSON.stringify(currentMoves);
-    
-    // SEND THE SINGLE SAVE BATCH!
     saveBatchDataToToken(batchUpdates); 
     
     btn.innerText = "✅ Done!";
@@ -212,16 +217,16 @@ function renderExtraSkills() {
     if (!tbody) return;
     tbody.innerHTML = '';
     
-    currentExtraCategories.forEach(cat => {
+    currentExtraCategories.forEach((category: ExtraCategory) => {
         const headTr = document.createElement('tr');
         headTr.style.backgroundColor = 'var(--primary)';
         headTr.style.color = 'white';
-        headTr.innerHTML = buildExtraCategoryHeader(cat);
+        headTr.innerHTML = buildExtraCategoryHeader(category);
         tbody.appendChild(headTr);
 
-        cat.skills.forEach(sk => {
+        category.skills.forEach((skill: ExtraSkill) => {
             const tr = document.createElement('tr');
-            tr.innerHTML = buildExtraSkillRow(cat.id, sk);
+            tr.innerHTML = buildExtraSkillRow(category.id, skill);
             tbody.appendChild(tr);
         });
     });
@@ -229,18 +234,18 @@ function renderExtraSkills() {
     document.querySelectorAll('.cat-name-input').forEach(input => {
         input.addEventListener('change', (e) => {
             const target = e.target as HTMLInputElement;
-            const cat = currentExtraCategories.find(c => c.id === target.dataset.catid);
-            if (cat) { cat.name = target.value; saveExtraSkillsToToken(currentExtraCategories); }
+            const category = currentExtraCategories.find((c: ExtraCategory) => c.id === target.dataset.catid);
+            if (category) { category.name = target.value; saveExtraSkillsToToken(currentExtraCategories); }
         });
     });
 
     document.querySelectorAll('.extra-skill-name').forEach(input => {
         input.addEventListener('change', (e) => {
             const target = e.target as HTMLInputElement;
-            const cat = currentExtraCategories.find(c => c.id === target.dataset.catid);
-            if (cat) {
-                const sk = cat.skills.find(s => s.id === target.dataset.skid);
-                if (sk) { sk.name = target.value; saveExtraSkillsToToken(currentExtraCategories); renderMoves(); }
+            const category = currentExtraCategories.find((c: ExtraCategory) => c.id === target.dataset.catid);
+            if (category) {
+                const skill = category.skills.find((s: ExtraSkill) => s.id === target.dataset.skid);
+                if (skill) { skill.name = target.value; saveExtraSkillsToToken(currentExtraCategories); renderMoves(); }
             }
         });
     });
@@ -249,12 +254,12 @@ function renderExtraSkills() {
         input.addEventListener('input', () => calculateStats(currentExtraCategories, currentMoves));
         input.addEventListener('change', (e) => {
             const target = e.target as HTMLInputElement;
-            const cat = currentExtraCategories.find(c => c.id === target.dataset.catid);
-            if (cat) {
-                const sk = cat.skills.find(s => s.id === target.dataset.skid);
-                if (sk) {
-                    if (target.classList.contains('extra-skill-base')) sk.base = parseInt(target.value) || 0;
-                    if (target.classList.contains('extra-skill-buff')) sk.buff = parseInt(target.value) || 0;
+            const category = currentExtraCategories.find((c: ExtraCategory) => c.id === target.dataset.catid);
+            if (category) {
+                const skill = category.skills.find((s: ExtraSkill) => s.id === target.dataset.skid);
+                if (skill) {
+                    if (target.classList.contains('extra-skill-base')) skill.base = parseInt(target.value) || 0;
+                    if (target.classList.contains('extra-skill-buff')) skill.buff = parseInt(target.value) || 0;
                     saveExtraSkillsToToken(currentExtraCategories);
                 }
             }
@@ -265,7 +270,7 @@ function renderExtraSkills() {
         btn.addEventListener('click', (e) => {
             if (confirm("Delete this custom skill category?")) {
                 const id = (e.currentTarget as HTMLButtonElement).dataset.catid;
-                currentExtraCategories = currentExtraCategories.filter(c => c.id !== id);
+                currentExtraCategories = currentExtraCategories.filter((c: ExtraCategory) => c.id !== id);
                 renderExtraSkills(); renderMoves();
                 saveExtraSkillsToToken(currentExtraCategories);
             }
@@ -275,12 +280,12 @@ function renderExtraSkills() {
 }
 
 document.getElementById('add-cat-btn')?.addEventListener('click', () => {
-    const catId = "cat_" + generateId();
+    const categoryId = "cat_" + generateId();
     currentExtraCategories.push({
-        id: catId, name: "EXTRA",
+        id: categoryId, name: "EXTRA",
         skills: [
-            { id: catId + "_1", name: "", base: 0, buff: 0 }, { id: catId + "_2", name: "", base: 0, buff: 0 },
-            { id: catId + "_3", name: "", base: 0, buff: 0 }, { id: catId + "_4", name: "", base: 0, buff: 0 }
+            { id: categoryId + "_1", name: "", base: 0, buff: 0 }, { id: categoryId + "_2", name: "", base: 0, buff: 0 },
+            { id: categoryId + "_3", name: "", base: 0, buff: 0 }, { id: categoryId + "_4", name: "", base: 0, buff: 0 }
         ]
     });
     renderExtraSkills(); renderMoves();
@@ -292,14 +297,12 @@ function renderMoves() {
   if (!tbody) return;
   tbody.innerHTML = ''; 
 
-  currentMoves.forEach((move, index) => {
+  currentMoves.forEach((move: Move, index: number) => {
     if (move.power === undefined) move.power = 0;
     if (move.dmgStat === undefined) move.dmgStat = "";
 
     const tr = document.createElement('tr');
-    tr.style.borderBottom = '1px solid #eee';
-    if (index % 2 === 0) tr.style.backgroundColor = '#fafafa';
-    
+    tr.className = 'dynamic-row'; // THE FIX: Handing styles over to CSS
     tr.innerHTML = buildMoveRow(move, index, currentExtraCategories);
     tbody.appendChild(tr);
   });
@@ -309,7 +312,7 @@ function renderMoves() {
       const target = e.target as HTMLInputElement | HTMLSelectElement;
       const id = target.getAttribute('data-id')!;
       const field = target.getAttribute('data-field')! as keyof Move;
-      const move = currentMoves.find(m => m.id === id);
+      const move = currentMoves.find((m: Move) => m.id === id);
       
       if (move) {
         if (field === 'power') move[field] = parseInt(target.value) || 0;
@@ -320,24 +323,23 @@ function renderMoves() {
         }
         
         if (field === 'name') {
-            const mData = await fetchMoveData(target.value.trim());
-            if (mData) {
-                move.type = mData.Type || "Normal";
-                let rawCat = mData.Category || "Physical";
+            const moveData = await fetchMoveData(target.value.trim());
+            if (moveData) {
+                move.type = String(moveData.Type || "Normal");
+                let rawCat = String(moveData.Category || "Physical");
                 if (rawCat === "Physical") move.cat = "Phys";
                 else if (rawCat === "Special") move.cat = "Spec";
                 else move.cat = "Supp";
                 
-                move.power = mData.Power || 0;
-                move.desc = mData.Effect || mData.Description || "";
+                move.power = Number(moveData.Power) || 0;
+                move.desc = String(moveData.Effect || moveData.Description || "");
                 
-                const rawDmg = mData.Damage1 === "None" ? "" : (mData.Damage1 || "");
-                const attrMapDmg: any = { "Strength": "str", "Dexterity": "dex", "Vitality": "vit", "Special": "spe", "Insight": "ins" };
-                move.dmgStat = attrMapDmg[rawDmg] || rawDmg;
+                const rawDmg = String(moveData.Damage1 === "None" ? "" : (moveData.Damage1 || ""));
+                move.dmgStat = ATTRIBUTE_MAPPING[rawDmg] || rawDmg;
                 
-                const attrMap: any = { "Strength": "str", "Dexterity": "dex", "Vitality": "vit", "Special": "spe", "Insight": "ins", "Tough": "tou", "Cool": "coo", "Beauty": "bea", "Cute": "cut", "Clever": "cle", "Will": "will" };
-                move.attr = attrMap[mData.Accuracy1] || "str";
-                move.skill = (mData.Accuracy2 || "brawl").toLowerCase();
+                const accuracyOne = String(moveData.Accuracy1 || "");
+                move.attr = ATTRIBUTE_MAPPING[accuracyOne] || "str";
+                move.skill = String(moveData.Accuracy2 || "brawl").toLowerCase();
                 
                 renderMoves(); 
             }
@@ -352,7 +354,7 @@ function renderMoves() {
     btn.addEventListener('click', (e) => {
       if (window.confirm("Are you sure you want to delete this move?")) {
         const id = (e.currentTarget as HTMLButtonElement).getAttribute('data-id')!;
-        currentMoves = currentMoves.filter(m => m.id !== id);
+        currentMoves = currentMoves.filter((m: Move) => m.id !== id);
         renderMoves(); saveMovesToToken(currentMoves);
       }
     });
@@ -385,7 +387,7 @@ function renderMoves() {
   document.querySelectorAll('.acc-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const id = (e.currentTarget as HTMLButtonElement).getAttribute('data-id')!;
-      const move = currentMoves.find(m => m.id === id);
+      const move = currentMoves.find((m: Move) => m.id === id);
       if (move) rollAccuracy(move);
     });
   });
@@ -393,7 +395,7 @@ function renderMoves() {
   document.querySelectorAll('.dmg-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const id = (e.currentTarget as HTMLButtonElement).getAttribute('data-id')!;
-      const move = currentMoves.find(m => m.id === id);
+      const move = currentMoves.find((m: Move) => m.id === id);
       if (move) rollDamage(move);
     });
   });
@@ -414,10 +416,10 @@ function renderInventory() {
     if (!tbody) return;
     tbody.innerHTML = '';
     
-    currentInventory.forEach((item, index) => {
+    // FIX: Removed the unused 'index: number' parameter!
+    currentInventory.forEach((item: InventoryItem) => {
         const tr = document.createElement('tr');
-        tr.style.borderBottom = '1px solid #eee';
-        if (index % 2 === 0) tr.style.backgroundColor = '#fafafa';
+        tr.className = 'dynamic-row'; 
         tr.innerHTML = buildInventoryRow(item);
         tbody.appendChild(tr);
     });
@@ -427,7 +429,7 @@ function renderInventory() {
             const target = e.target as HTMLInputElement;
             const id = target.getAttribute('data-id')!;
             const field = target.getAttribute('data-field')! as keyof InventoryItem;
-            const item = currentInventory.find(i => i.id === id);
+            const item = currentInventory.find((i: InventoryItem) => i.id === id);
             if (item) {
                 if (field === 'qty') item[field] = parseInt(target.value) || 0;
                 else item[field] = target.value as never;
@@ -439,7 +441,7 @@ function renderInventory() {
     document.querySelectorAll('.del-item-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const id = (e.currentTarget as HTMLButtonElement).getAttribute('data-id')!;
-            currentInventory = currentInventory.filter(i => i.id !== id);
+            currentInventory = currentInventory.filter((i: InventoryItem) => i.id !== id);
             renderInventory(); saveInventoryToToken(currentInventory);
         });
     });
@@ -497,13 +499,14 @@ function rollDamage(move: Move) {
   const abilityStr = abilitySelect ? abilitySelect.value : "";
   const extraDice = getVal('global-dmg-mod'); 
   
-  const attrMap: any = { "str": "str", "dex": "dex", "vit": "vit", "spe": "spe", "ins": "ins" };
-  let scalingVal = move.dmgStat && attrMap[move.dmgStat] ? getDerivedVal(`${attrMap[move.dmgStat]}-total`) : 0;
+  let scalingVal = move.dmgStat ? getDerivedVal(`${move.dmgStat}-total`) : 0;
+  
+  const isProtean = abilityStr.toLowerCase().includes("protean") || abilityStr.toLowerCase().includes("libero");
+  const hasTypeMatch = move.type && typingStr.includes(move.type);
   
   let stabBonus = 0; let stabTag = "";
-  const isProtean = abilityStr.toLowerCase().includes("protean") || abilityStr.toLowerCase().includes("libero");
-  if (move.type && (typingStr.includes(move.type) || isProtean)) {
-      stabBonus = 1; stabTag = isProtean && !typingStr.includes(move.type) ? " (Protean STAB)" : " (STAB)";
+  if (hasTypeMatch || isProtean) {
+      stabBonus = 1; stabTag = isProtean && !hasTypeMatch ? " (Protean STAB)" : " (STAB)";
   }
 
   const basePool = move.power + scalingVal + extraDice + stabBonus;
@@ -590,9 +593,9 @@ async function loadDataFromToken(tokenId: string) {
     const lockScreen = document.getElementById('gm-lock-screen');
     if (lockScreen) lockScreen.style.display = 'none';
     
-    document.querySelectorAll('input:not(.move-input):not(.inv-input):not(.cat-name-input):not(.extra-skill-name):not(.extra-skill-base):not(.extra-skill-buff):not(#is-npc), select:not(.move-input), textarea').forEach(element => {
-      if (element.classList.contains('skill-label')) return;
-      
+    const sheetInputs = document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('.sheet-save');
+    
+    sheetInputs.forEach(element => {
       const id = element.id;
       const val = data[id];
 
@@ -600,7 +603,6 @@ async function loadDataFromToken(tokenId: string) {
           const sel = element as HTMLSelectElement;
           sel.innerHTML = '';
           
-          // Use the saved list of abilities if it exists!
           if (data['ability-list']) {
               data['ability-list'].split(',').forEach((ab: string) => {
                   const opt = document.createElement('option');
@@ -613,27 +615,21 @@ async function loadDataFromToken(tokenId: string) {
           }
           sel.value = val;
 
-          fetchAbilityData(val).then(abData => {
-              if (abData) sel.title = abData.Effect || abData.Description || "No description found.";
+          fetchAbilityData(val).then(abilityData => {
+              if (abilityData) sel.title = String(abilityData.Effect || abilityData.Description || "No description found.");
           });
       }
-      else if (element.tagName === 'SELECT') {
-        const sel = element as HTMLSelectElement;
-        if (val !== undefined) sel.value = val;
-        else sel.value = sel.querySelector('option[selected]') ? sel.querySelector('option[selected]')!.getAttribute('value') || '' : '';
+      else if (val !== undefined) {
+          element.value = val;
       } 
-      else if (element.tagName === 'TEXTAREA') {
-        const ta = element as HTMLTextAreaElement;
-        ta.value = val !== undefined ? val : ta.defaultValue; 
+      else if (element instanceof HTMLSelectElement) {
+          element.value = element.querySelector('option[selected]')?.getAttribute('value') || '';
       } 
       else {
-        const inp = element as HTMLInputElement;
-        if (id === 'species' && val && val.includes('http')) inp.value = val.split('/').pop()?.replace('.json', '') || val;
-        else inp.value = val !== undefined ? val : inp.defaultValue; 
-
-        // IF IT'S THE MAIN TYPING BOX, COLOR IT UPON LOAD!
-        if (id === 'typing') applyTypeStyle(inp, inp.value);
+          element.value = element.defaultValue; 
       }
+
+      if (id === 'typing') applyTypeStyle(element, element.value);
     });
 
     const npcCheck = document.getElementById('is-npc') as HTMLInputElement;
@@ -660,7 +656,10 @@ document.getElementById('is-npc')?.addEventListener('change', (e) => {
     saveDataToToken('is-npc', (e.target as HTMLInputElement).checked.toString());
 });
 
-document.querySelectorAll('input:not(.move-input):not(.inv-input):not(.cat-name-input):not(.extra-skill-name):not(.extra-skill-base):not(.extra-skill-buff):not(#is-npc), select:not(.move-input):not(#ability), textarea').forEach(element => {
+const listenerInputs = document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('.sheet-save');
+listenerInputs.forEach(element => {
+  if (element.id === 'ability') return; 
+
   element.addEventListener('input', () => calculateStats(currentExtraCategories, currentMoves));
   element.addEventListener('change', (e) => {
       const target = e.target as HTMLInputElement;
@@ -669,7 +668,7 @@ document.querySelectorAll('input:not(.move-input):not(.inv-input):not(.cat-name-
 });
 
 // INITIALIZE
-loadDatabaseLists();
+loadUrlLists();
 setupSpinners();
 calculateStats(currentExtraCategories, currentMoves);
 setupOBR(loadDataFromToken);
