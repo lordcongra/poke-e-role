@@ -682,7 +682,8 @@ async function loadDataFromToken(tokenId: string) {
     setLastMetadataStr(JSON.stringify(data)); 
 
     const role = await OBR.player.getRole();
-    const isNPC = data['is-npc'] === 'true';
+    // THE FIX: Forcing JS to strictly evaluate this as a string, no matter how OBR saved it!
+    const isNPC = String(data['is-npc']) === 'true';
 
     if (role === 'GM') {
         const gmTools = document.getElementById('gm-tools');
@@ -690,9 +691,7 @@ async function loadDataFromToken(tokenId: string) {
     } else if (role === 'PLAYER' && isNPC) {
         document.getElementById('app')!.style.display = 'none';
         document.getElementById('gm-lock-screen')!.style.display = 'block';
-        
         renderTypeMatchups(data['typing'] || ""); 
-        
         setLoading(false); 
         return;
     } 
@@ -705,7 +704,7 @@ async function loadDataFromToken(tokenId: string) {
     
     sheetInputs.forEach(element => {
       const isDynamic = ['move-input', 'inv-input', 'cat-name-input', 'extra-skill-name', 'extra-skill-base', 'extra-skill-buff', 'skill-label'].some((cls: string) => element.classList.contains(cls));
-      if (isDynamic || element.id === 'is-npc') return;
+      if (isDynamic) return;
       
       const id = element.id;
       const val = data[id];
@@ -769,15 +768,9 @@ async function loadDataFromToken(tokenId: string) {
   setLoading(false); 
 }
 
-document.getElementById('is-npc')?.addEventListener('change', (e) => {
-    saveDataToToken('is-npc', (e.target as HTMLInputElement).checked.toString());
-});
-
-// THE FIX IS IN THIS BLOCK RIGHT HERE!
 const listenerInputs = document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('.sheet-save');
 listenerInputs.forEach(element => {
-  // We added 'is-npc' to the ignore list so the generic saver stops overwriting the checkbox!
-  if (element.id === 'ability' || element.id === 'is-npc') return; 
+  if (element.id === 'ability') return; 
 
   element.addEventListener('input', () => calculateStats(currentExtraCategories, currentMoves));
   element.addEventListener('change', (e) => {
@@ -785,6 +778,15 @@ listenerInputs.forEach(element => {
       saveDataToToken(target.id, target.value);
   });
 });
+
+// THE FIX: Specific, isolated listener just for the NPC checkbox!
+const npcCheckbox = document.getElementById('is-npc') as HTMLInputElement;
+if (npcCheckbox) {
+    npcCheckbox.addEventListener('change', (e) => {
+        const isChecked = (e.target as HTMLInputElement).checked;
+        saveDataToToken('is-npc', isChecked ? "true" : "false");
+    });
+}
 
 // INITIALIZE
 loadUrlLists();
