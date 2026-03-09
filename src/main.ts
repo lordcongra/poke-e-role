@@ -18,14 +18,12 @@ let currentExtraCategories: ExtraCategory[] = [];
 let currentStatuses: string[] = ["Healthy"];
 let currentCustomInfo: CustomInfo[] = [];
 
-// Global cache to prevent infinite loops when auto-syncing
 let currentTokenData: Record<string, any> = {};
 
 function saveDataToToken(id: string, value: any) {
     saveBatchDataToToken({ [id]: value });
 }
 
-// --- STRICT NUMBER SYNC FOR OWL TRACKERS ---
 function syncDerivedStats() {
     const updates: Record<string, any> = {};
     let hasChanges = false;
@@ -53,7 +51,6 @@ function syncDerivedStats() {
     }
 }
 
-// --- DYNAMIC STATUS SYSTEM ---
 function renderStatuses() {
     const container = document.getElementById('status-container');
     if (!container) return;
@@ -109,7 +106,6 @@ document.getElementById('add-status-btn')?.addEventListener('click', () => {
     saveDataToToken('status-list', JSON.stringify(currentStatuses));
 });
 
-// --- CUSTOM INFO SYSTEM ---
 function renderCustomInfo() {
     const container = document.getElementById('custom-info-container');
     if (!container) return;
@@ -149,7 +145,6 @@ document.getElementById('add-custom-info-btn')?.addEventListener('click', () => 
 });
 
 
-// --- DATABASE BINDINGS ---
 document.getElementById('species')?.addEventListener('change', async (e) => {
     const pokemonName = (e.target as HTMLInputElement).value;
     const pokemonData = await fetchPokemonData(pokemonName);
@@ -821,7 +816,7 @@ async function loadDataFromToken(tokenId: string) {
 
 const listenerInputs = document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('.sheet-save');
 listenerInputs.forEach(element => {
-  // STRICT IGNORE LIST: Prevents double-saves from wiping out API typings
+  // IGNORE LIST: Protects the API fetching system from getting overwritten by rapid auto-saves
   if (['ability', 'is-npc', 'species', 'typing'].includes(element.id)) return; 
 
   element.addEventListener('input', () => calculateStats(currentExtraCategories, currentMoves));

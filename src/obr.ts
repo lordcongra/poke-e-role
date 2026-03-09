@@ -39,63 +39,75 @@ export async function sendToDicePlus(notation: string, rollType: string = "roll"
     }
 }
 
+// --- NEW DEBOUNCER SYSTEM (Fixes flickering stats!) ---
+let saveTimeout: ReturnType<typeof setTimeout>;
+let pendingUpdates: Record<string, any> = {};
+
 export async function saveBatchDataToToken(updates: Record<string, any>) {
   if (!currentTokenId || isLoading) return; 
 
-  const hpCurr = getVal('hp-curr');
-  const hpMax = getDerivedVal('hp-max-display');
-  const willCurr = getVal('will-curr');
-  const willMax = getDerivedVal('will-max-display');
-  const actions = getVal('actions-used');
-  const def = getDerivedVal('def-total');
-  const spdef = getDerivedVal('spd-total');
-  const evade = getVal('evasions-used') > 0;
-  const clash = getVal('clashes-used') > 0;
+  // Queue all incoming changes
+  Object.assign(pendingUpdates, updates);
 
-  await OBR.scene.items.updateItems([currentTokenId], (items: Item[]) => {
-    for (let item of items) {
-      if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
+  // Restart the timer every time a new change comes in
+  clearTimeout(saveTimeout);
+  
+  // Wait 400ms after the user stops clicking before sending to OBR
+  saveTimeout = setTimeout(async () => {
+      const updatesToPush = { ...pendingUpdates };
+      pendingUpdates = {}; // Clear queue
+
+      const hpCurr = getVal('hp-curr');
+      const hpMax = getDerivedVal('hp-max-display');
+      const willCurr = getVal('will-curr');
+      const willMax = getDerivedVal('will-max-display');
+      const actions = getVal('actions-used');
+      const def = getDerivedVal('def-total');
+      const spdef = getDerivedVal('spd-total');
       
-      const meta = item.metadata[METADATA_ID] as Record<string, any>;
-      for (const [key, value] of Object.entries(updates)) {
-          meta[key] = value;
-      }
+      // Strict Numbers for the new Counters
+      const evade = Number(getVal('evasions-used')) || 0;
+      const clash = Number(getVal('clashes-used')) || 0;
 
-      lastKnownMetadataStr = JSON.stringify(meta);
+      await OBR.scene.items.updateItems([currentTokenId!], (items: Item[]) => {
+        for (let item of items) {
+          if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
+          
+          const meta = item.metadata[METADATA_ID] as Record<string, any>;
+          for (const [key, value] of Object.entries(updatesToPush)) {
+              meta[key] = value;
+          }
 
-      let trackers = (item.metadata["com.owl-trackers/trackers"] as OwlTracker[]) || [];
-      const defaultTrackers: OwlTracker[] = [
-          { id: generateId(), variant: "value-max", color: 6, value: willCurr, max: willMax, name: "Will" },
-          { id: generateId(), variant: "value-max", color: 2, value: hpCurr, max: hpMax, name: "HP" },
-          { id: generateId(), variant: "counter", color: 6, inlineMath: false, value: actions, name: "Actions" },
-          { id: generateId(), variant: "counter", color: 5, inlineMath: false, value: def, name: "DEF" },
-          { id: generateId(), variant: "counter", color: 1, inlineMath: false, value: spdef, name: "SP DEF" },
-          { id: generateId(), variant: "checkbox", color: 4, value: evade, name: "Evade" },
-          { id: generateId(), variant: "checkbox", color: 3, value: clash, name: "Clash" }
-      ];
+          lastKnownMetadataStr = JSON.stringify(meta);
 
-      if (trackers.length === 0) {
-          trackers = defaultTrackers;
-      } else {
-          trackers = JSON.parse(JSON.stringify(trackers));
-          defaultTrackers.forEach(dt => {
-              const existing = trackers.find((t: OwlTracker) => t.name === dt.name);
-              if (existing) {
-                  if (existing.name === 'HP') { existing.value = hpCurr; existing.max = hpMax; }
-                  if (existing.name === 'Will') { existing.value = willCurr; existing.max = willMax; }
-                  if (existing.name === 'Actions') { existing.value = actions; }
-                  if (existing.name === 'DEF') { existing.value = def; }
-                  if (existing.name === 'SP DEF') { existing.value = spdef; }
-                  if (existing.name === 'Evade') { existing.value = evade; }
-                  if (existing.name === 'Clash') { existing.value = clash; }
+          let trackers = (item.metadata["com.owl-trackers/trackers"] as OwlTracker[]) || [];
+          
+          const updateTracker = (name: string, variant: string, color: number, value: number, max?: number) => {
+              let t = trackers.find(x => x.name === name);
+              if (t) {
+                  t.variant = variant;
+                  t.value = value;
+                  if (max !== undefined) t.max = max;
+                  delete t.checked; // Scrub old broken checkbox data
               } else {
-                  trackers.push(dt);
+                  trackers.push({ id: generateId(), name, variant, color, value, max });
               }
-          });
-      }
-      item.metadata["com.owl-trackers/trackers"] = trackers;
-    }
-  });
+          };
+
+          updateTracker("Will", "value-max", 6, willCurr, willMax);
+          updateTracker("HP", "value-max", 2, hpCurr, hpMax);
+          updateTracker("Actions", "counter", 6, actions);
+          updateTracker("DEF", "counter", 5, def);
+          updateTracker("SP DEF", "counter", 1, spdef);
+          
+          // CONVERTED TO COUNTERS! No more X-Boxes!
+          updateTracker("Evade", "counter", 4, evade);
+          updateTracker("Clash", "counter", 3, clash);
+
+          item.metadata["com.owl-trackers/trackers"] = trackers;
+        }
+      });
+  }, 400); 
 }
 
 export async function saveMovesToToken(currentMoves: Move[]) {
