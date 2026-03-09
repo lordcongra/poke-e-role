@@ -184,11 +184,18 @@ export function buildCustomInfoRow(container: HTMLElement, info: CustomInfo) {
 
 export function renderTypeMatchups(typeStr: string) {
     const container = document.getElementById('type-matchup-container');
+    const lockedContainer = document.getElementById('locked-type-matchup-container');
+    
     if (!container) return;
+    
     container.innerHTML = '';
+    if (lockedContainer) lockedContainer.innerHTML = '';
 
-    if (!typeStr || (typeStr === "Normal" && !(document.getElementById('species') as HTMLInputElement)?.value)) {
-        container.appendChild(createEl('div', { style: 'color: #888; font-style: italic; text-align: center; padding-top: 10px;' }, ["Load a Pokémon to see matchups..."]));
+    // Check if we actually have a typing string to parse
+    if (!typeStr) {
+        const emptyMsg = createEl('div', { style: 'color: #888; font-style: italic; text-align: center; padding-top: 10px;' }, ["Load a Pokémon to see matchups..."]);
+        container.appendChild(emptyMsg);
+        if (lockedContainer) lockedContainer.appendChild(emptyMsg.cloneNode(true));
         return;
     }
 
@@ -226,6 +233,11 @@ export function renderTypeMatchups(typeStr: string) {
     buildGroup('0.5x', 0.5);
     buildGroup('0.25x', 0.25);
     buildGroup('0x', 0);
+    
+    // Mirror everything to the lock screen for players
+    if (lockedContainer) {
+        lockedContainer.innerHTML = container.innerHTML;
+    }
 }
 
 // --- SPINNERS & TOGGLES ---

@@ -690,6 +690,10 @@ async function loadDataFromToken(tokenId: string) {
     } else if (role === 'PLAYER' && isNPC) {
         document.getElementById('app')!.style.display = 'none';
         document.getElementById('gm-lock-screen')!.style.display = 'block';
+        
+        // This pushes the matchups to the player's lock screen before exiting!
+        renderTypeMatchups(data['typing'] || ""); 
+        
         setLoading(false); 
         return;
     } 
