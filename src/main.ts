@@ -682,7 +682,6 @@ async function loadDataFromToken(tokenId: string) {
     setLastMetadataStr(JSON.stringify(data)); 
 
     const role = await OBR.player.getRole();
-    // THE FIX: Forcing JS to strictly evaluate this as a string, no matter how OBR saved it!
     const isNPC = String(data['is-npc']) === 'true';
 
     if (role === 'GM') {
@@ -770,7 +769,7 @@ async function loadDataFromToken(tokenId: string) {
 
 const listenerInputs = document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('.sheet-save');
 listenerInputs.forEach(element => {
-  if (element.id === 'ability') return; 
+  if (element.id === 'ability' || element.id === 'is-npc') return; 
 
   element.addEventListener('input', () => calculateStats(currentExtraCategories, currentMoves));
   element.addEventListener('change', (e) => {
