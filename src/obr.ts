@@ -39,7 +39,7 @@ export async function sendToDicePlus(notation: string, rollType: string = "roll"
     }
 }
 
-// --- DEBOUNCER SYSTEM (Fixes flickering stats!) ---
+// --- DEBOUNCER SYSTEM ---
 let saveTimeout: ReturnType<typeof setTimeout>;
 let pendingUpdates: Record<string, any> = {};
 
@@ -61,7 +61,6 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
       const def = getDerivedVal('def-total');
       const spdef = getDerivedVal('spd-total');
       
-      // Calculate true/false based on if the user bumped the stat above 0
       const evadeChecked = getVal('evasions-used') > 0;
       const clashChecked = getVal('clashes-used') > 0;
 
@@ -78,10 +77,19 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
 
           let trackers = (item.metadata["com.owl-trackers/trackers"] as OwlTracker[]) || [];
           
-          // Rebuilt to EXACTLY match the raw JSON you provided
           const updateTracker = (name: string, variant: string, color: number, value: any, checked?: boolean, max?: number) => {
-              let t = trackers.find(x => x.name === name);
-              if (t) {
+              let tIndex = trackers.findIndex(x => x.name === name);
+              
+              // NUKE CORRUPTED DATA: If the variant doesn't match, destroy it!
+              if (tIndex !== -1) {
+                  if (trackers[tIndex].variant !== variant) {
+                      trackers.splice(tIndex, 1);
+                      tIndex = -1; // Force creation of a new one
+                  }
+              }
+
+              if (tIndex !== -1) {
+                  let t = trackers[tIndex];
                   t.variant = variant;
                   t.value = value;
                   
@@ -109,14 +117,14 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
           updateTracker("DEF", "counter", 5, def);
           updateTracker("SP DEF", "counter", 1, spdef);
           
-          // RESTORED TO CHECKBOXES! Passing static "false" for value, and the true/false variable for checked!
+          // These are now completely safe checkboxes
           updateTracker("Evade", "checkbox", 4, false, evadeChecked);
           updateTracker("Clash", "checkbox", 3, false, clashChecked);
 
           item.metadata["com.owl-trackers/trackers"] = trackers;
         }
       });
-  }, 150); 
+  }, 150); // 150ms delay kept!
 }
 
 export async function saveMovesToToken(currentMoves: Move[]) {
