@@ -168,7 +168,7 @@ document.getElementById('species')?.addEventListener('change', async (e) => {
     const typingInput = document.getElementById('typing') as HTMLInputElement;
     typingInput.value = typing;
     applyTypeStyle(typingInput, typing); 
-    renderTypeMatchups(typing); // Update Type Matchups visualizer
+    renderTypeMatchups(typing); 
 
     (document.getElementById('hp-base') as HTMLInputElement).value = String(hp);
     (document.getElementById('str-base') as HTMLInputElement).value = String(baseAttrs.Strength || 2);
@@ -238,7 +238,7 @@ document.getElementById('refresh-data-btn')?.addEventListener('click', async () 
     const typingInput = document.getElementById('typing') as HTMLInputElement;
     if (typingInput && typingInput.value) {
         applyTypeStyle(typingInput, typingInput.value);
-        renderTypeMatchups(typingInput.value); // Refresh Matchups!
+        renderTypeMatchups(typingInput.value); 
     }
 
     const pokemonName = (document.getElementById('species') as HTMLInputElement).value;
@@ -691,7 +691,6 @@ async function loadDataFromToken(tokenId: string) {
         document.getElementById('app')!.style.display = 'none';
         document.getElementById('gm-lock-screen')!.style.display = 'block';
         
-        // This pushes the matchups to the player's lock screen before exiting!
         renderTypeMatchups(data['typing'] || ""); 
         
         setLoading(false); 
@@ -774,9 +773,11 @@ document.getElementById('is-npc')?.addEventListener('change', (e) => {
     saveDataToToken('is-npc', (e.target as HTMLInputElement).checked.toString());
 });
 
+// THE FIX IS IN THIS BLOCK RIGHT HERE!
 const listenerInputs = document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('.sheet-save');
 listenerInputs.forEach(element => {
-  if (element.id === 'ability') return; 
+  // We added 'is-npc' to the ignore list so the generic saver stops overwriting the checkbox!
+  if (element.id === 'ability' || element.id === 'is-npc') return; 
 
   element.addEventListener('input', () => calculateStats(currentExtraCategories, currentMoves));
   element.addEventListener('change', (e) => {
