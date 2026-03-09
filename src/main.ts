@@ -9,7 +9,7 @@ import { buildMoveRow, buildInventoryRow, buildExtraCategoryHeader, buildExtraSk
 import { 
     METADATA_ID, setLoading, setLastMetadataStr, 
     sendToDicePlus, saveBatchDataToToken, saveMovesToToken, 
-    saveInventoryToToken, saveExtraSkillsToToken, setupOBR 
+    saveInventoryToToken, saveExtraSkillsToToken, setupOBR, currentTokenId
 } from './obr';
 
 let currentMoves: Move[] = [];
@@ -843,7 +843,13 @@ if (npcCheckbox) {
         saveDataToToken('is-npc', isChecked ? "true" : "false");
     });
 }
-
+document.getElementById('debug-trackers-btn')?.addEventListener('click', async () => {
+    const items = await OBR.scene.items.getItems([currentTokenId!]);
+    if (items.length > 0) {
+        const trackers = items[0].metadata["com.owl-trackers/trackers"];
+        prompt("Copy this data and paste it to me:", JSON.stringify(trackers));
+    }
+});
 // INITIALIZE
 loadUrlLists();
 setupSpinners();

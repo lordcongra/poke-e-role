@@ -39,23 +39,19 @@ export async function sendToDicePlus(notation: string, rollType: string = "roll"
     }
 }
 
-// --- NEW DEBOUNCER SYSTEM (Fixes flickering stats!) ---
+// --- DEBOUNCER SYSTEM (Fixes flickering stats!) ---
 let saveTimeout: ReturnType<typeof setTimeout>;
 let pendingUpdates: Record<string, any> = {};
 
 export async function saveBatchDataToToken(updates: Record<string, any>) {
   if (!currentTokenId || isLoading) return; 
 
-  // Queue all incoming changes
   Object.assign(pendingUpdates, updates);
-
-  // Restart the timer every time a new change comes in
   clearTimeout(saveTimeout);
   
-  // Wait 400ms after the user stops clicking before sending to OBR
   saveTimeout = setTimeout(async () => {
       const updatesToPush = { ...pendingUpdates };
-      pendingUpdates = {}; // Clear queue
+      pendingUpdates = {};
 
       const hpCurr = getVal('hp-curr');
       const hpMax = getDerivedVal('hp-max-display');
@@ -65,9 +61,9 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
       const def = getDerivedVal('def-total');
       const spdef = getDerivedVal('spd-total');
       
-      // Strict Numbers for the new Counters
-      const evade = Number(getVal('evasions-used')) || 0;
-      const clash = Number(getVal('clashes-used')) || 0;
+      // Calculate true/false based on if the user bumped the stat above 0
+      const evadeChecked = getVal('evasions-used') > 0;
+      const clashChecked = getVal('clashes-used') > 0;
 
       await OBR.scene.items.updateItems([currentTokenId!], (items: Item[]) => {
         for (let item of items) {
@@ -82,32 +78,45 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
 
           let trackers = (item.metadata["com.owl-trackers/trackers"] as OwlTracker[]) || [];
           
-          const updateTracker = (name: string, variant: string, color: number, value: number, max?: number) => {
+          // Rebuilt to EXACTLY match the raw JSON you provided
+          const updateTracker = (name: string, variant: string, color: number, value: any, checked?: boolean, max?: number) => {
               let t = trackers.find(x => x.name === name);
               if (t) {
                   t.variant = variant;
                   t.value = value;
+                  
+                  if (checked !== undefined) t.checked = checked;
+                  else delete t.checked;
+                  
                   if (max !== undefined) t.max = max;
-                  delete t.checked; // Scrub old broken checkbox data
+                  else delete t.max;
+                  
+                  if (variant === 'counter') t.inlineMath = false;
+                  else delete t.inlineMath;
+
               } else {
-                  trackers.push({ id: generateId(), name, variant, color, value, max });
+                  let newT: OwlTracker = { id: generateId(), name, variant, color, value };
+                  if (checked !== undefined) newT.checked = checked;
+                  if (max !== undefined) newT.max = max;
+                  if (variant === 'counter') newT.inlineMath = false;
+                  trackers.push(newT);
               }
           };
 
-          updateTracker("Will", "value-max", 6, willCurr, willMax);
-          updateTracker("HP", "value-max", 2, hpCurr, hpMax);
+          updateTracker("Will", "value-max", 6, willCurr, undefined, willMax);
+          updateTracker("HP", "value-max", 2, hpCurr, undefined, hpMax);
           updateTracker("Actions", "counter", 6, actions);
           updateTracker("DEF", "counter", 5, def);
           updateTracker("SP DEF", "counter", 1, spdef);
           
-          // CONVERTED TO COUNTERS! No more X-Boxes!
-          updateTracker("Evade", "counter", 4, evade);
-          updateTracker("Clash", "counter", 3, clash);
+          // RESTORED TO CHECKBOXES! Passing static "false" for value, and the true/false variable for checked!
+          updateTracker("Evade", "checkbox", 4, false, evadeChecked);
+          updateTracker("Clash", "checkbox", 3, false, clashChecked);
 
           item.metadata["com.owl-trackers/trackers"] = trackers;
         }
       });
-  }, 400); 
+  }, 150); 
 }
 
 export async function saveMovesToToken(currentMoves: Move[]) {
