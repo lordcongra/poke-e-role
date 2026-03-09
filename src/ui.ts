@@ -191,7 +191,6 @@ export function renderTypeMatchups(typeStr: string) {
     container.innerHTML = '';
     if (lockedContainer) lockedContainer.innerHTML = '';
 
-    // Check if we actually have a typing string to parse
     if (!typeStr) {
         const emptyMsg = createEl('div', { style: 'color: #888; font-style: italic; text-align: center; padding-top: 10px;' }, ["Load a Pokémon to see matchups..."]);
         container.appendChild(emptyMsg);
@@ -209,13 +208,8 @@ export function renderTypeMatchups(typeStr: string) {
     const buildGroup = (label: string, mult: number) => {
         if (groups[mult].length === 0) return;
         
-        // Main row layout: align-items to the top so the label stays aligned if badges wrap
         const groupDiv = createEl('div', { style: 'display: flex; gap: 8px; align-items: flex-start; margin-bottom: 6px;' });
-        
-        // Fixed-width label column
         const labelSpan = createEl('span', { innerText: label, style: 'width: 40px; font-weight: bold; color: var(--dark); text-align: right; flex-shrink: 0; padding-top: 2px;' });
-        
-        // Flexible badge column that handles the wrapping
         const badgesContainer = createEl('div', { style: 'display: flex; gap: 4px; flex-wrap: wrap; flex: 1;' });
         
         groups[mult].forEach(t => {
@@ -234,7 +228,6 @@ export function renderTypeMatchups(typeStr: string) {
     buildGroup('0.25x', 0.25);
     buildGroup('0x', 0);
     
-    // Mirror everything to the lock screen for players
     if (lockedContainer) {
         lockedContainer.innerHTML = container.innerHTML;
     }

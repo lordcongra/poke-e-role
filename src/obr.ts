@@ -39,7 +39,6 @@ export async function sendToDicePlus(notation: string, rollType: string = "roll"
     }
 }
 
-// FIX: Changed from string to any to accept Numbers and Booleans
 export async function saveBatchDataToToken(updates: Record<string, any>) {
   if (!currentTokenId || isLoading) return; 
 
@@ -57,7 +56,6 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
       
-      // FIX: Cast as 'any' to allow our mixed data types
       const meta = item.metadata[METADATA_ID] as Record<string, any>;
       for (const [key, value] of Object.entries(updates)) {
           meta[key] = value;
@@ -72,8 +70,8 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
           { id: generateId(), variant: "counter", color: 6, inlineMath: false, value: actions, name: "Actions" },
           { id: generateId(), variant: "counter", color: 5, inlineMath: false, value: def, name: "DEF" },
           { id: generateId(), variant: "counter", color: 1, inlineMath: false, value: spdef, name: "SP DEF" },
-          { id: generateId(), variant: "checkbox", color: 4, checked: evade, name: "Evade" },
-          { id: generateId(), variant: "checkbox", color: 3, checked: clash, name: "Clash" }
+          { id: generateId(), variant: "checkbox", color: 4, value: evade, name: "Evade" },
+          { id: generateId(), variant: "checkbox", color: 3, value: clash, name: "Clash" }
       ];
 
       if (trackers.length === 0) {
@@ -88,8 +86,8 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
                   if (existing.name === 'Actions') { existing.value = actions; }
                   if (existing.name === 'DEF') { existing.value = def; }
                   if (existing.name === 'SP DEF') { existing.value = spdef; }
-                  if (existing.name === 'Evade') { existing.checked = evade; }
-                  if (existing.name === 'Clash') { existing.checked = clash; }
+                  if (existing.name === 'Evade') { existing.value = evade; }
+                  if (existing.name === 'Clash') { existing.value = clash; }
               } else {
                   trackers.push(dt);
               }

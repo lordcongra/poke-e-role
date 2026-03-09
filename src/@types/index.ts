@@ -70,11 +70,12 @@ export const DAMAGE_STAT_MAPPING: Record<string, string> = {
     "Special": "spe",
     "Insight": "ins"
 };
+
 export interface OwlTracker {
     id: string;
     variant: string;
     color: number;
-    value?: number;
+    value?: number | boolean; // <--- THE FIX: Allows checkboxes to be true/false!
     max?: number;
     checked?: boolean;
     inlineMath?: boolean;
@@ -95,6 +96,7 @@ export interface DicePlusData {
     };
     error?: string;
 }
+
 export interface PokemonStats {
     HP?: number;
     Strength?: number;
@@ -137,6 +139,7 @@ export interface AbilityData {
     Effect?: string;
     Description?: string;
 }
+
 export interface CustomInfo {
     id: string;
     label: string;
