@@ -25,7 +25,7 @@ function saveDataToToken(id: string, value: any) {
     saveBatchDataToToken({ [id]: value });
 }
 
-// --- NEW: STRICT NUMBER SYNC FOR OWL TRACKERS ---
+// --- STRICT NUMBER SYNC FOR OWL TRACKERS ---
 function syncDerivedStats() {
     const updates: Record<string, any> = {};
     let hasChanges = false;
@@ -38,13 +38,11 @@ function syncDerivedStats() {
         }
     };
 
-    // Scrape all derived spans and push them as strict Numbers
     const spans = document.querySelectorAll<HTMLElement>('span[id$="-display"], span[id$="-total"], span[id$="-derived"], td[id$="-total"]');
     spans.forEach(span => {
         if (span.id) checkAndAdd(span.id, parseInt(span.innerText) || 0);
     });
 
-    // Make absolutely sure our Trackers are sent as true Numbers!
     ['actions-used', 'evasions-used', 'clashes-used', 'hp-curr', 'will-curr', 'hp-base', 'will-base'].forEach(id => {
         const el = document.getElementById(id) as HTMLInputElement;
         if (el) checkAndAdd(id, parseFloat(el.value) || 0);
@@ -262,7 +260,6 @@ document.getElementById('sheet-type')?.addEventListener('change', (e) => {
     calculateStats(currentExtraCategories, currentMoves);
 });
 
-// --- FIXED DATA REFRESH BUTTON ---
 document.getElementById('refresh-data-btn')?.addEventListener('click', async () => {
     const btn = document.getElementById('refresh-data-btn') as HTMLButtonElement;
     btn.innerText = "⏳ Refreshing...";
@@ -625,7 +622,7 @@ function rollAccuracy(move: Move) {
   if (actions < 5) {
       actions++;
       (document.getElementById('actions-used') as HTMLInputElement).value = actions.toString();
-      saveDataToToken('actions-used', actions); // Save as strict Number
+      saveDataToToken('actions-used', actions); 
       currentTokenData['actions-used'] = actions;
   }
 
@@ -668,18 +665,18 @@ function rollGeneric(actionName: string, pool: number, incrementEvade = false, i
       let a = getVal('actions-used');
       if (a < 5) {
          (document.getElementById('actions-used') as HTMLInputElement).value = (a+1).toString();
-         batchUpdates['actions-used'] = a + 1; // Strict Number
+         batchUpdates['actions-used'] = a + 1; 
       }
    }
    if (incrementEvade) {
       let e = getVal('evasions-used');
       (document.getElementById('evasions-used') as HTMLInputElement).value = (e+1).toString();
-      batchUpdates['evasions-used'] = e + 1; // Strict Number
+      batchUpdates['evasions-used'] = e + 1; 
    }
    if (incrementClash) {
       let c = getVal('clashes-used');
       (document.getElementById('clashes-used') as HTMLInputElement).value = (c+1).toString();
-      batchUpdates['clashes-used'] = c + 1; // Strict Number
+      batchUpdates['clashes-used'] = c + 1; 
    }
 
    if (Object.keys(batchUpdates).length > 0) {
@@ -709,7 +706,7 @@ document.getElementById('reset-round-btn')?.addEventListener('click', () => {
     (document.getElementById('actions-used') as HTMLInputElement).value = "0";
     (document.getElementById('evasions-used') as HTMLInputElement).value = "0";
     (document.getElementById('clashes-used') as HTMLInputElement).value = "0";
-    const updates = { 'actions-used': 0, 'evasions-used': 0, 'clashes-used': 0 }; // Strict Numbers
+    const updates = { 'actions-used': 0, 'evasions-used': 0, 'clashes-used': 0 }; 
     Object.assign(currentTokenData, updates);
     saveBatchDataToToken(updates);
 });
@@ -723,7 +720,6 @@ async function loadDataFromToken(tokenId: string) {
     const token = items[0];
     const data = (token.metadata[METADATA_ID] as Record<string, any>) || {};
     
-    // Store in global cache for safe syncing
     currentTokenData = data; 
     setLastMetadataStr(JSON.stringify(data)); 
 
@@ -784,7 +780,6 @@ async function loadDataFromToken(tokenId: string) {
       } 
       else {
           element.value = element.defaultValue; 
-          // Force numbers if blank!
           initialUpdates[id] = element.type === 'number' ? (parseFloat(element.value) || 0) : element.value; 
       }
 
@@ -813,14 +808,12 @@ async function loadDataFromToken(tokenId: string) {
     renderCustomInfo();
     renderTypeMatchups(data['typing'] || ""); 
     
-    // Process blank fields securely
     if (Object.keys(initialUpdates).length > 0) {
         Object.assign(currentTokenData, initialUpdates);
         saveBatchDataToToken(initialUpdates);
     }
 
     calculateStats(currentExtraCategories, currentMoves);
-    // Push derived calculations right back to token so Owl Trackers sees them!
     syncDerivedStats();
   }
   setLoading(false); 
@@ -828,14 +821,14 @@ async function loadDataFromToken(tokenId: string) {
 
 const listenerInputs = document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('.sheet-save');
 listenerInputs.forEach(element => {
-  if (element.id === 'ability' || element.id === 'is-npc') return; 
+  // STRICT IGNORE LIST: Prevents double-saves from wiping out API typings
+  if (['ability', 'is-npc', 'species', 'typing'].includes(element.id)) return; 
 
   element.addEventListener('input', () => calculateStats(currentExtraCategories, currentMoves));
   
   element.addEventListener('change', (e) => {
       const target = e.target as HTMLInputElement;
       
-      // The crucial safeguard! Forces numbers to save as JSON numbers!
       let valToSave: any = target.value;
       if (target.type === 'number') {
           valToSave = parseFloat(target.value) || 0;
@@ -844,7 +837,6 @@ listenerInputs.forEach(element => {
       currentTokenData[target.id] = valToSave;
       saveDataToToken(target.id, valToSave);
       
-      // Recalculate and push any changes to Max Stats right away
       syncDerivedStats(); 
   });
 });
