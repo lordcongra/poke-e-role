@@ -18,8 +18,41 @@ let currentExtraCategories: ExtraCategory[] = [];
 let currentStatuses: string[] = ["Healthy"];
 let currentCustomInfo: CustomInfo[] = [];
 
-function saveDataToToken(id: string, value: string) {
+// Global cache to prevent infinite loops when auto-syncing
+let currentTokenData: Record<string, any> = {};
+
+function saveDataToToken(id: string, value: any) {
     saveBatchDataToToken({ [id]: value });
+}
+
+// --- NEW: STRICT NUMBER SYNC FOR OWL TRACKERS ---
+function syncDerivedStats() {
+    const updates: Record<string, any> = {};
+    let hasChanges = false;
+    
+    const checkAndAdd = (id: string, val: number) => {
+        if (currentTokenData[id] !== val) {
+            updates[id] = val;
+            hasChanges = true;
+            currentTokenData[id] = val;
+        }
+    };
+
+    // Scrape all derived spans and push them as strict Numbers
+    const spans = document.querySelectorAll<HTMLElement>('span[id$="-display"], span[id$="-total"], span[id$="-derived"], td[id$="-total"]');
+    spans.forEach(span => {
+        if (span.id) checkAndAdd(span.id, parseInt(span.innerText) || 0);
+    });
+
+    // Make absolutely sure our Trackers are sent as true Numbers!
+    ['actions-used', 'evasions-used', 'clashes-used', 'hp-curr', 'will-curr', 'hp-base', 'will-base'].forEach(id => {
+        const el = document.getElementById(id) as HTMLInputElement;
+        if (el) checkAndAdd(id, parseFloat(el.value) || 0);
+    });
+
+    if (hasChanges) {
+        saveBatchDataToToken(updates);
+    }
 }
 
 // --- DYNAMIC STATUS SYSTEM ---
@@ -177,11 +210,11 @@ document.getElementById('species')?.addEventListener('change', async (e) => {
     (document.getElementById('spe-base') as HTMLInputElement).value = String(baseAttrs.Special || 2);
     (document.getElementById('ins-base') as HTMLInputElement).value = String(baseAttrs.Insight || 1);
 
-    const batchUpdates: Record<string, string> = {
-        'species': pokemonName, 'typing': typing, 'hp-base': String(hp),
-        'str-base': String(baseAttrs.Strength || 2), 'dex-base': String(baseAttrs.Dexterity || 2), 
-        'vit-base': String(baseAttrs.Vitality || 2), 'spe-base': String(baseAttrs.Special || 2), 
-        'ins-base': String(baseAttrs.Insight || 1), 'ability': defaultAbility,
+    const batchUpdates: Record<string, any> = {
+        'species': pokemonName, 'typing': typing, 'hp-base': hp,
+        'str-base': baseAttrs.Strength || 2, 'dex-base': baseAttrs.Dexterity || 2, 
+        'vit-base': baseAttrs.Vitality || 2, 'spe-base': baseAttrs.Special || 2, 
+        'ins-base': baseAttrs.Insight || 1, 'ability': defaultAbility,
         'ability-list': abilities.join(',')
     };
 
@@ -199,16 +232,18 @@ document.getElementById('species')?.addEventListener('change', async (e) => {
         ALL_SKILLS.forEach((skill: string) => {
             const baseInput = document.getElementById(`${skill}-base`) as HTMLInputElement;
             const buffInput = document.getElementById(`${skill}-buff`) as HTMLInputElement;
-            if(baseInput) { baseInput.value = "0"; batchUpdates[`skill-base`] = "0"; }
-            if(buffInput) { buffInput.value = "0"; batchUpdates[`skill-buff`] = "0"; }
+            if(baseInput) { baseInput.value = "0"; batchUpdates[`${skill}-base`] = 0; }
+            if(buffInput) { buffInput.value = "0"; batchUpdates[`${skill}-buff`] = 0; }
         });
         currentMoves = [];
         renderMoves();
         batchUpdates['moves-data'] = "[]";
     }
 
+    Object.assign(currentTokenData, batchUpdates);
     calculateStats(currentExtraCategories, currentMoves);
     saveBatchDataToToken(batchUpdates); 
+    syncDerivedStats();
 });
 
 document.getElementById('ability')?.addEventListener('change', async (e) => {
@@ -233,7 +268,7 @@ document.getElementById('refresh-data-btn')?.addEventListener('click', async () 
     btn.innerText = "⏳ Refreshing...";
     btn.disabled = true;
 
-    const batchUpdates: Record<string, string> = {};
+    const batchUpdates: Record<string, any> = {};
 
     const typingInput = document.getElementById('typing') as HTMLInputElement;
     if (typingInput && typingInput.value) {
@@ -308,6 +343,7 @@ document.getElementById('refresh-data-btn')?.addEventListener('click', async () 
 
     renderMoves();
     batchUpdates['moves-data'] = JSON.stringify(currentMoves);
+    Object.assign(currentTokenData, batchUpdates);
     saveBatchDataToToken(batchUpdates); 
     
     btn.innerText = "✅ Done!";
@@ -369,6 +405,7 @@ function renderExtraSkills() {
                     saveExtraSkillsToToken(currentExtraCategories);
                 }
             }
+            syncDerivedStats();
         });
     });
 
@@ -588,7 +625,8 @@ function rollAccuracy(move: Move) {
   if (actions < 5) {
       actions++;
       (document.getElementById('actions-used') as HTMLInputElement).value = actions.toString();
-      saveDataToToken('actions-used', actions.toString());
+      saveDataToToken('actions-used', actions); // Save as strict Number
+      currentTokenData['actions-used'] = actions;
   }
 
   const notation = succMod !== 0 ? `${dicePool}d6>3+${succMod}` : `${dicePool}d6>3`;
@@ -624,27 +662,30 @@ function rollDamage(move: Move) {
 
 function rollGeneric(actionName: string, pool: number, incrementEvade = false, incrementClash = false, incrementAction = false) {
    const nickname = (document.getElementById('nickname') as HTMLInputElement).value || "Someone";
-   const batchUpdates: Record<string, string> = {};
+   const batchUpdates: Record<string, any> = {};
    
    if (incrementAction) {
       let a = getVal('actions-used');
       if (a < 5) {
          (document.getElementById('actions-used') as HTMLInputElement).value = (a+1).toString();
-         batchUpdates['actions-used'] = (a+1).toString();
+         batchUpdates['actions-used'] = a + 1; // Strict Number
       }
    }
    if (incrementEvade) {
       let e = getVal('evasions-used');
       (document.getElementById('evasions-used') as HTMLInputElement).value = (e+1).toString();
-      batchUpdates['evasions-used'] = (e+1).toString();
+      batchUpdates['evasions-used'] = e + 1; // Strict Number
    }
    if (incrementClash) {
       let c = getVal('clashes-used');
       (document.getElementById('clashes-used') as HTMLInputElement).value = (c+1).toString();
-      batchUpdates['clashes-used'] = (c+1).toString();
+      batchUpdates['clashes-used'] = c + 1; // Strict Number
    }
 
-   if (Object.keys(batchUpdates).length > 0) saveBatchDataToToken(batchUpdates);
+   if (Object.keys(batchUpdates).length > 0) {
+       Object.assign(currentTokenData, batchUpdates);
+       saveBatchDataToToken(batchUpdates);
+   }
    if (pool > 0) sendToDicePlus(`${pool}d6>3 # ${nickname}: ${actionName}`);
 }
 
@@ -668,7 +709,9 @@ document.getElementById('reset-round-btn')?.addEventListener('click', () => {
     (document.getElementById('actions-used') as HTMLInputElement).value = "0";
     (document.getElementById('evasions-used') as HTMLInputElement).value = "0";
     (document.getElementById('clashes-used') as HTMLInputElement).value = "0";
-    saveBatchDataToToken({ 'actions-used': "0", 'evasions-used': "0", 'clashes-used': "0" });
+    const updates = { 'actions-used': 0, 'evasions-used': 0, 'clashes-used': 0 }; // Strict Numbers
+    Object.assign(currentTokenData, updates);
+    saveBatchDataToToken(updates);
 });
 
 // --- DATA INJECTION ---
@@ -678,7 +721,10 @@ async function loadDataFromToken(tokenId: string) {
   
   if (items.length > 0) {
     const token = items[0];
-    const data = (token.metadata[METADATA_ID] as Record<string, string>) || {};
+    const data = (token.metadata[METADATA_ID] as Record<string, any>) || {};
+    
+    // Store in global cache for safe syncing
+    currentTokenData = data; 
     setLastMetadataStr(JSON.stringify(data)); 
 
     const role = await OBR.player.getRole();
@@ -700,9 +746,7 @@ async function loadDataFromToken(tokenId: string) {
     if (lockScreen) lockScreen.style.display = 'none';
     
     const sheetInputs = document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('.sheet-save');
-    
-    // NEW: We prepare to hydrate the token with missing defaults to fix Owl Trackers!
-    const initialUpdates: Record<string, string> = {}; 
+    const initialUpdates: Record<string, any> = {}; 
 
     sheetInputs.forEach(element => {
       const isDynamic = ['move-input', 'inv-input', 'cat-name-input', 'extra-skill-name', 'extra-skill-base', 'extra-skill-buff', 'skill-label'].some((cls: string) => element.classList.contains(cls));
@@ -740,7 +784,8 @@ async function loadDataFromToken(tokenId: string) {
       } 
       else {
           element.value = element.defaultValue; 
-          initialUpdates[id] = element.value; 
+          // Force numbers if blank!
+          initialUpdates[id] = element.type === 'number' ? (parseFloat(element.value) || 0) : element.value; 
       }
 
       if (id === 'typing') applyTypeStyle(element, element.value);
@@ -767,13 +812,16 @@ async function loadDataFromToken(tokenId: string) {
     renderStatuses();
     renderCustomInfo();
     renderTypeMatchups(data['typing'] || ""); 
-    calculateStats(currentExtraCategories, currentMoves);
-
-    // NEW: Automatically push any missing default values to the Token right now!
-    // This entirely prevents the Owl Trackers "X-box" bug!
+    
+    // Process blank fields securely
     if (Object.keys(initialUpdates).length > 0) {
+        Object.assign(currentTokenData, initialUpdates);
         saveBatchDataToToken(initialUpdates);
     }
+
+    calculateStats(currentExtraCategories, currentMoves);
+    // Push derived calculations right back to token so Owl Trackers sees them!
+    syncDerivedStats();
   }
   setLoading(false); 
 }
@@ -783,9 +831,21 @@ listenerInputs.forEach(element => {
   if (element.id === 'ability' || element.id === 'is-npc') return; 
 
   element.addEventListener('input', () => calculateStats(currentExtraCategories, currentMoves));
+  
   element.addEventListener('change', (e) => {
       const target = e.target as HTMLInputElement;
-      saveDataToToken(target.id, target.value);
+      
+      // The crucial safeguard! Forces numbers to save as JSON numbers!
+      let valToSave: any = target.value;
+      if (target.type === 'number') {
+          valToSave = parseFloat(target.value) || 0;
+      }
+      
+      currentTokenData[target.id] = valToSave;
+      saveDataToToken(target.id, valToSave);
+      
+      // Recalculate and push any changes to Max Stats right away
+      syncDerivedStats(); 
   });
 });
 

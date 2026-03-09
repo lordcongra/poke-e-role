@@ -39,7 +39,8 @@ export async function sendToDicePlus(notation: string, rollType: string = "roll"
     }
 }
 
-export async function saveBatchDataToToken(updates: Record<string, string>) {
+// FIX: Changed from string to any to accept Numbers and Booleans
+export async function saveBatchDataToToken(updates: Record<string, any>) {
   if (!currentTokenId || isLoading) return; 
 
   const hpCurr = getVal('hp-curr');
@@ -55,7 +56,9 @@ export async function saveBatchDataToToken(updates: Record<string, string>) {
   await OBR.scene.items.updateItems([currentTokenId], (items: Item[]) => {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
-      const meta = item.metadata[METADATA_ID] as Record<string, string>;
+      
+      // FIX: Cast as 'any' to allow our mixed data types
+      const meta = item.metadata[METADATA_ID] as Record<string, any>;
       for (const [key, value] of Object.entries(updates)) {
           meta[key] = value;
       }
@@ -102,7 +105,7 @@ export async function saveMovesToToken(currentMoves: Move[]) {
   await OBR.scene.items.updateItems([currentTokenId], (items: Item[]) => {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
-      (item.metadata[METADATA_ID] as Record<string, string>)['moves-data'] = JSON.stringify(currentMoves);
+      (item.metadata[METADATA_ID] as Record<string, any>)['moves-data'] = JSON.stringify(currentMoves);
       lastKnownMetadataStr = JSON.stringify(item.metadata[METADATA_ID]);
     }
   });
@@ -113,7 +116,7 @@ export async function saveInventoryToToken(currentInventory: InventoryItem[]) {
   await OBR.scene.items.updateItems([currentTokenId], (items: Item[]) => {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
-      (item.metadata[METADATA_ID] as Record<string, string>)['inv-data'] = JSON.stringify(currentInventory);
+      (item.metadata[METADATA_ID] as Record<string, any>)['inv-data'] = JSON.stringify(currentInventory);
       lastKnownMetadataStr = JSON.stringify(item.metadata[METADATA_ID]);
     }
   });
@@ -124,7 +127,7 @@ export async function saveExtraSkillsToToken(currentExtraCategories: ExtraCatego
   await OBR.scene.items.updateItems([currentTokenId], (items: Item[]) => {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
-      (item.metadata[METADATA_ID] as Record<string, string>)['extra-skills-data'] = JSON.stringify(currentExtraCategories);
+      (item.metadata[METADATA_ID] as Record<string, any>)['extra-skills-data'] = JSON.stringify(currentExtraCategories);
       lastKnownMetadataStr = JSON.stringify(item.metadata[METADATA_ID]);
     }
   });
