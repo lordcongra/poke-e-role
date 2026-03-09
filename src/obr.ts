@@ -75,17 +75,16 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
 
           lastKnownMetadataStr = JSON.stringify(meta);
 
-          let trackers = (item.metadata["com.owl-trackers/trackers"] as OwlTracker[]) || [];
+          // Deep Clone to protect active memory
+          const rawTrackers = item.metadata["com.owl-trackers/trackers"];
+          let trackers: OwlTracker[] = rawTrackers ? JSON.parse(JSON.stringify(rawTrackers)) : [];
           
           const updateTracker = (name: string, variant: string, color: number, value: any, checked?: boolean, max?: number) => {
               let tIndex = trackers.findIndex(x => x.name === name);
               
-              // NUKE CORRUPTED DATA: If the variant doesn't match, destroy it!
-              if (tIndex !== -1) {
-                  if (trackers[tIndex].variant !== variant) {
-                      trackers.splice(tIndex, 1);
-                      tIndex = -1; // Force creation of a new one
-                  }
+              if (tIndex !== -1 && trackers[tIndex].variant !== variant) {
+                  trackers.splice(tIndex, 1);
+                  tIndex = -1; 
               }
 
               if (tIndex !== -1) {
@@ -117,14 +116,32 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
           updateTracker("DEF", "counter", 5, def);
           updateTracker("SP DEF", "counter", 1, spdef);
           
-          // These are now completely safe checkboxes
           updateTracker("Evade", "checkbox", 4, false, evadeChecked);
           updateTracker("Clash", "checkbox", 3, false, clashChecked);
 
           item.metadata["com.owl-trackers/trackers"] = trackers;
         }
       });
-  }, 150); // 150ms delay kept!
+  }, 150); 
+}
+
+// --- THE DEFIBRILLATOR ---
+export async function repairTrackers() {
+    if (!currentTokenId || isLoading) return;
+    
+    // Step 1: Wipe Evade and Clash completely to force Owl Trackers to unmount the crashed UI
+    await OBR.scene.items.updateItems([currentTokenId], (items: Item[]) => {
+        for (let item of items) {
+            let trackers = (item.metadata["com.owl-trackers/trackers"] as OwlTracker[]) || [];
+            trackers = trackers.filter(t => t.name !== "Evade" && t.name !== "Clash");
+            item.metadata["com.owl-trackers/trackers"] = trackers;
+        }
+    });
+
+    // Step 2: Wait a fraction of a second, then trigger a normal save to recreate them with fresh IDs
+    setTimeout(() => {
+        saveBatchDataToToken({ "_force_rebuild": Date.now() }); 
+    }, 300);
 }
 
 export async function saveMovesToToken(currentMoves: Move[]) {

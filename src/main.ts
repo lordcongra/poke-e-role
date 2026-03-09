@@ -9,7 +9,7 @@ import { buildMoveRow, buildInventoryRow, buildExtraCategoryHeader, buildExtraSk
 import { 
     METADATA_ID, setLoading, setLastMetadataStr, 
     sendToDicePlus, saveBatchDataToToken, saveMovesToToken, 
-    saveInventoryToToken, saveExtraSkillsToToken, setupOBR, currentTokenId
+    saveInventoryToToken, saveExtraSkillsToToken, setupOBR, repairTrackers
 } from './obr';
 
 let currentMoves: Move[] = [];
@@ -336,7 +336,12 @@ document.getElementById('refresh-data-btn')?.addEventListener('click', async () 
     renderMoves();
     batchUpdates['moves-data'] = JSON.stringify(currentMoves);
     Object.assign(currentTokenData, batchUpdates);
+    
     saveBatchDataToToken(batchUpdates); 
+    
+    // --- DEFIBRILLATOR FIRE ---
+    syncDerivedStats(); 
+    repairTrackers(); 
     
     btn.innerText = "✅ Done!";
     setTimeout(() => {
@@ -802,21 +807,23 @@ async function loadDataFromToken(tokenId: string) {
     renderStatuses();
     renderCustomInfo();
     renderTypeMatchups(data['typing'] || ""); 
-    
+    calculateStats(currentExtraCategories, currentMoves);
+
+    setLoading(false);
+
     if (Object.keys(initialUpdates).length > 0) {
         Object.assign(currentTokenData, initialUpdates);
         saveBatchDataToToken(initialUpdates);
     }
-
-    calculateStats(currentExtraCategories, currentMoves);
+    
     syncDerivedStats();
+    return; 
   }
   setLoading(false); 
 }
 
 const listenerInputs = document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('.sheet-save');
 listenerInputs.forEach(element => {
-  // IGNORE LIST: Protects the API fetching system from getting overwritten by rapid auto-saves
   if (['ability', 'is-npc', 'species', 'typing'].includes(element.id)) return; 
 
   element.addEventListener('input', () => calculateStats(currentExtraCategories, currentMoves));
@@ -843,13 +850,7 @@ if (npcCheckbox) {
         saveDataToToken('is-npc', isChecked ? "true" : "false");
     });
 }
-document.getElementById('debug-trackers-btn')?.addEventListener('click', async () => {
-    const items = await OBR.scene.items.getItems([currentTokenId!]);
-    if (items.length > 0) {
-        const trackers = items[0].metadata["com.owl-trackers/trackers"];
-        prompt("Copy this data and paste it to me:", JSON.stringify(trackers));
-    }
-});
+
 // INITIALIZE
 loadUrlLists();
 setupSpinners();
