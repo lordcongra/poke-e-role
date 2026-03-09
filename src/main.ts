@@ -701,6 +701,9 @@ async function loadDataFromToken(tokenId: string) {
     
     const sheetInputs = document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('.sheet-save');
     
+    // NEW: We prepare to hydrate the token with missing defaults to fix Owl Trackers!
+    const initialUpdates: Record<string, string> = {}; 
+
     sheetInputs.forEach(element => {
       const isDynamic = ['move-input', 'inv-input', 'cat-name-input', 'extra-skill-name', 'extra-skill-base', 'extra-skill-buff', 'skill-label'].some((cls: string) => element.classList.contains(cls));
       if (isDynamic) return;
@@ -732,10 +735,12 @@ async function loadDataFromToken(tokenId: string) {
           element.value = val;
       } 
       else if (element instanceof HTMLSelectElement) {
-          element.value = element.querySelector('option[selected]')?.getAttribute('value') || '';
+          element.value = element.querySelector('option[selected]')?.getAttribute('value') || element.options[0]?.value || '';
+          initialUpdates[id] = element.value; 
       } 
       else {
           element.value = element.defaultValue; 
+          initialUpdates[id] = element.value; 
       }
 
       if (id === 'typing') applyTypeStyle(element, element.value);
@@ -763,6 +768,12 @@ async function loadDataFromToken(tokenId: string) {
     renderCustomInfo();
     renderTypeMatchups(data['typing'] || ""); 
     calculateStats(currentExtraCategories, currentMoves);
+
+    // NEW: Automatically push any missing default values to the Token right now!
+    // This entirely prevents the Owl Trackers "X-box" bug!
+    if (Object.keys(initialUpdates).length > 0) {
+        saveBatchDataToToken(initialUpdates);
+    }
   }
   setLoading(false); 
 }
@@ -778,7 +789,6 @@ listenerInputs.forEach(element => {
   });
 });
 
-// THE FIX: Specific, isolated listener just for the NPC checkbox!
 const npcCheckbox = document.getElementById('is-npc') as HTMLInputElement;
 if (npcCheckbox) {
     npcCheckbox.addEventListener('change', (e) => {
