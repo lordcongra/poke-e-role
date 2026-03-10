@@ -1,25 +1,29 @@
 import './style.css';
 import OBR from "@owlbear-rodeo/sdk";
-import type { Move, InventoryItem, ExtraCategory, ExtraSkill, CustomInfo } from './@types/index';
-import { ATTRIBUTE_MAPPING } from './@types/index';
+import type { Move, InventoryItem, ExtraCategory, CustomInfo } from './@types/index';
 import { ALL_SKILLS, getVal, getDerivedVal, generateId } from './utils';
-import { calculateStats, updateMoveDisplays } from './math';
-import { loadUrlLists, fetchPokemonData, fetchMoveData, fetchAbilityData } from './api';
-import { buildMoveRow, buildInventoryRow, buildExtraCategoryHeader, buildExtraSkillRow, setupSpinners, updateSheetTypeUI, applyTypeStyle, buildCustomInfoRow, renderTypeMatchups } from './ui';
+import { calculateStats } from './math';
+import { loadUrlLists, fetchPokemonData, fetchAbilityData, populateLearnset, populateMoveDatalist } from './api';
+import { 
+    setupSpinners, updateSheetTypeUI, applyTypeStyle, 
+    renderTypeMatchups, renderStatuses, renderCustomInfo, 
+    renderInventory, renderExtraSkills, renderMoves 
+} from './ui';
 import { 
     METADATA_ID, setLoading, setLastMetadataStr, 
     sendToDicePlus, saveBatchDataToToken, saveMovesToToken, 
     saveInventoryToToken, saveExtraSkillsToToken, setupOBR, repairTrackers
 } from './obr';
 
+// --- STATE MANAGEMENT ---
 let currentMoves: Move[] = [];
 let currentInventory: InventoryItem[] = [];
 let currentExtraCategories: ExtraCategory[] = [];
 let currentStatuses: string[] = ["Healthy"];
 let currentCustomInfo: CustomInfo[] = [];
-
 let currentTokenData: Record<string, any> = {};
 
+// --- GLOBAL HELPERS ---
 function saveDataToToken(id: string, value: any) {
     saveBatchDataToToken({ [id]: value });
 }
@@ -28,7 +32,8 @@ function syncDerivedStats() {
     const updates: Record<string, any> = {};
     let hasChanges = false;
     
-    const checkAndAdd = (id: string, val: number) => {
+    // Changed val to 'any' to cleanly handle our new booleans
+    const checkAndAdd = (id: string, val: any) => {
         if (currentTokenData[id] !== val) {
             updates[id] = val;
             hasChanges = true;
@@ -41,9 +46,14 @@ function syncDerivedStats() {
         if (span.id) checkAndAdd(span.id, parseInt(span.innerText) || 0);
     });
 
-    ['actions-used', 'evasions-used', 'clashes-used', 'hp-curr', 'will-curr', 'hp-base', 'will-base'].forEach(id => {
+    ['actions-used', 'hp-curr', 'will-curr', 'hp-base', 'will-base'].forEach(id => {
         const el = document.getElementById(id) as HTMLInputElement;
         if (el) checkAndAdd(id, parseFloat(el.value) || 0);
+    });
+
+    ['evasions-used', 'clashes-used'].forEach(id => {
+        const el = document.getElementById(id) as HTMLInputElement;
+        if (el) checkAndAdd(id, el.checked);
     });
 
     if (hasChanges) {
@@ -51,104 +61,72 @@ function syncDerivedStats() {
     }
 }
 
-function renderStatuses() {
-    const container = document.getElementById('status-container');
-    if (!container) return;
-    container.innerHTML = '';
-    
-    const options = ["Healthy", "1st Degree Burn", "2nd Degree Burn", "3rd Degree Burn", "Badly Poisoned", "Confusion", "Disable", "Flinch", "Frozen Solid", "In Love", "Paralysis", "Poison", "Sleep"];
-
-    currentStatuses.forEach((status, index) => {
-        const wrapper = document.createElement('div');
-        wrapper.style.display = 'flex';
-        wrapper.style.gap = '2px';
-
-        const select = document.createElement('select');
-        select.style.flex = '1';
-        select.style.border = '1px solid var(--border)';
-        select.style.fontSize = '0.75rem';
-        
-        options.forEach(opt => {
-            const el = document.createElement('option');
-            el.value = opt;
-            el.text = opt;
-            if (opt === status) el.selected = true;
-            select.appendChild(el);
-        });
-
-        select.addEventListener('change', (e) => {
-            currentStatuses[index] = (e.target as HTMLSelectElement).value;
-            saveDataToToken('status-list', JSON.stringify(currentStatuses));
-        });
-
-        wrapper.appendChild(select);
-
-        if (index > 0) {
-            const delBtn = document.createElement('button');
-            delBtn.innerText = 'X';
-            delBtn.className = 'action-button action-button--red';
-            delBtn.style.padding = '0 4px';
-            delBtn.onclick = () => {
-                currentStatuses.splice(index, 1);
-                renderStatuses();
-                saveDataToToken('status-list', JSON.stringify(currentStatuses));
-            };
-            wrapper.appendChild(delBtn);
-        }
-        
-        container.appendChild(wrapper);
-    });
+function reRenderMoves() {
+    renderMoves(currentMoves, currentExtraCategories, saveMovesToToken, rollAccuracy, rollDamage);
 }
+
+// --- TOP-LEVEL BUTTON LISTENERS ---
+document.getElementById('toggle-learnset-btn')?.addEventListener('click', () => {
+    const container = document.getElementById('learnset-container');
+    const btn = document.getElementById('toggle-learnset-btn');
+    if (container && btn) {
+        if (container.style.display === 'none') {
+            container.style.display = 'block';
+            btn.innerText = "📖 Hide Learnset";
+        } else {
+            container.style.display = 'none';
+            btn.innerText = "📖 View Learnset";
+        }
+    }
+});
 
 document.getElementById('add-status-btn')?.addEventListener('click', () => {
     currentStatuses.push("Healthy");
-    renderStatuses();
+    renderStatuses(currentStatuses, saveDataToToken);
     saveDataToToken('status-list', JSON.stringify(currentStatuses));
 });
 
-function renderCustomInfo() {
-    const container = document.getElementById('custom-info-container');
-    if (!container) return;
-    container.innerHTML = '';
-
-    currentCustomInfo.forEach(info => {
-        buildCustomInfoRow(container, info);
-    });
-
-    container.querySelectorAll('input').forEach(input => {
-        input.addEventListener('change', (e) => {
-            const target = e.target as HTMLInputElement;
-            const id = target.dataset.id;
-            const field = target.dataset.field as keyof CustomInfo;
-            const item = currentCustomInfo.find(i => i.id === id);
-            if (item) {
-                item[field] = target.value;
-                saveDataToToken('custom-info-data', JSON.stringify(currentCustomInfo));
-            }
-        });
-    });
-
-    container.querySelectorAll('.del-info-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const id = (e.currentTarget as HTMLButtonElement).dataset.id;
-            currentCustomInfo = currentCustomInfo.filter(i => i.id !== id);
-            renderCustomInfo();
-            saveDataToToken('custom-info-data', JSON.stringify(currentCustomInfo));
-        });
-    });
-}
-
 document.getElementById('add-custom-info-btn')?.addEventListener('click', () => {
     currentCustomInfo.push({ id: generateId(), label: 'New Field', value: '' });
-    renderCustomInfo();
+    renderCustomInfo(currentCustomInfo, saveDataToToken);
     saveDataToToken('custom-info-data', JSON.stringify(currentCustomInfo));
 });
 
+document.getElementById('add-cat-btn')?.addEventListener('click', () => {
+    const categoryId = "cat_" + generateId();
+    currentExtraCategories.push({
+        id: categoryId, name: "EXTRA",
+        skills: [
+            { id: categoryId + "_1", name: "", base: 0, buff: 0 }, { id: categoryId + "_2", name: "", base: 0, buff: 0 },
+            { id: categoryId + "_3", name: "", base: 0, buff: 0 }, { id: categoryId + "_4", name: "", base: 0, buff: 0 }
+        ]
+    });
+    renderExtraSkills(currentExtraCategories, currentMoves, saveExtraSkillsToToken, syncDerivedStats, reRenderMoves);
+    reRenderMoves();
+    saveExtraSkillsToToken(currentExtraCategories);
+});
 
+document.getElementById('add-move-btn')?.addEventListener('click', () => {
+  if (currentMoves.length >= 20) { alert("You've reached the max of 20 moves."); return; }
+  currentMoves.push({ id: generateId(), name: '', attr: 'str', skill: 'brawl', type: '', cat: 'Phys', dmg: '', power: 0, dmgStat: '' });
+  reRenderMoves();
+  saveMovesToToken(currentMoves);
+});
+
+document.getElementById('add-item-btn')?.addEventListener('click', () => {
+    currentInventory.push({ id: generateId(), qty: 1, name: '', desc: '' });
+    renderInventory(currentInventory, saveInventoryToToken); 
+    saveInventoryToToken(currentInventory);
+});
+
+// --- IDENTITY & DATA FETCHING ---
 document.getElementById('species')?.addEventListener('change', async (e) => {
     const pokemonName = (e.target as HTMLInputElement).value;
     const pokemonData = await fetchPokemonData(pokemonName);
     if (!pokemonData) return;
+
+    populateLearnset(pokemonData);
+    populateMoveDatalist(pokemonData);
 
     const type1 = String(pokemonData.Type1 || "Normal");
     const type2 = String(pokemonData.Type2 || "");
@@ -229,7 +207,7 @@ document.getElementById('species')?.addEventListener('change', async (e) => {
             if(buffInput) { buffInput.value = "0"; batchUpdates[`${skill}-buff`] = 0; }
         });
         currentMoves = [];
-        renderMoves();
+        reRenderMoves();
         batchUpdates['moves-data'] = "[]";
     }
 
@@ -255,6 +233,7 @@ document.getElementById('sheet-type')?.addEventListener('change', (e) => {
     calculateStats(currentExtraCategories, currentMoves);
 });
 
+// --- DEFIBRILLATOR BUTTON ---
 document.getElementById('refresh-data-btn')?.addEventListener('click', async () => {
     const btn = document.getElementById('refresh-data-btn') as HTMLButtonElement;
     btn.innerText = "⏳ Refreshing...";
@@ -275,6 +254,9 @@ document.getElementById('refresh-data-btn')?.addEventListener('click', async () 
     if (pokemonName) {
         const pokemonData = await fetchPokemonData(pokemonName);
         if (pokemonData) {
+            populateLearnset(pokemonData);
+            populateMoveDatalist(pokemonData);
+
             abilitySelect.innerHTML = '';
             const abilities: string[] = [];
             
@@ -314,32 +296,11 @@ document.getElementById('refresh-data-btn')?.addEventListener('click', async () 
         if (abilityData) abilitySelect.title = String(abilityData.Effect || abilityData.Description || "No description found.");
     }
 
-    for (let move of currentMoves) {
-        if (move.name) {
-            const moveData = await fetchMoveData(move.name.trim());
-            if (moveData) {
-                move.type = String(moveData.Type || "Normal");
-                let rawCat = String(moveData.Category || "Physical");
-                if (rawCat === "Physical") move.cat = "Phys";
-                else if (rawCat === "Special") move.cat = "Spec";
-                else move.cat = "Supp";
-                
-                move.power = Number(moveData.Power) || 0;
-                move.desc = String(moveData.Effect || moveData.Description || "");
-                
-                const rawDmg = String(moveData.Damage1 === "None" ? "" : (moveData.Damage1 || ""));
-                move.dmgStat = ATTRIBUTE_MAPPING[rawDmg] || rawDmg;
-            }
-        }
-    }
-
-    renderMoves();
+    reRenderMoves();
     batchUpdates['moves-data'] = JSON.stringify(currentMoves);
     Object.assign(currentTokenData, batchUpdates);
     
     saveBatchDataToToken(batchUpdates); 
-    
-    // --- DEFIBRILLATOR FIRE ---
     syncDerivedStats(); 
     repairTrackers(); 
     
@@ -350,247 +311,6 @@ document.getElementById('refresh-data-btn')?.addEventListener('click', async () 
     }, 2000);
 });
 
-// --- RENDERING ---
-function renderExtraSkills() {
-    const tbody = document.getElementById('extra-skills-body');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    
-    currentExtraCategories.forEach((category: ExtraCategory) => {
-        const headTr = document.createElement('tr');
-        headTr.style.backgroundColor = 'var(--primary)';
-        headTr.style.color = 'white';
-        buildExtraCategoryHeader(headTr, category);
-        tbody.appendChild(headTr);
-
-        category.skills.forEach((skill: ExtraSkill) => {
-            const tr = document.createElement('tr');
-            buildExtraSkillRow(tr, category.id, skill);
-            tbody.appendChild(tr);
-        });
-    });
-
-    document.querySelectorAll('.cat-name-input').forEach(input => {
-        input.addEventListener('change', (e) => {
-            const target = e.target as HTMLInputElement;
-            const category = currentExtraCategories.find((c: ExtraCategory) => c.id === target.dataset.catid);
-            if (category) { category.name = target.value; saveExtraSkillsToToken(currentExtraCategories); }
-        });
-    });
-
-    document.querySelectorAll('.extra-skill-name').forEach(input => {
-        input.addEventListener('change', (e) => {
-            const target = e.target as HTMLInputElement;
-            const category = currentExtraCategories.find((c: ExtraCategory) => c.id === target.dataset.catid);
-            if (category) {
-                const skill = category.skills.find((s: ExtraSkill) => s.id === target.dataset.skid);
-                if (skill) { skill.name = target.value; saveExtraSkillsToToken(currentExtraCategories); renderMoves(); }
-            }
-        });
-    });
-
-    document.querySelectorAll('.extra-skill-base, .extra-skill-buff').forEach(input => {
-        input.addEventListener('input', () => calculateStats(currentExtraCategories, currentMoves));
-        input.addEventListener('change', (e) => {
-            const target = e.target as HTMLInputElement;
-            const category = currentExtraCategories.find((c: ExtraCategory) => c.id === target.dataset.catid);
-            if (category) {
-                const skill = category.skills.find((s: ExtraSkill) => s.id === target.dataset.skid);
-                if (skill) {
-                    if (target.classList.contains('extra-skill-base')) skill.base = parseInt(target.value) || 0;
-                    if (target.classList.contains('extra-skill-buff')) skill.buff = parseInt(target.value) || 0;
-                    saveExtraSkillsToToken(currentExtraCategories);
-                }
-            }
-            syncDerivedStats();
-        });
-    });
-
-    document.querySelectorAll('.del-cat-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            if (confirm("Delete this custom skill category?")) {
-                const id = (e.currentTarget as HTMLButtonElement).dataset.catid;
-                currentExtraCategories = currentExtraCategories.filter((c: ExtraCategory) => c.id !== id);
-                renderExtraSkills(); renderMoves();
-                saveExtraSkillsToToken(currentExtraCategories);
-            }
-        });
-    });
-    setupSpinners();
-}
-
-document.getElementById('add-cat-btn')?.addEventListener('click', () => {
-    const categoryId = "cat_" + generateId();
-    currentExtraCategories.push({
-        id: categoryId, name: "EXTRA",
-        skills: [
-            { id: categoryId + "_1", name: "", base: 0, buff: 0 }, { id: categoryId + "_2", name: "", base: 0, buff: 0 },
-            { id: categoryId + "_3", name: "", base: 0, buff: 0 }, { id: categoryId + "_4", name: "", base: 0, buff: 0 }
-        ]
-    });
-    renderExtraSkills(); renderMoves();
-    saveExtraSkillsToToken(currentExtraCategories);
-});
-
-function renderMoves() {
-  const tbody = document.getElementById('moves-table-body');
-  if (!tbody) return;
-  tbody.innerHTML = ''; 
-
-  currentMoves.forEach((move: Move, index: number) => {
-    if (move.power === undefined) move.power = 0;
-    if (move.dmgStat === undefined) move.dmgStat = "";
-
-    const tr = document.createElement('tr');
-    tr.className = 'data-table__row--dynamic'; 
-    buildMoveRow(tr, move, index, currentExtraCategories);
-    tbody.appendChild(tr);
-  });
-
-  document.querySelectorAll('.move-input').forEach(input => {
-    input.addEventListener('change', async (e) => {
-      const target = e.target as HTMLInputElement | HTMLSelectElement;
-      const id = target.getAttribute('data-id')!;
-      const field = target.getAttribute('data-field')! as keyof Move;
-      const move = currentMoves.find((m: Move) => m.id === id);
-      
-      if (move) {
-        if (field === 'power') move[field] = parseInt(target.value) || 0;
-        else move[field] = target.value as never;
-
-        if (field === 'type') {
-            applyTypeStyle(target as HTMLElement, target.value);
-        }
-        
-        if (field === 'name') {
-            const moveData = await fetchMoveData(target.value.trim());
-            if (moveData) {
-                move.type = String(moveData.Type || "Normal");
-                let rawCat = String(moveData.Category || "Physical");
-                if (rawCat === "Physical") move.cat = "Phys";
-                else if (rawCat === "Special") move.cat = "Spec";
-                else move.cat = "Supp";
-                
-                move.power = Number(moveData.Power) || 0;
-                move.desc = String(moveData.Effect || moveData.Description || "");
-                
-                const rawDmg = String(moveData.Damage1 === "None" ? "" : (moveData.Damage1 || ""));
-                move.dmgStat = ATTRIBUTE_MAPPING[rawDmg] || rawDmg;
-                
-                const accuracyOne = String(moveData.Accuracy1 || "");
-                move.attr = ATTRIBUTE_MAPPING[accuracyOne] || "str";
-                move.skill = String(moveData.Accuracy2 || "brawl").toLowerCase();
-                
-                renderMoves(); 
-            }
-        }
-        updateMoveDisplays(currentMoves);
-        saveMovesToToken(currentMoves);
-      }
-    });
-  });
-
-  document.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      if (window.confirm("Are you sure you want to delete this move?")) {
-        const id = (e.currentTarget as HTMLButtonElement).getAttribute('data-id')!;
-        currentMoves = currentMoves.filter((m: Move) => m.id !== id);
-        renderMoves(); saveMovesToToken(currentMoves);
-      }
-    });
-  });
-
-  document.querySelectorAll('.move-up-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const idx = parseInt((e.currentTarget as HTMLButtonElement).getAttribute('data-index')!);
-      if (idx > 0) {
-        const temp = currentMoves[idx];
-        currentMoves[idx] = currentMoves[idx - 1];
-        currentMoves[idx - 1] = temp;
-        renderMoves(); saveMovesToToken(currentMoves);
-      }
-    });
-  });
-
-  document.querySelectorAll('.move-down-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const idx = parseInt((e.currentTarget as HTMLButtonElement).getAttribute('data-index')!);
-      if (idx < currentMoves.length - 1) {
-        const temp = currentMoves[idx];
-        currentMoves[idx] = currentMoves[idx + 1];
-        currentMoves[idx + 1] = temp;
-        renderMoves(); saveMovesToToken(currentMoves);
-      }
-    });
-  });
-
-  document.querySelectorAll('.acc-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const id = (e.currentTarget as HTMLButtonElement).getAttribute('data-id')!;
-      const move = currentMoves.find((m: Move) => m.id === id);
-      if (move) rollAccuracy(move);
-    });
-  });
-
-  document.querySelectorAll('.dmg-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const id = (e.currentTarget as HTMLButtonElement).getAttribute('data-id')!;
-      const move = currentMoves.find((m: Move) => m.id === id);
-      if (move) rollDamage(move);
-    });
-  });
-
-  setupSpinners();
-  updateMoveDisplays(currentMoves);
-}
-
-document.getElementById('add-move-btn')?.addEventListener('click', () => {
-  if (currentMoves.length >= 20) { alert("You've reached the max of 20 moves."); return; }
-  currentMoves.push({ id: generateId(), name: '', attr: 'str', skill: 'brawl', type: '', cat: 'Phys', dmg: '', power: 0, dmgStat: '' });
-  renderMoves();
-  saveMovesToToken(currentMoves);
-});
-
-function renderInventory() {
-    const tbody = document.getElementById('inventory-table-body');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    
-    currentInventory.forEach((item: InventoryItem) => {
-        const tr = document.createElement('tr');
-        tr.className = 'data-table__row--dynamic'; 
-        buildInventoryRow(tr, item);
-        tbody.appendChild(tr);
-    });
-
-    document.querySelectorAll('.inv-input').forEach(input => {
-        input.addEventListener('change', (e) => {
-            const target = e.target as HTMLInputElement;
-            const id = target.getAttribute('data-id')!;
-            const field = target.getAttribute('data-field')! as keyof InventoryItem;
-            const item = currentInventory.find((i: InventoryItem) => i.id === id);
-            if (item) {
-                if (field === 'qty') item[field] = parseInt(target.value) || 0;
-                else item[field] = target.value as never;
-                saveInventoryToToken(currentInventory);
-            }
-        });
-    });
-
-    document.querySelectorAll('.del-item-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const id = (e.currentTarget as HTMLButtonElement).getAttribute('data-id')!;
-            currentInventory = currentInventory.filter((i: InventoryItem) => i.id !== id);
-            renderInventory(); saveInventoryToToken(currentInventory);
-        });
-    });
-    setupSpinners();
-}
-
-document.getElementById('add-item-btn')?.addEventListener('click', () => {
-    currentInventory.push({ id: generateId(), qty: 1, name: '', desc: '' });
-    renderInventory(); saveInventoryToToken(currentInventory);
-});
 
 // --- COMBAT ROLL LOGIC ---
 document.getElementById('roll-init-btn')?.addEventListener('click', async () => {
@@ -669,14 +389,18 @@ function rollGeneric(actionName: string, pool: number, incrementEvade = false, i
       }
    }
    if (incrementEvade) {
-      let e = getVal('evasions-used');
-      (document.getElementById('evasions-used') as HTMLInputElement).value = (e+1).toString();
-      batchUpdates['evasions-used'] = e + 1; 
+      const el = document.getElementById('evasions-used') as HTMLInputElement;
+      if (el) {
+          el.checked = true;
+          batchUpdates['evasions-used'] = true;
+      }
    }
    if (incrementClash) {
-      let c = getVal('clashes-used');
-      (document.getElementById('clashes-used') as HTMLInputElement).value = (c+1).toString();
-      batchUpdates['clashes-used'] = c + 1; 
+      const el = document.getElementById('clashes-used') as HTMLInputElement;
+      if (el) {
+          el.checked = true;
+          batchUpdates['clashes-used'] = true;
+      }
    }
 
    if (Object.keys(batchUpdates).length > 0) {
@@ -702,13 +426,28 @@ document.getElementById('roll-maneuver-btn')?.addEventListener('click', () => {
    if (val === 'struggle') rollGeneric("Struggle (Accuracy)", getDerivedVal('dex-total') + getDerivedVal('brawl-total'), false, false, true);
 });
 
+// --- ROUND RESET UNCHECKS ALL BOXES ---
 document.getElementById('reset-round-btn')?.addEventListener('click', () => {
     (document.getElementById('actions-used') as HTMLInputElement).value = "0";
-    (document.getElementById('evasions-used') as HTMLInputElement).value = "0";
-    (document.getElementById('clashes-used') as HTMLInputElement).value = "0";
-    const updates = { 'actions-used': 0, 'evasions-used': 0, 'clashes-used': 0 }; 
+    (document.getElementById('evasions-used') as HTMLInputElement).checked = false;
+    (document.getElementById('clashes-used') as HTMLInputElement).checked = false;
+    
+    const updates = { 'actions-used': 0, 'evasions-used': false, 'clashes-used': false }; 
     Object.assign(currentTokenData, updates);
     saveBatchDataToToken(updates);
+
+    let movesChanged = false;
+    currentMoves.forEach(m => {
+        if ((m as any).used) {
+            (m as any).used = false;
+            movesChanged = true;
+        }
+    });
+    
+    if (movesChanged) {
+        reRenderMoves();
+        saveMovesToToken(currentMoves);
+    }
 });
 
 // --- DATA INJECTION ---
@@ -771,6 +510,14 @@ async function loadDataFromToken(tokenId: string) {
               if (abilityData) sel.title = String(abilityData.Effect || abilityData.Description || "No description found.");
           });
       }
+      else if (element.type === 'checkbox') {
+          const chk = element as HTMLInputElement;
+          if (val !== undefined) {
+              chk.checked = (val === true || val === 'true');
+          } else {
+              initialUpdates[id] = chk.checked;
+          }
+      }
       else if (val !== undefined) {
           element.value = val;
       } 
@@ -801,13 +548,23 @@ async function loadDataFromToken(tokenId: string) {
     try { currentStatuses = data['status-list'] ? JSON.parse(data['status-list']) : ["Healthy"]; } catch(e) { currentStatuses = ["Healthy"]; }
     try { currentCustomInfo = data['custom-info-data'] ? JSON.parse(data['custom-info-data']) : []; } catch(e) { currentCustomInfo = []; }
 
-    renderMoves();
-    renderInventory();
-    renderExtraSkills();
-    renderStatuses();
-    renderCustomInfo();
+    reRenderMoves();
+    renderInventory(currentInventory, saveInventoryToToken);
+    renderExtraSkills(currentExtraCategories, currentMoves, saveExtraSkillsToToken, syncDerivedStats, reRenderMoves);
+    renderStatuses(currentStatuses, saveDataToToken);
+    renderCustomInfo(currentCustomInfo, saveDataToToken);
     renderTypeMatchups(data['typing'] || ""); 
     calculateStats(currentExtraCategories, currentMoves);
+
+    const currentSpeciesName = data['species'];
+    if (currentSpeciesName) {
+        fetchPokemonData(currentSpeciesName).then(pokemonData => {
+            if (pokemonData) {
+                populateLearnset(pokemonData);
+                populateMoveDatalist(pokemonData);
+            }
+        });
+    }
 
     setLoading(false);
 
@@ -822,6 +579,7 @@ async function loadDataFromToken(tokenId: string) {
   setLoading(false); 
 }
 
+// --- BASIC FIELD LISTENERS ---
 const listenerInputs = document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('.sheet-save');
 listenerInputs.forEach(element => {
   if (['ability', 'is-npc', 'species', 'typing'].includes(element.id)) return; 
@@ -834,11 +592,12 @@ listenerInputs.forEach(element => {
       let valToSave: any = target.value;
       if (target.type === 'number') {
           valToSave = parseFloat(target.value) || 0;
+      } else if (target.type === 'checkbox') {
+          valToSave = target.checked;
       }
       
       currentTokenData[target.id] = valToSave;
       saveDataToToken(target.id, valToSave);
-      
       syncDerivedStats(); 
   });
 });
@@ -854,8 +613,8 @@ if (npcCheckbox) {
 // INITIALIZE
 loadUrlLists();
 setupSpinners();
-renderStatuses(); 
-renderCustomInfo();
+renderStatuses(currentStatuses, saveDataToToken); 
+renderCustomInfo(currentCustomInfo, saveDataToToken);
 const initialTyping = (document.getElementById('typing') as HTMLInputElement)?.value || "";
 renderTypeMatchups(initialTyping);
 calculateStats(currentExtraCategories, currentMoves);

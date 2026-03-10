@@ -48,6 +48,7 @@
                 <div class="identity-grid__row">
                     <span class="identity-grid__label identity-grid__label--blue">Age</span>
                     <select id="age" class="identity-grid__select sheet-save">
+                        <option value="--">--</option>
                         <option value="Child">Child</option><option value="Teen">Teen</option>
                         <option value="Adult">Adult</option><option value="Senior">Senior</option>
                     </select>
@@ -128,8 +129,8 @@
                     <div style="text-align: center; font-weight: bold; color: var(--primary); font-size: 0.85rem; margin-bottom: 4px;">ROUND TRACKER</div>
                     <div style="display: flex; justify-content: space-between; font-size: 0.8rem; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 4px;">Action: <input type="number" id="actions-used" value="0" min="0" max="5" class="number-spinner__input sheet-save"></div>
-                        <div style="display: flex; align-items: center; gap: 4px;">Evade: <input type="number" id="evasions-used" value="0" min="0" class="number-spinner__input sheet-save"><button type="button" id="roll-evade-btn" class="action-button action-button--dark">🎲</button></div>
-                        <div style="display: flex; align-items: center; gap: 4px;">Clash: <input type="number" id="clashes-used" value="0" min="0" class="number-spinner__input sheet-save"><button type="button" id="roll-clash-btn" class="action-button action-button--dark">🎲</button></div>
+                        <div style="display: flex; align-items: center; gap: 4px;">Evade: <input type="checkbox" id="evasions-used" class="sheet-save" style="cursor: pointer; transform: scale(1.1);"><button type="button" id="roll-evade-btn" class="action-button action-button--dark">🎲</button></div>
+                        <div style="display: flex; align-items: center; gap: 4px;">Clash: <input type="checkbox" id="clashes-used" class="sheet-save" style="cursor: pointer; transform: scale(1.1);"><button type="button" id="roll-clash-btn" class="action-button action-button--dark">🎲</button></div>
                     </div>
                     <div style="display: flex; gap: 4px; justify-content: space-between; align-items: center; margin-top: 4px;">
                         <select id="maneuver-select" style="padding: 1px; font-family: inherit; border: 1px solid var(--border); font-size: 0.75rem; flex: 1;">
@@ -185,6 +186,10 @@
                             <td style="font-weight: bold;" id="ins-total">1</td>
                         </tr>
                     </table>
+                    <div style="font-size: 0.8rem; margin-top: 6px; display: flex; justify-content: space-between; align-items: center; padding: 0 4px;">
+                        <span>Remaining: <strong id="attr-remaining-display" style="font-size: 1rem;">0</strong></span>
+                        <span style="display: flex; align-items: center; gap: 4px; color: #666;">Extra: <input type="number" id="extra-attr-points" class="number-spinner__input sheet-save" value="0" style="width: 40px; border-color: #ccc;"></span>
+                    </div>
                 </div>
 
                 <div class="sheet-panel">
@@ -231,6 +236,10 @@
                             <td style="font-weight: bold;" id="cle-total">1</td>
                         </tr>
                     </table>
+                    <div style="font-size: 0.8rem; margin-top: 6px; display: flex; justify-content: space-between; align-items: center; padding: 0 4px;">
+                        <span>Remaining: <strong id="soc-remaining-display" style="font-size: 1rem;">0</strong></span>
+                        <span style="display: flex; align-items: center; gap: 4px; color: #666;">Extra: <input type="number" id="extra-soc-points" class="number-spinner__input sheet-save" value="0" style="width: 40px; border-color: #ccc;"></span>
+                    </div>
                 </div>
 
                 <div class="sheet-panel">
@@ -245,6 +254,10 @@
 
             <div class="sheet-container__column">
                 <div class="sheet-panel">
+                    <div style="font-size: 0.85rem; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; padding: 0 4px; background: #fafafa; border: 1px solid var(--border); border-radius: 4px; padding: 4px;">
+                        <span>Pts Remaining: <strong id="skill-remaining-display" style="font-size: 1rem;">0</strong> <span style="color: #666; font-size: 0.75rem;">(Max Rank: <span id="skill-limit-display">1</span>)</span></span>
+                        <span style="display: flex; align-items: center; gap: 4px; color: #666;">Extra Pts: <input type="number" id="extra-skill-points" class="number-spinner__input sheet-save" value="0" style="width: 40px; border-color: #ccc;"></span>
+                    </div>
                     <table class="data-table data-table--red-header" id="skills-table">
                         <tbody id="base-skills-body">
                             <tr><th style="text-align: left;">FIGHT</th><th>Base</th><th>Buff</th><th>Total</th></tr>
@@ -376,6 +389,7 @@
             <table class="data-table" style="text-align: left;">
                 <thead>
                     <tr>
+                        <th style="width: 25px; text-align: center;" title="Used this round?">✔</th>
                         <th style="width: 35px; text-align: center;">Acc</th>
                         <th>Name</th>
                         <th>Pool (Acc)</th>
@@ -391,6 +405,12 @@
                 </tbody>
             </table>
             <button type="button" id="add-move-btn" class="action-button action-button--red action-button--full-width">+ Add Move Slot</button>
+
+            <div style="margin-top: 8px;">
+                <button type="button" id="toggle-learnset-btn" class="action-button action-button--dark" style="width: 100%; font-size: 0.8rem; padding: 4px; margin: 0; display: none;">📖 View Learnset</button>
+                <div id="learnset-container" style="display: none; border: 1px solid var(--border); padding: 8px; border-radius: 4px; background: #fafafa; margin-top: 4px; max-height: 200px; overflow-y: auto; font-size: 0.8rem;">
+                </div>
+            </div>
         </div>
 
         <div class="sheet-panel">

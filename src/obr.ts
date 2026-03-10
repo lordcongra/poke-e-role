@@ -60,9 +60,6 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
       const actions = getVal('actions-used');
       const def = getDerivedVal('def-total');
       const spdef = getDerivedVal('spd-total');
-      
-      const evadeChecked = getVal('evasions-used') > 0;
-      const clashChecked = getVal('clashes-used') > 0;
 
       await OBR.scene.items.updateItems([currentTokenId!], (items: Item[]) => {
         for (let item of items) {
@@ -75,51 +72,59 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
 
           lastKnownMetadataStr = JSON.stringify(meta);
 
-          // Deep Clone to protect active memory
-          const rawTrackers = item.metadata["com.owl-trackers/trackers"];
-          let trackers: OwlTracker[] = rawTrackers ? JSON.parse(JSON.stringify(rawTrackers)) : [];
-          
-          const updateTracker = (name: string, variant: string, color: number, value: any, checked?: boolean, max?: number) => {
-              let tIndex = trackers.findIndex(x => x.name === name);
+          // ONLY GENERATE OWL TRACKERS IF THE TOKEN HAS A SPECIES ASSIGNED!
+          if (meta['species'] && meta['species'].trim() !== "") {
               
-              if (tIndex !== -1 && trackers[tIndex].variant !== variant) {
-                  trackers.splice(tIndex, 1);
-                  tIndex = -1; 
-              }
+              const evadeChecked = meta['evasions-used'] === true || meta['evasions-used'] === 'true';
+              const clashChecked = meta['clashes-used'] === true || meta['clashes-used'] === 'true';
 
-              if (tIndex !== -1) {
-                  let t = trackers[tIndex];
-                  t.variant = variant;
-                  t.value = value;
+              const rawTrackers = item.metadata["com.owl-trackers/trackers"];
+              let trackers: OwlTracker[] = rawTrackers ? JSON.parse(JSON.stringify(rawTrackers)) : [];
+              
+              const updateTracker = (name: string, variant: string, color: number, value?: any, checked?: boolean, max?: number) => {
+                  let tIndex = trackers.findIndex(x => x.name === name);
                   
-                  if (checked !== undefined) t.checked = checked;
-                  else delete t.checked;
-                  
-                  if (max !== undefined) t.max = max;
-                  else delete t.max;
-                  
-                  if (variant === 'counter') t.inlineMath = false;
-                  else delete t.inlineMath;
+                  if (tIndex !== -1 && trackers[tIndex].variant !== variant) {
+                      trackers.splice(tIndex, 1);
+                      tIndex = -1; 
+                  }
 
-              } else {
-                  let newT: OwlTracker = { id: generateId(), name, variant, color, value };
-                  if (checked !== undefined) newT.checked = checked;
-                  if (max !== undefined) newT.max = max;
-                  if (variant === 'counter') newT.inlineMath = false;
-                  trackers.push(newT);
-              }
-          };
+                  if (tIndex !== -1) {
+                      let t = trackers[tIndex];
+                      t.variant = variant;
+                      
+                      if (value !== undefined) t.value = value;
+                      else delete t.value;
+                      
+                      if (checked !== undefined) t.checked = checked;
+                      else delete t.checked;
+                      
+                      if (max !== undefined) t.max = max;
+                      else delete t.max;
+                      
+                      if (variant === 'counter') t.inlineMath = false;
+                      else delete t.inlineMath;
 
-          updateTracker("Will", "value-max", 6, willCurr, undefined, willMax);
-          updateTracker("HP", "value-max", 2, hpCurr, undefined, hpMax);
-          updateTracker("Actions", "counter", 6, actions);
-          updateTracker("DEF", "counter", 5, def);
-          updateTracker("SP DEF", "counter", 1, spdef);
-          
-          updateTracker("Evade", "checkbox", 4, false, evadeChecked);
-          updateTracker("Clash", "checkbox", 3, false, clashChecked);
+                  } else {
+                      let newT: any = { id: generateId(), name, variant, color };
+                      if (value !== undefined) newT.value = value;
+                      if (checked !== undefined) newT.checked = checked;
+                      if (max !== undefined) newT.max = max;
+                      if (variant === 'counter') newT.inlineMath = false;
+                      trackers.push(newT);
+                  }
+              };
 
-          item.metadata["com.owl-trackers/trackers"] = trackers;
+              updateTracker("Will", "value-max", 6, willCurr, undefined, willMax);
+              updateTracker("HP", "value-max", 2, hpCurr, undefined, hpMax);
+              updateTracker("Actions", "counter", 6, actions);
+              updateTracker("DEF", "counter", 5, def);
+              updateTracker("SP DEF", "counter", 1, spdef);
+              updateTracker("Evade", "checkbox", 4, undefined, evadeChecked);
+              updateTracker("Clash", "checkbox", 3, undefined, clashChecked);
+
+              item.metadata["com.owl-trackers/trackers"] = trackers;
+          }
         }
       });
   }, 150); 
@@ -129,7 +134,6 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
 export async function repairTrackers() {
     if (!currentTokenId || isLoading) return;
     
-    // Step 1: Wipe Evade and Clash completely to force Owl Trackers to unmount the crashed UI
     await OBR.scene.items.updateItems([currentTokenId], (items: Item[]) => {
         for (let item of items) {
             let trackers = (item.metadata["com.owl-trackers/trackers"] as OwlTracker[]) || [];
@@ -138,7 +142,6 @@ export async function repairTrackers() {
         }
     });
 
-    // Step 2: Wait a fraction of a second, then trigger a normal save to recreate them with fresh IDs
     setTimeout(() => {
         saveBatchDataToToken({ "_force_rebuild": Date.now() }); 
     }, 300);

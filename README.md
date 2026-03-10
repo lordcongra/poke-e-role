@@ -1,6 +1,6 @@
 # Pokerole 3.0 Sheet (Owlbear Rodeo Extension)
 
-A highly automated, modular character sheet extension for playing **Pokerole 3.0** and **Pokémon Mystery Dungeon (PMD)** campaigns within the Owlbear Rodeo VTT.
+A highly automated, modular character sheet extension for playing **Pokerole 3.0** campaigns (including **Pokémon Mystery Dungeon / PMD** settings) within the Owlbear Rodeo VTT.
 
 ## ⚠️ REQUIRED PLUGINS
 To use all the features of this character sheet, you **MUST** install the following Owlbear Rodeo extensions in your room:
@@ -9,7 +9,7 @@ To use all the features of this character sheet, you **MUST** install the follow
 3. **[Pretty Sordid (Initiative)](https://extensions.owlbear.rodeo/pretty-sordid):** Grabs Initiative rolls from the sheet and automatically sorts the combat order (including decimal tie-breakers!).
 
 ## 🎒 RECOMMENDED PLUGINS (Optional)
-While these extensions do not tie directly into the character sheet, they are highly recommended for running immersive Pokerole/PMD campaigns:
+While these extensions do not tie directly into the character sheet, they are highly recommended for running immersive Pokerole campaigns:
 * **[Bag It!](https://extensions.owlbear.rodeo/bag-it):** Provides a real, visual inventory system for players to store, move, and trade items directly on the tabletop.
 * **[Embers](https://extensions.owlbear.rodeo/embers):** An amazing tool for setting up visual spell and attack effects on the map. 
   > **Pro Tip:** Want a massive head start on your move animations? Reach out to **`@congra`** in the official Pokerole Discord to get a copy of his custom Embers spell effects JSON!
@@ -22,6 +22,15 @@ While these extensions do not tie directly into the character sheet, they are hi
 * Enter your Base Stats, Ranks, Buffs, and Debuffs, and the sheet automatically calculates all Derived Stats (HP, Will, Defenses, Evasion, Clashes).
 * Supports both **Pokémon** and **Trainer** modes, dynamically toggling relevant skills and clashes.
 * **Form & Evolution Safe:** Change a Pokémon's species to update their base stats and typing *without* wiping their invested skills and moves!
+
+### 📈 Soft Caps & PMD Overrides
+* Automatically calculates your maximum Attribute, Social, and Skill point limits based on your currently selected Rank and Age.
+* Tracks your spent points and warns you if you exceed standard limits.
+* **PMD / Homebrew Friendly:** Includes "Extra Pts" override boxes, allowing GMs to reward extra stats for completing dungeons without breaking the sheet's logic.
+
+### 📖 Built-In Learnset Pokédex
+* Scroll to the bottom of your moves to find the **View Learnset** button. 
+* Instantly builds a collapsible, rank-ordered list of every move your Pokémon can learn, fetched straight from the API with zero token data bloat.
 
 ### 🛡️ Auto-Calculating Type Matchups
 * Never stop combat to check a type chart again. The sheet automatically calculates and displays a Pokémon's defensive weaknesses and resistances (4x, 2x, 0.5x, 0.25x, 0x) based on their current dual-typing.
@@ -44,13 +53,14 @@ While these extensions do not tie directly into the character sheet, they are hi
 * Automatically accounts for global Accuracy/Damage modifiers, STAB bonuses, and even the Protean/Libero abilities!
 * Need a flat modifier to your successes? Use the "Succ" global modifier box for things like the *Low Accuracy* penalty.
 
-### ⚔️ Combat Economy Tracking
+### ⚔️ Combat Economy & Move Tracking
 * Keep track of your actions in the "Round Tracker" panel. 
-* Automatically increases your Action count when rolling attacks or maneuvers.
+* Automatically increases your Action count and checks off your Evasion/Clash trackers when rolling attacks or maneuvers.
 * Includes 1-click buttons for generic combat maneuvers (Grapple, Cover Ally, Ambush, etc.).
+* Dim your used moves with the inline **(✔)** checkbox to track your action economy, then click the **Reset** button to clear the board for the next turn.
 
 ### 📝 Custom Homebrew Fields
-* Click the `+ Add Custom Field` button at the top to inject custom labels and text inputs. Perfect for tracking campaign-specific mechanics, distinct PMD traits, or homebrew rules.
+* Click the `+ Add Custom Field` button at the top to inject custom labels and text inputs. Perfect for tracking campaign-specific mechanics or character traits.
 
 ### 🔒 GM Tools
 * Built-in NPC Toggle. Mark a sheet as a "Private NPC" to instantly hide the sheet's contents from players, preventing meta-gaming during boss fights.
@@ -62,4 +72,4 @@ To install this extension into your Owlbear Rodeo room, copy the Manifest URL be
 
 `https://lordcongra.github.io/poke-e-role/manifest.json`
 
-*(Note: If the sheet updates, you can force Owlbear to fetch the newest version by adding a version tag to the end of the URL, like `?v=1.1`)*
+*(Note: If the sheet updates, you can force Owlbear to fetch the newest version by adding a version tag to the end of the URL, like `?v=1.3`)*

@@ -1,5 +1,8 @@
 import type { Move, InventoryItem, ExtraCategory, ExtraSkill, CustomInfo } from './@types/index';
+import { ATTRIBUTE_MAPPING } from './@types/index';
 import { ALL_SKILLS, calculateMatchups } from './utils';
+import { calculateStats, updateMoveDisplays } from './math';
+import { fetchMoveData } from './api';
 
 // --- POKEMON TYPE COLORS ---
 export const TYPE_COLORS: Record<string, string> = {
@@ -77,16 +80,13 @@ export function buildExtraSkillRow(tr: HTMLTableRowElement, categoryId: string, 
 }
 
 export function buildMoveRow(tr: HTMLTableRowElement, move: Move, index: number, extraCategories: ExtraCategory[]) {
-    // 1. Acc
     const accSpan = createEl('span', { className: 'acc-total-display', title: 'Base Acc Dice', innerText: '0', style: 'font-weight: bold; font-size: 0.9em; color: var(--dark); min-width: 1em;', dataset: { id: move.id }});
     const accBtn = createEl('button', { type: 'button', className: 'acc-btn action-button action-button--dark', title: 'Roll Accuracy', innerText: '🎯', style: 'padding: 2px 6px;', dataset: { id: move.id }});
     const td1 = createEl('td', { className: 'data-table__cell--middle' }, [createEl('div', { className: 'flex-layout--row-center' }, [accSpan, accBtn])]);
 
-    // 2. Name
     const nameInp = createEl('input', { type: 'text', className: 'move-input form-input--transparent', list: 'move-list', value: move.name, placeholder: 'Move Name', title: move.desc || 'Enter move name to fetch data...', dataset: { field: 'name', id: move.id }});
     const td2 = createEl('td', { className: 'data-table__cell--middle' }, [nameInp]);
 
-    // 3. Attr + Skill
     const attrSel = createEl('select', { className: 'move-input form-select--bordered', dataset: { field: 'attr', id: move.id }});
     ['str', 'dex', 'vit', 'spe', 'ins', 'tou', 'coo', 'bea', 'cut', 'cle', 'will'].forEach(a => {
         attrSel.appendChild(createEl('option', { value: a, text: a.toUpperCase(), selected: move.attr === a }));
@@ -102,16 +102,13 @@ export function buildMoveRow(tr: HTMLTableRowElement, move: Move, index: number,
     }));
     const td3 = createEl('td', { className: 'data-table__cell--middle' }, [createEl('div', { className: 'flex-layout--row-start' }, [attrSel, " + ", skillSel])]);
 
-    // 4. Type
     const typeInp = createEl('input', { type: 'text', className: 'move-input form-input--transparent', value: move.type, placeholder: 'Type', style: getTypeStyle(move.type), dataset: { field: 'type', id: move.id }});
     const td4 = createEl('td', { className: 'data-table__cell--middle', style: 'padding: 2px;' }, [typeInp]);
 
-    // 5. Category
     const catSel = createEl('select', { className: 'move-input form-select--transparent', dataset: { field: 'cat', id: move.id }});
     ['Phys', 'Spec', 'Supp'].forEach(c => catSel.appendChild(createEl('option', { value: c, text: c, selected: move.cat === c })));
     const td5 = createEl('td', { className: 'data-table__cell--middle' }, [catSel]);
 
-    // 6. Power + Dmg Stat
     const pwrInp = createEl('input', { type: 'number', className: 'number-spinner__input move-input form-input--power', value: move.power, placeholder: 'Pwr', dataset: { field: 'power', id: move.id }});
     const dmgStatSel = createEl('select', { className: 'move-input form-select--bordered', dataset: { field: 'dmgStat', id: move.id }});
     [{v:"", l:"-"}, {v:"str", l:"STR"}, {v:"dex", l:"DEX"}, {v:"vit", l:"VIT"}, {v:"spe", l:"SPE"}, {v:"ins", l:"INS"}].forEach(opt => {
@@ -119,17 +116,14 @@ export function buildMoveRow(tr: HTMLTableRowElement, move: Move, index: number,
     });
     const td6 = createEl('td', { className: 'data-table__cell--middle' }, [createEl('div', { className: 'flex-layout--row-start' }, [pwrInp, " + ", dmgStatSel])]);
 
-    // 7. Damage
     const dmgSpan = createEl('span', { className: 'dmg-total-display', title: 'Base Dmg Dice', innerText: '0', style: 'font-weight: bold; font-size: 0.9em; color: var(--primary); min-width: 1em;', dataset: { id: move.id }});
     const dmgBtn = createEl('button', { type: 'button', className: 'dmg-btn action-button action-button--red', title: 'Roll Damage', innerText: '💥', style: 'padding: 2px 6px;', dataset: { id: move.id }});
     const td7 = createEl('td', { className: 'data-table__cell--middle' }, [createEl('div', { className: 'flex-layout--row-center' }, [dmgSpan, dmgBtn])]);
 
-    // 8. Sort
     const upBtn = createEl('button', { type: 'button', className: 'move-up-btn action-button action-button--sort', innerText: '▲', dataset: { index: index }});
     const dnBtn = createEl('button', { type: 'button', className: 'move-down-btn action-button action-button--sort', innerText: '▼', dataset: { index: index }});
     const td8 = createEl('td', { className: 'data-table__cell--middle' }, [createEl('div', { className: 'flex-layout--column-center' }, [upBtn, dnBtn])]);
 
-    // 9. Delete
     const delBtn = createEl('button', { type: 'button', className: 'delete-btn action-button action-button--red', innerText: 'X', style: 'padding: 2px 6px;', dataset: { id: move.id }});
     const td9 = createEl('td', { className: 'data-table__cell--middle' }, [delBtn]);
 
@@ -182,6 +176,336 @@ export function buildCustomInfoRow(container: HTMLElement, info: CustomInfo) {
     container.appendChild(row);
 }
 
+// --- LARGE RENDERERS (Transplanted from main.ts) ---
+
+export function renderStatuses(currentStatuses: string[], saveDataToToken: (key: string, val: string) => void) {
+    const container = document.getElementById('status-container');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    const options = ["Healthy", "1st Degree Burn", "2nd Degree Burn", "3rd Degree Burn", "Badly Poisoned", "Confusion", "Disable", "Flinch", "Frozen Solid", "In Love", "Paralysis", "Poison", "Sleep"];
+
+    currentStatuses.forEach((status, index) => {
+        const wrapper = createEl('div', { style: 'display: flex; gap: 2px;' });
+        const select = createEl('select', { style: 'flex: 1; border: 1px solid var(--border); font-size: 0.75rem;' });
+        
+        options.forEach(opt => {
+            select.appendChild(createEl('option', { value: opt, text: opt, selected: opt === status }));
+        });
+
+        select.addEventListener('change', (e) => {
+            currentStatuses[index] = (e.target as HTMLSelectElement).value;
+            saveDataToToken('status-list', JSON.stringify(currentStatuses));
+        });
+
+        wrapper.appendChild(select);
+
+        if (index > 0) {
+            const delBtn = createEl('button', { type: 'button', className: 'action-button action-button--red', innerText: 'X', style: 'padding: 0 4px;' });
+            delBtn.onclick = () => {
+                currentStatuses.splice(index, 1);
+                renderStatuses(currentStatuses, saveDataToToken);
+                saveDataToToken('status-list', JSON.stringify(currentStatuses));
+            };
+            wrapper.appendChild(delBtn);
+        }
+        
+        container.appendChild(wrapper);
+    });
+}
+
+export function renderCustomInfo(currentCustomInfo: CustomInfo[], saveDataToToken: (key: string, val: string) => void) {
+    const container = document.getElementById('custom-info-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    currentCustomInfo.forEach(info => {
+        buildCustomInfoRow(container, info);
+    });
+
+    container.querySelectorAll('input').forEach(input => {
+        input.addEventListener('change', (e) => {
+            const target = e.target as HTMLInputElement;
+            const id = target.dataset.id;
+            const field = target.dataset.field as keyof CustomInfo;
+            const item = currentCustomInfo.find(i => i.id === id);
+            if (item) {
+                item[field] = target.value;
+                saveDataToToken('custom-info-data', JSON.stringify(currentCustomInfo));
+            }
+        });
+    });
+
+    container.querySelectorAll('.del-info-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = (e.currentTarget as HTMLButtonElement).dataset.id;
+            const index = currentCustomInfo.findIndex(i => i.id === id);
+            if (index !== -1) currentCustomInfo.splice(index, 1);
+            renderCustomInfo(currentCustomInfo, saveDataToToken);
+            saveDataToToken('custom-info-data', JSON.stringify(currentCustomInfo));
+        });
+    });
+}
+
+export function renderInventory(currentInventory: InventoryItem[], saveInventoryToToken: (inv: InventoryItem[]) => void) {
+    const tbody = document.getElementById('inventory-table-body');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    
+    currentInventory.forEach((item: InventoryItem) => {
+        const tr = createEl('tr', { className: 'data-table__row--dynamic' });
+        buildInventoryRow(tr, item);
+        tbody.appendChild(tr);
+    });
+
+    document.querySelectorAll('.inv-input').forEach(input => {
+        input.addEventListener('change', (e) => {
+            const target = e.target as HTMLInputElement;
+            const id = target.getAttribute('data-id')!;
+            const field = target.getAttribute('data-field')! as keyof InventoryItem;
+            const item = currentInventory.find((i: InventoryItem) => i.id === id);
+            if (item) {
+                if (field === 'qty') item[field] = parseInt(target.value) || 0;
+                else item[field] = target.value as never;
+                saveInventoryToToken(currentInventory);
+            }
+        });
+    });
+
+    document.querySelectorAll('.del-item-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = (e.currentTarget as HTMLButtonElement).getAttribute('data-id')!;
+            const index = currentInventory.findIndex(i => i.id === id);
+            if (index !== -1) currentInventory.splice(index, 1);
+            renderInventory(currentInventory, saveInventoryToToken); 
+            saveInventoryToToken(currentInventory);
+        });
+    });
+    setupSpinners();
+}
+
+export function renderExtraSkills(
+    currentExtraCategories: ExtraCategory[],
+    currentMoves: Move[],
+    saveExtraSkillsToToken: (cats: ExtraCategory[]) => void,
+    syncDerivedStats: () => void,
+    renderMovesCallback: () => void
+) {
+    const tbody = document.getElementById('extra-skills-body');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    
+    currentExtraCategories.forEach((category: ExtraCategory) => {
+        const headTr = createEl('tr', { style: 'background-color: var(--primary); color: white;' });
+        buildExtraCategoryHeader(headTr, category);
+        tbody.appendChild(headTr);
+
+        category.skills.forEach((skill: ExtraSkill) => {
+            const tr = createEl('tr');
+            buildExtraSkillRow(tr, category.id, skill);
+            tbody.appendChild(tr);
+        });
+    });
+
+    document.querySelectorAll('.cat-name-input').forEach(input => {
+        input.addEventListener('change', (e) => {
+            const target = e.target as HTMLInputElement;
+            const category = currentExtraCategories.find((c: ExtraCategory) => c.id === target.dataset.catid);
+            if (category) { category.name = target.value; saveExtraSkillsToToken(currentExtraCategories); }
+        });
+    });
+
+    document.querySelectorAll('.extra-skill-name').forEach(input => {
+        input.addEventListener('change', (e) => {
+            const target = e.target as HTMLInputElement;
+            const category = currentExtraCategories.find((c: ExtraCategory) => c.id === target.dataset.catid);
+            if (category) {
+                const skill = category.skills.find((s: ExtraSkill) => s.id === target.dataset.skid);
+                if (skill) { skill.name = target.value; saveExtraSkillsToToken(currentExtraCategories); renderMovesCallback(); }
+            }
+        });
+    });
+
+    document.querySelectorAll('.extra-skill-base, .extra-skill-buff').forEach(input => {
+        input.addEventListener('input', () => calculateStats(currentExtraCategories, currentMoves));
+        input.addEventListener('change', (e) => {
+            const target = e.target as HTMLInputElement;
+            const category = currentExtraCategories.find((c: ExtraCategory) => c.id === target.dataset.catid);
+            if (category) {
+                const skill = category.skills.find((s: ExtraSkill) => s.id === target.dataset.skid);
+                if (skill) {
+                    if (target.classList.contains('extra-skill-base')) skill.base = parseInt(target.value) || 0;
+                    if (target.classList.contains('extra-skill-buff')) skill.buff = parseInt(target.value) || 0;
+                    saveExtraSkillsToToken(currentExtraCategories);
+                }
+            }
+            syncDerivedStats();
+        });
+    });
+
+    document.querySelectorAll('.del-cat-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            if (confirm("Delete this custom skill category?")) {
+                const id = (e.currentTarget as HTMLButtonElement).dataset.catid;
+                const index = currentExtraCategories.findIndex(c => c.id === id);
+                if(index !== -1) currentExtraCategories.splice(index, 1);
+                renderExtraSkills(currentExtraCategories, currentMoves, saveExtraSkillsToToken, syncDerivedStats, renderMovesCallback); 
+                renderMovesCallback();
+                saveExtraSkillsToToken(currentExtraCategories);
+            }
+        });
+    });
+    setupSpinners();
+}
+
+export function renderMoves(
+    currentMoves: Move[],
+    currentExtraCategories: ExtraCategory[],
+    saveMovesToToken: (moves: Move[]) => void,
+    rollAccuracy: (move: Move) => void,
+    rollDamage: (move: Move) => void
+) {
+  const tbody = document.getElementById('moves-table-body');
+  if (!tbody) return;
+  tbody.innerHTML = ''; 
+
+  currentMoves.forEach((move: Move, index: number) => {
+    if (move.power === undefined) move.power = 0;
+    if (move.dmgStat === undefined) move.dmgStat = "";
+
+    const tr = createEl('tr', { className: 'data-table__row--dynamic' });
+    buildMoveRow(tr, move, index, currentExtraCategories);
+    
+    const isUsed = (move as any).used ? true : false;
+    const td = createEl('td', { style: 'text-align: center;' });
+    td.innerHTML = `<input type="checkbox" class="move-used-checkbox" data-id="${move.id}" ${isUsed ? 'checked' : ''} style="cursor: pointer; transform: scale(1.1);" title="Mark as used this round">`;
+    tr.insertBefore(td, tr.firstChild); 
+    
+    if (isUsed) {
+        tr.style.opacity = '0.5';
+        tr.style.transition = 'opacity 0.2s ease';
+    }
+
+    tbody.appendChild(tr);
+  });
+
+  document.querySelectorAll('.move-used-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+          const target = e.target as HTMLInputElement;
+          const move = currentMoves.find(m => m.id === target.getAttribute('data-id'));
+          if (move) {
+              (move as any).used = target.checked;
+              const row = target.closest('tr');
+              if (row) {
+                  row.style.opacity = target.checked ? '0.5' : '1';
+                  row.style.transition = 'opacity 0.2s ease';
+              }
+              saveMovesToToken(currentMoves);
+          }
+      });
+  });
+
+  document.querySelectorAll('.move-input').forEach(input => {
+    input.addEventListener('change', async (e) => {
+      const target = e.target as HTMLInputElement | HTMLSelectElement;
+      const id = target.getAttribute('data-id')!;
+      const field = target.getAttribute('data-field')! as keyof Move;
+      const move = currentMoves.find((m: Move) => m.id === id);
+      
+      if (move) {
+        if (field === 'power') move[field] = parseInt(target.value) || 0;
+        else move[field] = target.value as never;
+
+        if (field === 'type') applyTypeStyle(target as HTMLElement, target.value);
+        
+        if (field === 'name') {
+            const moveData = await fetchMoveData(target.value.trim());
+            if (moveData) {
+                move.type = String(moveData.Type || "Normal");
+                let rawCat = String(moveData.Category || "Physical");
+                if (rawCat === "Physical") move.cat = "Phys";
+                else if (rawCat === "Special") move.cat = "Spec";
+                else move.cat = "Supp";
+                
+                move.power = Number(moveData.Power) || 0;
+                move.desc = String(moveData.Effect || moveData.Description || "");
+                
+                const rawDmg = String(moveData.Damage1 === "None" ? "" : (moveData.Damage1 || ""));
+                move.dmgStat = ATTRIBUTE_MAPPING[rawDmg] || rawDmg;
+                
+                const accuracyOne = String(moveData.Accuracy1 || "");
+                move.attr = ATTRIBUTE_MAPPING[accuracyOne] || "str";
+                move.skill = String(moveData.Accuracy2 || "brawl").toLowerCase();
+                
+                // Recursively re-render to show new values
+                renderMoves(currentMoves, currentExtraCategories, saveMovesToToken, rollAccuracy, rollDamage); 
+            }
+        }
+        updateMoveDisplays(currentMoves);
+        saveMovesToToken(currentMoves);
+      }
+    });
+  });
+
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      if (window.confirm("Are you sure you want to delete this move?")) {
+        const id = (e.currentTarget as HTMLButtonElement).getAttribute('data-id')!;
+        const index = currentMoves.findIndex(m => m.id === id);
+        if (index !== -1) currentMoves.splice(index, 1);
+        renderMoves(currentMoves, currentExtraCategories, saveMovesToToken, rollAccuracy, rollDamage); 
+        saveMovesToToken(currentMoves);
+      }
+    });
+  });
+
+  document.querySelectorAll('.move-up-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = parseInt((e.currentTarget as HTMLButtonElement).getAttribute('data-index')!);
+      if (idx > 0) {
+        const temp = currentMoves[idx];
+        currentMoves[idx] = currentMoves[idx - 1];
+        currentMoves[idx - 1] = temp;
+        renderMoves(currentMoves, currentExtraCategories, saveMovesToToken, rollAccuracy, rollDamage); 
+        saveMovesToToken(currentMoves);
+      }
+    });
+  });
+
+  document.querySelectorAll('.move-down-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = parseInt((e.currentTarget as HTMLButtonElement).getAttribute('data-index')!);
+      if (idx < currentMoves.length - 1) {
+        const temp = currentMoves[idx];
+        currentMoves[idx] = currentMoves[idx + 1];
+        currentMoves[idx + 1] = temp;
+        renderMoves(currentMoves, currentExtraCategories, saveMovesToToken, rollAccuracy, rollDamage); 
+        saveMovesToToken(currentMoves);
+      }
+    });
+  });
+
+  document.querySelectorAll('.acc-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = (e.currentTarget as HTMLButtonElement).getAttribute('data-id')!;
+      const move = currentMoves.find((m: Move) => m.id === id);
+      if (move) rollAccuracy(move);
+    });
+  });
+
+  document.querySelectorAll('.dmg-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = (e.currentTarget as HTMLButtonElement).getAttribute('data-id')!;
+      const move = currentMoves.find((m: Move) => m.id === id);
+      if (move) rollDamage(move);
+    });
+  });
+
+  setupSpinners();
+  updateMoveDisplays(currentMoves);
+}
+
+// --- STATIC UI HELPERS ---
 export function renderTypeMatchups(typeStr: string) {
     const container = document.getElementById('type-matchup-container');
     const lockedContainer = document.getElementById('locked-type-matchup-container');
@@ -233,7 +557,6 @@ export function renderTypeMatchups(typeStr: string) {
     }
 }
 
-// --- SPINNERS & TOGGLES ---
 export function setupSpinners() {
   document.querySelectorAll('input[type="number"].number-spinner__input').forEach(input => {
     if (input.parentElement?.classList.contains('number-spinner')) return;

@@ -87,3 +87,114 @@ export async function fetchAbilityData(abilityName: string): Promise<AbilityData
   try { const res = await fetch(selectedUrl); return (await res.json()) as AbilityData; } 
   catch (err) { return null; }
 }
+// --- LEARNSET & DATALIST PARSERS ---
+
+export function populateMoveDatalist(pokemonData: any) {
+    const moveListElement = document.getElementById('move-list') as HTMLDataListElement;
+    if (!moveListElement || !pokemonData) return;
+
+    moveListElement.innerHTML = '';
+    let movesToAdd: string[] = [];
+
+    // Extract moves regardless of JSON formatting
+    if (Array.isArray(pokemonData.Moves)) {
+        movesToAdd = pokemonData.Moves.map((m: any) => typeof m === 'string' ? m : m.Name);
+    } else if (pokemonData.Moves && typeof pokemonData.Moves === 'object') {
+        Object.values(pokemonData.Moves).forEach((categoryMoves: any) => {
+             if (Array.isArray(categoryMoves)) {
+                 movesToAdd.push(...categoryMoves.map(m => typeof m === 'string' ? m : m.Name || m.Move));
+             }
+        });
+    }
+
+    // Deduplicate, remove blanks, and alphabetize
+    const uniqueMoves = [...new Set(movesToAdd)].filter(m => m).sort();
+
+    uniqueMoves.forEach(moveName => {
+        const opt = document.createElement('option');
+        opt.value = moveName;
+        moveListElement.appendChild(opt);
+    });
+}
+
+export function populateLearnset(pokemonData: any) {
+    const container = document.getElementById('learnset-container');
+    const toggleBtn = document.getElementById('toggle-learnset-btn');
+    if (!container || !toggleBtn) return;
+
+    if (!pokemonData || !pokemonData.Moves) {
+        toggleBtn.style.display = 'none';
+        container.style.display = 'none';
+        return;
+    }
+
+    container.innerHTML = '';
+    let hasMoves = false;
+
+    const buildBadges = (moveArray: any[]) => {
+        const moveList = document.createElement('div');
+        moveList.style.display = 'flex';
+        moveList.style.flexWrap = 'wrap';
+        moveList.style.gap = '4px';
+        moveArray.forEach((m: any) => {
+            const moveName = typeof m === 'string' ? m : (m.Name || m.Move);
+            if (moveName) {
+                const moveBadge = document.createElement('span');
+                moveBadge.style.background = '#e0e0e0';
+                moveBadge.style.padding = '2px 6px';
+                moveBadge.style.borderRadius = '12px';
+                moveBadge.style.fontSize = '0.75rem';
+                moveBadge.style.color = '#333';
+                moveBadge.innerText = moveName;
+                moveList.appendChild(moveBadge);
+            }
+        });
+        return moveList;
+    };
+
+    let groupedMoves: Record<string, any[]> = {};
+    const rankOrder = ["Starter", "Beginner", "Rookie", "Amateur", "Standard", "Advanced", "Expert", "Master", "Champion", "Other"];
+
+    if (Array.isArray(pokemonData.Moves)) {
+        pokemonData.Moves.forEach((m: any) => {
+            const rank = typeof m === 'object' ? (m.Learned || m.Learn || m.Level || m.Rank || "Other") : "Other";
+            if (!groupedMoves[rank]) groupedMoves[rank] = [];
+            groupedMoves[rank].push(m);
+        });
+    } else if (typeof pokemonData.Moves === 'object') {
+        groupedMoves = pokemonData.Moves;
+    }
+
+    const sortedRanks = Object.keys(groupedMoves).sort((a, b) => {
+        let idxA = rankOrder.indexOf(a);
+        let idxB = rankOrder.indexOf(b);
+        if (idxA === -1) idxA = 99; 
+        if (idxB === -1) idxB = 99;
+        return idxA - idxB;
+    });
+
+    sortedRanks.forEach(rank => {
+        const moveArray = groupedMoves[rank];
+        if (Array.isArray(moveArray) && moveArray.length > 0) {
+            hasMoves = true;
+            const rankHeader = document.createElement('div');
+            rankHeader.style.fontWeight = 'bold';
+            rankHeader.style.color = 'var(--primary)';
+            rankHeader.style.marginTop = container.innerHTML === '' ? '0px' : '8px';
+            rankHeader.style.borderBottom = '1px solid #ccc';
+            rankHeader.style.marginBottom = '4px';
+            rankHeader.style.textTransform = 'capitalize';
+            rankHeader.innerText = rank;
+            
+            container.appendChild(rankHeader);
+            container.appendChild(buildBadges(moveArray));
+        }
+    });
+
+    if (hasMoves) {
+         toggleBtn.style.display = 'block';
+    } else {
+         toggleBtn.style.display = 'none';
+         container.style.display = 'none';
+    }
+}
