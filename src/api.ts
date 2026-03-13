@@ -87,36 +87,8 @@ export async function fetchAbilityData(abilityName: string): Promise<AbilityData
   try { const res = await fetch(selectedUrl); return (await res.json()) as AbilityData; } 
   catch (err) { return null; }
 }
-// --- LEARNSET & DATALIST PARSERS ---
 
-export function populateMoveDatalist(pokemonData: any) {
-    const moveListElement = document.getElementById('move-list') as HTMLDataListElement;
-    if (!moveListElement || !pokemonData) return;
-
-    moveListElement.innerHTML = '';
-    let movesToAdd: string[] = [];
-
-    // Extract moves regardless of JSON formatting
-    if (Array.isArray(pokemonData.Moves)) {
-        movesToAdd = pokemonData.Moves.map((m: any) => typeof m === 'string' ? m : m.Name);
-    } else if (pokemonData.Moves && typeof pokemonData.Moves === 'object') {
-        Object.values(pokemonData.Moves).forEach((categoryMoves: any) => {
-             if (Array.isArray(categoryMoves)) {
-                 movesToAdd.push(...categoryMoves.map(m => typeof m === 'string' ? m : m.Name || m.Move));
-             }
-        });
-    }
-
-    // Deduplicate, remove blanks, and alphabetize
-    const uniqueMoves = [...new Set(movesToAdd)].filter(m => m).sort();
-
-    uniqueMoves.forEach(moveName => {
-        const opt = document.createElement('option');
-        opt.value = moveName;
-        moveListElement.appendChild(opt);
-    });
-}
-
+// --- LEARNSET PARSER ---
 export function populateLearnset(pokemonData: any) {
     const container = document.getElementById('learnset-container');
     const toggleBtn = document.getElementById('toggle-learnset-btn');

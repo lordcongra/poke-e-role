@@ -1,9 +1,10 @@
 import './style.css';
 import OBR from "@owlbear-rodeo/sdk";
 import type { Move, InventoryItem, ExtraCategory, CustomInfo } from './@types/index';
-import { ALL_SKILLS, getVal, getDerivedVal, generateId } from './utils';
+import { ALL_SKILLS, generateId } from './utils';
 import { calculateStats } from './math';
-import { loadUrlLists, fetchPokemonData, fetchAbilityData, populateLearnset, populateMoveDatalist } from './api';
+import { loadUrlLists, fetchPokemonData, fetchAbilityData, populateLearnset } from './api';
+import { sheetView } from './view';
 import { 
     setupSpinners, updateSheetTypeUI, applyTypeStyle, 
     renderTypeMatchups, renderStatuses, renderCustomInfo, 
@@ -14,6 +15,10 @@ import {
     sendToDicePlus, saveBatchDataToToken, saveMovesToToken, 
     saveInventoryToToken, saveExtraSkillsToToken, setupOBR, repairTrackers
 } from './obr';
+
+// --- TINY HELPERS ---
+const v = (el: HTMLInputElement) => parseInt(el.value) || 0;
+const tv = (el: HTMLElement) => parseInt(el.innerText) || 0;
 
 // --- STATE MANAGEMENT ---
 let currentMoves: Move[] = [];
@@ -32,7 +37,6 @@ function syncDerivedStats() {
     const updates: Record<string, any> = {};
     let hasChanges = false;
     
-    // Changed val to 'any' to cleanly handle our new booleans
     const checkAndAdd = (id: string, val: any) => {
         if (currentTokenData[id] !== val) {
             updates[id] = val;
@@ -63,6 +67,22 @@ function syncDerivedStats() {
 
 function reRenderMoves() {
     renderMoves(currentMoves, currentExtraCategories, saveMovesToToken, rollAccuracy, rollDamage);
+}
+
+// --- NEW HELPER: MAX STAT LIMITS ---
+function applyStatLimits(pokemonData: any) {
+    const getLimit = (stat: string) => 
+        pokemonData[`Max${stat}`] || 
+        pokemonData[`Max ${stat}`] || 
+        (pokemonData.MaxAttributes && pokemonData.MaxAttributes[stat]) || 
+        (pokemonData.MaxStats && pokemonData.MaxStats[stat]) || 
+        "?";
+
+    if (sheetView.stats.str.limit) sheetView.stats.str.limit.innerText = getLimit("Strength");
+    if (sheetView.stats.dex.limit) sheetView.stats.dex.limit.innerText = getLimit("Dexterity");
+    if (sheetView.stats.vit.limit) sheetView.stats.vit.limit.innerText = getLimit("Vitality");
+    if (sheetView.stats.spe.limit) sheetView.stats.spe.limit.innerText = getLimit("Special");
+    if (sheetView.stats.ins.limit) sheetView.stats.ins.limit.innerText = getLimit("Insight");
 }
 
 // --- TOP-LEVEL BUTTON LISTENERS ---
@@ -120,13 +140,13 @@ document.getElementById('add-item-btn')?.addEventListener('click', () => {
 });
 
 // --- IDENTITY & DATA FETCHING ---
-document.getElementById('species')?.addEventListener('change', async (e) => {
-    const pokemonName = (e.target as HTMLInputElement).value;
+sheetView.identity.species.addEventListener('change', async () => {
+    const pokemonName = sheetView.identity.species.value;
     const pokemonData = await fetchPokemonData(pokemonName);
     if (!pokemonData) return;
 
     populateLearnset(pokemonData);
-    populateMoveDatalist(pokemonData);
+    applyStatLimits(pokemonData); 
 
     const type1 = String(pokemonData.Type1 || "Normal");
     const type2 = String(pokemonData.Type2 || "");
@@ -137,8 +157,7 @@ document.getElementById('species')?.addEventListener('change', async (e) => {
     const baseAttrs = pokemonData.Attributes || pokemonData.BaseAttributes || pokemonData;
     const hp = pokemonData.BaseHP || (baseStats && baseStats.HP) || 4;
     
-    const abilitySelect = document.getElementById('ability') as HTMLSelectElement;
-    abilitySelect.innerHTML = '';
+    sheetView.identity.ability.innerHTML = '';
     const abilities: string[] = [];
     
     const hasAbility1 = !!pokemonData.Ability1;
@@ -159,27 +178,26 @@ document.getElementById('species')?.addEventListener('change', async (e) => {
         const opt = document.createElement('option');
         opt.value = ab.replace(" (HA)", "");
         opt.text = ab;
-        abilitySelect.appendChild(opt);
+        sheetView.identity.ability.appendChild(opt);
     });
 
     let defaultAbility = "";
     if (abilities.length > 0) {
         defaultAbility = abilities[0].replace(" (HA)", "");
         const abilityData = await fetchAbilityData(defaultAbility);
-        if (abilityData) abilitySelect.title = String(abilityData.Effect || abilityData.Description || "No description found.");
+        if (abilityData) sheetView.identity.ability.title = String(abilityData.Effect || abilityData.Description || "No description found.");
     }
 
-    const typingInput = document.getElementById('typing') as HTMLInputElement;
-    typingInput.value = typing;
-    applyTypeStyle(typingInput, typing); 
+    sheetView.identity.typing.value = typing;
+    applyTypeStyle(sheetView.identity.typing, typing); 
     renderTypeMatchups(typing); 
 
-    (document.getElementById('hp-base') as HTMLInputElement).value = String(hp);
-    (document.getElementById('str-base') as HTMLInputElement).value = String(baseAttrs.Strength || 2);
-    (document.getElementById('dex-base') as HTMLInputElement).value = String(baseAttrs.Dexterity || 2);
-    (document.getElementById('vit-base') as HTMLInputElement).value = String(baseAttrs.Vitality || 2);
-    (document.getElementById('spe-base') as HTMLInputElement).value = String(baseAttrs.Special || 2);
-    (document.getElementById('ins-base') as HTMLInputElement).value = String(baseAttrs.Insight || 1);
+    sheetView.health.hp.base.value = String(hp);
+    sheetView.stats.str.base.value = String(baseAttrs.Strength || 2);
+    sheetView.stats.dex.base.value = String(baseAttrs.Dexterity || 2);
+    sheetView.stats.vit.base.value = String(baseAttrs.Vitality || 2);
+    sheetView.stats.spe.base.value = String(baseAttrs.Special || 2);
+    sheetView.stats.ins.base.value = String(baseAttrs.Insight || 1);
 
     const batchUpdates: Record<string, any> = {
         'species': pokemonName, 'typing': typing, 'hp-base': hp,
@@ -189,7 +207,7 @@ document.getElementById('species')?.addEventListener('change', async (e) => {
         'ability-list': abilities.join(',')
     };
 
-    const hasExistingSkills = ALL_SKILLS.some((skill: string) => getVal(`${skill}-base`) > 0 || getVal(`${skill}-buff`) > 0);
+    const hasExistingSkills = ALL_SKILLS.some((skill: string) => v(sheetView.skills[skill].base) > 0 || v(sheetView.skills[skill].buff) > 0);
     const hasExistingMoves = currentMoves.length > 0;
     
     let shouldWipe = false;
@@ -201,10 +219,8 @@ document.getElementById('species')?.addEventListener('change', async (e) => {
 
     if (shouldWipe) {
         ALL_SKILLS.forEach((skill: string) => {
-            const baseInput = document.getElementById(`${skill}-base`) as HTMLInputElement;
-            const buffInput = document.getElementById(`${skill}-buff`) as HTMLInputElement;
-            if(baseInput) { baseInput.value = "0"; batchUpdates[`${skill}-base`] = 0; }
-            if(buffInput) { buffInput.value = "0"; batchUpdates[`${skill}-buff`] = 0; }
+            sheetView.skills[skill].base.value = "0"; batchUpdates[`${skill}-base`] = 0;
+            sheetView.skills[skill].buff.value = "0"; batchUpdates[`${skill}-buff`] = 0;
         });
         currentMoves = [];
         reRenderMoves();
@@ -217,7 +233,7 @@ document.getElementById('species')?.addEventListener('change', async (e) => {
     syncDerivedStats();
 });
 
-document.getElementById('ability')?.addEventListener('change', async (e) => {
+sheetView.identity.ability.addEventListener('change', async (e) => {
     const val = (e.target as HTMLSelectElement).value;
     const abilityData = await fetchAbilityData(val);
     if (abilityData) {
@@ -226,7 +242,7 @@ document.getElementById('ability')?.addEventListener('change', async (e) => {
     saveDataToToken('ability', val);
 });
 
-document.getElementById('sheet-type')?.addEventListener('change', (e) => {
+sheetView.identity.sheetType.addEventListener('change', (e) => {
     const val = (e.target as HTMLSelectElement).value;
     updateSheetTypeUI(val);
     saveDataToToken('sheet-type', val);
@@ -240,24 +256,23 @@ document.getElementById('refresh-data-btn')?.addEventListener('click', async () 
     btn.disabled = true;
 
     const batchUpdates: Record<string, any> = {};
+    const typingStr = sheetView.identity.typing.value;
 
-    const typingInput = document.getElementById('typing') as HTMLInputElement;
-    if (typingInput && typingInput.value) {
-        applyTypeStyle(typingInput, typingInput.value);
-        renderTypeMatchups(typingInput.value); 
+    if (typingStr) {
+        applyTypeStyle(sheetView.identity.typing, typingStr);
+        renderTypeMatchups(typingStr); 
     }
 
-    const pokemonName = (document.getElementById('species') as HTMLInputElement).value;
-    const abilitySelect = document.getElementById('ability') as HTMLSelectElement;
-    const currentAbility = abilitySelect.value;
+    const pokemonName = sheetView.identity.species.value;
+    const currentAbility = sheetView.identity.ability.value;
 
     if (pokemonName) {
         const pokemonData = await fetchPokemonData(pokemonName);
         if (pokemonData) {
             populateLearnset(pokemonData);
-            populateMoveDatalist(pokemonData);
+            applyStatLimits(pokemonData); 
 
-            abilitySelect.innerHTML = '';
+            sheetView.identity.ability.innerHTML = '';
             const abilities: string[] = [];
             
             const hasAbility1 = !!pokemonData.Ability1;
@@ -278,22 +293,22 @@ document.getElementById('refresh-data-btn')?.addEventListener('click', async () 
                 const opt = document.createElement('option');
                 opt.value = ab.replace(" (HA)", "");
                 opt.text = ab;
-                abilitySelect.appendChild(opt);
+                sheetView.identity.ability.appendChild(opt);
             });
 
             if (currentAbility && abilities.some((a: string) => a.replace(" (HA)", "") === currentAbility)) {
-                abilitySelect.value = currentAbility;
+                sheetView.identity.ability.value = currentAbility;
             } else if (abilities.length > 0) {
-                abilitySelect.value = abilities[0].replace(" (HA)", "");
-                batchUpdates['ability'] = abilitySelect.value;
+                sheetView.identity.ability.value = abilities[0].replace(" (HA)", "");
+                batchUpdates['ability'] = sheetView.identity.ability.value;
             }
             batchUpdates['ability-list'] = abilities.join(',');
         }
     }
 
-    if (abilitySelect.value) {
-        const abilityData = await fetchAbilityData(abilitySelect.value);
-        if (abilityData) abilitySelect.title = String(abilityData.Effect || abilityData.Description || "No description found.");
+    if (sheetView.identity.ability.value) {
+        const abilityData = await fetchAbilityData(sheetView.identity.ability.value);
+        if (abilityData) sheetView.identity.ability.title = String(abilityData.Effect || abilityData.Description || "No description found.");
     }
 
     reRenderMoves();
@@ -311,37 +326,44 @@ document.getElementById('refresh-data-btn')?.addEventListener('click', async () 
     }, 2000);
 });
 
-
 // --- COMBAT ROLL LOGIC ---
 document.getElementById('roll-init-btn')?.addEventListener('click', async () => {
-    const initBonus = getDerivedVal('init-total');
-    const nickname = (document.getElementById('nickname') as HTMLInputElement).value || "Someone";
+    const initBonus = tv(sheetView.initiative.total);
+    const nickname = sheetView.identity.nickname.value || "Someone";
     const notation = initBonus > 0 ? `1d6+${initBonus}` : `1d6`;
     OBR.notification.show(`🎲 ${nickname} rolled Initiative!`);
     sendToDicePlus(notation, "init"); 
 });
 
 document.getElementById('roll-global-chance-btn')?.addEventListener('click', () => {
-    const chanceDice = getVal('global-chance-mod');
+    const chanceDice = v(sheetView.globalMods.chance);
     if (chanceDice <= 0) return;
-    const nickname = (document.getElementById('nickname') as HTMLInputElement).value || "Someone";
+    const nickname = sheetView.identity.nickname.value || "Someone";
     sendToDicePlus(`${chanceDice}d6>5 # ${nickname}: Chance Roll`, "chance"); 
 });
 
 function rollAccuracy(move: Move) {
-  const nickname = (document.getElementById('nickname') as HTMLInputElement).value || "Someone";
-  let actions = getVal('actions-used');
+  const nickname = sheetView.identity.nickname.value || "Someone";
+  let actions = v(sheetView.trackers.actions);
   const requiredSuccesses = actions + 1;
-  const extraDice = getVal('global-acc-mod'); 
-  const succMod = getVal('global-succ-mod'); 
+  const extraDice = v(sheetView.globalMods.acc); 
+  const succMod = v(sheetView.globalMods.succ); 
   
-  let attrTotal = move.attr === 'will' ? getDerivedVal('will-max-display') : getDerivedVal(`${move.attr}-total`);
-  const skillTotal = getDerivedVal(`${move.skill}-total`);
+  let attrTotal = move.attr === 'will' ? tv(sheetView.health.will.max) : tv(sheetView.stats[move.attr].total);
+  
+  let skillTotal = 0;
+  if (sheetView.skills[move.skill]) {
+      skillTotal = tv(sheetView.skills[move.skill].total);
+  } else {
+      const extraEl = document.getElementById(`${move.skill}-total`);
+      if (extraEl) skillTotal = parseInt(extraEl.innerText) || 0;
+  }
+
   const dicePool = attrTotal + skillTotal + extraDice;
   
   if (actions < 5) {
       actions++;
-      (document.getElementById('actions-used') as HTMLInputElement).value = actions.toString();
+      sheetView.trackers.actions.value = actions.toString();
       saveDataToToken('actions-used', actions); 
       currentTokenData['actions-used'] = actions;
   }
@@ -353,13 +375,16 @@ function rollAccuracy(move: Move) {
 function rollDamage(move: Move) {
   if (move.cat === "Supp") { alert(`${move.name} is a Support move (No Damage).`); return; }
 
-  const nickname = (document.getElementById('nickname') as HTMLInputElement).value || "Someone";
-  const typingStr = (document.getElementById('typing') as HTMLInputElement).value || "";
-  const abilitySelect = document.getElementById('ability') as HTMLSelectElement; 
-  const abilityStr = abilitySelect ? abilitySelect.value : "";
-  const extraDice = getVal('global-dmg-mod'); 
+  const nickname = sheetView.identity.nickname.value || "Someone";
+  const typingStr = sheetView.identity.typing.value || "";
+  const abilityStr = sheetView.identity.ability.value || "";
+  const extraDice = v(sheetView.globalMods.dmg); 
   
-  let scalingVal = move.dmgStat ? getDerivedVal(`${move.dmgStat}-total`) : 0;
+  let scalingVal = 0;
+  const attrMap: Record<string, string> = { "str": "str", "dex": "dex", "vit": "vit", "spe": "spe", "ins": "ins", "Strength": "str", "Dexterity": "dex", "Vitality": "vit", "Special": "spe", "Insight": "ins" };
+  if (move.dmgStat && attrMap[move.dmgStat] && sheetView.stats[attrMap[move.dmgStat]]) {
+      scalingVal = tv(sheetView.stats[attrMap[move.dmgStat]].total);
+  }
   
   const isProtean = abilityStr.toLowerCase().includes("protean") || abilityStr.toLowerCase().includes("libero");
   const hasTypeMatch = move.type && typingStr.includes(move.type);
@@ -378,29 +403,23 @@ function rollDamage(move: Move) {
 }
 
 function rollGeneric(actionName: string, pool: number, incrementEvade = false, incrementClash = false, incrementAction = false) {
-   const nickname = (document.getElementById('nickname') as HTMLInputElement).value || "Someone";
+   const nickname = sheetView.identity.nickname.value || "Someone";
    const batchUpdates: Record<string, any> = {};
    
    if (incrementAction) {
-      let a = getVal('actions-used');
+      let a = v(sheetView.trackers.actions);
       if (a < 5) {
-         (document.getElementById('actions-used') as HTMLInputElement).value = (a+1).toString();
+         sheetView.trackers.actions.value = (a+1).toString();
          batchUpdates['actions-used'] = a + 1; 
       }
    }
    if (incrementEvade) {
-      const el = document.getElementById('evasions-used') as HTMLInputElement;
-      if (el) {
-          el.checked = true;
-          batchUpdates['evasions-used'] = true;
-      }
+      sheetView.trackers.evade.checked = true;
+      batchUpdates['evasions-used'] = true;
    }
    if (incrementClash) {
-      const el = document.getElementById('clashes-used') as HTMLInputElement;
-      if (el) {
-          el.checked = true;
-          batchUpdates['clashes-used'] = true;
-      }
+      sheetView.trackers.clash.checked = true;
+      batchUpdates['clashes-used'] = true;
    }
 
    if (Object.keys(batchUpdates).length > 0) {
@@ -410,27 +429,27 @@ function rollGeneric(actionName: string, pool: number, incrementEvade = false, i
    if (pool > 0) sendToDicePlus(`${pool}d6>3 # ${nickname}: ${actionName}`);
 }
 
-document.getElementById('roll-evade-btn')?.addEventListener('click', () => { rollGeneric("Evasion", getDerivedVal('dex-total') + getDerivedVal('evasion-total'), true, false, true); });
+document.getElementById('roll-evade-btn')?.addEventListener('click', () => { rollGeneric("Evasion", tv(sheetView.stats.dex.total) + tv(sheetView.skills.evasion.total), true, false, true); });
 document.getElementById('roll-clash-btn')?.addEventListener('click', () => {
   const isSpec = confirm("Is this a Special Clash? (Cancel for Physical)");
-  rollGeneric(isSpec ? "Special Clash" : "Physical Clash", (isSpec ? getDerivedVal('spe-total') : getDerivedVal('str-total')) + getDerivedVal('clash-total'), false, true, true); 
+  rollGeneric(isSpec ? "Special Clash" : "Physical Clash", (isSpec ? tv(sheetView.stats.spe.total) : tv(sheetView.stats.str.total)) + tv(sheetView.skills.clash.total), false, true, true); 
 });
 document.getElementById('roll-maneuver-btn')?.addEventListener('click', () => {
    const val = (document.getElementById('maneuver-select') as HTMLSelectElement).value;
    if (val === 'none') return;
-   if (val === 'ambush') rollGeneric("Ambush", getDerivedVal('dex-total') + getDerivedVal('stealth-total'), false, false, true);
-   if (val === 'cover') rollGeneric("Cover an Ally", 3 + getDerivedVal('ins-total'), false, false, true);
-   if (val === 'grapple') rollGeneric("Grapple", getDerivedVal('str-total') + getDerivedVal('brawl-total'), false, false, true);
-   if (val === 'run') rollGeneric("Run Away", getDerivedVal('dex-total') + getDerivedVal('athletic-total'), false, false, true);
-   if (val === 'stabilize') rollGeneric("Stabilize Ally", getDerivedVal('cle-total') + getDerivedVal('medicine-total'), false, false, true);
-   if (val === 'struggle') rollGeneric("Struggle (Accuracy)", getDerivedVal('dex-total') + getDerivedVal('brawl-total'), false, false, true);
+   if (val === 'ambush') rollGeneric("Ambush", tv(sheetView.stats.dex.total) + tv(sheetView.skills.stealth.total), false, false, true);
+   if (val === 'cover') rollGeneric("Cover an Ally", 3 + tv(sheetView.stats.ins.total), false, false, true);
+   if (val === 'grapple') rollGeneric("Grapple", tv(sheetView.stats.str.total) + tv(sheetView.skills.brawl.total), false, false, true);
+   if (val === 'run') rollGeneric("Run Away", tv(sheetView.stats.dex.total) + tv(sheetView.skills.athletic.total), false, false, true);
+   if (val === 'stabilize') rollGeneric("Stabilize Ally", tv(sheetView.stats.cle.total) + tv(sheetView.skills.medicine.total), false, false, true);
+   if (val === 'struggle') rollGeneric("Struggle (Accuracy)", tv(sheetView.stats.dex.total) + tv(sheetView.skills.brawl.total), false, false, true);
 });
 
 // --- ROUND RESET UNCHECKS ALL BOXES ---
 document.getElementById('reset-round-btn')?.addEventListener('click', () => {
-    (document.getElementById('actions-used') as HTMLInputElement).value = "0";
-    (document.getElementById('evasions-used') as HTMLInputElement).checked = false;
-    (document.getElementById('clashes-used') as HTMLInputElement).checked = false;
+    sheetView.trackers.actions.value = "0";
+    sheetView.trackers.evade.checked = false;
+    sheetView.trackers.clash.checked = false;
     
     const updates = { 'actions-used': 0, 'evasions-used': false, 'clashes-used': false }; 
     Object.assign(currentTokenData, updates);
@@ -536,8 +555,7 @@ async function loadDataFromToken(tokenId: string) {
     const npcCheck = document.getElementById('is-npc') as HTMLInputElement;
     if (npcCheck) npcCheck.checked = isNPC;
     
-    const nicknameInput = document.getElementById('nickname') as HTMLInputElement;
-    if (nicknameInput) nicknameInput.value = data['nickname'] || token.name || "";
+    sheetView.identity.nickname.value = data['nickname'] || token.name || "";
 
     if (data['sheet-type']) updateSheetTypeUI(data['sheet-type']);
 
@@ -561,7 +579,7 @@ async function loadDataFromToken(tokenId: string) {
         fetchPokemonData(currentSpeciesName).then(pokemonData => {
             if (pokemonData) {
                 populateLearnset(pokemonData);
-                populateMoveDatalist(pokemonData);
+                applyStatLimits(pokemonData); 
             }
         });
     }
@@ -615,7 +633,7 @@ loadUrlLists();
 setupSpinners();
 renderStatuses(currentStatuses, saveDataToToken); 
 renderCustomInfo(currentCustomInfo, saveDataToToken);
-const initialTyping = (document.getElementById('typing') as HTMLInputElement)?.value || "";
+const initialTyping = sheetView.identity.typing.value || "";
 renderTypeMatchups(initialTyping);
 calculateStats(currentExtraCategories, currentMoves);
 setupOBR(loadDataFromToken);

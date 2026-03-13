@@ -23,9 +23,10 @@ While these extensions do not tie directly into the character sheet, they are hi
 * Supports both **Pokémon** and **Trainer** modes, dynamically toggling relevant skills and clashes.
 * **Form & Evolution Safe:** Change a Pokémon's species to update their base stats and typing *without* wiping their invested skills and moves!
 
-### 📈 Soft Caps & PMD Overrides
+### 📈 Soft Caps, Limits, & PMD Overrides
 * Automatically calculates your maximum Attribute, Social, and Skill point limits based on your currently selected Rank and Age.
 * Tracks your spent points and warns you if you exceed standard limits.
+* **Auto-Fetches Stat Caps:** Automatically queries the API to display the maximum Attribute limits for your specific Pokémon species. 
 * **PMD / Homebrew Friendly:** Includes "Extra Pts" override boxes, allowing GMs to reward extra stats for completing dungeons without breaking the sheet's logic.
 
 ### 📖 Built-In Learnset Pokédex
@@ -41,7 +42,7 @@ While these extensions do not tie directly into the character sheet, they are hi
 ### 🌐 Live Database Fetching
 * Type in the name of a Pokémon species, and the sheet securely fetches its Base Stats, Typings, and Abilities directly from the official Pokerole 3.0 GitHub Database.
 * Automatically color-codes your Typings with beautiful CSS gradients.
-* Type in a Move name to automatically pull its Base Power, Category, Accuracy stats, and mechanical Effects.
+* **Global Move Library:** Start typing a move name to instantly search the entire Pokerole global library (perfect for assigning custom TM/Tutor moves). The sheet automatically pulls the move's Base Power, Category, Accuracy stats, and mechanical Effects.
 
 ### 💡 Dynamic Tooltips & Modifiers
 * No more digging through PDFs during combat! Hover your mouse over your equipped Ability or any Move on your sheet to see a native tooltip explaining its exact mechanical effect. 
@@ -72,4 +73,4 @@ To install this extension into your Owlbear Rodeo room, copy the Manifest URL be
 
 `https://lordcongra.github.io/poke-e-role/manifest.json`
 
-*(Note: If the sheet updates, you can force Owlbear to fetch the newest version by adding a version tag to the end of the URL, like `?v=1.3`)*
+*(Note: If the sheet updates, you can force Owlbear to fetch the newest version by adding a version tag to the end of the URL, like `?v=1.3.1`)*

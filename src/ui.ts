@@ -377,10 +377,20 @@ export function renderMoves(
     buildMoveRow(tr, move, index, currentExtraCategories);
     
     const isUsed = (move as any).used ? true : false;
-    const td = createEl('td', { style: 'text-align: center;' });
-    td.innerHTML = `<input type="checkbox" class="move-used-checkbox" data-id="${move.id}" ${isUsed ? 'checked' : ''} style="cursor: pointer; transform: scale(1.1);" title="Mark as used this round">`;
-    tr.insertBefore(td, tr.firstChild); 
     
+    // --- THIS IS THE FIX ---
+    const checkbox = createEl('input', {
+        type: 'checkbox',
+        className: 'move-used-checkbox',
+        checked: isUsed,
+        title: 'Mark as used this round',
+        style: 'cursor: pointer; transform: scale(1.1);',
+        dataset: { id: move.id }
+    });
+    const td = createEl('td', { style: 'text-align: center;' }, [checkbox]);
+    tr.insertBefore(td, tr.firstChild); 
+    // -----------------------
+
     if (isUsed) {
         tr.style.opacity = '0.5';
         tr.style.transition = 'opacity 0.2s ease';
