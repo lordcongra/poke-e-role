@@ -126,3 +126,56 @@ body {
 
 .form-select--bordered { border: 1px solid var(--border); background: white; padding: 1px; }
 .form-select--transparent { border: none; background: transparent; }
+
+/* --- RESOURCE BOXES (HP & WILL) --- */
+.resource-box {
+    display: flex;
+    flex-direction: column;
+    padding: 6px 4px;
+    background-color: #fff;
+}
+
+.resource-box__main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    padding-bottom: 6px;
+}
+
+.resource-box__label {
+    font-weight: bold;
+    color: var(--dark);
+    font-size: 0.95rem;
+}
+
+.resource-box__divider {
+    font-weight: 900;
+    color: #bdc3c7;
+    font-size: 1.3rem;
+    margin: 0 2px;
+}
+
+.resource-box__max {
+    font-weight: 900;
+    color: var(--primary, #C62828);
+    font-size: 1.1rem;
+    min-width: 1.5rem;
+    text-align: left;
+}
+
+.resource-box__sub {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    border-top: 1px solid var(--border);
+    padding-top: 6px;
+    color: #7f8c8d;
+    font-size: 0.8rem;
+}
+
+.resource-box__sub .number-spinner {
+    transform: scale(0.85);
+    transform-origin: center;
+}

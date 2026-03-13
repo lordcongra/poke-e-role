@@ -1,17 +1,17 @@
 import './style.css';
 import OBR from "@owlbear-rodeo/sdk";
-import type { Move, InventoryItem, ExtraCategory, CustomInfo } from './@types/index';
+import type { Move, InventoryItem, ExtraCategory, CustomInfo, DicePlusData, StatusItem, EffectItem } from './@types/index';
 import { ALL_SKILLS, generateId } from './utils';
 import { calculateStats } from './math';
 import { loadUrlLists, fetchPokemonData, fetchAbilityData, populateLearnset } from './api';
 import { sheetView } from './view';
 import { 
     setupSpinners, updateSheetTypeUI, applyTypeStyle, 
-    renderTypeMatchups, renderStatuses, renderCustomInfo, 
+    renderTypeMatchups, renderStatuses, renderEffects, renderCustomInfo, 
     renderInventory, renderExtraSkills, renderMoves 
 } from './ui';
 import { 
-    METADATA_ID, setLoading, setLastMetadataStr, 
+    MY_EXTENSION_ID, METADATA_ID, setLoading, setLastMetadataStr, 
     sendToDicePlus, saveBatchDataToToken, saveMovesToToken, 
     saveInventoryToToken, saveExtraSkillsToToken, setupOBR, repairTrackers
 } from './obr';
@@ -24,7 +24,8 @@ const tv = (el: HTMLElement) => parseInt(el.innerText) || 0;
 let currentMoves: Move[] = [];
 let currentInventory: InventoryItem[] = [];
 let currentExtraCategories: ExtraCategory[] = [];
-let currentStatuses: string[] = ["Healthy"];
+let currentStatuses: StatusItem[] = [{ id: generateId(), name: "Healthy", customName: "", rounds: 0 }];
+let currentEffects: EffectItem[] = [];
 let currentCustomInfo: CustomInfo[] = [];
 let currentTokenData: Record<string, any> = {};
 
@@ -50,7 +51,7 @@ function syncDerivedStats() {
         if (span.id) checkAndAdd(span.id, parseInt(span.innerText) || 0);
     });
 
-    ['actions-used', 'hp-curr', 'will-curr', 'hp-base', 'will-base'].forEach(id => {
+    ['actions-used', 'hp-curr', 'will-curr', 'hp-base', 'will-base', 'happiness-curr', 'loyalty-curr'].forEach(id => {
         const el = document.getElementById(id) as HTMLInputElement;
         if (el) checkAndAdd(id, parseFloat(el.value) || 0);
     });
@@ -69,8 +70,7 @@ function reRenderMoves() {
     renderMoves(currentMoves, currentExtraCategories, saveMovesToToken, rollAccuracy, rollDamage);
 }
 
-// --- NEW HELPER: MAX STAT LIMITS ---
-function applyStatLimits(pokemonData: any) {
+function applyStatLimits(pokemonData: Record<string, any>) {
     const getLimit = (stat: string) => 
         pokemonData[`Max${stat}`] || 
         pokemonData[`Max ${stat}`] || 
@@ -101,9 +101,15 @@ document.getElementById('toggle-learnset-btn')?.addEventListener('click', () => 
 });
 
 document.getElementById('add-status-btn')?.addEventListener('click', () => {
-    currentStatuses.push("Healthy");
-    renderStatuses(currentStatuses, saveDataToToken);
+    currentStatuses.push({ id: generateId(), name: "Healthy", customName: "", rounds: 0 });
+    renderStatuses(currentStatuses, saveDataToToken, rollStatus);
     saveDataToToken('status-list', JSON.stringify(currentStatuses));
+});
+
+document.getElementById('add-effect-btn')?.addEventListener('click', () => {
+    currentEffects.push({ id: generateId(), name: "", rounds: 0 });
+    renderEffects(currentEffects, saveDataToToken);
+    saveDataToToken('effects-data', JSON.stringify(currentEffects));
 });
 
 document.getElementById('add-custom-info-btn')?.addEventListener('click', () => {
@@ -429,6 +435,29 @@ function rollGeneric(actionName: string, pool: number, incrementEvade = false, i
    if (pool > 0) sendToDicePlus(`${pool}d6>3 # ${nickname}: ${actionName}`);
 }
 
+function rollStatus(status: StatusItem) {
+    const nickname = sheetView.identity.nickname.value || "Someone";
+    let pool = 0;
+
+    if (status.name.includes("Burn")) {
+        pool = tv(sheetView.stats.dex.total) + tv(sheetView.skills.athletic.total);
+    } else if (status.name === "Paralysis") {
+        pool = tv(sheetView.stats.str.total) + tv(sheetView.skills.medicine.total);
+    } else if (status.name === "Sleep" || status.name === "Confusion") {
+        pool = tv(sheetView.stats.ins.total);
+    } else if (status.name === "In Love") {
+        pool = Math.max(v(sheetView.trackers.loyalty), tv(sheetView.stats.ins.total));
+    } else {
+        OBR.notification.show(`⚠️ ${status.name} does not have a standard self-recovery roll.`);
+        return;
+    }
+
+    if (pool > 0) {
+        const rollId = `status|${status.id}`;
+        sendToDicePlus(`${pool}d6>3 # ${nickname}: ${status.name} Recovery`, rollId);
+    }
+}
+
 document.getElementById('roll-evade-btn')?.addEventListener('click', () => { rollGeneric("Evasion", tv(sheetView.stats.dex.total) + tv(sheetView.skills.evasion.total), true, false, true); });
 document.getElementById('roll-clash-btn')?.addEventListener('click', () => {
   const isSpec = confirm("Is this a Special Clash? (Cancel for Physical)");
@@ -445,20 +474,32 @@ document.getElementById('roll-maneuver-btn')?.addEventListener('click', () => {
    if (val === 'struggle') rollGeneric("Struggle (Accuracy)", tv(sheetView.stats.dex.total) + tv(sheetView.skills.brawl.total), false, false, true);
 });
 
-// --- ROUND RESET UNCHECKS ALL BOXES ---
+// --- ROUND RESET UNCHECKS BOXES & TICKS TIMERS ---
 document.getElementById('reset-round-btn')?.addEventListener('click', () => {
     sheetView.trackers.actions.value = "0";
     sheetView.trackers.evade.checked = false;
     sheetView.trackers.clash.checked = false;
     
-    const updates = { 'actions-used': 0, 'evasions-used': false, 'clashes-used': false }; 
+    let updates: Record<string, any> = { 'actions-used': 0, 'evasions-used': false, 'clashes-used': false }; 
+
+    // Auto-Tick Timers (ONLY EFFECTS, NOT STATUSES)
+    let timersChanged = false;
+    currentEffects.forEach(e => {
+        if (e.rounds > 0) { e.rounds--; timersChanged = true; }
+    });
+
+    if (timersChanged) {
+        renderEffects(currentEffects, saveDataToToken);
+        updates['effects-data'] = JSON.stringify(currentEffects);
+    }
+
     Object.assign(currentTokenData, updates);
     saveBatchDataToToken(updates);
 
     let movesChanged = false;
     currentMoves.forEach(m => {
-        if ((m as any).used) {
-            (m as any).used = false;
+        if (m.used) {
+            m.used = false;
             movesChanged = true;
         }
     });
@@ -484,10 +525,10 @@ async function loadDataFromToken(tokenId: string) {
     const role = await OBR.player.getRole();
     const isNPC = String(data['is-npc']) === 'true';
 
-    if (role === 'GM') {
-        const gmTools = document.getElementById('gm-tools');
-        if (gmTools) gmTools.style.display = 'block';
-    } else if (role === 'PLAYER' && isNPC) {
+    const gmTools = document.getElementById('gm-tools');
+    if (gmTools) gmTools.style.display = (role === 'GM') ? 'block' : 'none';
+
+    if (role === 'PLAYER' && isNPC) {
         document.getElementById('app')!.style.display = 'none';
         document.getElementById('gm-lock-screen')!.style.display = 'block';
         renderTypeMatchups(data['typing'] || ""); 
@@ -562,14 +603,25 @@ async function loadDataFromToken(tokenId: string) {
     try { currentMoves = data['moves-data'] ? JSON.parse(data['moves-data']) : []; } catch(e) { currentMoves = []; }
     try { currentInventory = data['inv-data'] ? JSON.parse(data['inv-data']) : []; } catch(e) { currentInventory = []; }
     try { currentExtraCategories = data['extra-skills-data'] ? JSON.parse(data['extra-skills-data']) : []; } catch(e) { currentExtraCategories = []; }
-    
-    try { currentStatuses = data['status-list'] ? JSON.parse(data['status-list']) : ["Healthy"]; } catch(e) { currentStatuses = ["Healthy"]; }
     try { currentCustomInfo = data['custom-info-data'] ? JSON.parse(data['custom-info-data']) : []; } catch(e) { currentCustomInfo = []; }
+    try { currentEffects = data['effects-data'] ? JSON.parse(data['effects-data']) : []; } catch(e) { currentEffects = []; }
+
+    try { 
+        const parsedStatuses = data['status-list'] ? JSON.parse(data['status-list']) : [{ id: generateId(), name: "Healthy", customName: "", rounds: 0 }]; 
+        if (parsedStatuses.length > 0 && typeof parsedStatuses[0] === 'string') {
+            currentStatuses = parsedStatuses.map((s: string) => ({ id: generateId(), name: s, customName: "", rounds: 0 }));
+        } else {
+            currentStatuses = parsedStatuses;
+        }
+    } catch(e) { 
+        currentStatuses = [{ id: generateId(), name: "Healthy", customName: "", rounds: 0 }]; 
+    }
 
     reRenderMoves();
     renderInventory(currentInventory, saveInventoryToToken);
     renderExtraSkills(currentExtraCategories, currentMoves, saveExtraSkillsToToken, syncDerivedStats, reRenderMoves);
-    renderStatuses(currentStatuses, saveDataToToken);
+    renderStatuses(currentStatuses, saveDataToToken, rollStatus);
+    renderEffects(currentEffects, saveDataToToken);
     renderCustomInfo(currentCustomInfo, saveDataToToken);
     renderTypeMatchups(data['typing'] || ""); 
     calculateStats(currentExtraCategories, currentMoves);
@@ -628,12 +680,55 @@ if (npcCheckbox) {
     });
 }
 
+const showTrackersCheckbox = document.getElementById('show-trackers') as HTMLInputElement;
+if (showTrackersCheckbox) {
+    showTrackersCheckbox.addEventListener('change', (e) => {
+        const isChecked = (e.target as HTMLInputElement).checked;
+        saveDataToToken('show-trackers', isChecked);
+        syncDerivedStats();
+    });
+}
+
 // INITIALIZE
 loadUrlLists();
 setupSpinners();
-renderStatuses(currentStatuses, saveDataToToken); 
+renderStatuses(currentStatuses, saveDataToToken, rollStatus); 
+renderEffects(currentEffects, saveDataToToken);
 renderCustomInfo(currentCustomInfo, saveDataToToken);
 const initialTyping = sheetView.identity.typing.value || "";
 renderTypeMatchups(initialTyping);
 calculateStats(currentExtraCategories, currentMoves);
-setupOBR(loadDataFromToken);
+
+// INITIALIZE OBR & ROLL CATCHER
+setupOBR((tokenId) => {
+    loadDataFromToken(tokenId);
+});
+
+OBR.onReady(() => {
+    OBR.broadcast.onMessage(`${MY_EXTENSION_ID}/roll-result`, async (event) => {
+        const data = event.data as DicePlusData;
+        const myId = await OBR.player.getId();
+        if (data.playerId !== myId) return; 
+
+        // Catch Status Recovery rolls!
+        if (data.rollId && data.rollId.startsWith("status|") && data.result) {
+            const statusId = data.rollId.split("_")[0].split("|")[1];
+            const successes = parseInt(String(data.result.totalValue)) || 0; 
+            
+            let statusChanged = false;
+            currentStatuses.forEach(s => {
+                if (s.id === statusId) {
+                    s.rounds += successes; 
+                    statusChanged = true;
+                }
+            });
+
+            if (statusChanged) {
+                renderStatuses(currentStatuses, saveDataToToken, rollStatus);
+                const updates = { 'status-list': JSON.stringify(currentStatuses) };
+                Object.assign(currentTokenData, updates);
+                saveBatchDataToToken(updates);
+            }
+        }
+    });
+});

@@ -36,9 +36,12 @@ class CharacterSheetView {
     initiative = { total: getHTMLElement('init-total') };
 
     trackers = {
+        showTrackers: getInputElement('show-trackers'),
         actions: getInputElement('actions-used'),
         evade: getInputElement('evasions-used'),
-        clash: getInputElement('clashes-used')
+        clash: getInputElement('clashes-used'),
+        happiness: getInputElement('happiness-curr'), 
+        loyalty: getInputElement('loyalty-curr')      
     };
 
     globalMods = {
@@ -54,7 +57,6 @@ class CharacterSheetView {
         skill: { remaining: getHTMLElement('skill-remaining-display'), extra: getInputElement('extra-skill-points'), limit: getHTMLElement('skill-limit-display') }
     };
 
-    // Added "limit" as a nullable HTMLElement
     stats: Record<string, { base: HTMLInputElement, limit: HTMLElement | null, rank: HTMLInputElement, buff: HTMLInputElement, debuff: HTMLInputElement, total: HTMLElement }> = {};
     skills: Record<string, { label: HTMLInputElement, base: HTMLInputElement, buff: HTMLInputElement, total: HTMLElement }> = {};
 
@@ -62,7 +64,7 @@ class CharacterSheetView {
         [...COMBAT_STATS, ...SOCIAL_STATS].forEach(stat => {
             this.stats[stat] = {
                 base: getInputElement(`${stat}-base`),
-                limit: document.getElementById(`${stat}-limit-display`), // Will map the ID if it exists!
+                limit: document.getElementById(`${stat}-limit-display`), 
                 rank: getInputElement(`${stat}-rank`),
                 buff: getInputElement(`${stat}-buff`),
                 debuff: getInputElement(`${stat}-debuff`),

@@ -1,10 +1,9 @@
-import type { Move, InventoryItem, ExtraCategory, ExtraSkill, CustomInfo } from './@types/index';
+import type { Move, InventoryItem, ExtraCategory, ExtraSkill, CustomInfo, StatusItem, EffectItem } from './@types/index';
 import { ATTRIBUTE_MAPPING } from './@types/index';
 import { ALL_SKILLS, calculateMatchups } from './utils';
 import { calculateStats, updateMoveDisplays } from './math';
 import { fetchMoveData } from './api';
 
-// --- POKEMON TYPE COLORS ---
 export const TYPE_COLORS: Record<string, string> = {
     "Normal": "#A8A878", "Fire": "#F08030", "Water": "#6890F0",
     "Electric": "#F8D030", "Grass": "#78C850", "Ice": "#98D8D8",
@@ -30,7 +29,6 @@ export function applyTypeStyle(element: HTMLElement | null, typeStr: string) {
     element.style.cssText = getTypeStyle(typeStr);
 }
 
-// --- DOM GENERATOR HELPER ---
 export function createEl<K extends keyof HTMLElementTagNameMap>(
     tag: K,
     props: Record<string, any> = {},
@@ -53,7 +51,6 @@ export function createEl<K extends keyof HTMLElementTagNameMap>(
     return el;
 }
 
-// --- ROW GENERATORS ---
 export function buildExtraCategoryHeader(tr: HTMLTableRowElement, category: ExtraCategory) {
     const input = createEl('input', { type: 'text', className: 'cat-name-input form-input--transparent-white', value: category.name, placeholder: 'CAT NAME', dataset: { catid: category.id } });
     const btn = createEl('button', { type: 'button', className: 'del-cat-btn action-button action-button--transparent-white', title: 'Delete Category', innerText: 'X', dataset: { catid: category.id } });
@@ -148,63 +145,64 @@ export function buildInventoryRow(tr: HTMLTableRowElement, item: InventoryItem) 
 
 export function buildCustomInfoRow(container: HTMLElement, info: CustomInfo) {
     const labelInp = createEl('input', { 
-        type: 'text', 
-        className: 'identity-grid__label', 
-        value: info.label, 
-        placeholder: 'Label', 
+        type: 'text', className: 'identity-grid__label', value: info.label, placeholder: 'Label', 
         style: 'width: 70px; border: none; background: transparent; outline: none; cursor: text;', 
         dataset: { id: info.id, field: 'label' } 
     });
-    
-    const valInp = createEl('input', { 
-        type: 'text', 
-        className: 'identity-grid__input', 
-        value: info.value, 
-        placeholder: 'Value', 
-        dataset: { id: info.id, field: 'value' } 
-    });
-    
-    const delBtn = createEl('button', { 
-        type: 'button', 
-        className: 'action-button action-button--red del-info-btn', 
-        innerText: 'X', 
-        style: 'padding: 0 4px;', 
-        dataset: { id: info.id } 
-    });
-
+    const valInp = createEl('input', { type: 'text', className: 'identity-grid__input', value: info.value, placeholder: 'Value', dataset: { id: info.id, field: 'value' } });
+    const delBtn = createEl('button', { type: 'button', className: 'action-button action-button--red del-info-btn', innerText: 'X', style: 'padding: 0 4px;', dataset: { id: info.id } });
     const row = createEl('div', { className: 'identity-grid__row' }, [labelInp, valInp, delBtn]);
     container.appendChild(row);
 }
 
-// --- LARGE RENDERERS (Transplanted from main.ts) ---
+// --- RENDERERS ---
 
-export function renderStatuses(currentStatuses: string[], saveDataToToken: (key: string, val: string) => void) {
+export function renderStatuses(currentStatuses: StatusItem[], saveDataToToken: (key: string, val: string) => void, rollStatus: (status: StatusItem) => void) {
     const container = document.getElementById('status-container');
     if (!container) return;
     container.innerHTML = '';
     
-    const options = ["Healthy", "1st Degree Burn", "2nd Degree Burn", "3rd Degree Burn", "Badly Poisoned", "Confusion", "Disable", "Flinch", "Frozen Solid", "In Love", "Paralysis", "Poison", "Sleep"];
+    const options = ["Healthy", "1st Degree Burn", "2nd Degree Burn", "3rd Degree Burn", "Badly Poisoned", "Confusion", "Disable", "Flinch", "Frozen Solid", "In Love", "Paralysis", "Poison", "Sleep", "Custom..."];
 
     currentStatuses.forEach((status, index) => {
-        const wrapper = createEl('div', { style: 'display: flex; gap: 2px;' });
-        const select = createEl('select', { style: 'flex: 1; border: 1px solid var(--border); font-size: 0.75rem;' });
-        
-        options.forEach(opt => {
-            select.appendChild(createEl('option', { value: opt, text: opt, selected: opt === status }));
-        });
+        const wrapper = createEl('div', { style: 'display: flex; gap: 2px; align-items: center;' });
+        const select = createEl('select', { style: 'flex: 1; border: 1px solid var(--border); font-size: 0.75rem; min-width: 60px;' });
+        options.forEach(opt => select.appendChild(createEl('option', { value: opt, text: opt, selected: opt === status.name })));
 
         select.addEventListener('change', (e) => {
-            currentStatuses[index] = (e.target as HTMLSelectElement).value;
+            currentStatuses[index].name = (e.target as HTMLSelectElement).value;
+            renderStatuses(currentStatuses, saveDataToToken, rollStatus);
             saveDataToToken('status-list', JSON.stringify(currentStatuses));
         });
-
         wrapper.appendChild(select);
 
+        if (status.name === "Custom...") {
+            const customInput = createEl('input', { type: 'text', value: status.customName, placeholder: 'Effect Name', style: 'flex: 1; border: 1px solid var(--border); font-size: 0.75rem; padding: 2px; min-width: 60px;' });
+            customInput.addEventListener('change', (e) => {
+                currentStatuses[index].customName = (e.target as HTMLInputElement).value;
+                saveDataToToken('status-list', JSON.stringify(currentStatuses));
+            });
+            wrapper.appendChild(customInput);
+        }
+
+        const roundInp = createEl('input', { type: 'number', value: status.rounds, min: 0, style: 'width: 35px; border: 1px solid var(--border); font-size: 0.75rem; text-align: center;', title: 'Successes / Tracker' });
+        roundInp.addEventListener('change', (e) => {
+            currentStatuses[index].rounds = parseInt((e.target as HTMLInputElement).value) || 0;
+            saveDataToToken('status-list', JSON.stringify(currentStatuses));
+        });
+        wrapper.appendChild(roundInp);
+
+        if (status.name !== "Healthy") {
+            const rollBtn = createEl('button', { type: 'button', className: 'action-button action-button--dark', innerText: '🎲', style: 'padding: 0 4px; margin: 0;', title: 'Roll Recovery' });
+            rollBtn.onclick = () => rollStatus(currentStatuses[index]);
+            wrapper.appendChild(rollBtn);
+        }
+
         if (index > 0) {
-            const delBtn = createEl('button', { type: 'button', className: 'action-button action-button--red', innerText: 'X', style: 'padding: 0 4px;' });
+            const delBtn = createEl('button', { type: 'button', className: 'action-button action-button--red', innerText: 'X', style: 'padding: 0 4px; margin: 0;' });
             delBtn.onclick = () => {
                 currentStatuses.splice(index, 1);
-                renderStatuses(currentStatuses, saveDataToToken);
+                renderStatuses(currentStatuses, saveDataToToken, rollStatus);
                 saveDataToToken('status-list', JSON.stringify(currentStatuses));
             };
             wrapper.appendChild(delBtn);
@@ -214,23 +212,58 @@ export function renderStatuses(currentStatuses: string[], saveDataToToken: (key:
     });
 }
 
+export function renderEffects(currentEffects: EffectItem[], saveDataToToken: (key: string, val: string) => void) {
+    const container = document.getElementById('effects-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (currentEffects.length === 0) {
+        container.innerHTML = '<span style="color: #888; font-style: italic; font-size: 0.8rem; padding-left: 4px;">No active effects.</span>';
+        return;
+    }
+
+    currentEffects.forEach((effect, index) => {
+        const wrapper = createEl('div', { style: 'display: flex; gap: 4px; align-items: center; background: #f0f0f0; border: 1px solid var(--border); padding: 4px; border-radius: 6px;' });
+        
+        const nameInp = createEl('input', { type: 'text', value: effect.name, placeholder: 'Effect Name', style: 'width: 110px; border: 1px solid #ccc; font-size: 0.75rem; padding: 2px; border-radius: 3px;' });
+        nameInp.addEventListener('change', (e) => {
+            currentEffects[index].name = (e.target as HTMLInputElement).value;
+            saveDataToToken('effects-data', JSON.stringify(currentEffects));
+        });
+
+        const roundInp = createEl('input', { type: 'number', value: effect.rounds, min: 0, style: 'width: 40px; border: 1px solid #ccc; font-size: 0.75rem; text-align: center; border-radius: 3px;', title: 'Rounds left' });
+        roundInp.addEventListener('change', (e) => {
+            currentEffects[index].rounds = parseInt((e.target as HTMLInputElement).value) || 0;
+            saveDataToToken('effects-data', JSON.stringify(currentEffects));
+        });
+
+        const delBtn = createEl('button', { type: 'button', className: 'action-button action-button--red', innerText: 'X', style: 'padding: 0 4px; margin: 0; height: 100%; border-radius: 3px;' });
+        delBtn.onclick = () => {
+            currentEffects.splice(index, 1);
+            renderEffects(currentEffects, saveDataToToken);
+            saveDataToToken('effects-data', JSON.stringify(currentEffects));
+        };
+
+        const labelSpan = createEl('span', { innerText: 'Rds:', style: 'font-size: 0.7rem; color: #555;' });
+
+        wrapper.append(nameInp, labelSpan, roundInp, delBtn);
+        container.appendChild(wrapper);
+    });
+}
+
 export function renderCustomInfo(currentCustomInfo: CustomInfo[], saveDataToToken: (key: string, val: string) => void) {
     const container = document.getElementById('custom-info-container');
     if (!container) return;
     container.innerHTML = '';
 
-    currentCustomInfo.forEach(info => {
-        buildCustomInfoRow(container, info);
-    });
+    currentCustomInfo.forEach(info => { buildCustomInfoRow(container, info); });
 
     container.querySelectorAll('input').forEach(input => {
         input.addEventListener('change', (e) => {
             const target = e.target as HTMLInputElement;
-            const id = target.dataset.id;
-            const field = target.dataset.field as keyof CustomInfo;
-            const item = currentCustomInfo.find(i => i.id === id);
+            const item = currentCustomInfo.find(i => i.id === target.dataset.id);
             if (item) {
-                item[field] = target.value;
+                item[target.dataset.field as keyof CustomInfo] = target.value;
                 saveDataToToken('custom-info-data', JSON.stringify(currentCustomInfo));
             }
         });
@@ -284,13 +317,7 @@ export function renderInventory(currentInventory: InventoryItem[], saveInventory
     setupSpinners();
 }
 
-export function renderExtraSkills(
-    currentExtraCategories: ExtraCategory[],
-    currentMoves: Move[],
-    saveExtraSkillsToToken: (cats: ExtraCategory[]) => void,
-    syncDerivedStats: () => void,
-    renderMovesCallback: () => void
-) {
+export function renderExtraSkills(currentExtraCategories: ExtraCategory[], currentMoves: Move[], saveExtraSkillsToToken: (cats: ExtraCategory[]) => void, syncDerivedStats: () => void, renderMovesCallback: () => void) {
     const tbody = document.getElementById('extra-skills-body');
     if (!tbody) return;
     tbody.innerHTML = '';
@@ -358,13 +385,7 @@ export function renderExtraSkills(
     setupSpinners();
 }
 
-export function renderMoves(
-    currentMoves: Move[],
-    currentExtraCategories: ExtraCategory[],
-    saveMovesToToken: (moves: Move[]) => void,
-    rollAccuracy: (move: Move) => void,
-    rollDamage: (move: Move) => void
-) {
+export function renderMoves(currentMoves: Move[], currentExtraCategories: ExtraCategory[], saveMovesToToken: (moves: Move[]) => void, rollAccuracy: (move: Move) => void, rollDamage: (move: Move) => void) {
   const tbody = document.getElementById('moves-table-body');
   if (!tbody) return;
   tbody.innerHTML = ''; 
@@ -376,26 +397,15 @@ export function renderMoves(
     const tr = createEl('tr', { className: 'data-table__row--dynamic' });
     buildMoveRow(tr, move, index, currentExtraCategories);
     
-    const isUsed = (move as any).used ? true : false;
-    
-    // --- THIS IS THE FIX ---
-    const checkbox = createEl('input', {
-        type: 'checkbox',
-        className: 'move-used-checkbox',
-        checked: isUsed,
-        title: 'Mark as used this round',
-        style: 'cursor: pointer; transform: scale(1.1);',
-        dataset: { id: move.id }
-    });
+    const isUsed = move.used ? true : false;
+    const checkbox = createEl('input', { type: 'checkbox', className: 'move-used-checkbox', checked: isUsed, title: 'Mark as used this round', style: 'cursor: pointer; transform: scale(1.1);', dataset: { id: move.id } });
     const td = createEl('td', { style: 'text-align: center;' }, [checkbox]);
     tr.insertBefore(td, tr.firstChild); 
-    // -----------------------
 
     if (isUsed) {
         tr.style.opacity = '0.5';
         tr.style.transition = 'opacity 0.2s ease';
     }
-
     tbody.appendChild(tr);
   });
 
@@ -404,7 +414,7 @@ export function renderMoves(
           const target = e.target as HTMLInputElement;
           const move = currentMoves.find(m => m.id === target.getAttribute('data-id'));
           if (move) {
-              (move as any).used = target.checked;
+              move.used = target.checked;
               const row = target.closest('tr');
               if (row) {
                   row.style.opacity = target.checked ? '0.5' : '1';
@@ -424,7 +434,7 @@ export function renderMoves(
       
       if (move) {
         if (field === 'power') move[field] = parseInt(target.value) || 0;
-        else move[field] = target.value as never;
+        else (move as any)[field] = target.value;
 
         if (field === 'type') applyTypeStyle(target as HTMLElement, target.value);
         
@@ -447,7 +457,6 @@ export function renderMoves(
                 move.attr = ATTRIBUTE_MAPPING[accuracyOne] || "str";
                 move.skill = String(moveData.Accuracy2 || "brawl").toLowerCase();
                 
-                // Recursively re-render to show new values
                 renderMoves(currentMoves, currentExtraCategories, saveMovesToToken, rollAccuracy, rollDamage); 
             }
         }
@@ -515,7 +524,6 @@ export function renderMoves(
   updateMoveDisplays(currentMoves);
 }
 
-// --- STATIC UI HELPERS ---
 export function renderTypeMatchups(typeStr: string) {
     const container = document.getElementById('type-matchup-container');
     const lockedContainer = document.getElementById('locked-type-matchup-container');

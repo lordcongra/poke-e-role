@@ -26,74 +26,27 @@
         
         <div class="sheet-panel">
             <div class="identity-grid">
-                <div class="identity-grid__row">
-                    <span class="identity-grid__label">Nickname</span>
-                    <input type="text" id="nickname" class="identity-grid__input sheet-save" />
-                </div>
-                <div class="identity-grid__row">
-                    <span class="identity-grid__label">Species</span>
-                    <input type="text" id="species" list="species-list" class="identity-grid__input sheet-save" />
-                </div>
-                <div class="identity-grid__row">
-                    <span class="identity-grid__label">Nature</span>
-                    <input type="text" id="nature" class="identity-grid__input sheet-save" />
-                </div>
+                <div class="identity-grid__row"><span class="identity-grid__label">Nickname</span><input type="text" id="nickname" class="identity-grid__input sheet-save" /></div>
+                <div class="identity-grid__row"><span class="identity-grid__label">Species</span><input type="text" id="species" list="species-list" class="identity-grid__input sheet-save" /></div>
+                <div class="identity-grid__row"><span class="identity-grid__label">Nature</span><input type="text" id="nature" class="identity-grid__input sheet-save" /></div>
                 <div class="identity-grid__row">
                     <span class="identity-grid__label">Rank</span>
                     <select id="rank" class="identity-grid__select sheet-save">
-                        <option>Starter</option>
-                        <option>Rookie</option>
-                        <option>Standard</option>
-                        <option>Advanced</option>
-                        <option>Expert</option>
-                        <option>Ace</option>
-                        <option>Master</option>
-                        <option>Champion</option>
+                        <option>Starter</option><option>Rookie</option><option>Standard</option>
+                        <option>Advanced</option><option>Expert</option><option>Ace</option>
+                        <option>Master</option><option>Champion</option>
                     </select>
                 </div>
-                <div class="identity-grid__row">
-                    <span class="identity-grid__label">Typing</span>
-                    <input type="text" id="typing" class="identity-grid__input sheet-save" readonly style="font-weight: bold; color: var(--dark);" />
-                </div>
-                <div class="identity-grid__row">
-                    <span class="identity-grid__label">Ability</span>
-                    <select id="ability" class="identity-grid__select sheet-save" style="font-size: 0.85rem; color: #333;" title="Select an ability to see its description..."></select>
-                </div>
-                <div class="identity-grid__row">
-                    <span class="identity-grid__label identity-grid__label--blue">Mode</span>
-                    <select id="sheet-type" class="identity-grid__select sheet-save">
-                        <option value="pokemon">Pokémon</option>
-                        <option value="trainer">Trainer</option>
-                    </select>
-                </div>
-                <div class="identity-grid__row">
-                    <span class="identity-grid__label identity-grid__label--blue">Age</span>
-                    <select id="age" class="identity-grid__select sheet-save">
-                        <option value="--">--</option>
-                        <option value="Child">Child</option>
-                        <option value="Teen">Teen</option>
-                        <option value="Adult">Adult</option>
-                        <option value="Senior">Senior</option>
-                    </select>
-                </div>
-                <div class="identity-grid__row">
-                    <span class="identity-grid__label identity-grid__label--green">Combat</span>
-                    <input type="text" id="combat-item" class="identity-grid__input sheet-save" />
-                </div>
-                <div class="identity-grid__row">
-                    <span class="identity-grid__label identity-grid__label--green">Social</span>
-                    <input type="text" id="social-item" class="identity-grid__input sheet-save" />
-                </div>
-                <div class="identity-grid__row">
-                    <span class="identity-grid__label identity-grid__label--green">Hand</span>
-                    <input type="text" id="hand-item" class="identity-grid__input sheet-save" />
-                </div>
+                <div class="identity-grid__row"><span class="identity-grid__label">Typing</span><input type="text" id="typing" class="identity-grid__input sheet-save" readonly style="font-weight: bold; color: var(--dark);" /></div>
+                <div class="identity-grid__row"><span class="identity-grid__label">Ability</span><select id="ability" class="identity-grid__select sheet-save" style="font-size: 0.85rem; color: #333;" title="Select an ability to see its description..."></select></div>
+                <div class="identity-grid__row"><span class="identity-grid__label identity-grid__label--blue">Mode</span><select id="sheet-type" class="identity-grid__select sheet-save"><option value="pokemon">Pokémon</option><option value="trainer">Trainer</option></select></div>
+                <div class="identity-grid__row"><span class="identity-grid__label identity-grid__label--blue">Age</span><select id="age" class="identity-grid__select sheet-save"><option value="--">--</option><option value="Child">Child</option><option value="Teen">Teen</option><option value="Adult">Adult</option><option value="Senior">Senior</option></select></div>
+                <div class="identity-grid__row"><span class="identity-grid__label identity-grid__label--green">Combat</span><input type="text" id="combat-item" class="identity-grid__input sheet-save" /></div>
+                <div class="identity-grid__row"><span class="identity-grid__label identity-grid__label--green">Social</span><input type="text" id="social-item" class="identity-grid__input sheet-save" /></div>
+                <div class="identity-grid__row"><span class="identity-grid__label identity-grid__label--green">Hand</span><input type="text" id="hand-item" class="identity-grid__input sheet-save" /></div>
                 <div class="identity-grid__row">
                     <span class="identity-grid__label">Rolls</span>
-                    <select id="roll-target" class="identity-grid__select sheet-save">
-                        <option value="everyone">Public (Everyone)</option>
-                        <option value="gm_only">Private (GM Only)</option>
-                    </select>
+                    <select id="roll-target" class="identity-grid__select sheet-save"><option value="everyone">Public (Everyone)</option><option value="gm_only">Private (GM Only)</option></select>
                 </div>
                 <div id="custom-info-container" style="display: contents;"></div>
             </div>
@@ -101,10 +54,17 @@
             <div style="display: flex; gap: 8px; margin-top: 8px;">
                 <button type="button" id="refresh-data-btn" class="action-button action-button--dark" style="flex: 1; margin: 0; padding: 4px; border-radius: 4px; font-size: 0.85rem;">🔄 Refresh Token Data</button>
                 <button type="button" id="add-custom-info-btn" class="action-button action-button--dark" style="background: #1976d2; flex: 1; margin: 0; padding: 4px; border-radius: 4px; font-size: 0.85rem;">➕ Add Custom Field</button>
-                <div id="gm-tools" style="flex: 1; background: #ffebee; border: 1px solid var(--primary); padding: 4px; border-radius: 4px; text-align: center;">
-                    <label style="color: var(--primary); font-weight: bold; cursor: pointer; font-size: 0.85rem;">
-                        <input type="checkbox" id="is-npc"> 🔒 Private NPC
-                    </label>
+                <div style="flex: 1; display: flex; gap: 4px;">
+                    <div style="flex: 1; background: #e3f2fd; border: 1px solid #1976d2; padding: 4px; border-radius: 4px; text-align: center;">
+                        <label style="color: #1976d2; font-weight: bold; cursor: pointer; font-size: 0.75rem;" title="Show or hide UI rings on the map">
+                            <input type="checkbox" id="show-trackers" class="sheet-save" checked> ⭕ Trackers
+                        </label>
+                    </div>
+                    <div id="gm-tools" style="display: none; flex: 1; background: #ffebee; border: 1px solid var(--primary); padding: 4px; border-radius: 4px; text-align: center;">
+                        <label style="color: var(--primary); font-weight: bold; cursor: pointer; font-size: 0.75rem;">
+                            <input type="checkbox" id="is-npc"> 🔒 NPC
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>
@@ -113,33 +73,41 @@
             <div class="health-section__row">
                 <div class="health-section__box">
                     <div class="health-section__header">HP</div>
-                    <div class="health-section__inputs">
-                        Base: <input type="number" value="4" id="hp-base" class="number-spinner__input sheet-save" /> 
-                        Max: <span id="hp-max-display" style="font-weight:bold;">5</span>
-                    </div>
-                    <div class="health-section__inputs">
-                        Curr: <input type="number" value="5" id="hp-curr" class="number-spinner__input sheet-save" />
+                    <div class="resource-box">
+                        <div class="resource-box__main">
+                            <span class="resource-box__label">Curr:</span>
+                            <input type="number" value="5" id="hp-curr" class="number-spinner__input sheet-save" />
+                            <span class="resource-box__divider">/</span>
+                            <span id="hp-max-display" class="resource-box__max">5</span>
+                        </div>
+                        <div class="resource-box__sub">
+                            <span>Base:</span>
+                            <input type="number" value="4" id="hp-base" class="number-spinner__input sheet-save" />
+                        </div>
                     </div>
                 </div>
                 <div class="health-section__box">
                     <div class="health-section__header">WILL</div>
-                    <div class="health-section__inputs">
-                        Base: <input type="number" value="3" id="will-base" class="number-spinner__input sheet-save" /> 
-                        Max: <span id="will-max-display" style="font-weight:bold;">4</span>
-                    </div>
-                    <div class="health-section__inputs">
-                        Curr: <input type="number" value="4" id="will-curr" class="number-spinner__input sheet-save" />
+                    <div class="resource-box">
+                        <div class="resource-box__main">
+                            <span class="resource-box__label">Curr:</span>
+                            <input type="number" value="4" id="will-curr" class="number-spinner__input sheet-save" />
+                            <span class="resource-box__divider">/</span>
+                            <span id="will-max-display" class="resource-box__max">4</span>
+                        </div>
+                        <div class="resource-box__sub">
+                            <span>Base:</span>
+                            <input type="number" value="3" id="will-base" class="number-spinner__input sheet-save" />
+                        </div>
                     </div>
                 </div>
-                
                 <div class="health-section__box" style="display: flex; flex-direction: column; overflow: hidden;">
                     <div class="health-section__header health-section__header--dark" style="position: relative; text-align: center; padding: 0 6px;">
-                        <span>STATUS</span>
+                        <span>STATUS (Trackers)</span>
                         <button type="button" id="add-status-btn" class="action-button action-button--dark" style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; padding: 2px 5px; margin: 0; line-height: 1;">+ Add</button>
                     </div>
                     <div class="health-section__inputs" style="flex: 1; display: block; padding: 4px; padding-top: 2px;">
-                        <div id="status-container" style="display: flex; flex-direction: column; gap: 4px; overflow-y: auto; max-height: 76px; width: 100%;">
-                        </div>
+                        <div id="status-container" style="display: flex; flex-direction: column; gap: 4px; overflow-y: auto; max-height: 76px; width: 100%;"></div>
                     </div>
                 </div>
             </div>
@@ -147,42 +115,51 @@
             <div class="health-section__row" style="margin-top: 10px;">
                 <div class="health-section__box">
                     <div class="health-section__header">DEFENSE</div>
-                    <div class="health-section__inputs">
-                        Total: <span id="def-total" style="font-weight:bold; margin-right:5px;">2</span>+<input type="number" value="0" id="def-buff" class="number-spinner__input sheet-save"/>-<input type="number" value="0" id="def-debuff" class="number-spinner__input sheet-save"/>
+                    <div class="health-section__inputs" style="display: flex; align-items: center; justify-content: center;">
+                        Total: <span id="def-total" style="font-weight:bold; margin-left: 4px; margin-right:4px;">2</span>
+                        <span style="color: #388e3c; font-weight: 900; margin-right: 2px; font-size: 1.1rem;" title="Add Buff">+</span>
+                        <input type="number" value="0" id="def-buff" class="number-spinner__input sheet-save"/>
+                        <span style="color: #d32f2f; font-weight: 900; margin-left: 6px; margin-right: 2px; font-size: 1.2rem;" title="Subtract Debuff">-</span>
+                        <input type="number" value="0" id="def-debuff" class="number-spinner__input sheet-save"/>
                     </div>
                 </div>
                 <div class="health-section__box">
                     <div class="health-section__header">SPEC. DEFENSE</div>
-                    <div class="health-section__inputs">
-                        Total: <span id="spd-total" style="font-weight:bold; margin-right:5px;">1</span>+<input type="number" value="0" id="spd-buff" class="number-spinner__input sheet-save"/>-<input type="number" value="0" id="spd-debuff" class="number-spinner__input sheet-save"/>
+                    <div class="health-section__inputs" style="display: flex; align-items: center; justify-content: center;">
+                        Total: <span id="spd-total" style="font-weight:bold; margin-left: 4px; margin-right:4px;">1</span>
+                        <span style="color: #388e3c; font-weight: 900; margin-right: 2px; font-size: 1.1rem;" title="Add Buff">+</span>
+                        <input type="number" value="0" id="spd-buff" class="number-spinner__input sheet-save"/>
+                        <span style="color: #d32f2f; font-weight: 900; margin-left: 6px; margin-right: 2px; font-size: 1.2rem;" title="Subtract Debuff">-</span>
+                        <input type="number" value="0" id="spd-debuff" class="number-spinner__input sheet-save"/>
+                    </div>
+                </div>
+                <div class="health-section__box" style="display: flex; flex-direction: column; overflow: hidden;">
+                    <div class="health-section__header health-section__header--dark" style="position: relative; text-align: center; padding: 0 6px;">
+                        <span>TIMERS (Effects)</span>
+                        <button type="button" id="add-effect-btn" class="action-button action-button--dark" style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; padding: 2px 5px; margin: 0; line-height: 1;">+ Add</button>
+                    </div>
+                    <div class="health-section__inputs" style="flex: 1; display: block; padding: 4px; padding-top: 2px;">
+                        <div id="effects-container" style="display: flex; flex-direction: column; gap: 4px; overflow-y: auto; max-height: 76px; width: 100%;"></div>
                     </div>
                 </div>
             </div>
 
             <div class="health-section__row" style="margin-top: 10px;">
-                <div class="health-section__box">
+                <div class="health-section__box" style="flex: 1.2;">
                     <div class="health-section__header health-section__header--dark">INITIATIVE</div>
-                    <div class="health-section__inputs">
-                        1d6 + <span id="init-total" style="font-weight:bold;">0</span> <button type="button" id="roll-init-btn" class="action-button action-button--dark">🎲</button>
-                    </div>
+                    <div class="health-section__inputs">1d6 + <span id="init-total" style="font-weight:bold; margin-right: 4px;">0</span> <button type="button" id="roll-init-btn" class="action-button action-button--dark" style="padding: 1px 6px;">🎲</button></div>
                 </div>
-                <div class="health-section__box">
-                    <div class="health-section__header health-section__header--dark">EVASION</div>
-                    <div class="health-section__inputs" style="font-weight:bold; padding-bottom: 8px;">
-                        <span id="evasion-derived">0</span>
-                    </div>
+                <div class="health-section__box" style="flex: 0.8;"><div class="health-section__header health-section__header--dark">EVADE</div><div class="health-section__inputs" style="font-weight:bold; padding-bottom: 8px;"><span id="evasion-derived">0</span></div></div>
+                <div class="health-section__box" id="clash-p-row" style="flex: 0.8;"><div class="health-section__header health-section__header--dark">CLASH(P)</div><div class="health-section__inputs" style="font-weight:bold; padding-bottom: 8px;"><span id="clash-p-derived">0</span></div></div>
+                <div class="health-section__box" id="clash-s-row" style="flex: 0.8;"><div class="health-section__header health-section__header--dark">CLASH(S)</div><div class="health-section__inputs" style="font-weight:bold; padding-bottom: 8px;"><span id="clash-s-derived">0</span></div></div>
+                
+                <div class="health-section__box" style="flex: 0.9;">
+                    <div class="health-section__header health-section__header--dark" style="background-color: #f39c12;">HAPPY</div>
+                    <div class="health-section__inputs" style="padding-bottom: 3px;"><input type="number" value="0" min="0" max="5" id="happiness-curr" class="number-spinner__input sheet-save" /></div>
                 </div>
-                <div class="health-section__box" id="clash-p-row">
-                    <div class="health-section__header health-section__header--dark">CLASH (P)</div>
-                    <div class="health-section__inputs" style="font-weight:bold; padding-bottom: 8px;">
-                        <span id="clash-p-derived">0</span>
-                    </div>
-                </div>
-                <div class="health-section__box" id="clash-s-row">
-                    <div class="health-section__header health-section__header--dark">CLASH (S)</div>
-                    <div class="health-section__inputs" style="font-weight:bold; padding-bottom: 8px;">
-                        <span id="clash-s-derived">0</span>
-                    </div>
+                <div class="health-section__box" style="flex: 0.9;">
+                    <div class="health-section__header health-section__header--dark" style="background-color: #8e44ad;">LOYAL</div>
+                    <div class="health-section__inputs" style="padding-bottom: 3px;"><input type="number" value="0" min="0" max="5" id="loyalty-curr" class="number-spinner__input sheet-save" /></div>
                 </div>
             </div>
         </div>
@@ -192,46 +169,27 @@
                 <div class="tracker-section">
                     <div style="text-align: center; font-weight: bold; color: var(--primary); font-size: 0.85rem; margin-bottom: 4px;">ROUND TRACKER</div>
                     <div style="display: flex; justify-content: space-between; font-size: 0.8rem; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 4px;">
-                            Action: <input type="number" id="actions-used" value="0" min="0" max="5" class="number-spinner__input sheet-save">
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 4px;">
-                            Evade: <input type="checkbox" id="evasions-used" class="sheet-save" style="cursor: pointer; transform: scale(1.1);"><button type="button" id="roll-evade-btn" class="action-button action-button--dark">🎲</button>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 4px;">
-                            Clash: <input type="checkbox" id="clashes-used" class="sheet-save" style="cursor: pointer; transform: scale(1.1);"><button type="button" id="roll-clash-btn" class="action-button action-button--dark">🎲</button>
-                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px;">Action: <input type="number" id="actions-used" value="0" min="0" max="5" class="number-spinner__input sheet-save"></div>
+                        <div style="display: flex; align-items: center; gap: 4px;">Evade: <input type="checkbox" id="evasions-used" class="sheet-save" style="cursor: pointer; transform: scale(1.1);"><button type="button" id="roll-evade-btn" class="action-button action-button--dark">🎲</button></div>
+                        <div style="display: flex; align-items: center; gap: 4px;">Clash: <input type="checkbox" id="clashes-used" class="sheet-save" style="cursor: pointer; transform: scale(1.1);"><button type="button" id="roll-clash-btn" class="action-button action-button--dark">🎲</button></div>
                     </div>
                     <div style="display: flex; gap: 4px; justify-content: space-between; align-items: center; margin-top: 4px;">
                         <select id="maneuver-select" style="padding: 1px; font-family: inherit; border: 1px solid var(--border); font-size: 0.75rem; flex: 1;">
-                            <option value="none">-- Maneuver --</option>
-                            <option value="ambush">Ambush (Dex+Stl)</option>
-                            <option value="cover">Cover Ally (Will)</option>
-                            <option value="grapple">Grapple (Str+Bwl)</option>
-                            <option value="run">Run (Dex+Ath)</option>
-                            <option value="stabilize">Stabilize (Cle+Med)</option>
-                            <option value="struggle">Struggle (Dex+Bwl)</option>
+                            <option value="none">-- Maneuver --</option><option value="ambush">Ambush (Dex+Stl)</option><option value="cover">Cover Ally (Will)</option>
+                            <option value="grapple">Grapple (Str+Bwl)</option><option value="run">Run (Dex+Ath)</option><option value="stabilize">Stabilize (Cle+Med)</option><option value="struggle">Struggle (Dex+Bwl)</option>
                         </select>
                         <button type="button" id="roll-maneuver-btn" class="action-button action-button--dark">🎲</button>
                         <button type="button" id="reset-round-btn" class="action-button action-button--red">Reset</button>
                     </div>
                 </div>
 
-                <div class="sheet-panel">
+                <div class="sheet-panel" style="margin-top: 8px;">
                     <table class="data-table">
-                        <tr>
-                            <th>ATTR</th>
-                            <th>Base</th>
-                            <th>Limit</th>
-                            <th>Rank</th>
-                            <th>Buff</th>
-                            <th>Debuff</th>
-                            <th>Total</th>
-                        </tr>
+                        <tr><th>ATTR</th><th>Base</th><th>Limit</th><th>Rank</th><th>Buff</th><th>Debuff</th><th>Total</th></tr>
                         <tr>
                             <td style="background:#E65100; color:white; font-weight:bold;">STR</td>
                             <td><input type="number" value="2" id="str-base" class="number-spinner__input sheet-save"></td>
-                            <td id="str-limit-display" style="text-align: center; font-weight: bold; color: #7f8c8d; font-size: 0.9rem;">-</td>
+                            <td id="str-limit-display" style="text-align: center; font-weight: bold; font-size: 0.9rem;">-</td>
                             <td><input type="number" value="0" id="str-rank" class="number-spinner__input sheet-save"></td>
                             <td><input type="number" value="0" id="str-buff" class="number-spinner__input sheet-save"></td>
                             <td><input type="number" value="0" id="str-debuff" class="number-spinner__input sheet-save"></td>
@@ -240,7 +198,7 @@
                         <tr>
                             <td style="background:#2E7D32; color:white; font-weight:bold;">DEX</td>
                             <td><input type="number" value="2" id="dex-base" class="number-spinner__input sheet-save"></td>
-                            <td id="dex-limit-display" style="text-align: center; font-weight: bold; color: #7f8c8d; font-size: 0.9rem;">-</td>
+                            <td id="dex-limit-display" style="text-align: center; font-weight: bold; font-size: 0.9rem;">-</td>
                             <td><input type="number" value="0" id="dex-rank" class="number-spinner__input sheet-save"></td>
                             <td><input type="number" value="0" id="dex-buff" class="number-spinner__input sheet-save"></td>
                             <td><input type="number" value="0" id="dex-debuff" class="number-spinner__input sheet-save"></td>
@@ -249,7 +207,7 @@
                         <tr>
                             <td style="background:#C62828; color:white; font-weight:bold;">VIT</td>
                             <td><input type="number" value="2" id="vit-base" class="number-spinner__input sheet-save"></td>
-                            <td id="vit-limit-display" style="text-align: center; font-weight: bold; color: #7f8c8d; font-size: 0.9rem;">-</td>
+                            <td id="vit-limit-display" style="text-align: center; font-weight: bold; font-size: 0.9rem;">-</td>
                             <td><input type="number" value="0" id="vit-rank" class="number-spinner__input sheet-save"></td>
                             <td><input type="number" value="0" id="vit-buff" class="number-spinner__input sheet-save"></td>
                             <td><input type="number" value="0" id="vit-debuff" class="number-spinner__input sheet-save"></td>
@@ -258,7 +216,7 @@
                         <tr id="spe-row">
                             <td style="background:#1565C0; color:white; font-weight:bold;">SPE</td>
                             <td><input type="number" value="2" id="spe-base" class="number-spinner__input sheet-save"></td>
-                            <td id="spe-limit-display" style="text-align: center; font-weight: bold; color: #7f8c8d; font-size: 0.9rem;">-</td>
+                            <td id="spe-limit-display" style="text-align: center; font-weight: bold; font-size: 0.9rem;">-</td>
                             <td><input type="number" value="0" id="spe-rank" class="number-spinner__input sheet-save"></td>
                             <td><input type="number" value="0" id="spe-buff" class="number-spinner__input sheet-save"></td>
                             <td><input type="number" value="0" id="spe-debuff" class="number-spinner__input sheet-save"></td>
@@ -267,7 +225,7 @@
                         <tr>
                             <td style="background:#6A1B9A; color:white; font-weight:bold;">INS</td>
                             <td><input type="number" value="1" id="ins-base" class="number-spinner__input sheet-save"></td>
-                            <td id="ins-limit-display" style="text-align: center; font-weight: bold; color: #7f8c8d; font-size: 0.9rem;">-</td>
+                            <td id="ins-limit-display" style="text-align: center; font-weight: bold; font-size: 0.9rem;">-</td>
                             <td><input type="number" value="0" id="ins-rank" class="number-spinner__input sheet-save"></td>
                             <td><input type="number" value="0" id="ins-buff" class="number-spinner__input sheet-save"></td>
                             <td><input type="number" value="0" id="ins-debuff" class="number-spinner__input sheet-save"></td>
@@ -282,14 +240,7 @@
 
                 <div class="sheet-panel">
                     <table class="data-table">
-                        <tr>
-                            <th>SOCIAL</th>
-                            <th>Base</th>
-                            <th>Rank</th>
-                            <th>Buff</th>
-                            <th>Debuff</th>
-                            <th>Total</th>
-                        </tr>
+                        <tr><th>SOCIAL</th><th>Base</th><th>Rank</th><th>Buff</th><th>Debuff</th><th>Total</th></tr>
                         <tr>
                             <td style="background:#F9E79F; font-weight:bold;">TOUGH</td>
                             <td><input type="number" value="1" id="tou-base" class="number-spinner__input sheet-save"></td>
@@ -356,12 +307,7 @@
                     </div>
                     <table class="data-table data-table--red-header" id="skills-table">
                         <tbody id="base-skills-body">
-                            <tr>
-                                <th style="text-align: left;">FIGHT</th>
-                                <th>Base</th>
-                                <th>Buff</th>
-                                <th>Total</th>
-                            </tr>
+                            <tr><th style="text-align: left;">FIGHT</th><th>Base</th><th>Buff</th><th>Total</th></tr>
                             <tr>
                                 <td style="text-align: left;"><input type="text" class="skill-label form-input--transparent-bold sheet-save" id="label-brawl" value="Brawl"></td>
                                 <td><input type="number" value="0" id="brawl-base" class="number-spinner__input sheet-save"></td>
@@ -387,12 +333,7 @@
                                 <td style="font-weight: bold;" id="evasion-total">0</td>
                             </tr>
 
-                            <tr>
-                                <th style="text-align: left;">SURVIVE</th>
-                                <th></th>
-                                <th></th>
-                                <th></th>
-                            </tr>
+                            <tr><th style="text-align: left;">SURVIVE</th><th></th><th></th><th></th></tr>
                             <tr>
                                 <td style="text-align: left;"><input type="text" class="skill-label form-input--transparent-bold sheet-save" id="label-alert" value="Alert"></td>
                                 <td><input type="number" value="0" id="alert-base" class="number-spinner__input sheet-save"></td>
@@ -418,12 +359,7 @@
                                 <td style="font-weight: bold;" id="stealth-total">0</td>
                             </tr>
 
-                            <tr>
-                                <th style="text-align: left;">SOCIAL</th>
-                                <th></th>
-                                <th></th>
-                                <th></th>
-                            </tr>
+                            <tr><th style="text-align: left;">SOCIAL</th><th></th><th></th><th></th></tr>
                             <tr>
                                 <td style="text-align: left;"><input type="text" class="skill-label form-input--transparent-bold sheet-save" id="label-charm" value="Charm"></td>
                                 <td><input type="number" value="0" id="charm-base" class="number-spinner__input sheet-save"></td>
@@ -449,12 +385,7 @@
                                 <td style="font-weight: bold;" id="perform-total">0</td>
                             </tr>
 
-                            <tr>
-                                <th id="knowledge-header" style="text-align: left;">KNOWLEDGE (PMD)</th>
-                                <th></th>
-                                <th></th>
-                                <th></th>
-                            </tr>
+                            <tr><th id="knowledge-header" style="text-align: left;">KNOWLEDGE (PMD)</th><th></th><th></th><th></th></tr>
                             <tr>
                                 <td style="text-align: left;"><input type="text" class="skill-label form-input--transparent-bold sheet-save" id="label-crafts" value="Crafts"></td>
                                 <td><input type="number" value="0" id="crafts-base" class="number-spinner__input sheet-save"></td>

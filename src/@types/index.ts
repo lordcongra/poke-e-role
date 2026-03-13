@@ -1,4 +1,17 @@
 // --- INTERFACES ---
+export interface StatusItem {
+    id: string;
+    name: string;
+    customName: string;
+    rounds: number;
+}
+
+export interface EffectItem {
+    id: string;
+    name: string;
+    rounds: number;
+}
+
 export interface Move { 
     id: string; 
     name: string; 
@@ -10,6 +23,7 @@ export interface Move {
     power: number; 
     dmgStat: string; 
     desc?: string; 
+    used?: boolean;
 }
 
 export interface InventoryItem { 
@@ -75,7 +89,7 @@ export interface OwlTracker {
     id: string;
     variant: string;
     color: number;
-    value?: number | boolean; // <--- THE FIX: Allows checkboxes to be true/false!
+    value?: number | boolean;
     max?: number;
     checked?: boolean;
     inlineMath?: boolean;

@@ -20,6 +20,7 @@ While these extensions do not tie directly into the character sheet, they are hi
 
 ### 📊 Fully Automated Stat Calculation
 * Enter your Base Stats, Ranks, Buffs, and Debuffs, and the sheet automatically calculates all Derived Stats (HP, Will, Defenses, Evasion, Clashes).
+* Also supports tracking for **Happiness** and **Loyalty**.
 * Supports both **Pokémon** and **Trainer** modes, dynamically toggling relevant skills and clashes.
 * **Form & Evolution Safe:** Change a Pokémon's species to update their base stats and typing *without* wiping their invested skills and moves!
 
@@ -27,7 +28,13 @@ While these extensions do not tie directly into the character sheet, they are hi
 * Automatically calculates your maximum Attribute, Social, and Skill point limits based on your currently selected Rank and Age.
 * Tracks your spent points and warns you if you exceed standard limits.
 * **Auto-Fetches Stat Caps:** Automatically queries the API to display the maximum Attribute limits for your specific Pokémon species. 
-* **PMD / Homebrew Friendly:** Includes "Extra Pts" override boxes, allowing GMs to reward extra stats for completing dungeons without breaking the sheet's logic.
+* **PMD / Homebrew Friendly:** Includes "Extra Pts" override boxes, allowing GMs to reward extra stats for completing dungeons, using special items, etc without breaking the sheet's logic.
+
+### ⏱️ Dynamic Status & Timers (w/ Map Sync)
+* **Auto-Ticking Effects:** Track terrain, weather, or screens (like Tailwind or Reflect) in the "Timers" box. Clicking the "Reset Round" button automatically ticks these timers down by 1.
+* **1-Click Status Recovery:** The "Status" box tracks conditions like Sleep or Confusion. Click the 🎲 icon next to a status to automatically calculate and roll your recovery pool. The sheet intercepts the Dice+ result and adds your successes directly to the tracker!
+* **Owl Trackers Integration:** Any active timer or status automatically spawns a highly visible color-coded tracker on your token on the map so the GM never forgets it!
+* **Roleplay Mode:** Click the "⭕ Trackers" toggle at the top of the sheet to instantly hide all of your map rings during intense roleplay moments without losing your data.
 
 ### 📖 Built-In Learnset Pokédex
 * Scroll to the bottom of your moves to find the **View Learnset** button. 
@@ -35,9 +42,6 @@ While these extensions do not tie directly into the character sheet, they are hi
 
 ### 🛡️ Auto-Calculating Type Matchups
 * Never stop combat to check a type chart again. The sheet automatically calculates and displays a Pokémon's defensive weaknesses and resistances (4x, 2x, 0.5x, 0.25x, 0x) based on their current dual-typing.
-
-### 🩺 Dynamic Multi-Status System
-* Easily track multiple debilitating conditions at once. Stack Burn, Confusion, Paralysis, and more on a single token using the dynamic dropdown interface.
 
 ### 🌐 Live Database Fetching
 * Type in the name of a Pokémon species, and the sheet securely fetches its Base Stats, Typings, and Abilities directly from the official Pokerole 3.0 GitHub Database.
@@ -64,7 +68,7 @@ While these extensions do not tie directly into the character sheet, they are hi
 * Click the `+ Add Custom Field` button at the top to inject custom labels and text inputs. Perfect for tracking campaign-specific mechanics or character traits.
 
 ### 🔒 GM Tools
-* Built-in NPC Toggle. Mark a sheet as a "Private NPC" to instantly hide the sheet's contents from players, preventing meta-gaming during boss fights.
+* **Built-in NPC Toggle:** Mark a sheet as a "Private NPC" to instantly hide the sheet's contents from players, preventing meta-gaming during boss fights. *(Note: Players cannot see this button, preventing them from accidentally locking themselves out of their own sheets!)*
 
 ---
 
@@ -73,4 +77,4 @@ To install this extension into your Owlbear Rodeo room, copy the Manifest URL be
 
 `https://lordcongra.github.io/poke-e-role/manifest.json`
 
-*(Note: If the sheet updates, you can force Owlbear to fetch the newest version by adding a version tag to the end of the URL, like `?v=1.3.1`)*
+*(Note: If the sheet updates, you can force Owlbear to fetch the newest version by adding a version tag to the end of the URL, like `?v=1.3.2`)*

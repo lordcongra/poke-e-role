@@ -72,15 +72,44 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
 
           lastKnownMetadataStr = JSON.stringify(meta);
 
-          // ONLY GENERATE OWL TRACKERS IF THE TOKEN HAS A SPECIES ASSIGNED!
-          if (meta['species'] && meta['species'].trim() !== "") {
+          const rawTrackers = item.metadata["com.owl-trackers/trackers"];
+          let trackers: OwlTracker[] = rawTrackers ? JSON.parse(JSON.stringify(rawTrackers)) : [];
+          
+          const showTrackers = meta['show-trackers'] === undefined ? true : (meta['show-trackers'] === true || meta['show-trackers'] === 'true');
+          const hasSpecies = meta['species'] && meta['species'].trim() !== "";
+
+          // Always figure out which dynamic trackers might be active
+          const effectsDataRaw = meta['effects-data'];
+          let effectsData: any[] = [];
+          try { effectsData = effectsDataRaw ? (typeof effectsDataRaw === 'string' ? JSON.parse(effectsDataRaw) : effectsDataRaw) : []; } catch(e) {}
+          
+          const statusDataRaw = meta['status-list'];
+          let statusData: any[] = [];
+          try { statusData = statusDataRaw ? (typeof statusDataRaw === 'string' ? JSON.parse(statusDataRaw) : statusDataRaw) : []; } catch(e) {}
+
+          const standardTrackers = ["HP", "Will", "Actions", "DEF", "SP DEF", "Evade", "Clash"];
+          let activeDynamicNames = new Set<string>();
+
+          // THIS FIXES THE BUG: Only tell the map a tracker is "Active" if it has > 0 rounds!
+          effectsData.forEach(e => { 
+              if (Number(e.rounds) > 0 && e.name?.trim()) activeDynamicNames.add(e.name.trim()); 
+          });
+          statusData.forEach(s => {
+              if (Number(s.rounds) > 0) {
+                  const sName = s.name === 'Custom...' ? s.customName : s.name;
+                  if (sName?.trim()) activeDynamicNames.add(sName.trim());
+              }
+          });
+
+          // Generate trackers ONLY if the token has a Species AND the toggle is checked
+          if (hasSpecies && showTrackers) {
               
               const evadeChecked = meta['evasions-used'] === true || meta['evasions-used'] === 'true';
               const clashChecked = meta['clashes-used'] === true || meta['clashes-used'] === 'true';
 
-              const rawTrackers = item.metadata["com.owl-trackers/trackers"];
-              let trackers: OwlTracker[] = rawTrackers ? JSON.parse(JSON.stringify(rawTrackers)) : [];
-              
+              // Filter out dead sheet trackers (If they hit 0, they are completely removed here!)
+              trackers = trackers.filter(t => standardTrackers.includes(t.name) || activeDynamicNames.has(t.name));
+
               const updateTracker = (name: string, variant: string, color: number, value?: any, checked?: boolean, max?: number) => {
                   let tIndex = trackers.findIndex(x => x.name === name);
                   
@@ -115,6 +144,7 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
                   }
               };
 
+              // Base Stats
               updateTracker("Will", "value-max", 6, willCurr, undefined, willMax);
               updateTracker("HP", "value-max", 2, hpCurr, undefined, hpMax);
               updateTracker("Actions", "counter", 6, actions);
@@ -123,6 +153,26 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
               updateTracker("Evade", "checkbox", 4, undefined, evadeChecked);
               updateTracker("Clash", "checkbox", 3, undefined, clashChecked);
 
+              // Dynamic Trackers (Purple 8 for effects, Red 1 for statuses)
+              effectsData.forEach(e => {
+                  if (Number(e.rounds) > 0 && e.name?.trim()) {
+                      updateTracker(e.name.trim(), "counter", 8, Number(e.rounds));
+                  }
+              });
+
+              statusData.forEach(s => {
+                  if (Number(s.rounds) > 0) {
+                      const sName = s.name === 'Custom...' ? s.customName : s.name;
+                      if (sName?.trim()) {
+                          updateTracker(sName.trim(), "counter", 1, Number(s.rounds));
+                      }
+                  }
+              });
+
+              item.metadata["com.owl-trackers/trackers"] = trackers;
+          } else {
+              // Strip ALL sheet trackers from the token completely (Preserves manual GM rings!)
+              trackers = trackers.filter(t => !standardTrackers.includes(t.name) && !activeDynamicNames.has(t.name));
               item.metadata["com.owl-trackers/trackers"] = trackers;
           }
         }
@@ -130,7 +180,6 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
   }, 150); 
 }
 
-// --- THE DEFIBRILLATOR ---
 export async function repairTrackers() {
     if (!currentTokenId || isLoading) return;
     
