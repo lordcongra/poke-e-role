@@ -405,8 +405,14 @@ function rollDamage(move: Move) {
   const defStr = prompt(`Enter Target's ${move.cat === 'Phys' ? 'Defense' : 'Special Defense'} reduction (or 0):`, "0");
   if (defStr === null) return; 
   
-  let finalPool = basePool - (parseInt(defStr) || 0) + (confirm("Was this a Critical Hit? (OK for Yes, Cancel for No)") ? 2 : 0);
-  if (finalPool > 0) sendToDicePlus(`${finalPool}d6>3 # ${nickname}: ${move.name} Dmg${stabTag}`);
+  // Calculate the raw pool
+  let rawPool = basePool - (parseInt(defStr) || 0) + (confirm("Was this a Critical Hit? (OK for Yes, Cancel for No)") ? 2 : 0);
+  
+  // Enforce the Pokerole Minimum 1 Damage Die rule!
+  let finalPool = Math.max(1, rawPool);
+  
+  // Send the roll to Dice+ (No need to check if > 0 anymore, since it's guaranteed to be at least 1!)
+  sendToDicePlus(`${finalPool}d6>3 # ${nickname}: ${move.name} Dmg${stabTag}`);
 }
 
 function rollGeneric(actionName: string, pool: number, incrementEvade = false, incrementClash = false, incrementAction = false) {
