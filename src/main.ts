@@ -246,6 +246,7 @@ sheetView.identity.ability.addEventListener('change', async (e) => {
         (e.target as HTMLSelectElement).title = String(abilityData.Effect || abilityData.Description || "No description found.");
     }
     saveDataToToken('ability', val);
+    calculateStats(currentExtraCategories, currentMoves);
 });
 
 sheetView.identity.sheetType.addEventListener('change', (e) => {
