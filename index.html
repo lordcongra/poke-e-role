@@ -8,6 +8,71 @@
 <body>
     <datalist id="move-list"></datalist>
     <datalist id="species-list"></datalist>
+    <datalist id="ability-list"></datalist>
+    <datalist id="item-list">
+        <option value="Air Balloon"></option><option value="Amulet Coin"></option><option value="Black Belt"></option>
+        <option value="Black Glasses"></option><option value="Bright Powder"></option><option value="Charcoal"></option>
+        <option value="Choice Band"></option><option value="Choice Scarf"></option><option value="Choice Specs"></option>
+        <option value="Clear Amulet"></option><option value="Destiny Knot"></option><option value="Dragon Fang"></option>
+        <option value="Eject Button"></option><option value="Eviolite"></option><option value="Expert Belt"></option>
+        <option value="Fairy Wings"></option><option value="Flame Orb"></option><option value="Focus Sash"></option>
+        <option value="Hard Stone"></option><option value="Heavy-Duty Boots"></option><option value="Iron Ball"></option>
+        <option value="King's Rock"></option><option value="Leek"></option><option value="Leftovers"></option>
+        <option value="Life Orb"></option><option value="Light Ball"></option><option value="Loaded Dice"></option>
+        <option value="Lucky Punch"></option><option value="Magnet"></option><option value="Metal Coat"></option>
+        <option value="Metronome"></option><option value="Miracle Seed"></option><option value="Mystic Water"></option>
+        <option value="Never-Melt Ice"></option><option value="Poison Barb"></option><option value="Power Herb"></option>
+        <option value="Power Increasers"></option><option value="Protective Pads"></option><option value="Quick Claw"></option>
+        <option value="Razor Claw"></option><option value="Razor Fang"></option><option value="Red Card"></option>
+        <option value="Ring Target"></option><option value="Rocky Helmet"></option><option value="Safety Goggles"></option>
+        <option value="Sharp Beak"></option><option value="Silk Scarf"></option><option value="Silver Powder"></option>
+        <option value="Soft Sand"></option><option value="Spell Tag"></option><option value="Sticky Barb"></option>
+        <option value="Thick Club"></option><option value="Throat Spray"></option><option value="Toxic Orb"></option>
+        <option value="Twisted Spoon"></option><option value="Umbrella"></option><option value="Weakness Policy"></option>
+        <option value="White Herb"></option><option value="Wide Lens"></option><option value="Zoom Lens"></option>
+    </datalist>
+
+    <div id="targeting-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; font-family: sans-serif;">
+        <div style="background: white; padding: 15px; border-radius: 8px; width: 280px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid var(--primary);">
+            <h3 style="margin-top: 0; color: var(--primary); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 4px;">🎯 Select Target</h3>
+            
+            <div style="margin-bottom: 10px;">
+                <label style="font-size: 0.8rem; font-weight: bold; color: var(--dark);">Enemy Token:</label>
+                <select id="targeting-select" style="width: 100%; padding: 4px; border: 1px solid var(--border); border-radius: 4px; font-family: inherit; font-size: 0.85rem; margin-top: 2px;">
+                    <option value="manual">-- Manual Entry --</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="font-size: 0.8rem; font-weight: bold; color: var(--dark);"><span id="targeting-stat-label">Defense</span> Reduction:</label>
+                <input type="number" id="targeting-def-input" value="0" min="0" style="width: 100%; padding: 4px; border: 1px solid var(--border); border-radius: 4px; font-family: inherit; font-size: 0.85rem; margin-top: 2px; box-sizing: border-box;" />
+            </div>
+
+            <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 6px;">
+                <input type="checkbox" id="targeting-crit-checkbox" style="cursor: pointer; transform: scale(1.1);">
+                <label for="targeting-crit-checkbox" style="font-size: 0.85rem; font-weight: bold; cursor: pointer; color: #d32f2f;">Critical Hit? (+2 Dice)</label>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; gap: 8px;">
+                <button type="button" id="targeting-cancel" class="action-button action-button--dark" style="flex: 1; padding: 6px;">Cancel</button>
+                <button type="button" id="targeting-confirm" class="action-button action-button--red" style="flex: 1; padding: 6px;">💥 Roll Damage</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="clash-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; font-family: sans-serif;">
+        <div style="background: white; padding: 15px; border-radius: 8px; width: 260px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid var(--primary);">
+            <h3 style="margin-top: 0; color: var(--primary); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 4px; text-align: center;">⚔️ Select Clash Type</h3>
+            
+            <p style="font-size: 0.85rem; text-align: center; margin-bottom: 15px; color: var(--dark);">Which attribute are you using to Clash?</p>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button type="button" id="clash-physical-btn" class="action-button action-button--dark" style="background: #E65100; border-color: #E65100; padding: 8px; font-size: 0.9rem;">💪 Physical (STR)</button>
+                <button type="button" id="clash-special-btn" class="action-button action-button--dark" style="background: #1565C0; border-color: #1565C0; padding: 8px; font-size: 0.9rem;">✨ Special (SPE)</button>
+                <button type="button" id="clash-cancel-btn" class="action-button action-button--dark" style="padding: 6px; margin-top: 4px;">Cancel</button>
+            </div>
+        </div>
+    </div>
 
     <div id="gm-lock-screen" style="display: none; text-align: center; padding-top: 100px; color: var(--primary); font-family: sans-serif;">
         <h2 style="font-size: 2rem; margin-bottom: 10px;">🔒</h2>
@@ -38,9 +103,26 @@
                     </select>
                 </div>
                 <div class="identity-grid__row"><span class="identity-grid__label">Typing</span><input type="text" id="typing" class="identity-grid__input sheet-save" readonly style="font-weight: bold; color: var(--dark);" /></div>
-                <div class="identity-grid__row"><span class="identity-grid__label">Ability</span><select id="ability" class="identity-grid__select sheet-save" style="font-size: 0.85rem; color: #333;" title="Select an ability to see its description..."></select></div>
+                <div class="identity-grid__row"><span class="identity-grid__label">Ability</span><input type="text" id="ability" list="ability-list" class="identity-grid__input sheet-save" placeholder="Type or select..." /></div>
                 <div class="identity-grid__row"><span class="identity-grid__label identity-grid__label--blue">Mode</span><select id="sheet-type" class="identity-grid__select sheet-save"><option value="pokemon">Pokémon</option><option value="trainer">Trainer</option></select></div>
                 <div class="identity-grid__row"><span class="identity-grid__label identity-grid__label--blue">Age</span><select id="age" class="identity-grid__select sheet-save"><option value="--">--</option><option value="Child">Child</option><option value="Teen">Teen</option><option value="Adult">Adult</option><option value="Senior">Senior</option></select></div>
+                
+                <div class="identity-grid__row">
+                    <span class="identity-grid__label identity-grid__label--blue" title="Ruleset: Determines how HP and Spec. Defense are calculated. (Global Room Setting)">Ruleset</span>
+                    <select id="room-ruleset-style" class="identity-grid__select" title="Ruleset: Determines how HP and Spec. Defense are calculated. (Global Room Setting)">
+                        <option value="vg-vit-hp">VIT = DEF/HP, INS = SPD</option>
+                        <option value="tabletop">VIT = DEF/SPD/HP</option>
+                        <option value="vg-high-hp">VIT = DEF, INS = SPD; either VIT/INS used for HP</option>
+                    </select>
+                </div>
+                <div class="identity-grid__row">
+                    <span class="identity-grid__label identity-grid__label--red" title="Pain Penalizations: Automatically applies -1 or -2 success penalties to rolls when at low HP. (Global Room Setting)">Pain</span>
+                    <select id="room-pain-penalties" class="identity-grid__select" title="Pain Penalizations: Automatically applies -1 or -2 success penalties to rolls when at low HP. (Global Room Setting)">
+                        <option value="true">Enabled</option>
+                        <option value="false">Disabled</option>
+                    </select>
+                </div>
+
                 <div class="identity-grid__row"><span class="identity-grid__label identity-grid__label--green">Combat</span><input type="text" id="combat-item" class="identity-grid__input sheet-save" /></div>
                 <div class="identity-grid__row"><span class="identity-grid__label identity-grid__label--green">Social</span><input type="text" id="social-item" class="identity-grid__input sheet-save" /></div>
                 <div class="identity-grid__row"><span class="identity-grid__label identity-grid__label--green">Hand</span><input type="text" id="hand-item" class="identity-grid__input sheet-save" /></div>
@@ -102,7 +184,7 @@
                     </div>
                 </div>
                 <div class="health-section__box" style="display: flex; flex-direction: column; overflow: hidden;">
-                    <div class="health-section__header health-section__header--dark" style="position: relative; text-align: center; padding: 0 6px;">
+                    <div class="health-section__header health-section__header--dark" style="background-color: #8e44ad; position: relative; text-align: center; padding: 0 6px;">
                         <span>STATUS (Trackers)</span>
                         <button type="button" id="add-status-btn" class="action-button action-button--dark" style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; padding: 2px 5px; margin: 0; line-height: 1;">+ Add</button>
                     </div>
@@ -134,7 +216,7 @@
                     </div>
                 </div>
                 <div class="health-section__box" style="display: flex; flex-direction: column; overflow: hidden;">
-                    <div class="health-section__header health-section__header--dark" style="position: relative; text-align: center; padding: 0 6px;">
+                    <div class="health-section__header health-section__header--dark" style="background-color: #81D4FA; color: #333; position: relative; text-align: center; padding: 0 6px;">
                         <span>TIMERS (Effects)</span>
                         <button type="button" id="add-effect-btn" class="action-button action-button--dark" style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; padding: 2px 5px; margin: 0; line-height: 1;">+ Add</button>
                     </div>
@@ -168,18 +250,26 @@
             <div class="sheet-container__column">
                 <div class="tracker-section">
                     <div style="text-align: center; font-weight: bold; color: var(--primary); font-size: 0.85rem; margin-bottom: 4px;">ROUND TRACKER</div>
-                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 4px;">Action: <input type="number" id="actions-used" value="0" min="0" max="5" class="number-spinner__input sheet-save"></div>
-                        <div style="display: flex; align-items: center; gap: 4px;">Evade: <input type="checkbox" id="evasions-used" class="sheet-save" style="cursor: pointer; transform: scale(1.1);"><button type="button" id="roll-evade-btn" class="action-button action-button--dark">🎲</button></div>
-                        <div style="display: flex; align-items: center; gap: 4px;">Clash: <input type="checkbox" id="clashes-used" class="sheet-save" style="cursor: pointer; transform: scale(1.1);"><button type="button" id="roll-clash-btn" class="action-button action-button--dark">🎲</button></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 2px;" title="Actions taken this round">Act: <input type="number" id="actions-used" value="0" min="0" max="5" class="number-spinner__input sheet-save" style="width:25px;"></div>
+                        <div style="display: flex; align-items: center; gap: 2px;">Evade: <input type="checkbox" id="evasions-used" class="sheet-save" style="cursor: pointer;"><button type="button" id="roll-evade-btn" class="action-button action-button--dark" style="padding:1px 4px;">🎲</button></div>
+                        <div style="display: flex; align-items: center; gap: 2px;">Clash: <input type="checkbox" id="clashes-used" class="sheet-save" style="cursor: pointer;"><button type="button" id="roll-clash-btn" class="action-button action-button--dark" style="padding:1px 4px;">🎲</button></div>
+                        
+                        <div style="display: flex; align-items: center; gap: 2px;" title="Take Your Chances: Reroll failed dice">Chance: <input type="number" id="chances-used" value="0" min="0" class="number-spinner__input sheet-save" style="width:25px;"><button type="button" id="roll-chances-btn" class="action-button action-button--dark" style="padding:1px 4px;">🎲</button></div>
+                        <input type="hidden" id="fate-used" value="0" class="sheet-save">
                     </div>
-                    <div style="display: flex; gap: 4px; justify-content: space-between; align-items: center; margin-top: 4px;">
+                    <div style="display: flex; gap: 4px; justify-content: space-between; align-items: center; margin-top: 6px;">
                         <select id="maneuver-select" style="padding: 1px; font-family: inherit; border: 1px solid var(--border); font-size: 0.75rem; flex: 1;">
                             <option value="none">-- Maneuver --</option><option value="ambush">Ambush (Dex+Stl)</option><option value="cover">Cover Ally (Will)</option>
-                            <option value="grapple">Grapple (Str+Bwl)</option><option value="run">Run (Dex+Ath)</option><option value="stabilize">Stabilize (Cle+Med)</option><option value="struggle">Struggle (Dex+Bwl)</option>
+                            <option value="grapple">Grapple (Str+Bwl)</option><option value="run">Run (Dex+Ath)</option><option value="stabilize">Stabilize (Cle+Med)</option><option value="struggle">Struggle (Accuracy)</option>
                         </select>
                         <button type="button" id="roll-maneuver-btn" class="action-button action-button--dark">🎲</button>
                         <button type="button" id="reset-round-btn" class="action-button action-button--red">Reset</button>
+                    </div>
+                    <div style="display: flex; gap: 4px; justify-content: space-between; align-items: center; margin-top: 6px;">
+                        <button type="button" id="btn-will-pain" class="action-button action-button--dark" style="flex: 1; font-size: 0.65rem; padding: 2px;" title="Power Through the Pain: Ignore 1 Pain Penalization for the rest of the Scene (-1 Will)">Ign.Pain(-1W)</button>
+                        <button type="button" id="btn-will-fate" class="action-button action-button--dark" style="flex: 1; font-size: 0.65rem; padding: 2px;" title="Pushing Fate: Get 1 automatic un-removable success on a single roll (-1 Will). (Does not stack with Take Your Chances)">PushFate(-1W)</button>
+                        <button type="button" id="btn-will-chance" class="action-button action-button--dark" style="flex: 1; font-size: 0.65rem; padding: 2px;" title="Take Your Chances: Re-roll 1 unsuccessful die from all Action Rolls of the Round (-1 Will). (Does not stack with Pushing Fate)">Chance(-1W)</button>
                     </div>
                 </div>
 
@@ -421,7 +511,7 @@
 
         <div class="sheet-panel">
             <div class="sheet-panel__header">
-                <span>ATTACKS & MOVES</span>
+                <span>MOVES <span style="font-size: 0.75rem; color: #666; font-weight: normal; margin-left: 4px;">(Max: <span id="max-moves-display">4</span>)</span></span>
                 <div style="font-size: 0.8rem; display: flex; gap: 10px; background: #e0e0e0; padding: 2px 6px; border-radius: 3px; align-items: center; font-weight: normal; color: #222;">
                     <span style="display: flex; align-items: center; gap: 4px;" title="Adds or removes bonus dice to all Accuracy rolls">Acc: <input type="number" id="global-acc-mod" value="0" class="number-spinner__input sheet-save"></span>
                     <span style="display: flex; align-items: center; gap: 4px;" title="Adds or removes bonus dice to all Damage rolls">Dmg: <input type="number" id="global-dmg-mod" value="0" class="number-spinner__input sheet-save"></span>
@@ -429,6 +519,9 @@
                     <span style="display: flex; align-items: center; gap: 4px;">
                         Chance: <input type="number" id="global-chance-mod" value="0" min="0" class="number-spinner__input sheet-save">
                         <button type="button" id="roll-global-chance-btn" class="action-button action-button--dark" style="padding: 1px 4px;">🎲</button>
+                    </span>
+                    <span id="ign-pain-tracker-container" style="display: flex; align-items: center; gap: 4px; margin-left: 6px; border-left: 1px solid #aaa; padding-left: 10px;" title="Ignored Pain Penalties (Reset per Scene)">
+                        Ign.Pain: <input type="number" id="ignored-pain-mod" value="0" min="0" class="number-spinner__input sheet-save">
                     </span>
                 </div>
             </div>
@@ -462,15 +555,18 @@
 
         <div class="sheet-panel">
             <div class="sheet-panel__header">
-                <span>INVENTORY (BAG)</span>
-                <div style="font-size: 0.85rem; color: #1a5e20;">
-                    Poké (PD): <input type="number" id="currency" class="sheet-save" value="0" style="width: 70px; text-align: right; border: 1px solid var(--border); border-radius: 3px; padding: 2px;">
+                <span style="flex: 1;">INVENTORY (BAG) <span title="Smart Tags: Multiple tags and negatives are supported! E.g., [Dmg +1], [Acc -2], [Str +2], [Perform +1], [High Crit], [Dmg +1: Fire]" style="cursor:help; font-size:0.7rem; background:#e0e0e0; color:#333; padding:2px 4px; border-radius:3px;">🏷️ Tags Guide</span></span>
+                <div id="multi-item-warning" style="display:none; color: #d32f2f; font-size: 0.75rem; font-weight: bold; text-align: center; flex: 1;">⚠️ Multiple items active (Homebrew)</div>
+                <div style="font-size: 0.85rem; font-weight: bold; flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
+                    <span style="color: #d35400;" title="Training Points">TP: <input type="number" id="training-points" class="sheet-save" value="0" min="0" style="font-weight: normal; width: 60px; text-align: right; border: 1px solid var(--border); border-radius: 3px; padding: 2px;"></span>
+                    <span style="color: #1a5e20;">Poké (PD): <input type="number" id="currency" class="sheet-save" value="0" min="0" style="font-weight: normal; width: 80px; text-align: right; border: 1px solid var(--border); border-radius: 3px; padding: 2px;"></span>
                 </div>
             </div>
             <table class="data-table" style="text-align: left;">
                 <thead>
                     <tr>
-                        <th style="width: 55px; text-align: center;">Qty</th>
+                        <th style="width: 25px; text-align: center;" title="Item is Equipped/Active?">✔</th>
+                        <th style="width: 50px; text-align: center;">Qty</th>
                         <th style="width: 30%;">Item Name</th>
                         <th>Effect / Notes</th>
                         <th style="width: 35px; text-align: center;">Del</th>

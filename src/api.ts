@@ -5,6 +5,7 @@ export const GITHUB_TREE_URL = "https://api.github.com/repos/Pokerole-Software-D
 export const MOVES_URLS: Record<string, string> = {};
 export const SPECIES_URLS: Record<string, string> = {};
 export const ABILITIES_URLS: Record<string, string> = {};
+export const ALL_ABILITIES: string[] = []; // New export to hold the global list
 
 export async function loadUrlLists(): Promise<void> {
   const speciesInput = document.getElementById('species') as HTMLInputElement | null;
@@ -55,12 +56,17 @@ export async function loadUrlLists(): Promise<void> {
       versionRegex.test(file.path) && abilityRegex.test(file.path) && file.path.endsWith(".json")
     );
     
+    const abilityDatalist = document.getElementById('ability-list');
+    let abilityHtml = '';
     abilityFiles.forEach((file: GithubTreeItem) => {
       const abName = file.path.split('/').pop()?.replace('.json', '') || '';
       if (abName) {
         ABILITIES_URLS[abName.toLowerCase()] = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/${file.path}`;
+        if (!ALL_ABILITIES.includes(abName)) ALL_ABILITIES.push(abName); // Store it globally
+        abilityHtml += `<option value="${abName}"></option>`;
       }
     });
+    if (abilityDatalist) abilityDatalist.innerHTML = abilityHtml;
 
   } catch(err) {
     console.error("Error communicating with Github:", err);

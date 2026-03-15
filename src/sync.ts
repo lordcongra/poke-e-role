@@ -1,0 +1,228 @@
+import OBR from "@owlbear-rodeo/sdk";
+import type { DicePlusData } from './@types/index';
+import { generateId } from './utils';
+import { calculateStats } from './math';
+import { fetchPokemonData, populateLearnset } from './api';
+import { sheetView } from './view';
+import { 
+    updateSheetTypeUI, applyTypeStyle, renderTypeMatchups, renderStatuses, 
+    renderEffects, renderCustomInfo, renderInventory, renderExtraSkills, renderMoves,
+    updatePainUI, updateInventoryUI 
+} from './ui';
+import { 
+    MY_EXTENSION_ID, METADATA_ID, setLoading, setLastMetadataStr, 
+    saveBatchDataToToken, saveInventoryToToken, saveExtraSkillsToToken, saveMovesToToken
+} from './obr';
+import { appState, syncDerivedStats, saveDataToToken } from './state';
+import { rollAccuracy, rollDamage, rollStatus } from './combat';
+
+export const ROOM_META_ID = `${MY_EXTENSION_ID}/room-settings`;
+
+export function reRenderMoves() {
+    renderMoves(appState.currentMoves, appState.currentExtraCategories, saveMovesToToken, rollAccuracy, rollDamage);
+}
+
+export function applyStatLimits(pokemonData: Record<string, any>) {
+    const getLimit = (stat: string) => 
+        pokemonData[`Max${stat}`] || pokemonData[`Max ${stat}`] || 
+        (pokemonData.MaxAttributes && pokemonData.MaxAttributes[stat]) || 
+        (pokemonData.MaxStats && pokemonData.MaxStats[stat]) || "?";
+
+    if (sheetView.stats.str.limit) sheetView.stats.str.limit.innerText = getLimit("Strength");
+    if (sheetView.stats.dex.limit) sheetView.stats.dex.limit.innerText = getLimit("Dexterity");
+    if (sheetView.stats.vit.limit) sheetView.stats.vit.limit.innerText = getLimit("Vitality");
+    if (sheetView.stats.spe.limit) sheetView.stats.spe.limit.innerText = getLimit("Special");
+    if (sheetView.stats.ins.limit) sheetView.stats.ins.limit.innerText = getLimit("Insight");
+}
+
+export async function loadDataFromToken(tokenId: string) {
+  setLoading(true);
+  const items = await OBR.scene.items.getItems([tokenId]);
+  
+  if (items.length > 0) {
+    const token = items[0];
+    const data = (token.metadata[METADATA_ID] as Record<string, any>) || {};
+    
+    appState.currentTokenData = data; 
+    setLastMetadataStr(JSON.stringify(data)); 
+
+    const role = await OBR.player.getRole();
+    const isNPC = String(data['is-npc']) === 'true';
+
+    const gmTools = document.getElementById('gm-tools');
+    if (gmTools) gmTools.style.display = (role === 'GM') ? 'block' : 'none';
+
+    if (role === 'PLAYER' && isNPC) {
+        document.getElementById('app')!.style.display = 'none';
+        document.getElementById('gm-lock-screen')!.style.display = 'block';
+        renderTypeMatchups(data['typing'] || ""); 
+        setLoading(false); 
+        return;
+    } 
+    
+    document.getElementById('app')!.style.display = 'block';
+    const lockScreen = document.getElementById('gm-lock-screen');
+    if (lockScreen) lockScreen.style.display = 'none';
+    
+    const sheetInputs = document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('.sheet-save');
+    const initialUpdates: Record<string, any> = {}; 
+
+    sheetInputs.forEach(element => {
+      const isDynamic = ['move-input', 'inv-input', 'cat-name-input', 'extra-skill-name', 'extra-skill-base', 'extra-skill-buff', 'skill-label'].some((cls: string) => element.classList.contains(cls));
+      if (isDynamic) return;
+      
+      const id = element.id;
+      let val = data[id];
+
+      if (id === 'chances-used' && (val === true || val === 'true')) val = 1;
+      if (id === 'chances-used' && (val === false || val === 'false')) val = 0;
+
+      if (id === 'ability' && val) {
+          const sel = element as HTMLSelectElement;
+          sel.innerHTML = '';
+          
+          if (data['ability-list']) {
+              data['ability-list'].split(',').forEach((ab: string) => {
+                  const opt = document.createElement('option');
+                  opt.value = ab.replace(" (HA)", "");
+                  opt.text = ab;
+                  sel.appendChild(opt);
+              });
+          } else {
+              sel.innerHTML = `<option value="${val}">${val}</option>`;
+          }
+          sel.value = val;
+      }
+      else if (element.type === 'checkbox') {
+          const chk = element as HTMLInputElement;
+          if (val !== undefined) chk.checked = (val === true || val === 'true');
+          else initialUpdates[id] = chk.checked;
+      }
+      else if (val !== undefined) {
+          element.value = val;
+      } 
+      else if (element instanceof HTMLSelectElement) {
+          element.value = element.querySelector('option[selected]')?.getAttribute('value') || element.options[0]?.value || '';
+          initialUpdates[id] = element.value; 
+      } 
+      else {
+          element.value = element.defaultValue; 
+          initialUpdates[id] = element.type === 'number' ? (parseFloat(element.value) || 0) : element.value; 
+      }
+
+      if (id === 'typing') applyTypeStyle(element, element.value);
+    });
+
+    const npcCheck = document.getElementById('is-npc') as HTMLInputElement;
+    if (npcCheck) npcCheck.checked = isNPC;
+    
+    sheetView.identity.nickname.value = data['nickname'] || token.name || "";
+
+    if (data['sheet-type']) updateSheetTypeUI(data['sheet-type']);
+
+    try { appState.currentMoves = data['moves-data'] ? JSON.parse(data['moves-data']) : []; } catch(e) { appState.currentMoves = []; }
+    try { appState.currentInventory = data['inv-data'] ? JSON.parse(data['inv-data']) : []; } catch(e) { appState.currentInventory = []; }
+    try { appState.currentExtraCategories = data['extra-skills-data'] ? JSON.parse(data['extra-skills-data']) : []; } catch(e) { appState.currentExtraCategories = []; }
+    try { appState.currentCustomInfo = data['custom-info-data'] ? JSON.parse(data['custom-info-data']) : []; } catch(e) { appState.currentCustomInfo = []; }
+    try { appState.currentEffects = data['effects-data'] ? JSON.parse(data['effects-data']) : []; } catch(e) { appState.currentEffects = []; }
+
+    try { 
+        const parsedStatuses = data['status-list'] ? JSON.parse(data['status-list']) : [{ id: generateId(), name: "Healthy", customName: "", rounds: 0 }]; 
+        if (parsedStatuses.length > 0 && typeof parsedStatuses[0] === 'string') {
+            appState.currentStatuses = parsedStatuses.map((s: string) => ({ id: generateId(), name: s, customName: "", rounds: 0 }));
+        } else {
+            appState.currentStatuses = parsedStatuses;
+        }
+    } catch(e) { 
+        appState.currentStatuses = [{ id: generateId(), name: "Healthy", customName: "", rounds: 0 }]; 
+    }
+
+    reRenderMoves();
+    renderInventory(appState.currentInventory, saveInventoryToToken);
+    updateInventoryUI(appState.currentInventory);
+    renderExtraSkills(appState.currentExtraCategories, appState.currentMoves, saveExtraSkillsToToken, syncDerivedStats, reRenderMoves);
+    renderStatuses(appState.currentStatuses, saveDataToToken, rollStatus);
+    renderEffects(appState.currentEffects, saveDataToToken);
+    renderCustomInfo(appState.currentCustomInfo, saveDataToToken);
+    renderTypeMatchups(data['typing'] || ""); 
+    calculateStats(appState.currentExtraCategories, appState.currentMoves, appState.currentInventory);
+
+    const currentSpeciesName = data['species'];
+    if (currentSpeciesName) {
+        fetchPokemonData(currentSpeciesName).then(pokemonData => {
+            if (pokemonData) {
+                populateLearnset(pokemonData);
+                applyStatLimits(pokemonData); 
+            }
+        });
+    }
+
+    setLoading(false);
+
+    if (Object.keys(initialUpdates).length > 0) {
+        Object.assign(appState.currentTokenData, initialUpdates);
+        saveBatchDataToToken(initialUpdates);
+    }
+    
+    syncDerivedStats();
+    return; 
+  }
+  setLoading(false); 
+}
+
+export function initializeRoomSync() {
+    OBR.room.getMetadata().then(meta => {
+        const roomMeta = meta[ROOM_META_ID] as any;
+        if (roomMeta) {
+            if (roomMeta.painEnabled !== undefined) sheetView.identity.roomPain.value = roomMeta.painEnabled ? 'true' : 'false';
+            if (roomMeta.ruleset !== undefined) sheetView.identity.roomRuleset.value = roomMeta.ruleset;
+        }
+        updatePainUI(sheetView);
+    });
+
+    OBR.room.onMetadataChange(meta => {
+        const roomMeta = meta[ROOM_META_ID] as any;
+        if (roomMeta) {
+            let changed = false;
+            if (roomMeta.painEnabled !== undefined && sheetView.identity.roomPain.value !== (roomMeta.painEnabled ? 'true' : 'false')) {
+                sheetView.identity.roomPain.value = roomMeta.painEnabled ? 'true' : 'false';
+                changed = true;
+            }
+            if (roomMeta.ruleset !== undefined && sheetView.identity.roomRuleset.value !== roomMeta.ruleset) {
+                sheetView.identity.roomRuleset.value = roomMeta.ruleset;
+                changed = true;
+            }
+            if (changed) {
+                calculateStats(appState.currentExtraCategories, appState.currentMoves, appState.currentInventory);
+                updatePainUI(sheetView);
+                syncDerivedStats();
+            }
+        }
+    });
+
+    OBR.broadcast.onMessage(`${MY_EXTENSION_ID}/roll-result`, async (event) => {
+        const data = event.data as DicePlusData;
+        const myId = await OBR.player.getId();
+        if (data.playerId !== myId) return; 
+
+        if (data.rollId && data.rollId.startsWith("status|") && data.result) {
+            const statusId = data.rollId.split("_")[0].split("|")[1];
+            const successes = parseInt(String(data.result.totalValue)) || 0; 
+            
+            let statusChanged = false;
+            appState.currentStatuses.forEach(s => {
+                if (s.id === statusId) {
+                    s.rounds += successes; 
+                    statusChanged = true;
+                }
+            });
+
+            if (statusChanged) {
+                renderStatuses(appState.currentStatuses, saveDataToToken, rollStatus);
+                const updates = { 'status-list': JSON.stringify(appState.currentStatuses) };
+                Object.assign(appState.currentTokenData, updates);
+                saveBatchDataToToken(updates);
+            }
+        }
+    });
+}

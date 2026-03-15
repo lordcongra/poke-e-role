@@ -128,10 +128,13 @@ export function buildMoveRow(tr: HTMLTableRowElement, move: Move, index: number,
 }
 
 export function buildInventoryRow(tr: HTMLTableRowElement, item: InventoryItem) {
+    const actInp = createEl('input', { type: 'checkbox', className: 'inv-input', checked: item.active ? true : false, dataset: { field: 'active', id: item.id }, style: 'cursor:pointer; transform: scale(1.1);' });
+    const td0 = createEl('td', { className: 'data-table__cell--top' }, [createEl('div', { style: 'display: flex; justify-content: center; padding-top: 4px;' }, [actInp])]);
+
     const qtyInp = createEl('input', { type: 'number', className: 'inv-input number-spinner__input', value: item.qty, dataset: { field: 'qty', id: item.id }});
     const td1 = createEl('td', { className: 'data-table__cell--top' }, [createEl('div', { style: 'display: flex; justify-content: center;' }, [qtyInp])]);
 
-    const nameInp = createEl('input', { type: 'text', className: 'inv-input form-input--item-name', value: item.name, placeholder: 'Item Name', dataset: { field: 'name', id: item.id }});
+    const nameInp = createEl('input', { type: 'text', className: 'inv-input form-input--item-name', list: 'item-list', value: item.name, placeholder: 'Item Name', dataset: { field: 'name', id: item.id }});
     const td2 = createEl('td', { className: 'data-table__cell--top' }, [nameInp]);
 
     const descInp = createEl('textarea', { className: 'inv-input form-input--item-desc', rows: 1, value: item.desc, placeholder: 'Effect / Notes...', dataset: { field: 'desc', id: item.id }});
@@ -140,7 +143,7 @@ export function buildInventoryRow(tr: HTMLTableRowElement, item: InventoryItem) 
     const delBtn = createEl('button', { type: 'button', className: 'del-item-btn action-button action-button--red', innerText: 'X', style: 'padding: 2px 6px;', dataset: { id: item.id }});
     const td4 = createEl('td', { className: 'data-table__cell--top' }, [delBtn]);
 
-    tr.append(td1, td2, td3, td4);
+    tr.append(td0, td1, td2, td3, td4);
 }
 
 export function buildCustomInfoRow(container: HTMLElement, info: CustomInfo) {
@@ -157,16 +160,37 @@ export function buildCustomInfoRow(container: HTMLElement, info: CustomInfo) {
 
 // --- RENDERERS ---
 
+const getStatusColor = (name: string) => {
+    if (name === "Healthy") return { bg: "#A5D6A7", text: "#000" };
+    if (name === "1st Degree Burn") return { bg: "#FFCC80", text: "#000" };
+    if (name === "2nd Degree Burn") return { bg: "#FF8A65", text: "#000" };
+    if (name === "3rd Degree Burn") return { bg: "#D32F2F", text: "#FFF" }; // Darkened Red
+    if (name === "Poison") return { bg: "#CE93D8", text: "#000" };
+    if (name === "Badly Poisoned") return { bg: "#8E24AA", text: "#FFF" };
+    if (name === "Paralysis") return { bg: "#FFF59D", text: "#000" };
+    if (name === "Frozen Solid") return { bg: "#81D4FA", text: "#000" };
+    if (name === "Sleep") return { bg: "#9FA8DA", text: "#000" };
+    if (name === "In Love") return { bg: "#F48FB1", text: "#000" };
+    if (name === "Confusion") return { bg: "#80CBC4", text: "#000" }; // Light Teal
+    if (name === "Disable") return { bg: "#E0E0E0", text: "#000" }; // Pale Grey
+    if (name === "Flinch") return { bg: "#B0BEC5", text: "#000" }; // Bluish Gray
+    return { bg: "#FFFFFF", text: "#000" }; // Default/Custom
+};
+
 export function renderStatuses(currentStatuses: StatusItem[], saveDataToToken: (key: string, val: string) => void, rollStatus: (status: StatusItem) => void) {
     const container = document.getElementById('status-container');
     if (!container) return;
     container.innerHTML = '';
     
-    const options = ["Healthy", "1st Degree Burn", "2nd Degree Burn", "3rd Degree Burn", "Badly Poisoned", "Confusion", "Disable", "Flinch", "Frozen Solid", "In Love", "Paralysis", "Poison", "Sleep", "Custom..."];
+    // Notice the updated order: Poison moved up above Badly Poisoned!
+    const options = ["Healthy", "1st Degree Burn", "2nd Degree Burn", "3rd Degree Burn", "Poison", "Badly Poisoned", "Confusion", "Disable", "Flinch", "Frozen Solid", "In Love", "Paralysis", "Sleep", "Custom..."];
 
     currentStatuses.forEach((status, index) => {
         const wrapper = createEl('div', { style: 'display: flex; gap: 2px; align-items: center;' });
-        const select = createEl('select', { style: 'flex: 1; border: 1px solid var(--border); font-size: 0.75rem; min-width: 60px;' });
+        
+        const colors = getStatusColor(status.name);
+        const select = createEl('select', { style: `flex: 1; border: 1px solid var(--border); font-size: 0.75rem; min-width: 60px; background-color: ${colors.bg}; color: ${colors.text};` });
+        
         options.forEach(opt => select.appendChild(createEl('option', { value: opt, text: opt, selected: opt === status.name })));
 
         select.addEventListener('change', (e) => {
@@ -223,7 +247,7 @@ export function renderEffects(currentEffects: EffectItem[], saveDataToToken: (ke
     }
 
     currentEffects.forEach((effect, index) => {
-        const wrapper = createEl('div', { style: 'display: flex; gap: 4px; align-items: center; background: #f0f0f0; border: 1px solid var(--border); padding: 4px; border-radius: 6px;' });
+        const wrapper = createEl('div', { style: 'display: flex; gap: 4px; align-items: center; background: #E1F5FE; border: 1px solid #81D4FA; padding: 4px; border-radius: 6px;' });
         
         const nameInp = createEl('input', { type: 'text', value: effect.name, placeholder: 'Effect Name', style: 'width: 110px; border: 1px solid #ccc; font-size: 0.75rem; padding: 2px; border-radius: 3px;' });
         nameInp.addEventListener('change', (e) => {
@@ -298,8 +322,13 @@ export function renderInventory(currentInventory: InventoryItem[], saveInventory
             const field = target.getAttribute('data-field')! as keyof InventoryItem;
             const item = currentInventory.find((i: InventoryItem) => i.id === id);
             if (item) {
-                if (field === 'qty') item[field] = parseInt(target.value) || 0;
-                else item[field] = target.value as never;
+                if (field === 'qty') {
+                    item[field] = parseInt(target.value) || 0;
+                } else if (field === 'active') {
+                    item[field] = target.checked as never; 
+                } else {
+                    item[field] = target.value as never;
+                }
                 saveInventoryToToken(currentInventory);
             }
         });
@@ -633,5 +662,22 @@ export function updateSheetTypeUI(val: string) {
         (document.getElementById('label-charm') as HTMLInputElement).value = "Charm";
         (document.getElementById('label-magic') as HTMLInputElement).value = "Magic";
         if(knowledgeHeader) knowledgeHeader.innerText = "KNOWLEDGE (PMD)";
+    }
+}
+
+export function updatePainUI(sheetView: any) {
+    const isEnabled = sheetView.identity.roomPain.value === 'true';
+    const painBtn = document.getElementById('btn-will-pain');
+    const painTracker = document.getElementById('ign-pain-tracker-container');
+    
+    if (painBtn) painBtn.style.display = isEnabled ? 'block' : 'none';
+    if (painTracker) painTracker.style.display = isEnabled ? 'flex' : 'none';
+}
+
+export function updateInventoryUI(currentInventory: any[]) {
+    const activeCount = currentInventory.filter(i => i.active).length;
+    const warning = document.getElementById('multi-item-warning');
+    if (warning) {
+        warning.style.display = activeCount > 1 ? 'block' : 'none';
     }
 }

@@ -11,9 +11,11 @@ class CharacterSheetView {
         nature: getInputElement('nature'),
         rank: getSelectElement('rank'),
         typing: getInputElement('typing'),
-        ability: getSelectElement('ability'),
+        ability: getInputElement('ability'),
         sheetType: getSelectElement('sheet-type'),
         age: getSelectElement('age'),
+        roomRuleset: getSelectElement('room-ruleset-style'),
+        roomPain: getSelectElement('room-pain-penalties'),
         combatItem: getInputElement('combat-item'),
         socialItem: getInputElement('social-item'),
         handItem: getInputElement('hand-item'),
@@ -40,6 +42,8 @@ class CharacterSheetView {
         actions: getInputElement('actions-used'),
         evade: getInputElement('evasions-used'),
         clash: getInputElement('clashes-used'),
+        chances: getInputElement('chances-used'), 
+        fate: getInputElement('fate-used'),
         happiness: getInputElement('happiness-curr'), 
         loyalty: getInputElement('loyalty-curr')      
     };
@@ -48,7 +52,8 @@ class CharacterSheetView {
         acc: getInputElement('global-acc-mod'),
         dmg: getInputElement('global-dmg-mod'),
         succ: getInputElement('global-succ-mod'),
-        chance: getInputElement('global-chance-mod')
+        chance: getInputElement('global-chance-mod'),
+        ignoredPain: getInputElement('ignored-pain-mod')
     };
 
     points = {

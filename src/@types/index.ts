@@ -31,6 +31,7 @@ export interface InventoryItem {
     qty: number; 
     name: string; 
     desc: string; 
+    active?: boolean;
 }
 
 export interface ExtraSkill { 

@@ -43,6 +43,21 @@ export async function sendToDicePlus(notation: string, rollType: string = "roll"
 let saveTimeout: ReturnType<typeof setTimeout>;
 let pendingUpdates: Record<string, any> = {};
 
+// OBR Colors: 0=Red, 1=Orange, 2=Yellow, 3=Green, 4=Cyan, 5=Blue, 6=Purple, 7=Pink, 8=Grey
+const getTrackerColor = (name: string) => {
+    const lower = name.toLowerCase();
+    if (lower.includes('3rd degree')) return 0;
+    if (lower.includes('2nd degree')) return 0;
+    if (lower.includes('1st degree')) return 1;
+    if (lower.includes('badly poisoned')) return 6;
+    if (lower.includes('poison')) return 6;
+    if (lower.includes('paralysis')) return 2;
+    if (lower.includes('frozen')) return 4;
+    if (lower.includes('sleep')) return 5;
+    if (lower.includes('love')) return 7;
+    return 8; 
+};
+
 export async function saveBatchDataToToken(updates: Record<string, any>) {
   if (!currentTokenId || isLoading) return; 
 
@@ -78,7 +93,6 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
           const showTrackers = meta['show-trackers'] === undefined ? true : (meta['show-trackers'] === true || meta['show-trackers'] === 'true');
           const hasSpecies = meta['species'] && meta['species'].trim() !== "";
 
-          // Always figure out which dynamic trackers might be active
           const effectsDataRaw = meta['effects-data'];
           let effectsData: any[] = [];
           try { effectsData = effectsDataRaw ? (typeof effectsDataRaw === 'string' ? JSON.parse(effectsDataRaw) : effectsDataRaw) : []; } catch(e) {}
@@ -90,7 +104,6 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
           const standardTrackers = ["HP", "Will", "Actions", "DEF", "SP DEF", "Evade", "Clash"];
           let activeDynamicNames = new Set<string>();
 
-          // THIS FIXES THE BUG: Only tell the map a tracker is "Active" if it has > 0 rounds!
           effectsData.forEach(e => { 
               if (Number(e.rounds) > 0 && e.name?.trim()) activeDynamicNames.add(e.name.trim()); 
           });
@@ -101,13 +114,11 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
               }
           });
 
-          // Generate trackers ONLY if the token has a Species AND the toggle is checked
           if (hasSpecies && showTrackers) {
               
               const evadeChecked = meta['evasions-used'] === true || meta['evasions-used'] === 'true';
               const clashChecked = meta['clashes-used'] === true || meta['clashes-used'] === 'true';
 
-              // Filter out dead sheet trackers (If they hit 0, they are completely removed here!)
               trackers = trackers.filter(t => standardTrackers.includes(t.name) || activeDynamicNames.has(t.name));
 
               const updateTracker = (name: string, variant: string, color: number, value?: any, checked?: boolean, max?: number) => {
@@ -144,7 +155,6 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
                   }
               };
 
-              // Base Stats
               updateTracker("Will", "value-max", 6, willCurr, undefined, willMax);
               updateTracker("HP", "value-max", 2, hpCurr, undefined, hpMax);
               updateTracker("Actions", "counter", 6, actions);
@@ -153,25 +163,25 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
               updateTracker("Evade", "checkbox", 4, undefined, evadeChecked);
               updateTracker("Clash", "checkbox", 3, undefined, clashChecked);
 
-              // Dynamic Trackers (Purple 8 for effects, Red 1 for statuses)
+              // Effects (Timers) are now Cyan (4)
               effectsData.forEach(e => {
                   if (Number(e.rounds) > 0 && e.name?.trim()) {
-                      updateTracker(e.name.trim(), "counter", 8, Number(e.rounds));
+                      updateTracker(e.name.trim(), "counter", 4, Number(e.rounds));
                   }
               });
 
+              // Statuses map dynamically!
               statusData.forEach(s => {
                   if (Number(s.rounds) > 0) {
                       const sName = s.name === 'Custom...' ? s.customName : s.name;
                       if (sName?.trim()) {
-                          updateTracker(sName.trim(), "counter", 1, Number(s.rounds));
+                          updateTracker(sName.trim(), "counter", getTrackerColor(s.name), Number(s.rounds));
                       }
                   }
               });
 
               item.metadata["com.owl-trackers/trackers"] = trackers;
           } else {
-              // Strip ALL sheet trackers from the token completely (Preserves manual GM rings!)
               trackers = trackers.filter(t => !standardTrackers.includes(t.name) && !activeDynamicNames.has(t.name));
               item.metadata["com.owl-trackers/trackers"] = trackers;
           }
