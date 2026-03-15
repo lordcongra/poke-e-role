@@ -179,3 +179,43 @@ body {
     transform: scale(0.85);
     transform-origin: center;
 }
+
+/* =========================================
+   📱 MOBILE RESPONSIVENESS (v1.5.0)
+   These rules ONLY apply to screens narrower than 768px
+   ========================================= */
+@media (max-width: 768px) {
+    /* 1. Stack the main two-column layout (Stats over Skills) */
+    .sheet-container__row {
+        flex-direction: column !important;
+    }
+
+    /* 2. Make all buttons "Thumb-Friendly" (Apple recommends 44px minimum) */
+    .action-button {
+        padding: 10px 8px !important;
+        font-size: 1rem !important;
+        min-height: 44px; 
+    }
+
+    /* 3. Thicken up the input boxes so they are easier to tap */
+    input.sheet-save, select.sheet-save, .number-spinner__input {
+        padding: 8px 4px !important;
+        font-size: 1rem !important;
+        min-height: 36px;
+    }
+
+    /* 4. Allow the Identity Grid to wrap naturally instead of crushing text */
+    .identity-grid__row {
+        flex-wrap: wrap;
+    }
+    
+    .identity-grid__label {
+        flex: 1 1 100%; /* Forces the label to its own line on tiny screens */
+        margin-bottom: 2px;
+    }
+
+    /* 5. Give the tables a bit of breathing room */
+    .data-table th, .data-table td {
+        padding: 6px 2px !important;
+    }
+}
