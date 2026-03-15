@@ -4,7 +4,7 @@
   "manifest_version": 1,
   "description": "A highly automated, modular character sheet extension for Pokerole 3.0 and PMD campaigns.",
   "action": {
-    "title": "Poke-e-Role",
+    "title": "Pokerole 3.0 Autosheet",
     "icon": "/pokeball.svg",
     "popover": "/",
     "width": 850,
