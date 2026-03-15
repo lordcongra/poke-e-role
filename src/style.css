@@ -185,37 +185,70 @@ body {
    These rules ONLY apply to screens narrower than 768px
    ========================================= */
 @media (max-width: 768px) {
-    /* 1. Stack the main two-column layout (Stats over Skills) */
+    /* 1. Stack the main two-column layout */
     .sheet-container__row {
         flex-direction: column !important;
     }
 
-    /* 2. Make all buttons "Thumb-Friendly" (Apple recommends 44px minimum) */
-    .action-button {
-        padding: 10px 8px !important;
-        font-size: 1rem !important;
-        min-height: 44px; 
+    /* 2. Allow horizontal inline rows (like top buttons and trackers) to wrap */
+    .sheet-panel > div[style*="display: flex"],
+    .tracker-section > div[style*="display: flex"] {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
     }
 
-    /* 3. Thicken up the input boxes so they are easier to tap */
+    /* 3. Fix the squished stat boxes (HP, Will, Defenses, Init, etc.) */
+    .health-section__row {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    
+    .health-section__box {
+        flex: 1 1 45% !important; /* Forces 2 items per row instead of 3-6 */
+        min-width: 140px; /* Prevents them from getting too skinny */
+    }
+
+    /* Make the Status and Timer tracker boxes full width so the text fits */
+    .health-section__box[style*="flex-direction: column"] {
+        flex: 1 1 100% !important;
+        margin-top: 4px;
+    }
+
+    /* Stop the "+ Add" buttons from overlapping header text */
+    .health-section__header button {
+        position: relative !important;
+        right: auto !important;
+        top: auto !important;
+        transform: none !important;
+        margin-left: 8px !important;
+        display: inline-block;
+    }
+
+    /* 4. Fix top action buttons sizing */
+    .action-button {
+        padding: 8px !important;
+        font-size: 0.95rem !important;
+        min-height: 40px;
+    }
+
+    /* 5. Inputs and Spinners */
     input.sheet-save, select.sheet-save, .number-spinner__input {
-        padding: 8px 4px !important;
-        font-size: 1rem !important;
+        padding: 6px 4px !important;
+        font-size: 0.95rem !important;
         min-height: 36px;
     }
 
-    /* 4. Allow the Identity Grid to wrap naturally instead of crushing text */
+    /* 6. Allow the Identity Grid to wrap */
     .identity-grid__row {
         flex-wrap: wrap;
     }
-    
     .identity-grid__label {
-        flex: 1 1 100%; /* Forces the label to its own line on tiny screens */
+        flex: 1 1 100%;
         margin-bottom: 2px;
     }
 
-    /* 5. Give the tables a bit of breathing room */
-    .data-table th, .data-table td {
-        padding: 6px 2px !important;
+    /* 7. Allow tables to be swiped horizontally if they overflow */
+    .sheet-panel {
+        overflow-x: auto !important;
     }
 }
