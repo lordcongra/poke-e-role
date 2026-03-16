@@ -1,4 +1,4 @@
-import type { Move, InventoryItem, ExtraCategory, CustomInfo, StatusItem, EffectItem } from './@types/index';
+import type { Move, InventoryItem, ExtraCategory, CustomInfo, StatusItem, EffectItem, SkillCheck } from './@types/index';
 import { generateId } from './utils';
 import { saveBatchDataToToken } from './obr';
 
@@ -9,19 +9,20 @@ export const appState = {
     currentStatuses: [{ id: generateId(), name: "Healthy", customName: "", rounds: 0 }] as StatusItem[],
     currentEffects: [] as EffectItem[],
     currentCustomInfo: [] as CustomInfo[],
-    currentTokenData: {} as Record<string, any>,
+    currentSkillChecks: [] as SkillCheck[],
+    currentTokenData: {} as Record<string, unknown>, 
     pendingDamageMove: null as Move | null
 };
 
-export function saveDataToToken(id: string, value: any) {
+export function saveDataToToken(id: string, value: unknown) {
     saveBatchDataToToken({ [id]: value });
 }
 
 export function syncDerivedStats() {
-    const updates: Record<string, any> = {};
+    const updates: Record<string, unknown> = {};
     let hasChanges = false;
     
-    const checkAndAdd = (id: string, val: any) => {
+    const checkAndAdd = (id: string, val: unknown) => {
         if (appState.currentTokenData[id] !== val) {
             updates[id] = val;
             hasChanges = true;

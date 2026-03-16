@@ -3,6 +3,7 @@ import { ATTRIBUTE_MAPPING } from './@types/index';
 import { getVal, setText, ALL_SKILLS, COMBAT_STATS, SOCIAL_STATS } from './utils';
 import { sheetView } from './view';
 import { appState } from './state';
+import { isLoading } from './obr';
 
 const getInputValue = (el: HTMLInputElement) => parseInt(el.value) || 0;
 
@@ -116,6 +117,8 @@ export function calculateStats(currentExtraCategories: ExtraCategory[], currentM
   
   let itemStats: Record<string, number> = { str: 0, dex: 0, vit: 0, spe: 0, ins: 0, tou: 0, coo: 0, bea: 0, cut: 0, cle: 0 };
   let itemSkills: Record<string, number> = {};
+  let itemInit = 0;
+
   ALL_SKILLS.forEach(sk => itemSkills[sk] = 0);
   
   activeInventory.filter(i => i.active).forEach(item => {
@@ -134,6 +137,11 @@ export function calculateStats(currentExtraCategories: ExtraCategory[], currentM
       const skillMatches = desc.matchAll(new RegExp(`\\[(${ALL_SKILLS.join('|')})\\s*([+-]?\\d+)\\]`, 'gi'));
       for (const match of skillMatches) {
           itemSkills[match[1].toLowerCase()] += parseInt(match[2]) || 0;
+      }
+
+      const initMatches = desc.matchAll(/\[init\s*([+-]?\d+)\]/gi);
+      for (const match of initMatches) {
+          itemInit += parseInt(match[1]) || 0;
       }
   });
 
@@ -171,8 +179,39 @@ export function calculateStats(currentExtraCategories: ExtraCategory[], currentM
       hpBonus = Math.max(vit, ins);
   }
 
-  sheetView.health.hp.max.innerText = (getInputValue(sheetView.health.hp.base) + hpBonus).toString();
-  sheetView.health.will.max.innerText = (getInputValue(sheetView.health.will.base) + ins).toString();
+  // --- SMART HP SCALING (Heals automatically on Form Swap / Vit Rank up) ---
+  const oldMaxHp = parseInt(sheetView.health.hp.max.innerText) || 0;
+  const newMaxHp = getInputValue(sheetView.health.hp.base) + hpBonus;
+  
+  if (!isLoading && oldMaxHp > 0 && oldMaxHp !== newMaxHp) {
+      const currHpEl = sheetView.health.hp.curr;
+      let currHpVal = parseInt(currHpEl.value) || 0;
+      
+      if (newMaxHp > oldMaxHp) {
+          currHpVal += (newMaxHp - oldMaxHp);
+      } else if (currHpVal > newMaxHp) {
+          currHpVal = newMaxHp; // Clamps HP if max drops!
+      }
+      currHpEl.value = currHpVal.toString();
+  }
+  sheetView.health.hp.max.innerText = newMaxHp.toString();
+
+  // --- SMART WILL SCALING ---
+  const oldMaxWill = parseInt(sheetView.health.will.max.innerText) || 0;
+  const newMaxWill = getInputValue(sheetView.health.will.base) + ins;
+
+  if (!isLoading && oldMaxWill > 0 && oldMaxWill !== newMaxWill) {
+      const currWillEl = sheetView.health.will.curr;
+      let currWillVal = parseInt(currWillEl.value) || 0;
+      
+      if (newMaxWill > oldMaxWill) {
+          currWillVal += (newMaxWill - oldMaxWill);
+      } else if (currWillVal > newMaxWill) {
+          currWillVal = newMaxWill;
+      }
+      currWillEl.value = currWillVal.toString();
+  }
+  sheetView.health.will.max.innerText = newMaxWill.toString();
   
   const maxMovesDisplay = document.getElementById('max-moves-display');
   if (maxMovesDisplay) {
@@ -196,7 +235,9 @@ export function calculateStats(currentExtraCategories: ExtraCategory[], currentM
       });
   });
 
-  sheetView.initiative.total.innerText = (dex + (calculatedSkills.alert || 0)).toString();
+  // Apply the init bonus here!
+  sheetView.initiative.total.innerText = (dex + (calculatedSkills.alert || 0) + itemInit).toString();
+  
   sheetView.defenses.evasion.total.innerText = (dex + (calculatedSkills.evasion || 0)).toString();
   sheetView.defenses.clashP.total.innerText = (str + (calculatedSkills.clash || 0)).toString();
   sheetView.defenses.clashS.total.innerText = (spe + (calculatedSkills.clash || 0)).toString();

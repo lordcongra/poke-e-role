@@ -26,6 +26,13 @@ export interface Move {
     used?: boolean;
 }
 
+export interface SkillCheck {
+    id: string;
+    name: string;
+    attr: string;
+    skill: string;
+}
+
 export interface InventoryItem { 
     id: string; 
     qty: number; 
@@ -47,7 +54,6 @@ export interface ExtraCategory {
     skills: ExtraSkill[]; 
 }
 
-// Typing for the GitHub API response so we don't use 'any'
 export interface GithubTreeItem {
     path: string;
     mode: string;

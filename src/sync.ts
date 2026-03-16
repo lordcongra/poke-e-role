@@ -7,14 +7,15 @@ import { sheetView } from './view';
 import { 
     updateSheetTypeUI, applyTypeStyle, renderTypeMatchups, renderStatuses, 
     renderEffects, renderCustomInfo, renderInventory, renderExtraSkills, renderMoves,
-    updatePainUI, updateInventoryUI 
+    updatePainUI, updateInventoryUI, renderSkillChecks 
 } from './ui';
 import { 
     MY_EXTENSION_ID, METADATA_ID, setLoading, setLastMetadataStr, 
-    saveBatchDataToToken, saveInventoryToToken, saveExtraSkillsToToken, saveMovesToToken
+    saveBatchDataToToken, saveInventoryToToken, saveExtraSkillsToToken, saveMovesToToken,
+    saveSkillChecksToToken
 } from './obr';
 import { appState, syncDerivedStats, saveDataToToken } from './state';
-import { rollAccuracy, rollDamage, rollStatus } from './combat';
+import { rollAccuracy, rollDamage, rollStatus, rollSkillCheck } from './combat';
 
 export const ROOM_META_ID = `${MY_EXTENSION_ID}/room-settings`;
 
@@ -22,17 +23,37 @@ export function reRenderMoves() {
     renderMoves(appState.currentMoves, appState.currentExtraCategories, saveMovesToToken, rollAccuracy, rollDamage);
 }
 
-export function applyStatLimits(pokemonData: Record<string, any>) {
-    const getLimit = (stat: string) => 
-        pokemonData[`Max${stat}`] || pokemonData[`Max ${stat}`] || 
-        (pokemonData.MaxAttributes && pokemonData.MaxAttributes[stat]) || 
-        (pokemonData.MaxStats && pokemonData.MaxStats[stat]) || "?";
+export function reRenderSkillChecks() {
+    renderSkillChecks(appState.currentSkillChecks, appState.currentExtraCategories, saveSkillChecksToToken, rollSkillCheck);
+}
 
-    if (sheetView.stats.str.limit) sheetView.stats.str.limit.innerText = getLimit("Strength");
-    if (sheetView.stats.dex.limit) sheetView.stats.dex.limit.innerText = getLimit("Dexterity");
-    if (sheetView.stats.vit.limit) sheetView.stats.vit.limit.innerText = getLimit("Vitality");
-    if (sheetView.stats.spe.limit) sheetView.stats.spe.limit.innerText = getLimit("Special");
-    if (sheetView.stats.ins.limit) sheetView.stats.ins.limit.innerText = getLimit("Insight");
+export function applyStatLimits(pokemonData: Record<string, any>) {
+    const getLimit = (stat: string) => {
+        const val = pokemonData[`Max${stat}`] || pokemonData[`Max ${stat}`] || 
+            (pokemonData.MaxAttributes && pokemonData.MaxAttributes[stat]) || 
+            (pokemonData.MaxStats && pokemonData.MaxStats[stat]);
+        return val ? parseInt(val) : 5; // Safely default to 5 if undefined to prevent NaN errors in the spinner
+    };
+
+    const limits: Record<string, number> = {
+        'str-limit': getLimit("Strength"),
+        'dex-limit': getLimit("Dexterity"),
+        'vit-limit': getLimit("Vitality"),
+        'spe-limit': getLimit("Special"),
+        'ins-limit': getLimit("Insight")
+    };
+
+    const updates: Record<string, any> = {};
+
+    // Push the values to the DOM inputs, the live AppState, and the OBR token metadata!
+    for (const [id, val] of Object.entries(limits)) {
+        const el = document.getElementById(id) as HTMLInputElement;
+        if (el) el.value = val.toString();
+        appState.currentTokenData[id] = val;
+        updates[id] = val;
+    }
+
+    saveBatchDataToToken(updates);
 }
 
 export async function loadDataFromToken(tokenId: string) {
@@ -45,6 +66,15 @@ export async function loadDataFromToken(tokenId: string) {
     
     appState.currentTokenData = data; 
     setLastMetadataStr(JSON.stringify(data)); 
+
+    // --- BACKWARDS COMPATIBILITY PATCH FOR DUAL TYPES ---
+    if (!data['type1'] && data['typing']) {
+        const parts = data['typing'].split('/');
+        data['type1'] = parts[0].trim();
+        data['type2'] = parts.length > 1 ? parts[1].trim() : "None";
+        appState.currentTokenData['type1'] = data['type1'];
+        appState.currentTokenData['type2'] = data['type2'];
+    }
 
     const role = await OBR.player.getRole();
     const isNPC = String(data['is-npc']) === 'true';
@@ -68,7 +98,7 @@ export async function loadDataFromToken(tokenId: string) {
     const initialUpdates: Record<string, any> = {}; 
 
     sheetInputs.forEach(element => {
-      const isDynamic = ['move-input', 'inv-input', 'cat-name-input', 'extra-skill-name', 'extra-skill-base', 'extra-skill-buff', 'skill-label'].some((cls: string) => element.classList.contains(cls));
+      const isDynamic = ['move-input', 'check-input', 'inv-input', 'cat-name-input', 'extra-skill-name', 'extra-skill-base', 'extra-skill-buff', 'skill-label'].some((cls: string) => element.classList.contains(cls));
       if (isDynamic) return;
       
       const id = element.id;
@@ -110,7 +140,8 @@ export async function loadDataFromToken(tokenId: string) {
           initialUpdates[id] = element.type === 'number' ? (parseFloat(element.value) || 0) : element.value; 
       }
 
-      if (id === 'typing') applyTypeStyle(element, element.value);
+      if (id === 'type1') applyTypeStyle(element, val);
+      if (id === 'type2') applyTypeStyle(element, val === "None" ? "" : val);
     });
 
     const npcCheck = document.getElementById('is-npc') as HTMLInputElement;
@@ -121,6 +152,7 @@ export async function loadDataFromToken(tokenId: string) {
     if (data['sheet-type']) updateSheetTypeUI(data['sheet-type']);
 
     try { appState.currentMoves = data['moves-data'] ? JSON.parse(data['moves-data']) : []; } catch(e) { appState.currentMoves = []; }
+    try { appState.currentSkillChecks = data['skill-checks-data'] ? JSON.parse(data['skill-checks-data']) : []; } catch(e) { appState.currentSkillChecks = []; }
     try { appState.currentInventory = data['inv-data'] ? JSON.parse(data['inv-data']) : []; } catch(e) { appState.currentInventory = []; }
     try { appState.currentExtraCategories = data['extra-skills-data'] ? JSON.parse(data['extra-skills-data']) : []; } catch(e) { appState.currentExtraCategories = []; }
     try { appState.currentCustomInfo = data['custom-info-data'] ? JSON.parse(data['custom-info-data']) : []; } catch(e) { appState.currentCustomInfo = []; }
@@ -138,13 +170,22 @@ export async function loadDataFromToken(tokenId: string) {
     }
 
     reRenderMoves();
+    reRenderSkillChecks();
     renderInventory(appState.currentInventory, saveInventoryToToken);
     updateInventoryUI(appState.currentInventory);
     renderExtraSkills(appState.currentExtraCategories, appState.currentMoves, saveExtraSkillsToToken, syncDerivedStats, reRenderMoves);
     renderStatuses(appState.currentStatuses, saveDataToToken, rollStatus);
     renderEffects(appState.currentEffects, saveDataToToken);
     renderCustomInfo(appState.currentCustomInfo, saveDataToToken);
-    renderTypeMatchups(data['typing'] || ""); 
+    
+    // Safety check in case token lacks hidden 'typing' string but has 1 and 2
+    let combinedTyping = data['typing'] || "";
+    if (!combinedTyping && data['type1']) {
+        combinedTyping = data['type2'] && data['type2'] !== "None" ? `${data['type1']} / ${data['type2']}` : data['type1'];
+        sheetView.identity.typing.value = combinedTyping;
+    }
+    renderTypeMatchups(combinedTyping); 
+    
     calculateStats(appState.currentExtraCategories, appState.currentMoves, appState.currentInventory);
 
     const currentSpeciesName = data['species'];
@@ -152,7 +193,6 @@ export async function loadDataFromToken(tokenId: string) {
         fetchPokemonData(currentSpeciesName).then(pokemonData => {
             if (pokemonData) {
                 populateLearnset(pokemonData);
-                applyStatLimits(pokemonData); 
             }
         });
     }

@@ -1,4 +1,4 @@
-# Pokerole 3.0 Sheet v1.4 (Owlbear Rodeo Extension)
+# Pokerole 3.0 Sheet v1.5 (Owlbear Rodeo Extension)
 
 A highly automated, modular character sheet extension for playing **Pokerole 3.0** campaigns (including **Pokémon Mystery Dungeon / PMD** settings) within the Owlbear Rodeo VTT.
 
@@ -23,6 +23,11 @@ While these extensions do not tie directly into the character sheet, they are hi
 * Also supports tracking for **Happiness** and **Loyalty**.
 * Supports both **Pokémon** and **Trainer** modes, dynamically toggling relevant skills and clashes.
 * **Form & Evolution Safe:** Change a Pokémon's species to update their base stats and typing *without* wiping their invested skills and moves!
+* **Trainer Mode Safety Bank:** Accidentally swapped a fully-built Pokémon sheet to "Trainer"? No problem! The sheet automatically backs up your Pokémon's unique limits, base stats, and typings into memory, and flawlessly restores them the moment you switch back. This also allows you to have a sheet manage both a trainer's data and a pokemon's data if a homebrew mechanic is having you swap between the two!
+
+### 🎲 Custom Action Rolls (NEW in v1.5!)
+* Built specifically for out-of-combat Roleplay! Create up to 10 Custom Action Rolls (e.g., *Investigate*, *Persuade*, *Climb*) using any combination of Core Attributes and Skills.
+* Fully integrated with Pain Penalties, Status Effects (like Paralysis), and your active "Take Your Chances" reroll stacks!
 
 ### 📈 Soft Caps, Limits, & PMD Overrides
 * Automatically calculates your maximum Attribute, Social, and Skill point limits based on your currently selected Rank and Age.
@@ -31,7 +36,7 @@ While these extensions do not tie directly into the character sheet, they are hi
 * **PMD / Homebrew Friendly:** Includes "Extra Pts" override boxes, allowing GMs to reward extra stats for completing dungeons, using special items, etc. without breaking the sheet's logic.
 
 ### ⏱️ Dynamic Status, Pain, & Timers (w/ Map Sync)
-* **Pain Penalization:** The sheet automatically monitors your HP and deducts -1 or -2 successes from your rolls when you are badly hurt (automatically skipping Vitality/Will rolls).
+* **Pain Penalization:** The sheet automatically monitors your HP and deducts -1 or -2 successes from your rolls when you are badly hurt (automatically skipping Vitality/Will rolls). There is a toggle to disable pain penalizations if you are playing a homebrew without these rules.
 * **Status Penalties:** Automatically applies mechanical penalties for Confusion (success drops scaling with Rank) and Paralysis (-2 Dice to Dex rolls), and prevents actions if Asleep or Frozen.
 * **Smart Ability Overrides:** Hardcoded exceptions for abilities like Limber, Comatose, Insomnia, Vital Spirit, and Sweet Veil so they properly bypass status penalties!
 * **Auto-Ticking Effects:** Track terrain, weather, or screens (like Tailwind or Reflect) in the "Timers" box. Clicking the "Reset Round" button automatically ticks these timers down by 1.
@@ -84,4 +89,4 @@ To install this extension into your Owlbear Rodeo room, copy the Manifest URL be
 
 `https://lordcongra.github.io/poke-e-role/manifest.json`
 
-*(Note: If the sheet updates, you can force Owlbear to fetch the newest version by adding a version tag to the end of the URL, like `?v=1.4.0`)*
+*(Note: If the sheet updates, you can force Owlbear to fetch the newest version by adding a version tag to the end of the URL, like `?v=1.5.0`)*

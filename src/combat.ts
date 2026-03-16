@@ -1,5 +1,6 @@
 import OBR from "@owlbear-rodeo/sdk";
-import type { Move, StatusItem } from './@types/index';
+import type { Move, StatusItem, SkillCheck } from './@types/index';
+import { ATTRIBUTE_MAPPING } from './@types/index';
 import { calculateStats } from './math';
 import { sheetView } from './view';
 import { appState, syncDerivedStats, saveDataToToken } from './state';
@@ -62,6 +63,7 @@ export function parseItemTags(move: Move) {
     let bonusAcc = 0;
     let bonusDmg = 0;
     let highCritStacks = 0;
+    let ignoreLowAcc = 0;
     let itemNames: string[] = [];
 
     appState.currentInventory.filter(i => i.active).forEach(item => {
@@ -102,11 +104,16 @@ export function parseItemTags(move: Move) {
             }
         }
 
+        const ignoreAccMatches = desc.matchAll(/\[ignore low acc\s*(\d+)\]/gi);
+        for (const match of ignoreAccMatches) {
+            ignoreLowAcc += parseInt(match[1]) || 0; triggered = true;
+        }
+
         if (/\[high crit\]/i.test(desc)) { highCritStacks += 1; triggered = true; }
         if (triggered && item.name.trim()) itemNames.push(item.name.trim());
     });
 
-    return { bonusAcc, bonusDmg, highCritStacks, itemNames };
+    return { bonusAcc, bonusDmg, highCritStacks, ignoreLowAcc, itemNames };
 }
 
 export async function spendWill(cost: number, updateFn: () => void) {
@@ -142,8 +149,13 @@ export function rollAccuracy(move: Move) {
     const extraDice = v(sheetView.globalMods.acc) + itemBuffs.bonusAcc; 
     
     let moveLowAcc = 0;
+    let ignoredAccPenalty = 0;
     const lowAccMatch = moveDesc.match(/low accuracy\s*(\d+)/i);
-    if (lowAccMatch) moveLowAcc = parseInt(lowAccMatch[1]) || 0;
+    if (lowAccMatch) {
+        const baseLowAcc = parseInt(lowAccMatch[1]) || 0;
+        moveLowAcc = Math.max(0, baseLowAcc - itemBuffs.ignoreLowAcc);
+        ignoredAccPenalty = baseLowAcc - moveLowAcc;
+    }
     
     const pain = getPainPenalty(move.attr);
     
@@ -181,13 +193,13 @@ export function rollAccuracy(move: Move) {
 
     let tags = [];
     if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
+    if (ignoredAccPenalty > 0) tags.push(`Ignored ${ignoredAccPenalty} Low Acc`);
     if (succMod !== 0) tags.push(`Net Mod ${succMod > 0 ? '+' : ''}${succMod} Succ`);
     if (statuses.paralysisDexPenalty < 0 && move.attr === 'dex') tags.push(`Paralysis -2 Dice`);
     
     if (chancesUsed > 0) tags.push(`Chances: Max ${chancesUsed} Rerolls`);
     if (fateUsed > 0) tags.push(`Fate: +1 Auto Success`);
 
-    // Added the required successes tag!
     tags.push(`Need ${requiredSuccesses} Succ`);
     tags.push(`Crit on ${critReq}+`);
     
@@ -205,10 +217,7 @@ export function rollAccuracy(move: Move) {
   
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : "";
 
-    // Broadcast the context!
     OBR.notification.show(`🎯 ${nickname} rolled ${move.name} (Acc)!${finalTags}`);
-
-    // PURE MATH TO DICE+
     if (dicePool > 0) sendToDicePlus(`${dicePool}d6>3${mathMod}`);
 }
 
@@ -222,8 +231,6 @@ export function rollDamage(move: Move) {
     if (setDmgMatch || moveDesc.includes("set damage")) {
         const dmgVal = (setDmgMatch && setDmgMatch[1]) ? setDmgMatch[1] : move.power;
         OBR.notification.show(`💥 ${nickname} used ${move.name}! (Deals exactly ${dmgVal} Set Damage, ignores defenses)`);
-        
-        // PURE MATH TO DICE+
         sendToDicePlus(`0d6+${dmgVal}`);
         return; 
     }
@@ -246,17 +253,19 @@ export function rollDamage(move: Move) {
         select.innerHTML = '<option value="manual">-- Manual Entry --</option>';
         items.forEach(item => {
             if (item.metadata[METADATA_ID] && item.metadata["com.pretty-initiative/metadata"]) {
-                const meta = item.metadata[METADATA_ID] as Record<string, any>;
+                const meta = item.metadata[METADATA_ID] as Record<string, unknown>;
                 const name = meta.nickname || meta.species || item.name;
                 
-                const vit = (meta['vit-base'] || 2) + (meta['vit-rank'] || 0) + (meta['vit-buff'] || 0) - (meta['vit-debuff'] || 0);
-                const ins = (meta['ins-base'] || 1) + (meta['ins-rank'] || 0) + (meta['ins-buff'] || 0) - (meta['ins-debuff'] || 0);
+                const vit = (Number(meta['vit-base']) || 2) + (Number(meta['vit-rank']) || 0) + (Number(meta['vit-buff']) || 0) - (Number(meta['vit-debuff']) || 0);
+                const ins = (Number(meta['ins-base']) || 1) + (Number(meta['ins-rank']) || 0) + (Number(meta['ins-buff']) || 0) - (Number(meta['ins-debuff']) || 0);
                 
-                let def = vit + (meta['def-buff'] || 0) - (meta['def-debuff'] || 0);
-                let spd = ins + (meta['spd-buff'] || 0) - (meta['spd-debuff'] || 0);
+                let def = vit + (Number(meta['def-buff']) || 0) - (Number(meta['def-debuff']) || 0);
+                let spd = ins + (Number(meta['spd-buff']) || 0) - (Number(meta['spd-debuff']) || 0);
                 
-                const ruleset = meta['ruleset-style'] || 'vg-vit-hp';
-                if (ruleset === 'tabletop') spd = vit + (meta['spd-buff'] || 0) - (meta['spd-debuff'] || 0);
+                // Grab the GLOBAL ruleset to calculate the target's stats perfectly!
+                const ruleset = sheetView.identity.roomRuleset.value; 
+                if (ruleset === 'tabletop') spd = vit + (Number(meta['spd-buff']) || 0) - (Number(meta['spd-debuff']) || 0);
+                else if (ruleset === 'vg-high-hp' || ruleset === 'videogame') spd = ins + (Number(meta['spd-buff']) || 0) - (Number(meta['spd-debuff']) || 0);
   
                 const targetDef = move.cat === 'Phys' ? def : spd;
                 
@@ -275,7 +284,7 @@ export function rollDamage(move: Move) {
 export function rollGeneric(actionName: string, pool: number, attr: string, incrementEvade = false, incrementClash = false, incrementAction = false) {
     const nickname = sheetView.identity.nickname.value || "Someone";
     const abilityStr = sheetView.identity.ability.value || "";
-    const batchUpdates: Record<string, any> = {};
+    const batchUpdates: Record<string, unknown> = {};
     
     const statuses = getStatusPenalties();
     const hasComatose = abilityStr.toLowerCase().includes("comatose");
@@ -332,13 +341,67 @@ export function rollGeneric(actionName: string, pool: number, attr: string, incr
 
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : "";
  
-    // Broadcast the context!
     OBR.notification.show(`🎲 ${nickname} rolled ${actionName}!${finalTags}`);
-    
-    // PURE MATH TO DICE+
     if (dicePool > 0) sendToDicePlus(`${dicePool}d6>3${mathMod}`);
 }
- 
+
+export function rollSkillCheck(check: SkillCheck) {
+    const nickname = sheetView.identity.nickname.value || "Someone";
+    const abilityStr = sheetView.identity.ability.value || "";
+    const statuses = getStatusPenalties();
+    
+    const hasComatose = abilityStr.toLowerCase().includes("comatose");
+
+    if (statuses.isAsleep && !hasComatose) OBR.notification.show("⚠️ You are Asleep and cannot perform actions!");
+    if (statuses.isFrozen) OBR.notification.show("⚠️ You are Frozen Solid and cannot perform actions!");
+
+    let attrTotal = check.attr === 'will' ? tv(sheetView.health.will.max) : tv(sheetView.stats[check.attr]?.total);
+    let skillTotal = 0;
+    
+    if (check.skill && check.skill !== 'none') {
+        if (sheetView.skills[check.skill]) {
+            skillTotal = tv(sheetView.skills[check.skill].total);
+        } else {
+            const extraEl = document.getElementById(`${check.skill}-total`);
+            if (extraEl) skillTotal = parseInt(extraEl.innerText) || 0;
+        }
+    }
+
+    let dicePool = attrTotal + skillTotal;
+    if (check.attr === 'dex') dicePool += statuses.paralysisDexPenalty;
+
+    const pain = getPainPenalty(check.attr);
+    
+    let tags = [];
+    if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
+    
+    const genericSuccMod = v(sheetView.globalMods.succ) + statuses.confusionPenalty + pain;
+    const mathMod = genericSuccMod !== 0 ? (genericSuccMod > 0 ? `+${genericSuccMod}` : `${genericSuccMod}`) : "";
+
+    if (genericSuccMod !== 0) tags.push(`Net Mod ${genericSuccMod > 0 ? '+' : ''}${genericSuccMod} Succ`);
+    
+    const chancesUsed = v(sheetView.trackers.chances);
+    const fateUsed = v(sheetView.trackers.fate);
+
+    if (chancesUsed > 0) tags.push(`Chances: Max ${chancesUsed} Rerolls`);
+    if (fateUsed > 0) tags.push(`Fate: +1 Auto Success`);
+
+    if (statuses.paralysisDexPenalty < 0 && check.attr === 'dex') tags.push(`Paralysis: -2 Dice`);
+    
+    if (statuses.isAsleep) {
+        if (hasComatose) tags.push(`ASLEEP (Comatose)`);
+        else tags.push(`ASLEEP`);
+    }
+    if (statuses.isFrozen) tags.push(`FROZEN`);
+
+    const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : "";
+
+    const rollName = check.name.trim() || "Skill Check";
+    OBR.notification.show(`🎲 ${nickname} rolled ${rollName}!${finalTags}`);
+    
+    if (dicePool > 0) sendToDicePlus(`${dicePool}d6>3${mathMod}`);
+}
+
 export function rollStatus(status: StatusItem) {
     const nickname = sheetView.identity.nickname.value || "Someone";
     let pool = 0;
@@ -368,10 +431,7 @@ export function rollStatus(status: StatusItem) {
     if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
     const tagStr = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : "";
     
-    // Broadcast the context!
     OBR.notification.show(`🩹 ${nickname} rolled ${status.name} Recovery!${tagStr}`);
-    
-    // PURE MATH TO DICE+ (RESTORED TAG)
     if (pool > 0) sendToDicePlus(`${pool}d6>3${mathMod}`, `status|${status.id}`);
 }
 
@@ -394,8 +454,6 @@ export function setupCombatListeners() {
         const nickname = sheetView.identity.nickname.value || "Someone";
         
         OBR.notification.show(`🍀 ${nickname} used Take Your Chances to reroll ${finalRoll} failed dice!`);
-        
-        // PURE MATH TO DICE+
         sendToDicePlus(`${finalRoll}d6>3`);
     });
 
@@ -403,8 +461,6 @@ export function setupCombatListeners() {
         const initBonus = tv(sheetView.initiative.total);
         const nickname = sheetView.identity.nickname.value || "Someone";
         OBR.notification.show(`⚡ ${nickname} rolled Initiative!`);
-        
-        // PURE MATH TO DICE+ (RESTORED TAG)
         sendToDicePlus(initBonus > 0 ? `1d6+${initBonus}` : `1d6`, "init"); 
     });
     
@@ -413,8 +469,6 @@ export function setupCombatListeners() {
         if (chanceDice <= 0) return;
         const nickname = sheetView.identity.nickname.value || "Someone";
         OBR.notification.show(`🍀 ${nickname} rolled a Chance Roll!`);
-        
-        // PURE MATH TO DICE+ (RESTORED TAG)
         sendToDicePlus(`${chanceDice}d6>5`, "chance"); 
     });
 
@@ -446,9 +500,7 @@ export function setupCombatListeners() {
         const extraDice = v(sheetView.globalMods.dmg) + itemBuffs.bonusDmg; 
         
         let scalingVal = 0;
-        const attrMap: Record<string, string> = { "str": "str", "dex": "dex", "vit": "vit", "spe": "spe", "ins": "ins", "Strength": "str", "Dexterity": "dex", "Vitality": "vit", "Special": "spe", "Insight": "ins" };
-        const dmgStat = move.dmgStat || 'str';
-        const normalizedDmgStat = attrMap[dmgStat] || 'str';
+        const normalizedDmgStat = ATTRIBUTE_MAPPING[move.dmgStat] || move.dmgStat;
     
         if (normalizedDmgStat && sheetView.stats[normalizedDmgStat]) {
             scalingVal = tv(sheetView.stats[normalizedDmgStat].total);
@@ -465,7 +517,6 @@ export function setupCombatListeners() {
             stabBonus = 1; stabTag = isProtean && !hasTypeMatch ? " Protean STAB" : " STAB";
         }
     
-        // Calculate Sniper Bonus if Crit is checked!
         const critBonus = isSniper ? 3 : 2;
         const basePool = move.power + scalingVal + extraDice + stabBonus;
         let rawPool = basePool - defReduction + (isCrit ? critBonus : 0);
@@ -490,8 +541,6 @@ export function setupCombatListeners() {
         const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : "";
         
         OBR.notification.show(`💥 ${nickname} rolled ${move.name} (Dmg)!${finalTags}`);
-        
-        // PURE MATH TO DICE+
         sendToDicePlus(`${finalPool}d6>3${mathMod}`);
     });
 
@@ -508,7 +557,6 @@ export function setupCombatListeners() {
         spendWill(1, () => { sheetView.trackers.chances.value = (v(sheetView.trackers.chances) + 1).toString(); });
     });
 
-    // --- NEW CLASH MODAL LISTENERS ---
     document.getElementById('roll-clash-btn')?.addEventListener('click', () => {
         const modal = document.getElementById('clash-modal');
         if (modal) modal.style.display = 'flex';

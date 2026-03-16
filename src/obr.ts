@@ -1,7 +1,7 @@
 import OBR from "@owlbear-rodeo/sdk";
 import type { Item } from "@owlbear-rodeo/sdk";
 import { getVal, getDerivedVal, generateId } from './utils';
-import type { Move, InventoryItem, ExtraCategory, OwlTracker, PrettyInitMetadata, DicePlusData } from './@types/index';
+import type { Move, InventoryItem, ExtraCategory, OwlTracker, PrettyInitMetadata, DicePlusData, SkillCheck } from './@types/index';
 
 export const MY_EXTENSION_ID = "pokerole-pmd-extension";
 export const METADATA_ID = "pokerole-extension/stats";
@@ -43,19 +43,19 @@ export async function sendToDicePlus(notation: string, rollType: string = "roll"
 let saveTimeout: ReturnType<typeof setTimeout>;
 let pendingUpdates: Record<string, any> = {};
 
-// OBR Colors: 0=Red, 1=Orange, 2=Yellow, 3=Green, 4=Cyan, 5=Blue, 6=Purple, 7=Pink, 8=Grey
+// OBR Colors Mapped from UI: 
+// 0=Purple, 1=Magenta, 2=Red, 3=Orange, 4=Yellow, 5=Green, 6=Teal, 7=Light Blue, 8=Dark Blue
 const getTrackerColor = (name: string) => {
     const lower = name.toLowerCase();
-    if (lower.includes('3rd degree')) return 0;
-    if (lower.includes('2nd degree')) return 0;
-    if (lower.includes('1st degree')) return 1;
-    if (lower.includes('badly poisoned')) return 6;
-    if (lower.includes('poison')) return 6;
-    if (lower.includes('paralysis')) return 2;
-    if (lower.includes('frozen')) return 4;
-    if (lower.includes('sleep')) return 5;
-    if (lower.includes('love')) return 7;
-    return 8; 
+    if (lower.includes('3rd degree')) return 2; // Red
+    if (lower.includes('2nd degree')) return 3; // Orange
+    if (lower.includes('1st degree') || lower.includes('burn')) return 3; // Orange
+    if (lower.includes('badly poisoned') || lower.includes('poison')) return 0; // Purple
+    if (lower.includes('paralysis')) return 4; // Yellow
+    if (lower.includes('frozen')) return 7; // Light Blue
+    if (lower.includes('sleep')) return 8; // Dark Blue
+    if (lower.includes('love') || lower.includes('confusion')) return 1; // Magenta
+    return 8; // Default to Dark Blue if none match
 };
 
 export async function saveBatchDataToToken(updates: Record<string, any>) {
@@ -107,8 +107,10 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
           effectsData.forEach(e => { 
               if (Number(e.rounds) > 0 && e.name?.trim()) activeDynamicNames.add(e.name.trim()); 
           });
+          
+          // Capture all statuses that aren't "Healthy", regardless of rounds!
           statusData.forEach(s => {
-              if (Number(s.rounds) > 0) {
+              if (s.name !== "Healthy") {
                   const sName = s.name === 'Custom...' ? s.customName : s.name;
                   if (sName?.trim()) activeDynamicNames.add(sName.trim());
               }
@@ -155,27 +157,33 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
                   }
               };
 
-              updateTracker("Will", "value-max", 6, willCurr, undefined, willMax);
-              updateTracker("HP", "value-max", 2, hpCurr, undefined, hpMax);
-              updateTracker("Actions", "counter", 6, actions);
-              updateTracker("DEF", "counter", 5, def);
-              updateTracker("SP DEF", "counter", 1, spdef);
-              updateTracker("Evade", "checkbox", 4, undefined, evadeChecked);
-              updateTracker("Clash", "checkbox", 3, undefined, clashChecked);
+              updateTracker("Will", "value-max", 6, willCurr, undefined, willMax); // 6 = Teal
+              updateTracker("HP", "value-max", 2, hpCurr, undefined, hpMax); // 2 = Red
+              updateTracker("Actions", "counter", 6, actions); // 6 = Teal
+              updateTracker("DEF", "counter", 5, def); // 5 = Green
+              updateTracker("SP DEF", "counter", 1, spdef); // 1 = Magenta
+              updateTracker("Evade", "checkbox", 4, undefined, evadeChecked); // 4 = Yellow
+              updateTracker("Clash", "checkbox", 3, undefined, clashChecked); // 3 = Orange
 
-              // Effects (Timers) are now Cyan (4)
+              // Effects (Timers) map to Light Blue (7)
               effectsData.forEach(e => {
                   if (Number(e.rounds) > 0 && e.name?.trim()) {
-                      updateTracker(e.name.trim(), "counter", 4, Number(e.rounds));
+                      updateTracker(e.name.trim(), "counter", 7, Number(e.rounds));
                   }
               });
 
-              // Statuses map dynamically!
+              // Statuses map dynamically! Counter if rounds > 0, Checkbox if rounds == 0
               statusData.forEach(s => {
-                  if (Number(s.rounds) > 0) {
+                  if (s.name !== "Healthy") {
                       const sName = s.name === 'Custom...' ? s.customName : s.name;
                       if (sName?.trim()) {
-                          updateTracker(sName.trim(), "counter", getTrackerColor(s.name), Number(s.rounds));
+                          const rounds = Number(s.rounds) || 0;
+                          const color = getTrackerColor(s.name);
+                          if (rounds > 0) {
+                              updateTracker(sName.trim(), "counter", color, rounds);
+                          } else {
+                              updateTracker(sName.trim(), "checkbox", color, undefined, true);
+                          }
                       }
                   }
               });
@@ -212,6 +220,17 @@ export async function saveMovesToToken(currentMoves: Move[]) {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
       (item.metadata[METADATA_ID] as Record<string, any>)['moves-data'] = JSON.stringify(currentMoves);
+      lastKnownMetadataStr = JSON.stringify(item.metadata[METADATA_ID]);
+    }
+  });
+}
+
+export async function saveSkillChecksToToken(currentSkillChecks: SkillCheck[]) {
+  if (!currentTokenId || isLoading) return;
+  await OBR.scene.items.updateItems([currentTokenId], (items: Item[]) => {
+    for (let item of items) {
+      if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
+      (item.metadata[METADATA_ID] as Record<string, any>)['skill-checks-data'] = JSON.stringify(currentSkillChecks);
       lastKnownMetadataStr = JSON.stringify(item.metadata[METADATA_ID]);
     }
   });

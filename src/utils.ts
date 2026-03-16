@@ -1,3 +1,5 @@
+import { appState } from './state';
+
 export const COMBAT_STATS = ['str', 'dex', 'vit', 'spe', 'ins'];
 export const SOCIAL_STATS = ['tou', 'coo', 'bea', 'cut', 'cle'];
 export const ALL_SKILLS = ['brawl', 'channel', 'clash', 'evasion', 'alert', 'athletic', 'nature', 'stealth', 'charm', 'etiquette', 'intimidate', 'perform', 'crafts', 'lore', 'medicine', 'magic'];
@@ -30,6 +32,7 @@ export function calculateMatchups(typeStr: string): Record<string, number> {
     const types = typeStr.split('/').map(t => t.trim());
     const matchups: Record<string, number> = {};
 
+    // 1. Calculate Base Matchups
     ALL_TYPES.forEach(attacker => {
         let multiplier = 1;
         types.forEach(defender => {
@@ -39,6 +42,41 @@ export function calculateMatchups(typeStr: string): Record<string, number> {
             }
         });
         matchups[attacker] = multiplier;
+    });
+
+    // 2. Apply Dynamic Inventory Tags (Immunities, Resistances, Weaknesses)
+    appState.currentInventory.filter(i => i.active).forEach(item => {
+        const desc = (item.name + " " + item.desc).toLowerCase();
+        
+        // Handle [Immune: Type]
+        const immuneMatches = desc.match(/\[immune:\s*([a-z]+)\]/g);
+        if (immuneMatches) {
+            immuneMatches.forEach(m => {
+                const type = m.match(/\[immune:\s*([a-z]+)\]/)?.[1];
+                const properType = ALL_TYPES.find(t => t.toLowerCase() === type);
+                if (properType) matchups[properType] = 0;
+            });
+        }
+
+        // Handle [Resist: Type] (Halves the current multiplier)
+        const resistMatches = desc.match(/\[resist:\s*([a-z]+)\]/g);
+        if (resistMatches) {
+            resistMatches.forEach(m => {
+                const type = m.match(/\[resist:\s*([a-z]+)\]/)?.[1];
+                const properType = ALL_TYPES.find(t => t.toLowerCase() === type);
+                if (properType) matchups[properType] *= 0.5;
+            });
+        }
+
+        // Handle [Weak: Type] (Doubles the current multiplier)
+        const weakMatches = desc.match(/\[weak:\s*([a-z]+)\]/g);
+        if (weakMatches) {
+            weakMatches.forEach(m => {
+                const type = m.match(/\[weak:\s*([a-z]+)\]/)?.[1];
+                const properType = ALL_TYPES.find(t => t.toLowerCase() === type);
+                if (properType) matchups[properType] *= 2;
+            });
+        }
     });
 
     return matchups;

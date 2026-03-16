@@ -11,6 +11,8 @@ class CharacterSheetView {
         nature: getInputElement('nature'),
         rank: getSelectElement('rank'),
         typing: getInputElement('typing'),
+        type1: getSelectElement('type1'),
+        type2: getSelectElement('type2'),
         ability: getInputElement('ability'),
         sheetType: getSelectElement('sheet-type'),
         age: getSelectElement('age'),
