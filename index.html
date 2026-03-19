@@ -48,9 +48,15 @@
                 <input type="number" id="targeting-def-input" value="0" min="0" style="width: 100%; padding: 4px; border: 1px solid var(--border); border-radius: 4px; font-family: inherit; font-size: 0.85rem; margin-top: 2px; box-sizing: border-box; background: var(--input-bg); color: var(--text-main);" />
             </div>
 
-            <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 6px;">
-                <input type="checkbox" id="targeting-crit-checkbox" style="cursor: pointer; transform: scale(1.1);">
-                <label for="targeting-crit-checkbox" style="font-size: 0.85rem; font-weight: bold; cursor: pointer; color: #d32f2f;">Critical Hit? (+2 Dice)</label>
+            <div style="margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <input type="checkbox" id="targeting-crit-checkbox" style="cursor: pointer; transform: scale(1.1);">
+                    <label for="targeting-crit-checkbox" style="font-size: 0.85rem; font-weight: bold; cursor: pointer; color: #d32f2f;">Critical Hit?</label>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <input type="checkbox" id="targeting-se-checkbox" style="cursor: pointer; transform: scale(1.1);">
+                    <label for="targeting-se-checkbox" style="font-size: 0.85rem; font-weight: bold; cursor: pointer; color: #1976d2;">Super Effective?</label>
+                </div>
             </div>
 
             <div style="display: flex; justify-content: space-between; gap: 8px;">
@@ -85,15 +91,110 @@
         </div>
     </div>
 
+    <div id="tracker-settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; font-family: sans-serif;">
+        <div style="background: var(--panel-bg); padding: 15px; border-radius: 8px; width: 300px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid var(--primary);">
+            <h3 style="margin-top: 0; color: var(--primary); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 4px; text-align: center;">⚙️ Tracker Settings</h3>
+            <p style="font-size: 0.8rem; text-align: center; margin-bottom: 15px; color: var(--text-muted);">Customize what this token displays on the map.</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; color: var(--text-main); font-size: 0.9rem; padding: 0 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" id="setting-hp-bar" class="sheet-save" checked> Show HP Bar</label>
+                    <label class="gm-only-setting" style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; cursor: pointer;" title="OBR Hide (GM sees faded, Players see nothing)"><input type="checkbox" id="gm-hp-bar" class="sheet-save"> GM Only</label>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" id="setting-hp-text" class="sheet-save" checked> Show HP Numbers</label>
+                    <label class="gm-only-setting" style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" id="gm-hp-text" class="sheet-save"> GM Only</label>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" id="setting-will-bar" class="sheet-save" checked> Show Will Bar</label>
+                    <label class="gm-only-setting" style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" id="gm-will-bar" class="sheet-save"> GM Only</label>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" id="setting-will-text" class="sheet-save" checked> Show Will Numbers</label>
+                    <label class="gm-only-setting" style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" id="gm-will-text" class="sheet-save"> GM Only</label>
+                </div>
+                <hr style="width: 100%; border-color: var(--border); margin: 2px 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" id="setting-def-badge" class="sheet-save" checked> Show Defenses</label>
+                    <label class="gm-only-setting" style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" id="gm-def-badge" class="sheet-save"> GM Only</label>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" id="setting-eco-badge" class="sheet-save" checked> Show Actions</label>
+                    <label class="gm-only-setting" style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" id="gm-eco-badge" class="sheet-save"> GM Only</label>
+                </div>
+                <hr style="width: 100%; border-color: var(--border); margin: 2px 0;">
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.8rem;">
+                        <input type="color" id="color-act" class="sheet-save" value="#4890fc" style="width: 24px; height: 24px; padding: 0; border: 1px solid var(--border); border-radius: 4px; cursor: pointer;" title="Action Badge Color"> Action
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.8rem;">
+                        <input type="color" id="color-eva" class="sheet-save" value="#e7b630" style="width: 24px; height: 24px; padding: 0; border: 1px solid var(--border); border-radius: 4px; cursor: pointer;" title="Evade Badge Color"> Evade
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.8rem;">
+                        <input type="color" id="color-cla" class="sheet-save" value="#d44b22" style="width: 24px; height: 24px; padding: 0; border: 1px solid var(--border); border-radius: 4px; cursor: pointer;" title="Clash Badge Color"> Clash
+                    </label>
+                </div>
+
+                <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 6px;">
+                    <label style="display: flex; align-items: center; gap: 8px;" title="Positive numbers push the UI down, Negative numbers pull it up!">
+                        <span style="font-weight: bold;">Y-Offset:</span>
+                        <input type="number" id="y-offset" class="sheet-save number-spinner__input" value="0" step="5" style="width: 50px; border: 1px solid var(--border); border-radius: 3px; background: var(--input-bg); color: var(--text-main); text-align: center;">
+                    </label>
+                    <button type="button" id="reset-colors-btn" class="action-button action-button--dark" style="font-size: 0.75rem; padding: 4px 8px;">Reset Colors</button>
+                </div>
+
+            </div>
+            <div style="display: flex; justify-content: center;">
+                <button type="button" id="tracker-settings-close" class="action-button action-button--dark" style="width: 100%; padding: 6px;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tag-builder-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; font-family: sans-serif;">
+        <div style="background: var(--panel-bg); padding: 15px; border-radius: 8px; width: 280px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid var(--primary); color: var(--text-main);">
+            <h3 style="margin-top: 0; color: var(--primary); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 4px; text-align: center;">🏷️ Tag Builder</h3>
+            <p style="font-size: 0.8rem; text-align: center; margin-bottom: 15px; color: var(--text-muted);">Build an effect tag to append to this item.</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+                <select id="tag-builder-category" style="padding: 4px; border: 1px solid var(--border); border-radius: 4px; background: var(--input-bg); color: var(--text-main);">
+                    <option value="stat">Stat Modifier</option>
+                    <option value="skill">Skill Modifier</option>
+                    <option value="combat">Combat Boost</option>
+                    <option value="matchup">Matchup</option>
+                    <option value="mechanic">Mechanic</option>
+                    <option value="status">Status Condition</option>
+                </select>
+                
+                <select id="tag-builder-target" style="padding: 4px; border: 1px solid var(--border); border-radius: 4px; background: var(--input-bg); color: var(--text-main);"></select>
+                
+                <select id="tag-builder-type" style="padding: 4px; border: 1px solid var(--border); border-radius: 4px; background: var(--input-bg); color: var(--text-main); display: none;">
+                    <option value="">-- Any Type --</option>
+                    <option value="Normal">Normal</option><option value="Fire">Fire</option><option value="Water">Water</option><option value="Electric">Electric</option><option value="Grass">Grass</option><option value="Ice">Ice</option><option value="Fighting">Fighting</option><option value="Poison">Poison</option><option value="Ground">Ground</option><option value="Flying">Flying</option><option value="Psychic">Psychic</option><option value="Bug">Bug</option><option value="Rock">Rock</option><option value="Ghost">Ghost</option><option value="Dragon">Dragon</option><option value="Dark">Dark</option><option value="Steel">Steel</option><option value="Fairy">Fairy</option><option value="Super Effective">Super Effective</option>
+                </select>
+                
+                <div id="tag-builder-value-container" style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 0.85rem; font-weight: bold;">Value:</span>
+                    <input type="number" id="tag-builder-value" value="1" style="width: 100%; padding: 4px; border: 1px solid var(--border); border-radius: 4px; background: var(--input-bg); color: var(--text-main);">
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; gap: 8px;">
+                <button type="button" id="tag-builder-cancel" class="action-button action-button--dark" style="flex: 1; padding: 6px;">Cancel</button>
+                <button type="button" id="tag-builder-confirm" class="action-button action-button--red" style="flex: 1; padding: 6px;">🏷️ Append Tag</button>
+            </div>
+        </div>
+    </div>
+
     <div id="tags-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; font-family: sans-serif;">
         <div style="background: var(--panel-bg); padding: 15px; border-radius: 8px; width: 340px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid var(--primary); color: var(--text-main);">
             <h3 style="margin-top: 0; color: var(--primary); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 4px; text-align: center;">🏷️ Smart Tags Guide</h3>
             <p style="font-size: 0.8rem; margin-bottom: 10px; color: var(--text-muted); text-align: center;">Type these exactly as shown (with brackets) into an equipped item's Name or Notes to automatically apply mechanics.</p>
             <ul style="font-size: 0.8rem; padding-left: 20px; margin-bottom: 15px; line-height: 1.6; color: var(--text-main);">
-                <li><b>Stats/Skills:</b> <code>[Str +1]</code>, <code>[Dex -2]</code>, <code>[Brawl +2]</code></li>
-                <li><b>Combat:</b> <code>[Dmg +1]</code>, <code>[Dmg +1: Fire]</code>, <code>[Acc +1]</code>, <code>[Init +2]</code></li>
-                <li><b>Matchups:</b> <code>[Immune: Ground]</code>, <code>[Resist: Fire]</code>, <code>[Weak: Water]</code></li>
-                <li><b>Mechanics:</b> <code>[High Crit]</code>, <code>[Ignore Low Acc 2]</code></li>
+                <li><b>Stats/Skills:</b> <code>[Dex -2]</code>, <code>[Brawl +2]</code>, <code>[Def +1]</code>, <code>[Spd +1]</code></li>
+                <li><b>Combat:</b> <code>[Dmg +1]</code>, <code>[Acc +1]</code>, <code>[Init +2]</code>, <code>[Chance +2]</code>, <code>[Combo Dmg +1]</code></li>
+                <li><b>Matchups:</b> <code>[Immune: Ground]</code>, <code>[Remove Immunity: Type]</code>, <code>[Remove Immunities]</code></li>
+                <li><b>Mechanics:</b> <code>[High Crit]</code>, <code>[Ignore Low Acc 2]</code>, <code>[Status: Poison]</code></li>
             </ul>
             <div style="display: flex; justify-content: center;">
                 <button type="button" id="tags-close-btn" class="action-button action-button--dark" style="width: 100%; padding: 6px;">Close Guide</button>
@@ -235,7 +336,7 @@
                         <label style="color: #1976d2; font-weight: bold; cursor: pointer; font-size: 0.75rem;">
                             <input type="checkbox" id="show-trackers" class="sheet-save" checked> ⭕ Trackers
                         </label>
-                        <button type="button" class="help-tooltip info-trigger" style="margin: 0; background: #1976d2; color: #fff; border: none; outline: none;" data-title="UI Trackers" data-desc="Show or hide UI rings automatically attached to your token on the map.">?</button>
+                        <button type="button" id="tracker-settings-btn" class="action-button action-button--dark" style="margin: 0; padding: 2px 4px; font-size: 0.7rem;">⚙️</button>
                     </div>
                     <div id="gm-tools" style="display: none; flex: 1; background: var(--panel-alt); border: 1px solid var(--primary); padding: 4px; border-radius: 4px; text-align: center;">
                         <label style="color: var(--primary); font-weight: bold; cursor: pointer; font-size: 0.75rem;">
@@ -280,9 +381,10 @@
                         </div>
                     </div>
                 </div>
+                
                 <div class="health-section__box" style="display: flex; flex-direction: column; overflow: hidden;">
                     <div class="health-section__header health-section__header--dark" style="background-color: #8e44ad; position: relative; text-align: center; padding: 0 6px;">
-                        <span>STATUS <button type="button" class="help-tooltip info-trigger" style="border: none; outline: none;" data-title="Status Effects" data-desc="Apply a status effect to your Token via an Owlbear Tracker Ring.">?</button></span>
+                        <span>STATUS <button type="button" class="help-tooltip info-trigger" style="border: none; outline: none;" data-title="Status Effects" data-desc="Apply a status effect.">?</button></span>
                         <button type="button" id="add-status-btn" class="action-button action-button--dark" style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; padding: 2px 5px; margin: 0; line-height: 1;">+ Add</button>
                     </div>
                     <div class="health-section__inputs" style="flex: 1; display: block; padding: 4px; padding-top: 2px;">
@@ -312,6 +414,7 @@
                         <input type="number" value="0" id="spd-debuff" class="number-spinner__input sheet-save"/>
                     </div>
                 </div>
+                
                 <div class="health-section__box" style="display: flex; flex-direction: column; overflow: hidden;">
                     <div class="health-section__header health-section__header--dark" style="background-color: #81D4FA; color: #333; position: relative; text-align: center; padding: 0 6px;">
                         <span>TIMERS <button type="button" class="help-tooltip info-trigger" style="border: none; outline: none;" data-title="Timers" data-desc="Tracks any moves or effects that last a number of rounds.">?</button></span>

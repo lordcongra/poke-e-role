@@ -1,4 +1,4 @@
-import { appState } from './state';
+import type { InventoryItem } from './@types/index';
 
 export const COMBAT_STATS = ['str', 'dex', 'vit', 'spe', 'ins'];
 export const SOCIAL_STATS = ['tou', 'coo', 'bea', 'cut', 'cle'];
@@ -28,55 +28,102 @@ export const DEFENSE_MATCHUPS: Record<string, Record<string, number>> = {
     "Fairy": { Poison: 2, Steel: 2, Fighting: 0.5, Bug: 0.5, Dark: 0.5, Dragon: 0 }
 };
 
-export function calculateMatchups(typeStr: string): Record<string, number> {
+export function calculateMatchups(typeStr: string, currentInventory: InventoryItem[] = []): Record<string, number> {
     const types = typeStr.split('/').map(t => t.trim());
     const matchups: Record<string, number> = {};
 
-    // 1. Calculate Base Matchups
-    ALL_TYPES.forEach(attacker => {
-        let multiplier = 1;
-        types.forEach(defender => {
-            const defData = DEFENSE_MATCHUPS[defender];
-            if (defData && defData[attacker] !== undefined) {
-                multiplier *= defData[attacker];
-            }
-        });
-        matchups[attacker] = multiplier;
-    });
+    // 1. Parse Dynamic Inventory Tags FIRST
+    let removeImmunities = false;
+    const removeSpecificImmunities: string[] = [];
+    const extraImmunities: string[] = [];
+    const extraResistances: string[] = [];
+    const extraWeaknesses: string[] = [];
 
-    // 2. Apply Dynamic Inventory Tags (Immunities, Resistances, Weaknesses)
-    appState.currentInventory.filter(i => i.active).forEach(item => {
-        const desc = (item.name + " " + item.desc).toLowerCase();
+    currentInventory.filter(i => i.active).forEach(item => {
+        const desc = ((item.name || "") + " " + (item.desc || "")).toLowerCase();
         
-        // Handle [Immune: Type]
+        if (desc.includes("[remove immunities]")) {
+            removeImmunities = true;
+        }
+
+        const remImmuneMatches = desc.match(/\[remove immunity:\s*([a-z]+)\]/g);
+        if (remImmuneMatches) {
+            remImmuneMatches.forEach(m => {
+                const type = m.match(/\[remove immunity:\s*([a-z]+)\]/)?.[1];
+                const properType = ALL_TYPES.find(t => t.toLowerCase() === type);
+                if (properType) removeSpecificImmunities.push(properType);
+            });
+        }
+
         const immuneMatches = desc.match(/\[immune:\s*([a-z]+)\]/g);
         if (immuneMatches) {
             immuneMatches.forEach(m => {
                 const type = m.match(/\[immune:\s*([a-z]+)\]/)?.[1];
                 const properType = ALL_TYPES.find(t => t.toLowerCase() === type);
-                if (properType) matchups[properType] = 0;
+                if (properType) extraImmunities.push(properType);
             });
         }
 
-        // Handle [Resist: Type] (Halves the current multiplier)
         const resistMatches = desc.match(/\[resist:\s*([a-z]+)\]/g);
         if (resistMatches) {
             resistMatches.forEach(m => {
                 const type = m.match(/\[resist:\s*([a-z]+)\]/)?.[1];
                 const properType = ALL_TYPES.find(t => t.toLowerCase() === type);
-                if (properType) matchups[properType] *= 0.5;
+                if (properType) extraResistances.push(properType);
             });
         }
 
-        // Handle [Weak: Type] (Doubles the current multiplier)
         const weakMatches = desc.match(/\[weak:\s*([a-z]+)\]/g);
         if (weakMatches) {
             weakMatches.forEach(m => {
                 const type = m.match(/\[weak:\s*([a-z]+)\]/)?.[1];
                 const properType = ALL_TYPES.find(t => t.toLowerCase() === type);
-                if (properType) matchups[properType] *= 2;
+                if (properType) extraWeaknesses.push(properType);
             });
         }
+    });
+
+    // 2. Calculate Matchups
+    ALL_TYPES.forEach(attacker => {
+        let multiplier = 1;
+        
+        // Apply base type chart
+        types.forEach(defender => {
+            const defData = DEFENSE_MATCHUPS[defender];
+            if (defData && defData[attacker] !== undefined) {
+                let val = defData[attacker];
+                
+                // Ring Target overrides the 0 BEFORE it multiplies!
+                if (val === 0 && removeImmunities) val = 1;
+                
+                multiplier *= val;
+            }
+        });
+
+        // Apply custom tags
+        extraImmunities.forEach(immuneType => {
+            if (immuneType === attacker) multiplier *= 0;
+        });
+        extraResistances.forEach(resistType => {
+            if (resistType === attacker) multiplier *= 0.5;
+        });
+        extraWeaknesses.forEach(weakType => {
+            if (weakType === attacker) multiplier *= 2;
+        });
+
+        matchups[attacker] = multiplier;
+    });
+
+    // 3. Ring Target Override (Removes 0x matchups WITHOUT overwriting secondary weaknesses!)
+    if (removeImmunities) {
+        for (const type in matchups) {
+            if (matchups[type] === 0) matchups[type] = 1;
+        }
+    }
+    
+    // 4. Specific Immunity Overrides (Iron Ball)
+    removeSpecificImmunities.forEach(type => {
+        if (matchups[type] === 0) matchups[type] = 1;
     });
 
     return matchups;

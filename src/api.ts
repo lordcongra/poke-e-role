@@ -5,7 +5,8 @@ export const GITHUB_TREE_URL = "https://api.github.com/repos/Pokerole-Software-D
 export const MOVES_URLS: Record<string, string> = {};
 export const SPECIES_URLS: Record<string, string> = {};
 export const ABILITIES_URLS: Record<string, string> = {};
-export const ALL_ABILITIES: string[] = []; // New export to hold the global list
+export const ITEMS_URLS: Record<string, string> = {};
+export const ALL_ABILITIES: string[] = []; 
 
 export async function loadUrlLists(): Promise<void> {
   const speciesInput = document.getElementById('species') as HTMLInputElement | null;
@@ -21,6 +22,7 @@ export async function loadUrlLists(): Promise<void> {
     const pokemonRegex = /\/(Pokemon|Pokedex)\//i;
     const moveRegex = /\/Moves\//i;
     const abilityRegex = /\/Abilities\//i;
+    const itemRegex = /\/(Items|Equipment)\//i;
 
     const pokemonFiles = data.tree.filter((file: GithubTreeItem) => 
       versionRegex.test(file.path) && pokemonRegex.test(file.path) && file.path.endsWith(".json")
@@ -62,11 +64,28 @@ export async function loadUrlLists(): Promise<void> {
       const abName = file.path.split('/').pop()?.replace('.json', '') || '';
       if (abName) {
         ABILITIES_URLS[abName.toLowerCase()] = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/${file.path}`;
-        if (!ALL_ABILITIES.includes(abName)) ALL_ABILITIES.push(abName); // Store it globally
+        if (!ALL_ABILITIES.includes(abName)) ALL_ABILITIES.push(abName); 
         abilityHtml += `<option value="${abName}"></option>`;
       }
     });
     if (abilityDatalist) abilityDatalist.innerHTML = abilityHtml;
+
+    // --- ITEM FETCHING LOGIC ---
+    const itemFiles = data.tree.filter((file: GithubTreeItem) => 
+        versionRegex.test(file.path) && itemRegex.test(file.path) && file.path.endsWith(".json")
+    );
+    
+    const itemDatalist = document.getElementById('item-list');
+    let itemHtmlStr = '';
+    itemFiles.forEach((file: GithubTreeItem) => {
+        const itemName = file.path.split('/').pop()?.replace('.json', '') || '';
+        if (itemName) {
+            ITEMS_URLS[itemName.toLowerCase()] = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/${file.path}`;
+            itemHtmlStr += `<option value="${itemName}"></option>`;
+        }
+    });
+    // Replaces all the manual options in index.html with the dynamically populated list!
+    if (itemDatalist && itemHtmlStr) itemDatalist.innerHTML = itemHtmlStr;
 
   } catch(err) {
     console.error("Error communicating with Github:", err);
@@ -94,7 +113,13 @@ export async function fetchAbilityData(abilityName: string): Promise<AbilityData
   catch (err) { return null; }
 }
 
-// --- LEARNSET PARSER ---
+export async function fetchItemData(itemName: string): Promise<any | null> {
+    const selectedUrl = ITEMS_URLS[itemName.toLowerCase()];
+    if (!selectedUrl) return null;
+    try { const res = await fetch(selectedUrl); return (await res.json()); } 
+    catch (err) { return null; }
+}
+
 export function populateLearnset(pokemonData: any) {
     const container = document.getElementById('learnset-container');
     const toggleBtn = document.getElementById('toggle-learnset-btn');

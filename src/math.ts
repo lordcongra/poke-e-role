@@ -5,7 +5,7 @@ import { sheetView } from './view';
 import { appState } from './state';
 import { isLoading } from './obr';
 
-const getInputValue = (el: HTMLInputElement) => parseInt(el.value) || 0;
+const getInputValue = (el?: HTMLInputElement | null) => el ? (parseInt(el.value) || 0) : 0;
 
 const RANK_CAPS: Record<string, { attr: number, soc: number, skill: number, skillLimit: number }> = {
     "Starter":  { attr: 0, soc: 0, skill: 5, skillLimit: 1 },
@@ -29,29 +29,28 @@ const AGE_CAPS: Record<string, { attr: number, soc: number }> = {
 export function updateMoveDisplays(currentMoves: Move[], currentInventory?: InventoryItem[], calcStats?: Record<string, number>, calcSkills?: Record<string, number>) {
     const extraAccDice = getInputValue(sheetView.globalMods.acc);
     const extraDmgDice = getInputValue(sheetView.globalMods.dmg);
-    const typingStr = sheetView.identity.typing.value || "";
-    const abilityStr = sheetView.identity.ability.value || "";
+    const typingStr = sheetView.identity.typing?.value || "";
+    const abilityStr = sheetView.identity.ability?.value || "";
     const isProtean = abilityStr.toLowerCase().includes("protean") || abilityStr.toLowerCase().includes("libero");
     
-    // Bulletproof fallback: If no inventory is passed, grab it directly from the app state!
     const activeInventory = currentInventory || appState.currentInventory || [];
 
     currentMoves.forEach((move: Move) => {
         let attrTotal = 0;
         if (move.attr === 'will') {
-            attrTotal = parseInt(sheetView.health.will.max.innerText) || 0;
-        } else if (calcStats && calcStats[move.attr] !== undefined) {
+            attrTotal = parseInt(sheetView.health.will.max?.innerText || "0") || 0;
+        } else if (calcStats && move.attr && calcStats[move.attr] !== undefined) {
             attrTotal = calcStats[move.attr];
-        } else {
-            attrTotal = parseInt(sheetView.stats[move.attr]?.total.innerText) || 0;
+        } else if (move.attr && sheetView.stats[move.attr]) {
+            attrTotal = parseInt(sheetView.stats[move.attr].total?.innerText || "0") || 0;
         }
         
         let skillTotal = 0;
-        if (calcSkills && calcSkills[move.skill] !== undefined) {
+        if (calcSkills && move.skill && calcSkills[move.skill] !== undefined) {
             skillTotal = calcSkills[move.skill];
-        } else if (sheetView.skills[move.skill]) {
-            skillTotal = parseInt(sheetView.skills[move.skill].total.innerText) || 0;
-        } else {
+        } else if (move.skill && sheetView.skills[move.skill]) {
+            skillTotal = parseInt(sheetView.skills[move.skill].total?.innerText || "0") || 0;
+        } else if (move.skill) {
             const extraEl = document.getElementById(`${move.skill}-total`);
             if (extraEl) skillTotal = parseInt(extraEl.innerText) || 0;
         }
@@ -60,21 +59,8 @@ export function updateMoveDisplays(currentMoves: Move[], currentInventory?: Inve
         let itemDmg = 0;
         
         activeInventory.filter(i => i.active).forEach(item => {
-            const name = (item.name || "").trim().toLowerCase();
             const desc = (item.desc || "").toLowerCase();
             const moveType = (move.type || "").trim().toLowerCase();
-            
-            if (name === "wide lens" || name === "zoom lens") itemAcc += 2;
-            if (name === "life orb") itemDmg += 2;
-            
-            const typeBoosters: Record<string, string> = {
-                "black belt": "fighting", "black glasses": "dark", "charcoal": "fire", "dragon fang": "dragon",
-                "fairy wings": "fairy", "hard stone": "rock", "magnet": "electric", "metal coat": "steel",
-                "miracle seed": "grass", "mystic water": "water", "never-melt ice": "ice", "poison barb": "poison",
-                "sharp beak": "flying", "silk scarf": "normal", "silver powder": "bug", "soft sand": "ground",
-                "spell tag": "ghost", "twisted spoon": "psychic"
-            };
-            if (typeBoosters[name] && moveType === typeBoosters[name]) itemDmg += 1;
 
             const dmgMatches = desc.matchAll(/\[dmg\s*([+-]?\d+)(?:\s*:\s*(\w+))?\]/gi);
             for (const match of dmgMatches) {
@@ -84,6 +70,21 @@ export function updateMoveDisplays(currentMoves: Move[], currentInventory?: Inve
             const accMatches = desc.matchAll(/\[acc\s*([+-]?\d+)(?:\s*:\s*(\w+))?\]/gi);
             for (const match of accMatches) {
                 if (!match[2] || match[2].toLowerCase() === moveType) itemAcc += parseInt(match[1]) || 0;
+            }
+
+            const comboMatches = desc.matchAll(/\[combo dmg\s*([+-]?\d+)\]/gi);
+            for (const match of comboMatches) {
+                const mDesc = (move.desc || "").toLowerCase();
+                const mName = (move.name || "").toLowerCase();
+                
+                const isCombo = mDesc.includes("successive") || 
+                                mDesc.includes("double action") || 
+                                mDesc.includes("triple action") || 
+                                mName.includes("double") || 
+                                mName.includes("triple");
+                if (isCombo) {
+                    itemDmg += parseInt(match[1]) || 0; 
+                }
             }
         });
 
@@ -97,11 +98,11 @@ export function updateMoveDisplays(currentMoves: Move[], currentInventory?: Inve
             if (normalizedStat && calcStats && calcStats[normalizedStat] !== undefined) {
                 scalingVal = calcStats[normalizedStat];
             } else if (normalizedStat && sheetView.stats[normalizedStat]) {
-                scalingVal = parseInt(sheetView.stats[normalizedStat].total.innerText) || 0;
+                scalingVal = parseInt(sheetView.stats[normalizedStat].total?.innerText || "0") || 0;
             }
             
             let stabBonus = (move.type && (typingStr.includes(move.type) || isProtean)) ? 1 : 0;
-            dmgPool = move.power + scalingVal + extraDmgDice + stabBonus + itemDmg;
+            dmgPool = (parseInt(String(move.power)) || 0) + scalingVal + extraDmgDice + stabBonus + itemDmg;
         }
 
         const accDisplay = document.querySelector(`.acc-total-display[data-id="${move.id}"]`);
@@ -118,6 +119,8 @@ export function calculateStats(currentExtraCategories: ExtraCategory[], currentM
   let itemStats: Record<string, number> = { str: 0, dex: 0, vit: 0, spe: 0, ins: 0, tou: 0, coo: 0, bea: 0, cut: 0, cle: 0 };
   let itemSkills: Record<string, number> = {};
   let itemInit = 0;
+  let itemDef = 0;
+  let itemSpd = 0;
 
   ALL_SKILLS.forEach(sk => itemSkills[sk] = 0);
   
@@ -133,6 +136,12 @@ export function calculateStats(currentExtraCategories: ExtraCategory[], currentM
               itemStats[statKey] += parseInt(match[2]) || 0;
           }
       }
+
+      const defMatches = desc.matchAll(/\[def\s*([+-]?\d+)\]/gi);
+      for (const match of defMatches) itemDef += parseInt(match[1]) || 0;
+      
+      const spdMatches = desc.matchAll(/\[spd\s*([+-]?\d+)\]/gi);
+      for (const match of spdMatches) itemSpd += parseInt(match[1]) || 0;
 
       const skillMatches = desc.matchAll(new RegExp(`\\[(${ALL_SKILLS.join('|')})\\s*([+-]?\\d+)\\]`, 'gi'));
       for (const match of skillMatches) {
@@ -150,14 +159,14 @@ export function calculateStats(currentExtraCategories: ExtraCategory[], currentM
   COMBAT_STATS.forEach((stat: string) => {
       const s = sheetView.stats[stat];
       const total = getInputValue(s.base) + getInputValue(s.rank) + getInputValue(s.buff) - getInputValue(s.debuff) + (itemStats[stat] || 0);
-      s.total.innerText = total.toString();
+      if (s.total) s.total.innerText = total.toString();
       calculatedStats[stat] = total;
   });
 
   SOCIAL_STATS.forEach((stat: string) => {
       const s = sheetView.stats[stat];
       const total = getInputValue(s.base) + getInputValue(s.rank) + getInputValue(s.buff) - getInputValue(s.debuff) + (itemStats[stat] || 0);
-      s.total.innerText = total.toString();
+      if (s.total) s.total.innerText = total.toString();
       calculatedStats[stat] = total;
   });
 
@@ -167,7 +176,7 @@ export function calculateStats(currentExtraCategories: ExtraCategory[], currentM
   const spe = calculatedStats.spe || 0;
   const ins = calculatedStats.ins || 0;
 
-  const ruleset = sheetView.identity.roomRuleset.value; 
+  const ruleset = sheetView.identity.roomRuleset?.value || 'vg-vit-hp'; 
   let spdBase = ins;
   let hpBonus = vit; 
   
@@ -179,53 +188,57 @@ export function calculateStats(currentExtraCategories: ExtraCategory[], currentM
       hpBonus = Math.max(vit, ins);
   }
 
-  // --- SMART HP SCALING (Heals automatically on Form Swap / Vit Rank up) ---
-  const oldMaxHp = parseInt(sheetView.health.hp.max.innerText) || 0;
+  const oldMaxHp = parseInt(sheetView.health.hp.max?.innerText || "0") || 0;
   const newMaxHp = getInputValue(sheetView.health.hp.base) + hpBonus;
   
   if (!isLoading && oldMaxHp > 0 && oldMaxHp !== newMaxHp) {
       const currHpEl = sheetView.health.hp.curr;
-      let currHpVal = parseInt(currHpEl.value) || 0;
-      
-      if (newMaxHp > oldMaxHp) {
-          currHpVal += (newMaxHp - oldMaxHp);
-      } else if (currHpVal > newMaxHp) {
-          currHpVal = newMaxHp; // Clamps HP if max drops!
+      if (currHpEl) {
+          let currHpVal = parseInt(currHpEl.value) || 0;
+          if (newMaxHp > oldMaxHp) {
+              currHpVal += (newMaxHp - oldMaxHp);
+          } else if (currHpVal > newMaxHp) {
+              currHpVal = newMaxHp; 
+          }
+          currHpEl.value = currHpVal.toString();
       }
-      currHpEl.value = currHpVal.toString();
   }
-  sheetView.health.hp.max.innerText = newMaxHp.toString();
+  if (sheetView.health.hp.max) sheetView.health.hp.max.innerText = newMaxHp.toString();
 
-  // --- SMART WILL SCALING ---
-  const oldMaxWill = parseInt(sheetView.health.will.max.innerText) || 0;
+  const oldMaxWill = parseInt(sheetView.health.will.max?.innerText || "0") || 0;
   const newMaxWill = getInputValue(sheetView.health.will.base) + ins;
 
   if (!isLoading && oldMaxWill > 0 && oldMaxWill !== newMaxWill) {
       const currWillEl = sheetView.health.will.curr;
-      let currWillVal = parseInt(currWillEl.value) || 0;
-      
-      if (newMaxWill > oldMaxWill) {
-          currWillVal += (newMaxWill - oldMaxWill);
-      } else if (currWillVal > newMaxWill) {
-          currWillVal = newMaxWill;
+      if (currWillEl) {
+          let currWillVal = parseInt(currWillEl.value) || 0;
+          if (newMaxWill > oldMaxWill) {
+              currWillVal += (newMaxWill - oldMaxWill);
+          } else if (currWillVal > newMaxWill) {
+              currWillVal = newMaxWill;
+          }
+          currWillEl.value = currWillVal.toString();
       }
-      currWillEl.value = currWillVal.toString();
   }
-  sheetView.health.will.max.innerText = newMaxWill.toString();
+  if (sheetView.health.will.max) sheetView.health.will.max.innerText = newMaxWill.toString();
   
   const maxMovesDisplay = document.getElementById('max-moves-display');
   if (maxMovesDisplay) {
       maxMovesDisplay.innerText = (ins + 3).toString();
   }
   
-  sheetView.defenses.def.total.innerText = (vit + getInputValue(sheetView.defenses.def.buff) - getInputValue(sheetView.defenses.def.debuff)).toString();
-  sheetView.defenses.spd.total.innerText = (spdBase + getInputValue(sheetView.defenses.spd.buff) - getInputValue(sheetView.defenses.spd.debuff)).toString();
+  if (sheetView.defenses.def.total) {
+      sheetView.defenses.def.total.innerText = (vit + getInputValue(sheetView.defenses.def.buff) - getInputValue(sheetView.defenses.def.debuff) + itemDef).toString();
+  }
+  if (sheetView.defenses.spd.total) {
+      sheetView.defenses.spd.total.innerText = (spdBase + getInputValue(sheetView.defenses.spd.buff) - getInputValue(sheetView.defenses.spd.debuff) + itemSpd).toString();
+  }
 
   let calculatedSkills: Record<string, number> = {};
   ALL_SKILLS.forEach((skill: string) => {
       const s = sheetView.skills[skill];
       const total = getInputValue(s.base) + getInputValue(s.buff) + (itemSkills[skill] || 0);
-      s.total.innerText = total.toString();
+      if (s.total) s.total.innerText = total.toString();
       calculatedSkills[skill] = total;
   });
 
@@ -235,18 +248,15 @@ export function calculateStats(currentExtraCategories: ExtraCategory[], currentM
       });
   });
 
-  // Apply the init bonus here!
-  sheetView.initiative.total.innerText = (dex + (calculatedSkills.alert || 0) + itemInit).toString();
+  if (sheetView.initiative.total) sheetView.initiative.total.innerText = (dex + (calculatedSkills.alert || 0) + itemInit).toString();
+  if (sheetView.defenses.evasion.total) sheetView.defenses.evasion.total.innerText = (dex + (calculatedSkills.evasion || 0)).toString();
+  if (sheetView.defenses.clashP.total) sheetView.defenses.clashP.total.innerText = (str + (calculatedSkills.clash || 0)).toString();
+  if (sheetView.defenses.clashS.total) sheetView.defenses.clashS.total.innerText = (spe + (calculatedSkills.clash || 0)).toString();
   
-  sheetView.defenses.evasion.total.innerText = (dex + (calculatedSkills.evasion || 0)).toString();
-  sheetView.defenses.clashP.total.innerText = (str + (calculatedSkills.clash || 0)).toString();
-  sheetView.defenses.clashS.total.innerText = (spe + (calculatedSkills.clash || 0)).toString();
-  
-  // Pass activeInventory correctly so we don't drop items!
   updateMoveDisplays(currentMoves, activeInventory, calculatedStats, calculatedSkills);
 
-  const currentRank = sheetView.identity.rank.value || "Starter";
-  const currentAge = sheetView.identity.age.value || "--";
+  const currentRank = sheetView.identity.rank?.value || "Starter";
+  const currentAge = sheetView.identity.age?.value || "--";
   const rankData = RANK_CAPS[currentRank] || RANK_CAPS["Starter"];
   const ageData = AGE_CAPS[currentAge] || AGE_CAPS["--"];
 
@@ -264,7 +274,7 @@ export function calculateStats(currentExtraCategories: ExtraCategory[], currentM
   ALL_SKILLS.forEach(s => spentSkill += getInputValue(sheetView.skills[s].base));
   currentExtraCategories.forEach(cat => cat.skills.forEach(sk => spentSkill += getVal(`${sk.id}-base`)));
 
-  const updateRemainingUI = (el: HTMLElement, max: number, spent: number) => {
+  const updateRemainingUI = (el: HTMLElement | null, max: number, spent: number) => {
       if (el) {
           const remaining = max - spent;
           el.innerText = remaining.toString();
@@ -275,5 +285,5 @@ export function calculateStats(currentExtraCategories: ExtraCategory[], currentM
   updateRemainingUI(sheetView.points.attr.remaining, maxAttr, spentAttr);
   updateRemainingUI(sheetView.points.soc.remaining, maxSoc, spentSoc);
   updateRemainingUI(sheetView.points.skill.remaining, maxSkill, spentSkill);
-  sheetView.points.skill.limit.innerText = rankData.skillLimit.toString();
+  if (sheetView.points.skill.limit) sheetView.points.skill.limit.innerText = rankData.skillLimit.toString();
 }

@@ -2,10 +2,10 @@ import OBR from "@owlbear-rodeo/sdk";
 import { sheetView } from '../view';
 import { calculateStats } from '../math';
 import { updatePainUI, updateInventoryUI } from '../ui';
-import { repairTrackers } from '../obr';
 import { appState, syncDerivedStats, saveDataToToken } from '../state';
 import { ROOM_META_ID } from '../sync';
 import { updateHealthBars } from './uiListeners';
+import { DEFAULT_COLOR_ACT, DEFAULT_COLOR_EVA, DEFAULT_COLOR_CLA } from '../managers/graphicsManager';
 import { 
     handleTypeChange, 
     handleFormSwap, 
@@ -32,6 +32,28 @@ export function setupCharacterListeners() {
         }, 1000);
     }
 
+    // --- COLOR RESET LISTENER ---
+    document.getElementById('reset-colors-btn')?.addEventListener('click', () => {
+        const actInput = document.getElementById('color-act') as HTMLInputElement;
+        const evaInput = document.getElementById('color-eva') as HTMLInputElement;
+        const claInput = document.getElementById('color-cla') as HTMLInputElement;
+        
+        if (actInput) actInput.value = DEFAULT_COLOR_ACT;
+        if (evaInput) evaInput.value = DEFAULT_COLOR_EVA;
+        if (claInput) claInput.value = DEFAULT_COLOR_CLA;
+
+        const updates = {
+            'color-act': DEFAULT_COLOR_ACT,
+            'color-eva': DEFAULT_COLOR_EVA,
+            'color-cla': DEFAULT_COLOR_CLA
+        };
+
+        Object.assign(appState.currentTokenData, updates);
+        for (const [key, value] of Object.entries(updates)) {
+            saveDataToToken(key, value);
+        }
+    });
+
     // --- BASIC FIELD LISTENERS ---
     const listenerInputs = document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('.sheet-save');
     listenerInputs.forEach(element => {
@@ -46,7 +68,6 @@ export function setupCharacterListeners() {
             appState.currentTokenData[target.id] = valToSave;
             saveDataToToken(target.id, valToSave);
             syncDerivedStats(); 
-            repairTrackers(); 
             updateHealthBars();
             if (target.classList.contains('inv-input')) updateInventoryUI(appState.currentInventory);
         });

@@ -1,5 +1,6 @@
 import { calculateMatchups } from '../utils';
 import { createEl, getTypeStyle } from './dom';
+import { appState } from '../state';
 
 export function renderTypeMatchups(typeStr: string) {
     const container = document.getElementById('type-matchup-container');
@@ -17,7 +18,8 @@ export function renderTypeMatchups(typeStr: string) {
         return;
     }
 
-    const matchups = calculateMatchups(typeStr);
+    // Now safely passes the live inventory into the calculation engine!
+    const matchups = calculateMatchups(typeStr, appState.currentInventory);
     const groups: Record<number, string[]> = { 4: [], 2: [], 0.5: [], 0.25: [], 0: [] };
 
     for (const [type, mult] of Object.entries(matchups)) {
