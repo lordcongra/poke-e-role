@@ -6,24 +6,27 @@ import { sheetView } from './view';
 import { appState, syncDerivedStats, saveDataToToken } from './state';
 import { sendToDicePlus, METADATA_ID, saveBatchDataToToken } from './obr';
 
-const v = (el: HTMLInputElement) => parseInt(el.value) || 0;
-const tv = (el: HTMLElement) => parseInt(el.innerText) || 0;
+const v = (el?: HTMLInputElement | null) => el ? (parseInt(el.value) || 0) : 0;
+const tv = (el?: HTMLElement | null) => el ? (parseInt(el.innerText) || 0) : 0;
 
 export function getPainPenalty(attr: string): number {
     if (sheetView.identity.roomPain.value !== 'true') return 0;
-    // Pain ignores Vitality and Will rolls!
     if (attr === 'vit' || attr === 'will') return 0; 
     
-    const currHp = v(sheetView.health.hp.curr);
-    const maxHp = tv(sheetView.health.hp.max);
-    const ignoredPain = v(sheetView.globalMods.ignoredPain);
+    const currHp = parseInt(sheetView.health.hp.curr.value, 10) || 0;
+    const maxHp = parseInt(sheetView.health.hp.max.innerText, 10) || 1;
+    const ignoredPain = parseInt(sheetView.globalMods.ignoredPain.value, 10) || 0;
     
     let rawPenalty = 0;
-    if (currHp <= 1) rawPenalty = 2;
-    else if (currHp <= Math.floor(maxHp / 2)) rawPenalty = 1;
+    if (currHp <= 1) {
+        rawPenalty = 2;
+    } 
+    else if (currHp <= Math.floor(maxHp / 2)) {
+        rawPenalty = 1;
+    }
     
     const finalPenalty = Math.max(0, rawPenalty - ignoredPain);
-    return -finalPenalty; 
+    return finalPenalty > 0 ? -finalPenalty : 0; 
 }
 
 export function getStatusPenalties() {
@@ -33,26 +36,25 @@ export function getStatusPenalties() {
     let isFrozen = false;
     
     const abilityStr = (sheetView.identity.ability.value || "").toLowerCase();
-
-    appState.currentStatuses.forEach(s => {
-        if (s.name !== "Healthy") {
-            if (s.name === "Confusion") {
+    const activeStatuses = appState.currentStatuses.map(s => (s.name === "Custom..." ? s.customName : s.name).toLowerCase());
+    
+    activeStatuses.forEach(sName => {
+        if (sName !== "healthy") {
+            if (sName === "confusion") {
                 const rank = sheetView.identity.rank.value || "Starter";
-                if (["Starter", "Rookie", "Standard"].includes(rank)) confusionPenalty = -1;
-                else if (["Advanced", "Expert", "Ace"].includes(rank)) confusionPenalty = -2;
-                else confusionPenalty = -3;
+                if (["Starter", "Rookie", "Standard"].includes(rank)) confusionPenalty = Math.min(confusionPenalty, -1);
+                else if (["Advanced", "Expert", "Ace"].includes(rank)) confusionPenalty = Math.min(confusionPenalty, -2);
+                else confusionPenalty = Math.min(confusionPenalty, -3);
             }
-            if (s.name === "Paralysis") {
-                // Limber prevents Paralysis penalties
-                if (!abilityStr.includes("limber")) paralysisDexPenalty = -2;
+            if (sName === "paralysis") {
+                if (!abilityStr.includes("limber")) paralysisDexPenalty = Math.min(paralysisDexPenalty, -2);
             }
-            if (s.name === "Sleep") {
-                // Insomnia, Vital Spirit, and Sweet Veil grant immunity to Sleep
+            if (sName === "sleep") {
                 if (!abilityStr.includes("insomnia") && !abilityStr.includes("vital spirit") && !abilityStr.includes("sweet veil")) {
                     isAsleep = true;
                 }
             }
-            if (s.name === "Frozen Solid") isFrozen = true;
+            if (sName === "frozen solid") isFrozen = true;
         }
     });
 
@@ -67,29 +69,10 @@ export function parseItemTags(move: Move) {
     let itemNames: string[] = [];
 
     appState.currentInventory.filter(i => i.active).forEach(item => {
-        const name = (item.name || "").trim().toLowerCase();
         const desc = (item.desc || "").toLowerCase();
         const moveType = (move.type || "").trim().toLowerCase();
         let triggered = false;
         
-        if (name === "wide lens" || name === "zoom lens") { bonusAcc += 2; triggered = true; }
-        if (name === "life orb") { bonusDmg += 2; triggered = true; }
-        
-        const typeBoosters: Record<string, string> = {
-            "black belt": "fighting", "black glasses": "dark", "charcoal": "fire", "dragon fang": "dragon",
-            "fairy wings": "fairy", "hard stone": "rock", "magnet": "electric", "metal coat": "steel",
-            "miracle seed": "grass", "mystic water": "water", "never-melt ice": "ice", "poison barb": "poison",
-            "sharp beak": "flying", "silk scarf": "normal", "silver powder": "bug", "soft sand": "ground",
-            "spell tag": "ghost", "twisted spoon": "psychic"
-        };
-        if (typeBoosters[name] && moveType === typeBoosters[name]) {
-            bonusDmg += 1; triggered = true;
-        }
-
-        if (name === "razor claw" || name === "leek" || name === "lucky punch" || name === "sharp claw") {
-            highCritStacks += 1; triggered = true;
-        }
-
         const dmgMatches = desc.matchAll(/\[dmg\s*([+-]?\d+)(?:\s*:\s*(\w+))?\]/gi);
         for (const match of dmgMatches) {
             if (!match[2] || match[2].toLowerCase() === moveType) {
@@ -109,8 +92,23 @@ export function parseItemTags(move: Move) {
             ignoreLowAcc += parseInt(match[1]) || 0; triggered = true;
         }
 
+        const comboMatches = desc.matchAll(/\[combo dmg\s*([+-]?\d+)\]/gi);
+        for (const match of comboMatches) {
+            const mDesc = (move.desc || "").toLowerCase();
+            const mName = (move.name || "").toLowerCase();
+            const isCombo = mDesc.includes("successive") || 
+                            mDesc.includes("double action") || 
+                            mDesc.includes("triple action") || 
+                            mName.includes("double") || 
+                            mName.includes("triple");
+            if (isCombo) {
+                bonusDmg += parseInt(match[1]) || 0; 
+                triggered = true;
+            }
+        }
+
         if (/\[high crit\]/i.test(desc)) { highCritStacks += 1; triggered = true; }
-        if (triggered && item.name.trim()) itemNames.push(item.name.trim());
+        if (triggered && item.name?.trim()) itemNames.push(item.name.trim());
     });
 
     return { bonusAcc, bonusDmg, highCritStacks, ignoreLowAcc, itemNames };
@@ -132,13 +130,11 @@ export function rollAccuracy(move: Move) {
     const nickname = sheetView.identity.nickname.value || "Someone";
     let actions = v(sheetView.trackers.actions);
     const requiredSuccesses = actions + 1;
-    const moveDesc = move.desc?.toLowerCase() || "";
-    const safeMoveName = move.name.toLowerCase().trim();
+    const moveDesc = (move.desc || "").toLowerCase();
+    const safeMoveName = (move.name || "").toLowerCase().trim();
     const abilityStr = sheetView.identity.ability.value || "";
     
     const statuses = getStatusPenalties();
-    
-    // Exceptions for Sleep
     const isSleepMove = safeMoveName === "sleep talk" || safeMoveName === "snore";
     const hasComatose = abilityStr.toLowerCase().includes("comatose");
     
@@ -158,16 +154,15 @@ export function rollAccuracy(move: Move) {
     }
     
     const pain = getPainPenalty(move.attr);
-    
-    // Apply all net success modifiers (Pain, Confusion, Low Acc, Global)
     const succMod = v(sheetView.globalMods.succ) - moveLowAcc + statuses.confusionPenalty + pain; 
     const mathMod = succMod !== 0 ? (succMod > 0 ? `+${succMod}` : `${succMod}`) : "";
     
-    let attrTotal = move.attr === 'will' ? tv(sheetView.health.will.max) : tv(sheetView.stats[move.attr].total);
+    let attrTotal = move.attr === 'will' ? tv(sheetView.health.will.max) : (sheetView.stats[move.attr] ? tv(sheetView.stats[move.attr].total) : 0);
+    
     let skillTotal = 0;
-    if (sheetView.skills[move.skill]) {
+    if (move.skill && sheetView.skills[move.skill]) {
         skillTotal = tv(sheetView.skills[move.skill].total);
-    } else {
+    } else if (move.skill) {
         const extraEl = document.getElementById(`${move.skill}-total`);
         if (extraEl) skillTotal = parseInt(extraEl.innerText) || 0;
     }
@@ -196,7 +191,6 @@ export function rollAccuracy(move: Move) {
     if (ignoredAccPenalty > 0) tags.push(`Ignored ${ignoredAccPenalty} Low Acc`);
     if (succMod !== 0) tags.push(`Net Mod ${succMod > 0 ? '+' : ''}${succMod} Succ`);
     if (statuses.paralysisDexPenalty < 0 && move.attr === 'dex') tags.push(`Paralysis -2 Dice`);
-    
     if (chancesUsed > 0) tags.push(`Chances: Max ${chancesUsed} Rerolls`);
     if (fateUsed > 0) tags.push(`Fate: +1 Auto Success`);
 
@@ -210,27 +204,24 @@ export function rollAccuracy(move: Move) {
     }
     if (statuses.isFrozen) tags.push(`FROZEN`);
     if (moveDesc.includes("never miss") || moveDesc.includes("cannot be evaded")) tags.push(`CANNOT BE EVADED`);
-    
-    if (itemBuffs.itemNames.length > 0) {
-        tags.push(`Item: ${itemBuffs.itemNames.join(', ')}`);
-    }
+    if (itemBuffs.itemNames.length > 0) tags.push(`Item: ${itemBuffs.itemNames.join(', ')}`);
   
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : "";
 
-    OBR.notification.show(`🎯 ${nickname} rolled ${move.name} (Acc)!${finalTags}`);
+    OBR.notification.show(`🎯 ${nickname} rolled ${move.name || "a Move"} (Acc)!${finalTags}`);
     if (dicePool > 0) sendToDicePlus(`${dicePool}d6>3${mathMod}`);
 }
 
 export function rollDamage(move: Move) {
-    if (move.cat === "Supp") { alert(`${move.name} is a Support move (No Damage).`); return; }
+    if (move.cat === "Supp") { alert(`${move.name || "This"} is a Support move (No Damage).`); return; }
   
     const nickname = sheetView.identity.nickname.value || "Someone";
-    const moveDesc = move.desc?.toLowerCase() || "";
+    const moveDesc = (move.desc || "").toLowerCase();
   
     const setDmgMatch = moveDesc.match(/set damage\s*(\d+)?/i);
     if (setDmgMatch || moveDesc.includes("set damage")) {
         const dmgVal = (setDmgMatch && setDmgMatch[1]) ? setDmgMatch[1] : move.power;
-        OBR.notification.show(`💥 ${nickname} used ${move.name}! (Deals exactly ${dmgVal} Set Damage, ignores defenses)`);
+        OBR.notification.show(`💥 ${nickname} used ${move.name || "a Move"}! (Deals exactly ${dmgVal} Set Damage, ignores defenses)`);
         sendToDicePlus(`0d6+${dmgVal}`);
         return; 
     }
@@ -242,12 +233,14 @@ export function rollDamage(move: Move) {
     const select = document.getElementById('targeting-select') as HTMLSelectElement;
     const input = document.getElementById('targeting-def-input') as HTMLInputElement;
     const critBox = document.getElementById('targeting-crit-checkbox') as HTMLInputElement;
+    const seBox = document.getElementById('targeting-se-checkbox') as HTMLInputElement;
     
     if (!modal || !label || !select || !input || !critBox) return;
     
     label.innerText = move.cat === 'Phys' ? 'Defense' : 'Special Defense';
     input.value = "0";
     critBox.checked = false;
+    if (seBox) seBox.checked = false;
     
     OBR.scene.items.getItems().then(items => {
         select.innerHTML = '<option value="manual">-- Manual Entry --</option>';
@@ -262,7 +255,6 @@ export function rollDamage(move: Move) {
                 let def = vit + (Number(meta['def-buff']) || 0) - (Number(meta['def-debuff']) || 0);
                 let spd = ins + (Number(meta['spd-buff']) || 0) - (Number(meta['spd-debuff']) || 0);
                 
-                // Grab the GLOBAL ruleset to calculate the target's stats perfectly!
                 const ruleset = sheetView.identity.roomRuleset.value; 
                 if (ruleset === 'tabletop') spd = vit + (Number(meta['spd-buff']) || 0) - (Number(meta['spd-debuff']) || 0);
                 else if (ruleset === 'vg-high-hp' || ruleset === 'videogame') spd = ins + (Number(meta['spd-buff']) || 0) - (Number(meta['spd-debuff']) || 0);
@@ -355,7 +347,7 @@ export function rollSkillCheck(check: SkillCheck) {
     if (statuses.isAsleep && !hasComatose) OBR.notification.show("⚠️ You are Asleep and cannot perform actions!");
     if (statuses.isFrozen) OBR.notification.show("⚠️ You are Frozen Solid and cannot perform actions!");
 
-    let attrTotal = check.attr === 'will' ? tv(sheetView.health.will.max) : tv(sheetView.stats[check.attr]?.total);
+    let attrTotal = check.attr === 'will' ? tv(sheetView.health.will.max) : (sheetView.stats[check.attr] ? tv(sheetView.stats[check.attr].total) : 0);
     let skillTotal = 0;
     
     if (check.skill && check.skill !== 'none') {
@@ -371,7 +363,6 @@ export function rollSkillCheck(check: SkillCheck) {
     if (check.attr === 'dex') dicePool += statuses.paralysisDexPenalty;
 
     const pain = getPainPenalty(check.attr);
-    
     let tags = [];
     if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
     
@@ -379,13 +370,11 @@ export function rollSkillCheck(check: SkillCheck) {
     const mathMod = genericSuccMod !== 0 ? (genericSuccMod > 0 ? `+${genericSuccMod}` : `${genericSuccMod}`) : "";
 
     if (genericSuccMod !== 0) tags.push(`Net Mod ${genericSuccMod > 0 ? '+' : ''}${genericSuccMod} Succ`);
-    
     const chancesUsed = v(sheetView.trackers.chances);
     const fateUsed = v(sheetView.trackers.fate);
 
     if (chancesUsed > 0) tags.push(`Chances: Max ${chancesUsed} Rerolls`);
     if (fateUsed > 0) tags.push(`Fate: +1 Auto Success`);
-
     if (statuses.paralysisDexPenalty < 0 && check.attr === 'dex') tags.push(`Paralysis: -2 Dice`);
     
     if (statuses.isAsleep) {
@@ -395,10 +384,9 @@ export function rollSkillCheck(check: SkillCheck) {
     if (statuses.isFrozen) tags.push(`FROZEN`);
 
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : "";
-
-    const rollName = check.name.trim() || "Skill Check";
-    OBR.notification.show(`🎲 ${nickname} rolled ${rollName}!${finalTags}`);
+    const rollName = (check.name || "").trim() || "Skill Check";
     
+    OBR.notification.show(`🎲 ${nickname} rolled ${rollName}!${finalTags}`);
     if (dicePool > 0) sendToDicePlus(`${dicePool}d6>3${mathMod}`);
 }
 
@@ -436,23 +424,18 @@ export function rollStatus(status: StatusItem) {
 }
 
 export function setupCombatListeners() {
-    
     document.getElementById('roll-chances-btn')?.addEventListener('click', () => {
         const maxChances = v(sheetView.trackers.chances);
         if (maxChances <= 0) {
             OBR.notification.show("No Take Your Chances stacks! Spend Willpower first.");
             return;
         }
-        
         const input = window.prompt(`How many failed dice are you rerolling?\n(You have ${maxChances} stack(s) active this round)`, maxChances.toString());
         if (input === null) return; 
-        
         const numToRoll = parseInt(input);
         if (isNaN(numToRoll) || numToRoll <= 0) return;
-        
         const finalRoll = Math.min(numToRoll, maxChances);
         const nickname = sheetView.identity.nickname.value || "Someone";
-        
         OBR.notification.show(`🍀 ${nickname} used Take Your Chances to reroll ${finalRoll} failed dice!`);
         sendToDicePlus(`${finalRoll}d6>3`);
     });
@@ -465,10 +448,24 @@ export function setupCombatListeners() {
     });
     
     document.getElementById('roll-global-chance-btn')?.addEventListener('click', () => {
-        const chanceDice = v(sheetView.globalMods.chance);
+        const chanceDiceInput = v(sheetView.globalMods.chance);
+        let chanceBonus = 0;
+        
+        appState.currentInventory.filter(i => i.active).forEach(item => {
+            const desc = (item.desc || "").toLowerCase();
+            const chanceMatches = desc.matchAll(/\[chance\s*([+-]?\d+)\]/gi);
+            for (const match of chanceMatches) {
+                chanceBonus += parseInt(match[1]) || 0;
+            }
+        });
+
+        const chanceDice = chanceDiceInput + chanceBonus;
         if (chanceDice <= 0) return;
+
         const nickname = sheetView.identity.nickname.value || "Someone";
-        OBR.notification.show(`🍀 ${nickname} rolled a Chance Roll!`);
+        const tags = chanceBonus > 0 ? ` [ Item Bonus +${chanceBonus} ]` : "";
+        
+        OBR.notification.show(`🍀 ${nickname} rolled a Chance Roll!${tags}`);
         sendToDicePlus(`${chanceDice}d6>5`, "chance"); 
     });
 
@@ -482,30 +479,41 @@ export function setupCombatListeners() {
         const modal = document.getElementById('targeting-modal');
         const input = document.getElementById('targeting-def-input') as HTMLInputElement;
         const critBox = document.getElementById('targeting-crit-checkbox') as HTMLInputElement;
+        const seBox = document.getElementById('targeting-se-checkbox') as HTMLInputElement;
         
         if (modal) modal.style.display = 'none';
         if (!appState.pendingDamageMove) return;
-    
         const move = appState.pendingDamageMove;
         appState.pendingDamageMove = null;
-    
+        
         const defReduction = parseInt(input.value) || 0;
         const isCrit = critBox.checked;
+        const isSE = seBox ? seBox.checked : false;
+        
         const nickname = sheetView.identity.nickname.value || "Someone";
         const typingStr = sheetView.identity.typing.value || "";
         const abilityStr = sheetView.identity.ability.value || "";
-        
         const statuses = getStatusPenalties();
         const itemBuffs = parseItemTags(move);
         const extraDice = v(sheetView.globalMods.dmg) + itemBuffs.bonusDmg; 
         
+        // --- SUPER EFFECTIVE INVENTORY PARSER ---
+        let seDmgBonus = 0;
+        if (isSE) {
+            appState.currentInventory.filter(i => i.active).forEach(item => {
+                const desc = (item.desc || "").toLowerCase();
+                const seMatches = desc.matchAll(/\[dmg\s*([+-]?\d+):\s*super effective\]/gi);
+                for (const match of seMatches) {
+                    seDmgBonus += parseInt(match[1]) || 0;
+                }
+            });
+        }
+
         let scalingVal = 0;
         const normalizedDmgStat = ATTRIBUTE_MAPPING[move.dmgStat] || move.dmgStat;
-    
         if (normalizedDmgStat && sheetView.stats[normalizedDmgStat]) {
             scalingVal = tv(sheetView.stats[normalizedDmgStat].total);
         }
-
         if (normalizedDmgStat === 'dex') scalingVal += statuses.paralysisDexPenalty;
         
         const isProtean = abilityStr.toLowerCase().includes("protean") || abilityStr.toLowerCase().includes("libero");
@@ -518,7 +526,7 @@ export function setupCombatListeners() {
         }
     
         const critBonus = isSniper ? 3 : 2;
-        const basePool = move.power + scalingVal + extraDice + stabBonus;
+        const basePool = (parseInt(String(move.power)) || 0) + scalingVal + extraDice + stabBonus + seDmgBonus;
         let rawPool = basePool - defReduction + (isCrit ? critBonus : 0);
         let finalPool = Math.max(1, rawPool);
     
@@ -531,16 +539,21 @@ export function setupCombatListeners() {
             if (isSniper) tags.push(`Sniper Crit (+3 Dice)`);
             else tags.push(`CRITICAL HIT`);
         }
+        if (isSE) tags.push(`Super Effective`);
+        if (seDmgBonus > 0) tags.push(`Item SE Dmg +${seDmgBonus}`);
         if (stabBonus > 0) tags.push(stabTag);
         if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
         if (succMod !== 0) tags.push(`Net Mod ${succMod > 0 ? '+' : ''}${succMod} Succ`);
-        if (move.desc?.toLowerCase().includes("recoil")) tags.push(`APPLY RECOIL`);
+        
+        const moveDesc = (move.desc || "").toLowerCase();
+        if (moveDesc.includes("recoil")) tags.push(`APPLY RECOIL`);
+        
         if (statuses.paralysisDexPenalty < 0 && normalizedDmgStat === 'dex') tags.push(`Paralysis minus 2 Dmg`);
         if (itemBuffs.itemNames.length > 0) tags.push(`Item: ${itemBuffs.itemNames.join(', ')}`);
         
         const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : "";
         
-        OBR.notification.show(`💥 ${nickname} rolled ${move.name} (Dmg)!${finalTags}`);
+        OBR.notification.show(`💥 ${nickname} rolled ${move.name || "Damage"} (Dmg)!${finalTags}`);
         sendToDicePlus(`${finalPool}d6>3${mathMod}`);
     });
 

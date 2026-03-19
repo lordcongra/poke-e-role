@@ -1,18 +1,28 @@
 import OBR from "@owlbear-rodeo/sdk";
 import type { Item } from "@owlbear-rodeo/sdk";
 import { getVal, getDerivedVal, generateId } from './utils';
-import type { Move, InventoryItem, ExtraCategory, OwlTracker, PrettyInitMetadata, DicePlusData, SkillCheck } from './@types/index';
+import type { Move, InventoryItem, ExtraCategory, PrettyInitMetadata, DicePlusData, SkillCheck } from './@types/index';
+import { updateTokenGraphics, buildGraphicsDataFromMetadata } from './managers/graphicsManager';
 
 export const MY_EXTENSION_ID = "pokerole-pmd-extension";
 export const METADATA_ID = "pokerole-extension/stats";
 
 export let currentTokenId: string | null = null;
 export let isLoading = false;
-export let lastKnownMetadataStr = "";
+
+export let lastKnownMetadata: Record<string, any> = {};
+export let lastKnownMetadataStr = ""; 
+
+// Dictionary upgraded to track Scale, Rotation, AND Metadata!
+const knownTransforms: Record<string, { x: number, y: number, r: number, metaStr: string }> = {};
 
 export function setTokenId(id: string | null) { currentTokenId = id; }
 export function setLoading(loading: boolean) { isLoading = loading; }
-export function setLastMetadataStr(str: string) { lastKnownMetadataStr = str; }
+
+export function setLastMetadataStr(str: string) { 
+    lastKnownMetadataStr = str; 
+    try { lastKnownMetadata = JSON.parse(str); } catch(e) { lastKnownMetadata = {}; }
+}
 
 export async function sendToDicePlus(notation: string, rollType: string = "roll") {
     if (!notation) return;
@@ -25,13 +35,9 @@ export async function sendToDicePlus(notation: string, rollType: string = "roll"
         const targetVisibility = targetSelect ? targetSelect.value : 'everyone';
 
         await OBR.broadcast.sendMessage("dice-plus/roll-request", {
-            rollId: rollId,
-            playerId: playerId,
-            playerName: playerName,
-            rollTarget: targetVisibility, 
-            diceNotation: notation,
-            showResults: true, 
-            timestamp: Date.now(),
+            rollId: rollId, playerId, playerName,
+            rollTarget: targetVisibility, diceNotation: notation,
+            showResults: true, timestamp: Date.now(),
             source: MY_EXTENSION_ID 
         }, { destination: 'ALL' });
     } catch (e) {
@@ -43,21 +49,6 @@ export async function sendToDicePlus(notation: string, rollType: string = "roll"
 let saveTimeout: ReturnType<typeof setTimeout>;
 let pendingUpdates: Record<string, any> = {};
 
-// OBR Colors Mapped from UI: 
-// 0=Purple, 1=Magenta, 2=Red, 3=Orange, 4=Yellow, 5=Green, 6=Teal, 7=Light Blue, 8=Dark Blue
-const getTrackerColor = (name: string) => {
-    const lower = name.toLowerCase();
-    if (lower.includes('3rd degree')) return 2; // Red
-    if (lower.includes('2nd degree')) return 3; // Orange
-    if (lower.includes('1st degree') || lower.includes('burn')) return 3; // Orange
-    if (lower.includes('badly poisoned') || lower.includes('poison')) return 0; // Purple
-    if (lower.includes('paralysis')) return 4; // Yellow
-    if (lower.includes('frozen')) return 7; // Light Blue
-    if (lower.includes('sleep')) return 8; // Dark Blue
-    if (lower.includes('love') || lower.includes('confusion')) return 1; // Magenta
-    return 8; // Default to Dark Blue if none match
-};
-
 export async function saveBatchDataToToken(updates: Record<string, any>) {
   if (!currentTokenId || isLoading) return; 
 
@@ -68,150 +59,31 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
       const updatesToPush = { ...pendingUpdates };
       pendingUpdates = {};
 
-      const hpCurr = getVal('hp-curr');
-      const hpMax = getDerivedVal('hp-max-display');
-      const willCurr = getVal('will-curr');
-      const willMax = getDerivedVal('will-max-display');
-      const actions = getVal('actions-used');
-      const def = getDerivedVal('def-total');
-      const spdef = getDerivedVal('spd-total');
+      const domData = {
+          'hp-curr': getVal('hp-curr'), 
+          'hp-max-display': getDerivedVal('hp-max-display'),
+          'will-curr': getVal('will-curr'), 
+          'will-max-display': getDerivedVal('will-max-display'),
+          'def-total': getDerivedVal('def-total'), 
+          'spd-total': getDerivedVal('spd-total'),
+          'actions-used': getVal('actions-used'),
+          'evasions-used': (document.getElementById('evasions-used') as HTMLInputElement)?.checked || false,
+          'clashes-used': (document.getElementById('clashes-used') as HTMLInputElement)?.checked || false,
+          'y-offset': getVal('y-offset'), 
+      };
 
       await OBR.scene.items.updateItems([currentTokenId!], (items: Item[]) => {
         for (let item of items) {
           if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
-          
           const meta = item.metadata[METADATA_ID] as Record<string, any>;
-          for (const [key, value] of Object.entries(updatesToPush)) {
-              meta[key] = value;
-          }
+          
+          Object.assign(meta, updatesToPush, domData);
 
+          lastKnownMetadata = { ...meta };
           lastKnownMetadataStr = JSON.stringify(meta);
-
-          const rawTrackers = item.metadata["com.owl-trackers/trackers"];
-          let trackers: OwlTracker[] = rawTrackers ? JSON.parse(JSON.stringify(rawTrackers)) : [];
-          
-          const showTrackers = meta['show-trackers'] === undefined ? true : (meta['show-trackers'] === true || meta['show-trackers'] === 'true');
-          const hasSpecies = meta['species'] && meta['species'].trim() !== "";
-
-          const effectsDataRaw = meta['effects-data'];
-          let effectsData: any[] = [];
-          try { effectsData = effectsDataRaw ? (typeof effectsDataRaw === 'string' ? JSON.parse(effectsDataRaw) : effectsDataRaw) : []; } catch(e) {}
-          
-          const statusDataRaw = meta['status-list'];
-          let statusData: any[] = [];
-          try { statusData = statusDataRaw ? (typeof statusDataRaw === 'string' ? JSON.parse(statusDataRaw) : statusDataRaw) : []; } catch(e) {}
-
-          const standardTrackers = ["HP", "Will", "Actions", "DEF", "SP DEF", "Evade", "Clash"];
-          let activeDynamicNames = new Set<string>();
-
-          effectsData.forEach(e => { 
-              if (Number(e.rounds) > 0 && e.name?.trim()) activeDynamicNames.add(e.name.trim()); 
-          });
-          
-          // Capture all statuses that aren't "Healthy", regardless of rounds!
-          statusData.forEach(s => {
-              if (s.name !== "Healthy") {
-                  const sName = s.name === 'Custom...' ? s.customName : s.name;
-                  if (sName?.trim()) activeDynamicNames.add(sName.trim());
-              }
-          });
-
-          if (hasSpecies && showTrackers) {
-              
-              const evadeChecked = meta['evasions-used'] === true || meta['evasions-used'] === 'true';
-              const clashChecked = meta['clashes-used'] === true || meta['clashes-used'] === 'true';
-
-              trackers = trackers.filter(t => standardTrackers.includes(t.name) || activeDynamicNames.has(t.name));
-
-              const updateTracker = (name: string, variant: string, color: number, value?: any, checked?: boolean, max?: number) => {
-                  let tIndex = trackers.findIndex(x => x.name === name);
-                  
-                  if (tIndex !== -1 && trackers[tIndex].variant !== variant) {
-                      trackers.splice(tIndex, 1);
-                      tIndex = -1; 
-                  }
-
-                  if (tIndex !== -1) {
-                      let t = trackers[tIndex];
-                      t.variant = variant;
-                      
-                      if (value !== undefined) t.value = value;
-                      else delete t.value;
-                      
-                      if (checked !== undefined) t.checked = checked;
-                      else delete t.checked;
-                      
-                      if (max !== undefined) t.max = max;
-                      else delete t.max;
-                      
-                      if (variant === 'counter') t.inlineMath = false;
-                      else delete t.inlineMath;
-
-                  } else {
-                      let newT: any = { id: generateId(), name, variant, color };
-                      if (value !== undefined) newT.value = value;
-                      if (checked !== undefined) newT.checked = checked;
-                      if (max !== undefined) newT.max = max;
-                      if (variant === 'counter') newT.inlineMath = false;
-                      trackers.push(newT);
-                  }
-              };
-
-              updateTracker("Will", "value-max", 6, willCurr, undefined, willMax); // 6 = Teal
-              updateTracker("HP", "value-max", 2, hpCurr, undefined, hpMax); // 2 = Red
-              updateTracker("Actions", "counter", 6, actions); // 6 = Teal
-              updateTracker("DEF", "counter", 5, def); // 5 = Green
-              updateTracker("SP DEF", "counter", 1, spdef); // 1 = Magenta
-              updateTracker("Evade", "checkbox", 4, undefined, evadeChecked); // 4 = Yellow
-              updateTracker("Clash", "checkbox", 3, undefined, clashChecked); // 3 = Orange
-
-              // Effects (Timers) map to Light Blue (7)
-              effectsData.forEach(e => {
-                  if (Number(e.rounds) > 0 && e.name?.trim()) {
-                      updateTracker(e.name.trim(), "counter", 7, Number(e.rounds));
-                  }
-              });
-
-              // Statuses map dynamically! Counter if rounds > 0, Checkbox if rounds == 0
-              statusData.forEach(s => {
-                  if (s.name !== "Healthy") {
-                      const sName = s.name === 'Custom...' ? s.customName : s.name;
-                      if (sName?.trim()) {
-                          const rounds = Number(s.rounds) || 0;
-                          const color = getTrackerColor(s.name);
-                          if (rounds > 0) {
-                              updateTracker(sName.trim(), "counter", color, rounds);
-                          } else {
-                              updateTracker(sName.trim(), "checkbox", color, undefined, true);
-                          }
-                      }
-                  }
-              });
-
-              item.metadata["com.owl-trackers/trackers"] = trackers;
-          } else {
-              trackers = trackers.filter(t => !standardTrackers.includes(t.name) && !activeDynamicNames.has(t.name));
-              item.metadata["com.owl-trackers/trackers"] = trackers;
-          }
         }
       });
   }, 150); 
-}
-
-export async function repairTrackers() {
-    if (!currentTokenId || isLoading) return;
-    
-    await OBR.scene.items.updateItems([currentTokenId], (items: Item[]) => {
-        for (let item of items) {
-            let trackers = (item.metadata["com.owl-trackers/trackers"] as OwlTracker[]) || [];
-            trackers = trackers.filter(t => t.name !== "Evade" && t.name !== "Clash");
-            item.metadata["com.owl-trackers/trackers"] = trackers;
-        }
-    });
-
-    setTimeout(() => {
-        saveBatchDataToToken({ "_force_rebuild": Date.now() }); 
-    }, 300);
 }
 
 export async function saveMovesToToken(currentMoves: Move[]) {
@@ -220,7 +92,8 @@ export async function saveMovesToToken(currentMoves: Move[]) {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
       (item.metadata[METADATA_ID] as Record<string, any>)['moves-data'] = JSON.stringify(currentMoves);
-      lastKnownMetadataStr = JSON.stringify(item.metadata[METADATA_ID]);
+      lastKnownMetadata = { ...item.metadata[METADATA_ID] as Record<string, any> };
+      lastKnownMetadataStr = JSON.stringify(lastKnownMetadata);
     }
   });
 }
@@ -231,7 +104,8 @@ export async function saveSkillChecksToToken(currentSkillChecks: SkillCheck[]) {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
       (item.metadata[METADATA_ID] as Record<string, any>)['skill-checks-data'] = JSON.stringify(currentSkillChecks);
-      lastKnownMetadataStr = JSON.stringify(item.metadata[METADATA_ID]);
+      lastKnownMetadata = { ...item.metadata[METADATA_ID] as Record<string, any> };
+      lastKnownMetadataStr = JSON.stringify(lastKnownMetadata);
     }
   });
 }
@@ -242,7 +116,8 @@ export async function saveInventoryToToken(currentInventory: InventoryItem[]) {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
       (item.metadata[METADATA_ID] as Record<string, any>)['inv-data'] = JSON.stringify(currentInventory);
-      lastKnownMetadataStr = JSON.stringify(item.metadata[METADATA_ID]);
+      lastKnownMetadata = { ...item.metadata[METADATA_ID] as Record<string, any> };
+      lastKnownMetadataStr = JSON.stringify(lastKnownMetadata);
     }
   });
 }
@@ -253,13 +128,47 @@ export async function saveExtraSkillsToToken(currentExtraCategories: ExtraCatego
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
       (item.metadata[METADATA_ID] as Record<string, any>)['extra-skills-data'] = JSON.stringify(currentExtraCategories);
-      lastKnownMetadataStr = JSON.stringify(item.metadata[METADATA_ID]);
+      lastKnownMetadata = { ...item.metadata[METADATA_ID] as Record<string, any> };
+      lastKnownMetadataStr = JSON.stringify(lastKnownMetadata);
     }
   });
 }
 
 export function setupOBR(onTokenLoad: (tokenId: string) => void) {
     OBR.onReady(async () => {
+        
+        // --- BULLETPROOF INITIAL RENDER PIPELINE ---
+        const renderAllTokens = async () => {
+            try {
+                const allItems = await OBR.scene.items.getItems();
+                for (const item of allItems) {
+                    if (item.layer === "CHARACTER" && item.metadata[METADATA_ID]) {
+                        const meta = item.metadata[METADATA_ID] as Record<string, any>;
+                        knownTransforms[item.id] = { x: item.scale.x, y: item.scale.y, r: item.rotation, metaStr: JSON.stringify(meta) };
+                        
+                        // We await this so the OBR local engine isn't slammed with 20 parallel requests!
+                        await updateTokenGraphics(item, buildGraphicsDataFromMetadata(meta));
+                    }
+                }
+            } catch (e) {
+                console.error("Error rendering tokens on load:", e);
+            }
+        };
+
+        // 1. Check if the scene is ALREADY ready (happens on quick reloads)
+        const isReady = await OBR.scene.isReady();
+        if (isReady) {
+            await renderAllTokens();
+        }
+
+        // 2. Listen for the scene BECOMING ready (happens on initial load or map changes)
+        OBR.scene.onReadyChange(async (ready) => {
+            if (ready) {
+                await renderAllTokens();
+            }
+        });
+
+        // --- STANDARD LISTENERS ---
         const selected = await OBR.player.getSelection();
         if (selected && selected.length > 0) {
             setTokenId(selected[0]);
@@ -275,18 +184,65 @@ export function setupOBR(onTokenLoad: (tokenId: string) => void) {
             }
         });
 
-        OBR.scene.items.onChange((items: Item[]) => {
-            if (!currentTokenId) return;
-            const currentItem = items.find(i => i.id === currentTokenId);
-            if (currentItem) {
-                const newMeta = currentItem.metadata[METADATA_ID] || {};
-                const newMetaStr = JSON.stringify(newMeta);
-                if (newMetaStr !== lastKnownMetadataStr && !isLoading) {
-                    onTokenLoad(currentTokenId);
+        OBR.scene.items.onChange(async (items: Item[]) => {
+            for (const item of items) {
+                if (item.layer === "CHARACTER" && item.metadata[METADATA_ID]) {
+                    const meta = item.metadata[METADATA_ID] as Record<string, any> || {};
+                    
+                    const lastTransform = knownTransforms[item.id];
+                    const rawX = item.scale.x;
+                    const rawY = item.scale.y;
+                    const rawR = item.rotation;
+                    const metaStr = JSON.stringify(meta);
+
+                    let needsGraphicsUpdate = false;
+
+                    if (!lastTransform) {
+                        knownTransforms[item.id] = { x: rawX, y: rawY, r: rawR, metaStr };
+                        needsGraphicsUpdate = true;
+                    } else {
+                        const diffX = Math.abs(lastTransform.x - rawX);
+                        const diffY = Math.abs(lastTransform.y - rawY);
+                        const diffR = Math.abs(lastTransform.r - rawR);
+                        
+                        if (diffX > 0.005 || diffY > 0.005 || diffR > 0.005 || lastTransform.metaStr !== metaStr) {
+                            knownTransforms[item.id] = { x: rawX, y: rawY, r: rawR, metaStr };
+                            needsGraphicsUpdate = true;
+                        }
+                    }
+
+                    if (needsGraphicsUpdate) {
+                        const gData = buildGraphicsDataFromMetadata(meta);
+                        // Do NOT await inside high-frequency drag events to prevent input lag!
+                        updateTokenGraphics(item, gData); 
+                    }
+
+                    if (currentTokenId && item.id === currentTokenId) {
+                        let isDiff = false;
+                        const oldKeys = Object.keys(lastKnownMetadata);
+                        const newKeys = Object.keys(meta);
+                        if (oldKeys.length !== newKeys.length) {
+                            isDiff = true;
+                        } else {
+                            for (const k of newKeys) {
+                                if (String(meta[k]) !== String(lastKnownMetadata[k])) { 
+                                    isDiff = true; 
+                                    break; 
+                                }
+                            }
+                        }
+
+                        if (isDiff && !isLoading) {
+                            lastKnownMetadata = { ...meta };
+                            lastKnownMetadataStr = JSON.stringify(meta);
+                            onTokenLoad(currentTokenId);
+                        }
+                    }
                 }
             }
         });
 
+        // --- NEW: GENERIC SUCCESS/FAIL NOTIFICATION CATCHER ---
         OBR.broadcast.onMessage(`${MY_EXTENSION_ID}/roll-result`, async (event) => {
             const data = event.data as DicePlusData;
             const myId = await OBR.player.getId();
@@ -310,6 +266,14 @@ export function setupOBR(onTokenLoad: (tokenId: string) => void) {
                             };
                         }
                     });
+                }
+            } 
+            else if (data.rollId && (data.rollId.startsWith("roll_") || data.rollId.startsWith("chance_")) && data.result) {
+                const val = parseInt(String(data.result.totalValue)) || 0;
+                if (val > 0) {
+                    OBR.notification.show(`✅ Result: ${val} Success${val > 1 ? 'es' : ''}!`);
+                } else {
+                    OBR.notification.show(`❌ Result: Failure! (0)`);
                 }
             }
         });

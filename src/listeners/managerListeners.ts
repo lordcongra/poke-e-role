@@ -2,8 +2,8 @@ import OBR from "@owlbear-rodeo/sdk";
 import { generateId } from '../utils';
 import { calculateStats } from '../math';
 import { sheetView } from '../view';
-import { renderStatuses, renderEffects, renderCustomInfo, renderInventory, updateInventoryUI } from '../ui';
-import { saveBatchDataToToken, saveMovesToToken, saveInventoryToToken, saveExtraSkillsToToken, saveSkillChecksToToken, repairTrackers } from '../obr';
+import { renderStatuses, renderEffects, renderCustomInfo, renderInventory, updateInventoryUI, setupTagBuilder } from '../ui';
+import { saveBatchDataToToken, saveMovesToToken, saveInventoryToToken, saveExtraSkillsToToken, saveSkillChecksToToken } from '../obr';
 import { appState, syncDerivedStats, saveDataToToken } from '../state';
 import { rollStatus } from '../combat';
 import { reRenderMoves, reRenderSkillChecks } from '../sync';
@@ -61,7 +61,6 @@ export function setupManagerListeners() {
             setTimeout(() => {
                 calculateStats(appState.currentExtraCategories, appState.currentMoves, appState.currentInventory);
                 syncDerivedStats();
-                repairTrackers();
                 updateHealthBars();
             }, 50);
         });
@@ -72,7 +71,6 @@ export function setupManagerListeners() {
                     updateInventoryUI(appState.currentInventory);
                     calculateStats(appState.currentExtraCategories, appState.currentMoves, appState.currentInventory);
                     syncDerivedStats();
-                    repairTrackers();
                     updateHealthBars();
                 }, 50);
             }
@@ -107,7 +105,6 @@ export function setupManagerListeners() {
                 { id: categoryId + "_3", name: "", base: 0, buff: 0 }, { id: categoryId + "_4", name: "", base: 0, buff: 0 }
             ]
         });
-        // We trigger a re-render by saving and reloading via the view lifecycle in sync
         saveExtraSkillsToToken(appState.currentExtraCategories);
         setTimeout(() => window.location.reload(), 100);
     });
@@ -207,4 +204,7 @@ export function setupManagerListeners() {
         
         OBR.notification.show("🏕️ Long Rest complete! HP, Will, and Statuses restored.");
     });
+
+    // Boot up the corrected Tag Builder logic!
+    setupTagBuilder(saveInventoryToToken, renderInventory);
 }

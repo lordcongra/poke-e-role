@@ -4,7 +4,7 @@ import { calculateStats } from '../math';
 import { fetchPokemonData, fetchAbilityData, populateLearnset, ALL_ABILITIES } from '../api';
 import { sheetView } from '../view';
 import { updateSheetTypeUI, applyTypeStyle, renderTypeMatchups } from '../ui';
-import { saveBatchDataToToken, repairTrackers } from '../obr';
+import { saveBatchDataToToken } from '../obr';
 import { appState, syncDerivedStats, saveDataToToken } from '../state';
 import { reRenderMoves } from '../sync';
 import { updateHealthBars } from '../listeners/uiListeners';
@@ -96,10 +96,23 @@ export function handleFormSwap() {
         const abilityList = document.getElementById('ability-list');
         if (abilityList) {
             abilityList.innerHTML = '';
+            const nativeNames: string[] = [];
+            
             String(loadedData['ability-list']).split(',').forEach((ab: string) => {
                 if(ab.trim()) {
+                    const cleanName = ab.replace(" (HA)", "").trim();
+                    nativeNames.push(cleanName.toLowerCase());
                     const opt = document.createElement('option');
-                    opt.value = ab.trim();
+                    opt.value = cleanName;
+                    opt.text = `${cleanName} (${ab.includes("(HA)") ? "Hidden Ability" : "Native Ability"})`;
+                    abilityList.appendChild(opt);
+                }
+            });
+            
+            ALL_ABILITIES.forEach(abName => {
+                if (!nativeNames.includes(abName.toLowerCase())) {
+                    const opt = document.createElement('option');
+                    opt.value = abName;
                     abilityList.appendChild(opt);
                 }
             });
@@ -115,7 +128,6 @@ export function handleFormSwap() {
 
     calculateStats(appState.currentExtraCategories, appState.currentMoves, appState.currentInventory);
     syncDerivedStats();
-    repairTrackers();
     updateHealthBars();
 }
 
@@ -296,8 +308,10 @@ export async function handleSpeciesChange() {
     const nativeNames = abilities.map(a => a.replace(" (HA)", "").toLowerCase());
 
     abilities.forEach((ab: string) => {
+        const cleanName = ab.replace(" (HA)", "");
         const opt = document.createElement('option');
-        opt.value = ab.replace(" (HA)", "");
+        opt.value = cleanName;
+        opt.text = `${cleanName} (${ab.includes("(HA)") ? "Hidden Ability" : "Native Ability"})`;
         if (abilityList) abilityList.appendChild(opt);
     });
 
@@ -378,7 +392,6 @@ export async function handleSpeciesChange() {
         calculateStats(appState.currentExtraCategories, appState.currentMoves, appState.currentInventory);
         saveBatchDataToToken(batchUpdates); 
         syncDerivedStats();
-        repairTrackers();
         updateHealthBars();
     };
 
@@ -458,8 +471,10 @@ export async function handleRefreshData(btn: HTMLButtonElement) {
             const nativeNames = abilities.map(a => a.replace(" (HA)", "").toLowerCase());
 
             abilities.forEach((ab: string) => {
+                const cleanName = ab.replace(" (HA)", "");
                 const opt = document.createElement('option');
-                opt.value = ab.replace(" (HA)", "");
+                opt.value = cleanName;
+                opt.text = `${cleanName} (${ab.includes("(HA)") ? "Hidden Ability" : "Native Ability"})`;
                 if (abilityList) abilityList.appendChild(opt);
             });
 
@@ -499,7 +514,6 @@ export async function handleRefreshData(btn: HTMLButtonElement) {
     
     saveBatchDataToToken(batchUpdates); 
     syncDerivedStats(); 
-    repairTrackers(); 
     updateHealthBars();
     
     btn.innerText = "✅ Done!";

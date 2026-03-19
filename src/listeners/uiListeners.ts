@@ -38,6 +38,17 @@ export function setupUIListeners() {
         localStorage.setItem('pokerole-theme', newTheme);
     });
 
+    // --- TRACKER SETTINGS MODAL ---
+    document.getElementById('tracker-settings-btn')?.addEventListener('click', () => {
+        const modal = document.getElementById('tracker-settings-modal');
+        if (modal) modal.style.display = 'flex';
+    });
+
+    document.getElementById('tracker-settings-close')?.addEventListener('click', () => {
+        const modal = document.getElementById('tracker-settings-modal');
+        if (modal) modal.style.display = 'none';
+    });
+
     // --- SMART TAGS & INFO MODAL ---
     document.getElementById('tags-guide-btn')?.addEventListener('click', () => {
         const modal = document.getElementById('tags-modal');
