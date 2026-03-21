@@ -11,12 +11,20 @@ export function buildMoveRow(tr: HTMLTableRowElement, move: Move, index: number,
     const td1 = createEl('td', { className: 'data-table__cell--middle' }, [createEl('div', { className: 'flex-layout--row-center' }, [accSpan, accBtn])]);
 
     const nameInp = createEl('input', { type: 'text', className: 'move-input form-input--transparent', list: 'move-list', value: move.name, placeholder: 'Move Name', title: move.desc || 'Enter move name to fetch data...', dataset: { field: 'name', id: move.id }});
-    const infoBtn = createEl('button', { type: 'button', className: 'action-button action-button--transparent-white', innerText: '❔', style: 'color: var(--primary); padding: 0 2px; font-size: 0.8rem;', title: 'Read Description' });
+    
+    // --- UPDATED EDIT BUTTON ---
+    const infoBtn = createEl('button', { type: 'button', className: 'action-button action-button--transparent-white', innerText: '📝', style: 'color: var(--primary); padding: 0 2px; font-size: 0.8rem;', title: 'Edit Move & Tags' });
     infoBtn.onclick = () => {
-        const modal = document.getElementById('info-modal');
+        const modal = document.getElementById('move-edit-modal');
         if (modal) {
-            document.getElementById('info-modal-title')!.innerText = move.name || "Unknown Move";
-            document.getElementById('info-modal-desc')!.innerText = move.desc || "No description available.";
+            document.getElementById('move-edit-title')!.innerText = move.name || "Unknown Move";
+            (document.getElementById('move-edit-desc') as HTMLTextAreaElement).value = move.desc || "";
+            
+            const saveBtn = document.getElementById('move-edit-save-btn') as HTMLButtonElement;
+            const tagsBtn = document.getElementById('move-edit-tags-btn') as HTMLButtonElement;
+            saveBtn.dataset.moveid = move.id;
+            tagsBtn.dataset.moveid = move.id;
+            
             modal.style.display = 'flex';
         }
     };

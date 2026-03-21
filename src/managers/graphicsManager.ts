@@ -54,29 +54,22 @@ export function buildGraphicsDataFromMetadata(meta: Record<string, any>): Graphi
         clashUsed: meta['clashes-used'] === true || meta['clashes-used'] === 'true',
         
         showTrackers: meta['show-trackers'] !== false && meta['show-trackers'] !== 'false',
-        
         showHpBar: meta['setting-hp-bar'] !== false && meta['setting-hp-bar'] !== 'false',
         gmHpBar: meta['gm-hp-bar'] === true || meta['gm-hp-bar'] === 'true',
-
         showHpText: meta['setting-hp-text'] !== false && meta['setting-hp-text'] !== 'false',
         gmHpText: meta['gm-hp-text'] === true || meta['gm-hp-text'] === 'true',
-
         showWillBar: meta['setting-will-bar'] !== false && meta['setting-will-bar'] !== 'false',
         gmWillBar: meta['gm-will-bar'] === true || meta['gm-will-bar'] === 'true',
-
         showWillText: meta['setting-will-text'] !== false && meta['setting-will-text'] !== 'false',
         gmWillText: meta['gm-will-text'] === true || meta['gm-will-text'] === 'true',
-
         showDef: meta['setting-def-badge'] !== false && meta['setting-def-badge'] !== 'false',
         gmDef: meta['gm-def-badge'] === true || meta['gm-def-badge'] === 'true',
-
         showEco: meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false',
         gmEco: meta['gm-eco-badge'] === true || meta['gm-eco-badge'] === 'true',
 
         colorAct: meta['color-act'] || DEFAULT_COLOR_ACT,
         colorEva: meta['color-eva'] || DEFAULT_COLOR_EVA,
         colorCla: meta['color-cla'] || DEFAULT_COLOR_CLA,
-
         yOffset: Number(meta['y-offset']) || 0,
     };
 }
@@ -93,8 +86,6 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
     const tokenId = token.id;
 
     const meta = (token.metadata[STATS_META_ID] as Record<string, any>) || {};
-    
-    // Strict String cast to prevent crash if legacy metadata is corrupted!
     const species = String(meta['species'] || '');
     const hasSpecies = species.trim() !== '';
 
@@ -117,7 +108,6 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
 
     const s = Math.abs(token.scale.x || 1); 
 
-    // --- NEW THINNER BAR WIDTH ---
     const barWidth = 112 * s; 
     const startX = -barWidth / 2; 
     
@@ -127,7 +117,6 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
 
     const graphicsDef: Record<string, GraphicDef> = {};
 
-    // --- HEALTH BAR ---
     if (data.showHpBar) {
         const vis = !data.gmHpBar;
         graphicsDef['hp-shadow'] = { type: 'CURVE', points: [{x: startX+(1.5*s), y: hpY+(2*s)}, {x: startX + barWidth+(1.5*s), y: hpY+(2*s)}], color: '#000000', strokeOpacity: 0.4, width: 14*s, closed: false, fillOpacity: 0, z: 0, visible: vis };
@@ -142,7 +131,6 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
         graphicsDef['hp-text'] = { type: 'TEXT', text: `${data.hpCurr}/${data.hpMax}`, x: -barWidth/2, y: hpY - (15*s), width: barWidth, height: 30*s, align: "CENTER", vAlign: "MIDDLE", size: 11*s, weight: 800, stroke: 0, color: '#FFFFFF', fontFamily: "Arial, sans-serif", z: 5, visible: !data.gmHpText };
     }
 
-    // --- WILL BAR ---
     if (data.showWillBar) {
         const vis = !data.gmWillBar;
         graphicsDef['will-shadow'] = { type: 'CURVE', points: [{x: startX+(1.5*s), y: willY+(2*s)}, {x: startX + barWidth+(1.5*s), y: willY+(2*s)}], color: '#000000', strokeOpacity: 0.4, width: 14*s, closed: false, fillOpacity: 0, z: 0, visible: vis };
@@ -157,7 +145,6 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
         graphicsDef['will-text'] = { type: 'TEXT', text: `${data.willCurr}/${data.willMax}`, x: -barWidth/2, y: willY - (15*s), width: barWidth, height: 30*s, align: "CENTER", vAlign: "MIDDLE", size: 11*s, weight: 800, stroke: 0, color: '#FFFFFF', fontFamily: "Arial, sans-serif", z: 5, visible: !data.gmWillText };
     }
 
-    // --- DEFENSE & SP. DEFENSE ---
     if (data.showDef) {
         const vis = !data.gmDef;
         const defSpdY = hpY - (18*s); 
@@ -179,29 +166,20 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
         graphicsDef['spd-text'] = { type: 'TEXT', text: String(data.spd), x: sTxtX, y: dTxtY, width: 20*s, height: 20*s, align: "CENTER", vAlign: "MIDDLE", size: 12*s, weight: 700, stroke: 0, color: '#FFFFFF', fontFamily: "Arial, sans-serif", z: 5, visible: vis };
     }
 
-    // --- ACTIONS, EVADE, CLASH ---
     if (data.showEco) {
         const badgeCenterY = willY + (18 * s); 
         const vis = !data.gmEco;
 
-        // --- NEW SMALLER BADGE SIZES ---
         const badgeWidth = 16 * s; 
         const badgeHeight = 16 * s; 
         const standardSpacing = badgeWidth + (3 * s); 
         
-        // The HP outline has a stroke-width of 14*s. OBR uses rounded linecaps,
-        // so the visual edge extends exactly 7*s past the startX coordinate.
         const visualLeftEdge = startX - (7 * s); 
-        
-        // Align left edge of the action badge exactly to the visual left edge of the narrower HP bar
         const cx_act = visualLeftEdge + (badgeWidth / 2);
-        
-        // Anchor Clash so its RIGHT edge touches the exact center line (X = 0)
         const cx_cla = 0 - (badgeWidth / 2);
-        
-        // Evade sits immediately to the left of Clash
         const cx_eva = cx_cla - standardSpacing;
 
+        // --- RESTORED UNICODE CIRCLES AND CHECKMARKS ---
         const badges = [
             { id: 'badge-act', val: data.actions, color: data.colorAct, cx: cx_act },
             { id: 'badge-eva', val: data.evadeUsed ? '✓' : '◯', color: data.colorEva, cx: cx_eva },
@@ -216,9 +194,8 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
             const textXOffset = 0.3 * s; 
             let textYOffset = 0;
 
-            // Tweaked vertical alignments to perfectly fit the new 16px bubbles
             if (typeof b.val === 'number') textYOffset = -0.5 * s; 
-            else if (b.val === '◯') textYOffset = 1.0 * s; 
+            else if (b.val === '◯') textYOffset = 0.5 * s; 
             else if (b.val === '✓') textYOffset = 0.8 * s; 
 
             const finalTxtX = boxX + textXOffset;
@@ -230,7 +207,6 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
         });
     }
 
-    // --- RENDER LOGIC ---
     const itemsToDelete: string[] = [];
     const validExistingItems: Item[] = [];
 
@@ -260,7 +236,7 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
                 const curveObj = buildCurve()
                     .id(explicitId).name("").points(def.points).strokeColor(def.color).strokeWidth(def.width).fillOpacity(def.fillOpacity ?? 0).closed(def.closed).tension(0)
                     .position(token.position).attachedTo(tokenId).disableHit(true).locked(true).layer("ATTACHMENT").zIndex(def.z)
-                    .metadata({ [GRAPHICS_META_ID]: role }).visible(def.visible).build();
+                    .metadata({ [GRAPHICS_META_ID]: role }).visible(def.visible).build(); // Removed .scale() injection
                 
                 if (def.fillColor) curveObj.style.fillColor = def.fillColor;
                 curveObj.style.strokeOpacity = def.strokeOpacity ?? 1;
@@ -274,7 +250,7 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
                     .fillColor(def.color).fillOpacity(def.fillOpacity)
                     .id(explicitId).position({ x: token.position.x + def.x, y: token.position.y + def.y })
                     .attachedTo(tokenId).disableHit(true).locked(true).layer("ATTACHMENT").zIndex(def.z)
-                    .metadata({ [GRAPHICS_META_ID]: role, offsetX: def.x, offsetY: def.y }).visible(def.visible).build();
+                    .metadata({ [GRAPHICS_META_ID]: role, offsetX: def.x, offsetY: def.y }).visible(def.visible).build(); 
                 
                 shapeObj.style.strokeColor = def.strokeColor || 'transparent';
                 shapeObj.style.strokeWidth = def.strokeWidth || 0;
@@ -284,7 +260,7 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
                 itemsToCreate.push(shapeObj);
             } else if (def.type === 'TEXT') {
                 const txt = buildText().id(explicitId).name("").textType("PLAIN").plainText(def.text).position({ x: token.position.x + def.x, y: token.position.y + def.y }).width(def.width).height(def.height).textAlign(def.align).textAlignVertical(def.vAlign).attachedTo(tokenId).disableHit(true).locked(true).layer("ATTACHMENT").zIndex(def.z)
-                    .metadata({ [GRAPHICS_META_ID]: role, offsetX: def.x, offsetY: def.y }).visible(def.visible).build();
+                    .metadata({ [GRAPHICS_META_ID]: role, offsetX: def.x, offsetY: def.y }).visible(def.visible).build(); 
                 
                 txt.text.style.fontSize = def.size; txt.text.style.fontWeight = def.weight; txt.text.style.fillColor = def.color || "#FFFFFF"; txt.text.style.fillOpacity = 1; 
                 txt.text.style.strokeColor = "#000000"; 
@@ -316,11 +292,22 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
                     item.disableAttachmentBehavior = SEVERED_BEHAVIORS;
                 }
 
+                // --- REPAIR BROKEN TOKENS ---
+                // If a token was saved with the bad negative scale logic from the previous iteration,
+                // this forces it back to 1 so the Unicode characters render properly again!
+                if (item.scale.x !== 1 || item.scale.y !== 1) {
+                    item.scale = { x: 1, y: 1 };
+                }
+
                 if (item.visible !== def.visible) item.visible = def.visible;
 
                 if (def.type === 'CURVE') {
                     const curve = item as Curve;
                     
+                    if (!almostEqual(curve.position.x, token.position.x) || !almostEqual(curve.position.y, token.position.y)) {
+                        curve.position = { x: token.position.x, y: token.position.y };
+                    }
+
                     let pointsDiff = false;
                     if (curve.points.length !== def.points.length) {
                         pointsDiff = true;
@@ -347,12 +334,10 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
                 } else if (def.type === 'SHAPE') {
                     const shape = item as OBRShape;
                     
-                    const oldX = item.metadata.offsetX as number;
-                    const oldY = item.metadata.offsetY as number;
-                    if (!almostEqual(oldX, def.x) || !almostEqual(oldY, def.y)) {
-                        item.metadata.offsetX = def.x;
-                        item.metadata.offsetY = def.y;
-                        shape.position = { x: token.position.x + def.x, y: token.position.y + def.y };
+                    const targetX = token.position.x + def.x;
+                    const targetY = token.position.y + def.y;
+                    if (!almostEqual(shape.position.x, targetX) || !almostEqual(shape.position.y, targetY)) {
+                        shape.position = { x: targetX, y: targetY };
                     }
 
                     if (!almostEqual(shape.width, def.width)) shape.width = def.width;
@@ -372,12 +357,10 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
                 } else if (def.type === 'TEXT') {
                     const txt = item as OBRText;
                     
-                    const oldX = item.metadata.offsetX as number;
-                    const oldY = item.metadata.offsetY as number;
-                    if (!almostEqual(oldX, def.x) || !almostEqual(oldY, def.y)) {
-                        item.metadata.offsetX = def.x;
-                        item.metadata.offsetY = def.y;
-                        txt.position = { x: token.position.x + def.x, y: token.position.y + def.y };
+                    const targetX = token.position.x + def.x;
+                    const targetY = token.position.y + def.y;
+                    if (!almostEqual(txt.position.x, targetX) || !almostEqual(txt.position.y, targetY)) {
+                        txt.position = { x: targetX, y: targetY };
                     }
 
                     if (txt.text.plainText !== def.text) txt.text.plainText = def.text;

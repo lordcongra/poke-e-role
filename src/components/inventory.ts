@@ -2,6 +2,7 @@ import type { InventoryItem } from '../@types/index';
 import { createEl, setupSpinners } from './dom';
 import { fetchItemData } from '../api';
 import { appState, saveDataToToken } from '../state';
+import { saveMovesToToken } from '../obr';
 import { generateId } from '../utils';
 import { renderStatuses } from './status';
 import { rollStatus } from '../combat';
@@ -33,6 +34,36 @@ export const HARDCODED_TAGS: Record<string, string> = {
     "light ball": "[Str +1] [Spe +1]",
     "quick claw": "[Init +2]"
 };
+
+// --- NEW ISOLATED TAG BUILDER LAUNCHER ---
+export function openTagBuilder(targetId: string, targetType: 'item' | 'move') {
+    const modal = document.getElementById('tag-builder-modal');
+    const confirmBtn = document.getElementById('tag-builder-confirm');
+    const catSelect = document.getElementById('tag-builder-category') as HTMLSelectElement;
+    
+    if (!modal || !confirmBtn || !catSelect) return;
+
+    confirmBtn.dataset.itemid = targetId;
+    confirmBtn.dataset.targettype = targetType;
+
+    // Dynamically build categories based on what we are targeting!
+    catSelect.innerHTML = '';
+    if (targetType === 'move') {
+        catSelect.appendChild(new Option('Move Mechanic', 'move_mechanics'));
+    } else {
+        catSelect.innerHTML = `
+            <option value="stat">Stat Modifier</option>
+            <option value="skill">Skill Modifier</option>
+            <option value="combat">Combat Boost</option>
+            <option value="matchup">Matchup</option>
+            <option value="mechanic">Mechanic</option>
+            <option value="status">Status Condition</option>
+        `;
+    }
+    
+    catSelect.dispatchEvent(new Event('change'));
+    modal.style.display = 'flex';
+}
 
 export function buildInventoryRow(tr: HTMLTableRowElement, item: InventoryItem, index: number) {
     const actInp = createEl('input', { type: 'checkbox', className: 'inv-input', checked: item.active ? true : false, dataset: { field: 'active', id: item.id }, style: 'cursor:pointer; transform: scale(1.1);' });
@@ -66,12 +97,7 @@ export function buildInventoryRow(tr: HTMLTableRowElement, item: InventoryItem, 
     
     const tagBtn = createEl('button', { type: 'button', className: 'action-button action-button--transparent-white', innerText: '🏷️', style: 'padding: 2px 6px; font-size: 1.1rem;', title: 'Tag Builder' });
     tagBtn.onclick = () => {
-        const modal = document.getElementById('tag-builder-modal');
-        const confirmBtn = document.getElementById('tag-builder-confirm');
-        if (modal && confirmBtn) {
-            confirmBtn.dataset.itemid = item.id;
-            modal.style.display = 'flex';
-        }
+        openTagBuilder(item.id, 'item');
     };
 
     const td2 = createEl('td', { className: 'data-table__cell--top' }, [createEl('div', { style: 'display: flex; align-items: center;' }, [nameInp, infoBtn, tagBtn])]);
@@ -139,7 +165,6 @@ export function renderInventory(currentInventory: InventoryItem[], saveInventory
                 } else if (field === 'active') {
                     item[field] = target.checked as never; 
                     
-                    // --- AUTO STATUS INJECTION LOGIC ---
                     const desc = (item.desc || "").toLowerCase();
                     const statusMatches = Array.from(desc.matchAll(/\[status:\s*([a-zA-Z0-9\s]+)\]/gi));
                     
@@ -224,6 +249,30 @@ export function renderInventory(currentInventory: InventoryItem[], saveInventory
 }
 
 export function setupTagBuilder(saveInventoryToToken: (inv: InventoryItem[]) => void, renderInventoryFn: Function) {
+    
+    document.getElementById('move-edit-cancel-btn')?.addEventListener('click', () => {
+        const modal = document.getElementById('move-edit-modal');
+        if (modal) modal.style.display = 'none';
+    });
+
+    document.getElementById('move-edit-save-btn')?.addEventListener('click', (e) => {
+        const btn = e.currentTarget as HTMLButtonElement;
+        const moveId = btn.dataset.moveid;
+        const move = appState.currentMoves.find(m => m.id === moveId);
+        if (move) {
+            move.desc = (document.getElementById('move-edit-desc') as HTMLTextAreaElement).value;
+            saveMovesToToken(appState.currentMoves);
+        }
+        document.getElementById('move-edit-modal')!.style.display = 'none';
+    });
+
+    document.getElementById('move-edit-tags-btn')?.addEventListener('click', (e) => {
+        const btn = e.currentTarget as HTMLButtonElement;
+        if (btn.dataset.moveid) {
+            openTagBuilder(btn.dataset.moveid, 'move');
+        }
+    });
+
     const catSelect = document.getElementById('tag-builder-category') as HTMLSelectElement;
     const targetSelect = document.getElementById('tag-builder-target') as HTMLSelectElement;
     const typeSelect = document.getElementById('tag-builder-type') as HTMLSelectElement;
@@ -279,6 +328,13 @@ export function setupTagBuilder(saveInventoryToToken: (inv: InventoryItem[]) => 
             ['1st Degree Burn', '2nd Degree Burn', '3rd Degree Burn', 'Poison', 'Badly Poisoned', 'Paralysis', 'Sleep', 'Frozen Solid', 'Confusion', 'In Love', 'Flinch'].forEach(s => targetSelect.appendChild(new Option(s, s)));
             valueContainer.style.display = 'none';
             typeSelect.style.display = 'none';
+        } else if (cat === 'move_mechanics') {
+            // --- STRICTLY ISOLATED OPTIONS FOR MOVES ---
+            ['High Critical', 'Low Accuracy', 'Never Miss', 'Recoil', 'Successive Actions', 'Set Damage'].forEach(s => targetSelect.appendChild(new Option(s, s)));
+            targetSelect.onchange = () => {
+                valueContainer.style.display = (targetSelect.value === 'Low Accuracy' || targetSelect.value === 'Set Damage') ? 'flex' : 'none';
+            };
+            targetSelect.onchange(new Event('change'));
         }
     };
 
@@ -286,11 +342,8 @@ export function setupTagBuilder(saveInventoryToToken: (inv: InventoryItem[]) => 
     cancelBtn.addEventListener('click', () => { modal.style.display = 'none'; });
 
     confirmBtn.addEventListener('click', () => {
-        const itemId = confirmBtn.dataset.itemid;
-        const liveInventory = appState.currentInventory; 
-        const item = liveInventory.find(i => i.id === itemId);
-        
-        if (!item) return;
+        const targetId = confirmBtn.dataset.itemid;
+        const targetType = confirmBtn.dataset.targettype || 'item';
 
         let tag = "";
         const cat = catSelect.value;
@@ -316,17 +369,38 @@ export function setupTagBuilder(saveInventoryToToken: (inv: InventoryItem[]) => 
             else if (tgt === 'Ignore Low Acc') tag = `[Ignore Low Acc ${Math.abs(val)}]`;
         } else if (cat === 'status') {
             tag = `[Status: ${tgt}]`;
+        } else if (cat === 'move_mechanics') {
+            // Generates exact string formats that combat.ts is natively looking for!
+            if (tgt === 'High Critical') tag = `[High Critical]`;
+            else if (tgt === 'Low Accuracy') tag = `[Low Accuracy ${Math.abs(val)}]`;
+            else if (tgt === 'Never Miss') tag = `[Never Miss]`;
+            else if (tgt === 'Recoil') tag = `[Recoil]`;
+            else if (tgt === 'Successive Actions') tag = `[Successive Actions]`;
+            else if (tgt === 'Set Damage') tag = `[Set Damage ${Math.abs(val)}]`;
         }
 
         if (tag) {
-            item.desc = item.desc ? `${item.desc} ${tag}`.trim() : tag;
-            saveInventoryToToken(liveInventory);
-            renderInventoryFn(liveInventory, saveInventoryToToken);
-            
-            const descEl = document.querySelector(`.inv-input[data-field="desc"][data-id="${item.id}"]`) as HTMLTextAreaElement;
-            if (descEl) {
-                descEl.value = item.desc;
-                descEl.dispatchEvent(new Event('change', { bubbles: true }));
+            if (targetType === 'move') {
+                const move = appState.currentMoves.find(m => m.id === targetId);
+                if (move) {
+                    move.desc = move.desc ? `${move.desc} ${tag}`.trim() : tag;
+                    saveMovesToToken(appState.currentMoves);
+                    const editDesc = document.getElementById('move-edit-desc') as HTMLTextAreaElement;
+                    if (editDesc) editDesc.value = move.desc;
+                }
+            } else {
+                const liveInventory = appState.currentInventory; 
+                const item = liveInventory.find(i => i.id === targetId);
+                if (item) {
+                    item.desc = item.desc ? `${item.desc} ${tag}`.trim() : tag;
+                    saveInventoryToToken(liveInventory);
+                    renderInventoryFn(liveInventory, saveInventoryToToken);
+                    const descEl = document.querySelector(`.inv-input[data-field="desc"][data-id="${item.id}"]`) as HTMLTextAreaElement;
+                    if (descEl) {
+                        descEl.value = item.desc;
+                        descEl.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }
             }
         }
         modal.style.display = 'none';

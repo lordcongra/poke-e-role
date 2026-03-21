@@ -1,7 +1,7 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { ALL_SKILLS } from '../utils';
 import { calculateStats } from '../math';
-import { fetchPokemonData, fetchAbilityData, populateLearnset, ALL_ABILITIES } from '../api';
+import { fetchPokemonData, fetchAbilityData, fetchMoveData, populateLearnset, ALL_ABILITIES, MOVES_URLS } from '../api';
 import { sheetView } from '../view';
 import { updateSheetTypeUI, applyTypeStyle, renderTypeMatchups } from '../ui';
 import { saveBatchDataToToken } from '../obr';
@@ -444,6 +444,20 @@ export async function handleRefreshData(btn: HTMLButtonElement) {
 
     const pokemonName = sheetView.identity.species.value;
     const currentAbility = sheetView.identity.ability.value;
+
+    // --- NEW: MISSING DESCRIPTIONS AUTO-FETCHER ---
+    const movePromises = appState.currentMoves.map(async (move) => {
+        if (move.name && MOVES_URLS[move.name.toLowerCase()]) {
+            const moveData = await fetchMoveData(move.name.trim());
+            if (moveData) {
+                // Only overwrite if it is currently blank to protect homebrew tags!
+                if (!move.desc || move.desc.trim() === '') {
+                    move.desc = String(moveData.Effect || moveData.Description || "");
+                }
+            }
+        }
+    });
+    await Promise.all(movePromises);
 
     if (pokemonName) {
         const pokemonData = await fetchPokemonData(pokemonName);

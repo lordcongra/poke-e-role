@@ -92,6 +92,7 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 ### 📝 Custom Homebrew Fields
 * Click the `+ Add Custom Field` button at the top to inject custom labels and text inputs. Perfect for tracking campaign-specific mechanics or character traits.
+* **Renamable Skills:** Every base skill on the sheet (like Brawl, Evasion, or Charm) can be clicked and renamed to perfectly fit your table's custom rules or setting!
 
 ### 🔒 GM Tools
 * **Built-in NPC Toggle:** Mark a sheet as a "Private NPC" to instantly hide the sheet's contents from players, preventing meta-gaming during boss fights. *(Note: Players cannot see this button, preventing them from accidentally locking themselves out of their own sheets!)*
@@ -103,4 +104,4 @@ To install this extension into your Owlbear Rodeo room, copy the Manifest URL be
 
 `https://lordcongra.github.io/poke-e-role/manifest.json`
 
-*(Note: If the sheet updates, you can force Owlbear to fetch the newest version by adding a version tag to the end of the URL, like `?v=1.6.0`)*
+*(Note: If the sheet updates, you can force Owlbear to fetch the newest version by adding a version tag to the end of the URL, like `?v=1.6.1`)*
