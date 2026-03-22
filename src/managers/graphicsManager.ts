@@ -103,6 +103,8 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
         return;
     }
 
+    const isTokenVisible = token.visible !== false;
+
     const hpPct = Math.max(0, Math.min(1, data.hpCurr / Math.max(1, data.hpMax)));
     const willPct = Math.max(0, Math.min(1, data.willCurr / Math.max(1, data.willMax)));
 
@@ -118,7 +120,7 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
     const graphicsDef: Record<string, GraphicDef> = {};
 
     if (data.showHpBar) {
-        const vis = !data.gmHpBar;
+        const vis = !data.gmHpBar && isTokenVisible;
         graphicsDef['hp-shadow'] = { type: 'CURVE', points: [{x: startX+(1.5*s), y: hpY+(2*s)}, {x: startX + barWidth+(1.5*s), y: hpY+(2*s)}], color: '#000000', strokeOpacity: 0.4, width: 14*s, closed: false, fillOpacity: 0, z: 0, visible: vis };
         graphicsDef['hp-outline'] = { type: 'CURVE', points: [{x: startX, y: hpY}, {x: startX + barWidth, y: hpY}], color: '#FFFFFF', width: 14*s, closed: false, fillOpacity: 0, z: 1, visible: vis };
         graphicsDef['hp-bg'] = { type: 'CURVE', points: [{x: startX, y: hpY}, {x: startX + barWidth, y: hpY}], color: '#222222', width: 12*s, closed: false, fillOpacity: 0, z: 2, visible: vis };
@@ -128,11 +130,11 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
     }
     
     if (data.showHpText) {
-        graphicsDef['hp-text'] = { type: 'TEXT', text: `${data.hpCurr}/${data.hpMax}`, x: -barWidth/2, y: hpY - (15*s), width: barWidth, height: 30*s, align: "CENTER", vAlign: "MIDDLE", size: 11*s, weight: 800, stroke: 0, color: '#FFFFFF', fontFamily: "Arial, sans-serif", z: 5, visible: !data.gmHpText };
+        graphicsDef['hp-text'] = { type: 'TEXT', text: `${data.hpCurr}/${data.hpMax}`, x: -barWidth/2, y: hpY - (15*s), width: barWidth, height: 30*s, align: "CENTER", vAlign: "MIDDLE", size: 11*s, weight: 800, stroke: 0, color: '#FFFFFF', fontFamily: "Arial, sans-serif", z: 5, visible: !data.gmHpText && isTokenVisible };
     }
 
     if (data.showWillBar) {
-        const vis = !data.gmWillBar;
+        const vis = !data.gmWillBar && isTokenVisible;
         graphicsDef['will-shadow'] = { type: 'CURVE', points: [{x: startX+(1.5*s), y: willY+(2*s)}, {x: startX + barWidth+(1.5*s), y: willY+(2*s)}], color: '#000000', strokeOpacity: 0.4, width: 14*s, closed: false, fillOpacity: 0, z: 0, visible: vis };
         graphicsDef['will-outline'] = { type: 'CURVE', points: [{x: startX, y: willY}, {x: startX + barWidth, y: willY}], color: '#FFFFFF', width: 14*s, closed: false, fillOpacity: 0, z: 1, visible: vis };
         graphicsDef['will-bg'] = { type: 'CURVE', points: [{x: startX, y: willY}, {x: startX + barWidth, y: willY}], color: '#222222', width: 12*s, closed: false, fillOpacity: 0, z: 2, visible: vis };
@@ -142,11 +144,11 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
     }
 
     if (data.showWillText) {
-        graphicsDef['will-text'] = { type: 'TEXT', text: `${data.willCurr}/${data.willMax}`, x: -barWidth/2, y: willY - (15*s), width: barWidth, height: 30*s, align: "CENTER", vAlign: "MIDDLE", size: 11*s, weight: 800, stroke: 0, color: '#FFFFFF', fontFamily: "Arial, sans-serif", z: 5, visible: !data.gmWillText };
+        graphicsDef['will-text'] = { type: 'TEXT', text: `${data.willCurr}/${data.willMax}`, x: -barWidth/2, y: willY - (15*s), width: barWidth, height: 30*s, align: "CENTER", vAlign: "MIDDLE", size: 11*s, weight: 800, stroke: 0, color: '#FFFFFF', fontFamily: "Arial, sans-serif", z: 5, visible: !data.gmWillText && isTokenVisible };
     }
 
     if (data.showDef) {
-        const vis = !data.gmDef;
+        const vis = !data.gmDef && isTokenVisible;
         const defSpdY = hpY - (18*s); 
         const defSpdWidth = 24*s; 
         
@@ -168,7 +170,7 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
 
     if (data.showEco) {
         const badgeCenterY = willY + (18 * s); 
-        const vis = !data.gmEco;
+        const vis = !data.gmEco && isTokenVisible;
 
         const badgeWidth = 16 * s; 
         const badgeHeight = 16 * s; 
@@ -179,7 +181,6 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
         const cx_cla = 0 - (badgeWidth / 2);
         const cx_eva = cx_cla - standardSpacing;
 
-        // --- RESTORED UNICODE CIRCLES AND CHECKMARKS ---
         const badges = [
             { id: 'badge-act', val: data.actions, color: data.colorAct, cx: cx_act },
             { id: 'badge-eva', val: data.evadeUsed ? '✓' : '◯', color: data.colorEva, cx: cx_eva },
@@ -236,7 +237,7 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
                 const curveObj = buildCurve()
                     .id(explicitId).name("").points(def.points).strokeColor(def.color).strokeWidth(def.width).fillOpacity(def.fillOpacity ?? 0).closed(def.closed).tension(0)
                     .position(token.position).attachedTo(tokenId).disableHit(true).locked(true).layer("ATTACHMENT").zIndex(def.z)
-                    .metadata({ [GRAPHICS_META_ID]: role }).visible(def.visible).build(); // Removed .scale() injection
+                    .metadata({ [GRAPHICS_META_ID]: role }).visible(def.visible).build();
                 
                 if (def.fillColor) curveObj.style.fillColor = def.fillColor;
                 curveObj.style.strokeOpacity = def.strokeOpacity ?? 1;
@@ -292,9 +293,6 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
                     item.disableAttachmentBehavior = SEVERED_BEHAVIORS;
                 }
 
-                // --- REPAIR BROKEN TOKENS ---
-                // If a token was saved with the bad negative scale logic from the previous iteration,
-                // this forces it back to 1 so the Unicode characters render properly again!
                 if (item.scale.x !== 1 || item.scale.y !== 1) {
                     item.scale = { x: 1, y: 1 };
                 }
