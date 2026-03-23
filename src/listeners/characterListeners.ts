@@ -110,7 +110,8 @@ export function setupCharacterListeners() {
     sheetView.identity.roomRuleset.addEventListener('change', async (e) => {
         const val = (e.target as HTMLSelectElement).value;
         const meta = await OBR.room.getMetadata();
-        const roomMeta = (meta[ROOM_META_ID] as any) || {};
+        // FIX: Cast as Record<string, unknown> safely
+        const roomMeta = (meta[ROOM_META_ID] as Record<string, unknown>) || {};
         await OBR.room.setMetadata({ [ROOM_META_ID]: { ...roomMeta, ruleset: val } });
         calculateStats(appState.currentExtraCategories, appState.currentMoves, appState.currentInventory);
         syncDerivedStats();
@@ -120,10 +121,12 @@ export function setupCharacterListeners() {
     sheetView.identity.roomPain.addEventListener('change', async (e) => {
         const isEnabled = (e.target as HTMLSelectElement).value === 'true';
         const meta = await OBR.room.getMetadata();
-        const roomMeta = (meta[ROOM_META_ID] as any) || {};
+        // FIX: Cast as Record<string, unknown> safely
+        const roomMeta = (meta[ROOM_META_ID] as Record<string, unknown>) || {};
         await OBR.room.setMetadata({ [ROOM_META_ID]: { ...roomMeta, painEnabled: isEnabled } });
         calculateStats(appState.currentExtraCategories, appState.currentMoves, appState.currentInventory);
-        updatePainUI(sheetView);
+        // FIX: updatePainUI takes 0 arguments!
+        updatePainUI();
         syncDerivedStats();
         updateHealthBars();
     });

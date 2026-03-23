@@ -4,7 +4,7 @@ import { loadUrlLists } from './api';
 import { setupSpinners, renderStatuses, renderEffects, renderCustomInfo, renderTypeMatchups } from './ui';
 import { setupOBR } from './obr';
 import { appState, saveDataToToken } from './state';
-import { rollStatus, setupCombatListeners } from './combat';
+import { rollStatus } from './combat'; 
 import { calculateStats } from './math';
 import { sheetView } from './view';
 
@@ -14,8 +14,7 @@ import { setupEventListeners } from './listeners';
 // 1. Initialize UI and Local Lists
 loadUrlLists();
 setupSpinners();
-setupCombatListeners();
-setupEventListeners();
+setupEventListeners(); 
 
 renderStatuses(appState.currentStatuses, saveDataToToken, rollStatus); 
 renderEffects(appState.currentEffects, saveDataToToken);

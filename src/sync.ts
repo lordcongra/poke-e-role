@@ -27,12 +27,12 @@ export function reRenderSkillChecks() {
     renderSkillChecks(appState.currentSkillChecks, appState.currentExtraCategories, saveSkillChecksToToken, rollSkillCheck);
 }
 
-export function applyStatLimits(pokemonData: Record<string, any>) {
+export function applyStatLimits(pokemonData: Record<string, unknown>) {
     const getLimit = (stat: string) => {
         const val = pokemonData[`Max${stat}`] || pokemonData[`Max ${stat}`] || 
-            (pokemonData.MaxAttributes && pokemonData.MaxAttributes[stat]) || 
-            (pokemonData.MaxStats && pokemonData.MaxStats[stat]);
-        return val ? parseInt(val) : 5; 
+            ((pokemonData.MaxAttributes as Record<string, unknown>)?.[stat]) || 
+            ((pokemonData.MaxStats as Record<string, unknown>)?.[stat]);
+        return val ? parseInt(String(val)) : 5; 
     };
 
     const limits: Record<string, number> = {
@@ -43,7 +43,7 @@ export function applyStatLimits(pokemonData: Record<string, any>) {
         'ins-limit': getLimit("Insight")
     };
 
-    const updates: Record<string, any> = {};
+    const updates: Record<string, unknown> = {};
 
     for (const [id, val] of Object.entries(limits)) {
         const el = document.getElementById(id) as HTMLInputElement;
@@ -62,13 +62,13 @@ export async function loadDataFromToken(tokenId: string) {
       
       if (items.length > 0) {
         const token = items[0];
-        const data = (token.metadata[METADATA_ID] as Record<string, any>) || {};
+        const data = (token.metadata[METADATA_ID] as Record<string, unknown>) || {};
         
         appState.currentTokenData = data; 
         setLastMetadataStr(JSON.stringify(data)); 
 
         if (!data['type1'] && data['typing']) {
-            const parts = data['typing'].split('/');
+            const parts = String(data['typing']).split('/');
             data['type1'] = parts[0].trim();
             data['type2'] = parts.length > 1 ? parts[1].trim() : "None";
             appState.currentTokenData['type1'] = data['type1'];
@@ -81,7 +81,6 @@ export async function loadDataFromToken(tokenId: string) {
         const gmTools = document.getElementById('gm-tools');
         if (gmTools) gmTools.style.display = (role === 'GM') ? 'block' : 'none';
 
-        // --- SECURITY: Hide GM-Only Tracker Settings from Players ---
         const gmOnlySettings = document.querySelectorAll('.gm-only-setting');
         gmOnlySettings.forEach(el => {
             (el as HTMLElement).style.display = (role === 'GM') ? 'flex' : 'none';
@@ -90,7 +89,7 @@ export async function loadDataFromToken(tokenId: string) {
         if (role === 'PLAYER' && isNPC) {
             document.getElementById('app')!.style.display = 'none';
             document.getElementById('gm-lock-screen')!.style.display = 'block';
-            renderTypeMatchups(data['typing'] || ""); 
+            renderTypeMatchups(String(data['typing'] || "")); 
             return;
         } 
         
@@ -99,7 +98,7 @@ export async function loadDataFromToken(tokenId: string) {
         if (lockScreen) lockScreen.style.display = 'none';
         
         const sheetInputs = document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('.sheet-save');
-        const initialUpdates: Record<string, any> = {}; 
+        const initialUpdates: Record<string, unknown> = {}; 
 
         sheetInputs.forEach(element => {
           const isDynamic = ['move-input', 'check-input', 'inv-input', 'cat-name-input', 'extra-skill-name', 'extra-skill-base', 'extra-skill-buff', 'skill-label'].some((cls: string) => element.classList.contains(cls));
@@ -118,7 +117,7 @@ export async function loadDataFromToken(tokenId: string) {
                   const nativeNames: string[] = [];
                   
                   if (data['ability-list']) {
-                      data['ability-list'].split(',').forEach((ab: string) => {
+                      String(data['ability-list']).split(',').forEach((ab: string) => {
                           if (!ab.trim()) return;
                           const cleanName = ab.replace(" (HA)", "").trim();
                           nativeNames.push(cleanName.toLowerCase());
@@ -130,7 +129,6 @@ export async function loadDataFromToken(tokenId: string) {
                       });
                   }
                   
-                  // Append the rest of the alphabetical abilities
                   ALL_ABILITIES.forEach(abName => {
                       if (!nativeNames.includes(abName.toLowerCase())) {
                           const opt = document.createElement('option');
@@ -139,7 +137,7 @@ export async function loadDataFromToken(tokenId: string) {
                       }
                   });
               }
-              element.value = val;
+              element.value = String(val);
           }
           else if (element.type === 'checkbox') {
               const chk = element as HTMLInputElement;
@@ -147,7 +145,7 @@ export async function loadDataFromToken(tokenId: string) {
               else initialUpdates[id] = chk.checked;
           }
           else if (val !== undefined) {
-              element.value = val;
+              element.value = String(val);
           } 
           else if (element instanceof HTMLSelectElement) {
               element.value = element.querySelector('option[selected]')?.getAttribute('value') || element.options[0]?.value || '';
@@ -158,26 +156,26 @@ export async function loadDataFromToken(tokenId: string) {
               initialUpdates[id] = element.type === 'number' ? (parseFloat(element.value) || 0) : element.value; 
           }
 
-          if (id === 'type1') applyTypeStyle(element, val);
-          if (id === 'type2') applyTypeStyle(element, val === "None" ? "" : val);
+          if (id === 'type1') applyTypeStyle(element, String(val || ""));
+          if (id === 'type2') applyTypeStyle(element, val === "None" ? "" : String(val || ""));
         });
 
         const npcCheck = document.getElementById('is-npc') as HTMLInputElement;
         if (npcCheck) npcCheck.checked = isNPC;
         
-        sheetView.identity.nickname.value = data['nickname'] || token.name || "";
+        sheetView.identity.nickname.value = String(data['nickname'] || token.name || "");
 
-        if (data['sheet-type']) updateSheetTypeUI(data['sheet-type']);
+        if (data['sheet-type']) updateSheetTypeUI(String(data['sheet-type']));
 
-        try { appState.currentMoves = data['moves-data'] ? JSON.parse(data['moves-data']) : []; } catch(e) { appState.currentMoves = []; }
-        try { appState.currentSkillChecks = data['skill-checks-data'] ? JSON.parse(data['skill-checks-data']) : []; } catch(e) { appState.currentSkillChecks = []; }
-        try { appState.currentInventory = data['inv-data'] ? JSON.parse(data['inv-data']) : []; } catch(e) { appState.currentInventory = []; }
-        try { appState.currentExtraCategories = data['extra-skills-data'] ? JSON.parse(data['extra-skills-data']) : []; } catch(e) { appState.currentExtraCategories = []; }
-        try { appState.currentCustomInfo = data['custom-info-data'] ? JSON.parse(data['custom-info-data']) : []; } catch(e) { appState.currentCustomInfo = []; }
-        try { appState.currentEffects = data['effects-data'] ? JSON.parse(data['effects-data']) : []; } catch(e) { appState.currentEffects = []; }
+        try { appState.currentMoves = data['moves-data'] ? JSON.parse(String(data['moves-data'])) : []; } catch(e) { appState.currentMoves = []; }
+        try { appState.currentSkillChecks = data['skill-checks-data'] ? JSON.parse(String(data['skill-checks-data'])) : []; } catch(e) { appState.currentSkillChecks = []; }
+        try { appState.currentInventory = data['inv-data'] ? JSON.parse(String(data['inv-data'])) : []; } catch(e) { appState.currentInventory = []; }
+        try { appState.currentExtraCategories = data['extra-skills-data'] ? JSON.parse(String(data['extra-skills-data'])) : []; } catch(e) { appState.currentExtraCategories = []; }
+        try { appState.currentCustomInfo = data['custom-info-data'] ? JSON.parse(String(data['custom-info-data'])) : []; } catch(e) { appState.currentCustomInfo = []; }
+        try { appState.currentEffects = data['effects-data'] ? JSON.parse(String(data['effects-data'])) : []; } catch(e) { appState.currentEffects = []; }
 
         try { 
-            const parsedStatuses = data['status-list'] ? JSON.parse(data['status-list']) : [{ id: generateId(), name: "Healthy", customName: "", rounds: 0 }]; 
+            const parsedStatuses = data['status-list'] ? JSON.parse(String(data['status-list'])) : [{ id: generateId(), name: "Healthy", customName: "", rounds: 0 }]; 
             if (parsedStatuses.length > 0 && typeof parsedStatuses[0] === 'string') {
                 appState.currentStatuses = parsedStatuses.map((s: string) => ({ id: generateId(), name: s, customName: "", rounds: 0 }));
             } else {
@@ -196,16 +194,16 @@ export async function loadDataFromToken(tokenId: string) {
         renderEffects(appState.currentEffects, saveDataToToken);
         renderCustomInfo(appState.currentCustomInfo, saveDataToToken);
         
-        let combinedTyping = data['typing'] || "";
+        let combinedTyping = String(data['typing'] || "");
         if (!combinedTyping && data['type1']) {
-            combinedTyping = data['type2'] && data['type2'] !== "None" ? `${data['type1']} / ${data['type2']}` : data['type1'];
+            combinedTyping = data['type2'] && data['type2'] !== "None" ? `${data['type1']} / ${data['type2']}` : String(data['type1']);
             sheetView.identity.typing.value = combinedTyping;
         }
         renderTypeMatchups(combinedTyping); 
         
         calculateStats(appState.currentExtraCategories, appState.currentMoves, appState.currentInventory);
 
-        const currentSpeciesName = data['species'];
+        const currentSpeciesName = String(data['species'] || "");
         if (currentSpeciesName) {
             fetchPokemonData(currentSpeciesName).then(pokemonData => {
                 if (pokemonData) {
@@ -230,29 +228,29 @@ export async function loadDataFromToken(tokenId: string) {
 
 export function initializeRoomSync() {
     OBR.room.getMetadata().then(meta => {
-        const roomMeta = meta[ROOM_META_ID] as any;
+        const roomMeta = (meta[ROOM_META_ID] as Record<string, unknown>) || {};
         if (roomMeta) {
             if (roomMeta.painEnabled !== undefined) sheetView.identity.roomPain.value = roomMeta.painEnabled ? 'true' : 'false';
-            if (roomMeta.ruleset !== undefined) sheetView.identity.roomRuleset.value = roomMeta.ruleset;
+            if (roomMeta.ruleset !== undefined) sheetView.identity.roomRuleset.value = String(roomMeta.ruleset);
         }
-        updatePainUI(sheetView);
+        updatePainUI();
     });
 
     OBR.room.onMetadataChange(meta => {
-        const roomMeta = meta[ROOM_META_ID] as any;
+        const roomMeta = (meta[ROOM_META_ID] as Record<string, unknown>) || {};
         if (roomMeta) {
             let changed = false;
             if (roomMeta.painEnabled !== undefined && sheetView.identity.roomPain.value !== (roomMeta.painEnabled ? 'true' : 'false')) {
                 sheetView.identity.roomPain.value = roomMeta.painEnabled ? 'true' : 'false';
                 changed = true;
             }
-            if (roomMeta.ruleset !== undefined && sheetView.identity.roomRuleset.value !== roomMeta.ruleset) {
-                sheetView.identity.roomRuleset.value = roomMeta.ruleset;
+            if (roomMeta.ruleset !== undefined && sheetView.identity.roomRuleset.value !== String(roomMeta.ruleset)) {
+                sheetView.identity.roomRuleset.value = String(roomMeta.ruleset);
                 changed = true;
             }
             if (changed) {
                 calculateStats(appState.currentExtraCategories, appState.currentMoves, appState.currentInventory);
-                updatePainUI(sheetView);
+                updatePainUI();
                 syncDerivedStats();
             }
         }

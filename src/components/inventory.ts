@@ -35,7 +35,6 @@ export const HARDCODED_TAGS: Record<string, string> = {
     "quick claw": "[Init +2]"
 };
 
-// --- NEW ISOLATED TAG BUILDER LAUNCHER ---
 export function openTagBuilder(targetId: string, targetType: 'item' | 'move') {
     const modal = document.getElementById('tag-builder-modal');
     const confirmBtn = document.getElementById('tag-builder-confirm');
@@ -46,19 +45,16 @@ export function openTagBuilder(targetId: string, targetType: 'item' | 'move') {
     confirmBtn.dataset.itemid = targetId;
     confirmBtn.dataset.targettype = targetType;
 
-    // Dynamically build categories based on what we are targeting!
     catSelect.innerHTML = '';
     if (targetType === 'move') {
         catSelect.appendChild(new Option('Move Mechanic', 'move_mechanics'));
     } else {
-        catSelect.innerHTML = `
-            <option value="stat">Stat Modifier</option>
-            <option value="skill">Skill Modifier</option>
-            <option value="combat">Combat Boost</option>
-            <option value="matchup">Matchup</option>
-            <option value="mechanic">Mechanic</option>
-            <option value="status">Status Condition</option>
-        `;
+        catSelect.appendChild(new Option('Stat Modifier', 'stat'));
+        catSelect.appendChild(new Option('Skill Modifier', 'skill'));
+        catSelect.appendChild(new Option('Combat Boost', 'combat'));
+        catSelect.appendChild(new Option('Matchup', 'matchup'));
+        catSelect.appendChild(new Option('Mechanic', 'mechanic'));
+        catSelect.appendChild(new Option('Status Condition', 'status'));
     }
     
     catSelect.dispatchEvent(new Event('change'));
@@ -85,7 +81,7 @@ export function buildInventoryRow(tr: HTMLTableRowElement, item: InventoryItem, 
             if (item.name) {
                 const itemData = await fetchItemData(item.name.trim());
                 if (itemData) {
-                    document.getElementById('info-modal-desc')!.innerText = itemData.Description || itemData.Effect || item.desc || "No description found.";
+                    document.getElementById('info-modal-desc')!.innerText = String(itemData.Description || itemData.Effect || item.desc || "No description found.");
                 } else {
                     document.getElementById('info-modal-desc')!.innerText = item.desc || "No description/effect listed.";
                 }
@@ -163,7 +159,7 @@ export function renderInventory(currentInventory: InventoryItem[], saveInventory
                 if (field === 'qty') {
                     item[field] = parseInt(target.value) || 0;
                 } else if (field === 'active') {
-                    item[field] = target.checked as never; 
+                    item.active = target.checked; 
                     
                     const desc = (item.desc || "").toLowerCase();
                     const statusMatches = Array.from(desc.matchAll(/\[status:\s*([a-zA-Z0-9\s]+)\]/gi));
@@ -213,14 +209,15 @@ export function renderInventory(currentInventory: InventoryItem[], saveInventory
                     }
                     
                 } else {
-                    item[field] = target.value as never;
+                    // FIX: Safe type casting via unknown to bypass Interface index signature rules
+                    (item as unknown as Record<string, unknown>)[field] = target.value;
                     
                     if (field === 'name') {
                         const cleanName = target.value.trim().toLowerCase();
                         const itemData = await fetchItemData(cleanName);
                         const autoTag = HARDCODED_TAGS[cleanName];
 
-                        let newDesc = itemData ? (itemData.Description || itemData.Effect || "") : "";
+                        let newDesc = itemData ? String(itemData.Description || itemData.Effect || "") : "";
                         if (autoTag) {
                             newDesc = newDesc ? `${newDesc}\n\n${autoTag}` : autoTag;
                         }
@@ -329,7 +326,6 @@ export function setupTagBuilder(saveInventoryToToken: (inv: InventoryItem[]) => 
             valueContainer.style.display = 'none';
             typeSelect.style.display = 'none';
         } else if (cat === 'move_mechanics') {
-            // --- STRICTLY ISOLATED OPTIONS FOR MOVES ---
             ['High Critical', 'Low Accuracy', 'Never Miss', 'Recoil', 'Successive Actions', 'Set Damage'].forEach(s => targetSelect.appendChild(new Option(s, s)));
             targetSelect.onchange = () => {
                 valueContainer.style.display = (targetSelect.value === 'Low Accuracy' || targetSelect.value === 'Set Damage') ? 'flex' : 'none';
@@ -370,7 +366,6 @@ export function setupTagBuilder(saveInventoryToToken: (inv: InventoryItem[]) => 
         } else if (cat === 'status') {
             tag = `[Status: ${tgt}]`;
         } else if (cat === 'move_mechanics') {
-            // Generates exact string formats that combat.ts is natively looking for!
             if (tgt === 'High Critical') tag = `[High Critical]`;
             else if (tgt === 'Low Accuracy') tag = `[Low Accuracy ${Math.abs(val)}]`;
             else if (tgt === 'Never Miss') tag = `[Never Miss]`;

@@ -11,6 +11,53 @@ import { updateHealthBars } from '../listeners/uiListeners';
 
 const v = (el: HTMLInputElement) => parseInt(el.value) || 0;
 
+// --- SHARED DOM HELPER ---
+function updateAbilitiesList(pokemonData: Record<string, unknown>): string[] {
+    const abilityList = document.getElementById('ability-list');
+    if (abilityList) abilityList.replaceChildren(); // Rule 3 Safe Clear
+    
+    const abilities: string[] = [];
+    
+    const hasAbility1 = !!pokemonData.Ability1;
+    const hasAbility2 = pokemonData.Ability2 && pokemonData.Ability2 !== "None" && pokemonData.Ability2 !== "null";
+    const hasHiddenAbility = pokemonData.HiddenAbility && pokemonData.HiddenAbility !== "None" && pokemonData.HiddenAbility !== "null";
+
+    if (hasAbility1) abilities.push(String(pokemonData.Ability1));
+    if (hasAbility2) abilities.push(String(pokemonData.Ability2));
+    if (hasHiddenAbility) abilities.push(String(pokemonData.HiddenAbility) + " (HA)");
+
+    if (abilities.length === 0 && Array.isArray(pokemonData.Abilities)) {
+        pokemonData.Abilities.forEach((a: unknown) => {
+            if (typeof a === 'string') {
+                abilities.push(a);
+            } else if (a && typeof a === 'object') {
+                const aRec = a as Record<string, unknown>;
+                if (aRec.Name) abilities.push(String(aRec.Name));
+            }
+        });
+    }
+
+    const nativeNames = abilities.map(a => a.replace(" (HA)", "").toLowerCase());
+
+    abilities.forEach((ab: string) => {
+        const cleanName = ab.replace(" (HA)", "");
+        const opt = document.createElement('option');
+        opt.value = cleanName;
+        opt.text = `${cleanName} (${ab.includes("(HA)") ? "Hidden Ability" : "Native Ability"})`;
+        if (abilityList) abilityList.appendChild(opt);
+    });
+
+    ALL_ABILITIES.forEach(abName => {
+        if (!nativeNames.includes(abName.toLowerCase())) {
+            const opt = document.createElement('option');
+            opt.value = abName;
+            if (abilityList) abilityList.appendChild(opt);
+        }
+    });
+
+    return abilities;
+}
+
 export function handleTypeChange() {
     const t1 = (document.getElementById('type1') as HTMLSelectElement).value;
     const t2 = (document.getElementById('type2') as HTMLSelectElement).value;
@@ -72,7 +119,7 @@ export function handleFormSwap() {
         OBR.notification.show(`🧬 Swapped to ${isAltForm ? 'Base' : 'Alt'} Form!`);
     }
     
-    const batchUpdates: Record<string, string | number | boolean> = {
+    const batchUpdates: Record<string, unknown> = {
         [currentSaveKey]: JSON.stringify(currentDataToSave),
         'is-alt-form': !isAltForm
     };
@@ -95,7 +142,7 @@ export function handleFormSwap() {
     if (loadedData && loadedData['ability-list']) {
         const abilityList = document.getElementById('ability-list');
         if (abilityList) {
-            abilityList.innerHTML = '';
+            abilityList.replaceChildren(); // Rule 3 Safe Clear
             const nativeNames: string[] = [];
             
             String(loadedData['ability-list']).split(',').forEach((ab: string) => {
@@ -132,7 +179,7 @@ export function handleFormSwap() {
 }
 
 export function handleSheetTypeChange(val: string) {
-    const batchUpdates: Record<string, string | number | boolean> = { 'sheet-type': val };
+    const batchUpdates: Record<string, unknown> = { 'sheet-type': val };
 
     const currentStats = {
         'type1': String((document.getElementById('type1') as HTMLSelectElement)?.value || "None"),
@@ -158,7 +205,7 @@ export function handleSheetTypeChange(val: string) {
         const rawTrainerBackup = appState.currentTokenData['trainer-backup'];
         if (rawTrainerBackup && typeof rawTrainerBackup === 'string') {
             try {
-                const tBackup = JSON.parse(rawTrainerBackup);
+                const tBackup = JSON.parse(rawTrainerBackup) as Record<string, unknown>;
                 ['str', 'dex', 'vit', 'spe', 'ins'].forEach(s => {
                     if (tBackup[`${s}-base`] !== undefined) {
                         const el = document.getElementById(`${s}-base`) as HTMLInputElement;
@@ -209,7 +256,7 @@ export function handleSheetTypeChange(val: string) {
         const rawBackup = appState.currentTokenData['pokemon-backup'];
         if (rawBackup && typeof rawBackup === 'string') {
             try {
-                const backup = JSON.parse(rawBackup);
+                const backup = JSON.parse(rawBackup) as Record<string, unknown>;
                 ['str', 'dex', 'vit', 'spe', 'ins'].forEach(s => {
                     if (backup[`${s}-base`] !== undefined) {
                         const el = document.getElementById(`${s}-base`) as HTMLInputElement;
@@ -283,52 +330,14 @@ export async function handleSpeciesChange() {
     const hasSecondType = type2 && type2 !== "None" && type2 !== "null";
     const typing = hasSecondType ? `${type1} / ${type2}` : type1;
     
-    const baseStats = pokemonData.BaseStats;
-    const baseAttrs = pokemonData.Attributes || pokemonData.BaseAttributes || pokemonData;
+    const baseStats = pokemonData.BaseStats as Record<string, unknown> | undefined;
+    const baseAttrs = (pokemonData.Attributes || pokemonData.BaseAttributes || pokemonData) as Record<string, unknown>;
     const hp = pokemonData.BaseHP || (baseStats && baseStats.HP) || 4;
     
-    const abilityList = document.getElementById('ability-list');
-    if (abilityList) abilityList.innerHTML = '';
-    const abilities: string[] = [];
-    
-    const hasAbility1 = !!pokemonData.Ability1;
-    const hasAbility2 = pokemonData.Ability2 && pokemonData.Ability2 !== "None" && pokemonData.Ability2 !== "null";
-    const hasHiddenAbility = pokemonData.HiddenAbility && pokemonData.HiddenAbility !== "None" && pokemonData.HiddenAbility !== "null";
+    const abilities = updateAbilitiesList(pokemonData as Record<string, unknown>);
+    let defaultAbility = abilities.length > 0 ? abilities[0].replace(" (HA)", "") : "";
 
-    if (hasAbility1) abilities.push(String(pokemonData.Ability1));
-    if (hasAbility2) abilities.push(String(pokemonData.Ability2));
-    if (hasHiddenAbility) abilities.push(String(pokemonData.HiddenAbility) + " (HA)");
-
-    if (abilities.length === 0 && Array.isArray(pokemonData.Abilities)) {
-        pokemonData.Abilities.forEach((a: string | Record<string, unknown>) => {
-            abilities.push(typeof a === 'string' ? a : String(a.Name || ""));
-        });
-    }
-
-    const nativeNames = abilities.map(a => a.replace(" (HA)", "").toLowerCase());
-
-    abilities.forEach((ab: string) => {
-        const cleanName = ab.replace(" (HA)", "");
-        const opt = document.createElement('option');
-        opt.value = cleanName;
-        opt.text = `${cleanName} (${ab.includes("(HA)") ? "Hidden Ability" : "Native Ability"})`;
-        if (abilityList) abilityList.appendChild(opt);
-    });
-
-    ALL_ABILITIES.forEach(abName => {
-        if (!nativeNames.includes(abName.toLowerCase())) {
-            const opt = document.createElement('option');
-            opt.value = abName;
-            if (abilityList) abilityList.appendChild(opt);
-        }
-    });
-
-    let defaultAbility = "";
-    if (abilities.length > 0) {
-        defaultAbility = abilities[0].replace(" (HA)", "");
-    }
-
-    const batchUpdates: Record<string, string | number | boolean> = {
+    const batchUpdates: Record<string, unknown> = {
         'species': pokemonName, 'typing': typing, 'type1': type1, 'type2': type2, 'hp-base': hp,
         'str-base': baseAttrs.Strength || 2, 'dex-base': baseAttrs.Dexterity || 2, 
         'vit-base': baseAttrs.Vitality || 2, 'spe-base': baseAttrs.Special || 2, 
@@ -435,7 +444,7 @@ export async function handleRefreshData(btn: HTMLButtonElement) {
     btn.innerText = "⏳ Refreshing...";
     btn.disabled = true;
 
-    const batchUpdates: Record<string, string | number | boolean> = {};
+    const batchUpdates: Record<string, unknown> = {};
     const typingStr = (document.getElementById('typing') as HTMLInputElement)?.value;
 
     if (typingStr) {
@@ -445,12 +454,10 @@ export async function handleRefreshData(btn: HTMLButtonElement) {
     const pokemonName = sheetView.identity.species.value;
     const currentAbility = sheetView.identity.ability.value;
 
-    // --- NEW: MISSING DESCRIPTIONS AUTO-FETCHER ---
     const movePromises = appState.currentMoves.map(async (move) => {
         if (move.name && MOVES_URLS[move.name.toLowerCase()]) {
             const moveData = await fetchMoveData(move.name.trim());
             if (moveData) {
-                // Only overwrite if it is currently blank to protect homebrew tags!
                 if (!move.desc || move.desc.trim() === '') {
                     move.desc = String(moveData.Effect || moveData.Description || "");
                 }
@@ -463,42 +470,7 @@ export async function handleRefreshData(btn: HTMLButtonElement) {
         const pokemonData = await fetchPokemonData(pokemonName);
         if (pokemonData) {
             populateLearnset(pokemonData);
-            
-            const abilityList = document.getElementById('ability-list');
-            if (abilityList) abilityList.innerHTML = '';
-            const abilities: string[] = [];
-            
-            const hasAbility1 = !!pokemonData.Ability1;
-            const hasAbility2 = pokemonData.Ability2 && pokemonData.Ability2 !== "None" && pokemonData.Ability2 !== "null";
-            const hasHiddenAbility = pokemonData.HiddenAbility && pokemonData.HiddenAbility !== "None" && pokemonData.HiddenAbility !== "null";
-
-            if (hasAbility1) abilities.push(String(pokemonData.Ability1));
-            if (hasAbility2) abilities.push(String(pokemonData.Ability2));
-            if (hasHiddenAbility) abilities.push(String(pokemonData.HiddenAbility) + " (HA)");
-
-            if (abilities.length === 0 && Array.isArray(pokemonData.Abilities)) {
-                pokemonData.Abilities.forEach((a: string | Record<string, unknown>) => {
-                    abilities.push(typeof a === 'string' ? a : String(a.Name || ""));
-                });
-            }
-
-            const nativeNames = abilities.map(a => a.replace(" (HA)", "").toLowerCase());
-
-            abilities.forEach((ab: string) => {
-                const cleanName = ab.replace(" (HA)", "");
-                const opt = document.createElement('option');
-                opt.value = cleanName;
-                opt.text = `${cleanName} (${ab.includes("(HA)") ? "Hidden Ability" : "Native Ability"})`;
-                if (abilityList) abilityList.appendChild(opt);
-            });
-
-            ALL_ABILITIES.forEach(abName => {
-                if (!nativeNames.includes(abName.toLowerCase())) {
-                    const opt = document.createElement('option');
-                    opt.value = abName;
-                    if (abilityList) abilityList.appendChild(opt);
-                }
-            });
+            const abilities = updateAbilitiesList(pokemonData as Record<string, unknown>);
 
             if (currentAbility && abilities.some((a: string) => a.replace(" (HA)", "") === currentAbility)) {
                 sheetView.identity.ability.value = currentAbility;

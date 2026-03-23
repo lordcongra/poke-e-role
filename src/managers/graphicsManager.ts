@@ -1,10 +1,10 @@
 import OBR, { buildCurve, buildText, buildShape } from "@owlbear-rodeo/sdk";
 import type { Item, Curve, Text as OBRText, Shape as OBRShape, AttachmentBehavior } from "@owlbear-rodeo/sdk";
 
-export const GRAPHICS_META_ID = "pokerole-extension/graphic-role";
+// Bumping ID to v4 to forcefully clear any cached "tofu boxes" from OBR
+export const GRAPHICS_META_ID = "pokerole-extension/graphic-v4";
 export const STATS_META_ID = "pokerole-extension/stats"; 
 
-// --- CUSTOMIZABLE BADGE DEFAULTS ---
 export const DEFAULT_COLOR_ACT = '#4890fc'; 
 export const DEFAULT_COLOR_EVA = '#c387fc'; 
 export const DEFAULT_COLOR_CLA = '#dfad43'; 
@@ -41,7 +41,7 @@ function getHpColor(pct: number): string {
 
 const almostEqual = (a: number, b: number) => Math.abs(a - b) < 0.01;
 
-export function buildGraphicsDataFromMetadata(meta: Record<string, any>): GraphicsData {
+export function buildGraphicsDataFromMetadata(meta: Record<string, unknown>): GraphicsData {
     return {
         hpCurr: Number(meta['hp-curr']) || 0,
         hpMax: Number(meta['hp-max-display']) || 1,
@@ -67,9 +67,9 @@ export function buildGraphicsDataFromMetadata(meta: Record<string, any>): Graphi
         showEco: meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false',
         gmEco: meta['gm-eco-badge'] === true || meta['gm-eco-badge'] === 'true',
 
-        colorAct: meta['color-act'] || DEFAULT_COLOR_ACT,
-        colorEva: meta['color-eva'] || DEFAULT_COLOR_EVA,
-        colorCla: meta['color-cla'] || DEFAULT_COLOR_CLA,
+        colorAct: String(meta['color-act'] || DEFAULT_COLOR_ACT),
+        colorEva: String(meta['color-eva'] || DEFAULT_COLOR_EVA),
+        colorCla: String(meta['color-cla'] || DEFAULT_COLOR_CLA),
         yOffset: Number(meta['y-offset']) || 0,
     };
 }
@@ -85,7 +85,7 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
     }
     const tokenId = token.id;
 
-    const meta = (token.metadata[STATS_META_ID] as Record<string, any>) || {};
+    const meta = (token.metadata[STATS_META_ID] as Record<string, unknown>) || {};
     const species = String(meta['species'] || '');
     const hasSpecies = species.trim() !== '';
 
@@ -181,6 +181,7 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
         const cx_cla = 0 - (badgeWidth / 2);
         const cx_eva = cx_cla - standardSpacing;
 
+        // --- RESTORED UNICODE CIRCLES AND CHECKMARKS ---
         const badges = [
             { id: 'badge-act', val: data.actions, color: data.colorAct, cx: cx_act },
             { id: 'badge-eva', val: data.evadeUsed ? '✓' : '◯', color: data.colorEva, cx: cx_eva },
@@ -237,7 +238,7 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
                 const curveObj = buildCurve()
                     .id(explicitId).name("").points(def.points).strokeColor(def.color).strokeWidth(def.width).fillOpacity(def.fillOpacity ?? 0).closed(def.closed).tension(0)
                     .position(token.position).attachedTo(tokenId).disableHit(true).locked(true).layer("ATTACHMENT").zIndex(def.z)
-                    .metadata({ [GRAPHICS_META_ID]: role }).visible(def.visible).build();
+                    .metadata({ [GRAPHICS_META_ID]: role }).visible(def.visible).build(); // Removed .scale() injection
                 
                 if (def.fillColor) curveObj.style.fillColor = def.fillColor;
                 curveObj.style.strokeOpacity = def.strokeOpacity ?? 1;
@@ -293,6 +294,9 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
                     item.disableAttachmentBehavior = SEVERED_BEHAVIORS;
                 }
 
+                // --- REPAIR BROKEN TOKENS ---
+                // If a token was saved with the bad negative scale logic from the previous iteration,
+                // this forces it back to 1 so the Unicode characters render properly again!
                 if (item.scale.x !== 1 || item.scale.y !== 1) {
                     item.scale = { x: 1, y: 1 };
                 }

@@ -94,7 +94,10 @@ export function renderEffects(currentEffects: EffectItem[], saveDataToToken: (ke
     container.innerHTML = '';
 
     if (currentEffects.length === 0) {
-        container.innerHTML = '<span style="color: var(--text-muted); font-style: italic; font-size: 0.8rem; padding-left: 4px;">No active effects.</span>';
+        container.appendChild(createEl('span', { 
+            style: 'color: var(--text-muted); font-style: italic; font-size: 0.8rem; padding-left: 4px;', 
+            innerText: 'No active effects.' 
+        }));
         return;
     }
 
@@ -139,7 +142,8 @@ export function renderCustomInfo(currentCustomInfo: CustomInfo[], saveDataToToke
             const target = e.target as HTMLInputElement;
             const item = currentCustomInfo.find(i => i.id === target.dataset.id);
             if (item) {
-                item[target.dataset.field as keyof CustomInfo] = target.value;
+                // FIX: Safe casting via unknown
+                (item as unknown as Record<string, unknown>)[target.dataset.field as string] = target.value;
                 saveDataToToken('custom-info-data', JSON.stringify(currentCustomInfo));
             }
         });

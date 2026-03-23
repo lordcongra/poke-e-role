@@ -7,13 +7,12 @@ import { createEl, getTypeStyle, applyTypeStyle, setupSpinners } from './dom';
 
 export function buildMoveRow(tr: HTMLTableRowElement, move: Move, index: number, extraCategories: ExtraCategory[]) {
     const accSpan = createEl('span', { className: 'acc-total-display', title: 'Base Acc Dice', innerText: '0', style: 'font-weight: bold; font-size: 0.9em; color: var(--text-main); min-width: 1em;', dataset: { id: move.id }});
-    const accBtn = createEl('button', { type: 'button', className: 'acc-btn action-button action-button--dark', title: 'Roll Accuracy', innerText: '🎯', style: 'padding: 2px 6px;', dataset: { id: move.id }});
+    const accBtn = createEl('button', { type: 'button', className: 'acc-btn action-button action-button--dark', title: 'Roll Accuracy', innerText: '🎲', style: 'padding: 2px 6px;', dataset: { id: move.id }});
     const td1 = createEl('td', { className: 'data-table__cell--middle' }, [createEl('div', { className: 'flex-layout--row-center' }, [accSpan, accBtn])]);
 
     const nameInp = createEl('input', { type: 'text', className: 'move-input form-input--transparent', list: 'move-list', value: move.name, placeholder: 'Move Name', title: move.desc || 'Enter move name to fetch data...', dataset: { field: 'name', id: move.id }});
     
-    // --- UPDATED EDIT BUTTON ---
-    const infoBtn = createEl('button', { type: 'button', className: 'action-button action-button--transparent-white', innerText: '📝', style: 'color: var(--primary); padding: 0 2px; font-size: 0.8rem;', title: 'Edit Move & Tags' });
+    const infoBtn = createEl('button', { type: 'button', className: 'action-button action-button--transparent-white', innerText: '🏷️', style: 'color: var(--primary); padding: 0 2px; font-size: 0.8rem;', title: 'Edit Move & Tags' });
     infoBtn.onclick = () => {
         const modal = document.getElementById('move-edit-modal');
         if (modal) {
@@ -122,7 +121,8 @@ export function renderMoves(currentMoves: Move[], currentExtraCategories: ExtraC
       
       if (move) {
         if (field === 'power') move[field] = parseInt(target.value) || 0;
-        else (move as any)[field] = target.value;
+        // FIX: Safe casting via unknown
+        else (move as unknown as Record<string, unknown>)[field] = target.value;
 
         if (field === 'type') applyTypeStyle(target as HTMLElement, target.value);
         

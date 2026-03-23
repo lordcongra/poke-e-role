@@ -29,46 +29,55 @@ export async function loadUrlLists(): Promise<void> {
     );
 
     const speciesDatalist = document.getElementById('species-list');
-    let speciesHtml = '';
-    pokemonFiles.forEach((file: GithubTreeItem) => {
-      const monName = file.path.split('/').pop()?.replace('.json', '') || '';
-      if (monName) {
-        SPECIES_URLS[monName] = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/${file.path}`;
-        speciesHtml += `<option value="${monName}"></option>`;
-      }
-    });
-    if (speciesDatalist) speciesDatalist.innerHTML = speciesHtml;
+    if (speciesDatalist) {
+        speciesDatalist.innerHTML = ''; // Safe clear
+        pokemonFiles.forEach((file: GithubTreeItem) => {
+            const monName = file.path.split('/').pop()?.replace('.json', '') || '';
+            if (monName) {
+                SPECIES_URLS[monName] = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/${file.path}`;
+                const opt = document.createElement('option');
+                opt.value = monName;
+                speciesDatalist.appendChild(opt);
+            }
+        });
+    }
 
     const moveFiles = data.tree.filter((file: GithubTreeItem) => 
       versionRegex.test(file.path) && moveRegex.test(file.path) && file.path.endsWith(".json")
     );
 
     const moveDatalist = document.getElementById('move-list');
-    let datalistHtml = '';
-    moveFiles.forEach((file: GithubTreeItem) => {
-      const moveName = file.path.split('/').pop()?.replace('.json', '') || '';
-      if (moveName) {
-        MOVES_URLS[moveName.toLowerCase()] = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/${file.path}`;
-        datalistHtml += `<option value="${moveName}"></option>`;
-      }
-    });
-    if (moveDatalist) moveDatalist.innerHTML = datalistHtml;
+    if (moveDatalist) {
+        moveDatalist.innerHTML = '';
+        moveFiles.forEach((file: GithubTreeItem) => {
+            const moveName = file.path.split('/').pop()?.replace('.json', '') || '';
+            if (moveName) {
+                MOVES_URLS[moveName.toLowerCase()] = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/${file.path}`;
+                const opt = document.createElement('option');
+                opt.value = moveName;
+                moveDatalist.appendChild(opt);
+            }
+        });
+    }
 
     const abilityFiles = data.tree.filter((file: GithubTreeItem) => 
       versionRegex.test(file.path) && abilityRegex.test(file.path) && file.path.endsWith(".json")
     );
     
     const abilityDatalist = document.getElementById('ability-list');
-    let abilityHtml = '';
-    abilityFiles.forEach((file: GithubTreeItem) => {
-      const abName = file.path.split('/').pop()?.replace('.json', '') || '';
-      if (abName) {
-        ABILITIES_URLS[abName.toLowerCase()] = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/${file.path}`;
-        if (!ALL_ABILITIES.includes(abName)) ALL_ABILITIES.push(abName); 
-        abilityHtml += `<option value="${abName}"></option>`;
-      }
-    });
-    if (abilityDatalist) abilityDatalist.innerHTML = abilityHtml;
+    if (abilityDatalist) {
+        abilityDatalist.innerHTML = '';
+        abilityFiles.forEach((file: GithubTreeItem) => {
+            const abName = file.path.split('/').pop()?.replace('.json', '') || '';
+            if (abName) {
+                ABILITIES_URLS[abName.toLowerCase()] = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/${file.path}`;
+                if (!ALL_ABILITIES.includes(abName)) ALL_ABILITIES.push(abName); 
+                const opt = document.createElement('option');
+                opt.value = abName;
+                abilityDatalist.appendChild(opt);
+            }
+        });
+    }
 
     // --- ITEM FETCHING LOGIC ---
     const itemFiles = data.tree.filter((file: GithubTreeItem) => 
@@ -76,16 +85,18 @@ export async function loadUrlLists(): Promise<void> {
     );
     
     const itemDatalist = document.getElementById('item-list');
-    let itemHtmlStr = '';
-    itemFiles.forEach((file: GithubTreeItem) => {
-        const itemName = file.path.split('/').pop()?.replace('.json', '') || '';
-        if (itemName) {
-            ITEMS_URLS[itemName.toLowerCase()] = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/${file.path}`;
-            itemHtmlStr += `<option value="${itemName}"></option>`;
-        }
-    });
-    // Replaces all the manual options in index.html with the dynamically populated list!
-    if (itemDatalist && itemHtmlStr) itemDatalist.innerHTML = itemHtmlStr;
+    if (itemDatalist) {
+        itemDatalist.innerHTML = '';
+        itemFiles.forEach((file: GithubTreeItem) => {
+            const itemName = file.path.split('/').pop()?.replace('.json', '') || '';
+            if (itemName) {
+                ITEMS_URLS[itemName.toLowerCase()] = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/${file.path}`;
+                const opt = document.createElement('option');
+                opt.value = itemName;
+                itemDatalist.appendChild(opt);
+            }
+        });
+    }
 
   } catch(err) {
     console.error("Error communicating with Github:", err);
@@ -113,19 +124,21 @@ export async function fetchAbilityData(abilityName: string): Promise<AbilityData
   catch (err) { return null; }
 }
 
-export async function fetchItemData(itemName: string): Promise<any | null> {
+export async function fetchItemData(itemName: string): Promise<Record<string, unknown> | null> {
     const selectedUrl = ITEMS_URLS[itemName.toLowerCase()];
     if (!selectedUrl) return null;
-    try { const res = await fetch(selectedUrl); return (await res.json()); } 
+    try { const res = await fetch(selectedUrl); return (await res.json()) as Record<string, unknown>; } 
     catch (err) { return null; }
 }
 
-export function populateLearnset(pokemonData: any) {
+export function populateLearnset(pokemonData: PokemonData | Record<string, unknown>) {
     const container = document.getElementById('learnset-container');
     const toggleBtn = document.getElementById('toggle-learnset-btn');
     if (!container || !toggleBtn) return;
 
-    if (!pokemonData || !pokemonData.Moves) {
+    const pd = pokemonData as Record<string, unknown>;
+
+    if (!pd || !pd.Moves) {
         toggleBtn.style.display = 'none';
         container.style.display = 'none';
         return;
@@ -134,13 +147,20 @@ export function populateLearnset(pokemonData: any) {
     container.innerHTML = '';
     let hasMoves = false;
 
-    const buildBadges = (moveArray: any[]) => {
+    const buildBadges = (moveArray: unknown[]) => {
         const moveList = document.createElement('div');
         moveList.style.display = 'flex';
         moveList.style.flexWrap = 'wrap';
         moveList.style.gap = '4px';
-        moveArray.forEach((m: any) => {
-            const moveName = typeof m === 'string' ? m : (m.Name || m.Move);
+        
+        moveArray.forEach((m: unknown) => {
+            let moveName = "";
+            if (typeof m === 'string') moveName = m;
+            else if (m && typeof m === 'object') {
+                const mObj = m as Record<string, unknown>;
+                moveName = String(mObj.Name || mObj.Move || "");
+            }
+
             if (moveName) {
                 const moveBadge = document.createElement('span');
                 moveBadge.style.background = '#e0e0e0';
@@ -155,17 +175,21 @@ export function populateLearnset(pokemonData: any) {
         return moveList;
     };
 
-    let groupedMoves: Record<string, any[]> = {};
+    let groupedMoves: Record<string, unknown[]> = {};
     const rankOrder = ["Starter", "Beginner", "Rookie", "Amateur", "Standard", "Advanced", "Expert", "Master", "Champion", "Other"];
 
-    if (Array.isArray(pokemonData.Moves)) {
-        pokemonData.Moves.forEach((m: any) => {
-            const rank = typeof m === 'object' ? (m.Learned || m.Learn || m.Level || m.Rank || "Other") : "Other";
+    if (Array.isArray(pd.Moves)) {
+        pd.Moves.forEach((m: unknown) => {
+            let rank = "Other";
+            if (m && typeof m === 'object') {
+                const mObj = m as Record<string, unknown>;
+                rank = String(mObj.Learned || mObj.Learn || mObj.Level || mObj.Rank || "Other");
+            }
             if (!groupedMoves[rank]) groupedMoves[rank] = [];
             groupedMoves[rank].push(m);
         });
-    } else if (typeof pokemonData.Moves === 'object') {
-        groupedMoves = pokemonData.Moves;
+    } else if (typeof pd.Moves === 'object' && pd.Moves !== null) {
+        groupedMoves = pd.Moves as Record<string, unknown[]>;
     }
 
     const sortedRanks = Object.keys(groupedMoves).sort((a, b) => {

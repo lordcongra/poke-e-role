@@ -1,8 +1,8 @@
-# Pokerole 3.0 Sheet v1.6 (Owlbear Rodeo Extension)
+# Pokerole 3.0 Sheet v1.7 (Owlbear Rodeo Extension)
 
 A highly automated, modular character sheet extension for playing **Pokerole 3.0** campaigns (including **Pokémon Mystery Dungeon / PMD** settings) within the Owlbear Rodeo VTT.
 
-*A massive thank you to the creator of the **Owl Trackers** extension. Their incredible UI work and data management architecture were a massive inspiration for the custom graphics engine for the major v1.6 overhaul of this sheet!*
+*A massive thank you to the creator of the **Owl Trackers** extension. Their incredible UI work and data management architecture were a massive inspiration for the custom graphics engine for the overhaul of this sheet!*
 
 ---
 
@@ -37,9 +37,9 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 * Also supports tracking for **Happiness** and **Loyalty**.
 * **Form & Evolution Safe:** Change a Pokémon's species to update their base stats and typing *without* wiping their invested skills and moves!
 
-### 🎲 Custom Action Rolls (NEW in v1.6!)
-* Built specifically for out-of-combat Roleplay! Create up to 10 Custom Action Rolls (e.g., *Investigate*, *Persuade*, *Climb*) using any combination of Core Attributes and Skills.
-* Fully integrated with Pain Penalties, Status Effects (like Paralysis), and your active "Take Your Chances" reroll stacks!
+### 🎲 Custom Action Rolls & Auto-Generator
+* **Out-of-Combat Roleplay:** Create up to 10 Custom Action Rolls (e.g., *Investigate*, *Persuade*, *Climb*) using any combination of Core Attributes and Skills.
+* **Smart Auto-Generator:** Instantly draft Wild, Average, or Min-Max builds based on your Rank. The v1.7 "Waterfall Algorithm" intelligently caps your core attacking and defending stats before allocating remaining points, dynamically adjusting to your combat bias (Tank, Physical, Special, etc.).
 
 ### 📈 Soft Caps, Limits, & PMD Overrides
 * Automatically calculates your maximum Attribute, Social, and Skill point limits based on your currently selected Rank and Age.
@@ -64,7 +64,7 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 * Dim your used moves with the inline **(✔)** checkbox to track your action economy, then click the **Reset** button to clear the board for the next turn.
 
 ### 🎒 Inventory, Tags, & Progression
-* **The Tag Builder (NEW!):** Click the `🏷️` icon next to any item in your inventory to open the Tag Builder. This tool lets you easily attach mechanical modifiers to items (e.g., `[Dmg +2]`, `[Acc -1: Fire]`, `[Str +1]`, `[Status: Poison]`, `[High Crit]`). 
+* **The Tag Builder:** Click the `🏷️` icon next to any item in your inventory or move in your move list to open the Tag Builder. This tool lets you easily attach mechanical modifiers (e.g., `[Dmg +2]`, `[Acc -1: Fire]`, `[Str +1]`, `[Status: Poison]`, `[High Crit]`). 
 * **Smart Item Auto-Fill:** The sheet automatically recognizes standard items! Type "Life Orb", "Choice Scarf", or "Eviolite" into the name box, and the engine will automatically fetch the description and inject the perfect mechanical tags for you! Homebrew items are supported through the tag builder, simply add the tags you'd like the item to have and the sheet will handle the rest.
 * **Important Note on Complex Items:** Some items (like *Safety Goggles* or *White Herb*) rely on highly specific triggers or keywords that cannot be safely automated without massive technical debt. These items must be handled manually by the GM and Players using the honor system. Always read your item descriptions! If an item does not explicitly have a `[Bracketed]` tag generated for it, the engine is relying on you to remember its effects.
 * **Training Points (TP) & Poké (PD):** Keep track of your character's progression currency and wealth with dedicated, auto-saving trackers at the bottom of the sheet.
@@ -104,4 +104,4 @@ To install this extension into your Owlbear Rodeo room, copy the Manifest URL be
 
 `https://lordcongra.github.io/poke-e-role/manifest.json`
 
-*(Note: If the sheet updates, you can force Owlbear to fetch the newest version by adding a version tag to the end of the URL, like `?v=1.6.1`)*
+*(Note: If the sheet updates, you can force Owlbear to fetch the newest version by adding a version tag to the end of the URL, like `?v=1.7.0`)*

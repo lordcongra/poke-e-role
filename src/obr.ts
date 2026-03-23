@@ -10,7 +10,7 @@ export const METADATA_ID = "pokerole-extension/stats";
 export let currentTokenId: string | null = null;
 export let isLoading = false;
 
-export let lastKnownMetadata: Record<string, any> = {};
+export let lastKnownMetadata: Record<string, unknown> = {};
 export let lastKnownMetadataStr = ""; 
 
 // Dictionary upgraded to track Scale, Rotation, AND Metadata!
@@ -47,9 +47,9 @@ export async function sendToDicePlus(notation: string, rollType: string = "roll"
 
 // --- DEBOUNCER SYSTEM ---
 let saveTimeout: ReturnType<typeof setTimeout>;
-let pendingUpdates: Record<string, any> = {};
+let pendingUpdates: Record<string, unknown> = {};
 
-export async function saveBatchDataToToken(updates: Record<string, any>) {
+export async function saveBatchDataToToken(updates: Record<string, unknown>) {
   if (!currentTokenId || isLoading) return; 
 
   Object.assign(pendingUpdates, updates);
@@ -75,7 +75,7 @@ export async function saveBatchDataToToken(updates: Record<string, any>) {
       await OBR.scene.items.updateItems([currentTokenId!], (items: Item[]) => {
         for (let item of items) {
           if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
-          const meta = item.metadata[METADATA_ID] as Record<string, any>;
+          const meta = item.metadata[METADATA_ID] as Record<string, unknown>;
           
           Object.assign(meta, updatesToPush, domData);
 
@@ -91,8 +91,8 @@ export async function saveMovesToToken(currentMoves: Move[]) {
   await OBR.scene.items.updateItems([currentTokenId], (items: Item[]) => {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
-      (item.metadata[METADATA_ID] as Record<string, any>)['moves-data'] = JSON.stringify(currentMoves);
-      lastKnownMetadata = { ...item.metadata[METADATA_ID] as Record<string, any> };
+      (item.metadata[METADATA_ID] as Record<string, unknown>)['moves-data'] = JSON.stringify(currentMoves);
+      lastKnownMetadata = { ...item.metadata[METADATA_ID] as Record<string, unknown> };
       lastKnownMetadataStr = JSON.stringify(lastKnownMetadata);
     }
   });
@@ -103,8 +103,8 @@ export async function saveSkillChecksToToken(currentSkillChecks: SkillCheck[]) {
   await OBR.scene.items.updateItems([currentTokenId], (items: Item[]) => {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
-      (item.metadata[METADATA_ID] as Record<string, any>)['skill-checks-data'] = JSON.stringify(currentSkillChecks);
-      lastKnownMetadata = { ...item.metadata[METADATA_ID] as Record<string, any> };
+      (item.metadata[METADATA_ID] as Record<string, unknown>)['skill-checks-data'] = JSON.stringify(currentSkillChecks);
+      lastKnownMetadata = { ...item.metadata[METADATA_ID] as Record<string, unknown> };
       lastKnownMetadataStr = JSON.stringify(lastKnownMetadata);
     }
   });
@@ -115,8 +115,8 @@ export async function saveInventoryToToken(currentInventory: InventoryItem[]) {
   await OBR.scene.items.updateItems([currentTokenId], (items: Item[]) => {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
-      (item.metadata[METADATA_ID] as Record<string, any>)['inv-data'] = JSON.stringify(currentInventory);
-      lastKnownMetadata = { ...item.metadata[METADATA_ID] as Record<string, any> };
+      (item.metadata[METADATA_ID] as Record<string, unknown>)['inv-data'] = JSON.stringify(currentInventory);
+      lastKnownMetadata = { ...item.metadata[METADATA_ID] as Record<string, unknown> };
       lastKnownMetadataStr = JSON.stringify(lastKnownMetadata);
     }
   });
@@ -127,8 +127,8 @@ export async function saveExtraSkillsToToken(currentExtraCategories: ExtraCatego
   await OBR.scene.items.updateItems([currentTokenId], (items: Item[]) => {
     for (let item of items) {
       if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
-      (item.metadata[METADATA_ID] as Record<string, any>)['extra-skills-data'] = JSON.stringify(currentExtraCategories);
-      lastKnownMetadata = { ...item.metadata[METADATA_ID] as Record<string, any> };
+      (item.metadata[METADATA_ID] as Record<string, unknown>)['extra-skills-data'] = JSON.stringify(currentExtraCategories);
+      lastKnownMetadata = { ...item.metadata[METADATA_ID] as Record<string, unknown> };
       lastKnownMetadataStr = JSON.stringify(lastKnownMetadata);
     }
   });
@@ -143,7 +143,7 @@ export function setupOBR(onTokenLoad: (tokenId: string) => void) {
                 const allItems = await OBR.scene.items.getItems();
                 for (const item of allItems) {
                     if (item.layer === "CHARACTER" && item.metadata[METADATA_ID]) {
-                        const meta = item.metadata[METADATA_ID] as Record<string, any>;
+                        const meta = item.metadata[METADATA_ID] as Record<string, unknown>;
                         knownTransforms[item.id] = { x: item.scale.x, y: item.scale.y, r: item.rotation, metaStr: JSON.stringify(meta) };
                         
                         // We await this so the OBR local engine isn't slammed with 20 parallel requests!
@@ -187,7 +187,7 @@ export function setupOBR(onTokenLoad: (tokenId: string) => void) {
         OBR.scene.items.onChange(async (items: Item[]) => {
             for (const item of items) {
                 if (item.layer === "CHARACTER" && item.metadata[METADATA_ID]) {
-                    const meta = item.metadata[METADATA_ID] as Record<string, any> || {};
+                    const meta = item.metadata[METADATA_ID] as Record<string, unknown> || {};
                     
                     const lastTransform = knownTransforms[item.id];
                     const rawX = item.scale.x;

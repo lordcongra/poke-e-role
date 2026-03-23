@@ -1,3 +1,6 @@
+import type { InventoryItem } from '../@types/index';
+import { sheetView } from '../view';
+
 export const TYPE_COLORS: Record<string, string> = {
     "Normal": "#A8A878", "Fire": "#F08030", "Water": "#6890F0",
     "Electric": "#F8D030", "Grass": "#78C850", "Ice": "#98D8D8",
@@ -25,18 +28,19 @@ export function applyTypeStyle(element: HTMLElement | null, typeStr: string) {
 
 export function createEl<K extends keyof HTMLElementTagNameMap>(
     tag: K,
-    props: Record<string, any> = {},
+    props: Record<string, unknown> = {},
     children: (HTMLElement | string)[] = []
 ): HTMLElementTagNameMap[K] {
     const el = document.createElement(tag);
     for (const [key, val] of Object.entries(props)) {
-        if (key === 'className') el.className = val;
+        if (key === 'className') el.className = val as string;
         else if (key === 'dataset') {
-            for (const dKey in val) el.dataset[dKey] = String(val[dKey]);
+            const dataObj = val as Record<string, string | number | boolean>;
+            for (const dKey in dataObj) el.dataset[dKey] = String(dataObj[dKey]);
         }
-        else if (key === 'style') el.style.cssText = val;
-        else if (key === 'list') el.setAttribute('list', val); 
-        else (el as any)[key] = val;
+        else if (key === 'style') el.style.cssText = val as string;
+        else if (key === 'list') el.setAttribute('list', val as string); 
+        else (el as Record<string, unknown>)[key] = val;
     }
     children.forEach(c => {
         if (typeof c === 'string') el.appendChild(document.createTextNode(c));
@@ -86,7 +90,7 @@ export function updateSheetTypeUI(val: string) {
     const knowledgeHeader = document.getElementById('knowledge-header');
     
     const happyBox = document.getElementById('happiness-box');
-    const loyalBox = document.getElementById('loyalty-box');
+    const loyalBox = document.getElementById('loyalBox');
     const typeMatchupPanel = document.getElementById('type-matchup-panel');
 
     if (val === 'trainer') {
@@ -119,7 +123,7 @@ export function updateSheetTypeUI(val: string) {
     }
 }
 
-export function updatePainUI(sheetView: any) {
+export function updatePainUI() {
     const isEnabled = sheetView.identity.roomPain.value === 'true';
     const painBtn = document.getElementById('btn-will-pain');
     const painTracker = document.getElementById('ign-pain-tracker-container');
@@ -128,7 +132,7 @@ export function updatePainUI(sheetView: any) {
     if (painTracker) painTracker.style.display = isEnabled ? 'flex' : 'none';
 }
 
-export function updateInventoryUI(currentInventory: any[]) {
+export function updateInventoryUI(currentInventory: InventoryItem[]) {
     const activeCount = currentInventory.filter(i => i.active).length;
     const warning = document.getElementById('multi-item-warning');
     if (warning) {

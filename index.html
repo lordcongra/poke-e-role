@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pokerole PMD Sheet</title>
+    <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body>
     <datalist id="move-list"></datalist>
@@ -214,7 +215,7 @@
         </div>
     </div>
 
-    <div id="info-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; font-family: sans-serif;">
+    <div id="info-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1100; justify-content: center; align-items: center; font-family: sans-serif;">
         <div style="background: var(--panel-bg); padding: 15px; border-radius: 8px; width: 300px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid var(--primary); color: var(--text-main);">
             <h3 id="info-modal-title" style="margin-top: 0; color: var(--primary); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 4px; text-align: center;">Item Name</h3>
             <p id="info-modal-desc" style="font-size: 0.85rem; margin-bottom: 15px; color: var(--text-muted); white-space: pre-wrap; max-height: 250px; overflow-y: auto; line-height: 1.4;"></p>
@@ -240,6 +241,86 @@
                     <input type="checkbox" id="swap-update-stats" checked style="transform: scale(1.1); cursor: pointer;">
                     Overwrite Base Stats & Limits
                 </label>
+            </div>
+        </div>
+    </div>
+
+    <div id="generator-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; font-family: sans-serif;">
+        <div style="background: var(--panel-bg); padding: 15px; border-radius: 8px; width: 340px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid var(--primary); color: var(--text-main);">
+            <h3 style="margin-top: 0; color: var(--primary); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 4px; text-align: center;">🎲 Auto-Build Pokémon</h3>
+            <p style="font-size: 0.85rem; text-align: center; margin-bottom: 15px; color: var(--text-muted);">Generate stats, skills, and moves based on current Rank.</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+                <div style="display: flex; gap: 8px;">
+                    <div style="flex: 1;">
+                        <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">Build Tier:</label>
+                        <select id="generator-type" style="width: 100%; padding: 4px; border: 1px solid var(--border); border-radius: 4px; background: var(--input-bg); color: var(--text-main);">
+                            <option value="wild">Wild (Random)</option>
+                            <option value="average">Average</option>
+                            <option value="minmax">Min-Max</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="font-size: 0.8rem; font-weight: bold; color: var(--text-muted);">Combat Bias:</label>
+                        <select id="generator-focus" style="width: 100%; padding: 4px; border: 1px solid var(--border); border-radius: 4px; background: var(--input-bg); color: var(--text-main);">
+                            <option value="balanced">Balanced</option>
+                            <option value="physical">Physical Attacker</option>
+                            <option value="special">Special Attacker</option>
+                            <option value="tank">Tank / Defender</option>
+                            <option value="support">Status / Support</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="background: var(--panel-alt); padding: 8px; border-radius: 4px; border: 1px solid var(--border); margin-top: 4px;">
+                    <label style="font-size: 0.8rem; font-weight: bold; color: var(--primary); display: block; margin-bottom: 6px; text-align: center;">Move Composition</label>
+                    <p style="font-size: 0.7rem; color: var(--text-muted); text-align: center; margin-top: 0; margin-bottom: 8px; line-height: 1.2;">Insight will automatically scale to fit this total.</p>
+                    <div style="display: flex; justify-content: space-around; align-items: center;">
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                            <span style="font-size: 0.75rem; font-weight: bold;">Attacks</span>
+                            <input type="number" id="generator-atk-moves" value="2" min="0" max="6" style="width: 40px; text-align: center; padding: 2px; border: 1px solid var(--border); border-radius: 3px; background: var(--input-bg); color: var(--text-main);">
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                            <span style="font-size: 0.75rem; font-weight: bold;">Support</span>
+                            <input type="number" id="generator-sup-moves" value="2" min="0" max="6" style="width: 40px; text-align: center; padding: 2px; border: 1px solid var(--border); border-radius: 3px; background: var(--input-bg); color: var(--text-main);">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 5px; padding-top: 10px; border-top: 1px solid var(--border);">
+                    <label style="font-size: 0.8rem; cursor: pointer; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                        <input type="checkbox" id="generator-include-pmd" style="transform: scale(1.1); cursor: pointer;">
+                        Include Knowledge Skills (Lore, Medicine, etc.)
+                    </label>
+                    <label style="font-size: 0.8rem; cursor: pointer; color: var(--text-main); display: flex; align-items: center; gap: 6px; margin-top: 6px;">
+                        <input type="checkbox" id="generator-include-custom" style="transform: scale(1.1); cursor: pointer;" checked>
+                        Include Custom Homebrew Skills
+                    </label>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 15px; padding: 8px; background: #ffcdd2; color: #c62828; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-align: center;">
+                ⚠️ WARNING: This will completely overwrite this token's current stats, skills, and moves!
+            </div>
+
+            <div style="display: flex; justify-content: space-between; gap: 8px;">
+                <button type="button" id="generator-cancel-btn" class="action-button action-button--dark" style="flex: 1; padding: 6px;">Cancel</button>
+                <button type="button" id="generator-confirm-btn" class="action-button action-button--red" style="flex: 1; padding: 6px;">🎲 Generate</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="generator-preview-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1050; justify-content: center; align-items: center; font-family: sans-serif;">
+        <div style="background: var(--panel-bg); padding: 15px; border-radius: 8px; width: 540px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid var(--primary); color: var(--text-main); max-height: 90vh; display: flex; flex-direction: column;">
+            <h3 style="margin-top: 0; color: var(--primary); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 12px; text-align: center;">🔍 Build Preview</h3>
+            
+            <div id="preview-content" style="font-size: 0.8rem; display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; overflow-y: auto; padding-right: 4px;">
+                </div>
+
+            <div style="display: flex; justify-content: space-between; gap: 8px; margin-top: auto;">
+                <button type="button" id="preview-cancel-btn" class="action-button action-button--dark" style="flex: 1; padding: 6px;">Discard</button>
+                <button type="button" id="preview-reroll-btn" class="action-button action-button--dark" style="flex: 1; padding: 6px; background: #1976d2; border-color: #1976d2;">🎲 Reroll</button>
+                <button type="button" id="preview-apply-btn" class="action-button action-button--red" style="flex: 1; padding: 6px;">✅ Apply Build</button>
             </div>
         </div>
     </div>
@@ -274,6 +355,7 @@
                         <span class="identity-grid__label">Species</span>
                         <div style="display: flex; width: 100%; align-items: center; gap: 4px;">
                             <input type="text" id="species" list="species-list" class="identity-grid__input sheet-save" style="flex: 1; min-width: 0;" />
+                            <button type="button" id="auto-build-btn" class="action-button action-button--dark" style="padding: 2px 6px; font-size: 0.8rem; border-radius: 4px; margin-right: 2px;" title="Auto-Build Pokémon">🎲</button>
                             <button type="button" id="form-swap-btn" class="action-button action-button--dark" style="padding: 2px 6px; font-size: 0.8rem; border-radius: 4px; margin-right: 2px;" title="Swap to Alt Form / Mega Evolution">🧬</button>
                         </div>
                     </div>
@@ -818,7 +900,7 @@
                         <button type="button" id="roll-global-chance-btn" class="action-button action-button--dark" style="padding: 1px 4px;">🎲</button>
                     </span>
                     <span id="ign-pain-tracker-container" style="display: flex; align-items: center; gap: 4px; margin-left: 6px; border-left: 1px solid var(--border); padding-left: 10px;">
-                        Ign.Pain<button type="button" class="help-tooltip info-trigger" style="border: none; outline: none;" data-title="Ignored Pain" data-desc="Ignored Pain Penalties (Resets per Scene). Use the 'Ign.Pain(-1W)' button in the Round Tracker to increase this.">?</button>: <input type="number" id="ignored-pain-mod" value="0" min="0" class="number-spinner__input sheet-save">
+                        Ign.Pain<button type="button" class="help-tooltip info-trigger" style="border: none; outline: none;" data-title="Ignored Pain" data-desc="Ignored Pain Penalties (Resets per Scene). Use the 'Ign.Pain(-1W)' button in the Tracker to increase this.">?</button>: <input type="number" id="ignored-pain-mod" value="0" min="0" class="number-spinner__input sheet-save">
                     </span>
                 </div>
             </div>
