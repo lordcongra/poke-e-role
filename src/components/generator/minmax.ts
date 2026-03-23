@@ -304,8 +304,8 @@ export async function generateMinMaxBuild(): Promise<TempBuild | null> {
     }
 
     // --- STEP 6: ALLOCATE SKILLS (Top-Heavy Waterfall) ---
-    const pmdSkillsList = ['crafts', 'lore', 'medicine', 'magic'];
-    const validSkills = [...ALL_SKILLS, ...(includeCustom ? customSkillsList : [])].filter(s => includePmd || !pmdSkillsList.includes(s));
+    const pmdSkillsList: string[] = ['crafts', 'lore', 'medicine', 'magic'];
+    const validSkills: string[] = [...(ALL_SKILLS as string[]), ...(includeCustom ? customSkillsList : [])].filter(s => includePmd || !pmdSkillsList.includes(s));
 
     let availableSkills = Object.keys(requiredSkills).filter(sk => validSkills.includes(sk));
     while (skillPoints > 0 && availableSkills.length > 0) {
@@ -376,7 +376,7 @@ export async function generateMinMaxBuild(): Promise<TempBuild | null> {
         }
     }
 
-    const dumpSocs = [...SOCIAL_STATS];
+    const dumpSocs = [...SOCIAL_STATS] as string[];
     while (socPoints > 0 && dumpSocs.length > 0) {
         const randomSoc = dumpSocs[Math.floor(Math.random() * dumpSocs.length)];
         const base = parseInt((document.getElementById(`${randomSoc}-base`) as HTMLInputElement)?.value) || 1;

@@ -1,30 +1,29 @@
 import { fetchAbilityData } from '../api';
+import { debounce } from '../utils';
 
-export function updateHealthBars() {
-    setTimeout(() => {
-        const hpCurr = parseInt((document.getElementById('hp-curr') as HTMLInputElement)?.value) || 0;
-        const hpMax = parseInt(document.getElementById('hp-max-display')?.innerText || "1") || 1;
-        const hpBar = document.getElementById('hp-bar-fill');
+export const updateHealthBars = debounce(() => {
+    const hpCurr = parseInt((document.getElementById('hp-curr') as HTMLInputElement)?.value) || 0;
+    const hpMax = parseInt(document.getElementById('hp-max-display')?.innerText || "1") || 1;
+    const hpBar = document.getElementById('hp-bar-fill');
 
-        if (hpBar) {
-            const pct = Math.max(0, Math.min(100, (hpCurr / hpMax) * 100));
-            hpBar.style.width = `${pct}%`;
-            if (pct > 50) hpBar.style.backgroundColor = 'rgba(76, 175, 80, 0.9)'; // Green
-            else if (pct > 20) hpBar.style.backgroundColor = 'rgba(255, 152, 0, 0.9)'; // Orange
-            else hpBar.style.backgroundColor = 'rgba(244, 67, 54, 0.9)'; // Red
-        }
+    if (hpBar) {
+        const pct = Math.max(0, Math.min(100, (hpCurr / hpMax) * 100));
+        hpBar.style.width = `${pct}%`;
+        if (pct > 50) hpBar.style.backgroundColor = 'rgba(76, 175, 80, 0.9)'; // Green
+        else if (pct > 20) hpBar.style.backgroundColor = 'rgba(255, 152, 0, 0.9)'; // Orange
+        else hpBar.style.backgroundColor = 'rgba(244, 67, 54, 0.9)'; // Red
+    }
 
-        const willCurr = parseInt((document.getElementById('will-curr') as HTMLInputElement)?.value) || 0;
-        const willMax = parseInt(document.getElementById('will-max-display')?.innerText || "1") || 1;
-        const willBar = document.getElementById('will-bar-fill');
+    const willCurr = parseInt((document.getElementById('will-curr') as HTMLInputElement)?.value) || 0;
+    const willMax = parseInt(document.getElementById('will-max-display')?.innerText || "1") || 1;
+    const willBar = document.getElementById('will-bar-fill');
 
-        if (willBar) {
-            const pct = Math.max(0, Math.min(100, (willCurr / willMax) * 100));
-            willBar.style.width = `${pct}%`;
-            willBar.style.backgroundColor = 'rgba(33, 150, 243, 0.9)'; // Blue
-        }
-    }, 50); // Tiny delay to ensure Max HP has finished calculating first!
-}
+    if (willBar) {
+        const pct = Math.max(0, Math.min(100, (willCurr / willMax) * 100));
+        willBar.style.width = `${pct}%`;
+        willBar.style.backgroundColor = 'rgba(33, 150, 243, 0.9)'; // Blue
+    }
+}, 50);
 
 export function setupUIListeners() {
     // --- DARK MODE INIT & LISTENER ---

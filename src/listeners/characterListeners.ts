@@ -1,6 +1,6 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { sheetView } from '../view';
-import { calculateStats } from '../math';
+import { calculateStats, debouncedCalculateStats } from '../math';
 import { updatePainUI, updateInventoryUI } from '../ui';
 import { appState, syncDerivedStats, saveDataToToken } from '../state';
 import { ROOM_META_ID } from '../sync';
@@ -59,7 +59,7 @@ export function setupCharacterListeners() {
     listenerInputs.forEach(element => {
         if (['ability', 'is-npc', 'species', 'typing'].includes(element.id)) return; 
 
-        element.addEventListener('input', () => calculateStats(appState.currentExtraCategories, appState.currentMoves, appState.currentInventory));
+        element.addEventListener('input', () => debouncedCalculateStats(appState.currentExtraCategories, appState.currentMoves, appState.currentInventory));
         
         element.addEventListener('change', (e) => {
             const target = e.target as HTMLInputElement;
@@ -110,7 +110,6 @@ export function setupCharacterListeners() {
     sheetView.identity.roomRuleset.addEventListener('change', async (e) => {
         const val = (e.target as HTMLSelectElement).value;
         const meta = await OBR.room.getMetadata();
-        // FIX: Cast as Record<string, unknown> safely
         const roomMeta = (meta[ROOM_META_ID] as Record<string, unknown>) || {};
         await OBR.room.setMetadata({ [ROOM_META_ID]: { ...roomMeta, ruleset: val } });
         calculateStats(appState.currentExtraCategories, appState.currentMoves, appState.currentInventory);
@@ -121,11 +120,9 @@ export function setupCharacterListeners() {
     sheetView.identity.roomPain.addEventListener('change', async (e) => {
         const isEnabled = (e.target as HTMLSelectElement).value === 'true';
         const meta = await OBR.room.getMetadata();
-        // FIX: Cast as Record<string, unknown> safely
         const roomMeta = (meta[ROOM_META_ID] as Record<string, unknown>) || {};
         await OBR.room.setMetadata({ [ROOM_META_ID]: { ...roomMeta, painEnabled: isEnabled } });
         calculateStats(appState.currentExtraCategories, appState.currentMoves, appState.currentInventory);
-        // FIX: updatePainUI takes 0 arguments!
         updatePainUI();
         syncDerivedStats();
         updateHealthBars();

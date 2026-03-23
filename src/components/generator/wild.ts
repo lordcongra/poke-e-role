@@ -51,7 +51,7 @@ export async function generateWildBuild(): Promise<TempBuild | null> {
     customSkillsList.forEach(sk => genSkill[sk] = 0);
 
     // 1. Assign Attributes
-    const attrsToAssign = [...COMBAT_STATS];
+    const attrsToAssign = [...COMBAT_STATS] as string[];
     while (attrPoints > 0 && attrsToAssign.length > 0) {
         const randomAttr = attrsToAssign[Math.floor(Math.random() * attrsToAssign.length)];
         const currentRank = genAttr[randomAttr];
@@ -67,7 +67,7 @@ export async function generateWildBuild(): Promise<TempBuild | null> {
     }
 
     // 2. Assign Socials
-    const socsToAssign = [...SOCIAL_STATS];
+    const socsToAssign = [...SOCIAL_STATS] as string[];
     while (socPoints > 0 && socsToAssign.length > 0) {
         const randomSoc = socsToAssign[Math.floor(Math.random() * socsToAssign.length)];
         const currentRank = genSoc[randomSoc];
@@ -83,8 +83,8 @@ export async function generateWildBuild(): Promise<TempBuild | null> {
     }
 
     // 3. Assign Skills
-    const pmdSkillsList = ['crafts', 'lore', 'medicine', 'magic'];
-    let skillsToAssign = includePmd ? [...ALL_SKILLS] : ALL_SKILLS.filter(s => !pmdSkillsList.includes(s));
+    const pmdSkillsList: string[] = ['crafts', 'lore', 'medicine', 'magic'];
+    let skillsToAssign: string[] = includePmd ? [...(ALL_SKILLS as string[])] : (ALL_SKILLS as string[]).filter(s => !pmdSkillsList.includes(s));
     if (includeCustom) skillsToAssign = [...skillsToAssign, ...customSkillsList];
 
     while (skillPoints > 0 && skillsToAssign.length > 0) {

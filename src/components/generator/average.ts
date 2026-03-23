@@ -193,8 +193,8 @@ export async function generateAverageBuild(): Promise<TempBuild | null> {
     const coreSkills = new Set<string>();
 
     coreMoves.forEach(m => {
-        if (m.attr) { if (COMBAT_STATS.includes(m.attr)) coreAttrs.add(m.attr); else coreSocs.add(m.attr); }
-        if (m.dmgStat) { if (COMBAT_STATS.includes(m.dmgStat)) coreAttrs.add(m.dmgStat); else coreSocs.add(m.dmgStat); }
+        if (m.attr) { if ((COMBAT_STATS as string[]).includes(m.attr)) coreAttrs.add(m.attr); else coreSocs.add(m.attr); }
+        if (m.dmgStat) { if ((COMBAT_STATS as string[]).includes(m.dmgStat)) coreAttrs.add(m.dmgStat); else coreSocs.add(m.dmgStat); }
         if (m.skill) coreSkills.add(m.skill);
     });
 
@@ -219,7 +219,7 @@ export async function generateAverageBuild(): Promise<TempBuild | null> {
     }
 
     // --- STEP 5: RANDOM CHAOS FOR THE REST ---
-    const remainingAttrs = [...COMBAT_STATS];
+    const remainingAttrs = [...COMBAT_STATS] as string[];
     while (attrPoints > 0 && remainingAttrs.length > 0) {
         const rAttr = remainingAttrs[Math.floor(Math.random() * remainingAttrs.length)];
         const base = parseInt(sheetView.stats[rAttr].base.value) || 1;
@@ -227,7 +227,7 @@ export async function generateAverageBuild(): Promise<TempBuild | null> {
         else remainingAttrs.splice(remainingAttrs.indexOf(rAttr), 1);
     }
 
-    const remainingSocs = [...SOCIAL_STATS];
+    const remainingSocs = [...SOCIAL_STATS] as string[];
     while (socPoints > 0 && remainingSocs.length > 0) {
         const rSoc = remainingSocs[Math.floor(Math.random() * remainingSocs.length)];
         const base = parseInt(sheetView.stats[rSoc].base.value) || 1;
@@ -236,7 +236,7 @@ export async function generateAverageBuild(): Promise<TempBuild | null> {
     }
 
     const pmdSkillsList = ['crafts', 'lore', 'medicine', 'magic'];
-    const validSkills = [...ALL_SKILLS, ...(includeCustom ? customSkillsList : [])].filter(s => includePmd || !pmdSkillsList.includes(s));
+    const validSkills: string[] = [...(ALL_SKILLS as string[]), ...(includeCustom ? customSkillsList : [])].filter(s => includePmd || !pmdSkillsList.includes(s));
     while (skillPoints > 0 && validSkills.length > 0) {
         const rSk = validSkills[Math.floor(Math.random() * validSkills.length)];
         if (genSkill[rSk] < maxSkillRank) { genSkill[rSk]++; skillPoints--; } 

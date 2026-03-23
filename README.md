@@ -1,4 +1,4 @@
-# Pokerole 3.0 Sheet v1.7 (Owlbear Rodeo Extension)
+# Pokerole 3.0 Sheet v1.8 (Owlbear Rodeo Extension)
 
 A highly automated, modular character sheet extension for playing **Pokerole 3.0** campaigns (including **Pokémon Mystery Dungeon / PMD** settings) within the Owlbear Rodeo VTT.
 
@@ -34,12 +34,13 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 ### 📊 Fully Automated Stat Calculation
 * Enter your Base Stats, Ranks, Buffs, and Debuffs, and the sheet automatically calculates all Derived Stats (HP, Will, Defenses, Evasion, Clashes).
+* **Lag-Free UI:** Stat calculations are debounced, meaning you can rapidly click the spinner arrows without the browser freezing or dropping frames!
 * Also supports tracking for **Happiness** and **Loyalty**.
 * **Form & Evolution Safe:** Change a Pokémon's species to update their base stats and typing *without* wiping their invested skills and moves!
 
 ### 🎲 Custom Action Rolls & Auto-Generator
 * **Out-of-Combat Roleplay:** Create up to 10 Custom Action Rolls (e.g., *Investigate*, *Persuade*, *Climb*) using any combination of Core Attributes and Skills.
-* **Smart Auto-Generator:** Instantly draft Wild, Average, or Min-Max builds based on your Rank. The v1.7 "Waterfall Algorithm" intelligently caps your core attacking and defending stats before allocating remaining points, dynamically adjusting to your combat bias (Tank, Physical, Special, etc.).
+* **Smart Auto-Generator:** Instantly draft Wild, Average, or Min-Max builds based on your Rank. The "Waterfall Algorithm" intelligently caps your core attacking and defending stats before allocating remaining points, dynamically adjusting to your combat bias (Tank, Physical, Special, etc.).
 
 ### 📈 Soft Caps, Limits, & PMD Overrides
 * Automatically calculates your maximum Attribute, Social, and Skill point limits based on your currently selected Rank and Age.
@@ -74,7 +75,8 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 * **Pure Math Routing:** Dice+ and the sheet handles most of the math for you! *Note: Most abilities that grant specific statistical increases (like +1 damage dice to Fire moves) still need to be accounted for manually using the global modifier boxes on the Moves panel.*
 * **Smart Combat:** Automatically accounts for global Accuracy/Damage modifiers, STAB bonuses, Protean/Libero, and even grants +3 dice on Critical Hits for the *Sniper* ability.
 
-### 🌐 Live Database Fetching
+### 🌐 Live Database Fetching & Offline Resilience
+* **Lazy Caching (Rate Limit Protection):** The app automatically saves a local copy of Pokémon, Moves, and Abilities as you load them. If the GitHub API goes down or you hit a network rate limit, the sheet will seamlessly degrade to your local cache, allowing you to keep playing uninterrupted!
 * Type in the name of a Pokémon species, and the sheet securely fetches its Base Stats, Typings, and Abilities directly from the official Pokerole 3.0 GitHub Database.
 * **Hybrid Ability Datalist:** The Ability box automatically suggests a Pokémon's native abilities first, but acts as a fully searchable, editable text box. Perfect for global searches, homebrew, or mid-battle ability changes like *Mummy* or *Skill Swap*!
 * **Global Move Library:** Start typing a move name to instantly search the entire Pokerole global library to pull the move's Base Power, Category, Accuracy stats, and mechanical Effects. For moves with unique scaling behaviors, it is recommended to just change the Power of the move to the appropriate amount of dice it should roll.
@@ -104,4 +106,4 @@ To install this extension into your Owlbear Rodeo room, copy the Manifest URL be
 
 `https://lordcongra.github.io/poke-e-role/manifest.json`
 
-*(Note: If the sheet updates, you can force Owlbear to fetch the newest version by adding a version tag to the end of the URL, like `?v=1.7.0`)*
+*(Note: If the sheet updates, you can force Owlbear to fetch the newest version by adding a version tag to the end of the URL, like `?v=1.8.0`)*

@@ -1,11 +1,12 @@
 import type { InventoryItem } from './@types/index';
+import { CombatStat, SocialStat, Skill, PokemonType } from './@types/enums';
 
-export const COMBAT_STATS = ['str', 'dex', 'vit', 'spe', 'ins'];
-export const SOCIAL_STATS = ['tou', 'coo', 'bea', 'cut', 'cle'];
-export const ALL_SKILLS = ['brawl', 'channel', 'clash', 'evasion', 'alert', 'athletic', 'nature', 'stealth', 'charm', 'etiquette', 'intimidate', 'perform', 'crafts', 'lore', 'medicine', 'magic'];
+export const COMBAT_STATS = Object.values(CombatStat) as CombatStat[];
+export const SOCIAL_STATS = Object.values(SocialStat) as SocialStat[];
+export const ALL_SKILLS = Object.values(Skill) as Skill[];
 
 // --- TYPE MATCHUP MATRIX ---
-export const ALL_TYPES = ["Normal", "Fire", "Water", "Electric", "Grass", "Ice", "Fighting", "Poison", "Ground", "Flying", "Psychic", "Bug", "Rock", "Ghost", "Dragon", "Dark", "Steel", "Fairy"];
+export const ALL_TYPES = Object.values(PokemonType).filter(t => t !== PokemonType.NONE) as PokemonType[];
 
 export const DEFENSE_MATCHUPS: Record<string, Record<string, number>> = {
     "Normal": { Fighting: 2, Ghost: 0 },
@@ -150,4 +151,37 @@ export function generateId(): string {
         return crypto.randomUUID();
     }
     return Date.now().toString(36) + Math.random().toString(36).substring(2);
+}
+
+export function normalizeStat(val: string): CombatStat | SocialStat | 'will' | '' {
+    const s = val.toLowerCase().trim();
+    if (s.includes('str')) return CombatStat.STR;
+    if (s.includes('dex')) return CombatStat.DEX;
+    if (s.includes('vit')) return CombatStat.VIT;
+    if (s.includes('spe')) return CombatStat.SPE;
+    if (s.includes('ins')) return CombatStat.INS;
+    if (s.includes('tou')) return SocialStat.TOU;
+    if (s.includes('coo')) return SocialStat.COO;
+    if (s.includes('bea')) return SocialStat.BEA;
+    if (s.includes('cut')) return SocialStat.CUT;
+    if (s.includes('cle')) return SocialStat.CLE;
+    if (s.includes('will')) return 'will';
+    return '';
+}
+
+export function normalizeSkill(val: string): Skill | 'none' | string {
+    const s = val.toLowerCase().trim();
+    if (!s || s === 'none') return 'none';
+    for (const sk of ALL_SKILLS) {
+        if (s.includes(sk)) return sk;
+    }
+    return 'brawl'; // Safe fallback
+}
+
+export function debounce<Args extends unknown[]>(func: (...args: Args) => void, wait: number): (...args: Args) => void {
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    return (...args: Args) => {
+        if (timeout) clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), wait);
+    };
 }

@@ -1,5 +1,5 @@
 import type { Move, ExtraCategory, ExtraSkill } from '../@types/index';
-import { calculateStats } from '../math';
+import { debouncedCalculateStats } from '../math';
 import { createEl, setupSpinners } from './dom';
 
 export function buildExtraCategoryHeader(tr: HTMLTableRowElement, category: ExtraCategory) {
@@ -64,7 +64,7 @@ export function renderExtraSkills(currentExtraCategories: ExtraCategory[], curre
     });
 
     document.querySelectorAll('.extra-skill-base, .extra-skill-buff').forEach(input => {
-        input.addEventListener('input', () => calculateStats(currentExtraCategories, currentMoves));
+        input.addEventListener('input', () => debouncedCalculateStats(currentExtraCategories, currentMoves));
         input.addEventListener('change', (e) => {
             const target = e.target as HTMLInputElement;
             const category = currentExtraCategories.find((c: ExtraCategory) => c.id === target.dataset.catid);

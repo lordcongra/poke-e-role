@@ -1,3 +1,10 @@
+// src/@types/index.ts
+
+import { CombatStat, SocialStat, Skill, MoveCategory, PokemonType } from './enums';
+
+// Helper type to combine all valid rollable attributes
+export type CoreAttribute = CombatStat | SocialStat | 'will';
+
 // --- INTERFACES ---
 export interface StatusItem {
     id: string;
@@ -15,13 +22,13 @@ export interface EffectItem {
 export interface Move { 
     id: string; 
     name: string; 
-    attr: string; 
-    skill: string; 
-    type: string; 
-    cat: string; 
-    dmg: string; 
+    attr: CoreAttribute | (string & {}); 
+    skill: Skill | 'none' | (string & {}); 
+    type: PokemonType | (string & {}); 
+    cat: MoveCategory | (string & {}); 
+    dmg: string; // Legacy/unused? Keeping for backward compatibility
     power: number; 
-    dmgStat: string; 
+    dmgStat: CoreAttribute | '' | (string & {}); 
     desc?: string; 
     used?: boolean;
 }
@@ -29,8 +36,8 @@ export interface Move {
 export interface SkillCheck {
     id: string;
     name: string;
-    attr: string;
-    skill: string;
+    attr: CoreAttribute | (string & {});
+    skill: Skill | 'none' | (string & {});
 }
 
 export interface InventoryItem { 
@@ -70,26 +77,26 @@ export interface GithubTreeResponse {
 }
 
 // --- CONSTANTS & MAPPINGS ---
-export const ATTRIBUTE_MAPPING: Record<string, string> = {
-    "Strength": "str",
-    "Dexterity": "dex",
-    "Vitality": "vit",
-    "Special": "spe",
-    "Insight": "ins",
-    "Tough": "tou",
-    "Cool": "coo",
-    "Beauty": "bea",
-    "Cute": "cut",
-    "Clever": "cle",
+export const ATTRIBUTE_MAPPING: Record<string, CoreAttribute | (string & {})> = {
+    "Strength": CombatStat.STR,
+    "Dexterity": CombatStat.DEX,
+    "Vitality": CombatStat.VIT,
+    "Special": CombatStat.SPE,
+    "Insight": CombatStat.INS,
+    "Tough": SocialStat.TOU,
+    "Cool": SocialStat.COO,
+    "Beauty": SocialStat.BEA,
+    "Cute": SocialStat.CUT,
+    "Clever": SocialStat.CLE,
     "Will": "will"
 };
 
-export const DAMAGE_STAT_MAPPING: Record<string, string> = {
-    "Strength": "str",
-    "Dexterity": "dex",
-    "Vitality": "vit",
-    "Special": "spe",
-    "Insight": "ins"
+export const DAMAGE_STAT_MAPPING: Record<string, CombatStat> = {
+    "Strength": CombatStat.STR,
+    "Dexterity": CombatStat.DEX,
+    "Vitality": CombatStat.VIT,
+    "Special": CombatStat.SPE,
+    "Insight": CombatStat.INS
 };
 
 export interface OwlTracker {

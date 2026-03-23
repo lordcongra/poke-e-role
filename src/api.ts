@@ -1,3 +1,4 @@
+import OBR from "@owlbear-rodeo/sdk";
 import type { GithubTreeResponse, GithubTreeItem, PokemonData, MoveData, AbilityData } from './@types/index';
 
 export const GITHUB_TREE_URL = "https://api.github.com/repos/Pokerole-Software-Development/Pokerole-Data/git/trees/master?recursive=1";
@@ -8,16 +9,41 @@ export const ABILITIES_URLS: Record<string, string> = {};
 export const ITEMS_URLS: Record<string, string> = {};
 export const ALL_ABILITIES: string[] = []; 
 
+// --- SENIOR DEV CACHING UTILITY ---
+// This handles fetching, saving to cache, and falling back to cache automatically.
+async function fetchWithCache<T>(url: string, cacheKey: string, itemName: string, silentFallback: boolean = true): Promise<T | null> {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const data = (await response.json()) as T;
+        localStorage.setItem(`pkr_cache_${cacheKey}`, JSON.stringify(data));
+        return data;
+    } catch (err) {
+        console.warn(`[Network] Fetch failed for ${itemName}, checking cache...`);
+        const cached = localStorage.getItem(`pkr_cache_${cacheKey}`);
+        
+        if (cached) {
+            if (!silentFallback) {
+                OBR.notification.show(`⚠️ Network error. Using cached data for ${itemName}.`, "WARNING");
+            }
+            return JSON.parse(cached) as T;
+        }
+        
+        OBR.notification.show(`❌ Failed to load ${itemName}. No offline cache found.`, "ERROR");
+        return null;
+    }
+}
+
 export async function loadUrlLists(): Promise<void> {
   const speciesInput = document.getElementById('species') as HTMLInputElement | null;
   if (!speciesInput) return;
   
-  try {
-    const response = await fetch(GITHUB_TREE_URL);
-    if (!response.ok) return;
-    
-    const data = (await response.json()) as GithubTreeResponse;
+  // Try to fetch the Master Tree with a visible fallback warning if we hit Rate Limits
+  const data = await fetchWithCache<GithubTreeResponse>(GITHUB_TREE_URL, 'master_tree', 'Pokerole Database', false);
+  if (!data) return;
 
+  try {
     const versionRegex = /(v|(version\s?))3\.0/i;
     const pokemonRegex = /\/(Pokemon|Pokedex)\//i;
     const moveRegex = /\/Moves\//i;
@@ -79,7 +105,6 @@ export async function loadUrlLists(): Promise<void> {
         });
     }
 
-    // --- ITEM FETCHING LOGIC ---
     const itemFiles = data.tree.filter((file: GithubTreeItem) => 
         versionRegex.test(file.path) && itemRegex.test(file.path) && file.path.endsWith(".json")
     );
@@ -99,36 +124,32 @@ export async function loadUrlLists(): Promise<void> {
     }
 
   } catch(err) {
-    console.error("Error communicating with Github:", err);
+    console.error("Error processing Github Data:", err);
   }
 }
 
 export async function fetchPokemonData(monName: string): Promise<PokemonData | null> {
   const selectedUrl = SPECIES_URLS[monName];
   if (!selectedUrl) return null;
-  try { const res = await fetch(selectedUrl); return (await res.json()) as PokemonData; } 
-  catch (err) { return null; }
+  return await fetchWithCache<PokemonData>(selectedUrl, `species_${monName}`, monName);
 }
 
 export async function fetchMoveData(moveName: string): Promise<MoveData | null> {
   const selectedUrl = MOVES_URLS[moveName.toLowerCase()];
   if (!selectedUrl) return null;
-  try { const res = await fetch(selectedUrl); return (await res.json()) as MoveData; } 
-  catch (err) { return null; }
+  return await fetchWithCache<MoveData>(selectedUrl, `move_${moveName}`, moveName);
 }
 
 export async function fetchAbilityData(abilityName: string): Promise<AbilityData | null> {
   const selectedUrl = ABILITIES_URLS[abilityName.toLowerCase()];
   if (!selectedUrl) return null;
-  try { const res = await fetch(selectedUrl); return (await res.json()) as AbilityData; } 
-  catch (err) { return null; }
+  return await fetchWithCache<AbilityData>(selectedUrl, `ability_${abilityName}`, abilityName);
 }
 
 export async function fetchItemData(itemName: string): Promise<Record<string, unknown> | null> {
     const selectedUrl = ITEMS_URLS[itemName.toLowerCase()];
     if (!selectedUrl) return null;
-    try { const res = await fetch(selectedUrl); return (await res.json()) as Record<string, unknown>; } 
-    catch (err) { return null; }
+    return await fetchWithCache<Record<string, unknown>>(selectedUrl, `item_${itemName}`, itemName);
 }
 
 export function populateLearnset(pokemonData: PokemonData | Record<string, unknown>) {

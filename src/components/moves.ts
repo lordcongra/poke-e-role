@@ -1,6 +1,5 @@
 import type { Move, ExtraCategory } from '../@types/index';
-import { ATTRIBUTE_MAPPING } from '../@types/index';
-import { ALL_SKILLS } from '../utils';
+import { ALL_SKILLS, normalizeStat, normalizeSkill } from '../utils';
 import { updateMoveDisplays } from '../math';
 import { fetchMoveData } from '../api';
 import { createEl, getTypeStyle, applyTypeStyle, setupSpinners } from './dom';
@@ -139,11 +138,11 @@ export function renderMoves(currentMoves: Move[], currentExtraCategories: ExtraC
                 move.desc = String(moveData.Effect || moveData.Description || "");
                 
                 const rawDmg = String(moveData.Damage1 === "None" ? "" : (moveData.Damage1 || ""));
-                move.dmgStat = ATTRIBUTE_MAPPING[rawDmg] || rawDmg;
+                move.dmgStat = normalizeStat(rawDmg);
                 
                 const accuracyOne = String(moveData.Accuracy1 || "");
-                move.attr = ATTRIBUTE_MAPPING[accuracyOne] || "str";
-                move.skill = String(moveData.Accuracy2 || "brawl").toLowerCase();
+                move.attr = normalizeStat(accuracyOne) || 'str';
+                move.skill = normalizeSkill(String(moveData.Accuracy2 || ""));
                 
                 renderMoves(currentMoves, currentExtraCategories, saveMovesToToken, rollAccuracy, rollDamage); 
             }

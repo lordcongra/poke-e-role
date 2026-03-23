@@ -1,6 +1,6 @@
 import type { Move, ExtraCategory, ExtraSkill, InventoryItem } from './@types/index';
 import { ATTRIBUTE_MAPPING } from './@types/index';
-import { getVal, setText, ALL_SKILLS, COMBAT_STATS, SOCIAL_STATS } from './utils';
+import { getVal, setText, ALL_SKILLS, COMBAT_STATS, SOCIAL_STATS, debounce } from './utils';
 import { sheetView } from './view';
 import { appState } from './state';
 import { isLoading } from './obr';
@@ -156,14 +156,14 @@ export function calculateStats(currentExtraCategories: ExtraCategory[], currentM
 
   let calculatedStats: Record<string, number> = {};
   
-  COMBAT_STATS.forEach((stat: string) => {
+  COMBAT_STATS.forEach(stat => {
       const s = sheetView.stats[stat];
       const total = getInputValue(s.base) + getInputValue(s.rank) + getInputValue(s.buff) - getInputValue(s.debuff) + (itemStats[stat] || 0);
       if (s.total) s.total.innerText = total.toString();
       calculatedStats[stat] = total;
   });
 
-  SOCIAL_STATS.forEach((stat: string) => {
+  SOCIAL_STATS.forEach(stat => {
       const s = sheetView.stats[stat];
       const total = getInputValue(s.base) + getInputValue(s.rank) + getInputValue(s.buff) - getInputValue(s.debuff) + (itemStats[stat] || 0);
       if (s.total) s.total.innerText = total.toString();
@@ -235,7 +235,7 @@ export function calculateStats(currentExtraCategories: ExtraCategory[], currentM
   }
 
   let calculatedSkills: Record<string, number> = {};
-  ALL_SKILLS.forEach((skill: string) => {
+  ALL_SKILLS.forEach(skill => {
       const s = sheetView.skills[skill];
       const total = getInputValue(s.base) + getInputValue(s.buff) + (itemSkills[skill] || 0);
       if (s.total) s.total.innerText = total.toString();
@@ -287,3 +287,7 @@ export function calculateStats(currentExtraCategories: ExtraCategory[], currentM
   updateRemainingUI(sheetView.points.skill.remaining, maxSkill, spentSkill);
   if (sheetView.points.skill.limit) sheetView.points.skill.limit.innerText = rankData.skillLimit.toString();
 }
+
+export const debouncedCalculateStats = debounce((currentExtraCategories: ExtraCategory[], currentMoves: Move[], currentInventory?: InventoryItem[]) => {
+    calculateStats(currentExtraCategories, currentMoves, currentInventory);
+}, 150);
