@@ -88,6 +88,8 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
     const meta = (token.metadata[STATS_META_ID] as Record<string, unknown>) || {};
     const species = String(meta['species'] || '');
     const hasSpecies = species.trim() !== '';
+    const sheetType = String(meta['sheet-type'] || 'Pokémon');
+    const isTrainer = sheetType.toLowerCase() === 'trainer';
 
     const localAttached = (await OBR.scene.local.getItems()).filter(i => i.attachedTo === tokenId && i.metadata[GRAPHICS_META_ID] !== undefined);
     const networkAttached = (await OBR.scene.items.getItems()).filter(i => i.attachedTo === tokenId && i.metadata[GRAPHICS_META_ID] !== undefined);
@@ -96,7 +98,8 @@ export async function updateTokenGraphics(tokenInput: string | Item, data: Graph
         await OBR.scene.items.deleteItems(networkAttached.map(i => i.id));
     }
 
-    if (!data.showTrackers || !hasSpecies) {
+    // Bails out to prevent drawing UI on random map props, UNLESS it's a Pokemon with a species or explicitly a Trainer
+    if (!data.showTrackers || (!hasSpecies && !isTrainer)) {
         if (localAttached.length > 0) {
             await OBR.scene.local.deleteItems(localAttached.map(i => i.id));
         }
