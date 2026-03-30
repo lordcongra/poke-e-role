@@ -32,31 +32,135 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
             newSkills[skill].customName = meta[`label-${skill}`] !== undefined ? String(meta[`label-${skill}`]) : '';
         });
 
-        let parsedMoves: MoveData[] = [];
-        try { parsedMoves = meta['moves-data'] ? JSON.parse(String(meta['moves-data'])) : []; } catch(e) {}
-        
-        let parsedChecks: SkillCheck[] = [];
-        try { parsedChecks = meta['skill-checks-data'] ? JSON.parse(String(meta['skill-checks-data'])) : []; } catch(e) {}
-        
         let parsedExtraCats: ExtraCategory[] = [];
         try { parsedExtraCats = meta['extra-skills-data'] ? JSON.parse(String(meta['extra-skills-data'])) : []; } catch(e) {}
 
+        // AUDIT FIX: Added a migration translator to perfectly convert capitalized V1.8 data to V2 formats!
+        const mapAttr = (val: string) => {
+            const v = (val || '').toLowerCase().trim();
+            if (v.includes('str')) return 'str';
+            if (v.includes('dex')) return 'dex';
+            if (v.includes('vit')) return 'vit';
+            if (v.includes('spe')) return 'spe';
+            if (v.includes('ins')) return 'ins';
+            if (v.includes('will')) return 'will';
+            if (v.includes('tou')) return 'tou';
+            if (v.includes('coo')) return 'coo';
+            if (v.includes('bea')) return 'bea';
+            if (v.includes('cut')) return 'cut';
+            if (v.includes('cle')) return 'cle';
+            return '';
+        };
+
+        const mapSkill = (val: string) => {
+            const v = (val || '').split('/')[0].toLowerCase().trim();
+            const skills = ['brawl', 'channel', 'clash', 'evasion', 'alert', 'athletic', 'nature', 'stealth', 'charm', 'etiquette', 'intimidate', 'perform', 'crafts', 'lore', 'medicine', 'magic'];
+            for (const s of skills) { if (v.includes(s)) return s; }
+            for (const cat of parsedExtraCats) {
+                for (const sk of cat.skills) {
+                    if (v === sk.id.toLowerCase() || (sk.name && v === sk.name.toLowerCase())) return sk.id;
+                }
+            }
+            return 'none';
+        };
+
+        let parsedMoves: MoveData[] = [];
+        try { 
+            const rawMoves = meta['moves-data'] ? JSON.parse(String(meta['moves-data'])) : []; 
+            if (Array.isArray(rawMoves)) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                parsedMoves = rawMoves.map((m: any) => {
+                    const rawCat = String(m.category || m.Category || "Physical");
+                    const cat = rawCat.startsWith("Phys") ? "Physical" : (rawCat.startsWith("Spec") ? "Special" : "Status");
+                    
+                    return {
+                        id: m.id || crypto.randomUUID(),
+                        active: m.active === true || m.active === 'true',
+                        name: String(m.name || m.Name || ''),
+                        type: String(m.type || m.Type || 'Normal'),
+                        category: cat as 'Physical' | 'Special' | 'Status',
+                        acc1: mapAttr(String(m.acc1 || m.Accuracy1 || 'str')) || 'str',
+                        acc2: mapSkill(String(m.acc2 || m.Accuracy2 || 'none')),
+                        dmg1: mapAttr(String(m.dmg1 || m.Damage1 || '')),
+                        power: Number(m.power !== undefined ? m.power : (m.Power || 0)),
+                        desc: String(m.desc || m.Description || m.Effect || '')
+                    };
+                });
+            }
+        } catch(e) {}
+        
+        let parsedChecks: SkillCheck[] = [];
+        try { 
+            const rawChecks = meta['skill-checks-data'] ? JSON.parse(String(meta['skill-checks-data'])) : []; 
+            if (Array.isArray(rawChecks)) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                parsedChecks = rawChecks.map((c: any) => ({
+                    id: c.id || crypto.randomUUID(),
+                    name: String(c.name || c.Name || ''),
+                    attr: mapAttr(String(c.attr || c.Attribute || 'ins')) || 'ins',
+                    skill: mapSkill(String(c.skill || c.Skill || 'none'))
+                }));
+            }
+        } catch(e) {}
+
         let parsedInv: InventoryItem[] = [];
-        try { parsedInv = meta['inv-data'] ? JSON.parse(String(meta['inv-data'])) : []; } catch(e) {}
+        try { 
+            const rawInv = meta['inv-data'] ? JSON.parse(String(meta['inv-data'])) : []; 
+            if (Array.isArray(rawInv)) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                parsedInv = rawInv.map((i: any) => ({
+                    id: i.id || crypto.randomUUID(),
+                    qty: Number(i.qty !== undefined ? i.qty : 1),
+                    name: String(i.name || i.Name || ''),
+                    desc: String(i.desc || i.Description || i.Effect || ''),
+                    active: i.active === true || i.active === 'true'
+                }));
+            }
+        } catch(e) {}
 
         let parsedStatuses: StatusItem[] = [];
         try { 
-            parsedStatuses = meta['status-list'] ? JSON.parse(String(meta['status-list'])) : [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }]; 
-            if (parsedStatuses.length === 0) parsedStatuses.push({ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 });
+            const rawStatuses = meta['status-list'] ? JSON.parse(String(meta['status-list'])) : [];
+            if (Array.isArray(rawStatuses) && rawStatuses.length > 0) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                parsedStatuses = rawStatuses.map((s: any) => ({
+                    id: s.id || crypto.randomUUID(),
+                    name: String(s.name || s.Name || 'Healthy'),
+                    customName: String(s.customName || s.CustomName || ''),
+                    rounds: Number(s.rounds || 0)
+                }));
+            } else {
+                parsedStatuses = [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }];
+            }
         } catch(e) {
             parsedStatuses = [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }];
         }
 
         let parsedEffects: EffectItem[] = [];
-        try { parsedEffects = meta['effect-list'] ? JSON.parse(String(meta['effect-list'])) : []; } catch(e) {}
+        try { 
+            const rawEffects = meta['effect-list'] ? JSON.parse(String(meta['effect-list'])) : [];
+            if (Array.isArray(rawEffects)) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                parsedEffects = rawEffects.map((e: any) => ({
+                    id: e.id || crypto.randomUUID(),
+                    name: String(e.name || e.Name || ''),
+                    rounds: Number(e.rounds || 0)
+                }));
+            }
+        } catch(e) {}
 
         let parsedCustomInfo: CustomInfo[] = [];
-        try { parsedCustomInfo = meta['custom-info-data'] ? JSON.parse(String(meta['custom-info-data'])) : []; } catch(e) {}
+        try { 
+            const rawCustomInfo = meta['custom-info-data'] ? JSON.parse(String(meta['custom-info-data'])) : [];
+            if (Array.isArray(rawCustomInfo)) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                parsedCustomInfo = rawCustomInfo.map((c: any) => ({
+                    id: c.id || crypto.randomUUID(),
+                    label: String(c.label || c.Label || ''),
+                    value: String(c.value || c.Value || '')
+                }));
+            }
+        } catch(e) {}
 
         const newHealth = {
             hpCurr: meta['hp-curr'] !== undefined ? Number(meta['hp-curr']) : 5,
@@ -80,7 +184,6 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
                 nickname: String(meta['nickname'] || ''), species: String(meta['species'] || ''),
                 nature: String(meta['nature'] || ''), rank: (meta['rank'] as Rank) || 'Starter',
                 
-                // AUDIT FIX: Checks for both casing patterns from old versions!
                 type1: String(meta['type1'] || meta['Type1'] || ''), 
                 type2: String(meta['type2'] || meta['Type2'] || ''),
                 
