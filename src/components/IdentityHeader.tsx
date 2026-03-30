@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import OBR from "@owlbear-rodeo/sdk";
 import { useCharacterStore } from '../store/useCharacterStore';
 import type { Rank } from '../store/storeTypes';
-import { fetchPokemonData, fetchAbilityData, loadGithubTree, ALL_ABILITIES, SPECIES_URLS, MOVES_URLS, fetchMoveData } from '../utils/api';
+import { fetchPokemonData, fetchAbilityData, loadGithubTree, ALL_ABILITIES, SPECIES_URLS, fetchMoveData } from '../utils/api';
 import { HomebrewModal } from './HomebrewModal';
 import { GeneratorModal } from './GeneratorModal'; 
 import { TrackerSettingsModal } from './TrackerSettingsModal';
@@ -127,10 +127,11 @@ export function IdentityHeader() {
             await loadGithubTree();
             const store = useCharacterStore.getState();
             
+            // AUDIT FIX: Make the manual Refresh button fully rebuild moves via applyMoveData!
             for (const move of store.moves) {
-                if (move.name && MOVES_URLS[move.name.toLowerCase()]) {
+                if (move.name) {
                     const data = await fetchMoveData(move.name);
-                    if (data && (!move.desc || move.desc.trim() === '')) store.updateMove(move.id, 'desc', String(data.Effect || data.Description || ""));
+                    if (data) store.applyMoveData(move.id, data);
                 }
             }
             
@@ -209,7 +210,6 @@ export function IdentityHeader() {
         setModalConfig({ title: "Ability", content: "Loading..." }); 
         const data = await fetchAbilityData(id.ability);
         
-        // AUDIT FIX: Safely handles Custom Abilities that only have an Effect string but no Description!
         if (data && (data.Description || data.Effect)) {
             const content = [data.Description, data.Effect].filter(Boolean).join('\n\n');
             setModalConfig({ title: id.ability, content });
@@ -217,7 +217,6 @@ export function IdentityHeader() {
         else setModalConfig({ title: "Ability", content: "Could not load ability data." });
     };
 
-    // AUDIT FIX: Safely combined and deduplicated Custom Homebrew entities into the Searchable Datalists!
     const uniqueSpecies = Array.from(new Set([ ...speciesList, ...filteredPokemon.map(p => p.Name) ]));
     const uniqueAbilities = Array.from(new Set([ ...(id.availableAbilities || []), ...allAbilitiesList, ...filteredAbilities.map(ab => ab.name) ]));
 

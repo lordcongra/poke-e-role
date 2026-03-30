@@ -3,9 +3,9 @@ import { useEffect } from 'react';
 import OBR from "@owlbear-rodeo/sdk";
 import { useCharacterStore } from '../store/useCharacterStore';
 import type { CustomType, CustomAbility, CustomMove, CustomPokemon, CustomItem } from '../store/storeTypes';
-import { fetchPokemonData, syncHomebrewToApi } from '../utils/api';
+import { fetchPokemonData, fetchMoveData, syncHomebrewToApi } from '../utils/api';
 import { buildGraphicsFromMeta, renderTokenGraphics, STATS_META_ID } from '../utils/graphicsManager';
-import { setActiveTokenId } from '../utils/obr';
+import { saveToOwlbear, setActiveTokenId } from '../utils/obr';
 
 const METADATA_ID = STATS_META_ID;
 const ROOM_META_ID = "pokerole-pmd-extension/room-settings";
@@ -18,7 +18,6 @@ export function useOwlbearSync() {
     const setRoomCustomTypes = useCharacterStore(state => state.setRoomCustomTypes);
     const setTokenData = useCharacterStore(state => state.setTokenData);
     
-    // AUDIT FIX: We use refreshSpeciesData now to completely migrate old V1.8 tokens!
     const refreshSpeciesData = useCharacterStore(state => state.refreshSpeciesData);
     const applyLearnset = useCharacterStore(state => state.applyLearnset);
 
@@ -75,10 +74,24 @@ export function useOwlbearSync() {
                         
                         if (meta) {
                             loadFromOwlbear(meta);
+
+                            // AUDIT FIX: Auto-Migrate V1.8 Moves to V2.0 formats if the token hasn't been flagged yet!
+                            const isOldToken = meta['v2-migrated'] !== true;
+                            if (isOldToken) {
+                                const store = useCharacterStore.getState();
+                                for (const move of store.moves) {
+                                    if (move.name) {
+                                        fetchMoveData(move.name).then(data => {
+                                            if (data) useCharacterStore.getState().applyMoveData(move.id, data);
+                                        }).catch(() => {});
+                                    }
+                                }
+                                saveToOwlbear({ 'v2-migrated': true });
+                            }
+
                             if (meta['species']) {
                                 fetchPokemonData(String(meta['species']))
-                                    // AUDIT FIX: Using refreshSpeciesData backfills types and limits for V1.8 tokens!
-                                    .then(data => { if (data) refreshSpeciesData(data as Record<string, unknown>); })
+                                    .then(data => { if (data) useCharacterStore.getState().refreshSpeciesData(data as Record<string, unknown>); })
                                     .catch(e => console.warn("Failed to fetch species data on token load:", e));
                             } else {
                                 applyLearnset({ Moves: [] });
