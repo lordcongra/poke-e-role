@@ -306,14 +306,40 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             newAbility = abilities[0].replace(" (HA)", "");
         }
 
+        // AUDIT FIX: Backfill Types and Limits for V1.8 to V2.0 lazy migration!
+        const newType1 = String(data.Type1 || state.identity.type1 || '');
+        const newType2 = String(data.Type2 || state.identity.type2 || '');
+
+        const newStats = { ...state.stats };
+        newStats[CombatStat.STR].limit = getLimit(data, "Strength");
+        newStats[CombatStat.DEX].limit = getLimit(data, "Dexterity");
+        newStats[CombatStat.VIT].limit = getLimit(data, "Vitality");
+        newStats[CombatStat.SPE].limit = getLimit(data, "Special");
+        newStats[CombatStat.INS].limit = getLimit(data, "Insight");
+
         const updatesToSave = {
             'ability': newAbility,
-            'ability-list': abilities.join(',')
+            'ability-list': abilities.join(','),
+            'type1': newType1,
+            'type2': newType2,
+            'str-max': newStats[CombatStat.STR].limit,
+            'dex-max': newStats[CombatStat.DEX].limit,
+            'vit-max': newStats[CombatStat.VIT].limit,
+            'spe-max': newStats[CombatStat.SPE].limit,
+            'ins-max': newStats[CombatStat.INS].limit
         };
         try { saveToOwlbear(updatesToSave); } catch(e){}
 
         return { 
-            identity: { ...state.identity, availableAbilities: abilities, ability: newAbility, learnset: learnsetArray } 
+            identity: { 
+                ...state.identity, 
+                availableAbilities: abilities, 
+                ability: newAbility, 
+                learnset: learnsetArray,
+                type1: newType1,
+                type2: newType2
+            },
+            stats: newStats
         };
     })
 });

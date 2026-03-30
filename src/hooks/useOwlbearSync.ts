@@ -17,6 +17,9 @@ export function useOwlbearSync() {
     const loadFromOwlbear = useCharacterStore(state => state.loadFromOwlbear);
     const setRoomCustomTypes = useCharacterStore(state => state.setRoomCustomTypes);
     const setTokenData = useCharacterStore(state => state.setTokenData);
+    
+    // AUDIT FIX: We use refreshSpeciesData now to completely migrate old V1.8 tokens!
+    const refreshSpeciesData = useCharacterStore(state => state.refreshSpeciesData);
     const applyLearnset = useCharacterStore(state => state.applyLearnset);
 
     const setRoomCustomAbilities = useCharacterStore(state => state.setRoomCustomAbilities);
@@ -74,8 +77,9 @@ export function useOwlbearSync() {
                             loadFromOwlbear(meta);
                             if (meta['species']) {
                                 fetchPokemonData(String(meta['species']))
-                                    .then(data => { if (data) applyLearnset(data); })
-                                    .catch(e => console.warn("Failed to fetch learnset on token load:", e));
+                                    // AUDIT FIX: Using refreshSpeciesData backfills types and limits for V1.8 tokens!
+                                    .then(data => { if (data) refreshSpeciesData(data as Record<string, unknown>); })
+                                    .catch(e => console.warn("Failed to fetch species data on token load:", e));
                             } else {
                                 applyLearnset({ Moves: [] });
                             }
@@ -256,5 +260,5 @@ export function useOwlbearSync() {
             isMounted = false;
             unsubs.forEach(unsub => unsub());
         };
-    }, [loadFromOwlbear, setRoomCustomTypes, setTokenData, applyLearnset]);
+    }, [loadFromOwlbear, setRoomCustomTypes, setTokenData, applyLearnset, refreshSpeciesData]);
 }

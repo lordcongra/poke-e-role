@@ -79,7 +79,11 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
                 ...state.identity,
                 nickname: String(meta['nickname'] || ''), species: String(meta['species'] || ''),
                 nature: String(meta['nature'] || ''), rank: (meta['rank'] as Rank) || 'Starter',
-                type1: String(meta['type1'] || ''), type2: String(meta['type2'] || ''),
+                
+                // AUDIT FIX: Checks for both casing patterns from old versions!
+                type1: String(meta['type1'] || meta['Type1'] || ''), 
+                type2: String(meta['type2'] || meta['Type2'] || ''),
+                
                 ability: String(meta['ability'] || ''), availableAbilities: loadedAbilities,
                 mode: String(meta['mode'] || 'Pokémon'), age: String(meta['age'] || ''), gender: String(meta['gender'] || ''),
                 rolls: String(meta['rolls'] || 'Public (Everyone)'),
@@ -117,7 +121,6 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
             health: newHealth,
             will: newWill,
             derived: {
-                // AUDIT FIX: Swapped fallback order to prevent rogue root 'defBuff' keys from overwriting live 'def-buff' keys!
                 defBuff: Number(meta['def-buff'] ?? meta['defBuff']) || 0, 
                 defDebuff: Number(meta['def-debuff'] ?? meta['defDebuff']) || 0,
                 sdefBuff: Number(meta['spd-buff'] ?? meta['sdefBuff']) || 0, 
