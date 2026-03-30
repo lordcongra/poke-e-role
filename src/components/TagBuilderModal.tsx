@@ -22,7 +22,9 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
     const customItems = useCharacterStore(state => state.roomCustomItems);
 
     const roomCustomTypes = useCharacterStore(state => state.roomCustomTypes);
-    const dynamicTypeOptions = ['Normal', 'Fire', 'Water', 'Electric', 'Grass', 'Ice', 'Fighting', 'Poison', 'Ground', 'Flying', 'Psychic', 'Bug', 'Rock', 'Ghost', 'Dragon', 'Dark', 'Steel', 'Fairy', ...roomCustomTypes.map(t => t.name), 'Super Effective'];
+    
+    // AUDIT FIX: Added 'Physical' and 'Special' to the dynamic list so users can specify category damage!
+    const dynamicTypeOptions = ['Normal', 'Fire', 'Water', 'Electric', 'Grass', 'Ice', 'Fighting', 'Poison', 'Ground', 'Flying', 'Psychic', 'Bug', 'Rock', 'Ghost', 'Dragon', 'Dark', 'Steel', 'Fairy', ...roomCustomTypes.map(t => t.name), 'Physical', 'Special', 'Super Effective'];
 
     const extraCategories = useCharacterStore(state => state.extraCategories);
 
@@ -40,7 +42,6 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
         if (category === 'combat') return ['Dmg', 'Acc', 'Init', 'Chance', 'Combo Dmg'];
         if (category === 'matchup') return ['Immune', 'Resist', 'Weak', 'Remove Immunities', 'Remove Immunity'];
         
-        // AUDIT FIX: Placed Super Effective and Powder in universal Mechanics!
         if (category === 'mechanic') return ['High Crit', 'Stacking High Crit', 'Ignore Low Acc', 'Recoil', 'Super Effective', 'Powder'];
         if (category === 'status') return ['1st Degree Burn', '2nd Degree Burn', '3rd Degree Burn', 'Poison', 'Badly Poisoned', 'Paralysis', 'Sleep', 'Frozen Solid', 'Confusion', 'In Love', 'Flinch'];
         if (category === 'move_mechanics') return ['High Critical', 'Low Accuracy', 'Never Miss', 'Recoil', 'Successive Actions', 'Set Damage', 'Powder'];
@@ -84,7 +85,6 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
         }
 
         if (tag) {
-            // AUDIT FIX: Properly partitioned routing for Homebrew items!
             if (targetType === 'move') {
                 const move = moves.find(m => m.id === targetId);
                 if (move) updateMove(targetId, 'desc', move.desc ? `${move.desc} ${tag}`.trim() : tag);

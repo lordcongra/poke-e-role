@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useCharacterStore, getRankPoints, getAgePoints } from '../store/useCharacterStore';
 import { CombatStat } from '../types/enums';
 import { NumberSpinner } from './NumberSpinner';
-import { parseCombatTags } from '../utils/combatUtils';
+import { parseCombatTags, getAbilityText } from '../utils/combatUtils';
 
 const STAT_COLORS = { [CombatStat.STR]: '#E65100', [CombatStat.DEX]: '#2E7D32', [CombatStat.VIT]: '#C62828', [CombatStat.SPE]: '#1565C0', [CombatStat.INS]: '#6A1B9A' };
 
@@ -14,6 +14,8 @@ export function CoreTable() {
     const setExtra = useCharacterStore(state => state.setExtra);
     const inventory = useCharacterStore(state => state.inventory);
     const extraCategories = useCharacterStore(state => state.extraCategories);
+    const customAbilities = useCharacterStore(state => state.roomCustomAbilities);
+    const ability = useCharacterStore(state => state.identity.ability);
     
     const currentRank = useCharacterStore(state => state.identity.rank);
     const currentAge = useCharacterStore(state => state.identity.age);
@@ -22,8 +24,8 @@ export function CoreTable() {
     const rankPoints = getRankPoints(currentRank).core;
     const agePoints = getAgePoints(currentAge).core;
     
-    // AUDIT FIX: Passed extraCategories to satisfy the updated signature!
-    const invMods = parseCombatTags(inventory, extraCategories);
+    const abilityText = getAbilityText(ability, customAbilities);
+    const invMods = parseCombatTags(inventory, extraCategories, undefined, abilityText);
 
     const [isCollapsed, setIsCollapsed] = useState(false);
 

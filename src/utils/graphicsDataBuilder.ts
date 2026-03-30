@@ -1,7 +1,7 @@
 // src/utils/graphicsDataBuilder.ts
 import type { CharacterState, InventoryItem } from '../store/storeTypes';
 import { CombatStat } from '../types/enums';
-import { parseCombatTags } from './combatUtils';
+import { parseCombatTags, getAbilityText } from './combatUtils';
 
 export const DEFAULT_COLOR_ACT = '#4890fc'; 
 export const DEFAULT_COLOR_EVA = '#c387fc'; 
@@ -32,7 +32,9 @@ export interface GraphicsData {
 }
 
 export function buildGraphicsFromState(meta: Record<string, unknown>, state: CharacterState): GraphicsData {
-    const invMods = parseCombatTags(state.inventory, state.extraCategories);
+    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+    
     const vitTotal = Math.max(1, state.stats[CombatStat.VIT].base + state.stats[CombatStat.VIT].rank + state.stats[CombatStat.VIT].buff - state.stats[CombatStat.VIT].debuff + (invMods.stats.vit || 0));
     const insTotal = Math.max(1, state.stats[CombatStat.INS].base + state.stats[CombatStat.INS].rank + state.stats[CombatStat.INS].buff - state.stats[CombatStat.INS].debuff + (invMods.stats.ins || 0));
     const defTotal = Math.max(1, vitTotal + state.derived.defBuff - state.derived.defDebuff + invMods.def);

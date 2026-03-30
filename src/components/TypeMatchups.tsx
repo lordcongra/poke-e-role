@@ -1,6 +1,7 @@
 // src/components/TypeMatchups.tsx
 import { useState } from 'react';
 import { useCharacterStore } from '../store/useCharacterStore';
+import { getAbilityText } from '../utils/combatUtils';
 
 const BASE_CHART: Record<string, Record<string, number>> = {
     "Normal": { Fighting: 2, Ghost: 0 },
@@ -27,11 +28,15 @@ const BASE_TYPES = Object.keys(BASE_CHART);
 const TYPE_COLORS: Record<string, string> = { 'Normal': '#A8A878', 'Fire': '#F08030', 'Water': '#6890F0', 'Electric': '#F8D030', 'Grass': '#78C850', 'Ice': '#98D8D8', 'Fighting': '#C03028', 'Poison': '#A040A0', 'Ground': '#E0C068', 'Flying': '#A890F0', 'Psychic': '#F85888', 'Bug': '#A8B820', 'Rock': '#B8A038', 'Ghost': '#705898', 'Dragon': '#7038F8', 'Dark': '#705848', 'Steel': '#B8B8D0', 'Fairy': '#EE99AC' };
 
 export function TypeMatchups() {
+    const role = useCharacterStore(state => state.role);
     const type1 = useCharacterStore(state => state.identity.type1);
     const type2 = useCharacterStore(state => state.identity.type2);
     const roomCustomTypes = useCharacterStore(state => state.roomCustomTypes);
     
     const inventory = useCharacterStore(state => state.inventory);
+    
+    const customAbilities = useCharacterStore(state => state.roomCustomAbilities);
+    const abilityName = useCharacterStore(state => state.identity.ability);
 
     const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -44,8 +49,11 @@ export function TypeMatchups() {
         );
     }
 
-    const ALL_TYPES = [...BASE_TYPES, ...roomCustomTypes.map(t => t.name)];
-    const ALL_COLORS = { ...TYPE_COLORS, ...Object.fromEntries(roomCustomTypes.map(t => [t.name, t.color])) };
+    // AUDIT FIX: Filter out GM-Only types so players don't get spoilers in their matchup charts!
+    const visibleTypes = roomCustomTypes.filter(t => role === 'GM' || !t.gmOnly);
+    
+    const ALL_TYPES = [...BASE_TYPES, ...visibleTypes.map(t => t.name)];
+    const ALL_COLORS = { ...TYPE_COLORS, ...Object.fromEntries(visibleTypes.map(t => [t.name, t.color])) };
 
     const matrix: Record<string, Record<string, number>> = {};
     ALL_TYPES.forEach(def => {
@@ -57,7 +65,7 @@ export function TypeMatchups() {
         Object.entries(atkMap).forEach(([atk, mult]) => { matrix[def][atk] = mult; });
     });
 
-    roomCustomTypes.forEach(ct => {
+    visibleTypes.forEach(ct => {
         (ct.weaknesses || []).forEach(atk => { if (matrix[ct.name]) matrix[ct.name][atk] = 2; });
         (ct.resistances || []).forEach(atk => { if (matrix[ct.name]) matrix[ct.name][atk] = 0.5; });
         (ct.immunities || []).forEach(atk => { if (matrix[ct.name]) matrix[ct.name][atk] = 0; });
@@ -72,8 +80,14 @@ export function TypeMatchups() {
     const extraResistances: string[] = [];
     const extraWeaknesses: string[] = [];
 
-    inventory.filter(i => i.active).forEach(item => {
-        const desc = ((item.name || "") + " " + (item.desc || "")).toLowerCase();
+    const abilityText = getAbilityText(abilityName, customAbilities);
+    const stringsToParse = inventory.filter(i => i.active).map(item => ((item.name || "") + " " + (item.desc || "")).toLowerCase());
+    
+    if (abilityText) {
+        stringsToParse.push(abilityText.toLowerCase());
+    }
+
+    stringsToParse.forEach(desc => {
         if (desc.includes("[remove immunities]")) removeImmunities = true;
 
         const remImmuneMatches = desc.match(/\[remove immunity:\s*([a-z]+)\]/g);
@@ -110,7 +124,6 @@ export function TypeMatchups() {
         let mult1 = matrix[type1]?.[attackerType] ?? 1;
         let mult2 = matrix[type2]?.[attackerType] ?? 1;
         
-        // AUDIT FIX: Strip immunities before multiplying, preserving secondary weaknesses!
         if (removeImmunities || removeSpecificImmunities.includes(attackerType)) {
             if (mult1 === 0) mult1 = 1;
             if (mult2 === 0) mult2 = 1;

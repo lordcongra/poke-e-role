@@ -4,7 +4,7 @@ import { useCharacterStore } from '../store/useCharacterStore';
 import { CombatStat, Skill } from '../types/enums';
 import { ResourceBox } from './ResourceBox';
 import { NumberSpinner } from './NumberSpinner';
-import { parseCombatTags, rollStatus, rollDicePlus } from '../utils/combatUtils';
+import { parseCombatTags, getAbilityText, rollStatus, rollDicePlus } from '../utils/combatUtils';
 
 const STATUS_COLORS: Record<string, {bg: string, text: string}> = {
     "Healthy": { bg: "#A5D6A7", text: "#000" },
@@ -47,6 +47,8 @@ const TooltipIcon = ({ onClick }: { onClick: () => void }) => (
 export function DerivedBoard() {
     const ruleset = useCharacterStore(state => state.identity.ruleset);
     const mode = useCharacterStore(state => state.identity.mode);
+    const ability = useCharacterStore(state => state.identity.ability);
+    const customAbilities = useCharacterStore(state => state.roomCustomAbilities);
     
     const health = useCharacterStore(state => state.health);
     const will = useCharacterStore(state => state.will);
@@ -74,7 +76,8 @@ export function DerivedBoard() {
     const [tooltipInfo, setTooltipInfo] = useState<{title: string, desc: string} | null>(null);
     const [isCollapsed, setIsCollapsed] = useState(false);
 
-    const invMods = parseCombatTags(inventory, extraCategories);
+    const abilityText = getAbilityText(ability, customAbilities);
+    const invMods = parseCombatTags(inventory, extraCategories, undefined, abilityText);
     
     const vitTotal = Math.max(1, stats[CombatStat.VIT].base + stats[CombatStat.VIT].rank + stats[CombatStat.VIT].buff - stats[CombatStat.VIT].debuff + (invMods.stats.vit || 0));
     const insTotal = Math.max(1, stats[CombatStat.INS].base + stats[CombatStat.INS].rank + stats[CombatStat.INS].buff - stats[CombatStat.INS].debuff + (invMods.stats.ins || 0));
@@ -141,7 +144,6 @@ export function DerivedBoard() {
 
                         <div className="health-section__row">
                             <div className="sheet-panel health-section__box" style={{ flex: 1, padding: '0', overflow: 'hidden' }}>
-                                {/* AUDIT FIX: Added consistent Drop Shadow to ALL headers! */}
                                 <div style={{ background: 'var(--primary)', color: 'white', textShadow: '1px 1px 1px rgba(0,0,0,0.8)', textAlign: 'center', fontWeight: 'bold', fontSize: '0.85rem', padding: '4px' }}>DEFENSE</div>
                                 <div className="flex-layout--row-center" style={{ padding: '6px', justifyContent: 'center', gap: '8px', background: 'var(--panel-alt)' }}>
                                     <span style={{ color: 'var(--text-main)', fontSize: '0.85rem' }}>Total: <strong>{defTotal}</strong></span>

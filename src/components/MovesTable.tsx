@@ -5,7 +5,7 @@ import type { MoveData } from '../store/storeTypes';
 import { CombatStat } from '../types/enums';
 import { NumberSpinner } from './NumberSpinner';
 import { loadGithubTree, ALL_MOVES } from '../utils/api';
-import { calculateBaseDamage, executeDamageRoll, rollDicePlus, parseCombatTags } from '../utils/combatUtils';
+import { calculateBaseDamage, executeDamageRoll, rollDicePlus, parseCombatTags, getAbilityText } from '../utils/combatUtils';
 import { TargetingModal } from './TargetingModal';
 import { MoveCard } from './MoveCard';
 import { MoveRow } from './MoveRow';
@@ -25,6 +25,8 @@ export function MovesTable() {
     
     const skills = useCharacterStore(state => state.skills);
     const extraCategories = useCharacterStore(state => state.extraCategories);
+    const customAbilities = useCharacterStore(state => state.roomCustomAbilities);
+    const ability = useCharacterStore(state => state.identity.ability);
     const painEnabled = useCharacterStore(state => state.identity.pain) === 'Enabled';
     
     const roomCustomMoves = useCharacterStore(state => state.roomCustomMoves);
@@ -44,7 +46,9 @@ export function MovesTable() {
     }, []);
 
     const state = useCharacterStore.getState();
-    const itemBuffs = parseCombatTags(state.inventory, state.extraCategories);
+    const abilityText = getAbilityText(ability, customAbilities);
+    const itemBuffs = parseCombatTags(state.inventory, extraCategories, undefined, abilityText);
+    
     const insStat = state.stats[CombatStat.INS];
     const maxMoves = 3 + Math.max(1, insStat.base + insStat.rank + insStat.buff - insStat.debuff + (itemBuffs.stats.ins || 0));
 
@@ -76,7 +80,8 @@ export function MovesTable() {
 
     const handleGlobalChanceRoll = () => {
         const st = useCharacterStore.getState();
-        const items = parseCombatTags(st.inventory, st.extraCategories);
+        const aTxt = getAbilityText(st.identity.ability, st.roomCustomAbilities);
+        const items = parseCombatTags(st.inventory, st.extraCategories, undefined, aTxt);
         const totalChance = trackers.globalChance + items.chance;
         
         if (totalChance <= 0) return;

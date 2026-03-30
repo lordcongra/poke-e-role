@@ -5,7 +5,7 @@ import type { MoveData, SkillData, ExtraCategory } from '../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { NumberSpinner } from './NumberSpinner';
 import { fetchMoveData } from '../utils/api';
-import { rollAccuracy, calculateBaseDamage, parseCombatTags } from '../utils/combatUtils';
+import { rollAccuracy, calculateBaseDamage, parseCombatTags, getAbilityText } from '../utils/combatUtils';
 import { MoveEditModal } from './MoveEditModal';
 
 const ALL_TYPES = ['Normal', 'Fire', 'Water', 'Electric', 'Grass', 'Ice', 'Fighting', 'Poison', 'Ground', 'Flying', 'Psychic', 'Bug', 'Rock', 'Ghost', 'Dragon', 'Dark', 'Steel', 'Fairy'];
@@ -35,8 +35,11 @@ export function MoveCard({ move, skills, extraCategories, onTarget, onDelete }: 
     const will = useCharacterStore(state => state.will);
     const stats = useCharacterStore(state => state.stats);
     const socials = useCharacterStore(state => state.socials);
+    const customAbilities = useCharacterStore(state => state.roomCustomAbilities);
+    const ability = useCharacterStore(state => state.identity.ability);
     
-    const itemBuffs = parseCombatTags(inventory, extraCategories, move);
+    const abilityText = getAbilityText(ability, customAbilities);
+    const itemBuffs = parseCombatTags(inventory, extraCategories, move, abilityText);
     
     let attrTotal = 0;
     if (move.acc1 === 'will') attrTotal = will.willMax;
@@ -69,7 +72,6 @@ export function MoveCard({ move, skills, extraCategories, onTarget, onDelete }: 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap' }}>
                 <input type="checkbox" checked={move.active} onChange={(e) => updateMove(move.id, 'active', e.target.checked)} style={{ cursor: 'pointer', transform: 'scale(1.4)', flexShrink: 0, margin: '0 4px' }} title="Mark as used this round" />
                 <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--text-main)', textAlign: 'center', minWidth: '20px', flexShrink: 0 }}>{accTotal}</span>
-                {/* AUDIT FIX: Accuracy emoji updated to target! */}
                 <button type="button" onClick={() => rollAccuracy(move, useCharacterStore.getState())} className="action-button action-button--dark" style={{ padding: '6px 10px', flexShrink: 0 }} title="Roll Accuracy">🎯</button>
                 <input type="text" list="move-list" value={move.name} onChange={(e) => updateMove(move.id, 'name', e.target.value)} onBlur={handleNameBlur} placeholder="Move Name" style={{ flex: 1, minWidth: '80px', padding: '6px 8px', background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-main)', outline: 'none', fontWeight: 'bold', fontSize: '0.9rem' }} />
                 <button type="button" onClick={() => setEditModalOpen(true)} className="action-button action-button--transparent-white" style={{ color: 'var(--primary)', padding: '4px', fontSize: '1.2rem', flexShrink: 0 }} title="Edit Move & Tags">🏷️</button>

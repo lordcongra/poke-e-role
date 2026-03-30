@@ -1,5 +1,5 @@
 // src/utils/combatMath.ts
-import type { InventoryItem, MoveData, CharacterState, ExtraCategory } from '../store/storeTypes';
+import type { InventoryItem, MoveData, CharacterState, ExtraCategory, CustomAbility } from '../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
 
 export const ATTRIBUTE_MAPPING: Record<string, string> = {
@@ -7,7 +7,15 @@ export const ATTRIBUTE_MAPPING: Record<string, string> = {
     "Tough": "tou", "Cool": "coo", "Beauty": "bea", "Cute": "cut", "Clever": "cle", "Will": "will"
 };
 
-export function parseCombatTags(inventory: InventoryItem[], extraCategories: ExtraCategory[], move?: MoveData) {
+export function getAbilityText(abilityName: string, customAbilities: CustomAbility[]): string {
+    if (!abilityName) return "";
+    const custom = customAbilities.find(a => a.name.trim().toLowerCase() === abilityName.trim().toLowerCase());
+    return custom ? `${custom.description} ${custom.effect}` : "";
+}
+
+const safeParseInt = (val: string) => parseInt((val || "0").replace(/\s/g, '')) || 0;
+
+export function parseCombatTags(inventory: InventoryItem[], extraCategories: ExtraCategory[], move?: MoveData, abilityText: string = "") {
     const bonuses = {
         stats: {} as Record<string, number>, skills: {} as Record<string, number>,
         def: 0, spd: 0, init: 0, dmg: 0, acc: 0, chance: 0, seDmg: 0,
@@ -26,74 +34,87 @@ export function parseCombatTags(inventory: InventoryItem[], extraCategories: Ext
     const skillsList = [...Object.values(Skill), ...customSkillNames];
     const escapedSkills = skillsList.map(s => s.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
 
-    inventory.filter(i => i.active).forEach(item => {
-        const desc = (item.desc || "").toLowerCase();
-        const name = (item.name || "").trim();
+    const itemsToParse = inventory.filter(i => i.active).map(i => ({ name: i.name || "", desc: i.desc || "" }));
+
+    if (abilityText) {
+        itemsToParse.push({ name: "Ability", desc: abilityText });
+    }
+
+    itemsToParse.forEach(item => {
+        const desc = item.desc.toLowerCase();
+        const name = item.name.trim();
         
         let accTriggered = false;
         let dmgTriggered = false;
         let generalTriggered = false;
 
-        const statMatches = desc.matchAll(/\[(str|strength|dex|dexterity|vit|vitality|spe|special|ins|insight|tou|tough|coo|cool|bea|beauty|cut|cute|cle|clever)\s*([+-]?\d+)\]/gi);
+        const statMatches = desc.matchAll(/\[\s*(str|strength|dex|dexterity|vit|vitality|spe|special|ins|insight|tou|tough|coo|cool|bea|beauty|cut|cute|cle|clever)\s*([+-]?\s*\d+)\s*\]/gi);
         for (const match of statMatches) {
             const rawStat = match[1].toLowerCase();
             const map: Record<string, string> = { 'strength': 'str', 'dexterity': 'dex', 'vitality': 'vit', 'special': 'spe', 'insight': 'ins', 'tough': 'tou', 'cool': 'coo', 'beauty': 'bea', 'cute': 'cut', 'clever': 'cle' };
             const statKey = map[rawStat] || rawStat;
-            bonuses.stats[statKey] = (bonuses.stats[statKey] || 0) + (parseInt(match[2]) || 0);
+            bonuses.stats[statKey] = (bonuses.stats[statKey] || 0) + safeParseInt(match[2]);
             generalTriggered = true;
         }
 
-        const skillMatches = desc.matchAll(new RegExp(`\\[(${escapedSkills})\\s*([+-]?\\d+)\\]`, 'gi'));
+        const skillMatches = desc.matchAll(new RegExp(`\\[\\s*(${escapedSkills})\\s*([+-]?\\s*\\d+)\\s*\\]`, 'gi'));
         for (const match of skillMatches) { 
-            bonuses.skills[match[1].toLowerCase()] = (bonuses.skills[match[1].toLowerCase()] || 0) + (parseInt(match[2]) || 0); 
+            bonuses.skills[match[1].toLowerCase()] = (bonuses.skills[match[1].toLowerCase()] || 0) + safeParseInt(match[2]); 
             generalTriggered = true; 
         }
 
-        const defMatches = desc.matchAll(/\[def\s*([+-]?\d+)\]/gi);
-        for (const match of defMatches) { bonuses.def += parseInt(match[1]) || 0; generalTriggered = true; }
+        const defMatches = desc.matchAll(/\[\s*def\s*([+-]?\s*\d+)\s*\]/gi);
+        for (const match of defMatches) { bonuses.def += safeParseInt(match[1]); generalTriggered = true; }
        
-        const spdMatches = desc.matchAll(/\[spd\s*([+-]?\d+)\]/gi);
-        for (const match of spdMatches) { bonuses.spd += parseInt(match[1]) || 0; generalTriggered = true; }
+        const spdMatches = desc.matchAll(/\[\s*spd\s*([+-]?\s*\d+)\s*\]/gi);
+        for (const match of spdMatches) { bonuses.spd += safeParseInt(match[1]); generalTriggered = true; }
 
-        const initMatches = desc.matchAll(/\[init\s*([+-]?\d+)\]/gi);
-        for (const match of initMatches) { bonuses.init += parseInt(match[1]) || 0; generalTriggered = true; }
+        const initMatches = desc.matchAll(/\[\s*init\s*([+-]?\s*\d+)\s*\]/gi);
+        for (const match of initMatches) { bonuses.init += safeParseInt(match[1]); generalTriggered = true; }
 
-        const chanceMatches = desc.matchAll(/\[chance\s*([+-]?\d+)\]/gi);
-        for (const match of chanceMatches) { bonuses.chance += parseInt(match[1]) || 0; generalTriggered = true; }
+        const chanceMatches = desc.matchAll(/\[\s*chance\s*([+-]?\s*\d+)\s*\]/gi);
+        for (const match of chanceMatches) { bonuses.chance += safeParseInt(match[1]); generalTriggered = true; }
 
         if (move) {
-            const dmgMatches = desc.matchAll(/\[dmg\s*([+-]?\d+)(?:\s*:\s*([\w\s]+))?\]/gi);
+            const dmgMatches = desc.matchAll(/\[\s*dmg\s*([+-]?\s*\d+)(?:\s*:\s*([\w\s]+))?\s*\]/gi);
             for (const match of dmgMatches) {
                 const requirement = match[2]?.toLowerCase().trim();
-                if (!requirement || requirement === moveType) { bonuses.dmg += parseInt(match[1]) || 0; dmgTriggered = true; }
-                else if (requirement === "super effective") { bonuses.seDmg += parseInt(match[1]) || 0; dmgTriggered = true; }
+                
+                if (!requirement || requirement === moveType) { bonuses.dmg += safeParseInt(match[1]); dmgTriggered = true; }
+                else if (requirement === "super effective") { bonuses.seDmg += safeParseInt(match[1]); dmgTriggered = true; }
+                // AUDIT FIX: Checks if the move matches the requested category!
+                else if (requirement === "physical" && move.category === 'Physical') { bonuses.dmg += safeParseInt(match[1]); dmgTriggered = true; }
+                else if (requirement === "special" && move.category === 'Special') { bonuses.dmg += safeParseInt(match[1]); dmgTriggered = true; }
             }
 
-            const accMatches = desc.matchAll(/\[acc\s*([+-]?\d+)(?:\s*:\s*([\w\s]+))?\]/gi);
+            const accMatches = desc.matchAll(/\[\s*acc\s*([+-]?\s*\d+)(?:\s*:\s*([\w\s]+))?\s*\]/gi);
             for (const match of accMatches) {
                 const requirement = match[2]?.toLowerCase().trim();
-                if (!requirement || requirement === moveType) { bonuses.acc += parseInt(match[1]) || 0; accTriggered = true; }
+                
+                if (!requirement || requirement === moveType) { bonuses.acc += safeParseInt(match[1]); accTriggered = true; }
+                // AUDIT FIX: Added category support to accuracy tags too, just in case!
+                else if (requirement === "physical" && move.category === 'Physical') { bonuses.acc += safeParseInt(match[1]); accTriggered = true; }
+                else if (requirement === "special" && move.category === 'Special') { bonuses.acc += safeParseInt(match[1]); accTriggered = true; }
             }
 
-            const comboMatches = desc.matchAll(/\[combo dmg\s*([+-]?\d+)\]/gi);
+            const comboMatches = desc.matchAll(/\[\s*combo dmg\s*([+-]?\s*\d+)\s*\]/gi);
             for (const match of comboMatches) {
-                if (isComboMove) { bonuses.dmg += parseInt(match[1]) || 0; dmgTriggered = true; }
+                if (isComboMove) { bonuses.dmg += safeParseInt(match[1]); dmgTriggered = true; }
             }
         } else {
-            const dmgMatches = desc.matchAll(/\[dmg\s*([+-]?\d+)\]/gi);
-            for (const match of dmgMatches) { bonuses.dmg += parseInt(match[1]) || 0; dmgTriggered = true; }
-            const accMatches = desc.matchAll(/\[acc\s*([+-]?\d+)\]/gi);
-            for (const match of accMatches) { bonuses.acc += parseInt(match[1]) || 0; accTriggered = true; }
+            const dmgMatches = desc.matchAll(/\[\s*dmg\s*([+-]?\s*\d+)\s*\]/gi);
+            for (const match of dmgMatches) { bonuses.dmg += safeParseInt(match[1]); dmgTriggered = true; }
+            const accMatches = desc.matchAll(/\[\s*acc\s*([+-]?\s*\d+)\s*\]/gi);
+            for (const match of accMatches) { bonuses.acc += safeParseInt(match[1]); accTriggered = true; }
         }
 
-        if (/\[high crit\]/i.test(desc)) { bonuses.highCritStacks += 1; accTriggered = true; }
-        if (/\[stacking high crit\]/i.test(desc)) { bonuses.stackingHighCritStacks += 1; accTriggered = true; }
+        if (/\[\s*high crit\s*\]/i.test(desc)) { bonuses.highCritStacks += 1; accTriggered = true; }
+        if (/\[\s*stacking high crit\s*\]/i.test(desc)) { bonuses.stackingHighCritStacks += 1; accTriggered = true; }
         
-        const ignoreAccMatches = desc.matchAll(/\[ignore low acc\s*(\d+)\]/gi);
-        for (const match of ignoreAccMatches) { bonuses.ignoreLowAcc += parseInt(match[1]) || 0; accTriggered = true; }
+        const ignoreAccMatches = desc.matchAll(/\[\s*ignore low acc\s*(\d+)\s*\]/gi);
+        for (const match of ignoreAccMatches) { bonuses.ignoreLowAcc += safeParseInt(match[1]); accTriggered = true; }
 
-        // AUDIT FIX: Categorized item names so they only appear if they legitimately affected the specific roll context!
-        if (name) {
+        if (name && name !== "Ability") {
             if (generalTriggered || accTriggered || dmgTriggered) bonuses.itemNames.push(name);
             if (generalTriggered || accTriggered) bonuses.accItemNames.push(name);
             if (generalTriggered || dmgTriggered) bonuses.dmgItemNames.push(name);
@@ -146,7 +167,8 @@ export function getStatusPenalties(state: CharacterState) {
 }
 
 export function calculateBaseDamage(move: MoveData, state: CharacterState): number {
-    const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, move);
+    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, move, abilityText);
     const extraDice = state.trackers.globalDmg + itemBuffs.dmg;
 
     let scalingVal = 0;

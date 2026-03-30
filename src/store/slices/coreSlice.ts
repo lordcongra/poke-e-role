@@ -3,7 +3,7 @@ import type { StateCreator } from 'zustand';
 import type { CharacterState, CoreSlice } from '../storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { saveToOwlbear } from '../../utils/obr';
-import { parseCombatTags } from '../../utils/combatMath';
+import { parseCombatTags, getAbilityText } from '../../utils/combatMath';
 
 export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = (set) => ({
     health: { hpCurr: 5, hpMax: 5, hpBase: 4 },
@@ -49,8 +49,9 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
         const newHealth = { ...state.health, [field]: value };
         
         if (field === 'hpBase') {
-            // AUDIT FIX: Passed extraCategories!
-            const invMods = parseCombatTags(state.inventory, state.extraCategories);
+            const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+            const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+            
             const vitTotal = Math.max(1, state.stats[CombatStat.VIT].base + state.stats[CombatStat.VIT].rank + state.stats[CombatStat.VIT].buff - state.stats[CombatStat.VIT].debuff + (invMods.stats.vit || 0));
             const insTotal = Math.max(1, state.stats[CombatStat.INS].base + state.stats[CombatStat.INS].rank + state.stats[CombatStat.INS].buff - state.stats[CombatStat.INS].debuff + (invMods.stats.ins || 0));
             let hpStat = vitTotal;
@@ -81,8 +82,9 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
         const newWill = { ...state.will, [field]: value };
         
         if (field === 'willBase') {
-            // AUDIT FIX: Passed extraCategories!
-            const invMods = parseCombatTags(state.inventory, state.extraCategories);
+            const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+            const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+            
             const insTotal = Math.max(1, state.stats[CombatStat.INS].base + state.stats[CombatStat.INS].rank + state.stats[CombatStat.INS].buff - state.stats[CombatStat.INS].debuff + (invMods.stats.ins || 0));
             const oldMax = state.will.willMax;
             newWill.willMax = value + insTotal;
@@ -119,8 +121,9 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
         const newWill = { ...state.will };
         
         if (stat === CombatStat.VIT || stat === CombatStat.INS) {
-            // AUDIT FIX: Passed extraCategories!
-            const invMods = parseCombatTags(state.inventory, state.extraCategories);
+            const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+            const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+            
             const vitTotal = Math.max(1, newStats[CombatStat.VIT].base + newStats[CombatStat.VIT].rank + newStats[CombatStat.VIT].buff - newStats[CombatStat.VIT].debuff + (invMods.stats.vit || 0));
             const insTotal = Math.max(1, newStats[CombatStat.INS].base + newStats[CombatStat.INS].rank + newStats[CombatStat.INS].buff - newStats[CombatStat.INS].debuff + (invMods.stats.ins || 0));
             

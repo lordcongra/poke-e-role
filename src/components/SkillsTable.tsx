@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useCharacterStore, getRankPoints } from '../store/useCharacterStore';
 import { Skill } from '../types/enums';
 import { NumberSpinner } from './NumberSpinner';
-import { parseCombatTags } from '../utils/combatUtils';
+import { parseCombatTags, getAbilityText } from '../utils/combatUtils';
 
 function CategoryHeader({ title }: { title: string }) {
     return (
@@ -21,9 +21,11 @@ function SkillRow({ skill, defaultLabel }: { skill: Skill, defaultLabel: string 
     const setSkill = useCharacterStore(state => state.setSkill);
     const inventory = useCharacterStore(state => state.inventory);
     const extraCategories = useCharacterStore(state => state.extraCategories);
+    const customAbilities = useCharacterStore(state => state.roomCustomAbilities);
+    const ability = useCharacterStore(state => state.identity.ability);
     
-    // AUDIT FIX: Passed extraCategories!
-    const invMods = parseCombatTags(inventory, extraCategories);
+    const abilityText = getAbilityText(ability, customAbilities);
+    const invMods = parseCombatTags(inventory, extraCategories, undefined, abilityText);
     const itemBonus = invMods.skills[skill] || 0;
     const total = data.base + data.buff + itemBonus;
 

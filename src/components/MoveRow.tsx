@@ -5,7 +5,7 @@ import type { MoveData, SkillData, ExtraCategory } from '../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { NumberSpinner } from './NumberSpinner';
 import { fetchMoveData } from '../utils/api';
-import { rollAccuracy, calculateBaseDamage, parseCombatTags } from '../utils/combatUtils';
+import { rollAccuracy, calculateBaseDamage, parseCombatTags, getAbilityText } from '../utils/combatUtils';
 import { MoveEditModal } from './MoveEditModal';
 
 const ALL_TYPES = ['Normal', 'Fire', 'Water', 'Electric', 'Grass', 'Ice', 'Fighting', 'Poison', 'Ground', 'Flying', 'Psychic', 'Bug', 'Rock', 'Ghost', 'Dragon', 'Dark', 'Steel', 'Fairy'];
@@ -35,8 +35,11 @@ export function MoveRow({ move, skills, extraCategories, onTarget, onDelete }: {
     const will = useCharacterStore(state => state.will);
     const stats = useCharacterStore(state => state.stats);
     const socials = useCharacterStore(state => state.socials);
+    const customAbilities = useCharacterStore(state => state.roomCustomAbilities);
+    const ability = useCharacterStore(state => state.identity.ability);
     
-    const itemBuffs = parseCombatTags(inventory, extraCategories, move);
+    const abilityText = getAbilityText(ability, customAbilities);
+    const itemBuffs = parseCombatTags(inventory, extraCategories, move, abilityText);
     
     let attrTotal = 0;
     if (move.acc1 === 'will') attrTotal = will.willMax;
@@ -72,7 +75,6 @@ export function MoveRow({ move, skills, extraCategories, onTarget, onDelete }: {
                 <td className="data-table__cell--middle">
                     <div className="flex-layout--row-center">
                         <span style={{ fontWeight: 'bold', fontSize: '0.9em', color: 'var(--text-main)', minWidth: '1em', textAlign: 'right' }}>{accTotal}</span>
-                        {/* AUDIT FIX: Accuracy emoji updated to target! */}
                         <button type="button" onClick={() => rollAccuracy(move, useCharacterStore.getState())} className="action-button action-button--dark" style={{ padding: '2px 6px' }} title="Roll Accuracy">🎯</button>
                     </div>
                 </td>

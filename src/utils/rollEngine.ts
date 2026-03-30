@@ -3,7 +3,7 @@ import OBR from "@owlbear-rodeo/sdk";
 import type { MoveData, CharacterState, SkillCheck, StatusItem } from '../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { useCharacterStore } from '../store/useCharacterStore';
-import { ATTRIBUTE_MAPPING, parseCombatTags, getPainPenalty, getStatusPenalties } from './combatMath';
+import { ATTRIBUTE_MAPPING, parseCombatTags, getPainPenalty, getStatusPenalties, getAbilityText } from './combatMath';
 
 export async function rollDicePlus(notation: string, label: string, rollType = "roll", payload = "") {
     if (!OBR.isAvailable) {
@@ -67,7 +67,6 @@ export async function rollGeneric(actionName: string, pool: number, attr: string
         else tags.push(`ASLEEP`);
     }
     
-    // AUDIT FIX: Pushes a giant tag if the player tries to roll while Frozen!
     if (statuses.isFrozen) {
         tags.push(`❄️ FROZEN: Attacking Ice Block (5HP/2DEF). Fire/Super-Effective breaks instantly.`);
     }
@@ -88,7 +87,8 @@ export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {
         return;
     }
 
-    const itemBuffs = parseCombatTags(state.inventory, state.extraCategories);
+    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
     
     let attrTotal = 0;
     if (check.attr === 'will') attrTotal = state.will.willMax;
@@ -147,7 +147,8 @@ export async function rollStatus(status: StatusItem, state: CharacterState) {
     let pool = 0;
     let attr = "ins"; 
 
-    const itemBuffs = parseCombatTags(state.inventory, state.extraCategories);
+    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
  
     if (status.name.includes("Burn")) {
         attr = "dex";
@@ -194,7 +195,8 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
         return;
     }
 
-    const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, move);
+    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, move, abilityText);
     const extraDice = state.trackers.globalAcc + itemBuffs.acc;
 
     let moveLowAcc = 0;
@@ -282,7 +284,8 @@ export async function executeDamageRoll(move: MoveData, state: CharacterState, b
     const typingStr = `${state.identity.type1} / ${state.identity.type2}`;
     const statuses = getStatusPenalties(state);
     
-    const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, move);
+    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, move, abilityText);
     
     let actualPool = baseDamage - reduction;
     
@@ -332,7 +335,6 @@ export async function executeDamageRoll(move: MoveData, state: CharacterState, b
     
     const moveDesc = (move.desc || "").toLowerCase();
     
-    // AUDIT FIX: Smart detection for Powder and Recoil moves!
     if (moveDesc.includes("powder") || moveDesc.includes("spore")) {
         tags.push(`POWDER: Grass-types are immune`);
     }

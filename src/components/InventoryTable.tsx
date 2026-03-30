@@ -12,12 +12,42 @@ const HARDCODED_ITEMS = [
     "Eject Button", "Eviolite", "Expert Belt", "Fairy Wings", "Flame Orb", "Focus Sash",
     "Hard Stone", "Heavy-Duty Boots", "Iron Ball", "King's Rock", "Leek", "Leftovers",
     "Life Orb", "Light Ball", "Loaded Dice", "Lucky Punch", "Magnet", "Metal Coat",
-    "Metronome", "Miracle Seed", "Mystic Water", "Never-Melt Ice", "Poison Barb", "Power Herb",
+    "Metronome", "Miracle Seed", "Muscle Band", "Mystic Water", "Never-Melt Ice", "Poison Barb", "Power Herb",
     "Power Increasers", "Protective Pads", "Quick Claw", "Razor Claw", "Razor Fang", "Red Card",
     "Ring Target", "Rocky Helmet", "Safety Goggles", "Sharp Beak", "Silk Scarf", "Silver Powder",
     "Soft Sand", "Spell Tag", "Sticky Barb", "Thick Club", "Throat Spray", "Toxic Orb",
-    "Twisted Spoon", "Umbrella", "Weakness Policy", "White Herb", "Wide Lens", "Zoom Lens"
+    "Twisted Spoon", "Umbrella", "Weakness Policy", "White Herb", "Wide Lens", "Wise Glasses", "Zoom Lens"
 ];
+
+const HARDCODED_TAGS: Record<string, string> = {
+    "wide lens": "[Acc +2]", "zoom lens": "[Acc +2]", "life orb": "[Dmg +2] [Recoil]",
+    "black belt": "[Dmg +1: Fighting]", "black glasses": "[Dmg +1: Dark]",
+    "charcoal": "[Dmg +1: Fire]", "dragon fang": "[Dmg +1: Dragon]",
+    "fairy wings": "[Dmg +1: Fairy]", "hard stone": "[Dmg +1: Rock]",
+    "magnet": "[Dmg +1: Electric]", "metal coat": "[Dmg +1: Steel]",
+    "miracle seed": "[Dmg +1: Grass]", "mystic water": "[Dmg +1: Water]",
+    "never-melt ice": "[Dmg +1: Ice]", "poison barb": "[Dmg +1: Poison]",
+    "sharp beak": "[Dmg +1: Flying]", "silk scarf": "[Dmg +1: Normal]",
+    "silver powder": "[Dmg +1: Bug]", "soft sand": "[Dmg +1: Ground]",
+    "spell tag": "[Dmg +1: Ghost]", "twisted spoon": "[Dmg +1: Psychic]",
+    "razor claw": "[High Crit]", "leek": "[High Crit]",
+    "lucky punch": "[High Crit] [Str +2]", "sharp claw": "[High Crit]",
+    "ring target": "[Remove Immunities]",
+    "eviolite": "[Def +1] [Spd +1]",
+    "metronome": "[Combo Dmg +1]",
+    "loaded dice": "[Chance +2]",
+    "choice scarf": "[Init +3]",
+    "iron ball": "[Dex -1] [Remove Immunity: Ground]",
+    "toxic orb": "[Status: Poison]",
+    "flame orb": "[Status: 1st Degree Burn]",
+    "air balloon": "[Immune: Ground]",
+    "expert belt": "[Dmg +1: Super Effective]",
+    "thick club": "[Str +2]",
+    "light ball": "[Str +1] [Spe +1]",
+    "quick claw": "[Init +2]",
+    "muscle band": "[Dmg +1: Physical]",
+    "wise glasses": "[Dmg +1: Special]"
+};
 
 const TooltipIcon = ({ onClick }: { onClick: () => void }) => (
     <span onClick={onClick} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#555', color: 'white', borderRadius: '50%', width: '16px', height: '16px', fontSize: '11px', cursor: 'pointer', marginLeft: '6px', fontWeight: 'bold' }}>?</span>
@@ -44,6 +74,10 @@ function InventoryItemRow({ item, handleInfoClick, fetchingItems, setTagBuilderD
             if (data && (data.Description || data.Effect)) {
                 newDesc = String(data.Description || data.Effect || "").trim();
             }
+            
+            // AUDIT FIX: Read from the Hardcoded dictionary and append it to the new description!
+            const hardcoded = HARDCODED_TAGS[val.toLowerCase()];
+            if (hardcoded) newDesc = newDesc ? `${newDesc}\n\n${hardcoded}` : hardcoded;
             
             useCharacterStore.getState().updateInventoryItem(item.id, 'desc', newDesc);
         }
@@ -220,9 +254,9 @@ export function InventoryTable() {
                         <p style={{ fontSize: '0.8rem', marginBottom: '10px', color: 'var(--text-muted)', textAlign: 'center' }}>Type these exactly as shown (with brackets) into an equipped item's Name or Notes to automatically apply mechanics.</p>
                         <ul style={{ fontSize: '0.8rem', paddingLeft: '20px', marginBottom: '15px', lineHeight: '1.6', color: 'var(--text-main)' }}>
                             <li><b>Stats/Skills:</b> <code>[Dex -2]</code>, <code>[Brawl +2]</code>, <code>[Def +1]</code>, <code>[Spd +1]</code></li>
-                            <li><b>Combat:</b> <code>[Dmg +1]</code>, <code>[Acc +1]</code>, <code>[Init +2]</code>, <code>[Chance +2]</code>, <code>[Combo Dmg +1]</code></li>
+                            <li><b>Combat:</b> <code>[Dmg +1]</code>, <code>[Dmg +1: Physical]</code>, <code>[Acc +1]</code>, <code>[Chance +2]</code></li>
                             <li><b>Matchups:</b> <code>[Immune: Ground]</code>, <code>[Remove Immunity: Type]</code>, <code>[Remove Immunities]</code></li>
-                            <li><b>Mechanics:</b> <code>[High Crit]</code>, <code>[Stacking High Crit]</code>, <code>[Ignore Low Acc 2]</code>, <code>[Status: Poison]</code>, <code>[Recoil]</code></li>
+                            <li><b>Mechanics:</b> <code>[High Crit]</code>, <code>[Ignore Low Acc 2]</code>, <code>[Status: Poison]</code>, <code>[Recoil]</code></li>
                         </ul>
                         <div style={{ display: 'flex', justifyContent: 'center' }}>
                             <button type="button" onClick={() => setShowTagsGuide(false)} className="action-button action-button--dark" style={{ width: '100%', padding: '6px' }}>Close Guide</button>

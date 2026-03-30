@@ -2,11 +2,13 @@
 import type { StateCreator } from 'zustand';
 import type { CharacterState, InventorySlice, InventoryItem, CustomInfo } from '../storeTypes';
 import { saveToOwlbear } from '../../utils/obr';
-import { parseCombatTags } from '../../utils/combatMath';
+import { parseCombatTags, getAbilityText } from '../../utils/combatMath';
 import { CombatStat } from '../../types/enums';
 
 const syncHealthWill = (state: CharacterState, newInv: InventoryItem[], updatesToSave: Record<string, unknown>) => {
-    const invMods = parseCombatTags(newInv, state.extraCategories);
+    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const invMods = parseCombatTags(newInv, state.extraCategories, undefined, abilityText);
+    
     const vitTotal = Math.max(1, state.stats[CombatStat.VIT].base + state.stats[CombatStat.VIT].rank + state.stats[CombatStat.VIT].buff - state.stats[CombatStat.VIT].debuff + (invMods.stats.vit || 0));
     const insTotal = Math.max(1, state.stats[CombatStat.INS].base + state.stats[CombatStat.INS].rank + state.stats[CombatStat.INS].buff - state.stats[CombatStat.INS].debuff + (invMods.stats.ins || 0));
 

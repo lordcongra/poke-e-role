@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useCharacterStore, getRankPoints, getAgePoints } from '../store/useCharacterStore';
 import { SocialStat } from '../types/enums';
 import { NumberSpinner } from './NumberSpinner';
-import { parseCombatTags } from '../utils/combatUtils';
+import { parseCombatTags, getAbilityText } from '../utils/combatUtils';
 
 const SOCIAL_COLORS = { [SocialStat.TOU]: '#F9E79F', [SocialStat.COO]: '#F5CBA7', [SocialStat.BEA]: '#AED6F1', [SocialStat.CUT]: '#F5B7B1', [SocialStat.CLE]: '#A9DFBF' };
 const SOCIAL_LABELS = { [SocialStat.TOU]: 'TOUGH', [SocialStat.COO]: 'COOL', [SocialStat.BEA]: 'BEAUTY', [SocialStat.CUT]: 'CUTE', [SocialStat.CLE]: 'CLEVER' };
@@ -15,6 +15,8 @@ export function SocialTable() {
     const setExtra = useCharacterStore(state => state.setExtra);
     const inventory = useCharacterStore(state => state.inventory);
     const extraCategories = useCharacterStore(state => state.extraCategories);
+    const customAbilities = useCharacterStore(state => state.roomCustomAbilities);
+    const ability = useCharacterStore(state => state.identity.ability);
     
     const currentRank = useCharacterStore(state => state.identity.rank);
     const currentAge = useCharacterStore(state => state.identity.age);
@@ -22,8 +24,8 @@ export function SocialTable() {
     const rankPoints = getRankPoints(currentRank).social;
     const agePoints = getAgePoints(currentAge).social;
     
-    // AUDIT FIX: Passed extraCategories!
-    const invMods = parseCombatTags(inventory, extraCategories);
+    const abilityText = getAbilityText(ability, customAbilities);
+    const invMods = parseCombatTags(inventory, extraCategories, undefined, abilityText);
 
     const [isCollapsed, setIsCollapsed] = useState(false); 
 

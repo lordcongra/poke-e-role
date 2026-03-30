@@ -4,7 +4,7 @@ import OBR from "@owlbear-rodeo/sdk";
 import { useCharacterStore } from '../store/useCharacterStore';
 import { NumberSpinner } from './NumberSpinner';
 import { CombatStat, Skill } from '../types/enums';
-import { rollGeneric, rollDicePlus, parseCombatTags } from '../utils/combatUtils';
+import { rollGeneric, rollDicePlus, parseCombatTags, getAbilityText } from '../utils/combatUtils';
 
 const TooltipIcon = ({ onClick }: { onClick: () => void }) => (
     <span onClick={onClick} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#555', color: 'white', borderRadius: '50%', width: '14px', height: '14px', fontSize: '10px', cursor: 'pointer', marginLeft: '4px', fontWeight: 'bold' }}>?</span>
@@ -76,7 +76,9 @@ export function TrackerSection() {
 
     const handleEvadeRoll = () => {
         const s = useCharacterStore.getState();
-        const itemBuffs = parseCombatTags(s.inventory, s.extraCategories);
+        const abilityText = getAbilityText(s.identity.ability, s.roomCustomAbilities);
+        const itemBuffs = parseCombatTags(s.inventory, s.extraCategories, undefined, abilityText);
+        
         const dexTotal = Math.max(1, s.stats[CombatStat.DEX].base + s.stats[CombatStat.DEX].rank + s.stats[CombatStat.DEX].buff - s.stats[CombatStat.DEX].debuff + (itemBuffs.stats.dex || 0));
         const evadeTotal = s.skills[Skill.EVASION].base + s.skills[Skill.EVASION].buff + (itemBuffs.skills.evasion || 0);
         rollGeneric("Evasion", dexTotal + evadeTotal, "dex", true, false, true);
@@ -85,7 +87,9 @@ export function TrackerSection() {
     const handleClashRoll = (isPhysical: boolean) => {
         setShowClashModal(false);
         const s = useCharacterStore.getState();
-        const itemBuffs = parseCombatTags(s.inventory, s.extraCategories);
+        const abilityText = getAbilityText(s.identity.ability, s.roomCustomAbilities);
+        const itemBuffs = parseCombatTags(s.inventory, s.extraCategories, undefined, abilityText);
+        
         const stat = isPhysical ? CombatStat.STR : CombatStat.SPE;
         const statTotal = Math.max(1, s.stats[stat].base + s.stats[stat].rank + s.stats[stat].buff - s.stats[stat].debuff + (itemBuffs.stats[stat] || 0));
         const clashTotal = s.skills[Skill.CLASH].base + s.skills[Skill.CLASH].buff + (itemBuffs.skills.clash || 0);
@@ -96,7 +100,8 @@ export function TrackerSection() {
         if (maneuver === 'none') return;
         
         const s = useCharacterStore.getState();
-        const itemBuffs = parseCombatTags(s.inventory, s.extraCategories);
+        const abilityText = getAbilityText(s.identity.ability, s.roomCustomAbilities);
+        const itemBuffs = parseCombatTags(s.inventory, s.extraCategories, undefined, abilityText);
         
         const getStat = (stat: CombatStat) => Math.max(1, s.stats[stat].base + s.stats[stat].rank + s.stats[stat].buff - s.stats[stat].debuff + (itemBuffs.stats[stat] || 0));
         const getSkill = (skill: Skill) => s.skills[skill].base + s.skills[skill].buff + (itemBuffs.skills[skill] || 0);

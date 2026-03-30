@@ -3,7 +3,7 @@ import type { StateCreator } from 'zustand';
 import type { CharacterState, MacroSlice } from '../storeTypes';
 import { CombatStat, Skill } from '../../types/enums';
 import { saveToOwlbear } from '../../utils/obr';
-import { parseCombatTags } from '../../utils/combatMath';
+import { parseCombatTags, getAbilityText } from '../../utils/combatMath';
 
 const parseLearnset = (movesObj: unknown): Array<{Learned: string, Name: string}> => {
     const result: Array<{Learned: string, Name: string}> = [];
@@ -106,8 +106,10 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
         }
 
         const newHealth = { ...state.health };
-        // AUDIT FIX: Passed extraCategories!
-        const invMods = parseCombatTags(state.inventory, state.extraCategories);
+        
+        const abilityText = getAbilityText(newIdentity.ability, state.roomCustomAbilities);
+        const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+        
         const vitTotal = Math.max(1, newStats[CombatStat.VIT].base + newStats[CombatStat.VIT].rank + newStats[CombatStat.VIT].buff - newStats[CombatStat.VIT].debuff + (invMods.stats.vit || 0));
         const insTotal = Math.max(1, newStats[CombatStat.INS].base + newStats[CombatStat.INS].rank + newStats[CombatStat.INS].buff - newStats[CombatStat.INS].debuff + (invMods.stats.ins || 0));
         
@@ -175,8 +177,9 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             }
         });
 
-        // AUDIT FIX: Passed extraCategories!
-        const invMods = parseCombatTags(state.inventory, state.extraCategories);
+        const abilityText = getAbilityText(newIdentity.ability, state.roomCustomAbilities);
+        const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+        
         const vitTotal = Math.max(1, newStats[CombatStat.VIT].base + newStats[CombatStat.VIT].rank + newStats[CombatStat.VIT].buff - newStats[CombatStat.VIT].debuff + (invMods.stats.vit || 0));
         const insTotal = Math.max(1, newStats[CombatStat.INS].base + newStats[CombatStat.INS].rank + newStats[CombatStat.INS].buff - newStats[CombatStat.INS].debuff + (invMods.stats.ins || 0));
         
@@ -221,24 +224,6 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             updatesToSave['hp-base'] = newHealth.hpBase;
         }
 
-        // AUDIT FIX: Passed extraCategories!
-        const invMods = parseCombatTags(state.inventory, state.extraCategories);
-        const vitTotal = Math.max(1, newStats[CombatStat.VIT].base + newStats[CombatStat.VIT].rank + newStats[CombatStat.VIT].buff - newStats[CombatStat.VIT].debuff + (invMods.stats.vit || 0));
-        const insTotal = Math.max(1, newStats[CombatStat.INS].base + newStats[CombatStat.INS].rank + newStats[CombatStat.INS].buff - newStats[CombatStat.INS].debuff + (invMods.stats.ins || 0));
-        
-        let hpStat = vitTotal;
-        if (state.identity.ruleset === 'vg-high-hp') hpStat = Math.max(vitTotal, insTotal);
-
-        const oldHpMax = newHealth.hpMax; newHealth.hpMax = newHealth.hpBase + hpStat;
-        if (newHealth.hpMax > oldHpMax) newHealth.hpCurr += (newHealth.hpMax - oldHpMax); else if (newHealth.hpCurr > newHealth.hpMax) newHealth.hpCurr = newHealth.hpMax;
-        
-        const newWill = { ...state.will };
-        const oldWillMax = newWill.willMax; newWill.willMax = newWill.willBase + insTotal;
-        if (newWill.willMax > oldWillMax) newWill.willCurr += (newWill.willMax - oldWillMax); else if (newWill.willCurr > newWill.willMax) newWill.willCurr = newWill.willMax;
-
-        updatesToSave['hp-curr'] = newHealth.hpCurr; updatesToSave['hp-max-display'] = newHealth.hpMax;
-        updatesToSave['will-curr'] = newWill.willCurr; updatesToSave['will-max-display'] = newWill.willMax;
-
         const abilities: string[] = [];
         if (data.Ability1) abilities.push(String(data.Ability1)); 
         if (data.Ability2 && data.Ability2 !== "None") abilities.push(String(data.Ability2));
@@ -260,6 +245,25 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
         };
         updatesToSave['type1'] = newIdentity.type1; updatesToSave['type2'] = newIdentity.type2; updatesToSave['ability'] = newIdentity.ability;
         updatesToSave['ability-list'] = abilities.join(',');
+
+        const abilityText = getAbilityText(newIdentity.ability, state.roomCustomAbilities);
+        const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+        
+        const vitTotal = Math.max(1, newStats[CombatStat.VIT].base + newStats[CombatStat.VIT].rank + newStats[CombatStat.VIT].buff - newStats[CombatStat.VIT].debuff + (invMods.stats.vit || 0));
+        const insTotal = Math.max(1, newStats[CombatStat.INS].base + newStats[CombatStat.INS].rank + newStats[CombatStat.INS].buff - newStats[CombatStat.INS].debuff + (invMods.stats.ins || 0));
+        
+        let hpStat = vitTotal;
+        if (state.identity.ruleset === 'vg-high-hp') hpStat = Math.max(vitTotal, insTotal);
+
+        const oldHpMax = newHealth.hpMax; newHealth.hpMax = newHealth.hpBase + hpStat;
+        if (newHealth.hpMax > oldHpMax) newHealth.hpCurr += (newHealth.hpMax - oldHpMax); else if (newHealth.hpCurr > newHealth.hpMax) newHealth.hpCurr = newHealth.hpMax;
+        
+        const newWill = { ...state.will };
+        const oldWillMax = newWill.willMax; newWill.willMax = newWill.willBase + insTotal;
+        if (newWill.willMax > oldWillMax) newWill.willCurr += (newWill.willMax - oldWillMax); else if (newWill.willCurr > newWill.willMax) newWill.willCurr = newWill.willMax;
+
+        updatesToSave['hp-curr'] = newHealth.hpCurr; updatesToSave['hp-max-display'] = newHealth.hpMax;
+        updatesToSave['will-curr'] = newWill.willCurr; updatesToSave['will-max-display'] = newWill.willMax;
 
         let newSkills = { ...state.skills };
         let newMoves = [...state.moves];

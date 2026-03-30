@@ -38,9 +38,11 @@ export function IdentityHeader() {
     const role = useCharacterStore(state => state.role);
     const roomCustomTypes = useCharacterStore(state => state.roomCustomTypes);
     const roomCustomAbilities = useCharacterStore(state => state.roomCustomAbilities);
+    const roomCustomPokemon = useCharacterStore(state => state.roomCustomPokemon);
     
     const filteredTypes = roomCustomTypes.filter(t => role === 'GM' || !t.gmOnly);
     const filteredAbilities = roomCustomAbilities.filter(a => role === 'GM' || !a.gmOnly);
+    const filteredPokemon = roomCustomPokemon.filter(p => role === 'GM' || !p.gmOnly);
 
     const allTypes = [...POKEMON_TYPES, ...filteredTypes.map(t => t.name)];
     const allTypeColors = { ...TYPE_COLORS, ...Object.fromEntries(filteredTypes.map(t => [t.name, t.color])) };
@@ -206,9 +208,18 @@ export function IdentityHeader() {
         if (!id.ability) { setModalConfig({ title: "Ability", content: "No ability selected." }); return; }
         setModalConfig({ title: "Ability", content: "Loading..." }); 
         const data = await fetchAbilityData(id.ability);
-        if (data && data.Description) setModalConfig({ title: id.ability, content: data.Description + (data.Effect ? `\n\n${data.Effect}` : '') });
+        
+        // AUDIT FIX: Safely handles Custom Abilities that only have an Effect string but no Description!
+        if (data && (data.Description || data.Effect)) {
+            const content = [data.Description, data.Effect].filter(Boolean).join('\n\n');
+            setModalConfig({ title: id.ability, content });
+        }
         else setModalConfig({ title: "Ability", content: "Could not load ability data." });
     };
+
+    // AUDIT FIX: Safely combined and deduplicated Custom Homebrew entities into the Searchable Datalists!
+    const uniqueSpecies = Array.from(new Set([ ...speciesList, ...filteredPokemon.map(p => p.Name) ]));
+    const uniqueAbilities = Array.from(new Set([ ...(id.availableAbilities || []), ...allAbilitiesList, ...filteredAbilities.map(ab => ab.name) ]));
 
     return (
         <div className="sheet-panel" style={{ marginBottom: '15px', background: 'var(--panel-bg)', paddingBottom: '0' }}>
@@ -229,7 +240,9 @@ export function IdentityHeader() {
                             <span className="identity-grid__label">{id.mode === 'Trainer' ? 'Concept' : 'Species'}</span>
                             <div style={{ display: 'flex', width: '100%', alignItems: 'center', gap: '4px' }}>
                                 <input type="text" list="species-datalist" className="identity-grid__input" style={{ flex: 1, minWidth: 0 }} placeholder={id.mode === 'Trainer' ? "e.g. Bug Catcher" : "e.g. Aron"} value={id.species || ''} onChange={(e) => setIdentity('species', e.target.value)} onBlur={handleFetch} onKeyDown={(e) => { if (e.key === 'Enter') handleFetch(); }} />
-                                <datalist id="species-datalist">{speciesList.map(s => <option key={s} value={s} />)}</datalist>
+                                <datalist id="species-datalist">
+                                    {uniqueSpecies.map(s => <option key={s} value={s} />)}
+                                </datalist>
                                 {isFetching && <span style={{ fontSize: '0.8rem' }}>⏳</span>}
                                 
                                 {id.mode === 'Pokémon' && (
@@ -257,9 +270,7 @@ export function IdentityHeader() {
                             <span className="identity-grid__label">Ability <TooltipIcon onClick={openAbilityModal} /></span>
                             <input type="text" list="ability-datalist" className="identity-grid__input" value={id.ability || ''} onChange={(e) => setIdentity('ability', e.target.value)} placeholder="Type or select..." />
                             <datalist id="ability-datalist">
-                                {id.availableAbilities?.map(ab => <option key={`in-${ab}`} value={ab} />)}
-                                {allAbilitiesList.map(ab => <option key={`all-${ab}`} value={ab} />)}
-                                {filteredAbilities.map(ab => <option key={`hb-${ab.id}`} value={ab.name} />)}
+                                {uniqueAbilities.map(ab => <option key={ab} value={ab} />)}
                             </datalist>
                         </div>
 

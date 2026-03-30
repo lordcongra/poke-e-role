@@ -47,7 +47,7 @@ function LearnsetMoveRow({ pId, mIndex, move, currentMoves, canEdit }: { pId: st
     );
 }
 
-function PokemonCard({ p, allTypes, allTypeColors, abilityOptions, moveOptions, role, canEdit, onRemove }: { p: CustomPokemon, allTypes: string[], allTypeColors: Record<string, string>, abilityOptions: string[], moveOptions: string[], role: string, canEdit: boolean, onRemove: () => void }) {
+function PokemonCard({ p, allTypes, allTypeColors, role, canEdit, onRemove }: { p: CustomPokemon, allTypes: string[], allTypeColors: Record<string, string>, role: string, canEdit: boolean, onRemove: () => void }) {
     const updateCustomPokemon = useCharacterStore(state => state.updateCustomPokemon);
 
     const [localName, setLocalName] = useState(p.Name);
@@ -153,13 +153,6 @@ function PokemonCard({ p, allTypes, allTypeColors, abilityOptions, moveOptions, 
                         <input type="text" list="hb-ability-list" disabled={!canEdit} value={localAb2} onChange={e => canEdit && setLocalAb2(e.target.value)} onBlur={() => canEdit && localAb2 !== p.Ability2 && updateCustomPokemon(p.id, 'Ability2', localAb2)} placeholder="Ability 2" style={{ padding: '4px', background: 'var(--input-bg)', color: 'var(--text-main)', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '0.8rem' }} />
                         <input type="text" list="hb-ability-list" disabled={!canEdit} value={localHA} onChange={e => canEdit && setLocalHA(e.target.value)} onBlur={() => canEdit && localHA !== p.HiddenAbility && updateCustomPokemon(p.id, 'HiddenAbility', localHA)} placeholder="Hidden Ability" style={{ padding: '4px', background: 'var(--input-bg)', color: 'var(--text-main)', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '0.8rem' }} />
                         <input type="text" list="hb-ability-list" disabled={!canEdit} value={localEA} onChange={e => canEdit && setLocalEA(e.target.value)} onBlur={() => canEdit && localEA !== p.EventAbilities && updateCustomPokemon(p.id, 'EventAbilities', localEA)} placeholder="Event Ability" style={{ padding: '4px', background: 'var(--input-bg)', color: 'var(--text-main)', border: '1px solid var(--border)', borderRadius: '4px', fontSize: '0.8rem' }} />
-                        
-                        <datalist id="hb-ability-list">
-                            {abilityOptions.map(a => <option key={a} value={a} />)}
-                        </datalist>
-                        <datalist id="hb-move-list">
-                            {moveOptions.map(m => <option key={m} value={m} />)}
-                        </datalist>
                     </div>
 
                     <div style={{ borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
@@ -203,8 +196,8 @@ export function HomebrewPokemon() {
     const allTypes = [...POKEMON_TYPES, ...filteredTypes.map(t => t.name)];
     const allTypeColors = { ...TYPE_COLORS, ...Object.fromEntries(filteredTypes.map(t => [t.name, t.color])) };
     
-    const abilityOptions = [...ALL_ABILITIES, ...roomCustomAbilities.filter(a => role === 'GM' || !a.gmOnly).map(a => a.name)];
-    const moveOptions = [...ALL_MOVES, ...roomCustomMoves.filter(m => role === 'GM' || !m.gmOnly).map(m => m.name)];
+    const abilityOptions = Array.from(new Set([...ALL_ABILITIES, ...roomCustomAbilities.filter(a => role === 'GM' || !a.gmOnly).map(a => a.name)]));
+    const moveOptions = Array.from(new Set([...ALL_MOVES, ...roomCustomMoves.filter(m => role === 'GM' || !m.gmOnly).map(m => m.name)]));
 
     const fileRef = useRef<HTMLInputElement>(null);
     const [importData, setImportData] = useState<CustomPokemon[] | null>(null);
@@ -254,6 +247,13 @@ export function HomebrewPokemon() {
                 {canEdit && <button onClick={() => { setSearch(''); addCustomPokemon(); }} className="action-button action-button--dark" style={{ padding: '8px', background: '#00695C', borderColor: '#00695C', whiteSpace: 'nowrap' }}>+ Create New</button>}
             </div>
 
+            <datalist id="hb-ability-list">
+                {abilityOptions.map(a => <option key={a} value={a} />)}
+            </datalist>
+            <datalist id="hb-move-list">
+                {moveOptions.map(m => <option key={m} value={m} />)}
+            </datalist>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', overflowY: 'auto', flex: 1, paddingRight: '4px', overscrollBehavior: 'contain' }}>
                 {filteredPokemon.length === 0 ? (
                     <div style={{ textAlign: 'center', fontStyle: 'italic', color: 'var(--text-muted)', fontSize: '0.9rem', padding: '20px' }}>
@@ -261,7 +261,7 @@ export function HomebrewPokemon() {
                     </div>
                 ) : (
                     filteredPokemon.map(p => (
-                        <PokemonCard key={p.id} p={p} allTypes={allTypes} allTypeColors={allTypeColors} abilityOptions={abilityOptions} moveOptions={moveOptions} role={role} canEdit={canEdit} onRemove={() => removeCustomPokemon(p.id)} />
+                        <PokemonCard key={p.id} p={p} allTypes={allTypes} allTypeColors={allTypeColors} role={role} canEdit={canEdit} onRemove={() => removeCustomPokemon(p.id)} />
                     ))
                 )}
             </div>
