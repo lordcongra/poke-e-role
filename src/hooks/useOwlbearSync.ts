@@ -2,34 +2,253 @@
 import { useEffect } from 'react';
 import OBR from "@owlbear-rodeo/sdk";
 import { useCharacterStore } from '../store/useCharacterStore';
+import type { CustomType, CustomAbility, CustomMove, CustomPokemon } from '../store/storeTypes';
+import { fetchPokemonData, syncHomebrewToApi } from '../utils/api';
+import { buildGraphicsFromMeta, renderTokenGraphics, STATS_META_ID } from '../utils/graphicsManager';
+import { setActiveTokenId } from '../utils/obr';
 
-const METADATA_ID = "pokerole-extension/stats";
+const METADATA_ID = STATS_META_ID;
+const ROOM_META_ID = "pokerole-pmd-extension/room-settings";
+const EXTENSION_ID = "pokerole-pmd-extension"; 
+
+const knownTransforms: Record<string, { x: number, y: number, r: number, metaStr: string }> = {};
 
 export function useOwlbearSync() {
     const loadFromOwlbear = useCharacterStore(state => state.loadFromOwlbear);
+    const setRoomCustomTypes = useCharacterStore(state => state.setRoomCustomTypes);
+    const setTokenData = useCharacterStore(state => state.setTokenData);
+    const applyLearnset = useCharacterStore(state => state.applyLearnset);
+
+    const setRoomCustomAbilities = useCharacterStore(state => state.setRoomCustomAbilities);
+    const setRoomCustomMoves = useCharacterStore(state => state.setRoomCustomMoves);
+    const setRoomCustomPokemon = useCharacterStore(state => state.setRoomCustomPokemon);
 
     useEffect(() => {
+        let unsubs: Array<() => void> = [];
+        let isMounted = true;
+
         if (OBR.isAvailable) {
             OBR.onReady(async () => {
-                // 1. Grab token on initial load
-                const selected = await OBR.player.getSelection();
-                if (selected && selected.length > 0) {
-                    const items = await OBR.scene.items.getItems([selected[0]]);
-                    if (items.length > 0 && items[0].metadata[METADATA_ID]) {
-                        loadFromOwlbear(items[0].metadata[METADATA_ID] as Record<string, unknown>);
+                if (!isMounted) return;
+
+                const role = await OBR.player.getRole();
+                
+                const renderAllTokens = async (forceRebuild = false) => {
+                    try {
+                        const allItems = await OBR.scene.items.getItems(i => i.layer === "CHARACTER" && i.metadata[METADATA_ID] !== undefined);
+                        for (const item of allItems) {
+                            const meta = item.metadata[METADATA_ID] as Record<string, unknown>;
+                            knownTransforms[item.id] = { x: item.scale.x, y: item.scale.y, r: item.rotation, metaStr: JSON.stringify(meta) };
+                            const gData = buildGraphicsFromMeta(meta);
+                            await renderTokenGraphics(item, gData, role, forceRebuild);
+                        }
+                    } catch (e) {
+                        console.error("Error rendering tokens on load:", e);
                     }
+                };
+
+                const isReady = await OBR.scene.isReady();
+                if (isReady) {
+                    await renderAllTokens();
+                    setTimeout(() => renderAllTokens(true), 1500); 
                 }
 
-                // 2. Listen for when the user clicks a different token
-                OBR.player.onChange(async (player) => {
+                const unsubReady = OBR.scene.onReadyChange(async (ready) => {
+                    if (ready) {
+                        await renderAllTokens();
+                        setTimeout(() => renderAllTokens(true), 1500);
+                    }
+                });
+                unsubs.push(unsubReady);
+
+                const loadTokenAndLearnset = async (targetTokenId: string) => {
+                    setActiveTokenId(targetTokenId);
+                    setTokenData(targetTokenId, role);
+                    
+                    const items = await OBR.scene.items.getItems([targetTokenId]);
+                    if (items.length > 0) {
+                        const meta = items[0].metadata[METADATA_ID] as Record<string, unknown> | undefined;
+                        
+                        if (meta) {
+                            loadFromOwlbear(meta);
+                            if (meta['species']) {
+                                fetchPokemonData(String(meta['species']))
+                                    .then(data => { if (data) applyLearnset(data); })
+                                    .catch(e => console.warn("Failed to fetch learnset on token load:", e));
+                            } else {
+                                applyLearnset({ Moves: [] });
+                            }
+                        } else {
+                            loadFromOwlbear({});
+                            applyLearnset({ Moves: [] });
+                        }
+                    }
+                };
+
+                const selected = await OBR.player.getSelection();
+                if (selected && selected.length > 0) {
+                    await loadTokenAndLearnset(selected[0]);
+                }
+
+                const unsubPlayer = OBR.player.onChange(async (player) => {
                     if (player.selection && player.selection.length > 0) {
-                        const items = await OBR.scene.items.getItems([player.selection[0]]);
-                        if (items.length > 0 && items[0].metadata[METADATA_ID]) {
-                            loadFromOwlbear(items[0].metadata[METADATA_ID] as Record<string, unknown>);
+                        await loadTokenAndLearnset(player.selection[0]);
+                    }
+                });
+                unsubs.push(unsubPlayer);
+
+                const unsubItems = OBR.scene.items.onChange(async (items) => {
+                    for (const item of items) {
+                        if (item.layer === "CHARACTER" && item.metadata[METADATA_ID]) {
+                            const meta = item.metadata[METADATA_ID] as Record<string, unknown> || {};
+                            const lastTransform = knownTransforms[item.id];
+                            
+                            const rawX = item.scale.x;
+                            const rawY = item.scale.y;
+                            const rawR = item.rotation;
+                            const metaStr = JSON.stringify(meta);
+
+                            let needsGraphicsUpdate = false;
+
+                            if (!lastTransform) {
+                                knownTransforms[item.id] = { x: rawX, y: rawY, r: rawR, metaStr };
+                                needsGraphicsUpdate = true;
+                            } else {
+                                const diffX = Math.abs(lastTransform.x - rawX);
+                                const diffY = Math.abs(lastTransform.y - rawY);
+                                const diffR = Math.abs(lastTransform.r - rawR);
+
+                                if (diffX > 0.005 || diffY > 0.005 || diffR > 0.005 || lastTransform.metaStr !== metaStr) {
+                                    knownTransforms[item.id] = { x: rawX, y: rawY, r: rawR, metaStr };
+                                    needsGraphicsUpdate = true;
+                                }
+                            }
+
+                            if (needsGraphicsUpdate) {
+                                const gData = buildGraphicsFromMeta(meta);
+                                renderTokenGraphics(item, gData, role); 
+                            }
+
+                            // AUDIT FIX: Using the correct tokenId scope for collaborative sync!
+                            const storeState = useCharacterStore.getState();
+                            if (item.id === storeState.tokenId) {
+                                const lastKnown = lastTransform?.metaStr;
+                                if (lastKnown !== metaStr) {
+                                    storeState.loadFromOwlbear(meta);
+                                }
+                            }
                         }
                     }
                 });
+                unsubs.push(unsubItems);
+
+                const roomMeta = await OBR.room.getMetadata();
+                if (roomMeta[ROOM_META_ID]) {
+                    const data = roomMeta[ROOM_META_ID] as Record<string, unknown>;
+                    if (data.customTypes) setRoomCustomTypes(data.customTypes as CustomType[]);
+                    if (data.customAbilities) setRoomCustomAbilities(data.customAbilities as CustomAbility[]);
+                    if (data.customMoves) setRoomCustomMoves(data.customMoves as CustomMove[]);
+                    if (data.customPokemon) setRoomCustomPokemon(data.customPokemon as CustomPokemon[]);
+                    
+                    syncHomebrewToApi(
+                        (data.customPokemon as CustomPokemon[]) || [],
+                        (data.customMoves as CustomMove[]) || [],
+                        (data.customAbilities as CustomAbility[]) || []
+                    );
+
+                    if (data.ruleset !== undefined) useCharacterStore.getState().setIdentity('ruleset', String(data.ruleset));
+                    if (data.painEnabled !== undefined) useCharacterStore.getState().setIdentity('pain', data.painEnabled ? 'Enabled' : 'Disabled');
+                }
+
+                const unsubRoom = OBR.room.onMetadataChange((meta) => {
+                    if (meta[ROOM_META_ID]) {
+                        const data = meta[ROOM_META_ID] as Record<string, unknown>;
+                        if (data.customTypes) setRoomCustomTypes(data.customTypes as CustomType[]);
+                        if (data.customAbilities) setRoomCustomAbilities(data.customAbilities as CustomAbility[]);
+                        if (data.customMoves) setRoomCustomMoves(data.customMoves as CustomMove[]);
+                        if (data.customPokemon) setRoomCustomPokemon(data.customPokemon as CustomPokemon[]);
+
+                        syncHomebrewToApi(
+                            (data.customPokemon as CustomPokemon[]) || [],
+                            (data.customMoves as CustomMove[]) || [],
+                            (data.customAbilities as CustomAbility[]) || []
+                        );
+
+                        if (data.ruleset !== undefined) useCharacterStore.getState().setIdentity('ruleset', String(data.ruleset));
+                        if (data.painEnabled !== undefined) useCharacterStore.getState().setIdentity('pain', data.painEnabled ? 'Enabled' : 'Disabled');
+                    }
+                });
+                unsubs.push(unsubRoom);
+
+                const unsubRollResult = OBR.broadcast.onMessage(`${EXTENSION_ID}/roll-result`, async (event) => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const data = event.data as any; 
+                    const myId = await OBR.player.getId();
+                    if (data.playerId !== myId) return; 
+
+                    if (data.rollId) {
+                        const parts = String(data.rollId).split('|');
+                        const rollType = parts[0];
+                        const targetTokenId = parts.length > 1 ? parts[1] : null;
+                        const payload = parts.length > 2 ? parts[2] : null;
+
+                        if (rollType === "init" && targetTokenId && data.result) {
+                            const total = parseInt(String(data.result.totalValue)) || 0;
+                            const tiebreaker = Math.floor(Math.random() * 6) + 1;
+                            const finalInit = total + (tiebreaker / 10); 
+                            
+                            await OBR.scene.items.updateItems([targetTokenId], (items) => {
+                                for (const item of items) {
+                                    const existing = (item.metadata["com.pretty-initiative/metadata"] as Record<string, unknown>) || {};
+                                    item.metadata["com.pretty-initiative/metadata"] = {
+                                        ...existing, count: finalInit.toString(),
+                                        active: existing.active !== undefined ? existing.active : false,
+                                        group: existing.group !== undefined ? existing.group : 1
+                                    };
+                                }
+                            });
+                        }
+                        else if (rollType === "status" && targetTokenId && payload && data.result) {
+                            const successes = parseInt(String(data.result.totalValue)) || 0; 
+                            await OBR.scene.items.updateItems([targetTokenId], (items) => {
+                                for (const item of items) {
+                                    const meta = (item.metadata[STATS_META_ID] as Record<string, unknown>) || {};
+                                    const statusListStr = String(meta['status-list'] || '[]');
+                                    try {
+                                        const statuses = JSON.parse(statusListStr);
+                                        let changed = false;
+                                        for (const s of statuses) {
+                                            if (s.id === payload) {
+                                                s.rounds += successes;
+                                                changed = true;
+                                            }
+                                        }
+                                        if (changed) meta['status-list'] = JSON.stringify(statuses);
+                                    } catch(e) {}
+                                }
+                            });
+                        }
+                        else if ((rollType === "roll" || rollType === "chance") && data.result) {
+                            const val = parseInt(String(data.result.totalValue)) || 0;
+                            if (val > 0) OBR.notification.show(`✅ Result: ${val} Success${val > 1 ? 'es' : ''}!`);
+                            else OBR.notification.show(`❌ Result: Failure! (0)`);
+                        }
+                    }
+                });
+                unsubs.push(unsubRollResult);
+
+                const unsubRollError = OBR.broadcast.onMessage(`${EXTENSION_ID}/roll-error`, async (event) => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const data = event.data as any;
+                    OBR.notification.show(`Dice+ Error: ${data.error || 'Unknown syntax error.'}`, "ERROR");
+                });
+                unsubs.push(unsubRollError);
             });
         }
-    }, [loadFromOwlbear]);
+
+        return () => {
+            isMounted = false;
+            unsubs.forEach(unsub => unsub());
+        };
+    }, [loadFromOwlbear, setRoomCustomTypes, setTokenData, applyLearnset]);
 }

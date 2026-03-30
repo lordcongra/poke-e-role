@@ -1,227 +1,253 @@
 // src/components/MovesTable.tsx
 import { useState, useEffect } from 'react';
-import OBR from "@owlbear-rodeo/sdk";
 import { useCharacterStore } from '../store/useCharacterStore';
-import { fetchMoveData, loadGithubTree, ALL_MOVES } from '../utils/api';
+import type { MoveData } from '../store/storeTypes';
+import { CombatStat } from '../types/enums';
 import { NumberSpinner } from './NumberSpinner';
-import { CombatStat, Skill } from '../types/enums';
+import { loadGithubTree, ALL_MOVES } from '../utils/api';
+import { calculateBaseDamage, executeDamageRoll, rollDicePlus, parseCombatTags } from '../utils/combatUtils';
+import { TargetingModal } from './TargetingModal';
+import { MoveCard } from './MoveCard';
+import { MoveRow } from './MoveRow';
 
-const POKEMON_TYPES = ['', 'Normal', 'Fire', 'Water', 'Electric', 'Grass', 'Ice', 'Fighting', 'Poison', 'Ground', 'Flying', 'Psychic', 'Bug', 'Rock', 'Ghost', 'Dragon', 'Dark', 'Steel', 'Fairy'];
-const TYPE_COLORS: Record<string, string> = { 'Normal': '#A8A878', 'Fire': '#F08030', 'Water': '#6890F0', 'Electric': '#F8D030', 'Grass': '#78C850', 'Ice': '#98D8D8', 'Fighting': '#C03028', 'Poison': '#A040A0', 'Ground': '#E0C068', 'Flying': '#A890F0', 'Psychic': '#F85888', 'Bug': '#A8B820', 'Rock': '#B8A038', 'Ghost': '#705898', 'Dragon': '#7038F8', 'Dark': '#705848', 'Steel': '#B8B8D0', 'Fairy': '#EE99AC' };
-
-const ATTR_OPTIONS = ['--', 'STR', 'DEX', 'VIT', 'SPE', 'INS'];
-const SKILL_OPTIONS = ['--', 'BRAWL', 'CHANNEL', 'CLASH', 'EVASION', 'ALERT', 'ATHLETIC', 'NATURE', 'STEALTH', 'CHARM', 'ETIQUETTE', 'INTIMIDATE', 'PERFORM'];
+const TooltipIcon = ({ onClick }: { onClick: () => void }) => (
+    <span onClick={onClick} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#555', color: 'white', borderRadius: '50%', width: '14px', height: '14px', fontSize: '10px', cursor: 'pointer', marginLeft: '4px', fontWeight: 'bold' }}>?</span>
+);
 
 export function MovesTable() {
     const moves = useCharacterStore(state => state.moves);
     const addMove = useCharacterStore(state => state.addMove);
-    const updateMove = useCharacterStore(state => state.updateMove);
-    const removeMove = useCharacterStore(state => state.removeMove);
-    const moveUpMove = useCharacterStore(state => state.moveUpMove);
-    const moveDownMove = useCharacterStore(state => state.moveDownMove);
-    const applyMoveData = useCharacterStore(state => state.applyMoveData);
+    const removeMove = useCharacterStore(state => state.removeMove); 
+    const trackers = useCharacterStore(state => state.trackers);
+    const updateTracker = useCharacterStore(state => state.updateTracker);
+    const learnset = useCharacterStore(state => state.identity.learnset);
     
-    const learnset = useCharacterStore(state => state.identity.learnset) || [];
-    const stats = useCharacterStore(state => state.stats);
     const skills = useCharacterStore(state => state.skills);
+    const extraCategories = useCharacterStore(state => state.extraCategories);
+    const painEnabled = useCharacterStore(state => state.identity.pain) === 'Enabled';
+    
+    const roomCustomMoves = useCharacterStore(state => state.roomCustomMoves);
+    
+    const [targetingMove, setTargetingMove] = useState<MoveData | null>(null);
+    const [deleteMoveId, setDeleteMoveId] = useState<string | null>(null); 
+    const [moveList, setMoveList] = useState<string[]>([]);
+    const [showLearnset, setShowLearnset] = useState(false);
+    
+    const [showModsModal, setShowModsModal] = useState(false);
+    const [tooltipInfo, setTooltipInfo] = useState<{title: string, desc: string} | null>(null);
 
-    const [allMovesList, setAllMovesList] = useState<string[]>([]);
-    const [isLearnsetOpen, setIsLearnsetOpen] = useState(false);
-    const [fetchingMoves, setFetchingMoves] = useState<Record<string, boolean>>({});
+    useEffect(() => {
+        loadGithubTree().then(() => setMoveList([...ALL_MOVES]));
+    }, []);
 
-    const [modAcc, setModAcc] = useState(0);
-    const [modDmg, setModDmg] = useState(0);
-    const [modSucc, setModSucc] = useState(0);
+    const state = useCharacterStore.getState();
+    const itemBuffs = parseCombatTags(state.inventory, state.extraCategories);
+    const insStat = state.stats[CombatStat.INS];
+    const maxMoves = 3 + Math.max(1, insStat.base + insStat.rank + insStat.buff - insStat.debuff + (itemBuffs.stats.ins || 0));
 
-    useEffect(() => { loadGithubTree().then(() => { setAllMovesList([...ALL_MOVES]); }); }, []);
+    const handleTargetClick = (move: MoveData) => {
+        if (move.category === 'Status') {
+            alert(`${move.name || "This"} is a Support move (No Damage).`);
+            return;
+        }
 
-    const handleFetchMove = async (id: string, moveName: string) => {
-        if (!moveName) return;
-        setFetchingMoves(prev => ({ ...prev, [id]: true }));
-        try {
-            const data = await fetchMoveData(moveName);
-            if (data) applyMoveData(id, data);
-            else alert(`Could not find data for move: ${moveName}`);
-        } catch (err) { console.error(err); } 
-        finally { setFetchingMoves(prev => ({ ...prev, [id]: false })); }
+        const moveDesc = (move.desc || "").toLowerCase();
+        const setDmgMatch = moveDesc.match(/set damage\s*(\d+)?/i);
+        if (setDmgMatch || moveDesc.includes("set damage")) {
+            const dmgVal = (setDmgMatch && setDmgMatch[1]) ? setDmgMatch[1] : move.power;
+            const currentState = useCharacterStore.getState();
+            const nickname = currentState.identity.nickname || currentState.identity.species || "Someone";
+            rollDicePlus(`0d6+${dmgVal}`, `💥 ${nickname} used ${move.name || "a Move"}! (Deals exactly ${dmgVal} Set Damage, ignores defenses)`);
+            return;
+        }
+
+        setTargetingMove(move);
     };
 
-    // Calculate total dice based strictly on the selected dropdown options
-    const getDicePool = (attrKey: string, skillKey: string, flatBonus: number): number => {
-        let total = flatBonus;
+    const handleExecuteDamage = (baseDmg: number, isCrit: boolean, isSE: boolean, reduction: number) => {
+        if (targetingMove) {
+            executeDamageRoll(targetingMove, useCharacterStore.getState(), baseDmg, isCrit, isSE, reduction);
+        }
+        setTargetingMove(null);
+    };
+
+    const handleGlobalChanceRoll = () => {
+        const st = useCharacterStore.getState();
+        const items = parseCombatTags(st.inventory, st.extraCategories);
+        const totalChance = trackers.globalChance + items.chance;
         
-        // Add Attribute
-        const statMap: Record<string, CombatStat> = { 'STR': CombatStat.STR, 'DEX': CombatStat.DEX, 'VIT': CombatStat.VIT, 'SPE': CombatStat.SPE, 'INS': CombatStat.INS };
-        if (statMap[attrKey]) {
-            const s = stats[statMap[attrKey]];
-            total += Math.max(1, s.base + s.rank + s.buff - s.debuff);
-        }
-
-        // Add Skill
-        const skillMap: Record<string, Skill> = { 'BRAWL': Skill.BRAWL, 'CHANNEL': Skill.CHANNEL, 'CLASH': Skill.CLASH, 'EVASION': Skill.EVASION, 'ALERT': Skill.ALERT, 'ATHLETIC': Skill.ATHLETIC, 'NATURE': Skill.NATURE, 'STEALTH': Skill.STEALTH, 'CHARM': Skill.CHARM, 'ETIQUETTE': Skill.ETIQUETTE, 'INTIMIDATE': Skill.INTIMIDATE, 'PERFORM': Skill.PERFORM };
-        if (skillMap[skillKey]) {
-            const s = skills[skillMap[skillKey]];
-            total += (s.base + s.buff);
-        }
-
-        return total;
+        if (totalChance <= 0) return;
+        
+        const nickname = st.identity.nickname || st.identity.species || "Someone";
+        const tags = items.chance > 0 ? ` [ Item Bonus +${items.chance} ]` : "";
+        rollDicePlus(`${totalChance}d6>5`, `🍀 ${nickname} rolled a Chance Roll!${tags}`, "chance");
     };
 
-    const rollDicePlus = (diceCount: number, label: string) => {
-        if (!OBR.isAvailable) { console.log(`[Offline Roll] ${diceCount}d6 for ${label}`); return; }
-        OBR.broadcast.sendMessage("com.ssstormy.dice/roll", { dice: `${diceCount}d6`, label: label }).catch(e => console.warn(e));
-    };
-
-    const renderLearnset = () => {
-        if (learnset.length === 0) return <div style={{ padding: '10px', fontStyle: 'italic', color: 'var(--text-muted)' }}>No learnset available. Load a Pokémon first.</div>;
-        const grouped: Record<string, string[]> = {};
-        learnset.forEach(m => { const rank = m.Learned || 'Other'; if (!grouped[rank]) grouped[rank] = []; grouped[rank].push(m.Name); });
-        const rankOrder = ["Starter", "Beginner", "Rookie", "Amateur", "Standard", "Advanced", "Expert", "Master", "Champion", "Other"];
-        const sortedRanks = Object.keys(grouped).sort((a, b) => {
-            let idxA = rankOrder.indexOf(a); let idxB = rankOrder.indexOf(b);
-            if (idxA === -1) idxA = 99; if (idxB === -1) idxB = 99;
-            return idxA - idxB;
-        });
-
-        return sortedRanks.map(rank => (
-            <div key={rank} style={{ marginBottom: '8px' }}>
-                <div style={{ fontWeight: 'bold', color: 'var(--primary)', borderBottom: '1px solid var(--border)', marginBottom: '4px', textTransform: 'capitalize' }}>{rank}</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                    {grouped[rank].map((moveName, i) => (
-                        <span key={`${rank}-${moveName}-${i}`} style={{ background: 'var(--panel-alt)', border: '1px solid var(--border)', padding: '2px 6px', borderRadius: '12px', fontSize: '0.75rem', color: 'var(--text-main)' }}>{moveName}</span>
-                    ))}
-                </div>
-            </div>
-        ));
-    };
+    const groupedLearnset = learnset.reduce((acc, move) => {
+        if (!acc[move.Learned]) acc[move.Learned] = [];
+        acc[move.Learned].push(move.Name);
+        return acc;
+    }, {} as Record<string, string[]>);
+    
+    const rankOrder = ["Starter", "Beginner", "Rookie", "Amateur", "Standard", "Advanced", "Expert", "Master", "Champion", "Other"];
+    const sortedRanks = Object.keys(groupedLearnset).sort((a, b) => {
+        let idxA = rankOrder.indexOf(a); let idxB = rankOrder.indexOf(b);
+        if (idxA === -1) idxA = 99; if (idxB === -1) idxB = 99;
+        return idxA - idxB;
+    });
 
     return (
-        <div className="sheet-panel" style={{ marginTop: '10px' }}>
-            <div className="sheet-panel__header" style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 10px' }}>
-                <span>▼ MOVES (Max: 5)</span>
-                <div style={{ display: 'flex', gap: '10px', fontSize: '0.85rem', color: 'white', alignItems: 'center' }}>
-                    <span className="flex-layout--row-center" style={{ gap: '4px' }}>Acc ❔: <NumberSpinner value={modAcc} onChange={setModAcc} /></span>
-                    <span className="flex-layout--row-center" style={{ gap: '4px' }}>Dmg ❔: <NumberSpinner value={modDmg} onChange={setModDmg} /></span>
-                    <span className="flex-layout--row-center" style={{ gap: '4px' }}>Succ ❔: <NumberSpinner value={modSucc} onChange={setModSucc} /></span>
-                    <span className="flex-layout--row-center" style={{ gap: '4px' }}>Chance: 0 <span style={{ cursor: 'pointer', fontSize: '1.2rem' }}>🎲</span></span>
+        <div className="sheet-panel">
+            <datalist id="move-list">
+                {[...moveList, ...roomCustomMoves.map(m => m.name)].map(m => <option key={m} value={m} />)}
+            </datalist>
+            
+            <div className="sheet-panel__header">
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                    <button type="button" className="collapse-btn panel-toggle-btn">▼</button>
+                    MOVES <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'normal', marginLeft: '4px' }}>(Max: {maxMoves})</span>
+                </span>
+                
+                <div className="desktop-only-flex" style={{ fontSize: '0.75rem', gap: '4px', background: 'var(--label-bg)', padding: '2px 4px', borderRadius: '3px', alignItems: 'center', fontWeight: 'normal', color: 'var(--text-muted)', flexWrap: 'nowrap', overflowX: 'auto', scrollbarWidth: 'none', marginLeft: 'auto' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '2px', whiteSpace: 'nowrap' }}>Acc<TooltipIcon onClick={() => setTooltipInfo({ title: "Global Accuracy", desc: "Adds or removes bonus dice to all Accuracy rolls."})} />: <NumberSpinner value={trackers.globalAcc} onChange={(v) => updateTracker('globalAcc', v)} /></span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '2px', whiteSpace: 'nowrap' }}>Dmg<TooltipIcon onClick={() => setTooltipInfo({ title: "Global Damage", desc: "Adds or removes bonus dice to all Damage rolls."})} />: <NumberSpinner value={trackers.globalDmg} onChange={(v) => updateTracker('globalDmg', v)} /></span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '2px', whiteSpace: 'nowrap' }}>Succ<TooltipIcon onClick={() => setTooltipInfo({ title: "Global Success Modifier", desc: "Flat Bonus/Penalty to final Successes (e.g., Low Accuracy = -1)."})} />: <NumberSpinner value={trackers.globalSucc} onChange={(v) => updateTracker('globalSucc', v)} /></span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '2px', whiteSpace: 'nowrap' }}>
+                        Chance<TooltipIcon onClick={() => setTooltipInfo({ title: "Global Chance", desc: "Adds bonus dice to all Chance rolls."})} />: <NumberSpinner value={trackers.globalChance} onChange={(v) => updateTracker('globalChance', v)} min={0} />
+                        <button type="button" onClick={handleGlobalChanceRoll} className="action-button action-button--dark" style={{ padding: '1px 4px' }}>🎲</button>
+                    </span>
+                    {painEnabled && (
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '2px', marginLeft: '4px', borderLeft: '1px solid var(--border)', paddingLeft: '4px', whiteSpace: 'nowrap' }}>
+                            Pain<TooltipIcon onClick={() => setTooltipInfo({ title: "Ignored Pain", desc: "Ignored Pain Penalties (Resets per Scene). Use the 'Ign.Pain(-1W)' button in the Tracker to increase this."})} />: <NumberSpinner value={trackers.ignoredPain} onChange={(v) => updateTracker('ignoredPain', v)} min={0} />
+                        </span>
+                    )}
                 </div>
+
+                <button type="button" className="mobile-only-flex action-button action-button--dark" style={{ padding: '2px 6px', fontSize: '0.75rem', marginLeft: 'auto' }} onClick={() => setShowModsModal(true)}>⚙️ Modifiers</button>
             </div>
             
-            <div className="panel-content-wrapper" style={{ overflowX: 'auto' }}>
-                <table className="data-table" style={{ width: '100%', minWidth: '850px' }}>
-                    <thead>
-                        <tr style={{ background: '#444', color: 'white', fontSize: '0.8rem' }}>
-                            <th style={{ width: '30px' }}>✔</th>
-                            <th style={{ width: '80px' }}>Acc</th>
-                            <th style={{ width: '140px', textAlign: 'left' }}>Name</th>
-                            <th>Pool (Acc)</th>
-                            <th style={{ width: '90px' }}>Type</th>
-                            <th style={{ width: '70px' }}>Cat.</th>
-                            <th>Damage</th>
-                            <th style={{ width: '40px' }}>Dmg</th>
-                            <th style={{ width: '30px' }}>Sort</th>
-                            <th style={{ width: '30px' }}>Del</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {moves.map(move => {
-                            const calculatedAcc = getDicePool(move.acc1, move.acc2, move.accBonus) + modAcc;
-                            const calculatedDmg = getDicePool(move.dmg1, '--', move.power) + modDmg;
+            <div className="panel-content-wrapper">
+                <div className="desktop-only-flex table-responsive-wrapper">
+                    <table className="data-table" style={{ textAlign: 'left' }}>
+                        <thead>
+                            <tr>
+                                <th style={{ width: '25px', textAlign: 'center' }} title="Used this round?">✔</th>
+                                <th style={{ width: '45px', textAlign: 'center' }}>Acc</th>
+                                <th>Name</th>
+                                <th>Pool (Acc)</th>
+                                <th>Type</th>
+                                <th>Cat.</th>
+                                <th>Damage</th>
+                                <th style={{ width: '45px', textAlign: 'center' }}>Dmg</th>
+                                <th style={{ width: '30px', textAlign: 'center' }}>Sort</th>
+                                <th style={{ width: '30px', textAlign: 'center' }}>Del</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {moves.map((move) => (
+                                <MoveRow key={move.id} move={move} skills={skills} extraCategories={extraCategories} onTarget={handleTargetClick} onDelete={setDeleteMoveId} />
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div className="mobile-only-flex" style={{ flexDirection: 'column', width: '100%' }}>
+                    {moves.map((move) => (
+                        <MoveCard key={move.id} move={move} skills={skills} extraCategories={extraCategories} onTarget={handleTargetClick} onDelete={setDeleteMoveId} />
+                    ))}
+                </div>
 
-                            return (
-                                <tr key={move.id} className="data-table__row--dynamic" style={{ fontSize: '0.85rem' }}>
-                                    <td className="data-table__cell--middle">
-                                        <input type="checkbox" checked={move.active} onChange={(e) => updateMove(move.id, 'active', e.target.checked)} />
-                                    </td>
-                                    
-                                    {/* ACCURACY COLUMN: [Input] [Dice Btn] */}
-                                    <td className="data-table__cell--middle">
-                                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center', justifyContent: 'center' }}>
-                                            <input type="number" className="identity-grid__input" style={{ width: '35px', textAlign: 'center', padding: '2px', background: '#1976D2', color: 'white', fontWeight: 'bold', border: 'none' }} value={move.accBonus} onChange={(e) => updateMove(move.id, 'accBonus', Number(e.target.value) || 0)} />
-                                            <button onClick={() => rollDicePlus(calculatedAcc, `${move.name} Accuracy`)} style={{ background: '#555', color: 'white', border: 'none', borderRadius: '4px', padding: '2px 4px', fontSize: '1rem', cursor: 'pointer' }}>🎲</button>
+                <button type="button" onClick={addMove} className="action-button action-button--red action-button--full-width">+ Add Move Slot</button>
+                
+                {learnset.length > 0 && (
+                    <div style={{ marginTop: '8px' }}>
+                        <button type="button" onClick={() => setShowLearnset(!showLearnset)} className="action-button action-button--dark" style={{ width: '100%', fontSize: '0.8rem', padding: '4px', margin: 0 }}>
+                            {showLearnset ? "📖 Hide Learnset" : "📖 View Learnset"}
+                        </button>
+                        {showLearnset && (
+                            <div style={{ border: '1px solid var(--border)', padding: '8px', borderRadius: '4px', background: 'var(--panel-alt)', marginTop: '4px', maxHeight: '200px', overflowY: 'auto', fontSize: '0.8rem' }}>
+                                {sortedRanks.map(rank => (
+                                    <div key={rank} style={{ marginBottom: '6px' }}>
+                                        <div style={{ fontWeight: 'bold', color: 'var(--primary)', borderBottom: '1px solid var(--border)', marginBottom: '4px', textTransform: 'capitalize' }}>{rank}</div>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                            {groupedLearnset[rank].map((mName, idx) => (
+                                                <span key={idx} style={{ background: 'var(--label-bg)', padding: '2px 6px', borderRadius: '12px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{mName}</span>
+                                            ))}
                                         </div>
-                                    </td>
-                                    
-                                    {/* NAME & FETCH */}
-                                    <td style={{ padding: '2px' }}>
-                                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                                            <input type="text" list="moves-datalist" className="identity-grid__input" style={{ flex: 1, minWidth: '0' }} value={move.name} onChange={(e) => updateMove(move.id, 'name', e.target.value)} placeholder="Move Name" />
-                                            <span style={{ cursor: 'pointer', fontSize: '1.2rem', opacity: fetchingMoves[move.id] ? 0.5 : 1 }} onClick={() => handleFetchMove(move.id, move.name)}>🏷️</span>
-                                        </div>
-                                    </td>
-
-                                    {/* POOL (ACC) DROPDOWNS */}
-                                    <td style={{ padding: '2px' }}>
-                                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                                            <select className="identity-grid__select" style={{ flex: 1 }} value={move.acc1} onChange={(e) => updateMove(move.id, 'acc1', e.target.value)}>
-                                                {ATTR_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-                                            </select>
-                                            <span style={{ fontWeight: 'bold' }}>+</span>
-                                            <select className="identity-grid__select" style={{ flex: 1 }} value={move.acc2} onChange={(e) => updateMove(move.id, 'acc2', e.target.value)}>
-                                                {SKILL_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-                                            </select>
-                                        </div>
-                                    </td>
-                                    
-                                    {/* TYPE */}
-                                    <td style={{ padding: '2px' }}>
-                                        <select className="identity-grid__select" style={{ width: '100%', background: TYPE_COLORS[move.type] || 'var(--panel-alt)', color: move.type ? 'white' : 'inherit', fontWeight: 'bold', textShadow: move.type ? '1px 1px 1px rgba(0,0,0,0.5)' : 'none', padding: '2px 4px' }} value={move.type} onChange={(e) => updateMove(move.id, 'type', e.target.value)}>
-                                            {POKEMON_TYPES.map(t => <option key={t} value={t}>{t || '--'}</option>)}
-                                        </select>
-                                    </td>
-
-                                    {/* CAT */}
-                                    <td style={{ padding: '2px' }}>
-                                        <select className="identity-grid__select" style={{ width: '100%', padding: '2px' }} value={move.category} onChange={(e) => updateMove(move.id, 'category', e.target.value as any)}>
-                                            <option value="Physical">Phys</option><option value="Special">Spec</option><option value="Status">Stat</option>
-                                        </select>
-                                    </td>
-
-                                    {/* DAMAGE: [Power Input] + [Attr Dropdown] */}
-                                    <td style={{ padding: '2px' }}>
-                                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                                            <NumberSpinner value={move.power} onChange={v => updateMove(move.id, 'power', v)} />
-                                            <span style={{ fontWeight: 'bold' }}>+</span>
-                                            <select className="identity-grid__select" style={{ flex: 1 }} value={move.dmg1} onChange={(e) => updateMove(move.id, 'dmg1', e.target.value)}>
-                                                {ATTR_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-                                            </select>
-                                        </div>
-                                    </td>
-                                    
-                                    {/* DMG DICE BUTTON */}
-                                    <td className="data-table__cell--middle">
-                                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center', justifyContent: 'center' }}>
-                                            <span style={{ fontWeight: 'bold', color: '#C62828' }}>{calculatedDmg}</span>
-                                            <button onClick={() => rollDicePlus(calculatedDmg, `${move.name} Damage`)} style={{ background: '#C62828', color: 'white', border: 'none', borderRadius: '4px', padding: '2px 4px', fontSize: '1rem', cursor: 'pointer' }}>💥</button>
-                                        </div>
-                                    </td>
-
-                                    {/* SORT ARROWS */}
-                                    <td className="data-table__cell--middle">
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                            <button onClick={() => moveUpMove(move.id)} style={{ padding: '0px 4px', fontSize: '0.6rem', cursor: 'pointer' }}>▲</button>
-                                            <button onClick={() => moveDownMove(move.id)} style={{ padding: '0px 4px', fontSize: '0.6rem', cursor: 'pointer' }}>▼</button>
-                                        </div>
-                                    </td>
-                                    
-                                    {/* DELETE */}
-                                    <td className="data-table__cell--middle">
-                                        <button onClick={() => removeMove(move.id)} style={{ cursor: 'pointer', background: '#C62828', border: 'none', color: 'white', fontWeight: 'bold', padding: '4px 6px', borderRadius: '4px' }}>X</button>
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-                <button onClick={addMove} className="action-button" style={{ width: '100%', background: '#C62828', color: 'white', marginTop: '4px' }}>+ Add Move Slot</button>
-
-                <button onClick={() => setIsLearnsetOpen(!isLearnsetOpen)} className="action-button action-button--dark" style={{ width: '100%', marginTop: '6px', display: 'flex', justifyContent: 'center', gap: '6px' }}>
-                    <span>📖</span> {isLearnsetOpen ? 'Hide Learnset' : 'View Learnset'}
-                </button>
-                {isLearnsetOpen && (<div style={{ padding: '10px', background: 'var(--bg-color)', border: '1px solid var(--border)', borderTop: 'none', borderBottomLeftRadius: '6px', borderBottomRightRadius: '6px' }}>{renderLearnset()}</div>)}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
-            <datalist id="moves-datalist">{allMovesList.map(m => <option key={m} value={m} />)}</datalist>
+            {showModsModal && (
+                <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 1200, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <div style={{ background: 'var(--panel-bg)', padding: '20px', borderRadius: '6px', maxWidth: '300px', width: '90%', border: '2px solid var(--primary)', boxShadow: '0 4px 15px rgba(0,0,0,0.5)' }}>
+                        <h3 style={{ color: 'var(--primary)', marginTop: 0, fontSize: '1.1rem', textAlign: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '4px' }}>⚙️ Global Modifiers</h3>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '15px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold', fontSize: '0.85rem' }}>Acc<TooltipIcon onClick={() => setTooltipInfo({ title: "Global Accuracy", desc: "Adds or removes bonus dice to all Accuracy rolls."})} /></span>
+                                <NumberSpinner value={trackers.globalAcc} onChange={(v) => updateTracker('globalAcc', v)} />
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold', fontSize: '0.85rem' }}>Dmg<TooltipIcon onClick={() => setTooltipInfo({ title: "Global Damage", desc: "Adds or removes bonus dice to all Damage rolls."})} /></span>
+                                <NumberSpinner value={trackers.globalDmg} onChange={(v) => updateTracker('globalDmg', v)} />
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold', fontSize: '0.85rem' }}>Succ<TooltipIcon onClick={() => setTooltipInfo({ title: "Global Success Modifier", desc: "Flat Bonus/Penalty to final Successes (e.g., Low Accuracy = -1)."})} /></span>
+                                <NumberSpinner value={trackers.globalSucc} onChange={(v) => updateTracker('globalSucc', v)} />
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold', fontSize: '0.85rem' }}>
+                                    Chance
+                                    <button type="button" onClick={handleGlobalChanceRoll} className="action-button action-button--dark" style={{ padding: '1px 4px' }}>🎲</button>
+                                </span>
+                                <NumberSpinner value={trackers.globalChance} onChange={(v) => updateTracker('globalChance', v)} min={0} />
+                            </div>
+                            {painEnabled && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold', fontSize: '0.85rem', color: '#c62828' }}>Ign.Pain<TooltipIcon onClick={() => setTooltipInfo({ title: "Ignored Pain", desc: "Ignored Pain Penalties (Resets per Scene). Use the 'Ign.Pain(-1W)' button in the Tracker to increase this."})} /></span>
+                                    <NumberSpinner value={trackers.ignoredPain} onChange={(v) => updateTracker('ignoredPain', v)} min={0} />
+                                </div>
+                            )}
+                        </div>
+
+                        <button type="button" className="action-button action-button--dark" style={{ width: '100%', padding: '6px' }} onClick={() => setShowModsModal(false)}>Close</button>
+                    </div>
+                </div>
+            )}
+
+            {targetingMove && (
+                <TargetingModal move={targetingMove} baseDamage={calculateBaseDamage(targetingMove, useCharacterStore.getState())} onClose={() => setTargetingMove(null)} onRoll={handleExecuteDamage} />
+            )}
+
+            {deleteMoveId && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1200, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <div style={{ background: 'var(--panel-bg)', padding: '20px', borderRadius: '6px', maxWidth: '300px', width: '90%', border: '2px solid #C62828', boxShadow: '0 4px 15px rgba(0,0,0,0.5)', textAlign: 'center' }}>
+                        <h3 style={{ color: '#C62828', marginTop: 0, fontSize: '1.1rem' }}>⚠️ Confirm Deletion</h3>
+                        <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', marginBottom: '20px' }}>Are you sure you want to delete this Move?</p>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button type="button" className="action-button action-button--dark" style={{ flex: 1, padding: '6px' }} onClick={() => setDeleteMoveId(null)}>Cancel</button>
+                            <button type="button" className="action-button action-button--red" style={{ flex: 1, padding: '6px' }} onClick={() => { removeMove(deleteMoveId); setDeleteMoveId(null); }}>Delete</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {tooltipInfo && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1200, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <div style={{ background: 'var(--panel-bg)', padding: '15px', borderRadius: '8px', width: '280px', border: '2px solid var(--primary)', color: 'var(--text-main)', boxShadow: '0 4px 15px rgba(0,0,0,0.5)' }}>
+                        <h3 style={{ marginTop: 0, color: 'var(--primary)', fontSize: '1.1rem', borderBottom: '1px solid var(--border)', paddingBottom: '4px', textAlign: 'center' }}>{tooltipInfo.title}</h3>
+                        <p style={{ fontSize: '0.85rem', marginBottom: '15px', color: 'var(--text-muted)', whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>{tooltipInfo.desc}</p>
+                        <div style={{ display: 'flex', justifyContent: 'center' }}>
+                            <button type="button" className="action-button action-button--dark" style={{ width: '100%', padding: '6px' }} onClick={() => setTooltipInfo(null)}>Close</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
