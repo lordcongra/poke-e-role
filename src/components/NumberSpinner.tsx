@@ -5,15 +5,17 @@ interface NumberSpinnerProps {
     onChange: (val: number) => void;
     min?: number;
     max?: number;
+    disabled?: boolean;
 }
 
-export function NumberSpinner({ value, onChange, min = 0, max = 9999 }: NumberSpinnerProps) {
+export function NumberSpinner({ value, onChange, min = 0, max = 9999, disabled = false }: NumberSpinnerProps) {
     return (
-        <div className="number-spinner">
+        <div className="number-spinner" style={{ opacity: disabled ? 0.6 : 1, pointerEvents: disabled ? 'none' : 'auto' }}>
             <button 
                 type="button" 
                 className="number-spinner__button" 
-                onClick={() => onChange(Math.max(min, value - 1))}
+                onClick={() => !disabled && onChange(Math.max(min, value - 1))}
+                disabled={disabled}
             >
                 -
             </button>
@@ -22,13 +24,15 @@ export function NumberSpinner({ value, onChange, min = 0, max = 9999 }: NumberSp
                 type="number" 
                 className="number-spinner__input no-spinners" 
                 value={value} 
-                onChange={(e) => onChange(parseInt(e.target.value) || 0)} 
+                onChange={(e) => !disabled && onChange(parseInt(e.target.value) || 0)} 
+                disabled={disabled}
             />
             
             <button 
                 type="button" 
                 className="number-spinner__button" 
-                onClick={() => onChange(Math.min(max, value + 1))}
+                onClick={() => !disabled && onChange(Math.min(max, value + 1))}
+                disabled={disabled}
             >
                 +
             </button>

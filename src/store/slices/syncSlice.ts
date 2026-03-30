@@ -117,10 +117,11 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
             health: newHealth,
             will: newWill,
             derived: {
-                defBuff: Number(meta['defBuff'] ?? meta['def-buff']) || 0, 
-                defDebuff: Number(meta['defDebuff'] ?? meta['def-debuff']) || 0,
-                sdefBuff: Number(meta['sdefBuff'] ?? meta['spd-buff']) || 0, 
-                sdefDebuff: Number(meta['sdefDebuff'] ?? meta['spd-debuff']) || 0,
+                // AUDIT FIX: Swapped fallback order to prevent rogue root 'defBuff' keys from overwriting live 'def-buff' keys!
+                defBuff: Number(meta['def-buff'] ?? meta['defBuff']) || 0, 
+                defDebuff: Number(meta['def-debuff'] ?? meta['defDebuff']) || 0,
+                sdefBuff: Number(meta['spd-buff'] ?? meta['sdefBuff']) || 0, 
+                sdefDebuff: Number(meta['spd-debuff'] ?? meta['sdefDebuff']) || 0,
                 happy: Number(meta['happiness-curr'] ?? meta['happy']) || 0, 
                 loyal: Number(meta['loyalty-curr'] ?? meta['loyal']) || 0
             },

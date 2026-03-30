@@ -7,6 +7,8 @@ import { fetchPokemonData, fetchAbilityData, loadGithubTree, ALL_ABILITIES, SPEC
 import { HomebrewModal } from './HomebrewModal';
 import { GeneratorModal } from './GeneratorModal'; 
 import { TrackerSettingsModal } from './TrackerSettingsModal';
+import { RulesModal } from './RulesModal';
+import { SpeciesChangeModal } from './SpeciesChangeModal';
 import { saveToOwlbear } from '../utils/obr';
 
 const RANKS: Rank[] = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion'];
@@ -25,7 +27,6 @@ export function IdentityHeader() {
     const setIdentity = useCharacterStore(state => state.setIdentity);
     const setMode = useCharacterStore(state => state.setMode); 
     const toggleForm = useCharacterStore(state => state.toggleForm);
-    const applySpeciesData = useCharacterStore(state => state.applySpeciesData);
     
     const refreshSpeciesData = useCharacterStore(state => state.refreshSpeciesData);
     
@@ -36,9 +37,16 @@ export function IdentityHeader() {
 
     const role = useCharacterStore(state => state.role);
     const roomCustomTypes = useCharacterStore(state => state.roomCustomTypes);
+    const roomCustomAbilities = useCharacterStore(state => state.roomCustomAbilities);
     
-    const allTypes = [...POKEMON_TYPES, ...roomCustomTypes.map(t => t.name)];
-    const allTypeColors = { ...TYPE_COLORS, ...Object.fromEntries(roomCustomTypes.map(t => [t.name, t.color])) };
+    const filteredTypes = roomCustomTypes.filter(t => role === 'GM' || !t.gmOnly);
+    const filteredAbilities = roomCustomAbilities.filter(a => role === 'GM' || !a.gmOnly);
+
+    const allTypes = [...POKEMON_TYPES, ...filteredTypes.map(t => t.name)];
+    const allTypeColors = { ...TYPE_COLORS, ...Object.fromEntries(filteredTypes.map(t => [t.name, t.color])) };
+    
+    const access = id.homebrewAccess || 'Full';
+    const canViewHomebrew = role === 'GM' || access !== 'None';
 
     const [isFetching, setIsFetching] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -50,15 +58,12 @@ export function IdentityHeader() {
     const [showHomebrewModal, setShowHomebrewModal] = useState(false);
     const [showGeneratorModal, setShowGeneratorModal] = useState(false); 
     const [showTrackerSettings, setShowTrackerSettings] = useState(false); 
+    const [showRulesModal, setShowRulesModal] = useState(false);
+
     const [deleteCustomInfoId, setDeleteCustomInfoId] = useState<string | null>(null);
-    
     const [pendingSpeciesData, setPendingSpeciesData] = useState<Record<string, unknown> | null>(null);
-    const [swapUpdateStats, setSwapUpdateStats] = useState(true);
-    
     const [importData, setImportData] = useState<Record<string, unknown> | null>(null);
-
     const [isCollapsed, setIsCollapsed] = useState(false);
-
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -106,7 +111,7 @@ export function IdentityHeader() {
                 if (hasSkills || hasMoves) {
                     setPendingSpeciesData(data as Record<string, unknown>);
                 } else {
-                    applySpeciesData(data as Record<string, unknown>, true, true);
+                    store.applySpeciesData(data as Record<string, unknown>, true, true);
                 }
             }
         } catch (err) { console.error("Fetch failed:", err); } 
@@ -197,9 +202,6 @@ export function IdentityHeader() {
         setImportData(null);
     };
 
-    const openRulesetModal = () => setModalConfig({ title: "Ruleset Settings", content: "Determines how HP and Spec. Defense are calculated. (Global Room Setting)" });
-    const openPainModal = () => setModalConfig({ title: "Pain Penalties", content: "Automatically applies -1 or -2 success penalties to rolls when at low HP. (Global Room Setting)" });
-    
     const openAbilityModal = async () => {
         if (!id.ability) { setModalConfig({ title: "Ability", content: "No ability selected." }); return; }
         setModalConfig({ title: "Ability", content: "Loading..." }); 
@@ -219,6 +221,7 @@ export function IdentityHeader() {
             
             {!isCollapsed && (
                 <div className="panel-content-wrapper">
+                    
                     <div className="identity-grid" style={{ padding: '10px' }}>
                         <div className="identity-grid__row"><span className="identity-grid__label">Nickname</span><input type="text" className="identity-grid__input" value={id.nickname || ''} onChange={(e) => setIdentity('nickname', e.target.value)} /></div>
                         
@@ -232,7 +235,7 @@ export function IdentityHeader() {
                                 {id.mode === 'Pokémon' && (
                                     <>
                                         <button type="button" className="action-button action-button--dark" style={{ padding: '2px 6px', fontSize: '0.8rem', borderRadius: '4px', margin: '0 2px' }} onClick={() => { if (!id.species) { if (OBR.isAvailable) OBR.notification.show("⚠️ Please select a Species first!", "WARNING"); return; } setShowGeneratorModal(true); }} title="Auto-Build Pokémon">🎲</button>
-                                        <button type="button" className="action-button action-button--dark" style={{ padding: '2px 6px', fontSize: '0.8rem', borderRadius: '4px', background: id.isAltForm ? '#8E24AA' : '#555', borderColor: id.isAltForm ? '#8E24AA' : '#555' }} onClick={toggleForm} title={id.isAltForm ? "Swap to Base Form" : "Swap to Alt Form / Mega Evolution"}>🧬</button>
+                                        <button type="button" className="action-button action-button--dark" style={{ padding: '2px 6px', fontSize: '0.8rem', borderRadius: '4px', background: id.isAltForm ? '#00695C' : '#555', borderColor: id.isAltForm ? '#00695C' : '#555' }} onClick={toggleForm} title={id.isAltForm ? "Swap to Base Form" : "Swap to Alt Form / Mega Evolution"}>🧬</button>
                                     </>
                                 )}
                             </div>
@@ -256,29 +259,18 @@ export function IdentityHeader() {
                             <datalist id="ability-datalist">
                                 {id.availableAbilities?.map(ab => <option key={`in-${ab}`} value={ab} />)}
                                 {allAbilitiesList.map(ab => <option key={`all-${ab}`} value={ab} />)}
+                                {filteredAbilities.map(ab => <option key={`hb-${ab.id}`} value={ab.name} />)}
                             </datalist>
                         </div>
 
                         <div className="identity-grid__row"><span className="identity-grid__label identity-grid__label--blue">Mode</span><select className="identity-grid__select" value={id.mode || 'Pokémon'} onChange={(e) => setMode(e.target.value as 'Pokémon' | 'Trainer')}><option value="Pokémon">Pokémon</option><option value="Trainer">Trainer</option></select></div>
                         
-                        {/* AUDIT FIX: Sliced the Age row directly in half and added Gender to perfectly maintain the 7x2 layout! */}
                         <div className="identity-grid__row" style={{ padding: '2px 0 2px 4px' }}>
                             <span className="identity-grid__label identity-grid__label--blue">Age</span>
                             <select className="identity-grid__select" value={id.age || '--'} onChange={(e) => setIdentity('age', e.target.value)} style={{ flex: 0.6, minWidth: 0, padding: '2px' }}>{AGES.map(a => <option key={a} value={a}>{a}</option>)}</select>
                             <span className="identity-grid__label identity-grid__label--blue" style={{ marginLeft: '4px' }}>Gender</span>
                             <input type="text" className="identity-grid__input" value={id.gender || ''} onChange={(e) => setIdentity('gender', e.target.value)} style={{ flex: 1, minWidth: 0, padding: '2px 4px' }} placeholder="..." />
                         </div>
-
-                        <div className="identity-grid__row">
-                            <span className="identity-grid__label identity-grid__label--blue">Ruleset <TooltipIcon onClick={openRulesetModal} /></span>
-                            <select className="identity-grid__select" value={id.ruleset || 'vg-vit-hp'} onChange={(e) => setIdentity('ruleset', e.target.value)}>
-                                <option value="vg-vit-hp">VIT = DEF/HP, INS = SPD</option>
-                                <option value="tabletop">VIT = DEF/SPD/HP</option>
-                                <option value="vg-high-hp">VIT = DEF, INS = SPD; either VIT/INS used for HP</option>
-                            </select>
-                        </div>
-                        
-                        <div className="identity-grid__row"><span className="identity-grid__label identity-grid__label--red">Pain <TooltipIcon onClick={openPainModal} /></span><select className="identity-grid__select" value={id.pain || 'Disabled'} onChange={(e) => setIdentity('pain', e.target.value)}><option>Disabled</option><option>Enabled</option></select></div>
 
                         <div className="identity-grid__row"><span className="identity-grid__label identity-grid__label--green">Combat</span><input type="text" className="identity-grid__input" value={id.combat || ''} onChange={(e) => setIdentity('combat', e.target.value)} /></div>
                         <div className="identity-grid__row"><span className="identity-grid__label identity-grid__label--green">Social</span><input type="text" className="identity-grid__input" value={id.social || ''} onChange={(e) => setIdentity('social', e.target.value)} /></div>
@@ -300,7 +292,9 @@ export function IdentityHeader() {
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', padding: '0 10px 10px 10px' }}>
                         <button type="button" onClick={handleRefresh} disabled={isRefreshing} className="action-button action-button--dark" style={{ flex: '1 1 25%', minWidth: '100px', fontSize: '0.85rem' }} title="Refresh Data">{isRefreshing ? '⏳ Refreshing...' : '↻ Refresh'}</button>
                         
-                        <button type="button" className="action-button action-button--dark" style={{ flex: '1 1 25%', minWidth: '100px', background: '#8E24AA', borderColor: '#8E24AA', fontSize: '0.85rem' }} onClick={() => setShowHomebrewModal(true)}>🛠️ Homebrew</button>
+                        {canViewHomebrew && (
+                            <button type="button" className="action-button action-button--dark" style={{ flex: '1 1 25%', minWidth: '100px', background: '#00695C', borderColor: '#00695C', fontSize: '0.85rem' }} onClick={() => setShowHomebrewModal(true)}>🛠️ Homebrew</button>
+                        )}
                         
                         <button type="button" onClick={addCustomInfo} className="action-button" style={{ flex: '1 1 25%', minWidth: '100px', background: '#1976D2', color: 'white', fontSize: '0.85rem' }} title="Add Custom Field">➕ Custom Field</button>
                         
@@ -311,17 +305,25 @@ export function IdentityHeader() {
                         <button type="button" className="action-button action-button--dark" style={{ flex: '1 1 5%', minWidth: '35px', fontSize: '0.85rem' }} onClick={toggleTheme} title="Toggle Dark Mode">{isDark ? '☀️' : '🌙'}</button>
                     </div>
                     
-                    <div style={{ display: 'flex', gap: '4px', padding: '0 10px 10px 10px' }}>
-                        <div style={{ flex: 1, background: 'var(--panel-alt)', border: '1px solid #1976d2', padding: '4px', borderRadius: '4px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}>
-                            <label style={{ color: '#1976d2', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.75rem', display: 'flex', alignItems: 'center' }}>
-                                <input type="checkbox" checked={id.showTrackers ?? true} onChange={(e) => setIdentity('showTrackers', e.target.checked)} /> ⭕ Trackers
+                    <div style={{ display: 'flex', gap: '6px', padding: '0 10px 10px 10px' }}>
+                        <div style={{ flex: 1, background: '#1976d2', border: '1px solid rgba(0,0,0,0.2)', padding: '4px', borderRadius: '4px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}>
+                            <label style={{ flex: 1, height: '100%', color: 'white', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', textShadow: '1px 1px 1px rgba(0,0,0,0.5)' }}>
+                                <input type="checkbox" checked={id.showTrackers ?? true} onChange={(e) => setIdentity('showTrackers', e.target.checked)} style={{ cursor: 'pointer', marginRight: '4px' }} /> ⭕ Trackers
                             </label>
-                            <button type="button" onClick={() => setShowTrackerSettings(true)} className="action-button action-button--dark" style={{ margin: 0, padding: '2px 4px', fontSize: '0.7rem' }}>⚙️</button>
+                            <button type="button" onClick={() => setShowTrackerSettings(true)} className="action-button" style={{ margin: 0, padding: '2px 4px', fontSize: '0.7rem', background: 'rgba(0,0,0,0.2)', color: 'white', border: 'none' }}>⚙️</button>
                         </div>
+
+                        {role === 'GM' && (
+                            <div style={{ flex: 1, background: '#E65100', border: '1px solid rgba(0,0,0,0.2)', padding: '4px', borderRadius: '4px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <button type="button" onClick={() => setShowRulesModal(true)} style={{ width: '100%', height: '100%', background: 'transparent', border: 'none', color: 'white', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', textShadow: '1px 1px 1px rgba(0,0,0,0.5)' }}>
+                                    📜 Rules
+                                </button>
+                            </div>
+                        )}
                         
-                        <div style={{ display: role === 'GM' ? 'block' : 'none', flex: 1, background: 'var(--panel-alt)', border: '1px solid var(--primary)', padding: '4px', borderRadius: '4px', textAlign: 'center' }}>
-                            <label style={{ color: 'var(--primary)', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <input type="checkbox" checked={id.isNPC} onChange={(e) => setIdentity('isNPC', e.target.checked)} /> 🔒 NPC
+                        <div style={{ display: role === 'GM' ? 'block' : 'none', flex: 1, background: 'var(--primary)', border: '1px solid rgba(0,0,0,0.2)', padding: '4px', borderRadius: '4px', textAlign: 'center' }}>
+                            <label style={{ width: '100%', height: '100%', color: 'white', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', textShadow: '1px 1px 1px rgba(0,0,0,0.5)' }}>
+                                <input type="checkbox" checked={id.isNPC} onChange={(e) => setIdentity('isNPC', e.target.checked)} style={{ cursor: 'pointer', marginRight: '4px' }} /> 🔒 NPC
                             </label>
                         </div>
                     </div>
@@ -331,6 +333,7 @@ export function IdentityHeader() {
             {showHomebrewModal && <HomebrewModal onClose={() => setShowHomebrewModal(false)} />}
             {showGeneratorModal && <GeneratorModal onClose={() => setShowGeneratorModal(false)} />}
             {showTrackerSettings && <TrackerSettingsModal onClose={() => setShowTrackerSettings(false)} />}
+            {showRulesModal && <RulesModal onClose={() => setShowRulesModal(false)} />}
 
             {importData && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1200, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -346,33 +349,11 @@ export function IdentityHeader() {
             )}
 
             {pendingSpeciesData && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <div style={{ background: 'var(--panel-bg)', padding: '15px', borderRadius: '8px', width: '320px', border: '2px solid var(--primary)', color: 'var(--text-main)', boxShadow: '0 4px 15px rgba(0,0,0,0.5)' }}>
-                        <h3 style={{ marginTop: 0, color: 'var(--primary)', fontSize: '1.1rem', borderBottom: '1px solid var(--border)', paddingBottom: '4px', textAlign: 'center' }}>🧬 Species Changed</h3>
-                        <p style={{ fontSize: '0.85rem', textAlign: 'center', marginBottom: '15px', color: 'var(--text-muted)' }}>You loaded a new Pokémon. How do you want to handle existing data?</p>
-                        
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <button type="button" onClick={() => { applySpeciesData(pendingSpeciesData, false, swapUpdateStats); setPendingSpeciesData(null); }} className="action-button action-button--dark" style={{ background: '#1976d2', borderColor: '#1976d2', padding: '8px', fontSize: '0.9rem' }}>
-                                🔄 Form Change / Mega Evolve<br/><span style={{ fontSize: '0.7rem', fontWeight: 'normal' }}>(Updates Typing/Ability, Keeps Moves/Skills)</span>
-                            </button>
-                            <button type="button" onClick={() => { applySpeciesData(pendingSpeciesData, true, swapUpdateStats); setPendingSpeciesData(null); }} className="action-button action-button--red" style={{ padding: '8px', fontSize: '0.9rem' }}>
-                                ⚠️ Brand New Pokémon<br/><span style={{ fontSize: '0.7rem', fontWeight: 'normal' }}>(Wipes Moves & Skills completely)</span>
-                            </button>
-                            <button type="button" onClick={() => setPendingSpeciesData(null)} className="action-button action-button--dark" style={{ padding: '6px', marginTop: '4px' }}>Cancel Change</button>
-                        </div>
-                        
-                        <div style={{ marginTop: '15px', paddingTop: '10px', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
-                            <label style={{ fontSize: '0.8rem', cursor: 'pointer', color: 'var(--text-main)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                                <input type="checkbox" checked={swapUpdateStats} onChange={(e) => setSwapUpdateStats(e.target.checked)} style={{ transform: 'scale(1.1)', cursor: 'pointer' }} />
-                                Overwrite Base Stats & Limits
-                            </label>
-                        </div>
-                    </div>
-                </div>
+                <SpeciesChangeModal pendingSpeciesData={pendingSpeciesData} onClose={() => setPendingSpeciesData(null)} />
             )}
 
             {modalConfig && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1300, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                     <div style={{ background: 'var(--panel-bg)', padding: '20px', borderRadius: '6px', maxWidth: '400px', width: '90%', border: '2px solid #C62828', boxShadow: '0 4px 15px rgba(0,0,0,0.5)' }}>
                         <h3 style={{ color: '#C62828', textAlign: 'center', marginTop: 0, fontSize: '1.2rem' }}>{modalConfig.title}</h3>
                         <hr style={{ borderTop: '1px solid var(--border)', marginBottom: '15px' }} />

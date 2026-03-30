@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import OBR from "@owlbear-rodeo/sdk";
 import { useCharacterStore } from '../store/useCharacterStore';
-import type { CustomType, CustomAbility, CustomMove, CustomPokemon } from '../store/storeTypes';
+import type { CustomType, CustomAbility, CustomMove, CustomPokemon, CustomItem } from '../store/storeTypes';
 import { fetchPokemonData, syncHomebrewToApi } from '../utils/api';
 import { buildGraphicsFromMeta, renderTokenGraphics, STATS_META_ID } from '../utils/graphicsManager';
 import { setActiveTokenId } from '../utils/obr';
@@ -22,6 +22,7 @@ export function useOwlbearSync() {
     const setRoomCustomAbilities = useCharacterStore(state => state.setRoomCustomAbilities);
     const setRoomCustomMoves = useCharacterStore(state => state.setRoomCustomMoves);
     const setRoomCustomPokemon = useCharacterStore(state => state.setRoomCustomPokemon);
+    const setRoomCustomItems = useCharacterStore(state => state.setRoomCustomItems);
 
     useEffect(() => {
         let unsubs: Array<() => void> = [];
@@ -129,7 +130,6 @@ export function useOwlbearSync() {
                                 renderTokenGraphics(item, gData, role); 
                             }
 
-                            // AUDIT FIX: Using the correct tokenId scope for collaborative sync!
                             const storeState = useCharacterStore.getState();
                             if (item.id === storeState.tokenId) {
                                 const lastKnown = lastTransform?.metaStr;
@@ -149,15 +149,18 @@ export function useOwlbearSync() {
                     if (data.customAbilities) setRoomCustomAbilities(data.customAbilities as CustomAbility[]);
                     if (data.customMoves) setRoomCustomMoves(data.customMoves as CustomMove[]);
                     if (data.customPokemon) setRoomCustomPokemon(data.customPokemon as CustomPokemon[]);
+                    if (data.customItems) setRoomCustomItems(data.customItems as CustomItem[]);
                     
                     syncHomebrewToApi(
                         (data.customPokemon as CustomPokemon[]) || [],
                         (data.customMoves as CustomMove[]) || [],
-                        (data.customAbilities as CustomAbility[]) || []
+                        (data.customAbilities as CustomAbility[]) || [],
+                        (data.customItems as CustomItem[]) || []
                     );
 
                     if (data.ruleset !== undefined) useCharacterStore.getState().setIdentity('ruleset', String(data.ruleset));
                     if (data.painEnabled !== undefined) useCharacterStore.getState().setIdentity('pain', data.painEnabled ? 'Enabled' : 'Disabled');
+                    if (data.homebrewAccess !== undefined) useCharacterStore.getState().setIdentity('homebrewAccess', String(data.homebrewAccess));
                 }
 
                 const unsubRoom = OBR.room.onMetadataChange((meta) => {
@@ -167,15 +170,18 @@ export function useOwlbearSync() {
                         if (data.customAbilities) setRoomCustomAbilities(data.customAbilities as CustomAbility[]);
                         if (data.customMoves) setRoomCustomMoves(data.customMoves as CustomMove[]);
                         if (data.customPokemon) setRoomCustomPokemon(data.customPokemon as CustomPokemon[]);
+                        if (data.customItems) setRoomCustomItems(data.customItems as CustomItem[]);
 
                         syncHomebrewToApi(
                             (data.customPokemon as CustomPokemon[]) || [],
                             (data.customMoves as CustomMove[]) || [],
-                            (data.customAbilities as CustomAbility[]) || []
+                            (data.customAbilities as CustomAbility[]) || [],
+                            (data.customItems as CustomItem[]) || []
                         );
 
                         if (data.ruleset !== undefined) useCharacterStore.getState().setIdentity('ruleset', String(data.ruleset));
                         if (data.painEnabled !== undefined) useCharacterStore.getState().setIdentity('pain', data.painEnabled ? 'Enabled' : 'Disabled');
+                        if (data.homebrewAccess !== undefined) useCharacterStore.getState().setIdentity('homebrewAccess', String(data.homebrewAccess));
                     }
                 });
                 unsubs.push(unsubRoom);

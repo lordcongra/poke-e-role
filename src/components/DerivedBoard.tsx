@@ -72,6 +72,7 @@ export function DerivedBoard() {
     const extraCategories = useCharacterStore(state => state.extraCategories);
     
     const [tooltipInfo, setTooltipInfo] = useState<{title: string, desc: string} | null>(null);
+    const [isCollapsed, setIsCollapsed] = useState(false);
 
     const invMods = parseCombatTags(inventory, extraCategories);
     
@@ -89,124 +90,137 @@ export function DerivedBoard() {
     const alertTotal = skills[Skill.ALERT].base + skills[Skill.ALERT].buff + (invMods.skills.alert || 0);
     const initiative = dexTotal + alertTotal + invMods.init;
 
-    // AUDIT FIX: Properly mapped the UI to the CLASH skill for both Physical and Special variations!
     const clashP = strTotal + skills[Skill.CLASH].base + skills[Skill.CLASH].buff + (invMods.skills.clash || 0);
     const clashS = speTotal + skills[Skill.CLASH].base + skills[Skill.CLASH].buff + (invMods.skills.clash || 0);
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '15px' }}>
+        <div className="sheet-panel" style={{ marginBottom: '15px' }}>
+            <div className="sheet-panel__header">
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <button type="button" className={`collapse-btn ${isCollapsed ? 'is-collapsed' : ''}`} onClick={() => setIsCollapsed(!isCollapsed)}>▼</button>
+                    INFO
+                </span>
+            </div>
             
-            <div className="health-section__row">
-                <div style={{ flex: 1 }}><ResourceBox title="HP" curr={health.hpCurr} max={health.hpMax} base={health.hpBase} color="var(--primary)" onCurrChange={(v) => updateHealth('hpCurr', v)} onBaseChange={(v) => updateHealth('hpBase', v)} /></div>
-                <div style={{ flex: 1 }}><ResourceBox title="WILL" curr={will.willCurr} max={will.willMax} base={will.willBase} color="#2196F3" onCurrChange={(v) => updateWill('willCurr', v)} onBaseChange={(v) => updateWill('willBase', v)} /></div>
-                
-                <div className="sheet-panel health-section__box" style={{ flex: 1, padding: '0', border: '1px solid #7E57C2', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                    <div style={{ background: '#7E57C2', color: 'white', textAlign: 'center', fontWeight: 'bold', fontSize: '0.85rem', padding: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ paddingLeft: '4px' }}>STATUS <TooltipIcon onClick={() => setTooltipInfo({ title: "Status Effects", desc: "Apply a status effect."})} /></span>
-                        <button onClick={addStatus} className="action-button action-button--dark" style={{ background: 'transparent', padding: '0 4px' }}>+ Add</button>
-                    </div>
-                    <div style={{ padding: '4px', display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto', maxHeight: '80px' }}>
-                        {statuses.map((s, i) => {
-                            const colors = STATUS_COLORS[s.name] || { bg: '#FFF', text: '#000' };
-                            return (
-                                <div key={s.id} style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
-                                    <select className="identity-grid__select" style={{ flex: 1, background: colors.bg, color: colors.text, fontWeight: 'bold', fontSize: '0.75rem', padding: '2px' }} value={s.name} onChange={(e) => updateStatus(s.id, 'name', e.target.value)}>
-                                        {STATUS_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                    </select>
-                                    
-                                    <TooltipIcon onClick={() => setTooltipInfo({ title: s.name, desc: STATUS_RULES[s.name] || "Custom Effect." })} />
+            {!isCollapsed && (
+                <div className="panel-content-wrapper">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        
+                        <div className="health-section__row">
+                            <div style={{ flex: 1 }}><ResourceBox title="HP" curr={health.hpCurr} max={health.hpMax} base={health.hpBase} color="var(--primary)" onCurrChange={(v) => updateHealth('hpCurr', v)} onBaseChange={(v) => updateHealth('hpBase', v)} /></div>
+                            <div style={{ flex: 1 }}><ResourceBox title="WILL" curr={will.willCurr} max={will.willMax} base={will.willBase} color="#2196F3" onCurrChange={(v) => updateWill('willCurr', v)} onBaseChange={(v) => updateWill('willBase', v)} /></div>
+                            
+                            <div className="sheet-panel health-section__box" style={{ flex: 1, padding: '0', border: '1px solid #7E57C2', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                                <div style={{ background: '#7E57C2', color: 'white', textShadow: '1px 1px 1px rgba(0,0,0,0.8)', textAlign: 'center', fontWeight: 'bold', fontSize: '0.85rem', padding: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ paddingLeft: '4px' }}>STATUS <TooltipIcon onClick={() => setTooltipInfo({ title: "Status Effects", desc: "Apply a status effect."})} /></span>
+                                    <button onClick={addStatus} className="action-button action-button--dark" style={{ background: 'transparent', padding: '0 4px', textShadow: 'none' }}>+ Add</button>
+                                </div>
+                                <div style={{ padding: '4px', display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto', maxHeight: '80px' }}>
+                                    {statuses.map((s, i) => {
+                                        const colors = STATUS_COLORS[s.name] || { bg: '#FFF', text: '#000' };
+                                        return (
+                                            <div key={s.id} style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
+                                                <select className="identity-grid__select" style={{ flex: 1, background: colors.bg, color: colors.text, fontWeight: 'bold', fontSize: '0.75rem', padding: '2px' }} value={s.name} onChange={(e) => updateStatus(s.id, 'name', e.target.value)}>
+                                                    {STATUS_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                                </select>
+                                                
+                                                <TooltipIcon onClick={() => setTooltipInfo({ title: s.name, desc: STATUS_RULES[s.name] || "Custom Effect." })} />
 
-                                    {s.name === "Custom..." && (
-                                        <input type="text" style={{ flex: 1, border: '1px solid var(--border)', fontSize: '0.75rem', padding: '2px', background: 'var(--input-bg)', color: 'var(--text-main)' }} value={s.customName} onChange={(e) => updateStatus(s.id, 'customName', e.target.value)} placeholder="Effect" />
+                                                {s.name === "Custom..." && (
+                                                    <input type="text" style={{ flex: 1, border: '1px solid var(--border)', fontSize: '0.75rem', padding: '2px', background: 'var(--input-bg)', color: 'var(--text-main)' }} value={s.customName} onChange={(e) => updateStatus(s.id, 'customName', e.target.value)} placeholder="Effect" />
+                                                )}
+                                                <input type="number" style={{ width: '35px', border: '1px solid var(--border)', fontSize: '0.75rem', textAlign: 'center', background: 'var(--input-bg)', color: 'var(--text-main)' }} value={s.rounds} onChange={(e) => updateStatus(s.id, 'rounds', Number(e.target.value) || 0)} title="Successes/Rounds" />
+                                                {s.name !== "Healthy" && <button onClick={() => rollStatus(s, useCharacterStore.getState())} className="action-button action-button--dark" style={{ padding: '0 4px' }}>🎲</button>}
+                                                {i > 0 && <button onClick={() => removeStatus(s.id)} className="action-button action-button--red" style={{ padding: '0 4px' }}>X</button>}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="health-section__row">
+                            <div className="sheet-panel health-section__box" style={{ flex: 1, padding: '0', overflow: 'hidden' }}>
+                                {/* AUDIT FIX: Added consistent Drop Shadow to ALL headers! */}
+                                <div style={{ background: 'var(--primary)', color: 'white', textShadow: '1px 1px 1px rgba(0,0,0,0.8)', textAlign: 'center', fontWeight: 'bold', fontSize: '0.85rem', padding: '4px' }}>DEFENSE</div>
+                                <div className="flex-layout--row-center" style={{ padding: '6px', justifyContent: 'center', gap: '8px', background: 'var(--panel-alt)' }}>
+                                    <span style={{ color: 'var(--text-main)', fontSize: '0.85rem' }}>Total: <strong>{defTotal}</strong></span>
+                                    <span style={{ color: '#4CAF50' }}>+</span> <NumberSpinner value={derived.defBuff} onChange={v => setDerived('defBuff', Number(v) || 0)} min={0} />
+                                    <span style={{ color: '#F44336' }}>-</span> <NumberSpinner value={derived.defDebuff} onChange={v => setDerived('defDebuff', Number(v) || 0)} min={0} />
+                                </div>
+                            </div>
+                            
+                            <div className="sheet-panel health-section__box" style={{ flex: 1, padding: '0', overflow: 'hidden' }}>
+                                <div style={{ background: 'var(--primary)', color: 'white', textShadow: '1px 1px 1px rgba(0,0,0,0.8)', textAlign: 'center', fontWeight: 'bold', fontSize: '0.85rem', padding: '4px' }}>SPEC. DEFENSE</div>
+                                <div className="flex-layout--row-center" style={{ padding: '6px', justifyContent: 'center', gap: '8px', background: 'var(--panel-alt)' }}>
+                                    <span style={{ color: 'var(--text-main)', fontSize: '0.85rem' }}>Total: <strong>{sdefTotal}</strong></span>
+                                    <span style={{ color: '#4CAF50' }}>+</span> <NumberSpinner value={derived.sdefBuff} onChange={v => setDerived('sdefBuff', Number(v) || 0)} min={0} />
+                                    <span style={{ color: '#F44336' }}>-</span> <NumberSpinner value={derived.sdefDebuff} onChange={v => setDerived('sdefDebuff', Number(v) || 0)} min={0} />
+                                </div>
+                            </div>
+
+                            <div className="sheet-panel health-section__box" style={{ flex: 1, padding: '0', border: '1px solid #4FC3F7', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                                <div style={{ background: '#4FC3F7', color: 'white', textShadow: '1px 1px 1px rgba(0,0,0,0.8)', textAlign: 'center', fontWeight: 'bold', fontSize: '0.85rem', padding: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ paddingLeft: '4px' }}>TIMERS <TooltipIcon onClick={() => setTooltipInfo({ title: "Timers", desc: "Tracks any moves or effects that last a number of rounds."})} /></span>
+                                    <button onClick={addEffect} className="action-button action-button--dark" style={{ background: 'transparent', padding: '0 4px', textShadow: 'none' }}>+ Add</button>
+                                </div>
+                                <div style={{ padding: '4px', display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto', maxHeight: '80px' }}>
+                                    {effects.length === 0 ? (
+                                        <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.8rem' }}>No active effects.</div>
+                                    ) : (
+                                        effects.map(e => (
+                                            <div key={e.id} style={{ display: 'flex', gap: '4px', alignItems: 'center', background: 'var(--panel-bg)', border: '1px solid var(--border)', padding: '2px 4px', borderRadius: '4px' }}>
+                                                <input type="text" style={{ flex: 1, border: 'none', background: 'transparent', color: 'var(--text-main)', fontSize: '0.75rem', minWidth: '60px' }} value={e.name} onChange={(ev) => updateEffect(e.id, 'name', ev.target.value)} placeholder="Effect Name" />
+                                                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Rds:</span>
+                                                <input type="number" style={{ width: '35px', border: '1px solid var(--border)', fontSize: '0.75rem', textAlign: 'center', background: 'var(--input-bg)', color: 'var(--text-main)', borderRadius: '3px' }} value={e.rounds} onChange={(ev) => updateEffect(e.id, 'rounds', Number(ev.target.value) || 0)} min={0} />
+                                                <button onClick={() => removeEffect(e.id)} className="action-button action-button--red" style={{ padding: '0 4px' }}>X</button>
+                                            </div>
+                                        ))
                                     )}
-                                    <input type="number" style={{ width: '35px', border: '1px solid var(--border)', fontSize: '0.75rem', textAlign: 'center', background: 'var(--input-bg)', color: 'var(--text-main)' }} value={s.rounds} onChange={(e) => updateStatus(s.id, 'rounds', Number(e.target.value) || 0)} title="Successes/Rounds" />
-                                    {s.name !== "Healthy" && <button onClick={() => rollStatus(s, useCharacterStore.getState())} className="action-button action-button--dark" style={{ padding: '0 4px' }}>🎲</button>}
-                                    {i > 0 && <button onClick={() => removeStatus(s.id)} className="action-button action-button--red" style={{ padding: '0 4px' }}>X</button>}
                                 </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            </div>
+                            </div>
+                        </div>
 
-            <div className="health-section__row">
-                <div className="sheet-panel health-section__box" style={{ flex: 1, padding: '0', overflow: 'hidden' }}>
-                    <div style={{ background: 'var(--primary)', color: 'white', textAlign: 'center', fontWeight: 'bold', fontSize: '0.85rem', padding: '4px' }}>DEFENSE</div>
-                    <div className="flex-layout--row-center" style={{ padding: '6px', justifyContent: 'center', gap: '8px', background: 'var(--panel-alt)' }}>
-                        <span style={{ color: 'var(--text-main)', fontSize: '0.85rem' }}>Total: <strong>{defTotal}</strong></span>
-                        <span style={{ color: '#4CAF50' }}>+</span> <NumberSpinner value={derived.defBuff} onChange={v => setDerived('defBuff', v)} min={0} />
-                        <span style={{ color: '#F44336' }}>-</span> <NumberSpinner value={derived.defDebuff} onChange={v => setDerived('defDebuff', v)} min={0} />
-                    </div>
-                </div>
-                
-                <div className="sheet-panel health-section__box" style={{ flex: 1, padding: '0', overflow: 'hidden' }}>
-                    <div style={{ background: 'var(--primary)', color: 'white', textAlign: 'center', fontWeight: 'bold', fontSize: '0.85rem', padding: '4px' }}>SPEC. DEFENSE</div>
-                    <div className="flex-layout--row-center" style={{ padding: '6px', justifyContent: 'center', gap: '8px', background: 'var(--panel-alt)' }}>
-                        <span style={{ color: 'var(--text-main)', fontSize: '0.85rem' }}>Total: <strong>{sdefTotal}</strong></span>
-                        <span style={{ color: '#4CAF50' }}>+</span> <NumberSpinner value={derived.sdefBuff} onChange={v => setDerived('sdefBuff', v)} min={0} />
-                        <span style={{ color: '#F44336' }}>-</span> <NumberSpinner value={derived.sdefDebuff} onChange={v => setDerived('sdefDebuff', v)} min={0} />
-                    </div>
-                </div>
-
-                <div className="sheet-panel health-section__box" style={{ flex: 1, padding: '0', border: '1px solid #4FC3F7', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                    <div style={{ background: '#4FC3F7', color: '#111', textAlign: 'center', fontWeight: 'bold', fontSize: '0.85rem', padding: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ paddingLeft: '4px' }}>TIMERS <TooltipIcon onClick={() => setTooltipInfo({ title: "Timers", desc: "Tracks any moves or effects that last a number of rounds."})} /></span>
-                        <button onClick={addEffect} className="action-button action-button--dark" style={{ background: 'transparent', color: '#111', padding: '0 4px' }}>+ Add</button>
-                    </div>
-                    <div style={{ padding: '4px', display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto', maxHeight: '80px' }}>
-                        {effects.length === 0 ? (
-                            <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.8rem' }}>No active effects.</div>
-                        ) : (
-                            effects.map(e => (
-                                <div key={e.id} style={{ display: 'flex', gap: '4px', alignItems: 'center', background: 'var(--panel-bg)', border: '1px solid var(--border)', padding: '2px 4px', borderRadius: '4px' }}>
-                                    <input type="text" style={{ flex: 1, border: 'none', background: 'transparent', color: 'var(--text-main)', fontSize: '0.75rem', minWidth: '60px' }} value={e.name} onChange={(ev) => updateEffect(e.id, 'name', ev.target.value)} placeholder="Effect Name" />
-                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Rds:</span>
-                                    <input type="number" style={{ width: '35px', border: '1px solid var(--border)', fontSize: '0.75rem', textAlign: 'center', background: 'var(--input-bg)', color: 'var(--text-main)', borderRadius: '3px' }} value={e.rounds} onChange={(ev) => updateEffect(e.id, 'rounds', Number(ev.target.value) || 0)} min={0} />
-                                    <button onClick={() => removeEffect(e.id)} className="action-button action-button--red" style={{ padding: '0 4px' }}>X</button>
+                        <div className="health-section__row">
+                            <div className="sheet-panel health-section__box" style={{ flex: 1.5, padding: '0', textAlign: 'center', overflow: 'hidden' }}>
+                                <div style={{ background: '#555', color: 'white', textShadow: '1px 1px 1px rgba(0,0,0,0.8)', fontWeight: 'bold', fontSize: '0.75rem', padding: '4px' }}>INITIATIVE <TooltipIcon onClick={() => setTooltipInfo({ title: "Initiative", desc: "Initiative: Dexterity + Alert"})} /></div>
+                                <div style={{ padding: '6px', fontWeight: 'bold', color: 'var(--text-main)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}>
+                                    1d6 + {initiative} 
+                                    <button className="action-button action-button--dark" style={{ padding: '1px 6px' }} onClick={() => rollDicePlus(`1d6+${initiative}`, "Initiative", "init")}>🎲</button>
                                 </div>
-                            ))
-                        )}
+                            </div>
+                            <div className="sheet-panel health-section__box" style={{ flex: 1, padding: '0', textAlign: 'center', overflow: 'hidden' }}>
+                                <div style={{ background: '#555', color: 'white', textShadow: '1px 1px 1px rgba(0,0,0,0.8)', fontWeight: 'bold', fontSize: '0.75rem', padding: '4px' }}>EVADE <TooltipIcon onClick={() => setTooltipInfo({ title: "Evade", desc: "Evade: Dexterity + Evasion"})} /></div>
+                                <div style={{ padding: '6px', fontWeight: 'bold', color: 'var(--text-main)' }}>{dexTotal + skills[Skill.EVASION].base + skills[Skill.EVASION].buff + (invMods.skills.evasion || 0)}</div>
+                            </div>
+                            
+                            {mode === 'Pokémon' && (
+                                <>
+                                    <div className="sheet-panel health-section__box" style={{ flex: 1, padding: '0', textAlign: 'center', overflow: 'hidden' }}>
+                                        <div style={{ background: '#555', color: 'white', textShadow: '1px 1px 1px rgba(0,0,0,0.8)', fontWeight: 'bold', fontSize: '0.75rem', padding: '4px' }}>CLASH(P) <TooltipIcon onClick={() => setTooltipInfo({ title: "Physical Clash", desc: "Physical Clash: Strength + Clash"})} /></div>
+                                        <div style={{ padding: '6px', fontWeight: 'bold', color: 'var(--text-main)' }}>{clashP}</div>
+                                    </div>
+                                    <div className="sheet-panel health-section__box" style={{ flex: 1, padding: '0', textAlign: 'center', overflow: 'hidden' }}>
+                                        <div style={{ background: '#555', color: 'white', textShadow: '1px 1px 1px rgba(0,0,0,0.8)', fontWeight: 'bold', fontSize: '0.75rem', padding: '4px' }}>CLASH(S) <TooltipIcon onClick={() => setTooltipInfo({ title: "Special Clash", desc: "Special Clash: Special + Clash"})} /></div>
+                                        <div style={{ padding: '6px', fontWeight: 'bold', color: 'var(--text-main)' }}>{clashS}</div>
+                                    </div>
+                                    <div className="sheet-panel health-section__box" style={{ flex: 1, padding: '0', textAlign: 'center', border: '1px solid #FFB300' }}>
+                                        <div style={{ background: '#FFB300', color: 'white', textShadow: '1px 1px 1px rgba(0,0,0,0.8)', fontWeight: 'bold', fontSize: '0.75rem', padding: '4px' }}>HAPPY</div>
+                                        <div className="flex-layout--row-center" style={{ padding: '4px', justifyContent: 'center' }}><NumberSpinner value={derived.happy} onChange={v => setDerived('happy', v)} min={0} max={5} /></div>
+                                    </div>
+                                    <div className="sheet-panel health-section__box" style={{ flex: 1, padding: '0', textAlign: 'center', border: '1px solid #AB47BC' }}>
+                                        <div style={{ background: '#AB47BC', color: 'white', textShadow: '1px 1px 1px rgba(0,0,0,0.8)', fontWeight: 'bold', fontSize: '0.75rem', padding: '4px' }}>LOYAL</div>
+                                        <div className="flex-layout--row-center" style={{ padding: '4px', justifyContent: 'center' }}><NumberSpinner value={derived.loyal} onChange={v => setDerived('loyal', v)} min={0} max={5} /></div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <div className="health-section__row">
-                <div className="sheet-panel health-section__box" style={{ flex: 1.5, padding: '0', textAlign: 'center', overflow: 'hidden' }}>
-                    <div style={{ background: '#555', color: 'white', fontWeight: 'bold', fontSize: '0.75rem', padding: '4px' }}>INITIATIVE <TooltipIcon onClick={() => setTooltipInfo({ title: "Initiative", desc: "Initiative: Dexterity + Alert"})} /></div>
-                    <div style={{ padding: '6px', fontWeight: 'bold', color: 'var(--text-main)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}>
-                        1d6 + {initiative} 
-                        <button className="action-button action-button--dark" style={{ padding: '1px 6px' }} onClick={() => rollDicePlus(`1d6+${initiative}`, "Initiative", "init")}>🎲</button>
-                    </div>
-                </div>
-                <div className="sheet-panel health-section__box" style={{ flex: 1, padding: '0', textAlign: 'center', overflow: 'hidden' }}>
-                    <div style={{ background: '#555', color: 'white', fontWeight: 'bold', fontSize: '0.75rem', padding: '4px' }}>EVADE <TooltipIcon onClick={() => setTooltipInfo({ title: "Evade", desc: "Evade: Dexterity + Evasion"})} /></div>
-                    <div style={{ padding: '6px', fontWeight: 'bold', color: 'var(--text-main)' }}>{dexTotal + skills[Skill.EVASION].base + skills[Skill.EVASION].buff + (invMods.skills.evasion || 0)}</div>
-                </div>
-                
-                {mode === 'Pokémon' && (
-                    <>
-                        <div className="sheet-panel health-section__box" style={{ flex: 1, padding: '0', textAlign: 'center', overflow: 'hidden' }}>
-                            <div style={{ background: '#555', color: 'white', fontWeight: 'bold', fontSize: '0.75rem', padding: '4px' }}>CLASH(P) <TooltipIcon onClick={() => setTooltipInfo({ title: "Physical Clash", desc: "Physical Clash: Strength + Clash"})} /></div>
-                            <div style={{ padding: '6px', fontWeight: 'bold', color: 'var(--text-main)' }}>{clashP}</div>
-                        </div>
-                        <div className="sheet-panel health-section__box" style={{ flex: 1, padding: '0', textAlign: 'center', overflow: 'hidden' }}>
-                            <div style={{ background: '#555', color: 'white', fontWeight: 'bold', fontSize: '0.75rem', padding: '4px' }}>CLASH(S) <TooltipIcon onClick={() => setTooltipInfo({ title: "Special Clash", desc: "Special Clash: Special + Clash"})} /></div>
-                            <div style={{ padding: '6px', fontWeight: 'bold', color: 'var(--text-main)' }}>{clashS}</div>
-                        </div>
-                        <div className="sheet-panel health-section__box" style={{ flex: 1, padding: '0', textAlign: 'center', border: '1px solid #FFB300' }}>
-                            <div style={{ background: '#FFB300', color: '#111', fontWeight: 'bold', fontSize: '0.75rem', padding: '4px' }}>HAPPY</div>
-                            <div className="flex-layout--row-center" style={{ padding: '4px', justifyContent: 'center' }}><NumberSpinner value={derived.happy} onChange={v => setDerived('happy', v)} min={0} max={5} /></div>
-                        </div>
-                        <div className="sheet-panel health-section__box" style={{ flex: 1, padding: '0', textAlign: 'center', border: '1px solid #AB47BC' }}>
-                            <div style={{ background: '#AB47BC', color: 'white', fontWeight: 'bold', fontSize: '0.75rem', padding: '4px' }}>LOYAL</div>
-                            <div className="flex-layout--row-center" style={{ padding: '4px', justifyContent: 'center' }}><NumberSpinner value={derived.loyal} onChange={v => setDerived('loyal', v)} min={0} max={5} /></div>
-                        </div>
-                    </>
-                )}
-            </div>
+            )}
 
             {tooltipInfo && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1200, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1400, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                     <div style={{ background: 'var(--panel-bg)', padding: '15px', borderRadius: '8px', width: '280px', border: '2px solid var(--primary)', color: 'var(--text-main)', boxShadow: '0 4px 15px rgba(0,0,0,0.5)' }}>
                         <h3 style={{ marginTop: 0, color: 'var(--primary)', fontSize: '1.1rem', borderBottom: '1px solid var(--border)', paddingBottom: '4px', textAlign: 'center' }}>{tooltipInfo.title}</h3>
                         <p style={{ fontSize: '0.85rem', marginBottom: '15px', color: 'var(--text-muted)', whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>{tooltipInfo.desc}</p>

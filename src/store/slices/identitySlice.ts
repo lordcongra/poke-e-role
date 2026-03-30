@@ -39,7 +39,8 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
     identity: { 
         nickname: '', species: '', nature: '', rank: 'Starter', 
         type1: '', type2: '', ability: '', availableAbilities: [],
-        mode: 'Pokémon', age: '', gender: '', ruleset: 'vg-vit-hp', pain: 'Disabled', rolls: 'Public (Everyone)',
+        mode: 'Pokémon', age: '', gender: '', ruleset: 'vg-vit-hp', pain: 'Enabled', rolls: 'Public (Everyone)',
+        homebrewAccess: 'Full', 
         combat: '', social: '', hand: '', isNPC: false, learnset: [],
         isAltForm: false, baseFormData: '', altFormData: '',
         showTrackers: true, settingHpBar: true, gmHpBar: false, settingHpText: true, gmHpText: false,
@@ -59,6 +60,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         if (field === 'showTrackers') obrKey = 'show-trackers'; else if (field === 'isNPC') obrKey = 'is-npc';
         else if (field === 'rolls') obrKey = 'rolls';
         else if (field === 'gender') obrKey = 'gender';
+        else if (field === 'homebrewAccess') obrKey = 'homebrew-access';
         else if (field === 'settingHpBar') obrKey = 'setting-hp-bar'; else if (field === 'gmHpBar') obrKey = 'gm-hp-bar';
         else if (field === 'settingHpText') obrKey = 'setting-hp-text'; else if (field === 'gmHpText') obrKey = 'gm-hp-text';
         else if (field === 'settingWillBar') obrKey = 'setting-will-bar'; else if (field === 'gmWillBar') obrKey = 'gm-will-bar';
@@ -75,12 +77,13 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         else if (field === 'evaOffsetX') obrKey = 'eva-offset-x'; else if (field === 'evaOffsetY') obrKey = 'eva-offset-y';
         else if (field === 'claOffsetX') obrKey = 'cla-offset-x'; else if (field === 'claOffsetY') obrKey = 'cla-offset-y';
 
-        if (field === 'ruleset' || field === 'pain') {
+        if (field === 'ruleset' || field === 'pain' || field === 'homebrewAccess') {
             if (OBR.isAvailable) {
                 OBR.room.getMetadata().then(meta => {
                     const roomMeta = (meta["pokerole-pmd-extension/room-settings"] as Record<string, unknown>) || {};
                     if (field === 'ruleset') roomMeta.ruleset = value;
                     if (field === 'pain') roomMeta.painEnabled = value === 'Enabled';
+                    if (field === 'homebrewAccess') roomMeta.homebrewAccess = value;
                     OBR.room.setMetadata({ "pokerole-pmd-extension/room-settings": roomMeta });
                 });
             }

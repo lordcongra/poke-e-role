@@ -25,7 +25,7 @@ export function ResourceBox({ title, curr, max, base, color, onCurrChange, onBas
 
     return (
         <div className="health-section__box">
-            <div className="health-section__header">{title}</div>
+            <div className="health-section__header" style={{ textShadow: '1px 1px 1px rgba(0,0,0,0.8)' }}>{title}</div>
             <div className="resource-box">
                 <div className="resource-bar-fill" style={{ backgroundColor: barColor, width: `${pct}%` }}></div>
                 

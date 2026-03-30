@@ -32,7 +32,6 @@ export interface GraphicsData {
 }
 
 export function buildGraphicsFromState(meta: Record<string, unknown>, state: CharacterState): GraphicsData {
-    // AUDIT FIX: Passed extraCategories!
     const invMods = parseCombatTags(state.inventory, state.extraCategories);
     const vitTotal = Math.max(1, state.stats[CombatStat.VIT].base + state.stats[CombatStat.VIT].rank + state.stats[CombatStat.VIT].buff - state.stats[CombatStat.VIT].debuff + (invMods.stats.vit || 0));
     const insTotal = Math.max(1, state.stats[CombatStat.INS].base + state.stats[CombatStat.INS].rank + state.stats[CombatStat.INS].buff - state.stats[CombatStat.INS].debuff + (invMods.stats.ins || 0));
@@ -81,7 +80,6 @@ export function buildGraphicsFromMeta(meta: Record<string, unknown>): GraphicsDa
     let inventory: InventoryItem[] = [];
     try { inventory = meta['inv-data'] ? JSON.parse(String(meta['inv-data'])) : []; } catch(e) {}
     
-    // We pass empty categories to the parser if we rely purely on meta here
     const invMods = parseCombatTags(inventory, []); 
     
     const getStatBase = (s: string) => Number(meta[`${s}-base`]) || (s==='ins'?1:2);
@@ -92,10 +90,11 @@ export function buildGraphicsFromMeta(meta: Record<string, unknown>): GraphicsDa
     const vitTotal = Math.max(1, getStatBase('vit') + getStatRank('vit') + getStatBuff('vit') - getStatDebuff('vit') + (invMods.stats.vit || 0));
     const insTotal = Math.max(1, getStatBase('ins') + getStatRank('ins') + getStatBuff('ins') - getStatDebuff('ins') + (invMods.stats.ins || 0));
 
-    const defBuff = Number(meta['defBuff'] ?? meta['def-buff']) || 0;
-    const defDebuff = Number(meta['defDebuff'] ?? meta['def-debuff']) || 0;
-    const sdefBuff = Number(meta['sdefBuff'] ?? meta['spd-buff']) || 0;
-    const sdefDebuff = Number(meta['sdefDebuff'] ?? meta['spd-debuff']) || 0;
+    // AUDIT FIX: Swapped fallback order to prevent rogue root 'defBuff' keys from overwriting live 'def-buff' keys!
+    const defBuff = Number(meta['def-buff'] ?? meta['defBuff']) || 0;
+    const defDebuff = Number(meta['def-debuff'] ?? meta['defDebuff']) || 0;
+    const sdefBuff = Number(meta['spd-buff'] ?? meta['sdefBuff']) || 0;
+    const sdefDebuff = Number(meta['spd-debuff'] ?? meta['sdefDebuff']) || 0;
 
     const ruleset = String(meta['ruleset'] || 'vg-vit-hp');
     const defTotal = Math.max(1, vitTotal + defBuff - defDebuff + invMods.def);

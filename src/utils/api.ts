@@ -1,5 +1,5 @@
 // src/utils/api.ts
-import type { CustomPokemon, CustomMove, CustomAbility } from '../store/storeTypes';
+import type { CustomPokemon, CustomMove, CustomAbility, CustomItem } from '../store/storeTypes';
 
 export const GITHUB_TREE_URL = "https://api.github.com/repos/Pokerole-Software-Development/Pokerole-Data/git/trees/master?recursive=1";
 
@@ -17,11 +17,13 @@ let isTreeLoaded = false;
 let hbPokemon: CustomPokemon[] = [];
 let hbMoves: CustomMove[] = [];
 let hbAbilities: CustomAbility[] = [];
+let hbItems: CustomItem[] = [];
 
-export function syncHomebrewToApi(p: CustomPokemon[], m: CustomMove[], a: CustomAbility[]) {
+export function syncHomebrewToApi(p: CustomPokemon[], m: CustomMove[], a: CustomAbility[], i: CustomItem[]) {
     hbPokemon = p;
     hbMoves = m;
     hbAbilities = a;
+    hbItems = i;
 }
 // -----------------------------------
 
@@ -96,7 +98,6 @@ export async function fetchPokemonData(speciesName: string) {
     if (!speciesName) return null;
     const cleanName = speciesName.trim().toLowerCase();
 
-    // INTERCEPT: Check Homebrew Memory First!
     const custom = hbPokemon.find(p => p.Name.trim().toLowerCase() === cleanName);
     if (custom) return custom;
 
@@ -112,7 +113,6 @@ export async function fetchAbilityData(abilityName: string) {
     if (!abilityName) return null;
     const cleanName = abilityName.trim().toLowerCase();
 
-    // INTERCEPT: Check Homebrew Memory First!
     const custom = hbAbilities.find(a => a.name.trim().toLowerCase() === cleanName);
     if (custom) {
         return { Name: custom.name, Description: custom.description, Effect: custom.effect };
@@ -130,7 +130,6 @@ export async function fetchMoveData(moveName: string) {
     if (!moveName) return null;
     const cleanName = moveName.trim().toLowerCase();
 
-    // INTERCEPT: Check Homebrew Memory First!
     const custom = hbMoves.find(m => m.name.trim().toLowerCase() === cleanName);
     if (custom) {
         return {
@@ -149,8 +148,15 @@ export async function fetchMoveData(moveName: string) {
 
 export async function fetchItemData(itemName: string) {
     if (!itemName) return null;
-    await loadGithubTree();
     const cleanName = itemName.trim().toLowerCase();
+
+    // AUDIT FIX: Intercept Custom Items!
+    const custom = hbItems.find(i => i.name.trim().toLowerCase() === cleanName);
+    if (custom) {
+        return { Name: custom.name, Description: custom.description };
+    }
+
+    await loadGithubTree();
     const selectedUrl = ITEMS_URLS[cleanName];
 
     if (!selectedUrl) return null;

@@ -24,11 +24,6 @@ export interface Trackers {
     ignoredPain: number;
 }
 
-export interface CustomType { 
-    id?: string; name: string; color: string; weaknesses: string[]; resistances: string[]; immunities: string[];
-    seAgainst: string[]; nveAgainst: string[]; noEffectAgainst: string[];
-}
-
 export interface ExtraSkill { id: string; name: string; base: number; buff: number; }
 export interface ExtraCategory { id: string; name: string; skills: ExtraSkill[]; }
 
@@ -47,46 +42,23 @@ export interface GeneratorConfig {
     buildType: string; combatBias: string; targetAtkCount: number; targetSupCount: number; includePmd: boolean; includeCustom: boolean;
 }
 
-export interface CustomAbility {
-    id: string;
-    name: string;
-    description: string;
-    effect: string;
-}
-
+// AUDIT FIX: Added gmOnly flags to all Homebrew entities!
+export interface CustomAbility { id: string; name: string; description: string; effect: string; gmOnly?: boolean; }
+export interface CustomItem { id: string; name: string; description: string; gmOnly?: boolean; }
 export interface CustomMove {
-    id: string;
-    name: string;
-    type: string;
-    category: 'Physical' | 'Special' | 'Status';
-    power: number;
-    acc1: string;
-    acc2: string;
-    dmg1: string;
-    desc: string;
+    id: string; name: string; type: string; category: 'Physical' | 'Special' | 'Status';
+    power: number; acc1: string; acc2: string; dmg1: string; desc: string; gmOnly?: boolean;
 }
-
 export interface CustomPokemon {
-    id: string;
-    Name: string;
-    Type1: string;
-    Type2: string;
-    BaseHP: number;
-    Strength: number;
-    MaxStrength: number;
-    Dexterity: number;
-    MaxDexterity: number;
-    Vitality: number;
-    MaxVitality: number;
-    Special: number;
-    MaxSpecial: number;
-    Insight: number;
-    MaxInsight: number;
-    Ability1: string;
-    Ability2: string;
-    HiddenAbility: string;
-    EventAbilities: string;
-    Moves: Array<{ Learned: string, Name: string }>;
+    id: string; Name: string; Type1: string; Type2: string;
+    BaseHP: number; Strength: number; MaxStrength: number; Dexterity: number; MaxDexterity: number;
+    Vitality: number; MaxVitality: number; Special: number; MaxSpecial: number; Insight: number; MaxInsight: number;
+    Ability1: string; Ability2: string; HiddenAbility: string; EventAbilities: string; Moves: Array<{ Learned: string, Name: string }>;
+    gmOnly?: boolean;
+}
+export interface CustomType { 
+    id?: string; name: string; color: string; weaknesses: string[]; resistances: string[]; immunities: string[];
+    seAgainst: string[]; nveAgainst: string[]; noEffectAgainst: string[]; gmOnly?: boolean;
 }
 
 export interface CoreSlice {
@@ -135,40 +107,33 @@ export interface TrackerSlice {
 }
 
 export interface HomebrewSlice {
-    roomCustomTypes: CustomType[]; 
-    roomCustomAbilities: CustomAbility[];
-    roomCustomMoves: CustomMove[];
-    roomCustomPokemon: CustomPokemon[];
-    extraCategories: ExtraCategory[]; 
-    generatorConfig: GeneratorConfig;
+    roomCustomTypes: CustomType[]; roomCustomAbilities: CustomAbility[];
+    roomCustomMoves: CustomMove[]; roomCustomPokemon: CustomPokemon[];
+    roomCustomItems: CustomItem[];
+    extraCategories: ExtraCategory[]; generatorConfig: GeneratorConfig;
     
-    setRoomCustomTypes: (types: CustomType[]) => void; 
-    setRoomCustomAbilities: (abs: CustomAbility[]) => void;
-    setRoomCustomMoves: (moves: CustomMove[]) => void;
-    setRoomCustomPokemon: (mons: CustomPokemon[]) => void;
+    setRoomCustomTypes: (types: CustomType[]) => void; setRoomCustomAbilities: (abs: CustomAbility[]) => void;
+    setRoomCustomMoves: (moves: CustomMove[]) => void; setRoomCustomPokemon: (mons: CustomPokemon[]) => void;
+    setRoomCustomItems: (items: CustomItem[]) => void;
 
     addCustomType: (type: CustomType) => void; updateCustomType: (oldName: string, newType: CustomType) => void; removeCustomType: (name: string) => void;
     addCustomAbility: () => void; updateCustomAbility: <K extends keyof CustomAbility>(id: string, field: K, value: CustomAbility[K]) => void; removeCustomAbility: (id: string) => void;
     addCustomMove: () => void; updateCustomMove: <K extends keyof CustomMove>(id: string, field: K, value: CustomMove[K]) => void; removeCustomMove: (id: string) => void;
     addCustomPokemon: () => void; updateCustomPokemon: <K extends keyof CustomPokemon>(id: string, field: K, value: CustomPokemon[K]) => void; removeCustomPokemon: (id: string) => void;
+    addCustomItem: () => void; updateCustomItem: <K extends keyof CustomItem>(id: string, field: K, value: CustomItem[K]) => void; removeCustomItem: (id: string) => void;
 
-    overwriteCustomTypeData: (types: CustomType[]) => void;
-    overwriteCustomAbilityData: (abs: CustomAbility[]) => void;
-    overwriteCustomMoveData: (moves: CustomMove[]) => void;
-    overwriteCustomPokemonData: (mons: CustomPokemon[]) => void;
-    overwriteAllHomebrewData: (types: CustomType[], abs: CustomAbility[], moves: CustomMove[], mons: CustomPokemon[]) => void;
+    overwriteCustomTypeData: (types: CustomType[]) => void; overwriteCustomAbilityData: (abs: CustomAbility[]) => void;
+    overwriteCustomMoveData: (moves: CustomMove[]) => void; overwriteCustomPokemonData: (mons: CustomPokemon[]) => void;
+    overwriteCustomItemData: (items: CustomItem[]) => void;
+    overwriteAllHomebrewData: (types: CustomType[], abs: CustomAbility[], moves: CustomMove[], mons: CustomPokemon[], items: CustomItem[]) => void;
 
-    // AUDIT FIX: Merging (Additive) functions!
-    mergeCustomTypeData: (types: CustomType[]) => void;
-    mergeCustomAbilityData: (abs: CustomAbility[]) => void;
-    mergeCustomMoveData: (moves: CustomMove[]) => void;
-    mergeCustomPokemonData: (mons: CustomPokemon[]) => void;
-    mergeAllHomebrewData: (types: CustomType[], abs: CustomAbility[], moves: CustomMove[], mons: CustomPokemon[]) => void;
+    mergeCustomTypeData: (types: CustomType[]) => void; mergeCustomAbilityData: (abs: CustomAbility[]) => void;
+    mergeCustomMoveData: (moves: CustomMove[]) => void; mergeCustomPokemonData: (mons: CustomPokemon[]) => void;
+    mergeCustomItemData: (items: CustomItem[]) => void;
+    mergeAllHomebrewData: (types: CustomType[], abs: CustomAbility[], moves: CustomMove[], mons: CustomPokemon[], items: CustomItem[]) => void;
 
     addExtraCategory: () => void; updateExtraCategory: (id: string, name: string) => void; updateExtraSkill: <K extends keyof ExtraSkill>(catId: string, skillId: string, field: K, value: ExtraSkill[K]) => void; removeExtraCategory: (id: string) => void;
-    
-    setGeneratorConfig: (config: Partial<GeneratorConfig>) => void;
-    applyGeneratedBuild: (build: TempBuild) => void;
+    setGeneratorConfig: (config: Partial<GeneratorConfig>) => void; applyGeneratedBuild: (build: TempBuild) => void;
 }
 
 export interface IdentitySlice {
@@ -177,6 +142,7 @@ export interface IdentitySlice {
         nickname: string; species: string; nature: string; rank: Rank;
         type1: string; type2: string; ability: string; availableAbilities: string[];
         mode: string; age: string; gender: string; ruleset: string; pain: string; rolls: string;
+        homebrewAccess: string; 
         combat: string; social: string; hand: string; isNPC: boolean;
         learnset: Array<{ Learned: string; Name: string; }>;
         pokemonBackup?: string; trainerBackup?: string;

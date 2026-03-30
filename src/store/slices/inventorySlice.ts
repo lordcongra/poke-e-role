@@ -5,36 +5,7 @@ import { saveToOwlbear } from '../../utils/obr';
 import { parseCombatTags } from '../../utils/combatMath';
 import { CombatStat } from '../../types/enums';
 
-const HARDCODED_TAGS: Record<string, string> = {
-    "wide lens": "[Acc +2]", "zoom lens": "[Acc +2]", "life orb": "[Dmg +2]",
-    "black belt": "[Dmg +1: Fighting]", "black glasses": "[Dmg +1: Dark]",
-    "charcoal": "[Dmg +1: Fire]", "dragon fang": "[Dmg +1: Dragon]",
-    "fairy wings": "[Dmg +1: Fairy]", "hard stone": "[Dmg +1: Rock]",
-    "magnet": "[Dmg +1: Electric]", "metal coat": "[Dmg +1: Steel]",
-    "miracle seed": "[Dmg +1: Grass]", "mystic water": "[Dmg +1: Water]",
-    "never-melt ice": "[Dmg +1: Ice]", "poison barb": "[Dmg +1: Poison]",
-    "sharp beak": "[Dmg +1: Flying]", "silk scarf": "[Dmg +1: Normal]",
-    "silver powder": "[Dmg +1: Bug]", "soft sand": "[Dmg +1: Ground]",
-    "spell tag": "[Dmg +1: Ghost]", "twisted spoon": "[Dmg +1: Psychic]",
-    "razor claw": "[High Crit]", "leek": "[High Crit]",
-    "lucky punch": "[High Crit] [Str +2]", "sharp claw": "[High Crit]",
-    "ring target": "[Remove Immunities]",
-    "eviolite": "[Def +1] [Spd +1]",
-    "metronome": "[Combo Dmg +1]",
-    "loaded dice": "[Chance +2]",
-    "choice scarf": "[Init +3]",
-    "iron ball": "[Dex -1] [Remove Immunity: Ground]",
-    "toxic orb": "[Status: Poison]",
-    "flame orb": "[Status: 1st Degree Burn]",
-    "air balloon": "[Immune: Ground]",
-    "expert belt": "[Dmg +1: Super Effective]",
-    "thick club": "[Str +2]",
-    "light ball": "[Str +1] [Spe +1]",
-    "quick claw": "[Init +2]"
-};
-
 const syncHealthWill = (state: CharacterState, newInv: InventoryItem[], updatesToSave: Record<string, unknown>) => {
-    // AUDIT FIX: Passed extraCategories!
     const invMods = parseCombatTags(newInv, state.extraCategories);
     const vitTotal = Math.max(1, state.stats[CombatStat.VIT].base + state.stats[CombatStat.VIT].rank + state.stats[CombatStat.VIT].buff - state.stats[CombatStat.VIT].debuff + (invMods.stats.vit || 0));
     const insTotal = Math.max(1, state.stats[CombatStat.INS].base + state.stats[CombatStat.INS].rank + state.stats[CombatStat.INS].buff - state.stats[CombatStat.INS].debuff + (invMods.stats.ins || 0));
@@ -81,23 +52,6 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             if (item.id === id) {
                 const updated = { ...item, [field]: value };
                 
-                if (field === 'name') {
-                    const oldNameClean = String(item.name).trim().toLowerCase();
-                    const newNameClean = String(value).trim().toLowerCase();
-                    const oldTag = HARDCODED_TAGS[oldNameClean];
-                    const newTag = HARDCODED_TAGS[newNameClean];
-
-                    let currentDesc = item.desc || "";
-                    
-                    if (oldTag && oldTag !== newTag && currentDesc.includes(oldTag)) {
-                        currentDesc = currentDesc.replace(oldTag, "").trim();
-                    }
-                    if (newTag && !currentDesc.includes(newTag)) {
-                        currentDesc = currentDesc ? `${currentDesc}\n\n${newTag}`.trim() : newTag;
-                    }
-                    updated.desc = currentDesc;
-                }
-
                 if (field === 'active') {
                     const desc = (item.desc || "").toLowerCase();
                     const statusMatches = Array.from(desc.matchAll(/\[status:\s*([a-zA-Z0-9\s]+)\]/gi));

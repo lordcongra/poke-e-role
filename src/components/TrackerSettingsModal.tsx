@@ -54,7 +54,6 @@ export function TrackerSettingsModal({ onClose }: { onClose: () => void }) {
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '15px', color: 'var(--text-main)', fontSize: '0.9rem', padding: '0 10px' }}>
                     
-                    {/* AUDIT FIX: Switched to CSS Grid for perfect column alignment! */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 130px', gap: '8px', alignItems: 'center' }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                             <input type="checkbox" checked={id.settingHpBar} onChange={(e) => setIdentity('settingHpBar', e.target.checked)} /> Show HP Bar
@@ -150,11 +149,11 @@ export function TrackerSettingsModal({ onClose }: { onClose: () => void }) {
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', marginTop: '10px' }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }} title="Positive numbers push the UI down, Negative numbers pull it up!">
                             <span style={{ fontWeight: 'bold', fontSize: '0.85rem' }}>Y-Offset:</span>
-                            <input type="number" value={id.yOffset} onChange={(e) => setIdentity('yOffset', parseInt(e.target.value) || 0)} step="5" style={{ width: '50px', border: '1px solid var(--border)', borderRadius: '3px', background: 'var(--input-bg)', color: 'var(--text-main)', textAlign: 'center', outline: 'none' }} />
+                            <NumberSpinner value={id.yOffset} onChange={(v) => setIdentity('yOffset', v)} min={-9999} max={9999} />
                         </label>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }} title="Positive numbers push the UI right, Negative numbers pull it left!">
                             <span style={{ fontWeight: 'bold', fontSize: '0.85rem' }}>X-Offset:</span>
-                            <input type="number" value={id.xOffset} onChange={(e) => setIdentity('xOffset', parseInt(e.target.value) || 0)} step="5" style={{ width: '50px', border: '1px solid var(--border)', borderRadius: '3px', background: 'var(--input-bg)', color: 'var(--text-main)', textAlign: 'center', outline: 'none' }} />
+                            <NumberSpinner value={id.xOffset} onChange={(v) => setIdentity('xOffset', v)} min={-9999} max={9999} />
                         </label>
                     </div>
 
@@ -212,28 +211,29 @@ export function TrackerSettingsModal({ onClose }: { onClose: () => void }) {
                             <div style={{ fontWeight: 'bold', fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center' }}>Y Shift</div>
 
                             <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>HP Bar</span>
-                            <NumberSpinner value={id.hpOffsetX} onChange={(v) => setIdentity('hpOffsetX', v)} />
-                            <NumberSpinner value={id.hpOffsetY} onChange={(v) => setIdentity('hpOffsetY', v)} />
+                            {/* AUDIT FIX: Allows negative inputs! */}
+                            <NumberSpinner value={id.hpOffsetX} onChange={(v) => setIdentity('hpOffsetX', v)} min={-9999} max={9999} />
+                            <NumberSpinner value={id.hpOffsetY} onChange={(v) => setIdentity('hpOffsetY', v)} min={-9999} max={9999} />
 
                             <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>Will Bar</span>
-                            <NumberSpinner value={id.willOffsetX} onChange={(v) => setIdentity('willOffsetX', v)} />
-                            <NumberSpinner value={id.willOffsetY} onChange={(v) => setIdentity('willOffsetY', v)} />
+                            <NumberSpinner value={id.willOffsetX} onChange={(v) => setIdentity('willOffsetX', v)} min={-9999} max={9999} />
+                            <NumberSpinner value={id.willOffsetY} onChange={(v) => setIdentity('willOffsetY', v)} min={-9999} max={9999} />
 
                             <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>Defenses</span>
-                            <NumberSpinner value={id.defOffsetX} onChange={(v) => setIdentity('defOffsetX', v)} />
-                            <NumberSpinner value={id.defOffsetY} onChange={(v) => setIdentity('defOffsetY', v)} />
+                            <NumberSpinner value={id.defOffsetX} onChange={(v) => setIdentity('defOffsetX', v)} min={-9999} max={9999} />
+                            <NumberSpinner value={id.defOffsetY} onChange={(v) => setIdentity('defOffsetY', v)} min={-9999} max={9999} />
 
                             <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>Action Badge</span>
-                            <NumberSpinner value={id.actOffsetX} onChange={(v) => setIdentity('actOffsetX', v)} />
-                            <NumberSpinner value={id.actOffsetY} onChange={(v) => setIdentity('actOffsetY', v)} />
+                            <NumberSpinner value={id.actOffsetX} onChange={(v) => setIdentity('actOffsetX', v)} min={-9999} max={9999} />
+                            <NumberSpinner value={id.actOffsetY} onChange={(v) => setIdentity('actOffsetY', v)} min={-9999} max={9999} />
 
                             <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>Evade Badge</span>
-                            <NumberSpinner value={id.evaOffsetX} onChange={(v) => setIdentity('evaOffsetX', v)} />
-                            <NumberSpinner value={id.evaOffsetY} onChange={(v) => setIdentity('evaOffsetY', v)} />
+                            <NumberSpinner value={id.evaOffsetX} onChange={(v) => setIdentity('evaOffsetX', v)} min={-9999} max={9999} />
+                            <NumberSpinner value={id.evaOffsetY} onChange={(v) => setIdentity('evaOffsetY', v)} min={-9999} max={9999} />
 
                             <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>Clash Badge</span>
-                            <NumberSpinner value={id.claOffsetX} onChange={(v) => setIdentity('claOffsetX', v)} />
-                            <NumberSpinner value={id.claOffsetY} onChange={(v) => setIdentity('claOffsetY', v)} />
+                            <NumberSpinner value={id.claOffsetX} onChange={(v) => setIdentity('claOffsetX', v)} min={-9999} max={9999} />
+                            <NumberSpinner value={id.claOffsetY} onChange={(v) => setIdentity('claOffsetY', v)} min={-9999} max={9999} />
                         </div>
 
                         <div style={{ display: 'flex', gap: '8px' }}>

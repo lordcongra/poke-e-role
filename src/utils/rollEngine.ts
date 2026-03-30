@@ -41,10 +41,6 @@ export async function rollGeneric(actionName: string, pool: number, attr: string
         if (OBR.isAvailable) OBR.notification.show("⚠️ You are Asleep and cannot perform actions!", "WARNING"); 
         return;
     }
-    if (statuses.isFrozen) {
-        if (OBR.isAvailable) OBR.notification.show("⚠️ You are Frozen Solid and cannot perform actions!", "WARNING"); 
-        return;
-    }
 
     if (incrementAction) {
         useCharacterStore.getState().incrementAction();
@@ -70,7 +66,11 @@ export async function rollGeneric(actionName: string, pool: number, attr: string
         if (hasComatose) tags.push(`ASLEEP (Comatose)`);
         else tags.push(`ASLEEP`);
     }
-    if (statuses.isFrozen) tags.push(`FROZEN`);
+    
+    // AUDIT FIX: Pushes a giant tag if the player tries to roll while Frozen!
+    if (statuses.isFrozen) {
+        tags.push(`❄️ FROZEN: Attacking Ice Block (5HP/2DEF). Fire/Super-Effective breaks instantly.`);
+    }
 
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : "";
 
@@ -85,10 +85,6 @@ export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {
 
     if (statuses.isAsleep && !hasComatose) {
         if (OBR.isAvailable) OBR.notification.show("⚠️ You are Asleep and cannot perform actions!", "WARNING"); 
-        return;
-    }
-    if (statuses.isFrozen) {
-        if (OBR.isAvailable) OBR.notification.show("⚠️ You are Frozen Solid and cannot perform actions!", "WARNING"); 
         return;
     }
 
@@ -136,7 +132,9 @@ export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {
         if (hasComatose) tags.push(`ASLEEP (Comatose)`);
         else tags.push(`ASLEEP`);
     }
-    if (statuses.isFrozen) tags.push(`FROZEN`);
+    if (statuses.isFrozen) {
+        tags.push(`❄️ FROZEN: Attacking Ice Block (5HP/2DEF). Fire/Super-Effective breaks instantly.`);
+    }
 
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : "";
     const rollName = (check.name || "").trim() || "Skill Check";
@@ -193,10 +191,6 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
 
     if (statuses.isAsleep && !isSleepMove && !hasComatose) {
         if (OBR.isAvailable) OBR.notification.show("⚠️ You are Asleep and cannot perform actions!", "WARNING"); 
-        return;
-    }
-    if (statuses.isFrozen) {
-        if (OBR.isAvailable) OBR.notification.show("⚠️ You are Frozen Solid and cannot perform actions!", "WARNING"); 
         return;
     }
 
@@ -268,7 +262,11 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
         else if (isSleepMove) tags.push(`ASLEEP (Bypassed)`);
         else tags.push(`ASLEEP`);
     }
-    if (statuses.isFrozen) tags.push(`FROZEN`);
+    
+    if (statuses.isFrozen) {
+        tags.push(`❄️ FROZEN: Attacking Ice Block (5HP/2DEF). Fire/Super-Effective breaks instantly.`);
+    }
+    
     if (moveDesc.includes("never miss") || moveDesc.includes("cannot be evaded")) tags.push(`CANNOT BE EVADED`);
     
     if (itemBuffs.accItemNames.length > 0) tags.push(`Item: ${itemBuffs.accItemNames.join(', ')}`);
@@ -333,7 +331,14 @@ export async function executeDamageRoll(move: MoveData, state: CharacterState, b
     if (succMod !== 0) tags.push(`Net Mod ${succMod > 0 ? '+' : ''}${succMod} Succ`);
     
     const moveDesc = (move.desc || "").toLowerCase();
-    if (moveDesc.includes("recoil")) tags.push(`APPLY RECOIL`);
+    
+    // AUDIT FIX: Smart detection for Powder and Recoil moves!
+    if (moveDesc.includes("powder") || moveDesc.includes("spore")) {
+        tags.push(`POWDER: Grass-types are immune`);
+    }
+    if (moveDesc.includes("recoil") || itemBuffs.dmgItemNames.some(i => i.toLowerCase().includes("life orb") || i.toLowerCase().includes("recoil"))) {
+        tags.push(`RECOIL: Roll success as user dmg ignoring def`);
+    }
     
     if (statuses.paralysisDexPenalty < 0 && normalizedDmgStat === 'dex') tags.push(`Paralysis minus 2 Dmg`);
     

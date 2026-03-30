@@ -1,6 +1,6 @@
 // src/store/slices/homebrewSlice.ts
 import type { StateCreator } from 'zustand';
-import type { CharacterState, HomebrewSlice, ExtraCategory, MoveData, CustomMove, CustomPokemon } from '../storeTypes';
+import type { CharacterState, HomebrewSlice, ExtraCategory, MoveData, CustomMove, CustomPokemon, CustomItem } from '../storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { saveToOwlbear } from '../../utils/obr';
 import { syncHomebrewToApi } from '../../utils/api';
@@ -25,6 +25,7 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
     roomCustomAbilities: [],
     roomCustomMoves: [],
     roomCustomPokemon: [],
+    roomCustomItems: [],
     extraCategories: [],
     generatorConfig: { buildType: 'wild', combatBias: 'balanced', targetAtkCount: 2, targetSupCount: 2, includePmd: false, includeCustom: true },
 
@@ -32,6 +33,7 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
     setRoomCustomAbilities: (abs) => set({ roomCustomAbilities: abs }),
     setRoomCustomMoves: (moves) => set({ roomCustomMoves: moves }),
     setRoomCustomPokemon: (mons) => set({ roomCustomPokemon: mons }),
+    setRoomCustomItems: (items) => set({ roomCustomItems: items }),
 
     addCustomType: (typeObj) => {
         const current = get().roomCustomTypes;
@@ -55,19 +57,19 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
     addCustomAbility: () => {
         const newAbs = [...get().roomCustomAbilities, { id: crypto.randomUUID(), name: 'New Ability', description: '', effect: '' }];
         set({ roomCustomAbilities: newAbs });
-        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, newAbs);
+        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, newAbs, get().roomCustomItems);
         saveRoomMeta('customAbilities', newAbs);
     },
     updateCustomAbility: (id, field, value) => {
         const newAbs = get().roomCustomAbilities.map(a => a.id === id ? { ...a, [field]: value } : a);
         set({ roomCustomAbilities: newAbs });
-        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, newAbs);
+        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, newAbs, get().roomCustomItems);
         saveRoomMeta('customAbilities', newAbs);
     },
     removeCustomAbility: (id) => {
         const newAbs = get().roomCustomAbilities.filter(a => a.id !== id);
         set({ roomCustomAbilities: newAbs });
-        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, newAbs);
+        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, newAbs, get().roomCustomItems);
         saveRoomMeta('customAbilities', newAbs);
     },
 
@@ -77,19 +79,19 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             power: 2, acc1: 'dex', acc2: 'brawl', dmg1: 'str', desc: '' 
         }];
         set({ roomCustomMoves: newMoves });
-        syncHomebrewToApi(get().roomCustomPokemon, newMoves, get().roomCustomAbilities);
+        syncHomebrewToApi(get().roomCustomPokemon, newMoves, get().roomCustomAbilities, get().roomCustomItems);
         saveRoomMeta('customMoves', newMoves);
     },
     updateCustomMove: (id, field, value) => {
         const newMoves = get().roomCustomMoves.map(m => m.id === id ? { ...m, [field]: value } : m);
         set({ roomCustomMoves: newMoves });
-        syncHomebrewToApi(get().roomCustomPokemon, newMoves, get().roomCustomAbilities);
+        syncHomebrewToApi(get().roomCustomPokemon, newMoves, get().roomCustomAbilities, get().roomCustomItems);
         saveRoomMeta('customMoves', newMoves);
     },
     removeCustomMove: (id) => {
         const newMoves = get().roomCustomMoves.filter(m => m.id !== id);
         set({ roomCustomMoves: newMoves });
-        syncHomebrewToApi(get().roomCustomPokemon, newMoves, get().roomCustomAbilities);
+        syncHomebrewToApi(get().roomCustomPokemon, newMoves, get().roomCustomAbilities, get().roomCustomItems);
         saveRoomMeta('customMoves', newMoves);
     },
 
@@ -101,20 +103,39 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             Ability1: '', Ability2: '', HiddenAbility: '', EventAbilities: '', Moves: []
         }];
         set({ roomCustomPokemon: newMons });
-        syncHomebrewToApi(newMons, get().roomCustomMoves, get().roomCustomAbilities);
+        syncHomebrewToApi(newMons, get().roomCustomMoves, get().roomCustomAbilities, get().roomCustomItems);
         saveRoomMeta('customPokemon', newMons);
     },
     updateCustomPokemon: (id, field, value) => {
         const newMons = get().roomCustomPokemon.map(p => p.id === id ? { ...p, [field]: value } : p);
         set({ roomCustomPokemon: newMons });
-        syncHomebrewToApi(newMons, get().roomCustomMoves, get().roomCustomAbilities);
+        syncHomebrewToApi(newMons, get().roomCustomMoves, get().roomCustomAbilities, get().roomCustomItems);
         saveRoomMeta('customPokemon', newMons);
     },
     removeCustomPokemon: (id) => {
         const newMons = get().roomCustomPokemon.filter(p => p.id !== id);
         set({ roomCustomPokemon: newMons });
-        syncHomebrewToApi(newMons, get().roomCustomMoves, get().roomCustomAbilities);
+        syncHomebrewToApi(newMons, get().roomCustomMoves, get().roomCustomAbilities, get().roomCustomItems);
         saveRoomMeta('customPokemon', newMons);
+    },
+
+    addCustomItem: () => {
+        const newItems: CustomItem[] = [...get().roomCustomItems, { id: crypto.randomUUID(), name: 'New Item', description: '' }];
+        set({ roomCustomItems: newItems });
+        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, get().roomCustomAbilities, newItems);
+        saveRoomMeta('customItems', newItems);
+    },
+    updateCustomItem: (id, field, value) => {
+        const newItems = get().roomCustomItems.map(i => i.id === id ? { ...i, [field]: value } : i);
+        set({ roomCustomItems: newItems });
+        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, get().roomCustomAbilities, newItems);
+        saveRoomMeta('customItems', newItems);
+    },
+    removeCustomItem: (id) => {
+        const newItems = get().roomCustomItems.filter(i => i.id !== id);
+        set({ roomCustomItems: newItems });
+        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, get().roomCustomAbilities, newItems);
+        saveRoomMeta('customItems', newItems);
     },
 
     overwriteCustomTypeData: (types) => {
@@ -123,34 +144,38 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
     },
     overwriteCustomAbilityData: (abs) => {
         set({ roomCustomAbilities: abs });
-        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, abs);
+        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, abs, get().roomCustomItems);
         saveRoomMeta('customAbilities', abs);
     },
     overwriteCustomMoveData: (moves) => {
         set({ roomCustomMoves: moves });
-        syncHomebrewToApi(get().roomCustomPokemon, moves, get().roomCustomAbilities);
+        syncHomebrewToApi(get().roomCustomPokemon, moves, get().roomCustomAbilities, get().roomCustomItems);
         saveRoomMeta('customMoves', moves);
     },
     overwriteCustomPokemonData: (mons) => {
         set({ roomCustomPokemon: mons });
-        syncHomebrewToApi(mons, get().roomCustomMoves, get().roomCustomAbilities);
+        syncHomebrewToApi(mons, get().roomCustomMoves, get().roomCustomAbilities, get().roomCustomItems);
         saveRoomMeta('customPokemon', mons);
     },
-    overwriteAllHomebrewData: async (types, abs, moves, mons) => {
-        set({ roomCustomTypes: types, roomCustomAbilities: abs, roomCustomMoves: moves, roomCustomPokemon: mons });
-        syncHomebrewToApi(mons, moves, abs);
+    overwriteCustomItemData: (items) => {
+        set({ roomCustomItems: items });
+        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, get().roomCustomAbilities, items);
+        saveRoomMeta('customItems', items);
+    },
+    overwriteAllHomebrewData: async (types, abs, moves, mons, items) => {
+        set({ roomCustomTypes: types, roomCustomAbilities: abs, roomCustomMoves: moves, roomCustomPokemon: mons, roomCustomItems: items });
+        syncHomebrewToApi(mons, moves, abs, items);
         
         if (!OBR.isAvailable) return;
         try {
             const meta = await OBR.room.getMetadata();
             const roomSettings = (meta[ROOM_META_ID] as Record<string, unknown>) || {};
-            Object.assign(roomSettings, { customTypes: types, customAbilities: abs, customMoves: moves, customPokemon: mons });
+            Object.assign(roomSettings, { customTypes: types, customAbilities: abs, customMoves: moves, customPokemon: mons, customItems: items });
             await OBR.room.setMetadata({ [ROOM_META_ID]: roomSettings });
             OBR.notification.show("✅ Homebrew Workshop fully restored!");
         } catch (e) { console.error(e); }
     },
 
-    // AUDIT FIX: Merge Logic! Seamlessly combines arrays, updates existing names, and generates fresh UUIDs for new entries to prevent room collisions!
     mergeCustomTypeData: (types) => {
         const merged = [...get().roomCustomTypes];
         types.forEach(t => {
@@ -167,7 +192,7 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             if (idx !== -1) merged[idx] = { ...a, id: merged[idx].id }; else merged.push({ ...a, id: crypto.randomUUID() });
         });
         set({ roomCustomAbilities: merged });
-        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, merged);
+        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, merged, get().roomCustomItems);
         saveRoomMeta('customAbilities', merged);
     },
     mergeCustomMoveData: (moves) => {
@@ -177,7 +202,7 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             if (idx !== -1) merged[idx] = { ...m, id: merged[idx].id }; else merged.push({ ...m, id: crypto.randomUUID() });
         });
         set({ roomCustomMoves: merged });
-        syncHomebrewToApi(get().roomCustomPokemon, merged, get().roomCustomAbilities);
+        syncHomebrewToApi(get().roomCustomPokemon, merged, get().roomCustomAbilities, get().roomCustomItems);
         saveRoomMeta('customMoves', merged);
     },
     mergeCustomPokemonData: (mons) => {
@@ -187,10 +212,20 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             if (idx !== -1) merged[idx] = { ...p, id: merged[idx].id }; else merged.push({ ...p, id: crypto.randomUUID() });
         });
         set({ roomCustomPokemon: merged });
-        syncHomebrewToApi(merged, get().roomCustomMoves, get().roomCustomAbilities);
+        syncHomebrewToApi(merged, get().roomCustomMoves, get().roomCustomAbilities, get().roomCustomItems);
         saveRoomMeta('customPokemon', merged);
     },
-    mergeAllHomebrewData: async (types, abs, moves, mons) => {
+    mergeCustomItemData: (items) => {
+        const merged = [...get().roomCustomItems];
+        items.forEach(i => {
+            const idx = merged.findIndex(existing => existing.name.toLowerCase() === i.name.toLowerCase());
+            if (idx !== -1) merged[idx] = { ...i, id: merged[idx].id }; else merged.push({ ...i, id: crypto.randomUUID() });
+        });
+        set({ roomCustomItems: merged });
+        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, get().roomCustomAbilities, merged);
+        saveRoomMeta('customItems', merged);
+    },
+    mergeAllHomebrewData: async (types, abs, moves, mons, items) => {
         const mergedTypes = [...get().roomCustomTypes];
         types.forEach(t => {
             const idx = mergedTypes.findIndex(existing => existing.name.toLowerCase() === t.name.toLowerCase());
@@ -214,15 +249,21 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             const idx = mergedMons.findIndex(existing => existing.Name.toLowerCase() === p.Name.toLowerCase());
             if (idx !== -1) mergedMons[idx] = { ...p, id: mergedMons[idx].id }; else mergedMons.push({ ...p, id: crypto.randomUUID() });
         });
+        
+        const mergedItems = [...get().roomCustomItems];
+        items.forEach(i => {
+            const idx = mergedItems.findIndex(existing => existing.name.toLowerCase() === i.name.toLowerCase());
+            if (idx !== -1) mergedItems[idx] = { ...i, id: mergedItems[idx].id }; else mergedItems.push({ ...i, id: crypto.randomUUID() });
+        });
 
-        set({ roomCustomTypes: mergedTypes, roomCustomAbilities: mergedAbs, roomCustomMoves: mergedMoves, roomCustomPokemon: mergedMons });
-        syncHomebrewToApi(mergedMons, mergedMoves, mergedAbs);
+        set({ roomCustomTypes: mergedTypes, roomCustomAbilities: mergedAbs, roomCustomMoves: mergedMoves, roomCustomPokemon: mergedMons, roomCustomItems: mergedItems });
+        syncHomebrewToApi(mergedMons, mergedMoves, mergedAbs, mergedItems);
         
         if (!OBR.isAvailable) return;
         try {
             const meta = await OBR.room.getMetadata();
             const roomSettings = (meta[ROOM_META_ID] as Record<string, unknown>) || {};
-            Object.assign(roomSettings, { customTypes: mergedTypes, customAbilities: mergedAbs, customMoves: mergedMoves, customPokemon: mergedMons });
+            Object.assign(roomSettings, { customTypes: mergedTypes, customAbilities: mergedAbs, customMoves: mergedMoves, customPokemon: mergedMons, customItems: mergedItems });
             await OBR.room.setMetadata({ [ROOM_META_ID]: roomSettings });
             OBR.notification.show("✅ Homebrew Workshop successfully merged!");
         } catch (e) { console.error(e); }

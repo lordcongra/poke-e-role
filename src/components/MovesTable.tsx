@@ -15,6 +15,7 @@ const TooltipIcon = ({ onClick }: { onClick: () => void }) => (
 );
 
 export function MovesTable() {
+    const role = useCharacterStore(state => state.role);
     const moves = useCharacterStore(state => state.moves);
     const addMove = useCharacterStore(state => state.addMove);
     const removeMove = useCharacterStore(state => state.removeMove); 
@@ -32,6 +33,8 @@ export function MovesTable() {
     const [deleteMoveId, setDeleteMoveId] = useState<string | null>(null); 
     const [moveList, setMoveList] = useState<string[]>([]);
     const [showLearnset, setShowLearnset] = useState(false);
+    
+    const [isCollapsed, setIsCollapsed] = useState(false);
     
     const [showModsModal, setShowModsModal] = useState(false);
     const [tooltipInfo, setTooltipInfo] = useState<{title: string, desc: string} | null>(null);
@@ -99,12 +102,12 @@ export function MovesTable() {
     return (
         <div className="sheet-panel">
             <datalist id="move-list">
-                {[...moveList, ...roomCustomMoves.map(m => m.name)].map(m => <option key={m} value={m} />)}
+                {[...moveList, ...roomCustomMoves.filter(m => role === 'GM' || !m.gmOnly).map(m => m.name)].map(m => <option key={m} value={m} />)}
             </datalist>
             
             <div className="sheet-panel__header">
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-                    <button type="button" className="collapse-btn panel-toggle-btn">▼</button>
+                    <button type="button" className={`collapse-btn ${isCollapsed ? 'is-collapsed' : ''}`} onClick={() => setIsCollapsed(!isCollapsed)}>▼</button>
                     MOVES <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 'normal', marginLeft: '4px' }}>(Max: {maxMoves})</span>
                 </span>
                 
@@ -126,61 +129,63 @@ export function MovesTable() {
                 <button type="button" className="mobile-only-flex action-button action-button--dark" style={{ padding: '2px 6px', fontSize: '0.75rem', marginLeft: 'auto' }} onClick={() => setShowModsModal(true)}>⚙️ Modifiers</button>
             </div>
             
-            <div className="panel-content-wrapper">
-                <div className="desktop-only-flex table-responsive-wrapper">
-                    <table className="data-table" style={{ textAlign: 'left' }}>
-                        <thead>
-                            <tr>
-                                <th style={{ width: '25px', textAlign: 'center' }} title="Used this round?">✔</th>
-                                <th style={{ width: '45px', textAlign: 'center' }}>Acc</th>
-                                <th>Name</th>
-                                <th>Pool (Acc)</th>
-                                <th>Type</th>
-                                <th>Cat.</th>
-                                <th>Damage</th>
-                                <th style={{ width: '45px', textAlign: 'center' }}>Dmg</th>
-                                <th style={{ width: '30px', textAlign: 'center' }}>Sort</th>
-                                <th style={{ width: '30px', textAlign: 'center' }}>Del</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {moves.map((move) => (
-                                <MoveRow key={move.id} move={move} skills={skills} extraCategories={extraCategories} onTarget={handleTargetClick} onDelete={setDeleteMoveId} />
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-                
-                <div className="mobile-only-flex" style={{ flexDirection: 'column', width: '100%' }}>
-                    {moves.map((move) => (
-                        <MoveCard key={move.id} move={move} skills={skills} extraCategories={extraCategories} onTarget={handleTargetClick} onDelete={setDeleteMoveId} />
-                    ))}
-                </div>
-
-                <button type="button" onClick={addMove} className="action-button action-button--red action-button--full-width">+ Add Move Slot</button>
-                
-                {learnset.length > 0 && (
-                    <div style={{ marginTop: '8px' }}>
-                        <button type="button" onClick={() => setShowLearnset(!showLearnset)} className="action-button action-button--dark" style={{ width: '100%', fontSize: '0.8rem', padding: '4px', margin: 0 }}>
-                            {showLearnset ? "📖 Hide Learnset" : "📖 View Learnset"}
-                        </button>
-                        {showLearnset && (
-                            <div style={{ border: '1px solid var(--border)', padding: '8px', borderRadius: '4px', background: 'var(--panel-alt)', marginTop: '4px', maxHeight: '200px', overflowY: 'auto', fontSize: '0.8rem' }}>
-                                {sortedRanks.map(rank => (
-                                    <div key={rank} style={{ marginBottom: '6px' }}>
-                                        <div style={{ fontWeight: 'bold', color: 'var(--primary)', borderBottom: '1px solid var(--border)', marginBottom: '4px', textTransform: 'capitalize' }}>{rank}</div>
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                                            {groupedLearnset[rank].map((mName, idx) => (
-                                                <span key={idx} style={{ background: 'var(--label-bg)', padding: '2px 6px', borderRadius: '12px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{mName}</span>
-                                            ))}
-                                        </div>
-                                    </div>
+            {!isCollapsed && (
+                <div className="panel-content-wrapper">
+                    <div className="desktop-only-flex table-responsive-wrapper">
+                        <table className="data-table" style={{ textAlign: 'left' }}>
+                            <thead>
+                                <tr>
+                                    <th style={{ width: '25px', textAlign: 'center' }} title="Used this round?">✔</th>
+                                    <th style={{ width: '45px', textAlign: 'center' }}>Acc</th>
+                                    <th>Name</th>
+                                    <th>Pool (Acc)</th>
+                                    <th>Type</th>
+                                    <th>Cat.</th>
+                                    <th>Damage</th>
+                                    <th style={{ width: '45px', textAlign: 'center' }}>Dmg</th>
+                                    <th style={{ width: '30px', textAlign: 'center' }}>Sort</th>
+                                    <th style={{ width: '30px', textAlign: 'center' }}>Del</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {moves.map((move) => (
+                                    <MoveRow key={move.id} move={move} skills={skills} extraCategories={extraCategories} onTarget={handleTargetClick} onDelete={setDeleteMoveId} />
                                 ))}
-                            </div>
-                        )}
+                            </tbody>
+                        </table>
                     </div>
-                )}
-            </div>
+                    
+                    <div className="mobile-only-flex" style={{ flexDirection: 'column', width: '100%' }}>
+                        {moves.map((move) => (
+                            <MoveCard key={move.id} move={move} skills={skills} extraCategories={extraCategories} onTarget={handleTargetClick} onDelete={setDeleteMoveId} />
+                        ))}
+                    </div>
+
+                    <button type="button" onClick={addMove} className="action-button action-button--red action-button--full-width">+ Add Move Slot</button>
+                    
+                    {learnset.length > 0 && (
+                        <div style={{ marginTop: '8px' }}>
+                            <button type="button" onClick={() => setShowLearnset(!showLearnset)} className="action-button action-button--dark" style={{ width: '100%', fontSize: '0.8rem', padding: '4px', margin: 0 }}>
+                                {showLearnset ? "📖 Hide Learnset" : "📖 View Learnset"}
+                            </button>
+                            {showLearnset && (
+                                <div style={{ border: '1px solid var(--border)', padding: '8px', borderRadius: '4px', background: 'var(--panel-alt)', marginTop: '4px', maxHeight: '200px', overflowY: 'auto', fontSize: '0.8rem' }}>
+                                    {sortedRanks.map(rank => (
+                                        <div key={rank} style={{ marginBottom: '6px' }}>
+                                            <div style={{ fontWeight: 'bold', color: 'var(--primary)', borderBottom: '1px solid var(--border)', marginBottom: '4px', textTransform: 'capitalize' }}>{rank}</div>
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                {groupedLearnset[rank].map((mName, idx) => (
+                                                    <span key={idx} style={{ background: 'var(--label-bg)', padding: '2px 6px', borderRadius: '12px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{mName}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {showModsModal && (
                 <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 1200, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>

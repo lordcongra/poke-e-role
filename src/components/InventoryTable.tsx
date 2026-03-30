@@ -23,7 +23,7 @@ const TooltipIcon = ({ onClick }: { onClick: () => void }) => (
     <span onClick={onClick} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#555', color: 'white', borderRadius: '50%', width: '16px', height: '16px', fontSize: '11px', cursor: 'pointer', marginLeft: '6px', fontWeight: 'bold' }}>?</span>
 );
 
-function InventoryItemRow({ item, handleInfoClick, fetchingItems, setTagBuilderData, setDeleteItemId }: { item: InventoryItem, handleInfoClick: (id: string, name: string, desc: string) => void, fetchingItems: Record<string, boolean>, setTagBuilderData: (d: {id: string, type: 'item' | 'move' | 'ability'}) => void, setDeleteItemId: (id: string) => void }) {
+function InventoryItemRow({ item, handleInfoClick, fetchingItems, setTagBuilderData, setDeleteItemId }: { item: InventoryItem, handleInfoClick: (id: string, name: string, desc: string) => void, fetchingItems: Record<string, boolean>, setTagBuilderData: (d: {id: string, type: 'item' | 'move' | 'homebrew_ability' | 'homebrew_move' | 'homebrew_item'}) => void, setDeleteItemId: (id: string) => void }) {
     const updateInventoryItem = useCharacterStore(state => state.updateInventoryItem);
     const moveUpInventoryItem = useCharacterStore(state => state.moveUpInventoryItem);
     const moveDownInventoryItem = useCharacterStore(state => state.moveDownInventoryItem);
@@ -37,22 +37,15 @@ function InventoryItemRow({ item, handleInfoClick, fetchingItems, setTagBuilderD
     const handleNameBlur = async () => {
         const val = localName.trim();
         if (val !== item.name) {
-            // Synchronously update the name (which instantly adds hardcoded tags via inventorySlice)
             updateInventoryItem(item.id, 'name', val);
             
-            // If the description was blank initially, fetch the official one
-            if (!item.desc || item.desc.trim() === '') {
-                const data = await fetchItemData(val);
-                if (data && (data.Description || data.Effect)) {
-                    const newDesc = String(data.Description || data.Effect || "").trim();
-                    // Grab the fresh state to preserve the hardcoded tag we just appended!
-                    const latestItem = useCharacterStore.getState().inventory.find(i => i.id === item.id);
-                    if (latestItem) {
-                        const finalDesc = latestItem.desc ? `${newDesc}\n\n${latestItem.desc}`.trim() : newDesc;
-                        useCharacterStore.getState().updateInventoryItem(item.id, 'desc', finalDesc);
-                    }
-                }
+            const data = await fetchItemData(val);
+            let newDesc = "";
+            if (data && (data.Description || data.Effect)) {
+                newDesc = String(data.Description || data.Effect || "").trim();
             }
+            
+            useCharacterStore.getState().updateInventoryItem(item.id, 'desc', newDesc);
         }
     };
 
@@ -90,7 +83,10 @@ function InventoryItemRow({ item, handleInfoClick, fetchingItems, setTagBuilderD
 }
 
 export function InventoryTable() {
+    const role = useCharacterStore(state => state.role);
     const inventory = useCharacterStore(state => state.inventory);
+    const roomCustomItems = useCharacterStore(state => state.roomCustomItems);
+    
     const addInventoryItem = useCharacterStore(state => state.addInventoryItem);
     const removeInventoryItem = useCharacterStore(state => state.removeInventoryItem);
     
@@ -103,7 +99,7 @@ export function InventoryTable() {
     const setCurrency = useCharacterStore(state => state.setCurrency);
 
     const [infoModal, setInfoModal] = useState<{title: string, desc: string} | null>(null);
-    const [tagBuilderData, setTagBuilderData] = useState<{id: string, type: 'item' | 'move' | 'ability'} | null>(null);
+    const [tagBuilderData, setTagBuilderData] = useState<{id: string, type: 'item' | 'move' | 'homebrew_ability' | 'homebrew_move' | 'homebrew_item'} | null>(null);
     const [fetchingItems, setFetchingItems] = useState<Record<string, boolean>>({});
     
     const [isInvCollapsed, setIsInvCollapsed] = useState(false);
@@ -113,6 +109,7 @@ export function InventoryTable() {
     const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
 
     const activeCount = inventory.filter(i => i.active).length;
+    const customItemNames = roomCustomItems.filter(i => role === 'GM' || !i.gmOnly).map(i => i.name);
 
     const handleInfoClick = async (id: string, name: string, descFallback: string) => {
         if (!name) {
@@ -134,7 +131,7 @@ export function InventoryTable() {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <datalist id="item-list">
-                {HARDCODED_ITEMS.map(i => <option key={i} value={i} />)}
+                {[...HARDCODED_ITEMS, ...customItemNames].map(i => <option key={i} value={i} />)}
             </datalist>
 
             <div className="sheet-panel">
@@ -225,7 +222,7 @@ export function InventoryTable() {
                             <li><b>Stats/Skills:</b> <code>[Dex -2]</code>, <code>[Brawl +2]</code>, <code>[Def +1]</code>, <code>[Spd +1]</code></li>
                             <li><b>Combat:</b> <code>[Dmg +1]</code>, <code>[Acc +1]</code>, <code>[Init +2]</code>, <code>[Chance +2]</code>, <code>[Combo Dmg +1]</code></li>
                             <li><b>Matchups:</b> <code>[Immune: Ground]</code>, <code>[Remove Immunity: Type]</code>, <code>[Remove Immunities]</code></li>
-                            <li><b>Mechanics:</b> <code>[High Crit]</code>, <code>[Stacking High Crit]</code>, <code>[Ignore Low Acc 2]</code>, <code>[Status: Poison]</code></li>
+                            <li><b>Mechanics:</b> <code>[High Crit]</code>, <code>[Stacking High Crit]</code>, <code>[Ignore Low Acc 2]</code>, <code>[Status: Poison]</code>, <code>[Recoil]</code></li>
                         </ul>
                         <div style={{ display: 'flex', justifyContent: 'center' }}>
                             <button type="button" onClick={() => setShowTagsGuide(false)} className="action-button action-button--dark" style={{ width: '100%', padding: '6px' }}>Close Guide</button>
