@@ -1,14 +1,14 @@
 {
-  "name": "Pokerole 3.0 Sheet",
-  "version": "2.0.0",
-  "manifest_version": 1,
-  "description": "A fully automated Pokerole 3.0 character sheet, built for both standard and PMD campaigns.",
-  "author": "lordcongra",
-  "action": {
-    "title": "Pokerole 3.0 Sheet",
-    "icon": "https://lordcongra.github.io/poke-e-role/pokeball.svg",
-    "popover": "https://lordcongra.github.io/poke-e-role/",
-    "width": 850,
-    "height": 700
-  }
+    "name": "Pokerole 3.0 Sheet (DEV)",
+    "version": "2.0.1",
+    "manifest_version": 1,
+    "description": "Local testing build for the Pokerole character sheet.",
+    "author": "lordcongra",
+    "action": {
+        "title": "Pokerole 3.0 Sheet (DEV)",
+        "icon": "http://localhost:5173/pokeball.svg",
+        "popover": "http://localhost:5173/",
+        "width": 850,
+        "height": 700
+    }
 }

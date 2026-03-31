@@ -1,7 +1,7 @@
 // src/utils/obr.ts
-import OBR from "@owlbear-rodeo/sdk";
+import OBR from '@owlbear-rodeo/sdk';
 
-export const METADATA_ID = "pokerole-extension/stats";
+export const METADATA_ID = 'pokerole-extension/stats';
 
 let saveTimeout: ReturnType<typeof setTimeout>;
 let pendingUpdates: Record<string, unknown> = {};
@@ -14,10 +14,10 @@ export function setActiveTokenId(id: string | null) {
 export async function saveToOwlbear(updates: Record<string, unknown>) {
     const currentToken = activeTokenId;
     if (!OBR.isAvailable || !currentToken) return;
-    
+
     Object.assign(pendingUpdates, updates);
     clearTimeout(saveTimeout);
-    
+
     saveTimeout = setTimeout(async () => {
         const updatesToPush = { ...pendingUpdates };
         pendingUpdates = {};

@@ -1,59 +1,132 @@
-// src/utils/api.ts
 import type { CustomPokemon, CustomMove, CustomAbility, CustomItem } from '../store/storeTypes';
 
-export const GITHUB_TREE_URL = "https://api.github.com/repos/Pokerole-Software-Development/Pokerole-Data/git/trees/master?recursive=1";
+export const GITHUB_TREE_URL =
+    'https://api.github.com/repos/Pokerole-Software-Development/Pokerole-Data/git/trees/master?recursive=1';
 
 export const SPECIES_URLS: Record<string, string> = {};
 export const MOVES_URLS: Record<string, string> = {};
 export const ABILITIES_URLS: Record<string, string> = {};
-export const ITEMS_URLS: Record<string, string> = {}; 
+export const ITEMS_URLS: Record<string, string> = {};
 
 export const ALL_ABILITIES: string[] = [];
 export const ALL_MOVES: string[] = [];
 
 let isTreeLoaded = false;
 
-// --- HOMEBREW REGISTRY INJECTION ---
-let hbPokemon: CustomPokemon[] = [];
-let hbMoves: CustomMove[] = [];
-let hbAbilities: CustomAbility[] = [];
-let hbItems: CustomItem[] = [];
+let homebrewPokemon: CustomPokemon[] = [];
+let homebrewMoves: CustomMove[] = [];
+let homebrewAbilities: CustomAbility[] = [];
+let homebrewItems: CustomItem[] = [];
 
-export function syncHomebrewToApi(p: CustomPokemon[], m: CustomMove[], a: CustomAbility[], i: CustomItem[]) {
-    hbPokemon = p;
-    hbMoves = m;
-    hbAbilities = a;
-    hbItems = i;
+export function syncHomebrewToApi(
+    pokemon: CustomPokemon[],
+    moves: CustomMove[],
+    abilities: CustomAbility[],
+    items: CustomItem[]
+) {
+    homebrewPokemon = pokemon;
+    homebrewMoves = moves;
+    homebrewAbilities = abilities;
+    homebrewItems = items;
 }
-// -----------------------------------
+
+interface GitHubFileNode {
+    path: string;
+}
+
+interface GitHubTreeResponse {
+    tree: GitHubFileNode[];
+}
+
+export interface PokemonApiResponse {
+    Name?: string;
+    Type1?: string;
+    Type2?: string;
+    BaseStats?: { HP?: number };
+    BaseHP?: number;
+    Strength?: number | string;
+    Dexterity?: number | string;
+    Vitality?: number | string;
+    Special?: number | string;
+    Insight?: number | string;
+    MaxAttributes?: Record<string, number | string>;
+    MaxStats?: Record<string, number | string>;
+    Ability1?: string;
+    Ability2?: string;
+    HiddenAbility?: string;
+    EventAbilities?: string;
+    Abilities?: string[] | { Name: string }[];
+    Moves?:
+        | Record<string, string[] | { Name?: string; Move?: string }[]>
+        | { Learned?: string; Learn?: string; Level?: string; Rank?: string; Name?: string; Move?: string }[];
+}
+
+export interface MoveApiResponse {
+    Name?: string;
+    Type?: string;
+    Category?: string;
+    Power?: number | string;
+    Accuracy1?: string;
+    Accuracy2?: string;
+    Damage1?: string;
+    Effect?: string;
+    Description?: string;
+}
+
+export interface AbilityApiResponse {
+    Name?: string;
+    Description?: string;
+    Effect?: string;
+}
+
+export interface ItemApiResponse {
+    Name?: string;
+    Description?: string;
+    Effect?: string;
+}
+
+const activeRequests = new Map<string, AbortController>();
 
 async function fetchWithCache<T>(url: string, cacheKey: string, itemName: string): Promise<T | null> {
+    if (activeRequests.has(cacheKey)) {
+        activeRequests.get(cacheKey)?.abort();
+    }
+
+    const controller = new AbortController();
+    activeRequests.set(cacheKey, controller);
+
     try {
-        const response = await fetch(url);
+        const response = await fetch(url, { signal: controller.signal });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        
+
         const data = (await response.json()) as T;
         localStorage.setItem(`pkr_cache_${cacheKey}`, JSON.stringify(data));
         return data;
-    } catch (err) {
+    } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+            console.log(`[Network] Fetch aborted for ${itemName}.`);
+            return null;
+        }
+
         console.warn(`[Network] Fetch failed for ${itemName}, checking cache...`);
         const cached = localStorage.getItem(`pkr_cache_${cacheKey}`);
-        
+
         if (cached) {
             console.log(`Using cached data for ${itemName}.`);
             return JSON.parse(cached) as T;
         }
-        
-        console.error(`❌ Failed to load ${itemName}. No offline cache found.`);
+
+        console.error(`Failed to load ${itemName}. No offline cache found.`);
         return null;
+    } finally {
+        activeRequests.delete(cacheKey);
     }
 }
 
 export async function loadGithubTree(): Promise<void> {
     if (isTreeLoaded) return;
-    
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data = await fetchWithCache<any>(GITHUB_TREE_URL, 'master_tree', 'Pokerole Database');
+
+    const data = await fetchWithCache<GitHubTreeResponse>(GITHUB_TREE_URL, 'master_tree', 'Pokerole Database');
     if (!data || !data.tree) return;
 
     try {
@@ -61,11 +134,10 @@ export async function loadGithubTree(): Promise<void> {
         const pokemonRegex = /\/(Pokemon|Pokedex)\//i;
         const moveRegex = /\/Moves\//i;
         const abilityRegex = /\/Abilities\//i;
-        const itemRegex = /\/(Items|Equipment)\//i; 
+        const itemRegex = /\/(Items|Equipment)\//i;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        data.tree.forEach((file: any) => {
-            if (!versionRegex.test(file.path) || !file.path.endsWith(".json")) return;
+        data.tree.forEach((file: GitHubFileNode) => {
+            if (!versionRegex.test(file.path) || !file.path.endsWith('.json')) return;
 
             const name = file.path.split('/').pop()?.replace('.json', '') || '';
             if (!name) return;
@@ -82,38 +154,37 @@ export async function loadGithubTree(): Promise<void> {
                 ABILITIES_URLS[cleanKey] = rawUrl;
                 if (!ALL_ABILITIES.includes(name)) ALL_ABILITIES.push(name);
             } else if (itemRegex.test(file.path)) {
-                ITEMS_URLS[cleanKey] = rawUrl; 
+                ITEMS_URLS[cleanKey] = rawUrl;
             }
         });
 
         ALL_ABILITIES.sort();
         ALL_MOVES.sort();
         isTreeLoaded = true;
-    } catch(err) {
-        console.error("Error processing Github Data:", err);
+    } catch (err) {
+        console.error('Error processing Github Data:', err);
     }
 }
 
-export async function fetchPokemonData(speciesName: string) {
+export async function fetchPokemonData(speciesName: string): Promise<PokemonApiResponse | CustomPokemon | null> {
     if (!speciesName) return null;
     const cleanName = speciesName.trim().toLowerCase();
 
-    const custom = hbPokemon.find(p => p.Name.trim().toLowerCase() === cleanName);
+    const custom = homebrewPokemon.find((p) => p.Name.trim().toLowerCase() === cleanName);
     if (custom) return custom;
 
     await loadGithubTree();
     const selectedUrl = SPECIES_URLS[cleanName];
 
     if (!selectedUrl) return null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return await fetchWithCache<any>(selectedUrl, `species_${cleanName}`, speciesName);
+    return await fetchWithCache<PokemonApiResponse>(selectedUrl, `species_${cleanName}`, speciesName);
 }
 
-export async function fetchAbilityData(abilityName: string) {
+export async function fetchAbilityData(abilityName: string): Promise<AbilityApiResponse | null> {
     if (!abilityName) return null;
     const cleanName = abilityName.trim().toLowerCase();
 
-    const custom = hbAbilities.find(a => a.name.trim().toLowerCase() === cleanName);
+    const custom = homebrewAbilities.find((a) => a.name.trim().toLowerCase() === cleanName);
     if (custom) {
         return { Name: custom.name, Description: custom.description, Effect: custom.effect };
     }
@@ -122,19 +193,24 @@ export async function fetchAbilityData(abilityName: string) {
     const selectedUrl = ABILITIES_URLS[cleanName];
 
     if (!selectedUrl) return null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return await fetchWithCache<any>(selectedUrl, `ability_${cleanName}`, abilityName);
+    return await fetchWithCache<AbilityApiResponse>(selectedUrl, `ability_${cleanName}`, abilityName);
 }
 
-export async function fetchMoveData(moveName: string) {
+export async function fetchMoveData(moveName: string): Promise<MoveApiResponse | null> {
     if (!moveName) return null;
     const cleanName = moveName.trim().toLowerCase();
 
-    const custom = hbMoves.find(m => m.name.trim().toLowerCase() === cleanName);
+    const custom = homebrewMoves.find((m) => m.name.trim().toLowerCase() === cleanName);
     if (custom) {
         return {
-            Name: custom.name, Type: custom.type, Category: custom.category, Power: custom.power,
-            Accuracy1: custom.acc1, Accuracy2: custom.acc2, Damage1: custom.dmg1, Effect: custom.desc
+            Name: custom.name,
+            Type: custom.type,
+            Category: custom.category,
+            Power: custom.power,
+            Accuracy1: custom.acc1,
+            Accuracy2: custom.acc2,
+            Damage1: custom.dmg1,
+            Effect: custom.desc
         };
     }
 
@@ -142,16 +218,14 @@ export async function fetchMoveData(moveName: string) {
     const selectedUrl = MOVES_URLS[cleanName];
 
     if (!selectedUrl) return null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return await fetchWithCache<any>(selectedUrl, `move_${cleanName}`, moveName);
+    return await fetchWithCache<MoveApiResponse>(selectedUrl, `move_${cleanName}`, moveName);
 }
 
-export async function fetchItemData(itemName: string) {
+export async function fetchItemData(itemName: string): Promise<ItemApiResponse | null> {
     if (!itemName) return null;
     const cleanName = itemName.trim().toLowerCase();
 
-    // AUDIT FIX: Intercept Custom Items!
-    const custom = hbItems.find(i => i.name.trim().toLowerCase() === cleanName);
+    const custom = homebrewItems.find((i) => i.name.trim().toLowerCase() === cleanName);
     if (custom) {
         return { Name: custom.name, Description: custom.description };
     }
@@ -160,6 +234,5 @@ export async function fetchItemData(itemName: string) {
     const selectedUrl = ITEMS_URLS[cleanName];
 
     if (!selectedUrl) return null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return await fetchWithCache<any>(selectedUrl, `item_${cleanName}`, itemName);
+    return await fetchWithCache<ItemApiResponse>(selectedUrl, `item_${cleanName}`, itemName);
 }
