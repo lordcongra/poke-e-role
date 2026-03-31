@@ -1,0 +1,221 @@
+.tracker-section {
+    border: 2px solid var(--primary);
+    background-color: var(--panel-alt);
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.tracker-section__actions-row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    font-size: 0.75rem;
+    align-items: center;
+}
+
+.tracker-section__action-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.tracker-section__action-label {
+    font-weight: bold;
+}
+
+.tracker-section__buttons-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+}
+
+.tracker-section__toggle-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tracker-section__toggle-btn {
+    padding: 2px 6px;
+    white-space: nowrap;
+}
+
+.tracker-section__checkbox {
+    cursor: pointer;
+    transform: scale(1.1);
+}
+
+.tracker-section__chances-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 0.75rem;
+}
+
+.tracker-section__roll-btn {
+    padding: 2px 8px;
+}
+
+.tracker-section__maneuver-row {
+    display: flex;
+    gap: 6px;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.tracker-section__maneuver-select {
+    padding: 2px;
+    font-family: inherit;
+    border: 1px solid var(--border);
+    font-size: 0.75rem;
+    flex: 1;
+    min-width: 0;
+    background-color: var(--panel-bg);
+    color: var(--text-main);
+    border-radius: 3px;
+}
+
+.tracker-section__maneuver-btn {
+    flex: 0 0 32px;
+    padding: 2px 0;
+    text-align: center;
+}
+
+.tracker-section__reset-btn,
+.tracker-section__rest-btn {
+    flex: 0 0 80px;
+    width: 80px;
+    text-align: center;
+    padding: 4px 0;
+    box-sizing: border-box;
+    white-space: nowrap;
+}
+
+.tracker-section__rest-btn {
+    background-color: #2e7d32;
+    border-color: #2e7d32;
+}
+
+.tracker-section__will-row {
+    display: flex;
+    gap: 4px;
+    justify-content: space-between;
+    align-items: stretch;
+    margin-top: 8px;
+}
+
+.tracker-section__will-btn {
+    flex: 1 1 0%;
+    font-size: 0.65rem;
+    padding: 4px 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Modals */
+.tracker-modal__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: sans-serif;
+}
+
+.tracker-modal__content {
+    background-color: var(--panel-bg);
+    padding: 15px;
+    border-radius: 8px;
+    width: 280px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--primary);
+}
+
+.tracker-modal__content--clash {
+    width: 260px;
+}
+
+.tracker-modal__content--rest {
+    border-color: #2e7d32;
+}
+
+.tracker-modal__title {
+    margin-top: 0;
+    color: var(--primary);
+    font-size: 1.1rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+    text-align: center;
+}
+
+.tracker-modal__title--rest {
+    color: #2e7d32;
+}
+
+.tracker-modal__description {
+    font-size: 0.85rem;
+    text-align: center;
+    margin-bottom: 15px;
+    color: var(--text-muted);
+}
+
+.tracker-modal__actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.tracker-modal__btn-cancel,
+.tracker-modal__btn-confirm {
+    flex: 1;
+    padding: 6px;
+}
+
+.tracker-modal__btn-rest {
+    background-color: #2e7d32;
+    color: white;
+}
+
+.tracker-modal__clash-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tracker-modal__clash-btn-phys {
+    background-color: #e65100;
+    border-color: #e65100;
+    padding: 8px;
+    font-size: 0.9rem;
+}
+
+.tracker-modal__clash-btn-spec {
+    background-color: #1565c0;
+    border-color: #1565c0;
+    padding: 8px;
+    font-size: 0.9rem;
+}
+
+.tracker-modal__clash-btn-cancel {
+    padding: 6px;
+    margin-top: 4px;
+}
+
+.tracker-modal__spinner-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+}
