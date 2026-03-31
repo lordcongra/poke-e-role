@@ -1,23 +1,22 @@
-// src/components/GeneratorPreviewModal.tsx
 import { useState } from 'react';
 import type { TempBuild } from '../store/storeTypes';
 import { useCharacterStore } from '../store/useCharacterStore';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
+import { GeneratorPreviewStatSpinner } from './GeneratorPreviewStatSpinner';
+import { GeneratorPreviewMoveRow } from './GeneratorPreviewMoveRow';
+import './GeneratorPreviewModal.css';
 
-export function GeneratorPreviewModal({
-    build,
-    onClose,
-    onReroll
-}: {
+interface GeneratorPreviewModalProps {
     build: TempBuild;
     onClose: () => void;
     onReroll: () => void;
-}) {
+}
+
+export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPreviewModalProps) {
     const applyGeneratedBuild = useCharacterStore((state) => state.applyGeneratedBuild);
     const mode = useCharacterStore((state) => state.identity.mode);
     const extraCategories = useCharacterStore((state) => state.extraCategories);
 
-    // AUDIT FIX: Pull Base Stats from the Store so the preview math is accurate!
     const baseStats = useCharacterStore((state) => state.stats);
     const baseSocials = useCharacterStore((state) => state.socials);
     const baseSkills = useCharacterStore((state) => state.skills);
@@ -26,77 +25,47 @@ export function GeneratorPreviewModal({
     const [localBuild, setLocalBuild] = useState<TempBuild>(build);
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
 
-    const updateAttr = (stat: string, val: number) =>
-        setLocalBuild((prev) => ({ ...prev, attr: { ...prev.attr, [stat]: Math.max(0, val) } }));
-    const updateSoc = (stat: string, val: number) =>
-        setLocalBuild((prev) => ({ ...prev, soc: { ...prev.soc, [stat]: Math.max(0, val) } }));
-    const updateSkill = (sk: string, val: number) =>
-        setLocalBuild((prev) => ({ ...prev, skills: { ...prev.skills, [sk]: Math.max(0, val) } }));
+    const updateAttribute = (statistic: string, value: number) => {
+        setLocalBuild((previous) => ({ ...previous, attr: { ...previous.attr, [statistic]: Math.max(0, value) } }));
+    };
 
-    const buildSpinner = (val: number, setVal: (v: number) => void) => (
-        <div
-            style={{
-                display: 'flex',
-                alignItems: 'center',
-                border: '1px solid var(--border)',
-                borderRadius: '3px',
-                background: 'var(--input-bg)'
-            }}
-        >
-            <button
-                onClick={() => setVal(val - 1)}
-                style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'var(--text-main)',
-                    padding: '2px 6px',
-                    cursor: 'pointer'
-                }}
-            >
-                -
-            </button>
-            <span style={{ width: '20px', textAlign: 'center', fontSize: '0.85rem' }}>{val}</span>
-            <button
-                onClick={() => setVal(val + 1)}
-                style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'var(--text-main)',
-                    padding: '2px 6px',
-                    cursor: 'pointer'
-                }}
-            >
-                +
-            </button>
-        </div>
-    );
+    const updateSocial = (statistic: string, value: number) => {
+        setLocalBuild((previous) => ({ ...previous, soc: { ...previous.soc, [statistic]: Math.max(0, value) } }));
+    };
+
+    const updateSkill = (skillName: string, value: number) => {
+        setLocalBuild((previous) => ({ ...previous, skills: { ...previous.skills, [skillName]: Math.max(0, value) } }));
+    };
 
     const isTrainer = mode === 'Trainer';
 
-    const getSkillLabel = (sk: string) => {
-        if (localBuild.customSkillMap[sk]) return localBuild.customSkillMap[sk] || 'Unnamed';
+    const getSkillLabel = (skillName: string) => {
+        if (localBuild.customSkillMap[skillName]) return localBuild.customSkillMap[skillName] || 'Unnamed';
         if (isTrainer) {
-            if (sk === 'channel') return 'Throw';
-            if (sk === 'clash') return 'Weapon';
-            if (sk === 'charm') return 'Empathy';
-            if (sk === 'magic') return 'Science';
+            if (skillName === 'channel') return 'Throw';
+            if (skillName === 'clash') return 'Weapon';
+            if (skillName === 'charm') return 'Empathy';
+            if (skillName === 'magic') return 'Science';
         }
-        return sk.charAt(0).toUpperCase() + sk.slice(1);
+        return skillName.charAt(0).toUpperCase() + skillName.slice(1);
     };
 
-    // Helper functions to grab the combined Base + Generated stats for the dynamic UI
-    const getBaseAttr = (attr: string) => {
-        if (attr === 'will') return willMax;
-        if (['str', 'dex', 'vit', 'spe', 'ins'].includes(attr)) return baseStats[attr as CombatStat]?.base || 1;
-        if (['tou', 'coo', 'bea', 'cut', 'cle'].includes(attr)) return baseSocials[attr as SocialStat]?.base || 1;
+    const getBaseAttribute = (attribute: string) => {
+        if (attribute === 'will') return willMax;
+        if (Object.values(CombatStat).includes(attribute as CombatStat)) {
+            return baseStats[attribute as CombatStat]?.base || 1;
+        }
+        if (Object.values(SocialStat).includes(attribute as SocialStat)) {
+            return baseSocials[attribute as SocialStat]?.base || 1;
+        }
         return 0;
     };
 
-    const getBaseSkill = (skill: string) => {
-        if (baseSkills[skill as Skill]) return baseSkills[skill as Skill].base;
-        for (const cat of extraCategories) {
-            const sk = cat.skills.find((s) => s.id === skill);
-            if (sk) return sk.base;
+    const getBaseSkill = (skillName: string) => {
+        if (baseSkills[skillName as Skill]) return baseSkills[skillName as Skill].base;
+        for (const category of extraCategories) {
+            const foundSkill = category.skills.find((s) => s.id === skillName);
+            if (foundSkill) return foundSkill.base;
         }
         return 0;
     };
@@ -114,171 +83,70 @@ export function GeneratorPreviewModal({
         });
     }
 
-    const mappedExtraCats = extraCategories.map((cat) => ({
-        title: (cat.name || 'CUSTOM').toUpperCase(),
-        skills: cat.skills.map((sk) => sk.id)
+    const mappedExtraCategories = extraCategories.map((category) => ({
+        title: (category.name || 'CUSTOM').toUpperCase(),
+        skills: category.skills.map((extraSkill) => extraSkill.id)
     }));
 
-    const allCategories = [...skillCategories, ...mappedExtraCats];
-
-    // Dynamically calculate Max Moves based on the user adjusting the INS spinner!
+    const allCategories = [...skillCategories, ...mappedExtraCategories];
     const dynamicMaxMoves = (baseStats[CombatStat.INS]?.base || 1) + (localBuild.attr['ins'] || 0) + 3;
 
     return (
-        <div
-            style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                background: 'rgba(0,0,0,0.6)',
-                zIndex: 1050,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center'
-            }}
-        >
-            <div
-                style={{
-                    background: 'var(--panel-bg)',
-                    padding: '15px',
-                    borderRadius: '8px',
-                    width: '600px',
-                    border: '2px solid var(--primary)',
-                    color: 'var(--text-main)',
-                    maxHeight: '90vh',
-                    display: 'flex',
-                    flexDirection: 'column'
-                }}
-            >
-                <h3
-                    style={{
-                        marginTop: 0,
-                        color: 'var(--primary)',
-                        fontSize: '1.1rem',
-                        borderBottom: '1px solid var(--border)',
-                        paddingBottom: '8px',
-                        marginBottom: '12px',
-                        textAlign: 'center'
-                    }}
-                >
-                    🔍 Build Preview
-                </h3>
+        <div className="generator-preview__overlay">
+            <div className="generator-preview__content">
+                <h3 className="generator-preview__title">🔍 Build Preview</h3>
 
-                <div
-                    style={{
-                        fontSize: '0.8rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px',
-                        marginBottom: '15px',
-                        overflowY: 'auto',
-                        paddingRight: '4px'
-                    }}
-                >
-                    <div
-                        style={{
-                            background: 'var(--panel-alt)',
-                            padding: '8px',
-                            borderRadius: '4px',
-                            border: '1px solid var(--border)'
-                        }}
-                    >
-                        <div style={{ fontWeight: 'bold', marginBottom: '4px', color: 'var(--primary)' }}>
-                            Attributes (Rank Added)
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '4px' }}>
-                            {['str', 'dex', 'vit', 'spe', 'ins'].map((stat) => (
-                                <div
-                                    key={stat}
-                                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-                                >
-                                    <label style={{ fontSize: '0.7rem', fontWeight: 'bold', marginBottom: '2px' }}>
-                                        {stat.toUpperCase()}
-                                    </label>
-                                    {buildSpinner(localBuild.attr[stat] || 0, (v) => updateAttr(stat, v))}
+                <div className="generator-preview__scroll-container">
+                    <div className="generator-preview__section">
+                        <div className="generator-preview__section-title">Attributes (Rank Added)</div>
+                        <div className="generator-preview__grid-5">
+                            {Object.values(CombatStat).map((statistic) => (
+                                <div key={statistic} className="generator-preview__stat-column">
+                                    <label className="generator-preview__stat-label">{statistic.toUpperCase()}</label>
+                                    <GeneratorPreviewStatSpinner
+                                        value={localBuild.attr[statistic] || 0}
+                                        onChange={(value) => updateAttribute(statistic, value)}
+                                    />
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    <div
-                        style={{
-                            background: 'var(--panel-alt)',
-                            padding: '8px',
-                            borderRadius: '4px',
-                            border: '1px solid var(--border)'
-                        }}
-                    >
-                        <div style={{ fontWeight: 'bold', marginBottom: '4px', color: 'var(--primary)' }}>
-                            Socials (Rank Added)
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '4px' }}>
-                            {['tou', 'coo', 'bea', 'cut', 'cle'].map((stat) => (
-                                <div
-                                    key={stat}
-                                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-                                >
-                                    <label style={{ fontSize: '0.7rem', fontWeight: 'bold', marginBottom: '2px' }}>
-                                        {stat.toUpperCase()}
-                                    </label>
-                                    {buildSpinner(localBuild.soc[stat] || 0, (v) => updateSoc(stat, v))}
+                    <div className="generator-preview__section">
+                        <div className="generator-preview__section-title">Socials (Rank Added)</div>
+                        <div className="generator-preview__grid-5">
+                            {Object.values(SocialStat).map((statistic) => (
+                                <div key={statistic} className="generator-preview__stat-column">
+                                    <label className="generator-preview__stat-label">{statistic.toUpperCase()}</label>
+                                    <GeneratorPreviewStatSpinner
+                                        value={localBuild.soc[statistic] || 0}
+                                        onChange={(value) => updateSocial(statistic, value)}
+                                    />
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    <div
-                        style={{
-                            background: 'var(--panel-alt)',
-                            padding: '8px',
-                            borderRadius: '4px',
-                            border: '1px solid var(--border)'
-                        }}
-                    >
-                        <div style={{ fontWeight: 'bold', marginBottom: '8px', color: 'var(--primary)' }}>Skills</div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px 15px' }}>
-                            {allCategories.map((cat, index) => (
-                                <div
-                                    key={`${cat.title}-${index}`}
-                                    style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}
-                                >
-                                    <div
-                                        style={{
-                                            fontSize: '0.7rem',
-                                            fontWeight: 'bold',
-                                            color: 'var(--text-muted)',
-                                            borderBottom: '1px solid var(--border)',
-                                            paddingBottom: '2px'
-                                        }}
-                                    >
-                                        {cat.title}
-                                    </div>
-                                    {cat.skills.map((sk) => (
-                                        <div
-                                            key={sk}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'space-between',
-                                                gap: '4px'
-                                            }}
-                                        >
+                    <div className="generator-preview__section">
+                        <div className="generator-preview__section-title generator-preview__section-title--spaced">
+                            Skills
+                        </div>
+                        <div className="generator-preview__grid-4">
+                            {allCategories.map((category, index) => (
+                                <div key={`${category.title}-${index}`} className="generator-preview__skill-category">
+                                    <div className="generator-preview__skill-category-title">{category.title}</div>
+                                    {category.skills.map((skillName) => (
+                                        <div key={skillName} className="generator-preview__skill-row">
                                             <label
-                                                style={{
-                                                    fontSize: '0.7rem',
-                                                    fontWeight: 'bold',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    whiteSpace: 'nowrap',
-                                                    maxWidth: '60px'
-                                                }}
-                                                title={getSkillLabel(sk)}
+                                                className="generator-preview__skill-label"
+                                                title={getSkillLabel(skillName)}
                                             >
-                                                {getSkillLabel(sk)}
+                                                {getSkillLabel(skillName)}
                                             </label>
-                                            {buildSpinner(localBuild.skills[sk] || 0, (v) => updateSkill(sk, v))}
+                                            <GeneratorPreviewStatSpinner
+                                                value={localBuild.skills[skillName] || 0}
+                                                onChange={(value) => updateSkill(skillName, value)}
+                                            />
                                         </div>
                                     ))}
                                 </div>
@@ -286,107 +154,48 @@ export function GeneratorPreviewModal({
                         </div>
                     </div>
 
-                    <div
-                        style={{
-                            background: 'var(--panel-alt)',
-                            padding: '8px',
-                            borderRadius: '4px',
-                            border: '1px solid var(--border)'
-                        }}
-                    >
-                        <div style={{ fontWeight: 'bold', marginBottom: '4px', color: 'var(--primary)' }}>
-                            Moves (Max: {dynamicMaxMoves})
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                            {localBuild.moves.map((m, i) => {
-                                // AUDIT FIX: Dynamically combine Base Stats + Local Generated Stats for live preview updates!
-                                const accAttr =
-                                    getBaseAttr(m.attr) + (localBuild.attr[m.attr] || localBuild.soc[m.attr] || 0);
-                                const accSkill = getBaseSkill(m.skill) + (localBuild.skills[m.skill] || 0);
-                                const accPool = accAttr + accSkill;
+                    <div className="generator-preview__section">
+                        <div className="generator-preview__section-title">Moves (Max: {dynamicMaxMoves})</div>
+                        <div className="generator-preview__grid-2">
+                            {localBuild.moves.map((move, index) => {
+                                const accuracyAttributeTotal =
+                                    getBaseAttribute(move.attr) +
+                                    (localBuild.attr[move.attr] || localBuild.soc[move.attr] || 0);
+                                const accuracySkillTotal =
+                                    getBaseSkill(move.skill) + (localBuild.skills[move.skill] || 0);
+                                const accuracyPool = accuracyAttributeTotal + accuracySkillTotal;
 
-                                const dmgAttr =
-                                    getBaseAttr(m.dmgStat) +
-                                    (localBuild.attr[m.dmgStat] || localBuild.soc[m.dmgStat] || 0);
-                                const dmgPool = m.cat === 'Status' ? '-' : m.power + dmgAttr;
+                                const damageAttributeTotal =
+                                    getBaseAttribute(move.dmgStat) +
+                                    (localBuild.attr[move.dmgStat] || localBuild.soc[move.dmgStat] || 0);
+                                const damagePool = move.cat === 'Status' ? '-' : move.power + damageAttributeTotal;
 
                                 return (
-                                    <div
-                                        key={i}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            background: 'var(--input-bg)',
-                                            border: '1px solid var(--border)',
-                                            borderRadius: '3px',
-                                            padding: '4px'
-                                        }}
-                                    >
-                                        <span
-                                            style={{
-                                                flex: 1,
-                                                minWidth: 0,
-                                                fontSize: '0.8rem',
-                                                fontWeight: 'bold',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap'
-                                            }}
-                                            title={m.name}
-                                        >
-                                            {m.name}
-                                        </span>
-                                        <span
-                                            style={{
-                                                fontSize: '0.65rem',
-                                                color: 'var(--text-muted)',
-                                                fontFamily: 'monospace',
-                                                paddingRight: '4px',
-                                                marginRight: '4px'
-                                            }}
-                                        >
-                                            [{m.cat.substring(0, 4)}] A:{accPool} | D:{dmgPool}
-                                        </span>
-                                        <button
-                                            type="button"
-                                            style={{
-                                                background: 'none',
-                                                border: 'none',
-                                                color: 'var(--primary)',
-                                                fontWeight: 'bold',
-                                                cursor: 'pointer',
-                                                padding: '0 4px'
-                                            }}
-                                            onClick={() =>
-                                                setTooltipInfo({
-                                                    title: m.name,
-                                                    desc: `Type: ${m.type} | Category: ${m.cat} | Power: ${m.power}\nAccuracy: ${m.attr.toUpperCase()} + ${m.skill.charAt(0).toUpperCase() + m.skill.slice(1)}\nDamage: ${m.dmgStat ? m.dmgStat.toUpperCase() : 'N/A'}\n\n${m.desc}`
-                                                })
-                                            }
-                                        >
-                                            ?
-                                        </button>
-                                    </div>
+                                    <GeneratorPreviewMoveRow
+                                        key={index}
+                                        move={move}
+                                        accuracyPool={accuracyPool}
+                                        damagePool={damagePool}
+                                        onOpenTooltip={setTooltipInfo}
+                                    />
                                 );
                             })}
                         </div>
                     </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', marginTop: 'auto' }}>
+                <div className="generator-preview__actions">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="action-button action-button--dark"
-                        style={{ flex: 1, padding: '6px' }}
+                        className="action-button action-button--dark generator-preview__btn-cancel"
                     >
                         Discard
                     </button>
                     <button
                         type="button"
                         onClick={onReroll}
-                        className="action-button action-button--dark"
-                        style={{ flex: 1, padding: '6px', background: '#1976d2', borderColor: '#1976d2' }}
+                        className="action-button action-button--dark generator-preview__btn-reroll"
                     >
                         🎲 Reroll
                     </button>
@@ -396,8 +205,7 @@ export function GeneratorPreviewModal({
                             applyGeneratedBuild(localBuild);
                             onClose();
                         }}
-                        className="action-button action-button--red"
-                        style={{ flex: 1, padding: '6px' }}
+                        className="action-button action-button--red generator-preview__btn-apply"
                     >
                         ✅ Apply Build
                     </button>
@@ -405,59 +213,14 @@ export function GeneratorPreviewModal({
             </div>
 
             {tooltipInfo && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundColor: 'rgba(0,0,0,0.6)',
-                        zIndex: 1200,
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                    }}
-                >
-                    <div
-                        style={{
-                            background: 'var(--panel-bg)',
-                            padding: '15px',
-                            borderRadius: '8px',
-                            width: '280px',
-                            border: '2px solid var(--primary)',
-                            color: 'var(--text-main)',
-                            boxShadow: '0 4px 15px rgba(0,0,0,0.5)'
-                        }}
-                    >
-                        <h3
-                            style={{
-                                marginTop: 0,
-                                color: 'var(--primary)',
-                                fontSize: '1.1rem',
-                                borderBottom: '1px solid var(--border)',
-                                paddingBottom: '4px',
-                                textAlign: 'center'
-                            }}
-                        >
-                            {tooltipInfo.title}
-                        </h3>
-                        <p
-                            style={{
-                                fontSize: '0.85rem',
-                                marginBottom: '15px',
-                                color: 'var(--text-muted)',
-                                whiteSpace: 'pre-wrap',
-                                lineHeight: '1.4'
-                            }}
-                        >
-                            {tooltipInfo.desc}
-                        </p>
-                        <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <div className="generator-preview-tooltip__overlay">
+                    <div className="generator-preview-tooltip__content">
+                        <h3 className="generator-preview-tooltip__title">{tooltipInfo.title}</h3>
+                        <p className="generator-preview-tooltip__desc">{tooltipInfo.desc}</p>
+                        <div className="generator-preview-tooltip__actions">
                             <button
                                 type="button"
-                                className="action-button action-button--dark"
-                                style={{ width: '100%', padding: '6px' }}
+                                className="action-button action-button--dark generator-preview-tooltip__btn"
                                 onClick={() => setTooltipInfo(null)}
                             >
                                 Close

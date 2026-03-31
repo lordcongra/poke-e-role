@@ -1,0 +1,251 @@
+.generator-preview__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1050;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.generator-preview__content {
+    background: var(--panel-bg);
+    padding: 15px;
+    border-radius: 8px;
+    width: 600px;
+    border: 2px solid var(--primary);
+    color: var(--text-main);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.generator-preview__title {
+    margin-top: 0;
+    color: var(--primary);
+    font-size: 1.1rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.generator-preview__scroll-container {
+    font-size: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.generator-preview__section {
+    background: var(--panel-alt);
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+}
+
+.generator-preview__section-title {
+    font-weight: bold;
+    margin-bottom: 4px;
+    color: var(--primary);
+}
+
+.generator-preview__section-title--spaced {
+    margin-bottom: 8px;
+}
+
+.generator-preview__grid-5 {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+}
+
+.generator-preview__grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px 15px;
+}
+
+.generator-preview__grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.generator-preview__stat-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.generator-preview__stat-label {
+    font-size: 0.7rem;
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+
+.generator-preview__skill-category {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.generator-preview__skill-category-title {
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 2px;
+}
+
+.generator-preview__skill-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+}
+
+.generator-preview__skill-label {
+    font-size: 0.7rem;
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 60px;
+}
+
+.generator-preview__actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: auto;
+}
+
+.generator-preview__btn-cancel,
+.generator-preview__btn-reroll,
+.generator-preview__btn-apply {
+    flex: 1;
+    padding: 6px;
+}
+
+.generator-preview__btn-reroll {
+    background: #1976d2;
+    border-color: #1976d2;
+}
+
+/* Spinner Component Styles */
+.generator-preview-spinner {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: var(--input-bg);
+}
+
+.generator-preview-spinner__btn {
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    padding: 2px 6px;
+    cursor: pointer;
+}
+
+.generator-preview-spinner__value {
+    width: 20px;
+    text-align: center;
+    font-size: 0.85rem;
+}
+
+/* Move Row Component Styles */
+.generator-preview-move {
+    display: flex;
+    align-items: center;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 4px;
+}
+
+.generator-preview-move__name {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.8rem;
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.generator-preview-move__stats {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    font-family: monospace;
+    padding-right: 4px;
+    margin-right: 4px;
+}
+
+.generator-preview-move__tooltip-btn {
+    background: none;
+    border: none;
+    color: var(--primary);
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0 4px;
+}
+
+/* Tooltip Modal Styles */
+.generator-preview-tooltip__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1200;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.generator-preview-tooltip__content {
+    background: var(--panel-bg);
+    padding: 15px;
+    border-radius: 8px;
+    width: 280px;
+    border: 2px solid var(--primary);
+    color: var(--text-main);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.generator-preview-tooltip__title {
+    margin-top: 0;
+    color: var(--primary);
+    font-size: 1.1rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+    text-align: center;
+}
+
+.generator-preview-tooltip__desc {
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+    color: var(--text-muted);
+    white-space: pre-wrap;
+    line-height: 1.4;
+}
+
+.generator-preview-tooltip__actions {
+    display: flex;
+    justify-content: center;
+}
+
+.generator-preview-tooltip__btn {
+    width: 100%;
+    padding: 6px;
+}
