@@ -1,0 +1,268 @@
+.homebrew-types__container {
+    display: flex;
+    flex-direction: column;
+    color: var(--text-main);
+    flex: 1;
+    min-height: 0;
+}
+
+.homebrew-types__description {
+    margin-top: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.homebrew-types__editor-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    align-items: center;
+}
+
+.homebrew-types__color-picker {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.homebrew-types__color-input {
+    width: 65px;
+    padding: 4px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--input-bg);
+    color: var(--text-main);
+    font-size: 0.8rem;
+}
+
+.homebrew-types__name-input {
+    flex: 1;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--input-bg);
+    color: var(--text-main);
+    min-width: 0;
+}
+
+.homebrew-types__gm-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: #c62828;
+    font-weight: bold;
+}
+
+.homebrew-types__matchup-panel {
+    background: var(--panel-alt);
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    margin-bottom: 15px;
+}
+
+.homebrew-types__dropdown-row {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 10px;
+}
+
+.homebrew-types__select {
+    flex: 1;
+    border: 1px solid var(--border);
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.homebrew-types__matchup-grid {
+    display: flex;
+    gap: 10px;
+}
+
+.homebrew-types__matchup-col {
+    flex: 1;
+}
+
+.homebrew-types__matchup-title {
+    font-size: 0.8rem;
+    margin: 0 0 4px 0;
+    color: var(--primary);
+}
+
+.homebrew-types__matchup-title--offensive {
+    color: #1976d2;
+}
+
+.homebrew-types__matchup-btn {
+    width: 100%;
+    font-size: 0.7rem;
+    padding: 4px;
+    margin-top: 6px;
+}
+
+.homebrew-types__matchup-btn--first {
+    margin-top: 0;
+}
+
+.homebrew-types__pill-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.homebrew-types__pill {
+    background: var(--panel-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    cursor: default;
+}
+
+.homebrew-types__pill--editable {
+    cursor: pointer;
+}
+
+.homebrew-types__actions-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.homebrew-types__btn-cancel {
+    flex: 1;
+    padding: 8px;
+}
+
+.homebrew-types__btn-save {
+    background: #00695c;
+    color: white;
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.homebrew-types__list-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+    padding-right: 4px;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    flex: 1;
+    overscroll-behavior: contain;
+}
+
+.homebrew-types__empty-list {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.homebrew-types__list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--panel-alt);
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.homebrew-types__list-badge {
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
+    cursor: default;
+}
+
+.homebrew-types__list-badge--editable {
+    cursor: pointer;
+}
+
+.homebrew-types__list-delete {
+    background: transparent;
+    border: none;
+    color: #c62828;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.homebrew-types__footer {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+}
+
+.homebrew-types__footer-btn {
+    flex: 1;
+    padding: 8px;
+}
+
+/* Modals */
+.homebrew-types__modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1300;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.homebrew-types__modal-content {
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: 6px;
+    max-width: 400px;
+    width: 90%;
+    border: 2px solid #c62828;
+    text-align: center;
+}
+
+.homebrew-types__modal-title {
+    color: #c62828;
+    margin-top: 0;
+}
+
+.homebrew-types__modal-text {
+    font-size: 0.9rem;
+    color: var(--text-main);
+    margin-bottom: 20px;
+}
+
+.homebrew-types__modal-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.homebrew-types__modal-btn {
+    flex: 1;
+    padding: 8px;
+}
+
+.homebrew-types__modal-btn--merge {
+    background: #1976d2;
+    color: white;
+}

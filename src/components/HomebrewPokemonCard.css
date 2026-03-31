@@ -1,0 +1,180 @@
+.homebrew-pokemon-card {
+    background: var(--panel-alt);
+    border: 2px solid var(--primary);
+    border-radius: 6px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.homebrew-pokemon-card__header {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.homebrew-pokemon-card__name-input {
+    flex: 1;
+    padding: 6px;
+    font-weight: bold;
+    background: var(--input-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+}
+
+.homebrew-pokemon-card__gm-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    color: #c62828;
+    font-weight: bold;
+}
+
+.homebrew-pokemon-card__delete-btn {
+    padding: 6px 12px;
+}
+
+.homebrew-pokemon-card__types-row {
+    display: flex;
+    gap: 8px;
+}
+
+.homebrew-pokemon-card__type-select {
+    flex: 1;
+    padding: 4px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.homebrew-pokemon-card__stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.homebrew-pokemon-card__stat-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--row-even);
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.homebrew-pokemon-card__stat-label {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: var(--text-muted);
+}
+
+.homebrew-pokemon-card__stat-inputs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.homebrew-pokemon-card__stat-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.homebrew-pokemon-card__stat-sublabel {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+    font-weight: bold;
+}
+
+.homebrew-pokemon-card__spinner-wrapper {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+}
+
+.homebrew-pokemon-card__stat-divider {
+    color: var(--text-muted);
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.homebrew-pokemon-card__abilities-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.homebrew-pokemon-card__ability-input {
+    padding: 4px;
+    background: var(--input-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.homebrew-pokemon-card__learnset-section {
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+}
+
+.homebrew-pokemon-card__learnset-title {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: var(--primary);
+}
+
+.homebrew-pokemon-card__learnset-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.homebrew-pokemon-card__learnset-rank-box {
+    background: var(--row-odd);
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+}
+
+.homebrew-pokemon-card__learnset-rank-title {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: var(--primary);
+    margin-bottom: 4px;
+}
+
+.homebrew-pokemon-card__learnset-add-btn {
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    margin-top: 2px;
+}
+
+.homebrew-pokemon-card__learnset-row {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+.homebrew-pokemon-card__learnset-input {
+    flex: 1;
+    padding: 4px;
+    background: var(--input-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.homebrew-pokemon-card__learnset-remove-btn {
+    padding: 0 6px;
+}

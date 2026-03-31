@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCharacterStore } from '../store/useCharacterStore';
+import './HomebrewPokemonCard.css';
 
 interface LearnsetMoveRowProps {
     pokemonId: string;
@@ -32,7 +33,7 @@ export function LearnsetMoveRow({ pokemonId, moveIndex, move, currentMoves, canE
     };
 
     return (
-        <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
+        <div className="homebrew-pokemon-card__learnset-row">
             <input
                 type="text"
                 value={localName}
@@ -41,21 +42,12 @@ export function LearnsetMoveRow({ pokemonId, moveIndex, move, currentMoves, canE
                 list="hb-move-list"
                 placeholder="Move Name"
                 disabled={!canEdit}
-                style={{
-                    flex: 1,
-                    padding: '4px',
-                    background: 'var(--input-bg)',
-                    color: 'var(--text-main)',
-                    border: '1px solid var(--border)',
-                    borderRadius: '4px',
-                    fontSize: '0.8rem'
-                }}
+                className="homebrew-pokemon-card__learnset-input"
             />
             {canEdit && (
                 <button
                     onClick={handleRemove}
-                    className="action-button action-button--red"
-                    style={{ padding: '0 6px' }}
+                    className="action-button action-button--red homebrew-pokemon-card__learnset-remove-btn"
                 >
                     X
                 </button>
