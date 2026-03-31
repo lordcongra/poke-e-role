@@ -3,6 +3,7 @@ import { useCharacterStore } from '../store/useCharacterStore';
 import type { Skill } from '../types/enums';
 import { NumberSpinner } from './NumberSpinner';
 import { parseCombatTags, getAbilityText } from '../utils/combatMath';
+import './SkillRow.css';
 
 interface SkillRowProps {
     skill: Skill;
@@ -30,39 +31,26 @@ export function SkillRow({ skill, defaultLabel }: SkillRowProps) {
 
     return (
         <tr className="data-table__row--dynamic">
-            <td className="data-table__cell--middle-left" style={{ paddingLeft: '4px' }}>
+            <td className="data-table__cell--middle-left skill-row__input-cell">
                 <input
                     type="text"
                     value={localName}
-                    onChange={(e) => setLocalName(e.target.value)}
+                    onChange={(event) => setLocalName(event.target.value)}
                     onBlur={() => setSkill(skill, 'customName', localName || defaultLabel)}
-                    style={{
-                        background: 'var(--bg)',
-                        border: '1px solid var(--border)',
-                        borderRadius: '3px',
-                        boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)',
-                        color: 'var(--text-main)',
-                        fontWeight: 'bold',
-                        width: '90px',
-                        padding: '3px 4px',
-                        outline: 'none'
-                    }}
+                    className="skill-row__input"
                 />
             </td>
             <td className="data-table__cell--middle">
                 <div className="flex-layout--row-center">
-                    <NumberSpinner value={data.base} onChange={(val) => setSkill(skill, 'base', val)} min={0} max={5} />
+                    <NumberSpinner value={data.base} onChange={(value) => setSkill(skill, 'base', value)} min={0} max={5} />
                 </div>
             </td>
             <td className="data-table__cell--middle">
                 <div className="flex-layout--row-center">
-                    <NumberSpinner value={data.buff} onChange={(val) => setSkill(skill, 'buff', val)} min={0} />
+                    <NumberSpinner value={data.buff} onChange={(value) => setSkill(skill, 'buff', value)} min={0} />
                 </div>
             </td>
-            <td
-                className="data-table__cell--middle"
-                style={{ fontWeight: 'bold', color: 'var(--primary)', fontSize: '1rem' }}
-            >
+            <td className="data-table__cell--middle skill-row__total-cell">
                 {total}
             </td>
         </tr>

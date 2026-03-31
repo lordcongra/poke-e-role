@@ -1,0 +1,21 @@
+.skill-row__input-cell {
+    padding-left: 4px;
+}
+
+.skill-row__input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+    color: var(--text-main);
+    font-weight: bold;
+    width: 90px;
+    padding: 3px 4px;
+    outline: none;
+}
+
+.skill-row__total-cell {
+    font-weight: bold;
+    color: var(--primary);
+    font-size: 1rem;
+}

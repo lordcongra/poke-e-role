@@ -1,0 +1,86 @@
+.action-rolls__header-row {
+    background-color: #333333;
+    color: white;
+    font-size: 0.8rem;
+}
+
+.action-rolls__name-column {
+    width: 40%;
+}
+
+.action-rolls__button-column {
+    width: 35px;
+    text-align: center;
+}
+
+.action-rolls__row {
+    font-size: 0.85rem;
+}
+
+.action-rolls__input {
+    width: 100%;
+    padding: 4px;
+}
+
+.action-rolls__select-cell {
+    padding: 2px;
+}
+
+.action-rolls__select {
+    width: 100%;
+    padding: 2px;
+    border: 1px solid var(--border);
+}
+
+.action-rolls__icon-btn {
+    padding: 2px 6px;
+    cursor: pointer;
+}
+
+.action-rolls__add-btn {
+    width: 100%;
+    margin-top: 4px;
+    background-color: #1976d2;
+    border-color: #1976d2;
+}
+
+.action-rolls__modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1200;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.action-rolls__modal-content {
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: 6px;
+    max-width: 300px;
+    width: 90%;
+    border: 2px solid #c62828;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    text-align: center;
+}
+
+.action-rolls__modal-title {
+    color: #c62828;
+    margin-top: 0;
+    font-size: 1.1rem;
+}
+
+.action-rolls__modal-text {
+    font-size: 0.9rem;
+    color: var(--text-main);
+    margin-bottom: 20px;
+}
+
+.action-rolls__modal-actions {
+    display: flex;
+    gap: 10px;
+}

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import './CategoryHeader.css';
 
 interface CategoryHeaderProps {
     title: ReactNode;
@@ -6,8 +7,8 @@ interface CategoryHeaderProps {
 
 export function CategoryHeader({ title }: CategoryHeaderProps) {
     return (
-        <tr style={{ background: '#C62828', color: 'white' }}>
-            <th style={{ textAlign: 'left', paddingLeft: '6px' }}>{title}</th>
+        <tr className="category-header__row">
+            <th className="category-header__title">{title}</th>
             <th>Base</th>
             <th>Buff</th>
             <th>Total</th>
