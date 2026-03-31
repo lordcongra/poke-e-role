@@ -42,7 +42,12 @@ export function SkillRow({ skill, defaultLabel }: SkillRowProps) {
             </td>
             <td className="data-table__cell--middle">
                 <div className="flex-layout--row-center">
-                    <NumberSpinner value={data.base} onChange={(value) => setSkill(skill, 'base', value)} min={0} max={5} />
+                    <NumberSpinner
+                        value={data.base}
+                        onChange={(value) => setSkill(skill, 'base', value)}
+                        min={0}
+                        max={5}
+                    />
                 </div>
             </td>
             <td className="data-table__cell--middle">
@@ -50,9 +55,7 @@ export function SkillRow({ skill, defaultLabel }: SkillRowProps) {
                     <NumberSpinner value={data.buff} onChange={(value) => setSkill(skill, 'buff', value)} min={0} />
                 </div>
             </td>
-            <td className="data-table__cell--middle skill-row__total-cell">
-                {total}
-            </td>
+            <td className="data-table__cell--middle skill-row__total-cell">{total}</td>
         </tr>
     );
 }

@@ -1,0 +1,136 @@
+.timer-box {
+    flex: 1;
+    padding: 0;
+    border: 1px solid #4fc3f7;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.timer-box__header {
+    background: #4fc3f7;
+    color: white;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.85rem;
+    padding: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.timer-box__header-title {
+    padding-left: 4px;
+}
+
+.timer-box__add-btn {
+    background: transparent;
+    padding: 0 4px;
+    text-shadow: none;
+}
+
+.timer-box__content {
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+    max-height: 80px;
+}
+
+.timer-box__empty {
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.8rem;
+}
+
+.timer-box__row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+.timer-box__name-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text-main);
+    font-size: 0.75rem;
+    min-width: 60px;
+    outline: none;
+}
+
+.timer-box__rounds-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.timer-box__rounds-input {
+    width: 35px;
+    border: 1px solid var(--border);
+    font-size: 0.75rem;
+    text-align: center;
+    background: var(--input-bg);
+    color: var(--text-main);
+    border-radius: 3px;
+}
+
+.timer-box__icon-btn {
+    padding: 0 4px;
+}
+
+.timer-box__modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1400;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.timer-box__modal-content {
+    background: var(--panel-bg);
+    padding: 15px;
+    border-radius: 8px;
+    width: 280px;
+    border: 2px solid var(--primary);
+    color: var(--text-main);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.timer-box__modal-title {
+    margin-top: 0;
+    color: var(--primary);
+    font-size: 1.1rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+    text-align: center;
+}
+
+.timer-box__modal-desc {
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+    color: var(--text-muted);
+    white-space: pre-wrap;
+    line-height: 1.4;
+}
+
+.timer-box__modal-btn-container {
+    display: flex;
+    justify-content: center;
+}
+
+.timer-box__modal-btn {
+    width: 100%;
+    padding: 6px;
+}

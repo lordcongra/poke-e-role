@@ -87,7 +87,9 @@ export function SkillsTable() {
                                             <input
                                                 type="text"
                                                 value={category.name}
-                                                onChange={(event) => updateExtraCategory(category.id, event.target.value)}
+                                                onChange={(event) =>
+                                                    updateExtraCategory(category.id, event.target.value)
+                                                }
                                                 placeholder="CAT NAME"
                                                 className="skills-table__custom-category-input"
                                             />
@@ -110,7 +112,12 @@ export function SkillsTable() {
                                                 type="text"
                                                 value={extraSkill.name}
                                                 onChange={(event) =>
-                                                    updateExtraSkill(category.id, extraSkill.id, 'name', event.target.value)
+                                                    updateExtraSkill(
+                                                        category.id,
+                                                        extraSkill.id,
+                                                        'name',
+                                                        event.target.value
+                                                    )
                                                 }
                                                 placeholder="Skill"
                                                 className="skills-table__custom-skill-input"

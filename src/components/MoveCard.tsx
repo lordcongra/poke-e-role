@@ -1,4 +1,3 @@
-// src/components/MoveCard.tsx
 import { useState } from 'react';
 import { useCharacterStore } from '../store/useCharacterStore';
 import type { MoveData, SkillData, ExtraCategory } from '../store/storeTypes';
@@ -73,11 +72,11 @@ export function MoveCard({
 
     const [editModalOpen, setEditModalOpen] = useState(false);
 
-    const handleNameBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
-        const val = e.target.value.trim();
-        if (val) {
-            const data = await fetchMoveData(val);
-            if (data) applyMoveData(move.id, data);
+    const handleNameBlur = async (event: React.FocusEvent<HTMLInputElement>) => {
+        const value = event.target.value.trim();
+        if (value) {
+            const data = await fetchMoveData(value);
+            if (data) applyMoveData(move.id, data as Record<string, unknown>);
         }
     };
 

@@ -1,4 +1,3 @@
-// src/hooks/useOwlbearSync.ts
 import { useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../store/useCharacterStore';
@@ -82,7 +81,6 @@ export function useOwlbearSync() {
                         if (meta) {
                             loadFromOwlbear(meta);
 
-                            // AUDIT FIX: Auto-Migrate V1.8 Moves to V2.0 formats if the token hasn't been flagged yet!
                             const isOldToken = meta['v2-migrated'] !== true;
                             if (isOldToken) {
                                 const store = useCharacterStore.getState();
@@ -90,7 +88,10 @@ export function useOwlbearSync() {
                                     if (move.name) {
                                         fetchMoveData(move.name)
                                             .then((data) => {
-                                                if (data) useCharacterStore.getState().applyMoveData(move.id, data);
+                                                if (data)
+                                                    useCharacterStore
+                                                        .getState()
+                                                        .applyMoveData(move.id, data as Record<string, unknown>);
                                             })
                                             .catch(() => {});
                                     }

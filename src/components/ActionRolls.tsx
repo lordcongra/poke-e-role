@@ -65,7 +65,8 @@ export function ActionRolls() {
                                         <option value="none">-- None --</option>
                                         {Object.values(Skill).map((skill) => (
                                             <option key={skill} value={skill.toLowerCase()}>
-                                                {skills[skill].customName || skill.charAt(0).toUpperCase() + skill.slice(1)}
+                                                {skills[skill].customName ||
+                                                    skill.charAt(0).toUpperCase() + skill.slice(1)}
                                             </option>
                                         ))}
                                         {extraCategories.map((category) => (

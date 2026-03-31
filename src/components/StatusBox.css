@@ -1,0 +1,125 @@
+.status-box {
+    flex: 1;
+    padding: 0;
+    border: 1px solid #7e57c2;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.status-box__header {
+    background: #7e57c2;
+    color: white;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.85rem;
+    padding: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-box__header-title {
+    padding-left: 4px;
+}
+
+.status-box__add-btn {
+    background: transparent;
+    padding: 0 4px;
+    text-shadow: none;
+}
+
+.status-box__content {
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+    max-height: 80px;
+}
+
+.status-box__row {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+}
+
+.status-box__select {
+    flex: 1;
+    font-weight: bold;
+    font-size: 0.75rem;
+    padding: 2px;
+}
+
+.status-box__custom-input {
+    flex: 1;
+    border: 1px solid var(--border);
+    font-size: 0.75rem;
+    padding: 2px;
+    background: var(--input-bg);
+    color: var(--text-main);
+}
+
+.status-box__rounds-input {
+    width: 35px;
+    border: 1px solid var(--border);
+    font-size: 0.75rem;
+    text-align: center;
+    background: var(--input-bg);
+    color: var(--text-main);
+}
+
+.status-box__icon-btn {
+    padding: 0 4px;
+}
+
+.status-box__modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1400;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.status-box__modal-content {
+    background: var(--panel-bg);
+    padding: 15px;
+    border-radius: 8px;
+    width: 280px;
+    border: 2px solid var(--primary);
+    color: var(--text-main);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.status-box__modal-title {
+    margin-top: 0;
+    color: var(--primary);
+    font-size: 1.1rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+    text-align: center;
+}
+
+.status-box__modal-desc {
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+    color: var(--text-muted);
+    white-space: pre-wrap;
+    line-height: 1.4;
+}
+
+.status-box__modal-btn-container {
+    display: flex;
+    justify-content: center;
+}
+
+.status-box__modal-btn {
+    width: 100%;
+    padding: 6px;
+}
