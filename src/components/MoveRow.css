@@ -1,0 +1,70 @@
+.move-row {
+    transition: opacity 0.2s ease;
+}
+
+.move-row--inactive {
+    opacity: 0.5;
+}
+
+.move-row__checkbox {
+    cursor: pointer;
+    transform: scale(1.1);
+}
+
+.move-row__accuracy-text {
+    font-weight: bold;
+    font-size: 0.9em;
+    color: var(--text-main);
+    min-width: 1em;
+    text-align: right;
+}
+
+.move-row__roll-btn {
+    padding: 2px 6px;
+}
+
+.move-row__name-container {
+    display: flex;
+    align-items: center;
+}
+
+.move-row__name-input {
+    flex: 1;
+    min-width: 80px;
+}
+
+.move-row__edit-btn {
+    color: var(--primary);
+    padding: 0 2px;
+    font-size: 0.8rem;
+}
+
+.move-row__select-stat {
+    min-width: 50px;
+}
+
+.move-row__select-skill {
+    min-width: 70px;
+}
+
+.move-row__type-select {
+    font-weight: bold;
+    border-radius: 4px;
+}
+
+.move-row__damage-text {
+    font-weight: bold;
+    font-size: 0.9em;
+    color: var(--primary);
+    min-width: 1em;
+    text-align: right;
+}
+
+.move-row__sort-btn {
+    padding: 0 6px;
+    font-size: 0.6rem;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+}

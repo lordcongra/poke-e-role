@@ -1,0 +1,197 @@
+.moves-table__header-elements {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.moves-table__max-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: normal;
+    margin-left: 4px;
+}
+
+.moves-table__desktop-modifiers {
+    font-size: 0.75rem;
+    gap: 4px;
+    background: var(--label-bg);
+    padding: 2px 4px;
+    border-radius: 3px;
+    align-items: center;
+    font-weight: normal;
+    color: var(--text-muted);
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-left: auto;
+}
+
+.moves-table__modifier-item {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    white-space: nowrap;
+}
+
+.moves-table__modifier-pain {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: 4px;
+    border-left: 1px solid var(--border);
+    padding-left: 4px;
+    white-space: nowrap;
+}
+
+.moves-table__chance-roll-btn {
+    padding: 1px 4px;
+}
+
+.moves-table__mobile-modifiers-btn {
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    margin-left: auto;
+}
+
+.moves-table__header-row {
+    text-align: left;
+}
+
+.moves-table__th-checkbox {
+    width: 25px;
+    text-align: center;
+}
+
+.moves-table__th-acc {
+    width: 45px;
+    text-align: center;
+}
+
+.moves-table__th-dmg {
+    width: 45px;
+    text-align: center;
+}
+
+.moves-table__th-sort,
+.moves-table__th-del {
+    width: 30px;
+    text-align: center;
+}
+
+.moves-table__mobile-card-container {
+    flex-direction: column;
+    width: 100%;
+}
+
+.moves-table__learnset-section {
+    margin-top: 8px;
+}
+
+.moves-table__learnset-toggle-btn {
+    width: 100%;
+    font-size: 0.8rem;
+    padding: 4px;
+    margin: 0;
+}
+
+.moves-table__learnset-container {
+    border: 1px solid var(--border);
+    padding: 8px;
+    border-radius: 4px;
+    background: var(--panel-alt);
+    margin-top: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 0.8rem;
+}
+
+.moves-table__learnset-rank-group {
+    margin-bottom: 6px;
+}
+
+.moves-table__learnset-rank-title {
+    font-weight: bold;
+    color: var(--primary);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+    text-transform: capitalize;
+}
+
+.moves-table__learnset-moves-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.moves-table__learnset-pill {
+    background: var(--label-bg);
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.moves-table__modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1200;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.moves-table__modal-content {
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: 6px;
+    max-width: 300px;
+    width: 90%;
+    border: 2px solid #c62828;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    text-align: center;
+}
+
+.moves-table__modal-content--tooltip {
+    padding: 15px;
+    border-radius: 8px;
+    width: 280px;
+    border: 2px solid var(--primary);
+    color: var(--text-main);
+}
+
+.moves-table__modal-title {
+    color: #c62828;
+    margin-top: 0;
+    font-size: 1.1rem;
+}
+
+.moves-table__modal-title--tooltip {
+    color: var(--primary);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+}
+
+.moves-table__modal-text {
+    font-size: 0.9rem;
+    color: var(--text-main);
+    margin-bottom: 20px;
+}
+
+.moves-table__modal-text--tooltip {
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+    color: var(--text-muted);
+    white-space: pre-wrap;
+    line-height: 1.4;
+    text-align: left;
+}
+
+.moves-table__modal-actions {
+    display: flex;
+    gap: 10px;
+}

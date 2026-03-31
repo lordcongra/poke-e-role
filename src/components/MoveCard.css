@@ -1,0 +1,164 @@
+.move-card {
+    background: var(--row-odd);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: opacity 0.2s ease;
+}
+
+.move-card--inactive {
+    opacity: 0.5;
+}
+
+.move-card__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+.move-card__checkbox {
+    cursor: pointer;
+    transform: scale(1.4);
+    flex-shrink: 0;
+    margin: 0 4px;
+}
+
+.move-card__accuracy-text {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--text-main);
+    text-align: center;
+    min-width: 20px;
+    flex-shrink: 0;
+}
+
+.move-card__roll-btn {
+    padding: 6px 10px;
+    flex-shrink: 0;
+}
+
+.move-card__name-input {
+    flex: 1;
+    min-width: 80px;
+    padding: 6px 8px;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-main);
+    outline: none;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.move-card__edit-btn {
+    color: var(--primary);
+    padding: 4px;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.move-card__row {
+    display: flex;
+    gap: 8px;
+}
+
+.move-card__select {
+    flex: 1;
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    outline: none;
+    font-weight: bold;
+}
+
+.move-card__stat-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.move-card__stat-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--panel-alt);
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+}
+
+.move-card__stat-label {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: var(--text-muted);
+    width: 35px;
+}
+
+.move-card__stat-select {
+    flex: 1;
+    min-width: 0;
+    padding: 4px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: var(--input-bg);
+    color: var(--text-main);
+}
+
+.move-card__plus-sign {
+    font-weight: bold;
+}
+
+.move-card__plus-sign--right {
+    font-weight: bold;
+    margin-left: auto;
+}
+
+.move-card__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+}
+
+.move-card__damage-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.move-card__damage-text {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--primary);
+    min-width: 20px;
+    text-align: center;
+}
+
+.move-card__damage-btn {
+    padding: 6px 14px;
+}
+
+.move-card__sort-container {
+    display: flex;
+    gap: 6px;
+}
+
+.move-card__sort-btn {
+    height: 32px;
+    width: 36px;
+    font-size: 1rem;
+}
+
+.move-card__delete-btn {
+    height: 32px;
+    padding: 0 12px;
+    margin-left: 4px;
+}
