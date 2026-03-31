@@ -19,7 +19,10 @@ export function HomebrewMoves() {
 
     const filteredTypes = roomCustomTypes.filter((type) => role === 'GM' || !type.gmOnly);
     const allTypes = [...POKEMON_TYPES, ...filteredTypes.map((type) => type.name)];
-    const allTypeColors = { ...TYPE_COLORS, ...Object.fromEntries(filteredTypes.map((type) => [type.name, type.color])) };
+    const allTypeColors = {
+        ...TYPE_COLORS,
+        ...Object.fromEntries(filteredTypes.map((type) => [type.name, type.color]))
+    };
 
     const fileReference = useRef<HTMLInputElement>(null);
     const [importData, setImportData] = useState<CustomMove[] | null>(null);
@@ -64,7 +67,8 @@ export function HomebrewMoves() {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', height: '100%' }}>
             <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                Create custom moves. These will appear in the move dropdowns and automatically populate their formulas when selected.
+                Create custom moves. These will appear in the move dropdowns and automatically populate their formulas
+                when selected.
             </p>
 
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -144,7 +148,11 @@ export function HomebrewMoves() {
                     paddingTop: '10px'
                 }}
             >
-                <button onClick={handleExport} className="action-button action-button--dark" style={{ flex: 1, padding: '8px' }}>
+                <button
+                    onClick={handleExport}
+                    className="action-button action-button--dark"
+                    style={{ flex: 1, padding: '8px' }}
+                >
                     💾 Export Moves
                 </button>
                 {canEdit && (
@@ -156,7 +164,13 @@ export function HomebrewMoves() {
                         >
                             📂 Import Moves
                         </button>
-                        <input type="file" ref={fileReference} onChange={handleImport} style={{ display: 'none' }} accept=".json" />
+                        <input
+                            type="file"
+                            ref={fileReference}
+                            onChange={handleImport}
+                            style={{ display: 'none' }}
+                            accept=".json"
+                        />
                     </>
                 )}
             </div>

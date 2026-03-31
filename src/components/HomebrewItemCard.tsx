@@ -96,7 +96,11 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove }: HomebrewItem
                     </button>
                 )}
                 {canEdit && (
-                    <button onClick={onRemove} className="action-button action-button--red" style={{ padding: '6px 12px' }}>
+                    <button
+                        onClick={onRemove}
+                        className="action-button action-button--red"
+                        style={{ padding: '6px 12px' }}
+                    >
                         Delete
                     </button>
                 )}
@@ -130,7 +134,11 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove }: HomebrewItem
             )}
 
             {showTagBuilder && (
-                <TagBuilderModal targetId={item.id} targetType="homebrew_item" onClose={() => setShowTagBuilder(false)} />
+                <TagBuilderModal
+                    targetId={item.id}
+                    targetType="homebrew_item"
+                    onClose={() => setShowTagBuilder(false)}
+                />
             )}
         </div>
     );

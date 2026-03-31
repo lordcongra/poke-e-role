@@ -52,7 +52,11 @@ export function LearnsetMoveRow({ pokemonId, moveIndex, move, currentMoves, canE
                 }}
             />
             {canEdit && (
-                <button onClick={handleRemove} className="action-button action-button--red" style={{ padding: '0 6px' }}>
+                <button
+                    onClick={handleRemove}
+                    className="action-button action-button--red"
+                    style={{ padding: '0 6px' }}
+                >
                     X
                 </button>
             )}

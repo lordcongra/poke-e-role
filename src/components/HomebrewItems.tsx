@@ -58,8 +58,8 @@ export function HomebrewItems() {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', height: '100%' }}>
             <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                Create custom items. These will appear in the Bag dropdown, automatically loading their tags and descriptions when
-                selected!
+                Create custom items. These will appear in the Bag dropdown, automatically loading their tags and
+                descriptions when selected!
             </p>
 
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -137,7 +137,11 @@ export function HomebrewItems() {
                     paddingTop: '10px'
                 }}
             >
-                <button onClick={handleExport} className="action-button action-button--dark" style={{ flex: 1, padding: '8px' }}>
+                <button
+                    onClick={handleExport}
+                    className="action-button action-button--dark"
+                    style={{ flex: 1, padding: '8px' }}
+                >
                     💾 Export Items
                 </button>
                 {canEdit && (
@@ -149,7 +153,13 @@ export function HomebrewItems() {
                         >
                             📂 Import Items
                         </button>
-                        <input type="file" ref={fileReference} onChange={handleImport} style={{ display: 'none' }} accept=".json" />
+                        <input
+                            type="file"
+                            ref={fileReference}
+                            onChange={handleImport}
+                            style={{ display: 'none' }}
+                            accept=".json"
+                        />
                     </>
                 )}
             </div>

@@ -14,7 +14,14 @@ interface HomebrewPokemonCardProps {
     onRemove: () => void;
 }
 
-export function HomebrewPokemonCard({ pokemon, allTypes, allTypeColors, role, canEdit, onRemove }: HomebrewPokemonCardProps) {
+export function HomebrewPokemonCard({
+    pokemon,
+    allTypes,
+    allTypeColors,
+    role,
+    canEdit,
+    onRemove
+}: HomebrewPokemonCardProps) {
     const updateCustomPokemon = useCharacterStore((state) => state.updateCustomPokemon);
 
     const [localName, setLocalName] = useState(pokemon.Name);
@@ -62,7 +69,14 @@ export function HomebrewPokemonCard({ pokemon, allTypes, allTypeColors, role, ca
                 <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>{label}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginBottom: '2px', fontWeight: 'bold' }}>
+                        <span
+                            style={{
+                                fontSize: '0.6rem',
+                                color: 'var(--text-muted)',
+                                marginBottom: '2px',
+                                fontWeight: 'bold'
+                            }}
+                        >
                             Base
                         </span>
                         <div style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.5)', borderRadius: '4px' }}>
@@ -91,7 +105,9 @@ export function HomebrewPokemonCard({ pokemon, allTypes, allTypeColors, role, ca
                                 <div style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.5)', borderRadius: '4px' }}>
                                     <NumberSpinner
                                         value={maxValue}
-                                        onChange={(value) => canEdit && updateCustomPokemon(pokemon.id, maxField, value)}
+                                        onChange={(value) =>
+                                            canEdit && updateCustomPokemon(pokemon.id, maxField, value)
+                                        }
                                         min={0}
                                         disabled={!canEdit}
                                     />
@@ -129,7 +145,9 @@ export function HomebrewPokemonCard({ pokemon, allTypes, allTypeColors, role, ca
                     type="text"
                     value={localName}
                     onChange={(event) => canEdit && setLocalName(event.target.value)}
-                    onBlur={() => canEdit && localName !== pokemon.Name && updateCustomPokemon(pokemon.id, 'Name', localName)}
+                    onBlur={() =>
+                        canEdit && localName !== pokemon.Name && updateCustomPokemon(pokemon.id, 'Name', localName)
+                    }
                     placeholder="Pokémon Species Name"
                     disabled={!canEdit}
                     style={{
@@ -165,7 +183,11 @@ export function HomebrewPokemonCard({ pokemon, allTypes, allTypeColors, role, ca
                     </label>
                 )}
                 {canEdit && (
-                    <button onClick={onRemove} className="action-button action-button--red" style={{ padding: '6px 12px' }}>
+                    <button
+                        onClick={onRemove}
+                        className="action-button action-button--red"
+                        style={{ padding: '6px 12px' }}
+                    >
                         Delete
                     </button>
                 )}
@@ -176,7 +198,9 @@ export function HomebrewPokemonCard({ pokemon, allTypes, allTypeColors, role, ca
                     <div style={{ display: 'flex', gap: '8px' }}>
                         <select
                             value={pokemon.Type1}
-                            onChange={(event) => canEdit && updateCustomPokemon(pokemon.id, 'Type1', event.target.value)}
+                            onChange={(event) =>
+                                canEdit && updateCustomPokemon(pokemon.id, 'Type1', event.target.value)
+                            }
                             disabled={!canEdit}
                             style={{
                                 flex: 1,
@@ -197,7 +221,9 @@ export function HomebrewPokemonCard({ pokemon, allTypes, allTypeColors, role, ca
                         </select>
                         <select
                             value={pokemon.Type2}
-                            onChange={(event) => canEdit && updateCustomPokemon(pokemon.id, 'Type2', event.target.value)}
+                            onChange={(event) =>
+                                canEdit && updateCustomPokemon(pokemon.id, 'Type2', event.target.value)
+                            }
                             disabled={!canEdit}
                             style={{
                                 flex: 1,

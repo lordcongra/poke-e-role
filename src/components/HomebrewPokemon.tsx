@@ -22,7 +22,10 @@ export function HomebrewPokemon() {
 
     const filteredTypes = roomCustomTypes.filter((type) => role === 'GM' || !type.gmOnly);
     const allTypes = [...POKEMON_TYPES, ...filteredTypes.map((type) => type.name)];
-    const allTypeColors = { ...TYPE_COLORS, ...Object.fromEntries(filteredTypes.map((type) => [type.name, type.color])) };
+    const allTypeColors = {
+        ...TYPE_COLORS,
+        ...Object.fromEntries(filteredTypes.map((type) => [type.name, type.color]))
+    };
 
     const abilityOptions = Array.from(
         new Set([
@@ -82,8 +85,8 @@ export function HomebrewPokemon() {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', flex: 1, minHeight: 0 }}>
             <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                Create custom Pokémon or Boss monsters. Entering their name in the Character Identity panel will automatically build
-                their sheet.
+                Create custom Pokémon or Boss monsters. Entering their name in the Character Identity panel will
+                automatically build their sheet.
             </p>
 
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -174,7 +177,11 @@ export function HomebrewPokemon() {
                     paddingTop: '10px'
                 }}
             >
-                <button onClick={handleExport} className="action-button action-button--dark" style={{ flex: 1, padding: '8px' }}>
+                <button
+                    onClick={handleExport}
+                    className="action-button action-button--dark"
+                    style={{ flex: 1, padding: '8px' }}
+                >
                     💾 Export Pokémon
                 </button>
                 {canEdit && (
@@ -186,7 +193,13 @@ export function HomebrewPokemon() {
                         >
                             📂 Import Pokémon
                         </button>
-                        <input type="file" ref={fileReference} onChange={handleImport} style={{ display: 'none' }} accept=".json" />
+                        <input
+                            type="file"
+                            ref={fileReference}
+                            onChange={handleImport}
+                            style={{ display: 'none' }}
+                            accept=".json"
+                        />
                     </>
                 )}
             </div>

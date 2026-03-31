@@ -1,0 +1,44 @@
+.social-table__header-row {
+    background-color: #555555;
+    color: white;
+}
+
+.social-table__header-cell {
+    padding: 4px;
+}
+
+.social-table__statistic-label {
+    color: #111111;
+    font-weight: bold;
+    width: 60px;
+}
+
+.social-table__total-cell {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.social-table__footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 4px 0 4px;
+    border-top: 1px solid var(--border);
+    font-size: 0.85rem;
+    margin-top: 6px;
+}
+
+.social-table__max-label {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.75rem;
+}
+
+.social-table__extra-container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.social-table__negative-remaining {
+    color: #f44336;
+}

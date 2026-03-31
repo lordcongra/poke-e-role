@@ -1,0 +1,38 @@
+.core-table__header-row {
+    background-color: #555555;
+    color: white;
+}
+
+.core-table__header-cell {
+    padding: 4px;
+}
+
+.core-table__statistic-label {
+    color: white;
+    font-weight: bold;
+    width: 45px;
+}
+
+.core-table__total-cell {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.core-table__footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 4px 0 4px;
+    border-top: 1px solid var(--border);
+    font-size: 0.85rem;
+    margin-top: 6px;
+}
+
+.core-table__extra-container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.core-table__negative-remaining {
+    color: #f44336;
+}

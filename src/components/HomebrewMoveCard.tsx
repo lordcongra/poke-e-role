@@ -100,7 +100,11 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                     </button>
                 )}
                 {canEdit && (
-                    <button onClick={onRemove} className="action-button action-button--red" style={{ padding: '6px 12px' }}>
+                    <button
+                        onClick={onRemove}
+                        className="action-button action-button--red"
+                        style={{ padding: '6px 12px' }}
+                    >
                         Delete
                     </button>
                 )}
@@ -134,7 +138,12 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                         <select
                             value={move.category}
                             onChange={(event) =>
-                                canEdit && updateCustomMove(move.id, 'category', event.target.value as 'Physical' | 'Special' | 'Status')
+                                canEdit &&
+                                updateCustomMove(
+                                    move.id,
+                                    'category',
+                                    event.target.value as 'Physical' | 'Special' | 'Status'
+                                )
                             }
                             disabled={!canEdit}
                             style={{
@@ -161,7 +170,9 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                                 background: 'var(--input-bg)'
                             }}
                         >
-                            <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>Power:</span>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>
+                                Power:
+                            </span>
                             <NumberSpinner
                                 value={move.power}
                                 onChange={(value) => canEdit && updateCustomMove(move.id, 'power', value)}
@@ -181,7 +192,9 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                             border: '1px solid var(--border)'
                         }}
                     >
-                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>Accuracy:</span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>
+                            Accuracy:
+                        </span>
                         <select
                             value={move.acc1}
                             onChange={(event) => canEdit && updateCustomMove(move.id, 'acc1', event.target.value)}
@@ -236,7 +249,9 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                             border: '1px solid var(--border)'
                         }}
                     >
-                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>Damage:</span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>
+                            Damage:
+                        </span>
                         <select
                             value={move.dmg1}
                             onChange={(event) => canEdit && updateCustomMove(move.id, 'dmg1', event.target.value)}
@@ -263,7 +278,9 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                         value={localDescription}
                         onChange={(event) => canEdit && setLocalDescription(event.target.value)}
                         onBlur={() =>
-                            canEdit && localDescription !== move.desc && updateCustomMove(move.id, 'desc', localDescription)
+                            canEdit &&
+                            localDescription !== move.desc &&
+                            updateCustomMove(move.id, 'desc', localDescription)
                         }
                         placeholder="Move Description / Effects"
                         disabled={!canEdit}
@@ -285,7 +302,11 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
             )}
 
             {showTagBuilder && (
-                <TagBuilderModal targetId={move.id} targetType="homebrew_move" onClose={() => setShowTagBuilder(false)} />
+                <TagBuilderModal
+                    targetId={move.id}
+                    targetType="homebrew_move"
+                    onClose={() => setShowTagBuilder(false)}
+                />
             )}
         </div>
     );
