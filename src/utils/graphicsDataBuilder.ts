@@ -1,4 +1,3 @@
-// src/utils/graphicsDataBuilder.ts
 import type { CharacterState, InventoryItem } from '../store/storeTypes';
 import { CombatStat } from '../types/enums';
 import { parseCombatTags, getAbilityText } from './combatUtils';
@@ -35,6 +34,7 @@ export interface GraphicsData {
     colorEva: string;
     colorCla: string;
 
+    trackerScale: number;
     xOffset: number;
     yOffset: number;
     hpOffsetX: number;
@@ -104,6 +104,7 @@ export function buildGraphicsFromState(meta: Record<string, unknown>, state: Cha
         colorEva: String(meta['color-eva'] || DEFAULT_COLOR_EVA),
         colorCla: String(meta['color-cla'] || DEFAULT_COLOR_CLA),
 
+        trackerScale: state.identity.trackerScale ?? 100,
         xOffset: state.identity.xOffset || 0,
         yOffset: state.identity.yOffset || 0,
         hpOffsetX: state.identity.hpOffsetX || 0,
@@ -143,7 +144,6 @@ export function buildGraphicsFromMeta(meta: Record<string, unknown>): GraphicsDa
         getStatBase('ins') + getStatRank('ins') + getStatBuff('ins') - getStatDebuff('ins') + (invMods.stats.ins || 0)
     );
 
-    // AUDIT FIX: Swapped fallback order to prevent rogue root 'defBuff' keys from overwriting live 'def-buff' keys!
     const defBuff = Number(meta['def-buff'] ?? meta['defBuff']) || 0;
     const defDebuff = Number(meta['def-debuff'] ?? meta['defDebuff']) || 0;
     const sdefBuff = Number(meta['spd-buff'] ?? meta['sdefBuff']) || 0;
@@ -184,6 +184,7 @@ export function buildGraphicsFromMeta(meta: Record<string, unknown>): GraphicsDa
         colorEva: String(meta['color-eva'] || DEFAULT_COLOR_EVA),
         colorCla: String(meta['color-cla'] || DEFAULT_COLOR_CLA),
 
+        trackerScale: meta['tracker-scale'] !== undefined ? Number(meta['tracker-scale']) : 100,
         xOffset: Number(meta['x-offset']) || 0,
         yOffset: Number(meta['y-offset']) || 0,
         hpOffsetX: Number(meta['hp-offset-x']) || 0,

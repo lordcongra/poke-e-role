@@ -11,8 +11,10 @@ export function buildGraphicDefinitions(
     data: GraphicsData,
     role: 'PLAYER' | 'GM',
     isTokenVisible: boolean,
-    scale: number
+    tokenScale: number
 ): Record<string, GraphicDefinition> {
+    const scale = tokenScale * ((data.trackerScale ?? 100) / 100);
+
     const healthPercentage = Math.max(0, Math.min(1, data.hpCurr / Math.max(1, data.hpMax)));
     const willPercentage = Math.max(0, Math.min(1, data.willCurr / Math.max(1, data.willMax)));
 

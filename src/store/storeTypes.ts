@@ -21,7 +21,6 @@ import type {
     CustomType
 } from './entityTypes';
 
-// Re-export the entities so existing component imports don't break!
 export * from './entityTypes';
 
 export interface CoreSlice {
@@ -213,6 +212,7 @@ export interface IdentitySlice {
         colorEva: string;
         colorCla: string;
 
+        trackerScale: number;
         xOffset: number;
         yOffset: number;
         hpOffsetX: number;

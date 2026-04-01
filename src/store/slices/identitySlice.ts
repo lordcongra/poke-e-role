@@ -24,6 +24,7 @@ const OBR_KEY_MAP: Record<string, string> = {
     colorAct: 'color-act',
     colorEva: 'color-eva',
     colorCla: 'color-cla',
+    trackerScale: 'tracker-scale',
     xOffset: 'x-offset',
     yOffset: 'y-offset',
     hpOffsetX: 'hp-offset-x',
@@ -114,6 +115,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         colorEva: '#c387fc',
         colorCla: '#dfad43',
 
+        trackerScale: 100,
         xOffset: 0,
         yOffset: 0,
         hpOffsetX: 0,

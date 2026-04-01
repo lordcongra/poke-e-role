@@ -259,6 +259,7 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
                     colorEva: String(meta['color-eva'] || '#c387fc'),
                     colorCla: String(meta['color-cla'] || '#dfad43'),
 
+                    trackerScale: meta['tracker-scale'] !== undefined ? Number(meta['tracker-scale']) : 100,
                     xOffset: Number(meta['x-offset']) || 0,
                     yOffset: Number(meta['y-offset']) || 0,
                     hpOffsetX: Number(meta['hp-offset-x']) || 0,
