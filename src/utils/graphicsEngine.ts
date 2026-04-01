@@ -258,10 +258,12 @@ export async function applyGraphicsToOwlbear(
                             }
 
                             if (textItem.text.plainText !== definition.text) textItem.text.plainText = definition.text;
+
                             if (!almostEqual(textItem.text.width as number, definition.width))
                                 textItem.text.width = definition.width;
                             if (!almostEqual(textItem.text.height as number, definition.height))
                                 textItem.text.height = definition.height;
+
                             if (!almostEqual(textItem.text.style.fontSize, definition.size))
                                 textItem.text.style.fontSize = definition.size;
 

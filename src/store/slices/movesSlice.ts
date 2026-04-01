@@ -107,7 +107,6 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                     if (v.includes(s)) return s;
                 }
 
-                // AUDIT FIX: Teach the parser to recognize and map Custom Skills!
                 for (const cat of state.extraCategories) {
                     for (const sk of cat.skills) {
                         if (v === sk.id.toLowerCase() || (sk.name && v === sk.name.toLowerCase())) return sk.id;
@@ -123,6 +122,17 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                     const cat = rawCat === 'Physical' ? 'Physical' : rawCat === 'Special' ? 'Special' : 'Status';
                     const rawDmg = String(data.Damage1 === 'None' ? '' : data.Damage1 || '');
 
+                    let extraDesc = '';
+                    if (String(data.Accuracy2 || '').includes('/')) {
+                        extraDesc += `\n[Dual Acc: ${data.Accuracy2}]`;
+                    }
+                    if (String(data.Damage1 || '').includes('/')) {
+                        extraDesc += `\n[Dual Dmg: ${data.Damage1}]`;
+                    }
+
+                    const cleanDesc = String(data.Effect || data.Description || m.desc || '');
+                    const finalDesc = extraDesc ? `${cleanDesc}\n${extraDesc}` : cleanDesc;
+
                     return {
                         ...m,
                         name: String(data.Name || m.name),
@@ -132,7 +142,7 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                         acc2: mapSkill(String(data.Accuracy2 || 'none')),
                         dmg1: mapAttr(rawDmg),
                         power: data.Power !== undefined && data.Power !== '' ? Number(data.Power) : m.power,
-                        desc: String(data.Effect || data.Description || m.desc || '')
+                        desc: finalDesc.trim()
                     };
                 }
                 return m;

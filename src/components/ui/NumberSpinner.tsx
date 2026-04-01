@@ -9,6 +9,8 @@ interface NumberSpinnerProps {
 }
 
 export function NumberSpinner({ value, onChange, min = 0, max = 9999, disabled = false }: NumberSpinnerProps) {
+    const charLength = Math.max(2, String(value).length);
+
     return (
         <div
             className="number-spinner"
@@ -26,6 +28,7 @@ export function NumberSpinner({ value, onChange, min = 0, max = 9999, disabled =
             <input
                 type="number"
                 className="number-spinner__input no-spinners"
+                style={{ width: `${charLength + 0.5}ch` }}
                 value={value}
                 onChange={(e) => !disabled && onChange(parseInt(e.target.value) || 0)}
                 disabled={disabled}

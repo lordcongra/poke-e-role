@@ -292,7 +292,6 @@ select option {
 .number-spinner__input {
     border: none;
     text-align: center;
-    width: 22px;
     height: 100%;
     font-weight: bold;
     color: var(--text-main);
@@ -468,10 +467,6 @@ select option {
     }
     .number-spinner__button {
         width: 14px !important;
-    }
-    .number-spinner__input {
-        width: 18px !important;
-        font-size: 0.8rem !important;
     }
     .data-table {
         min-width: max-content;
