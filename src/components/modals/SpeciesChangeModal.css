@@ -43,11 +43,20 @@
     gap: 8px;
 }
 
-.species-change__btn-form {
+.species-change__btn-evolve {
     background: #1976d2;
     border-color: #1976d2;
     padding: 8px;
     font-size: 0.9rem;
+    color: white;
+}
+
+.species-change__btn-form {
+    background: #00695c;
+    border-color: #00695c;
+    padding: 8px;
+    font-size: 0.9rem;
+    color: white;
 }
 
 .species-change__btn-new {
@@ -63,26 +72,4 @@
 .species-change__btn-subtitle {
     font-size: 0.7rem;
     font-weight: normal;
-}
-
-.species-change__checkbox-container {
-    margin-top: 15px;
-    padding-top: 10px;
-    border-top: 1px solid var(--border);
-    text-align: center;
-}
-
-.species-change__checkbox-label {
-    font-size: 0.8rem;
-    cursor: pointer;
-    color: var(--text-main);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-}
-
-.species-change__checkbox {
-    transform: scale(1.1);
-    cursor: pointer;
 }

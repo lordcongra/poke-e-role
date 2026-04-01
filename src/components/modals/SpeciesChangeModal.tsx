@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import './SpeciesChangeModal.css';
 
@@ -9,35 +8,53 @@ interface SpeciesChangeModalProps {
 
 export function SpeciesChangeModal({ pendingSpeciesData, onClose }: SpeciesChangeModalProps) {
     const applySpeciesData = useCharacterStore((state) => state.applySpeciesData);
-    const [swapUpdateStats, setSwapUpdateStats] = useState(true);
 
     return (
         <div className="species-change__overlay">
             <div className="species-change__content">
                 <h3 className="species-change__title">🧬 Species Changed</h3>
                 <p className="species-change__desc">
-                    You loaded a new Pokémon. How do you want to handle existing data?
+                    You loaded a new Pokémon. How do you want to handle your existing sheet data?
                 </p>
 
                 <div className="species-change__btn-group">
                     <button
                         type="button"
                         onClick={() => {
-                            applySpeciesData(pendingSpeciesData, false, swapUpdateStats);
+                            // Evolution/Mega: Keeps skills/moves (wipeData=false), but updates stats & limits (updateStats=true)
+                            applySpeciesData(pendingSpeciesData, false, true);
                             onClose();
                         }}
-                        className="action-button action-button--dark species-change__btn-form"
+                        className="action-button species-change__btn-evolve"
                     >
-                        🔄 Form Change / Mega Evolve
+                        ✨ Evolve / Mega / Form Shift
                         <br />
                         <span className="species-change__btn-subtitle">
-                            (Updates Typing/Ability, Keeps Moves/Skills)
+                            (Updates Stats, Limits & Typing. Keeps Moves/Skills)
                         </span>
                     </button>
+
                     <button
                         type="button"
                         onClick={() => {
-                            applySpeciesData(pendingSpeciesData, true, swapUpdateStats);
+                            // Type Shift: Keeps skills/moves (wipeData=false), AND keeps custom stats/limits (updateStats=false)
+                            applySpeciesData(pendingSpeciesData, false, false);
+                            onClose();
+                        }}
+                        className="action-button species-change__btn-form"
+                    >
+                        🧬 Type / Ability Shift Only
+                        <br />
+                        <span className="species-change__btn-subtitle">
+                            (Updates Typing & Abilities ONLY. Keeps current Stats)
+                        </span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            // Brand New: Wipes skills/moves (wipeData=true), and applies new stats (updateStats=true)
+                            applySpeciesData(pendingSpeciesData, true, true);
                             onClose();
                         }}
                         className="action-button action-button--red species-change__btn-new"
@@ -46,6 +63,7 @@ export function SpeciesChangeModal({ pendingSpeciesData, onClose }: SpeciesChang
                         <br />
                         <span className="species-change__btn-subtitle">(Wipes Moves & Skills completely)</span>
                     </button>
+
                     <button
                         type="button"
                         onClick={onClose}
@@ -53,18 +71,6 @@ export function SpeciesChangeModal({ pendingSpeciesData, onClose }: SpeciesChang
                     >
                         Cancel Change
                     </button>
-                </div>
-
-                <div className="species-change__checkbox-container">
-                    <label className="species-change__checkbox-label">
-                        <input
-                            type="checkbox"
-                            checked={swapUpdateStats}
-                            onChange={(e) => setSwapUpdateStats(e.target.checked)}
-                            className="species-change__checkbox"
-                        />
-                        Overwrite Base Stats & Limits
-                    </label>
                 </div>
             </div>
         </div>

@@ -1,4 +1,3 @@
-// src/store/slices/macroSlice.ts
 import type { StateCreator } from 'zustand';
 import type { CharacterState, MacroSlice } from '../storeTypes';
 import { CombatStat, Skill } from '../../types/enums';
@@ -68,10 +67,11 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             const newStats = { ...state.stats };
 
             const newSkills = { ...state.skills };
-            newSkills[Skill.CHANNEL].customName = isTrainer ? 'Throw' : 'Channel';
-            newSkills[Skill.CLASH].customName = isTrainer ? 'Weapon' : 'Clash';
-            newSkills[Skill.CHARM].customName = isTrainer ? 'Empathy' : 'Charm';
-            newSkills[Skill.MAGIC].customName = isTrainer ? 'Science' : 'Magic';
+            newSkills[Skill.CHANNEL] = { ...newSkills[Skill.CHANNEL], customName: isTrainer ? 'Throw' : 'Channel' };
+            newSkills[Skill.CLASH] = { ...newSkills[Skill.CLASH], customName: isTrainer ? 'Weapon' : 'Clash' };
+            newSkills[Skill.CHARM] = { ...newSkills[Skill.CHARM], customName: isTrainer ? 'Empathy' : 'Charm' };
+            newSkills[Skill.MAGIC] = { ...newSkills[Skill.MAGIC], customName: isTrainer ? 'Science' : 'Magic' };
+
             updatesToSave[`label-${Skill.CHANNEL}`] = newSkills[Skill.CHANNEL].customName;
             updatesToSave[`label-${Skill.CLASH}`] = newSkills[Skill.CLASH].customName;
             updatesToSave[`label-${Skill.CHARM}`] = newSkills[Skill.CHARM].customName;
@@ -87,13 +87,14 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     updatesToSave.type2 = newIdentity.type2;
 
                     Object.values(CombatStat).forEach((stat) => {
+                        newStats[stat] = { ...newStats[stat] };
                         if (parsed[`${stat}Base`] !== undefined) {
                             newStats[stat].base = parsed[`${stat}Base`];
                             updatesToSave[`${stat}-base`] = parsed[`${stat}Base`];
                         }
                         if (parsed[`${stat}Limit`] !== undefined) {
                             newStats[stat].limit = parsed[`${stat}Limit`];
-                            updatesToSave[`${stat}-max`] = parsed[`${stat}Limit`];
+                            updatesToSave[`${stat}-limit`] = parsed[`${stat}Limit`];
                         }
                     });
                 } catch (e) {}
@@ -103,10 +104,9 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 updatesToSave.type1 = '';
                 updatesToSave.type2 = '';
                 Object.values(CombatStat).forEach((stat) => {
-                    newStats[stat].base = 1;
-                    newStats[stat].limit = 5;
+                    newStats[stat] = { ...newStats[stat], base: 1, limit: 5 };
                     updatesToSave[`${stat}-base`] = 1;
-                    updatesToSave[`${stat}-max`] = 5;
+                    updatesToSave[`${stat}-limit`] = 5;
                 });
             }
 
@@ -210,13 +210,14 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             }
 
             Object.values(CombatStat).forEach((stat) => {
+                newStats[stat] = { ...newStats[stat] };
                 if (loadedData[`${stat}Base`] !== undefined) {
                     newStats[stat].base = Number(loadedData[`${stat}Base`]);
                     updatesToSave[`${stat}-base`] = newStats[stat].base;
                 }
                 if (loadedData[`${stat}Limit`] !== undefined) {
                     newStats[stat].limit = Number(loadedData[`${stat}Limit`]);
-                    updatesToSave[`${stat}-max`] = newStats[stat].limit;
+                    updatesToSave[`${stat}-limit`] = newStats[stat].limit;
                 }
             });
 
@@ -277,7 +278,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 const applyStat = (statKey: CombatStat, dataBase: number, dataMax: number) => {
                     newStats[statKey] = { ...newStats[statKey], base: dataBase, limit: dataMax };
                     updatesToSave[`${statKey}-base`] = dataBase;
-                    updatesToSave[`${statKey}-max`] = dataMax;
+                    updatesToSave[`${statKey}-limit`] = dataMax;
                 };
 
                 applyStat(CombatStat.STR, getBase(data, 'Strength', 2), getLimit(data, 'Strength'));
@@ -417,27 +418,28 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 newAbility = abilities[0].replace(' (HA)', '');
             }
 
-            // AUDIT FIX: Backfill Types and Limits for V1.8 to V2.0 lazy migration!
             const newType1 = String(data.Type1 || state.identity.type1 || '');
             const newType2 = String(data.Type2 || state.identity.type2 || '');
 
-            const newStats = { ...state.stats };
-            newStats[CombatStat.STR].limit = getLimit(data, 'Strength');
-            newStats[CombatStat.DEX].limit = getLimit(data, 'Dexterity');
-            newStats[CombatStat.VIT].limit = getLimit(data, 'Vitality');
-            newStats[CombatStat.SPE].limit = getLimit(data, 'Special');
-            newStats[CombatStat.INS].limit = getLimit(data, 'Insight');
+            const newStats = {
+                ...state.stats,
+                [CombatStat.STR]: { ...state.stats[CombatStat.STR], limit: getLimit(data, 'Strength') },
+                [CombatStat.DEX]: { ...state.stats[CombatStat.DEX], limit: getLimit(data, 'Dexterity') },
+                [CombatStat.VIT]: { ...state.stats[CombatStat.VIT], limit: getLimit(data, 'Vitality') },
+                [CombatStat.SPE]: { ...state.stats[CombatStat.SPE], limit: getLimit(data, 'Special') },
+                [CombatStat.INS]: { ...state.stats[CombatStat.INS], limit: getLimit(data, 'Insight') }
+            };
 
             const updatesToSave = {
                 ability: newAbility,
                 'ability-list': abilities.join(','),
                 type1: newType1,
                 type2: newType2,
-                'str-max': newStats[CombatStat.STR].limit,
-                'dex-max': newStats[CombatStat.DEX].limit,
-                'vit-max': newStats[CombatStat.VIT].limit,
-                'spe-max': newStats[CombatStat.SPE].limit,
-                'ins-max': newStats[CombatStat.INS].limit
+                'str-limit': newStats[CombatStat.STR].limit,
+                'dex-limit': newStats[CombatStat.DEX].limit,
+                'vit-limit': newStats[CombatStat.VIT].limit,
+                'spe-limit': newStats[CombatStat.SPE].limit,
+                'ins-limit': newStats[CombatStat.INS].limit
             };
             try {
                 saveToOwlbear(updatesToSave);

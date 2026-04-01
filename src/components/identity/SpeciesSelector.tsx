@@ -23,15 +23,8 @@ export function SpeciesSelector({ uniqueSpecies, onOpenGenerator }: SpeciesSelec
         try {
             const data = await fetchPokemonData(identityStore.species);
             if (data) {
-                const store = useCharacterStore.getState();
-                const hasSkills = Object.values(store.skills).some((skill) => skill.base > 0 || skill.buff > 0);
-                const hasMoves = store.moves.length > 0;
-
-                if (hasSkills || hasMoves) {
-                    setPendingSpeciesData(data as Record<string, unknown>);
-                } else {
-                    store.applySpeciesData(data as Record<string, unknown>, true, true);
-                }
+                // ALWAYS trigger the modal so the user has explicit control over how the stats apply!
+                setPendingSpeciesData(data as Record<string, unknown>);
             }
         } catch (error) {
             console.error('Fetch failed:', error);

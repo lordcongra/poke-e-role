@@ -18,17 +18,21 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
         set((state) => {
             const newStats = { ...state.stats };
             Object.values(CombatStat).forEach((stat) => {
+                newStats[stat] = { ...newStats[stat] };
                 newStats[stat].base =
                     meta[`${stat}-base`] !== undefined ? Number(meta[`${stat}-base`]) : stat === 'ins' ? 1 : 2;
                 newStats[stat].rank = meta[`${stat}-rank`] !== undefined ? Number(meta[`${stat}-rank`]) : 0;
                 newStats[stat].buff = meta[`${stat}-buff`] !== undefined ? Number(meta[`${stat}-buff`]) : 0;
                 newStats[stat].debuff = meta[`${stat}-debuff`] !== undefined ? Number(meta[`${stat}-debuff`]) : 0;
+
+                // Prioritize the newer V2 key, gracefully fallback to the V1.8 legacy key if present
                 const limitVal = meta[`${stat}-limit`] ?? meta[`${stat}-max`];
                 newStats[stat].limit = limitVal !== undefined ? Number(limitVal) : 5;
             });
 
             const newSocials = { ...state.socials };
             Object.values(SocialStat).forEach((stat) => {
+                newSocials[stat] = { ...newSocials[stat] };
                 newSocials[stat].base = meta[`${stat}-base`] !== undefined ? Number(meta[`${stat}-base`]) : 1;
                 newSocials[stat].rank = meta[`${stat}-rank`] !== undefined ? Number(meta[`${stat}-rank`]) : 0;
                 newSocials[stat].buff = meta[`${stat}-buff`] !== undefined ? Number(meta[`${stat}-buff`]) : 0;
@@ -39,6 +43,7 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
 
             const newSkills = { ...state.skills };
             Object.values(Skill).forEach((skill) => {
+                newSkills[skill] = { ...newSkills[skill] };
                 newSkills[skill].base = meta[`${skill}-base`] !== undefined ? Number(meta[`${skill}-base`]) : 0;
                 newSkills[skill].buff = meta[`${skill}-buff`] !== undefined ? Number(meta[`${skill}-buff`]) : 0;
                 newSkills[skill].customName =
