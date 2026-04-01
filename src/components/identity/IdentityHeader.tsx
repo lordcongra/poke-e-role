@@ -25,6 +25,10 @@ export function IdentityHeader() {
         const savedTheme = localStorage.getItem('pokerole-theme');
         if (savedTheme === 'dark') {
             setIsDark(true);
+            // FIX: Apply the dark mode classes to the DOM immediately on load!
+            document.body.classList.add('dark-mode');
+            document.body.setAttribute('data-theme', 'dark');
+            document.documentElement.setAttribute('data-theme', 'dark');
         }
     }, []);
 
