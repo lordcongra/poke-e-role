@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { getAbilityText } from '../../utils/combatUtils';
+import { fetchAbilityData } from '../../utils/api';
 import './PrintSheet.css';
 
 export function PrintSheet() {
@@ -10,13 +11,43 @@ export function PrintSheet() {
     const config = identity.printConfig;
     const statStyle = config.statStyle || 'dots';
 
+    const [fetchedAbilities, setFetchedAbilities] = useState<Record<string, string>>({});
+    const [isReadyToPrint, setIsReadyToPrint] = useState(false);
+
+    // Fetch official ability descriptions before printing
     useEffect(() => {
-        const timer = setTimeout(() => {
-            window.print();
-            useCharacterStore.getState().setIdentity('isPrinting', false);
-        }, 250);
-        return () => clearTimeout(timer);
-    }, []);
+        let isMounted = true;
+        const preparePrint = async () => {
+            const results: Record<string, string> = {};
+            for (const abName of identity.availableAbilities) {
+                if (!getAbilityText(abName, roomCustomAbilities)) {
+                    const data = await fetchAbilityData(abName);
+                    if (data && (data.Description || data.Effect)) {
+                        results[abName] = [data.Description, data.Effect].filter(Boolean).join(' ');
+                    }
+                }
+            }
+            if (isMounted) {
+                setFetchedAbilities(results);
+                setIsReadyToPrint(true);
+            }
+        };
+        preparePrint();
+        return () => {
+            isMounted = false;
+        };
+    }, [identity.availableAbilities, roomCustomAbilities]);
+
+    // Trigger the print dialog ONLY after data is fetched
+    useEffect(() => {
+        if (isReadyToPrint) {
+            const timer = setTimeout(() => {
+                window.print();
+                useCharacterStore.getState().setIdentity('isPrinting', false);
+            }, 250);
+            return () => clearTimeout(timer);
+        }
+    }, [isReadyToPrint]);
 
     const renderStatValue = (filled: number, limit: number, isBlank: boolean) => {
         const val = isBlank ? '' : filled;
@@ -265,7 +296,8 @@ export function PrintSheet() {
                                     .filter((abName) => !config.showOnlyActiveAbility || identity.ability === abName)
                                     .map((abName, i) => {
                                         const isChecked = identity.ability === abName;
-                                        const desc = getAbilityText(abName, roomCustomAbilities);
+                                        const customDesc = getAbilityText(abName, roomCustomAbilities);
+                                        const desc = customDesc || fetchedAbilities[abName] || '';
 
                                         let showDesc = false;
                                         if (config.abilityDescStyle === 'all') showDesc = true;

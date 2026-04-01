@@ -11,6 +11,10 @@ export function setActiveTokenId(id: string | null) {
     activeTokenId = id;
 }
 
+export function hasPendingUpdates() {
+    return Object.keys(pendingUpdates).length > 0;
+}
+
 export async function saveToOwlbear(updates: Record<string, unknown>) {
     const currentToken = activeTokenId;
     if (!OBR.isAvailable || !currentToken) return;
@@ -22,7 +26,6 @@ export async function saveToOwlbear(updates: Record<string, unknown>) {
         const updatesToPush = { ...pendingUpdates };
         pendingUpdates = {};
 
-        // AUDIT FIX: The '!' tells TypeScript we guarantee this is a string, resolving the ts(2322) error!
         await OBR.scene.items.updateItems([currentToken!], (items) => {
             for (const item of items) {
                 if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};

@@ -12,11 +12,34 @@ export const ALL_ABILITIES: string[] = [];
 export const ALL_MOVES: string[] = [];
 
 let isTreeLoaded = false;
+let treePromise: Promise<void> | null = null;
 
 let homebrewPokemon: CustomPokemon[] = [];
 let homebrewMoves: CustomMove[] = [];
 let homebrewAbilities: CustomAbility[] = [];
 let homebrewItems: CustomItem[] = [];
+
+const KNOWN_DUAL_MOVES: Record<string, string[]> = {
+    Absorb: ['Absorb (Channel)', 'Absorb (Nature)'],
+    'Mega Drain': ['Mega Drain (Channel)', 'Mega Drain (Nature)'],
+    'Giga Drain': ['Giga Drain (Channel)', 'Giga Drain (Nature)'],
+    'Leech Seed': ['Leech Seed (Channel)', 'Leech Seed (Nature)'],
+    'Quick Attack': ['Quick Attack (Strength)', 'Quick Attack (Dexterity)'],
+    'Extreme Speed': ['Extreme Speed (Strength)', 'Extreme Speed (Dexterity)'],
+    Acrobatics: ['Acrobatics (Strength)', 'Acrobatics (Dexterity)'],
+    'Aerial Ace': ['Aerial Ace (Strength)', 'Aerial Ace (Dexterity)'],
+    Bide: ['Bide (Strength)', 'Bide (Vitality)'],
+    'Electro Ball': ['Electro Ball (Channel)', 'Electro Ball (Athletic)'],
+    'Grass Knot': ['Grass Knot (Channel)', 'Grass Knot (Nature)'],
+    'Horn Leech': ['Horn Leech (Brawl)', 'Horn Leech (Nature)'],
+    'Mach Punch': ['Mach Punch (Strength)', 'Mach Punch (Dexterity)'],
+    'Vacuum Wave': ['Vacuum Wave (Strength)', 'Vacuum Wave (Dexterity)'],
+    'Water Shuriken': ['Water Shuriken (Channel)', 'Water Shuriken (Athletic)'],
+    'Parabolic Charge': ['Parabolic Charge (Channel)', 'Parabolic Charge (Nature)'],
+    'Draining Kiss': ['Draining Kiss (Charm)', 'Draining Kiss (Nature)'],
+    'Oblivion Wing': ['Oblivion Wing (Channel)', 'Oblivion Wing (Nature)'],
+    'Bitter Malice': ['Bitter Malice (Channel)', 'Bitter Malice (Nature)']
+};
 
 export function syncHomebrewToApi(
     pokemon: CustomPokemon[],
@@ -123,47 +146,59 @@ async function fetchWithCache<T>(url: string, cacheKey: string, itemName: string
     }
 }
 
-export async function loadGithubTree(): Promise<void> {
-    if (isTreeLoaded) return;
+export function loadGithubTree(): Promise<void> {
+    if (isTreeLoaded) return Promise.resolve();
+    if (treePromise) return treePromise;
 
-    const data = await fetchWithCache<GitHubTreeResponse>(GITHUB_TREE_URL, 'master_tree', 'Pokerole Database');
-    if (!data || !data.tree) return;
+    treePromise = fetchWithCache<GitHubTreeResponse>(GITHUB_TREE_URL, 'master_tree', 'Pokerole Database')
+        .then((data) => {
+            if (!data || !data.tree) return;
 
-    try {
-        const versionRegex = /(v|(version\s?))3\.0/i;
-        const pokemonRegex = /\/(Pokemon|Pokedex)\//i;
-        const moveRegex = /\/Moves\//i;
-        const abilityRegex = /\/Abilities\//i;
-        const itemRegex = /\/(Items|Equipment)\//i;
+            const versionRegex = /(v|(version\s?))3\.0/i;
+            const pokemonRegex = /\/(Pokemon|Pokedex)\//i;
+            const moveRegex = /\/Moves\//i;
+            const abilityRegex = /\/Abilities\//i;
+            const itemRegex = /\/(Items|Equipment)\//i;
 
-        data.tree.forEach((file: GitHubFileNode) => {
-            if (!versionRegex.test(file.path) || !file.path.endsWith('.json')) return;
+            data.tree.forEach((file: GitHubFileNode) => {
+                if (!versionRegex.test(file.path) || !file.path.endsWith('.json')) return;
 
-            const name = file.path.split('/').pop()?.replace('.json', '') || '';
-            if (!name) return;
+                const name = file.path.split('/').pop()?.replace('.json', '') || '';
+                if (!name) return;
 
-            const rawUrl = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/${file.path}`;
-            const cleanKey = name.toLowerCase();
+                const rawUrl = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/${file.path}`;
+                const cleanKey = name.toLowerCase();
 
-            if (pokemonRegex.test(file.path)) {
-                SPECIES_URLS[cleanKey] = rawUrl;
-            } else if (moveRegex.test(file.path)) {
-                MOVES_URLS[cleanKey] = rawUrl;
-                if (!ALL_MOVES.includes(name)) ALL_MOVES.push(name);
-            } else if (abilityRegex.test(file.path)) {
-                ABILITIES_URLS[cleanKey] = rawUrl;
-                if (!ALL_ABILITIES.includes(name)) ALL_ABILITIES.push(name);
-            } else if (itemRegex.test(file.path)) {
-                ITEMS_URLS[cleanKey] = rawUrl;
-            }
+                if (pokemonRegex.test(file.path)) {
+                    SPECIES_URLS[cleanKey] = rawUrl;
+                } else if (moveRegex.test(file.path)) {
+                    MOVES_URLS[cleanKey] = rawUrl;
+
+                    if (KNOWN_DUAL_MOVES[name]) {
+                        KNOWN_DUAL_MOVES[name].forEach((variant) => {
+                            if (!ALL_MOVES.includes(variant)) ALL_MOVES.push(variant);
+                        });
+                    } else {
+                        if (!ALL_MOVES.includes(name)) ALL_MOVES.push(name);
+                    }
+                } else if (abilityRegex.test(file.path)) {
+                    ABILITIES_URLS[cleanKey] = rawUrl;
+                    if (!ALL_ABILITIES.includes(name)) ALL_ABILITIES.push(name);
+                } else if (itemRegex.test(file.path)) {
+                    ITEMS_URLS[cleanKey] = rawUrl;
+                }
+            });
+
+            ALL_ABILITIES.sort();
+            ALL_MOVES.sort();
+            isTreeLoaded = true;
+        })
+        .catch((err) => console.error('Error processing Github Data:', err))
+        .finally(() => {
+            treePromise = null;
         });
 
-        ALL_ABILITIES.sort();
-        ALL_MOVES.sort();
-        isTreeLoaded = true;
-    } catch (err) {
-        console.error('Error processing Github Data:', err);
-    }
+    return treePromise;
 }
 
 export async function fetchPokemonData(speciesName: string): Promise<PokemonApiResponse | CustomPokemon | null> {
@@ -198,7 +233,9 @@ export async function fetchAbilityData(abilityName: string): Promise<AbilityApiR
 
 export async function fetchMoveData(moveName: string): Promise<MoveApiResponse | null> {
     if (!moveName) return null;
-    const cleanName = moveName.trim().toLowerCase();
+
+    const baseName = moveName.split(' (')[0].trim();
+    const cleanName = baseName.toLowerCase();
 
     const custom = homebrewMoves.find((m) => m.name.trim().toLowerCase() === cleanName);
     if (custom) {
@@ -218,7 +255,7 @@ export async function fetchMoveData(moveName: string): Promise<MoveApiResponse |
     const selectedUrl = MOVES_URLS[cleanName];
 
     if (!selectedUrl) return null;
-    return await fetchWithCache<MoveApiResponse>(selectedUrl, `move_${cleanName}`, moveName);
+    return await fetchWithCache<MoveApiResponse>(selectedUrl, `move_${cleanName}`, baseName);
 }
 
 export async function fetchItemData(itemName: string): Promise<ItemApiResponse | null> {

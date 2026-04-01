@@ -1,4 +1,3 @@
-// src/components/modals/RulesModal.tsx
 import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { TooltipIcon } from '../ui/TooltipIcon';
@@ -12,7 +11,12 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
     return (
         <div className="rules-modal__overlay">
             <div className="rules-modal__content">
-                <h3 className="rules-modal__title">📜 Room Rules & Permissions</h3>
+                <div className="rules-modal__header-row">
+                    <h3 className="rules-modal__title">📜 Room Rules & Permissions</h3>
+                    <button onClick={onClose} className="rules-modal__close-x" title="Close">
+                        X
+                    </button>
+                </div>
 
                 <div className="rules-modal__form-group">
                     <div>
@@ -86,14 +90,6 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                         </select>
                     </div>
                 </div>
-
-                <button
-                    type="button"
-                    className="action-button action-button--dark rules-modal__close-btn"
-                    onClick={onClose}
-                >
-                    Close
-                </button>
             </div>
 
             {modalConfig && (

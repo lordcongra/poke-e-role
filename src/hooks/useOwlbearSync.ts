@@ -5,7 +5,7 @@ import { useCharacterStore } from '../store/useCharacterStore';
 import type { CustomType, CustomAbility, CustomMove, CustomPokemon, CustomItem } from '../store/storeTypes';
 import { fetchPokemonData, fetchMoveData, syncHomebrewToApi } from '../utils/api';
 import { buildGraphicsFromMeta, renderTokenGraphics, STATS_META_ID } from '../utils/graphicsManager';
-import { saveToOwlbear, setActiveTokenId } from '../utils/obr';
+import { saveToOwlbear, setActiveTokenId, hasPendingUpdates } from '../utils/obr';
 
 const METADATA_ID = STATS_META_ID;
 const ROOM_META_ID = 'pokerole-pmd-extension/room-settings';
@@ -80,7 +80,6 @@ export function useOwlbearSync() {
                         const tokenItem = items[0];
                         const meta = tokenItem.metadata[METADATA_ID] as Record<string, unknown> | undefined;
 
-                        // Grab the Image URL for the print sheet
                         const imgItem = tokenItem as Image;
                         if (imgItem.image?.url) {
                             useCharacterStore.getState().setIdentity('tokenImageUrl', imgItem.image.url);
@@ -180,11 +179,12 @@ export function useOwlbearSync() {
                             const storeState = useCharacterStore.getState();
                             if (item.id === storeState.tokenId) {
                                 const lastKnown = lastTransform?.metaStr;
-                                if (lastKnown !== metaStr) {
+
+                                // FIX: Ignore incoming OBR events if the user is actively making changes in the sheet!
+                                if (lastKnown !== metaStr && !hasPendingUpdates()) {
                                     storeState.loadFromOwlbear(meta);
                                 }
 
-                                // Keep the print sheet picture updated if the token image changes
                                 const imgItem = item as Image;
                                 if (imgItem.image?.url && imgItem.image.url !== storeState.identity.tokenImageUrl) {
                                     storeState.setIdentity('tokenImageUrl', imgItem.image.url);
