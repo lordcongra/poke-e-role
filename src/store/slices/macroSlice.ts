@@ -47,6 +47,54 @@ const getBase = (pd: Record<string, unknown>, stat: string, fallback: number) =>
     return val ? parseInt(String(val)) : fallback;
 };
 
+// DRY HELPER: Consolidates the massive HP/Will calculation logic shared by multiple macros
+const syncHealthAndWill = (
+    state: CharacterState,
+    newStats: CharacterState['stats'],
+    newIdentity: CharacterState['identity'],
+    newHealth: CharacterState['health'],
+    newWill: CharacterState['will'],
+    updatesToSave: Record<string, unknown>
+) => {
+    const abilityText = getAbilityText(newIdentity.ability, state.roomCustomAbilities);
+    const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+
+    const vitTotal = Math.max(
+        1,
+        newStats[CombatStat.VIT].base +
+            newStats[CombatStat.VIT].rank +
+            newStats[CombatStat.VIT].buff -
+            newStats[CombatStat.VIT].debuff +
+            (invMods.stats.vit || 0)
+    );
+    const insTotal = Math.max(
+        1,
+        newStats[CombatStat.INS].base +
+            newStats[CombatStat.INS].rank +
+            newStats[CombatStat.INS].buff -
+            newStats[CombatStat.INS].debuff +
+            (invMods.stats.ins || 0)
+    );
+
+    let hpStat = vitTotal;
+    if (state.identity.ruleset === 'vg-high-hp') hpStat = Math.max(vitTotal, insTotal);
+
+    const oldHpMax = newHealth.hpMax;
+    newHealth.hpMax = newHealth.hpBase + hpStat;
+    if (newHealth.hpMax > oldHpMax) newHealth.hpCurr += newHealth.hpMax - oldHpMax;
+    else if (newHealth.hpCurr > newHealth.hpMax) newHealth.hpCurr = newHealth.hpMax;
+
+    const oldWillMax = newWill.willMax;
+    newWill.willMax = newWill.willBase + insTotal;
+    if (newWill.willMax > oldWillMax) newWill.willCurr += newWill.willMax - oldWillMax;
+    else if (newWill.willCurr > newWill.willMax) newWill.willCurr = newWill.willMax;
+
+    updatesToSave['hp-curr'] = newHealth.hpCurr;
+    updatesToSave['hp-max-display'] = newHealth.hpMax;
+    updatesToSave['will-curr'] = newWill.willCurr;
+    updatesToSave['will-max-display'] = newWill.willMax;
+};
+
 export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> = (set) => ({
     setMode: (newMode) =>
         set((state) => {
@@ -111,44 +159,9 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             }
 
             const newHealth = { ...state.health };
-
-            const abilityText = getAbilityText(newIdentity.ability, state.roomCustomAbilities);
-            const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
-
-            const vitTotal = Math.max(
-                1,
-                newStats[CombatStat.VIT].base +
-                    newStats[CombatStat.VIT].rank +
-                    newStats[CombatStat.VIT].buff -
-                    newStats[CombatStat.VIT].debuff +
-                    (invMods.stats.vit || 0)
-            );
-            const insTotal = Math.max(
-                1,
-                newStats[CombatStat.INS].base +
-                    newStats[CombatStat.INS].rank +
-                    newStats[CombatStat.INS].buff -
-                    newStats[CombatStat.INS].debuff +
-                    (invMods.stats.ins || 0)
-            );
-
-            let hpStat = vitTotal;
-            if (state.identity.ruleset === 'vg-high-hp') hpStat = Math.max(vitTotal, insTotal);
-            const oldHpMax = newHealth.hpMax;
-            newHealth.hpMax = newHealth.hpBase + hpStat;
-            if (newHealth.hpMax > oldHpMax) newHealth.hpCurr += newHealth.hpMax - oldHpMax;
-            else if (newHealth.hpCurr > newHealth.hpMax) newHealth.hpCurr = newHealth.hpMax;
-
             const newWill = { ...state.will };
-            const oldWillMax = newWill.willMax;
-            newWill.willMax = newWill.willBase + insTotal;
-            if (newWill.willMax > oldWillMax) newWill.willCurr += newWill.willMax - oldWillMax;
-            else if (newWill.willCurr > newWill.willMax) newWill.willCurr = newWill.willMax;
 
-            updatesToSave['hp-curr'] = newHealth.hpCurr;
-            updatesToSave['hp-max-display'] = newHealth.hpMax;
-            updatesToSave['will-curr'] = newWill.willCurr;
-            updatesToSave['will-max-display'] = newWill.willMax;
+            syncHealthAndWill(state, newStats, newIdentity, newHealth, newWill, updatesToSave);
 
             try {
                 saveToOwlbear(updatesToSave);
@@ -182,6 +195,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             const newIdentity = { ...state.identity, isAltForm: !isAlt, [currentSaveKey]: backupStr };
             const newStats = { ...state.stats };
             const newHealth = { ...state.health };
+            const newWill = { ...state.will };
 
             let loadedData = currentData;
             if (state.identity[targetLoadKey]) {
@@ -221,44 +235,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 }
             });
 
-            const abilityText = getAbilityText(newIdentity.ability, state.roomCustomAbilities);
-            const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
-
-            const vitTotal = Math.max(
-                1,
-                newStats[CombatStat.VIT].base +
-                    newStats[CombatStat.VIT].rank +
-                    newStats[CombatStat.VIT].buff -
-                    newStats[CombatStat.VIT].debuff +
-                    (invMods.stats.vit || 0)
-            );
-            const insTotal = Math.max(
-                1,
-                newStats[CombatStat.INS].base +
-                    newStats[CombatStat.INS].rank +
-                    newStats[CombatStat.INS].buff -
-                    newStats[CombatStat.INS].debuff +
-                    (invMods.stats.ins || 0)
-            );
-
-            let hpStat = vitTotal;
-            if (state.identity.ruleset === 'vg-high-hp') hpStat = Math.max(vitTotal, insTotal);
-
-            const oldHpMax = newHealth.hpMax;
-            newHealth.hpMax = newHealth.hpBase + hpStat;
-            if (newHealth.hpMax > oldHpMax) newHealth.hpCurr += newHealth.hpMax - oldHpMax;
-            else if (newHealth.hpCurr > newHealth.hpMax) newHealth.hpCurr = newHealth.hpMax;
-
-            const newWill = { ...state.will };
-            const oldWillMax = newWill.willMax;
-            newWill.willMax = newWill.willBase + insTotal;
-            if (newWill.willMax > oldWillMax) newWill.willCurr += newWill.willMax - oldWillMax;
-            else if (newWill.willCurr > newWill.willMax) newWill.willCurr = newWill.willMax;
-
-            updatesToSave['hp-curr'] = newHealth.hpCurr;
-            updatesToSave['hp-max-display'] = newHealth.hpMax;
-            updatesToSave['will-curr'] = newWill.willCurr;
-            updatesToSave['will-max-display'] = newWill.willMax;
+            syncHealthAndWill(state, newStats, newIdentity, newHealth, newWill, updatesToSave);
 
             try {
                 saveToOwlbear(updatesToSave);
@@ -273,6 +250,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             const newStats = { ...state.stats };
             const updatesToSave: Record<string, unknown> = {};
             const newHealth = { ...state.health };
+            const newWill = { ...state.will };
 
             if (updateStats) {
                 const applyStat = (statKey: CombatStat, dataBase: number, dataMax: number) => {
@@ -322,44 +300,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             updatesToSave['ability'] = newIdentity.ability;
             updatesToSave['ability-list'] = abilities.join(',');
 
-            const abilityText = getAbilityText(newIdentity.ability, state.roomCustomAbilities);
-            const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
-
-            const vitTotal = Math.max(
-                1,
-                newStats[CombatStat.VIT].base +
-                    newStats[CombatStat.VIT].rank +
-                    newStats[CombatStat.VIT].buff -
-                    newStats[CombatStat.VIT].debuff +
-                    (invMods.stats.vit || 0)
-            );
-            const insTotal = Math.max(
-                1,
-                newStats[CombatStat.INS].base +
-                    newStats[CombatStat.INS].rank +
-                    newStats[CombatStat.INS].buff -
-                    newStats[CombatStat.INS].debuff +
-                    (invMods.stats.ins || 0)
-            );
-
-            let hpStat = vitTotal;
-            if (state.identity.ruleset === 'vg-high-hp') hpStat = Math.max(vitTotal, insTotal);
-
-            const oldHpMax = newHealth.hpMax;
-            newHealth.hpMax = newHealth.hpBase + hpStat;
-            if (newHealth.hpMax > oldHpMax) newHealth.hpCurr += newHealth.hpMax - oldHpMax;
-            else if (newHealth.hpCurr > newHealth.hpMax) newHealth.hpCurr = newHealth.hpMax;
-
-            const newWill = { ...state.will };
-            const oldWillMax = newWill.willMax;
-            newWill.willMax = newWill.willBase + insTotal;
-            if (newWill.willMax > oldWillMax) newWill.willCurr += newWill.willMax - oldWillMax;
-            else if (newWill.willCurr > newWill.willMax) newWill.willCurr = newWill.willMax;
-
-            updatesToSave['hp-curr'] = newHealth.hpCurr;
-            updatesToSave['hp-max-display'] = newHealth.hpMax;
-            updatesToSave['will-curr'] = newWill.willCurr;
-            updatesToSave['will-max-display'] = newWill.willMax;
+            syncHealthAndWill(state, newStats, newIdentity, newHealth, newWill, updatesToSave);
 
             let newSkills = { ...state.skills };
             let newMoves = [...state.moves];
@@ -380,6 +321,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             try {
                 saveToOwlbear(updatesToSave);
             } catch (e) {}
+
             return {
                 stats: newStats,
                 health: newHealth,
@@ -441,6 +383,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 'spe-limit': newStats[CombatStat.SPE].limit,
                 'ins-limit': newStats[CombatStat.INS].limit
             };
+
             try {
                 saveToOwlbear(updatesToSave);
             } catch (e) {}
