@@ -4,6 +4,7 @@ import { fetchItemData } from '../../utils/api';
 import type { InventoryItem } from '../../store/storeTypes';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { KNOWN_ITEMS } from '../../data/constants';
+import './InventoryTable.css';
 
 interface InventoryItemRowProps {
     item: InventoryItem;
@@ -57,16 +58,16 @@ export function InventoryItemRow({
 
     return (
         <tr className="data-table__row--dynamic">
-            <td className="data-table__cell--top" style={{ paddingTop: '6px' }}>
+            <td className="data-table__cell--top inventory-item__cell-top">
                 <input
                     type="checkbox"
-                    style={{ cursor: 'pointer', transform: 'scale(1.1)' }}
+                    className="inventory-item__checkbox"
                     checked={item.active}
                     onChange={(event) => updateInventoryItem(item.id, 'active', event.target.checked)}
                 />
             </td>
             <td className="data-table__cell--top">
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <div className="inventory-item__qty-container">
                     <NumberSpinner
                         value={item.qty}
                         onChange={(value: number) => updateInventoryItem(item.id, 'qty', value)}
@@ -75,12 +76,11 @@ export function InventoryItemRow({
                 </div>
             </td>
             <td className="data-table__cell--top">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                <div className="inventory-item__name-container">
                     <input
                         type="text"
                         list="item-list"
-                        className="identity-grid__input"
-                        style={{ width: '100%' }}
+                        className="identity-grid__input inventory-item__name-input"
                         value={localName}
                         onChange={(event) => setLocalName(event.target.value)}
                         onBlur={handleNameBlur}
@@ -88,8 +88,7 @@ export function InventoryItemRow({
                     />
                     <button
                         type="button"
-                        className="action-button"
-                        style={{ background: 'transparent', color: '#1976D2', padding: '0', fontSize: '1.1rem' }}
+                        className="action-button inventory-item__icon-btn inventory-item__icon-btn--info"
                         onClick={() => handleInfoClick(item.id, item.name, item.desc)}
                         disabled={fetchingItems[item.id]}
                     >
@@ -97,81 +96,41 @@ export function InventoryItemRow({
                     </button>
                     <button
                         type="button"
-                        className="action-button"
-                        style={{
-                            background: 'transparent',
-                            color: 'var(--text-main)',
-                            padding: '0',
-                            fontSize: '1.1rem'
-                        }}
+                        className="action-button inventory-item__icon-btn inventory-item__icon-btn--tag"
                         onClick={() => setTagBuilderData({ id: item.id, type: 'item' })}
                     >
                         🏷️
                     </button>
                 </div>
             </td>
-            <td style={{ padding: '4px 2px' }}>
+            <td className="inventory-item__desc-cell">
                 <textarea
-                    className="identity-grid__input form-input--item-desc"
-                    style={{
-                        width: '100%',
-                        resize: 'vertical',
-                        border: '1px solid var(--border)',
-                        background: 'var(--input-bg)',
-                        padding: '4px',
-                        minHeight: '30px'
-                    }}
+                    className="identity-grid__input form-input--item-desc inventory-item__desc-input"
                     value={item.desc}
                     onChange={(event) => updateInventoryItem(item.id, 'desc', event.target.value)}
                     placeholder="Effect / Notes..."
                 />
             </td>
             <td className="data-table__cell--top">
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                <div className="inventory-item__sort-container">
                     <button
                         type="button"
                         onClick={() => moveUpInventoryItem(item.id)}
-                        style={{
-                            padding: '0 4px',
-                            fontSize: '0.6rem',
-                            cursor: 'pointer',
-                            background: 'transparent',
-                            border: 'none',
-                            color: 'var(--text-main)'
-                        }}
+                        className="inventory-item__sort-btn"
                     >
                         ▲
                     </button>
                     <button
                         type="button"
                         onClick={() => moveDownInventoryItem(item.id)}
-                        style={{
-                            padding: '0 4px',
-                            fontSize: '0.6rem',
-                            cursor: 'pointer',
-                            background: 'transparent',
-                            border: 'none',
-                            color: 'var(--text-main)'
-                        }}
+                        className="inventory-item__sort-btn"
                     >
                         ▼
                     </button>
                 </div>
             </td>
             <td className="data-table__cell--top">
-                <button
-                    type="button"
-                    onClick={() => setDeleteItemId(item.id)}
-                    style={{
-                        cursor: 'pointer',
-                        background: '#C62828',
-                        border: 'none',
-                        color: 'white',
-                        fontWeight: 'bold',
-                        padding: '2px 6px',
-                        borderRadius: '4px'
-                    }}
-                >
+                <button type="button" onClick={() => setDeleteItemId(item.id)} className="inventory-item__delete-btn">
                     X
                 </button>
             </td>

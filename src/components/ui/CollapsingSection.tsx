@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
+import './UI.css';
 
 interface CollapsingSectionProps {
     title: ReactNode;
@@ -21,7 +22,7 @@ export function CollapsingSection({
     return (
         <div className={className}>
             <div className="sheet-panel__header">
-                <span className="flex-layout--row-center" style={{ gap: '4px', flexShrink: 0 }}>
+                <span className="collapsing-section__title-wrapper">
                     <button
                         type="button"
                         className={`collapse-btn ${isCollapsed ? 'is-collapsed' : ''}`}

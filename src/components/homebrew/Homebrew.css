@@ -1,0 +1,287 @@
+/* --- Homebrew Modal --- */
+.homebrew-modal__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1200;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.homebrew-modal__content {
+    background: var(--panel-bg);
+    border-radius: 8px;
+    width: 550px;
+    border: 2px solid #00695c;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.homebrew-modal__header {
+    background: #00695c;
+    padding: 10px 10px 0 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.homebrew-modal__title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.homebrew-modal__title {
+    margin: 0;
+    color: white;
+}
+
+.homebrew-modal__close-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.2rem;
+    padding: 0 5px;
+}
+
+.homebrew-modal__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.homebrew-modal__tab {
+    flex: 1;
+    padding: 8px 4px;
+    font-weight: bold;
+    background: rgba(0, 0, 0, 0.2);
+    color: white;
+    border: none;
+    border-radius: 6px 6px 0 0;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.homebrew-modal__tab--active {
+    background: var(--panel-bg);
+    color: #00695c;
+}
+
+.homebrew-modal__body {
+    padding: 15px;
+    overflow-y: hidden;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.homebrew-modal__footer {
+    padding: 10px;
+    border-top: 1px solid var(--border);
+    background: var(--panel-alt);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.homebrew-modal__footer-text {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.homebrew-modal__footer-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.homebrew-modal__footer-btn {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+}
+
+/* --- Homebrew Import Confirm Modal --- */
+.homebrew-import__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1300;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.homebrew-import__content {
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: 6px;
+    max-width: 400px;
+    width: 90%;
+    border: 2px solid #c62828;
+    text-align: center;
+}
+
+.homebrew-import__title {
+    color: #c62828;
+    margin-top: 0;
+}
+
+.homebrew-import__text {
+    font-size: 0.9rem;
+    color: var(--text-main);
+    margin-bottom: 20px;
+}
+
+.homebrew-import__actions {
+    display: flex;
+    gap: 8px;
+}
+
+.homebrew-import__btn {
+    flex: 1;
+    padding: 8px;
+}
+
+.homebrew-import__btn--merge {
+    background: #1976d2;
+    color: white;
+}
+
+/* --- Homebrew Lists (Shared) --- */
+.homebrew-list__container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+}
+
+.homebrew-list__desc {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.homebrew-list__search-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.homebrew-list__search-input {
+    flex: 1;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    color: var(--text-main);
+    outline: none;
+}
+
+.homebrew-list__create-btn {
+    padding: 8px;
+    background: #00695c;
+    border-color: #00695c;
+    white-space: nowrap;
+}
+
+.homebrew-list__scroll-area {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    flex: 1;
+    padding-right: 4px;
+    overscroll-behavior: contain;
+}
+
+.homebrew-list__empty {
+    text-align: center;
+    font-style: italic;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    padding: 20px;
+}
+
+.homebrew-list__footer {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+}
+
+/* --- Homebrew Cards (Shared) --- */
+.homebrew-card {
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.homebrew-card__header {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.homebrew-card__name-input {
+    flex: 1;
+    padding: 6px;
+    font-weight: bold;
+    background: var(--input-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+}
+
+.homebrew-card__gm-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    color: #c62828;
+    font-weight: bold;
+}
+
+.homebrew-card__btn {
+    padding: 6px 12px;
+}
+
+.homebrew-card__textarea {
+    width: 100%;
+    padding: 6px;
+    resize: vertical;
+    background: var(--input-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    box-sizing: border-box;
+}
+
+.homebrew-card__textarea--small {
+    height: 50px;
+}
+
+.homebrew-card__textarea--large {
+    height: 70px;
+}

@@ -1,0 +1,49 @@
+.homebrew-move__row {
+    display: flex;
+    gap: 8px;
+}
+
+.homebrew-move__select {
+    flex: 1;
+    padding: 4px;
+    background: var(--input-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.homebrew-move__power-box {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid var(--border);
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--input-bg);
+}
+
+.homebrew-move__label {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: var(--text-muted);
+}
+
+.homebrew-move__stat-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background: var(--row-odd);
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+}
+
+.homebrew-move__stat-select {
+    flex: 1;
+    padding: 2px;
+    background: var(--input-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+}

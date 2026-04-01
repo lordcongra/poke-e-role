@@ -19,9 +19,7 @@ export function MoveEditModal({ moveId, onClose }: MoveEditModalProps) {
     return (
         <div className="move-edit__overlay">
             <div className="move-edit__content">
-                <h3 className="move-edit__title">
-                    {move.name || 'Move Name'}
-                </h3>
+                <h3 className="move-edit__title">{move.name || 'Move Name'}</h3>
 
                 <textarea
                     className="move-edit__textarea"

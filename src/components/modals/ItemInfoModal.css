@@ -1,8 +1,14 @@
 .item-info__overlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background-color: rgba(0,0,0,0.6);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
     z-index: 1100;
-    display: flex; justify-content: center; align-items: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .item-info__content {
@@ -10,13 +16,13 @@
     padding: 15px;
     border-radius: 8px;
     width: 300px;
-    border: 2px solid #C62828;
+    border: 2px solid #c62828;
     color: var(--text-main);
 }
 
 .item-info__title {
     margin-top: 0;
-    color: #C62828;
+    color: #c62828;
     font-size: 1.1rem;
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
@@ -33,9 +39,11 @@
 }
 
 .item-info__actions {
-    display: flex; justify-content: center;
+    display: flex;
+    justify-content: center;
 }
 
 .item-info__btn-close {
-    width: 100%; padding: 6px;
+    width: 100%;
+    padding: 6px;
 }

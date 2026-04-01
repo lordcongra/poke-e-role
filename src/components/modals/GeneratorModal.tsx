@@ -51,9 +51,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
         <div className="generator-modal__overlay">
             <div className="generator-modal__content">
                 <h3 className="generator-modal__title">🎲 Auto-Build Pokémon</h3>
-                <p className="generator-modal__desc">
-                    Generate stats, skills, and moves based on current Rank.
-                </p>
+                <p className="generator-modal__desc">Generate stats, skills, and moves based on current Rank.</p>
 
                 <div className="generator-modal__form-group">
                     <div className="generator-modal__row">

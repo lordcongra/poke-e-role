@@ -12,10 +12,7 @@ export function ItemInfoModal({ infoModal, onClose }: ItemInfoModalProps) {
                 <h3 className="item-info__title">{infoModal.title}</h3>
                 <p className="item-info__desc">{infoModal.desc}</p>
                 <div className="item-info__actions">
-                    <button
-                        className="action-button action-button--dark item-info__btn-close"
-                        onClick={onClose}
-                    >
+                    <button className="action-button action-button--dark item-info__btn-close" onClick={onClose}>
                         Close
                     </button>
                 </div>

@@ -1,4 +1,3 @@
-// src/components/HomebrewModal.tsx
 import { useState, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
@@ -8,6 +7,7 @@ import { HomebrewMoves } from './HomebrewMoves';
 import { HomebrewPokemon } from './HomebrewPokemon';
 import { HomebrewItems } from './HomebrewItems';
 import type { CustomType, CustomAbility, CustomMove, CustomPokemon, CustomItem } from '../../store/storeTypes';
+import './Homebrew.css';
 
 export function HomebrewModal({ onClose }: { onClose: () => void }) {
     const role = useCharacterStore((state) => state.role);
@@ -82,103 +82,51 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
         reader.readAsText(file);
     };
 
-    const tabStyle = (tabName: string) => ({
-        flex: 1,
-        padding: '8px 4px',
-        fontWeight: 'bold' as const,
-        background: activeTab === tabName ? 'var(--panel-bg)' : 'rgba(0,0,0,0.2)',
-        color: activeTab === tabName ? '#00695C' : 'white',
-        border: 'none',
-        borderRadius: '6px 6px 0 0',
-        cursor: 'pointer',
-        fontSize: '0.85rem'
-    });
-
     return (
-        <div
-            style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(0,0,0,0.6)',
-                zIndex: 1200,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center'
-            }}
-        >
-            <div
-                style={{
-                    background: 'var(--panel-bg)',
-                    borderRadius: '8px',
-                    width: '550px',
-                    border: '2px solid #00695C',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
-                    maxHeight: '90vh',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    overflow: 'hidden'
-                }}
-            >
-                <div
-                    style={{
-                        background: '#00695C',
-                        paddingTop: '10px',
-                        paddingLeft: '10px',
-                        paddingRight: '10px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '10px'
-                    }}
-                >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h3 style={{ margin: 0, color: 'white' }}>🛠️ Homebrew Workshop</h3>
-                        <button
-                            onClick={onClose}
-                            style={{
-                                background: 'transparent',
-                                border: 'none',
-                                color: 'white',
-                                cursor: 'pointer',
-                                fontWeight: 'bold',
-                                fontSize: '1.2rem',
-                                padding: '0 5px'
-                            }}
-                        >
+        <div className="homebrew-modal__overlay">
+            <div className="homebrew-modal__content">
+                <div className="homebrew-modal__header">
+                    <div className="homebrew-modal__title-row">
+                        <h3 className="homebrew-modal__title">🛠️ Homebrew Workshop</h3>
+                        <button onClick={onClose} className="homebrew-modal__close-btn">
                             X
                         </button>
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                        <button onClick={() => setActiveTab('types')} style={tabStyle('types')}>
+                    <div className="homebrew-modal__tabs">
+                        <button
+                            onClick={() => setActiveTab('types')}
+                            className={`homebrew-modal__tab ${activeTab === 'types' ? 'homebrew-modal__tab--active' : ''}`}
+                        >
                             Types
                         </button>
-                        <button onClick={() => setActiveTab('abilities')} style={tabStyle('abilities')}>
+                        <button
+                            onClick={() => setActiveTab('abilities')}
+                            className={`homebrew-modal__tab ${activeTab === 'abilities' ? 'homebrew-modal__tab--active' : ''}`}
+                        >
                             Abilities
                         </button>
-                        <button onClick={() => setActiveTab('moves')} style={tabStyle('moves')}>
+                        <button
+                            onClick={() => setActiveTab('moves')}
+                            className={`homebrew-modal__tab ${activeTab === 'moves' ? 'homebrew-modal__tab--active' : ''}`}
+                        >
                             Moves
                         </button>
-                        <button onClick={() => setActiveTab('pokemon')} style={tabStyle('pokemon')}>
+                        <button
+                            onClick={() => setActiveTab('pokemon')}
+                            className={`homebrew-modal__tab ${activeTab === 'pokemon' ? 'homebrew-modal__tab--active' : ''}`}
+                        >
                             Pokémon
                         </button>
-                        <button onClick={() => setActiveTab('items')} style={tabStyle('items')}>
+                        <button
+                            onClick={() => setActiveTab('items')}
+                            className={`homebrew-modal__tab ${activeTab === 'items' ? 'homebrew-modal__tab--active' : ''}`}
+                        >
                             Items
                         </button>
                     </div>
                 </div>
 
-                <div
-                    style={{
-                        padding: '15px',
-                        overflowY: 'hidden',
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        minHeight: 0
-                    }}
-                >
+                <div className="homebrew-modal__body">
                     {activeTab === 'types' && <HomebrewTypes />}
                     {activeTab === 'abilities' && <HomebrewAbilities />}
                     {activeTab === 'moves' && <HomebrewMoves />}
@@ -186,24 +134,12 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                     {activeTab === 'items' && <HomebrewItems />}
                 </div>
 
-                <div
-                    style={{
-                        padding: '10px',
-                        borderTop: '1px solid var(--border)',
-                        background: 'var(--panel-alt)',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                    }}
-                >
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        Changes automatically save to the Room.
-                    </span>
-                    <div style={{ display: 'flex', gap: '4px' }}>
+                <div className="homebrew-modal__footer">
+                    <span className="homebrew-modal__footer-text">Changes automatically save to the Room.</span>
+                    <div className="homebrew-modal__footer-actions">
                         <button
                             onClick={handleExportAll}
-                            className="action-button action-button--dark"
-                            style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                            className="action-button action-button--dark homebrew-modal__footer-btn"
                         >
                             💾 Backup All
                         </button>
@@ -211,8 +147,7 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                             <>
                                 <button
                                     onClick={() => fileRef.current?.click()}
-                                    className="action-button action-button--dark"
-                                    style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                                    className="action-button action-button--dark homebrew-modal__footer-btn"
                                 >
                                     📂 Restore All
                                 </button>
@@ -230,41 +165,17 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
             </div>
 
             {importAllData && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundColor: 'rgba(0,0,0,0.6)',
-                        zIndex: 1300,
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                    }}
-                >
-                    <div
-                        style={{
-                            background: 'var(--panel-bg)',
-                            padding: '20px',
-                            borderRadius: '6px',
-                            maxWidth: '400px',
-                            width: '90%',
-                            border: '2px solid #C62828',
-                            textAlign: 'center'
-                        }}
-                    >
-                        <h3 style={{ color: '#C62828', marginTop: 0 }}>⚠️ Confirm Restore</h3>
-                        <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', marginBottom: '20px' }}>
+                <div className="homebrew-import__overlay">
+                    <div className="homebrew-import__content">
+                        <h3 className="homebrew-import__title">⚠️ Confirm Restore</h3>
+                        <p className="homebrew-import__text">
                             How would you like to import this data? <b>Overwrite</b> will delete all existing Workshop
                             items. <b>Add / Merge</b> will safely combine them, updating any items with matching names.
                         </p>
-                        <div style={{ display: 'flex', gap: '8px' }}>
+                        <div className="homebrew-import__actions">
                             <button
                                 onClick={() => setImportAllData(null)}
-                                className="action-button action-button--dark"
-                                style={{ flex: 1, padding: '8px' }}
+                                className="action-button action-button--dark homebrew-import__btn"
                             >
                                 Cancel
                             </button>
@@ -279,8 +190,7 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                                     );
                                     setImportAllData(null);
                                 }}
-                                className="action-button"
-                                style={{ flex: 1, padding: '8px', background: '#1976d2', color: 'white' }}
+                                className="action-button homebrew-import__btn homebrew-import__btn--merge"
                             >
                                 Add / Merge
                             </button>
@@ -295,8 +205,7 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                                     );
                                     setImportAllData(null);
                                 }}
-                                className="action-button action-button--red"
-                                style={{ flex: 1, padding: '8px' }}
+                                className="action-button action-button--red homebrew-import__btn"
                             >
                                 Overwrite
                             </button>

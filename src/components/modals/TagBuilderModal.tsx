@@ -25,10 +25,28 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
 
     const dynamicTypeOptions = [
-        'Normal', 'Fire', 'Water', 'Electric', 'Grass', 'Ice', 'Fighting', 'Poison', 
-        'Ground', 'Flying', 'Psychic', 'Bug', 'Rock', 'Ghost', 'Dragon', 'Dark', 
-        'Steel', 'Fairy', ...roomCustomTypes.map((t) => t.name), 
-        'Physical', 'Special', 'Super Effective'
+        'Normal',
+        'Fire',
+        'Water',
+        'Electric',
+        'Grass',
+        'Ice',
+        'Fighting',
+        'Poison',
+        'Ground',
+        'Flying',
+        'Psychic',
+        'Bug',
+        'Rock',
+        'Ghost',
+        'Dragon',
+        'Dark',
+        'Steel',
+        'Fairy',
+        ...roomCustomTypes.map((t) => t.name),
+        'Physical',
+        'Special',
+        'Super Effective'
     ];
 
     const extraCategories = useCharacterStore((state) => state.extraCategories);
@@ -44,8 +62,22 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
         if (category === 'skill') {
             const customSkillNames = extraCategories.flatMap((c) => c.skills.map((s) => s.name || 'Unnamed'));
             return [
-                'Brawl', 'Channel', 'Clash', 'Evasion', 'Alert', 'Athletic', 'Nature', 'Stealth',
-                'Charm', 'Etiquette', 'Intimidate', 'Perform', 'Crafts', 'Lore', 'Medicine', 'Magic',
+                'Brawl',
+                'Channel',
+                'Clash',
+                'Evasion',
+                'Alert',
+                'Athletic',
+                'Nature',
+                'Stealth',
+                'Charm',
+                'Etiquette',
+                'Intimidate',
+                'Perform',
+                'Crafts',
+                'Lore',
+                'Medicine',
+                'Magic',
                 ...customSkillNames
             ];
         }
@@ -56,12 +88,27 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
             return ['High Crit', 'Stacking High Crit', 'Ignore Low Acc', 'Recoil', 'Super Effective', 'Powder'];
         if (category === 'status')
             return [
-                '1st Degree Burn', '2nd Degree Burn', '3rd Degree Burn', 'Poison', 'Badly Poisoned',
-                'Paralysis', 'Sleep', 'Frozen Solid', 'Confusion', 'In Love', 'Flinch'
+                '1st Degree Burn',
+                '2nd Degree Burn',
+                '3rd Degree Burn',
+                'Poison',
+                'Badly Poisoned',
+                'Paralysis',
+                'Sleep',
+                'Frozen Solid',
+                'Confusion',
+                'In Love',
+                'Flinch'
             ];
         if (category === 'move_mechanics')
             return [
-                'High Critical', 'Low Accuracy', 'Never Miss', 'Recoil', 'Successive Actions', 'Set Damage', 'Powder'
+                'High Critical',
+                'Low Accuracy',
+                'Never Miss',
+                'Recoil',
+                'Successive Actions',
+                'Set Damage',
+                'Powder'
             ];
         return [];
     };
@@ -70,7 +117,9 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
         (category === 'combat' && !['Init', 'Chance', 'Combo Dmg'].includes(target)) ||
         (category === 'matchup' && target !== 'Remove Immunities');
     const showValueInput =
-        category === 'stat' || category === 'skill' || category === 'combat' ||
+        category === 'stat' ||
+        category === 'skill' ||
+        category === 'combat' ||
         (category === 'mechanic' && target === 'Ignore Low Acc') ||
         (category === 'move_mechanics' && ['Low Accuracy', 'Set Damage'].includes(target));
 
@@ -87,7 +136,10 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
         } else if (category === 'matchup') {
             if (target === 'Remove Immunities') tag = `[Remove Immunities]`;
             else if (typeOption) tag = `[${target}: ${typeOption}]`;
-            else { alert('Must select a type for matchups!'); return; }
+            else {
+                alert('Must select a type for matchups!');
+                return;
+            }
         } else if (category === 'mechanic') {
             if (target === 'High Crit') tag = `[High Crit]`;
             else if (target === 'Stacking High Crit') tag = `[Stacking High Crit]`;
@@ -117,11 +169,19 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
             } else if (targetType === 'homebrew_ability') {
                 const hbAbility = customAbilities.find((a) => a.id === targetId);
                 if (hbAbility)
-                    updateCustomAbility(targetId, 'effect', hbAbility.effect ? `${hbAbility.effect} ${tag}`.trim() : tag);
+                    updateCustomAbility(
+                        targetId,
+                        'effect',
+                        hbAbility.effect ? `${hbAbility.effect} ${tag}`.trim() : tag
+                    );
             } else if (targetType === 'homebrew_item') {
                 const hbItem = customItems.find((i) => i.id === targetId);
                 if (hbItem)
-                    updateCustomItem(targetId, 'description', hbItem.description ? `${hbItem.description} ${tag}`.trim() : tag);
+                    updateCustomItem(
+                        targetId,
+                        'description',
+                        hbItem.description ? `${hbItem.description} ${tag}`.trim() : tag
+                    );
             } else {
                 const item = inventory.find((i) => i.id === targetId);
                 if (item) updateInventoryItem(targetId, 'desc', item.desc ? `${item.desc} ${tag}`.trim() : tag);
@@ -160,7 +220,9 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                     >
                         <option value="">-- Select --</option>
                         {getTargetOptions().map((o) => (
-                            <option key={o} value={o}>{o}</option>
+                            <option key={o} value={o}>
+                                {o}
+                            </option>
                         ))}
                     </select>
 
@@ -172,7 +234,9 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                         >
                             <option value="">-- Any Type --</option>
                             {dynamicTypeOptions.map((t) => (
-                                <option key={t} value={t}>{t}</option>
+                                <option key={t} value={t}>
+                                    {t}
+                                </option>
                             ))}
                         </select>
                     )}

@@ -3,6 +3,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomItem } from '../../store/storeTypes';
 import { HomebrewItemCard } from './HomebrewItemCard';
+import './Homebrew.css';
 
 export function HomebrewItems() {
     const role = useCharacterStore((state) => state.role);
@@ -56,27 +57,19 @@ export function HomebrewItems() {
     };
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', height: '100%' }}>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+        <div className="homebrew-list__container">
+            <p className="homebrew-list__desc">
                 Create custom items. These will appear in the Bag dropdown, automatically loading their tags and
                 descriptions when selected!
             </p>
 
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <div className="homebrew-list__search-row">
                 <input
                     type="text"
                     placeholder="🔍 Search Items..."
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
-                    style={{
-                        flex: 1,
-                        padding: '8px',
-                        borderRadius: '4px',
-                        border: '1px solid var(--border)',
-                        background: 'var(--input-bg)',
-                        color: 'var(--text-main)',
-                        outline: 'none'
-                    }}
+                    className="homebrew-list__search-input"
                 />
                 {canEdit && (
                     <button
@@ -84,35 +77,16 @@ export function HomebrewItems() {
                             setSearchQuery('');
                             addCustomItem();
                         }}
-                        className="action-button action-button--dark"
-                        style={{ padding: '8px', background: '#00695C', borderColor: '#00695C', whiteSpace: 'nowrap' }}
+                        className="action-button action-button--dark homebrew-list__create-btn"
                     >
                         + Create New
                     </button>
                 )}
             </div>
 
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px',
-                    overflowY: 'auto',
-                    flex: 1,
-                    paddingRight: '4px',
-                    overscrollBehavior: 'contain'
-                }}
-            >
+            <div className="homebrew-list__scroll-area">
                 {filteredItems.length === 0 ? (
-                    <div
-                        style={{
-                            textAlign: 'center',
-                            fontStyle: 'italic',
-                            color: 'var(--text-muted)',
-                            fontSize: '0.9rem',
-                            padding: '20px'
-                        }}
-                    >
+                    <div className="homebrew-list__empty">
                         {visibleItems.length === 0 ? 'No custom items yet.' : 'No items match your search.'}
                     </div>
                 ) : (
@@ -128,15 +102,7 @@ export function HomebrewItems() {
                 )}
             </div>
 
-            <div
-                style={{
-                    display: 'flex',
-                    gap: '8px',
-                    marginTop: 'auto',
-                    borderTop: '1px solid var(--border)',
-                    paddingTop: '10px'
-                }}
-            >
+            <div className="homebrew-list__footer">
                 <button
                     onClick={handleExport}
                     className="action-button action-button--dark"
@@ -165,41 +131,17 @@ export function HomebrewItems() {
             </div>
 
             {importData && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundColor: 'rgba(0,0,0,0.6)',
-                        zIndex: 1300,
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                    }}
-                >
-                    <div
-                        style={{
-                            background: 'var(--panel-bg)',
-                            padding: '20px',
-                            borderRadius: '6px',
-                            maxWidth: '400px',
-                            width: '90%',
-                            border: '2px solid #C62828',
-                            textAlign: 'center'
-                        }}
-                    >
-                        <h3 style={{ color: '#C62828', marginTop: 0 }}>⚠️ Confirm Import</h3>
-                        <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', marginBottom: '20px' }}>
+                <div className="homebrew-import__overlay">
+                    <div className="homebrew-import__content">
+                        <h3 className="homebrew-import__title">⚠️ Confirm Import</h3>
+                        <p className="homebrew-import__text">
                             How would you like to import this data? <b>Overwrite</b> will delete your existing Items.{' '}
                             <b>Add / Merge</b> will safely combine them, updating any items with matching names.
                         </p>
-                        <div style={{ display: 'flex', gap: '8px' }}>
+                        <div className="homebrew-import__actions">
                             <button
                                 onClick={() => setImportData(null)}
-                                className="action-button action-button--dark"
-                                style={{ flex: 1, padding: '8px' }}
+                                className="action-button action-button--dark homebrew-import__btn"
                             >
                                 Cancel
                             </button>
@@ -208,8 +150,7 @@ export function HomebrewItems() {
                                     mergeCustomItemData(importData);
                                     setImportData(null);
                                 }}
-                                className="action-button"
-                                style={{ flex: 1, padding: '8px', background: '#1976d2', color: 'white' }}
+                                className="action-button homebrew-import__btn homebrew-import__btn--merge"
                             >
                                 Add / Merge
                             </button>
@@ -218,8 +159,7 @@ export function HomebrewItems() {
                                     overwriteCustomItemData(importData);
                                     setImportData(null);
                                 }}
-                                className="action-button action-button--red"
-                                style={{ flex: 1, padding: '8px' }}
+                                className="action-button action-button--red homebrew-import__btn"
                             >
                                 Overwrite
                             </button>

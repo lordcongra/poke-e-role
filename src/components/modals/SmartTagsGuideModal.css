@@ -1,8 +1,14 @@
 .tags-guide__overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.6);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
     z-index: 1000;
-    display: flex; justify-content: center; align-items: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     font-family: sans-serif;
 }
 
@@ -11,7 +17,7 @@
     padding: 15px;
     border-radius: 8px;
     width: 340px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     border: 2px solid var(--primary);
     color: var(--text-main);
 }
@@ -41,9 +47,11 @@
 }
 
 .tags-guide__actions {
-    display: flex; justify-content: center;
+    display: flex;
+    justify-content: center;
 }
 
 .tags-guide__btn-close {
-    width: 100%; padding: 6px;
+    width: 100%;
+    padding: 6px;
 }

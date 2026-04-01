@@ -4,6 +4,8 @@ import type { CustomMove } from '../../store/storeTypes';
 import { CombatStat, Skill } from '../../types/enums';
 import { TagBuilderModal } from '../modals/TagBuilderModal';
 import { NumberSpinner } from '../ui/NumberSpinner';
+import './Homebrew.css';
+import './HomebrewMove.css';
 
 interface HomebrewMoveCardProps {
     move: CustomMove;
@@ -31,19 +33,8 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
     }, [move]);
 
     return (
-        <div
-            style={{
-                background: 'var(--panel-alt)',
-                border: '1px solid var(--border)',
-                borderRadius: '6px',
-                padding: '10px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                flexShrink: 0
-            }}
-        >
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div className="homebrew-card">
+            <div className="homebrew-card__header">
                 <button
                     type="button"
                     className={`collapse-btn ${isCollapsed ? 'is-collapsed' : ''}`}
@@ -58,27 +49,10 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                     onBlur={() => canEdit && localName !== move.name && updateCustomMove(move.id, 'name', localName)}
                     placeholder="Move Name"
                     disabled={!canEdit}
-                    style={{
-                        flex: 1,
-                        padding: '6px',
-                        fontWeight: 'bold',
-                        background: 'var(--input-bg)',
-                        color: 'var(--text-main)',
-                        border: '1px solid var(--border)',
-                        borderRadius: '4px'
-                    }}
+                    className="homebrew-card__name-input"
                 />
                 {role === 'GM' && (
-                    <label
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            fontSize: '0.7rem',
-                            color: '#c62828',
-                            fontWeight: 'bold'
-                        }}
-                    >
+                    <label className="homebrew-card__gm-label">
                         <input
                             type="checkbox"
                             checked={localGameMasterOnly}
@@ -93,18 +67,13 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                 {canEdit && (
                     <button
                         onClick={() => setShowTagBuilder(true)}
-                        className="action-button action-button--dark"
-                        style={{ padding: '6px 12px' }}
+                        className="action-button action-button--dark homebrew-card__btn"
                     >
                         🏷️ Tags
                     </button>
                 )}
                 {canEdit && (
-                    <button
-                        onClick={onRemove}
-                        className="action-button action-button--red"
-                        style={{ padding: '6px 12px' }}
-                    >
+                    <button onClick={onRemove} className="action-button action-button--red homebrew-card__btn">
                         Delete
                     </button>
                 )}
@@ -112,19 +81,15 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
 
             {!isCollapsed && (
                 <>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div className="homebrew-move__row">
                         <select
                             value={move.type}
                             onChange={(event) => canEdit && updateCustomMove(move.id, 'type', event.target.value)}
                             disabled={!canEdit}
+                            className="homebrew-move__select"
                             style={{
-                                flex: 1,
-                                padding: '4px',
                                 background: allTypeColors[move.type] || 'var(--input-bg)',
                                 color: move.type && move.type !== 'None' ? 'white' : 'var(--text-main)',
-                                border: '1px solid var(--border)',
-                                borderRadius: '4px',
-                                fontWeight: 'bold',
                                 textShadow: move.type && move.type !== 'None' ? '1px 1px 1px rgba(0,0,0,0.8)' : 'none'
                             }}
                         >
@@ -146,33 +111,14 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                                 )
                             }
                             disabled={!canEdit}
-                            style={{
-                                flex: 1,
-                                padding: '4px',
-                                background: 'var(--input-bg)',
-                                color: 'var(--text-main)',
-                                border: '1px solid var(--border)',
-                                borderRadius: '4px'
-                            }}
+                            className="homebrew-move__select"
                         >
                             <option value="Physical">Physical</option>
                             <option value="Special">Special</option>
                             <option value="Status">Status</option>
                         </select>
-                        <div
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                border: '1px solid var(--border)',
-                                padding: '2px 6px',
-                                borderRadius: '4px',
-                                background: 'var(--input-bg)'
-                            }}
-                        >
-                            <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>
-                                Power:
-                            </span>
+                        <div className="homebrew-move__power-box">
+                            <span className="homebrew-move__label">Power:</span>
                             <NumberSpinner
                                 value={move.power}
                                 onChange={(value: number) => canEdit && updateCustomMove(move.id, 'power', value)}
@@ -181,32 +127,13 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                         </div>
                     </div>
 
-                    <div
-                        style={{
-                            display: 'flex',
-                            gap: '8px',
-                            alignItems: 'center',
-                            background: 'var(--row-odd)',
-                            padding: '6px',
-                            borderRadius: '4px',
-                            border: '1px solid var(--border)'
-                        }}
-                    >
-                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>
-                            Accuracy:
-                        </span>
+                    <div className="homebrew-move__stat-row">
+                        <span className="homebrew-move__label">Accuracy:</span>
                         <select
                             value={move.acc1}
                             onChange={(event) => canEdit && updateCustomMove(move.id, 'acc1', event.target.value)}
                             disabled={!canEdit}
-                            style={{
-                                flex: 1,
-                                padding: '2px',
-                                background: 'var(--input-bg)',
-                                color: 'var(--text-main)',
-                                border: '1px solid var(--border)',
-                                borderRadius: '3px'
-                            }}
+                            className="homebrew-move__stat-select"
                         >
                             {Object.values(CombatStat).map((stat) => (
                                 <option key={stat} value={stat}>
@@ -220,14 +147,7 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                             value={move.acc2}
                             onChange={(event) => canEdit && updateCustomMove(move.id, 'acc2', event.target.value)}
                             disabled={!canEdit}
-                            style={{
-                                flex: 1,
-                                padding: '2px',
-                                background: 'var(--input-bg)',
-                                color: 'var(--text-main)',
-                                border: '1px solid var(--border)',
-                                borderRadius: '3px'
-                            }}
+                            className="homebrew-move__stat-select"
                         >
                             <option value="none">-- None --</option>
                             {Object.values(Skill).map((skill) => (
@@ -238,32 +158,13 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                         </select>
                     </div>
 
-                    <div
-                        style={{
-                            display: 'flex',
-                            gap: '8px',
-                            alignItems: 'center',
-                            background: 'var(--row-odd)',
-                            padding: '6px',
-                            borderRadius: '4px',
-                            border: '1px solid var(--border)'
-                        }}
-                    >
-                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>
-                            Damage:
-                        </span>
+                    <div className="homebrew-move__stat-row">
+                        <span className="homebrew-move__label">Damage:</span>
                         <select
                             value={move.dmg1}
                             onChange={(event) => canEdit && updateCustomMove(move.id, 'dmg1', event.target.value)}
                             disabled={!canEdit}
-                            style={{
-                                flex: 1,
-                                padding: '2px',
-                                background: 'var(--input-bg)',
-                                color: 'var(--text-main)',
-                                border: '1px solid var(--border)',
-                                borderRadius: '3px'
-                            }}
+                            className="homebrew-move__stat-select"
                         >
                             <option value="">-- None --</option>
                             {Object.values(CombatStat).map((stat) => (
@@ -284,19 +185,7 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                         }
                         placeholder="Move Description / Effects"
                         disabled={!canEdit}
-                        style={{
-                            width: '100%',
-                            height: '50px',
-                            padding: '6px',
-                            resize: 'vertical',
-                            background: 'var(--input-bg)',
-                            color: 'var(--text-main)',
-                            border: '1px solid var(--border)',
-                            borderRadius: '4px',
-                            fontFamily: 'inherit',
-                            fontSize: '0.85rem',
-                            boxSizing: 'border-box'
-                        }}
+                        className="homebrew-card__textarea homebrew-card__textarea--small"
                     />
                 </>
             )}

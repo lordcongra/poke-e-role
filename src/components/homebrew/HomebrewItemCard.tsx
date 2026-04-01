@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomItem } from '../../store/storeTypes';
 import { TagBuilderModal } from '../modals/TagBuilderModal';
+import './Homebrew.css';
 
 interface HomebrewItemCardProps {
     item: CustomItem;
@@ -27,19 +28,8 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove }: HomebrewItem
     }, [item]);
 
     return (
-        <div
-            style={{
-                background: 'var(--panel-alt)',
-                border: '1px solid var(--border)',
-                borderRadius: '6px',
-                padding: '10px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                flexShrink: 0
-            }}
-        >
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div className="homebrew-card">
+            <div className="homebrew-card__header">
                 <button
                     type="button"
                     className={`collapse-btn ${isCollapsed ? 'is-collapsed' : ''}`}
@@ -54,27 +44,10 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove }: HomebrewItem
                     onBlur={() => canEdit && localName !== item.name && updateCustomItem(item.id, 'name', localName)}
                     placeholder="Item Name"
                     disabled={!canEdit}
-                    style={{
-                        flex: 1,
-                        padding: '6px',
-                        fontWeight: 'bold',
-                        background: 'var(--input-bg)',
-                        color: 'var(--text-main)',
-                        border: '1px solid var(--border)',
-                        borderRadius: '4px'
-                    }}
+                    className="homebrew-card__name-input"
                 />
                 {role === 'GM' && (
-                    <label
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            fontSize: '0.7rem',
-                            color: '#c62828',
-                            fontWeight: 'bold'
-                        }}
-                    >
+                    <label className="homebrew-card__gm-label">
                         <input
                             type="checkbox"
                             checked={localGameMasterOnly}
@@ -89,18 +62,13 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove }: HomebrewItem
                 {canEdit && (
                     <button
                         onClick={() => setShowTagBuilder(true)}
-                        className="action-button action-button--dark"
-                        style={{ padding: '6px 12px' }}
+                        className="action-button action-button--dark homebrew-card__btn"
                     >
                         🏷️ Tags
                     </button>
                 )}
                 {canEdit && (
-                    <button
-                        onClick={onRemove}
-                        className="action-button action-button--red"
-                        style={{ padding: '6px 12px' }}
-                    >
+                    <button onClick={onRemove} className="action-button action-button--red homebrew-card__btn">
                         Delete
                     </button>
                 )}
@@ -117,19 +85,7 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove }: HomebrewItem
                     }
                     placeholder="Item Effect / Description and Tags"
                     disabled={!canEdit}
-                    style={{
-                        width: '100%',
-                        height: '70px',
-                        padding: '6px',
-                        resize: 'vertical',
-                        background: 'var(--input-bg)',
-                        color: 'var(--text-main)',
-                        border: '1px solid var(--border)',
-                        borderRadius: '4px',
-                        fontFamily: 'inherit',
-                        fontSize: '0.85rem',
-                        boxSizing: 'border-box'
-                    }}
+                    className="homebrew-card__textarea homebrew-card__textarea--large"
                 />
             )}
 

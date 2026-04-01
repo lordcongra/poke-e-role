@@ -87,7 +87,7 @@ export function InventoryTable() {
     );
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div className="inventory-table__container">
             <datalist id="item-list">
                 {[...KNOWN_ITEMS.map((item) => item.name), ...customItemNames].map((itemName) => (
                     <option key={itemName} value={itemName} />
@@ -96,7 +96,7 @@ export function InventoryTable() {
 
             <CollapsingSection title="BAG" headerElements={bagHeaderElements}>
                 <div className="table-responsive-wrapper">
-                    <table className="data-table" style={{ width: '100%', textAlign: 'left' }}>
+                    <table className="data-table inventory-table__table">
                         <thead>
                             <tr className="inventory-table__header-row">
                                 <th className="inventory-table__header-cell-check" title="Equipped?">
@@ -126,8 +126,7 @@ export function InventoryTable() {
                 <button
                     type="button"
                     onClick={addInventoryItem}
-                    className="action-button action-button--dark"
-                    style={{ width: '100%', marginTop: '4px' }}
+                    className="action-button action-button--dark inventory-table__add-btn"
                 >
                     + Add Item
                 </button>
@@ -155,49 +154,21 @@ export function InventoryTable() {
             {showTagsGuide && <SmartTagsGuideModal onClose={() => setShowTagsGuide(false)} />}
 
             {deleteItemId && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundColor: 'rgba(0,0,0,0.6)',
-                        zIndex: 1200,
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                    }}
-                >
-                    <div
-                        style={{
-                            background: 'var(--panel-bg)',
-                            padding: '20px',
-                            borderRadius: '6px',
-                            maxWidth: '300px',
-                            width: '90%',
-                            border: '2px solid #C62828',
-                            boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
-                            textAlign: 'center'
-                        }}
-                    >
-                        <h3 style={{ color: '#C62828', marginTop: 0, fontSize: '1.1rem' }}>⚠️ Confirm Deletion</h3>
-                        <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', marginBottom: '20px' }}>
-                            Are you sure you want to delete this Item?
-                        </p>
-                        <div style={{ display: 'flex', gap: '10px' }}>
+                <div className="inventory-table__modal-overlay">
+                    <div className="inventory-table__modal-content">
+                        <h3 className="inventory-table__modal-title">⚠️ Confirm Deletion</h3>
+                        <p className="inventory-table__modal-text">Are you sure you want to delete this Item?</p>
+                        <div className="inventory-table__modal-actions">
                             <button
                                 type="button"
-                                className="action-button action-button--dark"
-                                style={{ flex: 1, padding: '6px' }}
+                                className="action-button action-button--dark inventory-table__modal-btn"
                                 onClick={() => setDeleteItemId(null)}
                             >
                                 Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--red"
-                                style={{ flex: 1, padding: '6px' }}
+                                className="action-button action-button--red inventory-table__modal-btn"
                                 onClick={() => {
                                     removeInventoryItem(deleteItemId);
                                     setDeleteItemId(null);

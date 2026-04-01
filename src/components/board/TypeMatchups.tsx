@@ -1,7 +1,8 @@
-// src/components/TypeMatchups.tsx
+// src/components/board/TypeMatchups.tsx
 import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { getAbilityText } from '../../utils/combatUtils';
+import './TypeMatchups.css';
 
 const BASE_CHART: Record<string, Record<string, number>> = {
     Normal: { Fighting: 2, Ghost: 0 },
@@ -76,26 +77,15 @@ export function TypeMatchups() {
 
     if (!type1 && !type2) {
         return (
-            <div className="sheet-panel" style={{ paddingBottom: '10px' }}>
+            <div className="sheet-panel type-matchups__panel">
                 <div className="sheet-panel__header" style={{ textAlign: 'left', paddingLeft: '10px' }}>
                     ▼ TYPE MATCHUPS
                 </div>
-                <div
-                    style={{
-                        textAlign: 'center',
-                        padding: '15px',
-                        color: 'var(--text-muted)',
-                        fontStyle: 'italic',
-                        fontSize: '0.9rem'
-                    }}
-                >
-                    Load a Pokémon to see matchups...
-                </div>
+                <div className="type-matchups__empty">Load a Pokémon to see matchups...</div>
             </div>
         );
     }
 
-    // AUDIT FIX: Filter out GM-Only types so players don't get spoilers in their matchup charts!
     const visibleTypes = roomCustomTypes.filter((t) => role === 'GM' || !t.gmOnly);
 
     const ALL_TYPES = [...BASE_TYPES, ...visibleTypes.map((t) => t.name)];
@@ -213,32 +203,11 @@ export function TypeMatchups() {
     const renderGroup = (label: string, types: string[]) => {
         if (types.length === 0) return null;
         return (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                <span
-                    style={{
-                        width: '35px',
-                        textAlign: 'right',
-                        fontWeight: 'bold',
-                        fontSize: '0.9rem',
-                        color: 'var(--text-main)'
-                    }}
-                >
-                    {label}
-                </span>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+            <div className="type-matchups__group-row">
+                <span className="type-matchups__group-label">{label}</span>
+                <div className="type-matchups__pill-container">
                     {types.map((t) => (
-                        <span
-                            key={t}
-                            style={{
-                                background: ALL_COLORS[t] || '#777',
-                                color: 'white',
-                                padding: '2px 8px',
-                                borderRadius: '4px',
-                                fontSize: '0.8rem',
-                                fontWeight: 'bold',
-                                textShadow: '1px 1px 1px rgba(0,0,0,0.5)'
-                            }}
-                        >
+                        <span key={t} className="type-matchups__pill" style={{ background: ALL_COLORS[t] || '#777' }}>
                             {t}
                         </span>
                     ))}
@@ -248,9 +217,9 @@ export function TypeMatchups() {
     };
 
     return (
-        <div className="sheet-panel" style={{ paddingBottom: '10px' }}>
+        <div className="sheet-panel type-matchups__panel">
             <div className="sheet-panel__header">
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span className="type-matchups__header-text">
                     <button
                         type="button"
                         className={`collapse-btn ${isCollapsed ? 'is-collapsed' : ''}`}
@@ -264,7 +233,7 @@ export function TypeMatchups() {
 
             {!isCollapsed && (
                 <div className="panel-content-wrapper">
-                    <div style={{ padding: '10px 10px 4px 10px' }}>
+                    <div className="type-matchups__content">
                         {renderGroup('4x', groups[4])}
                         {renderGroup('2x', groups[2])}
                         {renderGroup('0.5x', groups[0.5])}

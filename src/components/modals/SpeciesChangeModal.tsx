@@ -44,9 +44,7 @@ export function SpeciesChangeModal({ pendingSpeciesData, onClose }: SpeciesChang
                     >
                         ⚠️ Brand New Pokémon
                         <br />
-                        <span className="species-change__btn-subtitle">
-                            (Wipes Moves & Skills completely)
-                        </span>
+                        <span className="species-change__btn-subtitle">(Wipes Moves & Skills completely)</span>
                     </button>
                     <button
                         type="button"

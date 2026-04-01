@@ -1,0 +1,51 @@
+.type-matchups__panel {
+    padding-bottom: 10px;
+}
+
+.type-matchups__header-text {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.type-matchups__empty {
+    text-align: center;
+    padding: 15px;
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+.type-matchups__content {
+    padding: 10px 10px 4px 10px;
+}
+
+.type-matchups__group-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.type-matchups__group-label {
+    width: 35px;
+    text-align: right;
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: var(--text-main);
+}
+
+.type-matchups__pill-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.type-matchups__pill {
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+}
