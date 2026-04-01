@@ -42,21 +42,24 @@ function App() {
                 <IdentityHeader />
                 <DerivedBoard />
 
+                {/* --- COMBAT DASHBOARD --- */}
+                <TrackerSection />
+                <MovesTable />
+                <ActionRolls />
+
+                {/* --- STATS & SKILLS --- */}
                 <div className="sheet-container__row">
                     <div className="sheet-container__column">
-                        <TrackerSection />
+                        {mode === 'Pokémon' && <TypeMatchups />}
                         <CoreTable />
                         <SocialTable />
-                        {mode === 'Pokémon' && <TypeMatchups />}
                     </div>
 
                     <div className="sheet-container__column">
                         <SkillsTable />
-                        <ActionRolls />
                     </div>
                 </div>
 
-                <MovesTable />
                 <InventoryTable />
             </div>
             {isPrinting && <PrintSheet />}

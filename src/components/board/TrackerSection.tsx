@@ -138,143 +138,157 @@ export function TrackerSection() {
     };
 
     return (
-        <CollapsingSection title="ROUND TRACKER" className="tracker-section">
-            <div className="tracker-section__actions-row">
-                <div className="tracker-section__action-group">
-                    <span className="tracker-section__action-label">Act</span>
-                    <TooltipIcon
-                        onClick={() => setTooltipInfo({ title: 'Actions', desc: 'Actions taken this round.' })}
-                    />
-                    :
-                    <NumberSpinner
-                        value={trackers.actions}
-                        onChange={(value) => updateTracker('actions', Math.max(0, Math.min(5, value)))}
-                        min={0}
-                        max={5}
-                    />
-                </div>
+        <CollapsingSection title="ROUND TRACKER" className="sheet-panel tracker-section">
+            <div className="tracker-section__horizontal-wrapper">
+                {/* LEFT COLUMN: Actions & Chances */}
+                <div className="tracker-section__horizontal-col">
+                    <div className="tracker-section__actions-row">
+                        <div className="tracker-section__action-group">
+                            <span className="tracker-section__action-label">Act</span>
+                            <TooltipIcon
+                                onClick={() => setTooltipInfo({ title: 'Actions', desc: 'Actions taken this round.' })}
+                            />
+                            :
+                            <NumberSpinner
+                                value={trackers.actions}
+                                onChange={(value) => updateTracker('actions', Math.max(0, Math.min(5, value)))}
+                                min={0}
+                                max={5}
+                            />
+                        </div>
 
-                <div className="tracker-section__buttons-group">
-                    <div className="tracker-section__toggle-group">
-                        <button
-                            type="button"
-                            onClick={handleEvadeRoll}
-                            className="action-button action-button--dark tracker-section__toggle-btn"
-                        >
-                            🎲 Evade
-                        </button>
-                        <input
-                            type="checkbox"
-                            checked={trackers.evade}
-                            onChange={(event) => updateTracker('evade', event.target.checked)}
-                            className="sheet-save tracker-section__checkbox"
-                        />
+                        <div className="tracker-section__buttons-group">
+                            <div className="tracker-section__toggle-group">
+                                <button
+                                    type="button"
+                                    onClick={handleEvadeRoll}
+                                    className="action-button action-button--dark tracker-section__toggle-btn"
+                                >
+                                    🎲 Evade
+                                </button>
+                                <input
+                                    type="checkbox"
+                                    checked={trackers.evade}
+                                    onChange={(event) => updateTracker('evade', event.target.checked)}
+                                    className="sheet-save tracker-section__checkbox"
+                                />
+                            </div>
+
+                            <div className="tracker-section__toggle-group">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowClashModal(true)}
+                                    className="action-button action-button--dark tracker-section__toggle-btn"
+                                >
+                                    🎲 Clash
+                                </button>
+                                <input
+                                    type="checkbox"
+                                    checked={trackers.clash}
+                                    onChange={(event) => updateTracker('clash', event.target.checked)}
+                                    className="sheet-save tracker-section__checkbox"
+                                />
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="tracker-section__toggle-group">
+                    <div className="tracker-section__chances-row">
+                        <span className="tracker-section__action-label">Take your Chances</span>
+                        <TooltipIcon
+                            onClick={() =>
+                                setTooltipInfo({
+                                    title: 'Take Your Chances',
+                                    desc: 'Reroll failed dice. Max uses equals the number of Willpower spent.'
+                                })
+                            }
+                        />
+                        :
+                        <NumberSpinner
+                            value={trackers.chances}
+                            onChange={(value) => updateTracker('chances', value)}
+                            min={0}
+                        />
                         <button
                             type="button"
-                            onClick={() => setShowClashModal(true)}
-                            className="action-button action-button--dark tracker-section__toggle-btn"
+                            onClick={openChancesModal}
+                            className="action-button action-button--dark tracker-section__roll-btn"
                         >
-                            🎲 Clash
+                            🎲 Roll
                         </button>
-                        <input
-                            type="checkbox"
-                            checked={trackers.clash}
-                            onChange={(event) => updateTracker('clash', event.target.checked)}
-                            className="sheet-save tracker-section__checkbox"
-                        />
                     </div>
                 </div>
-            </div>
 
-            <div className="tracker-section__chances-row">
-                <span className="tracker-section__action-label">Take your Chances</span>
-                <TooltipIcon
-                    onClick={() =>
-                        setTooltipInfo({
-                            title: 'Take Your Chances',
-                            desc: 'Reroll failed dice. Max uses equals the number of Willpower spent.'
-                        })
-                    }
-                />
-                :
-                <NumberSpinner value={trackers.chances} onChange={(value) => updateTracker('chances', value)} min={0} />
-                <button
-                    type="button"
-                    onClick={openChancesModal}
-                    className="action-button action-button--dark tracker-section__roll-btn"
-                >
-                    🎲 Roll
-                </button>
-            </div>
+                {/* RIGHT COLUMN: Maneuvers & Willpower */}
+                <div className="tracker-section__horizontal-col">
+                    <div className="tracker-section__maneuver-row">
+                        <select
+                            value={maneuver}
+                            onChange={(event) => setManeuver(event.target.value)}
+                            className="tracker-section__maneuver-select"
+                        >
+                            <option value="none">-- Maneuver --</option>
+                            <option value="ambush">Ambush (Dex+Stl)</option>
+                            <option value="cover">Cover Ally (Will)</option>
+                            <option value="grapple">Grapple (Str+Bwl)</option>
+                            <option value="run">Run (Dex+Ath)</option>
+                            <option value="stabilize">Stabilize (Cle+Med)</option>
+                            <option value="struggle">Struggle (Accuracy)</option>
+                        </select>
+                        <button
+                            type="button"
+                            onClick={rollManeuver}
+                            className="action-button action-button--dark tracker-section__maneuver-btn"
+                        >
+                            🎲
+                        </button>
+                        <button
+                            type="button"
+                            onClick={resetRound}
+                            className="action-button action-button--red tracker-section__reset-btn"
+                        >
+                            🔄 Reset
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setShowRestModal(true)}
+                            className="action-button tracker-section__rest-btn"
+                            title="Fully heal HP/Will and clear statuses"
+                        >
+                            🏕️ Rest
+                        </button>
+                    </div>
 
-            <div className="tracker-section__maneuver-row">
-                <select
-                    value={maneuver}
-                    onChange={(event) => setManeuver(event.target.value)}
-                    className="tracker-section__maneuver-select"
-                >
-                    <option value="none">-- Maneuver --</option>
-                    <option value="ambush">Ambush (Dex+Stl)</option>
-                    <option value="cover">Cover Ally (Will)</option>
-                    <option value="grapple">Grapple (Str+Bwl)</option>
-                    <option value="run">Run (Dex+Ath)</option>
-                    <option value="stabilize">Stabilize (Cle+Med)</option>
-                    <option value="struggle">Struggle (Accuracy)</option>
-                </select>
-                <button
-                    type="button"
-                    onClick={rollManeuver}
-                    className="action-button action-button--dark tracker-section__maneuver-btn"
-                >
-                    🎲
-                </button>
-                <button
-                    type="button"
-                    onClick={resetRound}
-                    className="action-button action-button--red tracker-section__reset-btn"
-                >
-                    🔄 Reset
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setShowRestModal(true)}
-                    className="action-button tracker-section__rest-btn"
-                    title="Fully heal HP/Will and clear statuses"
-                >
-                    🏕️ Rest
-                </button>
-            </div>
-
-            <div className="mobile-stack tracker-section__will-row">
-                {painEnabled && (
-                    <button
-                        type="button"
-                        onClick={() => handleWillSpend(1, () => updateTracker('ignoredPain', trackers.ignoredPain + 1))}
-                        className="action-button action-button--dark tracker-section__will-btn"
-                        title="Power Through the Pain: Ignore 1 Pain Penalization for the rest of the Scene (-1 Will)"
-                    >
-                        Ignore Pain Penalties
-                    </button>
-                )}
-                <button
-                    type="button"
-                    onClick={handleFateSpend}
-                    className="action-button action-button--dark tracker-section__will-btn"
-                    title="Pushing Fate: Get 1 automatic un-removable success on a single roll (-1 Will). (Does not stack with Take Your Chances)"
-                >
-                    Pushing Fate
-                </button>
-                <button
-                    type="button"
-                    onClick={handleChanceSpend}
-                    className="action-button action-button--dark tracker-section__will-btn"
-                    title="Take Your Chances: Re-roll 1 unsuccessful die from all Action Rolls of the Round (-1 Will). (Does not stack with Pushing Fate)"
-                >
-                    Take Your Chances
-                </button>
+                    <div className="mobile-stack tracker-section__will-row">
+                        {painEnabled && (
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    handleWillSpend(1, () => updateTracker('ignoredPain', trackers.ignoredPain + 1))
+                                }
+                                className="action-button action-button--dark tracker-section__will-btn"
+                                title="Power Through the Pain: Ignore 1 Pain Penalization for the rest of the Scene (-1 Will)"
+                            >
+                                Ignore Pain Penalties
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            onClick={handleFateSpend}
+                            className="action-button action-button--dark tracker-section__will-btn"
+                            title="Pushing Fate: Get 1 automatic un-removable success on a single roll (-1 Will). (Does not stack with Take Your Chances)"
+                        >
+                            Pushing Fate
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleChanceSpend}
+                            className="action-button action-button--dark tracker-section__will-btn"
+                            title="Take Your Chances: Re-roll 1 unsuccessful die from all Action Rolls of the Round (-1 Will). (Does not stack with Pushing Fate)"
+                        >
+                            Take Your Chances
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {chancesModalOpen && <TakeChancesModal onClose={() => setChancesModalOpen(false)} />}

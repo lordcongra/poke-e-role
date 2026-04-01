@@ -100,12 +100,6 @@ export function SkillsTable() {
                                                 placeholder="CAT NAME"
                                                 className="skills-table__custom-category-input"
                                             />
-                                            <button
-                                                onClick={() => setDeleteCategoryId(category.id)}
-                                                className="skills-table__custom-category-delete"
-                                            >
-                                                X
-                                            </button>
                                         </div>
                                     </th>
                                     <th>Base</th>
@@ -158,12 +152,27 @@ export function SkillsTable() {
                                         </td>
                                     </tr>
                                 ))}
+                                <tr>
+                                    <td colSpan={4} className="skills-table__delete-cell">
+                                        <button
+                                            type="button"
+                                            onClick={() => setDeleteCategoryId(category.id)}
+                                            className="action-button action-button--red action-button--full-width"
+                                        >
+                                            - Delete "{category.name || 'Category'}"
+                                        </button>
+                                    </td>
+                                </tr>
                             </React.Fragment>
                         ))}
                     </tbody>
                 </table>
             </div>
-            <button onClick={addExtraCategory} className="action-button action-button--dark skills-table__add-btn">
+            <button
+                type="button"
+                onClick={addExtraCategory}
+                className="action-button action-button--dark skills-table__add-btn"
+            >
                 + Add Skill Category
             </button>
 

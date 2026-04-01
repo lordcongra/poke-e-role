@@ -33,7 +33,6 @@
 .skills-table__custom-category-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     width: 100%;
 }
 
@@ -42,20 +41,8 @@
     border: none;
     color: white;
     font-weight: bold;
-    width: 100px;
+    width: 100%;
     outline: none;
-}
-
-.skills-table__custom-category-delete {
-    background: #c62828;
-    border: none;
-    color: white;
-    cursor: pointer;
-    font-weight: bold;
-    border-radius: 4px;
-    padding: 2px 6px;
-    font-size: 0.8rem;
-    margin-left: auto;
 }
 
 .skills-table__custom-skill-input {
@@ -68,6 +55,10 @@
     width: 90px;
     padding: 3px 4px;
     outline: none;
+}
+
+.skills-table__delete-cell {
+    padding: 6px 4px 12px 4px;
 }
 
 .skills-table__modal-overlay {
@@ -115,6 +106,7 @@
     width: 100%;
     margin-top: 4px;
 }
+
 .skills-table__modal-btn {
     flex: 1;
     padding: 6px;
