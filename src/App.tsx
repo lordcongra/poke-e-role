@@ -1,4 +1,3 @@
-// src/App.tsx
 import { useOwlbearSync } from './hooks/useOwlbearSync';
 import { useCharacterStore } from './store/useCharacterStore';
 import { IdentityHeader } from './components/identity/IdentityHeader';
@@ -11,6 +10,7 @@ import { ActionRolls } from './components/tables/ActionRolls';
 import { MovesTable } from './components/tables/MovesTable';
 import { InventoryTable } from './components/tables/InventoryTable';
 import { TrackerSection } from './components/board/TrackerSection';
+import { PrintSheet } from './components/print/PrintSheet';
 import './App.css';
 import './style.css';
 
@@ -19,41 +19,48 @@ function App() {
     const isNPC = useCharacterStore((state) => state.identity.isNPC);
     const role = useCharacterStore((state) => state.role);
     const mode = useCharacterStore((state) => state.identity.mode);
+    const isPrinting = useCharacterStore((state) => state.identity.isPrinting);
 
     if (isNPC && role === 'PLAYER') {
         return (
-            <div id="gm-lock-screen" className="app-gm-lock">
-                <h2 className="app-gm-lock__icon">🔒</h2>
-                <h3>This sheet is hidden by the GM.</h3>
-                <div className="app-gm-lock__content">
-                    <TypeMatchups />
+            <>
+                <div id="gm-lock-screen" className="app-gm-lock">
+                    <h2 className="app-gm-lock__icon">🔒</h2>
+                    <h3>This sheet is hidden by the GM.</h3>
+                    <div className="app-gm-lock__content">
+                        <TypeMatchups />
+                    </div>
                 </div>
-            </div>
+                {isPrinting && <PrintSheet />}
+            </>
         );
     }
 
     return (
-        <div className="sheet-container app-container">
-            <IdentityHeader />
-            <DerivedBoard />
+        <>
+            <div className="sheet-container app-container">
+                <IdentityHeader />
+                <DerivedBoard />
 
-            <div className="sheet-container__row">
-                <div className="sheet-container__column">
-                    <TrackerSection />
-                    <CoreTable />
-                    <SocialTable />
-                    {mode === 'Pokémon' && <TypeMatchups />}
+                <div className="sheet-container__row">
+                    <div className="sheet-container__column">
+                        <TrackerSection />
+                        <CoreTable />
+                        <SocialTable />
+                        {mode === 'Pokémon' && <TypeMatchups />}
+                    </div>
+
+                    <div className="sheet-container__column">
+                        <SkillsTable />
+                        <ActionRolls />
+                    </div>
                 </div>
 
-                <div className="sheet-container__column">
-                    <SkillsTable />
-                    <ActionRolls />
-                </div>
+                <MovesTable />
+                <InventoryTable />
             </div>
-
-            <MovesTable />
-            <InventoryTable />
-        </div>
+            {isPrinting && <PrintSheet />}
+        </>
     );
 }
 

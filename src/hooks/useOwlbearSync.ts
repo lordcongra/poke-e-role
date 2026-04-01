@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
+import type { Image } from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../store/useCharacterStore';
 import type { CustomType, CustomAbility, CustomMove, CustomPokemon, CustomItem } from '../store/storeTypes';
 import { fetchPokemonData, fetchMoveData, syncHomebrewToApi } from '../utils/api';
@@ -76,7 +77,16 @@ export function useOwlbearSync() {
 
                     const items = await OBR.scene.items.getItems([targetTokenId]);
                     if (items.length > 0) {
-                        const meta = items[0].metadata[METADATA_ID] as Record<string, unknown> | undefined;
+                        const tokenItem = items[0];
+                        const meta = tokenItem.metadata[METADATA_ID] as Record<string, unknown> | undefined;
+
+                        // Grab the Image URL for the print sheet
+                        const imgItem = tokenItem as Image;
+                        if (imgItem.image?.url) {
+                            useCharacterStore.getState().setIdentity('tokenImageUrl', imgItem.image.url);
+                        } else {
+                            useCharacterStore.getState().setIdentity('tokenImageUrl', null);
+                        }
 
                         if (meta) {
                             loadFromOwlbear(meta);
@@ -172,6 +182,12 @@ export function useOwlbearSync() {
                                 const lastKnown = lastTransform?.metaStr;
                                 if (lastKnown !== metaStr) {
                                     storeState.loadFromOwlbear(meta);
+                                }
+
+                                // Keep the print sheet picture updated if the token image changes
+                                const imgItem = item as Image;
+                                if (imgItem.image?.url && imgItem.image.url !== storeState.identity.tokenImageUrl) {
+                                    storeState.setIdentity('tokenImageUrl', imgItem.image.url);
                                 }
                             }
                         }

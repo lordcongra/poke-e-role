@@ -129,7 +129,31 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         evaOffsetX: 0,
         evaOffsetY: 0,
         claOffsetX: 0,
-        claOffsetY: 0
+        claOffsetY: 0,
+
+        tokenImageUrl: null,
+        printConfig: {
+            blankName: false,
+            blankSpecies: false,
+            blankType: false,
+            blankNature: false,
+            blankRank: false,
+            blankAgeGender: false,
+            blankStats: false,
+            blankSocials: false,
+            blankSkills: false,
+            blankAbilities: false,
+            blankMoves: false,
+            hideMoveDesc: false,
+            hideKnowledgeSkills: false,
+            hideCustomSkills: false,
+            hideAge: false,
+            coreSkillsOnly: false,
+            showOnlyActiveAbility: false,
+            statStyle: 'dots',
+            abilityDescStyle: 'all'
+        },
+        isPrinting: false
     },
 
     setTokenData: (tokenId, role) => set({ tokenId, role }),
@@ -152,18 +176,28 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
             }
 
             const updatesToSave: Record<string, unknown> = {};
-            if (typeof value === 'string' || typeof value === 'boolean' || typeof value === 'number') {
-                updatesToSave[obrKey] = value;
-            }
+            if (field !== 'printConfig' && field !== 'tokenImageUrl' && field !== 'isPrinting') {
+                if (typeof value === 'string' || typeof value === 'boolean' || typeof value === 'number') {
+                    updatesToSave[obrKey] = value;
+                }
 
-            try {
-                if (Object.keys(updatesToSave).length > 0) saveToOwlbear(updatesToSave);
-            } catch (error) {
-                console.error(error);
+                try {
+                    if (Object.keys(updatesToSave).length > 0) saveToOwlbear(updatesToSave);
+                } catch (error) {
+                    console.error(error);
+                }
             }
 
             return { identity: { ...state.identity, [field]: value } };
         }),
+
+    setPrintConfig: (config) =>
+        set((state) => ({
+            identity: {
+                ...state.identity,
+                printConfig: { ...state.identity.printConfig, ...config }
+            }
+        })),
 
     applyLearnset: (data) =>
         set(

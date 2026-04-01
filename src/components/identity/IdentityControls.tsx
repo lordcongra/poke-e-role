@@ -5,6 +5,7 @@ import { fetchPokemonData, fetchAbilityData, fetchMoveData, loadGithubTree } fro
 import { saveToOwlbear } from '../../utils/obr';
 import { canViewHomebrew } from '../../utils/helper';
 import { IdentityToggles } from './IdentityToggles';
+import { PrintSettingsModal } from '../modals/PrintSettingsModal';
 
 interface IdentityControlsProps {
     onOpenHomebrew: () => void;
@@ -31,6 +32,7 @@ export function IdentityControls({
 
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [importData, setImportData] = useState<Record<string, unknown> | null>(null);
+    const [showPrintModal, setShowPrintModal] = useState(false);
     const fileInputReference = useRef<HTMLInputElement>(null);
 
     const handleRefresh = async () => {
@@ -164,7 +166,7 @@ export function IdentityControls({
                     type="button"
                     onClick={handleExport}
                     className="action-button action-button--dark identity-header__btn--small"
-                    title="Export Character (Download)"
+                    title="Export Character (Download JSON)"
                 >
                     💾
                 </button>
@@ -172,7 +174,7 @@ export function IdentityControls({
                     type="button"
                     onClick={() => fileInputReference.current?.click()}
                     className="action-button action-button--dark identity-header__btn--small"
-                    title="Import Character (Upload)"
+                    title="Import Character (Upload JSON)"
                 >
                     📂
                 </button>
@@ -183,6 +185,15 @@ export function IdentityControls({
                     className="identity-header__file-input"
                     accept=".json"
                 />
+
+                <button
+                    type="button"
+                    onClick={() => setShowPrintModal(true)}
+                    className="action-button action-button--dark identity-header__btn--small"
+                    title="Print Sheet"
+                >
+                    🖨️
+                </button>
 
                 <button
                     type="button"
@@ -222,6 +233,8 @@ export function IdentityControls({
                     </div>
                 </div>
             )}
+
+            {showPrintModal && <PrintSettingsModal onClose={() => setShowPrintModal(false)} />}
         </>
     );
 }

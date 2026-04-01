@@ -1,0 +1,261 @@
+@media screen {
+    .print-sheet-wrapper {
+        display: none !important;
+    }
+}
+
+@media print {
+    @page {
+        margin: 0.4in;
+    }
+
+    body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Hide the entire standard VTT application */
+    #root > *:not(.print-sheet-wrapper) {
+        display: none !important;
+    }
+
+    .print-sheet-wrapper {
+        display: block !important;
+        width: 100%;
+        color: black;
+        font-family: Arial, sans-serif;
+    }
+
+    .print-sheet {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    /* --- Headers --- */
+    .print-sheet__header {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        border: 2px solid black;
+        padding: 10px;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+    }
+
+    .print-sheet__field {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 2px;
+    }
+
+    .print-sheet__field-label {
+        font-weight: bold;
+        font-size: 0.85rem;
+        color: #555;
+        text-transform: uppercase;
+    }
+
+    .print-sheet__field-val {
+        font-size: 1rem;
+        font-weight: bold;
+    }
+
+    /* --- Top Grid (Portrait + Stats) --- */
+    .print-sheet__top-grid {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: 15px;
+    }
+
+    .print-sheet__portrait-box {
+        border: 2px solid black;
+        border-radius: 8px;
+        height: 140px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #f0f0f0;
+        overflow: hidden;
+    }
+
+    .print-sheet__portrait-img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    .print-sheet__stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    /* --- Sections --- */
+    .print-sheet__section {
+        border: 2px solid black;
+        border-radius: 8px;
+        padding: 8px 10px;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .print-sheet__section-title {
+        font-weight: bold;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        border-bottom: 2px solid black;
+        margin-top: 0;
+        margin-bottom: 6px;
+        padding-bottom: 2px;
+        background-color: #ddd;
+        padding: 4px;
+    }
+
+    /* --- Dots & Numbers --- */
+    .print-sheet__stat-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px;
+    }
+
+    .print-sheet__stat-name {
+        font-size: 0.85rem;
+        font-weight: bold;
+        width: 80px;
+    }
+
+    .print-sheet__stat-value-container {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .print-sheet__dots {
+        font-size: 1.4rem;
+        letter-spacing: 1px;
+        color: black;
+        line-height: 0.8;
+    }
+
+    .print-sheet__number {
+        font-size: 0.9rem;
+        font-weight: bold;
+        min-width: 12px;
+        text-align: right;
+    }
+
+    /* --- Skills --- */
+    .print-sheet__skills-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+    }
+
+    .print-sheet__skills-grid--core {
+        grid-template-columns: repeat(3, auto);
+        justify-content: center;
+        gap: 40px;
+    }
+
+    .print-sheet__skill-col-title {
+        font-weight: bold;
+        font-size: 0.8rem;
+        text-align: center;
+        border-bottom: 1px solid black;
+        margin-bottom: 6px;
+    }
+
+    /* --- Abilities --- */
+    .print-sheet__checkbox {
+        width: 14px;
+        height: 14px;
+        border: 2px solid black;
+        flex-shrink: 0;
+    }
+
+    .print-sheet__ability-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 0.85rem;
+        border-top: 1px solid black;
+        border-left: 1px solid black;
+    }
+
+    .print-sheet__ability-table tr {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .print-sheet__ability-table th,
+    .print-sheet__ability-table td {
+        border-right: 1px solid black;
+        border-bottom: 1px solid black;
+        padding: 6px;
+        text-align: left;
+        vertical-align: top;
+    }
+
+    .print-sheet__ability-table th {
+        background-color: #f0f0f0;
+        font-weight: bold;
+    }
+
+    /* --- TABLE BORDER COLLAPSE FIX --- */
+    .print-sheet__move-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 0.8rem;
+        border-top: 1px solid black;
+        border-left: 1px solid black;
+    }
+
+    .print-sheet__move-table tr {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .print-sheet__move-table th,
+    .print-sheet__move-table td {
+        border-right: 1px solid black;
+        border-bottom: 1px solid black;
+        padding: 4px;
+        text-align: left;
+    }
+
+    .print-sheet__move-table th {
+        background-color: #f0f0f0;
+        font-weight: bold;
+    }
+
+    /* --- Items & Notes --- */
+    .print-sheet__items-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .print-sheet__item-box {
+        border: 1px solid black;
+        height: 35px;
+    }
+
+    .print-sheet__notes-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .print-sheet__note-line {
+        border-bottom: 1px solid black;
+        height: 25px;
+    }
+}

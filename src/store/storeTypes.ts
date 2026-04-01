@@ -31,6 +31,28 @@ export interface PendingDualScale {
     dmg1Options?: string[];
 }
 
+export interface PrintConfig {
+    blankName: boolean;
+    blankSpecies: boolean;
+    blankType: boolean;
+    blankNature: boolean;
+    blankRank: boolean;
+    blankAgeGender: boolean;
+    blankStats: boolean;
+    blankSocials: boolean;
+    blankSkills: boolean;
+    blankAbilities: boolean;
+    blankMoves: boolean;
+    hideMoveDesc: boolean;
+    hideKnowledgeSkills: boolean;
+    hideCustomSkills: boolean;
+    hideAge: boolean;
+    coreSkillsOnly: boolean;
+    showOnlyActiveAbility: boolean;
+    statStyle: 'dots' | 'numbers' | 'both';
+    abilityDescStyle: 'all' | 'selected' | 'none';
+}
+
 export interface CoreSlice {
     health: { hpCurr: number; hpMax: number; hpBase: number };
     will: { willCurr: number; willMax: number; willBase: number };
@@ -239,9 +261,14 @@ export interface IdentitySlice {
         evaOffsetY: number;
         claOffsetX: number;
         claOffsetY: number;
+
+        tokenImageUrl: string | null;
+        printConfig: PrintConfig;
+        isPrinting: boolean;
     };
 
     setIdentity: <K extends keyof IdentitySlice['identity']>(field: K, value: IdentitySlice['identity'][K]) => void;
+    setPrintConfig: (config: Partial<PrintConfig>) => void;
     setTokenData: (tokenId: string, role: 'GM' | 'PLAYER') => void;
     applyLearnset: (data: Record<string, unknown>) => void;
 }
