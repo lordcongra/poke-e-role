@@ -16,6 +16,7 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+    min-width: 0; /* CRITICAL FIX: Allows grid column to shrink on mobile */
 }
 
 @media (max-width: 768px) {
@@ -48,7 +49,8 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    flex-wrap: nowrap;
+    flex-wrap: wrap; /* CRITICAL FIX: Allows Evade/Clash buttons to wrap on tiny screens */
+    justify-content: center;
 }
 
 .tracker-section__toggle-group {
@@ -71,6 +73,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-wrap: wrap; /* Safety wrap */
     gap: 6px;
     font-size: 0.75rem;
 }
@@ -82,8 +85,9 @@
 .tracker-section__maneuver-row {
     display: flex;
     gap: 6px;
-    justify-content: space-between;
+    justify-content: center; /* Centers items when wrapping */
     align-items: center;
+    flex-wrap: wrap; /* CRITICAL FIX: Allows Maneuver dropdown and buttons to wrap */
 }
 
 .tracker-section__maneuver-select {
@@ -91,7 +95,7 @@
     font-family: inherit;
     border: 1px solid var(--border);
     font-size: 0.75rem;
-    flex: 1;
+    flex: 1 1 100px; /* CRITICAL FIX: Allows shrinking down to a minimum size before wrapping */
     min-width: 0;
     background-color: var(--panel-bg);
     color: var(--text-main);
