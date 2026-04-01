@@ -17,8 +17,10 @@ export const ATTRIBUTE_MAPPING: Record<string, string> = {
 
 export function getAbilityText(abilityName: string, customAbilities: CustomAbility[]): string {
     if (!abilityName) return '';
+    // Strip out the (HA) tag so we can accurately find Homebrew abilities too
+    const cleanName = abilityName.replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
     const custom = customAbilities.find(
-        (ability) => ability.name.trim().toLowerCase() === abilityName.trim().toLowerCase()
+        (ability) => ability.name.trim().toLowerCase() === cleanName
     );
     return custom ? `${custom.description} ${custom.effect}` : '';
 }
@@ -232,7 +234,6 @@ export function getPainPenalty(attribute: string, state: CharacterState): number
 
     let rawPenalty = 0;
 
-    // Half HP is 1 penalty. Dropping to 1 HP stacks an additional 2 penalties for a total of 3.
     if (currentHealth <= 1) rawPenalty = 3;
     else if (currentHealth <= Math.floor(maxHealth / 2)) rawPenalty = 1;
 

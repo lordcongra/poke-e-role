@@ -182,7 +182,7 @@
 
     .print-sheet__ability-table {
         width: 100%;
-        border-collapse: separate;
+        border-collapse: separate; 
         border-spacing: 0;
         font-size: 0.85rem;
         border-top: 1px solid black;
@@ -211,7 +211,7 @@
     /* --- TABLE BORDER COLLAPSE FIX --- */
     .print-sheet__move-table {
         width: 100%;
-        border-collapse: separate;
+        border-collapse: separate; 
         border-spacing: 0;
         font-size: 0.8rem;
         border-top: 1px solid black;
@@ -257,5 +257,88 @@
     .print-sheet__note-line {
         border-bottom: 1px solid black;
         height: 25px;
+    }
+
+
+    /* =========================================
+       COMPACT MODE OVERRIDES 
+       (Brutally shaves vertical space!)
+       ========================================= */
+    .print-sheet-wrapper--compact .print-sheet {
+        gap: 4px;
+    }
+    .print-sheet-wrapper--compact .print-sheet__header {
+        gap: 4px;
+        padding: 6px;
+    }
+    .print-sheet-wrapper--compact .print-sheet__field {
+        padding-bottom: 0px;
+    }
+    .print-sheet-wrapper--compact .print-sheet__field-label {
+        font-size: 0.75rem;
+    }
+    .print-sheet-wrapper--compact .print-sheet__field-val {
+        font-size: 0.85rem;
+    }
+    .print-sheet-wrapper--compact .print-sheet__top-grid {
+        grid-template-columns: 90px 1fr;
+        gap: 8px;
+    }
+    .print-sheet-wrapper--compact .print-sheet__portrait-box {
+        height: 90px;
+    }
+    .print-sheet-wrapper--compact .print-sheet__stats-grid {
+        gap: 8px;
+    }
+    .print-sheet-wrapper--compact .print-sheet__section {
+        padding: 4px;
+    }
+    .print-sheet-wrapper--compact .print-sheet__section-title {
+        font-size: 0.8rem;
+        margin-bottom: 4px;
+        padding: 2px 4px;
+    }
+    .print-sheet-wrapper--compact .print-sheet__stat-row {
+        margin-bottom: 0px;
+    }
+    .print-sheet-wrapper--compact .print-sheet__stat-name {
+        font-size: 0.75rem;
+    }
+    .print-sheet-wrapper--compact .print-sheet__dots {
+        font-size: 1.1rem;
+        line-height: 0.8;
+    }
+    .print-sheet-wrapper--compact .print-sheet__number {
+        font-size: 0.8rem;
+    }
+    .print-sheet-wrapper--compact .print-sheet__skill-col-title {
+        font-size: 0.75rem;
+        margin-bottom: 4px;
+    }
+    .print-sheet-wrapper--compact .print-sheet__ability-row {
+        margin-bottom: 2px;
+        font-size: 0.75rem;
+    }
+    .print-sheet-wrapper--compact .print-sheet__ability-table th,
+    .print-sheet-wrapper--compact .print-sheet__ability-table td {
+        padding: 2px 4px;
+        font-size: 0.75rem;
+    }
+    .print-sheet-wrapper--compact .print-sheet__move-table th,
+    .print-sheet-wrapper--compact .print-sheet__move-table td {
+        padding: 2px;
+        font-size: 0.7rem;
+    }
+    .print-sheet-wrapper--compact .print-sheet__items-grid {
+        gap: 4px;
+    }
+    .print-sheet-wrapper--compact .print-sheet__item-box {
+        height: 20px;
+    }
+    .print-sheet-wrapper--compact .print-sheet__notes-container {
+        gap: 4px;
+    }
+    .print-sheet-wrapper--compact .print-sheet__note-line {
+        height: 16px;
     }
 }

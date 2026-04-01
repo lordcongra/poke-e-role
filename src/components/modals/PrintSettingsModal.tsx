@@ -28,7 +28,9 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         X
                     </button>
                 </div>
-                <p className="print-settings__desc">Customize how your sheet will look on paper.</p>
+                <p className="print-settings__desc">
+                    Customize how your sheet will look on paper.
+                </p>
 
                 <div className="print-settings__grid">
                     <label className="print-settings__checkbox-label">
@@ -134,7 +136,7 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
 
                 <div className="print-settings__divider" />
                 <p className="print-settings__desc print-settings__desc--sub">Visibility Options</p>
-
+                
                 <div className="print-settings__grid">
                     <label className="print-settings__checkbox-label">
                         <input
@@ -175,6 +177,15 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                     <label className="print-settings__checkbox-label" style={{ gridColumn: 'span 2' }}>
                         <input
                             type="checkbox"
+                            checked={printConfig.compactMode}
+                            onChange={() => toggle('compactMode')}
+                            className="print-settings__checkbox"
+                        />
+                        Compact Layout (Fit More on Page 1)
+                    </label>
+                    <label className="print-settings__checkbox-label" style={{ gridColumn: 'span 2' }}>
+                        <input
+                            type="checkbox"
                             checked={printConfig.coreSkillsOnly}
                             onChange={() => toggle('coreSkillsOnly')}
                             className="print-settings__checkbox"
@@ -194,33 +205,33 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
 
                 <div className="print-settings__divider" />
                 <p className="print-settings__desc print-settings__desc--sub">Display Styles</p>
+                
+                <div className="print-settings__dropdowns-wrapper">
+                    <div className="print-settings__dropdown-container">
+                        <label className="print-settings__dropdown-label">Stat Format:</label>
+                        <select
+                            value={printConfig.statStyle || 'dots'}
+                            onChange={(e) => setPrintConfig({ statStyle: e.target.value as 'dots' | 'numbers' | 'both' })}
+                            className="print-settings__select"
+                        >
+                            <option value="dots">Dots Only</option>
+                            <option value="numbers">Numbers Only</option>
+                            <option value="both">Dots & Nums</option>
+                        </select>
+                    </div>
 
-                <div className="print-settings__dropdown-container">
-                    <label className="print-settings__dropdown-label">Stat & Skill Format:</label>
-                    <select
-                        value={printConfig.statStyle || 'dots'}
-                        onChange={(e) => setPrintConfig({ statStyle: e.target.value as 'dots' | 'numbers' | 'both' })}
-                        className="print-settings__select"
-                    >
-                        <option value="dots">Dots Only</option>
-                        <option value="numbers">Numbers Only</option>
-                        <option value="both">Dots & Numbers</option>
-                    </select>
-                </div>
-
-                <div className="print-settings__dropdown-container">
-                    <label className="print-settings__dropdown-label">Ability Descriptions:</label>
-                    <select
-                        value={printConfig.abilityDescStyle || 'all'}
-                        onChange={(e) =>
-                            setPrintConfig({ abilityDescStyle: e.target.value as 'all' | 'selected' | 'none' })
-                        }
-                        className="print-settings__select"
-                    >
-                        <option value="all">Show All</option>
-                        <option value="selected">Show Selected Only</option>
-                        <option value="none">Hide All</option>
-                    </select>
+                    <div className="print-settings__dropdown-container">
+                        <label className="print-settings__dropdown-label">Ability Desc:</label>
+                        <select
+                            value={printConfig.abilityDescStyle || 'all'}
+                            onChange={(e) => setPrintConfig({ abilityDescStyle: e.target.value as 'all' | 'selected' | 'none' })}
+                            className="print-settings__select"
+                        >
+                            <option value="all">Show All</option>
+                            <option value="selected">Active Only</option>
+                            <option value="none">Hide All</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div className="print-settings__actions">

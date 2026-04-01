@@ -14,7 +14,6 @@ export function PrintSheet() {
     const [fetchedAbilities, setFetchedAbilities] = useState<Record<string, string>>({});
     const [isReadyToPrint, setIsReadyToPrint] = useState(false);
 
-    // Fetch official ability descriptions before printing
     useEffect(() => {
         let isMounted = true;
         const preparePrint = async () => {
@@ -33,12 +32,9 @@ export function PrintSheet() {
             }
         };
         preparePrint();
-        return () => {
-            isMounted = false;
-        };
+        return () => { isMounted = false; };
     }, [identity.availableAbilities, roomCustomAbilities]);
 
-    // Trigger the print dialog ONLY after data is fetched
     useEffect(() => {
         if (isReadyToPrint) {
             const timer = setTimeout(() => {
@@ -51,7 +47,7 @@ export function PrintSheet() {
 
     const renderStatValue = (filled: number, limit: number, isBlank: boolean) => {
         const val = isBlank ? '' : filled;
-
+        
         let dotsNode = null;
         if (statStyle === 'dots' || statStyle === 'both') {
             const dots = [];
@@ -92,7 +88,6 @@ export function PrintSheet() {
 
     const skillColumns = [];
 
-    // Col 1: Fight
     skillColumns.push(
         <div key="fight">
             <div className="print-sheet__skill-col-title">FIGHT</div>
@@ -103,7 +98,6 @@ export function PrintSheet() {
         </div>
     );
 
-    // Col 2: Survive
     skillColumns.push(
         <div key="survive">
             <div className="print-sheet__skill-col-title">SURVIVE</div>
@@ -114,7 +108,6 @@ export function PrintSheet() {
         </div>
     );
 
-    // Col 3: Social
     skillColumns.push(
         <div key="social">
             <div className="print-sheet__skill-col-title">SOCIAL</div>
@@ -126,7 +119,6 @@ export function PrintSheet() {
     );
 
     if (!config.coreSkillsOnly) {
-        // Col 4: Knowledge (Toggleable)
         if (!config.hideKnowledgeSkills) {
             skillColumns.push(
                 <div key="knowledge">
@@ -134,16 +126,11 @@ export function PrintSheet() {
                     {renderSkill('Crafts', skills[Skill.CRAFTS].base, config.blankSkills)}
                     {renderSkill('Lore', skills[Skill.LORE].base, config.blankSkills)}
                     {renderSkill('Medicine', skills[Skill.MEDICINE].base, config.blankSkills)}
-                    {renderSkill(
-                        skills[Skill.MAGIC].customName || 'Magic',
-                        skills[Skill.MAGIC].base,
-                        config.blankSkills
-                    )}
+                    {renderSkill(skills[Skill.MAGIC].customName || 'Magic', skills[Skill.MAGIC].base, config.blankSkills)}
                 </div>
             );
         }
 
-        // Col 5+: Custom Categories (Toggleable)
         if (!config.hideCustomSkills) {
             extraCategories.forEach((cat) => {
                 skillColumns.push(
@@ -155,7 +142,6 @@ export function PrintSheet() {
             });
         }
 
-        // Ensure we always have at least 4 columns to maintain the grid ratio
         while (skillColumns.length < 4 || skillColumns.length % 4 !== 0) {
             skillColumns.push(
                 <div key={`blank-${skillColumns.length}`}>
@@ -170,7 +156,7 @@ export function PrintSheet() {
     }
 
     return (
-        <div className="print-sheet-wrapper">
+        <div className={`print-sheet-wrapper ${config.compactMode ? 'print-sheet-wrapper--compact' : ''}`}>
             <div className="print-sheet">
                 <div className="print-sheet__header">
                     <div className="print-sheet__field">
@@ -198,11 +184,7 @@ export function PrintSheet() {
                     <div className="print-sheet__field">
                         <span className="print-sheet__field-label">{config.hideAge ? 'Gender:' : 'Age/Gender:'}</span>
                         <span className="print-sheet__field-val">
-                            {config.blankAgeGender
-                                ? ''
-                                : config.hideAge
-                                  ? identity.gender
-                                  : `${identity.age} ${identity.gender}`}
+                            {config.blankAgeGender ? '' : config.hideAge ? identity.gender : `${identity.age} ${identity.gender}`}
                         </span>
                     </div>
                 </div>
@@ -216,36 +198,11 @@ export function PrintSheet() {
                     <div className="print-sheet__stats-grid">
                         <div className="print-sheet__section">
                             <h4 className="print-sheet__section-title">Core Stats</h4>
-                            {renderStat(
-                                'Strength',
-                                stats[CombatStat.STR].base,
-                                stats[CombatStat.STR].limit,
-                                config.blankStats
-                            )}
-                            {renderStat(
-                                'Dexterity',
-                                stats[CombatStat.DEX].base,
-                                stats[CombatStat.DEX].limit,
-                                config.blankStats
-                            )}
-                            {renderStat(
-                                'Vitality',
-                                stats[CombatStat.VIT].base,
-                                stats[CombatStat.VIT].limit,
-                                config.blankStats
-                            )}
-                            {renderStat(
-                                'Special',
-                                stats[CombatStat.SPE].base,
-                                stats[CombatStat.SPE].limit,
-                                config.blankStats
-                            )}
-                            {renderStat(
-                                'Insight',
-                                stats[CombatStat.INS].base,
-                                stats[CombatStat.INS].limit,
-                                config.blankStats
-                            )}
+                            {renderStat('Strength', stats[CombatStat.STR].base, stats[CombatStat.STR].limit, config.blankStats)}
+                            {renderStat('Dexterity', stats[CombatStat.DEX].base, stats[CombatStat.DEX].limit, config.blankStats)}
+                            {renderStat('Vitality', stats[CombatStat.VIT].base, stats[CombatStat.VIT].limit, config.blankStats)}
+                            {renderStat('Special', stats[CombatStat.SPE].base, stats[CombatStat.SPE].limit, config.blankStats)}
+                            {renderStat('Insight', stats[CombatStat.INS].base, stats[CombatStat.INS].limit, config.blankStats)}
                         </div>
                         <div className="print-sheet__section">
                             <h4 className="print-sheet__section-title">Social Stats</h4>
@@ -260,9 +217,7 @@ export function PrintSheet() {
 
                 <div className="print-sheet__section">
                     <h4 className="print-sheet__section-title">Skills</h4>
-                    <div
-                        className={`print-sheet__skills-grid ${config.coreSkillsOnly ? 'print-sheet__skills-grid--core' : ''}`}
-                    >
+                    <div className={`print-sheet__skills-grid ${config.coreSkillsOnly ? 'print-sheet__skills-grid--core' : ''}`}>
                         {skillColumns}
                     </div>
                 </div>
@@ -293,12 +248,12 @@ export function PrintSheet() {
                                 </>
                             ) : (
                                 identity.availableAbilities
-                                    .filter((abName) => !config.showOnlyActiveAbility || identity.ability === abName)
+                                    .filter(abName => !config.showOnlyActiveAbility || identity.ability === abName)
                                     .map((abName, i) => {
                                         const isChecked = identity.ability === abName;
                                         const customDesc = getAbilityText(abName, roomCustomAbilities);
                                         const desc = customDesc || fetchedAbilities[abName] || '';
-
+                                        
                                         let showDesc = false;
                                         if (config.abilityDescStyle === 'all') showDesc = true;
                                         if (config.abilityDescStyle === 'selected' && isChecked) showDesc = true;
@@ -306,17 +261,9 @@ export function PrintSheet() {
                                         return (
                                             <tr key={i}>
                                                 <td style={{ textAlign: 'center' }}>
-                                                    <div
-                                                        className="print-sheet__checkbox"
-                                                        style={{
-                                                            backgroundColor: isChecked ? 'black' : 'white',
-                                                            margin: '0 auto'
-                                                        }}
-                                                    />
+                                                    <div className="print-sheet__checkbox" style={{ backgroundColor: isChecked ? 'black' : 'white', margin: '0 auto' }} />
                                                 </td>
-                                                <td>
-                                                    <strong>{abName}</strong>
-                                                </td>
+                                                <td><strong>{abName}</strong></td>
                                                 {config.abilityDescStyle !== 'none' && <td>{showDesc ? desc : ''}</td>}
                                             </tr>
                                         );
@@ -345,40 +292,29 @@ export function PrintSheet() {
                                 ? Array.from({ length: 6 }).map((_, i) => (
                                       <tr key={i}>
                                           <td style={{ height: '25px' }}></td>
-                                          <td></td>
-                                          <td></td>
-                                          <td></td>
-                                          <td></td>
-                                          <td></td>
+                                          <td></td><td></td><td></td><td></td><td></td>
                                           {!config.hideMoveDesc && <td></td>}
                                       </tr>
                                   ))
                                 : moves.map((move, i) => {
-                                      const dualAccMatch = move.desc?.match(/\[Dual Accuracy:\s*([^\]]+)\]/i);
-                                      const dualDmgMatch = move.desc?.match(/\[Dual Damage:\s*([^\]]+)\]/i);
+                                    const dualAccMatch = move.desc?.match(/\[Dual Accuracy:\s*([^\]]+)\]/i);
+                                    const dualDmgMatch = move.desc?.match(/\[Dual Damage:\s*([^\]]+)\]/i);
+                                    
+                                    const accString = dualAccMatch ? dualAccMatch[1] : `${move.acc1.toUpperCase()} + ${move.acc2.charAt(0).toUpperCase() + move.acc2.slice(1)}`;
+                                    const dmgString = dualDmgMatch ? dualDmgMatch[1] : move.dmg1.toUpperCase();
+                                    const cleanDesc = move.desc?.replace(/\[Dual (Accuracy|Damage):\s*[^\]]+\]\n?/gi, '');
 
-                                      const accString = dualAccMatch
-                                          ? dualAccMatch[1]
-                                          : `${move.acc1.toUpperCase()} + ${move.acc2.charAt(0).toUpperCase() + move.acc2.slice(1)}`;
-                                      const dmgString = dualDmgMatch ? dualDmgMatch[1] : move.dmg1.toUpperCase();
-                                      const cleanDesc = move.desc?.replace(
-                                          /\[Dual (Accuracy|Damage):\s*[^\]]+\]\n?/gi,
-                                          ''
-                                      );
-
-                                      return (
-                                          <tr key={i}>
-                                              <td>
-                                                  <strong>{move.name}</strong>
-                                              </td>
-                                              <td>{move.type}</td>
-                                              <td>{move.category}</td>
-                                              <td>{move.power}</td>
-                                              <td>{accString}</td>
-                                              <td>{move.category === 'Status' ? '-' : dmgString}</td>
-                                              {!config.hideMoveDesc && <td>{cleanDesc}</td>}
-                                          </tr>
-                                      );
+                                    return (
+                                        <tr key={i}>
+                                            <td><strong>{move.name}</strong></td>
+                                            <td>{move.type}</td>
+                                            <td>{move.category}</td>
+                                            <td>{move.power}</td>
+                                            <td>{accString}</td>
+                                            <td>{move.category === 'Status' ? '-' : dmgString}</td>
+                                            {!config.hideMoveDesc && <td>{cleanDesc}</td>}
+                                        </tr>
+                                    );
                                   })}
                         </tbody>
                     </table>
