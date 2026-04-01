@@ -1,0 +1,25 @@
+.app-gm-lock {
+    text-align: center;
+    padding-top: 100px;
+    color: var(--primary);
+    font-family: sans-serif;
+}
+
+.app-gm-lock__icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.app-gm-lock__content {
+    margin-top: 40px;
+    max-width: 350px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left;
+}
+
+.app-container {
+    padding: 10px;
+    max-width: 900px;
+    margin: 0 auto;
+}

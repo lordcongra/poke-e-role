@@ -1,0 +1,44 @@
+.move-edit__overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0,0,0,0.6);
+    z-index: 1000;
+    display: flex; justify-content: center; align-items: center;
+}
+
+.move-edit__content {
+    background: var(--panel-bg);
+    padding: 15px;
+    border-radius: 8px;
+    width: 300px;
+    border: 2px solid var(--primary);
+    color: var(--text-main);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.move-edit__title {
+    margin-top: 0;
+    color: var(--primary);
+    font-size: 1.1rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+    text-align: center;
+}
+
+.move-edit__textarea {
+    width: 100%; height: 100px; border: 1px solid var(--border);
+    border-radius: 4px; padding: 4px; font-family: inherit;
+    font-size: 0.85rem; resize: vertical; box-sizing: border-box;
+    background: var(--input-bg); color: var(--text-main); margin-bottom: 10px;
+}
+
+.move-edit__actions {
+    display: flex; justify-content: space-between; gap: 8px;
+}
+
+.move-edit__btn-close {
+    flex: 1; padding: 6px;
+}
+
+.move-edit__btn-tags {
+    flex: 1; padding: 6px; background: #1976d2; border-color: #1976d2;
+}

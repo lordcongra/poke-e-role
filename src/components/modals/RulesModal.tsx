@@ -1,28 +1,8 @@
-// src/components/RulesModal.tsx
+// src/components/modals/RulesModal.tsx
 import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
-
-const TooltipIcon = ({ onClick }: { onClick: () => void }) => (
-    <span
-        onClick={onClick}
-        style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#555',
-            color: 'white',
-            borderRadius: '50%',
-            width: '16px',
-            height: '16px',
-            fontSize: '11px',
-            cursor: 'pointer',
-            marginLeft: '6px',
-            fontWeight: 'bold'
-        }}
-    >
-        ?
-    </span>
-);
+import { TooltipIcon } from '../ui/TooltipIcon';
+import './RulesModal.css';
 
 export function RulesModal({ onClose }: { onClose: () => void }) {
     const id = useCharacterStore((state) => state.identity);
@@ -30,56 +10,13 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
     const [modalConfig, setModalConfig] = useState<{ title: string; content: string } | null>(null);
 
     return (
-        <div
-            style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(0,0,0,0.6)',
-                zIndex: 1200,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center'
-            }}
-        >
-            <div
-                style={{
-                    background: 'var(--panel-bg)',
-                    padding: '20px',
-                    borderRadius: '8px',
-                    maxWidth: '350px',
-                    width: '90%',
-                    border: '2px solid #E65100',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.5)'
-                }}
-            >
-                <h3
-                    style={{
-                        color: '#E65100',
-                        marginTop: 0,
-                        fontSize: '1.1rem',
-                        textAlign: 'center',
-                        borderBottom: '1px solid var(--border)',
-                        paddingBottom: '8px'
-                    }}
-                >
-                    📜 Room Rules & Permissions
-                </h3>
+        <div className="rules-modal__overlay">
+            <div className="rules-modal__content">
+                <h3 className="rules-modal__title">📜 Room Rules & Permissions</h3>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', margin: '15px 0' }}>
+                <div className="rules-modal__form-group">
                     <div>
-                        <label
-                            style={{
-                                fontSize: '0.85rem',
-                                fontWeight: 'bold',
-                                color: 'var(--text-main)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                            }}
-                        >
+                        <label className="rules-modal__label">
                             Ruleset{' '}
                             <TooltipIcon
                                 onClick={() =>
@@ -92,18 +29,9 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                             />
                         </label>
                         <select
-                            className="identity-grid__select"
+                            className="identity-grid__select rules-modal__select"
                             value={id.ruleset || 'vg-vit-hp'}
                             onChange={(e) => setIdentity('ruleset', e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '6px',
-                                border: '1px solid var(--border)',
-                                borderRadius: '4px',
-                                background: 'var(--input-bg)',
-                                color: 'var(--text-main)',
-                                marginTop: '4px'
-                            }}
                         >
                             <option value="vg-vit-hp">VIT = DEF/HP, INS = SPD</option>
                             <option value="tabletop">VIT = DEF/SPD/HP</option>
@@ -112,16 +40,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                     </div>
 
                     <div>
-                        <label
-                            style={{
-                                fontSize: '0.85rem',
-                                fontWeight: 'bold',
-                                color: 'var(--text-main)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                            }}
-                        >
+                        <label className="rules-modal__label">
                             Pain Penalties{' '}
                             <TooltipIcon
                                 onClick={() =>
@@ -134,18 +53,9 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                             />
                         </label>
                         <select
-                            className="identity-grid__select"
+                            className="identity-grid__select rules-modal__select"
                             value={id.pain || 'Enabled'}
                             onChange={(e) => setIdentity('pain', e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '6px',
-                                border: '1px solid var(--border)',
-                                borderRadius: '4px',
-                                background: 'var(--input-bg)',
-                                color: 'var(--text-main)',
-                                marginTop: '4px'
-                            }}
                         >
                             <option>Enabled</option>
                             <option>Disabled</option>
@@ -153,16 +63,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                     </div>
 
                     <div>
-                        <label
-                            style={{
-                                fontSize: '0.85rem',
-                                fontWeight: 'bold',
-                                color: 'var(--text-main)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                            }}
-                        >
+                        <label className="rules-modal__label">
                             Homebrew Access{' '}
                             <TooltipIcon
                                 onClick={() =>
@@ -175,18 +76,9 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                             />
                         </label>
                         <select
-                            className="identity-grid__select"
+                            className="identity-grid__select rules-modal__select"
                             value={id.homebrewAccess || 'Full'}
                             onChange={(e) => setIdentity('homebrewAccess', e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '6px',
-                                border: '1px solid var(--border)',
-                                borderRadius: '4px',
-                                background: 'var(--input-bg)',
-                                color: 'var(--text-main)',
-                                marginTop: '4px'
-                            }}
                         >
                             <option value="Full">Full Access</option>
                             <option value="View Only">View Only</option>
@@ -197,8 +89,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
 
                 <button
                     type="button"
-                    className="action-button action-button--dark"
-                    style={{ width: '100%', padding: '8px', fontSize: '1rem', fontWeight: 'bold' }}
+                    className="action-button action-button--dark rules-modal__close-btn"
                     onClick={onClose}
                 >
                     Close
@@ -206,50 +97,14 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
             </div>
 
             {modalConfig && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundColor: 'rgba(0,0,0,0.6)',
-                        zIndex: 1300,
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                    }}
-                >
-                    <div
-                        style={{
-                            background: 'var(--panel-bg)',
-                            padding: '20px',
-                            borderRadius: '6px',
-                            maxWidth: '400px',
-                            width: '90%',
-                            border: '2px solid #C62828',
-                            boxShadow: '0 4px 15px rgba(0,0,0,0.5)'
-                        }}
-                    >
-                        <h3 style={{ color: '#C62828', textAlign: 'center', marginTop: 0, fontSize: '1.2rem' }}>
-                            {modalConfig.title}
-                        </h3>
-                        <hr style={{ borderTop: '1px solid var(--border)', marginBottom: '15px' }} />
-                        <div
-                            style={{
-                                color: 'var(--text-main)',
-                                fontSize: '0.95rem',
-                                whiteSpace: 'pre-wrap',
-                                marginBottom: '20px',
-                                lineHeight: '1.4'
-                            }}
-                        >
-                            {modalConfig.content}
-                        </div>
+                <div className="rules-info__overlay">
+                    <div className="rules-info__content">
+                        <h3 className="rules-info__title">{modalConfig.title}</h3>
+                        <hr className="rules-info__divider" />
+                        <div className="rules-info__text">{modalConfig.content}</div>
                         <div style={{ textAlign: 'center' }}>
                             <button
-                                className="action-button action-button--dark"
-                                style={{ width: '100%', padding: '8px', fontSize: '1rem', fontWeight: 'bold' }}
+                                className="action-button action-button--dark rules-modal__close-btn"
                                 onClick={() => setModalConfig(null)}
                             >
                                 Close

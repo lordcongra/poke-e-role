@@ -1,0 +1,65 @@
+.species-change__overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0,0,0,0.6);
+    z-index: 1000;
+    display: flex; justify-content: center; align-items: center;
+}
+
+.species-change__content {
+    background: var(--panel-bg);
+    padding: 15px;
+    border-radius: 8px;
+    width: 320px;
+    border: 2px solid var(--primary);
+    color: var(--text-main);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.species-change__title {
+    margin-top: 0;
+    color: var(--primary);
+    font-size: 1.1rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+    text-align: center;
+}
+
+.species-change__desc {
+    font-size: 0.85rem;
+    text-align: center;
+    margin-bottom: 15px;
+    color: var(--text-muted);
+}
+
+.species-change__btn-group {
+    display: flex; flex-direction: column; gap: 8px;
+}
+
+.species-change__btn-form {
+    background: #1976d2; border-color: #1976d2; padding: 8px; font-size: 0.9rem;
+}
+
+.species-change__btn-new {
+    padding: 8px; font-size: 0.9rem;
+}
+
+.species-change__btn-cancel {
+    padding: 6px; margin-top: 4px;
+}
+
+.species-change__btn-subtitle {
+    font-size: 0.7rem; font-weight: normal;
+}
+
+.species-change__checkbox-container {
+    margin-top: 15px; padding-top: 10px; border-top: 1px solid var(--border); text-align: center;
+}
+
+.species-change__checkbox-label {
+    font-size: 0.8rem; cursor: pointer; color: var(--text-main);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+
+.species-change__checkbox {
+    transform: scale(1.1); cursor: pointer;
+}

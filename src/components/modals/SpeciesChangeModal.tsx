@@ -1,6 +1,6 @@
-// src/components/SpeciesChangeModal.tsx
 import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
+import './SpeciesChangeModal.css';
 
 interface SpeciesChangeModalProps {
     pendingSpeciesData: Record<string, unknown>;
@@ -12,67 +12,25 @@ export function SpeciesChangeModal({ pendingSpeciesData, onClose }: SpeciesChang
     const [swapUpdateStats, setSwapUpdateStats] = useState(true);
 
     return (
-        <div
-            style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(0,0,0,0.6)',
-                zIndex: 1000,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center'
-            }}
-        >
-            <div
-                style={{
-                    background: 'var(--panel-bg)',
-                    padding: '15px',
-                    borderRadius: '8px',
-                    width: '320px',
-                    border: '2px solid var(--primary)',
-                    color: 'var(--text-main)',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.5)'
-                }}
-            >
-                <h3
-                    style={{
-                        marginTop: 0,
-                        color: 'var(--primary)',
-                        fontSize: '1.1rem',
-                        borderBottom: '1px solid var(--border)',
-                        paddingBottom: '4px',
-                        textAlign: 'center'
-                    }}
-                >
-                    🧬 Species Changed
-                </h3>
-                <p
-                    style={{
-                        fontSize: '0.85rem',
-                        textAlign: 'center',
-                        marginBottom: '15px',
-                        color: 'var(--text-muted)'
-                    }}
-                >
+        <div className="species-change__overlay">
+            <div className="species-change__content">
+                <h3 className="species-change__title">🧬 Species Changed</h3>
+                <p className="species-change__desc">
                     You loaded a new Pokémon. How do you want to handle existing data?
                 </p>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div className="species-change__btn-group">
                     <button
                         type="button"
                         onClick={() => {
                             applySpeciesData(pendingSpeciesData, false, swapUpdateStats);
                             onClose();
                         }}
-                        className="action-button action-button--dark"
-                        style={{ background: '#1976d2', borderColor: '#1976d2', padding: '8px', fontSize: '0.9rem' }}
+                        className="action-button action-button--dark species-change__btn-form"
                     >
                         🔄 Form Change / Mega Evolve
                         <br />
-                        <span style={{ fontSize: '0.7rem', fontWeight: 'normal' }}>
+                        <span className="species-change__btn-subtitle">
                             (Updates Typing/Ability, Keeps Moves/Skills)
                         </span>
                     </button>
@@ -82,49 +40,30 @@ export function SpeciesChangeModal({ pendingSpeciesData, onClose }: SpeciesChang
                             applySpeciesData(pendingSpeciesData, true, swapUpdateStats);
                             onClose();
                         }}
-                        className="action-button action-button--red"
-                        style={{ padding: '8px', fontSize: '0.9rem' }}
+                        className="action-button action-button--red species-change__btn-new"
                     >
                         ⚠️ Brand New Pokémon
                         <br />
-                        <span style={{ fontSize: '0.7rem', fontWeight: 'normal' }}>
+                        <span className="species-change__btn-subtitle">
                             (Wipes Moves & Skills completely)
                         </span>
                     </button>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="action-button action-button--dark"
-                        style={{ padding: '6px', marginTop: '4px' }}
+                        className="action-button action-button--dark species-change__btn-cancel"
                     >
                         Cancel Change
                     </button>
                 </div>
 
-                <div
-                    style={{
-                        marginTop: '15px',
-                        paddingTop: '10px',
-                        borderTop: '1px solid var(--border)',
-                        textAlign: 'center'
-                    }}
-                >
-                    <label
-                        style={{
-                            fontSize: '0.8rem',
-                            cursor: 'pointer',
-                            color: 'var(--text-main)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '6px'
-                        }}
-                    >
+                <div className="species-change__checkbox-container">
+                    <label className="species-change__checkbox-label">
                         <input
                             type="checkbox"
                             checked={swapUpdateStats}
                             onChange={(e) => setSwapUpdateStats(e.target.checked)}
-                            style={{ transform: 'scale(1.1)', cursor: 'pointer' }}
+                            className="species-change__checkbox"
                         />
                         Overwrite Base Stats & Limits
                     </label>

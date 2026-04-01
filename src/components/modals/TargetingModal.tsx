@@ -1,9 +1,10 @@
-// src/components/TargetingModal.tsx
+// src/components/modals/TargetingModal.tsx
 import { useState, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import type { MoveData } from '../../store/storeTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { STATS_META_ID } from '../../utils/graphicsManager';
+import './TargetingModal.css';
 
 interface TargetingModalProps {
     move: MoveData;
@@ -19,8 +20,6 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
     const [targets, setTargets] = useState<{ name: string; def: number }[]>([]);
 
     const ruleset = useCharacterStore((state) => state.identity.ruleset);
-
-    // AUDIT FIX: Safely handles both new string maps and legacy JSON mappings by checking the start of the string!
     const isPhysicalMove = String(move.category).startsWith('Phys');
 
     useEffect(() => {
@@ -69,61 +68,17 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
     };
 
     return (
-        <div
-            style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                background: 'rgba(0,0,0,0.5)',
-                zIndex: 1000,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center'
-            }}
-        >
-            <div
-                style={{
-                    background: 'var(--panel-bg)',
-                    padding: '15px',
-                    borderRadius: '8px',
-                    width: '280px',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-                    border: '2px solid var(--primary)'
-                }}
-            >
-                <h3
-                    style={{
-                        marginTop: 0,
-                        color: 'var(--primary)',
-                        fontSize: '1.1rem',
-                        borderBottom: '1px solid var(--border)',
-                        paddingBottom: '4px'
-                    }}
-                >
-                    🎯 Select Target
-                </h3>
+        <div className="targeting-modal__overlay">
+            <div className="targeting-modal__content">
+                <h3 className="targeting-modal__title">🎯 Select Target</h3>
 
-                <div style={{ marginBottom: '10px' }}>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>
-                        Enemy Token:
-                    </label>
+                <div className="targeting-modal__form-group">
+                    <label className="targeting-modal__label">Enemy Token:</label>
                     <select
                         onChange={(e) => {
                             if (e.target.value !== 'manual') setReduction(Number(e.target.value));
                         }}
-                        style={{
-                            width: '100%',
-                            padding: '4px',
-                            border: '1px solid var(--border)',
-                            borderRadius: '4px',
-                            fontFamily: 'inherit',
-                            fontSize: '0.85rem',
-                            marginTop: '2px',
-                            background: 'var(--input-bg)',
-                            color: 'var(--text-main)'
-                        }}
+                        className="targeting-modal__select"
                     >
                         <option value="manual">-- Manual Entry --</option>
                         {targets.map((t, i) => (
@@ -134,8 +89,8 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                     </select>
                 </div>
 
-                <div style={{ marginBottom: '15px' }}>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>
+                <div className="targeting-modal__form-group targeting-modal__form-group--large">
+                    <label className="targeting-modal__label">
                         <span>{isPhysicalMove ? 'Defense' : 'Special Defense'}</span> Reduction:
                     </label>
                     <input
@@ -143,83 +98,42 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                         value={reduction}
                         onChange={(e) => setReduction(Number(e.target.value) || 0)}
                         min="0"
-                        style={{
-                            width: '100%',
-                            padding: '4px',
-                            border: '1px solid var(--border)',
-                            borderRadius: '4px',
-                            fontFamily: 'inherit',
-                            fontSize: '0.85rem',
-                            marginTop: '2px',
-                            boxSizing: 'border-box',
-                            background: 'var(--input-bg)',
-                            color: 'var(--text-main)'
-                        }}
+                        className="targeting-modal__input"
                     />
                 </div>
 
-                {/* AUDIT FIX: Corrected justifyContent spelling! */}
-                <div
-                    style={{
-                        marginBottom: '15px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between'
-                    }}
-                >
-                    <label
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            fontSize: '0.85rem',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            color: '#d32f2f'
-                        }}
-                    >
+                <div className="targeting-modal__checkbox-row">
+                    <label className="targeting-modal__checkbox-label targeting-modal__checkbox-label--crit">
                         <input
                             type="checkbox"
                             checked={isCrit}
                             onChange={(e) => setIsCrit(e.target.checked)}
-                            style={{ cursor: 'pointer', transform: 'scale(1.1)' }}
+                            className="targeting-modal__checkbox"
                         />
                         Critical Hit?
                     </label>
-                    <label
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            fontSize: '0.85rem',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            color: '#1976d2'
-                        }}
-                    >
+                    <label className="targeting-modal__checkbox-label targeting-modal__checkbox-label--se">
                         <input
                             type="checkbox"
                             checked={isSE}
                             onChange={(e) => setIsSE(e.target.checked)}
-                            style={{ cursor: 'pointer', transform: 'scale(1.1)' }}
+                            className="targeting-modal__checkbox"
                         />
                         Super Effective?
                     </label>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                <div className="targeting-modal__actions">
                     <button
                         type="button"
-                        className="action-button action-button--dark"
-                        style={{ flex: 1, padding: '6px' }}
+                        className="action-button action-button--dark targeting-modal__btn"
                         onClick={onClose}
                     >
                         Cancel
                     </button>
                     <button
                         type="button"
-                        className="action-button action-button--red"
-                        style={{ flex: 1, padding: '6px' }}
+                        className="action-button action-button--red targeting-modal__btn"
                         onClick={handleConfirm}
                     >
                         💥 Roll Damage

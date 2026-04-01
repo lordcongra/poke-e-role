@@ -1,0 +1,98 @@
+.rules-modal__overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0,0,0,0.6);
+    z-index: 1200;
+    display: flex; justify-content: center; align-items: center;
+}
+
+.rules-modal__content {
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 350px;
+    width: 90%;
+    border: 2px solid #E65100;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.rules-modal__title {
+    color: #E65100;
+    margin-top: 0;
+    font-size: 1.1rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+}
+
+.rules-modal__form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.rules-modal__label {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.rules-modal__select {
+    width: 100%;
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--input-bg);
+    color: var(--text-main);
+    margin-top: 4px;
+}
+
+.rules-modal__close-btn {
+    width: 100%;
+    padding: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+/* Nested Info Modal */
+.rules-info__overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0,0,0,0.6);
+    z-index: 1300;
+    display: flex; justify-content: center; align-items: center;
+}
+
+.rules-info__content {
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: 6px;
+    max-width: 400px;
+    width: 90%;
+    border: 2px solid #C62828;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.rules-info__title {
+    color: #C62828;
+    text-align: center;
+    margin-top: 0;
+    font-size: 1.2rem;
+}
+
+.rules-info__divider {
+    border-top: 1px solid var(--border);
+    margin-bottom: 15px;
+}
+
+.rules-info__text {
+    color: var(--text-main);
+    font-size: 0.95rem;
+    white-space: pre-wrap;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}

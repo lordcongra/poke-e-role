@@ -1,7 +1,7 @@
-// src/components/MoveEditModal.tsx
 import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { TagBuilderModal } from './TagBuilderModal';
+import './MoveEditModal.css';
 
 interface MoveEditModalProps {
     moveId: string;
@@ -17,77 +17,30 @@ export function MoveEditModal({ moveId, onClose }: MoveEditModalProps) {
     if (!move) return null;
 
     return (
-        <div
-            style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(0,0,0,0.6)',
-                zIndex: 1000,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center'
-            }}
-        >
-            <div
-                style={{
-                    background: 'var(--panel-bg)',
-                    padding: '15px',
-                    borderRadius: '8px',
-                    width: '300px',
-                    border: '2px solid var(--primary)',
-                    color: 'var(--text-main)',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
-                }}
-            >
-                <h3
-                    style={{
-                        marginTop: 0,
-                        color: 'var(--primary)',
-                        fontSize: '1.1rem',
-                        borderBottom: '1px solid var(--border)',
-                        paddingBottom: '4px',
-                        textAlign: 'center'
-                    }}
-                >
+        <div className="move-edit__overlay">
+            <div className="move-edit__content">
+                <h3 className="move-edit__title">
                     {move.name || 'Move Name'}
                 </h3>
 
                 <textarea
-                    style={{
-                        width: '100%',
-                        height: '100px',
-                        border: '1px solid var(--border)',
-                        borderRadius: '4px',
-                        padding: '4px',
-                        fontFamily: 'inherit',
-                        fontSize: '0.85rem',
-                        resize: 'vertical',
-                        boxSizing: 'border-box',
-                        background: 'var(--input-bg)',
-                        color: 'var(--text-main)',
-                        marginBottom: '10px'
-                    }}
+                    className="move-edit__textarea"
                     placeholder="Move description and tags..."
                     value={move.desc || ''}
                     onChange={(e) => updateMove(move.id, 'desc', e.target.value)}
                 />
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                <div className="move-edit__actions">
                     <button
                         type="button"
-                        className="action-button action-button--dark"
-                        style={{ flex: 1, padding: '6px' }}
+                        className="action-button action-button--dark move-edit__btn-close"
                         onClick={onClose}
                     >
                         Close
                     </button>
                     <button
                         type="button"
-                        className="action-button action-button--dark"
-                        style={{ flex: 1, padding: '6px', background: '#1976d2', borderColor: '#1976d2' }}
+                        className="action-button action-button--dark move-edit__btn-tags"
                         onClick={() => setShowTagBuilder(true)}
                     >
                         🏷️ Tags

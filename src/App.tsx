@@ -11,6 +11,7 @@ import { ActionRolls } from './components/tables/ActionRolls';
 import { MovesTable } from './components/tables/MovesTable';
 import { InventoryTable } from './components/tables/InventoryTable';
 import { TrackerSection } from './components/board/TrackerSection';
+import './App.css';
 import './style.css';
 
 function App() {
@@ -21,21 +22,10 @@ function App() {
 
     if (isNPC && role === 'PLAYER') {
         return (
-            <div
-                id="gm-lock-screen"
-                style={{ textAlign: 'center', paddingTop: '100px', color: 'var(--primary)', fontFamily: 'sans-serif' }}
-            >
-                <h2 style={{ fontSize: '2rem', marginBottom: '10px' }}>🔒</h2>
+            <div id="gm-lock-screen" className="app-gm-lock">
+                <h2 className="app-gm-lock__icon">🔒</h2>
                 <h3>This sheet is hidden by the GM.</h3>
-                <div
-                    style={{
-                        marginTop: '40px',
-                        maxWidth: '350px',
-                        marginLeft: 'auto',
-                        marginRight: 'auto',
-                        textAlign: 'left'
-                    }}
-                >
+                <div className="app-gm-lock__content">
                     <TypeMatchups />
                 </div>
             </div>
@@ -43,7 +33,7 @@ function App() {
     }
 
     return (
-        <div className="sheet-container" style={{ padding: '10px', maxWidth: '900px', margin: '0 auto' }}>
+        <div className="sheet-container app-container">
             <IdentityHeader />
             <DerivedBoard />
 
