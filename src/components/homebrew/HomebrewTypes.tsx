@@ -22,6 +22,7 @@ export function HomebrewTypes() {
     const allOptions = [...POKEMON_TYPES.filter((t) => t !== ''), ...visibleTypes.map((customType) => customType.name)];
 
     const [editingType, setEditingType] = useState<CustomType | null>(null);
+    const [deleteTypeId, setDeleteTypeId] = useState<string | null>(null);
 
     const fileReference = useRef<HTMLInputElement>(null);
     const [importData, setImportData] = useState<CustomType[] | null>(null);
@@ -99,7 +100,7 @@ export function HomebrewTypes() {
                             {canEdit && (
                                 <button
                                     type="button"
-                                    onClick={() => removeCustomType(customType.name)}
+                                    onClick={() => setDeleteTypeId(customType.name)}
                                     className="homebrew-types__list-delete"
                                     title="Delete"
                                 >
@@ -138,6 +139,36 @@ export function HomebrewTypes() {
                     </>
                 )}
             </div>
+
+            {deleteTypeId && (
+                <div className="homebrew-types__modal-overlay">
+                    <div className="homebrew-types__modal-content">
+                        <h3 className="homebrew-types__modal-title">⚠️ Confirm Deletion</h3>
+                        <p className="homebrew-types__modal-text">
+                            Are you sure you want to delete the Type "{deleteTypeId}"?
+                        </p>
+                        <div className="homebrew-types__modal-actions">
+                            <button
+                                type="button"
+                                onClick={() => setDeleteTypeId(null)}
+                                className="action-button action-button--dark homebrew-types__modal-btn"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    removeCustomType(deleteTypeId);
+                                    setDeleteTypeId(null);
+                                }}
+                                className="action-button action-button--red homebrew-types__modal-btn"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {importData && (
                 <div className="homebrew-types__modal-overlay">

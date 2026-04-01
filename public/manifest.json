@@ -1,13 +1,13 @@
 {
-    "name": "Pokerole 3.0 Sheet (DEV)",
-    "version": "2.0.1",
+    "name": "Pokerole 3.0 Sheet",
+    "version": "2.1.0",
     "manifest_version": 1,
-    "description": "Local testing build for the Pokerole character sheet.",
+    "description": "A highly automated, modular character sheet extension for playing Pokerole 3.0 campaigns.",
     "author": "lordcongra",
     "action": {
-        "title": "Pokerole 3.0 Sheet (DEV)",
-        "icon": "http://localhost:5173/pokeball.svg",
-        "popover": "http://localhost:5173/",
+        "title": "Pokerole 3.0 Sheet",
+        "icon": "https://lordcongra.github.io/poke-e-role/pokeball.svg",
+        "popover": "https://lordcongra.github.io/poke-e-role/",
         "width": 850,
         "height": 700
     }

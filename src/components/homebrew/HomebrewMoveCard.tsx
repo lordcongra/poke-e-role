@@ -25,6 +25,7 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
 
     const [isCollapsed, setIsCollapsed] = useState(move.name !== 'New Move');
     const [showTagBuilder, setShowTagBuilder] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     useEffect(() => {
         setLocalName(move.name);
@@ -73,7 +74,10 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                     </button>
                 )}
                 {canEdit && (
-                    <button onClick={onRemove} className="action-button action-button--red homebrew-card__btn">
+                    <button
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="action-button action-button--red homebrew-card__btn"
+                    >
                         Delete
                     </button>
                 )}
@@ -196,6 +200,31 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                     targetType="homebrew_move"
                     onClose={() => setShowTagBuilder(false)}
                 />
+            )}
+
+            {showDeleteConfirm && (
+                <div className="homebrew-confirm__overlay">
+                    <div className="homebrew-confirm__content">
+                        <h3 className="homebrew-confirm__title">⚠️ Confirm Deletion</h3>
+                        <p className="homebrew-confirm__text">Are you sure you want to delete this Custom Move?</p>
+                        <div className="homebrew-confirm__actions">
+                            <button
+                                type="button"
+                                onClick={() => setShowDeleteConfirm(false)}
+                                className="action-button action-button--dark homebrew-confirm__btn"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={onRemove}
+                                className="action-button action-button--red homebrew-confirm__btn"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

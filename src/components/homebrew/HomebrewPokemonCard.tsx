@@ -28,6 +28,7 @@ export function HomebrewPokemonCard({
     const [localName, setLocalName] = useState(pokemon.Name);
     const [localGameMasterOnly, setLocalGameMasterOnly] = useState(pokemon.gmOnly || false);
     const [isCollapsed, setIsCollapsed] = useState(pokemon.Name !== 'New Pokemon');
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     useEffect(() => {
         setLocalName(pokemon.Name);
@@ -70,7 +71,7 @@ export function HomebrewPokemonCard({
                 )}
                 {canEdit && (
                     <button
-                        onClick={onRemove}
+                        onClick={() => setShowDeleteConfirm(true)}
                         className="action-button action-button--red homebrew-pokemon-card__delete-btn"
                     >
                         Delete
@@ -125,6 +126,31 @@ export function HomebrewPokemonCard({
                     <HomebrewPokemonAbilities pokemon={pokemon} canEdit={canEdit} />
                     <HomebrewPokemonLearnset pokemon={pokemon} canEdit={canEdit} />
                 </>
+            )}
+
+            {showDeleteConfirm && (
+                <div className="homebrew-confirm__overlay">
+                    <div className="homebrew-confirm__content">
+                        <h3 className="homebrew-confirm__title">⚠️ Confirm Deletion</h3>
+                        <p className="homebrew-confirm__text">Are you sure you want to delete this Custom Pokémon?</p>
+                        <div className="homebrew-confirm__actions">
+                            <button
+                                type="button"
+                                onClick={() => setShowDeleteConfirm(false)}
+                                className="action-button action-button--dark homebrew-confirm__btn"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={onRemove}
+                                className="action-button action-button--red homebrew-confirm__btn"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

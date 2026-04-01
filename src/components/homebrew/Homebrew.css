@@ -293,3 +293,50 @@
 .homebrew-file-input {
     display: none;
 }
+
+/* --- Homebrew Deletion Confirm Modal --- */
+.homebrew-confirm__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1400;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.homebrew-confirm__content {
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: 6px;
+    max-width: 300px;
+    width: 90%;
+    border: 2px solid #c62828;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    text-align: center;
+}
+
+.homebrew-confirm__title {
+    color: #c62828;
+    margin-top: 0;
+    font-size: 1.1rem;
+}
+
+.homebrew-confirm__text {
+    font-size: 0.9rem;
+    color: var(--text-main);
+    margin-bottom: 20px;
+}
+
+.homebrew-confirm__actions {
+    display: flex;
+    gap: 10px;
+}
+
+.homebrew-confirm__btn {
+    flex: 1;
+    padding: 6px;
+}
