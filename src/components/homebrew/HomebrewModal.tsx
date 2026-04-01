@@ -1,7 +1,7 @@
 // src/components/HomebrewModal.tsx
 import { useState, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
-import { useCharacterStore } from "../../store/useCharacterStore";
+import { useCharacterStore } from '../../store/useCharacterStore';
 import { HomebrewTypes } from './HomebrewTypes';
 import { HomebrewAbilities } from './HomebrewAbilities';
 import { HomebrewMoves } from './HomebrewMoves';
