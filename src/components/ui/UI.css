@@ -20,3 +20,10 @@
     margin-left: 6px;
     font-weight: bold;
 }
+
+.health-section__header--shadow {
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
+}
+.resource-box__content-layer {
+    z-index: 2;
+}

@@ -180,7 +180,7 @@ export function IdentityControls({
                     type="file"
                     ref={fileInputReference}
                     onChange={handleImport}
-                    style={{ display: 'none' }}
+                    className="identity-header__file-input"
                     accept=".json"
                 />
 
@@ -206,16 +206,14 @@ export function IdentityControls({
                         <div className="identity-header__modal-actions">
                             <button
                                 type="button"
-                                className="action-button action-button--dark"
-                                style={{ flex: 1, padding: '6px' }}
+                                className="action-button action-button--dark identity-header__modal-btn"
                                 onClick={() => setImportData(null)}
                             >
                                 Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--red"
-                                style={{ flex: 1, padding: '6px' }}
+                                className="action-button action-button--red identity-header__modal-btn"
                                 onClick={confirmImport}
                             >
                                 Import

@@ -105,8 +105,7 @@ export function HomebrewItems() {
             <div className="homebrew-list__footer">
                 <button
                     onClick={handleExport}
-                    className="action-button action-button--dark"
-                    style={{ flex: 1, padding: '8px' }}
+                    className="action-button action-button--dark homebrew-list__footer-btn"
                 >
                     💾 Export Items
                 </button>
@@ -114,8 +113,7 @@ export function HomebrewItems() {
                     <>
                         <button
                             onClick={() => fileReference.current?.click()}
-                            className="action-button action-button--dark"
-                            style={{ flex: 1, padding: '8px' }}
+                            className="action-button action-button--dark homebrew-list__footer-btn"
                         >
                             📂 Import Items
                         </button>
@@ -123,7 +121,7 @@ export function HomebrewItems() {
                             type="file"
                             ref={fileReference}
                             onChange={handleImport}
-                            style={{ display: 'none' }}
+                            className="homebrew-file-input"
                             accept=".json"
                         />
                     </>

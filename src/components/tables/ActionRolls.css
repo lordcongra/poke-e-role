@@ -84,3 +84,17 @@
     display: flex;
     gap: 10px;
 }
+
+.action-rolls__table {
+    text-align: left;
+    width: 100%;
+}
+.action-rolls__modal-btn {
+    flex: 1;
+    padding: 6px;
+}
+
+.action-rolls__table {
+    text-align: left;
+    width: 100%;
+}

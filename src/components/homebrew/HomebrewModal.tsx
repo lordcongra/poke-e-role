@@ -155,7 +155,7 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                                     type="file"
                                     ref={fileRef}
                                     onChange={handleImportAll}
-                                    style={{ display: 'none' }}
+                                    className="homebrew-file-input"
                                     accept=".json"
                                 />
                             </>

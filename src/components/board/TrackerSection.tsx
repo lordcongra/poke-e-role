@@ -286,7 +286,7 @@ export function TrackerSection() {
                     <div className="tracker-modal__content">
                         <h3 className="tracker-modal__title">{tooltipInfo.title}</h3>
                         <p className="tracker-modal__description">{tooltipInfo.desc}</p>
-                        <div className="tracker-modal__actions" style={{ justifyContent: 'center' }}>
+                        <div className="tracker-modal__actions tracker-modal__actions--center">
                             <button
                                 type="button"
                                 className="action-button action-button--dark tracker-modal__btn-cancel"

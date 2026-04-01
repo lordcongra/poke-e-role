@@ -219,3 +219,7 @@
     justify-content: center;
     margin-bottom: 15px;
 }
+
+.tracker-modal__actions--center {
+    justify-content: center;
+}

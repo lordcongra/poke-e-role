@@ -145,8 +145,7 @@ export function HomebrewPokemon() {
             <div className="homebrew-list__footer">
                 <button
                     onClick={handleExport}
-                    className="action-button action-button--dark"
-                    style={{ flex: 1, padding: '8px' }}
+                    className="action-button action-button--dark homebrew-list__footer-btn"
                 >
                     💾 Export Pokémon
                 </button>
@@ -154,8 +153,7 @@ export function HomebrewPokemon() {
                     <>
                         <button
                             onClick={() => fileReference.current?.click()}
-                            className="action-button action-button--dark"
-                            style={{ flex: 1, padding: '8px' }}
+                            className="action-button action-button--dark homebrew-list__footer-btn"
                         >
                             📂 Import Pokémon
                         </button>
@@ -163,7 +161,7 @@ export function HomebrewPokemon() {
                             type="file"
                             ref={fileReference}
                             onChange={handleImport}
-                            style={{ display: 'none' }}
+                            className="homebrew-file-input"
                             accept=".json"
                         />
                     </>

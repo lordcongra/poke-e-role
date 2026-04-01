@@ -68,3 +68,10 @@
     border: none;
     color: var(--text-main);
 }
+
+.move-row__checkbox-cell {
+    text-align: center;
+}
+.move-row__type-cell {
+    padding: 2px;
+}

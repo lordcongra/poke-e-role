@@ -162,3 +162,8 @@
     padding: 0 12px;
     margin-left: 4px;
 }
+
+.move-card__select--static {
+    background: var(--panel-alt);
+    color: var(--text-main);
+}

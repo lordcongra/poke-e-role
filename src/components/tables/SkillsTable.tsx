@@ -163,11 +163,7 @@ export function SkillsTable() {
                     </tbody>
                 </table>
             </div>
-            <button
-                onClick={addExtraCategory}
-                className="action-button action-button--dark"
-                style={{ width: '100%', marginTop: '4px' }}
-            >
+            <button onClick={addExtraCategory} className="action-button action-button--dark skills-table__add-btn">
                 + Add Skill Category
             </button>
 
@@ -181,16 +177,14 @@ export function SkillsTable() {
                         <div className="skills-table__modal-actions">
                             <button
                                 type="button"
-                                className="action-button action-button--dark"
-                                style={{ flex: 1, padding: '6px' }}
+                                className="action-button action-button--dark skills-table__modal-btn"
                                 onClick={() => setDeleteCategoryId(null)}
                             >
                                 Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--red"
-                                style={{ flex: 1, padding: '6px' }}
+                                className="action-button action-button--red skills-table__modal-btn"
                                 onClick={() => {
                                     removeExtraCategory(deleteCategoryId);
                                     setDeleteCategoryId(null);

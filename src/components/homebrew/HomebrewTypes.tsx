@@ -132,7 +132,7 @@ export function HomebrewTypes() {
                             type="file"
                             ref={fileReference}
                             onChange={handleImport}
-                            style={{ display: 'none' }}
+                            className="homebrew-types__file-input"
                             accept=".json"
                         />
                     </>

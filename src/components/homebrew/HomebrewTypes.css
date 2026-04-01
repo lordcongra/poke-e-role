@@ -266,3 +266,5 @@
     background: #1976d2;
     color: white;
 }
+
+.homebrew-types__file-input { display: none; }

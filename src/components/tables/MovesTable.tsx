@@ -142,7 +142,7 @@ export function MovesTable() {
 
             <CollapsingSection title="MOVES" headerElements={headerElements}>
                 <div className="desktop-only-flex table-responsive-wrapper">
-                    <table className="data-table" style={{ textAlign: 'left' }}>
+                    <table className="data-table moves-table__table">
                         <thead>
                             <tr className="moves-table__header-row">
                                 <th className="moves-table__th-checkbox" title="Used this round?">
@@ -223,16 +223,14 @@ export function MovesTable() {
                         <div className="moves-table__modal-actions">
                             <button
                                 type="button"
-                                className="action-button action-button--dark"
-                                style={{ flex: 1, padding: '6px' }}
+                                className="action-button action-button--dark moves-table__modal-btn"
                                 onClick={() => setDeleteMoveId(null)}
                             >
                                 Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--red"
-                                style={{ flex: 1, padding: '6px' }}
+                                className="action-button action-button--red moves-table__modal-btn"
                                 onClick={() => {
                                     removeMove(deleteMoveId);
                                     setDeleteMoveId(null);
@@ -254,11 +252,10 @@ export function MovesTable() {
                         <p className="moves-table__modal-text moves-table__modal-text--tooltip">
                             {tooltipInfo.description}
                         </p>
-                        <div className="moves-table__modal-actions" style={{ justifyContent: 'center' }}>
+                        <div className="moves-table__modal-actions moves-table__modal-actions--center">
                             <button
                                 type="button"
-                                className="action-button action-button--dark"
-                                style={{ width: '100%', padding: '6px' }}
+                                className="action-button action-button--dark moves-table__modal-btn--full"
                                 onClick={() => setTooltipInfo(null)}
                             >
                                 Close

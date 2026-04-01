@@ -146,8 +146,7 @@ export function MoveCard({ move, skills, extraCategories, onTarget, onDelete }: 
                     onChange={(event) =>
                         updateMove(move.id, 'category', event.target.value as 'Physical' | 'Special' | 'Status')
                     }
-                    className="move-card__select"
-                    style={{ background: 'var(--panel-alt)', color: 'var(--text-main)' }}
+                    className="move-card__select move-card__select--static"
                 >
                     <option value="Physical">Physical</option>
                     <option value="Special">Special</option>

@@ -88,7 +88,7 @@ export function MoveRow({ move, skills, extraCategories, onTarget, onDelete }: M
     return (
         <>
             <tr className={`data-table__row--dynamic move-row ${!move.active ? '' : 'move-row--inactive'}`}>
-                <td style={{ textAlign: 'center' }}>
+                <td className="move-row__checkbox-cell">
                     <input
                         type="checkbox"
                         checked={move.active}
@@ -171,7 +171,7 @@ export function MoveRow({ move, skills, extraCategories, onTarget, onDelete }: M
                         </select>
                     </div>
                 </td>
-                <td className="data-table__cell--middle" style={{ padding: '2px' }}>
+                <td className="data-table__cell--middle move-row__type-cell">
                     <select
                         value={move.type}
                         onChange={(event) => updateMove(move.id, 'type', event.target.value)}

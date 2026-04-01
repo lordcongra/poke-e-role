@@ -285,3 +285,6 @@
 .homebrew-card__textarea--large {
     height: 70px;
 }
+
+.homebrew-list__footer-btn { flex: 1; padding: 8px; }
+.homebrew-file-input { display: none; }

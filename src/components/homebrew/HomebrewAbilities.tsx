@@ -107,8 +107,7 @@ export function HomebrewAbilities() {
             <div className="homebrew-list__footer">
                 <button
                     onClick={handleExport}
-                    className="action-button action-button--dark"
-                    style={{ flex: 1, padding: '8px' }}
+                    className="action-button action-button--dark homebrew-list__footer-btn"
                 >
                     💾 Export Abilities
                 </button>
@@ -116,8 +115,7 @@ export function HomebrewAbilities() {
                     <>
                         <button
                             onClick={() => fileReference.current?.click()}
-                            className="action-button action-button--dark"
-                            style={{ flex: 1, padding: '8px' }}
+                            className="action-button action-button--dark homebrew-list__footer-btn"
                         >
                             📂 Import Abilities
                         </button>
@@ -125,7 +123,7 @@ export function HomebrewAbilities() {
                             type="file"
                             ref={fileReference}
                             onChange={handleImport}
-                            style={{ display: 'none' }}
+                            className="homebrew-file-input"
                             accept=".json"
                         />
                     </>

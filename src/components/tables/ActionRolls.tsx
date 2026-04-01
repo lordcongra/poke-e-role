@@ -21,7 +21,7 @@ export function ActionRolls() {
     return (
         <CollapsingSection title="ACTION ROLLS">
             <div className="table-responsive-wrapper">
-                <table className="data-table" style={{ textAlign: 'left', width: '100%' }}>
+                <table className="data-table action-rolls__table">
                     <thead>
                         <tr className="action-rolls__header-row">
                             <th className="action-rolls__name-column">Action Name</th>
@@ -119,16 +119,14 @@ export function ActionRolls() {
                         <div className="action-rolls__modal-actions">
                             <button
                                 type="button"
-                                className="action-button action-button--dark"
-                                style={{ flex: 1, padding: '6px' }}
+                                className="action-button action-button--dark action-rolls__modal-btn"
                                 onClick={() => setDeleteRollId(null)}
                             >
                                 Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--red"
-                                style={{ flex: 1, padding: '6px' }}
+                                className="action-button action-button--red action-rolls__modal-btn"
                                 onClick={() => {
                                     removeSkillCheck(deleteRollId);
                                     setDeleteRollId(null);

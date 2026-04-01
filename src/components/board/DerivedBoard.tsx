@@ -90,7 +90,7 @@ export function DerivedBoard() {
 
     return (
         <CollapsingSection title="INFO">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div className="derived-board__container">
                 <div className="derived-board__health-row">
                     <div className="derived-board__health-box">
                         <ResourceBox
@@ -178,8 +178,7 @@ export function DerivedBoard() {
                         <div className="derived-board__box-content derived-board__box-content--dark-text">
                             1d6 + {initiative}
                             <button
-                                className="action-button action-button--dark"
-                                style={{ padding: '1px 6px' }}
+                                className="action-button action-button--dark derived-board__roll-btn"
                                 onClick={() => rollDicePlus(`1d6+${initiative}`, 'Initiative', 'init')}
                             >
                                 🎲

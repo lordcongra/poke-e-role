@@ -186,7 +186,7 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility }: IdentityGridPro
                             </option>
                         ))}
                     </select>
-                    <span className="identity-grid__label identity-grid__label--blue" style={{ marginLeft: '4px' }}>
+                    <span className="identity-grid__label identity-grid__label--blue identity-header__label-margin">
                         Gender
                     </span>
                     <input
@@ -252,16 +252,14 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility }: IdentityGridPro
                         <div className="identity-header__modal-actions">
                             <button
                                 type="button"
-                                className="action-button action-button--dark"
-                                style={{ flex: 1, padding: '6px' }}
+                                className="action-button action-button--dark identity-header__modal-btn"
                                 onClick={() => setDeleteCustomInfoId(null)}
                             >
                                 Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--red"
-                                style={{ flex: 1, padding: '6px' }}
+                                className="action-button action-button--red identity-header__modal-btn"
                                 onClick={() => {
                                     removeCustomInfo(deleteCustomInfoId);
                                     setDeleteCustomInfoId(null);

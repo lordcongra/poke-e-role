@@ -267,3 +267,15 @@
     font-size: 1rem;
     font-weight: bold;
 }
+
+.identity-header__modal-btn {
+    flex: 1;
+    padding: 6px;
+}
+.identity-header__label-margin {
+    margin-left: 4px;
+}
+
+.identity-header__file-input {
+    display: none;
+}
