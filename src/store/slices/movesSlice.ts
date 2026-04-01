@@ -1,11 +1,32 @@
-// src/store/slices/movesSlice.ts
 import type { StateCreator } from 'zustand';
-import type { CharacterState, MovesSlice, MoveData, SkillCheck } from '../storeTypes';
+import type { CharacterState, MovesSlice, MoveData, SkillCheck, PendingDualScale } from '../storeTypes';
 import { saveToOwlbear } from '../../utils/obr';
 
 export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> = (set) => ({
     moves: [],
     skillChecks: [],
+    pendingDualScale: null,
+
+    setPendingDualScale: (data) => set({ pendingDualScale: data }),
+
+    resolveDualScale: (moveId, acc1, acc2, dmg1) =>
+        set((state) => {
+            const newMoves = state.moves.map((m) => {
+                if (m.id === moveId) {
+                    return {
+                        ...m,
+                        ...(acc1 ? { acc1 } : {}),
+                        ...(acc2 ? { acc2 } : {}),
+                        ...(dmg1 ? { dmg1 } : {})
+                    };
+                }
+                return m;
+            });
+            try {
+                saveToOwlbear({ 'moves-data': JSON.stringify(newMoves) });
+            } catch (e) {}
+            return { moves: newMoves, pendingDualScale: null };
+        }),
 
     addMove: () =>
         set((state) => {
@@ -72,77 +93,95 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
         set((state) => {
             if (!data) return state;
 
-            const mapAttr = (val: string) => {
-                const v = (val || '').toLowerCase().trim();
-                if (v.includes('str')) return 'str';
-                if (v.includes('dex')) return 'dex';
-                if (v.includes('vit')) return 'vit';
-                if (v.includes('spe')) return 'spe';
-                if (v.includes('ins')) return 'ins';
-                if (v.includes('will')) return 'will';
-                return '';
+            const mapAttrOptions = (val: string) => {
+                const options = (val || '')
+                    .split('/')
+                    .map((v) => {
+                        const clean = v.toLowerCase().trim();
+                        if (clean.includes('str')) return 'str';
+                        if (clean.includes('dex')) return 'dex';
+                        if (clean.includes('vit')) return 'vit';
+                        if (clean.includes('spe')) return 'spe';
+                        if (clean.includes('ins')) return 'ins';
+                        if (clean.includes('will')) return 'will';
+                        return '';
+                    })
+                    .filter(Boolean);
+                return options.length > 0 ? options : [''];
             };
 
-            const mapSkill = (val: string) => {
-                const v = (val || '').split('/')[0].toLowerCase().trim();
-                const skills = [
-                    'brawl',
-                    'channel',
-                    'clash',
-                    'evasion',
-                    'alert',
-                    'athletic',
-                    'nature',
-                    'stealth',
-                    'charm',
-                    'etiquette',
-                    'intimidate',
-                    'perform',
-                    'crafts',
-                    'lore',
-                    'medicine',
-                    'magic'
-                ];
-                for (const s of skills) {
-                    if (v.includes(s)) return s;
-                }
+            const mapSkillOptions = (val: string) => {
+                const options = (val || '')
+                    .split('/')
+                    .map((v) => {
+                        const clean = v.toLowerCase().trim();
+                        const skills = [
+                            'brawl',
+                            'channel',
+                            'clash',
+                            'evasion',
+                            'alert',
+                            'athletic',
+                            'nature',
+                            'stealth',
+                            'charm',
+                            'etiquette',
+                            'intimidate',
+                            'perform',
+                            'crafts',
+                            'lore',
+                            'medicine',
+                            'magic'
+                        ];
 
-                for (const cat of state.extraCategories) {
-                    for (const sk of cat.skills) {
-                        if (v === sk.id.toLowerCase() || (sk.name && v === sk.name.toLowerCase())) return sk.id;
-                    }
-                }
+                        for (const s of skills) {
+                            if (clean.includes(s)) return s;
+                        }
 
-                return 'none';
+                        for (const cat of state.extraCategories) {
+                            for (const sk of cat.skills) {
+                                if (clean === sk.id.toLowerCase() || (sk.name && clean === sk.name.toLowerCase()))
+                                    return sk.id;
+                            }
+                        }
+                        return 'none';
+                    })
+                    .filter(Boolean);
+                return options.length > 0 ? options : ['none'];
             };
+
+            let newPendingDualScale: PendingDualScale | null = null;
 
             const newMoves = state.moves.map((m) => {
                 if (m.id === id) {
                     const rawCat = String(data.Category || 'Physical');
                     const cat = rawCat === 'Physical' ? 'Physical' : rawCat === 'Special' ? 'Special' : 'Status';
-                    const rawDmg = String(data.Damage1 === 'None' ? '' : data.Damage1 || '');
 
-                    let extraDesc = '';
-                    if (String(data.Accuracy2 || '').includes('/')) {
-                        extraDesc += `\n[Dual Acc: ${data.Accuracy2}]`;
-                    }
-                    if (String(data.Damage1 || '').includes('/')) {
-                        extraDesc += `\n[Dual Dmg: ${data.Damage1}]`;
-                    }
+                    const acc1Opts = mapAttrOptions(String(data.Accuracy1 || 'str'));
+                    const acc2Opts = mapSkillOptions(String(data.Accuracy2 || 'none'));
+                    const dmg1Opts = mapAttrOptions(String(data.Damage1 === 'None' ? '' : data.Damage1 || ''));
 
-                    const cleanDesc = String(data.Effect || data.Description || m.desc || '');
-                    const finalDesc = extraDesc ? `${cleanDesc}\n${extraDesc}` : cleanDesc;
+                    // If any option has multiple choices, trigger the modal!
+                    if (acc1Opts.length > 1 || acc2Opts.length > 1 || dmg1Opts.length > 1) {
+                        newPendingDualScale = {
+                            moveId: m.id,
+                            moveName: String(data.Name || m.name),
+                            acc1Options: acc1Opts.length > 1 ? acc1Opts : undefined,
+                            acc2Options: acc2Opts.length > 1 ? acc2Opts : undefined,
+                            dmg1Options: dmg1Opts.length > 1 ? dmg1Opts : undefined
+                        };
+                    }
 
                     return {
                         ...m,
                         name: String(data.Name || m.name),
                         type: String(data.Type || 'Normal'),
                         category: cat as 'Physical' | 'Special' | 'Status',
-                        acc1: mapAttr(String(data.Accuracy1 || 'str')) || 'str',
-                        acc2: mapSkill(String(data.Accuracy2 || 'none')),
-                        dmg1: mapAttr(rawDmg),
+                        acc1: acc1Opts[0] || 'str',
+                        acc2: acc2Opts[0] || 'none',
+                        dmg1: dmg1Opts[0] || '',
                         power: data.Power !== undefined && data.Power !== '' ? Number(data.Power) : m.power,
-                        desc: finalDesc.trim()
+                        desc: String(data.Effect || data.Description || m.desc || '')
                     };
                 }
                 return m;
@@ -151,7 +190,11 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
             try {
                 saveToOwlbear({ 'moves-data': JSON.stringify(newMoves) });
             } catch (e) {}
-            return { moves: newMoves };
+
+            return {
+                moves: newMoves,
+                pendingDualScale: newPendingDualScale || state.pendingDualScale
+            };
         }),
 
     addSkillCheck: () =>

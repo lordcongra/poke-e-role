@@ -17,6 +17,7 @@ import { CollapsingSection } from '../ui/CollapsingSection';
 import { GlobalModifiersModal } from '../modals/GlobalModifiersModal';
 import { MovesTableModifiers } from './MovesTableModifiers';
 import { MovesTableLearnset } from './MovesTableLearnset';
+import { DualScaleModal } from '../modals/DualScaleModal';
 import './MovesTable.css';
 
 export function MovesTable() {
@@ -264,6 +265,8 @@ export function MovesTable() {
                     </div>
                 </div>
             )}
+
+            <DualScaleModal />
         </div>
     );
 }

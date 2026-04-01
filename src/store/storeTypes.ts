@@ -23,6 +23,14 @@ import type {
 
 export * from './entityTypes';
 
+export interface PendingDualScale {
+    moveId: string;
+    moveName: string;
+    acc1Options?: string[];
+    acc2Options?: string[];
+    dmg1Options?: string[];
+}
+
 export interface CoreSlice {
     health: { hpCurr: number; hpMax: number; hpBase: number };
     will: { willCurr: number; willMax: number; willBase: number };
@@ -44,6 +52,10 @@ export interface CoreSlice {
 export interface MovesSlice {
     moves: MoveData[];
     skillChecks: SkillCheck[];
+    pendingDualScale: PendingDualScale | null;
+
+    setPendingDualScale: (data: PendingDualScale | null) => void;
+    resolveDualScale: (moveId: string, acc1?: string, acc2?: string, dmg1?: string) => void;
     addMove: () => void;
     updateMove: <K extends keyof MoveData>(id: string, field: K, value: MoveData[K]) => void;
     removeMove: (id: string) => void;
