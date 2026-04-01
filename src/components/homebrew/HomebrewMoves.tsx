@@ -114,10 +114,7 @@ export function HomebrewMoves() {
             </div>
 
             <div className="homebrew-list__footer">
-                <button
-                    onClick={handleExport}
-                    className="action-button action-button--dark homebrew-list__footer-btn"
-                >
+                <button onClick={handleExport} className="action-button action-button--dark homebrew-list__footer-btn">
                     💾 Export Moves
                 </button>
                 {canEdit && (

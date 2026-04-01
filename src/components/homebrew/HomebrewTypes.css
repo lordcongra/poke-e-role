@@ -267,4 +267,6 @@
     color: white;
 }
 
-.homebrew-types__file-input { display: none; }
+.homebrew-types__file-input {
+    display: none;
+}

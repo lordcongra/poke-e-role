@@ -1,11 +1,25 @@
+.derived-board__container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 .derived-board__health-row {
     display: flex;
     gap: 10px;
-    justify-content: space-between;
+    align-items: stretch;
 }
 
 .derived-board__health-box {
     flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.derived-board__health-box > .health-section__box {
+    height: 100%;
+    margin: 0;
 }
 
 .derived-board__box {
@@ -16,6 +30,9 @@
     border-radius: 4px;
     background: var(--panel-alt);
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
 }
 
 .derived-board__box--large {
@@ -58,6 +75,7 @@
     align-items: center;
     gap: 8px;
     background: var(--panel-alt);
+    flex: 1;
 }
 
 .derived-board__box-content--dark-text {
@@ -136,11 +154,13 @@
     padding: 6px;
 }
 
-.derived-board__container {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
 .derived-board__roll-btn {
     padding: 1px 6px;
+}
+
+/* Mobile overrides */
+@media (max-width: 768px) {
+    .derived-board__health-row {
+        flex-direction: column;
+    }
 }

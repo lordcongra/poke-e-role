@@ -1,4 +1,3 @@
-// src/store/slices/syncSlice.ts
 import type { StateCreator } from 'zustand';
 import type {
     CharacterState,
@@ -51,7 +50,6 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
                 parsedExtraCats = meta['extra-skills-data'] ? JSON.parse(String(meta['extra-skills-data'])) : [];
             } catch (e) {}
 
-            // AUDIT FIX: Added a migration translator to perfectly convert capitalized V1.8 data to V2 formats!
             const mapAttr = (val: string) => {
                 const v = (val || '').toLowerCase().trim();
                 if (v.includes('str')) return 'str';
@@ -177,7 +175,7 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
 
             let parsedEffects: EffectItem[] = [];
             try {
-                const rawEffects = meta['effect-list'] ? JSON.parse(String(meta['effect-list'])) : [];
+                const rawEffects = meta['effects-data'] ? JSON.parse(String(meta['effects-data'])) : [];
                 if (Array.isArray(rawEffects)) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     parsedEffects = rawEffects.map((e: any) => ({
