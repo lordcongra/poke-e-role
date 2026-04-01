@@ -1,8 +1,44 @@
-// src/store/slices/identitySlice.ts
 import type { StateCreator } from 'zustand';
 import type { CharacterState, IdentitySlice } from '../storeTypes';
 import { saveToOwlbear } from '../../utils/obr';
 import OBR from '@owlbear-rodeo/sdk';
+
+const OBR_KEY_MAP: Record<string, string> = {
+    showTrackers: 'show-trackers',
+    isNPC: 'is-npc',
+    rolls: 'rolls',
+    gender: 'gender',
+    homebrewAccess: 'homebrew-access',
+    settingHpBar: 'setting-hp-bar',
+    gmHpBar: 'gm-hp-bar',
+    settingHpText: 'setting-hp-text',
+    gmHpText: 'gm-hp-text',
+    settingWillBar: 'setting-will-bar',
+    gmWillBar: 'gm-will-bar',
+    settingWillText: 'setting-will-text',
+    gmWillText: 'gm-will-text',
+    settingDefBadge: 'setting-def-badge',
+    gmDefBadge: 'gm-def-badge',
+    settingEcoBadge: 'setting-eco-badge',
+    gmEcoBadge: 'gm-eco-badge',
+    colorAct: 'color-act',
+    colorEva: 'color-eva',
+    colorCla: 'color-cla',
+    xOffset: 'x-offset',
+    yOffset: 'y-offset',
+    hpOffsetX: 'hp-offset-x',
+    hpOffsetY: 'hp-offset-y',
+    willOffsetX: 'will-offset-x',
+    willOffsetY: 'will-offset-y',
+    defOffsetX: 'def-offset-x',
+    defOffsetY: 'def-offset-y',
+    actOffsetX: 'act-offset-x',
+    actOffsetY: 'act-offset-y',
+    evaOffsetX: 'eva-offset-x',
+    evaOffsetY: 'eva-offset-y',
+    claOffsetX: 'cla-offset-x',
+    claOffsetY: 'cla-offset-y'
+};
 
 const parseLearnset = (movesObj: unknown): Array<{ Learned: string; Name: string }> => {
     const result: Array<{ Learned: string; Name: string }> = [];
@@ -98,41 +134,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
 
     setIdentity: (field, value) =>
         set((state) => {
-            let obrKey = field as string;
-            if (field === 'showTrackers') obrKey = 'show-trackers';
-            else if (field === 'isNPC') obrKey = 'is-npc';
-            else if (field === 'rolls') obrKey = 'rolls';
-            else if (field === 'gender') obrKey = 'gender';
-            else if (field === 'homebrewAccess') obrKey = 'homebrew-access';
-            else if (field === 'settingHpBar') obrKey = 'setting-hp-bar';
-            else if (field === 'gmHpBar') obrKey = 'gm-hp-bar';
-            else if (field === 'settingHpText') obrKey = 'setting-hp-text';
-            else if (field === 'gmHpText') obrKey = 'gm-hp-text';
-            else if (field === 'settingWillBar') obrKey = 'setting-will-bar';
-            else if (field === 'gmWillBar') obrKey = 'gm-will-bar';
-            else if (field === 'settingWillText') obrKey = 'setting-will-text';
-            else if (field === 'gmWillText') obrKey = 'gm-will-text';
-            else if (field === 'settingDefBadge') obrKey = 'setting-def-badge';
-            else if (field === 'gmDefBadge') obrKey = 'gm-def-badge';
-            else if (field === 'settingEcoBadge') obrKey = 'setting-eco-badge';
-            else if (field === 'gmEcoBadge') obrKey = 'gm-eco-badge';
-            else if (field === 'colorAct') obrKey = 'color-act';
-            else if (field === 'colorEva') obrKey = 'color-eva';
-            else if (field === 'colorCla') obrKey = 'color-cla';
-            else if (field === 'xOffset') obrKey = 'x-offset';
-            else if (field === 'yOffset') obrKey = 'y-offset';
-            else if (field === 'hpOffsetX') obrKey = 'hp-offset-x';
-            else if (field === 'hpOffsetY') obrKey = 'hp-offset-y';
-            else if (field === 'willOffsetX') obrKey = 'will-offset-x';
-            else if (field === 'willOffsetY') obrKey = 'will-offset-y';
-            else if (field === 'defOffsetX') obrKey = 'def-offset-x';
-            else if (field === 'defOffsetY') obrKey = 'def-offset-y';
-            else if (field === 'actOffsetX') obrKey = 'act-offset-x';
-            else if (field === 'actOffsetY') obrKey = 'act-offset-y';
-            else if (field === 'evaOffsetX') obrKey = 'eva-offset-x';
-            else if (field === 'evaOffsetY') obrKey = 'eva-offset-y';
-            else if (field === 'claOffsetX') obrKey = 'cla-offset-x';
-            else if (field === 'claOffsetY') obrKey = 'cla-offset-y';
+            const obrKey = OBR_KEY_MAP[field as string] || (field as string);
 
             if (field === 'ruleset' || field === 'pain' || field === 'homebrewAccess') {
                 if (OBR.isAvailable) {
@@ -154,7 +156,10 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
 
             try {
                 if (Object.keys(updatesToSave).length > 0) saveToOwlbear(updatesToSave);
-            } catch (e) {}
+            } catch (error) {
+                console.error(error);
+            }
+
             return { identity: { ...state.identity, [field]: value } };
         }),
 

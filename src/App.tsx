@@ -1,16 +1,16 @@
 // src/App.tsx
 import { useOwlbearSync } from './hooks/useOwlbearSync';
 import { useCharacterStore } from './store/useCharacterStore';
-import { IdentityHeader } from './components/IdentityHeader';
-import { DerivedBoard } from './components/DerivedBoard';
-import { CoreTable } from './components/CoreTable';
-import { SocialTable } from './components/SocialTable';
-import { TypeMatchups } from './components/TypeMatchups';
-import { SkillsTable } from './components/SkillsTable';
-import { ActionRolls } from './components/ActionRolls';
-import { MovesTable } from './components/MovesTable';
-import { InventoryTable } from './components/InventoryTable';
-import { TrackerSection } from './components/TrackerSection';
+import { IdentityHeader } from './components/identity/IdentityHeader';
+import { DerivedBoard } from './components/board/DerivedBoard';
+import { CoreTable } from './components/tables/CoreTable';
+import { SocialTable } from './components/tables/SocialTable';
+import { TypeMatchups } from './components/board/TypeMatchups';
+import { SkillsTable } from './components/tables/SkillsTable';
+import { ActionRolls } from './components/tables/ActionRolls';
+import { MovesTable } from './components/tables/MovesTable';
+import { InventoryTable } from './components/tables/InventoryTable';
+import { TrackerSection } from './components/board/TrackerSection';
 import './style.css';
 
 function App() {

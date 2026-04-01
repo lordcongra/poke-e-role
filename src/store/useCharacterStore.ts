@@ -1,4 +1,3 @@
-// src/store/useCharacterStore.ts
 import { create } from 'zustand';
 import type { CharacterState, Rank } from './storeTypes';
 import { createCoreSlice } from './slices/coreSlice';
@@ -6,6 +5,8 @@ import { createMovesSlice } from './slices/movesSlice';
 import { createInventorySlice } from './slices/inventorySlice';
 import { createTrackerSlice } from './slices/trackerSlice';
 import { createHomebrewSlice } from './slices/homebrewSlice';
+import { createExtraSkillsSlice } from './slices/extraSkillsSlice';
+import { createGeneratorSlice } from './slices/generatorSlice';
 import { createIdentitySlice } from './slices/identitySlice';
 import { createMacroSlice } from './slices/macroSlice';
 import { createSyncSlice } from './slices/syncSlice';
@@ -54,6 +55,8 @@ export const useCharacterStore = create<CharacterState>()((set, get, api) => ({
     ...createInventorySlice(set, get, api),
     ...createTrackerSlice(set, get, api),
     ...createHomebrewSlice(set, get, api),
+    ...createExtraSkillsSlice(set, get, api),
+    ...createGeneratorSlice(set, get, api),
     ...createIdentitySlice(set, get, api),
     ...createMacroSlice(set, get, api),
     ...createSyncSlice(set, get, api)
