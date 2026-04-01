@@ -114,7 +114,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         colorAct: '#4890fc',
         colorEva: '#c387fc',
         colorCla: '#dfad43',
-        
+
         trackerScale: 100,
         xOffset: 0,
         yOffset: 0,
@@ -192,12 +192,12 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
             return { identity: { ...state.identity, [field]: value } };
         }),
 
-    setPrintConfig: (config) => 
-        set((state) => ({ 
-            identity: { 
-                ...state.identity, 
-                printConfig: { ...state.identity.printConfig, ...config } 
-            } 
+    setPrintConfig: (config) =>
+        set((state) => ({
+            identity: {
+                ...state.identity,
+                printConfig: { ...state.identity.printConfig, ...config }
+            }
         })),
 
     applyLearnset: (data) =>

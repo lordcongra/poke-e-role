@@ -28,9 +28,7 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         X
                     </button>
                 </div>
-                <p className="print-settings__desc">
-                    Customize how your sheet will look on paper.
-                </p>
+                <p className="print-settings__desc">Customize how your sheet will look on paper.</p>
 
                 <div className="print-settings__grid">
                     <label className="print-settings__checkbox-label">
@@ -136,7 +134,7 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
 
                 <div className="print-settings__divider" />
                 <p className="print-settings__desc print-settings__desc--sub">Visibility Options</p>
-                
+
                 <div className="print-settings__grid">
                     <label className="print-settings__checkbox-label">
                         <input
@@ -205,13 +203,15 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
 
                 <div className="print-settings__divider" />
                 <p className="print-settings__desc print-settings__desc--sub">Display Styles</p>
-                
+
                 <div className="print-settings__dropdowns-wrapper">
                     <div className="print-settings__dropdown-container">
                         <label className="print-settings__dropdown-label">Stat Format:</label>
                         <select
                             value={printConfig.statStyle || 'dots'}
-                            onChange={(e) => setPrintConfig({ statStyle: e.target.value as 'dots' | 'numbers' | 'both' })}
+                            onChange={(e) =>
+                                setPrintConfig({ statStyle: e.target.value as 'dots' | 'numbers' | 'both' })
+                            }
                             className="print-settings__select"
                         >
                             <option value="dots">Dots Only</option>
@@ -224,7 +224,9 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         <label className="print-settings__dropdown-label">Ability Desc:</label>
                         <select
                             value={printConfig.abilityDescStyle || 'all'}
-                            onChange={(e) => setPrintConfig({ abilityDescStyle: e.target.value as 'all' | 'selected' | 'none' })}
+                            onChange={(e) =>
+                                setPrintConfig({ abilityDescStyle: e.target.value as 'all' | 'selected' | 'none' })
+                            }
                             className="print-settings__select"
                         >
                             <option value="all">Show All</option>

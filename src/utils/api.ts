@@ -20,15 +20,15 @@ let homebrewAbilities: CustomAbility[] = [];
 let homebrewItems: CustomItem[] = [];
 
 const KNOWN_DUAL_MOVES: Record<string, string[]> = {
-    'Absorb': ['Absorb (Channel)', 'Absorb (Nature)'],
+    Absorb: ['Absorb (Channel)', 'Absorb (Nature)'],
     'Mega Drain': ['Mega Drain (Channel)', 'Mega Drain (Nature)'],
     'Giga Drain': ['Giga Drain (Channel)', 'Giga Drain (Nature)'],
     'Leech Seed': ['Leech Seed (Channel)', 'Leech Seed (Nature)'],
     'Quick Attack': ['Quick Attack (Strength)', 'Quick Attack (Dexterity)'],
     'Extreme Speed': ['Extreme Speed (Strength)', 'Extreme Speed (Dexterity)'],
-    'Acrobatics': ['Acrobatics (Strength)', 'Acrobatics (Dexterity)'],
+    Acrobatics: ['Acrobatics (Strength)', 'Acrobatics (Dexterity)'],
     'Aerial Ace': ['Aerial Ace (Strength)', 'Aerial Ace (Dexterity)'],
-    'Bide': ['Bide (Strength)', 'Bide (Vitality)'],
+    Bide: ['Bide (Strength)', 'Bide (Vitality)'],
     'Electro Ball': ['Electro Ball (Channel)', 'Electro Ball (Athletic)'],
     'Grass Knot': ['Grass Knot (Channel)', 'Grass Knot (Nature)'],
     'Horn Leech': ['Horn Leech (Brawl)', 'Horn Leech (Nature)'],
@@ -173,15 +173,14 @@ export function loadGithubTree(): Promise<void> {
                     SPECIES_URLS[cleanKey] = rawUrl;
                 } else if (moveRegex.test(file.path)) {
                     MOVES_URLS[cleanKey] = rawUrl;
-                    
+
                     if (KNOWN_DUAL_MOVES[name]) {
-                        KNOWN_DUAL_MOVES[name].forEach(variant => {
+                        KNOWN_DUAL_MOVES[name].forEach((variant) => {
                             if (!ALL_MOVES.includes(variant)) ALL_MOVES.push(variant);
                         });
                     } else {
                         if (!ALL_MOVES.includes(name)) ALL_MOVES.push(name);
                     }
-
                 } else if (abilityRegex.test(file.path)) {
                     ABILITIES_URLS[cleanKey] = rawUrl;
                     if (!ALL_ABILITIES.includes(name)) ALL_ABILITIES.push(name);
@@ -236,7 +235,7 @@ export async function fetchAbilityData(abilityName: string): Promise<AbilityApiR
 
 export async function fetchMoveData(moveName: string): Promise<MoveApiResponse | null> {
     if (!moveName) return null;
-    
+
     const baseName = moveName.split(' (')[0].trim();
     const cleanName = baseName.toLowerCase();
 

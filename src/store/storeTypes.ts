@@ -76,7 +76,7 @@ export interface MovesSlice {
     moves: MoveData[];
     skillChecks: SkillCheck[];
     pendingDualScale: PendingDualScale | null;
-    
+
     setPendingDualScale: (data: PendingDualScale | null) => void;
     resolveDualScale: (moveId: string, acc1?: string, acc2?: string, dmg1?: string) => void;
     addMove: () => void;
@@ -246,7 +246,7 @@ export interface IdentitySlice {
         colorAct: string;
         colorEva: string;
         colorCla: string;
-        
+
         trackerScale: number;
         xOffset: number;
         yOffset: number;

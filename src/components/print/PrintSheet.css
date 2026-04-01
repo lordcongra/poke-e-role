@@ -182,7 +182,7 @@
 
     .print-sheet__ability-table {
         width: 100%;
-        border-collapse: separate; 
+        border-collapse: separate;
         border-spacing: 0;
         font-size: 0.85rem;
         border-top: 1px solid black;
@@ -211,7 +211,7 @@
     /* --- TABLE BORDER COLLAPSE FIX --- */
     .print-sheet__move-table {
         width: 100%;
-        border-collapse: separate; 
+        border-collapse: separate;
         border-spacing: 0;
         font-size: 0.8rem;
         border-top: 1px solid black;
@@ -258,7 +258,6 @@
         border-bottom: 1px solid black;
         height: 25px;
     }
-
 
     /* =========================================
        COMPACT MODE OVERRIDES 

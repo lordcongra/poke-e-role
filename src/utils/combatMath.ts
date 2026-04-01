@@ -18,10 +18,11 @@ export const ATTRIBUTE_MAPPING: Record<string, string> = {
 export function getAbilityText(abilityName: string, customAbilities: CustomAbility[]): string {
     if (!abilityName) return '';
     // Strip out the (HA) tag so we can accurately find Homebrew abilities too
-    const cleanName = abilityName.replace(/\s*\(HA\)$/i, '').trim().toLowerCase();
-    const custom = customAbilities.find(
-        (ability) => ability.name.trim().toLowerCase() === cleanName
-    );
+    const cleanName = abilityName
+        .replace(/\s*\(HA\)$/i, '')
+        .trim()
+        .toLowerCase();
+    const custom = customAbilities.find((ability) => ability.name.trim().toLowerCase() === cleanName);
     return custom ? `${custom.description} ${custom.effect}` : '';
 }
 
