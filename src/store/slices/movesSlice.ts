@@ -104,6 +104,11 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                         if (clean.includes('spe')) return 'spe';
                         if (clean.includes('ins')) return 'ins';
                         if (clean.includes('will')) return 'will';
+                        if (clean.includes('tou')) return 'tou';
+                        if (clean.includes('coo')) return 'coo';
+                        if (clean.includes('bea')) return 'bea';
+                        if (clean.includes('cut')) return 'cut';
+                        if (clean.includes('cle')) return 'cle';
                         return '';
                     })
                     .filter(Boolean);

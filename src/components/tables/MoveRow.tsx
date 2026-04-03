@@ -143,6 +143,11 @@ export function MoveRow({ move, skills, extraCategories, onTarget, onDelete }: M
                                     {statistic.toUpperCase()}
                                 </option>
                             ))}
+                            {Object.values(SocialStat).map((statistic) => (
+                                <option key={statistic} value={statistic}>
+                                    {statistic.toUpperCase()}
+                                </option>
+                            ))}
                             <option value="will">WILL</option>
                         </select>
                         {' + '}
@@ -217,6 +222,11 @@ export function MoveRow({ move, skills, extraCategories, onTarget, onDelete }: M
                         >
                             <option value="">-</option>
                             {Object.values(CombatStat).map((statistic) => (
+                                <option key={statistic} value={statistic}>
+                                    {statistic.toUpperCase()}
+                                </option>
+                            ))}
+                            {Object.values(SocialStat).map((statistic) => (
                                 <option key={statistic} value={statistic}>
                                     {statistic.toUpperCase()}
                                 </option>

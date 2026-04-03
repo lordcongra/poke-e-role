@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomMove } from '../../store/storeTypes';
-import { CombatStat, Skill } from '../../types/enums';
+import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { TagBuilderModal } from '../modals/TagBuilderModal';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import './Homebrew.css';
@@ -144,6 +144,11 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                                     {stat.toUpperCase()}
                                 </option>
                             ))}
+                            {Object.values(SocialStat).map((stat) => (
+                                <option key={stat} value={stat}>
+                                    {stat.toUpperCase()}
+                                </option>
+                            ))}
                             <option value="will">WILL</option>
                         </select>
                         <span>+</span>
@@ -172,6 +177,11 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                         >
                             <option value="">-- None --</option>
                             {Object.values(CombatStat).map((stat) => (
+                                <option key={stat} value={stat}>
+                                    {stat.toUpperCase()}
+                                </option>
+                            ))}
+                            {Object.values(SocialStat).map((stat) => (
                                 <option key={stat} value={stat}>
                                     {stat.toUpperCase()}
                                 </option>

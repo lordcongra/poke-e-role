@@ -167,6 +167,11 @@ export function MoveCard({ move, skills, extraCategories, onTarget, onDelete }: 
                                 {statistic.toUpperCase()}
                             </option>
                         ))}
+                        {Object.values(SocialStat).map((statistic) => (
+                            <option key={statistic} value={statistic}>
+                                {statistic.toUpperCase()}
+                            </option>
+                        ))}
                         <option value="will">WILL</option>
                     </select>
                     <span className="move-card__plus-sign">+</span>
@@ -209,6 +214,11 @@ export function MoveCard({ move, skills, extraCategories, onTarget, onDelete }: 
                     >
                         <option value="">-</option>
                         {Object.values(CombatStat).map((statistic) => (
+                            <option key={statistic} value={statistic}>
+                                {statistic.toUpperCase()}
+                            </option>
+                        ))}
+                        {Object.values(SocialStat).map((statistic) => (
                             <option key={statistic} value={statistic}>
                                 {statistic.toUpperCase()}
                             </option>
