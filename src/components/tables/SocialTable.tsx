@@ -46,8 +46,26 @@ export function SocialTable() {
     );
     const remainingPoints = rankPoints + agePoints + extras.social - spentRank;
 
+    const handleResetBuffs = () => {
+        Object.values(SocialStat).forEach((statistic) => {
+            setSocialStatistic(statistic, 'buff', 0);
+            setSocialStatistic(statistic, 'debuff', 0);
+        });
+    };
+
+    const headerElements = (
+        <button
+            type="button"
+            onClick={handleResetBuffs}
+            className="action-button action-button--dark social-table__reset-btn"
+            title="Reset all Social Buffs & Debuffs to 0"
+        >
+            🔄 Reset Buffs
+        </button>
+    );
+
     return (
-        <CollapsingSection title="SOCIAL ATTRIBUTES">
+        <CollapsingSection title="SOCIAL ATTRIBUTES" headerElements={headerElements}>
             <div className="table-responsive-wrapper">
                 <table className="data-table">
                     <thead>

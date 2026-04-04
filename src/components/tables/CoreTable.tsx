@@ -40,8 +40,26 @@ export function CoreTable() {
     const spentRank = visibleStatistics.reduce((accumulator, statistic) => accumulator + statistics[statistic].rank, 0);
     const remainingPoints = rankPoints + agePoints + extras.core - spentRank;
 
+    const handleResetBuffs = () => {
+        Object.values(CombatStat).forEach((statistic) => {
+            setStatistic(statistic, 'buff', 0);
+            setStatistic(statistic, 'debuff', 0);
+        });
+    };
+
+    const headerElements = (
+        <button
+            type="button"
+            onClick={handleResetBuffs}
+            className="action-button action-button--dark core-table__reset-btn"
+            title="Reset all Core Buffs & Debuffs to 0"
+        >
+            🔄 Reset Buffs
+        </button>
+    );
+
     return (
-        <CollapsingSection title="CORE ATTRIBUTES">
+        <CollapsingSection title="CORE ATTRIBUTES" headerElements={headerElements}>
             <div className="table-responsive-wrapper">
                 <table className="data-table">
                     <thead>

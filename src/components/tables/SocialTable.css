@@ -42,3 +42,9 @@
 .social-table__negative-remaining {
     color: #f44336;
 }
+
+.social-table__reset-btn {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    white-space: nowrap;
+}
