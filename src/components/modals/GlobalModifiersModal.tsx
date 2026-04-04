@@ -36,6 +36,7 @@ export function GlobalModifiersModal({ onClose, setTooltipInfo, handleGlobalChan
                         <NumberSpinner
                             value={trackers.globalAcc}
                             onChange={(value) => updateTracker('globalAcc', value)}
+                            min={-99}
                         />
                     </div>
 
@@ -54,6 +55,7 @@ export function GlobalModifiersModal({ onClose, setTooltipInfo, handleGlobalChan
                         <NumberSpinner
                             value={trackers.globalDmg}
                             onChange={(value) => updateTracker('globalDmg', value)}
+                            min={-99}
                         />
                     </div>
 
@@ -72,6 +74,7 @@ export function GlobalModifiersModal({ onClose, setTooltipInfo, handleGlobalChan
                         <NumberSpinner
                             value={trackers.globalSucc}
                             onChange={(value) => updateTracker('globalSucc', value)}
+                            min={-99}
                         />
                     </div>
 

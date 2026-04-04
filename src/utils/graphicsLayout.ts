@@ -76,22 +76,21 @@ export function buildGraphicDefinitions(
             z: 2,
             visible: isVisible
         };
-        if (healthPercentage > 0) {
-            graphicDefinitions['hp-fill'] = {
-                type: 'CURVE',
-                points: [
-                    { x: healthBaseX, y: healthBaseY },
-                    { x: healthBaseX + barWidth * healthPercentage, y: healthBaseY }
-                ],
-                color: getHealthColor(healthPercentage),
-                strokeOpacity: 1,
-                width: 12 * scale,
-                closed: false,
-                fillOpacity: 0,
-                z: 3,
-                visible: isVisible
-            };
-        }
+
+        graphicDefinitions['hp-fill'] = {
+            type: 'CURVE',
+            points: [
+                { x: healthBaseX, y: healthBaseY },
+                { x: healthBaseX + barWidth * Math.max(0.001, healthPercentage), y: healthBaseY }
+            ],
+            color: getHealthColor(healthPercentage),
+            strokeOpacity: 1,
+            width: 12 * scale,
+            closed: false,
+            fillOpacity: 0,
+            z: 3,
+            visible: isVisible && healthPercentage > 0
+        };
     }
 
     if (data.showHpText) {
@@ -159,22 +158,21 @@ export function buildGraphicDefinitions(
             z: 2,
             visible: isVisible
         };
-        if (willPercentage > 0) {
-            graphicDefinitions['will-fill'] = {
-                type: 'CURVE',
-                points: [
-                    { x: willBaseX, y: willBaseY },
-                    { x: willBaseX + barWidth * willPercentage, y: willBaseY }
-                ],
-                color: '#2196F3',
-                strokeOpacity: 1,
-                width: 12 * scale,
-                closed: false,
-                fillOpacity: 0,
-                z: 3,
-                visible: isVisible
-            };
-        }
+
+        graphicDefinitions['will-fill'] = {
+            type: 'CURVE',
+            points: [
+                { x: willBaseX, y: willBaseY },
+                { x: willBaseX + barWidth * Math.max(0.001, willPercentage), y: willBaseY }
+            ],
+            color: '#2196F3',
+            strokeOpacity: 1,
+            width: 12 * scale,
+            closed: false,
+            fillOpacity: 0,
+            z: 3,
+            visible: isVisible && willPercentage > 0
+        };
     }
 
     if (data.showWillText) {

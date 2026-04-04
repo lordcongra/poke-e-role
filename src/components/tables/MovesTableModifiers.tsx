@@ -39,6 +39,7 @@ export function MovesTableModifiers({
                     <NumberSpinner
                         value={trackers.globalAcc}
                         onChange={(value: number) => updateTracker('globalAcc', value)}
+                        min={-99}
                     />
                 </span>
                 <span className="moves-table__modifier-item">
@@ -55,6 +56,7 @@ export function MovesTableModifiers({
                     <NumberSpinner
                         value={trackers.globalDmg}
                         onChange={(value: number) => updateTracker('globalDmg', value)}
+                        min={-99}
                     />
                 </span>
                 <span className="moves-table__modifier-item">
@@ -71,6 +73,7 @@ export function MovesTableModifiers({
                     <NumberSpinner
                         value={trackers.globalSucc}
                         onChange={(value: number) => updateTracker('globalSucc', value)}
+                        min={-99}
                     />
                 </span>
                 <span className="moves-table__modifier-item">
