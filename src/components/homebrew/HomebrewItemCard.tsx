@@ -90,7 +90,9 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove }: HomebrewItem
                             value={localPocket}
                             onChange={(event) => canEdit && setLocalPocket(event.target.value)}
                             onBlur={() =>
-                                canEdit && localPocket !== item.pocket && updateCustomItem(item.id, 'pocket', localPocket)
+                                canEdit &&
+                                localPocket !== item.pocket &&
+                                updateCustomItem(item.id, 'pocket', localPocket)
                             }
                             disabled={!canEdit}
                             className="homebrew-item-card__select"

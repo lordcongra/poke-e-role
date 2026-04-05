@@ -280,18 +280,18 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             const guaranteedPocket = item.pocket || 'Misc';
             const guaranteedCategory = item.category || 'Misc';
             if (index !== -1) {
-                mergedItems[index] = { 
-                    ...item, 
-                    id: mergedItems[index].id, 
-                    pocket: guaranteedPocket, 
-                    category: guaranteedCategory 
+                mergedItems[index] = {
+                    ...item,
+                    id: mergedItems[index].id,
+                    pocket: guaranteedPocket,
+                    category: guaranteedCategory
                 };
             } else {
-                mergedItems.push({ 
-                    ...item, 
-                    id: crypto.randomUUID(), 
-                    pocket: guaranteedPocket, 
-                    category: guaranteedCategory 
+                mergedItems.push({
+                    ...item,
+                    id: crypto.randomUUID(),
+                    pocket: guaranteedPocket,
+                    category: guaranteedCategory
                 });
             }
         });
@@ -340,18 +340,18 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             const guaranteedPocket = item.pocket || 'Misc';
             const guaranteedCategory = item.category || 'Misc';
             if (index !== -1) {
-                mergedItems[index] = { 
-                    ...item, 
-                    id: mergedItems[index].id, 
-                    pocket: guaranteedPocket, 
-                    category: guaranteedCategory 
+                mergedItems[index] = {
+                    ...item,
+                    id: mergedItems[index].id,
+                    pocket: guaranteedPocket,
+                    category: guaranteedCategory
                 };
             } else {
-                mergedItems.push({ 
-                    ...item, 
-                    id: crypto.randomUUID(), 
-                    pocket: guaranteedPocket, 
-                    category: guaranteedCategory 
+                mergedItems.push({
+                    ...item,
+                    id: crypto.randomUUID(),
+                    pocket: guaranteedPocket,
+                    category: guaranteedCategory
                 });
             }
         });
