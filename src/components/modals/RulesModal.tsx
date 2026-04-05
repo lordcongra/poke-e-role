@@ -89,6 +89,29 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                             <option value="None">None (Hidden)</option>
                         </select>
                     </div>
+
+                    <div>
+                        <label className="rules-modal__label">
+                            Loot Generator{' '}
+                            <TooltipIcon
+                                onClick={() =>
+                                    setModalConfig({
+                                        title: 'Loot Generator',
+                                        content:
+                                            'Controls if players can see and use the Random Loot Generator button on their sheets. (Global Room Setting)'
+                                    })
+                                }
+                            />
+                        </label>
+                        <select
+                            className="identity-grid__select rules-modal__select"
+                            value={id.gmOnlyLootGen === false ? 'Everyone' : 'GM Only'}
+                            onChange={(e) => setIdentity('gmOnlyLootGen', e.target.value === 'GM Only')}
+                        >
+                            <option value="GM Only">GM Only</option>
+                            <option value="Everyone">Everyone</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 

@@ -1,11 +1,12 @@
 import { useState, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { fetchPokemonData, fetchAbilityData, fetchMoveData, loadGithubTree } from '../../utils/api';
+import { fetchPokemonData, fetchAbilityData, fetchMoveData, loadGithubTree, loadLocalDataset } from '../../utils/api';
 import { saveToOwlbear } from '../../utils/obr';
 import { canViewHomebrew } from '../../utils/helper';
 import { IdentityToggles } from './IdentityToggles';
 import { PrintSettingsModal } from '../modals/PrintSettingsModal';
+import { ItemGeneratorModal } from '../modals/ItemGeneratorModal';
 
 interface IdentityControlsProps {
     onOpenHomebrew: () => void;
@@ -29,17 +30,21 @@ export function IdentityControls({
 
     const access = identityStore.homebrewAccess || 'Full';
     const showHomebrewButton = canViewHomebrew(role, access);
+    const showLootGenButton = role === 'GM' || identityStore.gmOnlyLootGen === false;
 
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [importData, setImportData] = useState<Record<string, unknown> | null>(null);
     const [showPrintModal, setShowPrintModal] = useState(false);
+    const [showLootGenModal, setShowLootGenModal] = useState(false);
     const fileInputReference = useRef<HTMLInputElement>(null);
 
     const handleRefresh = async () => {
         if (isRefreshing) return;
         setIsRefreshing(true);
         try {
+            await loadLocalDataset();
             await loadGithubTree();
+
             const store = useCharacterStore.getState();
 
             for (const move of store.moves) {
@@ -121,13 +126,19 @@ export function IdentityControls({
     const confirmImport = () => {
         if (!importData) return;
         const store = useCharacterStore.getState();
-        if (importData['moves-data'] !== undefined) {
-            store.loadFromOwlbear(importData);
-            saveToOwlbear(importData);
-        } else {
-            useCharacterStore.setState(importData);
+        try {
+            if (importData['moves-data'] !== undefined) {
+                store.loadFromOwlbear(importData);
+                saveToOwlbear(importData);
+            } else {
+                useCharacterStore.setState(importData);
+            }
+        } catch (error) {
+            console.error('Failed to import character data:', error);
+            if (OBR.isAvailable) OBR.notification.show('Failed to import data.', 'ERROR');
+        } finally {
+            setImportData(null);
         }
-        setImportData(null);
     };
 
     return (
@@ -150,6 +161,16 @@ export function IdentityControls({
                         onClick={onOpenHomebrew}
                     >
                         🛠️ Homebrew
+                    </button>
+                )}
+
+                {showLootGenButton && (
+                    <button
+                        type="button"
+                        className="action-button action-button--dark identity-header__btn"
+                        onClick={() => setShowLootGenModal(true)}
+                    >
+                        🎁 Loot Gen
                     </button>
                 )}
 
@@ -235,6 +256,7 @@ export function IdentityControls({
             )}
 
             {showPrintModal && <PrintSettingsModal onClose={() => setShowPrintModal(false)} />}
+            {showLootGenModal && <ItemGeneratorModal onClose={() => setShowLootGenModal(false)} />}
         </>
     );
 }

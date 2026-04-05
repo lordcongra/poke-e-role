@@ -3,6 +3,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomItem } from '../../store/storeTypes';
 import { TagBuilderModal } from '../modals/TagBuilderModal';
 import './Homebrew.css';
+import './HomebrewItemCard.css';
 
 interface HomebrewItemCardProps {
     item: CustomItem;
@@ -16,6 +17,8 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove }: HomebrewItem
 
     const [localName, setLocalName] = useState(item.name);
     const [localDescription, setLocalDescription] = useState(item.description);
+    const [localPocket, setLocalPocket] = useState(item.pocket || 'Misc');
+    const [localCategory, setLocalCategory] = useState(item.category || 'Misc');
     const [localGameMasterOnly, setLocalGameMasterOnly] = useState(item.gmOnly || false);
 
     const [showTagBuilder, setShowTagBuilder] = useState(false);
@@ -25,6 +28,8 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove }: HomebrewItem
     useEffect(() => {
         setLocalName(item.name);
         setLocalDescription(item.description);
+        setLocalPocket(item.pocket || 'Misc');
+        setLocalCategory(item.category || 'Misc');
         setLocalGameMasterOnly(item.gmOnly || false);
     }, [item]);
 
@@ -79,18 +84,53 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove }: HomebrewItem
             </div>
 
             {!isCollapsed && (
-                <textarea
-                    value={localDescription}
-                    onChange={(event) => canEdit && setLocalDescription(event.target.value)}
-                    onBlur={() =>
-                        canEdit &&
-                        localDescription !== item.description &&
-                        updateCustomItem(item.id, 'description', localDescription)
-                    }
-                    placeholder="Item Effect / Description and Tags"
-                    disabled={!canEdit}
-                    className="homebrew-card__textarea homebrew-card__textarea--large"
-                />
+                <>
+                    <div className="homebrew-item-card__row">
+                        <select
+                            value={localPocket}
+                            onChange={(event) => canEdit && setLocalPocket(event.target.value)}
+                            onBlur={() =>
+                                canEdit && localPocket !== item.pocket && updateCustomItem(item.id, 'pocket', localPocket)
+                            }
+                            disabled={!canEdit}
+                            className="homebrew-item-card__select"
+                        >
+                            <option value="Medicine">Medicine</option>
+                            <option value="HeldItems">Held Items</option>
+                            <option value="Pokeballs">Pokéballs</option>
+                            <option value="TrainerItems">Trainer Items</option>
+                            <option value="EvolutionItem">Evolution Item</option>
+                            <option value="KeyItems">Key Items</option>
+                            <option value="Custom">Custom</option>
+                        </select>
+                        <input
+                            type="text"
+                            list="homebrew-categories-list"
+                            value={localCategory}
+                            onChange={(event) => canEdit && setLocalCategory(event.target.value)}
+                            onBlur={() =>
+                                canEdit &&
+                                localCategory !== item.category &&
+                                updateCustomItem(item.id, 'category', localCategory)
+                            }
+                            placeholder="Category (e.g. Healing, Berry)"
+                            disabled={!canEdit}
+                            className="homebrew-item-card__input"
+                        />
+                    </div>
+                    <textarea
+                        value={localDescription}
+                        onChange={(event) => canEdit && setLocalDescription(event.target.value)}
+                        onBlur={() =>
+                            canEdit &&
+                            localDescription !== item.description &&
+                            updateCustomItem(item.id, 'description', localDescription)
+                        }
+                        placeholder="Item Effect / Description and Tags"
+                        disabled={!canEdit}
+                        className="homebrew-card__textarea homebrew-card__textarea--large"
+                    />
+                </>
             )}
 
             {showTagBuilder && (

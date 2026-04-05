@@ -132,6 +132,8 @@ export interface CustomItem {
     id: string;
     name: string;
     description: string;
+    pocket?: string;
+    category?: string;
     gmOnly?: boolean;
 }
 

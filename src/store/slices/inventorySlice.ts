@@ -1,13 +1,16 @@
-// src/store/slices/inventorySlice.ts
 import type { StateCreator } from 'zustand';
 import type { CharacterState, InventorySlice, InventoryItem, CustomInfo } from '../storeTypes';
 import { saveToOwlbear } from '../../utils/obr';
 import { parseCombatTags, getAbilityText } from '../../utils/combatMath';
 import { CombatStat } from '../../types/enums';
 
-const syncHealthWill = (state: CharacterState, newInv: InventoryItem[], updatesToSave: Record<string, unknown>) => {
+const syncHealthWill = (
+    state: CharacterState,
+    newInventory: InventoryItem[],
+    updatesToSave: Record<string, unknown>
+) => {
     const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
-    const invMods = parseCombatTags(newInv, state.extraCategories, undefined, abilityText);
+    const inventoryModifiers = parseCombatTags(newInventory, state.extraCategories, undefined, abilityText);
 
     const vitTotal = Math.max(
         1,
@@ -15,7 +18,7 @@ const syncHealthWill = (state: CharacterState, newInv: InventoryItem[], updatesT
             state.stats[CombatStat.VIT].rank +
             state.stats[CombatStat.VIT].buff -
             state.stats[CombatStat.VIT].debuff +
-            (invMods.stats.vit || 0)
+            (inventoryModifiers.stats.vit || 0)
     );
     const insTotal = Math.max(
         1,
@@ -23,7 +26,7 @@ const syncHealthWill = (state: CharacterState, newInv: InventoryItem[], updatesT
             state.stats[CombatStat.INS].rank +
             state.stats[CombatStat.INS].buff -
             state.stats[CombatStat.INS].debuff +
-            (invMods.stats.ins || 0)
+            (inventoryModifiers.stats.ins || 0)
     );
 
     let hpStat = vitTotal;
@@ -58,16 +61,40 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
 
     addInventoryItem: () =>
         set((state) => {
-            const newInv: InventoryItem[] = [
+            const newInventory: InventoryItem[] = [
                 ...state.inventory,
                 { id: crypto.randomUUID(), qty: 1, name: '', desc: '', active: false }
             ];
-            const updatesToSave: Record<string, unknown> = { 'inv-data': JSON.stringify(newInv) };
-            const { health, will } = syncHealthWill(state, newInv, updatesToSave);
+            const updatesToSave: Record<string, unknown> = { 'inv-data': JSON.stringify(newInventory) };
+            const { health, will } = syncHealthWill(state, newInventory, updatesToSave);
             try {
                 saveToOwlbear(updatesToSave);
-            } catch (e) {}
-            return { inventory: newInv, health, will };
+            } catch (error) {
+                console.error('Failed to save to Owlbear:', error);
+            }
+            return { inventory: newInventory, health, will };
+        }),
+
+    addSpecificInventoryItem: (item) =>
+        set((state) => {
+            const newInventory: InventoryItem[] = [
+                ...state.inventory,
+                {
+                    id: crypto.randomUUID(),
+                    qty: item.quantity ?? 1,
+                    name: item.name || '',
+                    desc: item.description || '',
+                    active: item.active || false
+                }
+            ];
+            const updatesToSave: Record<string, unknown> = { 'inv-data': JSON.stringify(newInventory) };
+            const { health, will } = syncHealthWill(state, newInventory, updatesToSave);
+            try {
+                saveToOwlbear(updatesToSave);
+            } catch (error) {
+                console.error('Failed to save to Owlbear:', error);
+            }
+            return { inventory: newInventory, health, will };
         }),
 
     updateInventoryItem: (id, field, value) =>
@@ -75,13 +102,13 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             let statusChanged = false;
             let newStatuses = [...state.statuses];
 
-            const newInv = state.inventory.map((item) => {
+            const newInventory = state.inventory.map((item) => {
                 if (item.id === id) {
                     const updated = { ...item, [field]: value };
 
                     if (field === 'active') {
-                        const desc = (item.desc || '').toLowerCase();
-                        const statusMatches = Array.from(desc.matchAll(/\[status:\s*([a-zA-Z0-9\s]+)\]/gi));
+                        const descriptionText = (item.desc || '').toLowerCase();
+                        const statusMatches = Array.from(descriptionText.matchAll(/\[status:\s*([a-zA-Z0-9\s]+)\]/gi));
 
                         if (statusMatches.length > 0) {
                             if (value === true) {
@@ -154,54 +181,64 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             });
 
             const updatesToSave: Record<string, unknown> = {};
-            const { health, will } = syncHealthWill(state, newInv, updatesToSave);
-            updatesToSave['inv-data'] = JSON.stringify(newInv);
+            const { health, will } = syncHealthWill(state, newInventory, updatesToSave);
+            updatesToSave['inv-data'] = JSON.stringify(newInventory);
             if (statusChanged) updatesToSave['status-list'] = JSON.stringify(newStatuses);
 
             try {
                 saveToOwlbear(updatesToSave);
-            } catch (e) {}
-            return { inventory: newInv, health, will, ...(statusChanged ? { statuses: newStatuses } : {}) };
+            } catch (error) {
+                console.error('Failed to save to Owlbear:', error);
+            }
+            return { inventory: newInventory, health, will, ...(statusChanged ? { statuses: newStatuses } : {}) };
         }),
 
     removeInventoryItem: (id) =>
         set((state) => {
-            const newInv = state.inventory.filter((i) => i.id !== id);
-            const updatesToSave: Record<string, unknown> = { 'inv-data': JSON.stringify(newInv) };
-            const { health, will } = syncHealthWill(state, newInv, updatesToSave);
+            const newInventory = state.inventory.filter((i) => i.id !== id);
+            const updatesToSave: Record<string, unknown> = { 'inv-data': JSON.stringify(newInventory) };
+            const { health, will } = syncHealthWill(state, newInventory, updatesToSave);
             try {
                 saveToOwlbear(updatesToSave);
-            } catch (e) {}
-            return { inventory: newInv, health, will };
+            } catch (error) {
+                console.error('Failed to save to Owlbear:', error);
+            }
+            return { inventory: newInventory, health, will };
         }),
 
     moveUpInventoryItem: (id) =>
         set((state) => {
             const index = state.inventory.findIndex((i) => i.id === id);
             if (index <= 0) return state;
-            const newInv = [...state.inventory];
-            [newInv[index - 1], newInv[index]] = [newInv[index], newInv[index - 1]];
+            const newInventory = [...state.inventory];
+            [newInventory[index - 1], newInventory[index]] = [newInventory[index], newInventory[index - 1]];
             try {
-                saveToOwlbear({ 'inv-data': JSON.stringify(newInv) });
-            } catch (e) {}
-            return { inventory: newInv };
+                saveToOwlbear({ 'inv-data': JSON.stringify(newInventory) });
+            } catch (error) {
+                console.error('Failed to save to Owlbear:', error);
+            }
+            return { inventory: newInventory };
         }),
     moveDownInventoryItem: (id) =>
         set((state) => {
             const index = state.inventory.findIndex((i) => i.id === id);
             if (index < 0 || index >= state.inventory.length - 1) return state;
-            const newInv = [...state.inventory];
-            [newInv[index + 1], newInv[index]] = [newInv[index], newInv[index + 1]];
+            const newInventory = [...state.inventory];
+            [newInventory[index + 1], newInventory[index]] = [newInventory[index], newInventory[index + 1]];
             try {
-                saveToOwlbear({ 'inv-data': JSON.stringify(newInv) });
-            } catch (e) {}
-            return { inventory: newInv };
+                saveToOwlbear({ 'inv-data': JSON.stringify(newInventory) });
+            } catch (error) {
+                console.error('Failed to save to Owlbear:', error);
+            }
+            return { inventory: newInventory };
         }),
     setNotes: (text) =>
         set(() => {
             try {
                 saveToOwlbear({ notes: text });
-            } catch (e) {}
+            } catch (error) {
+                console.error('Failed to save to Owlbear:', error);
+            }
             return { notes: text };
         }),
 
@@ -209,14 +246,18 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
         set(() => {
             try {
                 saveToOwlbear({ 'training-points': val });
-            } catch (e) {}
+            } catch (error) {
+                console.error('Failed to save to Owlbear:', error);
+            }
             return { tp: val };
         }),
     setCurrency: (val) =>
         set(() => {
             try {
                 saveToOwlbear({ currency: val });
-            } catch (e) {}
+            } catch (error) {
+                console.error('Failed to save to Owlbear:', error);
+            }
             return { currency: val };
         }),
 
@@ -225,7 +266,9 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             const newInfo = [...state.customInfo, { id: crypto.randomUUID(), label: 'New Field', value: '' }];
             try {
                 saveToOwlbear({ 'custom-info-data': JSON.stringify(newInfo) });
-            } catch (e) {}
+            } catch (error) {
+                console.error('Failed to save to Owlbear:', error);
+            }
             return { customInfo: newInfo };
         }),
     updateCustomInfo: (id: string, field: keyof CustomInfo, value: string) =>
@@ -233,7 +276,9 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             const newInfo = state.customInfo.map((c) => (c.id === id ? { ...c, [field]: value } : c));
             try {
                 saveToOwlbear({ 'custom-info-data': JSON.stringify(newInfo) });
-            } catch (e) {}
+            } catch (error) {
+                console.error('Failed to save to Owlbear:', error);
+            }
             return { customInfo: newInfo };
         }),
     removeCustomInfo: (id: string) =>
@@ -241,7 +286,9 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             const newInfo = state.customInfo.filter((c) => c.id !== id);
             try {
                 saveToOwlbear({ 'custom-info-data': JSON.stringify(newInfo) });
-            } catch (e) {}
+            } catch (error) {
+                console.error('Failed to save to Owlbear:', error);
+            }
             return { customInfo: newInfo };
         })
 });

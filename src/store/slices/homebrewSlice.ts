@@ -153,7 +153,7 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
     addCustomItem: () => {
         const newItems: CustomItem[] = [
             ...get().roomCustomItems,
-            { id: crypto.randomUUID(), name: 'New Item', description: '' }
+            { id: crypto.randomUUID(), name: 'New Item', description: '', pocket: 'Misc', category: 'Misc' }
         ];
         set({ roomCustomItems: newItems });
         syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, get().roomCustomAbilities, newItems);
@@ -277,8 +277,23 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         const mergedItems = [...get().roomCustomItems];
         items.forEach((item) => {
             const index = mergedItems.findIndex((existing) => existing.name.toLowerCase() === item.name.toLowerCase());
-            if (index !== -1) mergedItems[index] = { ...item, id: mergedItems[index].id };
-            else mergedItems.push({ ...item, id: crypto.randomUUID() });
+            const guaranteedPocket = item.pocket || 'Misc';
+            const guaranteedCategory = item.category || 'Misc';
+            if (index !== -1) {
+                mergedItems[index] = { 
+                    ...item, 
+                    id: mergedItems[index].id, 
+                    pocket: guaranteedPocket, 
+                    category: guaranteedCategory 
+                };
+            } else {
+                mergedItems.push({ 
+                    ...item, 
+                    id: crypto.randomUUID(), 
+                    pocket: guaranteedPocket, 
+                    category: guaranteedCategory 
+                });
+            }
         });
         set({ roomCustomItems: mergedItems });
         syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, get().roomCustomAbilities, mergedItems);
@@ -322,8 +337,23 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         const mergedItems = [...get().roomCustomItems];
         items.forEach((item) => {
             const index = mergedItems.findIndex((existing) => existing.name.toLowerCase() === item.name.toLowerCase());
-            if (index !== -1) mergedItems[index] = { ...item, id: mergedItems[index].id };
-            else mergedItems.push({ ...item, id: crypto.randomUUID() });
+            const guaranteedPocket = item.pocket || 'Misc';
+            const guaranteedCategory = item.category || 'Misc';
+            if (index !== -1) {
+                mergedItems[index] = { 
+                    ...item, 
+                    id: mergedItems[index].id, 
+                    pocket: guaranteedPocket, 
+                    category: guaranteedCategory 
+                };
+            } else {
+                mergedItems.push({ 
+                    ...item, 
+                    id: crypto.randomUUID(), 
+                    pocket: guaranteedPocket, 
+                    category: guaranteedCategory 
+                });
+            }
         });
 
         set({

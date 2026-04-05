@@ -97,6 +97,12 @@ export interface InventorySlice {
     tp: number;
     currency: number;
     addInventoryItem: () => void;
+    addSpecificInventoryItem: (item: {
+        name: string;
+        description: string;
+        quantity?: number;
+        active?: boolean;
+    }) => void;
     updateInventoryItem: <K extends keyof InventoryItem>(id: string, field: K, value: InventoryItem[K]) => void;
     removeInventoryItem: (id: string) => void;
     moveUpInventoryItem: (id: string) => void;
@@ -133,9 +139,9 @@ export interface HomebrewSlice {
     roomCustomItems: CustomItem[];
 
     setRoomCustomTypes: (types: CustomType[]) => void;
-    setRoomCustomAbilities: (abs: CustomAbility[]) => void;
+    setRoomCustomAbilities: (abilities: CustomAbility[]) => void;
     setRoomCustomMoves: (moves: CustomMove[]) => void;
-    setRoomCustomPokemon: (mons: CustomPokemon[]) => void;
+    setRoomCustomPokemon: (pokemon: CustomPokemon[]) => void;
     setRoomCustomItems: (items: CustomItem[]) => void;
 
     addCustomType: (type: CustomType) => void;
@@ -155,28 +161,28 @@ export interface HomebrewSlice {
     removeCustomItem: (id: string) => void;
 
     overwriteCustomTypeData: (types: CustomType[]) => void;
-    overwriteCustomAbilityData: (abs: CustomAbility[]) => void;
+    overwriteCustomAbilityData: (abilities: CustomAbility[]) => void;
     overwriteCustomMoveData: (moves: CustomMove[]) => void;
-    overwriteCustomPokemonData: (mons: CustomPokemon[]) => void;
+    overwriteCustomPokemonData: (pokemon: CustomPokemon[]) => void;
     overwriteCustomItemData: (items: CustomItem[]) => void;
     overwriteAllHomebrewData: (
         types: CustomType[],
-        abs: CustomAbility[],
+        abilities: CustomAbility[],
         moves: CustomMove[],
-        mons: CustomPokemon[],
+        pokemon: CustomPokemon[],
         items: CustomItem[]
     ) => void;
 
     mergeCustomTypeData: (types: CustomType[]) => void;
-    mergeCustomAbilityData: (abs: CustomAbility[]) => void;
+    mergeCustomAbilityData: (abilities: CustomAbility[]) => void;
     mergeCustomMoveData: (moves: CustomMove[]) => void;
-    mergeCustomPokemonData: (mons: CustomPokemon[]) => void;
+    mergeCustomPokemonData: (pokemon: CustomPokemon[]) => void;
     mergeCustomItemData: (items: CustomItem[]) => void;
     mergeAllHomebrewData: (
         types: CustomType[],
-        abs: CustomAbility[],
+        abilities: CustomAbility[],
         moves: CustomMove[],
-        mons: CustomPokemon[],
+        pokemon: CustomPokemon[],
         items: CustomItem[]
     ) => void;
 }
@@ -186,7 +192,7 @@ export interface ExtraSkillsSlice {
     addExtraCategory: () => void;
     updateExtraCategory: (id: string, name: string) => void;
     updateExtraSkill: <K extends keyof ExtraSkill>(
-        catId: string,
+        categoryId: string,
         skillId: string,
         field: K,
         value: ExtraSkill[K]
@@ -243,6 +249,7 @@ export interface IdentitySlice {
         gmDefBadge: boolean;
         settingEcoBadge: boolean;
         gmEcoBadge: boolean;
+        gmOnlyLootGen: boolean;
         colorAct: string;
         colorEva: string;
         colorCla: string;

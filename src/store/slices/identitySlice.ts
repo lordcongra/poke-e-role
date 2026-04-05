@@ -113,6 +113,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         gmDefBadge: false,
         settingEcoBadge: true,
         gmEcoBadge: false,
+        gmOnlyLootGen: true,
         colorAct: '#4890fc',
         colorEva: '#c387fc',
         colorCla: '#dfad43',
@@ -165,7 +166,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         set((state) => {
             const obrKey = OBR_KEY_MAP[field as string] || (field as string);
 
-            if (field === 'ruleset' || field === 'pain' || field === 'homebrewAccess') {
+            if (field === 'ruleset' || field === 'pain' || field === 'homebrewAccess' || field === 'gmOnlyLootGen') {
                 if (OBR.isAvailable) {
                     OBR.room.getMetadata().then((meta) => {
                         const roomMeta =
@@ -173,6 +174,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                         if (field === 'ruleset') roomMeta.ruleset = value;
                         if (field === 'pain') roomMeta.painEnabled = value === 'Enabled';
                         if (field === 'homebrewAccess') roomMeta.homebrewAccess = value;
+                        if (field === 'gmOnlyLootGen') roomMeta.gmOnlyLootGen = value;
                         OBR.room.setMetadata({ 'pokerole-pmd-extension/room-settings': roomMeta });
                     });
                 }

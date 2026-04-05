@@ -4,12 +4,13 @@ export const GITHUB_TREE_URL =
     'https://api.github.com/repos/Pokerole-Software-Development/Pokerole-Data/git/trees/master?recursive=1';
 
 export const SPECIES_URLS: Record<string, string> = {};
-export const MOVES_URLS: Record<string, string> = {};
 export const ABILITIES_URLS: Record<string, string> = {};
+export const MOVES_URLS: Record<string, string> = {};
 export const ITEMS_URLS: Record<string, string> = {};
 
 export const ALL_ABILITIES: string[] = [];
 export const ALL_MOVES: string[] = [];
+export const CATEGORIZED_ITEMS: Record<string, string[]> = {};
 
 let isTreeLoaded = false;
 let treePromise: Promise<void> | null = null;
@@ -19,27 +20,76 @@ let homebrewMoves: CustomMove[] = [];
 let homebrewAbilities: CustomAbility[] = [];
 let homebrewItems: CustomItem[] = [];
 
-const KNOWN_DUAL_MOVES: Record<string, string[]> = {
-    Absorb: ['Absorb (Channel)', 'Absorb (Nature)'],
-    'Mega Drain': ['Mega Drain (Channel)', 'Mega Drain (Nature)'],
-    'Giga Drain': ['Giga Drain (Channel)', 'Giga Drain (Nature)'],
-    'Leech Seed': ['Leech Seed (Channel)', 'Leech Seed (Nature)'],
-    'Quick Attack': ['Quick Attack (Strength)', 'Quick Attack (Dexterity)'],
-    'Extreme Speed': ['Extreme Speed (Strength)', 'Extreme Speed (Dexterity)'],
-    Acrobatics: ['Acrobatics (Strength)', 'Acrobatics (Dexterity)'],
-    'Aerial Ace': ['Aerial Ace (Strength)', 'Aerial Ace (Dexterity)'],
-    Bide: ['Bide (Strength)', 'Bide (Vitality)'],
-    'Electro Ball': ['Electro Ball (Channel)', 'Electro Ball (Athletic)'],
-    'Grass Knot': ['Grass Knot (Channel)', 'Grass Knot (Nature)'],
-    'Horn Leech': ['Horn Leech (Brawl)', 'Horn Leech (Nature)'],
-    'Mach Punch': ['Mach Punch (Strength)', 'Mach Punch (Dexterity)'],
-    'Vacuum Wave': ['Vacuum Wave (Strength)', 'Vacuum Wave (Dexterity)'],
-    'Water Shuriken': ['Water Shuriken (Channel)', 'Water Shuriken (Athletic)'],
-    'Parabolic Charge': ['Parabolic Charge (Channel)', 'Parabolic Charge (Nature)'],
-    'Draining Kiss': ['Draining Kiss (Charm)', 'Draining Kiss (Nature)'],
-    'Oblivion Wing': ['Oblivion Wing (Channel)', 'Oblivion Wing (Nature)'],
-    'Bitter Malice': ['Bitter Malice (Channel)', 'Bitter Malice (Nature)']
-};
+export interface LocalIndexItem {
+    name: string;
+    path: string;
+    type?: string;
+    pmd?: boolean;
+}
+
+export interface LocalDatasetIndex {
+    moves: {
+        support: LocalIndexItem[];
+        variable: LocalIndexItem[];
+        basic: Record<string, LocalIndexItem[]>;
+        highPower: Record<string, LocalIndexItem[]>;
+    };
+    items: Record<string, Record<string, LocalIndexItem[]>>;
+}
+
+let localDatasetIndex: LocalDatasetIndex | null = null;
+
+export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
+    if (localDatasetIndex) return localDatasetIndex;
+    try {
+        const response = await fetch('/dataset/index.json');
+        if (!response.ok) throw new Error('Could not fetch local dataset map.');
+
+        const data = (await response.json()) as LocalDatasetIndex;
+
+        if (ALL_MOVES.length === 0 && data.moves) {
+            const populateMoves = (arr: LocalIndexItem[]) => {
+                arr.forEach((moveItem) => {
+                    const cleanKey = moveItem.name.toLowerCase();
+                    MOVES_URLS[cleanKey] = moveItem.path;
+                    if (!ALL_MOVES.includes(moveItem.name)) ALL_MOVES.push(moveItem.name);
+                });
+            };
+
+            if (data.moves.support) populateMoves(data.moves.support);
+            if (data.moves.variable) populateMoves(data.moves.variable);
+            if (data.moves.basic) {
+                Object.values(data.moves.basic).forEach(populateMoves);
+            }
+            if (data.moves.highPower) {
+                Object.values(data.moves.highPower).forEach(populateMoves);
+            }
+            ALL_MOVES.sort();
+        }
+
+        if (Object.keys(CATEGORIZED_ITEMS).length === 0 && data.items) {
+            Object.keys(data.items).forEach((pocket) => {
+                Object.keys(data.items[pocket]).forEach((category) => {
+                    if (!CATEGORIZED_ITEMS[category]) CATEGORIZED_ITEMS[category] = [];
+
+                    data.items[pocket][category].forEach((item) => {
+                        const cleanKey = item.name.toLowerCase();
+                        ITEMS_URLS[cleanKey] = item.path;
+                        if (!CATEGORIZED_ITEMS[category].includes(item.name)) {
+                            CATEGORIZED_ITEMS[category].push(item.name);
+                        }
+                    });
+                });
+            });
+        }
+
+        localDatasetIndex = data;
+        return localDatasetIndex;
+    } catch (error) {
+        console.error('Failed to load local dataset:', error);
+        return null;
+    }
+}
 
 export function syncHomebrewToApi(
     pokemon: CustomPokemon[],
@@ -106,6 +156,12 @@ export interface ItemApiResponse {
     Name?: string;
     Description?: string;
     Effect?: string;
+    HealthRestored?: number;
+    Cures?: string | string[];
+    Boost?: string;
+    Value?: number;
+    ForPokemon?: string;
+    ForTypes?: string;
 }
 
 const activeRequests = new Map<string, AbortController>();
@@ -150,15 +206,15 @@ export function loadGithubTree(): Promise<void> {
     if (isTreeLoaded) return Promise.resolve();
     if (treePromise) return treePromise;
 
-    treePromise = fetchWithCache<GitHubTreeResponse>(GITHUB_TREE_URL, 'master_tree', 'Pokerole Database')
+    treePromise = fetchWithCache<GitHubTreeResponse>(GITHUB_TREE_URL, 'master_tree_fallback', 'Pokerole Github DB')
         .then((data) => {
             if (!data || !data.tree) return;
 
             const versionRegex = /(v|(version\s?))3\.0/i;
             const pokemonRegex = /\/(Pokemon|Pokedex)\//i;
-            const moveRegex = /\/Moves\//i;
             const abilityRegex = /\/Abilities\//i;
-            const itemRegex = /\/(Items|Equipment)\//i;
+            const moveRegex = /\/(Moves)\//i;
+            const itemRegex = /\/(Items)\//i;
 
             data.tree.forEach((file: GitHubFileNode) => {
                 if (!versionRegex.test(file.path) || !file.path.endsWith('.json')) return;
@@ -171,26 +227,17 @@ export function loadGithubTree(): Promise<void> {
 
                 if (pokemonRegex.test(file.path)) {
                     SPECIES_URLS[cleanKey] = rawUrl;
-                } else if (moveRegex.test(file.path)) {
-                    MOVES_URLS[cleanKey] = rawUrl;
-
-                    if (KNOWN_DUAL_MOVES[name]) {
-                        KNOWN_DUAL_MOVES[name].forEach((variant) => {
-                            if (!ALL_MOVES.includes(variant)) ALL_MOVES.push(variant);
-                        });
-                    } else {
-                        if (!ALL_MOVES.includes(name)) ALL_MOVES.push(name);
-                    }
                 } else if (abilityRegex.test(file.path)) {
                     ABILITIES_URLS[cleanKey] = rawUrl;
                     if (!ALL_ABILITIES.includes(name)) ALL_ABILITIES.push(name);
+                } else if (moveRegex.test(file.path)) {
+                    MOVES_URLS[cleanKey] = rawUrl;
                 } else if (itemRegex.test(file.path)) {
                     ITEMS_URLS[cleanKey] = rawUrl;
                 }
             });
 
             ALL_ABILITIES.sort();
-            ALL_MOVES.sort();
             isTreeLoaded = true;
         })
         .catch((err) => console.error('Error processing Github Data:', err))
@@ -217,7 +264,6 @@ export async function fetchPokemonData(speciesName: string): Promise<PokemonApiR
 
 export async function fetchAbilityData(abilityName: string): Promise<AbilityApiResponse | null> {
     if (!abilityName) return null;
-    // Strip "(HA)" from the end of the string before searching
     const baseName = abilityName.replace(/\s*\(HA\)$/i, '').trim();
     const cleanName = baseName.toLowerCase();
 
@@ -235,7 +281,6 @@ export async function fetchAbilityData(abilityName: string): Promise<AbilityApiR
 
 export async function fetchMoveData(moveName: string): Promise<MoveApiResponse | null> {
     if (!moveName) return null;
-
     const baseName = moveName.split(' (')[0].trim();
     const cleanName = baseName.toLowerCase();
 
@@ -254,10 +299,41 @@ export async function fetchMoveData(moveName: string): Promise<MoveApiResponse |
     }
 
     await loadGithubTree();
-    const selectedUrl = MOVES_URLS[cleanName];
+    await loadLocalDataset();
 
-    if (!selectedUrl) return null;
-    return await fetchWithCache<MoveApiResponse>(selectedUrl, `move_${cleanName}`, baseName);
+    const liveUrl = MOVES_URLS[cleanName];
+    if (liveUrl) {
+        try {
+            const data = await fetchWithCache<MoveApiResponse>(liveUrl, `live_move_${cleanName}`, baseName);
+            if (data) return data;
+        } catch (e) {
+            console.warn(`[Live Fetch] Failed to fetch live data for move ${moveName}, falling back to local.`);
+        }
+    }
+
+    const localIndex = localDatasetIndex;
+    if (localIndex) {
+        let targetPath = '';
+        const checkArr = (arr: LocalIndexItem[]) => {
+            const found = arr.find((m) => m.name.toLowerCase() === cleanName);
+            if (found) targetPath = found.path;
+        };
+
+        if (localIndex.moves.support) checkArr(localIndex.moves.support);
+        if (localIndex.moves.variable && !targetPath) checkArr(localIndex.moves.variable);
+        if (!targetPath && localIndex.moves.basic) {
+            Object.values(localIndex.moves.basic).forEach(checkArr);
+        }
+        if (!targetPath && localIndex.moves.highPower) {
+            Object.values(localIndex.moves.highPower).forEach(checkArr);
+        }
+
+        if (targetPath) {
+            return await fetchWithCache<MoveApiResponse>(targetPath, `local_move_${cleanName}`, baseName);
+        }
+    }
+
+    return null;
 }
 
 export async function fetchItemData(itemName: string): Promise<ItemApiResponse | null> {
@@ -270,8 +346,32 @@ export async function fetchItemData(itemName: string): Promise<ItemApiResponse |
     }
 
     await loadGithubTree();
-    const selectedUrl = ITEMS_URLS[cleanName];
+    await loadLocalDataset();
 
-    if (!selectedUrl) return null;
-    return await fetchWithCache<ItemApiResponse>(selectedUrl, `item_${cleanName}`, itemName);
+    const liveUrl = ITEMS_URLS[cleanName];
+    if (liveUrl) {
+        try {
+            const data = await fetchWithCache<ItemApiResponse>(liveUrl, `live_item_${cleanName}`, itemName);
+            if (data) return data;
+        } catch (e) {
+            console.warn(`[Live Fetch] Failed to fetch live data for item ${itemName}, falling back to local.`);
+        }
+    }
+
+    const localIndex = localDatasetIndex;
+    if (localIndex) {
+        let targetPath = '';
+        Object.values(localIndex.items).forEach((pocket) => {
+            Object.values(pocket).forEach((categoryItems) => {
+                const found = categoryItems.find((item) => item.name.toLowerCase() === cleanName);
+                if (found) targetPath = found.path;
+            });
+        });
+
+        if (targetPath) {
+            return await fetchWithCache<ItemApiResponse>(targetPath, `local_item_${cleanName}`, itemName);
+        }
+    }
+
+    return null;
 }

@@ -1,6 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
+import { loadLocalDataset } from '../../utils/api';
 import type { CustomItem } from '../../store/storeTypes';
 import { HomebrewItemCard } from './HomebrewItemCard';
 import './Homebrew.css';
@@ -19,6 +20,19 @@ export function HomebrewItems() {
     const fileReference = useRef<HTMLInputElement>(null);
     const [importData, setImportData] = useState<CustomItem[] | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+
+    useEffect(() => {
+        loadLocalDataset().then((index) => {
+            if (!index) return;
+            const categories = new Set<string>();
+            Object.values(index.items).forEach((pocketObj) => {
+                Object.keys(pocketObj).forEach((cat) => categories.add(cat));
+            });
+            roomCustomItems.forEach((i) => categories.add(i.category || 'Misc'));
+            setAvailableCategories(Array.from(categories).sort());
+        });
+    }, [roomCustomItems]);
 
     const visibleItems = roomCustomItems.filter((item) => role === 'GM' || !item.gmOnly);
     const filteredItems = visibleItems.filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -83,6 +97,12 @@ export function HomebrewItems() {
                     </button>
                 )}
             </div>
+
+            <datalist id="homebrew-categories-list">
+                {availableCategories.map((cat) => (
+                    <option key={cat} value={cat} />
+                ))}
+            </datalist>
 
             <div className="homebrew-list__scroll-area">
                 {filteredItems.length === 0 ? (

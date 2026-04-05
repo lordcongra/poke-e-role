@@ -180,7 +180,6 @@ export function useOwlbearSync() {
                             if (item.id === storeState.tokenId) {
                                 const lastKnown = lastTransform?.metaStr;
 
-                                // FIX: Ignore incoming OBR events if the user is actively making changes in the sheet!
                                 if (lastKnown !== metaStr && !hasPendingUpdates()) {
                                     storeState.loadFromOwlbear(meta);
                                 }
@@ -217,6 +216,8 @@ export function useOwlbearSync() {
                         useCharacterStore.getState().setIdentity('pain', data.painEnabled ? 'Enabled' : 'Disabled');
                     if (data.homebrewAccess !== undefined)
                         useCharacterStore.getState().setIdentity('homebrewAccess', String(data.homebrewAccess));
+                    if (data.gmOnlyLootGen !== undefined)
+                        useCharacterStore.getState().setIdentity('gmOnlyLootGen', Boolean(data.gmOnlyLootGen));
                 }
 
                 const unsubRoom = OBR.room.onMetadataChange((meta) => {
@@ -241,6 +242,8 @@ export function useOwlbearSync() {
                             useCharacterStore.getState().setIdentity('pain', data.painEnabled ? 'Enabled' : 'Disabled');
                         if (data.homebrewAccess !== undefined)
                             useCharacterStore.getState().setIdentity('homebrewAccess', String(data.homebrewAccess));
+                        if (data.gmOnlyLootGen !== undefined)
+                            useCharacterStore.getState().setIdentity('gmOnlyLootGen', Boolean(data.gmOnlyLootGen));
                     }
                 });
                 unsubs.push(unsubRoom);

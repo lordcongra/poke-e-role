@@ -1,0 +1,25 @@
+.homebrew-item-card__row {
+    display: flex;
+    gap: 8px;
+}
+
+.homebrew-item-card__select {
+    flex: 1;
+    padding: 4px;
+    background: var(--input-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.homebrew-item-card__input {
+    flex: 1;
+    padding: 4px;
+    background: var(--input-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-weight: bold;
+    min-width: 0;
+}
