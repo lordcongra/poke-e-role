@@ -1,4 +1,3 @@
-// src/store/slices/coreSlice.ts
 import type { StateCreator } from 'zustand';
 import type { CharacterState, CoreSlice } from '../storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';

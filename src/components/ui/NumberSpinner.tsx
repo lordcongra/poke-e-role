@@ -1,5 +1,3 @@
-// src/components/NumberSpinner.tsx
-
 interface NumberSpinnerProps {
     value: number;
     onChange: (val: number) => void;

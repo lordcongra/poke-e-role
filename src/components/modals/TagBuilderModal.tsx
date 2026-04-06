@@ -1,4 +1,3 @@
-// src/components/modals/TagBuilderModal.tsx
 import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import './TagBuilderModal.css';

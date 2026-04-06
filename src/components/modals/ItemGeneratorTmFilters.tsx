@@ -88,10 +88,7 @@ export function ItemGeneratorTmFilters({
 
             <span className="item-generator-modal__type-label">TM Powers:</span>
 
-            <div
-                className="item-generator-modal__checkbox-list"
-                style={{ marginBottom: '10px', paddingLeft: '5px', borderLeft: 'none', marginLeft: '0' }}
-            >
+            <div className="item-generator-modal__checkbox-list item-generator-modal__checkbox-list--flat">
                 <label className="item-generator-modal__checkbox-label">
                     <input
                         type="checkbox"
@@ -153,10 +150,7 @@ export function ItemGeneratorTmFilters({
 
             <span className="item-generator-modal__type-label">TM Types:</span>
 
-            <div
-                className="item-generator-modal__checkbox-list"
-                style={{ marginBottom: '10px', paddingLeft: '5px', borderLeft: 'none', marginLeft: '0' }}
-            >
+            <div className="item-generator-modal__checkbox-list item-generator-modal__checkbox-list--flat">
                 <label className="item-generator-modal__checkbox-label">
                     <input
                         type="checkbox"

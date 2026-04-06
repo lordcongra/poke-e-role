@@ -53,7 +53,7 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
 
     return (
         <>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
+            <div className="tracker-settings__color-group">
                 <label className="tracker-settings__subtitle">Badge Colors</label>
 
                 <div className="tracker-settings__color-row">

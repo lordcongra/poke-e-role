@@ -1,4 +1,3 @@
-// src/components/modals/GeneratorModal.tsx
 import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { generateBuild } from '../../utils/generatorUtils';

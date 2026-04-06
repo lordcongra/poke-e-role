@@ -1,4 +1,3 @@
-// src/utils/obr.ts
 import OBR from '@owlbear-rodeo/sdk';
 
 export const METADATA_ID = 'pokerole-extension/stats';

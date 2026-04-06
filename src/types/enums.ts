@@ -1,5 +1,3 @@
-// src/types/enums.ts
-
 export const CombatStat = {
     STR: 'str',
     DEX: 'dex',

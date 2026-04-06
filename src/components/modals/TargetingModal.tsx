@@ -1,4 +1,3 @@
-// src/components/modals/TargetingModal.tsx
 import { useState, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import type { MoveData } from '../../store/storeTypes';

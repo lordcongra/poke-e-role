@@ -1,4 +1,3 @@
-// src/store/slices/trackerSlice.ts
 import type { StateCreator } from 'zustand';
 import type { CharacterState, TrackerSlice } from '../storeTypes';
 import { saveToOwlbear } from '../../utils/obr';

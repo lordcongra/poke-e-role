@@ -30,11 +30,11 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
     const handleExportAll = () => {
         const state = useCharacterStore.getState();
         const exportData = {
-            customTypes: state.roomCustomTypes.filter((t) => role === 'GM' || !t.gmOnly),
-            customAbilities: state.roomCustomAbilities.filter((a) => role === 'GM' || !a.gmOnly),
-            customMoves: state.roomCustomMoves.filter((m) => role === 'GM' || !m.gmOnly),
-            customPokemon: state.roomCustomPokemon.filter((p) => role === 'GM' || !p.gmOnly),
-            customItems: state.roomCustomItems.filter((i) => role === 'GM' || !i.gmOnly)
+            customTypes: role === 'GM' ? state.roomCustomTypes : [],
+            customAbilities: role === 'GM' ? state.roomCustomAbilities : [],
+            customMoves: role === 'GM' ? state.roomCustomMoves : [],
+            customPokemon: role === 'GM' ? state.roomCustomPokemon : [],
+            customItems: role === 'GM' ? state.roomCustomItems : []
         };
         const dataStr = JSON.stringify(exportData, null, 2);
         const blob = new Blob([dataStr], { type: 'application/json' });

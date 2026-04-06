@@ -158,6 +158,13 @@
     margin-bottom: 4px;
 }
 
+.tracker-settings__color-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+}
+
 .tracker-settings__color-row {
     display: flex;
     align-items: center;
