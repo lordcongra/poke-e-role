@@ -30,17 +30,17 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
     const [basePockets, setBasePockets] = useState<ItemPocket[]>([]);
     const [customPockets, setCustomPockets] = useState<ItemPocket[]>([]);
     const [expandedPockets, setExpandedPockets] = useState<Record<string, boolean>>({});
-    
+
     const [filters, setFilters] = useState<Record<string, boolean>>({});
     const [tmPowers, setTmPowers] = useState<string[]>([]);
     const [tmTypes, setTmTypes] = useState<string[]>(['Any']);
-    
+
     const [isGenerating, setIsGenerating] = useState(false);
     const [generatedItem, setGeneratedItem] = useState<{ name: string; description: string } | null>(null);
     const [activePool, setActivePool] = useState<PoolItem[]>([]);
 
     const visibleTypes = roomCustomTypes.filter((type) => role === 'GM' || !type.gmOnly);
-    const allTypes = [...POKEMON_TYPES.filter(t => t !== ''), ...visibleTypes.map((type) => type.name)];
+    const allTypes = [...POKEMON_TYPES.filter((t) => t !== ''), ...visibleTypes.map((type) => type.name)];
     const allTypeColors = {
         ...TYPE_COLORS,
         ...Object.fromEntries(visibleTypes.map((type) => [type.name, type.color]))
@@ -54,7 +54,7 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
             const basePocketMap: Record<string, Set<string>> = {};
             if (index.items) {
                 Object.keys(index.items).forEach((pocket) => {
-                    if (pocket === 'TechnicalMachine') return; 
+                    if (pocket === 'TechnicalMachine') return;
                     if (!basePocketMap[pocket]) basePocketMap[pocket] = new Set();
                     Object.keys(index.items[pocket]).forEach((category) => {
                         basePocketMap[pocket].add(category);
@@ -62,14 +62,14 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
                 });
             }
 
-            const builtBasePockets: ItemPocket[] = Object.keys(basePocketMap).map(pocket => {
+            const builtBasePockets: ItemPocket[] = Object.keys(basePocketMap).map((pocket) => {
                 const categoriesArray = Array.from(basePocketMap[pocket]);
                 const isFlat = categoriesArray.length === 1 && categoriesArray[0] === 'Misc';
                 return {
                     pocket,
                     label: formatCamelCase(pocket),
                     isFlat,
-                    categories: categoriesArray.map(cat => ({
+                    categories: categoriesArray.map((cat) => ({
                         id: `base_item_${pocket}_${cat}`,
                         label: isFlat ? formatCamelCase(pocket) : formatCamelCase(cat)
                     }))
@@ -78,8 +78,8 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
             setBasePockets(builtBasePockets);
 
             const customPocketMap: Record<string, Set<string>> = {};
-            const visibleCustomItems = roomCustomItems.filter(i => !i.gmOnly);
-            
+            const visibleCustomItems = roomCustomItems.filter((i) => !i.gmOnly);
+
             visibleCustomItems.forEach((item) => {
                 const pocket = item.pocket || 'Custom';
                 const category = item.category || 'Misc';
@@ -87,14 +87,14 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
                 customPocketMap[pocket].add(category);
             });
 
-            const builtCustomPockets: ItemPocket[] = Object.keys(customPocketMap).map(pocket => {
+            const builtCustomPockets: ItemPocket[] = Object.keys(customPocketMap).map((pocket) => {
                 const categoriesArray = Array.from(customPocketMap[pocket]);
                 const isFlat = categoriesArray.length === 1 && categoriesArray[0] === 'Misc';
                 return {
                     pocket,
                     label: formatCamelCase(pocket),
                     isFlat,
-                    categories: categoriesArray.map(cat => ({
+                    categories: categoriesArray.map((cat) => ({
                         id: `custom_item_${pocket}_${cat}`,
                         label: isFlat ? formatCamelCase(pocket) : formatCamelCase(cat)
                     }))
@@ -107,12 +107,12 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
 
     const handleSelectAll = (select: boolean) => {
         const newFilters: Record<string, boolean> = {};
-        
+
         basePockets.forEach((pocketGroup) => {
-            pocketGroup.categories.forEach((cat) => newFilters[cat.id] = select);
+            pocketGroup.categories.forEach((cat) => (newFilters[cat.id] = select));
         });
         customPockets.forEach((pocketGroup) => {
-            pocketGroup.categories.forEach((cat) => newFilters[cat.id] = select);
+            pocketGroup.categories.forEach((cat) => (newFilters[cat.id] = select));
         });
 
         setFilters(newFilters);
@@ -121,7 +121,7 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
     };
 
     const togglePocket = (pocketId: string) => {
-        setExpandedPockets(prev => ({ ...prev, [pocketId]: !prev[pocketId] }));
+        setExpandedPockets((prev) => ({ ...prev, [pocketId]: !prev[pocketId] }));
     };
 
     const handleGenerate = async () => {
@@ -139,7 +139,7 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
         }
 
         setActivePool(masterPool);
-        
+
         setIsGenerating(true);
         try {
             const item = await rollLootItem(masterPool);
@@ -160,58 +160,69 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
                 <div className="item-generator-modal__content">
                     <div className="item-generator-modal__header">
                         <h3 className="item-generator-modal__title">🎁 Random Loot Generator</h3>
-                        <button onClick={onClose} className="item-generator-modal__close-btn" title="Close">X</button>
+                        <button onClick={onClose} className="item-generator-modal__close-btn" title="Close">
+                            X
+                        </button>
                     </div>
                     <p className="item-generator-modal__desc">Select one or more categories to build your loot pool.</p>
 
                     <div className="item-generator-modal__filter-actions">
-                        <button type="button" onClick={() => handleSelectAll(true)} className="item-generator-modal__btn-small">
+                        <button
+                            type="button"
+                            onClick={() => handleSelectAll(true)}
+                            className="item-generator-modal__btn-small"
+                        >
                             Select All
                         </button>
-                        <button type="button" onClick={() => handleSelectAll(false)} className="item-generator-modal__btn-small">
+                        <button
+                            type="button"
+                            onClick={() => handleSelectAll(false)}
+                            className="item-generator-modal__btn-small"
+                        >
                             Deselect All
                         </button>
                     </div>
 
                     <div className="item-generator-modal__filters-container">
-                        
                         <div className="item-generator-modal__filter-group">
                             <div className="item-generator-modal__filter-group-title">🎒 Base Items</div>
                             {basePockets.length === 0 && <div className="item-generator-modal__desc">Loading...</div>}
-                            {basePockets.map(group => (
-                                <ItemGeneratorPocketGroup 
+                            {basePockets.map((group) => (
+                                <ItemGeneratorPocketGroup
                                     key={`base_${group.pocket}`}
-                                    pocketGroup={group} 
-                                    isCustom={false} 
-                                    filters={filters} 
-                                    setFilters={setFilters} 
-                                    expandedPockets={expandedPockets} 
-                                    togglePocket={togglePocket} 
+                                    pocketGroup={group}
+                                    isCustom={false}
+                                    filters={filters}
+                                    setFilters={setFilters}
+                                    expandedPockets={expandedPockets}
+                                    togglePocket={togglePocket}
                                 />
                             ))}
                         </div>
 
-                        <ItemGeneratorTmFilters 
-                            tmPowers={tmPowers} 
-                            setTmPowers={setTmPowers} 
-                            tmTypes={tmTypes} 
-                            setTmTypes={setTmTypes} 
-                            allTypes={allTypes} 
-                            allTypeColors={allTypeColors} 
+                        <ItemGeneratorTmFilters
+                            tmPowers={tmPowers}
+                            setTmPowers={setTmPowers}
+                            tmTypes={tmTypes}
+                            setTmTypes={setTmTypes}
+                            allTypes={allTypes}
+                            allTypeColors={allTypeColors}
                         />
 
                         <div className="item-generator-modal__filter-group">
                             <div className="item-generator-modal__filter-group-title">🛠️ Custom Items</div>
-                            {customPockets.length === 0 && <div className="item-generator-modal__desc">No Custom Items available.</div>}
-                            {customPockets.map(group => (
-                                <ItemGeneratorPocketGroup 
+                            {customPockets.length === 0 && (
+                                <div className="item-generator-modal__desc">No Custom Items available.</div>
+                            )}
+                            {customPockets.map((group) => (
+                                <ItemGeneratorPocketGroup
                                     key={`custom_${group.pocket}`}
-                                    pocketGroup={group} 
-                                    isCustom={true} 
-                                    filters={filters} 
-                                    setFilters={setFilters} 
-                                    expandedPockets={expandedPockets} 
-                                    togglePocket={togglePocket} 
+                                    pocketGroup={group}
+                                    isCustom={true}
+                                    filters={filters}
+                                    setFilters={setFilters}
+                                    expandedPockets={expandedPockets}
+                                    togglePocket={togglePocket}
                                 />
                             ))}
                         </div>

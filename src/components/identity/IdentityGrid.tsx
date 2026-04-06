@@ -10,9 +10,10 @@ import { SpeciesSelector } from './SpeciesSelector';
 interface IdentityGridProps {
     onOpenGenerator: () => void;
     onOpenAbility: () => void;
+    onOpenNature: () => void;
 }
 
-export function IdentityGrid({ onOpenGenerator, onOpenAbility }: IdentityGridProps) {
+export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature }: IdentityGridProps) {
     const identityStore = useCharacterStore((state) => state.identity) || {};
     const setIdentity = useCharacterStore((state) => state.setIdentity);
     const setMode = useCharacterStore((state) => state.setMode);
@@ -79,7 +80,9 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility }: IdentityGridPro
                 <SpeciesSelector uniqueSpecies={uniqueSpecies} onOpenGenerator={onOpenGenerator} />
 
                 <div className="identity-grid__row">
-                    <span className="identity-grid__label">Nature</span>
+                    <span className="identity-grid__label">
+                        Nature <TooltipIcon onClick={onOpenNature} />
+                    </span>
                     <select
                         className="identity-grid__select"
                         value={identityStore.nature || ''}

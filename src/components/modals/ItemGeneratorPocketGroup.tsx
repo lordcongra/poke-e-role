@@ -69,9 +69,7 @@ export function ItemGeneratorPocketGroup({
                                 type="checkbox"
                                 className="item-generator-modal__checkbox"
                                 checked={!!filters[category.id]}
-                                onChange={() =>
-                                    setFilters((prev) => ({ ...prev, [category.id]: !prev[category.id] }))
-                                }
+                                onChange={() => setFilters((prev) => ({ ...prev, [category.id]: !prev[category.id] }))}
                             />
                             {category.label}
                         </label>

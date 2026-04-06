@@ -7,6 +7,7 @@ export const SPECIES_URLS: Record<string, string> = {};
 export const ABILITIES_URLS: Record<string, string> = {};
 export const MOVES_URLS: Record<string, string> = {};
 export const ITEMS_URLS: Record<string, string> = {};
+export const NATURES_URLS: Record<string, string> = {};
 
 export const ALL_ABILITIES: string[] = [];
 export const ALL_MOVES: string[] = [];
@@ -164,6 +165,14 @@ export interface ItemApiResponse {
     ForTypes?: string;
 }
 
+export interface NatureApiResponse {
+    Name?: string;
+    Nature?: string;
+    Confidence?: number;
+    Keywords?: string;
+    Description?: string;
+}
+
 const activeRequests = new Map<string, AbortController>();
 
 async function fetchWithCache<T>(url: string, cacheKey: string, itemName: string): Promise<T | null> {
@@ -211,13 +220,14 @@ export function loadGithubTree(): Promise<void> {
             if (!data || !data.tree) return;
 
             const versionRegex = /(v|(version\s?))3\.0/i;
-            const pokemonRegex = /\/(Pokemon|Pokedex)\//i;
-            const abilityRegex = /\/Abilities\//i;
-            const moveRegex = /\/(Moves)\//i;
-            const itemRegex = /\/(Items)\//i;
+            const pokemonRegex = /(^|\/)(Pokemon|Pokedex)\//i;
+            const abilityRegex = /(^|\/)Abilities\//i;
+            const moveRegex = /(^|\/)Moves\//i;
+            const itemRegex = /(^|\/)Items\//i;
+            const natureRegex = /(^|\/)Natures\//i;
 
             data.tree.forEach((file: GitHubFileNode) => {
-                if (!versionRegex.test(file.path) || !file.path.endsWith('.json')) return;
+                if (!file.path.endsWith('.json')) return;
 
                 const name = file.path.split('/').pop()?.replace('.json', '') || '';
                 if (!name) return;
@@ -225,15 +235,19 @@ export function loadGithubTree(): Promise<void> {
                 const rawUrl = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/${file.path}`;
                 const cleanKey = name.toLowerCase();
 
-                if (pokemonRegex.test(file.path)) {
+                const isV3 = versionRegex.test(file.path);
+
+                if (pokemonRegex.test(file.path) && isV3) {
                     SPECIES_URLS[cleanKey] = rawUrl;
-                } else if (abilityRegex.test(file.path)) {
+                } else if (abilityRegex.test(file.path) && isV3) {
                     ABILITIES_URLS[cleanKey] = rawUrl;
                     if (!ALL_ABILITIES.includes(name)) ALL_ABILITIES.push(name);
-                } else if (moveRegex.test(file.path)) {
+                } else if (moveRegex.test(file.path) && isV3) {
                     MOVES_URLS[cleanKey] = rawUrl;
-                } else if (itemRegex.test(file.path)) {
+                } else if (itemRegex.test(file.path) && isV3) {
                     ITEMS_URLS[cleanKey] = rawUrl;
+                } else if (natureRegex.test(file.path) && isV3) {
+                    NATURES_URLS[cleanKey] = rawUrl;
                 }
             });
 
@@ -374,4 +388,20 @@ export async function fetchItemData(itemName: string): Promise<ItemApiResponse |
     }
 
     return null;
+}
+
+export async function fetchNatureData(natureName: string): Promise<NatureApiResponse | null> {
+    if (!natureName || natureName === '-- Select --') return null;
+    const cleanName = natureName.trim().toLowerCase();
+
+    await loadGithubTree();
+    let selectedUrl = NATURES_URLS[cleanName];
+
+    // If the cache was stale and the tree didn't find the nature, forcefully construct the correct raw URL!
+    if (!selectedUrl) {
+        const formattedName = natureName.charAt(0).toUpperCase() + natureName.slice(1).toLowerCase();
+        selectedUrl = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/v3.0/Natures/${formattedName}.json`;
+    }
+
+    return await fetchWithCache<NatureApiResponse>(selectedUrl, `nature_${cleanName}`, natureName);
 }

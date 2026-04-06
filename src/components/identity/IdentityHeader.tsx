@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { fetchAbilityData } from '../../utils/api';
+import { fetchAbilityData, fetchNatureData } from '../../utils/api';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { IdentityGrid } from './IdentityGrid';
 import { IdentityControls } from './IdentityControls';
@@ -25,7 +25,6 @@ export function IdentityHeader() {
         const savedTheme = localStorage.getItem('pokerole-theme');
         if (savedTheme === 'dark') {
             setIsDark(true);
-            // FIX: Apply the dark mode classes to the DOM immediately on load!
             document.body.classList.add('dark-mode');
             document.body.setAttribute('data-theme', 'dark');
             document.documentElement.setAttribute('data-theme', 'dark');
@@ -64,9 +63,31 @@ export function IdentityHeader() {
         }
     };
 
+    const openNatureModal = async () => {
+        if (!identityStore.nature || identityStore.nature === '-- Select --') {
+            setModalConfig({ title: 'Nature', content: 'No nature selected.' });
+            return;
+        }
+        setModalConfig({ title: 'Nature', content: 'Loading...' });
+        const data = await fetchNatureData(identityStore.nature);
+
+        if (data && (data.Keywords || data.Description)) {
+            const content = [];
+            if (data.Keywords) content.push(`Keywords: ${data.Keywords}`);
+            if (data.Description) content.push(data.Description);
+            setModalConfig({ title: `Nature: ${identityStore.nature}`, content: content.join('\n\n') });
+        } else {
+            setModalConfig({ title: 'Nature', content: 'Could not load nature data.' });
+        }
+    };
+
     return (
         <CollapsingSection title="CHARACTER IDENTITY" className="sheet-panel identity-header">
-            <IdentityGrid onOpenGenerator={() => setShowGeneratorModal(true)} onOpenAbility={openAbilityModal} />
+            <IdentityGrid
+                onOpenGenerator={() => setShowGeneratorModal(true)}
+                onOpenAbility={openAbilityModal}
+                onOpenNature={openNatureModal}
+            />
 
             <IdentityControls
                 onOpenHomebrew={() => setShowHomebrewModal(true)}
