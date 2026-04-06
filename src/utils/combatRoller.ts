@@ -73,16 +73,24 @@ export async function rollStatus(status: StatusItem, state: CharacterState) {
     }
 
     const pain = getPainPenalty(attribute, state);
-    const mathModifier = pain !== 0 ? (pain > 0 ? `+${pain}` : `${pain}`) : '';
+    const successModifier = state.trackers.globalSucc + pain;
+    const mathModifier =
+        successModifier !== 0 ? (successModifier > 0 ? `+${successModifier}` : `${successModifier}`) : '';
 
     const tags: string[] = [];
     if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
+    if (state.trackers.globalSucc !== 0)
+        tags.push(`Net Mod ${state.trackers.globalSucc > 0 ? '+' : ''}${state.trackers.globalSucc} Succ`);
+
     const tagString = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';
 
+    // Fix: Confusion does not stack rounds, it just needs 2 successes to allow an attack.
+    const rollType = status.name === 'Confusion' ? 'roll' : 'status';
+
     await rollDicePlus(
-        `${dicePool}d6>3${mathModifier}`,
+        `${Math.max(1, dicePool)}d6>3${mathModifier}`,
         `🩹 ${nickname} rolled ${status.name} Recovery!${tagString}`,
-        'status',
+        rollType,
         status.id
     );
 }

@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { fetchPokemonData, fetchAbilityData, fetchMoveData, loadGithubTree, loadLocalDataset } from '../../utils/api';
+import { fetchPokemonData, fetchAbilityData, fetchMoveData, loadLocalDataset } from '../../utils/api';
 import { saveToOwlbear } from '../../utils/obr';
 import { STATS_META_ID } from '../../utils/graphicsManager';
 import { canViewHomebrew } from '../../utils/helper';
@@ -44,7 +44,6 @@ export function IdentityControls({
         setIsRefreshing(true);
         try {
             await loadLocalDataset();
-            await loadGithubTree();
 
             const store = useCharacterStore.getState();
 
@@ -81,13 +80,12 @@ export function IdentityControls({
         }
 
         try {
-            // Grab the raw metadata directly from the Owlbear Token!
             const items = await OBR.scene.items.getItems([state.tokenId]);
             if (items.length === 0) return;
 
             const exportData = items[0].metadata[STATS_META_ID] || {};
             const dataString = JSON.stringify(exportData, null, 2);
-
+            
             const blob = new Blob([dataString], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const linkElement = document.createElement('a');
@@ -124,13 +122,11 @@ export function IdentityControls({
         const store = useCharacterStore.getState();
         try {
             if (importData['moves-data'] !== undefined) {
-                // It's a standard Owlbear Metadata export
                 store.loadFromOwlbear(importData);
                 saveToOwlbear(importData);
             } else {
-                // It's a legacy V2.0 Zustand Export - We must map it back to Owlbear Data!
                 useCharacterStore.setState(importData);
-
+                
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const d = importData as any;
                 const metaToSave: Record<string, unknown> = {};
@@ -202,34 +198,31 @@ export function IdentityControls({
                     metaToSave['will-max-display'] = d.will.willMax;
                     metaToSave['will-base'] = d.will.willBase;
                 }
-
+                
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                if (d.stats)
-                    Object.entries(d.stats).forEach(([stat, vals]: any) => {
-                        metaToSave[`${stat}-base`] = vals.base;
-                        metaToSave[`${stat}-rank`] = vals.rank;
-                        metaToSave[`${stat}-buff`] = vals.buff;
-                        metaToSave[`${stat}-debuff`] = vals.debuff;
-                        metaToSave[`${stat}-limit`] = vals.limit;
-                    });
-
+                if (d.stats) Object.entries(d.stats).forEach(([stat, vals]: any) => {
+                    metaToSave[`${stat}-base`] = vals.base;
+                    metaToSave[`${stat}-rank`] = vals.rank;
+                    metaToSave[`${stat}-buff`] = vals.buff;
+                    metaToSave[`${stat}-debuff`] = vals.debuff;
+                    metaToSave[`${stat}-limit`] = vals.limit;
+                });
+                
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                if (d.socials)
-                    Object.entries(d.socials).forEach(([stat, vals]: any) => {
-                        metaToSave[`${stat}-base`] = vals.base;
-                        metaToSave[`${stat}-rank`] = vals.rank;
-                        metaToSave[`${stat}-buff`] = vals.buff;
-                        metaToSave[`${stat}-debuff`] = vals.debuff;
-                        metaToSave[`${stat}-limit`] = vals.limit;
-                    });
-
+                if (d.socials) Object.entries(d.socials).forEach(([stat, vals]: any) => {
+                    metaToSave[`${stat}-base`] = vals.base;
+                    metaToSave[`${stat}-rank`] = vals.rank;
+                    metaToSave[`${stat}-buff`] = vals.buff;
+                    metaToSave[`${stat}-debuff`] = vals.debuff;
+                    metaToSave[`${stat}-limit`] = vals.limit;
+                });
+                
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                if (d.skills)
-                    Object.entries(d.skills).forEach(([skill, vals]: any) => {
-                        metaToSave[`${skill}-base`] = vals.base;
-                        metaToSave[`${skill}-buff`] = vals.buff;
-                        if (vals.customName) metaToSave[`label-${skill}`] = vals.customName;
-                    });
+                if (d.skills) Object.entries(d.skills).forEach(([skill, vals]: any) => {
+                    metaToSave[`${skill}-base`] = vals.base;
+                    metaToSave[`${skill}-buff`] = vals.buff;
+                    if (vals.customName) metaToSave[`label-${skill}`] = vals.customName;
+                });
 
                 if (d.derived) {
                     metaToSave['def-buff'] = d.derived.defBuff;
@@ -271,7 +264,6 @@ export function IdentityControls({
                 metaToSave['training-points'] = d.tp || 0;
                 metaToSave['currency'] = d.currency || 0;
 
-                // Push the mapped data back into the Owlbear Token!
                 saveToOwlbear(metaToSave);
             }
         } catch (error) {

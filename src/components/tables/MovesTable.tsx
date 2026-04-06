@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { MoveData } from '../../store/storeTypes';
 import { CombatStat } from '../../types/enums';
-import { loadGithubTree, ALL_MOVES } from '../../utils/api';
+import { loadLocalDataset, ALL_MOVES } from '../../utils/api';
 import {
     calculateBaseDamage,
     executeDamageRoll,
@@ -45,7 +45,7 @@ export function MovesTable() {
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; description: string } | null>(null);
 
     useEffect(() => {
-        loadGithubTree().then(() => setMoveList([...ALL_MOVES]));
+        loadLocalDataset().then(() => setMoveList([...ALL_MOVES]));
     }, []);
 
     const state = useCharacterStore.getState();

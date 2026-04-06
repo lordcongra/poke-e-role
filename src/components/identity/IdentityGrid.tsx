@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { Rank } from '../../store/storeTypes';
-import { loadGithubTree, ALL_ABILITIES, SPECIES_URLS } from '../../utils/api';
+import { loadLocalDataset, ALL_ABILITIES, SPECIES_URLS } from '../../utils/api';
 import { POKEMON_TYPES, TYPE_COLORS, NATURES, AGES, RANKS } from '../../data/constants';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { CustomInfoRow } from '../ui/CustomInfoRow';
@@ -41,7 +41,7 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature }: I
     const [deleteCustomInfoId, setDeleteCustomInfoId] = useState<string | null>(null);
 
     useEffect(() => {
-        loadGithubTree()
+        loadLocalDataset()
             .then(() => {
                 setAllAbilitiesList([...ALL_ABILITIES]);
                 const formattedSpecies = Object.keys(SPECIES_URLS).map((species) =>
@@ -52,7 +52,7 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature }: I
                 );
                 setSpeciesList(formattedSpecies.sort());
             })
-            .catch((error) => console.error('Failed to load GitHub tree:', error));
+            .catch((error: unknown) => console.error('Failed to load local dataset:', error));
     }, []);
 
     const uniqueSpecies = Array.from(new Set([...speciesList, ...filteredPokemon.map((pokemon) => pokemon.Name)]));
