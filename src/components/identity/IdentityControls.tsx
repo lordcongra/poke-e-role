@@ -167,7 +167,7 @@ export function IdentityControls({
                 {showLootGenButton && (
                     <button
                         type="button"
-                        className="action-button action-button--dark identity-header__btn"
+                        className="action-button identity-header__btn identity-header__btn--loot"
                         onClick={() => setShowLootGenModal(true)}
                     >
                         🎁 Loot Gen

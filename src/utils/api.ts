@@ -1,4 +1,27 @@
 import type { CustomPokemon, CustomMove, CustomAbility, CustomItem } from '../store/storeTypes';
+import { fetchWithCache } from './apiClient';
+import type {
+    LocalIndexItem,
+    LocalDatasetIndex,
+    GitHubFileNode,
+    GitHubTreeResponse,
+    PokemonApiResponse,
+    MoveApiResponse,
+    AbilityApiResponse,
+    ItemApiResponse,
+    NatureApiResponse
+} from './apiTypes';
+
+// Re-export the types so we don't break existing imports in the UI components!
+export type {
+    LocalIndexItem,
+    LocalDatasetIndex,
+    PokemonApiResponse,
+    MoveApiResponse,
+    AbilityApiResponse,
+    ItemApiResponse,
+    NatureApiResponse
+};
 
 export const GITHUB_TREE_URL =
     'https://api.github.com/repos/Pokerole-Software-Development/Pokerole-Data/git/trees/master?recursive=1';
@@ -20,23 +43,6 @@ let homebrewPokemon: CustomPokemon[] = [];
 let homebrewMoves: CustomMove[] = [];
 let homebrewAbilities: CustomAbility[] = [];
 let homebrewItems: CustomItem[] = [];
-
-export interface LocalIndexItem {
-    name: string;
-    path: string;
-    type?: string;
-    pmd?: boolean;
-}
-
-export interface LocalDatasetIndex {
-    moves: {
-        support: LocalIndexItem[];
-        variable: LocalIndexItem[];
-        basic: Record<string, LocalIndexItem[]>;
-        highPower: Record<string, LocalIndexItem[]>;
-    };
-    items: Record<string, Record<string, LocalIndexItem[]>>;
-}
 
 let localDatasetIndex: LocalDatasetIndex | null = null;
 
@@ -104,113 +110,6 @@ export function syncHomebrewToApi(
     homebrewItems = items;
 }
 
-interface GitHubFileNode {
-    path: string;
-}
-
-interface GitHubTreeResponse {
-    tree: GitHubFileNode[];
-}
-
-export interface PokemonApiResponse {
-    Name?: string;
-    Type1?: string;
-    Type2?: string;
-    BaseStats?: { HP?: number };
-    BaseHP?: number;
-    Strength?: number | string;
-    Dexterity?: number | string;
-    Vitality?: number | string;
-    Special?: number | string;
-    Insight?: number | string;
-    MaxAttributes?: Record<string, number | string>;
-    MaxStats?: Record<string, number | string>;
-    Ability1?: string;
-    Ability2?: string;
-    HiddenAbility?: string;
-    EventAbilities?: string;
-    Abilities?: string[] | { Name: string }[];
-    Moves?:
-        | Record<string, string[] | { Name?: string; Move?: string }[]>
-        | { Learned?: string; Learn?: string; Level?: string; Rank?: string; Name?: string; Move?: string }[];
-}
-
-export interface MoveApiResponse {
-    Name?: string;
-    Type?: string;
-    Category?: string;
-    Power?: number | string;
-    Accuracy1?: string;
-    Accuracy2?: string;
-    Damage1?: string;
-    Effect?: string;
-    Description?: string;
-}
-
-export interface AbilityApiResponse {
-    Name?: string;
-    Description?: string;
-    Effect?: string;
-}
-
-export interface ItemApiResponse {
-    Name?: string;
-    Description?: string;
-    Effect?: string;
-    HealthRestored?: number;
-    Cures?: string | string[];
-    Boost?: string;
-    Value?: number;
-    ForPokemon?: string;
-    ForTypes?: string;
-}
-
-export interface NatureApiResponse {
-    Name?: string;
-    Nature?: string;
-    Confidence?: number;
-    Keywords?: string;
-    Description?: string;
-}
-
-const activeRequests = new Map<string, AbortController>();
-
-async function fetchWithCache<T>(url: string, cacheKey: string, itemName: string): Promise<T | null> {
-    if (activeRequests.has(cacheKey)) {
-        activeRequests.get(cacheKey)?.abort();
-    }
-
-    const controller = new AbortController();
-    activeRequests.set(cacheKey, controller);
-
-    try {
-        const response = await fetch(url, { signal: controller.signal });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-        const data = (await response.json()) as T;
-        localStorage.setItem(`pkr_cache_${cacheKey}`, JSON.stringify(data));
-        return data;
-    } catch (error) {
-        if (error instanceof Error && error.name === 'AbortError') {
-            console.log(`[Network] Fetch aborted for ${itemName}.`);
-            return null;
-        }
-
-        console.warn(`[Network] Fetch failed for ${itemName}, checking cache...`);
-        const cached = localStorage.getItem(`pkr_cache_${cacheKey}`);
-
-        if (cached) {
-            console.log(`Using cached data for ${itemName}.`);
-            return JSON.parse(cached) as T;
-        }
-
-        console.error(`Failed to load ${itemName}. No offline cache found.`);
-        return null;
-    } finally {
-        activeRequests.delete(cacheKey);
-    }
-}
-
 export function loadGithubTree(): Promise<void> {
     if (isTreeLoaded) return Promise.resolve();
     if (treePromise) return treePromise;
@@ -246,7 +145,7 @@ export function loadGithubTree(): Promise<void> {
                     MOVES_URLS[cleanKey] = rawUrl;
                 } else if (itemRegex.test(file.path) && isV3) {
                     ITEMS_URLS[cleanKey] = rawUrl;
-                } else if (natureRegex.test(file.path) && isV3) {
+                } else if (natureRegex.test(file.path)) {
                     NATURES_URLS[cleanKey] = rawUrl;
                 }
             });
@@ -397,7 +296,6 @@ export async function fetchNatureData(natureName: string): Promise<NatureApiResp
     await loadGithubTree();
     let selectedUrl = NATURES_URLS[cleanName];
 
-    // If the cache was stale and the tree didn't find the nature, forcefully construct the correct raw URL!
     if (!selectedUrl) {
         const formattedName = natureName.charAt(0).toUpperCase() + natureName.slice(1).toLowerCase();
         selectedUrl = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/v3.0/Natures/${formattedName}.json`;

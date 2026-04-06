@@ -125,6 +125,12 @@
     color: white;
 }
 
+.identity-header__btn--loot {
+    background: #8e24aa;
+    color: white;
+    border-color: #8e24aa;
+}
+
 .identity-header__toggles {
     display: flex;
     gap: 6px;
