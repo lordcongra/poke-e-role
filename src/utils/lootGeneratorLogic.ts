@@ -3,9 +3,9 @@ import type { LocalIndexItem, LocalDatasetIndex, ItemApiResponse } from './apiTy
 import type { CustomItem, CustomMove } from '../store/storeTypes';
 
 export type PoolItem =
-    | { type: 'homebrew'; data: CustomItem }
-    | { type: 'tm'; data: LocalIndexItem }
-    | { type: 'item'; data: LocalIndexItem };
+    | { type: 'homebrew'; bucket: string; data: CustomItem }
+    | { type: 'tm'; bucket: string; data: LocalIndexItem }
+    | { type: 'item'; bucket: string; data: LocalIndexItem };
 
 export const formatCamelCase = (text: string) => {
     if (text === 'ZCrystal') return 'Z-Crystal';
@@ -97,7 +97,8 @@ export function generateLootPool(
                     if (Array.isArray(itemsArr)) {
                         itemsArr.forEach((i) => {
                             const rarityStr = getRarityFromWeight(i.weight ?? 50);
-                            if (rarityFilters[rarityStr]) masterPool.push({ type: 'item', data: i });
+                            if (rarityFilters[rarityStr])
+                                masterPool.push({ type: 'item', bucket: `Base_${pocket}`, data: i });
                         });
                     }
                 }
@@ -111,7 +112,7 @@ export function generateLootPool(
         const cCategory = custom.category || 'Misc';
         const cRarity = custom.rarity || 'Uncommon';
         if (filters[`custom_item_${cPocket}_${cCategory}`] && rarityFilters[cRarity]) {
-            masterPool.push({ type: 'homebrew', data: custom });
+            masterPool.push({ type: 'homebrew', bucket: `Custom_${cPocket}`, data: custom });
         }
     });
 
@@ -122,23 +123,23 @@ export function generateLootPool(
         return tmTypes.some((t) => t.toLowerCase() === type?.toLowerCase());
     };
 
-    const processMoveArray = (arr: LocalIndexItem[]) => {
+    const processMoveArray = (arr: LocalIndexItem[], bucketName: string) => {
         if (!Array.isArray(arr)) return;
         arr.forEach((m) => {
             if (isMoveTypeValid(m.type)) {
                 const rarityStr = getRarityFromWeight(m.weight ?? 20);
-                if (rarityFilters[rarityStr]) masterPool.push({ type: 'tm', data: m });
+                if (rarityFilters[rarityStr]) masterPool.push({ type: 'tm', bucket: bucketName, data: m });
             }
         });
     };
 
     if (selectedPowers.has('support') && index.moves?.support) {
-        processMoveArray(index.moves.support);
+        processMoveArray(index.moves.support, 'Base_TMs');
     }
 
     [1, 2, 3].forEach((power) => {
         if (selectedPowers.has(String(power)) && index.moves?.basic?.[`power_${power}`]) {
-            processMoveArray(index.moves.basic[`power_${power}`]);
+            processMoveArray(index.moves.basic[`power_${power}`], 'Base_TMs');
         }
     });
 
@@ -147,13 +148,13 @@ export function generateLootPool(
         if (selectedPowers.has(String(power))) {
             includesHighPower = true;
             if (index.moves?.highPower?.[`power_${power}`]) {
-                processMoveArray(index.moves.highPower[`power_${power}`]);
+                processMoveArray(index.moves.highPower[`power_${power}`], 'Base_TMs');
             }
         }
     });
 
     if (includesHighPower && index.moves?.highPower?.variable) {
-        processMoveArray(index.moves.highPower.variable);
+        processMoveArray(index.moves.highPower.variable, 'Base_TMs');
     }
 
     const visibleCustomMoves = roomCustomMoves.filter((m) => !m.gmOnly);
@@ -170,6 +171,7 @@ export function generateLootPool(
                 if (rarityFilters[rarityStr]) {
                     masterPool.push({
                         type: 'tm',
+                        bucket: 'Custom_TMs',
                         data: { name: m.name, path: '', type: m.type, weight }
                     });
                 }
@@ -188,20 +190,17 @@ export async function rollLootItem(
         return { name: 'Error', description: 'No items in the pool.' };
     }
 
-    // STAGE 1: Bucket the pool by Meta-Category to prevent TMs from drowning out Items
-    const buckets: Record<string, PoolItem[]> = {
-        item: [],
-        tm: [],
-        homebrew: []
-    };
+    // STAGE 1: Bucket the pool by Meta-Category to prevent massive sets from drowning out tiny sets
+    const buckets: Record<string, PoolItem[]> = {};
 
     pool.forEach((item) => {
-        if (buckets[item.type]) {
-            buckets[item.type].push(item);
+        if (!buckets[item.bucket]) {
+            buckets[item.bucket] = [];
         }
+        buckets[item.bucket].push(item);
     });
 
-    // Remove empty buckets so we don't try to roll from a category with 0 items
+    // Remove empty buckets
     const activeBuckets = Object.values(buckets).filter((b) => b.length > 0);
 
     // Pick a bucket at random (e.g. 50/50 chance between Items and TMs if both are active)
