@@ -3,6 +3,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { fetchPokemonData, fetchAbilityData, fetchMoveData, loadGithubTree, loadLocalDataset } from '../../utils/api';
 import { saveToOwlbear } from '../../utils/obr';
+import { STATS_META_ID } from '../../utils/graphicsManager';
 import { canViewHomebrew } from '../../utils/helper';
 import { IdentityToggles } from './IdentityToggles';
 import { PrintSettingsModal } from '../modals/PrintSettingsModal';
@@ -72,39 +73,34 @@ export function IdentityControls({
         }
     };
 
-    const handleExport = () => {
+    const handleExport = async () => {
         const state = useCharacterStore.getState();
-        const exportData = {
-            identity: state.identity,
-            health: state.health,
-            will: state.will,
-            derived: state.derived,
-            extras: state.extras,
-            stats: state.stats,
-            socials: state.socials,
-            skills: state.skills,
-            moves: state.moves,
-            skillChecks: state.skillChecks,
-            inventory: state.inventory,
-            notes: state.notes,
-            customInfo: state.customInfo,
-            tp: state.tp,
-            currency: state.currency,
-            statuses: state.statuses,
-            effects: state.effects,
-            trackers: state.trackers
-        };
-        const dataString = JSON.stringify(exportData, null, 2);
-        const blob = new Blob([dataString], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const linkElement = document.createElement('a');
-        const name = identityStore.nickname || identityStore.species || 'character';
-        linkElement.href = url;
-        linkElement.download = `${name.replace(/\s+/g, '_')}_pokerole.json`;
-        document.body.appendChild(linkElement);
-        linkElement.click();
-        document.body.removeChild(linkElement);
-        URL.revokeObjectURL(url);
+        if (!state.tokenId || !OBR.isAvailable) {
+            if (OBR.isAvailable) OBR.notification.show('Please select a token to export.', 'WARNING');
+            return;
+        }
+
+        try {
+            // Grab the raw metadata directly from the Owlbear Token!
+            const items = await OBR.scene.items.getItems([state.tokenId]);
+            if (items.length === 0) return;
+
+            const exportData = items[0].metadata[STATS_META_ID] || {};
+            const dataString = JSON.stringify(exportData, null, 2);
+
+            const blob = new Blob([dataString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const linkElement = document.createElement('a');
+            const name = state.identity.nickname || state.identity.species || 'character';
+            linkElement.href = url;
+            linkElement.download = `${name.replace(/\s+/g, '_')}_pokerole.json`;
+            document.body.appendChild(linkElement);
+            linkElement.click();
+            document.body.removeChild(linkElement);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Export failed', error);
+        }
     };
 
     const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -128,10 +124,155 @@ export function IdentityControls({
         const store = useCharacterStore.getState();
         try {
             if (importData['moves-data'] !== undefined) {
+                // It's a standard Owlbear Metadata export
                 store.loadFromOwlbear(importData);
                 saveToOwlbear(importData);
             } else {
+                // It's a legacy V2.0 Zustand Export - We must map it back to Owlbear Data!
                 useCharacterStore.setState(importData);
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const d = importData as any;
+                const metaToSave: Record<string, unknown> = {};
+
+                if (d.identity) {
+                    metaToSave['nickname'] = d.identity.nickname;
+                    metaToSave['species'] = d.identity.species;
+                    metaToSave['nature'] = d.identity.nature;
+                    metaToSave['rank'] = d.identity.rank;
+                    metaToSave['type1'] = d.identity.type1;
+                    metaToSave['type2'] = d.identity.type2;
+                    metaToSave['ability'] = d.identity.ability;
+                    metaToSave['ability-list'] = (d.identity.availableAbilities || []).join(',');
+                    metaToSave['mode'] = d.identity.mode;
+                    metaToSave['age'] = d.identity.age;
+                    metaToSave['gender'] = d.identity.gender;
+                    metaToSave['rolls'] = d.identity.rolls;
+                    metaToSave['combat'] = d.identity.combat;
+                    metaToSave['social'] = d.identity.social;
+                    metaToSave['hand'] = d.identity.hand;
+                    metaToSave['is-npc'] = d.identity.isNPC;
+                    metaToSave['pokemon-backup'] = d.identity.pokemonBackup;
+                    metaToSave['trainer-backup'] = d.identity.trainerBackup;
+                    metaToSave['base-form-data'] = d.identity.baseFormData;
+                    metaToSave['alt-form-data'] = d.identity.altFormData;
+                    metaToSave['is-alt-form'] = d.identity.isAltForm;
+
+                    metaToSave['show-trackers'] = d.identity.showTrackers;
+                    metaToSave['setting-hp-bar'] = d.identity.settingHpBar;
+                    metaToSave['gm-hp-bar'] = d.identity.gmHpBar;
+                    metaToSave['setting-hp-text'] = d.identity.settingHpText;
+                    metaToSave['gm-hp-text'] = d.identity.gmHpText;
+                    metaToSave['setting-will-bar'] = d.identity.settingWillBar;
+                    metaToSave['gm-will-bar'] = d.identity.gmWillBar;
+                    metaToSave['setting-will-text'] = d.identity.settingWillText;
+                    metaToSave['gm-will-text'] = d.identity.gmWillText;
+                    metaToSave['setting-def-badge'] = d.identity.settingDefBadge;
+                    metaToSave['gm-def-badge'] = d.identity.gmDefBadge;
+                    metaToSave['setting-eco-badge'] = d.identity.settingEcoBadge;
+                    metaToSave['gm-eco-badge'] = d.identity.gmEcoBadge;
+                    metaToSave['color-act'] = d.identity.colorAct;
+                    metaToSave['color-eva'] = d.identity.colorEva;
+                    metaToSave['color-cla'] = d.identity.colorCla;
+
+                    metaToSave['tracker-scale'] = d.identity.trackerScale;
+                    metaToSave['x-offset'] = d.identity.xOffset;
+                    metaToSave['y-offset'] = d.identity.yOffset;
+                    metaToSave['hp-offset-x'] = d.identity.hpOffsetX;
+                    metaToSave['hp-offset-y'] = d.identity.hpOffsetY;
+                    metaToSave['will-offset-x'] = d.identity.willOffsetX;
+                    metaToSave['will-offset-y'] = d.identity.willOffsetY;
+                    metaToSave['def-offset-x'] = d.identity.defOffsetX;
+                    metaToSave['def-offset-y'] = d.identity.defOffsetY;
+                    metaToSave['act-offset-x'] = d.identity.actOffsetX;
+                    metaToSave['act-offset-y'] = d.identity.actOffsetY;
+                    metaToSave['eva-offset-x'] = d.identity.evaOffsetX;
+                    metaToSave['eva-offset-y'] = d.identity.evaOffsetY;
+                    metaToSave['cla-offset-x'] = d.identity.claOffsetX;
+                    metaToSave['cla-offset-y'] = d.identity.claOffsetY;
+                }
+
+                if (d.health) {
+                    metaToSave['hp-curr'] = d.health.hpCurr;
+                    metaToSave['hp-max-display'] = d.health.hpMax;
+                    metaToSave['hp-base'] = d.health.hpBase;
+                }
+                if (d.will) {
+                    metaToSave['will-curr'] = d.will.willCurr;
+                    metaToSave['will-max-display'] = d.will.willMax;
+                    metaToSave['will-base'] = d.will.willBase;
+                }
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                if (d.stats)
+                    Object.entries(d.stats).forEach(([stat, vals]: any) => {
+                        metaToSave[`${stat}-base`] = vals.base;
+                        metaToSave[`${stat}-rank`] = vals.rank;
+                        metaToSave[`${stat}-buff`] = vals.buff;
+                        metaToSave[`${stat}-debuff`] = vals.debuff;
+                        metaToSave[`${stat}-limit`] = vals.limit;
+                    });
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                if (d.socials)
+                    Object.entries(d.socials).forEach(([stat, vals]: any) => {
+                        metaToSave[`${stat}-base`] = vals.base;
+                        metaToSave[`${stat}-rank`] = vals.rank;
+                        metaToSave[`${stat}-buff`] = vals.buff;
+                        metaToSave[`${stat}-debuff`] = vals.debuff;
+                        metaToSave[`${stat}-limit`] = vals.limit;
+                    });
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                if (d.skills)
+                    Object.entries(d.skills).forEach(([skill, vals]: any) => {
+                        metaToSave[`${skill}-base`] = vals.base;
+                        metaToSave[`${skill}-buff`] = vals.buff;
+                        if (vals.customName) metaToSave[`label-${skill}`] = vals.customName;
+                    });
+
+                if (d.derived) {
+                    metaToSave['def-buff'] = d.derived.defBuff;
+                    metaToSave['def-debuff'] = d.derived.defDebuff;
+                    metaToSave['spd-buff'] = d.derived.sdefBuff;
+                    metaToSave['spd-debuff'] = d.derived.sdefDebuff;
+                    metaToSave['happiness-curr'] = d.derived.happy;
+                    metaToSave['loyalty-curr'] = d.derived.loyal;
+                }
+
+                if (d.extras) {
+                    metaToSave['extra-core'] = d.extras.core;
+                    metaToSave['extra-social'] = d.extras.social;
+                    metaToSave['extra-skill'] = d.extras.skill;
+                }
+
+                if (d.trackers) {
+                    metaToSave['actions-used'] = d.trackers.actions;
+                    metaToSave['evasions-used'] = d.trackers.evade;
+                    metaToSave['clashes-used'] = d.trackers.clash;
+                    metaToSave['chances-used'] = d.trackers.chances;
+                    metaToSave['fate-used'] = d.trackers.fate;
+                    metaToSave['global-acc-mod'] = d.trackers.globalAcc;
+                    metaToSave['global-dmg-mod'] = d.trackers.globalDmg;
+                    metaToSave['global-succ-mod'] = d.trackers.globalSucc;
+                    metaToSave['global-chance-mod'] = d.trackers.globalChance;
+                    metaToSave['ignored-pain-mod'] = d.trackers.ignoredPain;
+                }
+
+                if (d.moves) metaToSave['moves-data'] = JSON.stringify(d.moves);
+                if (d.skillChecks) metaToSave['skill-checks-data'] = JSON.stringify(d.skillChecks);
+                if (d.inventory) metaToSave['inv-data'] = JSON.stringify(d.inventory);
+                if (d.statuses) metaToSave['status-list'] = JSON.stringify(d.statuses);
+                if (d.effects) metaToSave['effects-data'] = JSON.stringify(d.effects);
+                if (d.customInfo) metaToSave['custom-info-data'] = JSON.stringify(d.customInfo);
+                if (d.extraCategories) metaToSave['extra-skills-data'] = JSON.stringify(d.extraCategories);
+
+                metaToSave['notes'] = d.notes || '';
+                metaToSave['training-points'] = d.tp || 0;
+                metaToSave['currency'] = d.currency || 0;
+
+                // Push the mapped data back into the Owlbear Token!
+                saveToOwlbear(metaToSave);
             }
         } catch (error) {
             console.error('Failed to import character data:', error);
