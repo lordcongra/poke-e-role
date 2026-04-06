@@ -153,13 +153,13 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
     addCustomItem: () => {
         const newItems: CustomItem[] = [
             ...get().roomCustomItems,
-            { 
-                id: crypto.randomUUID(), 
-                name: 'New Item', 
-                description: '', 
-                pocket: 'Misc', 
-                category: 'Misc', 
-                rarity: 'Uncommon' 
+            {
+                id: crypto.randomUUID(),
+                name: 'New Item',
+                description: '',
+                pocket: 'Misc',
+                category: 'Misc',
+                rarity: 'Uncommon'
             }
         ];
         set({ roomCustomItems: newItems });
@@ -288,18 +288,18 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             const guaranteedCategory = item.category || 'Misc';
             const guaranteedRarity = item.rarity || 'Uncommon';
             if (index !== -1) {
-                mergedItems[index] = { 
-                    ...item, 
-                    id: mergedItems[index].id, 
-                    pocket: guaranteedPocket, 
+                mergedItems[index] = {
+                    ...item,
+                    id: mergedItems[index].id,
+                    pocket: guaranteedPocket,
                     category: guaranteedCategory,
                     rarity: guaranteedRarity
                 };
             } else {
-                mergedItems.push({ 
-                    ...item, 
-                    id: crypto.randomUUID(), 
-                    pocket: guaranteedPocket, 
+                mergedItems.push({
+                    ...item,
+                    id: crypto.randomUUID(),
+                    pocket: guaranteedPocket,
                     category: guaranteedCategory,
                     rarity: guaranteedRarity
                 });
@@ -351,18 +351,18 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             const guaranteedCategory = item.category || 'Misc';
             const guaranteedRarity = item.rarity || 'Uncommon';
             if (index !== -1) {
-                mergedItems[index] = { 
-                    ...item, 
-                    id: mergedItems[index].id, 
-                    pocket: guaranteedPocket, 
+                mergedItems[index] = {
+                    ...item,
+                    id: mergedItems[index].id,
+                    pocket: guaranteedPocket,
                     category: guaranteedCategory,
                     rarity: guaranteedRarity
                 };
             } else {
-                mergedItems.push({ 
-                    ...item, 
-                    id: crypto.randomUUID(), 
-                    pocket: guaranteedPocket, 
+                mergedItems.push({
+                    ...item,
+                    id: crypto.randomUUID(),
+                    pocket: guaranteedPocket,
                     category: guaranteedCategory,
                     rarity: guaranteedRarity
                 });

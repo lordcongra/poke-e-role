@@ -23,9 +23,12 @@ console.log('🚀 Generating Index from existing files...');
 
 // --- WEIGHT CALCULATION HELPERS ---
 function getMoveWeight(move, power) {
-    if (move.Category === 'Support' || power === 0) return 20; // Rare
-    if (power <= 3) return 20; // Rare
-    return 5; // Power 4+ is Very Rare
+    if (move.Category === 'Status') return 50; // Uncommon
+    if (power <= 1) return 100; // Common
+    if (power === 2) return 50; // Uncommon
+    if (power === 3) return 20; // Rare
+    if (power >= 4) return 5; // Very Rare
+    return 20; // Default Rare
 }
 
 function getItemWeight(item, category) {
@@ -54,7 +57,7 @@ function getItemWeight(item, category) {
 function getAllFiles(dirPath, arrayOfFiles) {
     const files = fs.readdirSync(dirPath);
     arrayOfFiles = arrayOfFiles || [];
-    files.forEach(function(file) {
+    files.forEach(function (file) {
         if (fs.statSync(path.join(dirPath, file)).isDirectory()) {
             arrayOfFiles = getAllFiles(path.join(dirPath, file), arrayOfFiles);
         } else if (file.endsWith('.json')) {
@@ -75,7 +78,7 @@ if (fs.existsSync(MOVES_DIR)) {
 
             const relativePath = path.relative(MOVES_DIR, filePath).replace(/\\/g, '/');
             const categoryParts = relativePath.split('/');
-            categoryParts.pop(); 
+            categoryParts.pop();
             const categoryPath = categoryParts.join('/');
 
             let indexRef = null;

@@ -68,6 +68,15 @@ export function getRarityFromWeight(weight: number): string {
     return 'Legendary';
 }
 
+function getCustomMoveWeight(power: number, category: string): number {
+    if (category === 'Status') return 50;
+    if (power <= 1) return 100;
+    if (power === 2) return 50;
+    if (power === 3) return 20;
+    if (power >= 4) return 5;
+    return 20;
+}
+
 export function generateLootPool(
     index: LocalDatasetIndex,
     filters: Record<string, boolean>,
@@ -156,11 +165,12 @@ export function generateLootPool(
             if (m.power > 10 && includesHighPower) shouldInclude = true;
 
             if (shouldInclude) {
-                const rarityStr = getRarityFromWeight(m.power > 3 ? 5 : 20);
+                const weight = getCustomMoveWeight(m.power, m.category);
+                const rarityStr = getRarityFromWeight(weight);
                 if (rarityFilters[rarityStr]) {
                     masterPool.push({
                         type: 'tm',
-                        data: { name: m.name, path: '', type: m.type, weight: m.power > 3 ? 5 : 20 }
+                        data: { name: m.name, path: '', type: m.type, weight }
                     });
                 }
             }
@@ -174,9 +184,34 @@ export async function rollLootItem(
     pool: PoolItem[],
     ignoreWeighting: boolean
 ): Promise<{ name: string; description: string }> {
+    if (pool.length === 0) {
+        return { name: 'Error', description: 'No items in the pool.' };
+    }
+
+    // STAGE 1: Bucket the pool by Meta-Category to prevent TMs from drowning out Items
+    const buckets: Record<string, PoolItem[]> = {
+        item: [],
+        tm: [],
+        homebrew: []
+    };
+
+    pool.forEach((item) => {
+        if (buckets[item.type]) {
+            buckets[item.type].push(item);
+        }
+    });
+
+    // Remove empty buckets so we don't try to roll from a category with 0 items
+    const activeBuckets = Object.values(buckets).filter((b) => b.length > 0);
+
+    // Pick a bucket at random (e.g. 50/50 chance between Items and TMs if both are active)
+    const selectedBucketIndex = Math.floor(Math.random() * activeBuckets.length);
+    const selectedBucket = activeBuckets[selectedBucketIndex];
+
+    // STAGE 2: Normal rarity-weighted roll INSIDE the chosen bucket
     let totalWeight = 0;
 
-    const weightedPool = pool.map((item) => {
+    const weightedPool = selectedBucket.map((item) => {
         let itemWeight = 1; // If ignored, everyone gets 1 ticket!
 
         if (!ignoreWeighting) {

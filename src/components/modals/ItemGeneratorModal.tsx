@@ -84,6 +84,15 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
                     }))
                 };
             });
+
+            // Explicitly sort the pockets to group checkboxes properly and push Evolution Items down
+            const pocketOrder = ['Medicine', 'HeldItems', 'Pokeballs', 'TrainerItems', 'EvolutionItem', 'KeyItems'];
+            builtBasePockets.sort((a, b) => {
+                const idxA = pocketOrder.indexOf(a.pocket);
+                const idxB = pocketOrder.indexOf(b.pocket);
+                return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
+            });
+
             setBasePockets(builtBasePockets);
 
             const customPocketMap: Record<string, Set<string>> = {};
