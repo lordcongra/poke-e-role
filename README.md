@@ -1,8 +1,6 @@
-# Pokerole 3.0 Sheet v2.0 (Owlbear Rodeo Extension)
+# Pokerole 3.0 Sheet v2.2 (Owlbear Rodeo Extension)
 
 A highly automated, modular character sheet extension for playing **Pokerole 3.0** campaigns (including **Pokémon Mystery Dungeon / PMD** settings) within the Owlbear Rodeo VTT.
-
-**What's New in V2?** The entire extension has been rebuilt from the ground up using React and Zustand! This means lightning-fast, lag-free UI updates, bulletproof Owlbear Rodeo data syncing, and the introduction of the massive **Homebrew Workshop**!
 
 _A massive thank you to the creator of the **Owl Trackers** extension. Their incredible UI work and data management architecture were a massive inspiration for the custom graphics engine for the overhaul of this sheet!_
 
@@ -39,12 +37,24 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 ## 🌟 Features
 
-### 🛠️ The Homebrew Workshop (New in V2!)
+### 🛠️ The Homebrew Workshop
 
 - **Fully Custom Database:** Create your own custom Pokémon, Moves, Abilities, Items, and even completely new Typings (with custom weakness/resistance charts).
 - **Live Room Sync:** Anything you build in the Workshop instantly syncs to the room database, making it immediately available in the dropdown menus for every player!
 - **GM Spoiler Protection:** Check the "GM Only" box on any custom creation to keep it hidden from the players' Workshop and dropdown menus until you are ready to reveal the boss!
 - **Backup & Restore:** Easily export your entire Homebrew Workshop as a JSON file to share with other GMs or carry over to a new campaign room.
+
+### 🎁 The Loot Generator (New in V2.2!)
+
+- **Automated Drop Tables:** Takes the heavy lifting out of session prep and dungeon crawling. Select the pockets/categories you want to pull from (e.g., Berries, Held Items, TMs) and generate instant loot drops.
+- **Two-Stage RNG Engine:** Attempts to weight common items (like Potions) against rare items (like Mega Stones) so you don't accidentally over-reward your players. It's not perfect but it gets the job done.
+- **Legendary Filtering:** Easily toggle the inclusion of extremely rare, game-breaking legendary items with a single checkbox. This includes things like master balls, rare candy, etc. It will also include anything in the Homebrew Workshop that you tag as Legendary rarity.
+- **GM Access Control:** By default, the generator is a GM-exclusive tool, but it can be globally unlocked for players via the Room Rules menu!
+
+### 🌐 Live Database Fetching & Offline Resilience (New in V2.2!)
+
+- **Offline-First Architecture:** The extension now ships with a pre-compiled local database of Pokémon, Abilities, Natures, Moves, and Items. It loads instantly and is completely immune to third-party API rate limits or network outages!
+- **Seamless Live Fallback:** If you type in the name of a brand-new Pokémon that isn't in your local database yet, the app intelligently falls back to the live Pokerole-Data repository to fetch the stats, completely bypassing API limits in the process.
 
 ### 📊 Fully Automated Stat Calculation
 
@@ -63,7 +73,7 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 - Automatically calculates your maximum Attribute, Social, and Skill point limits based on your currently selected Rank and Age.
 - Tracks your spent points and warns you if you exceed standard limits.
 - **Auto-Fetches Stat Caps:** Automatically queries the API to display the maximum Attribute limits for your specific Pokémon species.
-- **PMD / Homebrew Friendly:** Includes "Extra Pts" override boxes, allowing GMs to reward extra stats for completing dungeons/quests/events, using special items, etc. without breaking the sheet's logic.
+- **PMD / Homebrew Friendly:** Includes "Extra Pts" override boxes, allowing GMs to reward extra stats for completing special dungeons/quests/events, using special items, etc. without breaking the sheet's logic.
 
 ### ⏱️ Dynamic Status, Pain, & Timers (w/ Map Sync)
 
@@ -91,15 +101,9 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 ### 🎲 1-Click Dice+ & Broadcast Integration
 
-- **OBR Notifications:** Every roll triggers a beautiful Owlbear Rodeo broadcast notification announcing the move, pain penalties, active item buffs, and required successes to the whole table!
+- **OBR Notifications:** Every roll triggers an Owlbear Rodeo broadcast notification announcing the move, pain penalties, active item buffs, and required successes to the whole table! The goal of this is to give you info on what you have that's affecting your rolls.
 - **Pure Math Routing:** Dice+ and the sheet handles most of the math for you!
-- **Smart Combat:** Automatically accounts for global Accuracy/Damage modifiers, STAB bonuses, Protean/Libero, and even grants +3 dice on Critical Hits for the _Sniper_ ability.
-
-### 🌐 Live Database Fetching & Offline Resilience
-
-- **Lazy Caching (Rate Limit Protection):** The app automatically saves a local copy of Pokémon, Moves, and Abilities as you load them. If the GitHub API goes down or you hit a network rate limit, the sheet will seamlessly degrade to your local cache, allowing you to keep playing uninterrupted!
-- Type in the name of a Pokémon species, and the sheet securely fetches its Base Stats, Typings, and Abilities directly from the official Pokerole 3.0 GitHub Database.
-- **Global Move Library:** Start typing a move name to instantly search the entire Pokerole global library to pull the move's Base Power, Category, Accuracy stats, and mechanical Effects.
+- **Smart Combat:** Automatically accounts for global Accuracy/Damage modifiers, STAB bonuses, Protean/Libero, Super Luck, and even grants +3 dice on Critical Hits for the _Sniper_ ability.
 
 ### 🛡️ Auto-Calculating Type Matchups
 
@@ -120,4 +124,4 @@ To install this extension into your Owlbear Rodeo room, copy the Manifest URL be
 
 `https://lordcongra.github.io/poke-e-role/manifest.json`
 
-_(Note: If the sheet updates, you can force Owlbear to fetch the newest version by adding a version tag to the end of the URL, like `?v=2.0.0`)_
+_(Note: If the sheet updates, you can force Owlbear to fetch the newest version by adding a version tag to the end of the URL, like `?v=2.2.0`)_
