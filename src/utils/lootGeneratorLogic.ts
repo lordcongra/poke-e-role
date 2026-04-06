@@ -1,5 +1,5 @@
 import { fetchMoveData, fetchItemData } from './api';
-import type { LocalIndexItem, LocalDatasetIndex, ItemApiResponse } from './api';
+import type { LocalIndexItem, LocalDatasetIndex, ItemApiResponse } from './apiTypes';
 import type { CustomItem, CustomMove } from '../store/storeTypes';
 
 export type PoolItem =
@@ -60,9 +60,18 @@ export const formatItemDescription = (data: ItemApiResponse): string => {
     return extraInfo ? `${baseDescription}${extraInfo}` : baseDescription;
 };
 
+export function getRarityFromWeight(weight: number): string {
+    if (weight >= 100) return 'Common';
+    if (weight >= 50) return 'Uncommon';
+    if (weight >= 20) return 'Rare';
+    if (weight >= 5) return 'Very Rare';
+    return 'Legendary';
+}
+
 export function generateLootPool(
     index: LocalDatasetIndex,
     filters: Record<string, boolean>,
+    rarityFilters: Record<string, boolean>,
     tmPowers: string[],
     tmTypes: string[],
     roomCustomItems: CustomItem[],
@@ -77,7 +86,10 @@ export function generateLootPool(
                 if (filters[`base_item_${pocket}_${category}`]) {
                     const itemsArr = index.items[pocket][category];
                     if (Array.isArray(itemsArr)) {
-                        itemsArr.forEach((i) => masterPool.push({ type: 'item', data: i }));
+                        itemsArr.forEach((i) => {
+                            const rarityStr = getRarityFromWeight(i.weight ?? 50);
+                            if (rarityFilters[rarityStr]) masterPool.push({ type: 'item', data: i });
+                        });
                     }
                 }
             });
@@ -88,7 +100,8 @@ export function generateLootPool(
     visibleCustomItems.forEach((custom) => {
         const cPocket = custom.pocket || 'Custom';
         const cCategory = custom.category || 'Misc';
-        if (filters[`custom_item_${cPocket}_${cCategory}`]) {
+        const cRarity = custom.rarity || 'Uncommon';
+        if (filters[`custom_item_${cPocket}_${cCategory}`] && rarityFilters[cRarity]) {
             masterPool.push({ type: 'homebrew', data: custom });
         }
     });
@@ -104,7 +117,8 @@ export function generateLootPool(
         if (!Array.isArray(arr)) return;
         arr.forEach((m) => {
             if (isMoveTypeValid(m.type)) {
-                masterPool.push({ type: 'tm', data: m });
+                const rarityStr = getRarityFromWeight(m.weight ?? 20);
+                if (rarityFilters[rarityStr]) masterPool.push({ type: 'tm', data: m });
             }
         });
     };
@@ -142,10 +156,13 @@ export function generateLootPool(
             if (m.power > 10 && includesHighPower) shouldInclude = true;
 
             if (shouldInclude) {
-                masterPool.push({
-                    type: 'tm',
-                    data: { name: m.name, path: '', type: m.type }
-                });
+                const rarityStr = getRarityFromWeight(m.power > 3 ? 5 : 20);
+                if (rarityFilters[rarityStr]) {
+                    masterPool.push({
+                        type: 'tm',
+                        data: { name: m.name, path: '', type: m.type, weight: m.power > 3 ? 5 : 20 }
+                    });
+                }
             }
         }
     });
@@ -153,28 +170,62 @@ export function generateLootPool(
     return masterPool;
 }
 
-export async function rollLootItem(pool: PoolItem[]): Promise<{ name: string; description: string }> {
-    const roll = pool[Math.floor(Math.random() * pool.length)];
+export async function rollLootItem(
+    pool: PoolItem[],
+    ignoreWeighting: boolean
+): Promise<{ name: string; description: string }> {
+    let totalWeight = 0;
+
+    const weightedPool = pool.map((item) => {
+        let itemWeight = 1; // If ignored, everyone gets 1 ticket!
+
+        if (!ignoreWeighting) {
+            if (item.type === 'tm' || item.type === 'item') {
+                itemWeight = item.data.weight ?? 50;
+            } else if (item.type === 'homebrew') {
+                const rarityStr = item.data.rarity || 'Uncommon';
+                if (rarityStr === 'Common') itemWeight = 100;
+                else if (rarityStr === 'Uncommon') itemWeight = 50;
+                else if (rarityStr === 'Rare') itemWeight = 20;
+                else if (rarityStr === 'Very Rare') itemWeight = 5;
+                else itemWeight = 1;
+            }
+        }
+
+        totalWeight += itemWeight;
+        return { ...item, _computedWeight: itemWeight };
+    });
+
+    let randomTarget = Math.random() * totalWeight;
+    let selectedRoll = weightedPool[0];
+
+    for (const item of weightedPool) {
+        randomTarget -= item._computedWeight;
+        if (randomTarget <= 0) {
+            selectedRoll = item;
+            break;
+        }
+    }
 
     let finalItemName = '';
     let finalItemDescription = '';
 
-    if (roll.type === 'homebrew') {
-        finalItemName = roll.data.name;
-        finalItemDescription = roll.data.description;
-    } else if (roll.type === 'tm') {
-        const moveData = await fetchMoveData(roll.data.name);
+    if (selectedRoll.type === 'homebrew') {
+        finalItemName = selectedRoll.data.name;
+        finalItemDescription = selectedRoll.data.description;
+    } else if (selectedRoll.type === 'tm') {
+        const moveData = await fetchMoveData(selectedRoll.data.name);
         if (moveData) {
             const accuracyText = [moveData.Accuracy1, moveData.Accuracy2].filter(Boolean).join(' + ');
             const damageText = moveData.Damage1 || 'None';
             const effectText = moveData.Effect ? `\n\nEffect: ${moveData.Effect}` : '';
 
-            finalItemName = `TM: ${roll.data.name}`;
-            finalItemDescription = `Teaches the move ${roll.data.name}.\n\nType: ${moveData.Type} | Cat: ${moveData.Category} | Power: ${moveData.Power}\nAcc: ${accuracyText || 'None'} | Dmg: ${damageText}${effectText}\n\n${moveData.Description}`;
+            finalItemName = `TM: ${selectedRoll.data.name}`;
+            finalItemDescription = `Teaches the move ${selectedRoll.data.name}.\n\nType: ${moveData.Type} | Cat: ${moveData.Category} | Power: ${moveData.Power}\nAcc: ${accuracyText || 'None'} | Dmg: ${damageText}${effectText}\n\n${moveData.Description}`;
         }
-    } else if (roll.type === 'item') {
-        const itemData = await fetchItemData(roll.data.name);
-        finalItemName = formatPokeballName(roll.data.name);
+    } else if (selectedRoll.type === 'item') {
+        const itemData = await fetchItemData(selectedRoll.data.name);
+        finalItemName = formatPokeballName(selectedRoll.data.name);
         finalItemDescription = itemData ? formatItemDescription(itemData) : '';
     }
 

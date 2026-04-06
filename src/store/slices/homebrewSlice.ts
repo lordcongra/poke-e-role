@@ -153,7 +153,14 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
     addCustomItem: () => {
         const newItems: CustomItem[] = [
             ...get().roomCustomItems,
-            { id: crypto.randomUUID(), name: 'New Item', description: '', pocket: 'Misc', category: 'Misc' }
+            { 
+                id: crypto.randomUUID(), 
+                name: 'New Item', 
+                description: '', 
+                pocket: 'Misc', 
+                category: 'Misc', 
+                rarity: 'Uncommon' 
+            }
         ];
         set({ roomCustomItems: newItems });
         syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, get().roomCustomAbilities, newItems);
@@ -279,19 +286,22 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             const index = mergedItems.findIndex((existing) => existing.name.toLowerCase() === item.name.toLowerCase());
             const guaranteedPocket = item.pocket || 'Misc';
             const guaranteedCategory = item.category || 'Misc';
+            const guaranteedRarity = item.rarity || 'Uncommon';
             if (index !== -1) {
-                mergedItems[index] = {
-                    ...item,
-                    id: mergedItems[index].id,
-                    pocket: guaranteedPocket,
-                    category: guaranteedCategory
+                mergedItems[index] = { 
+                    ...item, 
+                    id: mergedItems[index].id, 
+                    pocket: guaranteedPocket, 
+                    category: guaranteedCategory,
+                    rarity: guaranteedRarity
                 };
             } else {
-                mergedItems.push({
-                    ...item,
-                    id: crypto.randomUUID(),
-                    pocket: guaranteedPocket,
-                    category: guaranteedCategory
+                mergedItems.push({ 
+                    ...item, 
+                    id: crypto.randomUUID(), 
+                    pocket: guaranteedPocket, 
+                    category: guaranteedCategory,
+                    rarity: guaranteedRarity
                 });
             }
         });
@@ -339,19 +349,22 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             const index = mergedItems.findIndex((existing) => existing.name.toLowerCase() === item.name.toLowerCase());
             const guaranteedPocket = item.pocket || 'Misc';
             const guaranteedCategory = item.category || 'Misc';
+            const guaranteedRarity = item.rarity || 'Uncommon';
             if (index !== -1) {
-                mergedItems[index] = {
-                    ...item,
-                    id: mergedItems[index].id,
-                    pocket: guaranteedPocket,
-                    category: guaranteedCategory
+                mergedItems[index] = { 
+                    ...item, 
+                    id: mergedItems[index].id, 
+                    pocket: guaranteedPocket, 
+                    category: guaranteedCategory,
+                    rarity: guaranteedRarity
                 };
             } else {
-                mergedItems.push({
-                    ...item,
-                    id: crypto.randomUUID(),
-                    pocket: guaranteedPocket,
-                    category: guaranteedCategory
+                mergedItems.push({ 
+                    ...item, 
+                    id: crypto.randomUUID(), 
+                    pocket: guaranteedPocket, 
+                    category: guaranteedCategory,
+                    rarity: guaranteedRarity
                 });
             }
         });

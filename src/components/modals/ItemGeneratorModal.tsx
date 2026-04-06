@@ -35,6 +35,15 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
     const [tmPowers, setTmPowers] = useState<string[]>([]);
     const [tmTypes, setTmTypes] = useState<string[]>(['Any']);
 
+    const [rarityFilters, setRarityFilters] = useState<Record<string, boolean>>({
+        Common: true,
+        Uncommon: true,
+        Rare: true,
+        'Very Rare': true,
+        Legendary: true
+    });
+    const [ignoreWeighting, setIgnoreWeighting] = useState(false);
+
     const [isGenerating, setIsGenerating] = useState(false);
     const [generatedItem, setGeneratedItem] = useState<{ name: string; description: string } | null>(null);
     const [activePool, setActivePool] = useState<PoolItem[]>([]);
@@ -131,7 +140,15 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
             return;
         }
 
-        const masterPool = generateLootPool(index, filters, tmPowers, tmTypes, roomCustomItems, roomCustomMoves);
+        const masterPool = generateLootPool(
+            index,
+            filters,
+            rarityFilters,
+            tmPowers,
+            tmTypes,
+            roomCustomItems,
+            roomCustomMoves
+        );
 
         if (masterPool.length === 0) {
             if (OBR.isAvailable) OBR.notification.show('⚠️ No items match these filters!', 'WARNING');
@@ -142,7 +159,7 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
 
         setIsGenerating(true);
         try {
-            const item = await rollLootItem(masterPool);
+            const item = await rollLootItem(masterPool, ignoreWeighting);
             setGeneratedItem(item);
         } catch (error) {
             console.error('Loot Generator Error:', error);
@@ -153,6 +170,7 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
     };
 
     const isAnySelected = Object.values(filters).some((val) => val === true) || tmPowers.length > 0;
+    const isAnyRaritySelected = Object.values(rarityFilters).some((val) => val === true);
 
     return (
         <>
@@ -181,6 +199,40 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
                         >
                             Deselect All
                         </button>
+                    </div>
+
+                    <div className="item-generator-modal__rarity-container">
+                        <div className="item-generator-modal__rarity-header">✨ Drop Rarity Filters</div>
+                        <div className="item-generator-modal__rarity-grid">
+                            {['Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary'].map((rarity) => (
+                                <label key={rarity} className="item-generator-modal__checkbox-label">
+                                    <input
+                                        type="checkbox"
+                                        className="item-generator-modal__checkbox"
+                                        checked={!!rarityFilters[rarity]}
+                                        onChange={() =>
+                                            setRarityFilters((prev) => ({ ...prev, [rarity]: !prev[rarity] }))
+                                        }
+                                    />
+                                    {rarity}
+                                </label>
+                            ))}
+
+                            <div
+                                className="item-generator-modal__rarity-flat-odds"
+                                title="If checked, Common Potions and Legendary Masterballs will have the exact same probability of dropping!"
+                            >
+                                <label className="item-generator-modal__checkbox-label">
+                                    <input
+                                        type="checkbox"
+                                        className="item-generator-modal__checkbox"
+                                        checked={ignoreWeighting}
+                                        onChange={(e) => setIgnoreWeighting(e.target.checked)}
+                                    />
+                                    Ignore Weighting (Flat Odds)
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="item-generator-modal__filters-container">
@@ -232,7 +284,7 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
                         <button
                             type="button"
                             onClick={handleGenerate}
-                            disabled={isGenerating || !isAnySelected}
+                            disabled={isGenerating || !isAnySelected || !isAnyRaritySelected}
                             className="action-button action-button--red item-generator-modal__btn"
                         >
                             {isGenerating ? '⏳ Generating...' : '🎲 Generate'}
@@ -247,7 +299,7 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
                     onClose={() => setGeneratedItem(null)}
                     onReroll={async () => {
                         setIsGenerating(true);
-                        const item = await rollLootItem(activePool);
+                        const item = await rollLootItem(activePool, ignoreWeighting);
                         setGeneratedItem(item);
                         setIsGenerating(false);
                     }}

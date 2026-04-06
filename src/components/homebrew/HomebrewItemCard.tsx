@@ -19,6 +19,7 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove }: HomebrewItem
     const [localDescription, setLocalDescription] = useState(item.description);
     const [localPocket, setLocalPocket] = useState(item.pocket || 'Misc');
     const [localCategory, setLocalCategory] = useState(item.category || 'Misc');
+    const [localRarity, setLocalRarity] = useState(item.rarity || 'Uncommon');
     const [localGameMasterOnly, setLocalGameMasterOnly] = useState(item.gmOnly || false);
 
     const [showTagBuilder, setShowTagBuilder] = useState(false);
@@ -30,6 +31,7 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove }: HomebrewItem
         setLocalDescription(item.description);
         setLocalPocket(item.pocket || 'Misc');
         setLocalCategory(item.category || 'Misc');
+        setLocalRarity(item.rarity || 'Uncommon');
         setLocalGameMasterOnly(item.gmOnly || false);
     }, [item]);
 
@@ -119,6 +121,23 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove }: HomebrewItem
                             disabled={!canEdit}
                             className="homebrew-item-card__input"
                         />
+                        <select
+                            value={localRarity}
+                            onChange={(event) => canEdit && setLocalRarity(event.target.value)}
+                            onBlur={() =>
+                                canEdit &&
+                                localRarity !== item.rarity &&
+                                updateCustomItem(item.id, 'rarity', localRarity)
+                            }
+                            disabled={!canEdit}
+                            className="homebrew-item-card__select"
+                        >
+                            <option value="Common">Common</option>
+                            <option value="Uncommon">Uncommon</option>
+                            <option value="Rare">Rare</option>
+                            <option value="Very Rare">Very Rare</option>
+                            <option value="Legendary">Legendary</option>
+                        </select>
                     </div>
                     <textarea
                         value={localDescription}

@@ -3,6 +3,7 @@ export interface LocalIndexItem {
     path: string;
     type?: string;
     pmd?: boolean;
+    weight?: number;
 }
 
 export interface LocalDatasetIndex {
