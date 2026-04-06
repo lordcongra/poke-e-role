@@ -54,6 +54,7 @@ export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
 
         const data = (await response.json()) as LocalDatasetIndex;
 
+        // Populate Moves
         if (ALL_MOVES.length === 0 && data.moves) {
             const populateMoves = (arr: LocalIndexItem[]) => {
                 arr.forEach((moveItem) => {
@@ -74,6 +75,7 @@ export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
             ALL_MOVES.sort();
         }
 
+        // Populate Items
         if (Object.keys(CATEGORIZED_ITEMS).length === 0 && data.items) {
             Object.keys(data.items).forEach((pocket) => {
                 Object.keys(data.items[pocket]).forEach((category) => {
@@ -87,6 +89,29 @@ export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
                         }
                     });
                 });
+            });
+        }
+
+        // Populate Pokemon
+        if (Object.keys(SPECIES_URLS).length === 0 && data.pokemon) {
+            Object.values(data.pokemon).forEach((p) => {
+                SPECIES_URLS[p.name.toLowerCase()] = p.path;
+            });
+        }
+
+        // Populate Abilities
+        if (ALL_ABILITIES.length === 0 && data.abilities) {
+            Object.values(data.abilities).forEach((a) => {
+                ABILITIES_URLS[a.name.toLowerCase()] = a.path;
+                if (!ALL_ABILITIES.includes(a.name)) ALL_ABILITIES.push(a.name);
+            });
+            ALL_ABILITIES.sort();
+        }
+
+        // Populate Natures
+        if (Object.keys(NATURES_URLS).length === 0 && data.natures) {
+            Object.values(data.natures).forEach((n) => {
+                NATURES_URLS[n.name.toLowerCase()] = n.path;
             });
         }
 
@@ -114,8 +139,16 @@ export function loadGithubTree(): Promise<void> {
     if (isTreeLoaded) return Promise.resolve();
     if (treePromise) return treePromise;
 
-    treePromise = fetchWithCache<GitHubTreeResponse>(GITHUB_TREE_URL, 'master_tree_fallback', 'Pokerole Github DB')
-        .then((data) => {
+    treePromise = (async () => {
+        // ALWAYS load local dataset first to guarantee UI dropdowns populate immediately!
+        await loadLocalDataset();
+
+        try {
+            const data = await fetchWithCache<GitHubTreeResponse>(
+                GITHUB_TREE_URL,
+                'master_tree_fallback',
+                'Pokerole Github DB'
+            );
             if (!data || !data.tree) return;
 
             const isV3 = /(^|\/)v3\.0\//i;
@@ -149,14 +182,13 @@ export function loadGithubTree(): Promise<void> {
                     }
                 }
             });
-
+        } catch (err) {
+            console.error('Error processing Github Data (Falling back entirely to local dataset):', err);
+        } finally {
             ALL_ABILITIES.sort();
             isTreeLoaded = true;
-        })
-        .catch((err) => console.error('Error processing Github Data:', err))
-        .finally(() => {
-            treePromise = null;
-        });
+        }
+    })();
 
     return treePromise;
 }
