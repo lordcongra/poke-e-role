@@ -33,7 +33,7 @@ export function ItemGeneratorPocketGroup({
 
     if (pocketGroup.isFlat) {
         return (
-            <label className="item-generator-modal__checkbox-label item-generator-modal__flat-label">
+            <label className="item-generator-modal__checkbox-label item-generator-modal__pocket-header">
                 <input
                     type="checkbox"
                     className="item-generator-modal__checkbox"
@@ -45,7 +45,7 @@ export function ItemGeneratorPocketGroup({
                         }))
                     }
                 />
-                {pocketGroup.label}
+                <span className="item-generator-modal__pocket-title">{pocketGroup.label}</span>
             </label>
         );
     }
@@ -69,7 +69,9 @@ export function ItemGeneratorPocketGroup({
                                 type="checkbox"
                                 className="item-generator-modal__checkbox"
                                 checked={!!filters[category.id]}
-                                onChange={() => setFilters((prev) => ({ ...prev, [category.id]: !prev[category.id] }))}
+                                onChange={() =>
+                                    setFilters((prev) => ({ ...prev, [category.id]: !prev[category.id] }))
+                                }
                             />
                             {category.label}
                         </label>

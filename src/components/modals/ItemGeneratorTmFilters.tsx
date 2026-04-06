@@ -17,6 +17,7 @@ export function ItemGeneratorTmFilters({
     allTypes,
     allTypeColors
 }: ItemGeneratorTmFiltersProps) {
+    
     const hasBasic = ['1', '2', '3'].every((p) => tmPowers.includes(p));
     const hasHigh = ['4', '5', '6', '7', '8', '10'].every((p) => tmPowers.includes(p));
 
@@ -84,11 +85,11 @@ export function ItemGeneratorTmFilters({
 
     return (
         <div className="item-generator-modal__filter-group">
-            <div className="item-generator-modal__filter-group-title">Technical Machines</div>
+            <div className="item-generator-modal__filter-group-title">💿 Technical Machines</div>
 
             <span className="item-generator-modal__type-label">TM Powers:</span>
-
-            <div className="item-generator-modal__checkbox-list" style={{ marginBottom: '10px', paddingLeft: '5px' }}>
+            
+            <div className="item-generator-modal__checkbox-list" style={{ marginBottom: '10px', paddingLeft: '5px', borderLeft: 'none', marginLeft: '0' }}>
                 <label className="item-generator-modal__checkbox-label">
                     <input
                         type="checkbox"
@@ -124,28 +125,27 @@ export function ItemGeneratorTmFilters({
                         + Add Specific Power...
                     </option>
                     {!tmPowers.includes('support') && <option value="support">Support</option>}
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 10].map(
-                        (power) =>
-                            !tmPowers.includes(String(power)) && (
-                                <option key={`opt_pow_${power}`} value={String(power)}>
-                                    Power {power}
-                                </option>
-                            )
-                    )}
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 10].map((power) => (
+                        !tmPowers.includes(String(power)) && (
+                            <option key={`opt_pow_${power}`} value={String(power)}>
+                                Power {power}
+                            </option>
+                        )
+                    ))}
                 </select>
             </div>
 
             <div className="item-generator-modal__pill-container">
                 {tmPowers.map((power) => (
-                    <span key={power} className="item-generator-modal__pill" onClick={() => removePowerPill(power)}>
-                        {power === 'support' ? 'Support' : `Power ${power}`} x
+                    <span key={power} className="action-button action-button--dark item-generator-modal__pill" onClick={() => removePowerPill(power)}>
+                        {power === 'support' ? 'Support' : `Power ${power}`} <span style={{ marginLeft: '2px' }}>✖</span>
                     </span>
                 ))}
             </div>
 
             <span className="item-generator-modal__type-label">TM Types:</span>
 
-            <div className="item-generator-modal__checkbox-list" style={{ marginBottom: '10px', paddingLeft: '5px' }}>
+            <div className="item-generator-modal__checkbox-list" style={{ marginBottom: '10px', paddingLeft: '5px', borderLeft: 'none', marginLeft: '0' }}>
                 <label className="item-generator-modal__checkbox-label">
                     <input
                         type="checkbox"
@@ -162,35 +162,32 @@ export function ItemGeneratorTmFilters({
                     <option value="" disabled>
                         + Add Specific Type...
                     </option>
-                    {allTypes.map(
-                        (type) =>
-                            !tmTypes.includes(type) && (
-                                <option key={`opt_type_${type}`} value={type}>
-                                    {type}
-                                </option>
-                            )
-                    )}
+                    {allTypes.map((type) => (
+                        !tmTypes.includes(type) && (
+                            <option key={`opt_type_${type}`} value={type}>
+                                {type}
+                            </option>
+                        )
+                    ))}
                 </select>
             </div>
-
+            
             <div className="item-generator-modal__pill-container">
-                {tmTypes
-                    .filter((t) => t !== 'Any')
-                    .map((type) => (
-                        <span
-                            key={type}
-                            className="item-generator-modal__pill"
-                            style={{
-                                background: allTypeColors[type] || 'var(--dark)',
-                                color: 'white',
-                                textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
-                                borderColor: 'transparent'
-                            }}
-                            onClick={() => removeTypePill(type)}
-                        >
-                            {type} x
-                        </span>
-                    ))}
+                {tmTypes.filter(t => t !== 'Any').map((type) => (
+                    <span
+                        key={type}
+                        className="item-generator-modal__pill"
+                        style={{
+                            background: allTypeColors[type] || 'var(--dark)',
+                            color: 'white',
+                            textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
+                            borderColor: 'transparent'
+                        }}
+                        onClick={() => removeTypePill(type)}
+                    >
+                        {type} <span style={{ marginLeft: '2px' }}>✖</span>
+                    </span>
+                ))}
             </div>
         </div>
     );
