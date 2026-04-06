@@ -2,10 +2,9 @@
     padding-bottom: 10px;
 }
 
-.type-matchups__header-text {
-    display: flex;
-    align-items: center;
-    gap: 4px;
+.type-matchups__header--left {
+    text-align: left;
+    padding-left: 10px;
 }
 
 .type-matchups__empty {

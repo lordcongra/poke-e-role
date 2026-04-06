@@ -55,9 +55,36 @@ export interface PrintConfig {
 }
 
 export interface CoreSlice {
-    health: { hpCurr: number; hpMax: number; hpBase: number };
-    will: { willCurr: number; willMax: number; willBase: number };
-    derived: { defBuff: number; defDebuff: number; sdefBuff: number; sdefDebuff: number; happy: number; loyal: number };
+    health: {
+        /** 'hpCurr' = Current Hit Points */
+        hpCurr: number;
+        /** 'hpMax' = Maximum Hit Points */
+        hpMax: number;
+        /** 'hpBase' = Base Hit Points (Before Vitality/Insight scaling) */
+        hpBase: number;
+    };
+    will: {
+        /** 'willCurr' = Current Willpower */
+        willCurr: number;
+        /** 'willMax' = Maximum Willpower */
+        willMax: number;
+        /** 'willBase' = Base Willpower (Before Insight scaling) */
+        willBase: number;
+    };
+    derived: {
+        /** 'defBuff' = Defense Buff */
+        defBuff: number;
+        /** 'defDebuff' = Defense Debuff */
+        defDebuff: number;
+        /** 'sdefBuff' = Special Defense Buff */
+        sdefBuff: number;
+        /** 'sdefDebuff' = Special Defense Debuff */
+        sdefDebuff: number;
+        /** 'happy' = Happiness Tracker */
+        happy: number;
+        /** 'loyal' = Loyalty Tracker */
+        loyal: number;
+    };
     extras: { core: number; social: number; skill: number };
     stats: Record<CombatStat, StatData>;
     socials: Record<SocialStat, StatData>;
@@ -94,7 +121,9 @@ export interface InventorySlice {
     inventory: InventoryItem[];
     notes: string;
     customInfo: CustomInfo[];
+    /** 'tp' = Training Points */
     tp: number;
+    /** 'currency' = PokéDollars */
     currency: number;
     addInventoryItem: () => void;
     addSpecificInventoryItem: (item: {

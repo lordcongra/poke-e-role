@@ -1,66 +1,9 @@
-// src/components/board/TypeMatchups.tsx
-import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { getAbilityText } from '../../utils/combatUtils';
+import { BASE_TYPE_CHART, BASE_TYPES } from '../../data/typeMatchups';
+import { TYPE_COLORS } from '../../data/constants';
+import { CollapsingSection } from '../ui/CollapsingSection';
 import './TypeMatchups.css';
-
-const BASE_CHART: Record<string, Record<string, number>> = {
-    Normal: { Fighting: 2, Ghost: 0 },
-    Fire: { Water: 2, Ground: 2, Rock: 2, Fire: 0.5, Grass: 0.5, Ice: 0.5, Bug: 0.5, Steel: 0.5, Fairy: 0.5 },
-    Water: { Electric: 2, Grass: 2, Fire: 0.5, Water: 0.5, Ice: 0.5, Steel: 0.5 },
-    Electric: { Ground: 2, Electric: 0.5, Flying: 0.5, Steel: 0.5 },
-    Grass: { Fire: 2, Ice: 2, Poison: 2, Flying: 2, Bug: 2, Water: 0.5, Electric: 0.5, Grass: 0.5, Ground: 0.5 },
-    Ice: { Fire: 2, Fighting: 2, Rock: 2, Steel: 2, Ice: 0.5 },
-    Fighting: { Flying: 2, Psychic: 2, Fairy: 2, Bug: 0.5, Rock: 0.5, Dark: 0.5 },
-    Poison: { Ground: 2, Psychic: 2, Grass: 0.5, Fighting: 0.5, Poison: 0.5, Bug: 0.5, Fairy: 0.5 },
-    Ground: { Water: 2, Grass: 2, Ice: 2, Poison: 0.5, Rock: 0.5, Electric: 0 },
-    Flying: { Electric: 2, Ice: 2, Rock: 2, Grass: 0.5, Fighting: 0.5, Bug: 0.5, Ground: 0 },
-    Psychic: { Bug: 2, Ghost: 2, Dark: 2, Fighting: 0.5, Psychic: 0.5 },
-    Bug: { Fire: 2, Flying: 2, Rock: 2, Grass: 0.5, Fighting: 0.5, Ground: 0.5 },
-    Rock: { Water: 2, Grass: 2, Fighting: 2, Ground: 2, Steel: 2, Normal: 0.5, Fire: 0.5, Poison: 0.5, Flying: 0.5 },
-    Ghost: { Ghost: 2, Dark: 2, Poison: 0.5, Bug: 0.5, Normal: 0, Fighting: 0 },
-    Dragon: { Ice: 2, Dragon: 2, Fairy: 2, Fire: 0.5, Water: 0.5, Electric: 0.5, Grass: 0.5 },
-    Dark: { Fighting: 2, Bug: 2, Fairy: 2, Ghost: 0.5, Dark: 0.5, Psychic: 0 },
-    Steel: {
-        Fire: 2,
-        Fighting: 2,
-        Ground: 2,
-        Normal: 0.5,
-        Grass: 0.5,
-        Ice: 0.5,
-        Flying: 0.5,
-        Psychic: 0.5,
-        Bug: 0.5,
-        Rock: 0.5,
-        Dragon: 0.5,
-        Steel: 0.5,
-        Fairy: 0.5,
-        Poison: 0
-    },
-    Fairy: { Poison: 2, Steel: 2, Fighting: 0.5, Bug: 0.5, Dark: 0.5, Dragon: 0 }
-};
-
-const BASE_TYPES = Object.keys(BASE_CHART);
-const TYPE_COLORS: Record<string, string> = {
-    Normal: '#A8A878',
-    Fire: '#F08030',
-    Water: '#6890F0',
-    Electric: '#F8D030',
-    Grass: '#78C850',
-    Ice: '#98D8D8',
-    Fighting: '#C03028',
-    Poison: '#A040A0',
-    Ground: '#E0C068',
-    Flying: '#A890F0',
-    Psychic: '#F85888',
-    Bug: '#A8B820',
-    Rock: '#B8A038',
-    Ghost: '#705898',
-    Dragon: '#7038F8',
-    Dark: '#705848',
-    Steel: '#B8B8D0',
-    Fairy: '#EE99AC'
-};
 
 export function TypeMatchups() {
     const role = useCharacterStore((state) => state.role);
@@ -69,18 +12,13 @@ export function TypeMatchups() {
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
 
     const inventory = useCharacterStore((state) => state.inventory);
-
     const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
     const abilityName = useCharacterStore((state) => state.identity.ability);
-
-    const [isCollapsed, setIsCollapsed] = useState(false);
 
     if (!type1 && !type2) {
         return (
             <div className="sheet-panel type-matchups__panel">
-                <div className="sheet-panel__header" style={{ textAlign: 'left', paddingLeft: '10px' }}>
-                    ▼ TYPE MATCHUPS
-                </div>
+                <div className="sheet-panel__header type-matchups__header--left">▼ TYPE MATCHUPS</div>
                 <div className="type-matchups__empty">Load a Pokémon to see matchups...</div>
             </div>
         );
@@ -97,7 +35,7 @@ export function TypeMatchups() {
         ALL_TYPES.forEach((atk) => (matrix[def][atk] = 1));
     });
 
-    Object.entries(BASE_CHART).forEach(([def, atkMap]) => {
+    Object.entries(BASE_TYPE_CHART).forEach(([def, atkMap]) => {
         Object.entries(atkMap).forEach(([atk, mult]) => {
             matrix[def][atk] = mult;
         });
@@ -217,31 +155,14 @@ export function TypeMatchups() {
     };
 
     return (
-        <div className="sheet-panel type-matchups__panel">
-            <div className="sheet-panel__header">
-                <span className="type-matchups__header-text">
-                    <button
-                        type="button"
-                        className={`collapse-btn ${isCollapsed ? 'is-collapsed' : ''}`}
-                        onClick={() => setIsCollapsed(!isCollapsed)}
-                    >
-                        ▼
-                    </button>
-                    TYPE MATCHUPS
-                </span>
+        <CollapsingSection title="TYPE MATCHUPS" className="sheet-panel type-matchups__panel">
+            <div className="type-matchups__content">
+                {renderGroup('4x', groups[4])}
+                {renderGroup('2x', groups[2])}
+                {renderGroup('0.5x', groups[0.5])}
+                {renderGroup('0.25x', groups[0.25])}
+                {renderGroup('0x', groups[0])}
             </div>
-
-            {!isCollapsed && (
-                <div className="panel-content-wrapper">
-                    <div className="type-matchups__content">
-                        {renderGroup('4x', groups[4])}
-                        {renderGroup('2x', groups[2])}
-                        {renderGroup('0.5x', groups[0.5])}
-                        {renderGroup('0.25x', groups[0.25])}
-                        {renderGroup('0x', groups[0])}
-                    </div>
-                </div>
-            )}
-        </div>
+        </CollapsingSection>
     );
 }

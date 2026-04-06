@@ -73,27 +73,12 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
 
             const mapSkill = (val: string) => {
                 const v = (val || '').split('/')[0].toLowerCase().trim();
-                const skills = [
-                    'brawl',
-                    'channel',
-                    'clash',
-                    'evasion',
-                    'alert',
-                    'athletic',
-                    'nature',
-                    'stealth',
-                    'charm',
-                    'etiquette',
-                    'intimidate',
-                    'perform',
-                    'crafts',
-                    'lore',
-                    'medicine',
-                    'magic'
-                ];
-                for (const s of skills) {
+                const officialSkills = Object.values(Skill).map((s) => s.toLowerCase());
+
+                for (const s of officialSkills) {
                     if (v.includes(s)) return s;
                 }
+
                 for (const cat of parsedExtraCats) {
                     for (const sk of cat.skills) {
                         if (v === sk.id.toLowerCase() || (sk.name && v === sk.name.toLowerCase())) return sk.id;
@@ -106,8 +91,7 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
             try {
                 const rawMoves = meta['moves-data'] ? JSON.parse(String(meta['moves-data'])) : [];
                 if (Array.isArray(rawMoves)) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    parsedMoves = rawMoves.map((m: any) => {
+                    parsedMoves = rawMoves.map((m: Record<string, unknown>) => {
                         const rawCat = String(m.category || m.Category || 'Physical');
                         const cat = rawCat.startsWith('Phys')
                             ? 'Physical'
@@ -116,7 +100,7 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
                               : 'Status';
 
                         return {
-                            id: m.id || crypto.randomUUID(),
+                            id: (m.id as string) || crypto.randomUUID(),
                             active: m.active === true || m.active === 'true',
                             name: String(m.name || m.Name || ''),
                             type: String(m.type || m.Type || 'Normal'),
@@ -135,9 +119,8 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
             try {
                 const rawChecks = meta['skill-checks-data'] ? JSON.parse(String(meta['skill-checks-data'])) : [];
                 if (Array.isArray(rawChecks)) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    parsedChecks = rawChecks.map((c: any) => ({
-                        id: c.id || crypto.randomUUID(),
+                    parsedChecks = rawChecks.map((c: Record<string, unknown>) => ({
+                        id: (c.id as string) || crypto.randomUUID(),
                         name: String(c.name || c.Name || ''),
                         attr: mapAttr(String(c.attr || c.Attribute || 'ins')) || 'ins',
                         skill: mapSkill(String(c.skill || c.Skill || 'none'))
@@ -149,9 +132,8 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
             try {
                 const rawInv = meta['inv-data'] ? JSON.parse(String(meta['inv-data'])) : [];
                 if (Array.isArray(rawInv)) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    parsedInv = rawInv.map((i: any) => ({
-                        id: i.id || crypto.randomUUID(),
+                    parsedInv = rawInv.map((i: Record<string, unknown>) => ({
+                        id: (i.id as string) || crypto.randomUUID(),
                         qty: Number(i.qty !== undefined ? i.qty : 1),
                         name: String(i.name || i.Name || ''),
                         desc: String(i.desc || i.Description || i.Effect || ''),
@@ -164,9 +146,8 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
             try {
                 const rawStatuses = meta['status-list'] ? JSON.parse(String(meta['status-list'])) : [];
                 if (Array.isArray(rawStatuses) && rawStatuses.length > 0) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    parsedStatuses = rawStatuses.map((s: any) => ({
-                        id: s.id || crypto.randomUUID(),
+                    parsedStatuses = rawStatuses.map((s: Record<string, unknown>) => ({
+                        id: (s.id as string) || crypto.randomUUID(),
                         name: String(s.name || s.Name || 'Healthy'),
                         customName: String(s.customName || s.CustomName || ''),
                         rounds: Number(s.rounds || 0)
@@ -182,9 +163,8 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
             try {
                 const rawEffects = meta['effects-data'] ? JSON.parse(String(meta['effects-data'])) : [];
                 if (Array.isArray(rawEffects)) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    parsedEffects = rawEffects.map((e: any) => ({
-                        id: e.id || crypto.randomUUID(),
+                    parsedEffects = rawEffects.map((e: Record<string, unknown>) => ({
+                        id: (e.id as string) || crypto.randomUUID(),
                         name: String(e.name || e.Name || ''),
                         rounds: Number(e.rounds || 0)
                     }));
@@ -195,9 +175,8 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
             try {
                 const rawCustomInfo = meta['custom-info-data'] ? JSON.parse(String(meta['custom-info-data'])) : [];
                 if (Array.isArray(rawCustomInfo)) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    parsedCustomInfo = rawCustomInfo.map((c: any) => ({
-                        id: c.id || crypto.randomUUID(),
+                    parsedCustomInfo = rawCustomInfo.map((c: Record<string, unknown>) => ({
+                        id: (c.id as string) || crypto.randomUUID(),
                         label: String(c.label || c.Label || ''),
                         value: String(c.value || c.Value || '')
                     }));
