@@ -2,30 +2,13 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Setup paths based on your workspace structure
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// The script lives in /scripts, so we go up one level to reach the root
 const ROOT_DIR = path.resolve(__dirname, '..');
-const SOURCE_DIR = path.join(ROOT_DIR, 'Pokerole-Data', 'v3.0');
-const TARGET_DIR = path.join(ROOT_DIR, 'public', 'dataset');
-
-// Create directories safely
-function ensureDir(dirPath) {
-    if (!fs.existsSync(dirPath)) {
-        fs.mkdirSync(dirPath, { recursive: true });
-    }
-}
-
-// Clean and prepare target directories
-if (fs.existsSync(TARGET_DIR)) {
-    fs.rmSync(TARGET_DIR, { recursive: true, force: true });
-}
-ensureDir(TARGET_DIR);
-
-const movesTargetDir = path.join(TARGET_DIR, 'moves');
-const itemsTargetDir = path.join(TARGET_DIR, 'items');
+const DATASET_DIR = path.join(ROOT_DIR, 'public', 'dataset');
+const MOVES_DIR = path.join(DATASET_DIR, 'moves');
+const ITEMS_DIR = path.join(DATASET_DIR, 'items');
 
 const datasetIndex = {
     moves: {
@@ -36,113 +19,124 @@ const datasetIndex = {
     items: {}
 };
 
-console.log('🚀 Starting Dataset Build...');
+console.log('🚀 Generating Index from existing files...');
 
-// --- 1. PROCESS MOVES ---
-const movesSourceDir = path.join(SOURCE_DIR, 'Moves');
-if (fs.existsSync(movesSourceDir)) {
-    const moveFiles = fs.readdirSync(movesSourceDir).filter((f) => f.endsWith('.json'));
+// --- WEIGHT CALCULATION HELPERS ---
+function getMoveWeight(move, power) {
+    if (move.Category === 'Support' || power === 0) return 20; // Rare
+    if (power <= 3) return 20; // Rare
+    return 5; // Power 4+ is Very Rare
+}
 
-    moveFiles.forEach((file) => {
-        try {
-            const rawData = fs.readFileSync(path.join(movesSourceDir, file), 'utf-8');
-            const move = JSON.parse(rawData);
+function getItemWeight(item, category) {
+    const name = (item.Name || '').toLowerCase();
+    if (name.includes('masterball') || name.includes('rare candy')) return 1;
+    if (category === 'MegaStone' || category === 'ZCrystal') return 5;
 
-            // Skip Z-Moves, Max Moves, and Struggles
-            if (move.Attributes?.ZMove || move.Attributes?.MaxMove || move.Name.includes('Struggle')) return;
+    const priceStr = String(item.TrainerPrice || '').toLowerCase();
+    if (priceStr.includes('not for sale')) return 10;
+    if (priceStr.includes('very rare')) return 5;
+    if (priceStr.includes('rare')) return 20;
+    if (priceStr.includes('uncommon')) return 50;
+    if (priceStr.includes('common')) return 100;
 
-            let categoryPath = '';
-            let indexRef = null;
+    const priceNum = parseInt(priceStr.replace(/[^0-9]/g, ''), 10);
+    if (!isNaN(priceNum)) {
+        if (priceNum <= 500) return 100; // Common
+        if (priceNum <= 1500) return 50; // Uncommon
+        if (priceNum <= 5000) return 20; // Rare
+        return 5; // Very Rare
+    }
+    return 50; // Default Uncommon
+}
 
-            // Categorize Logic
-            if (move.Category === 'Support' || move.Power === 0) {
-                categoryPath = 'support';
-                indexRef = datasetIndex.moves.support;
-            } else if (typeof move.Power === 'string' || isNaN(move.Power)) {
-                // FIXED: Variable moves now go into highPower/variable
-                categoryPath = 'highPower/variable';
-                if (!datasetIndex.moves.highPower.variable) datasetIndex.moves.highPower.variable = [];
-                indexRef = datasetIndex.moves.highPower.variable;
-            } else {
-                const powerNum = Number(move.Power);
-                if (powerNum <= 3) {
-                    categoryPath = `basic/power_${powerNum}`;
-                    if (!datasetIndex.moves.basic[`power_${powerNum}`])
-                        datasetIndex.moves.basic[`power_${powerNum}`] = [];
-                    indexRef = datasetIndex.moves.basic[`power_${powerNum}`];
-                } else {
-                    categoryPath = `highPower/power_${powerNum}`;
-                    if (!datasetIndex.moves.highPower[`power_${powerNum}`])
-                        datasetIndex.moves.highPower[`power_${powerNum}`] = [];
-                    indexRef = datasetIndex.moves.highPower[`power_${powerNum}`];
-                }
-            }
-
-            // Copy File
-            const finalDestDir = path.join(movesTargetDir, categoryPath);
-            ensureDir(finalDestDir);
-            fs.copyFileSync(path.join(movesSourceDir, file), path.join(finalDestDir, file));
-
-            // Add to Index
-            indexRef.push({
-                name: move.Name,
-                type: move.Type,
-                path: `/dataset/moves/${categoryPath}/${file}`
-            });
-        } catch (error) {
-            console.error(`❌ Error processing move ${file}:`, error.message);
+// Helper to recursively get all JSON files
+function getAllFiles(dirPath, arrayOfFiles) {
+    const files = fs.readdirSync(dirPath);
+    arrayOfFiles = arrayOfFiles || [];
+    files.forEach(function(file) {
+        if (fs.statSync(path.join(dirPath, file)).isDirectory()) {
+            arrayOfFiles = getAllFiles(path.join(dirPath, file), arrayOfFiles);
+        } else if (file.endsWith('.json')) {
+            arrayOfFiles.push(path.join(dirPath, file));
         }
     });
-    console.log('✅ Moves categorized and copied!');
-} else {
-    console.warn('⚠️ Moves source directory not found. Skipping.');
+    return arrayOfFiles;
+}
+
+// --- 1. PROCESS MOVES ---
+if (fs.existsSync(MOVES_DIR)) {
+    const moveFiles = getAllFiles(MOVES_DIR);
+    moveFiles.forEach((filePath) => {
+        try {
+            const rawData = fs.readFileSync(filePath, 'utf-8');
+            const move = JSON.parse(rawData);
+            const fileName = path.basename(filePath);
+
+            const relativePath = path.relative(MOVES_DIR, filePath).replace(/\\/g, '/');
+            const categoryParts = relativePath.split('/');
+            categoryParts.pop(); 
+            const categoryPath = categoryParts.join('/');
+
+            let indexRef = null;
+            if (categoryPath === 'support') indexRef = datasetIndex.moves.support;
+            else if (categoryPath === 'highPower/variable') {
+                if (!datasetIndex.moves.highPower.variable) datasetIndex.moves.highPower.variable = [];
+                indexRef = datasetIndex.moves.highPower.variable;
+            } else if (categoryPath.startsWith('basic/')) {
+                const pow = categoryPath.split('/')[1];
+                if (!datasetIndex.moves.basic[pow]) datasetIndex.moves.basic[pow] = [];
+                indexRef = datasetIndex.moves.basic[pow];
+            } else if (categoryPath.startsWith('highPower/')) {
+                const pow = categoryPath.split('/')[1];
+                if (!datasetIndex.moves.highPower[pow]) datasetIndex.moves.highPower[pow] = [];
+                indexRef = datasetIndex.moves.highPower[pow];
+            }
+
+            if (indexRef) {
+                indexRef.push({
+                    name: move.Name,
+                    type: move.Type,
+                    path: `/dataset/moves/${categoryPath}/${fileName}`,
+                    weight: getMoveWeight(move, Number(move.Power) || 0)
+                });
+            }
+        } catch (error) {
+            console.error(`❌ Error processing move ${filePath}:`, error.message);
+        }
+    });
+    console.log('✅ Moves indexed!');
 }
 
 // --- 2. PROCESS ITEMS ---
-const itemsSourceDir = path.join(SOURCE_DIR, 'Items');
-if (fs.existsSync(itemsSourceDir)) {
-    const itemFiles = fs.readdirSync(itemsSourceDir).filter((f) => f.endsWith('.json'));
-
-    itemFiles.forEach((file) => {
+if (fs.existsSync(ITEMS_DIR)) {
+    const itemFiles = getAllFiles(ITEMS_DIR);
+    itemFiles.forEach((filePath) => {
         try {
-            const rawData = fs.readFileSync(path.join(itemsSourceDir, file), 'utf-8');
+            const rawData = fs.readFileSync(filePath, 'utf-8');
             const item = JSON.parse(rawData);
+            const fileName = path.basename(filePath);
 
-            // Clean strings to be URL/folder safe
             let pocket = (item.Pocket || 'Uncategorized').replace(/[^a-zA-Z0-9_-]/g, '');
             let category = (item.Category || 'Misc').replace(/[^a-zA-Z0-9_-]/g, '');
+            if (pocket === 'HeldItems' && category === 'Misc') category = 'BattleItem';
 
-            // FIXED: Manual overrides for edge cases
-            if (pocket === 'HeldItems' && category === 'Misc') {
-                category = 'BattleItem';
-            }
-
-            const finalDestDir = path.join(itemsTargetDir, pocket, category);
-            ensureDir(finalDestDir);
-
-            // Initialize nested index map if missing
             if (!datasetIndex.items[pocket]) datasetIndex.items[pocket] = {};
             if (!datasetIndex.items[pocket][category]) datasetIndex.items[pocket][category] = [];
 
-            // Copy File
-            fs.copyFileSync(path.join(itemsSourceDir, file), path.join(finalDestDir, file));
-
-            // Add to Index
             datasetIndex.items[pocket][category].push({
                 name: item.Name,
-                path: `/dataset/items/${pocket}/${category}/${file}`,
-                pmd: item.PMD || false
+                path: `/dataset/items/${pocket}/${category}/${fileName}`,
+                pmd: item.PMD || false,
+                weight: getItemWeight(item, category)
             });
         } catch (error) {
-            console.error(`❌ Error processing item ${file}:`, error.message);
+            console.error(`❌ Error processing item ${filePath}:`, error.message);
         }
     });
-    console.log('✅ Items categorized and copied!');
-} else {
-    console.warn('⚠️ Items source directory not found. Skipping.');
+    console.log('✅ Items indexed!');
 }
 
 // --- 3. WRITE INDEX FILE ---
-fs.writeFileSync(path.join(TARGET_DIR, 'index.json'), JSON.stringify(datasetIndex, null, 2));
-console.log('✅ Generated /public/dataset/index.json');
-console.log('🎉 Dataset Build Complete!');
+fs.writeFileSync(path.join(DATASET_DIR, 'index.json'), JSON.stringify(datasetIndex, null, 2));
+console.log('🎉 Index Build Complete!');
