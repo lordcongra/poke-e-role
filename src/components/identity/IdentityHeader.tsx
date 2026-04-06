@@ -71,10 +71,26 @@ export function IdentityHeader() {
         setModalConfig({ title: 'Nature', content: 'Loading...' });
         const data = await fetchNatureData(identityStore.nature);
 
-        if (data && (data.Keywords || data.Description)) {
+        if (data) {
             const content = [];
-            if (data.Keywords) content.push(`Keywords: ${data.Keywords}`);
-            if (data.Description) content.push(data.Description);
+
+            // Safely extract properties regardless of casing
+            const safeData = data as Record<string, unknown>;
+            const keywords = safeData.Keywords || safeData.keywords;
+            const desc = safeData.Description || safeData.description;
+            const confidence = safeData.Confidence || safeData.confidence;
+            const statUp = safeData['Stat Up'] || safeData['stat up'] || safeData.StatUp;
+            const statDown = safeData['Stat Down'] || safeData['stat down'] || safeData.StatDown;
+
+            if (keywords) content.push(`Keywords: ${keywords}`);
+            if (confidence) content.push(`Confidence: ${confidence}`);
+            if (statUp) content.push(`Stat Up: ${statUp}`);
+            if (statDown) content.push(`Stat Down: ${statDown}`);
+            if (desc) content.push(String(desc));
+
+            // If we couldn't find any standard keys, just dump the raw JSON to the screen so it's never blank!
+            if (content.length === 0) content.push(JSON.stringify(data, null, 2));
+
             setModalConfig({ title: `Nature: ${identityStore.nature}`, content: content.join('\n\n') });
         } else {
             setModalConfig({ title: 'Nature', content: 'Could not load nature data.' });
