@@ -118,7 +118,7 @@ export function loadGithubTree(): Promise<void> {
         .then((data) => {
             if (!data || !data.tree) return;
 
-            const versionRegex = /(v|(version\s?))3\.0/i;
+            const isV3 = /(^|\/)v3\.0\//i;
             const pokemonRegex = /(^|\/)(Pokemon|Pokedex)\//i;
             const abilityRegex = /(^|\/)Abilities\//i;
             const moveRegex = /(^|\/)Moves\//i;
@@ -134,19 +134,19 @@ export function loadGithubTree(): Promise<void> {
                 const rawUrl = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/${file.path}`;
                 const cleanKey = name.toLowerCase();
 
-                const isV3 = versionRegex.test(file.path);
-
-                if (pokemonRegex.test(file.path) && isV3) {
-                    SPECIES_URLS[cleanKey] = rawUrl;
-                } else if (abilityRegex.test(file.path) && isV3) {
-                    ABILITIES_URLS[cleanKey] = rawUrl;
-                    if (!ALL_ABILITIES.includes(name)) ALL_ABILITIES.push(name);
-                } else if (moveRegex.test(file.path) && isV3) {
-                    MOVES_URLS[cleanKey] = rawUrl;
-                } else if (itemRegex.test(file.path) && isV3) {
-                    ITEMS_URLS[cleanKey] = rawUrl;
-                } else if (natureRegex.test(file.path)) {
-                    NATURES_URLS[cleanKey] = rawUrl;
+                if (isV3.test(file.path)) {
+                    if (pokemonRegex.test(file.path)) {
+                        SPECIES_URLS[cleanKey] = rawUrl;
+                    } else if (abilityRegex.test(file.path)) {
+                        ABILITIES_URLS[cleanKey] = rawUrl;
+                        if (!ALL_ABILITIES.includes(name)) ALL_ABILITIES.push(name);
+                    } else if (moveRegex.test(file.path)) {
+                        MOVES_URLS[cleanKey] = rawUrl;
+                    } else if (itemRegex.test(file.path)) {
+                        ITEMS_URLS[cleanKey] = rawUrl;
+                    } else if (natureRegex.test(file.path)) {
+                        NATURES_URLS[cleanKey] = rawUrl;
+                    }
                 }
             });
 
@@ -169,10 +169,36 @@ export async function fetchPokemonData(speciesName: string): Promise<PokemonApiR
     if (custom) return custom;
 
     await loadGithubTree();
-    const selectedUrl = SPECIES_URLS[cleanName];
+    let selectedUrl = SPECIES_URLS[cleanName];
 
-    if (!selectedUrl) return null;
-    return await fetchWithCache<PokemonApiResponse>(selectedUrl, `species_${cleanName}`, speciesName);
+    if (!selectedUrl) {
+        const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+        const formattedName = speciesName
+            .trim()
+            .split('-')
+            .map((w) => w.split(' ').map(capitalize).join(' '))
+            .join('-');
+        selectedUrl = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/v3.0/Pokedex/${formattedName}.json`;
+    }
+
+    try {
+        const data = await fetchWithCache<PokemonApiResponse>(selectedUrl, `species_${cleanName}`, speciesName);
+        if (data) return data;
+    } catch (e) {
+        console.warn(`[Live Fetch] Failed to fetch live data for ${speciesName}, falling back to local.`);
+    }
+
+    await loadLocalDataset();
+    const localIndex = localDatasetIndex;
+    if (localIndex && localIndex.pokemon && localIndex.pokemon[cleanName]) {
+        return await fetchWithCache<PokemonApiResponse>(
+            localIndex.pokemon[cleanName].path,
+            `local_species_${cleanName}`,
+            speciesName
+        );
+    }
+
+    return null;
 }
 
 export async function fetchAbilityData(abilityName: string): Promise<AbilityApiResponse | null> {
@@ -186,10 +212,36 @@ export async function fetchAbilityData(abilityName: string): Promise<AbilityApiR
     }
 
     await loadGithubTree();
-    const selectedUrl = ABILITIES_URLS[cleanName];
+    let selectedUrl = ABILITIES_URLS[cleanName];
 
-    if (!selectedUrl) return null;
-    return await fetchWithCache<AbilityApiResponse>(selectedUrl, `ability_${cleanName}`, baseName);
+    if (!selectedUrl) {
+        const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+        const formattedName = baseName
+            .trim()
+            .split('-')
+            .map((w) => w.split(' ').map(capitalize).join(' '))
+            .join('-');
+        selectedUrl = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/v3.0/Abilities/${formattedName}.json`;
+    }
+
+    try {
+        const data = await fetchWithCache<AbilityApiResponse>(selectedUrl, `ability_${cleanName}`, baseName);
+        if (data) return data;
+    } catch (e) {
+        console.warn(`[Live Fetch] Failed to fetch live data for ${abilityName}, falling back to local.`);
+    }
+
+    await loadLocalDataset();
+    const localIndex = localDatasetIndex;
+    if (localIndex && localIndex.abilities && localIndex.abilities[cleanName]) {
+        return await fetchWithCache<AbilityApiResponse>(
+            localIndex.abilities[cleanName].path,
+            `local_ability_${cleanName}`,
+            baseName
+        );
+    }
+
+    return null;
 }
 
 export async function fetchMoveData(moveName: string): Promise<MoveApiResponse | null> {
@@ -262,6 +314,7 @@ export async function fetchItemData(itemName: string): Promise<ItemApiResponse |
     await loadLocalDataset();
 
     const liveUrl = ITEMS_URLS[cleanName];
+
     if (liveUrl) {
         try {
             const data = await fetchWithCache<ItemApiResponse>(liveUrl, `live_item_${cleanName}`, itemName);
@@ -301,5 +354,22 @@ export async function fetchNatureData(natureName: string): Promise<NatureApiResp
         selectedUrl = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/v3.0/Natures/${formattedName}.json`;
     }
 
-    return await fetchWithCache<NatureApiResponse>(selectedUrl, `nature_${cleanName}`, natureName);
+    try {
+        const data = await fetchWithCache<NatureApiResponse>(selectedUrl, `nature_${cleanName}`, natureName);
+        if (data) return data;
+    } catch (e) {
+        console.warn(`[Live Fetch] Failed to fetch live data for nature ${natureName}, falling back to local.`);
+    }
+
+    await loadLocalDataset();
+    const localIndex = localDatasetIndex;
+    if (localIndex && localIndex.natures && localIndex.natures[cleanName]) {
+        return await fetchWithCache<NatureApiResponse>(
+            localIndex.natures[cleanName].path,
+            `local_nature_${cleanName}`,
+            natureName
+        );
+    }
+
+    return null;
 }

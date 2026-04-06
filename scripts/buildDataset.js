@@ -9,8 +9,14 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const DATASET_DIR = path.join(ROOT_DIR, 'public', 'dataset');
 const MOVES_DIR = path.join(DATASET_DIR, 'moves');
 const ITEMS_DIR = path.join(DATASET_DIR, 'items');
+const POKEDEX_DIR = path.join(DATASET_DIR, 'pokedex');
+const ABILITIES_DIR = path.join(DATASET_DIR, 'abilities');
+const NATURES_DIR = path.join(DATASET_DIR, 'natures');
 
 const datasetIndex = {
+    pokemon: {},
+    abilities: {},
+    natures: {},
     moves: {
         support: [],
         basic: { power_1: [], power_2: [], power_3: [] },
@@ -67,7 +73,61 @@ function getAllFiles(dirPath, arrayOfFiles) {
     return arrayOfFiles;
 }
 
-// --- 1. PROCESS MOVES ---
+// --- 1. PROCESS POKEDEX ---
+if (fs.existsSync(POKEDEX_DIR)) {
+    const files = getAllFiles(POKEDEX_DIR);
+    files.forEach((filePath) => {
+        try {
+            const rawData = fs.readFileSync(filePath, 'utf-8');
+            const data = JSON.parse(rawData);
+            const fileName = path.basename(filePath);
+            const cleanName = (data.Name || fileName.replace('.json', '')).toLowerCase();
+            datasetIndex.pokemon[cleanName] = {
+                name: data.Name || fileName.replace('.json', ''),
+                path: `/dataset/pokedex/${fileName}`
+            };
+        } catch (e) {}
+    });
+    console.log('✅ Pokedex indexed!');
+}
+
+// --- 2. PROCESS ABILITIES ---
+if (fs.existsSync(ABILITIES_DIR)) {
+    const files = getAllFiles(ABILITIES_DIR);
+    files.forEach((filePath) => {
+        try {
+            const rawData = fs.readFileSync(filePath, 'utf-8');
+            const data = JSON.parse(rawData);
+            const fileName = path.basename(filePath);
+            const cleanName = (data.Name || fileName.replace('.json', '')).toLowerCase();
+            datasetIndex.abilities[cleanName] = {
+                name: data.Name || fileName.replace('.json', ''),
+                path: `/dataset/abilities/${fileName}`
+            };
+        } catch (e) {}
+    });
+    console.log('✅ Abilities indexed!');
+}
+
+// --- 3. PROCESS NATURES ---
+if (fs.existsSync(NATURES_DIR)) {
+    const files = getAllFiles(NATURES_DIR);
+    files.forEach((filePath) => {
+        try {
+            const rawData = fs.readFileSync(filePath, 'utf-8');
+            const data = JSON.parse(rawData);
+            const fileName = path.basename(filePath);
+            const cleanName = (data.Name || fileName.replace('.json', '')).toLowerCase();
+            datasetIndex.natures[cleanName] = {
+                name: data.Name || fileName.replace('.json', ''),
+                path: `/dataset/natures/${fileName}`
+            };
+        } catch (e) {}
+    });
+    console.log('✅ Natures indexed!');
+}
+
+// --- 4. PROCESS MOVES ---
 if (fs.existsSync(MOVES_DIR)) {
     const moveFiles = getAllFiles(MOVES_DIR);
     moveFiles.forEach((filePath) => {
@@ -111,7 +171,7 @@ if (fs.existsSync(MOVES_DIR)) {
     console.log('✅ Moves indexed!');
 }
 
-// --- 2. PROCESS ITEMS ---
+// --- 5. PROCESS ITEMS ---
 if (fs.existsSync(ITEMS_DIR)) {
     const itemFiles = getAllFiles(ITEMS_DIR);
     itemFiles.forEach((filePath) => {
@@ -140,6 +200,6 @@ if (fs.existsSync(ITEMS_DIR)) {
     console.log('✅ Items indexed!');
 }
 
-// --- 3. WRITE INDEX FILE ---
+// --- 6. WRITE INDEX FILE ---
 fs.writeFileSync(path.join(DATASET_DIR, 'index.json'), JSON.stringify(datasetIndex, null, 2));
 console.log('🎉 Index Build Complete!');

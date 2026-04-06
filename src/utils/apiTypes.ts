@@ -7,6 +7,9 @@ export interface LocalIndexItem {
 }
 
 export interface LocalDatasetIndex {
+    pokemon?: Record<string, LocalIndexItem>;
+    abilities?: Record<string, LocalIndexItem>;
+    natures?: Record<string, LocalIndexItem>;
     moves: {
         support: LocalIndexItem[];
         variable: LocalIndexItem[];

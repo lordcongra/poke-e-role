@@ -249,8 +249,7 @@ export function useOwlbearSync() {
                 unsubs.push(unsubRoom);
 
                 const unsubRollResult = OBR.broadcast.onMessage(`${EXTENSION_ID}/roll-result`, async (event) => {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const data = event.data as any;
+                    const data = event.data as Record<string, unknown>;
                     const myId = await OBR.player.getId();
                     if (data.playerId !== myId) return;
 
@@ -260,8 +259,10 @@ export function useOwlbearSync() {
                         const targetTokenId = parts.length > 1 ? parts[1] : null;
                         const payload = parts.length > 2 ? parts[2] : null;
 
-                        if (rollType === 'init' && targetTokenId && data.result) {
-                            const total = parseInt(String(data.result.totalValue)) || 0;
+                        const resultObj = data.result as Record<string, unknown> | undefined;
+
+                        if (rollType === 'init' && targetTokenId && resultObj) {
+                            const total = parseInt(String(resultObj.totalValue)) || 0;
                             const tiebreaker = Math.floor(Math.random() * 6) + 1;
                             const finalInit = total + tiebreaker / 10;
 
@@ -278,8 +279,8 @@ export function useOwlbearSync() {
                                     };
                                 }
                             });
-                        } else if (rollType === 'status' && targetTokenId && payload && data.result) {
-                            const successes = parseInt(String(data.result.totalValue)) || 0;
+                        } else if (rollType === 'status' && targetTokenId && payload && resultObj) {
+                            const successes = parseInt(String(resultObj.totalValue)) || 0;
                             await OBR.scene.items.updateItems([targetTokenId], (items) => {
                                 for (const item of items) {
                                     const meta = (item.metadata[STATS_META_ID] as Record<string, unknown>) || {};
@@ -297,8 +298,8 @@ export function useOwlbearSync() {
                                     } catch (e) {}
                                 }
                             });
-                        } else if ((rollType === 'roll' || rollType === 'chance') && data.result) {
-                            const val = parseInt(String(data.result.totalValue)) || 0;
+                        } else if ((rollType === 'roll' || rollType === 'chance') && resultObj) {
+                            const val = parseInt(String(resultObj.totalValue)) || 0;
                             if (val > 0) OBR.notification.show(`✅ Result: ${val} Success${val > 1 ? 'es' : ''}!`);
                             else OBR.notification.show(`❌ Result: Failure! (0)`);
                         }
@@ -307,8 +308,7 @@ export function useOwlbearSync() {
                 unsubs.push(unsubRollResult);
 
                 const unsubRollError = OBR.broadcast.onMessage(`${EXTENSION_ID}/roll-error`, async (event) => {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const data = event.data as any;
+                    const data = event.data as Record<string, unknown>;
                     OBR.notification.show(`Dice+ Error: ${data.error || 'Unknown syntax error.'}`, 'ERROR');
                 });
                 unsubs.push(unsubRollError);

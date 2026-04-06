@@ -13,18 +13,32 @@ export function SpeciesSelector({ uniqueSpecies, onOpenGenerator }: SpeciesSelec
     const identityStore = useCharacterStore((state) => state.identity);
     const setIdentity = useCharacterStore((state) => state.setIdentity);
     const toggleForm = useCharacterStore((state) => state.toggleForm);
+    const applySpeciesData = useCharacterStore((state) => state.applySpeciesData);
 
     const [isFetching, setIsFetching] = useState(false);
     const [pendingSpeciesData, setPendingSpeciesData] = useState<Record<string, unknown> | null>(null);
 
     const handleFetch = async () => {
-        if (!identityStore.species || identityStore.mode === 'Trainer') return;
+        if (identityStore.mode === 'Trainer') return;
+
+        const speciesName = identityStore.species || '';
+
+        // If the user completely cleared the input box, wipe the stats!
+        if (speciesName.trim() === '') {
+            applySpeciesData({ Name: '', Moves: [] }, true, true);
+            return;
+        }
+
         setIsFetching(true);
         try {
-            const data = await fetchPokemonData(identityStore.species);
+            const data = await fetchPokemonData(speciesName);
             if (data) {
                 // ALWAYS trigger the modal so the user has explicit control over how the stats apply!
                 setPendingSpeciesData(data as Record<string, unknown>);
+            } else {
+                if (OBR.isAvailable) {
+                    OBR.notification.show(`⚠️ Species "${speciesName}" not found.`, 'WARNING');
+                }
             }
         } catch (error) {
             console.error('Fetch failed:', error);

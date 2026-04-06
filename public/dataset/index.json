@@ -1,4 +1,6130 @@
 {
+    "pokemon": {
+        "abomasnow (mega form)": {
+            "name": "Abomasnow (Mega Form)",
+            "path": "/dataset/pokedex/Abomasnow (Mega Form).json"
+        },
+        "abomasnow": {
+            "name": "Abomasnow",
+            "path": "/dataset/pokedex/Abomasnow.json"
+        },
+        "abra": {
+            "name": "Abra",
+            "path": "/dataset/pokedex/Abra.json"
+        },
+        "absol (mega form)": {
+            "name": "Absol (Mega Form)",
+            "path": "/dataset/pokedex/Absol (Mega Form).json"
+        },
+        "absol": {
+            "name": "Absol",
+            "path": "/dataset/pokedex/Absol.json"
+        },
+        "accelgor": {
+            "name": "Accelgor",
+            "path": "/dataset/pokedex/Accelgor.json"
+        },
+        "aegislash (blade form)": {
+            "name": "Aegislash (Blade Form)",
+            "path": "/dataset/pokedex/Aegislash (Blade Form).json"
+        },
+        "aegislash": {
+            "name": "Aegislash",
+            "path": "/dataset/pokedex/Aegislash.json"
+        },
+        "aerodactyl (mega form)": {
+            "name": "Aerodactyl (Mega Form)",
+            "path": "/dataset/pokedex/Aerodactyl (Mega Form).json"
+        },
+        "aerodactyl": {
+            "name": "Aerodactyl",
+            "path": "/dataset/pokedex/Aerodactyl.json"
+        },
+        "aggron (mega form)": {
+            "name": "Aggron (Mega Form)",
+            "path": "/dataset/pokedex/Aggron (Mega Form).json"
+        },
+        "aggron": {
+            "name": "Aggron",
+            "path": "/dataset/pokedex/Aggron.json"
+        },
+        "aipom": {
+            "name": "Aipom",
+            "path": "/dataset/pokedex/Aipom.json"
+        },
+        "alakazam (mega form)": {
+            "name": "Alakazam (Mega Form)",
+            "path": "/dataset/pokedex/Alakazam (Mega Form).json"
+        },
+        "alakazam": {
+            "name": "Alakazam",
+            "path": "/dataset/pokedex/Alakazam.json"
+        },
+        "alcremie": {
+            "name": "Alcremie",
+            "path": "/dataset/pokedex/Alcremie.json"
+        },
+        "alomomola": {
+            "name": "Alomomola",
+            "path": "/dataset/pokedex/Alomomola.json"
+        },
+        "altaria (mega form)": {
+            "name": "Altaria (Mega Form)",
+            "path": "/dataset/pokedex/Altaria (Mega Form).json"
+        },
+        "altaria": {
+            "name": "Altaria",
+            "path": "/dataset/pokedex/Altaria.json"
+        },
+        "amaura": {
+            "name": "Amaura",
+            "path": "/dataset/pokedex/Amaura.json"
+        },
+        "ambipom": {
+            "name": "Ambipom",
+            "path": "/dataset/pokedex/Ambipom.json"
+        },
+        "amoonguss": {
+            "name": "Amoonguss",
+            "path": "/dataset/pokedex/Amoonguss.json"
+        },
+        "ampharos (mega form)": {
+            "name": "Ampharos (Mega Form)",
+            "path": "/dataset/pokedex/Ampharos (Mega Form).json"
+        },
+        "ampharos": {
+            "name": "Ampharos",
+            "path": "/dataset/pokedex/Ampharos.json"
+        },
+        "annihilape": {
+            "name": "Annihilape",
+            "path": "/dataset/pokedex/Annihilape.json"
+        },
+        "anorith": {
+            "name": "Anorith",
+            "path": "/dataset/pokedex/Anorith.json"
+        },
+        "appletun": {
+            "name": "Appletun",
+            "path": "/dataset/pokedex/Appletun.json"
+        },
+        "applin": {
+            "name": "Applin",
+            "path": "/dataset/pokedex/Applin.json"
+        },
+        "araquanid": {
+            "name": "Araquanid",
+            "path": "/dataset/pokedex/Araquanid.json"
+        },
+        "arbok": {
+            "name": "Arbok",
+            "path": "/dataset/pokedex/Arbok.json"
+        },
+        "arboliva": {
+            "name": "Arboliva",
+            "path": "/dataset/pokedex/Arboliva.json"
+        },
+        "arcanine (hisuian form)": {
+            "name": "Arcanine (Hisuian Form)",
+            "path": "/dataset/pokedex/Arcanine (Hisuian Form).json"
+        },
+        "arcanine": {
+            "name": "Arcanine",
+            "path": "/dataset/pokedex/Arcanine.json"
+        },
+        "arceus": {
+            "name": "Arceus",
+            "path": "/dataset/pokedex/Arceus.json"
+        },
+        "archaludon": {
+            "name": "Archaludon",
+            "path": "/dataset/pokedex/Archaludon.json"
+        },
+        "archen": {
+            "name": "Archen",
+            "path": "/dataset/pokedex/Archen.json"
+        },
+        "archeops": {
+            "name": "Archeops",
+            "path": "/dataset/pokedex/Archeops.json"
+        },
+        "arctibax": {
+            "name": "Arctibax",
+            "path": "/dataset/pokedex/Arctibax.json"
+        },
+        "arctovish": {
+            "name": "Arctovish",
+            "path": "/dataset/pokedex/Arctovish.json"
+        },
+        "arctozolt": {
+            "name": "Arctozolt",
+            "path": "/dataset/pokedex/Arctozolt.json"
+        },
+        "ariados": {
+            "name": "Ariados",
+            "path": "/dataset/pokedex/Ariados.json"
+        },
+        "armaldo": {
+            "name": "Armaldo",
+            "path": "/dataset/pokedex/Armaldo.json"
+        },
+        "armarouge": {
+            "name": "Armarouge",
+            "path": "/dataset/pokedex/Armarouge.json"
+        },
+        "aromatisse": {
+            "name": "Aromatisse",
+            "path": "/dataset/pokedex/Aromatisse.json"
+        },
+        "aron": {
+            "name": "Aron",
+            "path": "/dataset/pokedex/Aron.json"
+        },
+        "arrokuda": {
+            "name": "Arrokuda",
+            "path": "/dataset/pokedex/Arrokuda.json"
+        },
+        "articuno (galarian form)": {
+            "name": "Articuno (Galarian Form)",
+            "path": "/dataset/pokedex/Articuno (Galarian Form).json"
+        },
+        "articuno": {
+            "name": "Articuno",
+            "path": "/dataset/pokedex/Articuno.json"
+        },
+        "audino (mega form)": {
+            "name": "Audino (Mega Form)",
+            "path": "/dataset/pokedex/Audino (Mega Form).json"
+        },
+        "audino": {
+            "name": "Audino",
+            "path": "/dataset/pokedex/Audino.json"
+        },
+        "aurorus": {
+            "name": "Aurorus",
+            "path": "/dataset/pokedex/Aurorus.json"
+        },
+        "avalugg (hisuian form)": {
+            "name": "Avalugg (Hisuian Form)",
+            "path": "/dataset/pokedex/Avalugg (Hisuian Form).json"
+        },
+        "avalugg": {
+            "name": "Avalugg",
+            "path": "/dataset/pokedex/Avalugg.json"
+        },
+        "axew": {
+            "name": "Axew",
+            "path": "/dataset/pokedex/Axew.json"
+        },
+        "azelf": {
+            "name": "Azelf",
+            "path": "/dataset/pokedex/Azelf.json"
+        },
+        "azumarill": {
+            "name": "Azumarill",
+            "path": "/dataset/pokedex/Azumarill.json"
+        },
+        "azurill": {
+            "name": "Azurill",
+            "path": "/dataset/pokedex/Azurill.json"
+        },
+        "bagon": {
+            "name": "Bagon",
+            "path": "/dataset/pokedex/Bagon.json"
+        },
+        "baltoy": {
+            "name": "Baltoy",
+            "path": "/dataset/pokedex/Baltoy.json"
+        },
+        "banette (mega form)": {
+            "name": "Banette (Mega Form)",
+            "path": "/dataset/pokedex/Banette (Mega Form).json"
+        },
+        "banette": {
+            "name": "Banette",
+            "path": "/dataset/pokedex/Banette.json"
+        },
+        "barbaracle": {
+            "name": "Barbaracle",
+            "path": "/dataset/pokedex/Barbaracle.json"
+        },
+        "barboach": {
+            "name": "Barboach",
+            "path": "/dataset/pokedex/Barboach.json"
+        },
+        "barraskewda": {
+            "name": "Barraskewda",
+            "path": "/dataset/pokedex/Barraskewda.json"
+        },
+        "basculegion (female form)": {
+            "name": "Basculegion (Female Form)",
+            "path": "/dataset/pokedex/Basculegion (Female Form).json"
+        },
+        "basculegion (male form)": {
+            "name": "Basculegion (Male Form)",
+            "path": "/dataset/pokedex/Basculegion (Male Form).json"
+        },
+        "basculin (hisuian form)": {
+            "name": "Basculin (Hisuian Form)",
+            "path": "/dataset/pokedex/Basculin (Hisuian Form).json"
+        },
+        "basculin": {
+            "name": "Basculin",
+            "path": "/dataset/pokedex/Basculin.json"
+        },
+        "bastiodon": {
+            "name": "Bastiodon",
+            "path": "/dataset/pokedex/Bastiodon.json"
+        },
+        "baxcalibur": {
+            "name": "Baxcalibur",
+            "path": "/dataset/pokedex/Baxcalibur.json"
+        },
+        "bayleef": {
+            "name": "Bayleef",
+            "path": "/dataset/pokedex/Bayleef.json"
+        },
+        "beartic": {
+            "name": "Beartic",
+            "path": "/dataset/pokedex/Beartic.json"
+        },
+        "beautifly": {
+            "name": "Beautifly",
+            "path": "/dataset/pokedex/Beautifly.json"
+        },
+        "beedrill (mega form)": {
+            "name": "Beedrill (Mega Form)",
+            "path": "/dataset/pokedex/Beedrill (Mega Form).json"
+        },
+        "beedrill": {
+            "name": "Beedrill",
+            "path": "/dataset/pokedex/Beedrill.json"
+        },
+        "beheeyem": {
+            "name": "Beheeyem",
+            "path": "/dataset/pokedex/Beheeyem.json"
+        },
+        "beldum": {
+            "name": "Beldum",
+            "path": "/dataset/pokedex/Beldum.json"
+        },
+        "bellibolt": {
+            "name": "Bellibolt",
+            "path": "/dataset/pokedex/Bellibolt.json"
+        },
+        "bellossom": {
+            "name": "Bellossom",
+            "path": "/dataset/pokedex/Bellossom.json"
+        },
+        "bellsprout": {
+            "name": "Bellsprout",
+            "path": "/dataset/pokedex/Bellsprout.json"
+        },
+        "bergmite": {
+            "name": "Bergmite",
+            "path": "/dataset/pokedex/Bergmite.json"
+        },
+        "bewear": {
+            "name": "Bewear",
+            "path": "/dataset/pokedex/Bewear.json"
+        },
+        "bibarel": {
+            "name": "Bibarel",
+            "path": "/dataset/pokedex/Bibarel.json"
+        },
+        "bidoof": {
+            "name": "Bidoof",
+            "path": "/dataset/pokedex/Bidoof.json"
+        },
+        "binacle": {
+            "name": "Binacle",
+            "path": "/dataset/pokedex/Binacle.json"
+        },
+        "bisharp": {
+            "name": "Bisharp",
+            "path": "/dataset/pokedex/Bisharp.json"
+        },
+        "blacephalon": {
+            "name": "Blacephalon",
+            "path": "/dataset/pokedex/Blacephalon.json"
+        },
+        "blastoise (mega form)": {
+            "name": "Blastoise (Mega Form)",
+            "path": "/dataset/pokedex/Blastoise (Mega Form).json"
+        },
+        "blastoise": {
+            "name": "Blastoise",
+            "path": "/dataset/pokedex/Blastoise.json"
+        },
+        "blaziken (mega form)": {
+            "name": "Blaziken (Mega Form)",
+            "path": "/dataset/pokedex/Blaziken (Mega Form).json"
+        },
+        "blaziken": {
+            "name": "Blaziken",
+            "path": "/dataset/pokedex/Blaziken.json"
+        },
+        "blipbug": {
+            "name": "Blipbug",
+            "path": "/dataset/pokedex/Blipbug.json"
+        },
+        "blissey": {
+            "name": "Blissey",
+            "path": "/dataset/pokedex/Blissey.json"
+        },
+        "blitzle": {
+            "name": "Blitzle",
+            "path": "/dataset/pokedex/Blitzle.json"
+        },
+        "boldore": {
+            "name": "Boldore",
+            "path": "/dataset/pokedex/Boldore.json"
+        },
+        "boltund": {
+            "name": "Boltund",
+            "path": "/dataset/pokedex/Boltund.json"
+        },
+        "bombirdier": {
+            "name": "Bombirdier",
+            "path": "/dataset/pokedex/Bombirdier.json"
+        },
+        "bonsly": {
+            "name": "Bonsly",
+            "path": "/dataset/pokedex/Bonsly.json"
+        },
+        "bouffalant": {
+            "name": "Bouffalant",
+            "path": "/dataset/pokedex/Bouffalant.json"
+        },
+        "bounsweet": {
+            "name": "Bounsweet",
+            "path": "/dataset/pokedex/Bounsweet.json"
+        },
+        "braixen": {
+            "name": "Braixen",
+            "path": "/dataset/pokedex/Braixen.json"
+        },
+        "brambleghast": {
+            "name": "Brambleghast",
+            "path": "/dataset/pokedex/Brambleghast.json"
+        },
+        "bramblin": {
+            "name": "Bramblin",
+            "path": "/dataset/pokedex/Bramblin.json"
+        },
+        "braviary (hisuian form)": {
+            "name": "Braviary (Hisuian Form)",
+            "path": "/dataset/pokedex/Braviary (Hisuian Form).json"
+        },
+        "braviary": {
+            "name": "Braviary",
+            "path": "/dataset/pokedex/Braviary.json"
+        },
+        "breloom": {
+            "name": "Breloom",
+            "path": "/dataset/pokedex/Breloom.json"
+        },
+        "brionne": {
+            "name": "Brionne",
+            "path": "/dataset/pokedex/Brionne.json"
+        },
+        "bronzong": {
+            "name": "Bronzong",
+            "path": "/dataset/pokedex/Bronzong.json"
+        },
+        "bronzor": {
+            "name": "Bronzor",
+            "path": "/dataset/pokedex/Bronzor.json"
+        },
+        "brute bonnet": {
+            "name": "Brute Bonnet",
+            "path": "/dataset/pokedex/Brute Bonnet.json"
+        },
+        "bruxish": {
+            "name": "Bruxish",
+            "path": "/dataset/pokedex/Bruxish.json"
+        },
+        "budew": {
+            "name": "Budew",
+            "path": "/dataset/pokedex/Budew.json"
+        },
+        "buizel": {
+            "name": "Buizel",
+            "path": "/dataset/pokedex/Buizel.json"
+        },
+        "bulbasaur": {
+            "name": "Bulbasaur",
+            "path": "/dataset/pokedex/Bulbasaur.json"
+        },
+        "buneary": {
+            "name": "Buneary",
+            "path": "/dataset/pokedex/Buneary.json"
+        },
+        "bunnelby": {
+            "name": "Bunnelby",
+            "path": "/dataset/pokedex/Bunnelby.json"
+        },
+        "burmy": {
+            "name": "Burmy",
+            "path": "/dataset/pokedex/Burmy.json"
+        },
+        "butterfree": {
+            "name": "Butterfree",
+            "path": "/dataset/pokedex/Butterfree.json"
+        },
+        "buzzwole": {
+            "name": "Buzzwole",
+            "path": "/dataset/pokedex/Buzzwole.json"
+        },
+        "cacnea": {
+            "name": "Cacnea",
+            "path": "/dataset/pokedex/Cacnea.json"
+        },
+        "cacturne": {
+            "name": "Cacturne",
+            "path": "/dataset/pokedex/Cacturne.json"
+        },
+        "calyrex (ice rider form)": {
+            "name": "Calyrex (Ice Rider Form)",
+            "path": "/dataset/pokedex/Calyrex (Ice Rider Form).json"
+        },
+        "calyrex (shadow rider form)": {
+            "name": "Calyrex (Shadow Rider Form)",
+            "path": "/dataset/pokedex/Calyrex (Shadow Rider Form).json"
+        },
+        "calyrex": {
+            "name": "Calyrex",
+            "path": "/dataset/pokedex/Calyrex.json"
+        },
+        "camerupt (mega form)": {
+            "name": "Camerupt (Mega Form)",
+            "path": "/dataset/pokedex/Camerupt (Mega Form).json"
+        },
+        "camerupt": {
+            "name": "Camerupt",
+            "path": "/dataset/pokedex/Camerupt.json"
+        },
+        "capsakid": {
+            "name": "Capsakid",
+            "path": "/dataset/pokedex/Capsakid.json"
+        },
+        "carbink": {
+            "name": "Carbink",
+            "path": "/dataset/pokedex/Carbink.json"
+        },
+        "carkol": {
+            "name": "Carkol",
+            "path": "/dataset/pokedex/Carkol.json"
+        },
+        "carnivine": {
+            "name": "Carnivine",
+            "path": "/dataset/pokedex/Carnivine.json"
+        },
+        "carracosta": {
+            "name": "Carracosta",
+            "path": "/dataset/pokedex/Carracosta.json"
+        },
+        "carvanha": {
+            "name": "Carvanha",
+            "path": "/dataset/pokedex/Carvanha.json"
+        },
+        "cascoon": {
+            "name": "Cascoon",
+            "path": "/dataset/pokedex/Cascoon.json"
+        },
+        "castform": {
+            "name": "Castform",
+            "path": "/dataset/pokedex/Castform.json"
+        },
+        "caterpie": {
+            "name": "Caterpie",
+            "path": "/dataset/pokedex/Caterpie.json"
+        },
+        "celebi": {
+            "name": "Celebi",
+            "path": "/dataset/pokedex/Celebi.json"
+        },
+        "celesteela": {
+            "name": "Celesteela",
+            "path": "/dataset/pokedex/Celesteela.json"
+        },
+        "centiskorch": {
+            "name": "Centiskorch",
+            "path": "/dataset/pokedex/Centiskorch.json"
+        },
+        "ceruledge": {
+            "name": "Ceruledge",
+            "path": "/dataset/pokedex/Ceruledge.json"
+        },
+        "cetitan": {
+            "name": "Cetitan",
+            "path": "/dataset/pokedex/Cetitan.json"
+        },
+        "cetoddle": {
+            "name": "Cetoddle",
+            "path": "/dataset/pokedex/Cetoddle.json"
+        },
+        "chandelure": {
+            "name": "Chandelure",
+            "path": "/dataset/pokedex/Chandelure.json"
+        },
+        "chansey": {
+            "name": "Chansey",
+            "path": "/dataset/pokedex/Chansey.json"
+        },
+        "charcadet": {
+            "name": "Charcadet",
+            "path": "/dataset/pokedex/Charcadet.json"
+        },
+        "charizard (mega x form)": {
+            "name": "Charizard (Mega X Form)",
+            "path": "/dataset/pokedex/Charizard (Mega X Form).json"
+        },
+        "charizard (mega y form)": {
+            "name": "Charizard (Mega Y Form)",
+            "path": "/dataset/pokedex/Charizard (Mega Y Form).json"
+        },
+        "charizard": {
+            "name": "Charizard",
+            "path": "/dataset/pokedex/Charizard.json"
+        },
+        "charjabug": {
+            "name": "Charjabug",
+            "path": "/dataset/pokedex/Charjabug.json"
+        },
+        "charmander": {
+            "name": "Charmander",
+            "path": "/dataset/pokedex/Charmander.json"
+        },
+        "charmeleon": {
+            "name": "Charmeleon",
+            "path": "/dataset/pokedex/Charmeleon.json"
+        },
+        "chatot": {
+            "name": "Chatot",
+            "path": "/dataset/pokedex/Chatot.json"
+        },
+        "cherrim": {
+            "name": "Cherrim",
+            "path": "/dataset/pokedex/Cherrim.json"
+        },
+        "cherubi": {
+            "name": "Cherubi",
+            "path": "/dataset/pokedex/Cherubi.json"
+        },
+        "chesnaught": {
+            "name": "Chesnaught",
+            "path": "/dataset/pokedex/Chesnaught.json"
+        },
+        "chespin": {
+            "name": "Chespin",
+            "path": "/dataset/pokedex/Chespin.json"
+        },
+        "chewtle": {
+            "name": "Chewtle",
+            "path": "/dataset/pokedex/Chewtle.json"
+        },
+        "chi-yu": {
+            "name": "Chi-Yu",
+            "path": "/dataset/pokedex/Chi-Yu.json"
+        },
+        "chien-pao": {
+            "name": "Chien-Pao",
+            "path": "/dataset/pokedex/Chien-Pao.json"
+        },
+        "chikorita": {
+            "name": "Chikorita",
+            "path": "/dataset/pokedex/Chikorita.json"
+        },
+        "chimchar": {
+            "name": "Chimchar",
+            "path": "/dataset/pokedex/Chimchar.json"
+        },
+        "chimecho": {
+            "name": "Chimecho",
+            "path": "/dataset/pokedex/Chimecho.json"
+        },
+        "chinchou": {
+            "name": "Chinchou",
+            "path": "/dataset/pokedex/Chinchou.json"
+        },
+        "chingling": {
+            "name": "Chingling",
+            "path": "/dataset/pokedex/Chingling.json"
+        },
+        "cinccino": {
+            "name": "Cinccino",
+            "path": "/dataset/pokedex/Cinccino.json"
+        },
+        "cinderace": {
+            "name": "Cinderace",
+            "path": "/dataset/pokedex/Cinderace.json"
+        },
+        "clamperl": {
+            "name": "Clamperl",
+            "path": "/dataset/pokedex/Clamperl.json"
+        },
+        "clauncher": {
+            "name": "Clauncher",
+            "path": "/dataset/pokedex/Clauncher.json"
+        },
+        "clawitzer": {
+            "name": "Clawitzer",
+            "path": "/dataset/pokedex/Clawitzer.json"
+        },
+        "claydol": {
+            "name": "Claydol",
+            "path": "/dataset/pokedex/Claydol.json"
+        },
+        "clefable": {
+            "name": "Clefable",
+            "path": "/dataset/pokedex/Clefable.json"
+        },
+        "clefairy": {
+            "name": "Clefairy",
+            "path": "/dataset/pokedex/Clefairy.json"
+        },
+        "cleffa": {
+            "name": "Cleffa",
+            "path": "/dataset/pokedex/Cleffa.json"
+        },
+        "clobbopus": {
+            "name": "Clobbopus",
+            "path": "/dataset/pokedex/Clobbopus.json"
+        },
+        "clodsire": {
+            "name": "Clodsire",
+            "path": "/dataset/pokedex/Clodsire.json"
+        },
+        "cloyster": {
+            "name": "Cloyster",
+            "path": "/dataset/pokedex/Cloyster.json"
+        },
+        "coalossal": {
+            "name": "Coalossal",
+            "path": "/dataset/pokedex/Coalossal.json"
+        },
+        "cobalion": {
+            "name": "Cobalion",
+            "path": "/dataset/pokedex/Cobalion.json"
+        },
+        "cofagrigus": {
+            "name": "Cofagrigus",
+            "path": "/dataset/pokedex/Cofagrigus.json"
+        },
+        "combee": {
+            "name": "Combee",
+            "path": "/dataset/pokedex/Combee.json"
+        },
+        "combusken": {
+            "name": "Combusken",
+            "path": "/dataset/pokedex/Combusken.json"
+        },
+        "comfey": {
+            "name": "Comfey",
+            "path": "/dataset/pokedex/Comfey.json"
+        },
+        "conkeldurr": {
+            "name": "Conkeldurr",
+            "path": "/dataset/pokedex/Conkeldurr.json"
+        },
+        "copperajah": {
+            "name": "Copperajah",
+            "path": "/dataset/pokedex/Copperajah.json"
+        },
+        "corphish": {
+            "name": "Corphish",
+            "path": "/dataset/pokedex/Corphish.json"
+        },
+        "corsola (galarian form)": {
+            "name": "Corsola (Galarian Form)",
+            "path": "/dataset/pokedex/Corsola (Galarian Form).json"
+        },
+        "corsola": {
+            "name": "Corsola",
+            "path": "/dataset/pokedex/Corsola.json"
+        },
+        "corviknight": {
+            "name": "Corviknight",
+            "path": "/dataset/pokedex/Corviknight.json"
+        },
+        "corvisquire": {
+            "name": "Corvisquire",
+            "path": "/dataset/pokedex/Corvisquire.json"
+        },
+        "cosmoem": {
+            "name": "Cosmoem",
+            "path": "/dataset/pokedex/Cosmoem.json"
+        },
+        "cosmog": {
+            "name": "Cosmog",
+            "path": "/dataset/pokedex/Cosmog.json"
+        },
+        "cottonee": {
+            "name": "Cottonee",
+            "path": "/dataset/pokedex/Cottonee.json"
+        },
+        "crabominable": {
+            "name": "Crabominable",
+            "path": "/dataset/pokedex/Crabominable.json"
+        },
+        "crabrawler": {
+            "name": "Crabrawler",
+            "path": "/dataset/pokedex/Crabrawler.json"
+        },
+        "cradily": {
+            "name": "Cradily",
+            "path": "/dataset/pokedex/Cradily.json"
+        },
+        "cramorant (gorging form)": {
+            "name": "Cramorant (Gorging Form)",
+            "path": "/dataset/pokedex/Cramorant (Gorging Form).json"
+        },
+        "cramorant (gulping form)": {
+            "name": "Cramorant (Gulping Form)",
+            "path": "/dataset/pokedex/Cramorant (Gulping Form).json"
+        },
+        "cramorant": {
+            "name": "Cramorant",
+            "path": "/dataset/pokedex/Cramorant.json"
+        },
+        "cranidos": {
+            "name": "Cranidos",
+            "path": "/dataset/pokedex/Cranidos.json"
+        },
+        "crawdaunt": {
+            "name": "Crawdaunt",
+            "path": "/dataset/pokedex/Crawdaunt.json"
+        },
+        "cresselia": {
+            "name": "Cresselia",
+            "path": "/dataset/pokedex/Cresselia.json"
+        },
+        "croagunk": {
+            "name": "Croagunk",
+            "path": "/dataset/pokedex/Croagunk.json"
+        },
+        "crobat": {
+            "name": "Crobat",
+            "path": "/dataset/pokedex/Crobat.json"
+        },
+        "crocalor": {
+            "name": "Crocalor",
+            "path": "/dataset/pokedex/Crocalor.json"
+        },
+        "croconaw": {
+            "name": "Croconaw",
+            "path": "/dataset/pokedex/Croconaw.json"
+        },
+        "crustle": {
+            "name": "Crustle",
+            "path": "/dataset/pokedex/Crustle.json"
+        },
+        "cryogonal": {
+            "name": "Cryogonal",
+            "path": "/dataset/pokedex/Cryogonal.json"
+        },
+        "cubchoo": {
+            "name": "Cubchoo",
+            "path": "/dataset/pokedex/Cubchoo.json"
+        },
+        "cubone": {
+            "name": "Cubone",
+            "path": "/dataset/pokedex/Cubone.json"
+        },
+        "cufant": {
+            "name": "Cufant",
+            "path": "/dataset/pokedex/Cufant.json"
+        },
+        "cursola": {
+            "name": "Cursola",
+            "path": "/dataset/pokedex/Cursola.json"
+        },
+        "cutiefly": {
+            "name": "Cutiefly",
+            "path": "/dataset/pokedex/Cutiefly.json"
+        },
+        "cyclizar": {
+            "name": "Cyclizar",
+            "path": "/dataset/pokedex/Cyclizar.json"
+        },
+        "cyndaquil": {
+            "name": "Cyndaquil",
+            "path": "/dataset/pokedex/Cyndaquil.json"
+        },
+        "dachsbun": {
+            "name": "Dachsbun",
+            "path": "/dataset/pokedex/Dachsbun.json"
+        },
+        "darkrai": {
+            "name": "Darkrai",
+            "path": "/dataset/pokedex/Darkrai.json"
+        },
+        "darmanitan (galarian form)": {
+            "name": "Darmanitan (Galarian Form)",
+            "path": "/dataset/pokedex/Darmanitan (Galarian Form).json"
+        },
+        "darmanitan (galarian zen form)": {
+            "name": "Darmanitan (Galarian Zen Form)",
+            "path": "/dataset/pokedex/Darmanitan (Galarian Zen Form).json"
+        },
+        "darmanitan (zen form)": {
+            "name": "Darmanitan (Zen Form)",
+            "path": "/dataset/pokedex/Darmanitan (Zen Form).json"
+        },
+        "darmanitan": {
+            "name": "Darmanitan",
+            "path": "/dataset/pokedex/Darmanitan.json"
+        },
+        "dartrix": {
+            "name": "Dartrix",
+            "path": "/dataset/pokedex/Dartrix.json"
+        },
+        "darumaka (galarian form)": {
+            "name": "Darumaka (Galarian Form)",
+            "path": "/dataset/pokedex/Darumaka (Galarian Form).json"
+        },
+        "darumaka": {
+            "name": "Darumaka",
+            "path": "/dataset/pokedex/Darumaka.json"
+        },
+        "decidueye (hisuian form)": {
+            "name": "Decidueye (Hisuian Form)",
+            "path": "/dataset/pokedex/Decidueye (Hisuian Form).json"
+        },
+        "decidueye": {
+            "name": "Decidueye",
+            "path": "/dataset/pokedex/Decidueye.json"
+        },
+        "dedenne": {
+            "name": "Dedenne",
+            "path": "/dataset/pokedex/Dedenne.json"
+        },
+        "deerling": {
+            "name": "Deerling",
+            "path": "/dataset/pokedex/Deerling.json"
+        },
+        "deino": {
+            "name": "Deino",
+            "path": "/dataset/pokedex/Deino.json"
+        },
+        "delcatty": {
+            "name": "Delcatty",
+            "path": "/dataset/pokedex/Delcatty.json"
+        },
+        "delibird": {
+            "name": "Delibird",
+            "path": "/dataset/pokedex/Delibird.json"
+        },
+        "delphox": {
+            "name": "Delphox",
+            "path": "/dataset/pokedex/Delphox.json"
+        },
+        "deoxys (attack form)": {
+            "name": "Deoxys (Attack Form)",
+            "path": "/dataset/pokedex/Deoxys (Attack Form).json"
+        },
+        "deoxys (defense form)": {
+            "name": "Deoxys (Defense Form)",
+            "path": "/dataset/pokedex/Deoxys (Defense Form).json"
+        },
+        "deoxys (speed form)": {
+            "name": "Deoxys (Speed Form)",
+            "path": "/dataset/pokedex/Deoxys (Speed Form).json"
+        },
+        "deoxys": {
+            "name": "Deoxys",
+            "path": "/dataset/pokedex/Deoxys.json"
+        },
+        "dewgong": {
+            "name": "Dewgong",
+            "path": "/dataset/pokedex/Dewgong.json"
+        },
+        "dewott": {
+            "name": "Dewott",
+            "path": "/dataset/pokedex/Dewott.json"
+        },
+        "dewpider": {
+            "name": "Dewpider",
+            "path": "/dataset/pokedex/Dewpider.json"
+        },
+        "dhelmise": {
+            "name": "Dhelmise",
+            "path": "/dataset/pokedex/Dhelmise.json"
+        },
+        "dialga (origin form)": {
+            "name": "Dialga (Origin Form)",
+            "path": "/dataset/pokedex/Dialga (Origin Form).json"
+        },
+        "dialga": {
+            "name": "Dialga",
+            "path": "/dataset/pokedex/Dialga.json"
+        },
+        "diancie (mega form)": {
+            "name": "Diancie (Mega Form)",
+            "path": "/dataset/pokedex/Diancie (Mega Form).json"
+        },
+        "diancie": {
+            "name": "Diancie",
+            "path": "/dataset/pokedex/Diancie.json"
+        },
+        "diggersby": {
+            "name": "Diggersby",
+            "path": "/dataset/pokedex/Diggersby.json"
+        },
+        "diglett (alolan form)": {
+            "name": "Diglett (Alolan Form)",
+            "path": "/dataset/pokedex/Diglett (Alolan Form).json"
+        },
+        "diglett": {
+            "name": "Diglett",
+            "path": "/dataset/pokedex/Diglett.json"
+        },
+        "dipplin": {
+            "name": "Dipplin",
+            "path": "/dataset/pokedex/Dipplin.json"
+        },
+        "ditto": {
+            "name": "Ditto",
+            "path": "/dataset/pokedex/Ditto.json"
+        },
+        "dodrio": {
+            "name": "Dodrio",
+            "path": "/dataset/pokedex/Dodrio.json"
+        },
+        "doduo": {
+            "name": "Doduo",
+            "path": "/dataset/pokedex/Doduo.json"
+        },
+        "dolliv": {
+            "name": "Dolliv",
+            "path": "/dataset/pokedex/Dolliv.json"
+        },
+        "dondozo": {
+            "name": "Dondozo",
+            "path": "/dataset/pokedex/Dondozo.json"
+        },
+        "donphan": {
+            "name": "Donphan",
+            "path": "/dataset/pokedex/Donphan.json"
+        },
+        "dottler": {
+            "name": "Dottler",
+            "path": "/dataset/pokedex/Dottler.json"
+        },
+        "doublade": {
+            "name": "Doublade",
+            "path": "/dataset/pokedex/Doublade.json"
+        },
+        "dracovish": {
+            "name": "Dracovish",
+            "path": "/dataset/pokedex/Dracovish.json"
+        },
+        "dracozolt": {
+            "name": "Dracozolt",
+            "path": "/dataset/pokedex/Dracozolt.json"
+        },
+        "dragalge": {
+            "name": "Dragalge",
+            "path": "/dataset/pokedex/Dragalge.json"
+        },
+        "dragapult": {
+            "name": "Dragapult",
+            "path": "/dataset/pokedex/Dragapult.json"
+        },
+        "dragonair": {
+            "name": "Dragonair",
+            "path": "/dataset/pokedex/Dragonair.json"
+        },
+        "dragonite": {
+            "name": "Dragonite",
+            "path": "/dataset/pokedex/Dragonite.json"
+        },
+        "drakloak": {
+            "name": "Drakloak",
+            "path": "/dataset/pokedex/Drakloak.json"
+        },
+        "drampa": {
+            "name": "Drampa",
+            "path": "/dataset/pokedex/Drampa.json"
+        },
+        "drapion": {
+            "name": "Drapion",
+            "path": "/dataset/pokedex/Drapion.json"
+        },
+        "dratini": {
+            "name": "Dratini",
+            "path": "/dataset/pokedex/Dratini.json"
+        },
+        "drednaw": {
+            "name": "Drednaw",
+            "path": "/dataset/pokedex/Drednaw.json"
+        },
+        "dreepy": {
+            "name": "Dreepy",
+            "path": "/dataset/pokedex/Dreepy.json"
+        },
+        "drifblim": {
+            "name": "Drifblim",
+            "path": "/dataset/pokedex/Drifblim.json"
+        },
+        "drifloon": {
+            "name": "Drifloon",
+            "path": "/dataset/pokedex/Drifloon.json"
+        },
+        "drilbur": {
+            "name": "Drilbur",
+            "path": "/dataset/pokedex/Drilbur.json"
+        },
+        "drizzile": {
+            "name": "Drizzile",
+            "path": "/dataset/pokedex/Drizzile.json"
+        },
+        "drowzee": {
+            "name": "Drowzee",
+            "path": "/dataset/pokedex/Drowzee.json"
+        },
+        "druddigon": {
+            "name": "Druddigon",
+            "path": "/dataset/pokedex/Druddigon.json"
+        },
+        "dubwool": {
+            "name": "Dubwool",
+            "path": "/dataset/pokedex/Dubwool.json"
+        },
+        "ducklett": {
+            "name": "Ducklett",
+            "path": "/dataset/pokedex/Ducklett.json"
+        },
+        "dudunsparce": {
+            "name": "Dudunsparce",
+            "path": "/dataset/pokedex/Dudunsparce.json"
+        },
+        "dugtrio (alolan form)": {
+            "name": "Dugtrio (Alolan Form)",
+            "path": "/dataset/pokedex/Dugtrio (Alolan Form).json"
+        },
+        "dugtrio": {
+            "name": "Dugtrio",
+            "path": "/dataset/pokedex/Dugtrio.json"
+        },
+        "dunsparce": {
+            "name": "Dunsparce",
+            "path": "/dataset/pokedex/Dunsparce.json"
+        },
+        "duosion": {
+            "name": "Duosion",
+            "path": "/dataset/pokedex/Duosion.json"
+        },
+        "duraludon": {
+            "name": "Duraludon",
+            "path": "/dataset/pokedex/Duraludon.json"
+        },
+        "durant": {
+            "name": "Durant",
+            "path": "/dataset/pokedex/Durant.json"
+        },
+        "dusclops": {
+            "name": "Dusclops",
+            "path": "/dataset/pokedex/Dusclops.json"
+        },
+        "dusknoir": {
+            "name": "Dusknoir",
+            "path": "/dataset/pokedex/Dusknoir.json"
+        },
+        "duskull": {
+            "name": "Duskull",
+            "path": "/dataset/pokedex/Duskull.json"
+        },
+        "dustox": {
+            "name": "Dustox",
+            "path": "/dataset/pokedex/Dustox.json"
+        },
+        "dwebble": {
+            "name": "Dwebble",
+            "path": "/dataset/pokedex/Dwebble.json"
+        },
+        "eelektrik": {
+            "name": "Eelektrik",
+            "path": "/dataset/pokedex/Eelektrik.json"
+        },
+        "eelektross": {
+            "name": "Eelektross",
+            "path": "/dataset/pokedex/Eelektross.json"
+        },
+        "eevee": {
+            "name": "Eevee",
+            "path": "/dataset/pokedex/Eevee.json"
+        },
+        "egg": {
+            "name": "Egg",
+            "path": "/dataset/pokedex/Egg.json"
+        },
+        "eiscue (no ice form)": {
+            "name": "Eiscue (No Ice Form)",
+            "path": "/dataset/pokedex/Eiscue (No Ice Form).json"
+        },
+        "eiscue": {
+            "name": "Eiscue",
+            "path": "/dataset/pokedex/Eiscue.json"
+        },
+        "ekans": {
+            "name": "Ekans",
+            "path": "/dataset/pokedex/Ekans.json"
+        },
+        "eldegoss": {
+            "name": "Eldegoss",
+            "path": "/dataset/pokedex/Eldegoss.json"
+        },
+        "electabuzz": {
+            "name": "Electabuzz",
+            "path": "/dataset/pokedex/Electabuzz.json"
+        },
+        "electivire": {
+            "name": "Electivire",
+            "path": "/dataset/pokedex/Electivire.json"
+        },
+        "electrike": {
+            "name": "Electrike",
+            "path": "/dataset/pokedex/Electrike.json"
+        },
+        "electrode (hisuian form)": {
+            "name": "Electrode (Hisuian Form)",
+            "path": "/dataset/pokedex/Electrode (Hisuian Form).json"
+        },
+        "electrode": {
+            "name": "Electrode",
+            "path": "/dataset/pokedex/Electrode.json"
+        },
+        "elekid": {
+            "name": "Elekid",
+            "path": "/dataset/pokedex/Elekid.json"
+        },
+        "elgyem": {
+            "name": "Elgyem",
+            "path": "/dataset/pokedex/Elgyem.json"
+        },
+        "emboar": {
+            "name": "Emboar",
+            "path": "/dataset/pokedex/Emboar.json"
+        },
+        "emolga": {
+            "name": "Emolga",
+            "path": "/dataset/pokedex/Emolga.json"
+        },
+        "empoleon": {
+            "name": "Empoleon",
+            "path": "/dataset/pokedex/Empoleon.json"
+        },
+        "enamorus (therian form)": {
+            "name": "Enamorus (Therian Form)",
+            "path": "/dataset/pokedex/Enamorus (Therian Form).json"
+        },
+        "enamorus": {
+            "name": "Enamorus",
+            "path": "/dataset/pokedex/Enamorus.json"
+        },
+        "entei": {
+            "name": "Entei",
+            "path": "/dataset/pokedex/Entei.json"
+        },
+        "escavalier": {
+            "name": "Escavalier",
+            "path": "/dataset/pokedex/Escavalier.json"
+        },
+        "espathra": {
+            "name": "Espathra",
+            "path": "/dataset/pokedex/Espathra.json"
+        },
+        "espeon": {
+            "name": "Espeon",
+            "path": "/dataset/pokedex/Espeon.json"
+        },
+        "espurr": {
+            "name": "Espurr",
+            "path": "/dataset/pokedex/Espurr.json"
+        },
+        "eternatus (eternamax form)": {
+            "name": "Eternatus (Eternamax Form)",
+            "path": "/dataset/pokedex/Eternatus (Eternamax Form).json"
+        },
+        "eternatus": {
+            "name": "Eternatus",
+            "path": "/dataset/pokedex/Eternatus.json"
+        },
+        "excadrill": {
+            "name": "Excadrill",
+            "path": "/dataset/pokedex/Excadrill.json"
+        },
+        "exeggcute": {
+            "name": "Exeggcute",
+            "path": "/dataset/pokedex/Exeggcute.json"
+        },
+        "exeggutor (alolan form)": {
+            "name": "Exeggutor (Alolan Form)",
+            "path": "/dataset/pokedex/Exeggutor (Alolan Form).json"
+        },
+        "exeggutor": {
+            "name": "Exeggutor",
+            "path": "/dataset/pokedex/Exeggutor.json"
+        },
+        "exploud": {
+            "name": "Exploud",
+            "path": "/dataset/pokedex/Exploud.json"
+        },
+        "falinks": {
+            "name": "Falinks",
+            "path": "/dataset/pokedex/Falinks.json"
+        },
+        "farfetch'd (galarian form)": {
+            "name": "Farfetch'd (Galarian Form)",
+            "path": "/dataset/pokedex/Farfetch'd (Galarian Form).json"
+        },
+        "farfetch'd": {
+            "name": "Farfetch'd",
+            "path": "/dataset/pokedex/Farfetch'd.json"
+        },
+        "farigiraf": {
+            "name": "Farigiraf",
+            "path": "/dataset/pokedex/Farigiraf.json"
+        },
+        "fearow": {
+            "name": "Fearow",
+            "path": "/dataset/pokedex/Fearow.json"
+        },
+        "feebas": {
+            "name": "Feebas",
+            "path": "/dataset/pokedex/Feebas.json"
+        },
+        "fennekin": {
+            "name": "Fennekin",
+            "path": "/dataset/pokedex/Fennekin.json"
+        },
+        "feraligatr": {
+            "name": "Feraligatr",
+            "path": "/dataset/pokedex/Feraligatr.json"
+        },
+        "ferroseed": {
+            "name": "Ferroseed",
+            "path": "/dataset/pokedex/Ferroseed.json"
+        },
+        "ferrothorn": {
+            "name": "Ferrothorn",
+            "path": "/dataset/pokedex/Ferrothorn.json"
+        },
+        "fezandipiti": {
+            "name": "Fezandipiti",
+            "path": "/dataset/pokedex/Fezandipiti.json"
+        },
+        "fidough": {
+            "name": "Fidough",
+            "path": "/dataset/pokedex/Fidough.json"
+        },
+        "finizen": {
+            "name": "Finizen",
+            "path": "/dataset/pokedex/Finizen.json"
+        },
+        "finneon": {
+            "name": "Finneon",
+            "path": "/dataset/pokedex/Finneon.json"
+        },
+        "flaaffy": {
+            "name": "Flaaffy",
+            "path": "/dataset/pokedex/Flaaffy.json"
+        },
+        "flabébé": {
+            "name": "Flabébé",
+            "path": "/dataset/pokedex/Flabebe.json"
+        },
+        "flamigo": {
+            "name": "Flamigo",
+            "path": "/dataset/pokedex/Flamigo.json"
+        },
+        "flapple": {
+            "name": "Flapple",
+            "path": "/dataset/pokedex/Flapple.json"
+        },
+        "flareon": {
+            "name": "Flareon",
+            "path": "/dataset/pokedex/Flareon.json"
+        },
+        "fletchinder": {
+            "name": "Fletchinder",
+            "path": "/dataset/pokedex/Fletchinder.json"
+        },
+        "fletchling": {
+            "name": "Fletchling",
+            "path": "/dataset/pokedex/Fletchling.json"
+        },
+        "flittle": {
+            "name": "Flittle",
+            "path": "/dataset/pokedex/Flittle.json"
+        },
+        "floatzel": {
+            "name": "Floatzel",
+            "path": "/dataset/pokedex/Floatzel.json"
+        },
+        "floette": {
+            "name": "Floette",
+            "path": "/dataset/pokedex/Floette.json"
+        },
+        "floragato": {
+            "name": "Floragato",
+            "path": "/dataset/pokedex/Floragato.json"
+        },
+        "florges": {
+            "name": "Florges",
+            "path": "/dataset/pokedex/Florges.json"
+        },
+        "flutter mane": {
+            "name": "Flutter Mane",
+            "path": "/dataset/pokedex/Flutter Mane.json"
+        },
+        "flygon": {
+            "name": "Flygon",
+            "path": "/dataset/pokedex/Flygon.json"
+        },
+        "fomantis": {
+            "name": "Fomantis",
+            "path": "/dataset/pokedex/Fomantis.json"
+        },
+        "foongus": {
+            "name": "Foongus",
+            "path": "/dataset/pokedex/Foongus.json"
+        },
+        "forretress": {
+            "name": "Forretress",
+            "path": "/dataset/pokedex/Forretress.json"
+        },
+        "fraxure": {
+            "name": "Fraxure",
+            "path": "/dataset/pokedex/Fraxure.json"
+        },
+        "frigibax": {
+            "name": "Frigibax",
+            "path": "/dataset/pokedex/Frigibax.json"
+        },
+        "frillish": {
+            "name": "Frillish",
+            "path": "/dataset/pokedex/Frillish.json"
+        },
+        "froakie": {
+            "name": "Froakie",
+            "path": "/dataset/pokedex/Froakie.json"
+        },
+        "frogadier": {
+            "name": "Frogadier",
+            "path": "/dataset/pokedex/Frogadier.json"
+        },
+        "froslass": {
+            "name": "Froslass",
+            "path": "/dataset/pokedex/Froslass.json"
+        },
+        "frosmoth": {
+            "name": "Frosmoth",
+            "path": "/dataset/pokedex/Frosmoth.json"
+        },
+        "fuecoco": {
+            "name": "Fuecoco",
+            "path": "/dataset/pokedex/Fuecoco.json"
+        },
+        "furfrou": {
+            "name": "Furfrou",
+            "path": "/dataset/pokedex/Furfrou.json"
+        },
+        "furret": {
+            "name": "Furret",
+            "path": "/dataset/pokedex/Furret.json"
+        },
+        "gabite": {
+            "name": "Gabite",
+            "path": "/dataset/pokedex/Gabite.json"
+        },
+        "gallade (mega form)": {
+            "name": "Gallade (Mega Form)",
+            "path": "/dataset/pokedex/Gallade (Mega Form).json"
+        },
+        "gallade": {
+            "name": "Gallade",
+            "path": "/dataset/pokedex/Gallade.json"
+        },
+        "galvantula": {
+            "name": "Galvantula",
+            "path": "/dataset/pokedex/Galvantula.json"
+        },
+        "garbodor": {
+            "name": "Garbodor",
+            "path": "/dataset/pokedex/Garbodor.json"
+        },
+        "garchomp (mega form)": {
+            "name": "Garchomp (Mega Form)",
+            "path": "/dataset/pokedex/Garchomp (Mega Form).json"
+        },
+        "garchomp": {
+            "name": "Garchomp",
+            "path": "/dataset/pokedex/Garchomp.json"
+        },
+        "gardevoir (mega form)": {
+            "name": "Gardevoir (Mega Form)",
+            "path": "/dataset/pokedex/Gardevoir (Mega Form).json"
+        },
+        "gardevoir": {
+            "name": "Gardevoir",
+            "path": "/dataset/pokedex/Gardevoir.json"
+        },
+        "garganacl": {
+            "name": "Garganacl",
+            "path": "/dataset/pokedex/Garganacl.json"
+        },
+        "gastly": {
+            "name": "Gastly",
+            "path": "/dataset/pokedex/Gastly.json"
+        },
+        "gastrodon": {
+            "name": "Gastrodon",
+            "path": "/dataset/pokedex/Gastrodon.json"
+        },
+        "genesect": {
+            "name": "Genesect",
+            "path": "/dataset/pokedex/Genesect.json"
+        },
+        "gengar (mega form)": {
+            "name": "Gengar (Mega Form)",
+            "path": "/dataset/pokedex/Gengar (Mega Form).json"
+        },
+        "gengar": {
+            "name": "Gengar",
+            "path": "/dataset/pokedex/Gengar.json"
+        },
+        "geodude (alolan form)": {
+            "name": "Geodude (Alolan Form)",
+            "path": "/dataset/pokedex/Geodude (Alolan Form).json"
+        },
+        "geodude": {
+            "name": "Geodude",
+            "path": "/dataset/pokedex/Geodude.json"
+        },
+        "gholdengo": {
+            "name": "Gholdengo",
+            "path": "/dataset/pokedex/Gholdengo.json"
+        },
+        "gible": {
+            "name": "Gible",
+            "path": "/dataset/pokedex/Gible.json"
+        },
+        "gigalith": {
+            "name": "Gigalith",
+            "path": "/dataset/pokedex/Gigalith.json"
+        },
+        "gimmighoul (chest form)": {
+            "name": "Gimmighoul (Chest Form)",
+            "path": "/dataset/pokedex/Gimmighoul (Chest Form).json"
+        },
+        "gimmighoul (roaming form)": {
+            "name": "Gimmighoul (Roaming Form)",
+            "path": "/dataset/pokedex/Gimmighoul (Roaming Form).json"
+        },
+        "girafarig": {
+            "name": "Girafarig",
+            "path": "/dataset/pokedex/Girafarig.json"
+        },
+        "giratina (origin form)": {
+            "name": "Giratina (Origin Form)",
+            "path": "/dataset/pokedex/Giratina (Origin Form).json"
+        },
+        "giratina": {
+            "name": "Giratina",
+            "path": "/dataset/pokedex/Giratina.json"
+        },
+        "glaceon": {
+            "name": "Glaceon",
+            "path": "/dataset/pokedex/Glaceon.json"
+        },
+        "glalie (mega form)": {
+            "name": "Glalie (Mega Form)",
+            "path": "/dataset/pokedex/Glalie (Mega Form).json"
+        },
+        "glalie": {
+            "name": "Glalie",
+            "path": "/dataset/pokedex/Glalie.json"
+        },
+        "glameow": {
+            "name": "Glameow",
+            "path": "/dataset/pokedex/Glameow.json"
+        },
+        "glastrier": {
+            "name": "Glastrier",
+            "path": "/dataset/pokedex/Glastrier.json"
+        },
+        "gligar": {
+            "name": "Gligar",
+            "path": "/dataset/pokedex/Gligar.json"
+        },
+        "glimmet": {
+            "name": "Glimmet",
+            "path": "/dataset/pokedex/Glimmet.json"
+        },
+        "glimmora": {
+            "name": "Glimmora",
+            "path": "/dataset/pokedex/Glimmora.json"
+        },
+        "gliscor": {
+            "name": "Gliscor",
+            "path": "/dataset/pokedex/Gliscor.json"
+        },
+        "gloom": {
+            "name": "Gloom",
+            "path": "/dataset/pokedex/Gloom.json"
+        },
+        "gogoat": {
+            "name": "Gogoat",
+            "path": "/dataset/pokedex/Gogoat.json"
+        },
+        "golbat": {
+            "name": "Golbat",
+            "path": "/dataset/pokedex/Golbat.json"
+        },
+        "goldeen": {
+            "name": "Goldeen",
+            "path": "/dataset/pokedex/Goldeen.json"
+        },
+        "golduck": {
+            "name": "Golduck",
+            "path": "/dataset/pokedex/Golduck.json"
+        },
+        "golem (alolan form)": {
+            "name": "Golem (Alolan Form)",
+            "path": "/dataset/pokedex/Golem (Alolan Form).json"
+        },
+        "golem": {
+            "name": "Golem",
+            "path": "/dataset/pokedex/Golem.json"
+        },
+        "golett": {
+            "name": "Golett",
+            "path": "/dataset/pokedex/Golett.json"
+        },
+        "golisopod": {
+            "name": "Golisopod",
+            "path": "/dataset/pokedex/Golisopod.json"
+        },
+        "golurk": {
+            "name": "Golurk",
+            "path": "/dataset/pokedex/Golurk.json"
+        },
+        "goodra (hisuian form)": {
+            "name": "Goodra (Hisuian Form)",
+            "path": "/dataset/pokedex/Goodra (Hisuian Form).json"
+        },
+        "goodra": {
+            "name": "Goodra",
+            "path": "/dataset/pokedex/Goodra.json"
+        },
+        "goomy": {
+            "name": "Goomy",
+            "path": "/dataset/pokedex/Goomy.json"
+        },
+        "gorebyss": {
+            "name": "Gorebyss",
+            "path": "/dataset/pokedex/Gorebyss.json"
+        },
+        "gossifleur": {
+            "name": "Gossifleur",
+            "path": "/dataset/pokedex/Gossifleur.json"
+        },
+        "gothita": {
+            "name": "Gothita",
+            "path": "/dataset/pokedex/Gothita.json"
+        },
+        "gothitelle": {
+            "name": "Gothitelle",
+            "path": "/dataset/pokedex/Gothitelle.json"
+        },
+        "gothorita": {
+            "name": "Gothorita",
+            "path": "/dataset/pokedex/Gothorita.json"
+        },
+        "gouging fire": {
+            "name": "Gouging Fire",
+            "path": "/dataset/pokedex/Gouging Fire.json"
+        },
+        "gourgeist": {
+            "name": "Gourgeist",
+            "path": "/dataset/pokedex/Gourgeist.json"
+        },
+        "grafaiai": {
+            "name": "Grafaiai",
+            "path": "/dataset/pokedex/Grafaiai.json"
+        },
+        "granbull": {
+            "name": "Granbull",
+            "path": "/dataset/pokedex/Granbull.json"
+        },
+        "grapploct": {
+            "name": "Grapploct",
+            "path": "/dataset/pokedex/Grapploct.json"
+        },
+        "graveler (alolan form)": {
+            "name": "Graveler (Alolan Form)",
+            "path": "/dataset/pokedex/Graveler (Alolan Form).json"
+        },
+        "graveler": {
+            "name": "Graveler",
+            "path": "/dataset/pokedex/Graveler.json"
+        },
+        "great tusk": {
+            "name": "Great Tusk",
+            "path": "/dataset/pokedex/Great Tusk.json"
+        },
+        "greavard": {
+            "name": "Greavard",
+            "path": "/dataset/pokedex/Greavard.json"
+        },
+        "greedent": {
+            "name": "Greedent",
+            "path": "/dataset/pokedex/Greedent.json"
+        },
+        "greninja (battle bond form)": {
+            "name": "Greninja (Battle Bond Form)",
+            "path": "/dataset/pokedex/Greninja (Battle Bond Form).json"
+        },
+        "greninja": {
+            "name": "Greninja",
+            "path": "/dataset/pokedex/Greninja.json"
+        },
+        "grimer (alolan form)": {
+            "name": "Grimer (Alolan Form)",
+            "path": "/dataset/pokedex/Grimer (Alolan Form).json"
+        },
+        "grimer": {
+            "name": "Grimer",
+            "path": "/dataset/pokedex/Grimer.json"
+        },
+        "grimmsnarl": {
+            "name": "Grimmsnarl",
+            "path": "/dataset/pokedex/Grimmsnarl.json"
+        },
+        "grookey": {
+            "name": "Grookey",
+            "path": "/dataset/pokedex/Grookey.json"
+        },
+        "grotle": {
+            "name": "Grotle",
+            "path": "/dataset/pokedex/Grotle.json"
+        },
+        "groudon (primal form)": {
+            "name": "Groudon (Primal Form)",
+            "path": "/dataset/pokedex/Groudon (Primal Form).json"
+        },
+        "groudon": {
+            "name": "Groudon",
+            "path": "/dataset/pokedex/Groudon.json"
+        },
+        "grovyle": {
+            "name": "Grovyle",
+            "path": "/dataset/pokedex/Grovyle.json"
+        },
+        "growlithe (hisuian form)": {
+            "name": "Growlithe (Hisuian Form)",
+            "path": "/dataset/pokedex/Growlithe (Hisuian Form).json"
+        },
+        "growlithe": {
+            "name": "Growlithe",
+            "path": "/dataset/pokedex/Growlithe.json"
+        },
+        "grubbin": {
+            "name": "Grubbin",
+            "path": "/dataset/pokedex/Grubbin.json"
+        },
+        "grumpig": {
+            "name": "Grumpig",
+            "path": "/dataset/pokedex/Grumpig.json"
+        },
+        "gulpin": {
+            "name": "Gulpin",
+            "path": "/dataset/pokedex/Gulpin.json"
+        },
+        "gumshoos": {
+            "name": "Gumshoos",
+            "path": "/dataset/pokedex/Gumshoos.json"
+        },
+        "gurdurr": {
+            "name": "Gurdurr",
+            "path": "/dataset/pokedex/Gurdurr.json"
+        },
+        "guzzlord": {
+            "name": "Guzzlord",
+            "path": "/dataset/pokedex/Guzzlord.json"
+        },
+        "gyarados (mega form)": {
+            "name": "Gyarados (Mega Form)",
+            "path": "/dataset/pokedex/Gyarados (Mega Form).json"
+        },
+        "gyarados": {
+            "name": "Gyarados",
+            "path": "/dataset/pokedex/Gyarados.json"
+        },
+        "hakamo-o": {
+            "name": "Hakamo-o",
+            "path": "/dataset/pokedex/Hakamo-o.json"
+        },
+        "happiny": {
+            "name": "Happiny",
+            "path": "/dataset/pokedex/Happiny.json"
+        },
+        "hariyama": {
+            "name": "Hariyama",
+            "path": "/dataset/pokedex/Hariyama.json"
+        },
+        "hatenna": {
+            "name": "Hatenna",
+            "path": "/dataset/pokedex/Hatenna.json"
+        },
+        "hatterene": {
+            "name": "Hatterene",
+            "path": "/dataset/pokedex/Hatterene.json"
+        },
+        "hattrem": {
+            "name": "Hattrem",
+            "path": "/dataset/pokedex/Hattrem.json"
+        },
+        "haunter": {
+            "name": "Haunter",
+            "path": "/dataset/pokedex/Haunter.json"
+        },
+        "hawlucha": {
+            "name": "Hawlucha",
+            "path": "/dataset/pokedex/Hawlucha.json"
+        },
+        "haxorus": {
+            "name": "Haxorus",
+            "path": "/dataset/pokedex/Haxorus.json"
+        },
+        "heatmor": {
+            "name": "Heatmor",
+            "path": "/dataset/pokedex/Heatmor.json"
+        },
+        "heatran": {
+            "name": "Heatran",
+            "path": "/dataset/pokedex/Heatran.json"
+        },
+        "heliolisk": {
+            "name": "Heliolisk",
+            "path": "/dataset/pokedex/Heliolisk.json"
+        },
+        "helioptile": {
+            "name": "Helioptile",
+            "path": "/dataset/pokedex/Helioptile.json"
+        },
+        "heracross (mega form)": {
+            "name": "Heracross (Mega Form)",
+            "path": "/dataset/pokedex/Heracross (Mega Form).json"
+        },
+        "heracross": {
+            "name": "Heracross",
+            "path": "/dataset/pokedex/Heracross.json"
+        },
+        "herdier": {
+            "name": "Herdier",
+            "path": "/dataset/pokedex/Herdier.json"
+        },
+        "hippopotas": {
+            "name": "Hippopotas",
+            "path": "/dataset/pokedex/Hippopotas.json"
+        },
+        "hippowdon": {
+            "name": "Hippowdon",
+            "path": "/dataset/pokedex/Hippowdon.json"
+        },
+        "hitmonchan": {
+            "name": "Hitmonchan",
+            "path": "/dataset/pokedex/Hitmonchan.json"
+        },
+        "hitmonlee": {
+            "name": "Hitmonlee",
+            "path": "/dataset/pokedex/Hitmonlee.json"
+        },
+        "hitmontop": {
+            "name": "Hitmontop",
+            "path": "/dataset/pokedex/Hitmontop.json"
+        },
+        "ho-oh": {
+            "name": "Ho-oh",
+            "path": "/dataset/pokedex/Ho-oh.json"
+        },
+        "honchkrow": {
+            "name": "Honchkrow",
+            "path": "/dataset/pokedex/Honchkrow.json"
+        },
+        "honedge": {
+            "name": "Honedge",
+            "path": "/dataset/pokedex/Honedge.json"
+        },
+        "hoopa (unbound form)": {
+            "name": "Hoopa (Unbound Form)",
+            "path": "/dataset/pokedex/Hoopa (Unbound Form).json"
+        },
+        "hoopa": {
+            "name": "Hoopa",
+            "path": "/dataset/pokedex/Hoopa.json"
+        },
+        "hoothoot": {
+            "name": "Hoothoot",
+            "path": "/dataset/pokedex/Hoothoot.json"
+        },
+        "hoppip": {
+            "name": "Hoppip",
+            "path": "/dataset/pokedex/Hoppip.json"
+        },
+        "horsea": {
+            "name": "Horsea",
+            "path": "/dataset/pokedex/Horsea.json"
+        },
+        "houndoom (mega form)": {
+            "name": "Houndoom (Mega Form)",
+            "path": "/dataset/pokedex/Houndoom (Mega Form).json"
+        },
+        "houndoom": {
+            "name": "Houndoom",
+            "path": "/dataset/pokedex/Houndoom.json"
+        },
+        "houndour": {
+            "name": "Houndour",
+            "path": "/dataset/pokedex/Houndour.json"
+        },
+        "houndstone": {
+            "name": "Houndstone",
+            "path": "/dataset/pokedex/Houndstone.json"
+        },
+        "huntail": {
+            "name": "Huntail",
+            "path": "/dataset/pokedex/Huntail.json"
+        },
+        "hydrapple": {
+            "name": "Hydrapple",
+            "path": "/dataset/pokedex/Hydrapple.json"
+        },
+        "hydreigon": {
+            "name": "Hydreigon",
+            "path": "/dataset/pokedex/Hydreigon.json"
+        },
+        "hypno": {
+            "name": "Hypno",
+            "path": "/dataset/pokedex/Hypno.json"
+        },
+        "igglybuff": {
+            "name": "Igglybuff",
+            "path": "/dataset/pokedex/Igglybuff.json"
+        },
+        "illumise": {
+            "name": "Illumise",
+            "path": "/dataset/pokedex/Illumise.json"
+        },
+        "impidimp": {
+            "name": "Impidimp",
+            "path": "/dataset/pokedex/Impidimp.json"
+        },
+        "incineroar": {
+            "name": "Incineroar",
+            "path": "/dataset/pokedex/Incineroar.json"
+        },
+        "indeedee (female form)": {
+            "name": "Indeedee (Female Form)",
+            "path": "/dataset/pokedex/Indeedee (Female Form).json"
+        },
+        "indeedee (male form)": {
+            "name": "Indeedee (Male Form)",
+            "path": "/dataset/pokedex/Indeedee (Male Form).json"
+        },
+        "infernape": {
+            "name": "Infernape",
+            "path": "/dataset/pokedex/Infernape.json"
+        },
+        "inkay": {
+            "name": "Inkay",
+            "path": "/dataset/pokedex/Inkay.json"
+        },
+        "inteleon": {
+            "name": "Inteleon",
+            "path": "/dataset/pokedex/Inteleon.json"
+        },
+        "iron boulder": {
+            "name": "Iron Boulder",
+            "path": "/dataset/pokedex/Iron Boulder.json"
+        },
+        "iron bundle": {
+            "name": "Iron Bundle",
+            "path": "/dataset/pokedex/Iron Bundle.json"
+        },
+        "iron crown": {
+            "name": "Iron Crown",
+            "path": "/dataset/pokedex/Iron Crown.json"
+        },
+        "iron hands": {
+            "name": "Iron Hands",
+            "path": "/dataset/pokedex/Iron Hands.json"
+        },
+        "iron jugulis": {
+            "name": "Iron Jugulis",
+            "path": "/dataset/pokedex/Iron Jugulis.json"
+        },
+        "iron leaves": {
+            "name": "Iron Leaves",
+            "path": "/dataset/pokedex/Iron Leaves.json"
+        },
+        "iron moth": {
+            "name": "Iron Moth",
+            "path": "/dataset/pokedex/Iron Moth.json"
+        },
+        "iron thorns": {
+            "name": "Iron Thorns",
+            "path": "/dataset/pokedex/Iron Thorns.json"
+        },
+        "iron treads": {
+            "name": "Iron Treads",
+            "path": "/dataset/pokedex/Iron Treads.json"
+        },
+        "iron valiant": {
+            "name": "Iron Valiant",
+            "path": "/dataset/pokedex/Iron Valiant.json"
+        },
+        "ivysaur": {
+            "name": "Ivysaur",
+            "path": "/dataset/pokedex/Ivysaur.json"
+        },
+        "jangmo-o": {
+            "name": "Jangmo-o",
+            "path": "/dataset/pokedex/Jangmo-o.json"
+        },
+        "jellicent": {
+            "name": "Jellicent",
+            "path": "/dataset/pokedex/Jellicent.json"
+        },
+        "jigglypuff": {
+            "name": "Jigglypuff",
+            "path": "/dataset/pokedex/Jigglypuff.json"
+        },
+        "jirachi": {
+            "name": "Jirachi",
+            "path": "/dataset/pokedex/Jirachi.json"
+        },
+        "jolteon": {
+            "name": "Jolteon",
+            "path": "/dataset/pokedex/Jolteon.json"
+        },
+        "joltik": {
+            "name": "Joltik",
+            "path": "/dataset/pokedex/Joltik.json"
+        },
+        "jumpluff": {
+            "name": "Jumpluff",
+            "path": "/dataset/pokedex/Jumpluff.json"
+        },
+        "jynx": {
+            "name": "Jynx",
+            "path": "/dataset/pokedex/Jynx.json"
+        },
+        "kabuto": {
+            "name": "Kabuto",
+            "path": "/dataset/pokedex/Kabuto.json"
+        },
+        "kabutops": {
+            "name": "Kabutops",
+            "path": "/dataset/pokedex/Kabutops.json"
+        },
+        "kadabra": {
+            "name": "Kadabra",
+            "path": "/dataset/pokedex/Kadabra.json"
+        },
+        "kakuna": {
+            "name": "Kakuna",
+            "path": "/dataset/pokedex/Kakuna.json"
+        },
+        "kangaskhan (mega form)": {
+            "name": "Kangaskhan (Mega Form)",
+            "path": "/dataset/pokedex/Kangaskhan (Mega Form).json"
+        },
+        "kangaskhan": {
+            "name": "Kangaskhan",
+            "path": "/dataset/pokedex/Kangaskhan.json"
+        },
+        "karrablast": {
+            "name": "Karrablast",
+            "path": "/dataset/pokedex/Karrablast.json"
+        },
+        "kartana": {
+            "name": "Kartana",
+            "path": "/dataset/pokedex/Kartana.json"
+        },
+        "kecleon": {
+            "name": "Kecleon",
+            "path": "/dataset/pokedex/Kecleon.json"
+        },
+        "keldeo (resolute form)": {
+            "name": "Keldeo (Resolute Form)",
+            "path": "/dataset/pokedex/Keldeo (Resolute Form).json"
+        },
+        "keldeo": {
+            "name": "Keldeo",
+            "path": "/dataset/pokedex/Keldeo.json"
+        },
+        "kilowattrel": {
+            "name": "Kilowattrel",
+            "path": "/dataset/pokedex/Kilowattrel.json"
+        },
+        "kingambit": {
+            "name": "Kingambit",
+            "path": "/dataset/pokedex/Kingambit.json"
+        },
+        "kingdra": {
+            "name": "Kingdra",
+            "path": "/dataset/pokedex/Kingdra.json"
+        },
+        "kingler": {
+            "name": "Kingler",
+            "path": "/dataset/pokedex/Kingler.json"
+        },
+        "kirlia": {
+            "name": "Kirlia",
+            "path": "/dataset/pokedex/Kirlia.json"
+        },
+        "klang": {
+            "name": "Klang",
+            "path": "/dataset/pokedex/Klang.json"
+        },
+        "klawf": {
+            "name": "Klawf",
+            "path": "/dataset/pokedex/Klawf.json"
+        },
+        "kleavor": {
+            "name": "Kleavor",
+            "path": "/dataset/pokedex/Kleavor.json"
+        },
+        "klefki": {
+            "name": "Klefki",
+            "path": "/dataset/pokedex/Klefki.json"
+        },
+        "klink": {
+            "name": "Klink",
+            "path": "/dataset/pokedex/Klink.json"
+        },
+        "klinklang": {
+            "name": "Klinklang",
+            "path": "/dataset/pokedex/Klinklang.json"
+        },
+        "koffing": {
+            "name": "Koffing",
+            "path": "/dataset/pokedex/Koffing.json"
+        },
+        "komala": {
+            "name": "Komala",
+            "path": "/dataset/pokedex/Komala.json"
+        },
+        "kommo-o": {
+            "name": "Kommo-o",
+            "path": "/dataset/pokedex/Kommo-o.json"
+        },
+        "koraidon": {
+            "name": "Koraidon",
+            "path": "/dataset/pokedex/Koraidon.json"
+        },
+        "krabby": {
+            "name": "Krabby",
+            "path": "/dataset/pokedex/Krabby.json"
+        },
+        "kricketot": {
+            "name": "Kricketot",
+            "path": "/dataset/pokedex/Kricketot.json"
+        },
+        "kricketune": {
+            "name": "Kricketune",
+            "path": "/dataset/pokedex/Kricketune.json"
+        },
+        "krokorok": {
+            "name": "Krokorok",
+            "path": "/dataset/pokedex/Krokorok.json"
+        },
+        "krookodile": {
+            "name": "Krookodile",
+            "path": "/dataset/pokedex/Krookodile.json"
+        },
+        "kubfu": {
+            "name": "Kubfu",
+            "path": "/dataset/pokedex/Kubfu.json"
+        },
+        "kyogre (primal form)": {
+            "name": "Kyogre (Primal Form)",
+            "path": "/dataset/pokedex/Kyogre (Primal Form).json"
+        },
+        "kyogre": {
+            "name": "Kyogre",
+            "path": "/dataset/pokedex/Kyogre.json"
+        },
+        "kyurem (black form)": {
+            "name": "Kyurem (Black Form)",
+            "path": "/dataset/pokedex/Kyurem (Black Form).json"
+        },
+        "kyurem (white form)": {
+            "name": "Kyurem (White Form)",
+            "path": "/dataset/pokedex/Kyurem (White Form).json"
+        },
+        "kyurem": {
+            "name": "Kyurem",
+            "path": "/dataset/pokedex/Kyurem.json"
+        },
+        "lairon": {
+            "name": "Lairon",
+            "path": "/dataset/pokedex/Lairon.json"
+        },
+        "lampent": {
+            "name": "Lampent",
+            "path": "/dataset/pokedex/Lampent.json"
+        },
+        "landorus (therian form)": {
+            "name": "Landorus (Therian Form)",
+            "path": "/dataset/pokedex/Landorus (Therian Form).json"
+        },
+        "landorus": {
+            "name": "Landorus",
+            "path": "/dataset/pokedex/Landorus.json"
+        },
+        "lanturn": {
+            "name": "Lanturn",
+            "path": "/dataset/pokedex/Lanturn.json"
+        },
+        "lapras": {
+            "name": "Lapras",
+            "path": "/dataset/pokedex/Lapras.json"
+        },
+        "larvesta": {
+            "name": "Larvesta",
+            "path": "/dataset/pokedex/Larvesta.json"
+        },
+        "larvitar": {
+            "name": "Larvitar",
+            "path": "/dataset/pokedex/Larvitar.json"
+        },
+        "latias (mega form)": {
+            "name": "Latias (Mega Form)",
+            "path": "/dataset/pokedex/Latias (Mega Form).json"
+        },
+        "latias": {
+            "name": "Latias",
+            "path": "/dataset/pokedex/Latias.json"
+        },
+        "latios (mega form)": {
+            "name": "Latios (Mega Form)",
+            "path": "/dataset/pokedex/Latios (Mega Form).json"
+        },
+        "latios": {
+            "name": "Latios",
+            "path": "/dataset/pokedex/Latios.json"
+        },
+        "leafeon": {
+            "name": "Leafeon",
+            "path": "/dataset/pokedex/Leafeon.json"
+        },
+        "leavanny": {
+            "name": "Leavanny",
+            "path": "/dataset/pokedex/Leavanny.json"
+        },
+        "lechonk": {
+            "name": "Lechonk",
+            "path": "/dataset/pokedex/Lechonk.json"
+        },
+        "ledian": {
+            "name": "Ledian",
+            "path": "/dataset/pokedex/Ledian.json"
+        },
+        "ledyba": {
+            "name": "Ledyba",
+            "path": "/dataset/pokedex/Ledyba.json"
+        },
+        "lickilicky": {
+            "name": "Lickilicky",
+            "path": "/dataset/pokedex/Lickilicky.json"
+        },
+        "lickitung": {
+            "name": "Lickitung",
+            "path": "/dataset/pokedex/Lickitung.json"
+        },
+        "liepard": {
+            "name": "Liepard",
+            "path": "/dataset/pokedex/Liepard.json"
+        },
+        "lileep": {
+            "name": "Lileep",
+            "path": "/dataset/pokedex/Lileep.json"
+        },
+        "lilligant (hisuian form)": {
+            "name": "Lilligant (Hisuian Form)",
+            "path": "/dataset/pokedex/Lilligant (Hisiuan Form).json"
+        },
+        "lilligant": {
+            "name": "Lilligant",
+            "path": "/dataset/pokedex/Lilligant.json"
+        },
+        "lillipup": {
+            "name": "Lillipup",
+            "path": "/dataset/pokedex/Lillipup.json"
+        },
+        "linoone (galarian form)": {
+            "name": "Linoone (Galarian Form)",
+            "path": "/dataset/pokedex/Linoone (Galarian Form).json"
+        },
+        "linoone": {
+            "name": "Linoone",
+            "path": "/dataset/pokedex/Linoone.json"
+        },
+        "litleo": {
+            "name": "Litleo",
+            "path": "/dataset/pokedex/Litleo.json"
+        },
+        "litten": {
+            "name": "Litten",
+            "path": "/dataset/pokedex/Litten.json"
+        },
+        "litwick": {
+            "name": "Litwick",
+            "path": "/dataset/pokedex/Litwick.json"
+        },
+        "lokix": {
+            "name": "Lokix",
+            "path": "/dataset/pokedex/Lokix.json"
+        },
+        "lombre": {
+            "name": "Lombre",
+            "path": "/dataset/pokedex/Lombre.json"
+        },
+        "lopunny (mega form)": {
+            "name": "Lopunny (Mega Form)",
+            "path": "/dataset/pokedex/Lopunny (Mega Form).json"
+        },
+        "lopunny": {
+            "name": "Lopunny",
+            "path": "/dataset/pokedex/Lopunny.json"
+        },
+        "lotad": {
+            "name": "Lotad",
+            "path": "/dataset/pokedex/Lotad.json"
+        },
+        "loudred": {
+            "name": "Loudred",
+            "path": "/dataset/pokedex/Loudred.json"
+        },
+        "lucario (mega form)": {
+            "name": "Lucario (Mega Form)",
+            "path": "/dataset/pokedex/Lucario (Mega Form).json"
+        },
+        "lucario": {
+            "name": "Lucario",
+            "path": "/dataset/pokedex/Lucario.json"
+        },
+        "ludicolo": {
+            "name": "Ludicolo",
+            "path": "/dataset/pokedex/Ludicolo.json"
+        },
+        "lugia": {
+            "name": "Lugia",
+            "path": "/dataset/pokedex/Lugia.json"
+        },
+        "lumineon": {
+            "name": "Lumineon",
+            "path": "/dataset/pokedex/Lumineon.json"
+        },
+        "lunala": {
+            "name": "Lunala",
+            "path": "/dataset/pokedex/Lunala.json"
+        },
+        "lunatone": {
+            "name": "Lunatone",
+            "path": "/dataset/pokedex/Lunatone.json"
+        },
+        "lurantis": {
+            "name": "Lurantis",
+            "path": "/dataset/pokedex/Lurantis.json"
+        },
+        "luvdisc": {
+            "name": "Luvdisc",
+            "path": "/dataset/pokedex/Luvdisc.json"
+        },
+        "luxio": {
+            "name": "Luxio",
+            "path": "/dataset/pokedex/Luxio.json"
+        },
+        "luxray": {
+            "name": "Luxray",
+            "path": "/dataset/pokedex/Luxray.json"
+        },
+        "lycanroc (dusk form)": {
+            "name": "Lycanroc (Dusk Form)",
+            "path": "/dataset/pokedex/Lycanroc (Dusk Form).json"
+        },
+        "lycanroc (midday form)": {
+            "name": "Lycanroc (Midday Form)",
+            "path": "/dataset/pokedex/Lycanroc (Midday Form).json"
+        },
+        "lycanroc (midnight form)": {
+            "name": "Lycanroc (Midnight Form)",
+            "path": "/dataset/pokedex/Lycanroc (Midnight Form).json"
+        },
+        "mabosstiff": {
+            "name": "Mabosstiff",
+            "path": "/dataset/pokedex/Mabosstiff.json"
+        },
+        "machamp": {
+            "name": "Machamp",
+            "path": "/dataset/pokedex/Machamp.json"
+        },
+        "machoke": {
+            "name": "Machoke",
+            "path": "/dataset/pokedex/Machoke.json"
+        },
+        "machop": {
+            "name": "Machop",
+            "path": "/dataset/pokedex/Machop.json"
+        },
+        "magby": {
+            "name": "Magby",
+            "path": "/dataset/pokedex/Magby.json"
+        },
+        "magcargo": {
+            "name": "Magcargo",
+            "path": "/dataset/pokedex/Magcargo.json"
+        },
+        "magearna": {
+            "name": "Magearna",
+            "path": "/dataset/pokedex/Magearna.json"
+        },
+        "magikarp": {
+            "name": "Magikarp",
+            "path": "/dataset/pokedex/Magikarp.json"
+        },
+        "magmar": {
+            "name": "Magmar",
+            "path": "/dataset/pokedex/Magmar.json"
+        },
+        "magmortar": {
+            "name": "Magmortar",
+            "path": "/dataset/pokedex/Magmortar.json"
+        },
+        "magnemite": {
+            "name": "Magnemite",
+            "path": "/dataset/pokedex/Magnemite.json"
+        },
+        "magneton": {
+            "name": "Magneton",
+            "path": "/dataset/pokedex/Magneton.json"
+        },
+        "magnezone": {
+            "name": "Magnezone",
+            "path": "/dataset/pokedex/Magnezone.json"
+        },
+        "makuhita": {
+            "name": "Makuhita",
+            "path": "/dataset/pokedex/Makuhita.json"
+        },
+        "malamar": {
+            "name": "Malamar",
+            "path": "/dataset/pokedex/Malamar.json"
+        },
+        "mamoswine": {
+            "name": "Mamoswine",
+            "path": "/dataset/pokedex/Mamoswine.json"
+        },
+        "manaphy": {
+            "name": "Manaphy",
+            "path": "/dataset/pokedex/Manaphy.json"
+        },
+        "mandibuzz": {
+            "name": "Mandibuzz",
+            "path": "/dataset/pokedex/Mandibuzz.json"
+        },
+        "manectric (mega form)": {
+            "name": "Manectric (Mega Form)",
+            "path": "/dataset/pokedex/Manectric (Mega Form).json"
+        },
+        "manectric": {
+            "name": "Manectric",
+            "path": "/dataset/pokedex/Manectric.json"
+        },
+        "mankey": {
+            "name": "Mankey",
+            "path": "/dataset/pokedex/Mankey.json"
+        },
+        "mantine": {
+            "name": "Mantine",
+            "path": "/dataset/pokedex/Mantine.json"
+        },
+        "mantyke": {
+            "name": "Mantyke",
+            "path": "/dataset/pokedex/Mantyke.json"
+        },
+        "maractus": {
+            "name": "Maractus",
+            "path": "/dataset/pokedex/Maractus.json"
+        },
+        "mareanie": {
+            "name": "Mareanie",
+            "path": "/dataset/pokedex/Mareanie.json"
+        },
+        "mareep": {
+            "name": "Mareep",
+            "path": "/dataset/pokedex/Mareep.json"
+        },
+        "marill": {
+            "name": "Marill",
+            "path": "/dataset/pokedex/Marill.json"
+        },
+        "marowak (alolan form)": {
+            "name": "Marowak (Alolan Form)",
+            "path": "/dataset/pokedex/Marowak (Alolan Form).json"
+        },
+        "marowak": {
+            "name": "Marowak",
+            "path": "/dataset/pokedex/Marowak.json"
+        },
+        "marshadow": {
+            "name": "Marshadow",
+            "path": "/dataset/pokedex/Marshadow.json"
+        },
+        "marshtomp": {
+            "name": "Marshtomp",
+            "path": "/dataset/pokedex/Marshtomp.json"
+        },
+        "maschiff": {
+            "name": "Maschiff",
+            "path": "/dataset/pokedex/Maschiff.json"
+        },
+        "masquerain": {
+            "name": "Masquerain",
+            "path": "/dataset/pokedex/Masquerain.json"
+        },
+        "maushold": {
+            "name": "Maushold",
+            "path": "/dataset/pokedex/Maushold.json"
+        },
+        "mawile (mega form)": {
+            "name": "Mawile (Mega Form)",
+            "path": "/dataset/pokedex/Mawile (Mega Form).json"
+        },
+        "mawile": {
+            "name": "Mawile",
+            "path": "/dataset/pokedex/Mawile.json"
+        },
+        "medicham (mega form)": {
+            "name": "Medicham (Mega Form)",
+            "path": "/dataset/pokedex/Medicham (Mega Form).json"
+        },
+        "medicham": {
+            "name": "Medicham",
+            "path": "/dataset/pokedex/Medicham.json"
+        },
+        "meditite": {
+            "name": "Meditite",
+            "path": "/dataset/pokedex/Meditite.json"
+        },
+        "meganium": {
+            "name": "Meganium",
+            "path": "/dataset/pokedex/Meganium.json"
+        },
+        "melmetal": {
+            "name": "Melmetal",
+            "path": "/dataset/pokedex/Melmetal.json"
+        },
+        "meloetta (pirouette form)": {
+            "name": "Meloetta (Pirouette Form)",
+            "path": "/dataset/pokedex/Meloetta (Pirouette Form).json"
+        },
+        "meloetta": {
+            "name": "Meloetta",
+            "path": "/dataset/pokedex/Meloetta.json"
+        },
+        "meltan": {
+            "name": "Meltan",
+            "path": "/dataset/pokedex/Meltan.json"
+        },
+        "meowscarada": {
+            "name": "Meowscarada",
+            "path": "/dataset/pokedex/Meowscarada.json"
+        },
+        "meowstic": {
+            "name": "Meowstic",
+            "path": "/dataset/pokedex/Meowstic.json"
+        },
+        "meowth (alolan form)": {
+            "name": "Meowth (Alolan Form)",
+            "path": "/dataset/pokedex/Meowth (Alolan Form).json"
+        },
+        "meowth (galarian form)": {
+            "name": "Meowth (Galarian Form)",
+            "path": "/dataset/pokedex/Meowth (Galarian Form).json"
+        },
+        "meowth": {
+            "name": "Meowth",
+            "path": "/dataset/pokedex/Meowth.json"
+        },
+        "mesprit": {
+            "name": "Mesprit",
+            "path": "/dataset/pokedex/Mesprit.json"
+        },
+        "metagross (mega form)": {
+            "name": "Metagross (Mega Form)",
+            "path": "/dataset/pokedex/Metagross (Mega Form).json"
+        },
+        "metagross": {
+            "name": "Metagross",
+            "path": "/dataset/pokedex/Metagross.json"
+        },
+        "metang": {
+            "name": "Metang",
+            "path": "/dataset/pokedex/Metang.json"
+        },
+        "metapod": {
+            "name": "Metapod",
+            "path": "/dataset/pokedex/Metapod.json"
+        },
+        "mew": {
+            "name": "Mew",
+            "path": "/dataset/pokedex/Mew.json"
+        },
+        "mewtwo (mega x form)": {
+            "name": "Mewtwo (Mega X Form)",
+            "path": "/dataset/pokedex/Mewtwo (Mega X Form).json"
+        },
+        "mewtwo (mega y form)": {
+            "name": "Mewtwo (Mega Y Form)",
+            "path": "/dataset/pokedex/Mewtwo (Mega Y Form).json"
+        },
+        "mewtwo": {
+            "name": "Mewtwo",
+            "path": "/dataset/pokedex/Mewtwo.json"
+        },
+        "mienfoo": {
+            "name": "Mienfoo",
+            "path": "/dataset/pokedex/Mienfoo.json"
+        },
+        "mienshao": {
+            "name": "Mienshao",
+            "path": "/dataset/pokedex/Mienshao.json"
+        },
+        "mightyena": {
+            "name": "Mightyena",
+            "path": "/dataset/pokedex/Mightyena.json"
+        },
+        "milcery": {
+            "name": "Milcery",
+            "path": "/dataset/pokedex/Milcery.json"
+        },
+        "milotic": {
+            "name": "Milotic",
+            "path": "/dataset/pokedex/Milotic.json"
+        },
+        "miltank": {
+            "name": "Miltank",
+            "path": "/dataset/pokedex/Miltank.json"
+        },
+        "mime jr": {
+            "name": "Mime Jr",
+            "path": "/dataset/pokedex/Mime Jr.json"
+        },
+        "mimikyu": {
+            "name": "Mimikyu",
+            "path": "/dataset/pokedex/Mimikyu.json"
+        },
+        "minccino": {
+            "name": "Minccino",
+            "path": "/dataset/pokedex/Minccino.json"
+        },
+        "minior core": {
+            "name": "Minior Core",
+            "path": "/dataset/pokedex/Minior Core.json"
+        },
+        "minior": {
+            "name": "Minior",
+            "path": "/dataset/pokedex/Minior.json"
+        },
+        "minun": {
+            "name": "Minun",
+            "path": "/dataset/pokedex/Minun.json"
+        },
+        "miraidon": {
+            "name": "Miraidon",
+            "path": "/dataset/pokedex/Miraidon.json"
+        },
+        "misdreavus": {
+            "name": "Misdreavus",
+            "path": "/dataset/pokedex/Misdreavus.json"
+        },
+        "mismagius": {
+            "name": "Mismagius",
+            "path": "/dataset/pokedex/Mismagius.json"
+        },
+        "moltres (galarian form)": {
+            "name": "Moltres (Galarian Form)",
+            "path": "/dataset/pokedex/Moltres (Galarian Form).json"
+        },
+        "moltres": {
+            "name": "Moltres",
+            "path": "/dataset/pokedex/Moltres.json"
+        },
+        "monferno": {
+            "name": "Monferno",
+            "path": "/dataset/pokedex/Monferno.json"
+        },
+        "morelull": {
+            "name": "Morelull",
+            "path": "/dataset/pokedex/Morelull.json"
+        },
+        "morgrem": {
+            "name": "Morgrem",
+            "path": "/dataset/pokedex/Morgrem.json"
+        },
+        "morpeko": {
+            "name": "Morpeko",
+            "path": "/dataset/pokedex/Morpeko.json"
+        },
+        "mothim": {
+            "name": "Mothim",
+            "path": "/dataset/pokedex/Mothim.json"
+        },
+        "mr. mime (galarian form)": {
+            "name": "Mr. Mime (Galarian Form)",
+            "path": "/dataset/pokedex/Mr. Mime (Galarian Form).json"
+        },
+        "mr. mime": {
+            "name": "Mr. Mime",
+            "path": "/dataset/pokedex/Mr. Mime.json"
+        },
+        "mr. rime": {
+            "name": "Mr. Rime",
+            "path": "/dataset/pokedex/Mr. Rime.json"
+        },
+        "mudbray": {
+            "name": "Mudbray",
+            "path": "/dataset/pokedex/Mudbray.json"
+        },
+        "mudkip": {
+            "name": "Mudkip",
+            "path": "/dataset/pokedex/Mudkip.json"
+        },
+        "mudsdale": {
+            "name": "Mudsdale",
+            "path": "/dataset/pokedex/Mudsdale.json"
+        },
+        "muk (alolan form)": {
+            "name": "Muk (Alolan Form)",
+            "path": "/dataset/pokedex/Muk (Alolan Form).json"
+        },
+        "muk": {
+            "name": "Muk",
+            "path": "/dataset/pokedex/Muk.json"
+        },
+        "munchlax": {
+            "name": "Munchlax",
+            "path": "/dataset/pokedex/Munchlax.json"
+        },
+        "munkidori": {
+            "name": "Munkidori",
+            "path": "/dataset/pokedex/Munkidori.json"
+        },
+        "munna": {
+            "name": "Munna",
+            "path": "/dataset/pokedex/Munna.json"
+        },
+        "murkrow": {
+            "name": "Murkrow",
+            "path": "/dataset/pokedex/Murkrow.json"
+        },
+        "musharna": {
+            "name": "Musharna",
+            "path": "/dataset/pokedex/Musharna.json"
+        },
+        "nacli": {
+            "name": "Nacli",
+            "path": "/dataset/pokedex/Nacli.json"
+        },
+        "naclstack": {
+            "name": "Naclstack",
+            "path": "/dataset/pokedex/Naclstack.json"
+        },
+        "naganadel": {
+            "name": "Naganadel",
+            "path": "/dataset/pokedex/Naganadel.json"
+        },
+        "natu": {
+            "name": "Natu",
+            "path": "/dataset/pokedex/Natu.json"
+        },
+        "necrozma (dawn wings form)": {
+            "name": "Necrozma (Dawn Wings Form)",
+            "path": "/dataset/pokedex/Necrozma (Dawn Wings Form).json"
+        },
+        "necrozma (dusk mane form)": {
+            "name": "Necrozma (Dusk Mane Form)",
+            "path": "/dataset/pokedex/Necrozma (Dusk Mane Form).json"
+        },
+        "necrozma (ultra burst form)": {
+            "name": "Necrozma (Ultra Burst Form)",
+            "path": "/dataset/pokedex/Necrozma (Ultra Burst Form).json"
+        },
+        "necrozma": {
+            "name": "Necrozma",
+            "path": "/dataset/pokedex/Necrozma.json"
+        },
+        "nickit": {
+            "name": "Nickit",
+            "path": "/dataset/pokedex/Nickit.json"
+        },
+        "nidoking": {
+            "name": "Nidoking",
+            "path": "/dataset/pokedex/Nidoking.json"
+        },
+        "nidoqueen": {
+            "name": "Nidoqueen",
+            "path": "/dataset/pokedex/Nidoqueen.json"
+        },
+        "nidoran f": {
+            "name": "Nidoran F",
+            "path": "/dataset/pokedex/Nidoran F.json"
+        },
+        "nidoran m": {
+            "name": "Nidoran M",
+            "path": "/dataset/pokedex/Nidoran M.json"
+        },
+        "nidorina": {
+            "name": "Nidorina",
+            "path": "/dataset/pokedex/Nidorina.json"
+        },
+        "nidorino": {
+            "name": "Nidorino",
+            "path": "/dataset/pokedex/Nidorino.json"
+        },
+        "nihilego": {
+            "name": "Nihilego",
+            "path": "/dataset/pokedex/Nihilego.json"
+        },
+        "nincada": {
+            "name": "Nincada",
+            "path": "/dataset/pokedex/Nincada.json"
+        },
+        "ninetales (alolan form)": {
+            "name": "Ninetales (Alolan Form)",
+            "path": "/dataset/pokedex/Ninetales (Alolan Form).json"
+        },
+        "ninetales": {
+            "name": "Ninetales",
+            "path": "/dataset/pokedex/Ninetales.json"
+        },
+        "ninjask": {
+            "name": "Ninjask",
+            "path": "/dataset/pokedex/Ninjask.json"
+        },
+        "noctowl": {
+            "name": "Noctowl",
+            "path": "/dataset/pokedex/Noctowl.json"
+        },
+        "noibat": {
+            "name": "Noibat",
+            "path": "/dataset/pokedex/Noibat.json"
+        },
+        "noivern": {
+            "name": "Noivern",
+            "path": "/dataset/pokedex/Noivern.json"
+        },
+        "nosepass": {
+            "name": "Nosepass",
+            "path": "/dataset/pokedex/Nosepass.json"
+        },
+        "numel": {
+            "name": "Numel",
+            "path": "/dataset/pokedex/Numel.json"
+        },
+        "nuzleaf": {
+            "name": "Nuzleaf",
+            "path": "/dataset/pokedex/Nuzleaf.json"
+        },
+        "nymble": {
+            "name": "Nymble",
+            "path": "/dataset/pokedex/Nymble.json"
+        },
+        "obstagoon": {
+            "name": "Obstagoon",
+            "path": "/dataset/pokedex/Obstagoon.json"
+        },
+        "octillery": {
+            "name": "Octillery",
+            "path": "/dataset/pokedex/Octillery.json"
+        },
+        "oddish": {
+            "name": "Oddish",
+            "path": "/dataset/pokedex/Oddish.json"
+        },
+        "ogerpon (cornerstone mask form)": {
+            "name": "Ogerpon (Cornerstone Mask Form)",
+            "path": "/dataset/pokedex/Ogerpon (Cornerstone Mask Form).json"
+        },
+        "ogerpon (hearthflame mask form)": {
+            "name": "Ogerpon (Hearthflame Mask Form)",
+            "path": "/dataset/pokedex/Ogerpon (Hearthflame Mask Form).json"
+        },
+        "ogerpon (teal mask form)": {
+            "name": "Ogerpon (Teal Mask Form)",
+            "path": "/dataset/pokedex/Ogerpon (Teal Mask Form).json"
+        },
+        "ogerpon (wellspring mask form)": {
+            "name": "Ogerpon (Wellspring Mask Form)",
+            "path": "/dataset/pokedex/Ogerpon (Wellspring Mask Form).json"
+        },
+        "oinkologne (female form)": {
+            "name": "Oinkologne (Female Form)",
+            "path": "/dataset/pokedex/Oinkologne (Female Form).json"
+        },
+        "oinkologne (male form)": {
+            "name": "Oinkologne (Male Form)",
+            "path": "/dataset/pokedex/Oinkologne (Male Form).json"
+        },
+        "okidogi": {
+            "name": "Okidogi",
+            "path": "/dataset/pokedex/Okidogi.json"
+        },
+        "omanyte": {
+            "name": "Omanyte",
+            "path": "/dataset/pokedex/Omanyte.json"
+        },
+        "omastar": {
+            "name": "Omastar",
+            "path": "/dataset/pokedex/Omastar.json"
+        },
+        "onix": {
+            "name": "Onix",
+            "path": "/dataset/pokedex/Onix.json"
+        },
+        "oranguru": {
+            "name": "Oranguru",
+            "path": "/dataset/pokedex/Oranguru.json"
+        },
+        "orbeetle": {
+            "name": "Orbeetle",
+            "path": "/dataset/pokedex/Orbeetle.json"
+        },
+        "oricorio (baile form)": {
+            "name": "Oricorio (Baile Form)",
+            "path": "/dataset/pokedex/Oricorio (Baile Form).json"
+        },
+        "oricorio (pa'u form)": {
+            "name": "Oricorio (Pa'u Form)",
+            "path": "/dataset/pokedex/Oricorio (Pa'u Form).json"
+        },
+        "oricorio (pom-pom form)": {
+            "name": "Oricorio (Pom-Pom Form)",
+            "path": "/dataset/pokedex/Oricorio (Pom-pom Form).json"
+        },
+        "oricorio (sensu form)": {
+            "name": "Oricorio (Sensu Form)",
+            "path": "/dataset/pokedex/Oricorio (Sensu Form).json"
+        },
+        "orthworm": {
+            "name": "Orthworm",
+            "path": "/dataset/pokedex/Orthworm.json"
+        },
+        "oshawott": {
+            "name": "Oshawott",
+            "path": "/dataset/pokedex/Oshawott.json"
+        },
+        "overqwil": {
+            "name": "Overqwil",
+            "path": "/dataset/pokedex/Overqwil.json"
+        },
+        "pachirisu": {
+            "name": "Pachirisu",
+            "path": "/dataset/pokedex/Pachirisu.json"
+        },
+        "palafin (hero form)": {
+            "name": "Palafin (Hero Form)",
+            "path": "/dataset/pokedex/Palafin (Hero Form).json"
+        },
+        "palafin (zero form)": {
+            "name": "Palafin (Zero Form)",
+            "path": "/dataset/pokedex/Palafin (Zero Form).json"
+        },
+        "palkia (origin form)": {
+            "name": "Palkia (Origin Form)",
+            "path": "/dataset/pokedex/Palkia (Origin Form).json"
+        },
+        "palkia": {
+            "name": "Palkia",
+            "path": "/dataset/pokedex/Palkia.json"
+        },
+        "palossand": {
+            "name": "Palossand",
+            "path": "/dataset/pokedex/Palossand.json"
+        },
+        "palpitoad": {
+            "name": "Palpitoad",
+            "path": "/dataset/pokedex/Palpitoad.json"
+        },
+        "pancham": {
+            "name": "Pancham",
+            "path": "/dataset/pokedex/Pancham.json"
+        },
+        "pangoro": {
+            "name": "Pangoro",
+            "path": "/dataset/pokedex/Pangoro.json"
+        },
+        "panpour": {
+            "name": "Panpour",
+            "path": "/dataset/pokedex/Panpour.json"
+        },
+        "pansage": {
+            "name": "Pansage",
+            "path": "/dataset/pokedex/Pansage.json"
+        },
+        "pansear": {
+            "name": "Pansear",
+            "path": "/dataset/pokedex/Pansear.json"
+        },
+        "paras": {
+            "name": "Paras",
+            "path": "/dataset/pokedex/Paras.json"
+        },
+        "parasect": {
+            "name": "Parasect",
+            "path": "/dataset/pokedex/Parasect.json"
+        },
+        "passimian": {
+            "name": "Passimian",
+            "path": "/dataset/pokedex/Passimian.json"
+        },
+        "patrat": {
+            "name": "Patrat",
+            "path": "/dataset/pokedex/Patrat.json"
+        },
+        "pawmi": {
+            "name": "Pawmi",
+            "path": "/dataset/pokedex/Pawmi.json"
+        },
+        "pawmo": {
+            "name": "Pawmo",
+            "path": "/dataset/pokedex/Pawmo.json"
+        },
+        "pawmot": {
+            "name": "Pawmot",
+            "path": "/dataset/pokedex/Pawmot.json"
+        },
+        "pawniard": {
+            "name": "Pawniard",
+            "path": "/dataset/pokedex/Pawniard.json"
+        },
+        "pecharunt": {
+            "name": "Pecharunt",
+            "path": "/dataset/pokedex/Pecharunt.json"
+        },
+        "pelipper": {
+            "name": "Pelipper",
+            "path": "/dataset/pokedex/Pelipper.json"
+        },
+        "perrserker": {
+            "name": "Perrserker",
+            "path": "/dataset/pokedex/Perrserker.json"
+        },
+        "persian (alolan form)": {
+            "name": "Persian (Alolan Form)",
+            "path": "/dataset/pokedex/Persian (Alolan Form).json"
+        },
+        "persian": {
+            "name": "Persian",
+            "path": "/dataset/pokedex/Persian.json"
+        },
+        "petilil": {
+            "name": "Petilil",
+            "path": "/dataset/pokedex/Petilil.json"
+        },
+        "phanpy": {
+            "name": "Phanpy",
+            "path": "/dataset/pokedex/Phanpy.json"
+        },
+        "phantump": {
+            "name": "Phantump",
+            "path": "/dataset/pokedex/Phantump.json"
+        },
+        "pheromosa": {
+            "name": "Pheromosa",
+            "path": "/dataset/pokedex/Pheromosa.json"
+        },
+        "phione": {
+            "name": "Phione",
+            "path": "/dataset/pokedex/Phione.json"
+        },
+        "pichu": {
+            "name": "Pichu",
+            "path": "/dataset/pokedex/Pichu.json"
+        },
+        "pidgeot (mega form)": {
+            "name": "Pidgeot (Mega Form)",
+            "path": "/dataset/pokedex/Pidgeot (Mega Form).json"
+        },
+        "pidgeot": {
+            "name": "Pidgeot",
+            "path": "/dataset/pokedex/Pidgeot.json"
+        },
+        "pidgeotto": {
+            "name": "Pidgeotto",
+            "path": "/dataset/pokedex/Pidgeotto.json"
+        },
+        "pidgey": {
+            "name": "Pidgey",
+            "path": "/dataset/pokedex/Pidgey.json"
+        },
+        "pidove": {
+            "name": "Pidove",
+            "path": "/dataset/pokedex/Pidove.json"
+        },
+        "pignite": {
+            "name": "Pignite",
+            "path": "/dataset/pokedex/Pignite.json"
+        },
+        "pikachu": {
+            "name": "Pikachu",
+            "path": "/dataset/pokedex/Pikachu.json"
+        },
+        "pikipek": {
+            "name": "Pikipek",
+            "path": "/dataset/pokedex/Pikipek.json"
+        },
+        "piloswine": {
+            "name": "Piloswine",
+            "path": "/dataset/pokedex/Piloswine.json"
+        },
+        "pincurchin": {
+            "name": "Pincurchin",
+            "path": "/dataset/pokedex/Pincurchin.json"
+        },
+        "pineco": {
+            "name": "Pineco",
+            "path": "/dataset/pokedex/Pineco.json"
+        },
+        "pinsir (mega form)": {
+            "name": "Pinsir (Mega Form)",
+            "path": "/dataset/pokedex/Pinsir (Mega Form).json"
+        },
+        "pinsir": {
+            "name": "Pinsir",
+            "path": "/dataset/pokedex/Pinsir.json"
+        },
+        "piplup": {
+            "name": "Piplup",
+            "path": "/dataset/pokedex/Piplup.json"
+        },
+        "plusle": {
+            "name": "Plusle",
+            "path": "/dataset/pokedex/Plusle.json"
+        },
+        "poipole": {
+            "name": "Poipole",
+            "path": "/dataset/pokedex/Poipole.json"
+        },
+        "politoed": {
+            "name": "Politoed",
+            "path": "/dataset/pokedex/Politoed.json"
+        },
+        "poliwag": {
+            "name": "Poliwag",
+            "path": "/dataset/pokedex/Poliwag.json"
+        },
+        "poliwhirl": {
+            "name": "Poliwhirl",
+            "path": "/dataset/pokedex/Poliwhirl.json"
+        },
+        "poliwrath": {
+            "name": "Poliwrath",
+            "path": "/dataset/pokedex/Poliwrath.json"
+        },
+        "poltchageist (artisan form)": {
+            "name": "Poltchageist (Artisan Form)",
+            "path": "/dataset/pokedex/Poltchageist (Artisan Form).json"
+        },
+        "poltchageist (counterfeit form)": {
+            "name": "Poltchageist (Counterfeit Form)",
+            "path": "/dataset/pokedex/Poltchageist (Counterfeit Form).json"
+        },
+        "polteageist": {
+            "name": "Polteageist",
+            "path": "/dataset/pokedex/Polteageist.json"
+        },
+        "ponyta (galarian form)": {
+            "name": "Ponyta (Galarian Form)",
+            "path": "/dataset/pokedex/Ponyta (Galarian Form).json"
+        },
+        "ponyta": {
+            "name": "Ponyta",
+            "path": "/dataset/pokedex/Ponyta.json"
+        },
+        "poochyena": {
+            "name": "Poochyena",
+            "path": "/dataset/pokedex/Poochyena.json"
+        },
+        "popplio": {
+            "name": "Popplio",
+            "path": "/dataset/pokedex/Popplio.json"
+        },
+        "porygon-z": {
+            "name": "Porygon-Z",
+            "path": "/dataset/pokedex/Porygon-Z.json"
+        },
+        "porygon": {
+            "name": "Porygon",
+            "path": "/dataset/pokedex/Porygon.json"
+        },
+        "porygon2": {
+            "name": "Porygon2",
+            "path": "/dataset/pokedex/Porygon2.json"
+        },
+        "primarina": {
+            "name": "Primarina",
+            "path": "/dataset/pokedex/Primarina.json"
+        },
+        "primeape": {
+            "name": "Primeape",
+            "path": "/dataset/pokedex/Primeape.json"
+        },
+        "prinplup": {
+            "name": "Prinplup",
+            "path": "/dataset/pokedex/Prinplup.json"
+        },
+        "probopass": {
+            "name": "Probopass",
+            "path": "/dataset/pokedex/Probopass.json"
+        },
+        "psyduck": {
+            "name": "Psyduck",
+            "path": "/dataset/pokedex/Psyduck.json"
+        },
+        "pumpkaboo": {
+            "name": "Pumpkaboo",
+            "path": "/dataset/pokedex/Pumpkaboo.json"
+        },
+        "pupitar": {
+            "name": "Pupitar",
+            "path": "/dataset/pokedex/Pupitar.json"
+        },
+        "purrloin": {
+            "name": "Purrloin",
+            "path": "/dataset/pokedex/Purrloin.json"
+        },
+        "purugly": {
+            "name": "Purugly",
+            "path": "/dataset/pokedex/Purugly.json"
+        },
+        "pyroar": {
+            "name": "Pyroar",
+            "path": "/dataset/pokedex/Pyroar.json"
+        },
+        "pyukumuku": {
+            "name": "Pyukumuku",
+            "path": "/dataset/pokedex/Pyukumuku.json"
+        },
+        "quagsire": {
+            "name": "Quagsire",
+            "path": "/dataset/pokedex/Quagsire.json"
+        },
+        "quaquaval": {
+            "name": "Quaquaval",
+            "path": "/dataset/pokedex/Quaquaval.json"
+        },
+        "quaxly": {
+            "name": "Quaxly",
+            "path": "/dataset/pokedex/Quaxly.json"
+        },
+        "quaxwell": {
+            "name": "Quaxwell",
+            "path": "/dataset/pokedex/Quaxwell.json"
+        },
+        "quilava": {
+            "name": "Quilava",
+            "path": "/dataset/pokedex/Quilava.json"
+        },
+        "quilladin": {
+            "name": "Quilladin",
+            "path": "/dataset/pokedex/Quilladin.json"
+        },
+        "qwilfish (hisuian form)": {
+            "name": "Qwilfish (Hisuian Form)",
+            "path": "/dataset/pokedex/Qwilfish (Hisuian Form).json"
+        },
+        "qwilfish": {
+            "name": "Qwilfish",
+            "path": "/dataset/pokedex/Qwilfish.json"
+        },
+        "raboot": {
+            "name": "Raboot",
+            "path": "/dataset/pokedex/Raboot.json"
+        },
+        "rabsca": {
+            "name": "Rabsca",
+            "path": "/dataset/pokedex/Rabsca.json"
+        },
+        "raging bolt": {
+            "name": "Raging Bolt",
+            "path": "/dataset/pokedex/Raging Bolt.json"
+        },
+        "raichu (alolan form)": {
+            "name": "Raichu (Alolan Form)",
+            "path": "/dataset/pokedex/Raichu (Alolan Form).json"
+        },
+        "raichu": {
+            "name": "Raichu",
+            "path": "/dataset/pokedex/Raichu.json"
+        },
+        "raikou": {
+            "name": "Raikou",
+            "path": "/dataset/pokedex/Raikou.json"
+        },
+        "ralts": {
+            "name": "Ralts",
+            "path": "/dataset/pokedex/Ralts.json"
+        },
+        "rampardos": {
+            "name": "Rampardos",
+            "path": "/dataset/pokedex/Rampardos.json"
+        },
+        "rapidash (galarian form)": {
+            "name": "Rapidash (Galarian Form)",
+            "path": "/dataset/pokedex/Rapidash (Galarian Form).json"
+        },
+        "rapidash": {
+            "name": "Rapidash",
+            "path": "/dataset/pokedex/Rapidash.json"
+        },
+        "raticate (alolan form)": {
+            "name": "Raticate (Alolan Form)",
+            "path": "/dataset/pokedex/Raticate (Alolan Form).json"
+        },
+        "raticate": {
+            "name": "Raticate",
+            "path": "/dataset/pokedex/Raticate.json"
+        },
+        "rattata (alolan form)": {
+            "name": "Rattata (Alolan Form)",
+            "path": "/dataset/pokedex/Rattata (Alolan Form).json"
+        },
+        "rattata": {
+            "name": "Rattata",
+            "path": "/dataset/pokedex/Rattata.json"
+        },
+        "rayquaza (mega form)": {
+            "name": "Rayquaza (Mega Form)",
+            "path": "/dataset/pokedex/Rayquaza (Mega Form).json"
+        },
+        "rayquaza": {
+            "name": "Rayquaza",
+            "path": "/dataset/pokedex/Rayquaza.json"
+        },
+        "regice": {
+            "name": "Regice",
+            "path": "/dataset/pokedex/Regice.json"
+        },
+        "regidrago": {
+            "name": "Regidrago",
+            "path": "/dataset/pokedex/Regidrago.json"
+        },
+        "regieleki": {
+            "name": "Regieleki",
+            "path": "/dataset/pokedex/Regieleki.json"
+        },
+        "regigigas": {
+            "name": "Regigigas",
+            "path": "/dataset/pokedex/Regigigas.json"
+        },
+        "regirock": {
+            "name": "Regirock",
+            "path": "/dataset/pokedex/Regirock.json"
+        },
+        "registeel": {
+            "name": "Registeel",
+            "path": "/dataset/pokedex/Registeel.json"
+        },
+        "relicanth": {
+            "name": "Relicanth",
+            "path": "/dataset/pokedex/Relicanth.json"
+        },
+        "rellor": {
+            "name": "Rellor",
+            "path": "/dataset/pokedex/Rellor.json"
+        },
+        "remoraid": {
+            "name": "Remoraid",
+            "path": "/dataset/pokedex/Remoraid.json"
+        },
+        "reshiram": {
+            "name": "Reshiram",
+            "path": "/dataset/pokedex/Reshiram.json"
+        },
+        "reuniclus": {
+            "name": "Reuniclus",
+            "path": "/dataset/pokedex/Reuniclus.json"
+        },
+        "revavroom": {
+            "name": "Revavroom",
+            "path": "/dataset/pokedex/Revavroom.json"
+        },
+        "rhydon": {
+            "name": "Rhydon",
+            "path": "/dataset/pokedex/Rhydon.json"
+        },
+        "rhyhorn": {
+            "name": "Rhyhorn",
+            "path": "/dataset/pokedex/Rhyhorn.json"
+        },
+        "rhyperior": {
+            "name": "Rhyperior",
+            "path": "/dataset/pokedex/Rhyperior.json"
+        },
+        "ribombee": {
+            "name": "Ribombee",
+            "path": "/dataset/pokedex/Ribombee.json"
+        },
+        "rillaboom": {
+            "name": "Rillaboom",
+            "path": "/dataset/pokedex/Rillaboom.json"
+        },
+        "riolu": {
+            "name": "Riolu",
+            "path": "/dataset/pokedex/Riolu.json"
+        },
+        "roaring moon": {
+            "name": "Roaring Moon",
+            "path": "/dataset/pokedex/Roaring Moon.json"
+        },
+        "rockruff": {
+            "name": "Rockruff",
+            "path": "/dataset/pokedex/Rockruff.json"
+        },
+        "roggenrola": {
+            "name": "Roggenrola",
+            "path": "/dataset/pokedex/Roggenrola.json"
+        },
+        "rolycoly": {
+            "name": "Rolycoly",
+            "path": "/dataset/pokedex/Rolycoly.json"
+        },
+        "rookidee": {
+            "name": "Rookidee",
+            "path": "/dataset/pokedex/Rookidee.json"
+        },
+        "roselia": {
+            "name": "Roselia",
+            "path": "/dataset/pokedex/Roselia.json"
+        },
+        "roserade": {
+            "name": "Roserade",
+            "path": "/dataset/pokedex/Roserade.json"
+        },
+        "rotom (dex form)": {
+            "name": "Rotom (Dex Form)",
+            "path": "/dataset/pokedex/Rotom (Dex Form).json"
+        },
+        "rotom (fan form)": {
+            "name": "Rotom (Fan Form)",
+            "path": "/dataset/pokedex/Rotom (Fan Form).json"
+        },
+        "rotom (frost form)": {
+            "name": "Rotom (Frost Form)",
+            "path": "/dataset/pokedex/Rotom (Frost Form).json"
+        },
+        "rotom (heat form)": {
+            "name": "Rotom (Heat Form)",
+            "path": "/dataset/pokedex/Rotom (Heat Form).json"
+        },
+        "rotom (mow form)": {
+            "name": "Rotom (Mow Form)",
+            "path": "/dataset/pokedex/Rotom (Mow Form).json"
+        },
+        "rotom (wash form)": {
+            "name": "Rotom (Wash Form)",
+            "path": "/dataset/pokedex/Rotom (Wash Form).json"
+        },
+        "rotom": {
+            "name": "Rotom",
+            "path": "/dataset/pokedex/Rotom.json"
+        },
+        "rowlet": {
+            "name": "Rowlet",
+            "path": "/dataset/pokedex/Rowlet.json"
+        },
+        "rufflet": {
+            "name": "Rufflet",
+            "path": "/dataset/pokedex/Rufflet.json"
+        },
+        "runerigus": {
+            "name": "Runerigus",
+            "path": "/dataset/pokedex/Runerigus.json"
+        },
+        "sableye (mega form)": {
+            "name": "Sableye (Mega Form)",
+            "path": "/dataset/pokedex/Sableye (Mega Form).json"
+        },
+        "sableye": {
+            "name": "Sableye",
+            "path": "/dataset/pokedex/Sableye.json"
+        },
+        "salamence (mega form)": {
+            "name": "Salamence (Mega Form)",
+            "path": "/dataset/pokedex/Salamence (Mega Form).json"
+        },
+        "salamence": {
+            "name": "Salamence",
+            "path": "/dataset/pokedex/Salamence.json"
+        },
+        "salandit": {
+            "name": "Salandit",
+            "path": "/dataset/pokedex/Salandit.json"
+        },
+        "salazzle": {
+            "name": "Salazzle",
+            "path": "/dataset/pokedex/Salazzle.json"
+        },
+        "samurott (hisuian form)": {
+            "name": "Samurott (Hisuian Form)",
+            "path": "/dataset/pokedex/Samurott (Hisuian Form).json"
+        },
+        "samurott": {
+            "name": "Samurott",
+            "path": "/dataset/pokedex/Samurott.json"
+        },
+        "sandaconda": {
+            "name": "Sandaconda",
+            "path": "/dataset/pokedex/Sandaconda.json"
+        },
+        "sandile": {
+            "name": "Sandile",
+            "path": "/dataset/pokedex/Sandile.json"
+        },
+        "sandshrew (alolan form)": {
+            "name": "Sandshrew (Alolan Form)",
+            "path": "/dataset/pokedex/Sandshrew (Alolan Form).json"
+        },
+        "sandshrew": {
+            "name": "Sandshrew",
+            "path": "/dataset/pokedex/Sandshrew.json"
+        },
+        "sandslash (alolan form)": {
+            "name": "Sandslash (Alolan Form)",
+            "path": "/dataset/pokedex/Sandslash (Alolan Form).json"
+        },
+        "sandslash": {
+            "name": "Sandslash",
+            "path": "/dataset/pokedex/Sandslash.json"
+        },
+        "sandy shocks": {
+            "name": "Sandy Shocks",
+            "path": "/dataset/pokedex/Sandy Shocks.json"
+        },
+        "sandygast": {
+            "name": "Sandygast",
+            "path": "/dataset/pokedex/Sandygast.json"
+        },
+        "sawk": {
+            "name": "Sawk",
+            "path": "/dataset/pokedex/Sawk.json"
+        },
+        "sawsbuck": {
+            "name": "Sawsbuck",
+            "path": "/dataset/pokedex/Sawsbuck.json"
+        },
+        "scatterbug": {
+            "name": "Scatterbug",
+            "path": "/dataset/pokedex/Scatterbug.json"
+        },
+        "sceptile (mega form)": {
+            "name": "Sceptile (Mega Form)",
+            "path": "/dataset/pokedex/Sceptile (Mega Form).json"
+        },
+        "sceptile": {
+            "name": "Sceptile",
+            "path": "/dataset/pokedex/Sceptile.json"
+        },
+        "scizor (mega form)": {
+            "name": "Scizor (Mega Form)",
+            "path": "/dataset/pokedex/Scizor (Mega Form).json"
+        },
+        "scizor": {
+            "name": "Scizor",
+            "path": "/dataset/pokedex/Scizor.json"
+        },
+        "scolipede": {
+            "name": "Scolipede",
+            "path": "/dataset/pokedex/Scolipede.json"
+        },
+        "scorbunny": {
+            "name": "Scorbunny",
+            "path": "/dataset/pokedex/Scorbunny.json"
+        },
+        "scovillain": {
+            "name": "Scovillain",
+            "path": "/dataset/pokedex/Scovillain.json"
+        },
+        "scrafty": {
+            "name": "Scrafty",
+            "path": "/dataset/pokedex/Scrafty.json"
+        },
+        "scraggy": {
+            "name": "Scraggy",
+            "path": "/dataset/pokedex/Scraggy.json"
+        },
+        "scream tail": {
+            "name": "Scream Tail",
+            "path": "/dataset/pokedex/Scream Tail.json"
+        },
+        "scyther": {
+            "name": "Scyther",
+            "path": "/dataset/pokedex/Scyther.json"
+        },
+        "seadra": {
+            "name": "Seadra",
+            "path": "/dataset/pokedex/Seadra.json"
+        },
+        "seaking": {
+            "name": "Seaking",
+            "path": "/dataset/pokedex/Seaking.json"
+        },
+        "sealeo": {
+            "name": "Sealeo",
+            "path": "/dataset/pokedex/Sealeo.json"
+        },
+        "seedot": {
+            "name": "Seedot",
+            "path": "/dataset/pokedex/Seedot.json"
+        },
+        "seel": {
+            "name": "Seel",
+            "path": "/dataset/pokedex/Seel.json"
+        },
+        "seismitoad": {
+            "name": "Seismitoad",
+            "path": "/dataset/pokedex/Seismitoad.json"
+        },
+        "sentret": {
+            "name": "Sentret",
+            "path": "/dataset/pokedex/Sentret.json"
+        },
+        "serperior": {
+            "name": "Serperior",
+            "path": "/dataset/pokedex/Serperior.json"
+        },
+        "servine": {
+            "name": "Servine",
+            "path": "/dataset/pokedex/Servine.json"
+        },
+        "seviper": {
+            "name": "Seviper",
+            "path": "/dataset/pokedex/Seviper.json"
+        },
+        "sewaddle": {
+            "name": "Sewaddle",
+            "path": "/dataset/pokedex/Sewaddle.json"
+        },
+        "sharpedo (mega form)": {
+            "name": "Sharpedo (Mega Form)",
+            "path": "/dataset/pokedex/Sharpedo (Mega Form).json"
+        },
+        "sharpedo": {
+            "name": "Sharpedo",
+            "path": "/dataset/pokedex/Sharpedo.json"
+        },
+        "shaymin (sky form)": {
+            "name": "Shaymin (Sky Form)",
+            "path": "/dataset/pokedex/Shaymin (Sky Form).json"
+        },
+        "shaymin": {
+            "name": "Shaymin",
+            "path": "/dataset/pokedex/Shaymin.json"
+        },
+        "shedinja": {
+            "name": "Shedinja",
+            "path": "/dataset/pokedex/Shedinja.json"
+        },
+        "shelgon": {
+            "name": "Shelgon",
+            "path": "/dataset/pokedex/Shelgon.json"
+        },
+        "shellder": {
+            "name": "Shellder",
+            "path": "/dataset/pokedex/Shellder.json"
+        },
+        "shellos": {
+            "name": "Shellos",
+            "path": "/dataset/pokedex/Shellos.json"
+        },
+        "shelmet": {
+            "name": "Shelmet",
+            "path": "/dataset/pokedex/Shelmet.json"
+        },
+        "shieldon": {
+            "name": "Shieldon",
+            "path": "/dataset/pokedex/Shieldon.json"
+        },
+        "shiftry": {
+            "name": "Shiftry",
+            "path": "/dataset/pokedex/Shiftry.json"
+        },
+        "shiinotic": {
+            "name": "Shiinotic",
+            "path": "/dataset/pokedex/Shiinotic.json"
+        },
+        "shinx": {
+            "name": "Shinx",
+            "path": "/dataset/pokedex/Shinx.json"
+        },
+        "shroodle": {
+            "name": "Shroodle",
+            "path": "/dataset/pokedex/Shroodle.json"
+        },
+        "shroomish": {
+            "name": "Shroomish",
+            "path": "/dataset/pokedex/Shroomish.json"
+        },
+        "shuckle": {
+            "name": "Shuckle",
+            "path": "/dataset/pokedex/Shuckle.json"
+        },
+        "shuppet": {
+            "name": "Shuppet",
+            "path": "/dataset/pokedex/Shuppet.json"
+        },
+        "sigilyph": {
+            "name": "Sigilyph",
+            "path": "/dataset/pokedex/Sigilyph.json"
+        },
+        "silcoon": {
+            "name": "Silcoon",
+            "path": "/dataset/pokedex/Silcoon.json"
+        },
+        "silicobra": {
+            "name": "Silicobra",
+            "path": "/dataset/pokedex/Silicobra.json"
+        },
+        "silvally": {
+            "name": "Silvally",
+            "path": "/dataset/pokedex/Silvally.json"
+        },
+        "simipour": {
+            "name": "Simipour",
+            "path": "/dataset/pokedex/Simipour.json"
+        },
+        "simisage": {
+            "name": "Simisage",
+            "path": "/dataset/pokedex/Simisage.json"
+        },
+        "simisear": {
+            "name": "Simisear",
+            "path": "/dataset/pokedex/Simisear.json"
+        },
+        "sinistcha (masterpiece form)": {
+            "name": "Sinistcha (Masterpiece Form)",
+            "path": "/dataset/pokedex/Sinistcha (Masterpiece Form).json"
+        },
+        "sinistcha (unremarkable form)": {
+            "name": "Sinistcha (Unremarkable Form)",
+            "path": "/dataset/pokedex/Sinistcha (Unremarkable Form).json"
+        },
+        "sinistea": {
+            "name": "Sinistea",
+            "path": "/dataset/pokedex/Sinistea.json"
+        },
+        "sirfetch'd": {
+            "name": "Sirfetch'd",
+            "path": "/dataset/pokedex/Sirfetch'd.json"
+        },
+        "sizzlipede": {
+            "name": "Sizzlipede",
+            "path": "/dataset/pokedex/Sizzlipede.json"
+        },
+        "skarmory": {
+            "name": "Skarmory",
+            "path": "/dataset/pokedex/Skarmory.json"
+        },
+        "skeledirge": {
+            "name": "Skeledirge",
+            "path": "/dataset/pokedex/Skeledirge.json"
+        },
+        "skiddo": {
+            "name": "Skiddo",
+            "path": "/dataset/pokedex/Skiddo.json"
+        },
+        "skiploom": {
+            "name": "Skiploom",
+            "path": "/dataset/pokedex/Skiploom.json"
+        },
+        "skitty": {
+            "name": "Skitty",
+            "path": "/dataset/pokedex/Skitty.json"
+        },
+        "skorupi": {
+            "name": "Skorupi",
+            "path": "/dataset/pokedex/Skorupi.json"
+        },
+        "skrelp": {
+            "name": "Skrelp",
+            "path": "/dataset/pokedex/Skrelp.json"
+        },
+        "skuntank": {
+            "name": "Skuntank",
+            "path": "/dataset/pokedex/Skuntank.json"
+        },
+        "skwovet": {
+            "name": "Skwovet",
+            "path": "/dataset/pokedex/Skwovet.json"
+        },
+        "slaking": {
+            "name": "Slaking",
+            "path": "/dataset/pokedex/Slaking.json"
+        },
+        "slakoth": {
+            "name": "Slakoth",
+            "path": "/dataset/pokedex/Slakoth.json"
+        },
+        "sliggoo (hisuian form)": {
+            "name": "Sliggoo (Hisuian Form)",
+            "path": "/dataset/pokedex/Sliggoo (Hisuian Form).json"
+        },
+        "sliggoo": {
+            "name": "Sliggoo",
+            "path": "/dataset/pokedex/Sliggoo.json"
+        },
+        "slither wing": {
+            "name": "Slither Wing",
+            "path": "/dataset/pokedex/Slither Wing.json"
+        },
+        "slowbro (galarian form)": {
+            "name": "Slowbro (Galarian Form)",
+            "path": "/dataset/pokedex/Slowbro (Galarian Form).json"
+        },
+        "slowbro (mega form)": {
+            "name": "Slowbro (Mega Form)",
+            "path": "/dataset/pokedex/Slowbro (Mega Form).json"
+        },
+        "slowbro": {
+            "name": "Slowbro",
+            "path": "/dataset/pokedex/Slowbro.json"
+        },
+        "slowking (galarian form)": {
+            "name": "Slowking (Galarian Form)",
+            "path": "/dataset/pokedex/Slowking (Galarian Form).json"
+        },
+        "slowking": {
+            "name": "Slowking",
+            "path": "/dataset/pokedex/Slowking.json"
+        },
+        "slowpoke (galarian form)": {
+            "name": "Slowpoke (Galarian Form)",
+            "path": "/dataset/pokedex/Slowpoke (Galarian Form).json"
+        },
+        "slowpoke": {
+            "name": "Slowpoke",
+            "path": "/dataset/pokedex/Slowpoke.json"
+        },
+        "slugma": {
+            "name": "Slugma",
+            "path": "/dataset/pokedex/Slugma.json"
+        },
+        "slurpuff": {
+            "name": "Slurpuff",
+            "path": "/dataset/pokedex/Slurpuff.json"
+        },
+        "smeargle": {
+            "name": "Smeargle",
+            "path": "/dataset/pokedex/Smeargle.json"
+        },
+        "smoliv": {
+            "name": "Smoliv",
+            "path": "/dataset/pokedex/Smoliv.json"
+        },
+        "smoochum": {
+            "name": "Smoochum",
+            "path": "/dataset/pokedex/Smoochum.json"
+        },
+        "sneasel (hisuian form)": {
+            "name": "Sneasel (Hisuian Form)",
+            "path": "/dataset/pokedex/Sneasel (Hisuian Form).json"
+        },
+        "sneasel": {
+            "name": "Sneasel",
+            "path": "/dataset/pokedex/Sneasel.json"
+        },
+        "sneasler": {
+            "name": "Sneasler",
+            "path": "/dataset/pokedex/Sneasler.json"
+        },
+        "snivy": {
+            "name": "Snivy",
+            "path": "/dataset/pokedex/Snivy.json"
+        },
+        "snom": {
+            "name": "Snom",
+            "path": "/dataset/pokedex/Snom.json"
+        },
+        "snorlax": {
+            "name": "Snorlax",
+            "path": "/dataset/pokedex/Snorlax.json"
+        },
+        "snorunt": {
+            "name": "Snorunt",
+            "path": "/dataset/pokedex/Snorunt.json"
+        },
+        "snover": {
+            "name": "Snover",
+            "path": "/dataset/pokedex/Snover.json"
+        },
+        "snubbull": {
+            "name": "Snubbull",
+            "path": "/dataset/pokedex/Snubbull.json"
+        },
+        "sobble": {
+            "name": "Sobble",
+            "path": "/dataset/pokedex/Sobble.json"
+        },
+        "solgaleo": {
+            "name": "Solgaleo",
+            "path": "/dataset/pokedex/Solgaleo.json"
+        },
+        "solosis": {
+            "name": "Solosis",
+            "path": "/dataset/pokedex/Solosis.json"
+        },
+        "solrock": {
+            "name": "Solrock",
+            "path": "/dataset/pokedex/Solrock.json"
+        },
+        "spearow": {
+            "name": "Spearow",
+            "path": "/dataset/pokedex/Spearow.json"
+        },
+        "spectrier": {
+            "name": "Spectrier",
+            "path": "/dataset/pokedex/Spectrier.json"
+        },
+        "spewpa": {
+            "name": "Spewpa",
+            "path": "/dataset/pokedex/Spewpa.json"
+        },
+        "spheal": {
+            "name": "Spheal",
+            "path": "/dataset/pokedex/Spheal.json"
+        },
+        "spidops": {
+            "name": "Spidops",
+            "path": "/dataset/pokedex/Spidops.json"
+        },
+        "spinarak": {
+            "name": "Spinarak",
+            "path": "/dataset/pokedex/Spinarak.json"
+        },
+        "spinda": {
+            "name": "Spinda",
+            "path": "/dataset/pokedex/Spinda.json"
+        },
+        "spiritomb": {
+            "name": "Spiritomb",
+            "path": "/dataset/pokedex/Spiritomb.json"
+        },
+        "spoink": {
+            "name": "Spoink",
+            "path": "/dataset/pokedex/Spoink.json"
+        },
+        "sprigatito": {
+            "name": "Sprigatito",
+            "path": "/dataset/pokedex/Sprigatito.json"
+        },
+        "spritzee": {
+            "name": "Spritzee",
+            "path": "/dataset/pokedex/Spritzee.json"
+        },
+        "squawkabilly": {
+            "name": "Squawkabilly",
+            "path": "/dataset/pokedex/Squawkabilly.json"
+        },
+        "squirtle": {
+            "name": "Squirtle",
+            "path": "/dataset/pokedex/Squirtle.json"
+        },
+        "stakataka": {
+            "name": "Stakataka",
+            "path": "/dataset/pokedex/Stakataka.json"
+        },
+        "stantler": {
+            "name": "Stantler",
+            "path": "/dataset/pokedex/Stantler.json"
+        },
+        "staraptor": {
+            "name": "Staraptor",
+            "path": "/dataset/pokedex/Staraptor.json"
+        },
+        "staravia": {
+            "name": "Staravia",
+            "path": "/dataset/pokedex/Staravia.json"
+        },
+        "starly": {
+            "name": "Starly",
+            "path": "/dataset/pokedex/Starly.json"
+        },
+        "starmie": {
+            "name": "Starmie",
+            "path": "/dataset/pokedex/Starmie.json"
+        },
+        "staryu": {
+            "name": "Staryu",
+            "path": "/dataset/pokedex/Staryu.json"
+        },
+        "steelix (mega form)": {
+            "name": "Steelix (Mega Form)",
+            "path": "/dataset/pokedex/Steelix (Mega Form).json"
+        },
+        "steelix": {
+            "name": "Steelix",
+            "path": "/dataset/pokedex/Steelix.json"
+        },
+        "steenee": {
+            "name": "Steenee",
+            "path": "/dataset/pokedex/Steenee.json"
+        },
+        "stonjourner": {
+            "name": "Stonjourner",
+            "path": "/dataset/pokedex/Stonjourner.json"
+        },
+        "stoutland": {
+            "name": "Stoutland",
+            "path": "/dataset/pokedex/Stoutland.json"
+        },
+        "stufful": {
+            "name": "Stufful",
+            "path": "/dataset/pokedex/Stufful.json"
+        },
+        "stunfisk (galarian form)": {
+            "name": "Stunfisk (Galarian Form)",
+            "path": "/dataset/pokedex/Stunfisk (Galarian Form).json"
+        },
+        "stunfisk": {
+            "name": "Stunfisk",
+            "path": "/dataset/pokedex/Stunfisk.json"
+        },
+        "stunky": {
+            "name": "Stunky",
+            "path": "/dataset/pokedex/Stunky.json"
+        },
+        "sudowoodo": {
+            "name": "Sudowoodo",
+            "path": "/dataset/pokedex/Sudowoodo.json"
+        },
+        "suicune": {
+            "name": "Suicune",
+            "path": "/dataset/pokedex/Suicune.json"
+        },
+        "sunflora": {
+            "name": "Sunflora",
+            "path": "/dataset/pokedex/Sunflora.json"
+        },
+        "sunkern": {
+            "name": "Sunkern",
+            "path": "/dataset/pokedex/Sunkern.json"
+        },
+        "surskit": {
+            "name": "Surskit",
+            "path": "/dataset/pokedex/Surskit.json"
+        },
+        "swablu": {
+            "name": "Swablu",
+            "path": "/dataset/pokedex/Swablu.json"
+        },
+        "swadloon": {
+            "name": "Swadloon",
+            "path": "/dataset/pokedex/Swadloon.json"
+        },
+        "swalot": {
+            "name": "Swalot",
+            "path": "/dataset/pokedex/Swalot.json"
+        },
+        "swampert (mega form)": {
+            "name": "Swampert (Mega Form)",
+            "path": "/dataset/pokedex/Swampert (Mega Form).json"
+        },
+        "swampert": {
+            "name": "Swampert",
+            "path": "/dataset/pokedex/Swampert.json"
+        },
+        "swanna": {
+            "name": "Swanna",
+            "path": "/dataset/pokedex/Swanna.json"
+        },
+        "swellow": {
+            "name": "Swellow",
+            "path": "/dataset/pokedex/Swellow.json"
+        },
+        "swinub": {
+            "name": "Swinub",
+            "path": "/dataset/pokedex/Swinub.json"
+        },
+        "swirlix": {
+            "name": "Swirlix",
+            "path": "/dataset/pokedex/Swirlix.json"
+        },
+        "swoobat": {
+            "name": "Swoobat",
+            "path": "/dataset/pokedex/Swoobat.json"
+        },
+        "sylveon": {
+            "name": "Sylveon",
+            "path": "/dataset/pokedex/Sylveon.json"
+        },
+        "tadbulb": {
+            "name": "Tadbulb",
+            "path": "/dataset/pokedex/Tadbulb.json"
+        },
+        "taillow": {
+            "name": "Taillow",
+            "path": "/dataset/pokedex/Taillow.json"
+        },
+        "talonflame": {
+            "name": "Talonflame",
+            "path": "/dataset/pokedex/Talonflame.json"
+        },
+        "tandemaus": {
+            "name": "Tandemaus",
+            "path": "/dataset/pokedex/Tandemaus.json"
+        },
+        "tangela": {
+            "name": "Tangela",
+            "path": "/dataset/pokedex/Tangela.json"
+        },
+        "tangrowth": {
+            "name": "Tangrowth",
+            "path": "/dataset/pokedex/Tangrowth.json"
+        },
+        "tapu bulu": {
+            "name": "Tapu Bulu",
+            "path": "/dataset/pokedex/Tapu Bulu.json"
+        },
+        "tapu fini": {
+            "name": "Tapu Fini",
+            "path": "/dataset/pokedex/Tapu Fini.json"
+        },
+        "tapu koko": {
+            "name": "Tapu Koko",
+            "path": "/dataset/pokedex/Tapu Koko.json"
+        },
+        "tapu lele": {
+            "name": "Tapu Lele",
+            "path": "/dataset/pokedex/Tapu Lele.json"
+        },
+        "tarountula": {
+            "name": "Tarountula",
+            "path": "/dataset/pokedex/Tarountula.json"
+        },
+        "tatsugiri (curly form)": {
+            "name": "Tatsugiri (Curly Form)",
+            "path": "/dataset/pokedex/Tatsugiri (Curly Form).json"
+        },
+        "tatsugiri (droopy form)": {
+            "name": "Tatsugiri (Droopy Form)",
+            "path": "/dataset/pokedex/Tatsugiri (Droopy Form).json"
+        },
+        "tatsugiri (stretchy form)": {
+            "name": "Tatsugiri (Stretchy Form)",
+            "path": "/dataset/pokedex/Tatsugiri (Stretchy Form).json"
+        },
+        "tauros (paldean form) (aqua form)": {
+            "name": "Tauros (Paldean Form) (Aqua Form)",
+            "path": "/dataset/pokedex/Tauros (Paldean Form) (Aqua Form).json"
+        },
+        "tauros (paldean form) (blaze form)": {
+            "name": "Tauros (Paldean Form) (Blaze Form)",
+            "path": "/dataset/pokedex/Tauros (Paldean Form) (Blaze Form).json"
+        },
+        "tauros (paldean form) (combat form)": {
+            "name": "Tauros (Paldean Form) (Combat Form)",
+            "path": "/dataset/pokedex/Tauros (Paldean Form) (Combat Form).json"
+        },
+        "tauros": {
+            "name": "Tauros",
+            "path": "/dataset/pokedex/Tauros.json"
+        },
+        "teddiursa": {
+            "name": "Teddiursa",
+            "path": "/dataset/pokedex/Teddiursa.json"
+        },
+        "tentacool": {
+            "name": "Tentacool",
+            "path": "/dataset/pokedex/Tentacool.json"
+        },
+        "tentacruel": {
+            "name": "Tentacruel",
+            "path": "/dataset/pokedex/Tentacruel.json"
+        },
+        "tepig": {
+            "name": "Tepig",
+            "path": "/dataset/pokedex/Tepig.json"
+        },
+        "terapagos (normal form)": {
+            "name": "Terapagos (Normal Form)",
+            "path": "/dataset/pokedex/Terapagos (Normal Form).json"
+        },
+        "terapagos (stellar form)": {
+            "name": "Terapagos (Stellar Form)",
+            "path": "/dataset/pokedex/Terapagos (Stellar Form).json"
+        },
+        "terapagos (terastal form)": {
+            "name": "Terapagos (Terastal Form)",
+            "path": "/dataset/pokedex/Terapagos (Terastal Form).json"
+        },
+        "terrakion": {
+            "name": "Terrakion",
+            "path": "/dataset/pokedex/Terrakion.json"
+        },
+        "thievul": {
+            "name": "Thievul",
+            "path": "/dataset/pokedex/Thievul.json"
+        },
+        "throh": {
+            "name": "Throh",
+            "path": "/dataset/pokedex/Throh.json"
+        },
+        "thundurus (therian form)": {
+            "name": "Thundurus (Therian Form)",
+            "path": "/dataset/pokedex/Thundurus (Therian Form).json"
+        },
+        "thundurus": {
+            "name": "Thundurus",
+            "path": "/dataset/pokedex/Thundurus.json"
+        },
+        "thwackey": {
+            "name": "Thwackey",
+            "path": "/dataset/pokedex/Thwackey.json"
+        },
+        "timburr": {
+            "name": "Timburr",
+            "path": "/dataset/pokedex/Timburr.json"
+        },
+        "ting-lu": {
+            "name": "Ting-Lu",
+            "path": "/dataset/pokedex/Ting-Lu.json"
+        },
+        "tinkatink": {
+            "name": "Tinkatink",
+            "path": "/dataset/pokedex/Tinkatink.json"
+        },
+        "tinkaton": {
+            "name": "Tinkaton",
+            "path": "/dataset/pokedex/Tinkaton.json"
+        },
+        "tinkatuff": {
+            "name": "Tinkatuff",
+            "path": "/dataset/pokedex/Tinkatuff.json"
+        },
+        "tirtouga": {
+            "name": "Tirtouga",
+            "path": "/dataset/pokedex/Tirtouga.json"
+        },
+        "toedscool": {
+            "name": "Toedscool",
+            "path": "/dataset/pokedex/Toedscool.json"
+        },
+        "toedscruel": {
+            "name": "Toedscruel",
+            "path": "/dataset/pokedex/Toedscruel.json"
+        },
+        "togedemaru": {
+            "name": "Togedemaru",
+            "path": "/dataset/pokedex/Togedemaru.json"
+        },
+        "togekiss": {
+            "name": "Togekiss",
+            "path": "/dataset/pokedex/Togekiss.json"
+        },
+        "togepi": {
+            "name": "Togepi",
+            "path": "/dataset/pokedex/Togepi.json"
+        },
+        "togetic": {
+            "name": "Togetic",
+            "path": "/dataset/pokedex/Togetic.json"
+        },
+        "torchic": {
+            "name": "Torchic",
+            "path": "/dataset/pokedex/Torchic.json"
+        },
+        "torkoal": {
+            "name": "Torkoal",
+            "path": "/dataset/pokedex/Torkoal.json"
+        },
+        "tornadus (therian form)": {
+            "name": "Tornadus (Therian Form)",
+            "path": "/dataset/pokedex/Tornadus (Therian Form).json"
+        },
+        "tornadus": {
+            "name": "Tornadus",
+            "path": "/dataset/pokedex/Tornadus.json"
+        },
+        "torracat": {
+            "name": "Torracat",
+            "path": "/dataset/pokedex/Torracat.json"
+        },
+        "torterra": {
+            "name": "Torterra",
+            "path": "/dataset/pokedex/Torterra.json"
+        },
+        "totodile": {
+            "name": "Totodile",
+            "path": "/dataset/pokedex/Totodile.json"
+        },
+        "toucannon": {
+            "name": "Toucannon",
+            "path": "/dataset/pokedex/Toucannon.json"
+        },
+        "toxapex": {
+            "name": "Toxapex",
+            "path": "/dataset/pokedex/Toxapex.json"
+        },
+        "toxel": {
+            "name": "Toxel",
+            "path": "/dataset/pokedex/Toxel.json"
+        },
+        "toxicroak": {
+            "name": "Toxicroak",
+            "path": "/dataset/pokedex/Toxicroak.json"
+        },
+        "toxtricity (amped form)": {
+            "name": "Toxtricity (Amped Form)",
+            "path": "/dataset/pokedex/Toxtricity (Amped Form).json"
+        },
+        "toxtricity (low key form)": {
+            "name": "Toxtricity (Low Key Form)",
+            "path": "/dataset/pokedex/Toxtricity (Low Key Form).json"
+        },
+        "tranquill": {
+            "name": "Tranquill",
+            "path": "/dataset/pokedex/Tranquill.json"
+        },
+        "trapinch": {
+            "name": "Trapinch",
+            "path": "/dataset/pokedex/Trapinch.json"
+        },
+        "treecko": {
+            "name": "Treecko",
+            "path": "/dataset/pokedex/Treecko.json"
+        },
+        "trevenant": {
+            "name": "Trevenant",
+            "path": "/dataset/pokedex/Trevenant.json"
+        },
+        "tropius": {
+            "name": "Tropius",
+            "path": "/dataset/pokedex/Tropius.json"
+        },
+        "trubbish": {
+            "name": "Trubbish",
+            "path": "/dataset/pokedex/Trubbish.json"
+        },
+        "trumbeak": {
+            "name": "Trumbeak",
+            "path": "/dataset/pokedex/Trumbeak.json"
+        },
+        "tsareena": {
+            "name": "Tsareena",
+            "path": "/dataset/pokedex/Tsareena.json"
+        },
+        "turtonator": {
+            "name": "Turtonator",
+            "path": "/dataset/pokedex/Turtonator.json"
+        },
+        "turtwig": {
+            "name": "Turtwig",
+            "path": "/dataset/pokedex/Turtwig.json"
+        },
+        "tympole": {
+            "name": "Tympole",
+            "path": "/dataset/pokedex/Tympole.json"
+        },
+        "tynamo": {
+            "name": "Tynamo",
+            "path": "/dataset/pokedex/Tynamo.json"
+        },
+        "type: null": {
+            "name": "Type: Null",
+            "path": "/dataset/pokedex/Type Null.json"
+        },
+        "typhlosion (hisuian form)": {
+            "name": "Typhlosion (Hisuian Form)",
+            "path": "/dataset/pokedex/Typhlosion (Hisuian Form).json"
+        },
+        "typhlosion": {
+            "name": "Typhlosion",
+            "path": "/dataset/pokedex/Typhlosion.json"
+        },
+        "tyranitar (mega form)": {
+            "name": "Tyranitar (Mega Form)",
+            "path": "/dataset/pokedex/Tyranitar (Mega Form).json"
+        },
+        "tyranitar": {
+            "name": "Tyranitar",
+            "path": "/dataset/pokedex/Tyranitar.json"
+        },
+        "tyrantrum": {
+            "name": "Tyrantrum",
+            "path": "/dataset/pokedex/Tyrantrum.json"
+        },
+        "tyrogue": {
+            "name": "Tyrogue",
+            "path": "/dataset/pokedex/Tyrogue.json"
+        },
+        "tyrunt": {
+            "name": "Tyrunt",
+            "path": "/dataset/pokedex/Tyrunt.json"
+        },
+        "umbreon": {
+            "name": "Umbreon",
+            "path": "/dataset/pokedex/Umbreon.json"
+        },
+        "unfezant": {
+            "name": "Unfezant",
+            "path": "/dataset/pokedex/Unfezant.json"
+        },
+        "unown": {
+            "name": "Unown",
+            "path": "/dataset/pokedex/Unown.json"
+        },
+        "ursaluna (kitakami form)": {
+            "name": "Ursaluna (Kitakami Form)",
+            "path": "/dataset/pokedex/Ursaluna (Kitakami Form).json"
+        },
+        "ursaluna": {
+            "name": "Ursaluna",
+            "path": "/dataset/pokedex/Ursaluna.json"
+        },
+        "ursaring": {
+            "name": "Ursaring",
+            "path": "/dataset/pokedex/Ursaring.json"
+        },
+        "urshifu (rapid strike style form)": {
+            "name": "Urshifu (Rapid Strike Style Form)",
+            "path": "/dataset/pokedex/Urshifu (Rapid Strike Style Form).json"
+        },
+        "urshifu (single strike style form)": {
+            "name": "Urshifu (Single Strike Style Form)",
+            "path": "/dataset/pokedex/Urshifu (Single Strike Style Form).json"
+        },
+        "uxie": {
+            "name": "Uxie",
+            "path": "/dataset/pokedex/Uxie.json"
+        },
+        "vanillish": {
+            "name": "Vanillish",
+            "path": "/dataset/pokedex/Vanillish.json"
+        },
+        "vanillite": {
+            "name": "Vanillite",
+            "path": "/dataset/pokedex/Vanillite.json"
+        },
+        "vanilluxe": {
+            "name": "Vanilluxe",
+            "path": "/dataset/pokedex/Vanilluxe.json"
+        },
+        "vaporeon": {
+            "name": "Vaporeon",
+            "path": "/dataset/pokedex/Vaporeon.json"
+        },
+        "varoom": {
+            "name": "Varoom",
+            "path": "/dataset/pokedex/Varoom.json"
+        },
+        "veluza": {
+            "name": "Veluza",
+            "path": "/dataset/pokedex/Veluza.json"
+        },
+        "venipede": {
+            "name": "Venipede",
+            "path": "/dataset/pokedex/Venipede.json"
+        },
+        "venomoth": {
+            "name": "Venomoth",
+            "path": "/dataset/pokedex/Venomoth.json"
+        },
+        "venonat": {
+            "name": "Venonat",
+            "path": "/dataset/pokedex/Venonat.json"
+        },
+        "venusaur (mega form)": {
+            "name": "Venusaur (Mega Form)",
+            "path": "/dataset/pokedex/Venusaur (Mega Form).json"
+        },
+        "venusaur": {
+            "name": "Venusaur",
+            "path": "/dataset/pokedex/Venusaur.json"
+        },
+        "vespiquen": {
+            "name": "Vespiquen",
+            "path": "/dataset/pokedex/Vespiquen.json"
+        },
+        "vibrava": {
+            "name": "Vibrava",
+            "path": "/dataset/pokedex/Vibrava.json"
+        },
+        "victini": {
+            "name": "Victini",
+            "path": "/dataset/pokedex/Victini.json"
+        },
+        "victreebel": {
+            "name": "Victreebel",
+            "path": "/dataset/pokedex/Victreebel.json"
+        },
+        "vigoroth": {
+            "name": "Vigoroth",
+            "path": "/dataset/pokedex/Vigoroth.json"
+        },
+        "vikavolt": {
+            "name": "Vikavolt",
+            "path": "/dataset/pokedex/Vikavolt.json"
+        },
+        "vileplume": {
+            "name": "Vileplume",
+            "path": "/dataset/pokedex/Vileplume.json"
+        },
+        "virizion": {
+            "name": "Virizion",
+            "path": "/dataset/pokedex/Virizion.json"
+        },
+        "vivillon": {
+            "name": "Vivillon",
+            "path": "/dataset/pokedex/Vivillon.json"
+        },
+        "volbeat": {
+            "name": "Volbeat",
+            "path": "/dataset/pokedex/Volbeat.json"
+        },
+        "volcanion": {
+            "name": "Volcanion",
+            "path": "/dataset/pokedex/Volcanion.json"
+        },
+        "volcarona": {
+            "name": "Volcarona",
+            "path": "/dataset/pokedex/Volcarona.json"
+        },
+        "voltorb (hisuian form)": {
+            "name": "Voltorb (Hisuian Form)",
+            "path": "/dataset/pokedex/Voltorb (Hisuian Form).json"
+        },
+        "voltorb": {
+            "name": "Voltorb",
+            "path": "/dataset/pokedex/Voltorb.json"
+        },
+        "vullaby": {
+            "name": "Vullaby",
+            "path": "/dataset/pokedex/Vullaby.json"
+        },
+        "vulpix (alolan form)": {
+            "name": "Vulpix (Alolan Form)",
+            "path": "/dataset/pokedex/Vulpix (Alolan Form).json"
+        },
+        "vulpix": {
+            "name": "Vulpix",
+            "path": "/dataset/pokedex/Vulpix.json"
+        },
+        "wailmer": {
+            "name": "Wailmer",
+            "path": "/dataset/pokedex/Wailmer.json"
+        },
+        "wailord": {
+            "name": "Wailord",
+            "path": "/dataset/pokedex/Wailord.json"
+        },
+        "walking wake": {
+            "name": "Walking Wake",
+            "path": "/dataset/pokedex/Walking Wake.json"
+        },
+        "walrein": {
+            "name": "Walrein",
+            "path": "/dataset/pokedex/Walrein.json"
+        },
+        "wartortle": {
+            "name": "Wartortle",
+            "path": "/dataset/pokedex/Wartortle.json"
+        },
+        "watchog": {
+            "name": "Watchog",
+            "path": "/dataset/pokedex/Watchog.json"
+        },
+        "wattrel": {
+            "name": "Wattrel",
+            "path": "/dataset/pokedex/Wattrel.json"
+        },
+        "weavile": {
+            "name": "Weavile",
+            "path": "/dataset/pokedex/Weavile.json"
+        },
+        "weedle": {
+            "name": "Weedle",
+            "path": "/dataset/pokedex/Weedle.json"
+        },
+        "weepinbell": {
+            "name": "Weepinbell",
+            "path": "/dataset/pokedex/Weepinbell.json"
+        },
+        "weezing (galarian form)": {
+            "name": "Weezing (Galarian Form)",
+            "path": "/dataset/pokedex/Weezing (Galarian Form).json"
+        },
+        "weezing": {
+            "name": "Weezing",
+            "path": "/dataset/pokedex/Weezing.json"
+        },
+        "whimsicott": {
+            "name": "Whimsicott",
+            "path": "/dataset/pokedex/Whimsicott.json"
+        },
+        "whirlipede": {
+            "name": "Whirlipede",
+            "path": "/dataset/pokedex/Whirlipede.json"
+        },
+        "whiscash": {
+            "name": "Whiscash",
+            "path": "/dataset/pokedex/Whiscash.json"
+        },
+        "whismur": {
+            "name": "Whismur",
+            "path": "/dataset/pokedex/Whismur.json"
+        },
+        "wigglytuff": {
+            "name": "Wigglytuff",
+            "path": "/dataset/pokedex/Wigglytuff.json"
+        },
+        "wiglett": {
+            "name": "Wiglett",
+            "path": "/dataset/pokedex/Wiglett.json"
+        },
+        "wimpod": {
+            "name": "Wimpod",
+            "path": "/dataset/pokedex/Wimpod.json"
+        },
+        "wingull": {
+            "name": "Wingull",
+            "path": "/dataset/pokedex/Wingull.json"
+        },
+        "wishiwashi (swarm form)": {
+            "name": "Wishiwashi (Swarm Form)",
+            "path": "/dataset/pokedex/Wishiwashi (Swarm Form).json"
+        },
+        "wishiwashi": {
+            "name": "Wishiwashi",
+            "path": "/dataset/pokedex/Wishiwashi.json"
+        },
+        "wo-chien": {
+            "name": "Wo-Chien",
+            "path": "/dataset/pokedex/Wo-Chien.json"
+        },
+        "wobbuffet": {
+            "name": "Wobbuffet",
+            "path": "/dataset/pokedex/Wobbuffet.json"
+        },
+        "woobat": {
+            "name": "Woobat",
+            "path": "/dataset/pokedex/Woobat.json"
+        },
+        "wooloo": {
+            "name": "Wooloo",
+            "path": "/dataset/pokedex/Wooloo.json"
+        },
+        "wooper (paldean form)": {
+            "name": "Wooper (Paldean Form)",
+            "path": "/dataset/pokedex/Wooper (Paldean Form).json"
+        },
+        "wooper": {
+            "name": "Wooper",
+            "path": "/dataset/pokedex/Wooper.json"
+        },
+        "wormadam (grass form)": {
+            "name": "Wormadam (Grass Form)",
+            "path": "/dataset/pokedex/Wormadam (Grass Form).json"
+        },
+        "wormadam (ground form)": {
+            "name": "Wormadam (Ground Form)",
+            "path": "/dataset/pokedex/Wormadam (Ground Form).json"
+        },
+        "wormadam (steel form)": {
+            "name": "Wormadam (Steel Form)",
+            "path": "/dataset/pokedex/Wormadam (Steel Form).json"
+        },
+        "wugtrio": {
+            "name": "Wugtrio",
+            "path": "/dataset/pokedex/Wugtrio.json"
+        },
+        "wurmple": {
+            "name": "Wurmple",
+            "path": "/dataset/pokedex/Wurmple.json"
+        },
+        "wynaut": {
+            "name": "Wynaut",
+            "path": "/dataset/pokedex/Wynaut.json"
+        },
+        "wyrdeer": {
+            "name": "Wyrdeer",
+            "path": "/dataset/pokedex/Wyrdeer.json"
+        },
+        "xatu": {
+            "name": "Xatu",
+            "path": "/dataset/pokedex/Xatu.json"
+        },
+        "xerneas": {
+            "name": "Xerneas",
+            "path": "/dataset/pokedex/Xerneas.json"
+        },
+        "xurkitree": {
+            "name": "Xurkitree",
+            "path": "/dataset/pokedex/Xurkitree.json"
+        },
+        "yamask (galarian form)": {
+            "name": "Yamask (Galarian Form)",
+            "path": "/dataset/pokedex/Yamask (Galarian Form).json"
+        },
+        "yamask": {
+            "name": "Yamask",
+            "path": "/dataset/pokedex/Yamask.json"
+        },
+        "yamper": {
+            "name": "Yamper",
+            "path": "/dataset/pokedex/Yamper.json"
+        },
+        "yanma": {
+            "name": "Yanma",
+            "path": "/dataset/pokedex/Yanma.json"
+        },
+        "yanmega": {
+            "name": "Yanmega",
+            "path": "/dataset/pokedex/Yanmega.json"
+        },
+        "yungoos": {
+            "name": "Yungoos",
+            "path": "/dataset/pokedex/Yungoos.json"
+        },
+        "yveltal": {
+            "name": "Yveltal",
+            "path": "/dataset/pokedex/Yveltal.json"
+        },
+        "zacian (crown form)": {
+            "name": "Zacian (Crown Form)",
+            "path": "/dataset/pokedex/Zacian (Crown Form).json"
+        },
+        "zacian": {
+            "name": "Zacian",
+            "path": "/dataset/pokedex/Zacian.json"
+        },
+        "zamazenta (crown form)": {
+            "name": "Zamazenta (Crown Form)",
+            "path": "/dataset/pokedex/Zamazenta (Crown Form).json"
+        },
+        "zamazenta": {
+            "name": "Zamazenta",
+            "path": "/dataset/pokedex/Zamazenta.json"
+        },
+        "zangoose": {
+            "name": "Zangoose",
+            "path": "/dataset/pokedex/Zangoose.json"
+        },
+        "zapdos (galarian form)": {
+            "name": "Zapdos (Galarian Form)",
+            "path": "/dataset/pokedex/Zapdos (Galarian Form).json"
+        },
+        "zapdos": {
+            "name": "Zapdos",
+            "path": "/dataset/pokedex/Zapdos.json"
+        },
+        "zarude": {
+            "name": "Zarude",
+            "path": "/dataset/pokedex/Zarude.json"
+        },
+        "zebstrika": {
+            "name": "Zebstrika",
+            "path": "/dataset/pokedex/Zebstrika.json"
+        },
+        "zekrom": {
+            "name": "Zekrom",
+            "path": "/dataset/pokedex/Zekrom.json"
+        },
+        "zeraora": {
+            "name": "Zeraora",
+            "path": "/dataset/pokedex/Zeraora.json"
+        },
+        "zigzagoon (galarian form)": {
+            "name": "Zigzagoon (Galarian Form)",
+            "path": "/dataset/pokedex/Zigzagoon (Galarian Form).json"
+        },
+        "zigzagoon": {
+            "name": "Zigzagoon",
+            "path": "/dataset/pokedex/Zigzagoon.json"
+        },
+        "zoroark (hisuian form)": {
+            "name": "Zoroark (Hisuian Form)",
+            "path": "/dataset/pokedex/Zoroark (Hisuian Form).json"
+        },
+        "zoroark": {
+            "name": "Zoroark",
+            "path": "/dataset/pokedex/Zoroark.json"
+        },
+        "zorua (hisuian form)": {
+            "name": "Zorua (Hisuian Form)",
+            "path": "/dataset/pokedex/Zorua (Hisuian Form).json"
+        },
+        "zorua": {
+            "name": "Zorua",
+            "path": "/dataset/pokedex/Zorua.json"
+        },
+        "zubat": {
+            "name": "Zubat",
+            "path": "/dataset/pokedex/Zubat.json"
+        },
+        "zweilous": {
+            "name": "Zweilous",
+            "path": "/dataset/pokedex/Zweilous.json"
+        },
+        "zygarde 10%": {
+            "name": "Zygarde 10%",
+            "path": "/dataset/pokedex/Zygarde 10%.json"
+        },
+        "zygarde 100%": {
+            "name": "Zygarde 100%",
+            "path": "/dataset/pokedex/Zygarde 100%.json"
+        },
+        "zygarde 50%": {
+            "name": "Zygarde 50%",
+            "path": "/dataset/pokedex/Zygarde 50%.json"
+        },
+        "zygarde cell": {
+            "name": "Zygarde Cell",
+            "path": "/dataset/pokedex/Zygarde Cell.json"
+        }
+    },
+    "abilities": {
+        "adaptability": {
+            "name": "Adaptability",
+            "path": "/dataset/abilities/Adaptability.json"
+        },
+        "aerilate": {
+            "name": "Aerilate",
+            "path": "/dataset/abilities/Aerilate.json"
+        },
+        "aftermath": {
+            "name": "Aftermath",
+            "path": "/dataset/abilities/Aftermath.json"
+        },
+        "air lock": {
+            "name": "Air Lock",
+            "path": "/dataset/abilities/Air Lock.json"
+        },
+        "analytic": {
+            "name": "Analytic",
+            "path": "/dataset/abilities/Analytic.json"
+        },
+        "anger point": {
+            "name": "Anger Point",
+            "path": "/dataset/abilities/Anger Point.json"
+        },
+        "anger shell": {
+            "name": "Anger Shell",
+            "path": "/dataset/abilities/Anger Shell.json"
+        },
+        "anticipation": {
+            "name": "Anticipation",
+            "path": "/dataset/abilities/Anticipation.json"
+        },
+        "arena trap": {
+            "name": "Arena Trap",
+            "path": "/dataset/abilities/Arena Trap.json"
+        },
+        "armor tail": {
+            "name": "Armor Tail",
+            "path": "/dataset/abilities/Armor Tail.json"
+        },
+        "aroma veil": {
+            "name": "Aroma Veil",
+            "path": "/dataset/abilities/Aroma Veil.json"
+        },
+        "as one": {
+            "name": "As One",
+            "path": "/dataset/abilities/As One.json"
+        },
+        "aura break": {
+            "name": "Aura Break",
+            "path": "/dataset/abilities/Aura Break.json"
+        },
+        "bad dreams": {
+            "name": "Bad Dreams",
+            "path": "/dataset/abilities/Bad Dreams.json"
+        },
+        "ball fetch": {
+            "name": "Ball Fetch",
+            "path": "/dataset/abilities/Ball Fetch.json"
+        },
+        "battery": {
+            "name": "Battery",
+            "path": "/dataset/abilities/Battery.json"
+        },
+        "battle armor": {
+            "name": "Battle Armor",
+            "path": "/dataset/abilities/Battle Armor.json"
+        },
+        "beads of ruin": {
+            "name": "Beads of Ruin",
+            "path": "/dataset/abilities/Beads of Ruin.json"
+        },
+        "beast boost": {
+            "name": "Beast Boost",
+            "path": "/dataset/abilities/Beast Boost.json"
+        },
+        "berserk": {
+            "name": "Berserk",
+            "path": "/dataset/abilities/Berserk.json"
+        },
+        "big pecks": {
+            "name": "Big Pecks",
+            "path": "/dataset/abilities/Big Pecks.json"
+        },
+        "blaze": {
+            "name": "Blaze",
+            "path": "/dataset/abilities/Blaze.json"
+        },
+        "bulletproof": {
+            "name": "Bulletproof",
+            "path": "/dataset/abilities/Bulletproof.json"
+        },
+        "cheek pouch": {
+            "name": "Cheek Pouch",
+            "path": "/dataset/abilities/Cheek Pouch.json"
+        },
+        "chilling neigh": {
+            "name": "Chilling Neigh",
+            "path": "/dataset/abilities/Chilling Neigh.json"
+        },
+        "chlorophyll": {
+            "name": "Chlorophyll",
+            "path": "/dataset/abilities/Chlorophyll.json"
+        },
+        "clear body": {
+            "name": "Clear Body",
+            "path": "/dataset/abilities/Clear Body.json"
+        },
+        "cloud nine": {
+            "name": "Cloud Nine",
+            "path": "/dataset/abilities/Cloud Nine.json"
+        },
+        "color change": {
+            "name": "Color Change",
+            "path": "/dataset/abilities/Color Change.json"
+        },
+        "comatose": {
+            "name": "Comatose",
+            "path": "/dataset/abilities/Comatose.json"
+        },
+        "commander": {
+            "name": "Commander",
+            "path": "/dataset/abilities/Commander.json"
+        },
+        "competitive": {
+            "name": "Competitive",
+            "path": "/dataset/abilities/Competitive.json"
+        },
+        "compound eyes": {
+            "name": "Compound Eyes",
+            "path": "/dataset/abilities/Compound Eyes.json"
+        },
+        "contrary": {
+            "name": "Contrary",
+            "path": "/dataset/abilities/Contrary.json"
+        },
+        "corrosion": {
+            "name": "Corrosion",
+            "path": "/dataset/abilities/Corrosion.json"
+        },
+        "costar": {
+            "name": "Costar",
+            "path": "/dataset/abilities/Costar.json"
+        },
+        "cotton down": {
+            "name": "Cotton Down",
+            "path": "/dataset/abilities/Cotton Down.json"
+        },
+        "cud chew": {
+            "name": "Cud Chew",
+            "path": "/dataset/abilities/Cud Chew.json"
+        },
+        "curious medicine": {
+            "name": "Curious Medicine",
+            "path": "/dataset/abilities/Curious Medicine.json"
+        },
+        "cursed body": {
+            "name": "Cursed Body",
+            "path": "/dataset/abilities/Cursed Body.json"
+        },
+        "cute charm": {
+            "name": "Cute Charm",
+            "path": "/dataset/abilities/Cute Charm.json"
+        },
+        "damp": {
+            "name": "Damp",
+            "path": "/dataset/abilities/Damp.json"
+        },
+        "dancer": {
+            "name": "Dancer",
+            "path": "/dataset/abilities/Dancer.json"
+        },
+        "dark aura": {
+            "name": "Dark Aura",
+            "path": "/dataset/abilities/Dark Aura.json"
+        },
+        "dauntless shield": {
+            "name": "Dauntless Shield",
+            "path": "/dataset/abilities/Dauntless Shield.json"
+        },
+        "dazzling": {
+            "name": "Dazzling",
+            "path": "/dataset/abilities/Dazzling.json"
+        },
+        "defeatist": {
+            "name": "Defeatist",
+            "path": "/dataset/abilities/Defeatist.json"
+        },
+        "defiant": {
+            "name": "Defiant",
+            "path": "/dataset/abilities/Defiant.json"
+        },
+        "delta stream": {
+            "name": "Delta Stream",
+            "path": "/dataset/abilities/Delta Stream.json"
+        },
+        "desolate land": {
+            "name": "Desolate Land",
+            "path": "/dataset/abilities/Desolate Land.json"
+        },
+        "disguise": {
+            "name": "Disguise",
+            "path": "/dataset/abilities/Disguise.json"
+        },
+        "download": {
+            "name": "Download",
+            "path": "/dataset/abilities/Download.json"
+        },
+        "dragon maw": {
+            "name": "Dragon Maw",
+            "path": "/dataset/abilities/Dragon Maw.json"
+        },
+        "drizzle": {
+            "name": "Drizzle",
+            "path": "/dataset/abilities/Drizzle.json"
+        },
+        "drought": {
+            "name": "Drought",
+            "path": "/dataset/abilities/Drought.json"
+        },
+        "dry skin": {
+            "name": "Dry Skin",
+            "path": "/dataset/abilities/Dry Skin.json"
+        },
+        "early bird": {
+            "name": "Early Bird",
+            "path": "/dataset/abilities/Early Bird.json"
+        },
+        "earth eater": {
+            "name": "Earth Eater",
+            "path": "/dataset/abilities/Earth Eater.json"
+        },
+        "effect spore": {
+            "name": "Effect Spore",
+            "path": "/dataset/abilities/Effect Spore.json"
+        },
+        "electric surge": {
+            "name": "Electric Surge",
+            "path": "/dataset/abilities/Electric Surge.json"
+        },
+        "electromorphosis": {
+            "name": "Electromorphosis",
+            "path": "/dataset/abilities/Electromorphosis.json"
+        },
+        "embody aspect": {
+            "name": "Embody Aspect",
+            "path": "/dataset/abilities/Embody Aspect.json"
+        },
+        "emergency exit": {
+            "name": "Emergency Exit",
+            "path": "/dataset/abilities/Emergency Exit.json"
+        },
+        "fairy aura": {
+            "name": "Fairy Aura",
+            "path": "/dataset/abilities/Fairy Aura.json"
+        },
+        "filter": {
+            "name": "Filter",
+            "path": "/dataset/abilities/Filter.json"
+        },
+        "flame body": {
+            "name": "Flame Body",
+            "path": "/dataset/abilities/Flame Body.json"
+        },
+        "flare boost": {
+            "name": "Flare Boost",
+            "path": "/dataset/abilities/Flare Boost.json"
+        },
+        "flash fire": {
+            "name": "Flash Fire",
+            "path": "/dataset/abilities/Flash Fire.json"
+        },
+        "flower gift": {
+            "name": "Flower Gift",
+            "path": "/dataset/abilities/Flower Gift.json"
+        },
+        "flower veil": {
+            "name": "Flower Veil",
+            "path": "/dataset/abilities/Flower Veil.json"
+        },
+        "fluffy": {
+            "name": "Fluffy",
+            "path": "/dataset/abilities/Fluffy.json"
+        },
+        "forecast": {
+            "name": "Forecast",
+            "path": "/dataset/abilities/Forecast.json"
+        },
+        "forewarn": {
+            "name": "Forewarn",
+            "path": "/dataset/abilities/Forewarn.json"
+        },
+        "friend guard": {
+            "name": "Friend Guard",
+            "path": "/dataset/abilities/Friend Guard.json"
+        },
+        "frisk": {
+            "name": "Frisk",
+            "path": "/dataset/abilities/Frisk.json"
+        },
+        "full metal body": {
+            "name": "Full Metal Body",
+            "path": "/dataset/abilities/Full Metal Body.json"
+        },
+        "fur coat": {
+            "name": "Fur Coat",
+            "path": "/dataset/abilities/Fur Coat.json"
+        },
+        "gale wings": {
+            "name": "Gale Wings",
+            "path": "/dataset/abilities/Gale Wings.json"
+        },
+        "galvanize": {
+            "name": "Galvanize",
+            "path": "/dataset/abilities/Galvanize.json"
+        },
+        "gluttony": {
+            "name": "Gluttony",
+            "path": "/dataset/abilities/Gluttony.json"
+        },
+        "good as gold": {
+            "name": "Good As Gold",
+            "path": "/dataset/abilities/Good As Gold.json"
+        },
+        "gooey": {
+            "name": "Gooey",
+            "path": "/dataset/abilities/Gooey.json"
+        },
+        "gorilla tactics": {
+            "name": "Gorilla Tactics",
+            "path": "/dataset/abilities/Gorilla Tactics.json"
+        },
+        "grass pelt": {
+            "name": "Grass Pelt",
+            "path": "/dataset/abilities/Grass Pelt.json"
+        },
+        "grassy surge": {
+            "name": "Grassy Surge",
+            "path": "/dataset/abilities/Grassy Surge.json"
+        },
+        "grim neigh": {
+            "name": "Grim Neigh",
+            "path": "/dataset/abilities/Grim Neigh.json"
+        },
+        "guard dog": {
+            "name": "Guard Dog",
+            "path": "/dataset/abilities/Guard Dog.json"
+        },
+        "gulp missile": {
+            "name": "Gulp Missile",
+            "path": "/dataset/abilities/Gulp Missile.json"
+        },
+        "guts": {
+            "name": "Guts",
+            "path": "/dataset/abilities/Guts.json"
+        },
+        "hadron engine": {
+            "name": "Hadron Engine",
+            "path": "/dataset/abilities/Hadron Engine.json"
+        },
+        "harvest": {
+            "name": "Harvest",
+            "path": "/dataset/abilities/Harvest.json"
+        },
+        "healer": {
+            "name": "Healer",
+            "path": "/dataset/abilities/Healer.json"
+        },
+        "heatproof": {
+            "name": "Heatproof",
+            "path": "/dataset/abilities/Heatproof.json"
+        },
+        "heavy metal": {
+            "name": "Heavy Metal",
+            "path": "/dataset/abilities/Heavy Metal.json"
+        },
+        "honey gather": {
+            "name": "Honey Gather",
+            "path": "/dataset/abilities/Honey Gather.json"
+        },
+        "hospitality": {
+            "name": "Hospitality",
+            "path": "/dataset/abilities/Hospitality.json"
+        },
+        "huge power": {
+            "name": "Huge Power",
+            "path": "/dataset/abilities/Huge Power.json"
+        },
+        "hunger switch": {
+            "name": "Hunger Switch",
+            "path": "/dataset/abilities/Hunger Switch.json"
+        },
+        "hustle": {
+            "name": "Hustle",
+            "path": "/dataset/abilities/Hustle.json"
+        },
+        "hydration": {
+            "name": "Hydration",
+            "path": "/dataset/abilities/Hydration.json"
+        },
+        "hyper cutter": {
+            "name": "Hyper Cutter",
+            "path": "/dataset/abilities/Hyper Cutter.json"
+        },
+        "ice body": {
+            "name": "Ice Body",
+            "path": "/dataset/abilities/Ice Body.json"
+        },
+        "ice face": {
+            "name": "Ice Face",
+            "path": "/dataset/abilities/Ice Face.json"
+        },
+        "ice scales": {
+            "name": "Ice Scales",
+            "path": "/dataset/abilities/Ice Scales.json"
+        },
+        "illuminate": {
+            "name": "Illuminate",
+            "path": "/dataset/abilities/Illuminate.json"
+        },
+        "illusion": {
+            "name": "Illusion",
+            "path": "/dataset/abilities/Illusion.json"
+        },
+        "immunity": {
+            "name": "Immunity",
+            "path": "/dataset/abilities/Immunity.json"
+        },
+        "imposter": {
+            "name": "Imposter",
+            "path": "/dataset/abilities/Imposter.json"
+        },
+        "infiltrator": {
+            "name": "Infiltrator",
+            "path": "/dataset/abilities/Infiltrator.json"
+        },
+        "innards out": {
+            "name": "Innards Out",
+            "path": "/dataset/abilities/Innards Out.json"
+        },
+        "inner focus": {
+            "name": "Inner Focus",
+            "path": "/dataset/abilities/Inner Focus.json"
+        },
+        "insomnia": {
+            "name": "Insomnia",
+            "path": "/dataset/abilities/Insomnia.json"
+        },
+        "intimidate": {
+            "name": "Intimidate",
+            "path": "/dataset/abilities/Intimidate.json"
+        },
+        "intrepid sword": {
+            "name": "Intrepid Sword",
+            "path": "/dataset/abilities/Intrepid Sword.json"
+        },
+        "iron barbs": {
+            "name": "Iron Barbs",
+            "path": "/dataset/abilities/Iron Barbs.json"
+        },
+        "iron fist": {
+            "name": "Iron Fist",
+            "path": "/dataset/abilities/Iron Fist.json"
+        },
+        "justified": {
+            "name": "Justified",
+            "path": "/dataset/abilities/Justified.json"
+        },
+        "keen eye": {
+            "name": "Keen Eye",
+            "path": "/dataset/abilities/Keen Eye.json"
+        },
+        "klutz": {
+            "name": "Klutz",
+            "path": "/dataset/abilities/Klutz.json"
+        },
+        "leaf guard": {
+            "name": "Leaf Guard",
+            "path": "/dataset/abilities/Leaf Guard.json"
+        },
+        "levitate": {
+            "name": "Levitate",
+            "path": "/dataset/abilities/Levitate.json"
+        },
+        "libero": {
+            "name": "Libero",
+            "path": "/dataset/abilities/Libero.json"
+        },
+        "light metal": {
+            "name": "Light Metal",
+            "path": "/dataset/abilities/Light Metal.json"
+        },
+        "lightning rod": {
+            "name": "Lightning Rod",
+            "path": "/dataset/abilities/Lightning Rod.json"
+        },
+        "limber": {
+            "name": "Limber",
+            "path": "/dataset/abilities/Limber.json"
+        },
+        "lingering aroma": {
+            "name": "Lingering Aroma",
+            "path": "/dataset/abilities/Lingering Aroma.json"
+        },
+        "liquid ooze": {
+            "name": "Liquid Ooze",
+            "path": "/dataset/abilities/Liquid Ooze.json"
+        },
+        "liquid voice": {
+            "name": "Liquid Voice",
+            "path": "/dataset/abilities/Liquid Voice.json"
+        },
+        "long reach": {
+            "name": "Long Reach",
+            "path": "/dataset/abilities/Long Reach.json"
+        },
+        "magic bounce": {
+            "name": "Magic Bounce",
+            "path": "/dataset/abilities/Magic Bounce.json"
+        },
+        "magic guard": {
+            "name": "Magic Guard",
+            "path": "/dataset/abilities/Magic Guard.json"
+        },
+        "magician": {
+            "name": "Magician",
+            "path": "/dataset/abilities/Magician.json"
+        },
+        "magma armor": {
+            "name": "Magma Armor",
+            "path": "/dataset/abilities/Magma Armor.json"
+        },
+        "magnet pull": {
+            "name": "Magnet Pull",
+            "path": "/dataset/abilities/Magnet Pull.json"
+        },
+        "marvel scale": {
+            "name": "Marvel Scale",
+            "path": "/dataset/abilities/Marvel Scale.json"
+        },
+        "mega launcher": {
+            "name": "Mega Launcher",
+            "path": "/dataset/abilities/Mega Launcher.json"
+        },
+        "merciless": {
+            "name": "Merciless",
+            "path": "/dataset/abilities/Merciless.json"
+        },
+        "mimicry": {
+            "name": "Mimicry",
+            "path": "/dataset/abilities/Mimicry.json"
+        },
+        "mind's eye": {
+            "name": "Mind's Eye",
+            "path": "/dataset/abilities/Mind's Eye.json"
+        },
+        "minus": {
+            "name": "Minus",
+            "path": "/dataset/abilities/Minus.json"
+        },
+        "mirror armor": {
+            "name": "Mirror Armor",
+            "path": "/dataset/abilities/Mirror Armor.json"
+        },
+        "misty surge": {
+            "name": "Misty Surge",
+            "path": "/dataset/abilities/Misty Surge.json"
+        },
+        "mold breaker": {
+            "name": "Mold Breaker",
+            "path": "/dataset/abilities/Mold Breaker.json"
+        },
+        "moody": {
+            "name": "Moody",
+            "path": "/dataset/abilities/Moody.json"
+        },
+        "motor drive": {
+            "name": "Motor Drive",
+            "path": "/dataset/abilities/Motor Drive.json"
+        },
+        "moxie": {
+            "name": "Moxie",
+            "path": "/dataset/abilities/Moxie.json"
+        },
+        "multiscale": {
+            "name": "Multiscale",
+            "path": "/dataset/abilities/Multiscale.json"
+        },
+        "multitype": {
+            "name": "Multitype",
+            "path": "/dataset/abilities/Multitype.json"
+        },
+        "mummy": {
+            "name": "Mummy",
+            "path": "/dataset/abilities/Mummy.json"
+        },
+        "mycelium might": {
+            "name": "Mycelium Might",
+            "path": "/dataset/abilities/Mycelium Might.json"
+        },
+        "natural cure": {
+            "name": "Natural Cure",
+            "path": "/dataset/abilities/Natural Cure.json"
+        },
+        "neuroforce": {
+            "name": "Neuroforce",
+            "path": "/dataset/abilities/Neuroforce.json"
+        },
+        "neutralizing gas": {
+            "name": "Neutralizing Gas",
+            "path": "/dataset/abilities/Neutralizing Gas.json"
+        },
+        "no guard": {
+            "name": "No Guard",
+            "path": "/dataset/abilities/No Guard.json"
+        },
+        "normalize": {
+            "name": "Normalize",
+            "path": "/dataset/abilities/Normalize.json"
+        },
+        "oblivious": {
+            "name": "Oblivious",
+            "path": "/dataset/abilities/Oblivious.json"
+        },
+        "opportunist": {
+            "name": "Opportunist",
+            "path": "/dataset/abilities/Opportunist.json"
+        },
+        "orichalcum pulse": {
+            "name": "Orichalcum Pulse",
+            "path": "/dataset/abilities/Orichalcum Pulse.json"
+        },
+        "overcoat": {
+            "name": "Overcoat",
+            "path": "/dataset/abilities/Overcoat.json"
+        },
+        "overgrow": {
+            "name": "Overgrow",
+            "path": "/dataset/abilities/Overgrow.json"
+        },
+        "own tempo": {
+            "name": "Own Tempo",
+            "path": "/dataset/abilities/Own Tempo.json"
+        },
+        "parental bond": {
+            "name": "Parental Bond",
+            "path": "/dataset/abilities/Parental Bond.json"
+        },
+        "pastel veil": {
+            "name": "Pastel Veil",
+            "path": "/dataset/abilities/Pastel Veil.json"
+        },
+        "perish body": {
+            "name": "Perish Body",
+            "path": "/dataset/abilities/Perish Body.json"
+        },
+        "pickpocket": {
+            "name": "Pickpocket",
+            "path": "/dataset/abilities/Pickpocket.json"
+        },
+        "pickup": {
+            "name": "Pickup",
+            "path": "/dataset/abilities/Pickup.json"
+        },
+        "pixilate": {
+            "name": "Pixilate",
+            "path": "/dataset/abilities/Pixilate.json"
+        },
+        "plus": {
+            "name": "Plus",
+            "path": "/dataset/abilities/Plus.json"
+        },
+        "poison heal": {
+            "name": "Poison Heal",
+            "path": "/dataset/abilities/Poison Heal.json"
+        },
+        "poison point": {
+            "name": "Poison Point",
+            "path": "/dataset/abilities/Poison Point.json"
+        },
+        "poison puppeteer": {
+            "name": "Poison Puppeteer",
+            "path": "/dataset/abilities/Poison Puppeteer.json"
+        },
+        "poison touch": {
+            "name": "Poison Touch",
+            "path": "/dataset/abilities/Poison Touch.json"
+        },
+        "power construct": {
+            "name": "Power Construct",
+            "path": "/dataset/abilities/Power Construct.json"
+        },
+        "power of alchemy": {
+            "name": "Power of Alchemy",
+            "path": "/dataset/abilities/Power of Alchemy.json"
+        },
+        "power spot": {
+            "name": "Power Spot",
+            "path": "/dataset/abilities/Power Spot.json"
+        },
+        "prankster": {
+            "name": "Prankster",
+            "path": "/dataset/abilities/Prankster.json"
+        },
+        "pressure": {
+            "name": "Pressure",
+            "path": "/dataset/abilities/Pressure.json"
+        },
+        "primordial sea": {
+            "name": "Primordial Sea",
+            "path": "/dataset/abilities/Primordial Sea.json"
+        },
+        "prism armor": {
+            "name": "Prism Armor",
+            "path": "/dataset/abilities/Prism Armor.json"
+        },
+        "propeller tail": {
+            "name": "Propeller Tail",
+            "path": "/dataset/abilities/Propeller Tail.json"
+        },
+        "protean": {
+            "name": "Protean",
+            "path": "/dataset/abilities/Protean.json"
+        },
+        "protosynthesis": {
+            "name": "Protosynthesis",
+            "path": "/dataset/abilities/Protosynthesis.json"
+        },
+        "psychic surge": {
+            "name": "Psychic Surge",
+            "path": "/dataset/abilities/Psychic Surge.json"
+        },
+        "punk rock": {
+            "name": "Punk Rock",
+            "path": "/dataset/abilities/Punk Rock.json"
+        },
+        "pure power": {
+            "name": "Pure Power",
+            "path": "/dataset/abilities/Pure Power.json"
+        },
+        "purifying salt": {
+            "name": "Purifying Salt",
+            "path": "/dataset/abilities/Purifying Salt.json"
+        },
+        "quark drive": {
+            "name": "Quark Drive",
+            "path": "/dataset/abilities/Quark Drive.json"
+        },
+        "queenly majesty": {
+            "name": "Queenly Majesty",
+            "path": "/dataset/abilities/Queenly Majesty.json"
+        },
+        "quick draw": {
+            "name": "Quick Draw",
+            "path": "/dataset/abilities/Quick Draw.json"
+        },
+        "quick feet": {
+            "name": "Quick Feet",
+            "path": "/dataset/abilities/Quick Feet.json"
+        },
+        "rain dish": {
+            "name": "Rain Dish",
+            "path": "/dataset/abilities/Rain Dish.json"
+        },
+        "rattled": {
+            "name": "Rattled",
+            "path": "/dataset/abilities/Rattled.json"
+        },
+        "receiver": {
+            "name": "Receiver",
+            "path": "/dataset/abilities/Receiver.json"
+        },
+        "reckless": {
+            "name": "Reckless",
+            "path": "/dataset/abilities/Reckless.json"
+        },
+        "refrigerate": {
+            "name": "Refrigerate",
+            "path": "/dataset/abilities/Refrigerate.json"
+        },
+        "regenerator": {
+            "name": "Regenerator",
+            "path": "/dataset/abilities/Regenerator.json"
+        },
+        "ripen": {
+            "name": "Ripen",
+            "path": "/dataset/abilities/Ripen.json"
+        },
+        "rivalry": {
+            "name": "Rivalry",
+            "path": "/dataset/abilities/Rivalry.json"
+        },
+        "rks system": {
+            "name": "RKS System",
+            "path": "/dataset/abilities/RKS System.json"
+        },
+        "rock head": {
+            "name": "Rock Head",
+            "path": "/dataset/abilities/Rock Head.json"
+        },
+        "rocky payload": {
+            "name": "Rocky Payload",
+            "path": "/dataset/abilities/Rocky Payload.json"
+        },
+        "rough skin": {
+            "name": "Rough Skin",
+            "path": "/dataset/abilities/Rough Skin.json"
+        },
+        "run away": {
+            "name": "Run Away",
+            "path": "/dataset/abilities/Run Away.json"
+        },
+        "sand force": {
+            "name": "Sand Force",
+            "path": "/dataset/abilities/Sand Force.json"
+        },
+        "sand rush": {
+            "name": "Sand Rush",
+            "path": "/dataset/abilities/Sand Rush.json"
+        },
+        "sand spit": {
+            "name": "Sand Spit",
+            "path": "/dataset/abilities/Sand Spit.json"
+        },
+        "sand stream": {
+            "name": "Sand Stream",
+            "path": "/dataset/abilities/Sand Stream.json"
+        },
+        "sand veil": {
+            "name": "Sand Veil",
+            "path": "/dataset/abilities/Sand Veil.json"
+        },
+        "sap sipper": {
+            "name": "Sap Sipper",
+            "path": "/dataset/abilities/Sap Sipper.json"
+        },
+        "schooling": {
+            "name": "Schooling",
+            "path": "/dataset/abilities/Schooling.json"
+        },
+        "scrappy": {
+            "name": "Scrappy",
+            "path": "/dataset/abilities/Scrappy.json"
+        },
+        "screen cleaner": {
+            "name": "Screen Cleaner",
+            "path": "/dataset/abilities/Screen Cleaner.json"
+        },
+        "seed sower": {
+            "name": "Seed Sower",
+            "path": "/dataset/abilities/Seed Sower.json"
+        },
+        "serene grace": {
+            "name": "Serene Grace",
+            "path": "/dataset/abilities/Serene Grace.json"
+        },
+        "shadow shield": {
+            "name": "Shadow Shield",
+            "path": "/dataset/abilities/Shadow Shield.json"
+        },
+        "shadow tag": {
+            "name": "Shadow Tag",
+            "path": "/dataset/abilities/Shadow Tag.json"
+        },
+        "sharpness": {
+            "name": "Sharpness",
+            "path": "/dataset/abilities/Sharpness.json"
+        },
+        "shed skin": {
+            "name": "Shed Skin",
+            "path": "/dataset/abilities/Shed Skin.json"
+        },
+        "sheer force": {
+            "name": "Sheer Force",
+            "path": "/dataset/abilities/Sheer Force.json"
+        },
+        "shell armor": {
+            "name": "Shell Armor",
+            "path": "/dataset/abilities/Shell Armor.json"
+        },
+        "shield dust": {
+            "name": "Shield Dust",
+            "path": "/dataset/abilities/Shield Dust.json"
+        },
+        "shields down": {
+            "name": "Shields Down",
+            "path": "/dataset/abilities/Shields Down.json"
+        },
+        "simple": {
+            "name": "Simple",
+            "path": "/dataset/abilities/Simple.json"
+        },
+        "skill link": {
+            "name": "Skill Link",
+            "path": "/dataset/abilities/Skill Link.json"
+        },
+        "slow start": {
+            "name": "Slow Start",
+            "path": "/dataset/abilities/Slow Start.json"
+        },
+        "slush rush": {
+            "name": "Slush Rush",
+            "path": "/dataset/abilities/Slush Rush.json"
+        },
+        "sniper": {
+            "name": "Sniper",
+            "path": "/dataset/abilities/Sniper.json"
+        },
+        "snow cloak": {
+            "name": "Snow Cloak",
+            "path": "/dataset/abilities/Snow Cloak.json"
+        },
+        "snow warning": {
+            "name": "Snow Warning",
+            "path": "/dataset/abilities/Snow Warning.json"
+        },
+        "solar power": {
+            "name": "Solar Power",
+            "path": "/dataset/abilities/Solar Power.json"
+        },
+        "solid rock": {
+            "name": "Solid Rock",
+            "path": "/dataset/abilities/Solid Rock.json"
+        },
+        "soul heart": {
+            "name": "Soul Heart",
+            "path": "/dataset/abilities/Soul Heart.json"
+        },
+        "soundproof": {
+            "name": "Soundproof",
+            "path": "/dataset/abilities/Soundproof.json"
+        },
+        "speed boost": {
+            "name": "Speed Boost",
+            "path": "/dataset/abilities/Speed Boost.json"
+        },
+        "stakeout": {
+            "name": "Stakeout",
+            "path": "/dataset/abilities/Stakeout.json"
+        },
+        "stall": {
+            "name": "Stall",
+            "path": "/dataset/abilities/Stall.json"
+        },
+        "stalwart": {
+            "name": "Stalwart",
+            "path": "/dataset/abilities/Stalwart.json"
+        },
+        "stamina": {
+            "name": "Stamina",
+            "path": "/dataset/abilities/Stamina.json"
+        },
+        "stance change": {
+            "name": "Stance Change",
+            "path": "/dataset/abilities/Stance Change.json"
+        },
+        "static": {
+            "name": "Static",
+            "path": "/dataset/abilities/Static.json"
+        },
+        "steadfast": {
+            "name": "Steadfast",
+            "path": "/dataset/abilities/Steadfast.json"
+        },
+        "steam engine": {
+            "name": "Steam Engine",
+            "path": "/dataset/abilities/Steam Engine.json"
+        },
+        "steelworker": {
+            "name": "Steelworker",
+            "path": "/dataset/abilities/Steelworker.json"
+        },
+        "steely spirit": {
+            "name": "Steely Spirit",
+            "path": "/dataset/abilities/Steely Spirit.json"
+        },
+        "stench": {
+            "name": "Stench",
+            "path": "/dataset/abilities/Stench.json"
+        },
+        "sticky hold": {
+            "name": "Sticky Hold",
+            "path": "/dataset/abilities/Sticky Hold.json"
+        },
+        "storm drain": {
+            "name": "Storm Drain",
+            "path": "/dataset/abilities/Storm Drain.json"
+        },
+        "strong jaw": {
+            "name": "Strong Jaw",
+            "path": "/dataset/abilities/Strong Jaw.json"
+        },
+        "sturdy": {
+            "name": "Sturdy",
+            "path": "/dataset/abilities/Sturdy.json"
+        },
+        "suction cups": {
+            "name": "Suction Cups",
+            "path": "/dataset/abilities/Suction Cups.json"
+        },
+        "super luck": {
+            "name": "Super Luck",
+            "path": "/dataset/abilities/Super Luck.json"
+        },
+        "supersweet syrup": {
+            "name": "Supersweet Syrup",
+            "path": "/dataset/abilities/Supersweet Syrup.json"
+        },
+        "supreme overlord": {
+            "name": "Supreme Overlord",
+            "path": "/dataset/abilities/Supreme Overlord.json"
+        },
+        "surge surfer": {
+            "name": "Surge Surfer",
+            "path": "/dataset/abilities/Surge Surfer.json"
+        },
+        "swarm": {
+            "name": "Swarm",
+            "path": "/dataset/abilities/Swarm.json"
+        },
+        "sweet veil": {
+            "name": "Sweet Veil",
+            "path": "/dataset/abilities/Sweet Veil.json"
+        },
+        "swift swim": {
+            "name": "Swift Swim",
+            "path": "/dataset/abilities/Swift Swim.json"
+        },
+        "sword of ruin": {
+            "name": "Sword of Ruin",
+            "path": "/dataset/abilities/Sword of Ruin.json"
+        },
+        "symbiosis": {
+            "name": "Symbiosis",
+            "path": "/dataset/abilities/Symbiosis.json"
+        },
+        "synchronize": {
+            "name": "Synchronize",
+            "path": "/dataset/abilities/Synchronize.json"
+        },
+        "tablets of ruin": {
+            "name": "Tablets of Ruin",
+            "path": "/dataset/abilities/Tablets of Ruin.json"
+        },
+        "tangled feet": {
+            "name": "Tangled Feet",
+            "path": "/dataset/abilities/Tangled Feet.json"
+        },
+        "tangling hair": {
+            "name": "Tangling Hair",
+            "path": "/dataset/abilities/Tangling Hair.json"
+        },
+        "technician": {
+            "name": "Technician",
+            "path": "/dataset/abilities/Technician.json"
+        },
+        "telepathy": {
+            "name": "Telepathy",
+            "path": "/dataset/abilities/Telepathy.json"
+        },
+        "tera shell": {
+            "name": "Tera Shell",
+            "path": "/dataset/abilities/Tera Shell.json"
+        },
+        "tera shift": {
+            "name": "Tera Shift",
+            "path": "/dataset/abilities/Tera Shift.json"
+        },
+        "teraform zero": {
+            "name": "Teraform Zero",
+            "path": "/dataset/abilities/Teraform Zero.json"
+        },
+        "teravolt": {
+            "name": "Teravolt",
+            "path": "/dataset/abilities/Teravolt.json"
+        },
+        "thermal exchange": {
+            "name": "Thermal Exchange",
+            "path": "/dataset/abilities/Thermal Exchange.json"
+        },
+        "thick fat": {
+            "name": "Thick Fat",
+            "path": "/dataset/abilities/Thick Fat.json"
+        },
+        "tinted lens": {
+            "name": "Tinted Lens",
+            "path": "/dataset/abilities/Tinted Lens.json"
+        },
+        "torrent": {
+            "name": "Torrent",
+            "path": "/dataset/abilities/Torrent.json"
+        },
+        "tough claws": {
+            "name": "Tough Claws",
+            "path": "/dataset/abilities/Tough Claws.json"
+        },
+        "toxic boost": {
+            "name": "Toxic Boost",
+            "path": "/dataset/abilities/Toxic Boost.json"
+        },
+        "toxic chain": {
+            "name": "Toxic Chain",
+            "path": "/dataset/abilities/Toxic Chain.json"
+        },
+        "toxic debris": {
+            "name": "Toxic Debris",
+            "path": "/dataset/abilities/Toxic Debris.json"
+        },
+        "trace": {
+            "name": "Trace",
+            "path": "/dataset/abilities/Trace.json"
+        },
+        "transistor": {
+            "name": "Transistor",
+            "path": "/dataset/abilities/Transistor.json"
+        },
+        "triage": {
+            "name": "Triage",
+            "path": "/dataset/abilities/Triage.json"
+        },
+        "truant": {
+            "name": "Truant",
+            "path": "/dataset/abilities/Truant.json"
+        },
+        "turboblaze": {
+            "name": "Turboblaze",
+            "path": "/dataset/abilities/Turboblaze.json"
+        },
+        "unaware": {
+            "name": "Unaware",
+            "path": "/dataset/abilities/Unaware.json"
+        },
+        "unburden": {
+            "name": "Unburden",
+            "path": "/dataset/abilities/Unburden.json"
+        },
+        "unnerve": {
+            "name": "Unnerve",
+            "path": "/dataset/abilities/Unnerve.json"
+        },
+        "unseen fist": {
+            "name": "Unseen Fist",
+            "path": "/dataset/abilities/Unseen Fist.json"
+        },
+        "vessel of ruin": {
+            "name": "Vessel of Ruin",
+            "path": "/dataset/abilities/Vessel of Ruin.json"
+        },
+        "victory star": {
+            "name": "Victory Star",
+            "path": "/dataset/abilities/Victory Star.json"
+        },
+        "vital spirit": {
+            "name": "Vital Spirit",
+            "path": "/dataset/abilities/Vital Spirit.json"
+        },
+        "volt absorb": {
+            "name": "Volt Absorb",
+            "path": "/dataset/abilities/Volt Absorb.json"
+        },
+        "wandering spirit": {
+            "name": "Wandering Spirit",
+            "path": "/dataset/abilities/Wandering Spirit.json"
+        },
+        "water absorb": {
+            "name": "Water Absorb",
+            "path": "/dataset/abilities/Water Absorb.json"
+        },
+        "water bubble": {
+            "name": "Water Bubble",
+            "path": "/dataset/abilities/Water Bubble.json"
+        },
+        "water compaction": {
+            "name": "Water Compaction",
+            "path": "/dataset/abilities/Water Compaction.json"
+        },
+        "water veil": {
+            "name": "Water Veil",
+            "path": "/dataset/abilities/Water Veil.json"
+        },
+        "weak armor": {
+            "name": "Weak Armor",
+            "path": "/dataset/abilities/Weak Armor.json"
+        },
+        "well-baked body": {
+            "name": "Well-Baked Body",
+            "path": "/dataset/abilities/Well-Baked Body.json"
+        },
+        "white smoke": {
+            "name": "White Smoke",
+            "path": "/dataset/abilities/White Smoke.json"
+        },
+        "wimp out": {
+            "name": "Wimp Out",
+            "path": "/dataset/abilities/Wimp Out.json"
+        },
+        "wind power": {
+            "name": "Wind Power",
+            "path": "/dataset/abilities/Wind Power.json"
+        },
+        "wind rider": {
+            "name": "Wind Rider",
+            "path": "/dataset/abilities/Wind Rider.json"
+        },
+        "wonder guard": {
+            "name": "Wonder Guard",
+            "path": "/dataset/abilities/Wonder Guard.json"
+        },
+        "wonder skin": {
+            "name": "Wonder Skin",
+            "path": "/dataset/abilities/Wonder Skin.json"
+        },
+        "zen mode": {
+            "name": "Zen Mode",
+            "path": "/dataset/abilities/Zen Mode.json"
+        },
+        "zero to hero": {
+            "name": "Zero to Hero",
+            "path": "/dataset/abilities/Zero to Hero.json"
+        }
+    },
+    "natures": {
+        "adamant": {
+            "name": "Adamant",
+            "path": "/dataset/natures/Adamant.json"
+        },
+        "bashful": {
+            "name": "Bashful",
+            "path": "/dataset/natures/Bashful.json"
+        },
+        "bold": {
+            "name": "Bold",
+            "path": "/dataset/natures/Bold.json"
+        },
+        "brave": {
+            "name": "Brave",
+            "path": "/dataset/natures/Brave.json"
+        },
+        "calm": {
+            "name": "Calm",
+            "path": "/dataset/natures/Calm.json"
+        },
+        "careful": {
+            "name": "Careful",
+            "path": "/dataset/natures/Careful.json"
+        },
+        "docile": {
+            "name": "Docile",
+            "path": "/dataset/natures/Docile.json"
+        },
+        "gentle": {
+            "name": "Gentle",
+            "path": "/dataset/natures/Gentle.json"
+        },
+        "hardy": {
+            "name": "Hardy",
+            "path": "/dataset/natures/Hardy.json"
+        },
+        "hasty": {
+            "name": "Hasty",
+            "path": "/dataset/natures/Hasty.json"
+        },
+        "impish": {
+            "name": "Impish",
+            "path": "/dataset/natures/Impish.json"
+        },
+        "jolly": {
+            "name": "Jolly",
+            "path": "/dataset/natures/Jolly.json"
+        },
+        "lax": {
+            "name": "Lax",
+            "path": "/dataset/natures/Lax.json"
+        },
+        "lonely": {
+            "name": "Lonely",
+            "path": "/dataset/natures/Lonely.json"
+        },
+        "mild": {
+            "name": "Mild",
+            "path": "/dataset/natures/Mild.json"
+        },
+        "modest": {
+            "name": "Modest",
+            "path": "/dataset/natures/Modest.json"
+        },
+        "naive": {
+            "name": "Naive",
+            "path": "/dataset/natures/Naive.json"
+        },
+        "naughty": {
+            "name": "Naughty",
+            "path": "/dataset/natures/Naughty.json"
+        },
+        "quiet": {
+            "name": "Quiet",
+            "path": "/dataset/natures/Quiet.json"
+        },
+        "quirky": {
+            "name": "Quirky",
+            "path": "/dataset/natures/Quirky.json"
+        },
+        "rash": {
+            "name": "Rash",
+            "path": "/dataset/natures/Rash.json"
+        },
+        "relaxed": {
+            "name": "Relaxed",
+            "path": "/dataset/natures/Relaxed.json"
+        },
+        "sassy": {
+            "name": "Sassy",
+            "path": "/dataset/natures/Sassy.json"
+        },
+        "serious": {
+            "name": "Serious",
+            "path": "/dataset/natures/Serious.json"
+        },
+        "timid": {
+            "name": "Timid",
+            "path": "/dataset/natures/Timid.json"
+        }
+    },
     "moves": {
         "support": [
             {
