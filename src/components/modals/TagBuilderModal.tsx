@@ -1,5 +1,8 @@
+// src/components/modals/TagBuilderModal.tsx
 import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
+import { CombatStat, SocialStat, Skill } from '../../types/enums';
+import { POKEMON_TYPES } from '../../data/constants';
 import './TagBuilderModal.css';
 
 interface TagBuilderModalProps {
@@ -22,32 +25,6 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
     const customItems = useCharacterStore((state) => state.roomCustomItems);
 
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
-
-    const dynamicTypeOptions = [
-        'Normal',
-        'Fire',
-        'Water',
-        'Electric',
-        'Grass',
-        'Ice',
-        'Fighting',
-        'Poison',
-        'Ground',
-        'Flying',
-        'Psychic',
-        'Bug',
-        'Rock',
-        'Ghost',
-        'Dragon',
-        'Dark',
-        'Steel',
-        'Fairy',
-        ...roomCustomTypes.map((t) => t.name),
-        'Physical',
-        'Special',
-        'Super Effective'
-    ];
-
     const extraCategories = useCharacterStore((state) => state.extraCategories);
 
     const [category, setCategory] = useState('stat');
@@ -55,30 +32,28 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
     const [typeOption, setTypeOption] = useState('');
     const [value, setValue] = useState(1);
 
+    const formatEnum = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
+
+    const dynamicTypeOptions = [
+        ...POKEMON_TYPES.filter((t) => t !== ''),
+        ...roomCustomTypes.map((t) => t.name),
+        'Physical',
+        'Special',
+        'Super Effective'
+    ];
+
     const getTargetOptions = () => {
-        if (category === 'stat')
-            return ['Str', 'Dex', 'Vit', 'Spe', 'Ins', 'Tou', 'Coo', 'Bea', 'Cut', 'Cle', 'Def', 'Spd'];
+        if (category === 'stat') {
+            return [
+                ...Object.values(CombatStat).map(formatEnum),
+                ...Object.values(SocialStat).map(formatEnum),
+                'Def',
+                'Spd'
+            ];
+        }
         if (category === 'skill') {
             const customSkillNames = extraCategories.flatMap((c) => c.skills.map((s) => s.name || 'Unnamed'));
-            return [
-                'Brawl',
-                'Channel',
-                'Clash',
-                'Evasion',
-                'Alert',
-                'Athletic',
-                'Nature',
-                'Stealth',
-                'Charm',
-                'Etiquette',
-                'Intimidate',
-                'Perform',
-                'Crafts',
-                'Lore',
-                'Medicine',
-                'Magic',
-                ...customSkillNames
-            ];
+            return [...Object.values(Skill).map(formatEnum), ...customSkillNames];
         }
         if (category === 'combat') return ['Dmg', 'Acc', 'Init', 'Chance', 'Combo Dmg'];
         if (category === 'matchup') return ['Immune', 'Resist', 'Weak', 'Remove Immunities', 'Remove Immunity'];

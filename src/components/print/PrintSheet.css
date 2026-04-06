@@ -172,12 +172,20 @@
         margin-bottom: 6px;
     }
 
-    /* --- Abilities --- */
+    /* --- Table Layouts --- */
     .print-sheet__checkbox {
         width: 14px;
         height: 14px;
         border: 2px solid black;
         flex-shrink: 0;
+    }
+
+    .print-sheet__checkbox-container {
+        text-align: center;
+    }
+
+    .print-sheet__checkbox-box {
+        margin: 0 auto;
     }
 
     .print-sheet__ability-table {
@@ -235,6 +243,18 @@
         background-color: #f0f0f0;
         font-weight: bold;
     }
+
+    /* Table Column Widths & Utility Classes */
+    .print-sheet__col-check { width: 5%; text-align: center; }
+    .print-sheet__col-ability { width: 25%; }
+    .print-sheet__col-name { width: 20%; }
+    .print-sheet__col-type { width: 10%; }
+    .print-sheet__col-cat { width: 8%; }
+    .print-sheet__col-power { width: 8%; }
+    .print-sheet__col-acc { width: 15%; }
+    .print-sheet__col-dmg { width: 10%; }
+    
+    .print-sheet__empty-cell { height: 25px; }
 
     /* --- Items & Notes --- */
     .print-sheet__items-grid {
