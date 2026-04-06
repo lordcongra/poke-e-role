@@ -93,8 +93,15 @@ export function useOwlbearSync() {
                                 try {
                                     loadFromOwlbear(meta);
                                 } catch (e) {
-                                    console.error('CRITICAL: Corrupted token metadata detected. Resetting sheet to protect engine.', e);
-                                    if (OBR.isAvailable) OBR.notification.show('⚠️ Token data corrupted. Sheet reset to prevent crash.', 'ERROR');
+                                    console.error(
+                                        'CRITICAL: Corrupted token metadata detected. Resetting sheet to protect engine.',
+                                        e
+                                    );
+                                    if (OBR.isAvailable)
+                                        OBR.notification.show(
+                                            '⚠️ Token data corrupted. Sheet reset to prevent crash.',
+                                            'ERROR'
+                                        );
                                     loadFromOwlbear({});
                                 }
 
@@ -109,7 +116,10 @@ export function useOwlbearSync() {
                                                         if (data)
                                                             useCharacterStore
                                                                 .getState()
-                                                                .applyMoveData(move.id, data as Record<string, unknown>);
+                                                                .applyMoveData(
+                                                                    move.id,
+                                                                    data as Record<string, unknown>
+                                                                );
                                                     })
                                                     .catch(() => {});
                                             }
@@ -125,7 +135,9 @@ export function useOwlbearSync() {
                                                         .getState()
                                                         .refreshSpeciesData(data as Record<string, unknown>);
                                             })
-                                            .catch((e) => console.warn('Failed to fetch species data on token load:', e));
+                                            .catch((e) =>
+                                                console.warn('Failed to fetch species data on token load:', e)
+                                            );
                                     } else {
                                         applyLearnset({ Moves: [] });
                                     }
@@ -272,7 +284,9 @@ export function useOwlbearSync() {
                             if (data.ruleset !== undefined)
                                 useCharacterStore.getState().setIdentity('ruleset', String(data.ruleset));
                             if (data.painEnabled !== undefined)
-                                useCharacterStore.getState().setIdentity('pain', data.painEnabled ? 'Enabled' : 'Disabled');
+                                useCharacterStore
+                                    .getState()
+                                    .setIdentity('pain', data.painEnabled ? 'Enabled' : 'Disabled');
                             if (data.homebrewAccess !== undefined)
                                 useCharacterStore.getState().setIdentity('homebrewAccess', String(data.homebrewAccess));
                             if (data.gmOnlyLootGen !== undefined)
@@ -306,8 +320,10 @@ export function useOwlbearSync() {
                                 await OBR.scene.items.updateItems([targetTokenId], (items) => {
                                     for (const item of items) {
                                         const existing =
-                                            (item.metadata['com.pretty-initiative/metadata'] as Record<string, unknown>) ||
-                                            {};
+                                            (item.metadata['com.pretty-initiative/metadata'] as Record<
+                                                string,
+                                                unknown
+                                            >) || {};
                                         item.metadata['com.pretty-initiative/metadata'] = {
                                             ...existing,
                                             count: finalInit.toString(),

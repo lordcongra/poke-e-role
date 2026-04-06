@@ -21,6 +21,16 @@ export type {
     NatureApiResponse
 };
 
+// VITE MAGIC: Automatically detects your domain sub-folder!
+const BASE_URL = import.meta.env.BASE_URL || '/';
+
+const formatLocalPath = (pathStr: string) => {
+    if (pathStr.startsWith('/')) {
+        return BASE_URL + pathStr.slice(1);
+    }
+    return pathStr;
+};
+
 export const SPECIES_URLS: Record<string, string> = {};
 export const ABILITIES_URLS: Record<string, string> = {};
 export const MOVES_URLS: Record<string, string> = {};
@@ -58,8 +68,8 @@ export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
 
     datasetPromise = (async () => {
         try {
-            // Updated to relative path for safe deployment!
-            const response = await fetch('./dataset/index.json');
+            // Safely grab the index using the Vite Base URL!
+            const response = await fetch(`${BASE_URL}dataset/index.json`);
             if (!response.ok) throw new Error('Could not fetch local dataset map.');
 
             const data = (await response.json()) as LocalDatasetIndex;
@@ -69,7 +79,7 @@ export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
                 const populateMoves = (arr: LocalIndexItem[]) => {
                     arr.forEach((moveItem) => {
                         const cleanKey = moveItem.name.toLowerCase();
-                        MOVES_URLS[cleanKey] = moveItem.path;
+                        MOVES_URLS[cleanKey] = formatLocalPath(moveItem.path);
                         if (!ALL_MOVES.includes(moveItem.name)) ALL_MOVES.push(moveItem.name);
                     });
                 };
@@ -93,7 +103,7 @@ export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
 
                         data.items[pocket][category].forEach((item) => {
                             const cleanKey = item.name.toLowerCase();
-                            ITEMS_URLS[cleanKey] = item.path;
+                            ITEMS_URLS[cleanKey] = formatLocalPath(item.path);
                             if (!CATEGORIZED_ITEMS[category].includes(item.name)) {
                                 CATEGORIZED_ITEMS[category].push(item.name);
                             }
@@ -105,14 +115,14 @@ export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
             // Populate Pokemon
             if (Object.keys(SPECIES_URLS).length === 0 && data.pokemon) {
                 Object.values(data.pokemon).forEach((p) => {
-                    SPECIES_URLS[p.name.toLowerCase()] = p.path;
+                    SPECIES_URLS[p.name.toLowerCase()] = formatLocalPath(p.path);
                 });
             }
 
             // Populate Abilities
             if (ALL_ABILITIES.length === 0 && data.abilities) {
                 Object.values(data.abilities).forEach((a) => {
-                    ABILITIES_URLS[a.name.toLowerCase()] = a.path;
+                    ABILITIES_URLS[a.name.toLowerCase()] = formatLocalPath(a.path);
                     if (!ALL_ABILITIES.includes(a.name)) ALL_ABILITIES.push(a.name);
                 });
                 ALL_ABILITIES.sort();
@@ -121,7 +131,7 @@ export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
             // Populate Natures
             if (Object.keys(NATURES_URLS).length === 0 && data.natures) {
                 Object.values(data.natures).forEach((n) => {
-                    NATURES_URLS[n.name.toLowerCase()] = n.path;
+                    NATURES_URLS[n.name.toLowerCase()] = formatLocalPath(n.path);
                 });
             }
 
@@ -223,7 +233,7 @@ export async function fetchMoveData(moveName: string): Promise<MoveApiResponse |
     // 2. Check Local Dataset
     await loadLocalDataset();
     let targetPath = MOVES_URLS[cleanName];
-    
+
     if (targetPath) {
         return await fetchWithCache<MoveApiResponse>(targetPath, `local_move_${cleanName}`, baseName);
     }

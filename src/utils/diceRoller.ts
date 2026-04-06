@@ -14,10 +14,10 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
 
         const state = useCharacterStore.getState();
         const uniqueId = crypto.randomUUID();
-        
+
         // Fix: Always append a unique ID at the end to prevent Dice+ from silently ignoring duplicate status rolls!
-        const rollId = payload 
-            ? `${rollType}|${state.tokenId}|${payload}|${uniqueId}` 
+        const rollId = payload
+            ? `${rollType}|${state.tokenId}|${payload}|${uniqueId}`
             : `${rollType}|${state.tokenId}|${uniqueId}`;
 
         const playerId = await OBR.player.getId();

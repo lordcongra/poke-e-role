@@ -85,7 +85,7 @@ export function IdentityControls({
 
             const exportData = items[0].metadata[STATS_META_ID] || {};
             const dataString = JSON.stringify(exportData, null, 2);
-            
+
             const blob = new Blob([dataString], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const linkElement = document.createElement('a');
@@ -126,7 +126,7 @@ export function IdentityControls({
                 saveToOwlbear(importData);
             } else {
                 useCharacterStore.setState(importData);
-                
+
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const d = importData as any;
                 const metaToSave: Record<string, unknown> = {};
@@ -198,31 +198,34 @@ export function IdentityControls({
                     metaToSave['will-max-display'] = d.will.willMax;
                     metaToSave['will-base'] = d.will.willBase;
                 }
-                
+
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                if (d.stats) Object.entries(d.stats).forEach(([stat, vals]: any) => {
-                    metaToSave[`${stat}-base`] = vals.base;
-                    metaToSave[`${stat}-rank`] = vals.rank;
-                    metaToSave[`${stat}-buff`] = vals.buff;
-                    metaToSave[`${stat}-debuff`] = vals.debuff;
-                    metaToSave[`${stat}-limit`] = vals.limit;
-                });
-                
+                if (d.stats)
+                    Object.entries(d.stats).forEach(([stat, vals]: any) => {
+                        metaToSave[`${stat}-base`] = vals.base;
+                        metaToSave[`${stat}-rank`] = vals.rank;
+                        metaToSave[`${stat}-buff`] = vals.buff;
+                        metaToSave[`${stat}-debuff`] = vals.debuff;
+                        metaToSave[`${stat}-limit`] = vals.limit;
+                    });
+
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                if (d.socials) Object.entries(d.socials).forEach(([stat, vals]: any) => {
-                    metaToSave[`${stat}-base`] = vals.base;
-                    metaToSave[`${stat}-rank`] = vals.rank;
-                    metaToSave[`${stat}-buff`] = vals.buff;
-                    metaToSave[`${stat}-debuff`] = vals.debuff;
-                    metaToSave[`${stat}-limit`] = vals.limit;
-                });
-                
+                if (d.socials)
+                    Object.entries(d.socials).forEach(([stat, vals]: any) => {
+                        metaToSave[`${stat}-base`] = vals.base;
+                        metaToSave[`${stat}-rank`] = vals.rank;
+                        metaToSave[`${stat}-buff`] = vals.buff;
+                        metaToSave[`${stat}-debuff`] = vals.debuff;
+                        metaToSave[`${stat}-limit`] = vals.limit;
+                    });
+
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                if (d.skills) Object.entries(d.skills).forEach(([skill, vals]: any) => {
-                    metaToSave[`${skill}-base`] = vals.base;
-                    metaToSave[`${skill}-buff`] = vals.buff;
-                    if (vals.customName) metaToSave[`label-${skill}`] = vals.customName;
-                });
+                if (d.skills)
+                    Object.entries(d.skills).forEach(([skill, vals]: any) => {
+                        metaToSave[`${skill}-base`] = vals.base;
+                        metaToSave[`${skill}-buff`] = vals.buff;
+                        if (vals.customName) metaToSave[`label-${skill}`] = vals.customName;
+                    });
 
                 if (d.derived) {
                     metaToSave['def-buff'] = d.derived.defBuff;
