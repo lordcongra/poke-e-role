@@ -6,6 +6,7 @@ let saveTimeout: ReturnType<typeof setTimeout>;
 let pendingUpdates: Record<string, unknown> = {};
 
 let activeTokenId: string | null = null;
+
 export function setActiveTokenId(id: string | null) {
     activeTokenId = id;
 }
@@ -24,6 +25,9 @@ export async function saveToOwlbear(updates: Record<string, unknown>) {
     saveTimeout = setTimeout(async () => {
         const updatesToPush = { ...pendingUpdates };
         pendingUpdates = {};
+
+        // 👇 FOOLPROOF TEST: This prints the exact flat payload right before it hits the database!
+        console.log("🚀 PUSHING TO OWLBEAR:", updatesToPush);
 
         await OBR.scene.items.updateItems([currentToken!], (items) => {
             for (const item of items) {
