@@ -102,7 +102,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         learnset: [],
         pokemonBackup: '',
         trainerBackup: '',
-        
+
         activeTransformation: 'None',
         baseFormData: '',
         altFormData: '',

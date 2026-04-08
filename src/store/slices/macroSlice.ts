@@ -10,7 +10,8 @@ import {
     extractAbilities,
     syncHealthAndWill,
     createFormBackup,
-    restoreFormBackup
+    restoreFormBackup,
+    convertMovesToMax
 } from '../../utils/macroHelpers';
 
 export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> = (set) => ({
@@ -88,7 +89,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             return { identity: newIdentity, stats: newStats, health: newHealth, will: newWill, skills: newSkills };
         }),
 
-    toggleTransformation: (targetTransformation: TransformationType, affinity = '') =>
+    toggleTransformation: (targetTransformation: TransformationType, affinity = '', autoMaxMoves = false) =>
         set((state) => {
             const isCurrentlyTransformed = state.identity.activeTransformation !== 'None';
             const isReverting =
@@ -97,6 +98,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
 
             const newIdentity = { ...state.identity };
             const newStats = { ...state.stats };
+            const newSocials = { ...state.socials };
             const newHealth = { ...state.health };
             const newWill = { ...state.will };
             const newDerived = { ...state.derived };
@@ -108,6 +110,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 health: newHealth,
                 derived: newDerived,
                 stats: newStats,
+                socials: newSocials,
                 moves: [...state.moves],
                 skills: { ...state.skills }
             };
@@ -118,13 +121,30 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 const previousTrans = state.identity.activeTransformation;
 
                 if (['Mega', 'Dynamax', 'Gigantamax', 'Custom'].includes(previousTrans)) {
+                    // Always backup the current state to altFormData in case it's a permanent shift (like Mega)
                     const backupStr = createFormBackup(state);
                     newIdentity.altFormData = backupStr;
                     updatesToSave['alt-form-data'] = backupStr;
 
+                    // But ONLY load the base data if they actually swapped profiles!
                     if (state.identity.baseFormData) {
                         restoreFormBackup(state.identity.baseFormData, draft, updatesToSave);
                     }
+                }
+
+                if (previousTrans === 'Gigantamax') {
+                    // Strip the flat +2 buffs granted by Gigantamax
+                    newStats[CombatStat.STR].buff = Math.max(0, newStats[CombatStat.STR].buff - 2);
+                    newStats[CombatStat.SPE].buff = Math.max(0, newStats[CombatStat.SPE].buff - 2);
+                    newStats[CombatStat.DEX].buff = Math.max(0, newStats[CombatStat.DEX].buff - 2);
+                    newDerived.defBuff = Math.max(0, newDerived.defBuff - 2);
+                    newDerived.sdefBuff = Math.max(0, newDerived.sdefBuff - 2);
+
+                    updatesToSave[`${CombatStat.STR}-buff`] = newStats[CombatStat.STR].buff;
+                    updatesToSave[`${CombatStat.SPE}-buff`] = newStats[CombatStat.SPE].buff;
+                    updatesToSave[`${CombatStat.DEX}-buff`] = newStats[CombatStat.DEX].buff;
+                    updatesToSave['def-buff'] = newDerived.defBuff;
+                    updatesToSave['spd-buff'] = newDerived.sdefBuff;
                 }
 
                 if (previousTrans === 'Terastallize') {
@@ -151,12 +171,14 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     newWill.willCurr -= 1;
                 }
 
+                // Backup current state to base form so we can revert it later!
                 if (['Mega', 'Dynamax', 'Gigantamax', 'Custom'].includes(targetTransformation)) {
                     const backupStr = createFormBackup(state);
                     newIdentity.baseFormData = backupStr;
                     updatesToSave['base-form-data'] = backupStr;
 
-                    if (state.identity.altFormData) {
+                    // ONLY LOAD the alternate data if it's a complete swap! (Mega / Custom)
+                    if (['Mega', 'Custom'].includes(targetTransformation) && state.identity.altFormData) {
                         restoreFormBackup(state.identity.altFormData, draft, updatesToSave);
                     }
                 }
@@ -166,28 +188,34 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     newIdentity.terastallizeBonusActive = true;
                     updatesToSave['terastallize-affinity'] = affinity;
                     updatesToSave['terastallize-bonus-active'] = true;
-                } else if (targetTransformation === 'Dynamax') {
-                    newHealth.temporaryHitPoints = 6;
-                    updatesToSave['temporary-hit-points'] = 6;
-                    newEffects = [...newEffects, { id: crypto.randomUUID(), name: 'Dynamax Timer', rounds: 3 }];
-                    updatesToSave['effects-data'] = JSON.stringify(newEffects);
-                } else if (targetTransformation === 'Gigantamax') {
-                    newHealth.temporaryHitPoints = 12;
-                    updatesToSave['temporary-hit-points'] = 12;
-                    newEffects = [...newEffects, { id: crypto.randomUUID(), name: 'Gigantamax Timer', rounds: 3 }];
+                } else if (targetTransformation === 'Dynamax' || targetTransformation === 'Gigantamax') {
+                    newHealth.temporaryHitPoints = targetTransformation === 'Dynamax' ? 6 : 12;
+                    updatesToSave['temporary-hit-points'] = newHealth.temporaryHitPoints;
+
+                    newEffects = [
+                        ...newEffects,
+                        { id: crypto.randomUUID(), name: `${targetTransformation} Timer`, rounds: 3 }
+                    ];
                     updatesToSave['effects-data'] = JSON.stringify(newEffects);
 
-                    newStats[CombatStat.STR].buff += 2;
-                    newStats[CombatStat.SPE].buff += 2;
-                    newStats[CombatStat.DEX].buff += 2;
-                    newDerived.defBuff += 2;
-                    newDerived.sdefBuff += 2;
+                    if (targetTransformation === 'Gigantamax') {
+                        newStats[CombatStat.STR].buff += 2;
+                        newStats[CombatStat.SPE].buff += 2;
+                        newStats[CombatStat.DEX].buff += 2;
+                        newDerived.defBuff += 2;
+                        newDerived.sdefBuff += 2;
 
-                    updatesToSave[`${CombatStat.STR}-buff`] = newStats[CombatStat.STR].buff;
-                    updatesToSave[`${CombatStat.SPE}-buff`] = newStats[CombatStat.SPE].buff;
-                    updatesToSave[`${CombatStat.DEX}-buff`] = newStats[CombatStat.DEX].buff;
-                    updatesToSave['def-buff'] = newDerived.defBuff;
-                    updatesToSave['spd-buff'] = newDerived.sdefBuff;
+                        updatesToSave[`${CombatStat.STR}-buff`] = newStats[CombatStat.STR].buff;
+                        updatesToSave[`${CombatStat.SPE}-buff`] = newStats[CombatStat.SPE].buff;
+                        updatesToSave[`${CombatStat.DEX}-buff`] = newStats[CombatStat.DEX].buff;
+                        updatesToSave['def-buff'] = newDerived.defBuff;
+                        updatesToSave['spd-buff'] = newDerived.sdefBuff;
+                    }
+
+                    if (autoMaxMoves) {
+                        draft.moves = convertMovesToMax(draft.moves);
+                        updatesToSave['moves-data'] = JSON.stringify(draft.moves);
+                    }
                 }
 
                 newIdentity.activeTransformation = targetTransformation;
@@ -215,6 +243,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             return {
                 identity: newIdentity,
                 stats: newStats,
+                socials: newSocials,
                 health: newHealth,
                 will: newWill,
                 derived: newDerived,

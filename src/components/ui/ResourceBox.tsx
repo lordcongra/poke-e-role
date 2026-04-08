@@ -6,12 +6,24 @@ interface ResourceBoxProps {
     curr: number;
     max: number;
     base: number;
+    temp?: number;
     color: string;
     onCurrChange: (val: number) => void;
     onBaseChange: (val: number) => void;
+    onTempChange?: (val: number) => void;
 }
 
-export function ResourceBox({ title, curr, max, base, color, onCurrChange, onBaseChange }: ResourceBoxProps) {
+export function ResourceBox({
+    title,
+    curr,
+    max,
+    base,
+    temp,
+    color,
+    onCurrChange,
+    onBaseChange,
+    onTempChange
+}: ResourceBoxProps) {
     const pct = Math.max(0, Math.min(100, (curr / Math.max(1, max)) * 100));
 
     let barColor = color;
@@ -32,6 +44,16 @@ export function ResourceBox({ title, curr, max, base, color, onCurrChange, onBas
                 <div className="resource-box__main resource-box__content-layer">
                     <span className="resource-box__label">Curr:</span>
                     <NumberSpinner value={curr} onChange={onCurrChange} min={0} />
+
+                    {temp !== undefined && temp > 0 && onTempChange && (
+                        <>
+                            <span className="resource-box__temp-plus" title="Temporary HP (Dynamax Shield)">
+                                +
+                            </span>
+                            <NumberSpinner value={temp} onChange={onTempChange} min={0} />
+                        </>
+                    )}
+
                     <span className="resource-box__divider">/</span>
                     <span className="resource-box__max">{max}</span>
                 </div>

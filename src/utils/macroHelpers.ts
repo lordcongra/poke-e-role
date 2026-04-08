@@ -1,6 +1,7 @@
-import type { CharacterState, MoveData, SkillData } from '../store/storeTypes';
-import { CombatStat, Skill } from '../types/enums';
+import type { CharacterState, MoveData } from '../store/storeTypes';
+import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { parseCombatTags, getAbilityText } from './combatMath';
+import { MAX_MOVES_DATA } from '../data/maxMoves';
 
 export const parseLearnset = (movesObj: unknown): Array<{ Learned: string; Name: string }> => {
     const result: Array<{ Learned: string; Name: string }> = [];
@@ -117,19 +118,38 @@ export const createFormBackup = (state: CharacterState): string => {
         ability: state.identity.ability,
         availableAbilities: state.identity.availableAbilities,
         hpBase: state.health.hpBase,
-        defBuff: state.derived.defBuff,
-        defDebuff: state.derived.defDebuff,
-        sdefBuff: state.derived.sdefBuff,
-        sdefDebuff: state.derived.sdefDebuff,
-        moves: state.moves,
-        skills: state.skills
+        moves: state.moves
     };
+
+    const statsBackup: Record<string, unknown> = {};
     Object.values(CombatStat).forEach((stat) => {
-        backupData[`${stat}Base`] = state.stats[stat].base;
-        backupData[`${stat}Limit`] = state.stats[stat].limit;
-        backupData[`${stat}Buff`] = state.stats[stat].buff;
-        backupData[`${stat}Debuff`] = state.stats[stat].debuff;
+        statsBackup[stat] = {
+            base: state.stats[stat].base,
+            rank: state.stats[stat].rank,
+            limit: state.stats[stat].limit
+        };
     });
+    backupData.stats = statsBackup;
+
+    const socialsBackup: Record<string, unknown> = {};
+    Object.values(SocialStat).forEach((stat) => {
+        socialsBackup[stat] = {
+            base: state.socials[stat].base,
+            rank: state.socials[stat].rank,
+            limit: state.socials[stat].limit
+        };
+    });
+    backupData.socials = socialsBackup;
+
+    const skillsBackup: Record<string, unknown> = {};
+    Object.entries(state.skills).forEach(([sk, val]) => {
+        skillsBackup[sk] = {
+            base: val.base,
+            customName: val.customName
+        };
+    });
+    backupData.skills = skillsBackup;
+
     return JSON.stringify(backupData);
 };
 
@@ -138,8 +158,8 @@ export const restoreFormBackup = (
     draft: {
         identity: CharacterState['identity'];
         health: CharacterState['health'];
-        derived: CharacterState['derived'];
         stats: CharacterState['stats'];
+        socials: CharacterState['socials'];
         moves: CharacterState['moves'];
         skills: CharacterState['skills'];
     },
@@ -147,7 +167,7 @@ export const restoreFormBackup = (
 ) => {
     try {
         const loadedData = JSON.parse(backupStr);
-        const { identity, health, derived, stats } = draft;
+        const { identity, health, stats, socials, skills } = draft;
 
         identity.species = String(loadedData.species ?? identity.species);
         identity.type1 = String(loadedData.type1 ?? identity.type1);
@@ -168,57 +188,83 @@ export const restoreFormBackup = (
             updatesToSave['hp-base'] = health.hpBase;
         }
 
-        if (loadedData.defBuff !== undefined) {
-            derived.defBuff = Number(loadedData.defBuff);
-            updatesToSave['def-buff'] = derived.defBuff;
-        }
-        if (loadedData.defDebuff !== undefined) {
-            derived.defDebuff = Number(loadedData.defDebuff);
-            updatesToSave['def-debuff'] = derived.defDebuff;
-        }
-        if (loadedData.sdefBuff !== undefined) {
-            derived.sdefBuff = Number(loadedData.sdefBuff);
-            updatesToSave['spd-buff'] = derived.sdefBuff;
-        }
-        if (loadedData.sdefDebuff !== undefined) {
-            derived.sdefDebuff = Number(loadedData.sdefDebuff);
-            updatesToSave['spd-debuff'] = derived.sdefDebuff;
+        if (loadedData.stats) {
+            Object.entries(
+                loadedData.stats as Record<string, { base?: number; rank?: number; limit?: number }>
+            ).forEach(([stat, val]) => {
+                const s = stat as CombatStat;
+                if (stats[s]) {
+                    stats[s].base = val.base !== undefined ? Number(val.base) : stats[s].base;
+                    stats[s].rank = val.rank !== undefined ? Number(val.rank) : stats[s].rank;
+                    stats[s].limit = val.limit !== undefined ? Number(val.limit) : stats[s].limit;
+
+                    updatesToSave[`${s}-base`] = stats[s].base;
+                    updatesToSave[`${s}-rank`] = stats[s].rank;
+                    updatesToSave[`${s}-limit`] = stats[s].limit;
+                }
+            });
         }
 
-        Object.values(CombatStat).forEach((stat) => {
-            stats[stat] = { ...stats[stat] };
-            if (loadedData[`${stat}Base`] !== undefined) {
-                stats[stat].base = Number(loadedData[`${stat}Base`]);
-                updatesToSave[`${stat}-base`] = stats[stat].base;
-            }
-            if (loadedData[`${stat}Limit`] !== undefined) {
-                stats[stat].limit = Number(loadedData[`${stat}Limit`]);
-                updatesToSave[`${stat}-limit`] = stats[stat].limit;
-            }
-            if (loadedData[`${stat}Buff`] !== undefined) {
-                stats[stat].buff = Number(loadedData[`${stat}Buff`]);
-                updatesToSave[`${stat}-buff`] = stats[stat].buff;
-            }
-            if (loadedData[`${stat}Debuff`] !== undefined) {
-                stats[stat].debuff = Number(loadedData[`${stat}Debuff`]);
-                updatesToSave[`${stat}-debuff`] = stats[stat].debuff;
-            }
-        });
+        if (loadedData.socials) {
+            Object.entries(
+                loadedData.socials as Record<string, { base?: number; rank?: number; limit?: number }>
+            ).forEach(([stat, val]) => {
+                const s = stat as SocialStat;
+                if (socials[s]) {
+                    socials[s].base = val.base !== undefined ? Number(val.base) : socials[s].base;
+                    socials[s].rank = val.rank !== undefined ? Number(val.rank) : socials[s].rank;
+                    socials[s].limit = val.limit !== undefined ? Number(val.limit) : socials[s].limit;
+
+                    updatesToSave[`${s}-base`] = socials[s].base;
+                    updatesToSave[`${s}-rank`] = socials[s].rank;
+                    updatesToSave[`${s}-limit`] = socials[s].limit;
+                }
+            });
+        }
+
+        if (loadedData.skills) {
+            Object.entries(loadedData.skills as Record<string, { base?: number; customName?: string }>).forEach(
+                ([sk, val]) => {
+                    const s = sk as Skill;
+                    if (skills[s]) {
+                        skills[s].base = val.base !== undefined ? Number(val.base) : skills[s].base;
+                        if (val.customName !== undefined) skills[s].customName = String(val.customName);
+
+                        updatesToSave[`${s}-base`] = skills[s].base;
+                        if (val.customName !== undefined) updatesToSave[`label-${s}`] = skills[s].customName;
+                    }
+                }
+            );
+        }
 
         if (loadedData.moves) {
             draft.moves = loadedData.moves as MoveData[];
             updatesToSave['moves-data'] = JSON.stringify(draft.moves);
         }
-
-        if (loadedData.skills) {
-            draft.skills = loadedData.skills as Record<Skill, SkillData>;
-            Object.entries(draft.skills).forEach(([sk, val]) => {
-                updatesToSave[`${sk}-base`] = val.base;
-                updatesToSave[`${sk}-buff`] = val.buff;
-                if (val.customName) updatesToSave[`label-${sk}`] = val.customName;
-            });
-        }
     } catch (e) {
         console.error('Failed to parse form backup during form reversion', e);
     }
+};
+
+export const convertMovesToMax = (moves: MoveData[]): MoveData[] => {
+    return moves.map((m) => {
+        if (m.category === 'Status') {
+            return {
+                ...m,
+                name: 'Max Guard',
+                type: 'Normal',
+                power: 0,
+                desc: 'Target: Max Self. Shield Move. Reaction 5. Reduce 5 Damage this Max Pokémon would receive from a Physical or Special Move. Negate the Added Effects of Any Move that targets the Max user.'
+            };
+        }
+
+        const maxData = MAX_MOVES_DATA[m.type] || { name: `Max ${m.type}`, effect: 'No specific Max effect found.' };
+
+        return {
+            ...m,
+            name: maxData.name,
+            power: m.power + 2,
+            desc: `${maxData.effect} [Acc +2]`
+        };
+    });
 };

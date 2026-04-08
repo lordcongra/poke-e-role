@@ -3,6 +3,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { fetchPokemonData } from '../../utils/api';
 import { SpeciesChangeModal } from '../modals/SpeciesChangeModal';
+import { TransformationModal } from '../modals/TransformationModal';
 
 interface SpeciesSelectorProps {
     uniqueSpecies: string[];
@@ -12,11 +13,11 @@ interface SpeciesSelectorProps {
 export function SpeciesSelector({ uniqueSpecies, onOpenGenerator }: SpeciesSelectorProps) {
     const identityStore = useCharacterStore((state) => state.identity);
     const setIdentity = useCharacterStore((state) => state.setIdentity);
-    const toggleForm = useCharacterStore((state) => state.toggleForm);
     const applySpeciesData = useCharacterStore((state) => state.applySpeciesData);
 
     const [isFetching, setIsFetching] = useState(false);
     const [pendingSpeciesData, setPendingSpeciesData] = useState<Record<string, unknown> | null>(null);
+    const [showTransformModal, setShowTransformModal] = useState(false);
 
     const handleFetch = async () => {
         if (identityStore.mode === 'Trainer') return;
@@ -46,6 +47,8 @@ export function SpeciesSelector({ uniqueSpecies, onOpenGenerator }: SpeciesSelec
             setIsFetching(false);
         }
     };
+
+    const isTransformed = identityStore.activeTransformation !== 'None';
 
     return (
         <>
@@ -92,12 +95,14 @@ export function SpeciesSelector({ uniqueSpecies, onOpenGenerator }: SpeciesSelec
                                 type="button"
                                 className="action-button action-button--dark identity-header__species-btn"
                                 style={{
-                                    background: identityStore.isAltForm ? '#00695C' : '#555',
-                                    borderColor: identityStore.isAltForm ? '#00695C' : '#555'
+                                    background: isTransformed ? '#00695C' : '#555',
+                                    borderColor: isTransformed ? '#00695C' : '#555'
                                 }}
-                                onClick={toggleForm}
+                                onClick={() => setShowTransformModal(true)}
                                 title={
-                                    identityStore.isAltForm ? 'Swap to Base Form' : 'Swap to Alt Form / Mega Evolution'
+                                    isTransformed
+                                        ? 'Manage Active Transformation'
+                                        : 'Transform (Mega, Dynamax, Tera, etc.)'
                                 }
                             >
                                 🧬
@@ -113,6 +118,8 @@ export function SpeciesSelector({ uniqueSpecies, onOpenGenerator }: SpeciesSelec
                     onClose={() => setPendingSpeciesData(null)}
                 />
             )}
+
+            {showTransformModal && <TransformationModal onClose={() => setShowTransformModal(false)} />}
         </>
     );
 }

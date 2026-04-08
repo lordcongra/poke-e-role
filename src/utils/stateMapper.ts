@@ -37,11 +37,14 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (state.identity.type1 !== undefined) flatMetadata['type1'] = state.identity.type1;
             if (state.identity.type2 !== undefined) flatMetadata['type2'] = state.identity.type2;
             if (state.identity.mode !== undefined) flatMetadata['mode'] = state.identity.mode;
-            
+
             // New Transformation Variables
-            if (state.identity.activeTransformation !== undefined) flatMetadata['active-transformation'] = state.identity.activeTransformation;
-            if (state.identity.terastallizeAffinity !== undefined) flatMetadata['terastallize-affinity'] = state.identity.terastallizeAffinity;
-            if (state.identity.terastallizeBonusActive !== undefined) flatMetadata['terastallize-bonus-active'] = state.identity.terastallizeBonusActive;
+            if (state.identity.activeTransformation !== undefined)
+                flatMetadata['active-transformation'] = state.identity.activeTransformation;
+            if (state.identity.terastallizeAffinity !== undefined)
+                flatMetadata['terastallize-affinity'] = state.identity.terastallizeAffinity;
+            if (state.identity.terastallizeBonusActive !== undefined)
+                flatMetadata['terastallize-bonus-active'] = state.identity.terastallizeBonusActive;
 
             // Safely pass through our form backups
             sanitizeBackup(state.identity.baseFormData, 'base-form-data');
@@ -55,9 +58,10 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (state.health.hpCurr !== undefined) flatMetadata['hp-curr'] = state.health.hpCurr;
             if (state.health.hpMax !== undefined) flatMetadata['hp-max-display'] = state.health.hpMax;
             if (state.health.hpBase !== undefined) flatMetadata['hp-base'] = state.health.hpBase;
-            if (state.health.temporaryHitPoints !== undefined) flatMetadata['temporary-hit-points'] = state.health.temporaryHitPoints;
+            if (state.health.temporaryHitPoints !== undefined)
+                flatMetadata['temporary-hit-points'] = state.health.temporaryHitPoints;
         }
-        
+
         if (state.will) {
             if (state.will.willCurr !== undefined) flatMetadata['will-curr'] = state.will.willCurr;
             if (state.will.willMax !== undefined) flatMetadata['will-max-display'] = state.will.willMax;
@@ -105,9 +109,8 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
                 if (vals.customName) flatMetadata[`label-${skill}`] = vals.customName;
             });
         }
-
     } catch (error) {
-        console.error("Error mapping Zustand state to OBR Metadata:", error);
+        console.error('Error mapping Zustand state to OBR Metadata:', error);
     }
 
     return flatMetadata;

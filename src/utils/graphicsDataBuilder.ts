@@ -11,6 +11,7 @@ export interface GraphicsData {
     hasSpeciesOrTrainer: boolean;
     hpCurr: number;
     hpMax: number;
+    temporaryHitPoints: number;
     willCurr: number;
     willMax: number;
     defTotal: number;
@@ -81,6 +82,7 @@ export function buildGraphicsFromState(meta: Record<string, unknown>, state: Cha
         hasSpeciesOrTrainer: state.identity.species.trim() !== '' || state.identity.mode === 'Trainer',
         hpCurr: state.health.hpCurr,
         hpMax: state.health.hpMax,
+        temporaryHitPoints: state.health.temporaryHitPoints || 0,
         willCurr: state.will.willCurr,
         willMax: state.will.willMax,
         defTotal,
@@ -161,6 +163,7 @@ export function buildGraphicsFromMeta(meta: Record<string, unknown>): GraphicsDa
             String(meta['species'] || '').trim() !== '' || String(meta['mode'] || 'Pokémon') === 'Trainer',
         hpCurr: Number(meta['hp-curr']) || 0,
         hpMax: Number(meta['hp-max-display']) || 1,
+        temporaryHitPoints: Number(meta['temporary-hit-points']) || 0,
         willCurr: Number(meta['will-curr']) || 0,
         willMax: Number(meta['will-max-display']) || 1,
         defTotal,

@@ -320,7 +320,7 @@ export interface IdentitySlice {
 
 export interface MacroSlice {
     setMode: (mode: 'Pokémon' | 'Trainer') => void;
-    toggleTransformation: (targetTransformation: TransformationType, affinity?: string) => void;
+    toggleTransformation: (targetTransformation: TransformationType, affinity?: string, autoMaxMoves?: boolean) => void;
     applySpeciesData: (data: Record<string, unknown>, wipeData?: boolean, updateStats?: boolean) => void;
     refreshSpeciesData: (data: Record<string, unknown>) => void;
 }

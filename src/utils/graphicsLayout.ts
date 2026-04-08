@@ -34,6 +34,10 @@ export function buildGraphicDefinitions(
 
     if (data.showHpBar) {
         const isVisible = (!data.gmHpBar || role === 'GM') && isTokenVisible;
+
+        // Change the bar to a striking purple if Temp HP is active!
+        const finalHpColor = data.temporaryHitPoints > 0 ? '#e040fb' : getHealthColor(healthPercentage);
+
         graphicDefinitions['hp-shadow'] = {
             type: 'CURVE',
             points: [
@@ -83,7 +87,7 @@ export function buildGraphicDefinitions(
                 { x: healthBaseX, y: healthBaseY },
                 { x: healthBaseX + barWidth * Math.max(0.001, healthPercentage), y: healthBaseY }
             ],
-            color: getHealthColor(healthPercentage),
+            color: finalHpColor,
             strokeOpacity: 1,
             width: 12 * scale,
             closed: false,
@@ -95,9 +99,14 @@ export function buildGraphicDefinitions(
 
     if (data.showHpText) {
         const isVisible = (!data.gmHpText || role === 'GM') && isTokenVisible;
+        const hpString =
+            data.temporaryHitPoints > 0
+                ? `${data.hpCurr}+${data.temporaryHitPoints}/${data.hpMax}`
+                : `${data.hpCurr}/${data.hpMax}`;
+
         graphicDefinitions['hp-text'] = {
             type: 'TEXT',
-            text: `${data.hpCurr}/${data.hpMax}`,
+            text: hpString,
             x: healthCenterX,
             y: healthBaseY - 15 * scale,
             width: barWidth,

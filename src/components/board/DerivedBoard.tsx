@@ -98,9 +98,11 @@ export function DerivedBoard() {
                             curr={health.hpCurr}
                             max={health.hpMax}
                             base={health.hpBase}
+                            temp={health.temporaryHitPoints}
                             color="var(--primary)"
                             onCurrChange={(value: number) => updateHealth('hpCurr', value)}
                             onBaseChange={(value: number) => updateHealth('hpBase', value)}
+                            onTempChange={(value: number) => updateHealth('temporaryHitPoints', value)}
                         />
                     </div>
                     <div className="derived-board__health-box">
