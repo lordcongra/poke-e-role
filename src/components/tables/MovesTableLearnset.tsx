@@ -19,17 +19,16 @@ export function MovesTableLearnset({ learnset }: MovesTableLearnsetProps) {
     );
 
     const rankOrder = [
-        'Starter',
-        'Beginner',
-        'Rookie',
-        'Amateur',
-        'Standard',
-        'Advanced',
-        'Expert',
-        'Master',
-        'Champion',
-        'Other'
-    ];
+    'Starter',
+    'Rookie',
+    'Standard',
+    'Advanced',
+    'Expert',
+    'Ace',
+    'Master',
+    'Champion',
+    'Other'
+];
     const sortedRanks = Object.keys(groupedLearnset).sort((a, b) => {
         let indexA = rankOrder.indexOf(a);
         let indexB = rankOrder.indexOf(b);

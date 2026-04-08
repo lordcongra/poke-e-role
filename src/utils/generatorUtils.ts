@@ -6,9 +6,7 @@ import { assignWildStats, assignMinMaxStats, assignAverageStats } from './genera
 
 const RANK_HIERARCHY = [
     'Starter',
-    'Beginner',
     'Rookie',
-    'Amateur',
     'Standard',
     'Advanced',
     'Expert',

@@ -29,11 +29,8 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
     const [autoMaxMoves, setAutoMaxMoves] = useState(true);
     const [clearConfirmType, setClearConfirmType] = useState<'Mega' | 'Max' | null>(null);
 
-    // Tera Blast Configuration State
+    // Simplified Tera Blast Config
     const [teraCategory, setTeraCategory] = useState<'Physical' | 'Special'>('Special');
-    const [teraAcc1, setTeraAcc1] = useState('dex');
-    const [teraAcc2, setTeraAcc2] = useState('channel');
-    const [teraDmg1, setTeraDmg1] = useState('spe');
 
     const allTypes = [
         ...POKEMON_TYPES.filter((t) => t !== ''),
@@ -49,9 +46,9 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
     const handleApply = () => {
         toggleTransformation(selectedTrans, affinity, autoMaxMoves, {
             category: teraCategory,
-            acc1: teraAcc1,
-            acc2: teraAcc2,
-            dmg1: teraDmg1
+            acc1: teraCategory === 'Physical' ? 'str' : 'spe',
+            acc2: 'channel',
+            dmg1: teraCategory === 'Physical' ? 'str' : 'spe'
         });
         onClose();
     };
@@ -119,31 +116,15 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                 </select>
                                 
                                 <div style={{ marginTop: '10px', padding: '10px', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--row-odd)' }}>
-                                    <label className="transformation-modal__label" style={{ marginBottom: '8px', display: 'block' }}>Configure Tera Blast:</label>
-                                    <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                                        <select value={teraCategory} onChange={(e) => setTeraCategory(e.target.value as any)} className="transformation-modal__select" style={{ flex: 1, padding: '4px' }}>
-                                            <option value="Physical">Physical</option>
-                                            <option value="Special">Special</option>
-                                        </select>
-                                        <select value={teraDmg1} onChange={(e) => setTeraDmg1(e.target.value)} className="transformation-modal__select" style={{ flex: 1, padding: '4px' }}>
-                                            <option value="str">STR</option>
-                                            <option value="spe">SPE</option>
-                                        </select>
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                        <select value={teraAcc1} onChange={(e) => setTeraAcc1(e.target.value)} className="transformation-modal__select" style={{ flex: 1, padding: '4px' }}>
-                                            <option value="dex">DEX</option>
-                                            <option value="ins">INS</option>
-                                            <option value="str">STR</option>
-                                            <option value="spe">SPE</option>
-                                        </select>
-                                        <span style={{ display: 'flex', alignItems: 'center', fontWeight: 'bold' }}>+</span>
-                                        <select value={teraAcc2} onChange={(e) => setTeraAcc2(e.target.value)} className="transformation-modal__select" style={{ flex: 1, padding: '4px' }}>
-                                            <option value="channel">Channel</option>
-                                            <option value="clash">Clash</option>
-                                            <option value="brawl">Brawl</option>
-                                        </select>
-                                    </div>
+                                    <label className="transformation-modal__label" style={{ marginBottom: '8px', display: 'block' }}>Tera Blast Category:</label>
+                                    <select 
+                                        value={teraCategory} 
+                                        onChange={(e) => setTeraCategory(e.target.value as 'Physical' | 'Special')} 
+                                        className="transformation-modal__select"
+                                    >
+                                        <option value="Physical">Physical (Uses STR)</option>
+                                        <option value="Special">Special (Uses SPE)</option>
+                                    </select>
                                 </div>
                             </>
                         )}
