@@ -28,11 +28,16 @@
     z-index: 2;
 }
 
-/* Temp HP (Shields) for Dynamax/Gigantamax */
 .resource-box__temp-plus {
     font-weight: 900;
-    color: #c326df; /* Striking purple/pink for max energy */
+    color: #c326df;
     margin: 0 2px 0 4px;
     text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
     font-size: 1.1rem;
+}
+
+.resource-bar-fill--temp {
+    background-color: #c326df !important;
+    z-index: 1;
+    opacity: 0.9;
 }

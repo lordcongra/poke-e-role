@@ -5,7 +5,7 @@ import { saveToOwlbear } from '../../utils/obr';
 import { parseCombatTags, getAbilityText } from '../../utils/combatMath';
 
 export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = (set) => ({
-    health: { hpCurr: 5, hpMax: 5, hpBase: 4, temporaryHitPoints: 0 },
+    health: { hpCurr: 5, hpMax: 5, hpBase: 4, temporaryHitPoints: 0, temporaryHitPointsMax: 0 },
     will: { willCurr: 4, willMax: 4, willBase: 3 },
     derived: { defBuff: 0, defDebuff: 0, sdefBuff: 0, sdefDebuff: 0, happy: 0, loyal: 0 },
     extras: { core: 0, social: 0, skill: 0 },
@@ -92,6 +92,7 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
                     'hp-curr': newHealth.hpCurr,
                     'hp-max-display': newHealth.hpMax,
                     'temporary-hit-points': newHealth.temporaryHitPoints,
+                    'temporary-hit-points-max': newHealth.temporaryHitPointsMax,
                     ...(field === 'hpBase' ? { 'hp-base': value } : {})
                 });
             } catch (e) {}

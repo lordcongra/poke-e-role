@@ -84,7 +84,6 @@ export async function rollStatus(status: StatusItem, state: CharacterState) {
 
     const tagString = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';
 
-    // Fix: Confusion does not stack rounds, it just needs 2 successes to allow an attack.
     const rollType = status.name === 'Confusion' ? 'roll' : 'status';
 
     await rollDicePlus(
@@ -265,6 +264,23 @@ export async function executeDamageRoll(
         stabTag = isProtean && !hasTypeMatch ? ' Protean STAB' : ' STAB';
     }
 
+    // 🔥 NEW: Check and consume Terastallize Bonus
+    const isTera = state.identity.activeTransformation === 'Terastallize';
+    const teraAffinity = state.identity.terastallizeAffinity;
+    const teraBonusActive = state.identity.terastallizeBonusActive;
+    let teraBonusTags = '';
+
+    if (isTera && move.type === teraAffinity) {
+        if (teraBonusActive) {
+            const matchesOriginal = state.identity.type1 === teraAffinity || state.identity.type2 === teraAffinity;
+            teraBonusTags = matchesOriginal ? 'Tera Burst (+3 Dice)' : 'Tera Burst (+2 Dice)';
+            
+            useCharacterStore.getState().setIdentity('terastallizeBonusActive', false);
+        } else {
+            teraBonusTags = 'Tera Boost (+1 Dice)';
+        }
+    }
+
     const pain = getPainPenalty(normalizedDamageStatistic, state);
     const successModifier = state.trackers.globalSucc + pain;
     const mathModifier =
@@ -277,7 +293,11 @@ export async function executeDamageRoll(
     }
     if (isSuperEffective) tags.push(`Super Effective`);
     if (superEffectiveDamageBonus > 0) tags.push(`Item SE Dmg +${superEffectiveDamageBonus}`);
-    if (stabBonus > 0) tags.push(stabTag);
+    
+    // Log STAB or Tera STAB
+    if (teraBonusTags) tags.push(teraBonusTags);
+    else if (stabBonus > 0) tags.push(stabTag);
+    
     if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
     if (successModifier !== 0) tags.push(`Net Mod ${successModifier > 0 ? '+' : ''}${successModifier} Succ`);
 

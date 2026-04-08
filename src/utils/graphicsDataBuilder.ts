@@ -12,6 +12,7 @@ export interface GraphicsData {
     hpCurr: number;
     hpMax: number;
     temporaryHitPoints: number;
+    temporaryHitPointsMax: number;
     willCurr: number;
     willMax: number;
     defTotal: number;
@@ -83,6 +84,7 @@ export function buildGraphicsFromState(meta: Record<string, unknown>, state: Cha
         hpCurr: state.health.hpCurr,
         hpMax: state.health.hpMax,
         temporaryHitPoints: state.health.temporaryHitPoints || 0,
+        temporaryHitPointsMax: state.health.temporaryHitPointsMax || 0,
         willCurr: state.will.willCurr,
         willMax: state.will.willMax,
         defTotal,
@@ -164,6 +166,7 @@ export function buildGraphicsFromMeta(meta: Record<string, unknown>): GraphicsDa
         hpCurr: Number(meta['hp-curr']) || 0,
         hpMax: Number(meta['hp-max-display']) || 1,
         temporaryHitPoints: Number(meta['temporary-hit-points']) || 0,
+        temporaryHitPointsMax: Number(meta['temporary-hit-points-max']) || 0,
         willCurr: Number(meta['will-curr']) || 0,
         willMax: Number(meta['will-max-display']) || 1,
         defTotal,

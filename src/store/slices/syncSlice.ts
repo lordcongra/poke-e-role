@@ -26,7 +26,6 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
                 newStats[stat].buff = meta[`${stat}-buff`] !== undefined ? Number(meta[`${stat}-buff`]) : 0;
                 newStats[stat].debuff = meta[`${stat}-debuff`] !== undefined ? Number(meta[`${stat}-debuff`]) : 0;
 
-                // Prioritize the newer V2 key, gracefully fallback to the V1.8 legacy key if present
                 const limitVal = meta[`${stat}-limit`] ?? meta[`${stat}-max`];
                 newStats[stat].limit = limitVal !== undefined ? Number(limitVal) : 5;
             });
@@ -188,8 +187,8 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
                 hpCurr: meta['hp-curr'] !== undefined ? Number(meta['hp-curr']) : 5,
                 hpMax: meta['hp-max-display'] !== undefined ? Number(meta['hp-max-display']) : 5,
                 hpBase: meta['hp-base'] !== undefined ? Number(meta['hp-base']) : 4,
-                temporaryHitPoints:
-                    meta['temporary-hit-points'] !== undefined ? Number(meta['temporary-hit-points']) : 0
+                temporaryHitPoints: meta['temporary-hit-points'] !== undefined ? Number(meta['temporary-hit-points']) : 0,
+                temporaryHitPointsMax: meta['temporary-hit-points-max'] !== undefined ? Number(meta['temporary-hit-points-max']) : 0
             };
 
             const newWill = {
@@ -225,13 +224,13 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
                     isNPC: meta['is-npc'] === true || meta['is-npc'] === 'true',
                     pokemonBackup: String(meta['pokemon-backup'] || ''),
                     trainerBackup: String(meta['trainer-backup'] || ''),
-
+                    
                     activeTransformation: (meta['active-transformation'] as TransformationType) || 'None',
                     baseFormData: String(meta['base-form-data'] || ''),
                     altFormData: String(meta['alt-form-data'] || ''),
+                    maxFormData: String(meta['max-form-data'] || ''),
                     terastallizeAffinity: String(meta['terastallize-affinity'] || ''),
-                    terastallizeBonusActive:
-                        meta['terastallize-bonus-active'] === true || meta['terastallize-bonus-active'] === 'true',
+                    terastallizeBonusActive: meta['terastallize-bonus-active'] === true || meta['terastallize-bonus-active'] === 'true',
 
                     showTrackers: meta['show-trackers'] !== false && meta['show-trackers'] !== 'false',
                     settingHpBar: meta['setting-hp-bar'] !== false && meta['setting-hp-bar'] !== 'false',

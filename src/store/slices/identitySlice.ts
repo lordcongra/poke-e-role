@@ -43,7 +43,10 @@ const OBR_KEY_MAP: Record<string, string> = {
     claOffsetY: 'cla-offset-y',
     activeTransformation: 'active-transformation',
     terastallizeAffinity: 'terastallize-affinity',
-    terastallizeBonusActive: 'terastallize-bonus-active'
+    terastallizeBonusActive: 'terastallize-bonus-active',
+    baseFormData: 'base-form-data',
+    altFormData: 'alt-form-data',
+    maxFormData: 'max-form-data'
 };
 
 const parseLearnset = (movesObj: unknown): Array<{ Learned: string; Name: string }> => {
@@ -102,10 +105,11 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         learnset: [],
         pokemonBackup: '',
         trainerBackup: '',
-
+        
         activeTransformation: 'None',
         baseFormData: '',
         altFormData: '',
+        maxFormData: '',
         terastallizeAffinity: '',
         terastallizeBonusActive: false,
 

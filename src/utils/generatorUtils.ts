@@ -159,12 +159,16 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     for (const moveName of uniqueMoveNames) {
         const data = await fetchMoveData(moveName);
         if (data) {
-            const rawCategory = String(data.Category || 'Physical');
+            const rawCategory = String(data.Category || 'Physical').toLowerCase();
+            let cat = 'Status';
+            if (rawCategory.includes('phys')) cat = 'Phys';
+            else if (rawCategory.includes('spec') || rawCategory.includes('var')) cat = 'Spec';
+
             fetchedMoves.push({
                 id: crypto.randomUUID(),
                 name: moveName,
                 type: String(data.Type || 'Normal'),
-                cat: rawCategory === 'Physical' ? 'Phys' : rawCategory === 'Special' ? 'Spec' : 'Status',
+                cat: cat,
                 power: Number(data.Power) || 0,
                 desc: String(data.Effect || data.Description || ''),
                 dmgStat: normalizeStatistic(

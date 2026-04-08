@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import type { CharacterState, MacroSlice, TransformationType } from '../storeTypes';
+import type { CharacterState, MacroSlice, MoveData } from '../storeTypes';
 import { CombatStat, Skill } from '../../types/enums';
 import { saveToOwlbear } from '../../utils/obr';
 import OBR from '@owlbear-rodeo/sdk';
@@ -89,7 +89,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             return { identity: newIdentity, stats: newStats, health: newHealth, will: newWill, skills: newSkills };
         }),
 
-    toggleTransformation: (targetTransformation: TransformationType, affinity = '', autoMaxMoves = false) =>
+    toggleTransformation: (targetTransformation, affinity = '', autoMaxMoves = false, teraBlastConfig) =>
         set((state) => {
             const isCurrentlyTransformed = state.identity.activeTransformation !== 'None';
             const isReverting =
@@ -120,20 +120,21 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             if (isReverting) {
                 const previousTrans = state.identity.activeTransformation;
 
-                if (['Mega', 'Dynamax', 'Gigantamax', 'Custom'].includes(previousTrans)) {
-                    // Always backup the current state to altFormData in case it's a permanent shift (like Mega)
+                if (['Mega', 'Custom'].includes(previousTrans)) {
                     const backupStr = createFormBackup(state);
                     newIdentity.altFormData = backupStr;
                     updatesToSave['alt-form-data'] = backupStr;
+                } else if (['Dynamax', 'Gigantamax'].includes(previousTrans)) {
+                    const backupStr = createFormBackup(state);
+                    newIdentity.maxFormData = backupStr;
+                    updatesToSave['max-form-data'] = backupStr;
+                }
 
-                    // But ONLY load the base data if they actually swapped profiles!
-                    if (state.identity.baseFormData) {
-                        restoreFormBackup(state.identity.baseFormData, draft, updatesToSave);
-                    }
+                if (['Mega', 'Custom', 'Dynamax', 'Gigantamax', 'Terastallize'].includes(previousTrans) && state.identity.baseFormData) {
+                    restoreFormBackup(state.identity.baseFormData, draft, updatesToSave);
                 }
 
                 if (previousTrans === 'Gigantamax') {
-                    // Strip the flat +2 buffs granted by Gigantamax
                     newStats[CombatStat.STR].buff = Math.max(0, newStats[CombatStat.STR].buff - 2);
                     newStats[CombatStat.SPE].buff = Math.max(0, newStats[CombatStat.SPE].buff - 2);
                     newStats[CombatStat.DEX].buff = Math.max(0, newStats[CombatStat.DEX].buff - 2);
@@ -155,7 +156,9 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 }
 
                 newHealth.temporaryHitPoints = 0;
+                newHealth.temporaryHitPointsMax = 0;
                 updatesToSave['temporary-hit-points'] = 0;
+                updatesToSave['temporary-hit-points-max'] = 0;
 
                 newEffects = newEffects.filter((e) => !e.name.includes('Timer'));
                 updatesToSave['effects-data'] = JSON.stringify(newEffects);
@@ -171,15 +174,15 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     newWill.willCurr -= 1;
                 }
 
-                // Backup current state to base form so we can revert it later!
-                if (['Mega', 'Dynamax', 'Gigantamax', 'Custom'].includes(targetTransformation)) {
+                if (['Mega', 'Dynamax', 'Gigantamax', 'Custom', 'Terastallize'].includes(targetTransformation)) {
                     const backupStr = createFormBackup(state);
                     newIdentity.baseFormData = backupStr;
                     updatesToSave['base-form-data'] = backupStr;
 
-                    // ONLY LOAD the alternate data if it's a complete swap! (Mega / Custom)
                     if (['Mega', 'Custom'].includes(targetTransformation) && state.identity.altFormData) {
                         restoreFormBackup(state.identity.altFormData, draft, updatesToSave);
+                    } else if (['Dynamax', 'Gigantamax'].includes(targetTransformation) && state.identity.maxFormData) {
+                        restoreFormBackup(state.identity.maxFormData, draft, updatesToSave);
                     }
                 }
 
@@ -188,14 +191,31 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     newIdentity.terastallizeBonusActive = true;
                     updatesToSave['terastallize-affinity'] = affinity;
                     updatesToSave['terastallize-bonus-active'] = true;
+
+                    if (teraBlastConfig) {
+                        const teraBlastMove: MoveData = {
+                            id: crypto.randomUUID(),
+                            active: false,
+                            name: 'Tera Blast',
+                            type: affinity,
+                            category: teraBlastConfig.category,
+                            acc1: teraBlastConfig.acc1,
+                            acc2: teraBlastConfig.acc2,
+                            dmg1: teraBlastConfig.dmg1,
+                            power: 3,
+                            desc: 'Changes Type to match Terastallization.'
+                        };
+                        draft.moves.push(teraBlastMove);
+                        updatesToSave['moves-data'] = JSON.stringify(draft.moves);
+                    }
                 } else if (targetTransformation === 'Dynamax' || targetTransformation === 'Gigantamax') {
                     newHealth.temporaryHitPoints = targetTransformation === 'Dynamax' ? 6 : 12;
+                    newHealth.temporaryHitPointsMax = newHealth.temporaryHitPoints;
+                    
                     updatesToSave['temporary-hit-points'] = newHealth.temporaryHitPoints;
-
-                    newEffects = [
-                        ...newEffects,
-                        { id: crypto.randomUUID(), name: `${targetTransformation} Timer`, rounds: 3 }
-                    ];
+                    updatesToSave['temporary-hit-points-max'] = newHealth.temporaryHitPointsMax;
+                    
+                    newEffects = [...newEffects, { id: crypto.randomUUID(), name: `${targetTransformation} Timer`, rounds: 3 }];
                     updatesToSave['effects-data'] = JSON.stringify(newEffects);
 
                     if (targetTransformation === 'Gigantamax') {
@@ -212,8 +232,8 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                         updatesToSave['spd-buff'] = newDerived.sdefBuff;
                     }
 
-                    if (autoMaxMoves) {
-                        draft.moves = convertMovesToMax(draft.moves);
+                    if (autoMaxMoves && !state.identity.maxFormData) {
+                        draft.moves = convertMovesToMax(draft.moves, state.roomCustomTypes);
                         updatesToSave['moves-data'] = JSON.stringify(draft.moves);
                     }
                 }

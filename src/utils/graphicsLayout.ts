@@ -16,6 +16,10 @@ export function buildGraphicDefinitions(
     const scale = tokenScale * ((data.trackerScale ?? 100) / 100);
 
     const healthPercentage = Math.max(0, Math.min(1, data.hpCurr / Math.max(1, data.hpMax)));
+    const tempHpPercentage = data.temporaryHitPointsMax > 0 
+        ? Math.max(0, Math.min(1, data.temporaryHitPoints / data.temporaryHitPointsMax)) 
+        : 0;
+
     const willPercentage = Math.max(0, Math.min(1, data.willCurr / Math.max(1, data.willMax)));
 
     const barWidth = 112 * scale;
@@ -34,9 +38,8 @@ export function buildGraphicDefinitions(
 
     if (data.showHpBar) {
         const isVisible = (!data.gmHpBar || role === 'GM') && isTokenVisible;
-
-        // Change the bar to a striking purple if Temp HP is active!
-        const finalHpColor = data.temporaryHitPoints > 0 ? '#e040fb' : getHealthColor(healthPercentage);
+        
+        const finalHpColor = data.temporaryHitPoints > 0 ? '#c326df' : getHealthColor(healthPercentage);
 
         graphicDefinitions['hp-shadow'] = {
             type: 'CURVE',
@@ -81,6 +84,7 @@ export function buildGraphicDefinitions(
             visible: isVisible
         };
 
+        // Base HP bar (Green/Yellow/Red)
         graphicDefinitions['hp-fill'] = {
             type: 'CURVE',
             points: [
@@ -95,14 +99,31 @@ export function buildGraphicDefinitions(
             z: 3,
             visible: isVisible && healthPercentage > 0
         };
+
+        // Temp HP bar (Purple overlay) - Only render if tempHp is actually greater than 0
+        if (tempHpPercentage > 0) {
+            graphicDefinitions['temp-hp-fill'] = {
+                type: 'CURVE',
+                points: [
+                    { x: healthBaseX, y: healthBaseY },
+                    { x: healthBaseX + barWidth * Math.max(0.001, tempHpPercentage), y: healthBaseY }
+                ],
+                color: '#c326df',
+                strokeOpacity: 1,
+                width: 12 * scale,
+                closed: false,
+                fillOpacity: 0,
+                z: 4,
+                visible: isVisible
+            };
+        }
     }
 
     if (data.showHpText) {
         const isVisible = (!data.gmHpText || role === 'GM') && isTokenVisible;
-        const hpString =
-            data.temporaryHitPoints > 0
-                ? `${data.hpCurr}+${data.temporaryHitPoints}/${data.hpMax}`
-                : `${data.hpCurr}/${data.hpMax}`;
+        const hpString = data.temporaryHitPoints > 0 
+            ? `${data.hpCurr}+${data.temporaryHitPoints}/${data.hpMax}` 
+            : `${data.hpCurr}/${data.hpMax}`;
 
         graphicDefinitions['hp-text'] = {
             type: 'TEXT',

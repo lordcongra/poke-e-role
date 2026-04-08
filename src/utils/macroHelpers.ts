@@ -1,4 +1,4 @@
-import type { CharacterState, MoveData } from '../store/storeTypes';
+import type { CharacterState, MoveData, CustomType } from '../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { parseCombatTags, getAbilityText } from './combatMath';
 import { MAX_MOVES_DATA } from '../data/maxMoves';
@@ -189,9 +189,7 @@ export const restoreFormBackup = (
         }
 
         if (loadedData.stats) {
-            Object.entries(
-                loadedData.stats as Record<string, { base?: number; rank?: number; limit?: number }>
-            ).forEach(([stat, val]) => {
+            Object.entries(loadedData.stats as Record<string, { base?: number; rank?: number; limit?: number }>).forEach(([stat, val]) => {
                 const s = stat as CombatStat;
                 if (stats[s]) {
                     stats[s].base = val.base !== undefined ? Number(val.base) : stats[s].base;
@@ -206,9 +204,7 @@ export const restoreFormBackup = (
         }
 
         if (loadedData.socials) {
-            Object.entries(
-                loadedData.socials as Record<string, { base?: number; rank?: number; limit?: number }>
-            ).forEach(([stat, val]) => {
+            Object.entries(loadedData.socials as Record<string, { base?: number; rank?: number; limit?: number }>).forEach(([stat, val]) => {
                 const s = stat as SocialStat;
                 if (socials[s]) {
                     socials[s].base = val.base !== undefined ? Number(val.base) : socials[s].base;
@@ -223,18 +219,16 @@ export const restoreFormBackup = (
         }
 
         if (loadedData.skills) {
-            Object.entries(loadedData.skills as Record<string, { base?: number; customName?: string }>).forEach(
-                ([sk, val]) => {
-                    const s = sk as Skill;
-                    if (skills[s]) {
-                        skills[s].base = val.base !== undefined ? Number(val.base) : skills[s].base;
-                        if (val.customName !== undefined) skills[s].customName = String(val.customName);
+            Object.entries(loadedData.skills as Record<string, { base?: number; customName?: string }>).forEach(([sk, val]) => {
+                const s = sk as Skill;
+                if (skills[s]) {
+                    skills[s].base = val.base !== undefined ? Number(val.base) : skills[s].base;
+                    if (val.customName !== undefined) skills[s].customName = String(val.customName);
 
-                        updatesToSave[`${s}-base`] = skills[s].base;
-                        if (val.customName !== undefined) updatesToSave[`label-${s}`] = skills[s].customName;
-                    }
+                    updatesToSave[`${s}-base`] = skills[s].base;
+                    if (val.customName !== undefined) updatesToSave[`label-${s}`] = skills[s].customName;
                 }
-            );
+            });
         }
 
         if (loadedData.moves) {
@@ -246,8 +240,8 @@ export const restoreFormBackup = (
     }
 };
 
-export const convertMovesToMax = (moves: MoveData[]): MoveData[] => {
-    return moves.map((m) => {
+export const convertMovesToMax = (moves: MoveData[], customTypes: CustomType[]): MoveData[] => {
+    return moves.map(m => {
         if (m.category === 'Status') {
             return {
                 ...m,
@@ -258,13 +252,25 @@ export const convertMovesToMax = (moves: MoveData[]): MoveData[] => {
             };
         }
 
-        const maxData = MAX_MOVES_DATA[m.type] || { name: `Max ${m.type}`, effect: 'No specific Max effect found.' };
-
+        const customType = customTypes.find(t => t.name.toLowerCase() === m.type.toLowerCase());
+        let maxName = `Max ${m.type}`;
+        let maxEffect = 'No specific Max effect found.';
+        
+        if (customType && customType.maxMoveName) {
+            maxName = customType.maxMoveName;
+            maxEffect = customType.maxMoveEffect || maxEffect;
+        } else if (MAX_MOVES_DATA[m.type]) {
+            maxName = MAX_MOVES_DATA[m.type].name;
+            maxEffect = MAX_MOVES_DATA[m.type].effect;
+        }
+        
+        const retainedTags = (m.desc || '').match(/\[.*?\]/g)?.join(' ') || '';
+        
         return {
             ...m,
-            name: maxData.name,
+            name: maxName,
             power: m.power + 2,
-            desc: `${maxData.effect} [Acc +2]`
+            desc: `${maxEffect} [Acc +2] ${retainedTags}`.trim()
         };
     });
 };

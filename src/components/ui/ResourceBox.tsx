@@ -7,24 +7,16 @@ interface ResourceBoxProps {
     max: number;
     base: number;
     temp?: number;
+    tempMax?: number;
     color: string;
     onCurrChange: (val: number) => void;
     onBaseChange: (val: number) => void;
     onTempChange?: (val: number) => void;
 }
 
-export function ResourceBox({
-    title,
-    curr,
-    max,
-    base,
-    temp,
-    color,
-    onCurrChange,
-    onBaseChange,
-    onTempChange
-}: ResourceBoxProps) {
+export function ResourceBox({ title, curr, max, base, temp, tempMax, color, onCurrChange, onBaseChange, onTempChange }: ResourceBoxProps) {
     const pct = Math.max(0, Math.min(100, (curr / Math.max(1, max)) * 100));
+    const tempPct = tempMax && tempMax > 0 ? Math.max(0, Math.min(100, ((temp || 0) / tempMax) * 100)) : 0;
 
     let barColor = color;
     if (title === 'HP') {
@@ -40,16 +32,18 @@ export function ResourceBox({
             <div className="health-section__header health-section__header--shadow">{title}</div>
             <div className="resource-box">
                 <div className="resource-bar-fill" style={{ backgroundColor: barColor, width: `${pct}%` }}></div>
+                
+                {temp !== undefined && temp > 0 && tempMax && (
+                    <div className="resource-bar-fill resource-bar-fill--temp" style={{ width: `${tempPct}%` }}></div>
+                )}
 
                 <div className="resource-box__main resource-box__content-layer">
                     <span className="resource-box__label">Curr:</span>
                     <NumberSpinner value={curr} onChange={onCurrChange} min={0} />
-
+                    
                     {temp !== undefined && temp > 0 && onTempChange && (
                         <>
-                            <span className="resource-box__temp-plus" title="Temporary HP (Dynamax Shield)">
-                                +
-                            </span>
+                            <span className="resource-box__temp-plus" title="Temporary HP (Dynamax Shield)">+</span>
                             <NumberSpinner value={temp} onChange={onTempChange} min={0} />
                         </>
                     )}

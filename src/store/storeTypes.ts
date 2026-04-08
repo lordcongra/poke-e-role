@@ -18,12 +18,19 @@ import type {
     CustomItem,
     CustomMove,
     CustomPokemon,
-    CustomType
+    CustomType as BaseCustomType
 } from './entityTypes';
 
 export * from './entityTypes';
 
 export type TransformationType = 'None' | 'Mega' | 'Dynamax' | 'Gigantamax' | 'Terastallize' | 'Custom';
+
+export interface CustomType extends BaseCustomType {
+    /** 'maxMoveName' = Custom name for this type's Max Move */
+    maxMoveName?: string;
+    /** 'maxMoveEffect' = Custom effect text for this type's Max Move */
+    maxMoveEffect?: string;
+}
 
 export interface PendingDualScale {
     moveId: string;
@@ -31,6 +38,15 @@ export interface PendingDualScale {
     acc1Options?: string[];
     acc2Options?: string[];
     dmg1Options?: string[];
+    /** 'categoryOptions' = Triggers a prompt if the move category is Variable or undefined */
+    categoryOptions?: ('Physical' | 'Special' | 'Status')[];
+}
+
+export interface TeraBlastConfig {
+    category: 'Physical' | 'Special';
+    acc1: string;
+    acc2: string;
+    dmg1: string;
 }
 
 export interface PrintConfig {
@@ -66,6 +82,8 @@ export interface CoreSlice {
         hpBase: number;
         /** 'temporaryHitPoints' = Shield HP granted by Dynamax/Gigantamax */
         temporaryHitPoints: number;
+        /** 'temporaryHitPointsMax' = Tracks the ceiling of the shield for the visual bar */
+        temporaryHitPointsMax: number;
     };
     will: {
         /** 'willCurr' = Current Willpower */
@@ -109,7 +127,7 @@ export interface MovesSlice {
     pendingDualScale: PendingDualScale | null;
 
     setPendingDualScale: (data: PendingDualScale | null) => void;
-    resolveDualScale: (moveId: string, acc1?: string, acc2?: string, dmg1?: string) => void;
+    resolveDualScale: (moveId: string, acc1?: string, acc2?: string, dmg1?: string, category?: 'Physical' | 'Special' | 'Status') => void;
     addMove: () => void;
     updateMove: <K extends keyof MoveData>(id: string, field: K, value: MoveData[K]) => void;
     removeMove: (id: string) => void;
@@ -130,12 +148,7 @@ export interface InventorySlice {
     /** 'currency' = PokéDollars */
     currency: number;
     addInventoryItem: () => void;
-    addSpecificInventoryItem: (item: {
-        name: string;
-        description: string;
-        quantity?: number;
-        active?: boolean;
-    }) => void;
+    addSpecificInventoryItem: (item: { name: string; description: string; quantity?: number; active?: boolean; }) => void;
     updateInventoryItem: <K extends keyof InventoryItem>(id: string, field: K, value: InventoryItem[K]) => void;
     removeInventoryItem: (id: string) => void;
     moveUpInventoryItem: (id: string) => void;
@@ -198,38 +211,21 @@ export interface HomebrewSlice {
     overwriteCustomMoveData: (moves: CustomMove[]) => void;
     overwriteCustomPokemonData: (pokemon: CustomPokemon[]) => void;
     overwriteCustomItemData: (items: CustomItem[]) => void;
-    overwriteAllHomebrewData: (
-        types: CustomType[],
-        abilities: CustomAbility[],
-        moves: CustomMove[],
-        pokemon: CustomPokemon[],
-        items: CustomItem[]
-    ) => void;
+    overwriteAllHomebrewData: (types: CustomType[], abilities: CustomAbility[], moves: CustomMove[], pokemon: CustomPokemon[], items: CustomItem[]) => void;
 
     mergeCustomTypeData: (types: CustomType[]) => void;
     mergeCustomAbilityData: (abilities: CustomAbility[]) => void;
     mergeCustomMoveData: (moves: CustomMove[]) => void;
     mergeCustomPokemonData: (pokemon: CustomPokemon[]) => void;
     mergeCustomItemData: (items: CustomItem[]) => void;
-    mergeAllHomebrewData: (
-        types: CustomType[],
-        abilities: CustomAbility[],
-        moves: CustomMove[],
-        pokemon: CustomPokemon[],
-        items: CustomItem[]
-    ) => void;
+    mergeAllHomebrewData: (types: CustomType[], abilities: CustomAbility[], moves: CustomMove[], pokemon: CustomPokemon[], items: CustomItem[]) => void;
 }
 
 export interface ExtraSkillsSlice {
     extraCategories: ExtraCategory[];
     addExtraCategory: () => void;
     updateExtraCategory: (id: string, name: string) => void;
-    updateExtraSkill: <K extends keyof ExtraSkill>(
-        categoryId: string,
-        skillId: string,
-        field: K,
-        value: ExtraSkill[K]
-    ) => void;
+    updateExtraSkill: <K extends keyof ExtraSkill>(categoryId: string, skillId: string, field: K, value: ExtraSkill[K]) => void;
     removeExtraCategory: (id: string) => void;
 }
 
@@ -266,11 +262,17 @@ export interface IdentitySlice {
         pokemonBackup?: string;
         trainerBackup?: string;
 
-        // Transformation Engine Data
+        /** 'activeTransformation' = Tracks if the character is currently Mega Evolved, Dynamaxed, etc. */
         activeTransformation: TransformationType;
+        /** 'baseFormData' = JSON backup of the original form before transforming */
         baseFormData?: string;
+        /** 'altFormData' = JSON backup of a Mega/Custom form to preserve edits across transformations */
         altFormData?: string;
+        /** 'maxFormData' = JSON backup of Dynamax/Gigantamax specific adjustments */
+        maxFormData?: string;
+        /** 'terastallizeAffinity' = The chosen type when Terastallizing */
         terastallizeAffinity: string;
+        /** 'terastallizeBonusActive' = Flags if the first-attack Tera damage bonus is available */
         terastallizeBonusActive: boolean;
 
         showTrackers: boolean;
@@ -320,7 +322,7 @@ export interface IdentitySlice {
 
 export interface MacroSlice {
     setMode: (mode: 'Pokémon' | 'Trainer') => void;
-    toggleTransformation: (targetTransformation: TransformationType, affinity?: string, autoMaxMoves?: boolean) => void;
+    toggleTransformation: (targetTransformation: TransformationType, affinity?: string, autoMaxMoves?: boolean, teraBlastConfig?: TeraBlastConfig) => void;
     applySpeciesData: (data: Record<string, unknown>, wipeData?: boolean, updateStats?: boolean) => void;
     refreshSpeciesData: (data: Record<string, unknown>) => void;
 }
@@ -330,14 +332,4 @@ export interface SyncSlice {
 }
 
 export interface CharacterState
-    extends
-        CoreSlice,
-        MovesSlice,
-        InventorySlice,
-        TrackerSlice,
-        HomebrewSlice,
-        ExtraSkillsSlice,
-        GeneratorSlice,
-        IdentitySlice,
-        MacroSlice,
-        SyncSlice {}
+    extends CoreSlice, MovesSlice, InventorySlice, TrackerSlice, HomebrewSlice, ExtraSkillsSlice, GeneratorSlice, IdentitySlice, MacroSlice, SyncSlice {}
