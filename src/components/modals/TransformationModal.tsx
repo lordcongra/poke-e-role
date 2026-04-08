@@ -43,7 +43,21 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
         localStorage.setItem('pokerole-last-trans', val);
     };
 
+    const isTransforming = activeTrans === 'None';
+    const willCost = selectedTrans === 'Mega' || selectedTrans === 'Terastallize' ? 1 : 0;
+    const canAfford = willCurr >= willCost;
+
     const handleApply = () => {
+        // 🔥 Catch the click and notify the user if they can't afford it!
+        if (!canAfford) {
+            if (OBR.isAvailable) {
+                OBR.notification.show(`⚠️ Not enough Willpower! ${selectedTrans} requires ${willCost} Will.`, 'ERROR');
+            } else {
+                alert(`Not enough Willpower! ${selectedTrans} requires ${willCost} Will.`);
+            }
+            return; // Stop the transformation and keep the modal open
+        }
+
         toggleTransformation(selectedTrans, affinity, autoMaxMoves, {
             category: teraCategory,
             acc1: teraCategory === 'Physical' ? 'str' : 'spe',
@@ -68,10 +82,6 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
         }
         setClearConfirmType(null);
     };
-
-    const isTransforming = activeTrans === 'None';
-    const willCost = selectedTrans === 'Mega' || selectedTrans === 'Terastallize' ? 1 : 0;
-    const canAfford = willCurr >= willCost;
 
     return (
         <div className="transformation-modal__overlay">
@@ -215,7 +225,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                 type="button"
                                 className="action-button action-button--red transformation-modal__btn"
                                 onClick={handleApply}
-                                disabled={!canAfford}
+                                style={{ opacity: canAfford ? 1 : 0.6 }} // Visual indicator that it's "locked" but still clickable
                             >
                                 ✨ Activate
                             </button>

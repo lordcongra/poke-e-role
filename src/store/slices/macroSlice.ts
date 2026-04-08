@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import type { CharacterState, MacroSlice, MoveData } from '../storeTypes';
+import type { CharacterState, MacroSlice, TransformationType, MoveData } from '../storeTypes';
 import { CombatStat, Skill } from '../../types/enums';
 import { saveToOwlbear } from '../../utils/obr';
 import OBR from '@owlbear-rodeo/sdk';
@@ -89,7 +89,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             return { identity: newIdentity, stats: newStats, health: newHealth, will: newWill, skills: newSkills };
         }),
 
-    toggleTransformation: (targetTransformation, affinity = '', autoMaxMoves = false, teraBlastConfig) =>
+    toggleTransformation: (targetTransformation: TransformationType, affinity = '', autoMaxMoves = false, teraBlastConfig) =>
         set((state) => {
             const isCurrentlyTransformed = state.identity.activeTransformation !== 'None';
             const isReverting =
@@ -108,11 +108,13 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             const draft = {
                 identity: newIdentity,
                 health: newHealth,
+                will: newWill,
                 derived: newDerived,
                 stats: newStats,
                 socials: newSocials,
                 moves: [...state.moves],
-                skills: { ...state.skills }
+                skills: { ...state.skills },
+                statuses: newStatuses
             };
 
             const updatesToSave: Record<string, unknown> = {};
@@ -121,17 +123,18 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 const previousTrans = state.identity.activeTransformation;
 
                 if (['Mega', 'Custom'].includes(previousTrans)) {
-                    const backupStr = createFormBackup(state);
+                    const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
                     newIdentity.altFormData = backupStr;
                     updatesToSave['alt-form-data'] = backupStr;
                 } else if (['Dynamax', 'Gigantamax'].includes(previousTrans)) {
-                    const backupStr = createFormBackup(state);
+                    const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
                     newIdentity.maxFormData = backupStr;
                     updatesToSave['max-form-data'] = backupStr;
                 }
 
                 if (['Mega', 'Custom', 'Dynamax', 'Gigantamax', 'Terastallize'].includes(previousTrans) && state.identity.baseFormData) {
-                    restoreFormBackup(state.identity.baseFormData, draft, updatesToSave);
+                    const restoreResources = ['Mega', 'Custom'].includes(previousTrans);
+                    restoreFormBackup(state.identity.baseFormData, draft, updatesToSave, restoreResources);
                 }
 
                 if (previousTrans === 'Gigantamax') {
@@ -175,14 +178,15 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 }
 
                 if (['Mega', 'Dynamax', 'Gigantamax', 'Custom', 'Terastallize'].includes(targetTransformation)) {
-                    const backupStr = createFormBackup(state);
+                    // Pass the drafted variables to createFormBackup so the Base form accurately records the -1 Will!
+                    const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
                     newIdentity.baseFormData = backupStr;
                     updatesToSave['base-form-data'] = backupStr;
 
                     if (['Mega', 'Custom'].includes(targetTransformation) && state.identity.altFormData) {
-                        restoreFormBackup(state.identity.altFormData, draft, updatesToSave);
+                        restoreFormBackup(state.identity.altFormData, draft, updatesToSave, true);
                     } else if (['Dynamax', 'Gigantamax'].includes(targetTransformation) && state.identity.maxFormData) {
-                        restoreFormBackup(state.identity.maxFormData, draft, updatesToSave);
+                        restoreFormBackup(state.identity.maxFormData, draft, updatesToSave, false);
                     }
                 }
 
@@ -250,8 +254,8 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 updatesToSave['hp-curr'] = newHealth.hpCurr;
                 updatesToSave['will-curr'] = newWill.willCurr;
 
-                newStatuses = [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }];
-                updatesToSave['status-list'] = JSON.stringify(newStatuses);
+                draft.statuses = [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }];
+                updatesToSave['status-list'] = JSON.stringify(draft.statuses);
             }
 
             try {
@@ -267,7 +271,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 health: newHealth,
                 will: newWill,
                 derived: newDerived,
-                statuses: newStatuses,
+                statuses: draft.statuses,
                 effects: newEffects,
                 moves: draft.moves,
                 skills: draft.skills

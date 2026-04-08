@@ -1,4 +1,4 @@
-import type { CharacterState, MoveData, CustomType } from '../store/storeTypes';
+import type { CharacterState, MoveData, StatusItem, CustomType } from '../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { parseCombatTags, getAbilityText } from './combatMath';
 import { MAX_MOVES_DATA } from '../data/maxMoves';
@@ -110,7 +110,12 @@ export const syncHealthAndWill = (
     updatesToSave['will-max-display'] = newWill.willMax;
 };
 
-export const createFormBackup = (state: CharacterState): string => {
+export const createFormBackup = (
+    state: CharacterState,
+    healthDraft?: CharacterState['health'],
+    willDraft?: CharacterState['will'],
+    statusesDraft?: CharacterState['statuses']
+): string => {
     const backupData: Record<string, unknown> = {
         species: state.identity.species,
         type1: state.identity.type1,
@@ -118,6 +123,9 @@ export const createFormBackup = (state: CharacterState): string => {
         ability: state.identity.ability,
         availableAbilities: state.identity.availableAbilities,
         hpBase: state.health.hpBase,
+        hpCurr: healthDraft ? healthDraft.hpCurr : state.health.hpCurr,
+        willCurr: willDraft ? willDraft.willCurr : state.will.willCurr,
+        statuses: statusesDraft ? statusesDraft : state.statuses,
         moves: state.moves
     };
 
@@ -158,16 +166,20 @@ export const restoreFormBackup = (
     draft: {
         identity: CharacterState['identity'];
         health: CharacterState['health'];
+        will: CharacterState['will'];
+        derived: CharacterState['derived'];
         stats: CharacterState['stats'];
         socials: CharacterState['socials'];
         moves: CharacterState['moves'];
         skills: CharacterState['skills'];
+        statuses: CharacterState['statuses'];
     },
-    updatesToSave: Record<string, unknown>
+    updatesToSave: Record<string, unknown>,
+    restoreResources: boolean = false
 ) => {
     try {
         const loadedData = JSON.parse(backupStr);
-        const { identity, health, stats, socials, skills } = draft;
+        const { identity, health, will, stats, socials, skills } = draft;
 
         identity.species = String(loadedData.species ?? identity.species);
         identity.type1 = String(loadedData.type1 ?? identity.type1);
@@ -186,6 +198,21 @@ export const restoreFormBackup = (
         if (loadedData.hpBase !== undefined) {
             health.hpBase = Number(loadedData.hpBase);
             updatesToSave['hp-base'] = health.hpBase;
+        }
+
+        if (restoreResources) {
+            if (loadedData.hpCurr !== undefined) {
+                health.hpCurr = Number(loadedData.hpCurr);
+                updatesToSave['hp-curr'] = health.hpCurr;
+            }
+            if (loadedData.willCurr !== undefined) {
+                will.willCurr = Number(loadedData.willCurr);
+                updatesToSave['will-curr'] = will.willCurr;
+            }
+            if (loadedData.statuses !== undefined) {
+                draft.statuses = loadedData.statuses as StatusItem[];
+                updatesToSave['status-list'] = JSON.stringify(draft.statuses);
+            }
         }
 
         if (loadedData.stats) {
