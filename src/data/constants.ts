@@ -21,7 +21,8 @@ export const POKEMON_TYPES = [
     'Dragon',
     'Dark',
     'Steel',
-    'Fairy'
+    'Fairy',
+    'Stellar'
 ];
 
 export const TYPE_COLORS: Record<string, string> = {
@@ -42,7 +43,8 @@ export const TYPE_COLORS: Record<string, string> = {
     Dragon: '#7038F8',
     Dark: '#705848',
     Steel: '#B8B8D0',
-    Fairy: '#EE99AC'
+    Fairy: '#EE99AC',
+    Stellar: '#4DD0E1'
 };
 
 export const NATURES = [

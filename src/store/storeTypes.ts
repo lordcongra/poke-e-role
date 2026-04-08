@@ -23,6 +23,8 @@ import type {
 
 export * from './entityTypes';
 
+export type TransformationType = 'None' | 'Mega' | 'Dynamax' | 'Gigantamax' | 'Terastallize' | 'Custom';
+
 export interface PendingDualScale {
     moveId: string;
     moveName: string;
@@ -62,6 +64,8 @@ export interface CoreSlice {
         hpMax: number;
         /** 'hpBase' = Base Hit Points (Before Vitality/Insight scaling) */
         hpBase: number;
+        /** 'temporaryHitPoints' = Shield HP granted by Dynamax/Gigantamax */
+        temporaryHitPoints: number;
     };
     will: {
         /** 'willCurr' = Current Willpower */
@@ -261,9 +265,13 @@ export interface IdentitySlice {
         learnset: Array<{ Learned: string; Name: string }>;
         pokemonBackup?: string;
         trainerBackup?: string;
-        isAltForm: boolean;
+
+        // Transformation Engine Data
+        activeTransformation: TransformationType;
         baseFormData?: string;
         altFormData?: string;
+        terastallizeAffinity: string;
+        terastallizeBonusActive: boolean;
 
         showTrackers: boolean;
         settingHpBar: boolean;
@@ -312,7 +320,7 @@ export interface IdentitySlice {
 
 export interface MacroSlice {
     setMode: (mode: 'Pokémon' | 'Trainer') => void;
-    toggleForm: () => void;
+    toggleTransformation: (targetTransformation: TransformationType, affinity?: string) => void;
     applySpeciesData: (data: Record<string, unknown>, wipeData?: boolean, updateStats?: boolean) => void;
     refreshSpeciesData: (data: Record<string, unknown>) => void;
 }

@@ -9,7 +9,8 @@ import type {
     InventoryItem,
     StatusItem,
     EffectItem,
-    CustomInfo
+    CustomInfo,
+    TransformationType
 } from '../storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 
@@ -186,7 +187,8 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
             const newHealth = {
                 hpCurr: meta['hp-curr'] !== undefined ? Number(meta['hp-curr']) : 5,
                 hpMax: meta['hp-max-display'] !== undefined ? Number(meta['hp-max-display']) : 5,
-                hpBase: meta['hp-base'] !== undefined ? Number(meta['hp-base']) : 4
+                hpBase: meta['hp-base'] !== undefined ? Number(meta['hp-base']) : 4,
+                temporaryHitPoints: meta['temporary-hit-points'] !== undefined ? Number(meta['temporary-hit-points']) : 0
             };
 
             const newWill = {
@@ -222,9 +224,12 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
                     isNPC: meta['is-npc'] === true || meta['is-npc'] === 'true',
                     pokemonBackup: String(meta['pokemon-backup'] || ''),
                     trainerBackup: String(meta['trainer-backup'] || ''),
+                    
+                    activeTransformation: (meta['active-transformation'] as TransformationType) || 'None',
                     baseFormData: String(meta['base-form-data'] || ''),
                     altFormData: String(meta['alt-form-data'] || ''),
-                    isAltForm: meta['is-alt-form'] === true || meta['is-alt-form'] === 'true',
+                    terastallizeAffinity: String(meta['terastallize-affinity'] || ''),
+                    terastallizeBonusActive: meta['terastallize-bonus-active'] === true || meta['terastallize-bonus-active'] === 'true',
 
                     showTrackers: meta['show-trackers'] !== false && meta['show-trackers'] !== 'false',
                     settingHpBar: meta['setting-hp-bar'] !== false && meta['setting-hp-bar'] !== 'false',

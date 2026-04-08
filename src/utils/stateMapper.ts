@@ -37,7 +37,11 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (state.identity.type1 !== undefined) flatMetadata['type1'] = state.identity.type1;
             if (state.identity.type2 !== undefined) flatMetadata['type2'] = state.identity.type2;
             if (state.identity.mode !== undefined) flatMetadata['mode'] = state.identity.mode;
-            if (state.identity.isAltForm !== undefined) flatMetadata['is-alt-form'] = state.identity.isAltForm;
+            
+            // New Transformation Variables
+            if (state.identity.activeTransformation !== undefined) flatMetadata['active-transformation'] = state.identity.activeTransformation;
+            if (state.identity.terastallizeAffinity !== undefined) flatMetadata['terastallize-affinity'] = state.identity.terastallizeAffinity;
+            if (state.identity.terastallizeBonusActive !== undefined) flatMetadata['terastallize-bonus-active'] = state.identity.terastallizeBonusActive;
 
             // Safely pass through our form backups
             sanitizeBackup(state.identity.baseFormData, 'base-form-data');
@@ -51,6 +55,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (state.health.hpCurr !== undefined) flatMetadata['hp-curr'] = state.health.hpCurr;
             if (state.health.hpMax !== undefined) flatMetadata['hp-max-display'] = state.health.hpMax;
             if (state.health.hpBase !== undefined) flatMetadata['hp-base'] = state.health.hpBase;
+            if (state.health.temporaryHitPoints !== undefined) flatMetadata['temporary-hit-points'] = state.health.temporaryHitPoints;
         }
         
         if (state.will) {

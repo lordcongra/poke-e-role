@@ -1,99 +1,17 @@
 import type { StateCreator } from 'zustand';
-import type { CharacterState, MacroSlice } from '../storeTypes';
+import type { CharacterState, MacroSlice, TransformationType } from '../storeTypes';
 import { CombatStat, Skill } from '../../types/enums';
 import { saveToOwlbear } from '../../utils/obr';
-import { parseCombatTags, getAbilityText } from '../../utils/combatMath';
-
-const parseLearnset = (movesObj: unknown): Array<{ Learned: string; Name: string }> => {
-    const result: Array<{ Learned: string; Name: string }> = [];
-    if (Array.isArray(movesObj)) {
-        movesObj.forEach((m: unknown) => {
-            if (typeof m === 'string') result.push({ Learned: 'Other', Name: m });
-            else if (typeof m === 'object' && m !== null) {
-                const mRec = m as Record<string, unknown>;
-                const rank = mRec.Learned || mRec.Learn || mRec.Level || mRec.Rank || 'Other';
-                const name = mRec.Name || mRec.Move || '';
-                if (name) result.push({ Learned: String(rank), Name: String(name) });
-            }
-        });
-    } else if (typeof movesObj === 'object' && movesObj !== null) {
-        Object.entries(movesObj).forEach(([rank, mList]) => {
-            if (Array.isArray(mList)) {
-                mList.forEach((m: unknown) => {
-                    let name = '';
-                    if (typeof m === 'string') name = m;
-                    else if (typeof m === 'object' && m !== null) {
-                        const mRec = m as Record<string, unknown>;
-                        name = String(mRec.Name || mRec.Move || '');
-                    }
-                    if (name) result.push({ Learned: rank, Name: name });
-                });
-            }
-        });
-    }
-    return result;
-};
-
-const getLimit = (pd: Record<string, unknown>, stat: string) => {
-    const maxAttr = pd.MaxAttributes as Record<string, string | number> | undefined;
-    const maxStats = pd.MaxStats as Record<string, string | number> | undefined;
-    const val = pd[`Max${stat}`] || pd[`Max ${stat}`] || (maxAttr && maxAttr[stat]) || (maxStats && maxStats[stat]);
-    return val ? parseInt(String(val)) : 5;
-};
-
-const getBase = (pd: Record<string, unknown>, stat: string, fallback: number) => {
-    const baseAttr = pd.Attributes || pd.BaseAttributes || pd;
-    const val = (baseAttr as Record<string, unknown>)[stat];
-    return val ? parseInt(String(val)) : fallback;
-};
-
-// DRY HELPER: Consolidates the massive HP/Will calculation logic shared by multiple macros
-const syncHealthAndWill = (
-    state: CharacterState,
-    newStats: CharacterState['stats'],
-    newIdentity: CharacterState['identity'],
-    newHealth: CharacterState['health'],
-    newWill: CharacterState['will'],
-    updatesToSave: Record<string, unknown>
-) => {
-    const abilityText = getAbilityText(newIdentity.ability, state.roomCustomAbilities);
-    const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
-
-    const vitTotal = Math.max(
-        1,
-        newStats[CombatStat.VIT].base +
-            newStats[CombatStat.VIT].rank +
-            newStats[CombatStat.VIT].buff -
-            newStats[CombatStat.VIT].debuff +
-            (invMods.stats.vit || 0)
-    );
-    const insTotal = Math.max(
-        1,
-        newStats[CombatStat.INS].base +
-            newStats[CombatStat.INS].rank +
-            newStats[CombatStat.INS].buff -
-            newStats[CombatStat.INS].debuff +
-            (invMods.stats.ins || 0)
-    );
-
-    let hpStat = vitTotal;
-    if (state.identity.ruleset === 'vg-high-hp') hpStat = Math.max(vitTotal, insTotal);
-
-    const oldHpMax = newHealth.hpMax;
-    newHealth.hpMax = newHealth.hpBase + hpStat;
-    if (newHealth.hpMax > oldHpMax) newHealth.hpCurr += newHealth.hpMax - oldHpMax;
-    else if (newHealth.hpCurr > newHealth.hpMax) newHealth.hpCurr = newHealth.hpMax;
-
-    const oldWillMax = newWill.willMax;
-    newWill.willMax = newWill.willBase + insTotal;
-    if (newWill.willMax > oldWillMax) newWill.willCurr += newWill.willMax - oldWillMax;
-    else if (newWill.willCurr > newWill.willMax) newWill.willCurr = newWill.willMax;
-
-    updatesToSave['hp-curr'] = newHealth.hpCurr;
-    updatesToSave['hp-max-display'] = newHealth.hpMax;
-    updatesToSave['will-curr'] = newWill.willCurr;
-    updatesToSave['will-max-display'] = newWill.willMax;
-};
+import OBR from '@owlbear-rodeo/sdk';
+import {
+    parseLearnset,
+    getLimit,
+    getBase,
+    extractAbilities,
+    syncHealthAndWill,
+    createFormBackup,
+    restoreFormBackup
+} from '../../utils/macroHelpers';
 
 export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> = (set) => ({
     setMode: (newMode) =>
@@ -170,78 +88,141 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             return { identity: newIdentity, stats: newStats, health: newHealth, will: newWill, skills: newSkills };
         }),
 
-    toggleForm: () =>
+    toggleTransformation: (targetTransformation: TransformationType, affinity = '') =>
         set((state) => {
-            const isAlt = state.identity.isAltForm;
-            const currentSaveKey = isAlt ? 'altFormData' : 'baseFormData';
-            const targetLoadKey = isAlt ? 'baseFormData' : 'altFormData';
-            const obrSaveKey = isAlt ? 'alt-form-data' : 'base-form-data';
+            const isCurrentlyTransformed = state.identity.activeTransformation !== 'None';
+            const isReverting =
+                targetTransformation === 'None' ||
+                (isCurrentlyTransformed && state.identity.activeTransformation === targetTransformation);
 
-            const currentData: Record<string, unknown> = {
-                species: state.identity.species,
-                type1: state.identity.type1,
-                type2: state.identity.type2,
-                ability: state.identity.ability,
-                availableAbilities: state.identity.availableAbilities,
-                hpBase: state.health.hpBase
-            };
-            Object.values(CombatStat).forEach((stat) => {
-                currentData[`${stat}Base`] = state.stats[stat].base;
-                currentData[`${stat}Limit`] = state.stats[stat].limit;
-            });
-            const backupStr = JSON.stringify(currentData);
-
-            const updatesToSave: Record<string, unknown> = { 'is-alt-form': !isAlt, [obrSaveKey]: backupStr };
-            const newIdentity = { ...state.identity, isAltForm: !isAlt, [currentSaveKey]: backupStr };
+            const newIdentity = { ...state.identity };
             const newStats = { ...state.stats };
             const newHealth = { ...state.health };
             const newWill = { ...state.will };
+            const newDerived = { ...state.derived };
+            let newStatuses = [...state.statuses];
+            let newEffects = [...state.effects];
 
-            let loadedData = currentData;
-            if (state.identity[targetLoadKey]) {
-                try {
-                    loadedData = JSON.parse(state.identity[targetLoadKey]!);
-                } catch (e) {}
-            }
+            const draft = {
+                identity: newIdentity,
+                health: newHealth,
+                derived: newDerived,
+                stats: newStats,
+                moves: [...state.moves],
+                skills: { ...state.skills }
+            };
 
-            newIdentity.species = String(loadedData.species ?? newIdentity.species);
-            newIdentity.type1 = String(loadedData.type1 ?? newIdentity.type1);
-            newIdentity.type2 = String(loadedData.type2 ?? newIdentity.type2);
-            newIdentity.ability = String(loadedData.ability ?? newIdentity.ability);
-            newIdentity.availableAbilities = Array.isArray(loadedData.availableAbilities)
-                ? loadedData.availableAbilities
-                : newIdentity.availableAbilities;
+            const updatesToSave: Record<string, unknown> = {};
 
-            updatesToSave['species'] = newIdentity.species;
-            updatesToSave['type1'] = newIdentity.type1;
-            updatesToSave['type2'] = newIdentity.type2;
-            updatesToSave['ability'] = newIdentity.ability;
-            updatesToSave['ability-list'] = newIdentity.availableAbilities.join(',');
+            if (isReverting) {
+                const previousTrans = state.identity.activeTransformation;
 
-            if (loadedData.hpBase !== undefined) {
-                newHealth.hpBase = Number(loadedData.hpBase);
-                updatesToSave['hp-base'] = newHealth.hpBase;
-            }
+                if (['Mega', 'Dynamax', 'Gigantamax', 'Custom'].includes(previousTrans)) {
+                    const backupStr = createFormBackup(state);
+                    newIdentity.altFormData = backupStr;
+                    updatesToSave['alt-form-data'] = backupStr;
 
-            Object.values(CombatStat).forEach((stat) => {
-                newStats[stat] = { ...newStats[stat] };
-                if (loadedData[`${stat}Base`] !== undefined) {
-                    newStats[stat].base = Number(loadedData[`${stat}Base`]);
-                    updatesToSave[`${stat}-base`] = newStats[stat].base;
+                    if (state.identity.baseFormData) {
+                        restoreFormBackup(state.identity.baseFormData, draft, updatesToSave);
+                    }
                 }
-                if (loadedData[`${stat}Limit`] !== undefined) {
-                    newStats[stat].limit = Number(loadedData[`${stat}Limit`]);
-                    updatesToSave[`${stat}-limit`] = newStats[stat].limit;
+
+                if (previousTrans === 'Terastallize') {
+                    newIdentity.terastallizeAffinity = '';
+                    newIdentity.terastallizeBonusActive = false;
+                    updatesToSave['terastallize-affinity'] = '';
+                    updatesToSave['terastallize-bonus-active'] = false;
                 }
-            });
+
+                newHealth.temporaryHitPoints = 0;
+                updatesToSave['temporary-hit-points'] = 0;
+
+                newEffects = newEffects.filter((e) => !e.name.includes('Timer'));
+                updatesToSave['effects-data'] = JSON.stringify(newEffects);
+
+                newIdentity.activeTransformation = 'None';
+                updatesToSave['active-transformation'] = 'None';
+            } else {
+                if (targetTransformation === 'Mega' || targetTransformation === 'Terastallize') {
+                    if (newWill.willCurr < 1) {
+                        if (OBR.isAvailable) OBR.notification.show('Not enough Willpower!', 'ERROR');
+                        return state;
+                    }
+                    newWill.willCurr -= 1;
+                }
+
+                if (['Mega', 'Dynamax', 'Gigantamax', 'Custom'].includes(targetTransformation)) {
+                    const backupStr = createFormBackup(state);
+                    newIdentity.baseFormData = backupStr;
+                    updatesToSave['base-form-data'] = backupStr;
+
+                    if (state.identity.altFormData) {
+                        restoreFormBackup(state.identity.altFormData, draft, updatesToSave);
+                    }
+                }
+
+                if (targetTransformation === 'Terastallize') {
+                    newIdentity.terastallizeAffinity = affinity;
+                    newIdentity.terastallizeBonusActive = true;
+                    updatesToSave['terastallize-affinity'] = affinity;
+                    updatesToSave['terastallize-bonus-active'] = true;
+                } else if (targetTransformation === 'Dynamax') {
+                    newHealth.temporaryHitPoints = 6;
+                    updatesToSave['temporary-hit-points'] = 6;
+                    newEffects = [...newEffects, { id: crypto.randomUUID(), name: 'Dynamax Timer', rounds: 3 }];
+                    updatesToSave['effects-data'] = JSON.stringify(newEffects);
+                } else if (targetTransformation === 'Gigantamax') {
+                    newHealth.temporaryHitPoints = 12;
+                    updatesToSave['temporary-hit-points'] = 12;
+                    newEffects = [...newEffects, { id: crypto.randomUUID(), name: 'Gigantamax Timer', rounds: 3 }];
+                    updatesToSave['effects-data'] = JSON.stringify(newEffects);
+
+                    newStats[CombatStat.STR].buff += 2;
+                    newStats[CombatStat.SPE].buff += 2;
+                    newStats[CombatStat.DEX].buff += 2;
+                    newDerived.defBuff += 2;
+                    newDerived.sdefBuff += 2;
+
+                    updatesToSave[`${CombatStat.STR}-buff`] = newStats[CombatStat.STR].buff;
+                    updatesToSave[`${CombatStat.SPE}-buff`] = newStats[CombatStat.SPE].buff;
+                    updatesToSave[`${CombatStat.DEX}-buff`] = newStats[CombatStat.DEX].buff;
+                    updatesToSave['def-buff'] = newDerived.defBuff;
+                    updatesToSave['spd-buff'] = newDerived.sdefBuff;
+                }
+
+                newIdentity.activeTransformation = targetTransformation;
+                updatesToSave['active-transformation'] = targetTransformation;
+            }
 
             syncHealthAndWill(state, newStats, newIdentity, newHealth, newWill, updatesToSave);
 
+            if (!isReverting && targetTransformation === 'Mega') {
+                newHealth.hpCurr = newHealth.hpMax;
+                newWill.willCurr = newWill.willMax;
+                updatesToSave['hp-curr'] = newHealth.hpCurr;
+                updatesToSave['will-curr'] = newWill.willCurr;
+
+                newStatuses = [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }];
+                updatesToSave['status-list'] = JSON.stringify(newStatuses);
+            }
+
             try {
                 saveToOwlbear(updatesToSave);
-            } catch (e) {}
+            } catch (e) {
+                console.error('Failed to save transformation to Owlbear', e);
+            }
 
-            return { identity: newIdentity, stats: newStats, health: newHealth, will: newWill };
+            return {
+                identity: newIdentity,
+                stats: newStats,
+                health: newHealth,
+                will: newWill,
+                derived: newDerived,
+                statuses: newStatuses,
+                effects: newEffects,
+                moves: draft.moves,
+                skills: draft.skills
+            };
         }),
 
     applySpeciesData: (data, wipeData = true, updateStats = true) =>
@@ -270,21 +251,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 updatesToSave['hp-base'] = newHealth.hpBase;
             }
 
-            const abilities: string[] = [];
-            if (data.Ability1) abilities.push(String(data.Ability1));
-            if (data.Ability2 && data.Ability2 !== 'None') abilities.push(String(data.Ability2));
-            if (data.HiddenAbility && data.HiddenAbility !== 'None')
-                abilities.push(String(data.HiddenAbility) + ' (HA)');
-            if (data.EventAbilities) abilities.push(String(data.EventAbilities));
-
-            if (abilities.length === 0 && Array.isArray(data.Abilities)) {
-                data.Abilities.forEach((a: unknown) => {
-                    if (typeof a === 'string') abilities.push(a);
-                    else if (a && typeof a === 'object' && (a as Record<string, unknown>).Name)
-                        abilities.push(String((a as Record<string, unknown>).Name));
-                });
-            }
-
+            const abilities = extractAbilities(data);
             const learnsetArray = parseLearnset(data.Moves);
 
             const newIdentity = {
@@ -337,21 +304,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
         set((state) => {
             if (!data || (!data.Name && !data.Moves)) return state;
 
-            const abilities: string[] = [];
-            if (data.Ability1) abilities.push(String(data.Ability1));
-            if (data.Ability2 && data.Ability2 !== 'None') abilities.push(String(data.Ability2));
-            if (data.HiddenAbility && data.HiddenAbility !== 'None')
-                abilities.push(String(data.HiddenAbility) + ' (HA)');
-            if (data.EventAbilities) abilities.push(String(data.EventAbilities));
-
-            if (abilities.length === 0 && Array.isArray(data.Abilities)) {
-                data.Abilities.forEach((a: unknown) => {
-                    if (typeof a === 'string') abilities.push(a);
-                    else if (a && typeof a === 'object' && (a as Record<string, unknown>).Name)
-                        abilities.push(String((a as Record<string, unknown>).Name));
-                });
-            }
-
+            const abilities = extractAbilities(data);
             const learnsetArray = parseLearnset(data.Moves);
 
             let newAbility = state.identity.ability;
