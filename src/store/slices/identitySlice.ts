@@ -42,6 +42,7 @@ const OBR_KEY_MAP: Record<string, string> = {
     claOffsetX: 'cla-offset-x',
     claOffsetY: 'cla-offset-y',
     activeTransformation: 'active-transformation',
+    activeFormId: 'active-form-id', // <--- NEW!
     terastallizeAffinity: 'terastallize-affinity',
     terastallizeBonusActive: 'terastallize-bonus-active',
     baseFormData: 'base-form-data',
@@ -107,6 +108,8 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         trainerBackup: '',
         
         activeTransformation: 'None',
+        activeFormId: '', // <--- NEW!
+        formSaves: {},    // <--- NEW!
         baseFormData: '',
         altFormData: '',
         maxFormData: '',
@@ -196,7 +199,6 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
             const updatesToSave: Record<string, unknown> = {};
             let newHealth = state.health;
 
-            // Recalculate HP immediately when the ruleset is changed
             if (field === 'ruleset') {
                 const newRuleset = String(value);
                 const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
@@ -236,7 +238,11 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
 
             if (field !== 'printConfig' && field !== 'tokenImageUrl' && field !== 'isPrinting') {
                 if (typeof value === 'string' || typeof value === 'boolean' || typeof value === 'number') {
-                    updatesToSave[obrKey] = value;
+                    if (field === 'maxFormData') updatesToSave['max-form-data'] = value;
+                    else if (field === 'activeFormId') updatesToSave['active-form-id'] = value;
+                    else updatesToSave[obrKey] = value;
+                } else if (field === 'formSaves') {
+                    updatesToSave['form-saves'] = JSON.stringify(value);
                 }
 
                 try {

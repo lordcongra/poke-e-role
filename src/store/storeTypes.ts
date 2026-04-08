@@ -32,13 +32,35 @@ export interface CustomType extends BaseCustomType {
     maxMoveEffect?: string;
 }
 
+// 🔥 UPDATED: Hyper-Granular Custom Form Interface
+export interface CustomForm {
+    id: string;
+    name: string;
+    description: string;
+    
+    // Modularity Toggles
+    swapBaseStats: boolean;
+    swapStatLimits: boolean;
+    swapStatRanks: boolean;
+    swapMoves: boolean;
+    swapTyping: boolean;
+    clearDebuffs: boolean;
+    clearStatuses: boolean;
+    
+    // Mechanical Additions
+    grantedMove: string; // e.g., 'Tera Blast'
+    tags: string; // e.g., '[Str +2] [Dmg +1]'
+    tempHp: number; // e.g., 6 for Dynamax
+    
+    gmOnly?: boolean;
+}
+
 export interface PendingDualScale {
     moveId: string;
     moveName: string;
     acc1Options?: string[];
     acc2Options?: string[];
     dmg1Options?: string[];
-    /** 'categoryOptions' = Triggers a prompt if the move category is Variable or undefined */
     categoryOptions?: ('Physical' | 'Special' | 'Status')[];
 }
 
@@ -183,42 +205,70 @@ export interface HomebrewSlice {
     roomCustomMoves: CustomMove[];
     roomCustomPokemon: CustomPokemon[];
     roomCustomItems: CustomItem[];
+    roomCustomForms: CustomForm[];
 
     setRoomCustomTypes: (types: CustomType[]) => void;
     setRoomCustomAbilities: (abilities: CustomAbility[]) => void;
     setRoomCustomMoves: (moves: CustomMove[]) => void;
     setRoomCustomPokemon: (pokemon: CustomPokemon[]) => void;
     setRoomCustomItems: (items: CustomItem[]) => void;
+    setRoomCustomForms: (forms: CustomForm[]) => void;
 
     addCustomType: (type: CustomType) => void;
     updateCustomType: (oldName: string, newType: CustomType) => void;
     removeCustomType: (name: string) => void;
+    
     addCustomAbility: () => void;
     updateCustomAbility: <K extends keyof CustomAbility>(id: string, field: K, value: CustomAbility[K]) => void;
     removeCustomAbility: (id: string) => void;
+    
     addCustomMove: () => void;
     updateCustomMove: <K extends keyof CustomMove>(id: string, field: K, value: CustomMove[K]) => void;
     removeCustomMove: (id: string) => void;
+    
     addCustomPokemon: () => void;
     updateCustomPokemon: <K extends keyof CustomPokemon>(id: string, field: K, value: CustomPokemon[K]) => void;
     removeCustomPokemon: (id: string) => void;
+    
     addCustomItem: () => void;
     updateCustomItem: <K extends keyof CustomItem>(id: string, field: K, value: CustomItem[K]) => void;
     removeCustomItem: (id: string) => void;
+
+    addCustomForm: (isMegaTemplate?: boolean) => void;
+    updateCustomForm: <K extends keyof CustomForm>(id: string, field: K, value: CustomForm[K]) => void;
+    removeCustomForm: (id: string) => void;
 
     overwriteCustomTypeData: (types: CustomType[]) => void;
     overwriteCustomAbilityData: (abilities: CustomAbility[]) => void;
     overwriteCustomMoveData: (moves: CustomMove[]) => void;
     overwriteCustomPokemonData: (pokemon: CustomPokemon[]) => void;
     overwriteCustomItemData: (items: CustomItem[]) => void;
-    overwriteAllHomebrewData: (types: CustomType[], abilities: CustomAbility[], moves: CustomMove[], pokemon: CustomPokemon[], items: CustomItem[]) => void;
+    overwriteCustomFormData: (forms: CustomForm[]) => void;
+    
+    overwriteAllHomebrewData: (
+        types: CustomType[], 
+        abilities: CustomAbility[], 
+        moves: CustomMove[], 
+        pokemon: CustomPokemon[], 
+        items: CustomItem[],
+        forms: CustomForm[]
+    ) => void;
 
     mergeCustomTypeData: (types: CustomType[]) => void;
     mergeCustomAbilityData: (abilities: CustomAbility[]) => void;
     mergeCustomMoveData: (moves: CustomMove[]) => void;
     mergeCustomPokemonData: (pokemon: CustomPokemon[]) => void;
     mergeCustomItemData: (items: CustomItem[]) => void;
-    mergeAllHomebrewData: (types: CustomType[], abilities: CustomAbility[], moves: CustomMove[], pokemon: CustomPokemon[], items: CustomItem[]) => void;
+    mergeCustomFormData: (forms: CustomForm[]) => void;
+    
+    mergeAllHomebrewData: (
+        types: CustomType[], 
+        abilities: CustomAbility[], 
+        moves: CustomMove[], 
+        pokemon: CustomPokemon[], 
+        items: CustomItem[],
+        forms: CustomForm[]
+    ) => void;
 }
 
 export interface ExtraSkillsSlice {
@@ -264,15 +314,17 @@ export interface IdentitySlice {
 
         /** 'activeTransformation' = Tracks if the character is currently Mega Evolved, Dynamaxed, etc. */
         activeTransformation: TransformationType;
-        /** 'baseFormData' = JSON backup of the original form before transforming */
+        /** 'activeFormId' = Tracks WHICH custom form is active (e.g., 'megax') */
+        activeFormId: string;
+        /** 'formSaves' = Dynamic dictionary storing form backups by ID instead of hardcoded strings! */
+        formSaves: Record<string, string>;
+        
+        // Legacy slots (kept for backwards compatibility during migration)
         baseFormData?: string;
-        /** 'altFormData' = JSON backup of a Mega/Custom form to preserve edits across transformations */
         altFormData?: string;
-        /** 'maxFormData' = JSON backup of Dynamax/Gigantamax specific adjustments */
         maxFormData?: string;
-        /** 'terastallizeAffinity' = The chosen type when Terastallizing */
+
         terastallizeAffinity: string;
-        /** 'terastallizeBonusActive' = Flags if the first-attack Tera damage bonus is available */
         terastallizeBonusActive: boolean;
 
         showTrackers: boolean;

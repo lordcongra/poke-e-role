@@ -226,6 +226,8 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
                     trainerBackup: String(meta['trainer-backup'] || ''),
                     
                     activeTransformation: (meta['active-transformation'] as TransformationType) || 'None',
+                    activeFormId: String(meta['active-form-id'] || ''),
+                    formSaves: meta['form-saves'] ? JSON.parse(String(meta['form-saves'])) : {},
                     baseFormData: String(meta['base-form-data'] || ''),
                     altFormData: String(meta['alt-form-data'] || ''),
                     maxFormData: String(meta['max-form-data'] || ''),
