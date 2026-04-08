@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand';
-import type { CharacterState, MacroSlice, TransformationType, MoveData } from '../storeTypes';
-import { CombatStat, Skill } from '../../types/enums';
+import type { CharacterState, MacroSlice, MoveData } from '../storeTypes';
+import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { saveToOwlbear } from '../../utils/obr';
 import OBR from '@owlbear-rodeo/sdk';
 import {
@@ -11,7 +11,8 @@ import {
     syncHealthAndWill,
     createFormBackup,
     restoreFormBackup,
-    convertMovesToMax
+    convertMovesToMax,
+    type RestoreConfig
 } from '../../utils/macroHelpers';
 
 export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> = (set) => ({
@@ -89,7 +90,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             return { identity: newIdentity, stats: newStats, health: newHealth, will: newWill, skills: newSkills };
         }),
 
-    toggleTransformation: (targetTransformation: TransformationType, affinity = '', autoMaxMoves = false, teraBlastConfig) =>
+    toggleTransformation: (targetTransformation, affinity = '', autoMaxMoves = false, teraBlastConfig, customFormId) =>
         set((state) => {
             const isCurrentlyTransformed = state.identity.activeTransformation !== 'None';
             const isReverting =
@@ -121,20 +122,45 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
 
             if (isReverting) {
                 const previousTrans = state.identity.activeTransformation;
+                let revertConfig: RestoreConfig = {};
 
-                if (['Mega', 'Custom'].includes(previousTrans)) {
+                if (previousTrans === 'Mega') {
                     const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
                     newIdentity.altFormData = backupStr;
                     updatesToSave['alt-form-data'] = backupStr;
+                    revertConfig = { restoreBaseStats: true, restoreStatLimits: true, restoreStatRanks: true, restoreMoves: true, restoreTyping: true, restoreResources: true };
                 } else if (['Dynamax', 'Gigantamax'].includes(previousTrans)) {
                     const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
                     newIdentity.maxFormData = backupStr;
                     updatesToSave['max-form-data'] = backupStr;
+                    revertConfig = { restoreMoves: true };
+                } else if (previousTrans === 'Custom' && state.identity.activeFormId) {
+                    const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
+                    newIdentity.formSaves = { ...newIdentity.formSaves, [state.identity.activeFormId]: backupStr };
+                    updatesToSave['form-saves'] = JSON.stringify(newIdentity.formSaves);
+                    
+                    const activeForm = state.roomCustomForms.find(f => f.id === state.identity.activeFormId);
+                    if (activeForm) {
+                        revertConfig = {
+                            restoreBaseStats: activeForm.swapBaseStats,
+                            restoreStatLimits: activeForm.swapStatLimits,
+                            restoreStatRanks: activeForm.swapStatRanks,
+                            restoreMoves: activeForm.swapMoves,
+                            restoreTyping: activeForm.swapTyping,
+                            restoreResources: activeForm.clearStatuses
+                        };
+                        
+                        // Clean up granted moves if the move array isn't fully swapping back
+                        if (!activeForm.swapMoves && activeForm.grantedMove) {
+                            draft.moves = draft.moves.filter((m) => m.name.toLowerCase() !== activeForm.grantedMove.toLowerCase());
+                            updatesToSave['moves-data'] = JSON.stringify(draft.moves);
+                        }
+                    }
                 }
 
-                if (['Mega', 'Custom', 'Dynamax', 'Gigantamax', 'Terastallize'].includes(previousTrans) && state.identity.baseFormData) {
-                    const restoreResources = ['Mega', 'Custom'].includes(previousTrans);
-                    restoreFormBackup(state.identity.baseFormData, draft, updatesToSave, restoreResources);
+                // Actually perform the Revert Unpacking
+                if (['Mega', 'Custom', 'Dynamax', 'Gigantamax'].includes(previousTrans) && state.identity.baseFormData) {
+                    restoreFormBackup(state.identity.baseFormData, draft, updatesToSave, revertConfig);
                 }
 
                 if (previousTrans === 'Gigantamax') {
@@ -167,8 +193,12 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 updatesToSave['effects-data'] = JSON.stringify(newEffects);
 
                 newIdentity.activeTransformation = 'None';
+                newIdentity.activeFormId = '';
                 updatesToSave['active-transformation'] = 'None';
+                updatesToSave['active-form-id'] = '';
             } else {
+                
+                // Willpower Cost Logic
                 if (targetTransformation === 'Mega' || targetTransformation === 'Terastallize') {
                     if (newWill.willCurr < 1) {
                         if (OBR.isAvailable) OBR.notification.show('Not enough Willpower!', 'ERROR');
@@ -177,16 +207,78 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     newWill.willCurr -= 1;
                 }
 
-                if (['Mega', 'Dynamax', 'Gigantamax', 'Custom', 'Terastallize'].includes(targetTransformation)) {
-                    // Pass the drafted variables to createFormBackup so the Base form accurately records the -1 Will!
+                if (['Mega', 'Dynamax', 'Gigantamax', 'Custom'].includes(targetTransformation)) {
+                    // Core memory save logic so Base remembers the -1 Will deduction
                     const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
                     newIdentity.baseFormData = backupStr;
                     updatesToSave['base-form-data'] = backupStr;
 
-                    if (['Mega', 'Custom'].includes(targetTransformation) && state.identity.altFormData) {
-                        restoreFormBackup(state.identity.altFormData, draft, updatesToSave, true);
+                    // Unpack Alternate Saves based on form type!
+                    if (targetTransformation === 'Mega' && state.identity.altFormData) {
+                        restoreFormBackup(state.identity.altFormData, draft, updatesToSave, { restoreBaseStats: true, restoreStatLimits: true, restoreStatRanks: true, restoreMoves: true, restoreTyping: true, restoreResources: true });
                     } else if (['Dynamax', 'Gigantamax'].includes(targetTransformation) && state.identity.maxFormData) {
-                        restoreFormBackup(state.identity.maxFormData, draft, updatesToSave, false);
+                        restoreFormBackup(state.identity.maxFormData, draft, updatesToSave, { restoreMoves: true });
+                    } else if (targetTransformation === 'Custom' && customFormId) {
+                        const targetForm = state.roomCustomForms.find(f => f.id === customFormId);
+                        if (targetForm) {
+                            if (newIdentity.formSaves[customFormId]) {
+                                const activateConfig: RestoreConfig = {
+                                    restoreBaseStats: targetForm.swapBaseStats,
+                                    restoreStatLimits: targetForm.swapStatLimits,
+                                    restoreStatRanks: targetForm.swapStatRanks,
+                                    restoreMoves: targetForm.swapMoves,
+                                    restoreTyping: targetForm.swapTyping,
+                                    restoreResources: targetForm.clearStatuses
+                                };
+                                restoreFormBackup(newIdentity.formSaves[customFormId], draft, updatesToSave, activateConfig);
+                            }
+                            
+                            // Apply custom mechanical overlays immediately upon activating!
+                            if (targetForm.tempHp > 0) {
+                                newHealth.temporaryHitPoints = targetForm.tempHp;
+                                newHealth.temporaryHitPointsMax = targetForm.tempHp;
+                                updatesToSave['temporary-hit-points'] = targetForm.tempHp;
+                                updatesToSave['temporary-hit-points-max'] = targetForm.tempHp;
+                            }
+                            if (targetForm.clearStatuses) {
+                                draft.statuses = [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }];
+                                updatesToSave['status-list'] = JSON.stringify(draft.statuses);
+                            }
+                            if (targetForm.clearDebuffs) {
+                                Object.values(CombatStat).forEach((s) => {
+                                    newStats[s].debuff = 0;
+                                    updatesToSave[`${s}-debuff`] = 0;
+                                });
+                                Object.values(SocialStat).forEach((s) => {
+                                    newSocials[s].debuff = 0;
+                                    updatesToSave[`${s}-debuff`] = 0;
+                                });
+                                newDerived.defDebuff = 0;
+                                updatesToSave['def-debuff'] = 0;
+                                newDerived.sdefDebuff = 0;
+                                updatesToSave['spd-debuff'] = 0;
+                            }
+                            if (targetForm.grantedMove) {
+                                if (!draft.moves.find((m) => m.name.toLowerCase() === targetForm.grantedMove.toLowerCase())) {
+                                    draft.moves.push({
+                                        id: crypto.randomUUID(),
+                                        active: false,
+                                        name: targetForm.grantedMove,
+                                        type: 'Normal',
+                                        category: 'Physical',
+                                        acc1: 'str',
+                                        acc2: 'none',
+                                        dmg1: 'str',
+                                        power: 1,
+                                        desc: 'Granted by Custom Form'
+                                    });
+                                    updatesToSave['moves-data'] = JSON.stringify(draft.moves);
+                                }
+                            }
+                            
+                            newIdentity.activeFormId = customFormId;
+                            updatesToSave['active-form-id'] = customFormId;
+                        }
                     }
                 }
 

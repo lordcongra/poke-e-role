@@ -1,5 +1,6 @@
 import type { InventoryItem, MoveData, CharacterState, ExtraCategory, CustomAbility } from '../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
+import { useCharacterStore } from '../store/useCharacterStore';
 
 export const ATTRIBUTE_MAPPING: Record<string, string> = {
     Strength: 'str',
@@ -74,6 +75,15 @@ export function parseCombatTags(
     
     if (move && move.desc) {
         itemsToParse.push({ name: move.name || 'Move', desc: move.desc });
+    }
+
+    // 🔥 NEW: Inject passive tags from the active Custom Form!
+    const state = useCharacterStore.getState();
+    if (state.identity.activeTransformation === 'Custom' && state.identity.activeFormId) {
+        const customForm = state.roomCustomForms.find(f => f.id === state.identity.activeFormId);
+        if (customForm && customForm.tags) {
+            itemsToParse.push({ name: customForm.name, desc: customForm.tags });
+        }
     }
 
     itemsToParse.forEach((item) => {
@@ -197,7 +207,7 @@ export function parseCombatTags(
             accuracyTriggered = true;
         }
 
-        if (name && name !== 'Ability' && name !== 'Move') {
+        if (name && name !== 'Ability' && name !== 'Move' && name !== 'Active Form') {
             if (generalTriggered || accuracyTriggered || damageTriggered) bonuses.itemNames.push(name);
             if (generalTriggered || accuracyTriggered) bonuses.accItemNames.push(name);
             if (generalTriggered || damageTriggered) bonuses.dmgItemNames.push(name);

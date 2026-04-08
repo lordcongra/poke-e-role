@@ -11,25 +11,31 @@ interface TransformationModalProps {
 
 export function TransformationModal({ onClose }: TransformationModalProps) {
     const activeTrans = useCharacterStore((state) => state.identity.activeTransformation);
+    const activeFormId = useCharacterStore((state) => state.identity.activeFormId);
+    const formSaves = useCharacterStore((state) => state.identity.formSaves);
+    
     const toggleTransformation = useCharacterStore((state) => state.toggleTransformation);
     const setIdentity = useCharacterStore((state) => state.setIdentity);
     const willCurr = useCharacterStore((state) => state.will.willCurr);
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
+    const roomCustomForms = useCharacterStore((state) => state.roomCustomForms);
     const role = useCharacterStore((state) => state.role);
 
     const hasAltForm = !!useCharacterStore((state) => state.identity.altFormData);
     const hasMaxForm = !!useCharacterStore((state) => state.identity.maxFormData);
 
-    const cachedTrans = (localStorage.getItem('pokerole-last-trans') as TransformationType) || 'Mega';
-    const [selectedTrans, setSelectedTrans] = useState<TransformationType>(
-        activeTrans !== 'None' ? activeTrans : cachedTrans
+    const cachedTrans = localStorage.getItem('pokerole-last-trans') || 'Mega';
+    
+    const [selectedTrans, setSelectedTrans] = useState<string>(
+        activeTrans !== 'None' 
+            ? (activeTrans === 'Custom' ? `custom_${activeFormId}` : activeTrans) 
+            : cachedTrans
     );
 
     const [affinity, setAffinity] = useState('Stellar');
     const [autoMaxMoves, setAutoMaxMoves] = useState(true);
-    const [clearConfirmType, setClearConfirmType] = useState<'Mega' | 'Max' | null>(null);
+    const [clearConfirmType, setClearConfirmType] = useState<'Mega' | 'Max' | 'Custom' | null>(null);
 
-    // Simplified Tera Blast Config
     const [teraCategory, setTeraCategory] = useState<'Physical' | 'Special'>('Special');
 
     const allTypes = [
@@ -38,32 +44,44 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
     ];
 
     const handleSelectTrans = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const val = e.target.value as TransformationType;
+        const val = e.target.value;
         setSelectedTrans(val);
         localStorage.setItem('pokerole-last-trans', val);
     };
 
     const isTransforming = activeTrans === 'None';
-    const willCost = selectedTrans === 'Mega' || selectedTrans === 'Terastallize' ? 1 : 0;
+    
+    let targetTrans: TransformationType = selectedTrans as TransformationType;
+    let targetFormId: string | undefined = undefined;
+
+    if (selectedTrans.startsWith('custom_')) {
+        targetTrans = 'Custom';
+        targetFormId = selectedTrans.replace('custom_', '');
+    }
+    
+    const selectedCustomForm = roomCustomForms.find((f) => f.id === targetFormId);
+    const hasCurrentCustomSave = targetFormId ? !!formSaves[targetFormId] : false;
+
+    const willCost = targetTrans === 'Mega' || targetTrans === 'Terastallize' ? 1 : 0;
     const canAfford = willCurr >= willCost;
 
     const handleApply = () => {
-        // 🔥 Catch the click and notify the user if they can't afford it!
         if (!canAfford) {
             if (OBR.isAvailable) {
-                OBR.notification.show(`⚠️ Not enough Willpower! ${selectedTrans} requires ${willCost} Will.`, 'ERROR');
+                OBR.notification.show(`⚠️ Not enough Willpower! ${targetTrans} requires ${willCost} Will.`, 'ERROR');
             } else {
-                alert(`Not enough Willpower! ${selectedTrans} requires ${willCost} Will.`);
+                alert(`Not enough Willpower! ${targetTrans} requires ${willCost} Will.`);
             }
-            return; // Stop the transformation and keep the modal open
+            return;
         }
 
-        toggleTransformation(selectedTrans, affinity, autoMaxMoves, {
+        toggleTransformation(targetTrans, affinity, autoMaxMoves, {
             category: teraCategory,
             acc1: teraCategory === 'Physical' ? 'str' : 'spe',
             acc2: 'channel',
             dmg1: teraCategory === 'Physical' ? 'str' : 'spe'
-        });
+        }, targetFormId);
+        
         onClose();
     };
 
@@ -75,10 +93,15 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
     const confirmClearMemory = () => {
         if (clearConfirmType === 'Mega') {
             setIdentity('altFormData', '');
-            if (OBR.isAvailable) OBR.notification.show('Mega / Custom Form Memory Cleared!', 'SUCCESS');
+            if (OBR.isAvailable) OBR.notification.show('Mega Form Memory Cleared!', 'SUCCESS');
         } else if (clearConfirmType === 'Max') {
             setIdentity('maxFormData', '');
             if (OBR.isAvailable) OBR.notification.show('Dynamax / Gigantamax Memory Cleared!', 'SUCCESS');
+        } else if (clearConfirmType === 'Custom' && targetFormId) {
+            const newFormSaves = { ...formSaves };
+            delete newFormSaves[targetFormId];
+            setIdentity('formSaves', newFormSaves);
+            if (OBR.isAvailable) OBR.notification.show('Custom Form Memory Cleared!', 'SUCCESS');
         }
         setClearConfirmType(null);
     };
@@ -107,10 +130,18 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                             <option value="Dynamax">Dynamax</option>
                             <option value="Gigantamax">Gigantamax</option>
                             <option value="Terastallize">Terastallization</option>
-                            <option value="Custom">Custom / Homebrew Form</option>
+                            {roomCustomForms.length > 0 && (
+                                <optgroup label="Homebrew Forms">
+                                    {roomCustomForms.map(form => (
+                                        <option key={form.id} value={`custom_${form.id}`}>
+                                            {form.name}
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            )}
                         </select>
 
-                        {selectedTrans === 'Terastallize' && (
+                        {targetTrans === 'Terastallize' && (
                             <>
                                 <label className="transformation-modal__label">Tera Affinity:</label>
                                 <select
@@ -139,7 +170,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                             </>
                         )}
 
-                        {(selectedTrans === 'Dynamax' || selectedTrans === 'Gigantamax') && !hasMaxForm && (
+                        {(targetTrans === 'Dynamax' || targetTrans === 'Gigantamax') && !hasMaxForm && (
                             <label className="transformation-modal__label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '6px' }}>
                                 <input 
                                     type="checkbox" 
@@ -152,59 +183,62 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                         )}
 
                         <div className="transformation-modal__desc-box">
-                            {selectedTrans === 'Mega' && (
+                            {targetTrans === 'Mega' && (
                                 <>
                                     Backs up your current stats, heals all HP/Will to full, and clears statuses.
                                     {hasAltForm && <div style={{marginTop: '8px', color: 'var(--primary)', fontWeight: 'bold'}}>✨ Saved Mega form detected. Values will be restored!</div>}
                                     <span className="transformation-modal__cost-warning">Costs 1 Willpower.</span>
                                 </>
                             )}
-                            {selectedTrans === 'Dynamax' && (
+                            {targetTrans === 'Dynamax' && (
                                 <>
                                     Grants 6 Temporary HP, triggers a 3-round timer, and prevents Evasion/Clashing.
                                     {hasMaxForm && <div style={{marginTop: '8px', color: 'var(--primary)', fontWeight: 'bold'}}>✨ Saved Max form detected. Values will be restored!</div>}
                                 </>
                             )}
-                            {selectedTrans === 'Gigantamax' && (
+                            {targetTrans === 'Gigantamax' && (
                                 <>
                                     Grants 12 Temporary HP, +2 to STR/SPE/DEX/DEF/SPD, triggers a 3-round timer, and prevents Evasion/Clashing.
                                     {hasMaxForm && <div style={{marginTop: '8px', color: 'var(--primary)', fontWeight: 'bold'}}>✨ Saved Max form detected. Values will be restored!</div>}
                                 </>
                             )}
-                            {selectedTrans === 'Terastallize' && (
+                            {targetTrans === 'Terastallize' && (
                                 <>
                                     Replaces your typing with Stellar, applies STAB to your affinity type, and grants bonus damage to your next attack.
                                     <span className="transformation-modal__cost-warning">Costs 1 Willpower.</span>
                                 </>
                             )}
-                            {selectedTrans === 'Custom' && (
+                            {targetTrans === 'Custom' && selectedCustomForm && (
                                 <>
-                                    Safely backs up your current stats so you can freely edit your sheet for a homebrew form.
-                                    {hasAltForm && <div style={{marginTop: '8px', color: 'var(--primary)', fontWeight: 'bold'}}>✨ Saved Custom form detected. Values will be restored!</div>}
+                                    {selectedCustomForm.description || `Applies the ${selectedCustomForm.name} Custom Form.`}
+                                    {hasCurrentCustomSave && <div style={{marginTop: '8px', color: 'var(--primary)', fontWeight: 'bold'}}>✨ Saved memory detected. Values will be restored!</div>}
                                 </>
                             )}
                         </div>
 
-                        {(hasAltForm || hasMaxForm) && (
-                            <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                                {hasAltForm && (
-                                    <button type="button" className="action-button action-button--dark" style={{flex: 1, fontSize: '0.8rem'}} onClick={() => setClearConfirmType('Mega')}>
-                                        🗑️ Clear Mega Save
-                                    </button>
-                                )}
-                                {hasMaxForm && (
-                                    <button type="button" className="action-button action-button--dark" style={{flex: 1, fontSize: '0.8rem'}} onClick={() => setClearConfirmType('Max')}>
-                                        🗑️ Clear Max Save
-                                    </button>
-                                )}
-                            </div>
-                        )}
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                            {targetTrans === 'Mega' && hasAltForm && (
+                                <button type="button" className="action-button action-button--dark" style={{flex: 1, fontSize: '0.8rem'}} onClick={() => setClearConfirmType('Mega')}>
+                                    🗑️ Clear Mega Save
+                                </button>
+                            )}
+                            {(targetTrans === 'Dynamax' || targetTrans === 'Gigantamax') && hasMaxForm && (
+                                <button type="button" className="action-button action-button--dark" style={{flex: 1, fontSize: '0.8rem'}} onClick={() => setClearConfirmType('Max')}>
+                                    🗑️ Clear Max Save
+                                </button>
+                            )}
+                            {targetTrans === 'Custom' && hasCurrentCustomSave && (
+                                <button type="button" className="action-button action-button--dark" style={{flex: 1, fontSize: '0.8rem'}} onClick={() => setClearConfirmType('Custom')}>
+                                    🗑️ Clear Form Save
+                                </button>
+                            )}
+                        </div>
 
                     </div>
                 ) : (
                     <div className="transformation-modal__section">
                         <div className="transformation-modal__desc-box" style={{ textAlign: 'center' }}>
-                            You are currently transformed into your <strong>{activeTrans}</strong> form!
+                            You are currently transformed!
                             <br /><br />
                             Reverting will safely restore your original Base Stats, Typing, Moves, and Skills.
                         </div>
@@ -225,7 +259,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                 type="button"
                                 className="action-button action-button--red transformation-modal__btn"
                                 onClick={handleApply}
-                                style={{ opacity: canAfford ? 1 : 0.6 }} // Visual indicator that it's "locked" but still clickable
+                                style={{ opacity: canAfford ? 1 : 0.6 }}
                             >
                                 ✨ Activate
                             </button>
@@ -246,7 +280,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1600, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                     <div style={{ background: 'var(--panel-bg)', padding: '20px', borderRadius: '8px', border: '2px solid #c62828', maxWidth: '300px', textAlign: 'center' }}>
                         <h3 style={{ color: '#c62828', marginTop: 0 }}>⚠️ Confirm Deletion</h3>
-                        <p style={{ fontSize: '0.9rem', marginBottom: '20px' }}>Are you sure you want to delete your {clearConfirmType === 'Mega' ? 'Mega/Custom' : 'Dynamax'} saved data? This cannot be undone.</p>
+                        <p style={{ fontSize: '0.9rem', marginBottom: '20px' }}>Are you sure you want to delete your {clearConfirmType === 'Mega' ? 'Mega' : clearConfirmType === 'Max' ? 'Dynamax' : 'Custom Form'} saved data? This cannot be undone.</p>
                         <div style={{ display: 'flex', gap: '10px' }}>
                             <button className="action-button action-button--dark" style={{ flex: 1, padding: '8px' }} onClick={() => setClearConfirmType(null)}>Cancel</button>
                             <button className="action-button action-button--red" style={{ flex: 1, padding: '8px' }} onClick={confirmClearMemory}>Delete</button>

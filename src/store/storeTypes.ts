@@ -32,7 +32,6 @@ export interface CustomType extends BaseCustomType {
     maxMoveEffect?: string;
 }
 
-// 🔥 UPDATED: Hyper-Granular Custom Form Interface
 export interface CustomForm {
     id: string;
     name: string;
@@ -48,9 +47,9 @@ export interface CustomForm {
     clearStatuses: boolean;
     
     // Mechanical Additions
-    grantedMove: string; // e.g., 'Tera Blast'
-    tags: string; // e.g., '[Str +2] [Dmg +1]'
-    tempHp: number; // e.g., 6 for Dynamax
+    grantedMove: string;
+    tags: string;
+    tempHp: number;
     
     gmOnly?: boolean;
 }
@@ -374,7 +373,7 @@ export interface IdentitySlice {
 
 export interface MacroSlice {
     setMode: (mode: 'Pokémon' | 'Trainer') => void;
-    toggleTransformation: (targetTransformation: TransformationType, affinity?: string, autoMaxMoves?: boolean, teraBlastConfig?: TeraBlastConfig) => void;
+    toggleTransformation: (targetTransformation: TransformationType, affinity?: string, autoMaxMoves?: boolean, teraBlastConfig?: TeraBlastConfig, customFormId?: string) => void;
     applySpeciesData: (data: Record<string, unknown>, wipeData?: boolean, updateStats?: boolean) => void;
     refreshSpeciesData: (data: Record<string, unknown>) => void;
 }

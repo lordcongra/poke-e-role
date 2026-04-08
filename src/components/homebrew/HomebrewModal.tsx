@@ -6,7 +6,8 @@ import { HomebrewAbilities } from './HomebrewAbilities';
 import { HomebrewMoves } from './HomebrewMoves';
 import { HomebrewPokemon } from './HomebrewPokemon';
 import { HomebrewItems } from './HomebrewItems';
-import type { CustomType, CustomAbility, CustomMove, CustomPokemon, CustomItem } from '../../store/storeTypes';
+import { HomebrewForms } from './HomebrewForms';
+import type { CustomType, CustomAbility, CustomMove, CustomPokemon, CustomItem, CustomForm } from '../../store/storeTypes';
 import './Homebrew.css';
 
 export function HomebrewModal({ onClose }: { onClose: () => void }) {
@@ -14,7 +15,7 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
     const access = useCharacterStore((state) => state.identity.homebrewAccess);
     const canEdit = role === 'GM' || access === 'Full';
 
-    const [activeTab, setActiveTab] = useState<'types' | 'abilities' | 'moves' | 'pokemon' | 'items'>('types');
+    const [activeTab, setActiveTab] = useState<'types' | 'abilities' | 'moves' | 'pokemon' | 'items' | 'forms'>('types');
     const overwriteAllHomebrewData = useCharacterStore((state) => state.overwriteAllHomebrewData);
     const mergeAllHomebrewData = useCharacterStore((state) => state.mergeAllHomebrewData);
 
@@ -25,6 +26,7 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
         moves: CustomMove[];
         mons: CustomPokemon[];
         items: CustomItem[];
+        forms: CustomForm[];
     } | null>(null);
 
     const handleExportAll = () => {
@@ -34,7 +36,8 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
             customAbilities: role === 'GM' ? state.roomCustomAbilities : [],
             customMoves: role === 'GM' ? state.roomCustomMoves : [],
             customPokemon: role === 'GM' ? state.roomCustomPokemon : [],
-            customItems: role === 'GM' ? state.roomCustomItems : []
+            customItems: role === 'GM' ? state.roomCustomItems : [],
+            customForms: role === 'GM' ? state.roomCustomForms : []
         };
         const dataStr = JSON.stringify(exportData, null, 2);
         const blob = new Blob([dataStr], { type: 'application/json' });
@@ -62,14 +65,16 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                         imported.customAbilities ||
                         imported.customMoves ||
                         imported.customPokemon ||
-                        imported.customItems)
+                        imported.customItems ||
+                        imported.customForms)
                 ) {
                     setImportAllData({
                         types: imported.customTypes || [],
                         abs: imported.customAbilities || [],
                         moves: imported.customMoves || [],
                         mons: imported.customPokemon || [],
-                        items: imported.customItems || []
+                        items: imported.customItems || [],
+                        forms: imported.customForms || []
                     });
                 } else {
                     if (OBR.isAvailable) OBR.notification.show('Invalid Homebrew Backup file.', 'ERROR');
@@ -123,6 +128,12 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                         >
                             Items
                         </button>
+                        <button
+                            onClick={() => setActiveTab('forms')}
+                            className={`homebrew-modal__tab ${activeTab === 'forms' ? 'homebrew-modal__tab--active' : ''}`}
+                        >
+                            Forms
+                        </button>
                     </div>
                 </div>
 
@@ -132,6 +143,7 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                     {activeTab === 'moves' && <HomebrewMoves />}
                     {activeTab === 'pokemon' && <HomebrewPokemon />}
                     {activeTab === 'items' && <HomebrewItems />}
+                    {activeTab === 'forms' && <HomebrewForms />}
                 </div>
 
                 <div className="homebrew-modal__footer">
@@ -186,7 +198,8 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                                         importAllData.abs,
                                         importAllData.moves,
                                         importAllData.mons,
-                                        importAllData.items
+                                        importAllData.items,
+                                        importAllData.forms
                                     );
                                     setImportAllData(null);
                                 }}
@@ -201,7 +214,8 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                                         importAllData.abs,
                                         importAllData.moves,
                                         importAllData.mons,
-                                        importAllData.items
+                                        importAllData.items,
+                                        importAllData.forms
                                     );
                                     setImportAllData(null);
                                 }}

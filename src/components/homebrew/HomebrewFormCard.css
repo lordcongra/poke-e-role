@@ -1,0 +1,55 @@
+.homebrew-form-card__settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    background: var(--panel-bg);
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.homebrew-form-card__settings-column {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.homebrew-form-card__settings-header {
+    font-weight: bold;
+    font-size: 0.85rem;
+    color: var(--primary);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+}
+
+.homebrew-form-card__checkbox-label {
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.homebrew-form-card__checkbox-label--enabled {
+    cursor: pointer;
+}
+
+.homebrew-form-card__checkbox-label--disabled {
+    cursor: default;
+}
+
+.homebrew-form-card__temp-hp-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.homebrew-form-card__temp-hp-label {
+    font-size: 0.8rem;
+}
+
+.homebrew-form-card__inputs-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+}

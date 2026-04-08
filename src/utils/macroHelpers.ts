@@ -161,6 +161,15 @@ export const createFormBackup = (
     return JSON.stringify(backupData);
 };
 
+export interface RestoreConfig {
+    restoreBaseStats?: boolean;
+    restoreStatLimits?: boolean;
+    restoreStatRanks?: boolean;
+    restoreMoves?: boolean;
+    restoreTyping?: boolean;
+    restoreResources?: boolean;
+}
+
 export const restoreFormBackup = (
     backupStr: string,
     draft: {
@@ -175,32 +184,34 @@ export const restoreFormBackup = (
         statuses: CharacterState['statuses'];
     },
     updatesToSave: Record<string, unknown>,
-    restoreResources: boolean = false
+    config: RestoreConfig
 ) => {
     try {
         const loadedData = JSON.parse(backupStr);
         const { identity, health, will, stats, socials, skills } = draft;
 
-        identity.species = String(loadedData.species ?? identity.species);
-        identity.type1 = String(loadedData.type1 ?? identity.type1);
-        identity.type2 = String(loadedData.type2 ?? identity.type2);
-        identity.ability = String(loadedData.ability ?? identity.ability);
-        identity.availableAbilities = Array.isArray(loadedData.availableAbilities)
-            ? loadedData.availableAbilities
-            : identity.availableAbilities;
+        if (config.restoreTyping) {
+            identity.species = String(loadedData.species ?? identity.species);
+            identity.type1 = String(loadedData.type1 ?? identity.type1);
+            identity.type2 = String(loadedData.type2 ?? identity.type2);
+            identity.ability = String(loadedData.ability ?? identity.ability);
+            identity.availableAbilities = Array.isArray(loadedData.availableAbilities)
+                ? loadedData.availableAbilities
+                : identity.availableAbilities;
 
-        updatesToSave['species'] = identity.species;
-        updatesToSave['type1'] = identity.type1;
-        updatesToSave['type2'] = identity.type2;
-        updatesToSave['ability'] = identity.ability;
-        updatesToSave['ability-list'] = identity.availableAbilities.join(',');
+            updatesToSave['species'] = identity.species;
+            updatesToSave['type1'] = identity.type1;
+            updatesToSave['type2'] = identity.type2;
+            updatesToSave['ability'] = identity.ability;
+            updatesToSave['ability-list'] = identity.availableAbilities.join(',');
+        }
 
-        if (loadedData.hpBase !== undefined) {
+        if (config.restoreBaseStats && loadedData.hpBase !== undefined) {
             health.hpBase = Number(loadedData.hpBase);
             updatesToSave['hp-base'] = health.hpBase;
         }
 
-        if (restoreResources) {
+        if (config.restoreResources) {
             if (loadedData.hpCurr !== undefined) {
                 health.hpCurr = Number(loadedData.hpCurr);
                 updatesToSave['hp-curr'] = health.hpCurr;
@@ -219,13 +230,18 @@ export const restoreFormBackup = (
             Object.entries(loadedData.stats as Record<string, { base?: number; rank?: number; limit?: number }>).forEach(([stat, val]) => {
                 const s = stat as CombatStat;
                 if (stats[s]) {
-                    stats[s].base = val.base !== undefined ? Number(val.base) : stats[s].base;
-                    stats[s].rank = val.rank !== undefined ? Number(val.rank) : stats[s].rank;
-                    stats[s].limit = val.limit !== undefined ? Number(val.limit) : stats[s].limit;
-
-                    updatesToSave[`${s}-base`] = stats[s].base;
-                    updatesToSave[`${s}-rank`] = stats[s].rank;
-                    updatesToSave[`${s}-limit`] = stats[s].limit;
+                    if (config.restoreBaseStats && val.base !== undefined) {
+                        stats[s].base = Number(val.base);
+                        updatesToSave[`${s}-base`] = stats[s].base;
+                    }
+                    if (config.restoreStatRanks && val.rank !== undefined) {
+                        stats[s].rank = Number(val.rank);
+                        updatesToSave[`${s}-rank`] = stats[s].rank;
+                    }
+                    if (config.restoreStatLimits && val.limit !== undefined) {
+                        stats[s].limit = Number(val.limit);
+                        updatesToSave[`${s}-limit`] = stats[s].limit;
+                    }
                 }
             });
         }
@@ -234,18 +250,23 @@ export const restoreFormBackup = (
             Object.entries(loadedData.socials as Record<string, { base?: number; rank?: number; limit?: number }>).forEach(([stat, val]) => {
                 const s = stat as SocialStat;
                 if (socials[s]) {
-                    socials[s].base = val.base !== undefined ? Number(val.base) : socials[s].base;
-                    socials[s].rank = val.rank !== undefined ? Number(val.rank) : socials[s].rank;
-                    socials[s].limit = val.limit !== undefined ? Number(val.limit) : socials[s].limit;
-
-                    updatesToSave[`${s}-base`] = socials[s].base;
-                    updatesToSave[`${s}-rank`] = socials[s].rank;
-                    updatesToSave[`${s}-limit`] = socials[s].limit;
+                    if (config.restoreBaseStats && val.base !== undefined) {
+                        socials[s].base = Number(val.base);
+                        updatesToSave[`${s}-base`] = socials[s].base;
+                    }
+                    if (config.restoreStatRanks && val.rank !== undefined) {
+                        socials[s].rank = Number(val.rank);
+                        updatesToSave[`${s}-rank`] = socials[s].rank;
+                    }
+                    if (config.restoreStatLimits && val.limit !== undefined) {
+                        socials[s].limit = Number(val.limit);
+                        updatesToSave[`${s}-limit`] = socials[s].limit;
+                    }
                 }
             });
         }
 
-        if (loadedData.skills) {
+        if (loadedData.skills && config.restoreStatRanks) {
             Object.entries(loadedData.skills as Record<string, { base?: number; customName?: string }>).forEach(([sk, val]) => {
                 const s = sk as Skill;
                 if (skills[s]) {
@@ -258,7 +279,7 @@ export const restoreFormBackup = (
             });
         }
 
-        if (loadedData.moves) {
+        if (loadedData.moves && config.restoreMoves) {
             draft.moves = loadedData.moves as MoveData[];
             updatesToSave['moves-data'] = JSON.stringify(draft.moves);
         }
