@@ -128,7 +128,11 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
                     newIdentity.altFormData = backupStr;
                     updatesToSave['alt-form-data'] = backupStr;
-                    revertConfig = { restoreBaseStats: true, restoreStatLimits: true, restoreStatRanks: true, restoreMoves: true, restoreTyping: true, restoreResources: true };
+                    revertConfig = { 
+                        restoreBaseStats: true, restoreStatLimits: true, restoreStatRanks: true, 
+                        restoreSkills: false, restoreMoves: true, restoreTyping: true, 
+                        restoreAbilities: true, restoreResources: true 
+                    };
                 } else if (['Dynamax', 'Gigantamax'].includes(previousTrans)) {
                     const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
                     newIdentity.maxFormData = backupStr;
@@ -145,20 +149,21 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                             restoreBaseStats: activeForm.swapBaseStats,
                             restoreStatLimits: activeForm.swapStatLimits,
                             restoreStatRanks: activeForm.swapStatRanks,
+                            restoreSkills: activeForm.swapSkills,
                             restoreMoves: activeForm.swapMoves,
                             restoreTyping: activeForm.swapTyping,
-                            restoreResources: activeForm.clearStatuses
+                            restoreAbilities: activeForm.swapAbilities,
+                            restoreResources: activeForm.restoreHpWill
                         };
                         
-                        // Clean up granted moves if the move array isn't fully swapping back
-                        if (!activeForm.swapMoves && activeForm.grantedMove) {
-                            draft.moves = draft.moves.filter((m) => m.name.toLowerCase() !== activeForm.grantedMove.toLowerCase());
+                        if (!activeForm.swapMoves && activeForm.grantedMoves && activeForm.grantedMoves.length > 0) {
+                            const grantedNames = activeForm.grantedMoves.map(m => m.toLowerCase());
+                            draft.moves = draft.moves.filter((m) => !grantedNames.includes(m.name.toLowerCase()));
                             updatesToSave['moves-data'] = JSON.stringify(draft.moves);
                         }
                     }
                 }
 
-                // Actually perform the Revert Unpacking
                 if (['Mega', 'Custom', 'Dynamax', 'Gigantamax'].includes(previousTrans) && state.identity.baseFormData) {
                     restoreFormBackup(state.identity.baseFormData, draft, updatesToSave, revertConfig);
                 }
@@ -198,7 +203,6 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 updatesToSave['active-form-id'] = '';
             } else {
                 
-                // Willpower Cost Logic
                 if (targetTransformation === 'Mega' || targetTransformation === 'Terastallize') {
                     if (newWill.willCurr < 1) {
                         if (OBR.isAvailable) OBR.notification.show('Not enough Willpower!', 'ERROR');
@@ -208,14 +212,16 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 }
 
                 if (['Mega', 'Dynamax', 'Gigantamax', 'Custom'].includes(targetTransformation)) {
-                    // Core memory save logic so Base remembers the -1 Will deduction
                     const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
                     newIdentity.baseFormData = backupStr;
                     updatesToSave['base-form-data'] = backupStr;
 
-                    // Unpack Alternate Saves based on form type!
                     if (targetTransformation === 'Mega' && state.identity.altFormData) {
-                        restoreFormBackup(state.identity.altFormData, draft, updatesToSave, { restoreBaseStats: true, restoreStatLimits: true, restoreStatRanks: true, restoreMoves: true, restoreTyping: true, restoreResources: true });
+                        restoreFormBackup(state.identity.altFormData, draft, updatesToSave, { 
+                            restoreBaseStats: true, restoreStatLimits: true, restoreStatRanks: true, 
+                            restoreSkills: false, restoreMoves: true, restoreTyping: true, 
+                            restoreAbilities: true, restoreResources: true 
+                        });
                     } else if (['Dynamax', 'Gigantamax'].includes(targetTransformation) && state.identity.maxFormData) {
                         restoreFormBackup(state.identity.maxFormData, draft, updatesToSave, { restoreMoves: true });
                     } else if (targetTransformation === 'Custom' && customFormId) {
@@ -226,14 +232,15 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                                     restoreBaseStats: targetForm.swapBaseStats,
                                     restoreStatLimits: targetForm.swapStatLimits,
                                     restoreStatRanks: targetForm.swapStatRanks,
+                                    restoreSkills: targetForm.swapSkills,
                                     restoreMoves: targetForm.swapMoves,
                                     restoreTyping: targetForm.swapTyping,
-                                    restoreResources: targetForm.clearStatuses
+                                    restoreAbilities: targetForm.swapAbilities,
+                                    restoreResources: targetForm.restoreHpWill
                                 };
                                 restoreFormBackup(newIdentity.formSaves[customFormId], draft, updatesToSave, activateConfig);
                             }
                             
-                            // Apply custom mechanical overlays immediately upon activating!
                             if (targetForm.tempHp > 0) {
                                 newHealth.temporaryHitPoints = targetForm.tempHp;
                                 newHealth.temporaryHitPointsMax = targetForm.tempHp;
@@ -258,22 +265,38 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                                 newDerived.sdefDebuff = 0;
                                 updatesToSave['spd-debuff'] = 0;
                             }
-                            if (targetForm.grantedMove) {
-                                if (!draft.moves.find((m) => m.name.toLowerCase() === targetForm.grantedMove.toLowerCase())) {
-                                    draft.moves.push({
-                                        id: crypto.randomUUID(),
-                                        active: false,
-                                        name: targetForm.grantedMove,
-                                        type: 'Normal',
-                                        category: 'Physical',
-                                        acc1: 'str',
-                                        acc2: 'none',
-                                        dmg1: 'str',
-                                        power: 1,
-                                        desc: 'Granted by Custom Form'
-                                    });
-                                    updatesToSave['moves-data'] = JSON.stringify(draft.moves);
-                                }
+                            if (targetForm.clearBuffs) {
+                                Object.values(CombatStat).forEach((s) => {
+                                    newStats[s].buff = 0;
+                                    updatesToSave[`${s}-buff`] = 0;
+                                });
+                                Object.values(SocialStat).forEach((s) => {
+                                    newSocials[s].buff = 0;
+                                    updatesToSave[`${s}-buff`] = 0;
+                                });
+                                newDerived.defBuff = 0;
+                                updatesToSave['def-buff'] = 0;
+                                newDerived.sdefBuff = 0;
+                                updatesToSave['spd-buff'] = 0;
+                            }
+                            if (targetForm.grantedMoves && targetForm.grantedMoves.length > 0) {
+                                targetForm.grantedMoves.forEach((moveName) => {
+                                    if (!draft.moves.find((m) => m.name.toLowerCase() === moveName.toLowerCase())) {
+                                        draft.moves.push({
+                                            id: crypto.randomUUID(),
+                                            active: false,
+                                            name: moveName,
+                                            type: 'Normal',
+                                            category: 'Physical',
+                                            acc1: 'str',
+                                            acc2: 'none',
+                                            dmg1: 'str',
+                                            power: 1,
+                                            desc: 'Granted by Custom Form'
+                                        });
+                                    }
+                                });
+                                updatesToSave['moves-data'] = JSON.stringify(draft.moves);
                             }
                             
                             newIdentity.activeFormId = customFormId;

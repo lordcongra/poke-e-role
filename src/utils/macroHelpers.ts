@@ -165,8 +165,10 @@ export interface RestoreConfig {
     restoreBaseStats?: boolean;
     restoreStatLimits?: boolean;
     restoreStatRanks?: boolean;
+    restoreSkills?: boolean;
     restoreMoves?: boolean;
     restoreTyping?: boolean;
+    restoreAbilities?: boolean;
     restoreResources?: boolean;
 }
 
@@ -194,14 +196,18 @@ export const restoreFormBackup = (
             identity.species = String(loadedData.species ?? identity.species);
             identity.type1 = String(loadedData.type1 ?? identity.type1);
             identity.type2 = String(loadedData.type2 ?? identity.type2);
+            
+            updatesToSave['species'] = identity.species;
+            updatesToSave['type1'] = identity.type1;
+            updatesToSave['type2'] = identity.type2;
+        }
+
+        if (config.restoreAbilities) {
             identity.ability = String(loadedData.ability ?? identity.ability);
             identity.availableAbilities = Array.isArray(loadedData.availableAbilities)
                 ? loadedData.availableAbilities
                 : identity.availableAbilities;
 
-            updatesToSave['species'] = identity.species;
-            updatesToSave['type1'] = identity.type1;
-            updatesToSave['type2'] = identity.type2;
             updatesToSave['ability'] = identity.ability;
             updatesToSave['ability-list'] = identity.availableAbilities.join(',');
         }
@@ -266,7 +272,7 @@ export const restoreFormBackup = (
             });
         }
 
-        if (loadedData.skills && config.restoreStatRanks) {
+        if (loadedData.skills && config.restoreSkills) {
             Object.entries(loadedData.skills as Record<string, { base?: number; customName?: string }>).forEach(([sk, val]) => {
                 const s = sk as Skill;
                 if (skills[s]) {

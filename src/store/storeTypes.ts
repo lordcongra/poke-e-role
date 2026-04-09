@@ -41,13 +41,19 @@ export interface CustomForm {
     swapBaseStats: boolean;
     swapStatLimits: boolean;
     swapStatRanks: boolean;
+    swapSkills: boolean;
     swapMoves: boolean;
     swapTyping: boolean;
+    swapAbilities: boolean;
+    
+    // Transform Effects
     clearDebuffs: boolean;
+    clearBuffs: boolean;
     clearStatuses: boolean;
+    restoreHpWill: boolean;
     
     // Mechanical Additions
-    grantedMove: string;
+    grantedMoves: string[];
     tags: string;
     tempHp: number;
     

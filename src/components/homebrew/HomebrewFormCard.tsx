@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomForm } from '../../store/storeTypes';
+import { TagBuilderModal } from '../modals/TagBuilderModal';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import './Homebrew.css';
 import './HomebrewFormCard.css';
@@ -14,20 +15,21 @@ interface HomebrewFormCardProps {
 
 export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewFormCardProps) {
     const updateCustomForm = useCharacterStore((state) => state.updateCustomForm);
+    const roomCustomMoves = useCharacterStore((state) => state.roomCustomMoves);
 
     const [localName, setLocalName] = useState(form.name);
     const [localDescription, setLocalDescription] = useState(form.description);
-    const [localGrantedMove, setLocalGrantedMove] = useState(form.grantedMove || '');
     const [localTags, setLocalTags] = useState(form.tags || '');
     const [localGmOnly, setLocalGmOnly] = useState(form.gmOnly || false);
 
+    const [newMoveInput, setNewMoveInput] = useState('');
     const [isCollapsed, setIsCollapsed] = useState(!form.name.includes('New'));
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showTagBuilder, setShowTagBuilder] = useState(false);
 
     useEffect(() => {
         setLocalName(form.name);
         setLocalDescription(form.description);
-        setLocalGrantedMove(form.grantedMove || '');
         setLocalTags(form.tags || '');
         setLocalGmOnly(form.gmOnly || false);
     }, [form]);
@@ -35,6 +37,19 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
     const toggleSetting = (field: keyof CustomForm, currentValue: boolean) => {
         if (!canEdit) return;
         updateCustomForm(form.id, field, !currentValue as never);
+    };
+
+    const handleAddMove = () => {
+        if (!canEdit || !newMoveInput.trim()) return;
+        const updatedMoves = [...(form.grantedMoves || []), newMoveInput.trim()];
+        updateCustomForm(form.id, 'grantedMoves', updatedMoves);
+        setNewMoveInput('');
+    };
+
+    const handleRemoveMove = (moveToRemove: string) => {
+        if (!canEdit) return;
+        const updatedMoves = (form.grantedMoves || []).filter(m => m !== moveToRemove);
+        updateCustomForm(form.id, 'grantedMoves', updatedMoves);
     };
 
     const cursorClass = canEdit ? 'homebrew-form-card__checkbox-label--enabled' : 'homebrew-form-card__checkbox-label--disabled';
@@ -112,6 +127,14 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
                                 Swap Stat Ranks
                             </label>
                             <label className={`homebrew-form-card__checkbox-label ${cursorClass}`}>
+                                <input type="checkbox" disabled={!canEdit} checked={form.swapSkills} onChange={() => toggleSetting('swapSkills', form.swapSkills)} />
+                                Swap Skills
+                            </label>
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`}>
+                                <input type="checkbox" disabled={!canEdit} checked={form.swapAbilities} onChange={() => toggleSetting('swapAbilities', form.swapAbilities)} />
+                                Swap Abilities
+                            </label>
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`}>
                                 <input type="checkbox" disabled={!canEdit} checked={form.swapMoves} onChange={() => toggleSetting('swapMoves', form.swapMoves)} />
                                 Swap Move-Set
                             </label>
@@ -123,6 +146,10 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
 
                         <div className="homebrew-form-card__settings-column">
                             <span className="homebrew-form-card__settings-header">Transform Effects</span>
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`} title="If checked, this form will store its own distinct HP and Will pools across transformations.">
+                                <input type="checkbox" disabled={!canEdit} checked={form.restoreHpWill} onChange={() => toggleSetting('restoreHpWill', form.restoreHpWill)} />
+                                Maintain Distinct HP/Will Pool
+                            </label>
                             <label className={`homebrew-form-card__checkbox-label ${cursorClass}`}>
                                 <input type="checkbox" disabled={!canEdit} checked={form.clearStatuses} onChange={() => toggleSetting('clearStatuses', form.clearStatuses)} />
                                 Clear Status Conditions
@@ -130,6 +157,10 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
                             <label className={`homebrew-form-card__checkbox-label ${cursorClass}`}>
                                 <input type="checkbox" disabled={!canEdit} checked={form.clearDebuffs} onChange={() => toggleSetting('clearDebuffs', form.clearDebuffs)} />
                                 Clear Stat Debuffs
+                            </label>
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`}>
+                                <input type="checkbox" disabled={!canEdit} checked={form.clearBuffs} onChange={() => toggleSetting('clearBuffs', form.clearBuffs)} />
+                                Clear Stat Buffs
                             </label>
                             
                             <div className="homebrew-form-card__temp-hp-row">
@@ -139,27 +170,68 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
                         </div>
                     </div>
 
-                    <div className="homebrew-form-card__inputs-row">
-                        <input
-                            type="text"
-                            value={localGrantedMove}
-                            onChange={(event) => canEdit && setLocalGrantedMove(event.target.value)}
-                            onBlur={() => canEdit && localGrantedMove !== form.grantedMove && updateCustomForm(form.id, 'grantedMove', localGrantedMove)}
-                            placeholder="Granted Move (e.g. Tera Blast)"
-                            disabled={!canEdit}
-                            className="homebrew-card__name-input"
-                        />
-                        <input
-                            type="text"
-                            value={localTags}
-                            onChange={(event) => canEdit && setLocalTags(event.target.value)}
-                            onBlur={() => canEdit && localTags !== form.tags && updateCustomForm(form.id, 'tags', localTags)}
-                            placeholder="Passive Tags (e.g. [Str +2] [High Crit])"
-                            disabled={!canEdit}
-                            className="homebrew-card__name-input"
-                        />
+                    <div className="homebrew-form-card__moves-section">
+                        <span className="homebrew-form-card__settings-header">Granted Moves</span>
+                        <div className="homebrew-form-card__inputs-row">
+                            <input
+                                list={`moves-list-${form.id}`}
+                                type="text"
+                                value={newMoveInput}
+                                onChange={(e) => setNewMoveInput(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleAddMove()}
+                                placeholder="Add a move (e.g. Tera Blast)"
+                                disabled={!canEdit}
+                                className="homebrew-card__name-input"
+                            />
+                            <datalist id={`moves-list-${form.id}`}>
+                                {roomCustomMoves.map(m => <option key={m.id} value={m.name} />)}
+                            </datalist>
+                            {canEdit && (
+                                <button type="button" className="action-button action-button--dark" onClick={handleAddMove}>
+                                    Add
+                                </button>
+                            )}
+                        </div>
+                        <div className="homebrew-form-card__pills-container">
+                            {(form.grantedMoves || []).map(move => (
+                                <span key={move} className="homebrew-form-card__pill">
+                                    {move} 
+                                    {canEdit && (
+                                        <button className="homebrew-form-card__pill-delete" onClick={() => handleRemoveMove(move)}>x</button>
+                                    )}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="homebrew-form-card__moves-section" style={{ marginTop: '8px' }}>
+                        <span className="homebrew-form-card__settings-header">Passive Tags</span>
+                        <div className="homebrew-form-card__inputs-row">
+                            <input
+                                type="text"
+                                value={localTags}
+                                onChange={(event) => canEdit && setLocalTags(event.target.value)}
+                                onBlur={() => canEdit && localTags !== form.tags && updateCustomForm(form.id, 'tags', localTags)}
+                                placeholder="Passive Tags (e.g. [Str +2] [High Crit])"
+                                disabled={!canEdit}
+                                className="homebrew-card__name-input"
+                            />
+                            {canEdit && (
+                                <button type="button" className="action-button action-button--dark" onClick={() => setShowTagBuilder(true)}>
+                                    🏷️ Builder
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </>
+            )}
+
+            {showTagBuilder && (
+                <TagBuilderModal
+                    targetId={form.id}
+                    targetType="homebrew_form"
+                    onClose={() => setShowTagBuilder(false)}
+                />
             )}
 
             {showDeleteConfirm && (

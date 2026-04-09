@@ -181,7 +181,6 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         saveRoomMeta('customItems', newItems);
     },
 
-    // 🔥 UPDATED: Granular Form Defaults!
     addCustomForm: (isMegaTemplate = false) => {
         const newForms: CustomForm[] = [
             ...get().roomCustomForms,
@@ -192,11 +191,15 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
                 swapBaseStats: isMegaTemplate,
                 swapStatLimits: isMegaTemplate,
                 swapStatRanks: isMegaTemplate,
+                swapSkills: isMegaTemplate,
                 swapMoves: isMegaTemplate,
                 swapTyping: isMegaTemplate,
+                swapAbilities: isMegaTemplate,
                 clearDebuffs: false,
+                clearBuffs: false,
                 clearStatuses: isMegaTemplate,
-                grantedMove: '',
+                restoreHpWill: isMegaTemplate,
+                grantedMoves: [],
                 tags: '',
                 tempHp: 0,
                 gmOnly: false
