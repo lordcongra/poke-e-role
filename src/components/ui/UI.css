@@ -28,6 +28,19 @@
     z-index: 2;
 }
 
+.resource-box__temp-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.resource-box__clear-temp-btn {
+    padding: 0 4px;
+    font-size: 0.75rem;
+    height: 22px;
+    margin-left: 2px;
+}
+
 .resource-box__temp-plus {
     font-weight: 900;
     color: #c326df;

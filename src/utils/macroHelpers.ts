@@ -69,7 +69,8 @@ export const syncHealthAndWill = (
     newIdentity: CharacterState['identity'],
     newHealth: CharacterState['health'],
     newWill: CharacterState['will'],
-    updatesToSave: Record<string, unknown>
+    updatesToSave: Record<string, unknown>,
+    preventCurrentGain: boolean = false
 ) => {
     const abilityText = getAbilityText(newIdentity.ability, state.roomCustomAbilities);
     const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
@@ -96,12 +97,14 @@ export const syncHealthAndWill = (
 
     const oldHpMax = newHealth.hpMax;
     newHealth.hpMax = newHealth.hpBase + hpStat;
-    if (newHealth.hpMax > oldHpMax) newHealth.hpCurr += newHealth.hpMax - oldHpMax;
+    
+    if (!preventCurrentGain && newHealth.hpMax > oldHpMax) newHealth.hpCurr += newHealth.hpMax - oldHpMax;
     else if (newHealth.hpCurr > newHealth.hpMax) newHealth.hpCurr = newHealth.hpMax;
 
     const oldWillMax = newWill.willMax;
     newWill.willMax = newWill.willBase + insTotal;
-    if (newWill.willMax > oldWillMax) newWill.willCurr += newWill.willMax - oldWillMax;
+    
+    if (!preventCurrentGain && newWill.willMax > oldWillMax) newWill.willCurr += newWill.willMax - oldWillMax;
     else if (newWill.willCurr > newWill.willMax) newWill.willCurr = newWill.willMax;
 
     updatesToSave['hp-curr'] = newHealth.hpCurr;
@@ -134,7 +137,9 @@ export const createFormBackup = (
         statsBackup[stat] = {
             base: state.stats[stat].base,
             rank: state.stats[stat].rank,
-            limit: state.stats[stat].limit
+            limit: state.stats[stat].limit,
+            buff: state.stats[stat].buff,
+            debuff: state.stats[stat].debuff
         };
     });
     backupData.stats = statsBackup;
@@ -144,7 +149,9 @@ export const createFormBackup = (
         socialsBackup[stat] = {
             base: state.socials[stat].base,
             rank: state.socials[stat].rank,
-            limit: state.socials[stat].limit
+            limit: state.socials[stat].limit,
+            buff: state.socials[stat].buff,
+            debuff: state.socials[stat].debuff
         };
     });
     backupData.socials = socialsBackup;
@@ -169,7 +176,11 @@ export interface RestoreConfig {
     restoreMoves?: boolean;
     restoreTyping?: boolean;
     restoreAbilities?: boolean;
-    restoreResources?: boolean;
+    restoreHp?: boolean;
+    restoreWill?: boolean;
+    restoreBuffs?: boolean;
+    restoreDebuffs?: boolean;
+    restoreStatuses?: boolean;
 }
 
 export const restoreFormBackup = (
@@ -217,23 +228,23 @@ export const restoreFormBackup = (
             updatesToSave['hp-base'] = health.hpBase;
         }
 
-        if (config.restoreResources) {
-            if (loadedData.hpCurr !== undefined) {
-                health.hpCurr = Number(loadedData.hpCurr);
-                updatesToSave['hp-curr'] = health.hpCurr;
-            }
-            if (loadedData.willCurr !== undefined) {
-                will.willCurr = Number(loadedData.willCurr);
-                updatesToSave['will-curr'] = will.willCurr;
-            }
-            if (loadedData.statuses !== undefined) {
-                draft.statuses = loadedData.statuses as StatusItem[];
-                updatesToSave['status-list'] = JSON.stringify(draft.statuses);
-            }
+        if (config.restoreHp && loadedData.hpCurr !== undefined) {
+            health.hpCurr = Number(loadedData.hpCurr);
+            updatesToSave['hp-curr'] = health.hpCurr;
+        }
+        
+        if (config.restoreWill && loadedData.willCurr !== undefined) {
+            will.willCurr = Number(loadedData.willCurr);
+            updatesToSave['will-curr'] = will.willCurr;
+        }
+        
+        if (config.restoreStatuses && loadedData.statuses !== undefined) {
+            draft.statuses = loadedData.statuses as StatusItem[];
+            updatesToSave['status-list'] = JSON.stringify(draft.statuses);
         }
 
         if (loadedData.stats) {
-            Object.entries(loadedData.stats as Record<string, { base?: number; rank?: number; limit?: number }>).forEach(([stat, val]) => {
+            Object.entries(loadedData.stats as Record<string, { base?: number; rank?: number; limit?: number; buff?: number; debuff?: number }>).forEach(([stat, val]) => {
                 const s = stat as CombatStat;
                 if (stats[s]) {
                     if (config.restoreBaseStats && val.base !== undefined) {
@@ -248,12 +259,20 @@ export const restoreFormBackup = (
                         stats[s].limit = Number(val.limit);
                         updatesToSave[`${s}-limit`] = stats[s].limit;
                     }
+                    if (config.restoreBuffs && val.buff !== undefined) {
+                        stats[s].buff = Number(val.buff);
+                        updatesToSave[`${s}-buff`] = stats[s].buff;
+                    }
+                    if (config.restoreDebuffs && val.debuff !== undefined) {
+                        stats[s].debuff = Number(val.debuff);
+                        updatesToSave[`${s}-debuff`] = stats[s].debuff;
+                    }
                 }
             });
         }
 
         if (loadedData.socials) {
-            Object.entries(loadedData.socials as Record<string, { base?: number; rank?: number; limit?: number }>).forEach(([stat, val]) => {
+            Object.entries(loadedData.socials as Record<string, { base?: number; rank?: number; limit?: number; buff?: number; debuff?: number }>).forEach(([stat, val]) => {
                 const s = stat as SocialStat;
                 if (socials[s]) {
                     if (config.restoreBaseStats && val.base !== undefined) {
@@ -267,6 +286,14 @@ export const restoreFormBackup = (
                     if (config.restoreStatLimits && val.limit !== undefined) {
                         socials[s].limit = Number(val.limit);
                         updatesToSave[`${s}-limit`] = socials[s].limit;
+                    }
+                    if (config.restoreBuffs && val.buff !== undefined) {
+                        socials[s].buff = Number(val.buff);
+                        updatesToSave[`${s}-buff`] = socials[s].buff;
+                    }
+                    if (config.restoreDebuffs && val.debuff !== undefined) {
+                        socials[s].debuff = Number(val.debuff);
+                        updatesToSave[`${s}-debuff`] = socials[s].debuff;
                     }
                 }
             });

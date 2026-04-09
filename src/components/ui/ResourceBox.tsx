@@ -12,9 +12,10 @@ interface ResourceBoxProps {
     onCurrChange: (val: number) => void;
     onBaseChange: (val: number) => void;
     onTempChange?: (val: number) => void;
+    onClearTemp?: () => void;
 }
 
-export function ResourceBox({ title, curr, max, base, temp, tempMax, color, onCurrChange, onBaseChange, onTempChange }: ResourceBoxProps) {
+export function ResourceBox({ title, curr, max, base, temp, tempMax, color, onCurrChange, onBaseChange, onTempChange, onClearTemp }: ResourceBoxProps) {
     const pct = Math.max(0, Math.min(100, (curr / Math.max(1, max)) * 100));
     const tempPct = tempMax && tempMax > 0 ? Math.max(0, Math.min(100, ((temp || 0) / tempMax) * 100)) : 0;
 
@@ -33,7 +34,7 @@ export function ResourceBox({ title, curr, max, base, temp, tempMax, color, onCu
             <div className="resource-box">
                 <div className="resource-bar-fill" style={{ backgroundColor: barColor, width: `${pct}%` }}></div>
                 
-                {temp !== undefined && temp > 0 && tempMax && (
+                {tempMax !== undefined && tempMax > 0 && (
                     <div className="resource-bar-fill resource-bar-fill--temp" style={{ width: `${tempPct}%` }}></div>
                 )}
 
@@ -41,11 +42,16 @@ export function ResourceBox({ title, curr, max, base, temp, tempMax, color, onCu
                     <span className="resource-box__label">Curr:</span>
                     <NumberSpinner value={curr} onChange={onCurrChange} min={0} />
                     
-                    {temp !== undefined && temp > 0 && onTempChange && (
-                        <>
+                    {tempMax !== undefined && tempMax > 0 && onTempChange && (
+                        <div className="resource-box__temp-wrapper">
                             <span className="resource-box__temp-plus" title="Temporary HP (Dynamax Shield)">+</span>
-                            <NumberSpinner value={temp} onChange={onTempChange} min={0} />
-                        </>
+                            <NumberSpinner value={temp || 0} onChange={onTempChange} min={0} max={tempMax} />
+                            {onClearTemp && (
+                                <button onClick={onClearTemp} className="action-button action-button--red resource-box__clear-temp-btn" title="Remove Temp HP">
+                                    X
+                                </button>
+                            )}
+                        </div>
                     )}
 
                     <span className="resource-box__divider">/</span>

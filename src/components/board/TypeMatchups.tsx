@@ -10,7 +10,11 @@ export function TypeMatchups() {
     const rawType1 = useCharacterStore((state) => state.identity.type1);
     const rawType2 = useCharacterStore((state) => state.identity.type2);
     
-    const isTera = useCharacterStore((state) => state.identity.activeTransformation) === 'Terastallize';
+    const activeTransformation = useCharacterStore((state) => state.identity.activeTransformation);
+    const activeFormId = useCharacterStore((state) => state.identity.activeFormId);
+    const roomCustomForms = useCharacterStore((state) => state.roomCustomForms);
+    
+    const isTera = activeTransformation === 'Terastallize';
     const teraAffinity = useCharacterStore((state) => state.identity.terastallizeAffinity);
 
     const type1 = isTera ? teraAffinity : rawType1;
@@ -81,6 +85,14 @@ export function TypeMatchups() {
 
     if (abilityText) {
         stringsToParse.push(abilityText.toLowerCase());
+    }
+
+    // 🔥 NEW: Parse passive tags from the active Custom Form!
+    if (activeTransformation === 'Custom' && activeFormId) {
+        const activeForm = roomCustomForms.find(f => f.id === activeFormId);
+        if (activeForm && activeForm.tags) {
+            stringsToParse.push(activeForm.tags.toLowerCase());
+        }
     }
 
     stringsToParse.forEach((desc) => {

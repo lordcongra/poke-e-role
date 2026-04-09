@@ -37,7 +37,7 @@ export interface CustomForm {
     name: string;
     description: string;
     
-    // Modularity Toggles
+    // Data Swaps (Blank Slates)
     swapBaseStats: boolean;
     swapStatLimits: boolean;
     swapStatRanks: boolean;
@@ -46,11 +46,19 @@ export interface CustomForm {
     swapTyping: boolean;
     swapAbilities: boolean;
     
-    // Transform Effects
-    clearDebuffs: boolean;
-    clearBuffs: boolean;
-    clearStatuses: boolean;
-    restoreHpWill: boolean;
+    // Buffs & Debuffs
+    swapBuffs: boolean;
+    swapDebuffs: boolean;
+    wipeBuffs: boolean;
+    wipeDebuffs: boolean;
+    swapStatuses: boolean;
+    wipeStatuses: boolean;
+    
+    // Transform Effects (HP & Will)
+    restoreHp: boolean;
+    restoreWill: boolean;
+    healHp: boolean;
+    healWill: boolean;
     
     // Mechanical Additions
     grantedMoves: string[];

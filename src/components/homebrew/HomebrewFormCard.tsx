@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomForm } from '../../store/storeTypes';
+import { ALL_MOVES } from '../../utils/api';
 import { TagBuilderModal } from '../modals/TagBuilderModal';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import './Homebrew.css';
@@ -27,6 +28,8 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [showTagBuilder, setShowTagBuilder] = useState(false);
 
+    const moveOptions = Array.from(new Set([...ALL_MOVES, ...roomCustomMoves.map(m => m.name)])).sort();
+
     useEffect(() => {
         setLocalName(form.name);
         setLocalDescription(form.description);
@@ -36,7 +39,16 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
 
     const toggleSetting = (field: keyof CustomForm, currentValue: boolean) => {
         if (!canEdit) return;
-        updateCustomForm(form.id, field, !currentValue as never);
+        const newValue = !currentValue;
+        updateCustomForm(form.id, field, newValue as never);
+
+        // Enforce Mutual Exclusivity
+        if (field === 'swapBuffs' && newValue) updateCustomForm(form.id, 'wipeBuffs', false as never);
+        if (field === 'wipeBuffs' && newValue) updateCustomForm(form.id, 'swapBuffs', false as never);
+        if (field === 'swapDebuffs' && newValue) updateCustomForm(form.id, 'wipeDebuffs', false as never);
+        if (field === 'wipeDebuffs' && newValue) updateCustomForm(form.id, 'swapDebuffs', false as never);
+        if (field === 'swapStatuses' && newValue) updateCustomForm(form.id, 'wipeStatuses', false as never);
+        if (field === 'wipeStatuses' && newValue) updateCustomForm(form.id, 'swapStatuses', false as never);
     };
 
     const handleAddMove = () => {
@@ -145,25 +157,59 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
                         </div>
 
                         <div className="homebrew-form-card__settings-column">
-                            <span className="homebrew-form-card__settings-header">Transform Effects</span>
-                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`} title="If checked, this form will store its own distinct HP and Will pools across transformations.">
-                                <input type="checkbox" disabled={!canEdit} checked={form.restoreHpWill} onChange={() => toggleSetting('restoreHpWill', form.restoreHpWill)} />
-                                Maintain Distinct HP/Will Pool
+                            <span className="homebrew-form-card__settings-header">Buffs, Debuffs, Status</span>
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`} title="Temporarily clears buffs. Original buffs will return when reverting.">
+                                <input type="checkbox" disabled={!canEdit} checked={form.swapBuffs} onChange={() => toggleSetting('swapBuffs', form.swapBuffs)} />
+                                Swap Buffs (Restore on Revert)
                             </label>
-                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`}>
-                                <input type="checkbox" disabled={!canEdit} checked={form.clearStatuses} onChange={() => toggleSetting('clearStatuses', form.clearStatuses)} />
-                                Clear Status Conditions
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`} title="Temporarily clears debuffs. Original debuffs will return when reverting.">
+                                <input type="checkbox" disabled={!canEdit} checked={form.swapDebuffs} onChange={() => toggleSetting('swapDebuffs', form.swapDebuffs)} />
+                                Swap Debuffs (Restore on Revert)
                             </label>
-                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`}>
-                                <input type="checkbox" disabled={!canEdit} checked={form.clearDebuffs} onChange={() => toggleSetting('clearDebuffs', form.clearDebuffs)} />
-                                Clear Stat Debuffs
-                            </label>
-                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`}>
-                                <input type="checkbox" disabled={!canEdit} checked={form.clearBuffs} onChange={() => toggleSetting('clearBuffs', form.clearBuffs)} />
-                                Clear Stat Buffs
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`} title="Temporarily clears statuses. Original statuses will return when reverting.">
+                                <input type="checkbox" disabled={!canEdit} checked={form.swapStatuses} onChange={() => toggleSetting('swapStatuses', form.swapStatuses)} />
+                                Swap Statuses (Restore on Revert)
                             </label>
                             
-                            <div className="homebrew-form-card__temp-hp-row">
+                            <hr style={{width: '100%', borderColor: 'var(--border)', margin: '2px 0'}}/>
+                            
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`} style={{color: '#c62828'}}>
+                                <input type="checkbox" disabled={!canEdit} checked={form.wipeBuffs} onChange={() => toggleSetting('wipeBuffs', form.wipeBuffs)} />
+                                Wipe Buffs (Permanent)
+                            </label>
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`} style={{color: '#c62828'}}>
+                                <input type="checkbox" disabled={!canEdit} checked={form.wipeDebuffs} onChange={() => toggleSetting('wipeDebuffs', form.wipeDebuffs)} />
+                                Wipe Debuffs (Permanent)
+                            </label>
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`} style={{color: '#c62828'}}>
+                                <input type="checkbox" disabled={!canEdit} checked={form.wipeStatuses} onChange={() => toggleSetting('wipeStatuses', form.wipeStatuses)} />
+                                Wipe Statuses (Permanent)
+                            </label>
+                        </div>
+                        
+                        <div className="homebrew-form-card__settings-column">
+                            <span className="homebrew-form-card__settings-header">Transform Effects</span>
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`} title="Stores a distinct HP pool. Reverting will load whatever HP you had prior to transforming.">
+                                <input type="checkbox" disabled={!canEdit} checked={form.restoreHp} onChange={() => toggleSetting('restoreHp', form.restoreHp)} />
+                                Maintain Distinct HP Pool
+                            </label>
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`} title="Stores a distinct Will pool. Reverting will load whatever Will you had prior to transforming.">
+                                <input type="checkbox" disabled={!canEdit} checked={form.restoreWill} onChange={() => toggleSetting('restoreWill', form.restoreWill)} />
+                                Maintain Distinct Will Pool
+                            </label>
+                            
+                            <hr style={{width: '100%', borderColor: 'var(--border)', margin: '2px 0'}}/>
+
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`}>
+                                <input type="checkbox" disabled={!canEdit} checked={form.healHp} onChange={() => toggleSetting('healHp', form.healHp)} />
+                                Heal HP to Max on Transform
+                            </label>
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`}>
+                                <input type="checkbox" disabled={!canEdit} checked={form.healWill} onChange={() => toggleSetting('healWill', form.healWill)} />
+                                Heal Will to Max on Transform
+                            </label>
+                            
+                            <div className="homebrew-form-card__temp-hp-row" style={{marginTop: '8px'}}>
                                 <span className="homebrew-form-card__temp-hp-label">Temp HP Shield:</span>
                                 <NumberSpinner value={form.tempHp} onChange={(val) => canEdit && updateCustomForm(form.id, 'tempHp', val)} disabled={!canEdit} />
                             </div>
@@ -184,7 +230,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
                                 className="homebrew-card__name-input"
                             />
                             <datalist id={`moves-list-${form.id}`}>
-                                {roomCustomMoves.map(m => <option key={m.id} value={m.name} />)}
+                                {moveOptions.map(m => <option key={m} value={m} />)}
                             </datalist>
                             {canEdit && (
                                 <button type="button" className="action-button action-button--dark" onClick={handleAddMove}>
@@ -193,8 +239,8 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
                             )}
                         </div>
                         <div className="homebrew-form-card__pills-container">
-                            {(form.grantedMoves || []).map(move => (
-                                <span key={move} className="homebrew-form-card__pill">
+                            {(form.grantedMoves || []).map((move, i) => (
+                                <span key={i} className="homebrew-form-card__pill">
                                     {move} 
                                     {canEdit && (
                                         <button className="homebrew-form-card__pill-delete" onClick={() => handleRemoveMove(move)}>x</button>

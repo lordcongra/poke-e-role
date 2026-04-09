@@ -30,6 +30,7 @@ export function DerivedBoard() {
     const extraCategories = useCharacterStore((state) => state.extraCategories);
 
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
+    const [showTempConfirm, setShowTempConfirm] = useState(false);
 
     const abilityText = getAbilityText(ability, customAbilities);
     const inventoryModifiers = parseCombatTags(inventory, extraCategories, undefined, abilityText);
@@ -104,6 +105,7 @@ export function DerivedBoard() {
                             onCurrChange={(value: number) => updateHealth('hpCurr', value)}
                             onBaseChange={(value: number) => updateHealth('hpBase', value)}
                             onTempChange={(value: number) => updateHealth('temporaryHitPoints', value)}
+                            onClearTemp={() => setShowTempConfirm(true)}
                         />
                     </div>
                     <div className="derived-board__health-box">
@@ -281,6 +283,23 @@ export function DerivedBoard() {
                             >
                                 Close
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showTempConfirm && (
+                <div className="derived-board__modal-overlay">
+                    <div className="derived-board__modal-content">
+                        <h3 className="derived-board__modal-title" style={{color: '#c62828', borderColor: '#c62828'}}>⚠️ Clear Temp HP</h3>
+                        <p className="derived-board__modal-desc">Are you sure you want to completely remove your Temporary HP Shield?</p>
+                        <div className="derived-board__modal-btn-container" style={{ gap: '10px' }}>
+                            <button type="button" className="action-button action-button--dark derived-board__modal-btn" onClick={() => setShowTempConfirm(false)}>Cancel</button>
+                            <button type="button" className="action-button action-button--red derived-board__modal-btn" onClick={() => {
+                                updateHealth('temporaryHitPoints', 0);
+                                updateHealth('temporaryHitPointsMax', 0);
+                                setShowTempConfirm(false);
+                            }}>Clear</button>
                         </div>
                     </div>
                 </div>

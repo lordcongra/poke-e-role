@@ -195,10 +195,16 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
                 swapMoves: isMegaTemplate,
                 swapTyping: isMegaTemplate,
                 swapAbilities: isMegaTemplate,
-                clearDebuffs: false,
-                clearBuffs: false,
-                clearStatuses: isMegaTemplate,
-                restoreHpWill: isMegaTemplate,
+                swapBuffs: false,
+                swapDebuffs: false,
+                wipeBuffs: false,
+                wipeDebuffs: false,
+                swapStatuses: isMegaTemplate,
+                wipeStatuses: false,
+                restoreHp: false,
+                restoreWill: false,
+                healHp: isMegaTemplate,
+                healWill: isMegaTemplate,
                 grantedMoves: [],
                 tags: '',
                 tempHp: 0,
@@ -244,17 +250,46 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         saveRoomMeta('customItems', items);
     },
     overwriteCustomFormData: (forms) => {
-        set({ roomCustomForms: forms });
-        saveRoomMeta('customForms', forms);
+        const safeForms = forms.map(f => ({
+            ...f,
+            swapStatuses: f.swapStatuses ?? false,
+            wipeStatuses: f.wipeStatuses ?? false,
+            swapBuffs: f.swapBuffs ?? false,
+            swapDebuffs: f.swapDebuffs ?? false,
+            wipeBuffs: f.wipeBuffs ?? false,
+            wipeDebuffs: f.wipeDebuffs ?? false,
+            restoreHp: f.restoreHp ?? false,
+            restoreWill: f.restoreWill ?? false,
+            healHp: f.healHp ?? false,
+            healWill: f.healWill ?? false,
+            grantedMoves: Array.isArray(f.grantedMoves) ? f.grantedMoves : []
+        }));
+        set({ roomCustomForms: safeForms });
+        saveRoomMeta('customForms', safeForms);
     },
     overwriteAllHomebrewData: async (types, abilities, moves, pokemon, items, forms) => {
+        const safeForms = forms.map(f => ({
+            ...f,
+            swapStatuses: f.swapStatuses ?? false,
+            wipeStatuses: f.wipeStatuses ?? false,
+            swapBuffs: f.swapBuffs ?? false,
+            swapDebuffs: f.swapDebuffs ?? false,
+            wipeBuffs: f.wipeBuffs ?? false,
+            wipeDebuffs: f.wipeDebuffs ?? false,
+            restoreHp: f.restoreHp ?? false,
+            restoreWill: f.restoreWill ?? false,
+            healHp: f.healHp ?? false,
+            healWill: f.healWill ?? false,
+            grantedMoves: Array.isArray(f.grantedMoves) ? f.grantedMoves : []
+        }));
+        
         set({
             roomCustomTypes: types,
             roomCustomAbilities: abilities,
             roomCustomMoves: moves,
             roomCustomPokemon: pokemon,
             roomCustomItems: items,
-            roomCustomForms: forms
+            roomCustomForms: safeForms
         });
         syncHomebrewToApi(pokemon, moves, abilities, items);
 
@@ -268,7 +303,7 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
                 customMoves: moves,
                 customPokemon: pokemon,
                 customItems: items,
-                customForms: forms
+                customForms: safeForms
             });
             await OBR.room.setMetadata({ [ROOM_META_ID]: roomSettings });
             OBR.notification.show('✅ Homebrew Workshop fully restored!');
@@ -359,8 +394,24 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         const mergedForms = [...get().roomCustomForms];
         forms.forEach((form) => {
             const index = mergedForms.findIndex((existing) => existing.name.toLowerCase() === form.name.toLowerCase());
-            if (index !== -1) mergedForms[index] = { ...form, id: mergedForms[index].id };
-            else mergedForms.push({ ...form, id: crypto.randomUUID() });
+            
+            const safeForm = {
+                ...form,
+                swapStatuses: form.swapStatuses ?? false,
+                wipeStatuses: form.wipeStatuses ?? false,
+                swapBuffs: form.swapBuffs ?? false,
+                swapDebuffs: form.swapDebuffs ?? false,
+                wipeBuffs: form.wipeBuffs ?? false,
+                wipeDebuffs: form.wipeDebuffs ?? false,
+                restoreHp: form.restoreHp ?? false,
+                restoreWill: form.restoreWill ?? false,
+                healHp: form.healHp ?? false,
+                healWill: form.healWill ?? false,
+                grantedMoves: Array.isArray(form.grantedMoves) ? form.grantedMoves : []
+            };
+
+            if (index !== -1) mergedForms[index] = { ...safeForm, id: mergedForms[index].id };
+            else mergedForms.push({ ...safeForm, id: crypto.randomUUID() });
         });
         set({ roomCustomForms: mergedForms });
         saveRoomMeta('customForms', mergedForms);
@@ -428,8 +479,24 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         const mergedForms = [...get().roomCustomForms];
         forms.forEach((form) => {
             const index = mergedForms.findIndex((existing) => existing.name.toLowerCase() === form.name.toLowerCase());
-            if (index !== -1) mergedForms[index] = { ...form, id: mergedForms[index].id };
-            else mergedForms.push({ ...form, id: crypto.randomUUID() });
+            
+            const safeForm = {
+                ...form,
+                swapStatuses: form.swapStatuses ?? false,
+                wipeStatuses: form.wipeStatuses ?? false,
+                swapBuffs: form.swapBuffs ?? false,
+                swapDebuffs: form.swapDebuffs ?? false,
+                wipeBuffs: form.wipeBuffs ?? false,
+                wipeDebuffs: form.wipeDebuffs ?? false,
+                restoreHp: form.restoreHp ?? false,
+                restoreWill: form.restoreWill ?? false,
+                healHp: form.healHp ?? false,
+                healWill: form.healWill ?? false,
+                grantedMoves: Array.isArray(form.grantedMoves) ? form.grantedMoves : []
+            };
+
+            if (index !== -1) mergedForms[index] = { ...safeForm, id: mergedForms[index].id };
+            else mergedForms.push({ ...safeForm, id: crypto.randomUUID() });
         });
 
         set({

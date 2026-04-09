@@ -130,8 +130,9 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     updatesToSave['alt-form-data'] = backupStr;
                     revertConfig = { 
                         restoreBaseStats: true, restoreStatLimits: true, restoreStatRanks: true, 
-                        restoreSkills: false, restoreMoves: true, restoreTyping: true, 
-                        restoreAbilities: true, restoreResources: true 
+                        restoreSkills: true, restoreMoves: true, restoreTyping: true, 
+                        restoreAbilities: true, restoreHp: true, restoreWill: true,
+                        restoreStatuses: true
                     };
                 } else if (['Dynamax', 'Gigantamax'].includes(previousTrans)) {
                     const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
@@ -153,7 +154,11 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                             restoreMoves: activeForm.swapMoves,
                             restoreTyping: activeForm.swapTyping,
                             restoreAbilities: activeForm.swapAbilities,
-                            restoreResources: activeForm.restoreHpWill
+                            restoreHp: activeForm.restoreHp,
+                            restoreWill: activeForm.restoreWill,
+                            restoreBuffs: activeForm.swapBuffs,
+                            restoreDebuffs: activeForm.swapDebuffs,
+                            restoreStatuses: activeForm.swapStatuses
                         };
                         
                         if (!activeForm.swapMoves && activeForm.grantedMoves && activeForm.grantedMoves.length > 0) {
@@ -164,7 +169,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     }
                 }
 
-                if (['Mega', 'Custom', 'Dynamax', 'Gigantamax'].includes(previousTrans) && state.identity.baseFormData) {
+                if (['Mega', 'Custom', 'Dynamax', 'Gigantamax', 'Terastallize'].includes(previousTrans) && state.identity.baseFormData) {
                     restoreFormBackup(state.identity.baseFormData, draft, updatesToSave, revertConfig);
                 }
 
@@ -219,8 +224,9 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     if (targetTransformation === 'Mega' && state.identity.altFormData) {
                         restoreFormBackup(state.identity.altFormData, draft, updatesToSave, { 
                             restoreBaseStats: true, restoreStatLimits: true, restoreStatRanks: true, 
-                            restoreSkills: false, restoreMoves: true, restoreTyping: true, 
-                            restoreAbilities: true, restoreResources: true 
+                            restoreSkills: true, restoreMoves: true, restoreTyping: true, 
+                            restoreAbilities: true, restoreHp: true, restoreWill: true,
+                            restoreStatuses: true
                         });
                     } else if (['Dynamax', 'Gigantamax'].includes(targetTransformation) && state.identity.maxFormData) {
                         restoreFormBackup(state.identity.maxFormData, draft, updatesToSave, { restoreMoves: true });
@@ -236,7 +242,11 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                                     restoreMoves: targetForm.swapMoves,
                                     restoreTyping: targetForm.swapTyping,
                                     restoreAbilities: targetForm.swapAbilities,
-                                    restoreResources: targetForm.restoreHpWill
+                                    restoreHp: targetForm.restoreHp,
+                                    restoreWill: targetForm.restoreWill,
+                                    restoreBuffs: targetForm.swapBuffs,
+                                    restoreDebuffs: targetForm.swapDebuffs,
+                                    restoreStatuses: targetForm.swapStatuses
                                 };
                                 restoreFormBackup(newIdentity.formSaves[customFormId], draft, updatesToSave, activateConfig);
                             }
@@ -247,11 +257,11 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                                 updatesToSave['temporary-hit-points'] = targetForm.tempHp;
                                 updatesToSave['temporary-hit-points-max'] = targetForm.tempHp;
                             }
-                            if (targetForm.clearStatuses) {
+                            if (targetForm.swapStatuses || targetForm.wipeStatuses) {
                                 draft.statuses = [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }];
                                 updatesToSave['status-list'] = JSON.stringify(draft.statuses);
                             }
-                            if (targetForm.clearDebuffs) {
+                            if (targetForm.swapDebuffs || targetForm.wipeDebuffs) {
                                 Object.values(CombatStat).forEach((s) => {
                                     newStats[s].debuff = 0;
                                     updatesToSave[`${s}-debuff`] = 0;
@@ -265,7 +275,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                                 newDerived.sdefDebuff = 0;
                                 updatesToSave['spd-debuff'] = 0;
                             }
-                            if (targetForm.clearBuffs) {
+                            if (targetForm.swapBuffs || targetForm.wipeBuffs) {
                                 Object.values(CombatStat).forEach((s) => {
                                     newStats[s].buff = 0;
                                     updatesToSave[`${s}-buff`] = 0;
@@ -361,7 +371,9 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 updatesToSave['active-transformation'] = targetTransformation;
             }
 
-            syncHealthAndWill(state, newStats, newIdentity, newHealth, newWill, updatesToSave);
+            // CRITICAL: We pass TRUE to the final parameter to stop syncHealthAndWill from double-dipping free HP/Will 
+            // when it detects that the new stat maximums are higher than the old ones!
+            syncHealthAndWill(state, newStats, newIdentity, newHealth, newWill, updatesToSave, true);
 
             if (!isReverting && targetTransformation === 'Mega') {
                 newHealth.hpCurr = newHealth.hpMax;
@@ -371,6 +383,20 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
 
                 draft.statuses = [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }];
                 updatesToSave['status-list'] = JSON.stringify(draft.statuses);
+            }
+
+            if (!isReverting && targetTransformation === 'Custom' && customFormId) {
+                const targetForm = state.roomCustomForms.find(f => f.id === customFormId);
+                if (targetForm) {
+                    if (targetForm.healHp) {
+                        newHealth.hpCurr = newHealth.hpMax;
+                        updatesToSave['hp-curr'] = newHealth.hpCurr;
+                    }
+                    if (targetForm.healWill) {
+                        newWill.willCurr = newWill.willMax;
+                        updatesToSave['will-curr'] = newWill.willCurr;
+                    }
+                }
             }
 
             try {

@@ -1,6 +1,6 @@
 .homebrew-form-card__settings-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 10px;
     background: var(--panel-bg);
     padding: 10px;
@@ -25,7 +25,7 @@
 }
 
 .homebrew-form-card__checkbox-label {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     display: flex;
     align-items: center;
     gap: 6px;
