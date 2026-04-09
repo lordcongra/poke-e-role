@@ -27,7 +27,7 @@ export async function saveToOwlbear(updates: Record<string, unknown>) {
         pendingUpdates = {};
 
         // 👇 FOOLPROOF TEST: This prints the exact flat payload right before it hits the database!
-        console.log("🚀 PUSHING TO OWLBEAR:", updatesToPush);
+        console.log('🚀 PUSHING TO OWLBEAR:', updatesToPush);
 
         await OBR.scene.items.updateItems([currentToken!], (items) => {
             for (const item of items) {

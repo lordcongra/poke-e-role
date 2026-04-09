@@ -37,6 +37,10 @@ export function MovesTable() {
 
     const roomCustomMoves = useCharacterStore((state) => state.roomCustomMoves);
 
+    // 🔥 Reactive Selectors for Targeting Modal Syncing
+    useCharacterStore((state) => state.trackers.firstHitDmg);
+    useCharacterStore((state) => state.trackers.firstHitAcc);
+
     const [targetingMove, setTargetingMove] = useState<MoveData | null>(null);
     const [deleteMoveId, setDeleteMoveId] = useState<string | null>(null);
     const [moveList, setMoveList] = useState<string[]>([]);

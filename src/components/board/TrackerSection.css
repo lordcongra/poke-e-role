@@ -69,6 +69,31 @@
     transform: scale(1.1);
 }
 
+.tracker-section__first-hit-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+.tracker-section__first-hit-label {
+    font-weight: bold;
+    color: var(--primary);
+}
+
+.tracker-section__first-hit-check {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+    color: var(--text-main);
+    font-weight: bold;
+}
+
 .tracker-section__chances-row {
     display: flex;
     justify-content: center;

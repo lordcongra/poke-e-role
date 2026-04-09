@@ -7,10 +7,20 @@ import './TypeMatchups.css';
 
 export function TypeMatchups() {
     const role = useCharacterStore((state) => state.role);
-    const type1 = useCharacterStore((state) => state.identity.type1);
-    const type2 = useCharacterStore((state) => state.identity.type2);
-    const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
+    const rawType1 = useCharacterStore((state) => state.identity.type1);
+    const rawType2 = useCharacterStore((state) => state.identity.type2);
 
+    const activeTransformation = useCharacterStore((state) => state.identity.activeTransformation);
+    const activeFormId = useCharacterStore((state) => state.identity.activeFormId);
+    const roomCustomForms = useCharacterStore((state) => state.roomCustomForms);
+
+    const isTera = activeTransformation === 'Terastallize';
+    const teraAffinity = useCharacterStore((state) => state.identity.terastallizeAffinity);
+
+    const type1 = isTera ? teraAffinity : rawType1;
+    const type2 = isTera ? '' : rawType2;
+
+    const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
     const inventory = useCharacterStore((state) => state.inventory);
     const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
     const abilityName = useCharacterStore((state) => state.identity.ability);
@@ -75,6 +85,14 @@ export function TypeMatchups() {
 
     if (abilityText) {
         stringsToParse.push(abilityText.toLowerCase());
+    }
+
+    // 🔥 NEW: Parse passive tags from the active Custom Form!
+    if (activeTransformation === 'Custom' && activeFormId) {
+        const activeForm = roomCustomForms.find((f) => f.id === activeFormId);
+        if (activeForm && activeForm.tags) {
+            stringsToParse.push(activeForm.tags.toLowerCase());
+        }
     }
 
     stringsToParse.forEach((desc) => {
@@ -155,7 +173,10 @@ export function TypeMatchups() {
     };
 
     return (
-        <CollapsingSection title="TYPE MATCHUPS" className="sheet-panel type-matchups__panel">
+        <CollapsingSection
+            title={isTera ? `TYPE MATCHUPS (TERA: ${teraAffinity.toUpperCase()})` : 'TYPE MATCHUPS'}
+            className="sheet-panel type-matchups__panel"
+        >
             <div className="type-matchups__content">
                 {renderGroup('4x', groups[4])}
                 {renderGroup('2x', groups[2])}

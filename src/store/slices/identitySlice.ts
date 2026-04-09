@@ -40,7 +40,17 @@ const OBR_KEY_MAP: Record<string, string> = {
     evaOffsetX: 'eva-offset-x',
     evaOffsetY: 'eva-offset-y',
     claOffsetX: 'cla-offset-x',
-    claOffsetY: 'cla-offset-y'
+    claOffsetY: 'cla-offset-y',
+    activeTransformation: 'active-transformation',
+    activeFormId: 'active-form-id',
+    customFormConfig: 'custom-form-config',
+    terastallizeAffinity: 'terastallize-affinity',
+    terastallizeBonusActive: 'terastallize-bonus-active',
+    customFormFirstHitAccActive: 'custom-form-first-hit-acc',
+    customFormFirstHitDmgActive: 'custom-form-first-hit-dmg',
+    baseFormData: 'base-form-data',
+    altFormData: 'alt-form-data',
+    maxFormData: 'max-form-data'
 };
 
 const parseLearnset = (movesObj: unknown): Array<{ Learned: string; Name: string }> => {
@@ -97,9 +107,24 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         hand: '',
         isNPC: false,
         learnset: [],
-        isAltForm: false,
+        pokemonBackup: '',
+        trainerBackup: '',
+        
+        activeTransformation: 'None',
+        activeFormId: '',
+        formSaves: {},
+        customFormConfig: {},
+        
         baseFormData: '',
         altFormData: '',
+        maxFormData: '',
+        terastallizeAffinity: '',
+        terastallizeBonusActive: false,
+        customFormFirstHitAccActive: false,
+        customFormFirstHitDmgActive: false,
+        
+        badges: [], // 🔥 NEW
+
         showTrackers: true,
         settingHpBar: true,
         gmHpBar: false,
@@ -183,7 +208,6 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
             const updatesToSave: Record<string, unknown> = {};
             let newHealth = state.health;
 
-            // Recalculate HP immediately when the ruleset is changed
             if (field === 'ruleset') {
                 const newRuleset = String(value);
                 const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
@@ -223,7 +247,15 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
 
             if (field !== 'printConfig' && field !== 'tokenImageUrl' && field !== 'isPrinting') {
                 if (typeof value === 'string' || typeof value === 'boolean' || typeof value === 'number') {
-                    updatesToSave[obrKey] = value;
+                    if (field === 'maxFormData') updatesToSave['max-form-data'] = value;
+                    else if (field === 'activeFormId') updatesToSave['active-form-id'] = value;
+                    else updatesToSave[obrKey] = value;
+                } else if (field === 'formSaves') {
+                    updatesToSave['form-saves'] = JSON.stringify(value);
+                } else if (field === 'customFormConfig') {
+                    updatesToSave['custom-form-config'] = JSON.stringify(value);
+                } else if (field === 'badges') {
+                    updatesToSave['badges-data'] = JSON.stringify(value); // 🔥 NEW
                 }
 
                 try {

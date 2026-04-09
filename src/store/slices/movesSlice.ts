@@ -9,7 +9,7 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
 
     setPendingDualScale: (data) => set({ pendingDualScale: data }),
 
-    resolveDualScale: (moveId, acc1, acc2, dmg1) =>
+    resolveDualScale: (moveId, acc1, acc2, dmg1, category) =>
         set((state) => {
             const newMoves = state.moves.map((m) => {
                 if (m.id === moveId) {
@@ -17,7 +17,8 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                         ...m,
                         ...(acc1 ? { acc1 } : {}),
                         ...(acc2 ? { acc2 } : {}),
-                        ...(dmg1 ? { dmg1 } : {})
+                        ...(dmg1 ? { dmg1 } : {}),
+                        ...(category ? { category } : {})
                     };
                 }
                 return m;
@@ -159,21 +160,33 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
 
             const newMoves = state.moves.map((m) => {
                 if (m.id === id) {
-                    const rawCat = String(data.Category || 'Physical');
-                    const cat = rawCat === 'Physical' ? 'Physical' : rawCat === 'Special' ? 'Special' : 'Status';
+                    const rawCat = String(data.Category || 'Physical').toLowerCase();
+                    let cat: 'Physical' | 'Special' | 'Status' = 'Status';
+                    let catOpts: ('Physical' | 'Special' | 'Status')[] | undefined = undefined;
+
+                    // If it explicitly says phys/spec/status, assign it directly.
+                    if (rawCat === 'physical' || rawCat.includes('phys')) cat = 'Physical';
+                    else if (rawCat === 'special' || rawCat.includes('spec')) cat = 'Special';
+                    else if (rawCat === 'status' || rawCat.includes('stat') || rawCat.includes('sup')) cat = 'Status';
+                    else {
+                        // If it's "Variable" or completely unrecognized, prompt the user!
+                        cat = 'Physical'; // Temporary fallback until they select
+                        catOpts = ['Physical', 'Special', 'Status'];
+                    }
 
                     const acc1Opts = mapAttrOptions(String(data.Accuracy1 || 'str'));
                     const acc2Opts = mapSkillOptions(String(data.Accuracy2 || 'none'));
                     const dmg1Opts = mapAttrOptions(String(data.Damage1 === 'None' ? '' : data.Damage1 || ''));
 
                     // If any option has multiple choices, trigger the modal!
-                    if (acc1Opts.length > 1 || acc2Opts.length > 1 || dmg1Opts.length > 1) {
+                    if (acc1Opts.length > 1 || acc2Opts.length > 1 || dmg1Opts.length > 1 || catOpts) {
                         newPendingDualScale = {
                             moveId: m.id,
                             moveName: String(data.Name || m.name),
                             acc1Options: acc1Opts.length > 1 ? acc1Opts : undefined,
                             acc2Options: acc2Opts.length > 1 ? acc2Opts : undefined,
-                            dmg1Options: dmg1Opts.length > 1 ? dmg1Opts : undefined
+                            dmg1Options: dmg1Opts.length > 1 ? dmg1Opts : undefined,
+                            categoryOptions: catOpts
                         };
                     }
 
@@ -181,7 +194,7 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                         ...m,
                         name: String(data.Name || m.name),
                         type: String(data.Type || 'Normal'),
-                        category: cat as 'Physical' | 'Special' | 'Status',
+                        category: cat,
                         acc1: acc1Opts[0] || 'str',
                         acc2: acc2Opts[0] || 'none',
                         dmg1: dmg1Opts[0] || '',

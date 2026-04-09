@@ -1,4 +1,3 @@
-// src/components/modals/TagBuilderModal.tsx
 import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
@@ -7,7 +6,7 @@ import './TagBuilderModal.css';
 
 interface TagBuilderModalProps {
     targetId: string;
-    targetType: 'item' | 'move' | 'homebrew_ability' | 'homebrew_move' | 'homebrew_item';
+    targetType: 'item' | 'move' | 'homebrew_ability' | 'homebrew_move' | 'homebrew_item' | 'homebrew_form';
     onClose: () => void;
 }
 
@@ -17,12 +16,14 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
     const updateCustomAbility = useCharacterStore((state) => state.updateCustomAbility);
     const updateCustomMove = useCharacterStore((state) => state.updateCustomMove);
     const updateCustomItem = useCharacterStore((state) => state.updateCustomItem);
+    const updateCustomForm = useCharacterStore((state) => state.updateCustomForm);
 
     const inventory = useCharacterStore((state) => state.inventory);
     const moves = useCharacterStore((state) => state.moves);
     const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
     const customMoves = useCharacterStore((state) => state.roomCustomMoves);
     const customItems = useCharacterStore((state) => state.roomCustomItems);
+    const customForms = useCharacterStore((state) => state.roomCustomForms);
 
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
     const extraCategories = useCharacterStore((state) => state.extraCategories);
@@ -55,7 +56,8 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
             const customSkillNames = extraCategories.flatMap((c) => c.skills.map((s) => s.name || 'Unnamed'));
             return [...Object.values(Skill).map(formatEnum), ...customSkillNames];
         }
-        if (category === 'combat') return ['Dmg', 'Acc', 'Init', 'Chance', 'Combo Dmg'];
+        if (category === 'combat')
+            return ['Dmg', 'Acc', 'Init', 'Chance', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc'];
         if (category === 'matchup') return ['Immune', 'Resist', 'Weak', 'Remove Immunities', 'Remove Immunity'];
 
         if (category === 'mechanic')
@@ -88,7 +90,8 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
     };
 
     const showTypeSelect =
-        (category === 'combat' && !['Init', 'Chance', 'Combo Dmg'].includes(target)) ||
+        (category === 'combat' &&
+            !['Init', 'Chance', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc'].includes(target)) ||
         (category === 'matchup' && target !== 'Remove Immunities');
     const showValueInput =
         category === 'stat' ||
@@ -104,7 +107,8 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
         if (category === 'stat' || category === 'skill') {
             tag = `[${target} ${sign}]`;
         } else if (category === 'combat') {
-            if (['Init', 'Chance', 'Combo Dmg'].includes(target)) tag = `[${target} ${sign}]`;
+            if (['Init', 'Chance', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc'].includes(target))
+                tag = `[${target} ${sign}]`;
             else if (typeOption) tag = `[${target} ${sign}: ${typeOption}]`;
             else tag = `[${target} ${sign}]`;
         } else if (category === 'matchup') {
@@ -156,6 +160,9 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                         'description',
                         hbItem.description ? `${hbItem.description} ${tag}`.trim() : tag
                     );
+            } else if (targetType === 'homebrew_form') {
+                const hbForm = customForms.find((f) => f.id === targetId);
+                if (hbForm) updateCustomForm(targetId, 'tags', hbForm.tags ? `${hbForm.tags} ${tag}`.trim() : tag);
             } else {
                 const item = inventory.find((i) => i.id === targetId);
                 if (item) updateInventoryItem(targetId, 'desc', item.desc ? `${item.desc} ${tag}`.trim() : tag);

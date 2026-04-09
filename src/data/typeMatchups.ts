@@ -31,7 +31,8 @@ export const BASE_TYPE_CHART: Record<string, Record<string, number>> = {
         Fairy: 0.5,
         Poison: 0
     },
-    Fairy: { Poison: 2, Steel: 2, Fighting: 0.5, Bug: 0.5, Dark: 0.5, Dragon: 0 }
+    Fairy: { Poison: 2, Steel: 2, Fighting: 0.5, Bug: 0.5, Dark: 0.5, Dragon: 0 },
+    Stellar: {}
 };
 
 export const BASE_TYPES = Object.keys(BASE_TYPE_CHART);

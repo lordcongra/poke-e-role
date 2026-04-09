@@ -84,7 +84,6 @@ export async function rollStatus(status: StatusItem, state: CharacterState) {
 
     const tagString = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';
 
-    // Fix: Confusion does not stack rounds, it just needs 2 successes to allow an attack.
     const rollType = status.name === 'Confusion' ? 'roll' : 'status';
 
     await rollDicePlus(
@@ -164,6 +163,14 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     let dicePool = attributeTotal + skillTotal + extraDice;
     if (move.acc1 === 'dex') dicePool += statuses.paralysisDexterityPenalty;
 
+    let customFirstHitAccTag = '';
+    if (itemBuffs.firstHitAcc !== 0 && state.trackers.firstHitAcc) {
+        dicePool += itemBuffs.firstHitAcc;
+        const sign = itemBuffs.firstHitAcc > 0 ? '+' : '';
+        customFirstHitAccTag = `First Hit (${sign}${itemBuffs.firstHitAcc} Dice)`;
+        useCharacterStore.getState().updateTracker('firstHitAcc', false);
+    }
+
     let criticalRequirement = requiredSuccesses + 3;
     const hasItemHighCrit = itemBuffs.highCritStacks > 0;
     const hasMoveHighCrit = moveDescription.includes('high critical');
@@ -182,6 +189,8 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     if (ignoredAccuracyPenalty > 0) tags.push(`Ignored ${ignoredAccuracyPenalty} Low Acc`);
     if (successModifier !== 0) tags.push(`Net Mod ${successModifier > 0 ? '+' : ''}${successModifier} Succ`);
     if (statuses.paralysisDexterityPenalty < 0 && move.acc1 === 'dex') tags.push(`Paralysis: -2 Dice`);
+
+    if (customFirstHitAccTag) tags.push(customFirstHitAccTag);
     if (chancesUsed > 0) tags.push(`Chances: Max ${chancesUsed} Rerolls`);
 
     tags.push(`Need ${requiredSuccesses} Succ`);
@@ -265,6 +274,29 @@ export async function executeDamageRoll(
         stabTag = isProtean && !hasTypeMatch ? ' Protean STAB' : ' STAB';
     }
 
+    const isTera = state.identity.activeTransformation === 'Terastallize';
+    const teraAffinity = state.identity.terastallizeAffinity;
+    const teraBonusActive = state.identity.terastallizeBonusActive;
+    let teraBonusTags = '';
+
+    if (isTera && move.type === teraAffinity) {
+        if (teraBonusActive) {
+            const matchesOriginal = state.identity.type1 === teraAffinity || state.identity.type2 === teraAffinity;
+            teraBonusTags = matchesOriginal ? 'Tera Burst (+3 Dice)' : 'Tera Burst (+2 Dice)';
+            useCharacterStore.getState().setIdentity('terastallizeBonusActive', false);
+        } else {
+            teraBonusTags = 'Tera Boost (+1 Dice)';
+        }
+    }
+
+    let customFirstHitTag = '';
+    if (itemBuffs.firstHitDmg !== 0 && state.trackers.firstHitDmg) {
+        // 🔥 FIX: We do NOT add itemBuffs.firstHitDmg here! It is already inside baseDamage!
+        const sign = itemBuffs.firstHitDmg > 0 ? '+' : '';
+        customFirstHitTag = `First Hit (${sign}${itemBuffs.firstHitDmg} Dice)`;
+        useCharacterStore.getState().updateTracker('firstHitDmg', false);
+    }
+
     const pain = getPainPenalty(normalizedDamageStatistic, state);
     const successModifier = state.trackers.globalSucc + pain;
     const mathModifier =
@@ -277,7 +309,12 @@ export async function executeDamageRoll(
     }
     if (isSuperEffective) tags.push(`Super Effective`);
     if (superEffectiveDamageBonus > 0) tags.push(`Item SE Dmg +${superEffectiveDamageBonus}`);
-    if (stabBonus > 0) tags.push(stabTag);
+
+    if (teraBonusTags) tags.push(teraBonusTags);
+    else if (stabBonus > 0) tags.push(stabTag);
+
+    if (customFirstHitTag) tags.push(customFirstHitTag);
+
     if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
     if (successModifier !== 0) tags.push(`Net Mod ${successModifier > 0 ? '+' : ''}${successModifier} Succ`);
 

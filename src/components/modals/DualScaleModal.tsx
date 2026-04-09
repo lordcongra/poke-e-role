@@ -9,19 +9,21 @@ export function DualScaleModal() {
     const [selectedAcc1, setSelectedAcc1] = useState<string | undefined>();
     const [selectedAcc2, setSelectedAcc2] = useState<string | undefined>();
     const [selectedDmg1, setSelectedDmg1] = useState<string | undefined>();
+    const [selectedCategory, setSelectedCategory] = useState<'Physical' | 'Special' | 'Status' | undefined>();
 
     useEffect(() => {
         if (pendingDualScale) {
             setSelectedAcc1(pendingDualScale.acc1Options ? pendingDualScale.acc1Options[0] : undefined);
             setSelectedAcc2(pendingDualScale.acc2Options ? pendingDualScale.acc2Options[0] : undefined);
             setSelectedDmg1(pendingDualScale.dmg1Options ? pendingDualScale.dmg1Options[0] : undefined);
+            setSelectedCategory(pendingDualScale.categoryOptions ? pendingDualScale.categoryOptions[0] : undefined);
         }
     }, [pendingDualScale]);
 
     if (!pendingDualScale) return null;
 
     const handleConfirm = () => {
-        resolveDualScale(pendingDualScale.moveId, selectedAcc1, selectedAcc2, selectedDmg1);
+        resolveDualScale(pendingDualScale.moveId, selectedAcc1, selectedAcc2, selectedDmg1, selectedCategory);
     };
 
     const formatLabel = (val: string) => {
@@ -32,11 +34,28 @@ export function DualScaleModal() {
     return (
         <div className="dual-scale__overlay">
             <div className="dual-scale__content">
-                <h3 className="dual-scale__title">⚖️ Dual-Scaling Move</h3>
+                <h3 className="dual-scale__title">⚖️ Move Options Detected</h3>
                 <p className="dual-scale__desc">
-                    <b>{pendingDualScale.moveName}</b> has multiple ways it can be rolled. Which stats/skills would you
-                    like to use?
+                    <b>{pendingDualScale.moveName}</b> has variable scaling or ambiguous options. Please select how you
+                    want to roll it:
                 </p>
+
+                {pendingDualScale.categoryOptions && (
+                    <div className="dual-scale__section">
+                        <div className="dual-scale__section-title">Move Category:</div>
+                        <select
+                            className="dual-scale__select"
+                            value={selectedCategory}
+                            onChange={(e) => setSelectedCategory(e.target.value as 'Physical' | 'Special' | 'Status')}
+                        >
+                            {pendingDualScale.categoryOptions.map((opt) => (
+                                <option key={opt} value={opt}>
+                                    {opt}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
 
                 {pendingDualScale.acc1Options && (
                     <div className="dual-scale__section">

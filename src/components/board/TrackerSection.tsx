@@ -16,6 +16,9 @@ export function TrackerSection() {
     const updateTracker = useCharacterStore((state) => state.updateTracker);
     const resetRound = useCharacterStore((state) => state.resetRound);
 
+    const activeTransformation = useCharacterStore((state) => state.identity.activeTransformation);
+    const isMaxed = activeTransformation === 'Dynamax' || activeTransformation === 'Gigantamax';
+
     const painEnabled =
         String(useCharacterStore((state) => state.identity.pain || 'Enabled')).toLowerCase() === 'enabled';
     const will = useCharacterStore((state) => state.will);
@@ -162,6 +165,9 @@ export function TrackerSection() {
                                 <button
                                     type="button"
                                     onClick={handleEvadeRoll}
+                                    disabled={isMaxed}
+                                    style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
+                                    title={isMaxed ? 'Cannot Evade while Dynamaxed/Gigantamaxed' : ''}
                                     className="action-button action-button--dark tracker-section__toggle-btn"
                                 >
                                     🎲 Evade
@@ -169,6 +175,9 @@ export function TrackerSection() {
                                 <input
                                     type="checkbox"
                                     checked={trackers.evade}
+                                    disabled={isMaxed}
+                                    style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
+                                    title={isMaxed ? 'Cannot Evade while Dynamaxed/Gigantamaxed' : ''}
                                     onChange={(event) => updateTracker('evade', event.target.checked)}
                                     className="sheet-save tracker-section__checkbox"
                                 />
@@ -178,6 +187,9 @@ export function TrackerSection() {
                                 <button
                                     type="button"
                                     onClick={() => setShowClashModal(true)}
+                                    disabled={isMaxed}
+                                    style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
+                                    title={isMaxed ? 'Cannot Clash while Dynamaxed/Gigantamaxed' : ''}
                                     className="action-button action-button--dark tracker-section__toggle-btn"
                                 >
                                     🎲 Clash
@@ -185,9 +197,39 @@ export function TrackerSection() {
                                 <input
                                     type="checkbox"
                                     checked={trackers.clash}
+                                    disabled={isMaxed}
+                                    style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
+                                    title={isMaxed ? 'Cannot Clash while Dynamaxed/Gigantamaxed' : ''}
                                     onChange={(event) => updateTracker('clash', event.target.checked)}
                                     className="sheet-save tracker-section__checkbox"
                                 />
+                            </div>
+
+                            <div className="tracker-section__first-hit-group">
+                                <span
+                                    className="tracker-section__first-hit-label"
+                                    title="Prime your First Hit tags for Accuracy or Damage"
+                                >
+                                    1st Hit:
+                                </span>
+                                <label className="tracker-section__first-hit-check">
+                                    <input
+                                        type="checkbox"
+                                        checked={trackers.firstHitAcc}
+                                        onChange={(event) => updateTracker('firstHitAcc', event.target.checked)}
+                                        className="sheet-save tracker-section__checkbox"
+                                    />{' '}
+                                    Acc
+                                </label>
+                                <label className="tracker-section__first-hit-check">
+                                    <input
+                                        type="checkbox"
+                                        checked={trackers.firstHitDmg}
+                                        onChange={(event) => updateTracker('firstHitDmg', event.target.checked)}
+                                        className="sheet-save tracker-section__checkbox"
+                                    />{' '}
+                                    Dmg
+                                </label>
                             </div>
                         </div>
                     </div>

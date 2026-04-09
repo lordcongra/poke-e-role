@@ -1,5 +1,6 @@
 import type { InventoryItem, MoveData, CharacterState, ExtraCategory, CustomAbility } from '../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
+import { useCharacterStore } from '../store/useCharacterStore';
 
 export const ATTRIBUTE_MAPPING: Record<string, string> = {
     Strength: 'str',
@@ -17,7 +18,6 @@ export const ATTRIBUTE_MAPPING: Record<string, string> = {
 
 export function getAbilityText(abilityName: string, customAbilities: CustomAbility[]): string {
     if (!abilityName) return '';
-    // Strip out the (HA) tag so we can accurately find Homebrew abilities too
     const cleanName = abilityName
         .replace(/\s*\(HA\)$/i, '')
         .trim()
@@ -44,6 +44,8 @@ export function parseCombatTags(
         acc: 0,
         chance: 0,
         seDmg: 0,
+        firstHitDmg: 0,
+        firstHitAcc: 0,
         highCritStacks: 0,
         stackingHighCritStacks: 0,
         ignoreLowAcc: 0,
@@ -74,6 +76,18 @@ export function parseCombatTags(
 
     if (abilityText) {
         itemsToParse.push({ name: 'Ability', desc: abilityText });
+    }
+
+    if (move && move.desc) {
+        itemsToParse.push({ name: move.name || 'Move', desc: move.desc });
+    }
+
+    const state = useCharacterStore.getState();
+    if (state.identity.activeTransformation === 'Custom' && state.identity.activeFormId) {
+        const customForm = state.roomCustomForms.find((f) => f.id === state.identity.activeFormId);
+        if (customForm && customForm.tags) {
+            itemsToParse.push({ name: customForm.name, desc: customForm.tags });
+        }
     }
 
     itemsToParse.forEach((item) => {
@@ -139,59 +153,58 @@ export function parseCombatTags(
             generalTriggered = true;
         }
 
-        if (move) {
-            const damageMatches = description.matchAll(/\[\s*dmg\s*([+-]?\s*\d+)(?:\s*:\s*([\w\s]+))?\s*\]/gi);
-            for (const match of damageMatches) {
-                const requirement = match[2]?.toLowerCase().trim();
+        const damageMatches = description.matchAll(/\[\s*dmg\s*([+-]?\s*\d+)(?:\s*:\s*([\w\s]+))?\s*\]/gi);
+        for (const match of damageMatches) {
+            const requirement = match[2]?.toLowerCase().trim();
 
-                if (!requirement || requirement === moveType) {
-                    bonuses.dmg += safeParseInt(match[1]);
-                    damageTriggered = true;
-                } else if (requirement === 'super effective') {
-                    bonuses.seDmg += safeParseInt(match[1]);
-                    damageTriggered = true;
-                } else if (requirement === 'physical' && move.category === 'Physical') {
-                    bonuses.dmg += safeParseInt(match[1]);
-                    damageTriggered = true;
-                } else if (requirement === 'special' && move.category === 'Special') {
-                    bonuses.dmg += safeParseInt(match[1]);
-                    damageTriggered = true;
-                }
-            }
-
-            const accuracyMatches = description.matchAll(/\[\s*acc\s*([+-]?\s*\d+)(?:\s*:\s*([\w\s]+))?\s*\]/gi);
-            for (const match of accuracyMatches) {
-                const requirement = match[2]?.toLowerCase().trim();
-
-                if (!requirement || requirement === moveType) {
-                    bonuses.acc += safeParseInt(match[1]);
-                    accuracyTriggered = true;
-                } else if (requirement === 'physical' && move.category === 'Physical') {
-                    bonuses.acc += safeParseInt(match[1]);
-                    accuracyTriggered = true;
-                } else if (requirement === 'special' && move.category === 'Special') {
-                    bonuses.acc += safeParseInt(match[1]);
-                    accuracyTriggered = true;
-                }
-            }
-
-            const comboMatches = description.matchAll(/\[\s*combo dmg\s*([+-]?\s*\d+)\s*\]/gi);
-            for (const match of comboMatches) {
-                if (isComboMove) {
-                    bonuses.dmg += safeParseInt(match[1]);
-                    damageTriggered = true;
-                }
-            }
-        } else {
-            const damageMatches = description.matchAll(/\[\s*dmg\s*([+-]?\s*\d+)\s*\]/gi);
-            for (const match of damageMatches) {
+            if (!requirement || requirement === moveType) {
+                bonuses.dmg += safeParseInt(match[1]);
+                damageTriggered = true;
+            } else if (requirement === 'super effective') {
+                bonuses.seDmg += safeParseInt(match[1]);
+                damageTriggered = true;
+            } else if (move && requirement === 'physical' && move.category === 'Physical') {
+                bonuses.dmg += safeParseInt(match[1]);
+                damageTriggered = true;
+            } else if (move && requirement === 'special' && move.category === 'Special') {
                 bonuses.dmg += safeParseInt(match[1]);
                 damageTriggered = true;
             }
-            const accuracyMatches = description.matchAll(/\[\s*acc\s*([+-]?\s*\d+)\s*\]/gi);
-            for (const match of accuracyMatches) {
+        }
+
+        const firstHitMatches = description.matchAll(/\[\s*first hit dmg\s*([+-]?\s*\d+)\s*\]/gi);
+        for (const match of firstHitMatches) {
+            bonuses.firstHitDmg += safeParseInt(match[1]);
+            damageTriggered = true;
+        }
+
+        const firstHitAccMatches = description.matchAll(/\[\s*first hit acc\s*([+-]?\s*\d+)\s*\]/gi);
+        for (const match of firstHitAccMatches) {
+            bonuses.firstHitAcc += safeParseInt(match[1]);
+            accuracyTriggered = true;
+        }
+
+        const accuracyMatches = description.matchAll(/\[\s*acc\s*([+-]?\s*\d+)(?:\s*:\s*([\w\s]+))?\s*\]/gi);
+        for (const match of accuracyMatches) {
+            const requirement = match[2]?.toLowerCase().trim();
+
+            if (!requirement || requirement === moveType) {
                 bonuses.acc += safeParseInt(match[1]);
                 accuracyTriggered = true;
+            } else if (move && requirement === 'physical' && move.category === 'Physical') {
+                bonuses.acc += safeParseInt(match[1]);
+                accuracyTriggered = true;
+            } else if (move && requirement === 'special' && move.category === 'Special') {
+                bonuses.acc += safeParseInt(match[1]);
+                accuracyTriggered = true;
+            }
+        }
+
+        const comboMatches = description.matchAll(/\[\s*combo dmg\s*([+-]?\s*\d+)\s*\]/gi);
+        for (const match of comboMatches) {
+            if (isComboMove) {
+                bonuses.dmg += safeParseInt(match[1]);
+                damageTriggered = true;
             }
         }
 
@@ -210,7 +223,7 @@ export function parseCombatTags(
             accuracyTriggered = true;
         }
 
-        if (name && name !== 'Ability') {
+        if (name && name !== 'Ability' && name !== 'Move' && name !== 'Active Form') {
             if (generalTriggered || accuracyTriggered || damageTriggered) bonuses.itemNames.push(name);
             if (generalTriggered || accuracyTriggered) bonuses.accItemNames.push(name);
             if (generalTriggered || damageTriggered) bonuses.dmgItemNames.push(name);
@@ -318,6 +331,27 @@ export function calculateBaseDamage(move: MoveData, state: CharacterState): numb
     const typingString = `${state.identity.type1} / ${state.identity.type2}`;
     const hasTypeMatch = move.type && typingString.includes(move.type);
 
-    const sameTypeAttackBonus = hasTypeMatch || isProtean ? 1 : 0;
-    return move.power + scalingValue + extraDice + sameTypeAttackBonus;
+    let sameTypeAttackBonus = hasTypeMatch || isProtean ? 1 : 0;
+
+    let teraBonus = 0;
+    const isTera = state.identity.activeTransformation === 'Terastallize';
+    if (isTera && move.type === state.identity.terastallizeAffinity) {
+        sameTypeAttackBonus = 1;
+        if (state.identity.terastallizeBonusActive) {
+            const matchesOriginal =
+                state.identity.type1 === state.identity.terastallizeAffinity ||
+                state.identity.type2 === state.identity.terastallizeAffinity;
+            teraBonus = matchesOriginal ? 3 : 2;
+        } else {
+            teraBonus = 1;
+        }
+    }
+
+    // 🔥 FIX: Pull First Hit Dmg from the global Tracker Slice!
+    let customFirstHitTag = 0;
+    if (itemBuffs.firstHitDmg !== 0 && state.trackers.firstHitDmg) {
+        customFirstHitTag = itemBuffs.firstHitDmg;
+    }
+
+    return move.power + scalingValue + extraDice + sameTypeAttackBonus + teraBonus + customFirstHitTag;
 }
