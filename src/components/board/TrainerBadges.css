@@ -8,7 +8,7 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    max-height: 138px; /* Perfectly fits exactly 3 badges before scrolling */
+    max-height: 138px;
     overflow-y: auto;
     padding-right: 4px;
     margin-bottom: 8px;
@@ -63,4 +63,51 @@
 .trainer-badge-row__del-btn {
     padding: 0 8px;
     height: 32px;
+}
+
+/* Modals */
+.trainer-badges__modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1200;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.trainer-badges__modal-content {
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: 6px;
+    max-width: 300px;
+    width: 90%;
+    border: 2px solid #c62828;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    text-align: center;
+}
+
+.trainer-badges__modal-title {
+    color: #c62828;
+    margin-top: 0;
+    font-size: 1.1rem;
+}
+
+.trainer-badges__modal-text {
+    font-size: 0.9rem;
+    color: var(--text-main);
+    margin-bottom: 20px;
+}
+
+.trainer-badges__modal-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.trainer-badges__modal-btn {
+    flex: 1;
+    padding: 6px;
 }

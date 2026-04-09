@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { TrainerBadgeRow } from './TrainerBadgeRow';
@@ -6,6 +7,8 @@ import './TrainerBadges.css';
 export function TrainerBadges() {
     const badges = useCharacterStore(state => state.identity.badges) || [];
     const setIdentity = useCharacterStore(state => state.setIdentity);
+    
+    const [deleteBadgeId, setDeleteBadgeId] = useState<string | null>(null);
 
     const addBadge = () => {
         setIdentity('badges', [...badges, { id: crypto.randomUUID(), name: '', emoji: '🏅' }]);
@@ -38,7 +41,7 @@ export function TrainerBadges() {
                             key={badge.id}
                             badge={badge}
                             onUpdate={(field, value) => updateBadge(badge.id, field, value)}
-                            onRemove={() => removeBadge(badge.id)}
+                            onRemove={() => setDeleteBadgeId(badge.id)}
                         />
                     ))
                 )}
@@ -46,6 +49,34 @@ export function TrainerBadges() {
             <button type="button" onClick={addBadge} className="action-button action-button--dark trainer-badges__add-btn">
                 + Add Badge
             </button>
+
+            {deleteBadgeId && (
+                <div className="trainer-badges__modal-overlay">
+                    <div className="trainer-badges__modal-content">
+                        <h3 className="trainer-badges__modal-title">⚠️ Confirm Deletion</h3>
+                        <p className="trainer-badges__modal-text">Are you sure you want to delete this Badge?</p>
+                        <div className="trainer-badges__modal-actions">
+                            <button
+                                type="button"
+                                className="action-button action-button--dark trainer-badges__modal-btn"
+                                onClick={() => setDeleteBadgeId(null)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="action-button action-button--red trainer-badges__modal-btn"
+                                onClick={() => {
+                                    removeBadge(deleteBadgeId);
+                                    setDeleteBadgeId(null);
+                                }}
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </CollapsingSection>
     );
 }
