@@ -10,6 +10,7 @@ import type {
     StatusItem,
     EffectItem,
     CustomInfo,
+    Badge,
     TransformationType
 } from '../storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
@@ -182,15 +183,25 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
                     }));
                 }
             } catch (e) {}
+            
+            let parsedBadges: Badge[] = [];
+            try {
+                const rawBadges = meta['badges-data'] ? JSON.parse(String(meta['badges-data'])) : [];
+                if (Array.isArray(rawBadges)) {
+                    parsedBadges = rawBadges.map((b: Record<string, unknown>) => ({
+                        id: String(b.id || crypto.randomUUID()),
+                        name: String(b.name || ''),
+                        emoji: String(b.emoji || '🏅')
+                    }));
+                }
+            } catch (e) {}
 
             const newHealth = {
                 hpCurr: meta['hp-curr'] !== undefined ? Number(meta['hp-curr']) : 5,
                 hpMax: meta['hp-max-display'] !== undefined ? Number(meta['hp-max-display']) : 5,
                 hpBase: meta['hp-base'] !== undefined ? Number(meta['hp-base']) : 4,
-                temporaryHitPoints:
-                    meta['temporary-hit-points'] !== undefined ? Number(meta['temporary-hit-points']) : 0,
-                temporaryHitPointsMax:
-                    meta['temporary-hit-points-max'] !== undefined ? Number(meta['temporary-hit-points-max']) : 0
+                temporaryHitPoints: meta['temporary-hit-points'] !== undefined ? Number(meta['temporary-hit-points']) : 0,
+                temporaryHitPointsMax: meta['temporary-hit-points-max'] !== undefined ? Number(meta['temporary-hit-points-max']) : 0
             };
 
             const newWill = {
@@ -226,18 +237,22 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
                     isNPC: meta['is-npc'] === true || meta['is-npc'] === 'true',
                     pokemonBackup: String(meta['pokemon-backup'] || ''),
                     trainerBackup: String(meta['trainer-backup'] || ''),
-
+                    
                     activeTransformation: (meta['active-transformation'] as TransformationType) || 'None',
                     activeFormId: String(meta['active-form-id'] || ''),
                     formSaves: meta['form-saves'] ? JSON.parse(String(meta['form-saves'])) : {},
                     customFormConfig: meta['custom-form-config'] ? JSON.parse(String(meta['custom-form-config'])) : {},
-
+                    
                     baseFormData: String(meta['base-form-data'] || ''),
                     altFormData: String(meta['alt-form-data'] || ''),
                     maxFormData: String(meta['max-form-data'] || ''),
                     terastallizeAffinity: String(meta['terastallize-affinity'] || ''),
-                    terastallizeBonusActive:
-                        meta['terastallize-bonus-active'] === true || meta['terastallize-bonus-active'] === 'true',
+                    terastallizeBonusActive: meta['terastallize-bonus-active'] === true || meta['terastallize-bonus-active'] === 'true',
+                    
+                    customFormFirstHitAccActive: meta['custom-form-first-hit-acc'] === true || meta['custom-form-first-hit-acc'] === 'true',
+                    customFormFirstHitDmgActive: meta['custom-form-first-hit-dmg'] === true || meta['custom-form-first-hit-dmg'] === 'true',
+                    
+                    badges: parsedBadges,
 
                     showTrackers: meta['show-trackers'] !== false && meta['show-trackers'] !== 'false',
                     settingHpBar: meta['setting-hp-bar'] !== false && meta['setting-hp-bar'] !== 'false',
@@ -298,7 +313,6 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
                     globalSucc: Number(meta['global-succ-mod']) || 0,
                     globalChance: Number(meta['global-chance-mod']) || 0,
                     ignoredPain: Number(meta['ignored-pain-mod']) || 0,
-                    // 🔥 NEW: Map the trackers from Owlbear!
                     firstHitAcc: meta['first-hit-acc-active'] === true || meta['first-hit-acc-active'] === 'true',
                     firstHitDmg: meta['first-hit-dmg-active'] === true || meta['first-hit-dmg-active'] === 'true'
                 },

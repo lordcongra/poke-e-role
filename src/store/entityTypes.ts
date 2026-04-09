@@ -61,6 +61,12 @@ export interface CustomInfo {
     value: string;
 }
 
+export interface Badge {
+    id: string;
+    name: string;
+    emoji: string;
+}
+
 export interface Trackers {
     actions: number;
     evade: boolean;
@@ -72,7 +78,6 @@ export interface Trackers {
     globalSucc: number;
     globalChance: number;
     ignoredPain: number;
-    // 🔥 NEW: Independently tracked Acc/Dmg First Hit logic moved to Global Trackers!
     firstHitAcc: boolean;
     firstHitDmg: boolean;
 }

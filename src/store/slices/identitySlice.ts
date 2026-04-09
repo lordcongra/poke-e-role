@@ -46,6 +46,8 @@ const OBR_KEY_MAP: Record<string, string> = {
     customFormConfig: 'custom-form-config',
     terastallizeAffinity: 'terastallize-affinity',
     terastallizeBonusActive: 'terastallize-bonus-active',
+    customFormFirstHitAccActive: 'custom-form-first-hit-acc',
+    customFormFirstHitDmgActive: 'custom-form-first-hit-dmg',
     baseFormData: 'base-form-data',
     altFormData: 'alt-form-data',
     maxFormData: 'max-form-data'
@@ -107,17 +109,21 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         learnset: [],
         pokemonBackup: '',
         trainerBackup: '',
-
+        
         activeTransformation: 'None',
         activeFormId: '',
         formSaves: {},
         customFormConfig: {},
-
+        
         baseFormData: '',
         altFormData: '',
         maxFormData: '',
         terastallizeAffinity: '',
         terastallizeBonusActive: false,
+        customFormFirstHitAccActive: false,
+        customFormFirstHitDmgActive: false,
+        
+        badges: [], // 🔥 NEW
 
         showTrackers: true,
         settingHpBar: true,
@@ -248,6 +254,8 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                     updatesToSave['form-saves'] = JSON.stringify(value);
                 } else if (field === 'customFormConfig') {
                     updatesToSave['custom-form-config'] = JSON.stringify(value);
+                } else if (field === 'badges') {
+                    updatesToSave['badges-data'] = JSON.stringify(value); // 🔥 NEW
                 }
 
                 try {
