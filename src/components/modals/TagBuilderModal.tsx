@@ -56,7 +56,8 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
             const customSkillNames = extraCategories.flatMap((c) => c.skills.map((s) => s.name || 'Unnamed'));
             return [...Object.values(Skill).map(formatEnum), ...customSkillNames];
         }
-        if (category === 'combat') return ['Dmg', 'Acc', 'Init', 'Chance', 'Combo Dmg'];
+        if (category === 'combat')
+            return ['Dmg', 'Acc', 'Init', 'Chance', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc'];
         if (category === 'matchup') return ['Immune', 'Resist', 'Weak', 'Remove Immunities', 'Remove Immunity'];
 
         if (category === 'mechanic')
@@ -89,7 +90,8 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
     };
 
     const showTypeSelect =
-        (category === 'combat' && !['Init', 'Chance', 'Combo Dmg'].includes(target)) ||
+        (category === 'combat' &&
+            !['Init', 'Chance', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc'].includes(target)) ||
         (category === 'matchup' && target !== 'Remove Immunities');
     const showValueInput =
         category === 'stat' ||
@@ -105,7 +107,8 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
         if (category === 'stat' || category === 'skill') {
             tag = `[${target} ${sign}]`;
         } else if (category === 'combat') {
-            if (['Init', 'Chance', 'Combo Dmg'].includes(target)) tag = `[${target} ${sign}]`;
+            if (['Init', 'Chance', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc'].includes(target))
+                tag = `[${target} ${sign}]`;
             else if (typeOption) tag = `[${target} ${sign}: ${typeOption}]`;
             else tag = `[${target} ${sign}]`;
         } else if (category === 'matchup') {
@@ -159,12 +162,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                     );
             } else if (targetType === 'homebrew_form') {
                 const hbForm = customForms.find((f) => f.id === targetId);
-                if (hbForm)
-                    updateCustomForm(
-                        targetId,
-                        'tags',
-                        hbForm.tags ? `${hbForm.tags} ${tag}`.trim() : tag
-                    );
+                if (hbForm) updateCustomForm(targetId, 'tags', hbForm.tags ? `${hbForm.tags} ${tag}`.trim() : tag);
             } else {
                 const item = inventory.find((i) => i.id === targetId);
                 if (item) updateInventoryItem(targetId, 'desc', item.desc ? `${item.desc} ${tag}`.trim() : tag);

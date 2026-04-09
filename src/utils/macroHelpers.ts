@@ -97,15 +97,23 @@ export const syncHealthAndWill = (
 
     const oldHpMax = newHealth.hpMax;
     newHealth.hpMax = newHealth.hpBase + hpStat;
-    
-    if (!preventCurrentGain && newHealth.hpMax > oldHpMax) newHealth.hpCurr += newHealth.hpMax - oldHpMax;
-    else if (newHealth.hpCurr > newHealth.hpMax) newHealth.hpCurr = newHealth.hpMax;
+
+    if (!preventCurrentGain && newHealth.hpMax > oldHpMax) {
+        newHealth.hpCurr += newHealth.hpMax - oldHpMax;
+    }
+    if (newHealth.hpCurr > newHealth.hpMax) {
+        newHealth.hpCurr = newHealth.hpMax;
+    }
 
     const oldWillMax = newWill.willMax;
     newWill.willMax = newWill.willBase + insTotal;
-    
-    if (!preventCurrentGain && newWill.willMax > oldWillMax) newWill.willCurr += newWill.willMax - oldWillMax;
-    else if (newWill.willCurr > newWill.willMax) newWill.willCurr = newWill.willMax;
+
+    if (!preventCurrentGain && newWill.willMax > oldWillMax) {
+        newWill.willCurr += newWill.willMax - oldWillMax;
+    }
+    if (newWill.willCurr > newWill.willMax) {
+        newWill.willCurr = newWill.willMax;
+    }
 
     updatesToSave['hp-curr'] = newHealth.hpCurr;
     updatesToSave['hp-max-display'] = newHealth.hpMax;
@@ -207,7 +215,7 @@ export const restoreFormBackup = (
             identity.species = String(loadedData.species ?? identity.species);
             identity.type1 = String(loadedData.type1 ?? identity.type1);
             identity.type2 = String(loadedData.type2 ?? identity.type2);
-            
+
             updatesToSave['species'] = identity.species;
             updatesToSave['type1'] = identity.type1;
             updatesToSave['type2'] = identity.type2;
@@ -232,19 +240,24 @@ export const restoreFormBackup = (
             health.hpCurr = Number(loadedData.hpCurr);
             updatesToSave['hp-curr'] = health.hpCurr;
         }
-        
+
         if (config.restoreWill && loadedData.willCurr !== undefined) {
             will.willCurr = Number(loadedData.willCurr);
             updatesToSave['will-curr'] = will.willCurr;
         }
-        
+
         if (config.restoreStatuses && loadedData.statuses !== undefined) {
             draft.statuses = loadedData.statuses as StatusItem[];
             updatesToSave['status-list'] = JSON.stringify(draft.statuses);
         }
 
         if (loadedData.stats) {
-            Object.entries(loadedData.stats as Record<string, { base?: number; rank?: number; limit?: number; buff?: number; debuff?: number }>).forEach(([stat, val]) => {
+            Object.entries(
+                loadedData.stats as Record<
+                    string,
+                    { base?: number; rank?: number; limit?: number; buff?: number; debuff?: number }
+                >
+            ).forEach(([stat, val]) => {
                 const s = stat as CombatStat;
                 if (stats[s]) {
                     if (config.restoreBaseStats && val.base !== undefined) {
@@ -272,7 +285,12 @@ export const restoreFormBackup = (
         }
 
         if (loadedData.socials) {
-            Object.entries(loadedData.socials as Record<string, { base?: number; rank?: number; limit?: number; buff?: number; debuff?: number }>).forEach(([stat, val]) => {
+            Object.entries(
+                loadedData.socials as Record<
+                    string,
+                    { base?: number; rank?: number; limit?: number; buff?: number; debuff?: number }
+                >
+            ).forEach(([stat, val]) => {
                 const s = stat as SocialStat;
                 if (socials[s]) {
                     if (config.restoreBaseStats && val.base !== undefined) {
@@ -300,16 +318,18 @@ export const restoreFormBackup = (
         }
 
         if (loadedData.skills && config.restoreSkills) {
-            Object.entries(loadedData.skills as Record<string, { base?: number; customName?: string }>).forEach(([sk, val]) => {
-                const s = sk as Skill;
-                if (skills[s]) {
-                    skills[s].base = val.base !== undefined ? Number(val.base) : skills[s].base;
-                    if (val.customName !== undefined) skills[s].customName = String(val.customName);
+            Object.entries(loadedData.skills as Record<string, { base?: number; customName?: string }>).forEach(
+                ([sk, val]) => {
+                    const s = sk as Skill;
+                    if (skills[s]) {
+                        skills[s].base = val.base !== undefined ? Number(val.base) : skills[s].base;
+                        if (val.customName !== undefined) skills[s].customName = String(val.customName);
 
-                    updatesToSave[`${s}-base`] = skills[s].base;
-                    if (val.customName !== undefined) updatesToSave[`label-${s}`] = skills[s].customName;
+                        updatesToSave[`${s}-base`] = skills[s].base;
+                        if (val.customName !== undefined) updatesToSave[`label-${s}`] = skills[s].customName;
+                    }
                 }
-            });
+            );
         }
 
         if (loadedData.moves && config.restoreMoves) {
@@ -322,7 +342,7 @@ export const restoreFormBackup = (
 };
 
 export const convertMovesToMax = (moves: MoveData[], customTypes: CustomType[]): MoveData[] => {
-    return moves.map(m => {
+    return moves.map((m) => {
         if (m.category === 'Status') {
             return {
                 ...m,
@@ -333,10 +353,10 @@ export const convertMovesToMax = (moves: MoveData[], customTypes: CustomType[]):
             };
         }
 
-        const customType = customTypes.find(t => t.name.toLowerCase() === m.type.toLowerCase());
+        const customType = customTypes.find((t) => t.name.toLowerCase() === m.type.toLowerCase());
         let maxName = `Max ${m.type}`;
         let maxEffect = 'No specific Max effect found.';
-        
+
         if (customType && customType.maxMoveName) {
             maxName = customType.maxMoveName;
             maxEffect = customType.maxMoveEffect || maxEffect;
@@ -344,9 +364,9 @@ export const convertMovesToMax = (moves: MoveData[], customTypes: CustomType[]):
             maxName = MAX_MOVES_DATA[m.type].name;
             maxEffect = MAX_MOVES_DATA[m.type].effect;
         }
-        
+
         const retainedTags = (m.desc || '').match(/\[.*?\]/g)?.join(' ') || '';
-        
+
         return {
             ...m,
             name: maxName,

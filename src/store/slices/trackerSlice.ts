@@ -15,7 +15,9 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
         globalDmg: 0,
         globalSucc: 0,
         globalChance: 0,
-        ignoredPain: 0
+        ignoredPain: 0,
+        firstHitAcc: false,
+        firstHitDmg: false
     },
 
     addStatus: () =>
@@ -88,6 +90,8 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
             else if (field === 'globalSucc') obrKey = 'global-succ-mod';
             else if (field === 'globalChance') obrKey = 'global-chance-mod';
             else if (field === 'ignoredPain') obrKey = 'ignored-pain-mod';
+            else if (field === 'firstHitAcc') obrKey = 'first-hit-acc-active';
+            else if (field === 'firstHitDmg') obrKey = 'first-hit-dmg-active';
 
             try {
                 saveToOwlbear({ [obrKey]: value });

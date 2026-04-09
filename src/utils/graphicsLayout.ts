@@ -16,9 +16,10 @@ export function buildGraphicDefinitions(
     const scale = tokenScale * ((data.trackerScale ?? 100) / 100);
 
     const healthPercentage = Math.max(0, Math.min(1, data.hpCurr / Math.max(1, data.hpMax)));
-    const tempHpPercentage = data.temporaryHitPointsMax > 0 
-        ? Math.max(0, Math.min(1, data.temporaryHitPoints / data.temporaryHitPointsMax)) 
-        : 0;
+    const tempHpPercentage =
+        data.temporaryHitPointsMax > 0
+            ? Math.max(0, Math.min(1, data.temporaryHitPoints / data.temporaryHitPointsMax))
+            : 0;
 
     const willPercentage = Math.max(0, Math.min(1, data.willCurr / Math.max(1, data.willMax)));
 
@@ -38,7 +39,7 @@ export function buildGraphicDefinitions(
 
     if (data.showHpBar) {
         const isVisible = (!data.gmHpBar || role === 'GM') && isTokenVisible;
-        
+
         const finalHpColor = data.temporaryHitPoints > 0 ? '#c326df' : getHealthColor(healthPercentage);
 
         graphicDefinitions['hp-shadow'] = {
@@ -121,9 +122,10 @@ export function buildGraphicDefinitions(
 
     if (data.showHpText) {
         const isVisible = (!data.gmHpText || role === 'GM') && isTokenVisible;
-        const hpString = data.temporaryHitPoints > 0 
-            ? `${data.hpCurr}+${data.temporaryHitPoints}/${data.hpMax}` 
-            : `${data.hpCurr}/${data.hpMax}`;
+        const hpString =
+            data.temporaryHitPoints > 0
+                ? `${data.hpCurr}+${data.temporaryHitPoints}/${data.hpMax}`
+                : `${data.hpCurr}/${data.hpMax}`;
 
         graphicDefinitions['hp-text'] = {
             type: 'TEXT',

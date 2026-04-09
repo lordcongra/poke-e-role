@@ -42,7 +42,8 @@ const OBR_KEY_MAP: Record<string, string> = {
     claOffsetX: 'cla-offset-x',
     claOffsetY: 'cla-offset-y',
     activeTransformation: 'active-transformation',
-    activeFormId: 'active-form-id', // <--- NEW!
+    activeFormId: 'active-form-id',
+    customFormConfig: 'custom-form-config',
     terastallizeAffinity: 'terastallize-affinity',
     terastallizeBonusActive: 'terastallize-bonus-active',
     baseFormData: 'base-form-data',
@@ -106,10 +107,12 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         learnset: [],
         pokemonBackup: '',
         trainerBackup: '',
-        
+
         activeTransformation: 'None',
-        activeFormId: '', // <--- NEW!
-        formSaves: {},    // <--- NEW!
+        activeFormId: '',
+        formSaves: {},
+        customFormConfig: {},
+
         baseFormData: '',
         altFormData: '',
         maxFormData: '',
@@ -243,6 +246,8 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                     else updatesToSave[obrKey] = value;
                 } else if (field === 'formSaves') {
                     updatesToSave['form-saves'] = JSON.stringify(value);
+                } else if (field === 'customFormConfig') {
+                    updatesToSave['custom-form-config'] = JSON.stringify(value);
                 }
 
                 try {

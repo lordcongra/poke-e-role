@@ -17,7 +17,6 @@ export interface SkillData {
 export interface SkillCheck {
     id: string;
     name: string;
-    /** 'attr' = The core Attribute used for the roll (e.g., 'ins', 'str', 'will') */
     attr: string;
     skill: string;
 }
@@ -27,16 +26,11 @@ export interface MoveData {
     active: boolean;
     name: string;
     type: string;
-    /** 'cat' = Category (Physical, Special, Status) */
     category: 'Physical' | 'Special' | 'Status';
-    /** 'acc1' = Accuracy Attribute (e.g., 'dex', 'str', 'will') */
     acc1: string;
-    /** 'acc2' = Accuracy Skill (e.g., 'brawl', 'channel', or 'none') */
     acc2: string;
-    /** 'dmg1' = Damage Attribute (e.g., 'str', 'spe', or '' for Status moves) */
     dmg1: string;
     power: number;
-    /** 'desc' = Description and mechanical tags (e.g., '[High Crit]') */
     desc?: string;
 }
 
@@ -55,10 +49,8 @@ export interface EffectItem {
 
 export interface InventoryItem {
     id: string;
-    /** 'qty' = Quantity of the item */
     qty: number;
     name: string;
-    /** 'desc' = Description and mechanical tags */
     desc: string;
     active?: boolean;
 }
@@ -75,16 +67,14 @@ export interface Trackers {
     clash: boolean;
     chances: number;
     fate: number;
-    /** 'globalAcc' = Global Accuracy Modifier applied to all rolls */
     globalAcc: number;
-    /** 'globalDmg' = Global Damage Modifier applied to all rolls */
     globalDmg: number;
-    /** 'globalSucc' = Global Success Modifier (Flat additions/subtractions to final successes) */
     globalSucc: number;
-    /** 'globalChance' = Global Chance Dice Modifier */
     globalChance: number;
-    /** 'ignoredPain' = How many levels of Pain Penalty the character is currently ignoring */
     ignoredPain: number;
+    // 🔥 NEW: Independently tracked Acc/Dmg First Hit logic moved to Global Trackers!
+    firstHitAcc: boolean;
+    firstHitDmg: boolean;
 }
 
 export interface ExtraSkill {
@@ -103,24 +93,18 @@ export interface ExtraCategory {
 export interface TempMove {
     id: string;
     name: string;
-    /** 'attr' = Accuracy Attribute */
     attr: string;
     skill: string;
     type: string;
-    /** 'cat' = Move Category (Phys, Spec, Status) */
     cat: string;
-    /** 'dmgStat' = Damage Attribute */
     dmgStat: string;
     power: number;
-    /** 'desc' = Description and mechanical tags */
     desc: string;
 }
 
 export interface TempBuild {
     species: string;
-    /** 'attr' = Combat Attributes (Strength, Dexterity, Vitality, Special, Insight) */
     attr: Record<string, number>;
-    /** 'soc' = Social Attributes (Tough, Cool, Beauty, Cute, Clever) */
     soc: Record<string, number>;
     skills: Record<string, number>;
     customSkillsList: string[];
@@ -144,7 +128,6 @@ export interface CustomAbility {
     name: string;
     description: string;
     effect: string;
-    /** 'gmOnly' = Hides this entity from the player-facing dropdowns */
     gmOnly?: boolean;
 }
 
@@ -155,7 +138,6 @@ export interface CustomItem {
     pocket?: string;
     category?: string;
     rarity?: string;
-    /** 'gmOnly' = Hides this entity from the player-facing dropdowns */
     gmOnly?: boolean;
 }
 
@@ -163,18 +145,12 @@ export interface CustomMove {
     id: string;
     name: string;
     type: string;
-    /** 'category' = Category (Physical, Special, Status) */
     category: 'Physical' | 'Special' | 'Status';
     power: number;
-    /** 'acc1' = Accuracy Attribute */
     acc1: string;
-    /** 'acc2' = Accuracy Skill */
     acc2: string;
-    /** 'dmg1' = Damage Attribute */
     dmg1: string;
-    /** 'desc' = Description and mechanical tags */
     desc: string;
-    /** 'gmOnly' = Hides this entity from the player-facing dropdowns */
     gmOnly?: boolean;
 }
 
@@ -199,7 +175,6 @@ export interface CustomPokemon {
     HiddenAbility: string;
     EventAbilities: string;
     Moves: Array<{ Learned: string; Name: string }>;
-    /** 'gmOnly' = Hides this entity from the player-facing dropdowns */
     gmOnly?: boolean;
 }
 
@@ -213,6 +188,5 @@ export interface CustomType {
     seAgainst: string[];
     nveAgainst: string[];
     noEffectAgainst: string[];
-    /** 'gmOnly' = Hides this entity from the player-facing dropdowns */
     gmOnly?: boolean;
 }

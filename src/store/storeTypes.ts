@@ -26,9 +26,7 @@ export * from './entityTypes';
 export type TransformationType = 'None' | 'Mega' | 'Dynamax' | 'Gigantamax' | 'Terastallize' | 'Custom';
 
 export interface CustomType extends BaseCustomType {
-    /** 'maxMoveName' = Custom name for this type's Max Move */
     maxMoveName?: string;
-    /** 'maxMoveEffect' = Custom effect text for this type's Max Move */
     maxMoveEffect?: string;
 }
 
@@ -36,8 +34,7 @@ export interface CustomForm {
     id: string;
     name: string;
     description: string;
-    
-    // Data Swaps (Blank Slates)
+
     swapBaseStats: boolean;
     swapStatLimits: boolean;
     swapStatRanks: boolean;
@@ -45,26 +42,29 @@ export interface CustomForm {
     swapMoves: boolean;
     swapTyping: boolean;
     swapAbilities: boolean;
-    
-    // Buffs & Debuffs
+
     swapBuffs: boolean;
     swapDebuffs: boolean;
+    freshBuffs: boolean;
+    freshDebuffs: boolean;
     wipeBuffs: boolean;
     wipeDebuffs: boolean;
     swapStatuses: boolean;
+    freshStatuses: boolean;
     wipeStatuses: boolean;
-    
-    // Transform Effects (HP & Will)
+
     restoreHp: boolean;
     restoreWill: boolean;
     healHp: boolean;
     healWill: boolean;
-    
-    // Mechanical Additions
+
+    activationCostHp: number;
+    activationCostWill: number;
+
     grantedMoves: string[];
     tags: string;
     tempHp: number;
-    
+
     gmOnly?: boolean;
 }
 
@@ -109,37 +109,23 @@ export interface PrintConfig {
 
 export interface CoreSlice {
     health: {
-        /** 'hpCurr' = Current Hit Points */
         hpCurr: number;
-        /** 'hpMax' = Maximum Hit Points */
         hpMax: number;
-        /** 'hpBase' = Base Hit Points (Before Vitality/Insight scaling) */
         hpBase: number;
-        /** 'temporaryHitPoints' = Shield HP granted by Dynamax/Gigantamax */
         temporaryHitPoints: number;
-        /** 'temporaryHitPointsMax' = Tracks the ceiling of the shield for the visual bar */
         temporaryHitPointsMax: number;
     };
     will: {
-        /** 'willCurr' = Current Willpower */
         willCurr: number;
-        /** 'willMax' = Maximum Willpower */
         willMax: number;
-        /** 'willBase' = Base Willpower (Before Insight scaling) */
         willBase: number;
     };
     derived: {
-        /** 'defBuff' = Defense Buff */
         defBuff: number;
-        /** 'defDebuff' = Defense Debuff */
         defDebuff: number;
-        /** 'sdefBuff' = Special Defense Buff */
         sdefBuff: number;
-        /** 'sdefDebuff' = Special Defense Debuff */
         sdefDebuff: number;
-        /** 'happy' = Happiness Tracker */
         happy: number;
-        /** 'loyal' = Loyalty Tracker */
         loyal: number;
     };
     extras: { core: number; social: number; skill: number };
@@ -162,7 +148,13 @@ export interface MovesSlice {
     pendingDualScale: PendingDualScale | null;
 
     setPendingDualScale: (data: PendingDualScale | null) => void;
-    resolveDualScale: (moveId: string, acc1?: string, acc2?: string, dmg1?: string, category?: 'Physical' | 'Special' | 'Status') => void;
+    resolveDualScale: (
+        moveId: string,
+        acc1?: string,
+        acc2?: string,
+        dmg1?: string,
+        category?: 'Physical' | 'Special' | 'Status'
+    ) => void;
     addMove: () => void;
     updateMove: <K extends keyof MoveData>(id: string, field: K, value: MoveData[K]) => void;
     removeMove: (id: string) => void;
@@ -178,12 +170,15 @@ export interface InventorySlice {
     inventory: InventoryItem[];
     notes: string;
     customInfo: CustomInfo[];
-    /** 'tp' = Training Points */
     tp: number;
-    /** 'currency' = PokéDollars */
     currency: number;
     addInventoryItem: () => void;
-    addSpecificInventoryItem: (item: { name: string; description: string; quantity?: number; active?: boolean; }) => void;
+    addSpecificInventoryItem: (item: {
+        name: string;
+        description: string;
+        quantity?: number;
+        active?: boolean;
+    }) => void;
     updateInventoryItem: <K extends keyof InventoryItem>(id: string, field: K, value: InventoryItem[K]) => void;
     removeInventoryItem: (id: string) => void;
     moveUpInventoryItem: (id: string) => void;
@@ -230,19 +225,19 @@ export interface HomebrewSlice {
     addCustomType: (type: CustomType) => void;
     updateCustomType: (oldName: string, newType: CustomType) => void;
     removeCustomType: (name: string) => void;
-    
+
     addCustomAbility: () => void;
     updateCustomAbility: <K extends keyof CustomAbility>(id: string, field: K, value: CustomAbility[K]) => void;
     removeCustomAbility: (id: string) => void;
-    
+
     addCustomMove: () => void;
     updateCustomMove: <K extends keyof CustomMove>(id: string, field: K, value: CustomMove[K]) => void;
     removeCustomMove: (id: string) => void;
-    
+
     addCustomPokemon: () => void;
     updateCustomPokemon: <K extends keyof CustomPokemon>(id: string, field: K, value: CustomPokemon[K]) => void;
     removeCustomPokemon: (id: string) => void;
-    
+
     addCustomItem: () => void;
     updateCustomItem: <K extends keyof CustomItem>(id: string, field: K, value: CustomItem[K]) => void;
     removeCustomItem: (id: string) => void;
@@ -257,12 +252,12 @@ export interface HomebrewSlice {
     overwriteCustomPokemonData: (pokemon: CustomPokemon[]) => void;
     overwriteCustomItemData: (items: CustomItem[]) => void;
     overwriteCustomFormData: (forms: CustomForm[]) => void;
-    
+
     overwriteAllHomebrewData: (
-        types: CustomType[], 
-        abilities: CustomAbility[], 
-        moves: CustomMove[], 
-        pokemon: CustomPokemon[], 
+        types: CustomType[],
+        abilities: CustomAbility[],
+        moves: CustomMove[],
+        pokemon: CustomPokemon[],
         items: CustomItem[],
         forms: CustomForm[]
     ) => void;
@@ -273,12 +268,12 @@ export interface HomebrewSlice {
     mergeCustomPokemonData: (pokemon: CustomPokemon[]) => void;
     mergeCustomItemData: (items: CustomItem[]) => void;
     mergeCustomFormData: (forms: CustomForm[]) => void;
-    
+
     mergeAllHomebrewData: (
-        types: CustomType[], 
-        abilities: CustomAbility[], 
-        moves: CustomMove[], 
-        pokemon: CustomPokemon[], 
+        types: CustomType[],
+        abilities: CustomAbility[],
+        moves: CustomMove[],
+        pokemon: CustomPokemon[],
         items: CustomItem[],
         forms: CustomForm[]
     ) => void;
@@ -288,7 +283,12 @@ export interface ExtraSkillsSlice {
     extraCategories: ExtraCategory[];
     addExtraCategory: () => void;
     updateExtraCategory: (id: string, name: string) => void;
-    updateExtraSkill: <K extends keyof ExtraSkill>(categoryId: string, skillId: string, field: K, value: ExtraSkill[K]) => void;
+    updateExtraSkill: <K extends keyof ExtraSkill>(
+        categoryId: string,
+        skillId: string,
+        field: K,
+        value: ExtraSkill[K]
+    ) => void;
     removeExtraCategory: (id: string) => void;
 }
 
@@ -325,14 +325,11 @@ export interface IdentitySlice {
         pokemonBackup?: string;
         trainerBackup?: string;
 
-        /** 'activeTransformation' = Tracks if the character is currently Mega Evolved, Dynamaxed, etc. */
         activeTransformation: TransformationType;
-        /** 'activeFormId' = Tracks WHICH custom form is active (e.g., 'megax') */
         activeFormId: string;
-        /** 'formSaves' = Dynamic dictionary storing form backups by ID instead of hardcoded strings! */
         formSaves: Record<string, string>;
-        
-        // Legacy slots (kept for backwards compatibility during migration)
+        customFormConfig: Record<string, boolean>;
+
         baseFormData?: string;
         altFormData?: string;
         maxFormData?: string;
@@ -387,7 +384,13 @@ export interface IdentitySlice {
 
 export interface MacroSlice {
     setMode: (mode: 'Pokémon' | 'Trainer') => void;
-    toggleTransformation: (targetTransformation: TransformationType, affinity?: string, autoMaxMoves?: boolean, teraBlastConfig?: TeraBlastConfig, customFormId?: string) => void;
+    toggleTransformation: (
+        targetTransformation: TransformationType,
+        affinity?: string,
+        autoMaxMoves?: boolean,
+        teraBlastConfig?: TeraBlastConfig,
+        customFormId?: string
+    ) => void;
     applySpeciesData: (data: Record<string, unknown>, wipeData?: boolean, updateStats?: boolean) => void;
     refreshSpeciesData: (data: Record<string, unknown>) => void;
 }
@@ -397,4 +400,14 @@ export interface SyncSlice {
 }
 
 export interface CharacterState
-    extends CoreSlice, MovesSlice, InventorySlice, TrackerSlice, HomebrewSlice, ExtraSkillsSlice, GeneratorSlice, IdentitySlice, MacroSlice, SyncSlice {}
+    extends
+        CoreSlice,
+        MovesSlice,
+        InventorySlice,
+        TrackerSlice,
+        HomebrewSlice,
+        ExtraSkillsSlice,
+        GeneratorSlice,
+        IdentitySlice,
+        MacroSlice,
+        SyncSlice {}

@@ -47,6 +47,10 @@ export function MoveCard({ move, skills, extraCategories, onTarget, onDelete }: 
     const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
     const ability = useCharacterStore((state) => state.identity.ability);
 
+    // 🔥 Reactive First Hit Selectors (Forces the component to visually re-render when the internal state triggers)
+    useCharacterStore((state) => state.trackers.firstHitDmg);
+    const firstHitAccActive = useCharacterStore((state) => state.trackers.firstHitAcc);
+
     const abilityText = getAbilityText(ability, customAbilities);
     const itemBuffs = parseCombatTags(inventory, extraCategories, move, abilityText);
 
@@ -82,7 +86,13 @@ export function MoveCard({ move, skills, extraCategories, onTarget, onDelete }: 
     }
 
     const trackers = useCharacterStore((state) => state.trackers);
-    const accuracyTotal = attributeTotal + skillTotal + trackers.globalAcc + itemBuffs.acc;
+
+    let customFirstHitAccTag = 0;
+    if (itemBuffs.firstHitAcc !== 0 && firstHitAccActive) {
+        customFirstHitAccTag = itemBuffs.firstHitAcc;
+    }
+
+    const accuracyTotal = attributeTotal + skillTotal + trackers.globalAcc + itemBuffs.acc + customFirstHitAccTag;
     const damageTotal = move.category === 'Status' ? '-' : calculateBaseDamage(move, useCharacterStore.getState());
 
     return (

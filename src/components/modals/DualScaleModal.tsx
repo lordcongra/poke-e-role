@@ -23,13 +23,7 @@ export function DualScaleModal() {
     if (!pendingDualScale) return null;
 
     const handleConfirm = () => {
-        resolveDualScale(
-            pendingDualScale.moveId, 
-            selectedAcc1, 
-            selectedAcc2, 
-            selectedDmg1, 
-            selectedCategory
-        );
+        resolveDualScale(pendingDualScale.moveId, selectedAcc1, selectedAcc2, selectedDmg1, selectedCategory);
     };
 
     const formatLabel = (val: string) => {
@@ -42,7 +36,8 @@ export function DualScaleModal() {
             <div className="dual-scale__content">
                 <h3 className="dual-scale__title">⚖️ Move Options Detected</h3>
                 <p className="dual-scale__desc">
-                    <b>{pendingDualScale.moveName}</b> has variable scaling or ambiguous options. Please select how you want to roll it:
+                    <b>{pendingDualScale.moveName}</b> has variable scaling or ambiguous options. Please select how you
+                    want to roll it:
                 </p>
 
                 {pendingDualScale.categoryOptions && (

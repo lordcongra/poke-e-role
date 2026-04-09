@@ -59,7 +59,8 @@ export function HomebrewForms() {
     return (
         <div className="homebrew-list__container">
             <p className="homebrew-list__desc">
-                Design specific mechanical templates for form shifts (Mega Evolutions, Stance Changes, Custom Forms). Players can select these when transforming.
+                Design specific mechanical templates for form shifts (Mega Evolutions, Stance Changes, Custom Forms).
+                Players can select these when transforming.
             </p>
 
             <div className="homebrew-list__search-row">

@@ -14,8 +14,9 @@ import {
     convertMovesToMax,
     type RestoreConfig
 } from '../../utils/macroHelpers';
+import { fetchMoveData } from '../../utils/api';
 
-export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> = (set) => ({
+export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> = (set, get) => ({
     setMode: (newMode) =>
         set((state) => {
             const isTrainer = newMode === 'Trainer';
@@ -98,6 +99,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 (isCurrentlyTransformed && state.identity.activeTransformation === targetTransformation);
 
             const newIdentity = { ...state.identity };
+            const newTrackers = { ...state.trackers };
             const newStats = { ...state.stats };
             const newSocials = { ...state.socials };
             const newHealth = { ...state.health };
@@ -128,11 +130,19 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
                     newIdentity.altFormData = backupStr;
                     updatesToSave['alt-form-data'] = backupStr;
-                    revertConfig = { 
-                        restoreBaseStats: true, restoreStatLimits: true, restoreStatRanks: true, 
-                        restoreSkills: true, restoreMoves: true, restoreTyping: true, 
-                        restoreAbilities: true, restoreHp: true, restoreWill: true,
-                        restoreStatuses: true
+                    revertConfig = {
+                        restoreBaseStats: true,
+                        restoreStatLimits: true,
+                        restoreStatRanks: true,
+                        restoreSkills: true,
+                        restoreMoves: true,
+                        restoreTyping: true,
+                        restoreAbilities: true,
+                        restoreHp: true,
+                        restoreWill: true,
+                        restoreStatuses: true,
+                        restoreBuffs: false,
+                        restoreDebuffs: false
                     };
                 } else if (['Dynamax', 'Gigantamax'].includes(previousTrans)) {
                     const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
@@ -143,33 +153,53 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
                     newIdentity.formSaves = { ...newIdentity.formSaves, [state.identity.activeFormId]: backupStr };
                     updatesToSave['form-saves'] = JSON.stringify(newIdentity.formSaves);
-                    
-                    const activeForm = state.roomCustomForms.find(f => f.id === state.identity.activeFormId);
-                    if (activeForm) {
-                        revertConfig = {
-                            restoreBaseStats: activeForm.swapBaseStats,
-                            restoreStatLimits: activeForm.swapStatLimits,
-                            restoreStatRanks: activeForm.swapStatRanks,
-                            restoreSkills: activeForm.swapSkills,
-                            restoreMoves: activeForm.swapMoves,
-                            restoreTyping: activeForm.swapTyping,
-                            restoreAbilities: activeForm.swapAbilities,
-                            restoreHp: activeForm.restoreHp,
-                            restoreWill: activeForm.restoreWill,
-                            restoreBuffs: activeForm.swapBuffs,
-                            restoreDebuffs: activeForm.swapDebuffs,
-                            restoreStatuses: activeForm.swapStatuses
-                        };
-                        
-                        if (!activeForm.swapMoves && activeForm.grantedMoves && activeForm.grantedMoves.length > 0) {
-                            const grantedNames = activeForm.grantedMoves.map(m => m.toLowerCase());
+
+                    const activeForm = state.roomCustomForms.find((f) => f.id === state.identity.activeFormId);
+
+                    revertConfig =
+                        state.identity.customFormConfig && Object.keys(state.identity.customFormConfig).length > 0
+                            ? state.identity.customFormConfig
+                            : activeForm
+                              ? {
+                                    restoreBaseStats: activeForm.swapBaseStats,
+                                    restoreStatLimits: activeForm.swapStatLimits,
+                                    restoreStatRanks: activeForm.swapStatRanks,
+                                    restoreSkills: activeForm.swapSkills,
+                                    restoreMoves: activeForm.swapMoves,
+                                    restoreTyping: activeForm.swapTyping,
+                                    restoreAbilities: activeForm.swapAbilities,
+                                    restoreHp: activeForm.restoreHp,
+                                    restoreWill: activeForm.restoreWill,
+                                    restoreBuffs: activeForm.swapBuffs || activeForm.freshBuffs,
+                                    restoreDebuffs: activeForm.swapDebuffs || activeForm.freshDebuffs,
+                                    restoreStatuses: activeForm.swapStatuses || activeForm.freshStatuses
+                                }
+                              : {
+                                    restoreBaseStats: true,
+                                    restoreStatLimits: true,
+                                    restoreStatRanks: true,
+                                    restoreSkills: true,
+                                    restoreMoves: true,
+                                    restoreTyping: true,
+                                    restoreAbilities: true,
+                                    restoreHp: true,
+                                    restoreWill: true
+                                };
+
+                    if (!revertConfig.restoreMoves) {
+                        const grantedMoves = activeForm ? activeForm.grantedMoves : [];
+                        if (grantedMoves && grantedMoves.length > 0) {
+                            const grantedNames = grantedMoves.map((m) => m.toLowerCase());
                             draft.moves = draft.moves.filter((m) => !grantedNames.includes(m.name.toLowerCase()));
                             updatesToSave['moves-data'] = JSON.stringify(draft.moves);
                         }
                     }
                 }
 
-                if (['Mega', 'Custom', 'Dynamax', 'Gigantamax', 'Terastallize'].includes(previousTrans) && state.identity.baseFormData) {
+                if (
+                    ['Mega', 'Custom', 'Dynamax', 'Gigantamax', 'Terastallize'].includes(previousTrans) &&
+                    state.identity.baseFormData
+                ) {
                     restoreFormBackup(state.identity.baseFormData, draft, updatesToSave, revertConfig);
                 }
 
@@ -204,17 +234,41 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
 
                 newIdentity.activeTransformation = 'None';
                 newIdentity.activeFormId = '';
+                newIdentity.customFormConfig = {};
+
+                newTrackers.firstHitAcc = false;
+                newTrackers.firstHitDmg = false;
+
                 updatesToSave['active-transformation'] = 'None';
                 updatesToSave['active-form-id'] = '';
+                updatesToSave['custom-form-config'] = '{}';
+                updatesToSave['first-hit-acc-active'] = false;
+                updatesToSave['first-hit-dmg-active'] = false;
             } else {
-                
+                let costHp = 0;
+                let costWill = 0;
+
                 if (targetTransformation === 'Mega' || targetTransformation === 'Terastallize') {
-                    if (newWill.willCurr < 1) {
-                        if (OBR.isAvailable) OBR.notification.show('Not enough Willpower!', 'ERROR');
-                        return state;
+                    costWill = 1;
+                } else if (targetTransformation === 'Custom' && customFormId) {
+                    const targetForm = state.roomCustomForms.find((f) => f.id === customFormId);
+                    if (targetForm) {
+                        costHp = targetForm.activationCostHp || 0;
+                        costWill = targetForm.activationCostWill || 0;
                     }
-                    newWill.willCurr -= 1;
                 }
+
+                if (costHp > 0 && newHealth.hpCurr <= costHp) {
+                    if (OBR.isAvailable) OBR.notification.show('Not enough HP to safely transform!', 'ERROR');
+                    return state;
+                }
+                if (costWill > 0 && newWill.willCurr < costWill) {
+                    if (OBR.isAvailable) OBR.notification.show('Not enough Willpower!', 'ERROR');
+                    return state;
+                }
+
+                newHealth.hpCurr -= costHp;
+                newWill.willCurr -= costWill;
 
                 if (['Mega', 'Dynamax', 'Gigantamax', 'Custom'].includes(targetTransformation)) {
                     const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
@@ -222,46 +276,83 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     updatesToSave['base-form-data'] = backupStr;
 
                     if (targetTransformation === 'Mega' && state.identity.altFormData) {
-                        restoreFormBackup(state.identity.altFormData, draft, updatesToSave, { 
-                            restoreBaseStats: true, restoreStatLimits: true, restoreStatRanks: true, 
-                            restoreSkills: true, restoreMoves: true, restoreTyping: true, 
-                            restoreAbilities: true, restoreHp: true, restoreWill: true,
+                        restoreFormBackup(state.identity.altFormData, draft, updatesToSave, {
+                            restoreBaseStats: true,
+                            restoreStatLimits: true,
+                            restoreStatRanks: true,
+                            restoreSkills: true,
+                            restoreMoves: true,
+                            restoreTyping: true,
+                            restoreAbilities: true,
+                            restoreHp: true,
+                            restoreWill: true,
                             restoreStatuses: true
                         });
                     } else if (['Dynamax', 'Gigantamax'].includes(targetTransformation) && state.identity.maxFormData) {
                         restoreFormBackup(state.identity.maxFormData, draft, updatesToSave, { restoreMoves: true });
                     } else if (targetTransformation === 'Custom' && customFormId) {
-                        const targetForm = state.roomCustomForms.find(f => f.id === customFormId);
+                        const targetForm = state.roomCustomForms.find((f) => f.id === customFormId);
                         if (targetForm) {
+                            newTrackers.firstHitAcc = true;
+                            newTrackers.firstHitDmg = true;
+                            updatesToSave['first-hit-acc-active'] = true;
+                            updatesToSave['first-hit-dmg-active'] = true;
+
+                            const activateConfig: RestoreConfig = {
+                                restoreBaseStats: targetForm.swapBaseStats,
+                                restoreStatLimits: targetForm.swapStatLimits,
+                                restoreStatRanks: targetForm.swapStatRanks,
+                                restoreSkills: targetForm.swapSkills,
+                                restoreMoves: targetForm.swapMoves,
+                                restoreTyping: targetForm.swapTyping,
+                                restoreAbilities: targetForm.swapAbilities,
+                                restoreHp: targetForm.restoreHp,
+                                restoreWill: targetForm.restoreWill,
+                                restoreBuffs: targetForm.swapBuffs,
+                                restoreDebuffs: targetForm.swapDebuffs,
+                                restoreStatuses: targetForm.swapStatuses
+                            };
+
+                            const savedConfig: RestoreConfig = {
+                                restoreBaseStats: targetForm.swapBaseStats,
+                                restoreStatLimits: targetForm.swapStatLimits,
+                                restoreStatRanks: targetForm.swapStatRanks,
+                                restoreSkills: targetForm.swapSkills,
+                                restoreMoves: targetForm.swapMoves,
+                                restoreTyping: targetForm.swapTyping,
+                                restoreAbilities: targetForm.swapAbilities,
+                                restoreHp: targetForm.restoreHp,
+                                restoreWill: targetForm.restoreWill,
+                                restoreBuffs: targetForm.swapBuffs || targetForm.freshBuffs,
+                                restoreDebuffs: targetForm.swapDebuffs || targetForm.freshDebuffs,
+                                restoreStatuses: targetForm.swapStatuses || targetForm.freshStatuses
+                            };
+
+                            newIdentity.customFormConfig = savedConfig as Record<string, boolean>;
+                            updatesToSave['custom-form-config'] = JSON.stringify(savedConfig);
+
                             if (newIdentity.formSaves[customFormId]) {
-                                const activateConfig: RestoreConfig = {
-                                    restoreBaseStats: targetForm.swapBaseStats,
-                                    restoreStatLimits: targetForm.swapStatLimits,
-                                    restoreStatRanks: targetForm.swapStatRanks,
-                                    restoreSkills: targetForm.swapSkills,
-                                    restoreMoves: targetForm.swapMoves,
-                                    restoreTyping: targetForm.swapTyping,
-                                    restoreAbilities: targetForm.swapAbilities,
-                                    restoreHp: targetForm.restoreHp,
-                                    restoreWill: targetForm.restoreWill,
-                                    restoreBuffs: targetForm.swapBuffs,
-                                    restoreDebuffs: targetForm.swapDebuffs,
-                                    restoreStatuses: targetForm.swapStatuses
-                                };
-                                restoreFormBackup(newIdentity.formSaves[customFormId], draft, updatesToSave, activateConfig);
+                                restoreFormBackup(
+                                    newIdentity.formSaves[customFormId],
+                                    draft,
+                                    updatesToSave,
+                                    activateConfig
+                                );
                             }
-                            
+
                             if (targetForm.tempHp > 0) {
                                 newHealth.temporaryHitPoints = targetForm.tempHp;
                                 newHealth.temporaryHitPointsMax = targetForm.tempHp;
                                 updatesToSave['temporary-hit-points'] = targetForm.tempHp;
                                 updatesToSave['temporary-hit-points-max'] = targetForm.tempHp;
                             }
-                            if (targetForm.swapStatuses || targetForm.wipeStatuses) {
-                                draft.statuses = [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }];
+                            if (targetForm.freshStatuses || targetForm.wipeStatuses) {
+                                draft.statuses = [
+                                    { id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }
+                                ];
                                 updatesToSave['status-list'] = JSON.stringify(draft.statuses);
                             }
-                            if (targetForm.swapDebuffs || targetForm.wipeDebuffs) {
+                            if (targetForm.freshDebuffs || targetForm.wipeDebuffs) {
                                 Object.values(CombatStat).forEach((s) => {
                                     newStats[s].debuff = 0;
                                     updatesToSave[`${s}-debuff`] = 0;
@@ -275,7 +366,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                                 newDerived.sdefDebuff = 0;
                                 updatesToSave['spd-debuff'] = 0;
                             }
-                            if (targetForm.swapBuffs || targetForm.wipeBuffs) {
+                            if (targetForm.freshBuffs || targetForm.wipeBuffs) {
                                 Object.values(CombatStat).forEach((s) => {
                                     newStats[s].buff = 0;
                                     updatesToSave[`${s}-buff`] = 0;
@@ -292,8 +383,9 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                             if (targetForm.grantedMoves && targetForm.grantedMoves.length > 0) {
                                 targetForm.grantedMoves.forEach((moveName) => {
                                     if (!draft.moves.find((m) => m.name.toLowerCase() === moveName.toLowerCase())) {
+                                        const newMoveId = crypto.randomUUID();
                                         draft.moves.push({
-                                            id: crypto.randomUUID(),
+                                            id: newMoveId,
                                             active: false,
                                             name: moveName,
                                             type: 'Normal',
@@ -304,11 +396,20 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                                             power: 1,
                                             desc: 'Granted by Custom Form'
                                         });
+
+                                        // 🔥 FIX: Calls get() to avoid hook circular dependency!
+                                        fetchMoveData(moveName)
+                                            .then((data) => {
+                                                if (data) {
+                                                    get().applyMoveData(newMoveId, data as Record<string, unknown>);
+                                                }
+                                            })
+                                            .catch((e) => console.warn('Failed to fetch granted move:', e));
                                     }
                                 });
                                 updatesToSave['moves-data'] = JSON.stringify(draft.moves);
                             }
-                            
+
                             newIdentity.activeFormId = customFormId;
                             updatesToSave['active-form-id'] = customFormId;
                         }
@@ -340,11 +441,14 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 } else if (targetTransformation === 'Dynamax' || targetTransformation === 'Gigantamax') {
                     newHealth.temporaryHitPoints = targetTransformation === 'Dynamax' ? 6 : 12;
                     newHealth.temporaryHitPointsMax = newHealth.temporaryHitPoints;
-                    
+
                     updatesToSave['temporary-hit-points'] = newHealth.temporaryHitPoints;
                     updatesToSave['temporary-hit-points-max'] = newHealth.temporaryHitPointsMax;
-                    
-                    newEffects = [...newEffects, { id: crypto.randomUUID(), name: `${targetTransformation} Timer`, rounds: 3 }];
+
+                    newEffects = [
+                        ...newEffects,
+                        { id: crypto.randomUUID(), name: `${targetTransformation} Timer`, rounds: 3 }
+                    ];
                     updatesToSave['effects-data'] = JSON.stringify(newEffects);
 
                     if (targetTransformation === 'Gigantamax') {
@@ -371,22 +475,15 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 updatesToSave['active-transformation'] = targetTransformation;
             }
 
-            // CRITICAL: We pass TRUE to the final parameter to stop syncHealthAndWill from double-dipping free HP/Will 
-            // when it detects that the new stat maximums are higher than the old ones!
             syncHealthAndWill(state, newStats, newIdentity, newHealth, newWill, updatesToSave, true);
 
             if (!isReverting && targetTransformation === 'Mega') {
-                newHealth.hpCurr = newHealth.hpMax;
-                newWill.willCurr = newWill.willMax;
-                updatesToSave['hp-curr'] = newHealth.hpCurr;
-                updatesToSave['will-curr'] = newWill.willCurr;
-
                 draft.statuses = [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }];
                 updatesToSave['status-list'] = JSON.stringify(draft.statuses);
             }
 
             if (!isReverting && targetTransformation === 'Custom' && customFormId) {
-                const targetForm = state.roomCustomForms.find(f => f.id === customFormId);
+                const targetForm = state.roomCustomForms.find((f) => f.id === customFormId);
                 if (targetForm) {
                     if (targetForm.healHp) {
                         newHealth.hpCurr = newHealth.hpMax;
@@ -415,7 +512,8 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 statuses: draft.statuses,
                 effects: newEffects,
                 moves: draft.moves,
-                skills: draft.skills
+                skills: draft.skills,
+                trackers: newTrackers
             };
         }),
 

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import type { Image } from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../store/useCharacterStore';
-import type { CustomType, CustomAbility, CustomMove, CustomPokemon, CustomItem } from '../store/storeTypes';
+import type { CustomType, CustomAbility, CustomMove, CustomPokemon, CustomItem, CustomForm } from '../store/storeTypes';
 import { fetchPokemonData, fetchMoveData, syncHomebrewToApi } from '../utils/api';
 import { buildGraphicsFromMeta, renderTokenGraphics, STATS_META_ID } from '../utils/graphicsManager';
 import { saveToOwlbear, setActiveTokenId, hasPendingUpdates } from '../utils/obr';
@@ -25,6 +25,7 @@ export function useOwlbearSync() {
     const setRoomCustomMoves = useCharacterStore((state) => state.setRoomCustomMoves);
     const setRoomCustomPokemon = useCharacterStore((state) => state.setRoomCustomPokemon);
     const setRoomCustomItems = useCharacterStore((state) => state.setRoomCustomItems);
+    const setRoomCustomForms = useCharacterStore((state) => state.setRoomCustomForms); // 🔥 NEW
 
     useEffect(() => {
         let unsubs: Array<() => void> = [];
@@ -89,7 +90,6 @@ export function useOwlbearSync() {
                             }
 
                             if (meta) {
-                                // Indestructible Armor: Catch corrupted tokens before they crash the engine!
                                 try {
                                     loadFromOwlbear(meta);
                                 } catch (e) {
@@ -154,7 +154,6 @@ export function useOwlbearSync() {
                     }
                 };
 
-                // Indestructible Armor: Catch startup crashes!
                 try {
                     const selected = await OBR.player.getSelection();
                     if (selected && selected.length > 0) {
@@ -243,6 +242,7 @@ export function useOwlbearSync() {
                         if (data.customMoves) setRoomCustomMoves(data.customMoves as CustomMove[]);
                         if (data.customPokemon) setRoomCustomPokemon(data.customPokemon as CustomPokemon[]);
                         if (data.customItems) setRoomCustomItems(data.customItems as CustomItem[]);
+                        if (data.customForms) setRoomCustomForms(data.customForms as CustomForm[]); // 🔥 NEW
 
                         syncHomebrewToApi(
                             (data.customPokemon as CustomPokemon[]) || [],
@@ -273,6 +273,7 @@ export function useOwlbearSync() {
                             if (data.customMoves) setRoomCustomMoves(data.customMoves as CustomMove[]);
                             if (data.customPokemon) setRoomCustomPokemon(data.customPokemon as CustomPokemon[]);
                             if (data.customItems) setRoomCustomItems(data.customItems as CustomItem[]);
+                            if (data.customForms) setRoomCustomForms(data.customForms as CustomForm[]); // 🔥 NEW
 
                             syncHomebrewToApi(
                                 (data.customPokemon as CustomPokemon[]) || [],

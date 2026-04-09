@@ -9,11 +9,11 @@ export function TypeMatchups() {
     const role = useCharacterStore((state) => state.role);
     const rawType1 = useCharacterStore((state) => state.identity.type1);
     const rawType2 = useCharacterStore((state) => state.identity.type2);
-    
+
     const activeTransformation = useCharacterStore((state) => state.identity.activeTransformation);
     const activeFormId = useCharacterStore((state) => state.identity.activeFormId);
     const roomCustomForms = useCharacterStore((state) => state.roomCustomForms);
-    
+
     const isTera = activeTransformation === 'Terastallize';
     const teraAffinity = useCharacterStore((state) => state.identity.terastallizeAffinity);
 
@@ -89,7 +89,7 @@ export function TypeMatchups() {
 
     // 🔥 NEW: Parse passive tags from the active Custom Form!
     if (activeTransformation === 'Custom' && activeFormId) {
-        const activeForm = roomCustomForms.find(f => f.id === activeFormId);
+        const activeForm = roomCustomForms.find((f) => f.id === activeFormId);
         if (activeForm && activeForm.tags) {
             stringsToParse.push(activeForm.tags.toLowerCase());
         }
@@ -173,8 +173,8 @@ export function TypeMatchups() {
     };
 
     return (
-        <CollapsingSection 
-            title={isTera ? `TYPE MATCHUPS (TERA: ${teraAffinity.toUpperCase()})` : "TYPE MATCHUPS"} 
+        <CollapsingSection
+            title={isTera ? `TYPE MATCHUPS (TERA: ${teraAffinity.toUpperCase()})` : 'TYPE MATCHUPS'}
             className="sheet-panel type-matchups__panel"
         >
             <div className="type-matchups__content">

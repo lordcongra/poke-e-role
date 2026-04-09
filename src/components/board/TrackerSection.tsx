@@ -204,6 +204,33 @@ export function TrackerSection() {
                                     className="sheet-save tracker-section__checkbox"
                                 />
                             </div>
+
+                            <div className="tracker-section__first-hit-group">
+                                <span
+                                    className="tracker-section__first-hit-label"
+                                    title="Prime your First Hit tags for Accuracy or Damage"
+                                >
+                                    1st Hit:
+                                </span>
+                                <label className="tracker-section__first-hit-check">
+                                    <input
+                                        type="checkbox"
+                                        checked={trackers.firstHitAcc}
+                                        onChange={(event) => updateTracker('firstHitAcc', event.target.checked)}
+                                        className="sheet-save tracker-section__checkbox"
+                                    />{' '}
+                                    Acc
+                                </label>
+                                <label className="tracker-section__first-hit-check">
+                                    <input
+                                        type="checkbox"
+                                        checked={trackers.firstHitDmg}
+                                        onChange={(event) => updateTracker('firstHitDmg', event.target.checked)}
+                                        className="sheet-save tracker-section__checkbox"
+                                    />{' '}
+                                    Dmg
+                                </label>
+                            </div>
                         </div>
                     </div>
 

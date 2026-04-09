@@ -7,7 +7,14 @@ import { HomebrewMoves } from './HomebrewMoves';
 import { HomebrewPokemon } from './HomebrewPokemon';
 import { HomebrewItems } from './HomebrewItems';
 import { HomebrewForms } from './HomebrewForms';
-import type { CustomType, CustomAbility, CustomMove, CustomPokemon, CustomItem, CustomForm } from '../../store/storeTypes';
+import type {
+    CustomType,
+    CustomAbility,
+    CustomMove,
+    CustomPokemon,
+    CustomItem,
+    CustomForm
+} from '../../store/storeTypes';
 import './Homebrew.css';
 
 export function HomebrewModal({ onClose }: { onClose: () => void }) {
@@ -15,7 +22,9 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
     const access = useCharacterStore((state) => state.identity.homebrewAccess);
     const canEdit = role === 'GM' || access === 'Full';
 
-    const [activeTab, setActiveTab] = useState<'types' | 'abilities' | 'moves' | 'pokemon' | 'items' | 'forms'>('types');
+    const [activeTab, setActiveTab] = useState<'types' | 'abilities' | 'moves' | 'pokemon' | 'items' | 'forms'>(
+        'types'
+    );
     const overwriteAllHomebrewData = useCharacterStore((state) => state.overwriteAllHomebrewData);
     const mergeAllHomebrewData = useCharacterStore((state) => state.mergeAllHomebrewData);
 

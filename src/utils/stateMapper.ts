@@ -26,13 +26,19 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (state.identity.type1 !== undefined) flatMetadata['type1'] = state.identity.type1;
             if (state.identity.type2 !== undefined) flatMetadata['type2'] = state.identity.type2;
             if (state.identity.mode !== undefined) flatMetadata['mode'] = state.identity.mode;
-            
-            if (state.identity.activeTransformation !== undefined) flatMetadata['active-transformation'] = state.identity.activeTransformation;
+
+            if (state.identity.activeTransformation !== undefined)
+                flatMetadata['active-transformation'] = state.identity.activeTransformation;
             if (state.identity.activeFormId !== undefined) flatMetadata['active-form-id'] = state.identity.activeFormId;
-            if (state.identity.formSaves !== undefined) flatMetadata['form-saves'] = JSON.stringify(state.identity.formSaves);
-            
-            if (state.identity.terastallizeAffinity !== undefined) flatMetadata['terastallize-affinity'] = state.identity.terastallizeAffinity;
-            if (state.identity.terastallizeBonusActive !== undefined) flatMetadata['terastallize-bonus-active'] = state.identity.terastallizeBonusActive;
+            if (state.identity.formSaves !== undefined)
+                flatMetadata['form-saves'] = JSON.stringify(state.identity.formSaves);
+            if (state.identity.customFormConfig !== undefined)
+                flatMetadata['custom-form-config'] = JSON.stringify(state.identity.customFormConfig);
+
+            if (state.identity.terastallizeAffinity !== undefined)
+                flatMetadata['terastallize-affinity'] = state.identity.terastallizeAffinity;
+            if (state.identity.terastallizeBonusActive !== undefined)
+                flatMetadata['terastallize-bonus-active'] = state.identity.terastallizeBonusActive;
 
             sanitizeBackup(state.identity.baseFormData, 'base-form-data');
             sanitizeBackup(state.identity.altFormData, 'alt-form-data');
@@ -45,10 +51,12 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (state.health.hpCurr !== undefined) flatMetadata['hp-curr'] = state.health.hpCurr;
             if (state.health.hpMax !== undefined) flatMetadata['hp-max-display'] = state.health.hpMax;
             if (state.health.hpBase !== undefined) flatMetadata['hp-base'] = state.health.hpBase;
-            if (state.health.temporaryHitPoints !== undefined) flatMetadata['temporary-hit-points'] = state.health.temporaryHitPoints;
-            if (state.health.temporaryHitPointsMax !== undefined) flatMetadata['temporary-hit-points-max'] = state.health.temporaryHitPointsMax;
+            if (state.health.temporaryHitPoints !== undefined)
+                flatMetadata['temporary-hit-points'] = state.health.temporaryHitPoints;
+            if (state.health.temporaryHitPointsMax !== undefined)
+                flatMetadata['temporary-hit-points-max'] = state.health.temporaryHitPointsMax;
         }
-        
+
         if (state.will) {
             if (state.will.willCurr !== undefined) flatMetadata['will-curr'] = state.will.willCurr;
             if (state.will.willMax !== undefined) flatMetadata['will-max-display'] = state.will.willMax;
@@ -57,6 +65,14 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
 
         if (state.tp !== undefined) flatMetadata['training-points'] = state.tp;
         if (state.currency !== undefined) flatMetadata['currency'] = state.currency;
+
+        // 🔥 NEW: Global Tracker Mapping!
+        if (state.trackers) {
+            if (state.trackers.firstHitAcc !== undefined)
+                flatMetadata['first-hit-acc-active'] = state.trackers.firstHitAcc;
+            if (state.trackers.firstHitDmg !== undefined)
+                flatMetadata['first-hit-dmg-active'] = state.trackers.firstHitDmg;
+        }
 
         if (state.moves) flatMetadata['moves-data'] = JSON.stringify(state.moves);
         if (state.inventory) flatMetadata['inv-data'] = JSON.stringify(state.inventory);
@@ -93,9 +109,8 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
                 if (vals.customName) flatMetadata[`label-${skill}`] = vals.customName;
             });
         }
-
     } catch (error) {
-        console.error("Error mapping Zustand state to OBR Metadata:", error);
+        console.error('Error mapping Zustand state to OBR Metadata:', error);
     }
 
     return flatMetadata;

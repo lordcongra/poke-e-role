@@ -197,14 +197,19 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
                 swapAbilities: isMegaTemplate,
                 swapBuffs: false,
                 swapDebuffs: false,
+                freshBuffs: false,
+                freshDebuffs: false,
                 wipeBuffs: false,
                 wipeDebuffs: false,
-                swapStatuses: isMegaTemplate,
+                swapStatuses: false,
+                freshStatuses: isMegaTemplate,
                 wipeStatuses: false,
-                restoreHp: false,
-                restoreWill: false,
+                restoreHp: isMegaTemplate, // 🔥 FIX: Check defaults for Mega
+                restoreWill: isMegaTemplate, // 🔥 FIX: Check defaults for Mega
                 healHp: isMegaTemplate,
                 healWill: isMegaTemplate,
+                activationCostHp: 0,
+                activationCostWill: isMegaTemplate ? 1 : 0,
                 grantedMoves: [],
                 tags: '',
                 tempHp: 0,
@@ -250,39 +255,49 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         saveRoomMeta('customItems', items);
     },
     overwriteCustomFormData: (forms) => {
-        const safeForms = forms.map(f => ({
+        const safeForms = forms.map((f) => ({
             ...f,
             swapStatuses: f.swapStatuses ?? false,
+            freshStatuses: f.freshStatuses ?? false,
             wipeStatuses: f.wipeStatuses ?? false,
             swapBuffs: f.swapBuffs ?? false,
             swapDebuffs: f.swapDebuffs ?? false,
+            freshBuffs: f.freshBuffs ?? false,
+            freshDebuffs: f.freshDebuffs ?? false,
             wipeBuffs: f.wipeBuffs ?? false,
             wipeDebuffs: f.wipeDebuffs ?? false,
             restoreHp: f.restoreHp ?? false,
             restoreWill: f.restoreWill ?? false,
             healHp: f.healHp ?? false,
             healWill: f.healWill ?? false,
+            activationCostHp: f.activationCostHp ?? 0,
+            activationCostWill: f.activationCostWill ?? 0,
             grantedMoves: Array.isArray(f.grantedMoves) ? f.grantedMoves : []
         }));
         set({ roomCustomForms: safeForms });
         saveRoomMeta('customForms', safeForms);
     },
     overwriteAllHomebrewData: async (types, abilities, moves, pokemon, items, forms) => {
-        const safeForms = forms.map(f => ({
+        const safeForms = forms.map((f) => ({
             ...f,
             swapStatuses: f.swapStatuses ?? false,
+            freshStatuses: f.freshStatuses ?? false,
             wipeStatuses: f.wipeStatuses ?? false,
             swapBuffs: f.swapBuffs ?? false,
             swapDebuffs: f.swapDebuffs ?? false,
+            freshBuffs: f.freshBuffs ?? false,
+            freshDebuffs: f.freshDebuffs ?? false,
             wipeBuffs: f.wipeBuffs ?? false,
             wipeDebuffs: f.wipeDebuffs ?? false,
             restoreHp: f.restoreHp ?? false,
             restoreWill: f.restoreWill ?? false,
             healHp: f.healHp ?? false,
             healWill: f.healWill ?? false,
+            activationCostHp: f.activationCostHp ?? 0,
+            activationCostWill: f.activationCostWill ?? 0,
             grantedMoves: Array.isArray(f.grantedMoves) ? f.grantedMoves : []
         }));
-        
+
         set({
             roomCustomTypes: types,
             roomCustomAbilities: abilities,
@@ -394,19 +409,24 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         const mergedForms = [...get().roomCustomForms];
         forms.forEach((form) => {
             const index = mergedForms.findIndex((existing) => existing.name.toLowerCase() === form.name.toLowerCase());
-            
+
             const safeForm = {
                 ...form,
                 swapStatuses: form.swapStatuses ?? false,
+                freshStatuses: form.freshStatuses ?? false,
                 wipeStatuses: form.wipeStatuses ?? false,
                 swapBuffs: form.swapBuffs ?? false,
                 swapDebuffs: form.swapDebuffs ?? false,
+                freshBuffs: form.freshBuffs ?? false,
+                freshDebuffs: form.freshDebuffs ?? false,
                 wipeBuffs: form.wipeBuffs ?? false,
                 wipeDebuffs: form.wipeDebuffs ?? false,
                 restoreHp: form.restoreHp ?? false,
                 restoreWill: form.restoreWill ?? false,
                 healHp: form.healHp ?? false,
                 healWill: form.healWill ?? false,
+                activationCostHp: form.activationCostHp ?? 0,
+                activationCostWill: form.activationCostWill ?? 0,
                 grantedMoves: Array.isArray(form.grantedMoves) ? form.grantedMoves : []
             };
 
@@ -479,19 +499,24 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         const mergedForms = [...get().roomCustomForms];
         forms.forEach((form) => {
             const index = mergedForms.findIndex((existing) => existing.name.toLowerCase() === form.name.toLowerCase());
-            
+
             const safeForm = {
                 ...form,
                 swapStatuses: form.swapStatuses ?? false,
+                freshStatuses: form.freshStatuses ?? false,
                 wipeStatuses: form.wipeStatuses ?? false,
                 swapBuffs: form.swapBuffs ?? false,
                 swapDebuffs: form.swapDebuffs ?? false,
+                freshBuffs: form.freshBuffs ?? false,
+                freshDebuffs: form.freshDebuffs ?? false,
                 wipeBuffs: form.wipeBuffs ?? false,
                 wipeDebuffs: form.wipeDebuffs ?? false,
                 restoreHp: form.restoreHp ?? false,
                 restoreWill: form.restoreWill ?? false,
                 healHp: form.healHp ?? false,
                 healWill: form.healWill ?? false,
+                activationCostHp: form.activationCostHp ?? 0,
+                activationCostWill: form.activationCostWill ?? 0,
                 grantedMoves: Array.isArray(form.grantedMoves) ? form.grantedMoves : []
             };
 

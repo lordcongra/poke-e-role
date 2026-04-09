@@ -4,16 +4,7 @@ import { getRankPoints, getAgePoints } from '../store/useCharacterStore';
 import { CombatStat, Skill } from '../types/enums';
 import { assignWildStats, assignMinMaxStats, assignAverageStats } from './generatorLogic';
 
-const RANK_HIERARCHY = [
-    'Starter',
-    'Rookie',
-    'Standard',
-    'Advanced',
-    'Expert',
-    'Ace',
-    'Master',
-    'Champion'
-];
+const RANK_HIERARCHY = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion'];
 const ALL_SKILLS = Object.values(Skill) as string[];
 
 const ATTRIBUTE_MAPPING: Record<string, string> = {
