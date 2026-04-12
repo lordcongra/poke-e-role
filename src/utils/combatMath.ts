@@ -46,6 +46,9 @@ export function parseCombatTags(
         seDmg: 0,
         firstHitDmg: 0,
         firstHitAcc: 0,
+        gainTempHp: 0,
+        tempHpOnHit: 0,
+        tempHpDmgRatio: '',
         highCritStacks: 0,
         stackingHighCritStacks: 0,
         ignoreLowAcc: 0,
@@ -198,6 +201,24 @@ export function parseCombatTags(
                 bonuses.acc += safeParseInt(match[1]);
                 accuracyTriggered = true;
             }
+        }
+
+        const tempHpMatches = description.matchAll(/\[\s*gain temp hp\s*(\d+)\s*\]/gi);
+        for (const match of tempHpMatches) {
+            bonuses.gainTempHp += safeParseInt(match[1]);
+            damageTriggered = true; // Still triggers on move use if applied to a move
+        }
+
+        const tempHpOnHitMatches = description.matchAll(/\[\s*temp hp \+(\d+)\s*on hit\s*\]/gi);
+        for (const match of tempHpOnHitMatches) {
+            bonuses.tempHpOnHit += safeParseInt(match[1]);
+            damageTriggered = true;
+        }
+
+        const tempHpDmgMatches = description.matchAll(/\[\s*temp hp\s*([\d./%]+)\s*dmg\s*\]/gi);
+        for (const match of tempHpDmgMatches) {
+            bonuses.tempHpDmgRatio = match[1].trim();
+            damageTriggered = true;
         }
 
         const comboMatches = description.matchAll(/\[\s*combo dmg\s*([+-]?\s*\d+)\s*\]/gi);

@@ -309,10 +309,14 @@ export async function executeDamageRoll(
     if (isSuperEffective) tags.push(`Super Effective`);
     if (superEffectiveDamageBonus > 0) tags.push(`Item SE Dmg +${superEffectiveDamageBonus}`);
 
-    if (stabBonus > 0) tags.push(stabTag);
     if (teraBonusTags) tags.push(teraBonusTags);
+    else if (stabBonus > 0) tags.push(stabTag);
 
     if (customFirstHitTag) tags.push(customFirstHitTag);
+
+    if (itemBuffs.gainTempHp > 0) tags.push(`🛡️ Gains ${itemBuffs.gainTempHp} Temp HP`);
+    if (itemBuffs.tempHpOnHit > 0) tags.push(`🛡️ Gains ${itemBuffs.tempHpOnHit} Temp HP on Hit`);
+    if (itemBuffs.tempHpDmgRatio) tags.push(`🛡️ Gains ${itemBuffs.tempHpDmgRatio} Dmg as Temp HP`);
 
     if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
     if (successModifier !== 0) tags.push(`Net Mod ${successModifier > 0 ? '+' : ''}${successModifier} Succ`);
@@ -338,8 +342,15 @@ export async function executeDamageRoll(
 
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';
 
+    // Bundle the flat On Hit value and the Dmg Ratio into a single payload string
+    const ratioPayload = itemBuffs.tempHpDmgRatio || '0';
+    const flatPayload = itemBuffs.tempHpOnHit || 0;
+    const payload = `${flatPayload}_${ratioPayload}`;
+
     await rollDicePlus(
         `${actualDicePool}d6>3${mathModifier}`,
-        `💥 ${nickname} rolled ${move.name || 'Damage'} (Dmg)!${finalTags}`
+        `💥 ${nickname} rolled ${move.name || 'Damage'} (Dmg)!${finalTags}`,
+        'damage',
+        payload
     );
 }

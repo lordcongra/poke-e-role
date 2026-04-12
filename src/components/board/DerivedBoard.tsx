@@ -31,6 +31,8 @@ export function DerivedBoard() {
 
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
     const [showTempConfirm, setShowTempConfirm] = useState(false);
+    const [showAddTempModal, setShowAddTempModal] = useState(false);
+    const [newTempHp, setNewTempHp] = useState(0);
 
     const abilityText = getAbilityText(ability, customAbilities);
     const inventoryModifiers = parseCombatTags(inventory, extraCategories, undefined, abilityText);
@@ -106,6 +108,10 @@ export function DerivedBoard() {
                             onBaseChange={(value: number) => updateHealth('hpBase', value)}
                             onTempChange={(value: number) => updateHealth('temporaryHitPoints', value)}
                             onClearTemp={() => setShowTempConfirm(true)}
+                            onAddTempClick={() => {
+                                setNewTempHp(health.temporaryHitPointsMax || 0);
+                                setShowAddTempModal(true);
+                            }}
                         />
                     </div>
                     <div className="derived-board__health-box">
@@ -282,6 +288,43 @@ export function DerivedBoard() {
                                 onClick={() => setTooltipInfo(null)}
                             >
                                 Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showAddTempModal && (
+                <div className="derived-board__modal-overlay">
+                    <div className="derived-board__modal-content">
+                        <h3 className="derived-board__modal-title" style={{ color: '#c326df', borderColor: '#c326df' }}>
+                            🛡️ Set Temporary HP
+                        </h3>
+                        <p className="derived-board__modal-desc">
+                            Enter the amount of Temporary HP to grant. This will replace any existing shield.
+                        </p>
+                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
+                            <NumberSpinner value={newTempHp} onChange={setNewTempHp} min={0} max={999} />
+                        </div>
+                        <div className="derived-board__modal-btn-container" style={{ gap: '10px' }}>
+                            <button
+                                type="button"
+                                className="action-button action-button--dark derived-board__modal-btn"
+                                onClick={() => setShowAddTempModal(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="action-button derived-board__modal-btn"
+                                style={{ backgroundColor: '#c326df', color: 'white' }}
+                                onClick={() => {
+                                    updateHealth('temporaryHitPointsMax', newTempHp);
+                                    updateHealth('temporaryHitPoints', newTempHp);
+                                    setShowAddTempModal(false);
+                                }}
+                            >
+                                Apply Shield
                             </button>
                         </div>
                     </div>

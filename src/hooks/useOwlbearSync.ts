@@ -25,7 +25,7 @@ export function useOwlbearSync() {
     const setRoomCustomMoves = useCharacterStore((state) => state.setRoomCustomMoves);
     const setRoomCustomPokemon = useCharacterStore((state) => state.setRoomCustomPokemon);
     const setRoomCustomItems = useCharacterStore((state) => state.setRoomCustomItems);
-    const setRoomCustomForms = useCharacterStore((state) => state.setRoomCustomForms); // 🔥 NEW
+    const setRoomCustomForms = useCharacterStore((state) => state.setRoomCustomForms);
 
     useEffect(() => {
         let unsubs: Array<() => void> = [];
@@ -242,7 +242,7 @@ export function useOwlbearSync() {
                         if (data.customMoves) setRoomCustomMoves(data.customMoves as CustomMove[]);
                         if (data.customPokemon) setRoomCustomPokemon(data.customPokemon as CustomPokemon[]);
                         if (data.customItems) setRoomCustomItems(data.customItems as CustomItem[]);
-                        if (data.customForms) setRoomCustomForms(data.customForms as CustomForm[]); // 🔥 NEW
+                        if (data.customForms) setRoomCustomForms(data.customForms as CustomForm[]);
 
                         syncHomebrewToApi(
                             (data.customPokemon as CustomPokemon[]) || [],
@@ -273,7 +273,7 @@ export function useOwlbearSync() {
                             if (data.customMoves) setRoomCustomMoves(data.customMoves as CustomMove[]);
                             if (data.customPokemon) setRoomCustomPokemon(data.customPokemon as CustomPokemon[]);
                             if (data.customItems) setRoomCustomItems(data.customItems as CustomItem[]);
-                            if (data.customForms) setRoomCustomForms(data.customForms as CustomForm[]); // 🔥 NEW
+                            if (data.customForms) setRoomCustomForms(data.customForms as CustomForm[]);
 
                             syncHomebrewToApi(
                                 (data.customPokemon as CustomPokemon[]) || [],
@@ -309,7 +309,7 @@ export function useOwlbearSync() {
                             const parts = String(data.rollId).split('|');
                             const rollType = parts[0];
                             const targetTokenId = parts.length > 1 ? parts[1] : null;
-                            const payload = parts.length > 2 ? parts[2] : null;
+                            const payload = parts.length > 3 ? parts.slice(2, -1).join('|') : null;
 
                             const resultObj = data.result as Record<string, unknown> | undefined;
 
@@ -333,7 +333,8 @@ export function useOwlbearSync() {
                                         };
                                     }
                                 });
-                            } else if (rollType === 'status' && targetTokenId && payload && resultObj) {
+                            } else if (rollType === 'status' && targetTokenId && parts.length > 2 && resultObj) {
+                                const statusId = parts[2];
                                 const successes = parseInt(String(resultObj.totalValue)) || 0;
                                 await OBR.scene.items.updateItems([targetTokenId], (items) => {
                                     for (const item of items) {
@@ -343,7 +344,7 @@ export function useOwlbearSync() {
                                             const statuses = JSON.parse(statusListStr);
                                             let changed = false;
                                             for (const s of statuses) {
-                                                if (s.id === payload) {
+                                                if (s.id === statusId) {
                                                     s.rounds += successes;
                                                     changed = true;
                                                 }
@@ -354,10 +355,54 @@ export function useOwlbearSync() {
                                         }
                                     }
                                 });
-                            } else if ((rollType === 'roll' || rollType === 'chance') && resultObj) {
+                            } else if (
+                                (rollType === 'roll' || rollType === 'chance' || rollType === 'damage') &&
+                                resultObj
+                            ) {
                                 const val = parseInt(String(resultObj.totalValue)) || 0;
-                                if (val > 0) OBR.notification.show(`✅ Result: ${val} Success${val > 1 ? 'es' : ''}!`);
-                                else OBR.notification.show(`❌ Result: Failure! (0)`);
+                                let msg =
+                                    val > 0
+                                        ? `✅ Result: ${val} Success${val > 1 ? 'es' : ''}!`
+                                        : `❌ Result: Failure! (0)`;
+
+                                // AUTOMATED SHIELD GENERATION LOGIC
+                                if (rollType === 'damage' && payload && val > 0) {
+                                    const [flatStr, ratioStr] = payload.split('_');
+                                    const flatGained = parseInt(flatStr) || 0;
+
+                                    let ratio = 0;
+                                    if (ratioStr) {
+                                        if (ratioStr.includes('%')) {
+                                            ratio = parseFloat(ratioStr.replace('%', '')) / 100;
+                                        } else if (ratioStr.includes('/')) {
+                                            const [num, den] = ratioStr.split('/');
+                                            ratio = parseFloat(num) / parseFloat(den);
+                                        } else {
+                                            ratio = parseFloat(ratioStr);
+                                        }
+                                    }
+
+                                    let tempGained = flatGained;
+                                    if (!isNaN(ratio) && ratio > 0) {
+                                        tempGained += Math.floor(val * ratio);
+                                    }
+
+                                    if (tempGained > 0) {
+                                        const store = useCharacterStore.getState();
+                                        const currentTempMax = store.health.temporaryHitPointsMax || 0;
+
+                                        // Temp HP replaces current shield ONLY if it is higher
+                                        if (tempGained > currentTempMax) {
+                                            store.updateHealth('temporaryHitPointsMax', tempGained);
+                                            store.updateHealth('temporaryHitPoints', tempGained);
+                                            msg = `✅ Result: ${val} Successes! (Gained ${tempGained} Temp HP 🛡️)`;
+                                        } else {
+                                            msg = `✅ Result: ${val} Successes! (Current Shield Holds 🛡️)`;
+                                        }
+                                    }
+                                }
+
+                                OBR.notification.show(msg);
                             }
                         }
                     } catch (e) {

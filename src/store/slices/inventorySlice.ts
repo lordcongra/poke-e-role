@@ -101,6 +101,7 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
         set((state) => {
             let statusChanged = false;
             let newStatuses = [...state.statuses];
+            let grantedTempHp = 0;
 
             const newInventory = state.inventory.map((item) => {
                 if (item.id === id) {
@@ -108,6 +109,14 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
 
                     if (field === 'active') {
                         const descriptionText = (item.desc || '').toLowerCase();
+
+                        if (value === true) {
+                            const tempHpMatch = descriptionText.match(/\[\s*gain temp hp\s*(\d+)\s*\]/i);
+                            if (tempHpMatch) {
+                                grantedTempHp = Math.max(grantedTempHp, parseInt(tempHpMatch[1], 10));
+                            }
+                        }
+
                         const statusMatches = Array.from(descriptionText.matchAll(/\[status:\s*([a-zA-Z0-9\s]+)\]/gi));
 
                         if (statusMatches.length > 0) {
@@ -182,6 +191,14 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
 
             const updatesToSave: Record<string, unknown> = {};
             const { health, will } = syncHealthWill(state, newInventory, updatesToSave);
+
+            if (grantedTempHp > health.temporaryHitPointsMax) {
+                health.temporaryHitPoints = grantedTempHp;
+                health.temporaryHitPointsMax = grantedTempHp;
+                updatesToSave['temporary-hit-points'] = grantedTempHp;
+                updatesToSave['temporary-hit-points-max'] = grantedTempHp;
+            }
+
             updatesToSave['inv-data'] = JSON.stringify(newInventory);
             if (statusChanged) updatesToSave['status-list'] = JSON.stringify(newStatuses);
 

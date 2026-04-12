@@ -31,7 +31,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
     const [category, setCategory] = useState('stat');
     const [target, setTarget] = useState('Str');
     const [typeOption, setTypeOption] = useState('');
-    const [value, setValue] = useState(1);
+    const [value, setValue] = useState<number>(1);
 
     const formatEnum = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
@@ -61,7 +61,18 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
         if (category === 'matchup') return ['Immune', 'Resist', 'Weak', 'Remove Immunities', 'Remove Immunity'];
 
         if (category === 'mechanic')
-            return ['High Crit', 'Stacking High Crit', 'Ignore Low Acc', 'Recoil', 'Super Effective', 'Powder'];
+            return [
+                'High Crit',
+                'Stacking High Crit',
+                'Ignore Low Acc',
+                'Recoil',
+                'Super Effective',
+                'Powder',
+                'Gain Temp HP',
+                'Temp HP on Hit',
+                'Temp HP % Dmg'
+            ];
+
         if (category === 'status')
             return [
                 '1st Degree Burn',
@@ -93,16 +104,20 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
         (category === 'combat' &&
             !['Init', 'Chance', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc'].includes(target)) ||
         (category === 'matchup' && target !== 'Remove Immunities');
+
     const showValueInput =
         category === 'stat' ||
         category === 'skill' ||
         category === 'combat' ||
-        (category === 'mechanic' && target === 'Ignore Low Acc') ||
+        (category === 'mechanic' &&
+            ['Ignore Low Acc', 'Gain Temp HP', 'Temp HP on Hit', 'Temp HP % Dmg'].includes(target)) ||
         (category === 'move_mechanics' && ['Low Accuracy', 'Set Damage'].includes(target));
 
     const handleConfirm = () => {
         let tag = '';
-        const sign = value >= 0 ? `+${value}` : `${value}`;
+
+        const numValue = Number(value) || 0;
+        const sign = numValue >= 0 ? `+${numValue}` : `${numValue}`;
 
         if (category === 'stat' || category === 'skill') {
             tag = `[${target} ${sign}]`;
@@ -121,19 +136,22 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
         } else if (category === 'mechanic') {
             if (target === 'High Crit') tag = `[High Crit]`;
             else if (target === 'Stacking High Crit') tag = `[Stacking High Crit]`;
-            else if (target === 'Ignore Low Acc') tag = `[Ignore Low Acc ${Math.abs(value)}]`;
+            else if (target === 'Ignore Low Acc') tag = `[Ignore Low Acc ${Math.abs(numValue)}]`;
             else if (target === 'Recoil') tag = `[Recoil]`;
             else if (target === 'Super Effective') tag = `[Super Effective]`;
             else if (target === 'Powder') tag = `[Powder]`;
+            else if (target === 'Gain Temp HP') tag = `[Gain Temp HP ${Math.abs(numValue)}]`;
+            else if (target === 'Temp HP on Hit') tag = `[Temp HP +${Math.abs(numValue)} on Hit]`;
+            else if (target === 'Temp HP % Dmg') tag = `[Temp HP ${Math.abs(numValue)}% Dmg]`;
         } else if (category === 'status') {
             tag = `[Status: ${target}]`;
         } else if (category === 'move_mechanics') {
             if (target === 'High Critical') tag = `[High Critical]`;
-            else if (target === 'Low Accuracy') tag = `[Low Accuracy ${Math.abs(value)}]`;
+            else if (target === 'Low Accuracy') tag = `[Low Accuracy ${Math.abs(numValue)}]`;
             else if (target === 'Never Miss') tag = `[Never Miss]`;
             else if (target === 'Recoil') tag = `[Recoil]`;
             else if (target === 'Successive Actions') tag = `[Successive Actions]`;
-            else if (target === 'Set Damage') tag = `[Set Damage ${Math.abs(value)}]`;
+            else if (target === 'Set Damage') tag = `[Set Damage ${Math.abs(numValue)}]`;
             else if (target === 'Powder') tag = `[Powder]`;
         }
 
