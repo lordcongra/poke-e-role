@@ -204,8 +204,8 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
                 swapStatuses: false,
                 freshStatuses: isMegaTemplate,
                 wipeStatuses: false,
-                restoreHp: isMegaTemplate, // 🔥 FIX: Check defaults for Mega
-                restoreWill: isMegaTemplate, // 🔥 FIX: Check defaults for Mega
+                restoreHp: isMegaTemplate,
+                restoreWill: isMegaTemplate,
                 healHp: isMegaTemplate,
                 healWill: isMegaTemplate,
                 activationCostHp: 0,
@@ -213,6 +213,7 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
                 grantedMoves: [],
                 tags: '',
                 tempHp: 0,
+                tempWill: 0,
                 gmOnly: false
             }
         ];
@@ -272,6 +273,8 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             healWill: f.healWill ?? false,
             activationCostHp: f.activationCostHp ?? 0,
             activationCostWill: f.activationCostWill ?? 0,
+            tempHp: f.tempHp ?? 0,
+            tempWill: f.tempWill ?? 0,
             grantedMoves: Array.isArray(f.grantedMoves) ? f.grantedMoves : []
         }));
         set({ roomCustomForms: safeForms });
@@ -295,6 +298,8 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             healWill: f.healWill ?? false,
             activationCostHp: f.activationCostHp ?? 0,
             activationCostWill: f.activationCostWill ?? 0,
+            tempHp: f.tempHp ?? 0,
+            tempWill: f.tempWill ?? 0,
             grantedMoves: Array.isArray(f.grantedMoves) ? f.grantedMoves : []
         }));
 
@@ -427,6 +432,8 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
                 healWill: form.healWill ?? false,
                 activationCostHp: form.activationCostHp ?? 0,
                 activationCostWill: form.activationCostWill ?? 0,
+                tempHp: form.tempHp ?? 0,
+                tempWill: form.tempWill ?? 0,
                 grantedMoves: Array.isArray(form.grantedMoves) ? form.grantedMoves : []
             };
 
@@ -517,6 +524,8 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
                 healWill: form.healWill ?? false,
                 activationCostHp: form.activationCostHp ?? 0,
                 activationCostWill: form.activationCostWill ?? 0,
+                tempHp: form.tempHp ?? 0,
+                tempWill: form.tempWill ?? 0,
                 grantedMoves: Array.isArray(form.grantedMoves) ? form.grantedMoves : []
             };
 

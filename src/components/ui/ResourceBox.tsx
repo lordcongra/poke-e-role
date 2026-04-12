@@ -8,6 +8,7 @@ interface ResourceBoxProps {
     base: number;
     temp?: number;
     tempMax?: number;
+    tempType?: 'hp' | 'will';
     color: string;
     onCurrChange: (val: number) => void;
     onBaseChange: (val: number) => void;
@@ -23,6 +24,7 @@ export function ResourceBox({
     base,
     temp,
     tempMax,
+    tempType = 'hp',
     color,
     onCurrChange,
     onBaseChange,
@@ -42,6 +44,13 @@ export function ResourceBox({
         barColor = 'rgba(33, 150, 243, 0.9)';
     }
 
+    const isWill = tempType === 'will';
+    const tempFillClass = isWill ? 'resource-bar-fill--temp-will' : 'resource-bar-fill--temp';
+    const addTempClass = isWill ? 'resource-box__add-temp-btn--will' : 'resource-box__add-temp-btn';
+    const shieldBtnClass = isWill ? 'resource-box__temp-shield-btn--will' : 'resource-box__temp-shield-btn';
+
+    const isEmptyTemp = tempMax === undefined || tempMax === 0;
+
     return (
         <div className="health-section__box">
             <div className="health-section__header health-section__header--shadow">{title}</div>
@@ -49,46 +58,58 @@ export function ResourceBox({
                 <div className="resource-bar-fill" style={{ backgroundColor: barColor, width: `${pct}%` }}></div>
 
                 {tempMax !== undefined && tempMax > 0 && (
-                    <div className="resource-bar-fill resource-bar-fill--temp" style={{ width: `${tempPct}%` }}></div>
+                    <div className={`resource-bar-fill ${tempFillClass}`} style={{ width: `${tempPct}%` }}></div>
                 )}
 
                 <div className="resource-box__main resource-box__content-layer">
-                    <span className="resource-box__label">Curr:</span>
-                    <NumberSpinner value={curr} onChange={onCurrChange} min={0} />
-                    <span className="resource-box__divider">/</span>
-                    <span className="resource-box__max">{max}</span>
+                    <div className="resource-box__grid-left">
+                        <span className="resource-box__label">Curr:</span>
+                    </div>
+                    <div className="resource-box__grid-center">
+                        <NumberSpinner value={curr} onChange={onCurrChange} min={0} />
+                    </div>
+                    <div className="resource-box__grid-right">
+                        <span className="resource-box__divider">/</span>
+                        <span className="resource-box__max">{max}</span>
+                    </div>
                 </div>
 
                 {onTempChange && onAddTempClick && (
-                    <div className="resource-box__temp-row resource-box__content-layer">
-                        {tempMax === undefined || tempMax === 0 ? (
+                    <div className={`resource-box__temp-row resource-box__content-layer ${isEmptyTemp ? 'resource-box__temp-row--empty' : ''}`}>
+                        {isEmptyTemp ? (
                             <button
                                 onClick={onAddTempClick}
-                                className="action-button resource-box__add-temp-btn"
-                                title="Add Temporary HP Shield"
+                                className={`action-button ${addTempClass}`}
+                                title={isWill ? "Add Temp Will Power" : "Add Temporary Shield"}
                             >
-                                🛡️ +Temp
+                                {isWill ? '🌟 +Temp' : '🛡️ +Temp'}
                             </button>
                         ) : (
-                            <div className="resource-box__temp-wrapper">
-                                <button
-                                    onClick={onAddTempClick}
-                                    className="action-button resource-box__temp-shield-btn"
-                                    title="Set Temporary HP"
-                                >
-                                    🛡️
-                                </button>
-                                <NumberSpinner value={temp || 0} onChange={onTempChange} min={0} max={tempMax} />
-                                {onClearTemp && (
+                            <>
+                                <div className="resource-box__grid-left">
                                     <button
-                                        onClick={onClearTemp}
-                                        className="action-button action-button--red resource-box__clear-temp-btn"
-                                        title="Remove Temp HP"
+                                        onClick={onAddTempClick}
+                                        className={`action-button ${shieldBtnClass}`}
+                                        title={isWill ? "Set Temp Will Power" : "Set Temporary Shield"}
                                     >
-                                        X
+                                        {isWill ? '🌟' : '🛡️'}
                                     </button>
-                                )}
-                            </div>
+                                </div>
+                                <div className="resource-box__grid-center">
+                                    <NumberSpinner value={temp || 0} onChange={onTempChange} min={0} max={tempMax} />
+                                </div>
+                                <div className="resource-box__grid-right">
+                                    {onClearTemp && (
+                                        <button
+                                            onClick={onClearTemp}
+                                            className="action-button action-button--red resource-box__clear-temp-btn"
+                                            title={isWill ? "Remove Temp Will Power" : "Remove Temp Shield"}
+                                        >
+                                            X
+                                        </button>
+                                    )}
+                                </div>
+                            </>
                         )}
                     </div>
                 )}

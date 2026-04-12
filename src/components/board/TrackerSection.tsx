@@ -31,8 +31,25 @@ export function TrackerSection() {
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
 
     const handleWillSpend = (cost: number, action: () => void) => {
-        if (will.willCurr >= cost) {
-            updateWill('willCurr', will.willCurr - cost);
+        const totalWill = will.willCurr + (will.temporaryWill || 0);
+
+        if (totalWill >= cost) {
+            let remainingCost = cost;
+            let newTemp = will.temporaryWill || 0;
+            let newCurr = will.willCurr;
+
+            if (newTemp > 0) {
+                const deduct = Math.min(newTemp, remainingCost);
+                newTemp -= deduct;
+                remainingCost -= deduct;
+                updateWill('temporaryWill', newTemp);
+            }
+
+            if (remainingCost > 0) {
+                newCurr -= remainingCost;
+                updateWill('willCurr', newCurr);
+            }
+
             action();
         } else {
             if (OBR.isAvailable) OBR.notification.show('Not enough Will points!', 'WARNING');

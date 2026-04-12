@@ -416,11 +416,22 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
                                 Heal Will to Max on Transform
                             </label>
 
-                            <div className="homebrew-form-card__temp-hp-row" style={{ marginTop: '8px' }}>
+                            <div
+                                className="homebrew-form-card__temp-hp-row"
+                                style={{ marginTop: '8px', flexWrap: 'wrap' }}
+                            >
                                 <span className="homebrew-form-card__temp-hp-label">Temp HP Shield:</span>
                                 <NumberSpinner
                                     value={form.tempHp}
                                     onChange={(val) => canEdit && updateCustomForm(form.id, 'tempHp', val)}
+                                    disabled={!canEdit}
+                                />
+                                <span className="homebrew-form-card__temp-hp-label" style={{ marginLeft: '10px' }}>
+                                    Temp Will Power:
+                                </span>
+                                <NumberSpinner
+                                    value={form.tempWill ?? 0}
+                                    onChange={(val) => canEdit && updateCustomForm(form.id, 'tempWill', val)}
                                     disabled={!canEdit}
                                 />
                             </div>

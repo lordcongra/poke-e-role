@@ -18,6 +18,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
     const toggleTransformation = useCharacterStore((state) => state.toggleTransformation);
     const setIdentity = useCharacterStore((state) => state.setIdentity);
     const willCurr = useCharacterStore((state) => state.will.willCurr);
+    const tempWill = useCharacterStore((state) => state.will.temporaryWill);
     const hpCurr = useCharacterStore((state) => state.health.hpCurr);
 
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
@@ -27,7 +28,6 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
     const hasAltForm = !!useCharacterStore((state) => state.identity.altFormData);
     const hasMaxForm = !!useCharacterStore((state) => state.identity.maxFormData);
 
-    // Ensure we don't accidentally cache "None" which breaks the default selection rendering
     const cachedTransRaw = localStorage.getItem('pokerole-last-trans') || 'Mega';
     const cachedTrans = cachedTransRaw === 'None' ? 'Mega' : cachedTransRaw;
 
@@ -41,7 +41,6 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
 
     const [teraCategory, setTeraCategory] = useState<'Physical' | 'Special'>('Special');
 
-    // Filter out Stellar as it's not a selectable base affinity
     const allTypes = [
         ...POKEMON_TYPES.filter((t) => t !== '' && t !== 'Stellar'),
         ...roomCustomTypes.filter((t) => role === 'GM' || !t.gmOnly).map((t) => t.name)
@@ -74,8 +73,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
               ? 1
               : 0;
 
-    const canAffordWill = willCurr >= willCost;
-    // Must have strictly MORE Hp than the cost to survive the transformation (unless it costs 0)
+    const canAffordWill = willCurr + (tempWill || 0) >= willCost;
     const canAffordHp = hpCost === 0 ? true : hpCurr > hpCost;
     const canAfford = canAffordWill && canAffordHp;
 

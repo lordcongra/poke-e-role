@@ -30,9 +30,16 @@ export function DerivedBoard() {
     const extraCategories = useCharacterStore((state) => state.extraCategories);
 
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
-    const [showTempConfirm, setShowTempConfirm] = useState(false);
+
+    // HP Modals
     const [showAddTempModal, setShowAddTempModal] = useState(false);
     const [newTempHp, setNewTempHp] = useState(0);
+    const [showTempConfirm, setShowTempConfirm] = useState(false);
+
+    // Will Modals
+    const [showAddTempWillModal, setShowAddTempWillModal] = useState(false);
+    const [newTempWill, setNewTempWill] = useState(0);
+    const [showTempWillConfirm, setShowTempWillConfirm] = useState(false);
 
     const abilityText = getAbilityText(ability, customAbilities);
     const inventoryModifiers = parseCombatTags(inventory, extraCategories, undefined, abilityText);
@@ -103,6 +110,7 @@ export function DerivedBoard() {
                             base={health.hpBase}
                             temp={health.temporaryHitPoints}
                             tempMax={health.temporaryHitPointsMax}
+                            tempType="hp"
                             color="var(--primary)"
                             onCurrChange={(value: number) => updateHealth('hpCurr', value)}
                             onBaseChange={(value: number) => updateHealth('hpBase', value)}
@@ -120,9 +128,18 @@ export function DerivedBoard() {
                             curr={will.willCurr}
                             max={will.willMax}
                             base={will.willBase}
+                            temp={will.temporaryWill}
+                            tempMax={will.temporaryWillMax}
+                            tempType="will"
                             color="#2196F3"
                             onCurrChange={(value: number) => updateWill('willCurr', value)}
                             onBaseChange={(value: number) => updateWill('willBase', value)}
+                            onTempChange={(value: number) => updateWill('temporaryWill', value)}
+                            onClearTemp={() => setShowTempWillConfirm(true)}
+                            onAddTempClick={() => {
+                                setNewTempWill(will.temporaryWillMax || 0);
+                                setShowAddTempWillModal(true);
+                            }}
                         />
                     </div>
                     <StatusBox />
@@ -355,6 +372,77 @@ export function DerivedBoard() {
                                     updateHealth('temporaryHitPoints', 0);
                                     updateHealth('temporaryHitPointsMax', 0);
                                     setShowTempConfirm(false);
+                                }}
+                            >
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showAddTempWillModal && (
+                <div className="derived-board__modal-overlay">
+                    <div className="derived-board__modal-content">
+                        <h3 className="derived-board__modal-title" style={{ color: '#7e57c2', borderColor: '#7e57c2' }}>
+                            🌟 Set Temp Willpower
+                        </h3>
+                        <p className="derived-board__modal-desc">
+                            Enter the amount of Temporary Willpower to grant. This will replace any existing Temporary
+                            Willpower.
+                        </p>
+                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
+                            <NumberSpinner value={newTempWill} onChange={setNewTempWill} min={0} max={999} />
+                        </div>
+                        <div className="derived-board__modal-btn-container" style={{ gap: '10px' }}>
+                            <button
+                                type="button"
+                                className="action-button action-button--dark derived-board__modal-btn"
+                                onClick={() => setShowAddTempWillModal(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="action-button derived-board__modal-btn"
+                                style={{ backgroundColor: '#7e57c2', color: 'white' }}
+                                onClick={() => {
+                                    updateWill('temporaryWillMax', newTempWill);
+                                    updateWill('temporaryWill', newTempWill);
+                                    setShowAddTempWillModal(false);
+                                }}
+                            >
+                                Apply Temp Will
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showTempWillConfirm && (
+                <div className="derived-board__modal-overlay">
+                    <div className="derived-board__modal-content">
+                        <h3 className="derived-board__modal-title" style={{ color: '#c62828', borderColor: '#c62828' }}>
+                            ⚠️ Clear Temp Willpower
+                        </h3>
+                        <p className="derived-board__modal-desc">
+                            Are you sure you want to completely remove your Temporary Willpower?
+                        </p>
+                        <div className="derived-board__modal-btn-container" style={{ gap: '10px' }}>
+                            <button
+                                type="button"
+                                className="action-button action-button--dark derived-board__modal-btn"
+                                onClick={() => setShowTempWillConfirm(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="action-button action-button--red derived-board__modal-btn"
+                                onClick={() => {
+                                    updateWill('temporaryWill', 0);
+                                    updateWill('temporaryWillMax', 0);
+                                    setShowTempWillConfirm(false);
                                 }}
                             >
                                 Clear

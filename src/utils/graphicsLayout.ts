@@ -22,6 +22,8 @@ export function buildGraphicDefinitions(
             : 0;
 
     const willPercentage = Math.max(0, Math.min(1, data.willCurr / Math.max(1, data.willMax)));
+    const tempWillPercentage =
+        data.temporaryWillMax > 0 ? Math.max(0, Math.min(1, data.temporaryWill / data.temporaryWillMax)) : 0;
 
     const barWidth = 112 * scale;
     const startX = -barWidth / 2 + data.xOffset * scale;
@@ -85,7 +87,6 @@ export function buildGraphicDefinitions(
             visible: isVisible
         };
 
-        // Base HP bar (Green/Yellow/Red) - Deletes entirely if HP hits 0
         if (healthPercentage > 0) {
             graphicDefinitions['hp-fill'] = {
                 type: 'CURVE',
@@ -103,7 +104,6 @@ export function buildGraphicDefinitions(
             };
         }
 
-        // Temp HP bar (Purple overlay) - Deletes entirely if Temp HP hits 0
         if (tempHpPercentage > 0) {
             graphicDefinitions['temp-hp-fill'] = {
                 type: 'CURVE',
@@ -193,7 +193,6 @@ export function buildGraphicDefinitions(
             visible: isVisible
         };
 
-        // Will bar (Blue) - Deletes entirely if Will hits 0
         if (willPercentage > 0) {
             graphicDefinitions['will-fill'] = {
                 type: 'CURVE',
@@ -210,13 +209,35 @@ export function buildGraphicDefinitions(
                 visible: isVisible
             };
         }
+
+        if (tempWillPercentage > 0) {
+            graphicDefinitions['temp-will-fill'] = {
+                type: 'CURVE',
+                points: [
+                    { x: willBaseX, y: willBaseY },
+                    { x: willBaseX + barWidth * Math.max(0.001, tempWillPercentage), y: willBaseY }
+                ],
+                color: '#7e57c2',
+                strokeOpacity: 1,
+                width: 12 * scale,
+                closed: false,
+                fillOpacity: 0,
+                z: 4,
+                visible: isVisible
+            };
+        }
     }
 
     if (data.showWillText) {
         const isVisible = (!data.gmWillText || role === 'GM') && isTokenVisible;
+        const willString =
+            data.temporaryWill > 0
+                ? `${data.willCurr}+${data.temporaryWill}/${data.willMax}`
+                : `${data.willCurr}/${data.willMax}`;
+
         graphicDefinitions['will-text'] = {
             type: 'TEXT',
-            text: `${data.willCurr}/${data.willMax}`,
+            text: willString,
             x: willCenterX,
             y: willBaseY - 15 * scale,
             width: barWidth,

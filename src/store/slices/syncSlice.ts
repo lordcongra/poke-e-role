@@ -209,7 +209,9 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
             const newWill = {
                 willCurr: meta['will-curr'] !== undefined ? Number(meta['will-curr']) : 4,
                 willMax: meta['will-max-display'] !== undefined ? Number(meta['will-max-display']) : 4,
-                willBase: meta['will-base'] !== undefined ? Number(meta['will-base']) : 3
+                willBase: meta['will-base'] !== undefined ? Number(meta['will-base']) : 3,
+                temporaryWill: meta['temporary-will'] !== undefined ? Number(meta['temporary-will']) : 0,
+                temporaryWillMax: meta['temporary-will-max'] !== undefined ? Number(meta['temporary-will-max']) : 0
             };
 
             const abilityListStr = String(meta['ability-list'] || '');
@@ -272,6 +274,7 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
                     gmDefBadge: meta['gm-def-badge'] === true || meta['gm-def-badge'] === 'true',
                     settingEcoBadge: meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false',
                     gmEcoBadge: meta['gm-eco-badge'] === true || meta['gm-eco-badge'] === 'true',
+                    gmOnlyLootGen: meta['gm-only-loot-gen'] !== false && meta['gm-only-loot-gen'] !== 'false',
                     colorAct: String(meta['color-act'] || '#4890fc'),
                     colorEva: String(meta['color-eva'] || '#c387fc'),
                     colorCla: String(meta['color-cla'] || '#dfad43'),

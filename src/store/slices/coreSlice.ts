@@ -6,7 +6,7 @@ import { parseCombatTags, getAbilityText } from '../../utils/combatMath';
 
 export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = (set) => ({
     health: { hpCurr: 5, hpMax: 5, hpBase: 4, temporaryHitPoints: 0, temporaryHitPointsMax: 0 },
-    will: { willCurr: 4, willMax: 4, willBase: 3 },
+    will: { willCurr: 4, willMax: 4, willBase: 3, temporaryWill: 0, temporaryWillMax: 0 },
     derived: { defBuff: 0, defDebuff: 0, sdefBuff: 0, sdefDebuff: 0, happy: 0, loyal: 0 },
     extras: { core: 0, social: 0, skill: 0 },
 
@@ -52,7 +52,12 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
 
     updateHealth: (field, value) =>
         set((state) => {
-            const newHealth = { ...state.health, [field]: value };
+            let safeValue = value;
+            if (field === 'temporaryHitPoints' && state.health.temporaryHitPointsMax) {
+                safeValue = Math.min(Math.max(0, value), state.health.temporaryHitPointsMax);
+            }
+
+            const newHealth = { ...state.health, [field]: safeValue };
 
             if (field === 'hpBase') {
                 const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
@@ -78,7 +83,7 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
                 if (state.identity.ruleset === 'vg-high-hp') hpStat = Math.max(vitTotal, insTotal);
 
                 const oldMax = state.health.hpMax;
-                newHealth.hpMax = value + hpStat;
+                newHealth.hpMax = safeValue + hpStat;
 
                 if (newHealth.hpMax > oldMax) {
                     newHealth.hpCurr += newHealth.hpMax - oldMax;
@@ -93,7 +98,7 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
                     'hp-max-display': newHealth.hpMax,
                     'temporary-hit-points': newHealth.temporaryHitPoints,
                     'temporary-hit-points-max': newHealth.temporaryHitPointsMax,
-                    ...(field === 'hpBase' ? { 'hp-base': value } : {})
+                    ...(field === 'hpBase' ? { 'hp-base': safeValue } : {})
                 });
             } catch (e) {}
 
@@ -102,7 +107,12 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
 
     updateWill: (field, value) =>
         set((state) => {
-            const newWill = { ...state.will, [field]: value };
+            let safeValue = value;
+            if (field === 'temporaryWill' && state.will.temporaryWillMax) {
+                safeValue = Math.min(Math.max(0, value), state.will.temporaryWillMax);
+            }
+
+            const newWill = { ...state.will, [field]: safeValue };
 
             if (field === 'willBase') {
                 const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
@@ -117,7 +127,7 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
                         (invMods.stats.ins || 0)
                 );
                 const oldMax = state.will.willMax;
-                newWill.willMax = value + insTotal;
+                newWill.willMax = safeValue + insTotal;
 
                 if (newWill.willMax > oldMax) {
                     newWill.willCurr += newWill.willMax - oldMax;
@@ -130,7 +140,9 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
                 saveToOwlbear({
                     'will-curr': newWill.willCurr,
                     'will-max-display': newWill.willMax,
-                    ...(field === 'willBase' ? { 'will-base': value } : {})
+                    'temporary-will': newWill.temporaryWill,
+                    'temporary-will-max': newWill.temporaryWillMax,
+                    ...(field === 'willBase' ? { 'will-base': safeValue } : {})
                 });
             } catch (e) {}
 

@@ -68,6 +68,9 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (state.will.willCurr !== undefined) flatMetadata['will-curr'] = state.will.willCurr;
             if (state.will.willMax !== undefined) flatMetadata['will-max-display'] = state.will.willMax;
             if (state.will.willBase !== undefined) flatMetadata['will-base'] = state.will.willBase;
+            if (state.will.temporaryWill !== undefined) flatMetadata['temporary-will'] = state.will.temporaryWill;
+            if (state.will.temporaryWillMax !== undefined)
+                flatMetadata['temporary-will-max'] = state.will.temporaryWillMax;
         }
 
         if (state.tp !== undefined) flatMetadata['training-points'] = state.tp;

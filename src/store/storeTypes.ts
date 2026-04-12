@@ -65,6 +65,7 @@ export interface CustomForm {
     grantedMoves: string[];
     tags: string;
     tempHp: number;
+    tempWill: number;
 
     gmOnly?: boolean;
 }
@@ -120,6 +121,8 @@ export interface CoreSlice {
         willCurr: number;
         willMax: number;
         willBase: number;
+        temporaryWill: number;
+        temporaryWillMax: number;
     };
     derived: {
         defBuff: number;

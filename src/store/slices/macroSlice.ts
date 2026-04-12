@@ -124,6 +124,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
 
             if (isReverting) {
                 const previousTrans = state.identity.activeTransformation;
+                const wasFainted = state.health.hpCurr <= 0;
 
                 let revertConfig: RestoreConfig = {};
 
@@ -204,6 +205,11 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     restoreFormBackup(state.identity.baseFormData, draft, updatesToSave, revertConfig);
                 }
 
+                if (previousTrans === 'Mega' && wasFainted) {
+                    newHealth.hpCurr = 0;
+                    updatesToSave['hp-curr'] = 0;
+                }
+
                 if (previousTrans === 'Gigantamax') {
                     newStats[CombatStat.STR].buff = Math.max(0, newStats[CombatStat.STR].buff - 2);
                     newStats[CombatStat.SPE].buff = Math.max(0, newStats[CombatStat.SPE].buff - 2);
@@ -224,7 +230,6 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     updatesToSave['terastallize-affinity'] = '';
                     updatesToSave['terastallize-bonus-active'] = false;
 
-                    // Explicitly wipe the generated Tera Blast move when reverting
                     draft.moves = draft.moves.filter(
                         (m) => !(m.name === 'Tera Blast' && m.desc === 'Changes Type to match Terastallization.')
                     );
@@ -235,6 +240,11 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 newHealth.temporaryHitPointsMax = 0;
                 updatesToSave['temporary-hit-points'] = 0;
                 updatesToSave['temporary-hit-points-max'] = 0;
+
+                newWill.temporaryWill = 0;
+                newWill.temporaryWillMax = 0;
+                updatesToSave['temporary-will'] = 0;
+                updatesToSave['temporary-will-max'] = 0;
 
                 newEffects = newEffects.filter((e) => !e.name.includes('Timer'));
                 updatesToSave['effects-data'] = JSON.stringify(newEffects);
@@ -269,13 +279,25 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     if (OBR.isAvailable) OBR.notification.show('Not enough HP to safely transform!', 'ERROR');
                     return state;
                 }
-                if (costWill > 0 && newWill.willCurr < costWill) {
-                    if (OBR.isAvailable) OBR.notification.show('Not enough Willpower!', 'ERROR');
-                    return state;
+
+                if (costWill > 0) {
+                    let remainingWillCost = costWill;
+                    if (newWill.temporaryWill > 0) {
+                        const deduct = Math.min(newWill.temporaryWill, remainingWillCost);
+                        newWill.temporaryWill -= deduct;
+                        remainingWillCost -= deduct;
+                        updatesToSave['temporary-will'] = newWill.temporaryWill;
+                    }
+                    if (remainingWillCost > 0) {
+                        if (newWill.willCurr < remainingWillCost) {
+                            if (OBR.isAvailable) OBR.notification.show('Not enough Willpower!', 'ERROR');
+                            return state;
+                        }
+                        newWill.willCurr -= remainingWillCost;
+                    }
                 }
 
                 newHealth.hpCurr -= costHp;
-                newWill.willCurr -= costWill;
 
                 if (['Mega', 'Dynamax', 'Gigantamax', 'Custom'].includes(targetTransformation)) {
                     const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
@@ -308,7 +330,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                             const activateConfig: RestoreConfig = {
                                 restoreBaseStats: targetForm.swapBaseStats,
                                 restoreStatLimits: targetForm.swapStatLimits,
-                                restoreStatRanks: targetForm.swapSkills,
+                                restoreStatRanks: targetForm.swapStatRanks,
                                 restoreSkills: targetForm.swapSkills,
                                 restoreMoves: targetForm.swapMoves,
                                 restoreTyping: targetForm.swapTyping,
@@ -352,6 +374,12 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                                 newHealth.temporaryHitPointsMax = targetForm.tempHp;
                                 updatesToSave['temporary-hit-points'] = targetForm.tempHp;
                                 updatesToSave['temporary-hit-points-max'] = targetForm.tempHp;
+                            }
+                            if (targetForm.tempWill > 0) {
+                                newWill.temporaryWill = targetForm.tempWill;
+                                newWill.temporaryWillMax = targetForm.tempWill;
+                                updatesToSave['temporary-will'] = targetForm.tempWill;
+                                updatesToSave['temporary-will-max'] = targetForm.tempWill;
                             }
                             if (targetForm.freshStatuses || targetForm.wipeStatuses) {
                                 draft.statuses = [
