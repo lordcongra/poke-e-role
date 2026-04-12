@@ -135,7 +135,11 @@ export const createFormBackup = (
         availableAbilities: state.identity.availableAbilities,
         hpBase: state.health.hpBase,
         hpCurr: healthDraft ? healthDraft.hpCurr : state.health.hpCurr,
+        tempHp: healthDraft ? healthDraft.temporaryHitPoints : state.health.temporaryHitPoints,
+        tempHpMax: healthDraft ? healthDraft.temporaryHitPointsMax : state.health.temporaryHitPointsMax,
         willCurr: willDraft ? willDraft.willCurr : state.will.willCurr,
+        tempWill: willDraft ? willDraft.temporaryWill : state.will.temporaryWill,
+        tempWillMax: willDraft ? willDraft.temporaryWillMax : state.will.temporaryWillMax,
         statuses: statusesDraft ? statusesDraft : state.statuses,
         moves: state.moves
     };
@@ -236,14 +240,34 @@ export const restoreFormBackup = (
             updatesToSave['hp-base'] = health.hpBase;
         }
 
-        if (config.restoreHp && loadedData.hpCurr !== undefined) {
-            health.hpCurr = Number(loadedData.hpCurr);
-            updatesToSave['hp-curr'] = health.hpCurr;
+        if (config.restoreHp) {
+            if (loadedData.hpCurr !== undefined) {
+                health.hpCurr = Number(loadedData.hpCurr);
+                updatesToSave['hp-curr'] = health.hpCurr;
+            }
+            if (loadedData.tempHp !== undefined) {
+                health.temporaryHitPoints = Number(loadedData.tempHp);
+                updatesToSave['temporary-hit-points'] = health.temporaryHitPoints;
+            }
+            if (loadedData.tempHpMax !== undefined) {
+                health.temporaryHitPointsMax = Number(loadedData.tempHpMax);
+                updatesToSave['temporary-hit-points-max'] = health.temporaryHitPointsMax;
+            }
         }
 
-        if (config.restoreWill && loadedData.willCurr !== undefined) {
-            will.willCurr = Number(loadedData.willCurr);
-            updatesToSave['will-curr'] = will.willCurr;
+        if (config.restoreWill) {
+            if (loadedData.willCurr !== undefined) {
+                will.willCurr = Number(loadedData.willCurr);
+                updatesToSave['will-curr'] = will.willCurr;
+            }
+            if (loadedData.tempWill !== undefined) {
+                will.temporaryWill = Number(loadedData.tempWill);
+                updatesToSave['temporary-will'] = will.temporaryWill;
+            }
+            if (loadedData.tempWillMax !== undefined) {
+                will.temporaryWillMax = Number(loadedData.tempWillMax);
+                updatesToSave['temporary-will-max'] = will.temporaryWillMax;
+            }
         }
 
         if (config.restoreStatuses && loadedData.statuses !== undefined) {

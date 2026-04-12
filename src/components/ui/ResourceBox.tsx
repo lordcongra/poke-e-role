@@ -75,12 +75,14 @@ export function ResourceBox({
                 </div>
 
                 {onTempChange && onAddTempClick && (
-                    <div className={`resource-box__temp-row resource-box__content-layer ${isEmptyTemp ? 'resource-box__temp-row--empty' : ''}`}>
+                    <div
+                        className={`resource-box__temp-row resource-box__content-layer ${isEmptyTemp ? 'resource-box__temp-row--empty' : ''}`}
+                    >
                         {isEmptyTemp ? (
                             <button
                                 onClick={onAddTempClick}
                                 className={`action-button ${addTempClass}`}
-                                title={isWill ? "Add Temp Will Power" : "Add Temporary Shield"}
+                                title={isWill ? 'Add Temp Will Power' : 'Add Temporary Shield'}
                             >
                                 {isWill ? '🌟 +Temp' : '🛡️ +Temp'}
                             </button>
@@ -90,7 +92,7 @@ export function ResourceBox({
                                     <button
                                         onClick={onAddTempClick}
                                         className={`action-button ${shieldBtnClass}`}
-                                        title={isWill ? "Set Temp Will Power" : "Set Temporary Shield"}
+                                        title={isWill ? 'Set Temp Will Power' : 'Set Temporary Shield'}
                                     >
                                         {isWill ? '🌟' : '🛡️'}
                                     </button>
@@ -103,7 +105,7 @@ export function ResourceBox({
                                         <button
                                             onClick={onClearTemp}
                                             className="action-button action-button--red resource-box__clear-temp-btn"
-                                            title={isWill ? "Remove Temp Will Power" : "Remove Temp Shield"}
+                                            title={isWill ? 'Remove Temp Will Power' : 'Remove Temp Shield'}
                                         >
                                             X
                                         </button>

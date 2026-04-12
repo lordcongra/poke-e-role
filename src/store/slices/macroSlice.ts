@@ -127,6 +127,8 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 const wasFainted = state.health.hpCurr <= 0;
 
                 let revertConfig: RestoreConfig = {};
+                let shouldWipeTempHp = false;
+                let shouldWipeTempWill = false;
 
                 if (previousTrans === 'Mega') {
                     const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
@@ -146,11 +148,14 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                         restoreBuffs: false,
                         restoreDebuffs: false
                     };
+                    shouldWipeTempHp = true;
+                    shouldWipeTempWill = true;
                 } else if (['Dynamax', 'Gigantamax'].includes(previousTrans)) {
                     const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
                     newIdentity.maxFormData = backupStr;
                     updatesToSave['max-form-data'] = backupStr;
                     revertConfig = { restoreMoves: true };
+                    shouldWipeTempHp = true;
                 } else if (previousTrans === 'Custom' && state.identity.activeFormId) {
                     const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
                     newIdentity.formSaves = { ...newIdentity.formSaves, [state.identity.activeFormId]: backupStr };
@@ -196,6 +201,26 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                             updatesToSave['moves-data'] = JSON.stringify(draft.moves);
                         }
                     }
+
+                    if (activeForm) {
+                        if (activeForm.restoreHp || activeForm.tempHp > 0) shouldWipeTempHp = true;
+                        if (activeForm.restoreWill || activeForm.tempWill > 0) shouldWipeTempWill = true;
+                    }
+                }
+
+                // Safely wipe out Temp HP/Will if the previous form had isolated pools
+                // (If restoreFormBackup is true for HP/Will, it will safely overwrite these zeros!)
+                if (shouldWipeTempHp) {
+                    newHealth.temporaryHitPoints = 0;
+                    newHealth.temporaryHitPointsMax = 0;
+                    updatesToSave['temporary-hit-points'] = 0;
+                    updatesToSave['temporary-hit-points-max'] = 0;
+                }
+                if (shouldWipeTempWill) {
+                    newWill.temporaryWill = 0;
+                    newWill.temporaryWillMax = 0;
+                    updatesToSave['temporary-will'] = 0;
+                    updatesToSave['temporary-will-max'] = 0;
                 }
 
                 if (
@@ -235,16 +260,6 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     );
                     updatesToSave['moves-data'] = JSON.stringify(draft.moves);
                 }
-
-                newHealth.temporaryHitPoints = 0;
-                newHealth.temporaryHitPointsMax = 0;
-                updatesToSave['temporary-hit-points'] = 0;
-                updatesToSave['temporary-hit-points-max'] = 0;
-
-                newWill.temporaryWill = 0;
-                newWill.temporaryWillMax = 0;
-                updatesToSave['temporary-will'] = 0;
-                updatesToSave['temporary-will-max'] = 0;
 
                 newEffects = newEffects.filter((e) => !e.name.includes('Timer'));
                 updatesToSave['effects-data'] = JSON.stringify(newEffects);
@@ -303,6 +318,34 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
                     newIdentity.baseFormData = backupStr;
                     updatesToSave['base-form-data'] = backupStr;
+
+                    // Wipe Temp pools if the new form uses isolated pools
+                    if (targetTransformation === 'Mega') {
+                        newHealth.temporaryHitPoints = 0;
+                        newHealth.temporaryHitPointsMax = 0;
+                        updatesToSave['temporary-hit-points'] = 0;
+                        updatesToSave['temporary-hit-points-max'] = 0;
+                        newWill.temporaryWill = 0;
+                        newWill.temporaryWillMax = 0;
+                        updatesToSave['temporary-will'] = 0;
+                        updatesToSave['temporary-will-max'] = 0;
+                    } else if (targetTransformation === 'Custom' && customFormId) {
+                        const targetForm = state.roomCustomForms.find((f) => f.id === customFormId);
+                        if (targetForm) {
+                            if (targetForm.restoreHp) {
+                                newHealth.temporaryHitPoints = 0;
+                                newHealth.temporaryHitPointsMax = 0;
+                                updatesToSave['temporary-hit-points'] = 0;
+                                updatesToSave['temporary-hit-points-max'] = 0;
+                            }
+                            if (targetForm.restoreWill) {
+                                newWill.temporaryWill = 0;
+                                newWill.temporaryWillMax = 0;
+                                updatesToSave['temporary-will'] = 0;
+                                updatesToSave['temporary-will-max'] = 0;
+                            }
+                        }
+                    }
 
                     if (targetTransformation === 'Mega' && state.identity.altFormData) {
                         restoreFormBackup(state.identity.altFormData, draft, updatesToSave, {
