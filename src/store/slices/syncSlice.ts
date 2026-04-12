@@ -183,7 +183,7 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
                     }));
                 }
             } catch (e) {}
-            
+
             let parsedBadges: Badge[] = [];
             try {
                 const rawBadges = meta['badges-data'] ? JSON.parse(String(meta['badges-data'])) : [];
@@ -200,8 +200,10 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
                 hpCurr: meta['hp-curr'] !== undefined ? Number(meta['hp-curr']) : 5,
                 hpMax: meta['hp-max-display'] !== undefined ? Number(meta['hp-max-display']) : 5,
                 hpBase: meta['hp-base'] !== undefined ? Number(meta['hp-base']) : 4,
-                temporaryHitPoints: meta['temporary-hit-points'] !== undefined ? Number(meta['temporary-hit-points']) : 0,
-                temporaryHitPointsMax: meta['temporary-hit-points-max'] !== undefined ? Number(meta['temporary-hit-points-max']) : 0
+                temporaryHitPoints:
+                    meta['temporary-hit-points'] !== undefined ? Number(meta['temporary-hit-points']) : 0,
+                temporaryHitPointsMax:
+                    meta['temporary-hit-points-max'] !== undefined ? Number(meta['temporary-hit-points-max']) : 0
             };
 
             const newWill = {
@@ -237,21 +239,24 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
                     isNPC: meta['is-npc'] === true || meta['is-npc'] === 'true',
                     pokemonBackup: String(meta['pokemon-backup'] || ''),
                     trainerBackup: String(meta['trainer-backup'] || ''),
-                    
+
                     activeTransformation: (meta['active-transformation'] as TransformationType) || 'None',
                     activeFormId: String(meta['active-form-id'] || ''),
                     formSaves: meta['form-saves'] ? JSON.parse(String(meta['form-saves'])) : {},
                     customFormConfig: meta['custom-form-config'] ? JSON.parse(String(meta['custom-form-config'])) : {},
-                    
+
                     baseFormData: String(meta['base-form-data'] || ''),
                     altFormData: String(meta['alt-form-data'] || ''),
                     maxFormData: String(meta['max-form-data'] || ''),
                     terastallizeAffinity: String(meta['terastallize-affinity'] || ''),
-                    terastallizeBonusActive: meta['terastallize-bonus-active'] === true || meta['terastallize-bonus-active'] === 'true',
-                    
-                    customFormFirstHitAccActive: meta['custom-form-first-hit-acc'] === true || meta['custom-form-first-hit-acc'] === 'true',
-                    customFormFirstHitDmgActive: meta['custom-form-first-hit-dmg'] === true || meta['custom-form-first-hit-dmg'] === 'true',
-                    
+                    terastallizeBonusActive:
+                        meta['terastallize-bonus-active'] === true || meta['terastallize-bonus-active'] === 'true',
+
+                    customFormFirstHitAccActive:
+                        meta['custom-form-first-hit-acc'] === true || meta['custom-form-first-hit-acc'] === 'true',
+                    customFormFirstHitDmgActive:
+                        meta['custom-form-first-hit-dmg'] === true || meta['custom-form-first-hit-dmg'] === 'true',
+
                     badges: parsedBadges,
 
                     showTrackers: meta['show-trackers'] !== false && meta['show-trackers'] !== 'false',

@@ -13,6 +13,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
     const activeTrans = useCharacterStore((state) => state.identity.activeTransformation);
     const activeFormId = useCharacterStore((state) => state.identity.activeFormId);
     const formSaves = useCharacterStore((state) => state.identity.formSaves);
+    const currentType1 = useCharacterStore((state) => state.identity.type1);
 
     const toggleTransformation = useCharacterStore((state) => state.toggleTransformation);
     const setIdentity = useCharacterStore((state) => state.setIdentity);
@@ -26,20 +27,23 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
     const hasAltForm = !!useCharacterStore((state) => state.identity.altFormData);
     const hasMaxForm = !!useCharacterStore((state) => state.identity.maxFormData);
 
-    const cachedTrans = localStorage.getItem('pokerole-last-trans') || 'Mega';
+    // Ensure we don't accidentally cache "None" which breaks the default selection rendering
+    const cachedTransRaw = localStorage.getItem('pokerole-last-trans') || 'Mega';
+    const cachedTrans = cachedTransRaw === 'None' ? 'Mega' : cachedTransRaw;
 
     const [selectedTrans, setSelectedTrans] = useState<string>(
         activeTrans !== 'None' ? (activeTrans === 'Custom' ? `custom_${activeFormId}` : activeTrans) : cachedTrans
     );
 
-    const [affinity, setAffinity] = useState('Stellar');
+    const [affinity, setAffinity] = useState(currentType1 || 'Normal');
     const [autoMaxMoves, setAutoMaxMoves] = useState(true);
     const [clearConfirmType, setClearConfirmType] = useState<'Mega' | 'Max' | 'Custom' | null>(null);
 
     const [teraCategory, setTeraCategory] = useState<'Physical' | 'Special'>('Special');
 
+    // Filter out Stellar as it's not a selectable base affinity
     const allTypes = [
-        ...POKEMON_TYPES.filter((t) => t !== ''),
+        ...POKEMON_TYPES.filter((t) => t !== '' && t !== 'Stellar'),
         ...roomCustomTypes.filter((t) => role === 'GM' || !t.gmOnly).map((t) => t.name)
     ];
 

@@ -335,8 +335,8 @@ export function calculateBaseDamage(move: MoveData, state: CharacterState): numb
 
     let teraBonus = 0;
     const isTera = state.identity.activeTransformation === 'Terastallize';
+
     if (isTera && move.type === state.identity.terastallizeAffinity) {
-        sameTypeAttackBonus = 1;
         if (state.identity.terastallizeBonusActive) {
             const matchesOriginal =
                 state.identity.type1 === state.identity.terastallizeAffinity ||
@@ -347,7 +347,6 @@ export function calculateBaseDamage(move: MoveData, state: CharacterState): numb
         }
     }
 
-    // 🔥 FIX: Pull First Hit Dmg from the global Tracker Slice!
     let customFirstHitTag = 0;
     if (itemBuffs.firstHitDmg !== 0 && state.trackers.firstHitDmg) {
         customFirstHitTag = itemBuffs.firstHitDmg;

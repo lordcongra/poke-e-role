@@ -12,19 +12,27 @@ interface TargetingModalProps {
     onRoll: (baseDmg: number, isCrit: boolean, isSE: boolean, reduction: number) => void;
 }
 
+interface TargetOption {
+    id: string;
+    name: string;
+    def: number;
+    isTera: boolean;
+}
+
 export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingModalProps) {
     const [reduction, setReduction] = useState(0);
     const [isCrit, setIsCrit] = useState(false);
     const [isSE, setIsSE] = useState(false);
-    const [targets, setTargets] = useState<{ name: string; def: number }[]>([]);
+    const [targets, setTargets] = useState<TargetOption[]>([]);
 
     const ruleset = useCharacterStore((state) => state.identity.ruleset);
+    const activeTransformation = useCharacterStore((state) => state.identity.activeTransformation);
     const isPhysicalMove = String(move.category).startsWith('Phys');
 
     useEffect(() => {
         if (OBR.isAvailable) {
             OBR.scene.items.getItems().then((items) => {
-                const availableTargets: { name: string; def: number }[] = [];
+                const availableTargets: TargetOption[] = [];
 
                 items.forEach((item) => {
                     if (item.metadata[STATS_META_ID] && item.metadata['com.pretty-initiative/metadata']) {
@@ -53,7 +61,9 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                         if (ruleset === 'tabletop') spd = vit + sdefBuff - sdefDebuff;
 
                         const targetDef = isPhysicalMove ? def : spd;
-                        availableTargets.push({ name, def: Math.max(1, targetDef) });
+                        const isTera = meta['active-transformation'] === 'Terastallize';
+
+                        availableTargets.push({ id: item.id, name, def: Math.max(1, targetDef), isTera });
                     }
                 });
 
@@ -66,6 +76,21 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
         onRoll(baseDamage, isCrit, isSE, reduction);
     };
 
+    const handleTargetSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const val = e.target.value;
+        if (val !== 'manual') {
+            const selectedTarget = targets.find((t) => t.id === val);
+            if (selectedTarget) {
+                setReduction(selectedTarget.def);
+
+                // Automatically check SE if both combatants are Terastallized!
+                if (activeTransformation === 'Terastallize' && selectedTarget.isTera) {
+                    setIsSE(true);
+                }
+            }
+        }
+    };
+
     return (
         <div className="targeting-modal__overlay">
             <div className="targeting-modal__content">
@@ -73,15 +98,10 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
 
                 <div className="targeting-modal__form-group">
                     <label className="targeting-modal__label">Enemy Token:</label>
-                    <select
-                        onChange={(e) => {
-                            if (e.target.value !== 'manual') setReduction(Number(e.target.value));
-                        }}
-                        className="targeting-modal__select"
-                    >
+                    <select onChange={handleTargetSelect} className="targeting-modal__select" defaultValue="manual">
                         <option value="manual">-- Manual Entry --</option>
-                        {targets.map((t, i) => (
-                            <option key={i} value={t.def}>
+                        {targets.map((t) => (
+                            <option key={t.id} value={t.id}>
                                 {t.name} ({isPhysicalMove ? 'DEF' : 'SPD'}: {t.def})
                             </option>
                         ))}
@@ -111,7 +131,10 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                         />
                         Critical Hit?
                     </label>
-                    <label className="targeting-modal__checkbox-label targeting-modal__checkbox-label--se">
+                    <label
+                        className="targeting-modal__checkbox-label targeting-modal__checkbox-label--se"
+                        title="Check this if the move is Super Effective, OR if both you and the target are Terastallized!"
+                    >
                         <input
                             type="checkbox"
                             checked={isSE}

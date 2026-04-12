@@ -124,6 +124,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
 
             if (isReverting) {
                 const previousTrans = state.identity.activeTransformation;
+
                 let revertConfig: RestoreConfig = {};
 
                 if (previousTrans === 'Mega') {
@@ -222,6 +223,12 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     newIdentity.terastallizeBonusActive = false;
                     updatesToSave['terastallize-affinity'] = '';
                     updatesToSave['terastallize-bonus-active'] = false;
+
+                    // Explicitly wipe the generated Tera Blast move when reverting
+                    draft.moves = draft.moves.filter(
+                        (m) => !(m.name === 'Tera Blast' && m.desc === 'Changes Type to match Terastallization.')
+                    );
+                    updatesToSave['moves-data'] = JSON.stringify(draft.moves);
                 }
 
                 newHealth.temporaryHitPoints = 0;
@@ -301,7 +308,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                             const activateConfig: RestoreConfig = {
                                 restoreBaseStats: targetForm.swapBaseStats,
                                 restoreStatLimits: targetForm.swapStatLimits,
-                                restoreStatRanks: targetForm.swapStatRanks,
+                                restoreStatRanks: targetForm.swapSkills,
                                 restoreSkills: targetForm.swapSkills,
                                 restoreMoves: targetForm.swapMoves,
                                 restoreTyping: targetForm.swapTyping,
@@ -397,7 +404,6 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                                             desc: 'Granted by Custom Form'
                                         });
 
-                                        // 🔥 FIX: Calls get() to avoid hook circular dependency!
                                         fetchMoveData(moveName)
                                             .then((data) => {
                                                 if (data) {
@@ -480,6 +486,11 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             if (!isReverting && targetTransformation === 'Mega') {
                 draft.statuses = [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }];
                 updatesToSave['status-list'] = JSON.stringify(draft.statuses);
+
+                newHealth.hpCurr = newHealth.hpMax;
+                updatesToSave['hp-curr'] = newHealth.hpCurr;
+                newWill.willCurr = newWill.willMax;
+                updatesToSave['will-curr'] = newWill.willCurr;
             }
 
             if (!isReverting && targetTransformation === 'Custom' && customFormId) {

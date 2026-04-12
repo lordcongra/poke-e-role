@@ -109,12 +109,12 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         learnset: [],
         pokemonBackup: '',
         trainerBackup: '',
-        
+
         activeTransformation: 'None',
         activeFormId: '',
         formSaves: {},
         customFormConfig: {},
-        
+
         baseFormData: '',
         altFormData: '',
         maxFormData: '',
@@ -122,7 +122,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         terastallizeBonusActive: false,
         customFormFirstHitAccActive: false,
         customFormFirstHitDmgActive: false,
-        
+
         badges: [], // 🔥 NEW
 
         showTrackers: true,

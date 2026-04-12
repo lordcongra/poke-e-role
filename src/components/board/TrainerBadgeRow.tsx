@@ -18,7 +18,7 @@ export function TrainerBadgeRow({ badge, onUpdate, onRemove }: TrainerBadgeRowPr
                 onFocus={(e) => e.target.select()}
                 title="Press Win + . (Windows) or Cmd + Ctrl + Space (Mac) for emojis"
             />
-            
+
             <input
                 type="text"
                 className="trainer-badge-row__input"
@@ -26,9 +26,9 @@ export function TrainerBadgeRow({ badge, onUpdate, onRemove }: TrainerBadgeRowPr
                 value={badge.name}
                 onChange={(e) => onUpdate('name', e.target.value)}
             />
-            
-            <button 
-                type="button" 
+
+            <button
+                type="button"
                 className="action-button action-button--red trainer-badge-row__del-btn"
                 onClick={onRemove}
                 title="Delete Badge"

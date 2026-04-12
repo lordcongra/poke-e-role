@@ -291,7 +291,6 @@ export async function executeDamageRoll(
 
     let customFirstHitTag = '';
     if (itemBuffs.firstHitDmg !== 0 && state.trackers.firstHitDmg) {
-        // 🔥 FIX: We do NOT add itemBuffs.firstHitDmg here! It is already inside baseDamage!
         const sign = itemBuffs.firstHitDmg > 0 ? '+' : '';
         customFirstHitTag = `First Hit (${sign}${itemBuffs.firstHitDmg} Dice)`;
         useCharacterStore.getState().updateTracker('firstHitDmg', false);
@@ -310,8 +309,8 @@ export async function executeDamageRoll(
     if (isSuperEffective) tags.push(`Super Effective`);
     if (superEffectiveDamageBonus > 0) tags.push(`Item SE Dmg +${superEffectiveDamageBonus}`);
 
+    if (stabBonus > 0) tags.push(stabTag);
     if (teraBonusTags) tags.push(teraBonusTags);
-    else if (stabBonus > 0) tags.push(stabTag);
 
     if (customFirstHitTag) tags.push(customFirstHitTag);
 
