@@ -35,7 +35,7 @@ export interface CustomForm {
     id: string;
     name: string;
     description: string;
-
+    
     swapBaseStats: boolean;
     swapStatLimits: boolean;
     swapStatRanks: boolean;
@@ -43,7 +43,7 @@ export interface CustomForm {
     swapMoves: boolean;
     swapTyping: boolean;
     swapAbilities: boolean;
-
+    
     swapBuffs: boolean;
     swapDebuffs: boolean;
     freshBuffs: boolean;
@@ -53,20 +53,21 @@ export interface CustomForm {
     swapStatuses: boolean;
     freshStatuses: boolean;
     wipeStatuses: boolean;
-
+    
     restoreHp: boolean;
     restoreWill: boolean;
     healHp: boolean;
     healWill: boolean;
-
+    
     activationCostHp: number;
     activationCostWill: number;
-
+    
     grantedMoves: string[];
     tags: string;
     tempHp: number;
     tempWill: number;
-
+    imageUrl?: string;
+    
     gmOnly?: boolean;
 }
 
@@ -152,13 +153,7 @@ export interface MovesSlice {
     pendingDualScale: PendingDualScale | null;
 
     setPendingDualScale: (data: PendingDualScale | null) => void;
-    resolveDualScale: (
-        moveId: string,
-        acc1?: string,
-        acc2?: string,
-        dmg1?: string,
-        category?: 'Physical' | 'Special' | 'Status'
-    ) => void;
+    resolveDualScale: (moveId: string, acc1?: string, acc2?: string, dmg1?: string, category?: 'Physical' | 'Special' | 'Status') => void;
     addMove: () => void;
     updateMove: <K extends keyof MoveData>(id: string, field: K, value: MoveData[K]) => void;
     removeMove: (id: string) => void;
@@ -177,12 +172,7 @@ export interface InventorySlice {
     tp: number;
     currency: number;
     addInventoryItem: () => void;
-    addSpecificInventoryItem: (item: {
-        name: string;
-        description: string;
-        quantity?: number;
-        active?: boolean;
-    }) => void;
+    addSpecificInventoryItem: (item: { name: string; description: string; quantity?: number; active?: boolean; }) => void;
     updateInventoryItem: <K extends keyof InventoryItem>(id: string, field: K, value: InventoryItem[K]) => void;
     removeInventoryItem: (id: string) => void;
     moveUpInventoryItem: (id: string) => void;
@@ -229,19 +219,19 @@ export interface HomebrewSlice {
     addCustomType: (type: CustomType) => void;
     updateCustomType: (oldName: string, newType: CustomType) => void;
     removeCustomType: (name: string) => void;
-
+    
     addCustomAbility: () => void;
     updateCustomAbility: <K extends keyof CustomAbility>(id: string, field: K, value: CustomAbility[K]) => void;
     removeCustomAbility: (id: string) => void;
-
+    
     addCustomMove: () => void;
     updateCustomMove: <K extends keyof CustomMove>(id: string, field: K, value: CustomMove[K]) => void;
     removeCustomMove: (id: string) => void;
-
+    
     addCustomPokemon: () => void;
     updateCustomPokemon: <K extends keyof CustomPokemon>(id: string, field: K, value: CustomPokemon[K]) => void;
     removeCustomPokemon: (id: string) => void;
-
+    
     addCustomItem: () => void;
     updateCustomItem: <K extends keyof CustomItem>(id: string, field: K, value: CustomItem[K]) => void;
     removeCustomItem: (id: string) => void;
@@ -256,12 +246,12 @@ export interface HomebrewSlice {
     overwriteCustomPokemonData: (pokemon: CustomPokemon[]) => void;
     overwriteCustomItemData: (items: CustomItem[]) => void;
     overwriteCustomFormData: (forms: CustomForm[]) => void;
-
+    
     overwriteAllHomebrewData: (
-        types: CustomType[],
-        abilities: CustomAbility[],
-        moves: CustomMove[],
-        pokemon: CustomPokemon[],
+        types: CustomType[], 
+        abilities: CustomAbility[], 
+        moves: CustomMove[], 
+        pokemon: CustomPokemon[], 
         items: CustomItem[],
         forms: CustomForm[]
     ) => void;
@@ -272,12 +262,12 @@ export interface HomebrewSlice {
     mergeCustomPokemonData: (pokemon: CustomPokemon[]) => void;
     mergeCustomItemData: (items: CustomItem[]) => void;
     mergeCustomFormData: (forms: CustomForm[]) => void;
-
+    
     mergeAllHomebrewData: (
-        types: CustomType[],
-        abilities: CustomAbility[],
-        moves: CustomMove[],
-        pokemon: CustomPokemon[],
+        types: CustomType[], 
+        abilities: CustomAbility[], 
+        moves: CustomMove[], 
+        pokemon: CustomPokemon[], 
         items: CustomItem[],
         forms: CustomForm[]
     ) => void;
@@ -287,12 +277,7 @@ export interface ExtraSkillsSlice {
     extraCategories: ExtraCategory[];
     addExtraCategory: () => void;
     updateExtraCategory: (id: string, name: string) => void;
-    updateExtraSkill: <K extends keyof ExtraSkill>(
-        categoryId: string,
-        skillId: string,
-        field: K,
-        value: ExtraSkill[K]
-    ) => void;
+    updateExtraSkill: <K extends keyof ExtraSkill>(categoryId: string, skillId: string, field: K, value: ExtraSkill[K]) => void;
     removeExtraCategory: (id: string) => void;
 }
 
@@ -333,7 +318,7 @@ export interface IdentitySlice {
         activeFormId: string;
         formSaves: Record<string, string>;
         customFormConfig: Record<string, boolean>;
-
+        
         baseFormData?: string;
         altFormData?: string;
         maxFormData?: string;
@@ -342,7 +327,7 @@ export interface IdentitySlice {
         terastallizeBonusActive: boolean;
         customFormFirstHitAccActive: boolean;
         customFormFirstHitDmgActive: boolean;
-
+        
         badges: Badge[];
 
         showTrackers: boolean;
@@ -392,13 +377,7 @@ export interface IdentitySlice {
 
 export interface MacroSlice {
     setMode: (mode: 'Pokémon' | 'Trainer') => void;
-    toggleTransformation: (
-        targetTransformation: TransformationType,
-        affinity?: string,
-        autoMaxMoves?: boolean,
-        teraBlastConfig?: TeraBlastConfig,
-        customFormId?: string
-    ) => void;
+    toggleTransformation: (targetTransformation: TransformationType, affinity?: string, autoMaxMoves?: boolean, teraBlastConfig?: TeraBlastConfig, customFormId?: string) => void;
     applySpeciesData: (data: Record<string, unknown>, wipeData?: boolean, updateStats?: boolean) => void;
     refreshSpeciesData: (data: Record<string, unknown>) => void;
 }
@@ -408,14 +387,4 @@ export interface SyncSlice {
 }
 
 export interface CharacterState
-    extends
-        CoreSlice,
-        MovesSlice,
-        InventorySlice,
-        TrackerSlice,
-        HomebrewSlice,
-        ExtraSkillsSlice,
-        GeneratorSlice,
-        IdentitySlice,
-        MacroSlice,
-        SyncSlice {}
+    extends CoreSlice, MovesSlice, InventorySlice, TrackerSlice, HomebrewSlice, ExtraSkillsSlice, GeneratorSlice, IdentitySlice, MacroSlice, SyncSlice {}

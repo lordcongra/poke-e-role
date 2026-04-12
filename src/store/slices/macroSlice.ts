@@ -121,11 +121,12 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             };
 
             const updatesToSave: Record<string, unknown> = {};
+            let shouldRestoreImage = false;
 
             if (isReverting) {
                 const previousTrans = state.identity.activeTransformation;
                 const wasFainted = state.health.hpCurr <= 0;
-
+                
                 let revertConfig: RestoreConfig = {};
                 let shouldWipeTempHp = false;
                 let shouldWipeTempWill = false;
@@ -162,6 +163,10 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     updatesToSave['form-saves'] = JSON.stringify(newIdentity.formSaves);
 
                     const activeForm = state.roomCustomForms.find((f) => f.id === state.identity.activeFormId);
+                    
+                    if (activeForm && activeForm.imageUrl) {
+                        shouldRestoreImage = true;
+                    }
 
                     revertConfig =
                         state.identity.customFormConfig && Object.keys(state.identity.customFormConfig).length > 0
@@ -193,6 +198,8 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                                     restoreWill: true
                                 };
 
+                    if (shouldRestoreImage) revertConfig.restoreImage = true;
+
                     if (!revertConfig.restoreMoves) {
                         const grantedMoves = activeForm ? activeForm.grantedMoves : [];
                         if (grantedMoves && grantedMoves.length > 0) {
@@ -201,15 +208,13 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                             updatesToSave['moves-data'] = JSON.stringify(draft.moves);
                         }
                     }
-
+                    
                     if (activeForm) {
                         if (activeForm.restoreHp || activeForm.tempHp > 0) shouldWipeTempHp = true;
                         if (activeForm.restoreWill || activeForm.tempWill > 0) shouldWipeTempWill = true;
                     }
                 }
 
-                // Safely wipe out Temp HP/Will if the previous form had isolated pools
-                // (If restoreFormBackup is true for HP/Will, it will safely overwrite these zeros!)
                 if (shouldWipeTempHp) {
                     newHealth.temporaryHitPoints = 0;
                     newHealth.temporaryHitPointsMax = 0;
@@ -254,10 +259,8 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     newIdentity.terastallizeBonusActive = false;
                     updatesToSave['terastallize-affinity'] = '';
                     updatesToSave['terastallize-bonus-active'] = false;
-
-                    draft.moves = draft.moves.filter(
-                        (m) => !(m.name === 'Tera Blast' && m.desc === 'Changes Type to match Terastallization.')
-                    );
+                    
+                    draft.moves = draft.moves.filter((m) => !(m.name === 'Tera Blast' && m.desc === 'Changes Type to match Terastallization.'));
                     updatesToSave['moves-data'] = JSON.stringify(draft.moves);
                 }
 
@@ -319,7 +322,6 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     newIdentity.baseFormData = backupStr;
                     updatesToSave['base-form-data'] = backupStr;
 
-                    // Wipe Temp pools if the new form uses isolated pools
                     if (targetTransformation === 'Mega') {
                         newHealth.temporaryHitPoints = 0;
                         newHealth.temporaryHitPointsMax = 0;
@@ -557,7 +559,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             if (!isReverting && targetTransformation === 'Mega') {
                 draft.statuses = [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }];
                 updatesToSave['status-list'] = JSON.stringify(draft.statuses);
-
+                
                 newHealth.hpCurr = newHealth.hpMax;
                 updatesToSave['hp-curr'] = newHealth.hpCurr;
                 newWill.willCurr = newWill.willMax;
@@ -582,6 +584,29 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 saveToOwlbear(updatesToSave);
             } catch (e) {
                 console.error('Failed to save transformation to Owlbear', e);
+            }
+            
+            // NATIVE OBR IMAGE SWAP LOGIC
+            if (OBR.isAvailable && state.tokenId) {
+                let targetUrl = '';
+                if (isReverting && shouldRestoreImage && newIdentity.tokenImageUrl) {
+                    targetUrl = newIdentity.tokenImageUrl;
+                } else if (!isReverting && targetTransformation === 'Custom' && customFormId) {
+                    const targetForm = state.roomCustomForms.find((f) => f.id === customFormId);
+                    if (targetForm && targetForm.imageUrl) {
+                        targetUrl = targetForm.imageUrl;
+                        newIdentity.tokenImageUrl = targetUrl;
+                    }
+                }
+
+                if (targetUrl) {
+                    OBR.scene.items.updateItems([state.tokenId], (items) => {
+                        for (const item of items) {
+                            const imgItem = item as any;
+                            if (imgItem.image) imgItem.image.url = targetUrl;
+                        }
+                    }).catch(e => console.warn("Failed to update token image:", e));
+                }
             }
 
             return {

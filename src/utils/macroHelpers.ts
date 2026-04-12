@@ -141,7 +141,8 @@ export const createFormBackup = (
         tempWill: willDraft ? willDraft.temporaryWill : state.will.temporaryWill,
         tempWillMax: willDraft ? willDraft.temporaryWillMax : state.will.temporaryWillMax,
         statuses: statusesDraft ? statusesDraft : state.statuses,
-        moves: state.moves
+        moves: state.moves,
+        tokenImageUrl: state.identity.tokenImageUrl
     };
 
     const statsBackup: Record<string, unknown> = {};
@@ -193,6 +194,7 @@ export interface RestoreConfig {
     restoreBuffs?: boolean;
     restoreDebuffs?: boolean;
     restoreStatuses?: boolean;
+    restoreImage?: boolean;
 }
 
 export const restoreFormBackup = (
@@ -214,6 +216,10 @@ export const restoreFormBackup = (
     try {
         const loadedData = JSON.parse(backupStr);
         const { identity, health, will, stats, socials, skills } = draft;
+
+        if (config.restoreImage && loadedData.tokenImageUrl !== undefined) {
+            draft.identity.tokenImageUrl = String(loadedData.tokenImageUrl);
+        }
 
         if (config.restoreTyping) {
             identity.species = String(loadedData.species ?? identity.species);

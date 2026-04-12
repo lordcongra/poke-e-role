@@ -4,6 +4,7 @@ import type { CustomForm } from '../../store/storeTypes';
 import { ALL_MOVES } from '../../utils/api';
 import { TagBuilderModal } from '../modals/TagBuilderModal';
 import { NumberSpinner } from '../ui/NumberSpinner';
+import OBR from '@owlbear-rodeo/sdk';
 import './Homebrew.css';
 import './HomebrewFormCard.css';
 
@@ -93,6 +94,33 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
         if (!canEdit) return;
         const updatedMoves = (form.grantedMoves || []).filter((m) => m !== moveToRemove);
         updateCustomForm(form.id, 'grantedMoves', updatedMoves);
+    };
+
+    const handleSetImage = async () => {
+        if (!OBR.isAvailable || !canEdit) return;
+        try {
+            let images: any = null;
+            
+            // Try all possible variations of the OBR Assets API just to be safe
+            if (typeof (OBR as any).assets?.requestImages === 'function') {
+                images = await (OBR as any).assets.requestImages();
+            } else if (typeof (OBR as any).assets?.selectImages === 'function') {
+                images = await (OBR as any).assets.selectImages();
+            } else if (typeof (OBR as any).assets?.pickImages === 'function') {
+                images = await (OBR as any).assets.pickImages();
+            } else {
+                // Safe fallback if the SDK structure ever changes
+                const url = window.prompt("Enter an Image URL (or use Changr to grab the image link):");
+                if (url) updateCustomForm(form.id, 'imageUrl', url);
+                return;
+            }
+
+            if (images && images.length > 0 && images[0].url) {
+                updateCustomForm(form.id, 'imageUrl', images[0].url);
+            }
+        } catch (e) {
+            console.error("Failed to pick image:", e);
+        }
     };
 
     const cursorClass = canEdit
@@ -416,19 +444,14 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
                                 Heal Will to Max on Transform
                             </label>
 
-                            <div
-                                className="homebrew-form-card__temp-hp-row"
-                                style={{ marginTop: '8px', flexWrap: 'wrap' }}
-                            >
+                            <div className="homebrew-form-card__temp-hp-row" style={{ marginTop: '8px', flexWrap: 'wrap' }}>
                                 <span className="homebrew-form-card__temp-hp-label">Temp HP Shield:</span>
                                 <NumberSpinner
                                     value={form.tempHp}
                                     onChange={(val) => canEdit && updateCustomForm(form.id, 'tempHp', val)}
                                     disabled={!canEdit}
                                 />
-                                <span className="homebrew-form-card__temp-hp-label" style={{ marginLeft: '10px' }}>
-                                    Temp Will Power:
-                                </span>
+                                <span className="homebrew-form-card__temp-hp-label" style={{ marginLeft: '10px' }}>Temp Will Power:</span>
                                 <NumberSpinner
                                     value={form.tempWill ?? 0}
                                     onChange={(val) => canEdit && updateCustomForm(form.id, 'tempWill', val)}
@@ -480,6 +503,27 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
                                     )}
                                 </span>
                             ))}
+                        </div>
+                    </div>
+
+                    <div className="homebrew-form-card__moves-section" style={{ marginTop: '8px' }}>
+                        <div className="homebrew-form-card__inputs-row" style={{ alignItems: 'center' }}>
+                            <span className="homebrew-form-card__settings-header" style={{ border: 'none', padding: 0, margin: 0 }}>Form Image:</span>
+                            {form.imageUrl ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <img src={form.imageUrl} alt="Form" style={{ width: '30px', height: '30px', objectFit: 'contain', borderRadius: '4px', border: '1px solid var(--border)' }} />
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--primary)', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{form.imageUrl}</span>
+                                    {canEdit && (
+                                        <button type="button" onClick={() => updateCustomForm(form.id, 'imageUrl', '')} className="action-button action-button--red" style={{ padding: '2px 6px', fontSize: '0.7rem' }}>Clear</button>
+                                    )}
+                                </div>
+                            ) : (
+                                canEdit && (
+                                    <button type="button" onClick={handleSetImage} className="action-button action-button--dark" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>
+                                        🖼️ Select Token Image
+                                    </button>
+                                )
+                            )}
                         </div>
                     </div>
 

@@ -214,6 +214,7 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
                 tags: '',
                 tempHp: 0,
                 tempWill: 0,
+                imageUrl: '',
                 gmOnly: false
             }
         ];
@@ -275,6 +276,7 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             activationCostWill: f.activationCostWill ?? 0,
             tempHp: f.tempHp ?? 0,
             tempWill: f.tempWill ?? 0,
+            imageUrl: f.imageUrl || '',
             grantedMoves: Array.isArray(f.grantedMoves) ? f.grantedMoves : []
         }));
         set({ roomCustomForms: safeForms });
@@ -300,6 +302,7 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             activationCostWill: f.activationCostWill ?? 0,
             tempHp: f.tempHp ?? 0,
             tempWill: f.tempWill ?? 0,
+            imageUrl: f.imageUrl || '',
             grantedMoves: Array.isArray(f.grantedMoves) ? f.grantedMoves : []
         }));
 
@@ -434,6 +437,7 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
                 activationCostWill: form.activationCostWill ?? 0,
                 tempHp: form.tempHp ?? 0,
                 tempWill: form.tempWill ?? 0,
+                imageUrl: form.imageUrl || '',
                 grantedMoves: Array.isArray(form.grantedMoves) ? form.grantedMoves : []
             };
 
@@ -526,6 +530,7 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
                 activationCostWill: form.activationCostWill ?? 0,
                 tempHp: form.tempHp ?? 0,
                 tempWill: form.tempWill ?? 0,
+                imageUrl: form.imageUrl || '',
                 grantedMoves: Array.isArray(form.grantedMoves) ? form.grantedMoves : []
             };
 
