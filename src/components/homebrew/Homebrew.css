@@ -26,7 +26,7 @@
 
 .homebrew-modal__header {
     background: #00695c;
-    padding: 10px 10px 0 10px;
+    padding: 10px;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -54,19 +54,18 @@
 }
 
 .homebrew-modal__tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
 }
 
 .homebrew-modal__tab {
-    flex: 1;
     padding: 8px 4px;
     font-weight: bold;
     background: rgba(0, 0, 0, 0.2);
     color: white;
     border: none;
-    border-radius: 6px 6px 0 0;
+    border-radius: 4px;
     cursor: pointer;
     font-size: 0.85rem;
 }
@@ -179,10 +178,11 @@
     display: flex;
     gap: 8px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .homebrew-list__search-input {
-    flex: 1;
+    flex: 1 1 150px;
     padding: 8px;
     border-radius: 4px;
     border: 1px solid var(--border);
@@ -196,6 +196,7 @@
     background: #00695c;
     border-color: #00695c;
     white-space: nowrap;
+    text-align: center;
 }
 
 .homebrew-list__scroll-area {
@@ -339,4 +340,20 @@
 .homebrew-confirm__btn {
     flex: 1;
     padding: 6px;
+}
+
+/* --- Mobile Overrides --- */
+@media (max-width: 768px) {
+    .homebrew-list__search-input {
+        flex: 1 1 100%;
+    }
+
+    .homebrew-list__create-btn {
+        flex: 1 1 auto;
+        text-align: center;
+    }
+
+    .homebrew-modal__tabs {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }

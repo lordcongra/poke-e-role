@@ -97,3 +97,20 @@
 .homebrew-form-card__pill-delete:hover {
     color: #ffcccc;
 }
+
+/* Mobile Overrides */
+@media (max-width: 768px) {
+    .homebrew-form-card__settings-grid {
+        grid-template-columns: 1fr;
+    }
+    .homebrew-form-card__inputs-row {
+        flex-wrap: wrap;
+    }
+    .homebrew-card__header {
+        flex-wrap: wrap;
+    }
+    .homebrew-form-card__temp-hp-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

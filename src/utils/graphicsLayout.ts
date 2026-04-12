@@ -87,6 +87,7 @@ export function buildGraphicDefinitions(
             visible: isVisible
         };
 
+        // Base HP bar (Green/Yellow/Red)
         if (healthPercentage > 0) {
             graphicDefinitions['hp-fill'] = {
                 type: 'CURVE',
@@ -104,6 +105,7 @@ export function buildGraphicDefinitions(
             };
         }
 
+        // Temp HP bar (Purple overlay)
         if (tempHpPercentage > 0) {
             graphicDefinitions['temp-hp-fill'] = {
                 type: 'CURVE',

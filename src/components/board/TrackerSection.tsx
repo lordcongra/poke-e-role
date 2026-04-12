@@ -164,7 +164,7 @@ export function TrackerSection() {
                 <div className="tracker-section__horizontal-col">
                     <div className="tracker-section__actions-row">
                         <div className="tracker-section__action-group">
-                            <span className="tracker-section__action-label">Act</span>
+                            <span className="tracker-section__action-label">Actions</span>
                             <TooltipIcon
                                 onClick={() => setTooltipInfo({ title: 'Actions', desc: 'Actions taken this round.' })}
                             />
@@ -280,41 +280,45 @@ export function TrackerSection() {
                 {/* RIGHT COLUMN: Maneuvers & Willpower */}
                 <div className="tracker-section__horizontal-col">
                     <div className="tracker-section__maneuver-row">
-                        <select
-                            value={maneuver}
-                            onChange={(event) => setManeuver(event.target.value)}
-                            className="tracker-section__maneuver-select"
-                        >
-                            <option value="none">-- Maneuver --</option>
-                            <option value="ambush">Ambush (Dex+Stl)</option>
-                            <option value="cover">Cover Ally (Will)</option>
-                            <option value="grapple">Grapple (Str+Bwl)</option>
-                            <option value="run">Run (Dex+Ath)</option>
-                            <option value="stabilize">Stabilize (Cle+Med)</option>
-                            <option value="struggle">Struggle (Accuracy)</option>
-                        </select>
-                        <button
-                            type="button"
-                            onClick={rollManeuver}
-                            className="action-button action-button--dark tracker-section__maneuver-btn"
-                        >
-                            🎲
-                        </button>
-                        <button
-                            type="button"
-                            onClick={resetRound}
-                            className="action-button action-button--red tracker-section__reset-btn"
-                        >
-                            🔄 Reset
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setShowRestModal(true)}
-                            className="action-button tracker-section__rest-btn"
-                            title="Fully heal HP/Will and clear statuses"
-                        >
-                            🏕️ Rest
-                        </button>
+                        <div className="tracker-section__maneuver-subrow">
+                            <select
+                                value={maneuver}
+                                onChange={(event) => setManeuver(event.target.value)}
+                                className="tracker-section__maneuver-select"
+                            >
+                                <option value="none">-- Maneuver --</option>
+                                <option value="ambush">Ambush (Dex+Stl)</option>
+                                <option value="cover">Cover Ally (Will)</option>
+                                <option value="grapple">Grapple (Str+Bwl)</option>
+                                <option value="run">Run (Dex+Ath)</option>
+                                <option value="stabilize">Stabilize (Cle+Med)</option>
+                                <option value="struggle">Struggle (Accuracy)</option>
+                            </select>
+                            <button
+                                type="button"
+                                onClick={rollManeuver}
+                                className="action-button action-button--dark tracker-section__maneuver-btn"
+                            >
+                                🎲
+                            </button>
+                        </div>
+                        <div className="tracker-section__maneuver-subrow">
+                            <button
+                                type="button"
+                                onClick={resetRound}
+                                className="action-button action-button--red tracker-section__reset-btn"
+                            >
+                                🔄 Reset
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setShowRestModal(true)}
+                                className="action-button tracker-section__rest-btn"
+                                title="Fully heal HP/Will and clear statuses"
+                            >
+                                🏕️ Rest
+                            </button>
+                        </div>
                     </div>
 
                     <div className="mobile-stack tracker-section__will-row">

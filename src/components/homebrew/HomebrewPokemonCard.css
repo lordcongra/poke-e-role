@@ -178,3 +178,20 @@
 .homebrew-pokemon-card__learnset-remove-btn {
     padding: 0 6px;
 }
+
+/* Mobile Overrides */
+@media (max-width: 768px) {
+    .homebrew-pokemon-card__stats-grid,
+    .homebrew-pokemon-card__abilities-grid {
+        grid-template-columns: 1fr;
+    }
+    .homebrew-pokemon-card__types-row {
+        flex-direction: column;
+    }
+    .homebrew-pokemon-card__header {
+        flex-wrap: wrap;
+    }
+    .homebrew-pokemon-card__learnset-row {
+        flex-wrap: wrap;
+    }
+}
