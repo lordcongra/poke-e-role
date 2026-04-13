@@ -34,6 +34,8 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
                 flatMetadata['form-saves'] = JSON.stringify(state.identity.formSaves);
             if (state.identity.customFormConfig !== undefined)
                 flatMetadata['custom-form-config'] = JSON.stringify(state.identity.customFormConfig);
+            if (state.identity.customFormImages !== undefined)
+                flatMetadata['custom-form-images'] = JSON.stringify(state.identity.customFormImages);
             if (state.identity.badges !== undefined)
                 flatMetadata['badges-data'] = JSON.stringify(state.identity.badges);
 
@@ -41,6 +43,10 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
                 flatMetadata['terastallize-affinity'] = state.identity.terastallizeAffinity;
             if (state.identity.terastallizeBonusActive !== undefined)
                 flatMetadata['terastallize-bonus-active'] = state.identity.terastallizeBonusActive;
+
+            if (state.identity.megaImageUrl !== undefined) flatMetadata['mega-image-url'] = state.identity.megaImageUrl;
+            if (state.identity.maxImageUrl !== undefined) flatMetadata['max-image-url'] = state.identity.maxImageUrl;
+            if (state.identity.teraImageUrl !== undefined) flatMetadata['tera-image-url'] = state.identity.teraImageUrl;
 
             if (state.identity.customFormFirstHitAccActive !== undefined)
                 flatMetadata['custom-form-first-hit-acc'] = state.identity.customFormFirstHitAccActive;

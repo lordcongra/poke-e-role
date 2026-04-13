@@ -10,10 +10,11 @@ interface TransformationModalProps {
 }
 
 export function TransformationModal({ onClose }: TransformationModalProps) {
-    const activeTrans = useCharacterStore((state) => state.identity.activeTransformation);
-    const activeFormId = useCharacterStore((state) => state.identity.activeFormId);
-    const formSaves = useCharacterStore((state) => state.identity.formSaves);
-    const currentType1 = useCharacterStore((state) => state.identity.type1);
+    const identityStore = useCharacterStore((state) => state.identity);
+    const activeTrans = identityStore.activeTransformation;
+    const activeFormId = identityStore.activeFormId;
+    const formSaves = identityStore.formSaves;
+    const currentType1 = identityStore.type1;
 
     const toggleTransformation = useCharacterStore((state) => state.toggleTransformation);
     const setIdentity = useCharacterStore((state) => state.setIdentity);
@@ -25,8 +26,8 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
     const roomCustomForms = useCharacterStore((state) => state.roomCustomForms);
     const role = useCharacterStore((state) => state.role);
 
-    const hasAltForm = !!useCharacterStore((state) => state.identity.altFormData);
-    const hasMaxForm = !!useCharacterStore((state) => state.identity.maxFormData);
+    const hasAltForm = !!identityStore.altFormData;
+    const hasMaxForm = !!identityStore.maxFormData;
 
     const cachedTransRaw = localStorage.getItem('pokerole-last-trans') || 'Mega';
     const cachedTrans = cachedTransRaw === 'None' ? 'Mega' : cachedTransRaw;
@@ -52,6 +53,48 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
         localStorage.setItem('pokerole-last-trans', val);
     };
 
+    const handleSetImage = async (field: string, isCustomForm = false) => {
+        if (!OBR.isAvailable) return;
+        try {
+            let images: any = null;
+            if (typeof (OBR as any).assets?.downloadImages === 'function') {
+                images = await (OBR as any).assets.downloadImages();
+            } else {
+                const url = window.prompt("Enter an Image URL:");
+                if (url) {
+                    if (isCustomForm) {
+                        setIdentity('customFormImages', { ...identityStore.customFormImages, [field]: url });
+                    } else {
+                        setIdentity(field as keyof typeof identityStore, url);
+                    }
+                }
+                return;
+            }
+
+            if (images && images.length > 0) {
+                let selectedUrl = '';
+                const img = images[0];
+                
+                if (typeof img === 'string') selectedUrl = img;
+                else if (img.url) selectedUrl = img.url;
+                else if (img.image?.url) selectedUrl = img.image.url;
+                else if (img.src) selectedUrl = img.src;
+
+                if (selectedUrl) {
+                    if (isCustomForm) {
+                        setIdentity('customFormImages', { ...identityStore.customFormImages, [field]: selectedUrl });
+                    } else {
+                        setIdentity(field as keyof typeof identityStore, selectedUrl);
+                    }
+                } else {
+                    if (OBR.isAvailable) OBR.notification.show("Could not extract URL. Please check F12 Console!", "ERROR");
+                }
+            }
+        } catch (e) {
+            console.error("Failed to pick image:", e);
+        }
+    };
+
     const isTransforming = activeTrans === 'None';
 
     let targetTrans: TransformationType = selectedTrans as TransformationType;
@@ -73,7 +116,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
               ? 1
               : 0;
 
-    const canAffordWill = willCurr + (tempWill || 0) >= willCost;
+    const canAffordWill = (willCurr + (tempWill || 0)) >= willCost;
     const canAffordHp = hpCost === 0 ? true : hpCurr > hpCost;
     const canAfford = canAffordWill && canAffordHp;
 
@@ -222,6 +265,58 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                 />
                                 Auto-Convert to Max Moves?
                             </label>
+                        )}
+
+                        {['Mega', 'Dynamax', 'Gigantamax', 'Terastallize'].includes(targetTrans) && (
+                            <div className="transformation-modal__image-row">
+                                <span className="transformation-modal__label">{targetTrans} Image:</span>
+                                {(() => {
+                                    const fieldMap: Record<string, 'megaImageUrl' | 'maxImageUrl' | 'teraImageUrl'> = {
+                                        'Mega': 'megaImageUrl',
+                                        'Dynamax': 'maxImageUrl',
+                                        'Gigantamax': 'maxImageUrl',
+                                        'Terastallize': 'teraImageUrl'
+                                    };
+                                    const field = fieldMap[targetTrans as string];
+                                    const url = identityStore[field];
+                                    if (url) {
+                                        return (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <img src={url as string} alt="Form" style={{ width: '30px', height: '30px', objectFit: 'contain', borderRadius: '4px', border: '1px solid var(--border)' }} />
+                                                <button type="button" onClick={() => setIdentity(field as any, '')} className="action-button action-button--red" style={{ padding: '2px 6px', fontSize: '0.7rem' }}>Clear</button>
+                                            </div>
+                                        );
+                                    }
+                                    return (
+                                        <button type="button" onClick={() => handleSetImage(field)} className="action-button action-button--dark" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>
+                                            🖼️ Select Token Image
+                                        </button>
+                                    );
+                                })()}
+                            </div>
+                        )}
+
+                        {targetTrans === 'Custom' && targetFormId && (
+                            <div className="transformation-modal__image-row">
+                                <span className="transformation-modal__label">Custom Form Image:</span>
+                                {(() => {
+                                    const safeId = targetFormId as string;
+                                    const url = identityStore.customFormImages[safeId];
+                                    if (url) {
+                                        return (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <img src={url} alt="Form" style={{ width: '30px', height: '30px', objectFit: 'contain', borderRadius: '4px', border: '1px solid var(--border)' }} />
+                                                <button type="button" onClick={() => setIdentity('customFormImages', { ...identityStore.customFormImages, [safeId]: '' })} className="action-button action-button--red" style={{ padding: '2px 6px', fontSize: '0.7rem' }}>Clear</button>
+                                            </div>
+                                        );
+                                    }
+                                    return (
+                                        <button type="button" onClick={() => handleSetImage(safeId, true)} className="action-button action-button--dark" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>
+                                            🖼️ Select Token Image
+                                        </button>
+                                    );
+                                })()}
+                            </div>
                         )}
 
                         <div className="transformation-modal__desc-box">

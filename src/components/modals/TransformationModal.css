@@ -82,6 +82,17 @@
     font-weight: bold;
 }
 
+.transformation-modal__image-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--panel-alt);
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    margin-top: 4px;
+}
+
 .transformation-modal__desc-box {
     background: var(--panel-alt);
     border: 1px solid var(--border);

@@ -66,7 +66,6 @@ export interface CustomForm {
     tags: string;
     tempHp: number;
     tempWill: number;
-    imageUrl?: string;
 
     gmOnly?: boolean;
 }
@@ -334,6 +333,7 @@ export interface IdentitySlice {
         activeFormId: string;
         formSaves: Record<string, string>;
         customFormConfig: Record<string, boolean>;
+        customFormImages: Record<string, string>;
 
         baseFormData?: string;
         altFormData?: string;
@@ -343,6 +343,10 @@ export interface IdentitySlice {
         terastallizeBonusActive: boolean;
         customFormFirstHitAccActive: boolean;
         customFormFirstHitDmgActive: boolean;
+
+        megaImageUrl?: string;
+        maxImageUrl?: string;
+        teraImageUrl?: string;
 
         badges: Badge[];
 

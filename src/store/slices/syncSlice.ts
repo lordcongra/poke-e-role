@@ -246,6 +246,7 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
                     activeFormId: String(meta['active-form-id'] || ''),
                     formSaves: meta['form-saves'] ? JSON.parse(String(meta['form-saves'])) : {},
                     customFormConfig: meta['custom-form-config'] ? JSON.parse(String(meta['custom-form-config'])) : {},
+                    customFormImages: meta['custom-form-images'] ? JSON.parse(String(meta['custom-form-images'])) : {},
 
                     baseFormData: String(meta['base-form-data'] || ''),
                     altFormData: String(meta['alt-form-data'] || ''),
@@ -253,6 +254,10 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
                     terastallizeAffinity: String(meta['terastallize-affinity'] || ''),
                     terastallizeBonusActive:
                         meta['terastallize-bonus-active'] === true || meta['terastallize-bonus-active'] === 'true',
+
+                    megaImageUrl: String(meta['mega-image-url'] || ''),
+                    maxImageUrl: String(meta['max-image-url'] || ''),
+                    teraImageUrl: String(meta['tera-image-url'] || ''),
 
                     customFormFirstHitAccActive:
                         meta['custom-form-first-hit-acc'] === true || meta['custom-form-first-hit-acc'] === 'true',

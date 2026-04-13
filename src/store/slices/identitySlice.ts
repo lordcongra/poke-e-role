@@ -44,13 +44,17 @@ const OBR_KEY_MAP: Record<string, string> = {
     activeTransformation: 'active-transformation',
     activeFormId: 'active-form-id',
     customFormConfig: 'custom-form-config',
+    customFormImages: 'custom-form-images',
     terastallizeAffinity: 'terastallize-affinity',
     terastallizeBonusActive: 'terastallize-bonus-active',
-    customFormFirstHitAccActive: 'custom-form-first-hit-acc',
-    customFormFirstHitDmgActive: 'custom-form-first-hit-dmg',
     baseFormData: 'base-form-data',
     altFormData: 'alt-form-data',
-    maxFormData: 'max-form-data'
+    maxFormData: 'max-form-data',
+    customFormFirstHitAccActive: 'custom-form-first-hit-acc',
+    customFormFirstHitDmgActive: 'custom-form-first-hit-dmg',
+    megaImageUrl: 'mega-image-url',
+    maxImageUrl: 'max-image-url',
+    teraImageUrl: 'tera-image-url'
 };
 
 const parseLearnset = (movesObj: unknown): Array<{ Learned: string; Name: string }> => {
@@ -114,6 +118,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         activeFormId: '',
         formSaves: {},
         customFormConfig: {},
+        customFormImages: {},
 
         baseFormData: '',
         altFormData: '',
@@ -123,7 +128,11 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         customFormFirstHitAccActive: false,
         customFormFirstHitDmgActive: false,
 
-        badges: [], // 🔥 NEW
+        megaImageUrl: '',
+        maxImageUrl: '',
+        teraImageUrl: '',
+
+        badges: [],
 
         showTrackers: true,
         settingHpBar: true,
@@ -254,8 +263,10 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                     updatesToSave['form-saves'] = JSON.stringify(value);
                 } else if (field === 'customFormConfig') {
                     updatesToSave['custom-form-config'] = JSON.stringify(value);
+                } else if (field === 'customFormImages') {
+                    updatesToSave['custom-form-images'] = JSON.stringify(value);
                 } else if (field === 'badges') {
-                    updatesToSave['badges-data'] = JSON.stringify(value); // 🔥 NEW
+                    updatesToSave['badges-data'] = JSON.stringify(value);
                 }
 
                 try {

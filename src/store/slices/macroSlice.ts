@@ -122,12 +122,12 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
 
             const updatesToSave: Record<string, unknown> = {};
             let shouldRestoreImage = false;
+            let revertConfig: RestoreConfig = {}; // HOISTED to perfectly clear TS errors!
 
             if (isReverting) {
                 const previousTrans = state.identity.activeTransformation;
                 const wasFainted = state.health.hpCurr <= 0;
-
-                let revertConfig: RestoreConfig = {};
+                
                 let shouldWipeTempHp = false;
                 let shouldWipeTempWill = false;
 
@@ -151,20 +151,22 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     };
                     shouldWipeTempHp = true;
                     shouldWipeTempWill = true;
+                    if (state.identity.megaImageUrl) revertConfig.restoreImage = true;
                 } else if (['Dynamax', 'Gigantamax'].includes(previousTrans)) {
                     const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
                     newIdentity.maxFormData = backupStr;
                     updatesToSave['max-form-data'] = backupStr;
                     revertConfig = { restoreMoves: true };
                     shouldWipeTempHp = true;
+                    if (state.identity.maxImageUrl) revertConfig.restoreImage = true;
                 } else if (previousTrans === 'Custom' && state.identity.activeFormId) {
                     const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
                     newIdentity.formSaves = { ...newIdentity.formSaves, [state.identity.activeFormId]: backupStr };
                     updatesToSave['form-saves'] = JSON.stringify(newIdentity.formSaves);
 
                     const activeForm = state.roomCustomForms.find((f) => f.id === state.identity.activeFormId);
-
-                    if (activeForm && activeForm.imageUrl) {
+                    
+                    if (state.identity.customFormImages[state.identity.activeFormId]) {
                         shouldRestoreImage = true;
                     }
 
@@ -208,11 +210,21 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                             updatesToSave['moves-data'] = JSON.stringify(draft.moves);
                         }
                     }
-
+                    
                     if (activeForm) {
                         if (activeForm.restoreHp || activeForm.tempHp > 0) shouldWipeTempHp = true;
                         if (activeForm.restoreWill || activeForm.tempWill > 0) shouldWipeTempWill = true;
                     }
+                } else if (previousTrans === 'Terastallize') {
+                    newIdentity.terastallizeAffinity = '';
+                    newIdentity.terastallizeBonusActive = false;
+                    updatesToSave['terastallize-affinity'] = '';
+                    updatesToSave['terastallize-bonus-active'] = false;
+                    
+                    draft.moves = draft.moves.filter((m) => !(m.name === 'Tera Blast' && m.desc === 'Changes Type to match Terastallization.'));
+                    updatesToSave['moves-data'] = JSON.stringify(draft.moves);
+                    
+                    if (state.identity.teraImageUrl) revertConfig.restoreImage = true;
                 }
 
                 if (shouldWipeTempHp) {
@@ -252,18 +264,6 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     updatesToSave[`${CombatStat.DEX}-buff`] = newStats[CombatStat.DEX].buff;
                     updatesToSave['def-buff'] = newDerived.defBuff;
                     updatesToSave['spd-buff'] = newDerived.sdefBuff;
-                }
-
-                if (previousTrans === 'Terastallize') {
-                    newIdentity.terastallizeAffinity = '';
-                    newIdentity.terastallizeBonusActive = false;
-                    updatesToSave['terastallize-affinity'] = '';
-                    updatesToSave['terastallize-bonus-active'] = false;
-
-                    draft.moves = draft.moves.filter(
-                        (m) => !(m.name === 'Tera Blast' && m.desc === 'Changes Type to match Terastallization.')
-                    );
-                    updatesToSave['moves-data'] = JSON.stringify(draft.moves);
                 }
 
                 newEffects = newEffects.filter((e) => !e.name.includes('Timer'));
@@ -319,7 +319,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
 
                 newHealth.hpCurr -= costHp;
 
-                if (['Mega', 'Dynamax', 'Gigantamax', 'Custom'].includes(targetTransformation)) {
+                if (['Mega', 'Dynamax', 'Gigantamax', 'Custom', 'Terastallize'].includes(targetTransformation)) {
                     const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
                     newIdentity.baseFormData = backupStr;
                     updatesToSave['base-form-data'] = backupStr;
@@ -561,7 +561,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             if (!isReverting && targetTransformation === 'Mega') {
                 draft.statuses = [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }];
                 updatesToSave['status-list'] = JSON.stringify(draft.statuses);
-
+                
                 newHealth.hpCurr = newHealth.hpMax;
                 updatesToSave['hp-curr'] = newHealth.hpCurr;
                 newWill.willCurr = newWill.willMax;
@@ -587,29 +587,37 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             } catch (e) {
                 console.error('Failed to save transformation to Owlbear', e);
             }
-
+            
             // NATIVE OBR IMAGE SWAP LOGIC
             if (OBR.isAvailable && state.tokenId) {
                 let targetUrl = '';
-                if (isReverting && shouldRestoreImage && newIdentity.tokenImageUrl) {
-                    targetUrl = newIdentity.tokenImageUrl;
-                } else if (!isReverting && targetTransformation === 'Custom' && customFormId) {
-                    const targetForm = state.roomCustomForms.find((f) => f.id === customFormId);
-                    if (targetForm && targetForm.imageUrl) {
-                        targetUrl = targetForm.imageUrl;
+                if (isReverting && newIdentity.tokenImageUrl) {
+                    if (revertConfig.restoreImage) targetUrl = newIdentity.tokenImageUrl;
+                } else if (!isReverting) {
+                    if (targetTransformation === 'Custom' && customFormId) {
+                        if (state.identity.customFormImages[customFormId]) {
+                            targetUrl = state.identity.customFormImages[customFormId];
+                            newIdentity.tokenImageUrl = targetUrl;
+                        }
+                    } else if (targetTransformation === 'Mega' && state.identity.megaImageUrl) {
+                        targetUrl = state.identity.megaImageUrl;
+                        newIdentity.tokenImageUrl = targetUrl;
+                    } else if ((targetTransformation === 'Dynamax' || targetTransformation === 'Gigantamax') && state.identity.maxImageUrl) {
+                        targetUrl = state.identity.maxImageUrl;
+                        newIdentity.tokenImageUrl = targetUrl;
+                    } else if (targetTransformation === 'Terastallize' && state.identity.teraImageUrl) {
+                        targetUrl = state.identity.teraImageUrl;
                         newIdentity.tokenImageUrl = targetUrl;
                     }
                 }
 
                 if (targetUrl) {
-                    OBR.scene.items
-                        .updateItems([state.tokenId], (items) => {
-                            for (const item of items) {
-                                const imgItem = item as any;
-                                if (imgItem.image) imgItem.image.url = targetUrl;
-                            }
-                        })
-                        .catch((e) => console.warn('Failed to update token image:', e));
+                    OBR.scene.items.updateItems([state.tokenId], (items) => {
+                        for (const item of items) {
+                            const imgItem = item as any;
+                            if (imgItem.image) imgItem.image.url = targetUrl;
+                        }
+                    }).catch(e => console.warn("Failed to update token image:", e));
                 }
             }
 
