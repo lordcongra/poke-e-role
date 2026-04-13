@@ -93,8 +93,7 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 ### ⚔️ Willpower & Combat Economy
 
-- **Decoupled Temp Pools (New!):** Independently track and manage Temporary HP and Temporary Willpower. Automated UI bars visually overlay the Temp points directly onto your base resource bars! 
-- **Automated Shield Spending:** Using maneuvers or activating transformations will automatically deduct costs from your Temporary Willpower before ever touching your base Will!
+- **Decoupled Temp Pools (New!):** Independently track and manage Temporary HP and Temporary Willpower. Automated UI bars visually overlay the Temp points directly onto your base resource bars! (Temp Will spends first - made for homebrew mechanics).
 - **Willpower Mechanics:** Dedicated 1-click buttons to spend Willpower for "Pushing Fate" (+1 Auto Success), "Take Your Chances" (gain reroll stacks), and "Power Through the Pain" (ignore Pain Penalties for the scene).
 - **Interactive Rerolls:** A dedicated reroll prompt lets you choose exactly how many failed dice to pick back up and reroll using your active "Take Your Chances" stacks.
 - **Action Tracking:** Automatically increases your Action count and checks off your Evasion/Clash trackers when rolling attacks or maneuvers.
@@ -133,4 +132,4 @@ To install this extension into your Owlbear Rodeo room, copy the Manifest URL be
 
 `https://lordcongra.github.io/poke-e-role/manifest.json`
 
-_(Note: If the sheet updates, you can force Owlbear to fetch the newest version by adding a version tag to the end of the URL, like `?v=2.3.0`)_
+_(Note: If the sheet updates, you can force Owlbear to fetch the newest version by adding a version tag to the end of the URL, like `?v=2.4.0`)_
