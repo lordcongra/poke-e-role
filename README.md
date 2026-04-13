@@ -40,6 +40,7 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 ### 🧬 Form Shifts & Transformations (New!)
 
 - **Built-In Transformations:** Instantly shift your Pokémon into Mega Evolutions, Dynamax, Gigantamax, or Terastallize states with a single click.
+- **Native Image Swapping:** Use the built-in Owlbear Rodeo asset picker to assign specific images to your forms! When you transform, the sheet natively overwrites the token graphic on the map, and perfectly restores your original image when you revert.
 - **Automated Memory:** The engine automatically safely backs up your Base Form (Stats, Typing, Moves) into the token's memory and perfectly restores it when you revert!
 - **Dynamic Mechanics:** Transformations automatically handle complex mechanics like applying STAB for Tera Types, generating Temporary HP Shields, managing 3-round Max Timers, and converting standard attacks into Max Moves!
 
@@ -51,7 +52,7 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 - **GM Spoiler Protection:** Check the "GM Only" box on any custom creation to keep it hidden from the players' Workshop and dropdown menus until you are ready to reveal the boss!
 - **Backup & Restore:** Easily export your entire Homebrew Workshop as a JSON file to share with other GMs or carry over to a new campaign room.
 
-### 🏅 Trainer Badges & Achievements (New!)
+### 🏅 Trainer Badges & Achievements
 
 - **Trainer Progression:** When using the sheet in "Trainer Mode", players have access to a dedicated Badges section under their Social Attributes.
 - **Visual Identity:** Name your badges and use a sleek, native emoji-picker UI to proudly display your hard-earned Gym Badges or campaign achievements directly on your sheet!
@@ -80,13 +81,6 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 - **Out-of-Combat Roleplay:** Create up to 10 Custom Action Rolls (e.g., _Investigate_, _Persuade_, _Climb_) using any combination of Core Attributes and Skills.
 - **Smart Auto-Generator:** Instantly draft Wild, Average, or Min-Max builds based on your Rank. The algorithm intelligently caps your core attacking and defending stats before allocating remaining points, dynamically adjusting to your combat bias (Tank, Physical, Special, Support, etc.).
 
-### 📈 Soft Caps, Limits, & PMD Overrides
-
-- Automatically calculates your maximum Attribute, Social, and Skill point limits based on your currently selected Rank and Age.
-- Tracks your spent points and warns you if you exceed standard limits.
-- **Auto-Fetches Stat Caps:** Automatically queries the API to display the maximum Attribute limits for your specific Pokémon species.
-- **PMD / Homebrew Friendly:** Includes "Extra Pts" override boxes, allowing GMs to reward extra stats for completing special dungeons/quests/events, using special items, etc. without breaking the sheet's logic.
-
 ### ⏱️ Dynamic Status, Pain, & Timers (w/ Map Sync)
 
 - **Pain Penalization:** The sheet automatically monitors your HP and deducts -1 or -2 successes from your rolls when you are badly hurt (automatically skipping Vitality/Will rolls).
@@ -99,6 +93,8 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 ### ⚔️ Willpower & Combat Economy
 
+- **Decoupled Temp Pools (New!):** Independently track and manage Temporary HP and Temporary Willpower. Automated UI bars visually overlay the Temp points directly onto your base resource bars! 
+- **Automated Shield Spending:** Using maneuvers or activating transformations will automatically deduct costs from your Temporary Willpower before ever touching your base Will!
 - **Willpower Mechanics:** Dedicated 1-click buttons to spend Willpower for "Pushing Fate" (+1 Auto Success), "Take Your Chances" (gain reroll stacks), and "Power Through the Pain" (ignore Pain Penalties for the scene).
 - **Interactive Rerolls:** A dedicated reroll prompt lets you choose exactly how many failed dice to pick back up and reroll using your active "Take Your Chances" stacks.
 - **Action Tracking:** Automatically increases your Action count and checks off your Evasion/Clash trackers when rolling attacks or maneuvers.
@@ -116,6 +112,7 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 - **OBR Notifications:** Every roll triggers an Owlbear Rodeo broadcast notification announcing the move, pain penalties, active item buffs, and required successes to the whole table! The goal of this is to give you info on what you have that's affecting your rolls.
 - **Pure Math Routing:** Dice+ and the sheet handles most of the math for you!
 - **Smart Combat:** Automatically accounts for global Accuracy/Damage modifiers, STAB bonuses, Protean/Libero, Super Luck, and even grants +3 dice on Critical Hits for the _Sniper_ ability.
+- **Automated Vampiric Shields (New!):** Adding the `[Temp HP % Dmg]` tag to any move or item will automatically intercept the broadcast from Owlbear Rodeo's 3D dice and magically apply the correct Temp HP shield to your character based on how much damage you rolled!
 
 ### 🛡️ Auto-Calculating Type Matchups
 
