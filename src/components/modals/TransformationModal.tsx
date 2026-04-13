@@ -60,7 +60,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
             if (typeof (OBR as any).assets?.downloadImages === 'function') {
                 images = await (OBR as any).assets.downloadImages();
             } else {
-                const url = window.prompt("Enter an Image URL:");
+                const url = window.prompt('Enter an Image URL:');
                 if (url) {
                     if (isCustomForm) {
                         setIdentity('customFormImages', { ...identityStore.customFormImages, [field]: url });
@@ -74,7 +74,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
             if (images && images.length > 0) {
                 let selectedUrl = '';
                 const img = images[0];
-                
+
                 if (typeof img === 'string') selectedUrl = img;
                 else if (img.url) selectedUrl = img.url;
                 else if (img.image?.url) selectedUrl = img.image.url;
@@ -87,11 +87,12 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                         setIdentity(field as keyof typeof identityStore, selectedUrl);
                     }
                 } else {
-                    if (OBR.isAvailable) OBR.notification.show("Could not extract URL. Please check F12 Console!", "ERROR");
+                    if (OBR.isAvailable)
+                        OBR.notification.show('Could not extract URL. Please check F12 Console!', 'ERROR');
                 }
             }
         } catch (e) {
-            console.error("Failed to pick image:", e);
+            console.error('Failed to pick image:', e);
         }
     };
 
@@ -116,7 +117,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
               ? 1
               : 0;
 
-    const canAffordWill = (willCurr + (tempWill || 0)) >= willCost;
+    const canAffordWill = willCurr + (tempWill || 0) >= willCost;
     const canAffordHp = hpCost === 0 ? true : hpCurr > hpCost;
     const canAfford = canAffordWill && canAffordHp;
 
@@ -272,23 +273,45 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                 <span className="transformation-modal__label">{targetTrans} Image:</span>
                                 {(() => {
                                     const fieldMap: Record<string, 'megaImageUrl' | 'maxImageUrl' | 'teraImageUrl'> = {
-                                        'Mega': 'megaImageUrl',
-                                        'Dynamax': 'maxImageUrl',
-                                        'Gigantamax': 'maxImageUrl',
-                                        'Terastallize': 'teraImageUrl'
+                                        Mega: 'megaImageUrl',
+                                        Dynamax: 'maxImageUrl',
+                                        Gigantamax: 'maxImageUrl',
+                                        Terastallize: 'teraImageUrl'
                                     };
                                     const field = fieldMap[targetTrans as string];
                                     const url = identityStore[field];
                                     if (url) {
                                         return (
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                <img src={url as string} alt="Form" style={{ width: '30px', height: '30px', objectFit: 'contain', borderRadius: '4px', border: '1px solid var(--border)' }} />
-                                                <button type="button" onClick={() => setIdentity(field as any, '')} className="action-button action-button--red" style={{ padding: '2px 6px', fontSize: '0.7rem' }}>Clear</button>
+                                                <img
+                                                    src={url as string}
+                                                    alt="Form"
+                                                    style={{
+                                                        width: '30px',
+                                                        height: '30px',
+                                                        objectFit: 'contain',
+                                                        borderRadius: '4px',
+                                                        border: '1px solid var(--border)'
+                                                    }}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIdentity(field as any, '')}
+                                                    className="action-button action-button--red"
+                                                    style={{ padding: '2px 6px', fontSize: '0.7rem' }}
+                                                >
+                                                    Clear
+                                                </button>
                                             </div>
                                         );
                                     }
                                     return (
-                                        <button type="button" onClick={() => handleSetImage(field)} className="action-button action-button--dark" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSetImage(field)}
+                                            className="action-button action-button--dark"
+                                            style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                                        >
                                             🖼️ Select Token Image
                                         </button>
                                     );
@@ -305,13 +328,40 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                     if (url) {
                                         return (
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                <img src={url} alt="Form" style={{ width: '30px', height: '30px', objectFit: 'contain', borderRadius: '4px', border: '1px solid var(--border)' }} />
-                                                <button type="button" onClick={() => setIdentity('customFormImages', { ...identityStore.customFormImages, [safeId]: '' })} className="action-button action-button--red" style={{ padding: '2px 6px', fontSize: '0.7rem' }}>Clear</button>
+                                                <img
+                                                    src={url}
+                                                    alt="Form"
+                                                    style={{
+                                                        width: '30px',
+                                                        height: '30px',
+                                                        objectFit: 'contain',
+                                                        borderRadius: '4px',
+                                                        border: '1px solid var(--border)'
+                                                    }}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setIdentity('customFormImages', {
+                                                            ...identityStore.customFormImages,
+                                                            [safeId]: ''
+                                                        })
+                                                    }
+                                                    className="action-button action-button--red"
+                                                    style={{ padding: '2px 6px', fontSize: '0.7rem' }}
+                                                >
+                                                    Clear
+                                                </button>
                                             </div>
                                         );
                                     }
                                     return (
-                                        <button type="button" onClick={() => handleSetImage(safeId, true)} className="action-button action-button--dark" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSetImage(safeId, true)}
+                                            className="action-button action-button--dark"
+                                            style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                                        >
                                             🖼️ Select Token Image
                                         </button>
                                     );
