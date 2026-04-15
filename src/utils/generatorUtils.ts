@@ -90,7 +90,6 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     const baseInsight = state.stats[CombatStat.INS].base;
     const totalTargetMoves = config.targetAtkCount + config.targetSupCount;
 
-    // Calculate minimum insight needed just to fulfill the target composition
     let neededInsightRank = Math.max(0, totalTargetMoves - 3 - baseInsight);
     neededInsightRank = Math.min(neededInsightRank, attributeLimits['ins'] - baseInsight, attributePoints);
     generatedAttributes['ins'] = neededInsightRank;
@@ -143,7 +142,6 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     };
 
     extractMoves(pd.Moves, false);
-    // If we don't have enough moves to fill the maximum possible capacity, pull from all ranks (e.g. egg moves)
     if (legalMoveNames.length < draftedMax) extractMoves(pd.Moves, true);
 
     const uniqueMoveNames = [...new Set(legalMoveNames)];
@@ -157,13 +155,28 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             if (rawCategory.includes('phys')) cat = 'Phys';
             else if (rawCategory.includes('spec') || rawCategory.includes('var')) cat = 'Spec';
 
+            const rawAcc1 = String(data.Accuracy1 || 'STR');
+            const rawAcc2 = String(data.Accuracy2 || 'None');
+            const rawDmg1 = String(data.Damage1 || 'None');
+
+            const accString = rawAcc2.toLowerCase() === 'none' ? `Accuracy: ${rawAcc1}` : `Accuracy: ${rawAcc1} + ${rawAcc2}`;
+            const dmgString = cat === 'Status' ? '' : `Damage: ${rawDmg1}`;
+
+            const rawDesc = String(data.Effect || data.Description || '');
+            const retainedTags = rawDesc.match(/\[.*?\]/g)?.join(' ') || '';
+            
+            let cleanDesc = rawDesc.replace(/\[.*?\]/g, '').trim();
+            cleanDesc = cleanDesc.replace(/\n\nAccuracy:[\s\S]*/i, '').trim();
+
+            const finalDesc = `${cleanDesc}\n\n${accString}${dmgString ? '\n' + dmgString : ''}${retainedTags ? '\n\n' + retainedTags : ''}`.trim();
+
             fetchedMoves.push({
                 id: crypto.randomUUID(),
                 name: moveName,
                 type: String(data.Type || 'Normal'),
                 cat: cat,
                 power: Number(data.Power) || 0,
-                desc: String(data.Effect || data.Description || ''),
+                desc: finalDesc,
                 dmgStat: normalizeStatistic(
                     ATTRIBUTE_MAPPING[String(data.Damage1 || '')] || String(data.Damage1 || '')
                 ),
@@ -256,7 +269,6 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         else leftoverPool.sort(() => 0.5 - Math.random());
     }
 
-    // 1. Run the stat distribution logic FIRST so the attributes are fully finalized
     if (config.buildType === 'wild') {
         assignWildStats(
             generatedAttributes,
@@ -303,7 +315,6 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         );
     }
 
-    // 2. NOW calculate the final move capacity and score the leftover pool based on synergy
     const finalDraftedMax = baseInsight + generatedAttributes['ins'] + 3;
 
     if (config.buildType !== 'wild') {
@@ -315,7 +326,6 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             if (Object.values(SocialStat).includes(statName as SocialStat)) {
                 return state.socials[statName as SocialStat].base + (generatedSocials[statName] || 0);
             }
-            // Will scales with Insight, so we must dynamically calculate its projected total!
             if (statName === 'will') return state.will.willMax + (generatedAttributes['ins'] || 0);
             return 0;
         };
@@ -345,7 +355,6 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         });
     }
 
-    // 3. Finally, backfill the empty slots using the newly synergized leftover pool
     while (draftedMoves.length < finalDraftedMax && leftoverPool.length > 0) {
         const move = leftoverPool.shift();
         if (move) draftedMoves.push(move);

@@ -164,13 +164,11 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                     let cat: 'Physical' | 'Special' | 'Status' = 'Status';
                     let catOpts: ('Physical' | 'Special' | 'Status')[] | undefined = undefined;
 
-                    // If it explicitly says phys/spec/status, assign it directly.
                     if (rawCat === 'physical' || rawCat.includes('phys')) cat = 'Physical';
                     else if (rawCat === 'special' || rawCat.includes('spec')) cat = 'Special';
                     else if (rawCat === 'status' || rawCat.includes('stat') || rawCat.includes('sup')) cat = 'Status';
                     else {
-                        // If it's "Variable" or completely unrecognized, prompt the user!
-                        cat = 'Physical'; // Temporary fallback until they select
+                        cat = 'Physical';
                         catOpts = ['Physical', 'Special', 'Status'];
                     }
 
@@ -178,7 +176,6 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                     const acc2Opts = mapSkillOptions(String(data.Accuracy2 || 'none'));
                     const dmg1Opts = mapAttrOptions(String(data.Damage1 === 'None' ? '' : data.Damage1 || ''));
 
-                    // If any option has multiple choices, trigger the modal!
                     if (acc1Opts.length > 1 || acc2Opts.length > 1 || dmg1Opts.length > 1 || catOpts) {
                         newPendingDualScale = {
                             moveId: m.id,
@@ -190,6 +187,21 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                         };
                     }
 
+                    const rawAcc1 = String(data.Accuracy1 || 'STR');
+                    const rawAcc2 = String(data.Accuracy2 || 'None');
+                    const rawDmg1 = String(data.Damage1 || 'None');
+
+                    const accString = rawAcc2.toLowerCase() === 'none' ? `Accuracy: ${rawAcc1}` : `Accuracy: ${rawAcc1} + ${rawAcc2}`;
+                    const dmgString = cat === 'Status' ? '' : `Damage: ${rawDmg1}`;
+
+                    const rawDesc = String(data.Effect || data.Description || m.desc || '');
+                    const retainedTags = rawDesc.match(/\[.*?\]/g)?.join(' ') || '';
+                    
+                    let cleanDesc = rawDesc.replace(/\[.*?\]/g, '').trim();
+                    cleanDesc = cleanDesc.replace(/\n\nAccuracy:[\s\S]*/i, '').trim();
+
+                    const finalDesc = `${cleanDesc}\n\n${accString}${dmgString ? '\n' + dmgString : ''}${retainedTags ? '\n\n' + retainedTags : ''}`.trim();
+
                     return {
                         ...m,
                         name: String(data.Name || m.name),
@@ -199,7 +211,7 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                         acc2: acc2Opts[0] || 'none',
                         dmg1: dmg1Opts[0] || '',
                         power: data.Power !== undefined && data.Power !== '' ? Number(data.Power) : m.power,
-                        desc: String(data.Effect || data.Description || m.desc || '')
+                        desc: finalDesc
                     };
                 }
                 return m;

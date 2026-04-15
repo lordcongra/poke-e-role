@@ -356,17 +356,21 @@ export function PrintSheet() {
                                       </tr>
                                   ))
                                 : moves.map((move, i) => {
-                                      const dualAccMatch = move.desc?.match(/\[Dual Accuracy:\s*([^\]]+)\]/i);
-                                      const dualDmgMatch = move.desc?.match(/\[Dual Damage:\s*([^\]]+)\]/i);
+                                      const dualAccMatch = move.desc?.match(/Accuracy:\s*([^\n\[]+)/i);
+                                      const dualDmgMatch = move.desc?.match(/Damage:\s*([^\n\[]+)/i);
 
                                       const accString = dualAccMatch
-                                          ? dualAccMatch[1]
-                                          : `${move.acc1.toUpperCase()} + ${move.acc2.charAt(0).toUpperCase() + move.acc2.slice(1)}`;
-                                      const dmgString = dualDmgMatch ? dualDmgMatch[1] : move.dmg1.toUpperCase();
-                                      const cleanDesc = move.desc?.replace(
-                                          /\[Dual (Accuracy|Damage):\s*[^\]]+\]\n?/gi,
-                                          ''
-                                      );
+                                          ? dualAccMatch[1].trim()
+                                          : move.acc2.toLowerCase() === 'none'
+                                            ? move.acc1.toUpperCase()
+                                            : `${move.acc1.toUpperCase()} + ${move.acc2.charAt(0).toUpperCase() + move.acc2.slice(1)}`;
+                                      const dmgString = dualDmgMatch ? dualDmgMatch[1].trim() : move.dmg1.toUpperCase();
+
+                                      let cleanDesc = move.desc || '';
+                                      const retainedTags = cleanDesc.match(/\[.*?\]/g)?.join(' ') || '';
+                                      cleanDesc = cleanDesc.replace(/\[.*?\]/g, '').trim();
+                                      cleanDesc = cleanDesc.replace(/\n\nAccuracy:[\s\S]*/i, '').trim();
+                                      if (retainedTags) cleanDesc = `${cleanDesc} ${retainedTags}`.trim();
 
                                       return (
                                           <tr key={i}>
