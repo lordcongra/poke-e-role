@@ -25,11 +25,12 @@ const datasetIndex = {
     items: {}
 };
 
-console.log('🚀 Generating Index from existing files...');
+console.log('🚀 Generating Index & Reorganizing Files...');
 
 // --- WEIGHT CALCULATION HELPERS ---
 function getMoveWeight(move, power) {
-    if (move.Category === 'Status') return 50; // Uncommon
+    const rawCategory = String(move.Category || '').toLowerCase();
+    if (rawCategory.includes('status') || rawCategory.includes('support')) return 50; // Uncommon
     if (power <= 1) return 100; // Common
     if (power === 2) return 50; // Uncommon
     if (power === 3) return 20; // Rare
@@ -127,7 +128,7 @@ if (fs.existsSync(NATURES_DIR)) {
     console.log('✅ Natures indexed!');
 }
 
-// --- 4. PROCESS MOVES ---
+// --- 4. PROCESS & REORGANIZE MOVES ---
 if (fs.existsSync(MOVES_DIR)) {
     const moveFiles = getAllFiles(MOVES_DIR);
     moveFiles.forEach((filePath) => {
@@ -136,39 +137,59 @@ if (fs.existsSync(MOVES_DIR)) {
             const move = JSON.parse(rawData);
             const fileName = path.basename(filePath);
 
-            const relativePath = path.relative(MOVES_DIR, filePath).replace(/\\/g, '/');
-            const categoryParts = relativePath.split('/');
-            categoryParts.pop();
-            const categoryPath = categoryParts.join('/');
+            const powerNum = Number(move.Power) || 0;
+            const rawCategory = String(move.Category || '').toLowerCase();
+            const dmg1 = String(move.Damage1 || '').toLowerCase();
 
+            let targetSubfolder = '';
             let indexRef = null;
-            if (categoryPath === 'support') indexRef = datasetIndex.moves.support;
-            else if (categoryPath === 'highPower/variable') {
+
+            // STRICT DATA-DRIVEN CATEGORIZATION
+            if (rawCategory.includes('status') || rawCategory.includes('support') || rawCategory.includes('sup')) {
+                targetSubfolder = 'support';
+                indexRef = datasetIndex.moves.support;
+            } else if (dmg1.includes('varies') || powerNum === 0) {
+                targetSubfolder = 'highPower/variable';
                 if (!datasetIndex.moves.highPower.variable) datasetIndex.moves.highPower.variable = [];
                 indexRef = datasetIndex.moves.highPower.variable;
-            } else if (categoryPath.startsWith('basic/')) {
-                const pow = categoryPath.split('/')[1];
-                if (!datasetIndex.moves.basic[pow]) datasetIndex.moves.basic[pow] = [];
-                indexRef = datasetIndex.moves.basic[pow];
-            } else if (categoryPath.startsWith('highPower/')) {
-                const pow = categoryPath.split('/')[1];
-                if (!datasetIndex.moves.highPower[pow]) datasetIndex.moves.highPower[pow] = [];
-                indexRef = datasetIndex.moves.highPower[pow];
+            } else if (powerNum >= 1 && powerNum <= 3) {
+                targetSubfolder = `basic/power_${powerNum}`;
+                const powKey = `power_${powerNum}`;
+                if (!datasetIndex.moves.basic[powKey]) datasetIndex.moves.basic[powKey] = [];
+                indexRef = datasetIndex.moves.basic[powKey];
+            } else {
+                targetSubfolder = `highPower/power_${powerNum}`;
+                const powKey = `power_${powerNum}`;
+                if (!datasetIndex.moves.highPower[powKey]) datasetIndex.moves.highPower[powKey] = [];
+                indexRef = datasetIndex.moves.highPower[powKey];
             }
 
+            // PHYSICALLY REORGANIZE THE FILE IF IN WRONG FOLDER
+            const targetDir = path.join(MOVES_DIR, ...targetSubfolder.split('/'));
+            if (!fs.existsSync(targetDir)) {
+                fs.mkdirSync(targetDir, { recursive: true });
+            }
+            
+            const newFilePath = path.join(targetDir, fileName);
+            if (filePath !== newFilePath) {
+                fs.renameSync(filePath, newFilePath);
+                console.log(`📦 Moved ${fileName} to ${targetSubfolder}`);
+            }
+
+            // ADD TO INDEX
             if (indexRef) {
                 indexRef.push({
                     name: move.Name,
                     type: move.Type,
-                    path: `/dataset/moves/${categoryPath}/${fileName}`,
-                    weight: getMoveWeight(move, Number(move.Power) || 0)
+                    path: `/dataset/moves/${targetSubfolder}/${fileName}`,
+                    weight: getMoveWeight(move, powerNum)
                 });
             }
         } catch (error) {
             console.error(`❌ Error processing move ${filePath}:`, error.message);
         }
     });
-    console.log('✅ Moves indexed!');
+    console.log('✅ Moves indexed and reorganized!');
 }
 
 // --- 5. PROCESS ITEMS ---
