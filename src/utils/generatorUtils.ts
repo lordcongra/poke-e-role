@@ -1,7 +1,7 @@
 import type { TempBuild, TempMove, CharacterState, GeneratorConfig } from '../store/storeTypes';
 import { fetchPokemonData, fetchMoveData, MOVES_URLS } from './api';
 import { getRankPoints, getAgePoints } from '../store/useCharacterStore';
-import { CombatStat, Skill } from '../types/enums';
+import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { assignWildStats, assignMinMaxStats, assignAverageStats } from './generatorLogic';
 
 const RANK_HIERARCHY = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion'];
@@ -95,9 +95,9 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     neededInsightRank = Math.min(neededInsightRank, attributeLimits['ins'] - baseInsight, attributePoints);
     generatedAttributes['ins'] = neededInsightRank;
 
+    const draftedMax = baseInsight + generatedAttributes['ins'] + 3;
     const adjustedAttributePoints = attributePoints - neededInsightRank;
     const currentRankIndex = Math.max(0, RANK_HIERARCHY.indexOf(rank));
-    const absoluteMaxMoves = baseInsight + attributeLimits['ins'] + 3;
 
     const isMoveAllowed = (moveRankRaw: string) => {
         const rankIndex = RANK_HIERARCHY.indexOf(moveRankRaw.trim());
@@ -144,7 +144,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
 
     extractMoves(pd.Moves, false);
     // If we don't have enough moves to fill the maximum possible capacity, pull from all ranks (e.g. egg moves)
-    if (legalMoveNames.length < absoluteMaxMoves) extractMoves(pd.Moves, true);
+    if (legalMoveNames.length < draftedMax) extractMoves(pd.Moves, true);
 
     const uniqueMoveNames = [...new Set(legalMoveNames)];
     const fetchedMoves: TempMove[] = [];
@@ -303,9 +303,49 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         );
     }
 
-    // 2. NOW calculate the final move capacity and backfill the empty slots
+    // 2. NOW calculate the final move capacity and score the leftover pool based on synergy
     const finalDraftedMax = baseInsight + generatedAttributes['ins'] + 3;
 
+    if (config.buildType !== 'wild') {
+        const getStatValue = (statName: string) => {
+            if (!statName) return 0;
+            if (Object.values(CombatStat).includes(statName as CombatStat)) {
+                return state.stats[statName as CombatStat].base + (generatedAttributes[statName] || 0);
+            }
+            if (Object.values(SocialStat).includes(statName as SocialStat)) {
+                return state.socials[statName as SocialStat].base + (generatedSocials[statName] || 0);
+            }
+            // Will scales with Insight, so we must dynamically calculate its projected total!
+            if (statName === 'will') return state.will.willMax + (generatedAttributes['ins'] || 0);
+            return 0;
+        };
+
+        const getSkillValue = (skillName: string) => {
+            if (!skillName || skillName === 'none') return 0;
+            let val = generatedSkills[skillName] || 0;
+            if (Object.values(Skill).includes(skillName as Skill)) {
+                val += state.skills[skillName as Skill].base;
+            } else {
+                for (const cat of state.extraCategories) {
+                    const found = cat.skills.find((s) => s.id === skillName);
+                    if (found) val += found.base;
+                }
+            }
+            return val;
+        };
+
+        leftoverPool.sort((a, b) => {
+            const aScore = getStatValue(a.attr) + getSkillValue(a.skill) + (a.cat === 'Status' ? 0 : getStatValue(a.dmgStat) + a.power);
+            const bScore = getStatValue(b.attr) + getSkillValue(b.skill) + (b.cat === 'Status' ? 0 : getStatValue(b.dmgStat) + b.power);
+            
+            const aStab = myTypes.includes(a.type) ? 2 : 0;
+            const bStab = myTypes.includes(b.type) ? 2 : 0;
+            
+            return (bScore + bStab) - (aScore + aStab);
+        });
+    }
+
+    // 3. Finally, backfill the empty slots using the newly synergized leftover pool
     while (draftedMoves.length < finalDraftedMax && leftoverPool.length > 0) {
         const move = leftoverPool.shift();
         if (move) draftedMoves.push(move);
