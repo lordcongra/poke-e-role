@@ -33,6 +33,7 @@ function normalizeStatistic(value: string): string {
     if (stringValue.includes('bea')) return 'bea';
     if (stringValue.includes('cut')) return 'cut';
     if (stringValue.includes('cle')) return 'cle';
+    if (stringValue.includes('will')) return 'will';
     return '';
 }
 
@@ -89,12 +90,14 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     const baseInsight = state.stats[CombatStat.INS].base;
     const totalTargetMoves = config.targetAtkCount + config.targetSupCount;
 
+    // Calculate minimum insight needed just to fulfill the target composition
     let neededInsightRank = Math.max(0, totalTargetMoves - 3 - baseInsight);
     neededInsightRank = Math.min(neededInsightRank, attributeLimits['ins'] - baseInsight, attributePoints);
     generatedAttributes['ins'] = neededInsightRank;
 
     const adjustedAttributePoints = attributePoints - neededInsightRank;
     const currentRankIndex = Math.max(0, RANK_HIERARCHY.indexOf(rank));
+    const absoluteMaxMoves = baseInsight + attributeLimits['ins'] + 3;
 
     const isMoveAllowed = (moveRankRaw: string) => {
         const rankIndex = RANK_HIERARCHY.indexOf(moveRankRaw.trim());
@@ -140,7 +143,8 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     };
 
     extractMoves(pd.Moves, false);
-    if (legalMoveNames.length === 0) extractMoves(pd.Moves, true);
+    // If we don't have enough moves to fill the maximum possible capacity, pull from all ranks (e.g. egg moves)
+    if (legalMoveNames.length < absoluteMaxMoves) extractMoves(pd.Moves, true);
 
     const uniqueMoveNames = [...new Set(legalMoveNames)];
     const fetchedMoves: TempMove[] = [];
@@ -173,16 +177,12 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     }
 
     const draftedMoves: TempMove[] = [];
+    let leftoverPool: TempMove[] = [];
     let supportPool = fetchedMoves.filter((move) => move.cat === 'Status');
     let attackPool = fetchedMoves.filter((move) => move.cat === 'Phys' || move.cat === 'Spec');
 
     if (config.buildType === 'wild') {
-        const availableMoves = [...fetchedMoves].sort(() => 0.5 - Math.random());
-        const actualMaxMoves = baseInsight + generatedAttributes['ins'] + 3;
-        for (let i = 0; i < actualMaxMoves && availableMoves.length > 0; i++) {
-            const move = availableMoves.shift();
-            if (move) draftedMoves.push(move);
-        }
+        leftoverPool = [...fetchedMoves].sort(() => 0.5 - Math.random());
     } else {
         if (config.combatBias === 'physical') attackPool = attackPool.filter((move) => move.cat === 'Phys');
         if (config.combatBias === 'special') attackPool = attackPool.filter((move) => move.cat === 'Spec');
@@ -251,17 +251,12 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             }
         }
 
-        const leftoverPool = fetchedMoves.filter((move) => !draftedMoves.includes(move));
+        leftoverPool = fetchedMoves.filter((move) => !draftedMoves.includes(move));
         if (config.buildType === 'minmax') leftoverPool.sort((a, b) => b.power - a.power);
         else leftoverPool.sort(() => 0.5 - Math.random());
-
-        const draftedMax = baseInsight + generatedAttributes['ins'] + 3;
-        while (draftedMoves.length < draftedMax && leftoverPool.length > 0) {
-            const move = leftoverPool.shift();
-            if (move) draftedMoves.push(move);
-        }
     }
 
+    // 1. Run the stat distribution logic FIRST so the attributes are fully finalized
     if (config.buildType === 'wild') {
         assignWildStats(
             generatedAttributes,
@@ -308,6 +303,14 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         );
     }
 
+    // 2. NOW calculate the final move capacity and backfill the empty slots
+    const finalDraftedMax = baseInsight + generatedAttributes['ins'] + 3;
+
+    while (draftedMoves.length < finalDraftedMax && leftoverPool.length > 0) {
+        const move = leftoverPool.shift();
+        if (move) draftedMoves.push(move);
+    }
+
     return {
         species: speciesName,
         attr: generatedAttributes,
@@ -316,7 +319,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         customSkillsList: customSkillsList,
         customSkillMap: customSkillMap,
         moves: draftedMoves,
-        maxMoves: baseInsight + generatedAttributes['ins'] + 3,
+        maxMoves: finalDraftedMax,
         includePmd: config.includePmd
     };
 }
