@@ -134,7 +134,7 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
         });
 
         setFilters(newFilters);
-        setTmPowers(select ? ['support', '1', '2', '3', '4', '5', '6', '7', '8', '10'] : []);
+        setTmPowers(select ? ['support', '1', '2', '3', '4', '5', '6', '7', '8', '10', 'variable'] : []);
         setTmTypes(select ? ['Any'] : []);
     };
 

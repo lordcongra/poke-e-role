@@ -153,7 +153,8 @@ export function generateLootPool(
         }
     });
 
-    if (includesHighPower && index.moves?.highPower?.variable) {
+    // Decoupled Variable Move processing
+    if (selectedPowers.has('variable') && index.moves?.highPower?.variable) {
         processMoveArray(index.moves.highPower.variable, 'Base_TMs');
     }
 
@@ -161,7 +162,8 @@ export function generateLootPool(
     visibleCustomMoves.forEach((m) => {
         if (isMoveTypeValid(m.type)) {
             let shouldInclude = false;
-            if (m.power === 0 && selectedPowers.has('support')) shouldInclude = true;
+            if (m.category === 'Status' && selectedPowers.has('support')) shouldInclude = true;
+            if (m.power === 0 && m.category !== 'Status' && selectedPowers.has('variable')) shouldInclude = true;
             if (m.power >= 1 && m.power <= 10 && selectedPowers.has(String(m.power))) shouldInclude = true;
             if (m.power > 10 && includesHighPower) shouldInclude = true;
 

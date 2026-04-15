@@ -19,6 +19,7 @@ export function ItemGeneratorTmFilters({
 }: ItemGeneratorTmFiltersProps) {
     const hasBasic = ['1', '2', '3'].every((p) => tmPowers.includes(p));
     const hasHigh = ['4', '5', '6', '7', '8', '10'].every((p) => tmPowers.includes(p));
+    const hasVariable = tmPowers.includes('variable');
 
     const toggleBasicPowers = () => {
         if (hasBasic) {
@@ -41,6 +42,14 @@ export function ItemGeneratorTmFilters({
             setTmPowers((prev) => prev.filter((p) => p !== 'support'));
         } else {
             setTmPowers((prev) => [...prev, 'support']);
+        }
+    };
+
+    const toggleVariable = () => {
+        if (hasVariable) {
+            setTmPowers((prev) => prev.filter((p) => p !== 'variable'));
+        } else {
+            setTmPowers((prev) => [...prev, 'variable']);
         }
     };
 
@@ -116,6 +125,15 @@ export function ItemGeneratorTmFilters({
                     />
                     High Power Moves (Power 4+)
                 </label>
+                <label className="item-generator-modal__checkbox-label">
+                    <input
+                        type="checkbox"
+                        className="item-generator-modal__checkbox"
+                        checked={hasVariable}
+                        onChange={toggleVariable}
+                    />
+                    Variable Power Moves (Varies)
+                </label>
             </div>
 
             <div className="item-generator-modal__dropdown-row">
@@ -124,6 +142,7 @@ export function ItemGeneratorTmFilters({
                         + Add Specific Power...
                     </option>
                     {!tmPowers.includes('support') && <option value="support">Support</option>}
+                    {!tmPowers.includes('variable') && <option value="variable">Variable</option>}
                     {[1, 2, 3, 4, 5, 6, 7, 8, 10].map(
                         (power) =>
                             !tmPowers.includes(String(power)) && (
@@ -142,7 +161,7 @@ export function ItemGeneratorTmFilters({
                         className="action-button action-button--dark item-generator-modal__pill"
                         onClick={() => removePowerPill(power)}
                     >
-                        {power === 'support' ? 'Support' : `Power ${power}`}{' '}
+                        {power === 'support' ? 'Support' : power === 'variable' ? 'Variable' : `Power ${power}`}{' '}
                         <span style={{ marginLeft: '2px' }}>✖</span>
                     </span>
                 ))}
