@@ -8,7 +8,7 @@
     "Accuracy2": "Channel",
     "Target": "Foe",
     "Effect": "Single Target. Low Accuracy 1. Roll 5 Chance Dice to Increase User's Special by 1.",
-    "Description": "The Pokémon releases an electric beam, if any charge remains unused, it will make use of it to boost its power.",
+    "Description": "The Pokémon releases an electric beam, if any charge remains unused, it will make use of it to boost their power.",
     "_id": "charge-beam",
     "Attributes": {
         "AccuracyReduction": -1

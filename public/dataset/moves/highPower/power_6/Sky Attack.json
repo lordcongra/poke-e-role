@@ -8,7 +8,7 @@
     "Accuracy2": "Brawl",
     "Target": "Foe",
     "Effect": "Single Target. Low Accuracy 1. Charge Move. High Critical. Lethal. Roll 3 Chance Dice to Flinch the Target.",
-    "Description": "In a graceful but lethal strike, the Pokémon takes a deep dive towards the foe as if the sky was falling down right on top of it",
+    "Description": "In a graceful but lethal strike, the Pokémon takes a deep dive towards the foe as if the sky was falling down right on top of it.",
     "_id": "sky-attack",
     "Attributes": {
         "HighCritical": true,

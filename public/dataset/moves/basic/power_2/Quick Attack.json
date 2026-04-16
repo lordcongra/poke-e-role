@@ -8,7 +8,7 @@
     "Accuracy2": "Brawl",
     "Target": "Foe",
     "Effect": "Single Target. Reaction 1. Out of battle, double the Pokemon's movement speed.",
-    "Description": "An attackas fight as lightning.",
+    "Description": "An attack as fast as lightning.",
     "_id": "quick-attack",
     "Attributes": {
         "Reaction": "1"

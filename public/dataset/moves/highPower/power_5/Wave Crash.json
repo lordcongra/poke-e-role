@@ -8,7 +8,7 @@
     "Accuracy2": "Athletic/Brawl",
     "Target": "Foe",
     "Effect": "Single Target. Recoil. Reduce User's Dexterity by 1.",
-    "Description": "The Pokémon rides a tsunami-like wave an slams it against its target. The crash is very destructive and the Pokémon may end up falling from the ride.",
+    "Description": "The Pokémon rides a tsunami-like wave and slams it against its target. The crash is very destructive and the Pokémon may end up falling from the ride.",
     "_id": "wave-crash",
     "Attributes": {
         "Recoil": true

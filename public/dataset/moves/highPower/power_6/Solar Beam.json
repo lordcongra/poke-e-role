@@ -8,7 +8,7 @@
     "Accuracy2": "Channel",
     "Target": "Foe",
     "Effect": "Single Target. Charge Move. If Sunny Weather is active, you skip this Move's Charge action. If performed under Rain, Sandstorm or Hail/Snowy Weather, this Move takes two actions to Charge.",
-    "Description": "The Pokémon gathers sunlight but instead of being absorbed it is sot as a devastating beam of light instead.",
+    "Description": "The Pokémon gathers sunlight but instead of being absorbed it is shot as a devastating beam of light instead.",
     "_id": "solar-beam",
     "Attributes": {
         "Charge": true

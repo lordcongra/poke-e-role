@@ -8,7 +8,7 @@
     "Accuracy2": "Channel",
     "Target": "Foe",
     "Effect": "Single Target. Low Accuracy 3. Put the Target to sleep. Dark-Type Pokemon are affected by this Move.",
-    "Description": "By staring at an hypnotic pendulum, the target is suggestioned to feel tired and close its eyelids.",
+    "Description": "By staring at an hypnotic pendulum, the target is suggested to feel tired and close its eyelids.",
     "_id": "hypnosis",
     "Attributes": {
         "AccuracyReduction": -3

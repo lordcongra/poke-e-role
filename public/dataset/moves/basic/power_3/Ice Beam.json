@@ -8,7 +8,7 @@
     "Accuracy2": "Channel",
     "Target": "Foe",
     "Effect": "Single Target. Roll 1 Chance Die to Freeze the Target.",
-    "Description": "The Pokémon shoots a cold beam that reduces all warmth on the environment up to freezing point.",
+    "Description": "The Pokémon shoots a cold beam that reduces all warmth in the environment down to the freezing point.",
     "_id": "ice-beam",
     "Attributes": {},
     "AddedEffects": {

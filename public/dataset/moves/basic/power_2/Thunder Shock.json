@@ -8,7 +8,7 @@
     "Accuracy2": "Channel",
     "Target": "Foe",
     "Effect": "Single Target. Roll 1 Chance die to Paralyze the Target.",
-    "Description": "The most basic electric attack, charge, release, and shock! Just don’t point it to any electric device.",
+    "Description": "The most basic electric attack, charge, release, and shock! Just don’t point it to any electronic device.",
     "_id": "thunder-shock",
     "Attributes": {},
     "AddedEffects": {

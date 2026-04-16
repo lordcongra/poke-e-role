@@ -8,7 +8,7 @@
     "Accuracy2": "Etiquette",
     "Target": "Foe",
     "Effect": "Single Target. Reduce the Target's Strength by 1.",
-    "Description": "The Pokémon starts to play with the foe. They are firendly, respectful, and thank the foe for the fun time. The foe does not want to fight, they want to keep playing.",
+    "Description": "The Pokémon starts to play with the foe. They are friendly, respectful, and thank the foe for the fun time. The foe does not want to fight, they want to keep playing.",
     "_id": "play-nice",
     "Attributes": {},
     "AddedEffects": {

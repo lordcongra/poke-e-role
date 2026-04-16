@@ -7,8 +7,8 @@
     "Accuracy1": "Vitality",
     "Accuracy2": "Channel",
     "Target": "Ally",
-    "Effect": "Target One Ally. Increase by 1 the Strength and Spcial of one Steel-Type of Electric-Type Ally.",
-    "Description": "The Pokémon performs a basic manteniance on their ally. A change of oil and filters, new spark plugs, and the ally is more than ready!",
+    "Effect": "Target One Ally. Increase by 1 the Strength and Special of one Steel-Type or Electric-Type Ally.",
+    "Description": "The Pokémon performs a basic maintenance on their ally. A change of oil and filters, new spark plugs, and the ally is more than ready!",
     "_id": "gear-up",
     "Attributes": {},
     "AddedEffects": {

@@ -8,7 +8,7 @@
     "Accuracy2": "Channel",
     "Target": "Area",
     "Effect": "Area Move. Lethal. Ranged. The User faints.",
-    "Description": "It’s not about winning or losing, some pokémon just want to see the world burn.",
+    "Description": "It’s not about winning or losing; some pokémon just want to see the world burn.",
     "_id": "self-destruct",
     "Attributes": {
         "UserFaints": true,

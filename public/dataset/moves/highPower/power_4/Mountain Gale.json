@@ -8,7 +8,7 @@
     "Accuracy2": "Channel",
     "Target": "Foe",
     "Effect": "Single Target. Ranged. Roll 3 Chance Dice to Flinch the Foe.",
-    "Description": "",
+    "Description": "If the foe does not go to the mountain, hurl the mountain into the foe.",
     "_id": "mountain_gale",
     "Attributes": {
         "Ranged": true

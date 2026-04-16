@@ -8,7 +8,7 @@
     "Accuracy2": "Brawl",
     "Target": "Foe",
     "Effect": "Single Target. Fist Move. Roll 1 Chance Die to inflict 2nd Degree Burn on the Target.",
-    "Description": "A fist powered by the fiery spirit of combat, the heat of the battle lights of for real as the punch hits the foe right where it hurts!",
+    "Description": "A fist powered by the fiery spirit of combat, the heat of the battle lights up for real as the punch hits the foe right where it hurts!",
     "_id": "fire-punch",
     "Attributes": {
         "FistMove": true
