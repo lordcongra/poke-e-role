@@ -169,7 +169,7 @@ if (fs.existsSync(MOVES_DIR)) {
             if (!fs.existsSync(targetDir)) {
                 fs.mkdirSync(targetDir, { recursive: true });
             }
-            
+
             const newFilePath = path.join(targetDir, fileName);
             if (filePath !== newFilePath) {
                 fs.renameSync(filePath, newFilePath);

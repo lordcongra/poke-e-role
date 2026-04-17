@@ -159,16 +159,18 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             const rawAcc2 = String(data.Accuracy2 || 'None');
             const rawDmg1 = String(data.Damage1 || 'None');
 
-            const accString = rawAcc2.toLowerCase() === 'none' ? `Accuracy: ${rawAcc1}` : `Accuracy: ${rawAcc1} + ${rawAcc2}`;
+            const accString =
+                rawAcc2.toLowerCase() === 'none' ? `Accuracy: ${rawAcc1}` : `Accuracy: ${rawAcc1} + ${rawAcc2}`;
             const dmgString = cat === 'Status' ? '' : `Damage: ${rawDmg1}`;
 
             const rawDesc = String(data.Effect || data.Description || '');
             const retainedTags = rawDesc.match(/\[.*?\]/g)?.join(' ') || '';
-            
+
             let cleanDesc = rawDesc.replace(/\[.*?\]/g, '').trim();
             cleanDesc = cleanDesc.replace(/\n\nAccuracy:[\s\S]*/i, '').trim();
 
-            const finalDesc = `${cleanDesc}\n\n${accString}${dmgString ? '\n' + dmgString : ''}${retainedTags ? '\n\n' + retainedTags : ''}`.trim();
+            const finalDesc =
+                `${cleanDesc}\n\n${accString}${dmgString ? '\n' + dmgString : ''}${retainedTags ? '\n\n' + retainedTags : ''}`.trim();
 
             fetchedMoves.push({
                 id: crypto.randomUUID(),
@@ -345,13 +347,19 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         };
 
         leftoverPool.sort((a, b) => {
-            const aScore = getStatValue(a.attr) + getSkillValue(a.skill) + (a.cat === 'Status' ? 0 : getStatValue(a.dmgStat) + a.power);
-            const bScore = getStatValue(b.attr) + getSkillValue(b.skill) + (b.cat === 'Status' ? 0 : getStatValue(b.dmgStat) + b.power);
-            
+            const aScore =
+                getStatValue(a.attr) +
+                getSkillValue(a.skill) +
+                (a.cat === 'Status' ? 0 : getStatValue(a.dmgStat) + a.power);
+            const bScore =
+                getStatValue(b.attr) +
+                getSkillValue(b.skill) +
+                (b.cat === 'Status' ? 0 : getStatValue(b.dmgStat) + b.power);
+
             const aStab = myTypes.includes(a.type) ? 2 : 0;
             const bStab = myTypes.includes(b.type) ? 2 : 0;
-            
-            return (bScore + bStab) - (aScore + aStab);
+
+            return bScore + bStab - (aScore + aStab);
         });
     }
 

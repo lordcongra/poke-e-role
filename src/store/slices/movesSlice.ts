@@ -191,16 +191,18 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                     const rawAcc2 = String(data.Accuracy2 || 'None');
                     const rawDmg1 = String(data.Damage1 || 'None');
 
-                    const accString = rawAcc2.toLowerCase() === 'none' ? `Accuracy: ${rawAcc1}` : `Accuracy: ${rawAcc1} + ${rawAcc2}`;
+                    const accString =
+                        rawAcc2.toLowerCase() === 'none' ? `Accuracy: ${rawAcc1}` : `Accuracy: ${rawAcc1} + ${rawAcc2}`;
                     const dmgString = cat === 'Status' ? '' : `Damage: ${rawDmg1}`;
 
                     const rawDesc = String(data.Effect || data.Description || m.desc || '');
                     const retainedTags = rawDesc.match(/\[.*?\]/g)?.join(' ') || '';
-                    
+
                     let cleanDesc = rawDesc.replace(/\[.*?\]/g, '').trim();
                     cleanDesc = cleanDesc.replace(/\n\nAccuracy:[\s\S]*/i, '').trim();
 
-                    const finalDesc = `${cleanDesc}\n\n${accString}${dmgString ? '\n' + dmgString : ''}${retainedTags ? '\n\n' + retainedTags : ''}`.trim();
+                    const finalDesc =
+                        `${cleanDesc}\n\n${accString}${dmgString ? '\n' + dmgString : ''}${retainedTags ? '\n\n' + retainedTags : ''}`.trim();
 
                     return {
                         ...m,

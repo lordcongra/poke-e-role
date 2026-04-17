@@ -104,6 +104,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         gender: '',
         ruleset: 'vg-vit-hp',
         pain: 'Enabled',
+        diceEngine: 'dice-plus',
         rolls: 'Public (Everyone)',
         homebrewAccess: 'Full',
         combat: '',
@@ -200,13 +201,20 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         set((state) => {
             const obrKey = OBR_KEY_MAP[field as string] || (field as string);
 
-            if (field === 'ruleset' || field === 'pain' || field === 'homebrewAccess' || field === 'gmOnlyLootGen') {
+            if (
+                field === 'ruleset' ||
+                field === 'pain' ||
+                field === 'diceEngine' ||
+                field === 'homebrewAccess' ||
+                field === 'gmOnlyLootGen'
+            ) {
                 if (OBR.isAvailable) {
                     OBR.room.getMetadata().then((meta) => {
                         const roomMeta =
                             (meta['pokerole-pmd-extension/room-settings'] as Record<string, unknown>) || {};
                         if (field === 'ruleset') roomMeta.ruleset = value;
                         if (field === 'pain') roomMeta.painEnabled = value === 'Enabled';
+                        if (field === 'diceEngine') roomMeta.diceEngine = value;
                         if (field === 'homebrewAccess') roomMeta.homebrewAccess = value;
                         if (field === 'gmOnlyLootGen') roomMeta.gmOnlyLootGen = value;
                         OBR.room.setMetadata({ 'pokerole-pmd-extension/room-settings': roomMeta });

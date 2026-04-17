@@ -21,6 +21,29 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                 <div className="rules-modal__form-group">
                     <div>
                         <label className="rules-modal__label">
+                            Dice Engine{' '}
+                            <TooltipIcon
+                                onClick={() =>
+                                    setModalConfig({
+                                        title: 'Dice Engine Settings',
+                                        content:
+                                            'Select which Dice Extension to broadcast rolls to. Both engines support 3D physics dice and full sheet automation, but Custom Action Rolls also features a persistent chat log. (Global Room Setting)'
+                                    })
+                                }
+                            />
+                        </label>
+                        <select
+                            className="identity-grid__select rules-modal__select"
+                            value={id.diceEngine || 'dice-plus'}
+                            onChange={(e) => setIdentity('diceEngine', e.target.value as 'dice-plus' | 'car')}
+                        >
+                            <option value="dice-plus">Dice+ (3D Physics Dice)</option>
+                            <option value="car">Custom Action Rolls (3D Dice & Chat Log)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="rules-modal__label">
                             Ruleset{' '}
                             <TooltipIcon
                                 onClick={() =>

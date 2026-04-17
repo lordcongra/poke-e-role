@@ -319,6 +319,7 @@ export interface IdentitySlice {
         gender: string;
         ruleset: string;
         pain: string;
+        diceEngine: 'dice-plus' | 'car';
         rolls: string;
         homebrewAccess: string;
         combat: string;

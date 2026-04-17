@@ -10,18 +10,158 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
         return;
     }
     try {
+        const state = useCharacterStore.getState();
+        const diceEngine = state.identity.diceEngine || 'dice-plus';
+        const playerId = await OBR.player.getId();
+        const playerName = await OBR.player.getName();
+
+        if (diceEngine === 'car') {
+            // FORMATTING FOR CUSTOM ACTION ROLLS:
+            const cleanNotation = notation.replace(/\s/g, '');
+            const isSuccessRoll = cleanNotation.includes('>3');
+            
+            const match = cleanNotation.match(/(\d+)d6(?:>3)?(?:([+-]\d+))?/);
+            const numDice = match ? parseInt(match[1], 10) : 1;
+            const flatMod = match && match[2] ? parseInt(match[2].replace(/\s/g, ''), 10) : 0;
+
+            const diceData = [];
+            const rollStrings = [];
+            let rawSuccesses = 0;
+            let rawSum = 0;
+
+            // Generate the random dice results locally
+            for (let i = 0; i < numDice; i++) {
+                const result = Math.floor(Math.random() * 6) + 1;
+                diceData.push({ type: 6, result });
+                rawSum += result;
+                
+                if (result > 3) {
+                    rawSuccesses++;
+                    rollStrings.push(`${result}✓`);
+                } else {
+                    rollStrings.push(`${result}✖`);
+                }
+            }
+
+            const rawFailures = numDice - rawSuccesses;
+            const finalSuccesses = Math.max(0, rawSuccesses + flatMod);
+            const finalSum = rawSum + flatMod;
+            const modStr = flatMod > 0 ? ` + ${flatMod}` : flatMod < 0 ? ` - ${Math.abs(flatMod)}` : '';
+            
+            const cleanLabel = label.replace(/^[🎲💥🩹🍀🎯]\s*/u, '').trim();
+
+            let mensaje = '';
+            if (numDice === 0) {
+                mensaje = `${playerName} | ${cleanLabel}: Set Damage → ${finalSuccesses} ✓`;
+            } else if (isSuccessRoll) {
+                mensaje = `${playerName} | ${cleanLabel}: [${rollStrings.join(', ')}] > 3${modStr} → ${finalSuccesses} ✓ ${rawFailures} ✖`;
+            } else {
+                const sumStrings = diceData.map(d => d.result).join(' + ');
+                mensaje = `${playerName} | ${cleanLabel}: [${sumStrings}]${modStr} → ${finalSum}`;
+            }
+
+            const icon = state.identity.tokenImageUrl || 'https://lordcongra.github.io/poke-e-role/pokeball.svg';
+
+            await OBR.broadcast.sendMessage(
+                'tirada:mensaje',
+                {
+                    mensaje,
+                    icon,
+                    diceData
+                },
+                { destination: 'ALL' }
+            );
+
+            // ⚠️ SHEET AUTOMATION ⚠️
+            if (rollType === 'init') {
+                const tiebreaker = Math.floor(Math.random() * 6) + 1;
+                const finalInit = finalSum + tiebreaker / 10;
+                
+                if (state.tokenId) {
+                    await OBR.scene.items.updateItems([state.tokenId], (items) => {
+                        for (const item of items) {
+                            const existing =
+                                (item.metadata['com.pretty-initiative/metadata'] as Record<
+                                    string,
+                                    unknown
+                                >) || {};
+                            item.metadata['com.pretty-initiative/metadata'] = {
+                                ...existing,
+                                count: finalInit.toString(),
+                                active: existing.active !== undefined ? existing.active : false,
+                                group: existing.group !== undefined ? existing.group : 1
+                            };
+                        }
+                    });
+                }
+            } else if (rollType === 'damage' && payload && finalSuccesses > 0) {
+                const [flatStr, ratioStr] = payload.split('_');
+                const flatGained = parseInt(flatStr) || 0;
+
+                let ratio = 0;
+                if (ratioStr) {
+                    if (ratioStr.includes('%')) {
+                        ratio = parseFloat(ratioStr.replace('%', '')) / 100;
+                    } else if (ratioStr.includes('/')) {
+                        const [num, den] = ratioStr.split('/');
+                        ratio = parseFloat(num) / parseFloat(den);
+                    } else {
+                        ratio = parseFloat(ratioStr);
+                    }
+                }
+
+                let tempGained = flatGained;
+                if (!isNaN(ratio) && ratio > 0) {
+                    tempGained += Math.floor(finalSuccesses * ratio);
+                }
+
+                if (tempGained > 0) {
+                    const store = useCharacterStore.getState();
+                    const currentTempMax = store.health.temporaryHitPointsMax || 0;
+
+                    if (tempGained > currentTempMax) {
+                        store.updateHealth('temporaryHitPointsMax', tempGained);
+                        store.updateHealth('temporaryHitPoints', tempGained);
+                        OBR.notification.show(`✅ Result: ${finalSuccesses} Successes! (Gained ${tempGained} Temp HP 🛡️)`);
+                    } else {
+                        OBR.notification.show(`✅ Result: ${finalSuccesses} Successes! (Current Shield Holds 🛡️)`);
+                    }
+                }
+            } else if (rollType === 'status' && payload) {
+                const statusId = payload;
+                if (state.tokenId) {
+                    await OBR.scene.items.updateItems([state.tokenId], (items) => {
+                        for (const item of items) {
+                            const meta = (item.metadata['pokerole-extension/stats'] as Record<string, unknown>) || {};
+                            const statusListStr = String(meta['status-list'] || '[]');
+                            try {
+                                const statuses = JSON.parse(statusListStr);
+                                let changed = false;
+                                for (const s of statuses) {
+                                    if (s.id === statusId) {
+                                        s.rounds += finalSuccesses;
+                                        changed = true;
+                                    }
+                                }
+                                if (changed) meta['status-list'] = JSON.stringify(statuses);
+                            } catch (e) {}
+                        }
+                    });
+                }
+            }
+
+            return; 
+        }
+
+        // FORMATTING FOR DICE+:
         OBR.notification.show(label);
 
-        const state = useCharacterStore.getState();
         const uniqueId = crypto.randomUUID();
 
-        // Fix: Always append a unique ID at the end to prevent Dice+ from silently ignoring duplicate status rolls!
         const rollId = payload
             ? `${rollType}|${state.tokenId}|${payload}|${uniqueId}`
             : `${rollType}|${state.tokenId}|${uniqueId}`;
 
-        const playerId = await OBR.player.getId();
-        const playerName = await OBR.player.getName();
         const targetVisibility = state.identity.rolls === 'Private (GM)' ? 'gm_only' : 'everyone';
 
         await OBR.broadcast.sendMessage(
@@ -39,7 +179,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
             { destination: 'ALL' }
         );
     } catch (error) {
-        console.error('Dice+ Error:', error);
+        console.error('Dice Engine Broadcast Error:', error);
     }
 }
 

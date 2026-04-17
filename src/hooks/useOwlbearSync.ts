@@ -255,6 +255,10 @@ export function useOwlbearSync() {
                             useCharacterStore.getState().setIdentity('ruleset', String(data.ruleset));
                         if (data.painEnabled !== undefined)
                             useCharacterStore.getState().setIdentity('pain', data.painEnabled ? 'Enabled' : 'Disabled');
+                        if (data.diceEngine !== undefined)
+                            useCharacterStore
+                                .getState()
+                                .setIdentity('diceEngine', String(data.diceEngine) as 'dice-plus' | 'car');
                         if (data.homebrewAccess !== undefined)
                             useCharacterStore.getState().setIdentity('homebrewAccess', String(data.homebrewAccess));
                         if (data.gmOnlyLootGen !== undefined)
@@ -288,6 +292,10 @@ export function useOwlbearSync() {
                                 useCharacterStore
                                     .getState()
                                     .setIdentity('pain', data.painEnabled ? 'Enabled' : 'Disabled');
+                            if (data.diceEngine !== undefined)
+                                useCharacterStore
+                                    .getState()
+                                    .setIdentity('diceEngine', String(data.diceEngine) as 'dice-plus' | 'car');
                             if (data.homebrewAccess !== undefined)
                                 useCharacterStore.getState().setIdentity('homebrewAccess', String(data.homebrewAccess));
                             if (data.gmOnlyLootGen !== undefined)
