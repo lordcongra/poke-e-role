@@ -6,6 +6,15 @@ export default defineConfig({
 
     plugins: [react()],
 
+    build: {
+        rollupOptions: {
+            input: {
+                main: 'index.html',
+                rollLog: 'roll-log.html'
+            }
+        }
+    },
+
     server: {
         port: 5173,
         cors: true,

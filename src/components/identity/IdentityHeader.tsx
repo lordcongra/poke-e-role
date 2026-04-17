@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { fetchAbilityData, fetchNatureData } from '../../utils/api';
 import { CollapsingSection } from '../ui/CollapsingSection';
@@ -34,16 +35,24 @@ export function IdentityHeader() {
     const toggleTheme = () => {
         const newIsDark = !isDark;
         setIsDark(newIsDark);
+        
+        const themeValue = newIsDark ? 'dark' : 'light';
+        
         if (newIsDark) {
             document.body.classList.add('dark-mode');
             document.body.setAttribute('data-theme', 'dark');
             document.documentElement.setAttribute('data-theme', 'dark');
-            localStorage.setItem('pokerole-theme', 'dark');
         } else {
             document.body.classList.remove('dark-mode');
             document.body.setAttribute('data-theme', 'light');
             document.documentElement.setAttribute('data-theme', 'light');
-            localStorage.setItem('pokerole-theme', 'light');
+        }
+        
+        localStorage.setItem('pokerole-theme', themeValue);
+        
+        // Tell any other open windows (like the Roll Log) to update their themes!
+        if (OBR.isAvailable) {
+            OBR.broadcast.sendMessage('pokerole-pmd-extension/theme-sync', themeValue, { destination: 'LOCAL' });
         }
     };
 

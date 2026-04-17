@@ -14,19 +14,6 @@ const EXTENSION_ID = 'pokerole-pmd-extension';
 const knownTransforms: Record<string, { x: number; y: number; r: number; metaStr: string }> = {};
 
 export function useOwlbearSync() {
-    const loadFromOwlbear = useCharacterStore((state) => state.loadFromOwlbear);
-    const setRoomCustomTypes = useCharacterStore((state) => state.setRoomCustomTypes);
-    const setTokenData = useCharacterStore((state) => state.setTokenData);
-
-    const refreshSpeciesData = useCharacterStore((state) => state.refreshSpeciesData);
-    const applyLearnset = useCharacterStore((state) => state.applyLearnset);
-
-    const setRoomCustomAbilities = useCharacterStore((state) => state.setRoomCustomAbilities);
-    const setRoomCustomMoves = useCharacterStore((state) => state.setRoomCustomMoves);
-    const setRoomCustomPokemon = useCharacterStore((state) => state.setRoomCustomPokemon);
-    const setRoomCustomItems = useCharacterStore((state) => state.setRoomCustomItems);
-    const setRoomCustomForms = useCharacterStore((state) => state.setRoomCustomForms);
-
     useEffect(() => {
         let unsubs: Array<() => void> = [];
         let isMounted = true;
@@ -74,8 +61,9 @@ export function useOwlbearSync() {
 
                 const loadTokenAndLearnset = async (targetTokenId: string) => {
                     try {
+                        const store = useCharacterStore.getState();
                         setActiveTokenId(targetTokenId);
-                        setTokenData(targetTokenId, role);
+                        store.setTokenData(targetTokenId, role);
 
                         const items = await OBR.scene.items.getItems([targetTokenId]);
                         if (items.length > 0) {
@@ -84,14 +72,14 @@ export function useOwlbearSync() {
 
                             const imgItem = tokenItem as Image;
                             if (imgItem.image?.url) {
-                                useCharacterStore.getState().setIdentity('tokenImageUrl', imgItem.image.url);
+                                store.setIdentity('tokenImageUrl', imgItem.image.url);
                             } else {
-                                useCharacterStore.getState().setIdentity('tokenImageUrl', null);
+                                store.setIdentity('tokenImageUrl', null);
                             }
 
                             if (meta) {
                                 try {
-                                    loadFromOwlbear(meta);
+                                    store.loadFromOwlbear(meta);
                                 } catch (e) {
                                     console.error(
                                         'CRITICAL: Corrupted token metadata detected. Resetting sheet to protect engine.',
@@ -102,14 +90,14 @@ export function useOwlbearSync() {
                                             '⚠️ Token data corrupted. Sheet reset to prevent crash.',
                                             'ERROR'
                                         );
-                                    loadFromOwlbear({});
+                                    store.loadFromOwlbear({});
                                 }
 
                                 try {
                                     const isOldToken = meta['v2-migrated'] !== true;
                                     if (isOldToken) {
-                                        const store = useCharacterStore.getState();
-                                        for (const move of store.moves) {
+                                        const currentStore = useCharacterStore.getState();
+                                        for (const move of currentStore.moves) {
                                             if (move.name) {
                                                 fetchMoveData(move.name)
                                                     .then((data) => {
@@ -139,14 +127,14 @@ export function useOwlbearSync() {
                                                 console.warn('Failed to fetch species data on token load:', e)
                                             );
                                     } else {
-                                        applyLearnset({ Moves: [] });
+                                        store.applyLearnset({ Moves: [] });
                                     }
                                 } catch (e) {
                                     console.error('Error during post-load fetches:', e);
                                 }
                             } else {
-                                loadFromOwlbear({});
-                                applyLearnset({ Moves: [] });
+                                store.loadFromOwlbear({});
+                                store.applyLearnset({ Moves: [] });
                             }
                         }
                     } catch (error) {
@@ -237,12 +225,14 @@ export function useOwlbearSync() {
                     const roomMeta = await OBR.room.getMetadata();
                     if (roomMeta[ROOM_META_ID]) {
                         const data = roomMeta[ROOM_META_ID] as Record<string, unknown>;
-                        if (data.customTypes) setRoomCustomTypes(data.customTypes as CustomType[]);
-                        if (data.customAbilities) setRoomCustomAbilities(data.customAbilities as CustomAbility[]);
-                        if (data.customMoves) setRoomCustomMoves(data.customMoves as CustomMove[]);
-                        if (data.customPokemon) setRoomCustomPokemon(data.customPokemon as CustomPokemon[]);
-                        if (data.customItems) setRoomCustomItems(data.customItems as CustomItem[]);
-                        if (data.customForms) setRoomCustomForms(data.customForms as CustomForm[]);
+                        const store = useCharacterStore.getState();
+                        
+                        if (data.customTypes) store.setRoomCustomTypes(data.customTypes as CustomType[]);
+                        if (data.customAbilities) store.setRoomCustomAbilities(data.customAbilities as CustomAbility[]);
+                        if (data.customMoves) store.setRoomCustomMoves(data.customMoves as CustomMove[]);
+                        if (data.customPokemon) store.setRoomCustomPokemon(data.customPokemon as CustomPokemon[]);
+                        if (data.customItems) store.setRoomCustomItems(data.customItems as CustomItem[]);
+                        if (data.customForms) store.setRoomCustomForms(data.customForms as CustomForm[]);
 
                         syncHomebrewToApi(
                             (data.customPokemon as CustomPokemon[]) || [],
@@ -251,18 +241,11 @@ export function useOwlbearSync() {
                             (data.customItems as CustomItem[]) || []
                         );
 
-                        if (data.ruleset !== undefined)
-                            useCharacterStore.getState().setIdentity('ruleset', String(data.ruleset));
-                        if (data.painEnabled !== undefined)
-                            useCharacterStore.getState().setIdentity('pain', data.painEnabled ? 'Enabled' : 'Disabled');
-                        if (data.diceEngine !== undefined)
-                            useCharacterStore
-                                .getState()
-                                .setIdentity('diceEngine', String(data.diceEngine) as 'dice-plus' | 'car');
-                        if (data.homebrewAccess !== undefined)
-                            useCharacterStore.getState().setIdentity('homebrewAccess', String(data.homebrewAccess));
-                        if (data.gmOnlyLootGen !== undefined)
-                            useCharacterStore.getState().setIdentity('gmOnlyLootGen', Boolean(data.gmOnlyLootGen));
+                        if (data.ruleset !== undefined) store.setIdentity('ruleset', String(data.ruleset));
+                        if (data.painEnabled !== undefined) store.setIdentity('pain', data.painEnabled ? 'Enabled' : 'Disabled');
+                        if (data.diceEngine !== undefined) store.setIdentity('diceEngine', String(data.diceEngine) as 'dice-plus' | 'car');
+                        if (data.homebrewAccess !== undefined) store.setIdentity('homebrewAccess', String(data.homebrewAccess));
+                        if (data.gmOnlyLootGen !== undefined) store.setIdentity('gmOnlyLootGen', Boolean(data.gmOnlyLootGen));
                     }
                 } catch (e) {
                     console.error('Engine recovered from room metadata crash:', e);
@@ -272,12 +255,14 @@ export function useOwlbearSync() {
                     try {
                         if (meta[ROOM_META_ID]) {
                             const data = meta[ROOM_META_ID] as Record<string, unknown>;
-                            if (data.customTypes) setRoomCustomTypes(data.customTypes as CustomType[]);
-                            if (data.customAbilities) setRoomCustomAbilities(data.customAbilities as CustomAbility[]);
-                            if (data.customMoves) setRoomCustomMoves(data.customMoves as CustomMove[]);
-                            if (data.customPokemon) setRoomCustomPokemon(data.customPokemon as CustomPokemon[]);
-                            if (data.customItems) setRoomCustomItems(data.customItems as CustomItem[]);
-                            if (data.customForms) setRoomCustomForms(data.customForms as CustomForm[]);
+                            const store = useCharacterStore.getState();
+                            
+                            if (data.customTypes) store.setRoomCustomTypes(data.customTypes as CustomType[]);
+                            if (data.customAbilities) store.setRoomCustomAbilities(data.customAbilities as CustomAbility[]);
+                            if (data.customMoves) store.setRoomCustomMoves(data.customMoves as CustomMove[]);
+                            if (data.customPokemon) store.setRoomCustomPokemon(data.customPokemon as CustomPokemon[]);
+                            if (data.customItems) store.setRoomCustomItems(data.customItems as CustomItem[]);
+                            if (data.customForms) store.setRoomCustomForms(data.customForms as CustomForm[]);
 
                             syncHomebrewToApi(
                                 (data.customPokemon as CustomPokemon[]) || [],
@@ -286,26 +271,49 @@ export function useOwlbearSync() {
                                 (data.customItems as CustomItem[]) || []
                             );
 
-                            if (data.ruleset !== undefined)
-                                useCharacterStore.getState().setIdentity('ruleset', String(data.ruleset));
-                            if (data.painEnabled !== undefined)
-                                useCharacterStore
-                                    .getState()
-                                    .setIdentity('pain', data.painEnabled ? 'Enabled' : 'Disabled');
-                            if (data.diceEngine !== undefined)
-                                useCharacterStore
-                                    .getState()
-                                    .setIdentity('diceEngine', String(data.diceEngine) as 'dice-plus' | 'car');
-                            if (data.homebrewAccess !== undefined)
-                                useCharacterStore.getState().setIdentity('homebrewAccess', String(data.homebrewAccess));
-                            if (data.gmOnlyLootGen !== undefined)
-                                useCharacterStore.getState().setIdentity('gmOnlyLootGen', Boolean(data.gmOnlyLootGen));
+                            if (data.ruleset !== undefined) store.setIdentity('ruleset', String(data.ruleset));
+                            if (data.painEnabled !== undefined) store.setIdentity('pain', data.painEnabled ? 'Enabled' : 'Disabled');
+                            if (data.diceEngine !== undefined) store.setIdentity('diceEngine', String(data.diceEngine) as 'dice-plus' | 'car');
+                            if (data.homebrewAccess !== undefined) store.setIdentity('homebrewAccess', String(data.homebrewAccess));
+                            if (data.gmOnlyLootGen !== undefined) store.setIdentity('gmOnlyLootGen', Boolean(data.gmOnlyLootGen));
                         }
                     } catch (e) {
                         console.error('Engine recovered from room metadata sync crash:', e);
                     }
                 });
                 unsubs.push(unsubRoom);
+
+                // Receive the Roll Sync broadcast from REMOTE players
+                const unsubRollLogSync = OBR.broadcast.onMessage(`${EXTENSION_ID}/roll-log-sync`, async (event) => {
+                    const rollData = event.data as any;
+                    
+                    // GM PRIVACY FILTER
+                    const myId = await OBR.player.getId();
+                    const myRole = await OBR.player.getRole();
+                    if (rollData.targetVisibility === 'gm_only' && myRole !== 'GM' && rollData.playerId !== myId) {
+                        return; // Ignore this broadcast entirely if we aren't allowed to see it!
+                    }
+                    
+                    const existing = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+                    if (!existing.find((r: any) => r.id === rollData.id)) {
+                        localStorage.setItem('pkr_roll_log', JSON.stringify([rollData, ...existing].slice(0, 50)));
+                    }
+
+                    OBR.broadcast.sendMessage(`${EXTENSION_ID}/roll-log-update`, {}, { destination: 'LOCAL' });
+
+                    const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+                    await OBR.popover.open({
+                        id: 'pkr-roll-log',
+                        url: `${baseUrl}/roll-log.html`,
+                        height: 380,
+                        width: 320,
+                        disableClickAway: true,
+                        anchorReference: 'POSITION',
+                        anchorPosition: { top: 99999, left: 99999 },
+                        transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
+                    }).catch(() => {});
+                });
+                unsubs.push(unsubRollLogSync);
 
                 const unsubRollResult = OBR.broadcast.onMessage(`${EXTENSION_ID}/roll-result`, async (event) => {
                     try {
@@ -373,7 +381,6 @@ export function useOwlbearSync() {
                                         ? `✅ Result: ${val} Success${val > 1 ? 'es' : ''}!`
                                         : `❌ Result: Failure! (0)`;
 
-                                // AUTOMATED SHIELD GENERATION LOGIC
                                 if (rollType === 'damage' && payload && val > 0) {
                                     const [flatStr, ratioStr] = payload.split('_');
                                     const flatGained = parseInt(flatStr) || 0;
@@ -399,7 +406,6 @@ export function useOwlbearSync() {
                                         const store = useCharacterStore.getState();
                                         const currentTempMax = store.health.temporaryHitPointsMax || 0;
 
-                                        // Temp HP replaces current shield ONLY if it is higher
                                         if (tempGained > currentTempMax) {
                                             store.updateHealth('temporaryHitPointsMax', tempGained);
                                             store.updateHealth('temporaryHitPoints', tempGained);
@@ -431,5 +437,5 @@ export function useOwlbearSync() {
             isMounted = false;
             unsubs.forEach((unsub) => unsub());
         };
-    }, [loadFromOwlbear, setRoomCustomTypes, setTokenData, applyLearnset, refreshSpeciesData]);
+    }, []); 
 }

@@ -14,32 +14,35 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
         const diceEngine = state.identity.diceEngine || 'dice-plus';
         const playerId = await OBR.player.getId();
         const playerName = await OBR.player.getName();
+        const targetVisibility = state.identity.rolls === 'Private (GM)' ? 'gm_only' : 'everyone';
 
         if (diceEngine === 'car') {
-            // FORMATTING FOR CUSTOM ACTION ROLLS:
             const cleanNotation = notation.replace(/\s/g, '');
-            const isSuccessRoll = cleanNotation.includes('>3');
+            const isSuccessRoll = cleanNotation.includes('>');
             
-            const match = cleanNotation.match(/(\d+)d6(?:>3)?(?:([+-]\d+))?/);
+            const match = cleanNotation.match(/(\d+)d6(?:>(\d+))?(?:([+-]\d+))?/);
             const numDice = match ? parseInt(match[1], 10) : 1;
-            const flatMod = match && match[2] ? parseInt(match[2].replace(/\s/g, ''), 10) : 0;
+            const successThreshold = match && match[2] ? parseInt(match[2], 10) : 3;
+            const flatMod = match && match[3] ? parseInt(match[3].replace(/\s/g, ''), 10) : 0;
 
             const diceData = [];
             const rollStrings = [];
+            const asteriskResults = [];
             let rawSuccesses = 0;
             let rawSum = 0;
 
-            // Generate the random dice results locally
             for (let i = 0; i < numDice; i++) {
                 const result = Math.floor(Math.random() * 6) + 1;
                 diceData.push({ type: 6, result });
                 rawSum += result;
                 
-                if (result > 3) {
+                if (result > successThreshold) {
                     rawSuccesses++;
                     rollStrings.push(`${result}✓`);
+                    asteriskResults.push(`${result}*`);
                 } else {
                     rollStrings.push(`${result}✖`);
+                    asteriskResults.push(`${result}`);
                 }
             }
 
@@ -49,106 +52,157 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
             const modStr = flatMod > 0 ? ` + ${flatMod}` : flatMod < 0 ? ` - ${Math.abs(flatMod)}` : '';
             
             const cleanLabel = label.replace(/^[🎲💥🩹🍀🎯]\s*/u, '').trim();
+            const privacyTag = targetVisibility === 'gm_only' ? '🙈 [PRIVATE] ' : '';
+            const finalLabel = `${privacyTag}${cleanLabel}`;
+
+            let popupMessage = '';
+            if (numDice === 0) {
+                popupMessage = `${finalLabel}\nSet Damage → ${finalSuccesses}`;
+            } else if (isSuccessRoll) {
+                popupMessage = `${finalLabel}\n[${asteriskResults.join(', ')}]${modStr} → ${finalSuccesses} Successes`;
+            } else {
+                popupMessage = `${finalLabel}\n[${diceData.map(d => d.result).join(', ')}]${modStr} → ${finalSum}`;
+            }
+            
+            const icon = state.identity.tokenImageUrl || 'https://lordcongra.github.io/poke-e-role/pokeball.svg';
 
             let mensaje = '';
             if (numDice === 0) {
-                mensaje = `${playerName} | ${cleanLabel}: Set Damage → ${finalSuccesses} ✓`;
+                mensaje = `${playerName} | ${finalLabel}: Set Damage → ${finalSuccesses} ✓`;
             } else if (isSuccessRoll) {
-                mensaje = `${playerName} | ${cleanLabel}: [${rollStrings.join(', ')}] > 3${modStr} → ${finalSuccesses} ✓ ${rawFailures} ✖`;
+                mensaje = `${playerName} | ${finalLabel}: [${rollStrings.join(', ')}] > ${successThreshold}${modStr} → ${finalSuccesses} ✓ ${rawFailures} ✖`;
             } else {
                 const sumStrings = diceData.map(d => d.result).join(' + ');
-                mensaje = `${playerName} | ${cleanLabel}: [${sumStrings}]${modStr} → ${finalSum}`;
+                mensaje = `${playerName} | ${finalLabel}: [${sumStrings}]${modStr} → ${finalSum}`;
             }
 
-            const icon = state.identity.tokenImageUrl || 'https://lordcongra.github.io/poke-e-role/pokeball.svg';
+            // 1. Send the 3D Dice Broadcasts
+            if (targetVisibility === 'gm_only') {
+                // Private roll: Send to LOCAL so the roller sees their own 3D dice.
+                // (The GM will get the log instantly, but no 3D dice since we can't broadcast to just them).
+                await OBR.broadcast.sendMessage(
+                    'tirada:mensaje', 
+                    { mensaje, icon, diceData }, 
+                    { destination: 'LOCAL' }
+                );
+            } else {
+                // Public roll: Everyone sees the 3D dice!
+                await OBR.broadcast.sendMessage(
+                    'tirada:mensaje', 
+                    { mensaje, icon, diceData }, 
+                    { destination: 'ALL' }
+                );
+            }
 
-            await OBR.broadcast.sendMessage(
-                'tirada:mensaje',
-                {
-                    mensaje,
+            // 2. Delay the log, the popup, and the automation by 3.5 seconds to let the dice fall!
+            // If it's a private roll, we don't need to wait for 3D dice on the GM's screen, so pop the log instantly.
+            const delayMs = targetVisibility === 'gm_only' ? 250 : 3500;
+
+            setTimeout(async () => {
+                const rollLogData = { 
+                    id: crypto.randomUUID(), 
+                    player: playerName,
+                    playerId: playerId, 
+                    label: finalLabel, 
+                    result: popupMessage, 
                     icon,
-                    diceData
-                },
-                { destination: 'ALL' }
-            );
-
-            // ⚠️ SHEET AUTOMATION ⚠️
-            if (rollType === 'init') {
-                const tiebreaker = Math.floor(Math.random() * 6) + 1;
-                const finalInit = finalSum + tiebreaker / 10;
+                    targetVisibility 
+                };
                 
-                if (state.tokenId) {
-                    await OBR.scene.items.updateItems([state.tokenId], (items) => {
-                        for (const item of items) {
-                            const existing =
-                                (item.metadata['com.pretty-initiative/metadata'] as Record<
-                                    string,
-                                    unknown
-                                >) || {};
-                            item.metadata['com.pretty-initiative/metadata'] = {
-                                ...existing,
-                                count: finalInit.toString(),
-                                active: existing.active !== undefined ? existing.active : false,
-                                group: existing.group !== undefined ? existing.group : 1
-                            };
+                const existingLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+                localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData, ...existingLog].slice(0, 50)));
+
+                // We send the Roll Log to REMOTE. The listener in useOwlbearSync handles the privacy check!
+                await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-sync', rollLogData, { destination: 'REMOTE' });
+                await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-update', {}, { destination: 'LOCAL' });
+
+                const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+                await OBR.popover.open({
+                    id: 'pkr-roll-log',
+                    url: `${baseUrl}/roll-log.html`,
+                    height: 380,
+                    width: 320,
+                    disableClickAway: true,
+                    anchorReference: 'POSITION',
+                    anchorPosition: { top: 99999, left: 99999 },
+                    transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
+                }).catch(() => {});
+
+                // ⚠️ SHEET AUTOMATION ⚠️
+                if (rollType === 'init') {
+                    const tiebreaker = Math.floor(Math.random() * 6) + 1;
+                    const finalInit = finalSum + tiebreaker / 10;
+                    
+                    if (state.tokenId) {
+                        await OBR.scene.items.updateItems([state.tokenId], (items) => {
+                            for (const item of items) {
+                                const existing =
+                                    (item.metadata['com.pretty-initiative/metadata'] as Record<string, unknown>) || {};
+                                item.metadata['com.pretty-initiative/metadata'] = {
+                                    ...existing,
+                                    count: finalInit.toString(),
+                                    active: existing.active !== undefined ? existing.active : false,
+                                    group: existing.group !== undefined ? existing.group : 1
+                                };
+                            }
+                        });
+                    }
+                } else if (rollType === 'damage' && payload && finalSuccesses > 0) {
+                    const [flatStr, ratioStr] = payload.split('_');
+                    const flatGained = parseInt(flatStr) || 0;
+
+                    let ratio = 0;
+                    if (ratioStr) {
+                        if (ratioStr.includes('%')) {
+                            ratio = parseFloat(ratioStr.replace('%', '')) / 100;
+                        } else if (ratioStr.includes('/')) {
+                            const [num, den] = ratioStr.split('/');
+                            ratio = parseFloat(num) / parseFloat(den);
+                        } else {
+                            ratio = parseFloat(ratioStr);
                         }
-                    });
-                }
-            } else if (rollType === 'damage' && payload && finalSuccesses > 0) {
-                const [flatStr, ratioStr] = payload.split('_');
-                const flatGained = parseInt(flatStr) || 0;
-
-                let ratio = 0;
-                if (ratioStr) {
-                    if (ratioStr.includes('%')) {
-                        ratio = parseFloat(ratioStr.replace('%', '')) / 100;
-                    } else if (ratioStr.includes('/')) {
-                        const [num, den] = ratioStr.split('/');
-                        ratio = parseFloat(num) / parseFloat(den);
-                    } else {
-                        ratio = parseFloat(ratioStr);
                     }
-                }
 
-                let tempGained = flatGained;
-                if (!isNaN(ratio) && ratio > 0) {
-                    tempGained += Math.floor(finalSuccesses * ratio);
-                }
-
-                if (tempGained > 0) {
-                    const store = useCharacterStore.getState();
-                    const currentTempMax = store.health.temporaryHitPointsMax || 0;
-
-                    if (tempGained > currentTempMax) {
-                        store.updateHealth('temporaryHitPointsMax', tempGained);
-                        store.updateHealth('temporaryHitPoints', tempGained);
-                        OBR.notification.show(`✅ Result: ${finalSuccesses} Successes! (Gained ${tempGained} Temp HP 🛡️)`);
-                    } else {
-                        OBR.notification.show(`✅ Result: ${finalSuccesses} Successes! (Current Shield Holds 🛡️)`);
+                    let tempGained = flatGained;
+                    if (!isNaN(ratio) && ratio > 0) {
+                        tempGained += Math.floor(finalSuccesses * ratio);
                     }
-                }
-            } else if (rollType === 'status' && payload) {
-                const statusId = payload;
-                if (state.tokenId) {
-                    await OBR.scene.items.updateItems([state.tokenId], (items) => {
-                        for (const item of items) {
-                            const meta = (item.metadata['pokerole-extension/stats'] as Record<string, unknown>) || {};
-                            const statusListStr = String(meta['status-list'] || '[]');
-                            try {
-                                const statuses = JSON.parse(statusListStr);
-                                let changed = false;
-                                for (const s of statuses) {
-                                    if (s.id === statusId) {
-                                        s.rounds += finalSuccesses;
-                                        changed = true;
+
+                    if (tempGained > 0) {
+                        const store = useCharacterStore.getState();
+                        const currentTempMax = store.health.temporaryHitPointsMax || 0;
+
+                        if (tempGained > currentTempMax) {
+                            store.updateHealth('temporaryHitPointsMax', tempGained);
+                            store.updateHealth('temporaryHitPoints', tempGained);
+                            OBR.notification.show(`✅ Result: ${finalSuccesses} Successes! (Gained ${tempGained} Temp HP 🛡️)`);
+                        } else {
+                            OBR.notification.show(`✅ Result: ${finalSuccesses} Successes! (Current Shield Holds 🛡️)`);
+                        }
+                    }
+                } else if (rollType === 'status' && payload) {
+                    const statusId = payload;
+                    if (state.tokenId) {
+                        await OBR.scene.items.updateItems([state.tokenId], (items) => {
+                            for (const item of items) {
+                                const meta = (item.metadata['pokerole-extension/stats'] as Record<string, unknown>) || {};
+                                const statusListStr = String(meta['status-list'] || '[]');
+                                try {
+                                    const statuses = JSON.parse(statusListStr);
+                                    let changed = false;
+                                    for (const s of statuses) {
+                                        if (s.id === statusId) {
+                                            s.rounds += finalSuccesses;
+                                            changed = true;
+                                        }
                                     }
-                                }
-                                if (changed) meta['status-list'] = JSON.stringify(statuses);
-                            } catch (e) {}
-                        }
-                    });
+                                    if (changed) meta['status-list'] = JSON.stringify(statuses);
+                                } catch (e) {}
+                            }
+                        });
+                    }
                 }
-            }
+            }, delayMs);
 
             return; 
         }
@@ -161,8 +215,6 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
         const rollId = payload
             ? `${rollType}|${state.tokenId}|${payload}|${uniqueId}`
             : `${rollType}|${state.tokenId}|${uniqueId}`;
-
-        const targetVisibility = state.identity.rolls === 'Private (GM)' ? 'gm_only' : 'everyone';
 
         await OBR.broadcast.sendMessage(
             'dice-plus/roll-request',
