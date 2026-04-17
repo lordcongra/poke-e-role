@@ -45,7 +45,7 @@ function RollLog() {
         if (OBR.isAvailable) {
             OBR.onReady(() => {
                 const unsubs: Array<() => void> = [];
-                
+
                 unsubs.push(
                     OBR.broadcast.onMessage('pokerole-pmd-extension/roll-log-update', () => {
                         loadRolls();

@@ -226,7 +226,7 @@ export function useOwlbearSync() {
                     if (roomMeta[ROOM_META_ID]) {
                         const data = roomMeta[ROOM_META_ID] as Record<string, unknown>;
                         const store = useCharacterStore.getState();
-                        
+
                         if (data.customTypes) store.setRoomCustomTypes(data.customTypes as CustomType[]);
                         if (data.customAbilities) store.setRoomCustomAbilities(data.customAbilities as CustomAbility[]);
                         if (data.customMoves) store.setRoomCustomMoves(data.customMoves as CustomMove[]);
@@ -242,10 +242,14 @@ export function useOwlbearSync() {
                         );
 
                         if (data.ruleset !== undefined) store.setIdentity('ruleset', String(data.ruleset));
-                        if (data.painEnabled !== undefined) store.setIdentity('pain', data.painEnabled ? 'Enabled' : 'Disabled');
-                        if (data.diceEngine !== undefined) store.setIdentity('diceEngine', String(data.diceEngine) as 'dice-plus' | 'car');
-                        if (data.homebrewAccess !== undefined) store.setIdentity('homebrewAccess', String(data.homebrewAccess));
-                        if (data.gmOnlyLootGen !== undefined) store.setIdentity('gmOnlyLootGen', Boolean(data.gmOnlyLootGen));
+                        if (data.painEnabled !== undefined)
+                            store.setIdentity('pain', data.painEnabled ? 'Enabled' : 'Disabled');
+                        if (data.diceEngine !== undefined)
+                            store.setIdentity('diceEngine', String(data.diceEngine) as 'dice-plus' | 'car');
+                        if (data.homebrewAccess !== undefined)
+                            store.setIdentity('homebrewAccess', String(data.homebrewAccess));
+                        if (data.gmOnlyLootGen !== undefined)
+                            store.setIdentity('gmOnlyLootGen', Boolean(data.gmOnlyLootGen));
                     }
                 } catch (e) {
                     console.error('Engine recovered from room metadata crash:', e);
@@ -256,9 +260,10 @@ export function useOwlbearSync() {
                         if (meta[ROOM_META_ID]) {
                             const data = meta[ROOM_META_ID] as Record<string, unknown>;
                             const store = useCharacterStore.getState();
-                            
+
                             if (data.customTypes) store.setRoomCustomTypes(data.customTypes as CustomType[]);
-                            if (data.customAbilities) store.setRoomCustomAbilities(data.customAbilities as CustomAbility[]);
+                            if (data.customAbilities)
+                                store.setRoomCustomAbilities(data.customAbilities as CustomAbility[]);
                             if (data.customMoves) store.setRoomCustomMoves(data.customMoves as CustomMove[]);
                             if (data.customPokemon) store.setRoomCustomPokemon(data.customPokemon as CustomPokemon[]);
                             if (data.customItems) store.setRoomCustomItems(data.customItems as CustomItem[]);
@@ -272,10 +277,14 @@ export function useOwlbearSync() {
                             );
 
                             if (data.ruleset !== undefined) store.setIdentity('ruleset', String(data.ruleset));
-                            if (data.painEnabled !== undefined) store.setIdentity('pain', data.painEnabled ? 'Enabled' : 'Disabled');
-                            if (data.diceEngine !== undefined) store.setIdentity('diceEngine', String(data.diceEngine) as 'dice-plus' | 'car');
-                            if (data.homebrewAccess !== undefined) store.setIdentity('homebrewAccess', String(data.homebrewAccess));
-                            if (data.gmOnlyLootGen !== undefined) store.setIdentity('gmOnlyLootGen', Boolean(data.gmOnlyLootGen));
+                            if (data.painEnabled !== undefined)
+                                store.setIdentity('pain', data.painEnabled ? 'Enabled' : 'Disabled');
+                            if (data.diceEngine !== undefined)
+                                store.setIdentity('diceEngine', String(data.diceEngine) as 'dice-plus' | 'car');
+                            if (data.homebrewAccess !== undefined)
+                                store.setIdentity('homebrewAccess', String(data.homebrewAccess));
+                            if (data.gmOnlyLootGen !== undefined)
+                                store.setIdentity('gmOnlyLootGen', Boolean(data.gmOnlyLootGen));
                         }
                     } catch (e) {
                         console.error('Engine recovered from room metadata sync crash:', e);
@@ -286,14 +295,14 @@ export function useOwlbearSync() {
                 // Receive the Roll Sync broadcast from REMOTE players
                 const unsubRollLogSync = OBR.broadcast.onMessage(`${EXTENSION_ID}/roll-log-sync`, async (event) => {
                     const rollData = event.data as any;
-                    
+
                     // GM PRIVACY FILTER
                     const myId = await OBR.player.getId();
                     const myRole = await OBR.player.getRole();
                     if (rollData.targetVisibility === 'gm_only' && myRole !== 'GM' && rollData.playerId !== myId) {
                         return; // Ignore this broadcast entirely if we aren't allowed to see it!
                     }
-                    
+
                     const existing = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
                     if (!existing.find((r: any) => r.id === rollData.id)) {
                         localStorage.setItem('pkr_roll_log', JSON.stringify([rollData, ...existing].slice(0, 50)));
@@ -302,16 +311,18 @@ export function useOwlbearSync() {
                     OBR.broadcast.sendMessage(`${EXTENSION_ID}/roll-log-update`, {}, { destination: 'LOCAL' });
 
                     const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-                    await OBR.popover.open({
-                        id: 'pkr-roll-log',
-                        url: `${baseUrl}/roll-log.html`,
-                        height: 380,
-                        width: 320,
-                        disableClickAway: true,
-                        anchorReference: 'POSITION',
-                        anchorPosition: { top: 99999, left: 99999 },
-                        transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
-                    }).catch(() => {});
+                    await OBR.popover
+                        .open({
+                            id: 'pkr-roll-log',
+                            url: `${baseUrl}/roll-log.html`,
+                            height: 380,
+                            width: 320,
+                            disableClickAway: true,
+                            anchorReference: 'POSITION',
+                            anchorPosition: { top: 99999, left: 99999 },
+                            transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
+                        })
+                        .catch(() => {});
                 });
                 unsubs.push(unsubRollLogSync);
 
@@ -437,5 +448,5 @@ export function useOwlbearSync() {
             isMounted = false;
             unsubs.forEach((unsub) => unsub());
         };
-    }, []); 
+    }, []);
 }

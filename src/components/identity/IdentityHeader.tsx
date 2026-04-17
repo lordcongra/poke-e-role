@@ -35,9 +35,9 @@ export function IdentityHeader() {
     const toggleTheme = () => {
         const newIsDark = !isDark;
         setIsDark(newIsDark);
-        
+
         const themeValue = newIsDark ? 'dark' : 'light';
-        
+
         if (newIsDark) {
             document.body.classList.add('dark-mode');
             document.body.setAttribute('data-theme', 'dark');
@@ -47,9 +47,9 @@ export function IdentityHeader() {
             document.body.setAttribute('data-theme', 'light');
             document.documentElement.setAttribute('data-theme', 'light');
         }
-        
+
         localStorage.setItem('pokerole-theme', themeValue);
-        
+
         // Tell any other open windows (like the Roll Log) to update their themes!
         if (OBR.isAvailable) {
             OBR.broadcast.sendMessage('pokerole-pmd-extension/theme-sync', themeValue, { destination: 'LOCAL' });

@@ -19,7 +19,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
         if (diceEngine === 'car') {
             const cleanNotation = notation.replace(/\s/g, '');
             const isSuccessRoll = cleanNotation.includes('>');
-            
+
             const match = cleanNotation.match(/(\d+)d6(?:>(\d+))?(?:([+-]\d+))?/);
             const numDice = match ? parseInt(match[1], 10) : 1;
             const successThreshold = match && match[2] ? parseInt(match[2], 10) : 3;
@@ -35,7 +35,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 const result = Math.floor(Math.random() * 6) + 1;
                 diceData.push({ type: 6, result });
                 rawSum += result;
-                
+
                 if (result > successThreshold) {
                     rawSuccesses++;
                     rollStrings.push(`${result}✓`);
@@ -50,7 +50,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
             const finalSuccesses = Math.max(0, rawSuccesses + flatMod);
             const finalSum = rawSum + flatMod;
             const modStr = flatMod > 0 ? ` + ${flatMod}` : flatMod < 0 ? ` - ${Math.abs(flatMod)}` : '';
-            
+
             const cleanLabel = label.replace(/^[🎲💥🩹🍀🎯]\s*/u, '').trim();
             const privacyTag = targetVisibility === 'gm_only' ? '🙈 [PRIVATE] ' : '';
             const finalLabel = `${privacyTag}${cleanLabel}`;
@@ -61,9 +61,9 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
             } else if (isSuccessRoll) {
                 popupMessage = `${finalLabel}\n[${asteriskResults.join(', ')}]${modStr} → ${finalSuccesses} Successes`;
             } else {
-                popupMessage = `${finalLabel}\n[${diceData.map(d => d.result).join(', ')}]${modStr} → ${finalSum}`;
+                popupMessage = `${finalLabel}\n[${diceData.map((d) => d.result).join(', ')}]${modStr} → ${finalSum}`;
             }
-            
+
             const icon = state.identity.tokenImageUrl || 'https://lordcongra.github.io/poke-e-role/pokeball.svg';
 
             let mensaje = '';
@@ -72,7 +72,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
             } else if (isSuccessRoll) {
                 mensaje = `${playerName} | ${finalLabel}: [${rollStrings.join(', ')}] > ${successThreshold}${modStr} → ${finalSuccesses} ✓ ${rawFailures} ✖`;
             } else {
-                const sumStrings = diceData.map(d => d.result).join(' + ');
+                const sumStrings = diceData.map((d) => d.result).join(' + ');
                 mensaje = `${playerName} | ${finalLabel}: [${sumStrings}]${modStr} → ${finalSum}`;
             }
 
@@ -81,17 +81,13 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 // Private roll: Send to LOCAL so the roller sees their own 3D dice.
                 // (The GM will get the log instantly, but no 3D dice since we can't broadcast to just them).
                 await OBR.broadcast.sendMessage(
-                    'tirada:mensaje', 
-                    { mensaje, icon, diceData }, 
+                    'tirada:mensaje',
+                    { mensaje, icon, diceData },
                     { destination: 'LOCAL' }
                 );
             } else {
                 // Public roll: Everyone sees the 3D dice!
-                await OBR.broadcast.sendMessage(
-                    'tirada:mensaje', 
-                    { mensaje, icon, diceData }, 
-                    { destination: 'ALL' }
-                );
+                await OBR.broadcast.sendMessage('tirada:mensaje', { mensaje, icon, diceData }, { destination: 'ALL' });
             }
 
             // 2. Delay the log, the popup, and the automation by 3.5 seconds to let the dice fall!
@@ -99,40 +95,44 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
             const delayMs = targetVisibility === 'gm_only' ? 250 : 3500;
 
             setTimeout(async () => {
-                const rollLogData = { 
-                    id: crypto.randomUUID(), 
+                const rollLogData = {
+                    id: crypto.randomUUID(),
                     player: playerName,
-                    playerId: playerId, 
-                    label: finalLabel, 
-                    result: popupMessage, 
+                    playerId: playerId,
+                    label: finalLabel,
+                    result: popupMessage,
                     icon,
-                    targetVisibility 
+                    targetVisibility
                 };
-                
+
                 const existingLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
                 localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData, ...existingLog].slice(0, 50)));
 
                 // We send the Roll Log to REMOTE. The listener in useOwlbearSync handles the privacy check!
-                await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-sync', rollLogData, { destination: 'REMOTE' });
+                await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-sync', rollLogData, {
+                    destination: 'REMOTE'
+                });
                 await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-update', {}, { destination: 'LOCAL' });
 
                 const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-                await OBR.popover.open({
-                    id: 'pkr-roll-log',
-                    url: `${baseUrl}/roll-log.html`,
-                    height: 380,
-                    width: 320,
-                    disableClickAway: true,
-                    anchorReference: 'POSITION',
-                    anchorPosition: { top: 99999, left: 99999 },
-                    transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
-                }).catch(() => {});
+                await OBR.popover
+                    .open({
+                        id: 'pkr-roll-log',
+                        url: `${baseUrl}/roll-log.html`,
+                        height: 380,
+                        width: 320,
+                        disableClickAway: true,
+                        anchorReference: 'POSITION',
+                        anchorPosition: { top: 99999, left: 99999 },
+                        transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
+                    })
+                    .catch(() => {});
 
                 // ⚠️ SHEET AUTOMATION ⚠️
                 if (rollType === 'init') {
                     const tiebreaker = Math.floor(Math.random() * 6) + 1;
                     const finalInit = finalSum + tiebreaker / 10;
-                    
+
                     if (state.tokenId) {
                         await OBR.scene.items.updateItems([state.tokenId], (items) => {
                             for (const item of items) {
@@ -175,7 +175,9 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                         if (tempGained > currentTempMax) {
                             store.updateHealth('temporaryHitPointsMax', tempGained);
                             store.updateHealth('temporaryHitPoints', tempGained);
-                            OBR.notification.show(`✅ Result: ${finalSuccesses} Successes! (Gained ${tempGained} Temp HP 🛡️)`);
+                            OBR.notification.show(
+                                `✅ Result: ${finalSuccesses} Successes! (Gained ${tempGained} Temp HP 🛡️)`
+                            );
                         } else {
                             OBR.notification.show(`✅ Result: ${finalSuccesses} Successes! (Current Shield Holds 🛡️)`);
                         }
@@ -185,7 +187,8 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                     if (state.tokenId) {
                         await OBR.scene.items.updateItems([state.tokenId], (items) => {
                             for (const item of items) {
-                                const meta = (item.metadata['pokerole-extension/stats'] as Record<string, unknown>) || {};
+                                const meta =
+                                    (item.metadata['pokerole-extension/stats'] as Record<string, unknown>) || {};
                                 const statusListStr = String(meta['status-list'] || '[]');
                                 try {
                                     const statuses = JSON.parse(statusListStr);
@@ -204,7 +207,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 }
             }, delayMs);
 
-            return; 
+            return;
         }
 
         // FORMATTING FOR DICE+:
