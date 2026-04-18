@@ -46,15 +46,15 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 }
             }
 
-            const rawFailures = numDice - rawSuccesses;
             const finalSuccesses = Math.max(0, rawSuccesses + flatMod);
             const finalSum = rawSum + flatMod;
             const modStr = flatMod > 0 ? ` + ${flatMod}` : flatMod < 0 ? ` - ${Math.abs(flatMod)}` : '';
 
             const cleanLabel = label.replace(/^[🎲💥🩹🍀🎯]\s*/u, '').trim();
-            const privacyTag = targetVisibility === 'gm_only' ? '🙈 [PRIVATE] ' : '';
+            const privacyTag = targetVisibility === 'gm_only' ? '[PRIVATE] ' : '';
             const finalLabel = `${privacyTag}${cleanLabel}`;
 
+            // This is the math that will go into our delayed Roll Log popover
             let popupMessage = '';
             if (numDice === 0) {
                 popupMessage = `${finalLabel}\nSet Damage → ${finalSuccesses}`;
@@ -66,32 +66,37 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
 
             const icon = state.identity.tokenImageUrl || 'https://lordcongra.github.io/poke-e-role/pokeball.svg';
 
-            let mensaje = '';
-            if (numDice === 0) {
-                mensaje = `${playerName} | ${finalLabel}: Set Damage → ${finalSuccesses} ✓`;
-            } else if (isSuccessRoll) {
-                mensaje = `${playerName} | ${finalLabel}: [${rollStrings.join(', ')}] > ${successThreshold}${modStr} → ${finalSuccesses} ✓ ${rawFailures} ✖`;
-            } else {
-                const sumStrings = diceData.map((d) => d.result).join(' + ');
-                mensaje = `${playerName} | ${finalLabel}: [${sumStrings}]${modStr} → ${finalSum}`;
+            // This is the string CAR displays instantly at the top of the screen.
+            // We stripped the math out so it doesn't spoil the 3D dice rolls!
+            const mensaje = `${playerName} | ${finalLabel}`;
+
+            // --- FETCH CAR DICE THEME ---
+            let diceTheme = undefined;
+            try {
+                const roomMeta = await OBR.room.getMetadata();
+                const allThemes = roomMeta['com.grupos-acciones.dice/roomDiceThemes'] as any;
+
+                if (allThemes && allThemes.players) {
+                    const connectionId = OBR.player.getConnectionId ? await OBR.player.getConnectionId() : '';
+                    const playerThemeData = allThemes.players[playerId] || allThemes.players[connectionId];
+                    if (playerThemeData && playerThemeData.diceTheme) {
+                        diceTheme = playerThemeData.diceTheme;
+                    }
+                }
+            } catch (e) {
+                console.warn('Could not fetch CAR dice theme from metadata:', e);
             }
+
+            const broadcastPayload = { mensaje, icon, diceData, diceTheme };
 
             // 1. Send the 3D Dice Broadcasts
             if (targetVisibility === 'gm_only') {
-                // Private roll: Send to LOCAL so the roller sees their own 3D dice.
-                // (The GM will get the log instantly, but no 3D dice since we can't broadcast to just them).
-                await OBR.broadcast.sendMessage(
-                    'tirada:mensaje',
-                    { mensaje, icon, diceData },
-                    { destination: 'LOCAL' }
-                );
+                await OBR.broadcast.sendMessage('tirada:mensaje', broadcastPayload, { destination: 'LOCAL' });
             } else {
-                // Public roll: Everyone sees the 3D dice!
-                await OBR.broadcast.sendMessage('tirada:mensaje', { mensaje, icon, diceData }, { destination: 'ALL' });
+                await OBR.broadcast.sendMessage('tirada:mensaje', broadcastPayload, { destination: 'ALL' });
             }
 
             // 2. Delay the log, the popup, and the automation by 3.5 seconds to let the dice fall!
-            // If it's a private roll, we don't need to wait for 3D dice on the GM's screen, so pop the log instantly.
             const delayMs = targetVisibility === 'gm_only' ? 250 : 3500;
 
             setTimeout(async () => {
@@ -108,7 +113,6 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 const existingLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
                 localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData, ...existingLog].slice(0, 50)));
 
-                // We send the Roll Log to REMOTE. The listener in useOwlbearSync handles the privacy check!
                 await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-sync', rollLogData, {
                     destination: 'REMOTE'
                 });

@@ -28,6 +28,7 @@
 
 .type-matchups__group-label {
     width: 35px;
+    flex-shrink: 0;
     text-align: right;
     font-weight: bold;
     font-size: 0.9rem;
