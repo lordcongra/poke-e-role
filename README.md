@@ -1,4 +1,4 @@
-# Pokerole 3.0 Sheet v2.3 (Owlbear Rodeo Extension)
+# Pokerole 3.0 Sheet v2.4.5 (Owlbear Rodeo Extension)
 
 A highly automated, modular character sheet extension for playing **Pokerole 3.0** campaigns (including **Pokémon Mystery Dungeon / PMD** settings) within the Owlbear Rodeo VTT.
 
@@ -8,10 +8,15 @@ _A massive thank you to the creator of the **Owl Trackers** extension. Their inc
 
 ## ⚠️ REQUIRED PLUGINS
 
-To use all the features of this character sheet, you **MUST** install the following Owlbear Rodeo extensions in your room:
+To use all the features of this character sheet, you **MUST** install **Pretty Sordid** and **at least one (though having both is recommended to test which you like better)** of the following Dice Engines:
 
-1. **[Dice+](https://extensions.owlbear.rodeo/dice-plus):** Handles all 1-click 3D dice rolling (Accuracy, Damage, Evasion, Clashes, etc.).
-2. **[Pretty Sordid (Initiative)](https://extensions.owlbear.rodeo/pretty-sordid):** Grabs Initiative rolls from the sheet and automatically sorts the combat order (including decimal tie-breakers!).
+1. **[Custom Action Rolls (CAR)](https://owlbear.rogue.pub/extension/https://action-manager.onrender.com/manifest.json):** Handles 3D dice and features a persistent, pop-out chat log styled like the sheet(more consistent visual theming) to track roll history (found in "Log" button inside the CAR extension). Gives a more detailed breakdown of rolls in the log. Creating your dice visuals can take more time but has more options. This option tends to have better performance on Firefox.
+   _- AND/OR -_
+2. **[Dice+](https://extensions.owlbear.rodeo/dice-plus):** The classic engine (this was the first integration, Custom Action Rolls is new). Handles 1-click 3D physics dice and has roll history but is somewhat more difficult to find. Is a physics-based engine so it can sometimes lose accuracy at high dice counts (trust the GM roll result). Creating your dice is faster usually but gated with some premium features.
+
+_(Note: You can swap between these engines at any time for the whole room using the "📜 Rules" menu on the sheet!)_
+
+3. **[Pretty Sordid (Initiative)](https://extensions.owlbear.rodeo/pretty-sordid):** Grabs Initiative rolls from the sheet and automatically sorts the combat order (including decimal tie-breakers!).
 
 ## 🎒 RECOMMENDED PLUGINS (Optional)
 
@@ -37,7 +42,7 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 ## 🌟 Features
 
-### 🧬 Form Shifts & Transformations (New!)
+### 🧬 Form Shifts & Transformations
 
 - **Built-In Transformations:** Instantly shift your Pokémon into Mega Evolutions, Dynamax, Gigantamax, or Terastallize states with a single click.
 - **Native Image Swapping:** Use the built-in Owlbear Rodeo asset picker to assign specific images to your forms! When you transform, the sheet natively overwrites the token graphic on the map, and perfectly restores your original image when you revert.
@@ -76,9 +81,9 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 - Also supports tracking for **Happiness** and **Loyalty**.
 - **Form & Evolution Safe:** Change a Pokémon's species to update their base stats and typing _without_ wiping their invested skills and moves!
 
-### 🎲 Custom Action Rolls & Auto-Generator
+### 🎲 Action Rolls & Auto-Generator
 
-- **Out-of-Combat Roleplay:** Create up to 10 Custom Action Rolls (e.g., _Investigate_, _Persuade_, _Climb_) using any combination of Core Attributes and Skills.
+- **Out-of-Combat Roleplay:** Create up to 10 custom Action Rolls (e.g., _Investigate_, _Persuade_, _Climb_) using any combination of Core Attributes and Skills.
 - **Smart Auto-Generator:** Instantly draft Wild, Average, or Min-Max builds based on your Rank. The algorithm intelligently caps your core attacking and defending stats before allocating remaining points, dynamically adjusting to your combat bias (Tank, Physical, Special, Support, etc.).
 
 ### ⏱️ Dynamic Status, Pain, & Timers (w/ Map Sync)
@@ -93,12 +98,12 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 ### ⚔️ Willpower & Combat Economy
 
-- **Decoupled Temp Pools (New!):** Independently track and manage Temporary HP and Temporary Willpower. Automated UI bars visually overlay the Temp points directly onto your base resource bars! (Temp Will spends first - made for homebrew mechanics).
 - **Willpower Mechanics:** Dedicated 1-click buttons to spend Willpower for "Pushing Fate" (+1 Auto Success), "Take Your Chances" (gain reroll stacks), and "Power Through the Pain" (ignore Pain Penalties for the scene).
 - **Interactive Rerolls:** A dedicated reroll prompt lets you choose exactly how many failed dice to pick back up and reroll using your active "Take Your Chances" stacks.
 - **Action Tracking:** Automatically increases your Action count and checks off your Evasion/Clash trackers when rolling attacks or maneuvers.
 - **Generic Maneuvers:** 1-click dropdown for combat maneuvers (Grapple, Cover Ally, Ambush, etc.).
 - Dim your used moves with the inline **(✔)** checkbox to track your action economy, then click the **Reset** button to clear the board for the next turn.
+- **Decoupled Temp Pools:** Independently track and manage Temporary HP and Temporary Willpower. Automated UI bars visually overlay the Temp points directly onto your base resource bars! (Temp Will spends first and Temp HP takes damage first - made for homebrew mechanics, though Temp HP exists for dynamax/gigantamax integration).
 
 ### 🎒 Inventory, Tags, & Progression
 
@@ -106,12 +111,14 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 - **Smart Item Auto-Fill:** The sheet automatically recognizes standard items! Type "Life Orb", "Choice Scarf", or "Eviolite" into the name box, and the engine will automatically fetch the description and inject the perfect mechanical tags for you!
 - **Training Points (TP) & Poké (PD):** Keep track of your character's progression currency and wealth with dedicated, auto-saving trackers at the bottom of the sheet.
 
-### 🎲 1-Click Dice+ & Broadcast Integration
+### 🎲 Dice Engine Integration (CAR vs. Dice+)
 
-- **OBR Notifications:** Every roll triggers an Owlbear Rodeo broadcast notification announcing the move, pain penalties, active item buffs, and required successes to the whole table! The goal of this is to give you info on what you have that's affecting your rolls.
-- **Pure Math Routing:** Dice+ and the sheet handles most of the math for you!
+- **Pure Math Routing:** Our engine handles the math for you! Broadcasts are natively formatted to support both the **Dice+** and **Custom Action Rolls (CAR)** extensions.
+- **Which should I choose?**
+    - **Custom Action Rolls (CAR):** Uses internal math rather than pure physics, making it more performance-lite (especially on Firefox) and perfectly synced for all players, regardless of how massive the dice pool gets. It also includes a persistent chat log!
+    - **Dice+:** A pure 3D physics-based roller. It runs smoothly on Google Chrome, but keep in mind that very large dice pools (12+ dice) might occasionally show visual inaccuracies for non-GMs due to physics desyncs across the network.
+- **OBR Notifications:** Every roll triggers an Owlbear Rodeo broadcast notification announcing the move, pain penalties, active item buffs, and required successes to the whole table!
 - **Smart Combat:** Automatically accounts for global Accuracy/Damage modifiers, STAB bonuses, Protean/Libero, Super Luck, and even grants +3 dice on Critical Hits for the _Sniper_ ability.
-- **Automated Vampiric Shields (New!):** Adding the `[Temp HP % Dmg]` tag to any move or item will automatically intercept the broadcast from Owlbear Rodeo's 3D dice and magically apply the correct Temp HP shield to your character based on how much damage you rolled!
 
 ### 🛡️ Auto-Calculating Type Matchups
 
@@ -120,7 +127,7 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 ### 🔒 Room Rules & GM Tools
 
-- **Global Room Rules:** GMs can click the "📜 Rules" button to globally configure how HP/Spec Def is calculated for the room, and completely disable/enable Pain Penalties for all players!
+- **Global Room Rules:** GMs can click the "📜 Rules" button to globally configure the active Dice Engine, dictate how HP/Spec Def is calculated for the room, and completely disable/enable Pain Penalties for all players!
 - **Homebrew Access Control:** GMs can set Homebrew permissions to "Full Access", "View Only", or completely hide the Workshop from the players' screens.
 - **Built-in NPC Toggle:** Mark a sheet as a "Private NPC" to instantly hide the sheet's contents from players, preventing meta-gaming during boss fights.
 
@@ -130,6 +137,6 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 To install this extension into your Owlbear Rodeo room, copy the Manifest URL below and paste it into your Owlbear Rodeo extension manager:
 
-`https://lordcongra.github.io/poke-e-role/manifest.json`
+`https://lordcongra.github.io/poke-e-role/manifest.json?v=2.4.5`
 
-_(Note: If the sheet updates, you can force Owlbear to fetch the newest version by adding a version tag to the end of the URL, like `?v=2.4.0`)_
+_(Note: If the sheet updates, you can force Owlbear to fetch the newest version by bumping the version tag at the end of the URL!)_
