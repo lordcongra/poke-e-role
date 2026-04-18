@@ -285,3 +285,9 @@
 .identity-header__file-input {
     display: none;
 }
+
+.identity-header__changelog-btn {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    margin-left: auto;
+}

@@ -10,6 +10,8 @@ import { HomebrewModal } from '../homebrew/HomebrewModal';
 import { GeneratorModal } from '../modals/GeneratorModal';
 import { TrackerSettingsModal } from '../modals/TrackerSettingsModal';
 import { RulesModal } from '../modals/RulesModal';
+import { ChangelogModal } from '../modals/ChangelogModal';
+import { CURRENT_VERSION } from '../../data/changelog';
 import './IdentityHeader.css';
 
 export function IdentityHeader() {
@@ -21,14 +23,24 @@ export function IdentityHeader() {
     const [showGeneratorModal, setShowGeneratorModal] = useState(false);
     const [showTrackerSettings, setShowTrackerSettings] = useState(false);
     const [showRulesModal, setShowRulesModal] = useState(false);
+    const [showChangelog, setShowChangelog] = useState(false);
 
     useEffect(() => {
-        const savedTheme = localStorage.getItem('pokerole-theme');
-        if (savedTheme === 'dark') {
-            setIsDark(true);
-            document.body.classList.add('dark-mode');
-            document.body.setAttribute('data-theme', 'dark');
-            document.documentElement.setAttribute('data-theme', 'dark');
+        try {
+            const savedTheme = localStorage.getItem('pokerole-theme');
+            if (savedTheme === 'dark') {
+                setIsDark(true);
+                document.body.classList.add('dark-mode');
+                document.body.setAttribute('data-theme', 'dark');
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+
+            const seenVersion = localStorage.getItem('pkr_changelog_seen');
+            if (seenVersion !== CURRENT_VERSION) {
+                setShowChangelog(true);
+            }
+        } catch (e) {
+            console.warn('Could not access localStorage', e);
         }
     }, []);
 
@@ -48,12 +60,21 @@ export function IdentityHeader() {
             document.documentElement.setAttribute('data-theme', 'light');
         }
 
-        localStorage.setItem('pokerole-theme', themeValue);
+        try {
+            localStorage.setItem('pokerole-theme', themeValue);
+        } catch (e) {}
 
         // Tell any other open windows (like the Roll Log) to update their themes!
         if (OBR.isAvailable) {
             OBR.broadcast.sendMessage('pokerole-pmd-extension/theme-sync', themeValue, { destination: 'LOCAL' });
         }
+    };
+
+    const handleCloseChangelog = () => {
+        try {
+            localStorage.setItem('pkr_changelog_seen', CURRENT_VERSION);
+        } catch (e) {}
+        setShowChangelog(false);
     };
 
     const openAbilityModal = async () => {
@@ -106,8 +127,23 @@ export function IdentityHeader() {
         }
     };
 
+    const headerElements = (
+        <button
+            type="button"
+            className="action-button action-button--dark identity-header__changelog-btn"
+            onClick={() => setShowChangelog(true)}
+            title="View Update Log"
+        >
+            📢 What's New
+        </button>
+    );
+
     return (
-        <CollapsingSection title="CHARACTER IDENTITY" className="sheet-panel identity-header">
+        <CollapsingSection
+            title="CHARACTER IDENTITY"
+            headerElements={headerElements}
+            className="sheet-panel identity-header"
+        >
             <IdentityGrid
                 onOpenGenerator={() => setShowGeneratorModal(true)}
                 onOpenAbility={openAbilityModal}
@@ -126,6 +162,7 @@ export function IdentityHeader() {
             {showGeneratorModal && <GeneratorModal onClose={() => setShowGeneratorModal(false)} />}
             {showTrackerSettings && <TrackerSettingsModal onClose={() => setShowTrackerSettings(false)} />}
             {showRulesModal && <RulesModal onClose={() => setShowRulesModal(false)} />}
+            {showChangelog && <ChangelogModal onClose={handleCloseChangelog} />}
 
             {modalConfig && (
                 <div className="identity-header__modal-overlay identity-header__modal-overlay--high-z">

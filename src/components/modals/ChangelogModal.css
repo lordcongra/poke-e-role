@@ -1,0 +1,114 @@
+.changelog-modal__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1500;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: sans-serif;
+}
+
+.changelog-modal__content {
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: 8px;
+    width: 450px;
+    max-width: 90%;
+    max-height: 85vh;
+    border: 2px solid var(--primary);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    color: var(--text-main);
+}
+
+.changelog-modal__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    flex-shrink: 0;
+}
+
+.changelog-modal__title {
+    margin: 0;
+    color: var(--primary);
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.changelog-modal__close-x {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-weight: bold;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 6px;
+    border-radius: 4px;
+}
+
+.changelog-modal__close-x:hover {
+    background: rgba(255, 0, 0, 0.1);
+    color: var(--primary);
+}
+
+.changelog-modal__body {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 5px;
+    margin-bottom: 15px;
+}
+
+.changelog-modal__version-block {
+    margin-bottom: 20px;
+}
+
+.changelog-modal__version-title {
+    margin: 0 0 8px 0;
+    font-size: 1.05rem;
+    color: var(--primary);
+    border-bottom: 1px solid var(--row-even);
+    padding-bottom: 4px;
+}
+
+.changelog-modal__date {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: normal;
+}
+
+.changelog-modal__list {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-main);
+}
+
+.changelog-modal__list li {
+    margin-bottom: 6px;
+}
+
+.changelog-modal__actions {
+    display: flex;
+    justify-content: center;
+    flex-shrink: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 15px;
+}
+
+.changelog-modal__btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+}
