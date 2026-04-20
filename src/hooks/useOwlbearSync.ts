@@ -250,6 +250,8 @@ export function useOwlbearSync() {
                             store.setIdentity('homebrewAccess', String(data.homebrewAccess));
                         if (data.gmOnlyLootGen !== undefined)
                             store.setIdentity('gmOnlyLootGen', Boolean(data.gmOnlyLootGen));
+                        if (data.gmOnlyMatchups !== undefined)
+                            store.setIdentity('gmOnlyMatchups', Boolean(data.gmOnlyMatchups));
                     }
                 } catch (e) {
                     console.error('Engine recovered from room metadata crash:', e);
@@ -285,6 +287,8 @@ export function useOwlbearSync() {
                                 store.setIdentity('homebrewAccess', String(data.homebrewAccess));
                             if (data.gmOnlyLootGen !== undefined)
                                 store.setIdentity('gmOnlyLootGen', Boolean(data.gmOnlyLootGen));
+                            if (data.gmOnlyMatchups !== undefined)
+                                store.setIdentity('gmOnlyMatchups', Boolean(data.gmOnlyMatchups));
                         }
                     } catch (e) {
                         console.error('Engine recovered from room metadata sync crash:', e);

@@ -135,6 +135,29 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                             <option value="Everyone">Everyone</option>
                         </select>
                     </div>
+
+                    <div>
+                        <label className="rules-modal__label">
+                            Type Matchups{' '}
+                            <TooltipIcon
+                                onClick={() =>
+                                    setModalConfig({
+                                        title: 'Type Matchups Visibility',
+                                        content:
+                                            'Controls if players can see the Type Matchups chart on their sheets. Useful for hiding custom typings. (Global Room Setting)'
+                                    })
+                                }
+                            />
+                        </label>
+                        <select
+                            className="identity-grid__select rules-modal__select"
+                            value={id.gmOnlyMatchups ? 'GM Only' : 'Everyone'}
+                            onChange={(e) => setIdentity('gmOnlyMatchups', e.target.value === 'GM Only')}
+                        >
+                            <option value="Everyone">Everyone</option>
+                            <option value="GM Only">GM Only</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 

@@ -364,7 +364,10 @@ export interface IdentitySlice {
         gmDefBadge: boolean;
         settingEcoBadge: boolean;
         gmEcoBadge: boolean;
+
         gmOnlyLootGen: boolean;
+        gmOnlyMatchups: boolean;
+
         colorAct: string;
         colorEva: string;
         colorCla: string;

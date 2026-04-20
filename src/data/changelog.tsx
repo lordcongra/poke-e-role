@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-export const CURRENT_VERSION = '2.4.5';
+export const CURRENT_VERSION = '2.5.1';
 
 export interface ChangelogEntry {
     version: string;
@@ -13,7 +13,7 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
         version: '2.4.5',
         date: 'Recently',
         changes: [
-            'Added a new update changelog system to keep players informed!',
+            'Added in Rules toggle for hiding Type Matchups from locked NPC tokens.',
             'Added new dice-roller engine option in Rules: Custom Action Rolls! Read up on it in the readme on github to learn more.',
             'The default dice roller for the room will be whichever one the DM sets it to, it cannot be set per-player.',
             <>
