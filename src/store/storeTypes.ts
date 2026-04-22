@@ -19,6 +19,7 @@ import type {
     CustomItem,
     CustomMove,
     CustomPokemon,
+    PendingDemoRoll,
     CustomType as BaseCustomType
 } from './entityTypes';
 
@@ -367,6 +368,7 @@ export interface IdentitySlice {
 
         gmOnlyLootGen: boolean;
         gmOnlyMatchups: boolean;
+        gmDemoMode: boolean;
 
         colorAct: string;
         colorEva: string;
@@ -391,12 +393,15 @@ export interface IdentitySlice {
         tokenImageUrl: string | null;
         printConfig: PrintConfig;
         isPrinting: boolean;
+
+        pendingDemoRoll: PendingDemoRoll | null;
     };
 
     setIdentity: <K extends keyof IdentitySlice['identity']>(field: K, value: IdentitySlice['identity'][K]) => void;
     setPrintConfig: (config: Partial<PrintConfig>) => void;
     setTokenData: (tokenId: string, role: 'GM' | 'PLAYER') => void;
     applyLearnset: (data: Record<string, unknown>) => void;
+    setPendingDemoRoll: (rollData: PendingDemoRoll | null) => void;
 }
 
 export interface MacroSlice {

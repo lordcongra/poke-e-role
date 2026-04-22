@@ -6,6 +6,7 @@ import './RulesModal.css';
 export function RulesModal({ onClose }: { onClose: () => void }) {
     const id = useCharacterStore((state) => state.identity);
     const setIdentity = useCharacterStore((state) => state.setIdentity);
+    const role = useCharacterStore((state) => state.role);
     const [modalConfig, setModalConfig] = useState<{ title: string; content: string } | null>(null);
 
     return (
@@ -27,7 +28,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                     setModalConfig({
                                         title: 'Dice Engine Settings',
                                         content:
-                                            'Select which Dice Extension to broadcast rolls to. Both engines support 3D physics dice and full sheet automation, but Custom Action Rolls also features a persistent chat log. (Global Room Setting)'
+                                            'Select which Dice Extension to broadcast rolls to. Both engines support 3D dice and full sheet automation, but Custom Action Rolls may be better for performance and has more realiable accuracy with larger dice rolls.'
                                     })
                                 }
                             />
@@ -158,6 +159,31 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                             <option value="GM Only">GM Only</option>
                         </select>
                     </div>
+
+                    {role === 'GM' && (
+                        <div>
+                            <label className="rules-modal__label">
+                                GM Demo Mode (CAR Only){' '}
+                                <TooltipIcon
+                                    onClick={() =>
+                                        setModalConfig({
+                                            title: 'GM Demonstration Mode',
+                                            content:
+                                                'When enabled, intercept ALL of your dice rolls and prompts you to specify the exact number of successes (or even the exact dice array!) you want the engine to fake. PERFECT for making tutorials/demo videos or for climactic GMing moments where you want a scenario to go a specific way. (GM ONLY FEATURE - does not affect player rolls). This feature ONLY works with the Custom Action Rolls dice engine option enabled, it is NOT compatible with Dice+.'
+                                        })
+                                    }
+                                />
+                            </label>
+                            <select
+                                className="identity-grid__select rules-modal__select"
+                                value={id.gmDemoMode ? 'Enabled' : 'Disabled'}
+                                onChange={(e) => setIdentity('gmDemoMode', e.target.value === 'Enabled')}
+                            >
+                                <option value="Disabled">Disabled</option>
+                                <option value="Enabled">Enabled</option>
+                            </select>
+                        </div>
+                    )}
                 </div>
             </div>
 

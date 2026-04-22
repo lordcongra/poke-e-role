@@ -1,0 +1,109 @@
+.demo-roll-modal__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: sans-serif;
+}
+
+.demo-roll-modal__content {
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: 8px;
+    width: 320px;
+    border: 2px solid #e65100;
+    color: var(--text-main);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+}
+
+.demo-roll-modal__title {
+    margin-top: 0;
+    color: #e65100;
+    font-size: 1.2rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+    text-align: center;
+}
+
+.demo-roll-modal__desc {
+    font-size: 0.85rem;
+    text-align: center;
+    margin-bottom: 15px;
+    color: var(--text-muted);
+}
+
+.demo-roll-modal__tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.demo-roll-modal__tab {
+    flex: 1;
+    padding: 6px;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+.demo-roll-modal__tab--active {
+    background: #e65100;
+    color: white;
+    border-color: #e65100;
+}
+
+.demo-roll-modal__body {
+    margin-bottom: 20px;
+}
+
+.demo-roll-modal__form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.demo-roll-modal__label {
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+.demo-roll-modal__input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--input-bg);
+    color: var(--text-main);
+    font-size: 1rem;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.demo-roll-modal__subtext {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin: 0;
+    text-align: center;
+}
+
+.demo-roll-modal__actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.demo-roll-modal__btn {
+    flex: 1;
+    padding: 10px;
+    font-size: 0.95rem;
+}

@@ -12,6 +12,7 @@ import { InventoryTable } from './components/tables/InventoryTable';
 import { TrackerSection } from './components/board/TrackerSection';
 import { TrainerBadges } from './components/board/TrainerBadges';
 import { PrintSheet } from './components/print/PrintSheet';
+import { DemoRollModal } from './components/modals/DemoRollModal';
 import './App.css';
 import './style.css';
 
@@ -69,6 +70,9 @@ function App() {
 
                 <InventoryTable />
             </div>
+
+            {/* Global Modals / Interceptors */}
+            <DemoRollModal />
             {isPrinting && <PrintSheet />}
         </>
     );

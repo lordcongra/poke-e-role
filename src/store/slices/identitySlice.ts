@@ -54,7 +54,8 @@ const OBR_KEY_MAP: Record<string, string> = {
     customFormFirstHitDmgActive: 'custom-form-first-hit-dmg',
     megaImageUrl: 'mega-image-url',
     maxImageUrl: 'max-image-url',
-    teraImageUrl: 'tera-image-url'
+    teraImageUrl: 'tera-image-url',
+    gmDemoMode: 'gm-demo-mode'
 };
 
 const parseLearnset = (movesObj: unknown): Array<{ Learned: string; Name: string }> => {
@@ -151,6 +152,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
 
         gmOnlyLootGen: true,
         gmOnlyMatchups: false,
+        gmDemoMode: false,
 
         colorAct: '#4890fc',
         colorEva: '#c387fc',
@@ -195,10 +197,16 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
             statStyle: 'dots',
             abilityDescStyle: 'all'
         },
-        isPrinting: false
+        isPrinting: false,
+        pendingDemoRoll: null
     },
 
     setTokenData: (tokenId, role) => set({ tokenId, role }),
+
+    setPendingDemoRoll: (rollData) =>
+        set((state) => ({
+            identity: { ...state.identity, pendingDemoRoll: rollData }
+        })),
 
     setIdentity: (field, value) =>
         set((state) => {
@@ -210,10 +218,11 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 field === 'diceEngine' ||
                 field === 'homebrewAccess' ||
                 field === 'gmOnlyLootGen' ||
-                field === 'gmOnlyMatchups'
+                field === 'gmOnlyMatchups' ||
+                field === 'gmDemoMode'
             ) {
                 if (OBR.isAvailable) {
-                    OBR.room.getMetadata().then((meta) => {
+                    OBR.room.getMetadata().then((meta: Record<string, unknown>) => {
                         const roomMeta =
                             (meta['pokerole-pmd-extension/room-settings'] as Record<string, unknown>) || {};
                         if (field === 'ruleset') roomMeta.ruleset = value;
@@ -222,6 +231,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                         if (field === 'homebrewAccess') roomMeta.homebrewAccess = value;
                         if (field === 'gmOnlyLootGen') roomMeta.gmOnlyLootGen = value;
                         if (field === 'gmOnlyMatchups') roomMeta.gmOnlyMatchups = value;
+                        if (field === 'gmDemoMode') roomMeta.gmDemoMode = value;
                         OBR.room.setMetadata({ 'pokerole-pmd-extension/room-settings': roomMeta });
                     });
                 }
@@ -267,7 +277,12 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 updatesToSave['hp-max-display'] = newHealth.hpMax;
             }
 
-            if (field !== 'printConfig' && field !== 'tokenImageUrl' && field !== 'isPrinting') {
+            if (
+                field !== 'printConfig' &&
+                field !== 'tokenImageUrl' &&
+                field !== 'isPrinting' &&
+                field !== 'pendingDemoRoll'
+            ) {
                 if (typeof value === 'string' || typeof value === 'boolean' || typeof value === 'number') {
                     if (field === 'maxFormData') updatesToSave['max-form-data'] = value;
                     else if (field === 'activeFormId') updatesToSave['active-form-id'] = value;

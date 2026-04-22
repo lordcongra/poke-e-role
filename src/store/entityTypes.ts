@@ -195,3 +195,11 @@ export interface CustomType {
     noEffectAgainst: string[];
     gmOnly?: boolean;
 }
+
+export interface PendingDemoRoll {
+    notation: string;
+    numDice: number;
+    successThreshold: number;
+    flatMod: number;
+    resolve: (diceArray: number[] | null) => void;
+}

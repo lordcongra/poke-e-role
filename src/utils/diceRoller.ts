@@ -12,6 +12,8 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
     try {
         const state = useCharacterStore.getState();
         const diceEngine = state.identity.diceEngine || 'dice-plus';
+        const isGmDemo = state.identity.gmDemoMode && state.role === 'GM' && diceEngine === 'car';
+
         const playerId = await OBR.player.getId();
         const playerName = await OBR.player.getName();
         const targetVisibility = state.identity.rolls === 'Private (GM)' ? 'gm_only' : 'everyone';
@@ -25,6 +27,25 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
             const successThreshold = match && match[2] ? parseInt(match[2], 10) : 3;
             const flatMod = match && match[3] ? parseInt(match[3].replace(/\s/g, ''), 10) : 0;
 
+            let overrideDice: number[] | null = null;
+
+            // ⚠️ GM INTERCEPTOR PATTERN ⚠️
+            if (isGmDemo && numDice > 0) {
+                overrideDice = await new Promise<number[] | null>((resolve) => {
+                    useCharacterStore.getState().setPendingDemoRoll({
+                        notation: cleanNotation,
+                        numDice,
+                        successThreshold,
+                        flatMod,
+                        resolve
+                    });
+                });
+
+                useCharacterStore.getState().setPendingDemoRoll(null);
+
+                if (!overrideDice) return;
+            }
+
             const diceData = [];
             const rollStrings = [];
             const asteriskResults = [];
@@ -32,7 +53,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
             let rawSum = 0;
 
             for (let i = 0; i < numDice; i++) {
-                const result = Math.floor(Math.random() * 6) + 1;
+                const result = overrideDice ? overrideDice[i] : Math.floor(Math.random() * 6) + 1;
                 diceData.push({ type: 6, result });
                 rawSum += result;
 
@@ -54,7 +75,6 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
             const privacyTag = targetVisibility === 'gm_only' ? '[PRIVATE] ' : '';
             const finalLabel = `${privacyTag}${cleanLabel}`;
 
-            // This is the math that will go into our delayed Roll Log popover
             let popupMessage = '';
             if (numDice === 0) {
                 popupMessage = `${finalLabel}\nSet Damage → ${finalSuccesses}`;
@@ -65,20 +85,21 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
             }
 
             const icon = state.identity.tokenImageUrl || 'https://lordcongra.github.io/poke-e-role/pokeball.svg';
-
-            // This is the string CAR displays instantly at the top of the screen.
-            // We stripped the math out so it doesn't spoil the 3D dice rolls!
             const mensaje = `${playerName} | ${finalLabel}`;
 
-            // --- FETCH CAR DICE THEME ---
-            let diceTheme = undefined;
+            let diceTheme: unknown = undefined;
             try {
                 const roomMeta = await OBR.room.getMetadata();
-                const allThemes = roomMeta['com.grupos-acciones.dice/roomDiceThemes'] as any;
+                // STRICT TYPING FIX: Replaced `any` with `Record<string, unknown>`
+                const allThemes = roomMeta['com.grupos-acciones.dice/roomDiceThemes'] as
+                    | Record<string, unknown>
+                    | undefined;
 
                 if (allThemes && allThemes.players) {
+                    const playersMap = allThemes.players as Record<string, Record<string, unknown>>;
                     const connectionId = OBR.player.getConnectionId ? await OBR.player.getConnectionId() : '';
-                    const playerThemeData = allThemes.players[playerId] || allThemes.players[connectionId];
+                    const playerThemeData = playersMap[playerId] || playersMap[connectionId];
+
                     if (playerThemeData && playerThemeData.diceTheme) {
                         diceTheme = playerThemeData.diceTheme;
                     }
@@ -89,14 +110,13 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
 
             const broadcastPayload = { mensaje, icon, diceData, diceTheme };
 
-            // 1. Send the 3D Dice Broadcasts
+            // Restored the proper routing based on your test!
             if (targetVisibility === 'gm_only') {
                 await OBR.broadcast.sendMessage('tirada:mensaje', broadcastPayload, { destination: 'LOCAL' });
             } else {
                 await OBR.broadcast.sendMessage('tirada:mensaje', broadcastPayload, { destination: 'ALL' });
             }
 
-            // 2. Delay the log, the popup, and the automation by 3.5 seconds to let the dice fall!
             const delayMs = targetVisibility === 'gm_only' ? 250 : 3500;
 
             setTimeout(async () => {
@@ -132,7 +152,6 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                     })
                     .catch(() => {});
 
-                // ⚠️ SHEET AUTOMATION ⚠️
                 if (rollType === 'init') {
                     const tiebreaker = Math.floor(Math.random() * 6) + 1;
                     const finalInit = finalSum + tiebreaker / 10;
@@ -214,11 +233,8 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
             return;
         }
 
-        // FORMATTING FOR DICE+:
         OBR.notification.show(label);
-
         const uniqueId = crypto.randomUUID();
-
         const rollId = payload
             ? `${rollType}|${state.tokenId}|${payload}|${uniqueId}`
             : `${rollType}|${state.tokenId}|${uniqueId}`;

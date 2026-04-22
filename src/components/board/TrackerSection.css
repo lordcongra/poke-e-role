@@ -65,17 +65,22 @@
 .tracker-section__first-hit-group {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     background: var(--panel-bg);
     border: 1px solid var(--border);
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 0.75rem;
+    flex: 0 1 auto;
 }
 
 .tracker-section__first-hit-label {
     font-weight: bold;
     color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .tracker-section__first-hit-check {
@@ -132,6 +137,14 @@
     flex: 0 0 32px;
     padding: 2px 0;
     text-align: center;
+}
+
+.tracker-section__reset-rest-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .tracker-section__reset-btn,

@@ -160,126 +160,44 @@ export function TrackerSection() {
     return (
         <CollapsingSection title="ROUND TRACKER" className="sheet-panel tracker-section">
             <div className="tracker-section__horizontal-wrapper">
-                {/* LEFT COLUMN: Actions & Chances */}
-                <div className="tracker-section__horizontal-col">
-                    <div className="tracker-section__actions-row">
-                        <div className="tracker-section__action-group">
-                            <span className="tracker-section__action-label">Actions</span>
-                            <TooltipIcon
-                                onClick={() => setTooltipInfo({ title: 'Actions', desc: 'Actions taken this round.' })}
-                            />
-                            :
-                            <NumberSpinner
-                                value={trackers.actions}
-                                onChange={(value) => updateTracker('actions', Math.max(0, Math.min(5, value)))}
-                                min={0}
-                                max={5}
-                            />
-                        </div>
-
-                        <div className="tracker-section__buttons-group">
-                            <div className="tracker-section__toggle-group">
-                                <button
-                                    type="button"
-                                    onClick={handleEvadeRoll}
-                                    disabled={isMaxed}
-                                    style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
-                                    title={isMaxed ? 'Cannot Evade while Dynamaxed/Gigantamaxed' : ''}
-                                    className="action-button action-button--dark tracker-section__toggle-btn"
-                                >
-                                    🎲 Evade
-                                </button>
-                                <input
-                                    type="checkbox"
-                                    checked={trackers.evade}
-                                    disabled={isMaxed}
-                                    style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
-                                    title={isMaxed ? 'Cannot Evade while Dynamaxed/Gigantamaxed' : ''}
-                                    onChange={(event) => updateTracker('evade', event.target.checked)}
-                                    className="sheet-save tracker-section__checkbox"
-                                />
-                            </div>
-
-                            <div className="tracker-section__toggle-group">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowClashModal(true)}
-                                    disabled={isMaxed}
-                                    style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
-                                    title={isMaxed ? 'Cannot Clash while Dynamaxed/Gigantamaxed' : ''}
-                                    className="action-button action-button--dark tracker-section__toggle-btn"
-                                >
-                                    🎲 Clash
-                                </button>
-                                <input
-                                    type="checkbox"
-                                    checked={trackers.clash}
-                                    disabled={isMaxed}
-                                    style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
-                                    title={isMaxed ? 'Cannot Clash while Dynamaxed/Gigantamaxed' : ''}
-                                    onChange={(event) => updateTracker('clash', event.target.checked)}
-                                    className="sheet-save tracker-section__checkbox"
-                                />
-                            </div>
-
-                            <div className="tracker-section__first-hit-group">
-                                <span
-                                    className="tracker-section__first-hit-label"
-                                    title="Prime your First Hit tags for Accuracy or Damage"
-                                >
-                                    1st Hit:
-                                </span>
-                                <label className="tracker-section__first-hit-check">
-                                    <input
-                                        type="checkbox"
-                                        checked={trackers.firstHitAcc}
-                                        onChange={(event) => updateTracker('firstHitAcc', event.target.checked)}
-                                        className="sheet-save tracker-section__checkbox"
-                                    />{' '}
-                                    Acc
-                                </label>
-                                <label className="tracker-section__first-hit-check">
-                                    <input
-                                        type="checkbox"
-                                        checked={trackers.firstHitDmg}
-                                        onChange={(event) => updateTracker('firstHitDmg', event.target.checked)}
-                                        className="sheet-save tracker-section__checkbox"
-                                    />{' '}
-                                    Dmg
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="tracker-section__chances-row">
-                        <span className="tracker-section__action-label">Take your Chances</span>
-                        <TooltipIcon
-                            onClick={() =>
-                                setTooltipInfo({
-                                    title: 'Take Your Chances',
-                                    desc: 'Reroll failed dice. Max uses equals the number of Willpower spent.'
-                                })
-                            }
-                        />
-                        :
-                        <NumberSpinner
-                            value={trackers.chances}
-                            onChange={(value) => updateTracker('chances', value)}
-                            min={0}
-                        />
-                        <button
-                            type="button"
-                            onClick={openChancesModal}
-                            className="action-button action-button--dark tracker-section__roll-btn"
-                        >
-                            🎲 Roll
-                        </button>
-                    </div>
-                </div>
-
-                {/* RIGHT COLUMN: Maneuvers & Willpower */}
+                
+                {/* LEFT COLUMN: Modifiers, Maneuvers, & Willpower */}
                 <div className="tracker-section__horizontal-col">
                     <div className="tracker-section__maneuver-row">
+                        
+                        <div className="tracker-section__first-hit-group">
+                            <span className="tracker-section__first-hit-label">
+                                1st Hit
+                                <TooltipIcon
+                                    onClick={() =>
+                                        setTooltipInfo({
+                                            title: '1st Hit Modifiers',
+                                            desc: "1st Hit modifiers are primarily used for calculating bonus damage upon Terastallizing. The Accuracy toggle exists for Homebrew items. If you aren't using these mechanics, you can safely ignore these checkboxes!"
+                                        })
+                                    }
+                                />
+                                :
+                            </span>
+                            <label className="tracker-section__first-hit-check">
+                                <input
+                                    type="checkbox"
+                                    checked={trackers.firstHitAcc}
+                                    onChange={(event) => updateTracker('firstHitAcc', event.target.checked)}
+                                    className="sheet-save tracker-section__checkbox"
+                                />{' '}
+                                Acc
+                            </label>
+                            <label className="tracker-section__first-hit-check">
+                                <input
+                                    type="checkbox"
+                                    checked={trackers.firstHitDmg}
+                                    onChange={(event) => updateTracker('firstHitDmg', event.target.checked)}
+                                    className="sheet-save tracker-section__checkbox"
+                                />{' '}
+                                Dmg
+                            </label>
+                        </div>
+
                         <div className="tracker-section__maneuver-subrow">
                             <select
                                 value={maneuver}
@@ -300,23 +218,6 @@ export function TrackerSection() {
                                 className="action-button action-button--dark tracker-section__maneuver-btn"
                             >
                                 🎲
-                            </button>
-                        </div>
-                        <div className="tracker-section__maneuver-subrow">
-                            <button
-                                type="button"
-                                onClick={resetRound}
-                                className="action-button action-button--red tracker-section__reset-btn"
-                            >
-                                🔄 Reset
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setShowRestModal(true)}
-                                className="action-button tracker-section__rest-btn"
-                                title="Fully heal HP/Will and clear statuses"
-                            >
-                                🏕️ Rest
                             </button>
                         </div>
                     </div>
@@ -351,7 +252,116 @@ export function TrackerSection() {
                             Take Your Chances
                         </button>
                     </div>
+                    
+                    <div className="tracker-section__chances-row">
+                        <span className="tracker-section__action-label">Take your Chances</span>
+                        <TooltipIcon
+                            onClick={() =>
+                                setTooltipInfo({
+                                    title: 'Take Your Chances',
+                                    desc: 'Reroll failed dice. Max uses equals the number of Willpower spent.'
+                                })
+                            }
+                        />
+                        :
+                        <NumberSpinner
+                            value={trackers.chances}
+                            onChange={(value) => updateTracker('chances', value)}
+                            min={0}
+                        />
+                        <button
+                            type="button"
+                            onClick={openChancesModal}
+                            className="action-button action-button--dark tracker-section__roll-btn"
+                        >
+                            🎲 Roll
+                        </button>
+                    </div>
                 </div>
+
+                {/* RIGHT COLUMN: Round Management */}
+                <div className="tracker-section__horizontal-col">
+                    <div className="tracker-section__actions-row">
+                        <div className="tracker-section__action-group">
+                            <span className="tracker-section__action-label">Actions</span>
+                            <TooltipIcon
+                                onClick={() => setTooltipInfo({ title: 'Actions', desc: 'Actions taken this round.' })}
+                            />
+                            :
+                            <NumberSpinner
+                                value={trackers.actions}
+                                onChange={(value) => updateTracker('actions', Math.max(0, Math.min(5, value)))}
+                                min={0}
+                                max={5}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="tracker-section__buttons-group">
+                        <div className="tracker-section__toggle-group">
+                            <button
+                                type="button"
+                                onClick={handleEvadeRoll}
+                                disabled={isMaxed}
+                                style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
+                                title={isMaxed ? 'Cannot Evade while Dynamaxed/Gigantamaxed' : ''}
+                                className="action-button action-button--dark tracker-section__toggle-btn"
+                            >
+                                🎲 Evade
+                            </button>
+                            <input
+                                type="checkbox"
+                                checked={trackers.evade}
+                                disabled={isMaxed}
+                                style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
+                                title={isMaxed ? 'Cannot Evade while Dynamaxed/Gigantamaxed' : ''}
+                                onChange={(event) => updateTracker('evade', event.target.checked)}
+                                className="sheet-save tracker-section__checkbox"
+                            />
+                        </div>
+
+                        <div className="tracker-section__toggle-group">
+                            <button
+                                type="button"
+                                onClick={() => setShowClashModal(true)}
+                                disabled={isMaxed}
+                                style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
+                                title={isMaxed ? 'Cannot Clash while Dynamaxed/Gigantamaxed' : ''}
+                                className="action-button action-button--dark tracker-section__toggle-btn"
+                            >
+                                🎲 Clash
+                            </button>
+                            <input
+                                type="checkbox"
+                                checked={trackers.clash}
+                                disabled={isMaxed}
+                                style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
+                                title={isMaxed ? 'Cannot Clash while Dynamaxed/Gigantamaxed' : ''}
+                                onChange={(event) => updateTracker('clash', event.target.checked)}
+                                className="sheet-save tracker-section__checkbox"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="tracker-section__reset-rest-row">
+                        <button
+                            type="button"
+                            onClick={resetRound}
+                            className="action-button action-button--red tracker-section__reset-btn"
+                        >
+                            🔄 Reset
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setShowRestModal(true)}
+                            className="action-button tracker-section__rest-btn"
+                            title="Fully heal HP/Will and clear statuses"
+                        >
+                            🏕️ Rest
+                        </button>
+                    </div>
+                </div>
+
             </div>
 
             {chancesModalOpen && <TakeChancesModal onClose={() => setChancesModalOpen(false)} />}
