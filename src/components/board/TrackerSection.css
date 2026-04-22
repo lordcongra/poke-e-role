@@ -8,30 +8,37 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
-    align-items: center;
-    padding-top: 4px; /* Tiny bit of space separating the content from the red header */
+    align-items: stretch; 
+    padding-top: 4px; 
 }
 
 .tracker-section__horizontal-col {
     display: flex;
     flex-direction: column;
+    justify-content: space-between; 
     gap: 12px;
-    min-width: 0; /* CRITICAL FIX: Allows grid column to shrink on mobile */
+    min-width: 0; 
+    height: 100%;
 }
 
-.tracker-section__actions-row {
+.tracker-section__row-space-between {
     display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 6px 10px;
-    font-size: 0.75rem;
+    justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
 }
 
 .tracker-section__action-group {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 4px;
+}
+
+.tracker-section__action-group--right {
+    margin-left: auto; 
+    font-size: 0.75rem;
 }
 
 .tracker-section__action-label {
@@ -42,24 +49,29 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    flex-wrap: wrap; /* CRITICAL FIX: Allows Evade/Clash buttons to wrap on tiny screens */
-    justify-content: center;
+    flex-wrap: wrap; 
 }
 
 .tracker-section__toggle-group {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
 }
 
 .tracker-section__toggle-btn {
-    padding: 2px 6px;
+    padding: 0 8px;
     white-space: nowrap;
+    height: 24px; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
 }
 
 .tracker-section__checkbox {
     cursor: pointer;
     transform: scale(1.1);
+    margin: 0; /* Prevents default browser margins from messing up vertical alignment */
 }
 
 .tracker-section__first-hit-group {
@@ -67,17 +79,20 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    background: var(--panel-bg);
+    background: var(--row-odd); 
     border: 1px solid var(--border);
-    padding: 2px 6px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); 
+    padding: 0 6px;
     border-radius: 4px;
     font-size: 0.75rem;
     flex: 0 1 auto;
+    height: 28px; /* Matched to Maneuver Dropdown */
+    box-sizing: border-box;
 }
 
 .tracker-section__first-hit-label {
     font-weight: bold;
-    color: var(--primary);
+    color: var(--text-main);
     display: flex;
     align-items: center;
     gap: 4px;
@@ -86,7 +101,7 @@
 .tracker-section__first-hit-check {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 4px;
     cursor: pointer;
     color: var(--text-main);
     font-weight: bold;
@@ -96,7 +111,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-wrap: wrap; /* Safety wrap */
+    flex-wrap: wrap; 
     gap: 6px;
     font-size: 0.75rem;
 }
@@ -105,38 +120,41 @@
     padding: 2px 8px;
 }
 
-.tracker-section__maneuver-row {
-    display: flex;
-    gap: 6px;
-    justify-content: center; /* Centers items when wrapping */
-    align-items: center;
-    flex-wrap: wrap; /* CRITICAL FIX: Allows Maneuver dropdown and buttons to wrap */
-}
-
 .tracker-section__maneuver-subrow {
     display: flex;
     gap: 6px;
     align-items: center;
-    justify-content: center;
     flex: 1 1 auto;
 }
 
 .tracker-section__maneuver-select {
-    padding: 2px;
+    padding: 0 6px;
     font-family: inherit;
     border: 1px solid var(--border);
     font-size: 0.75rem;
-    flex: 1 1 100px; /* CRITICAL FIX: Allows shrinking down to a minimum size before wrapping */
+    flex: 1 1 100px; 
     min-width: 0;
-    background-color: var(--panel-bg);
+    background-color: var(--row-odd); 
     color: var(--text-main);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); 
     border-radius: 3px;
+    height: 28px; 
+    box-sizing: border-box;
+    outline: none;
 }
 
 .tracker-section__maneuver-btn {
-    flex: 0 0 32px;
-    padding: 2px 0;
+    flex: 0 0 28px; 
+    height: 28px; 
+    min-height: 28px; 
+    max-height: 28px; 
+    margin: 0;
+    padding: 0;
     text-align: center;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .tracker-section__reset-rest-row {
@@ -152,9 +170,13 @@
     flex: 1 1 80px;
     min-width: 80px;
     text-align: center;
-    padding: 4px 0;
+    padding: 0; 
+    height: 28px; /* Hard-locked to perfectly match the Conditions box */
     box-sizing: border-box;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .tracker-section__rest-btn {
@@ -165,7 +187,7 @@
 
 .tracker-section__will-row {
     display: flex;
-    gap: 4px;
+    gap: 6px; 
     justify-content: space-between;
     align-items: stretch;
 }
@@ -173,12 +195,56 @@
 .tracker-section__will-btn {
     flex: 1 1 0%;
     font-size: 0.65rem;
-    padding: 4px 2px;
+    padding: 6px 2px;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     white-space: nowrap;
+}
+
+/* Active Conditions Container */
+.tracker-section__conditions-container {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    background: var(--row-odd); 
+    border: 1px solid var(--border);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); 
+    padding: 0 8px; 
+    border-radius: 4px;
+    height: 28px; /* Hard-locked to perfectly match the Reset/Rest buttons */
+    box-sizing: border-box;
+}
+
+.tracker-section__conditions-label {
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.tracker-section__conditions-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+}
+
+.tracker-section__condition-pill {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    white-space: nowrap;
+}
+
+.tracker-section__conditions-empty {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-style: italic;
 }
 
 /* Modals */
@@ -289,10 +355,6 @@
 @media (max-width: 768px) {
     .tracker-section__horizontal-wrapper {
         grid-template-columns: 1fr;
-        gap: 12px;
-    }
-
-    .tracker-section__maneuver-subrow {
-        flex: 1 1 100%;
+        gap: 16px;
     }
 }

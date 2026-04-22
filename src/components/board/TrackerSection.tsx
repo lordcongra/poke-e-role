@@ -3,7 +3,8 @@ import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { CombatStat, Skill } from '../../types/enums';
-import { rollGeneric, parseCombatTags, getAbilityText } from '../../utils/combatUtils';
+import { rollGeneric, parseCombatTags, getAbilityText, getStatusPenalties } from '../../utils/combatUtils';
+import { STATUS_COLORS } from '../../data/constants';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { TakeChancesModal } from '../modals/TakeChancesModal';
@@ -22,7 +23,12 @@ export function TrackerSection() {
     const painEnabled =
         String(useCharacterStore((state) => state.identity.pain || 'Enabled')).toLowerCase() === 'enabled';
     const will = useCharacterStore((state) => state.will);
+    const health = useCharacterStore((state) => state.health);
     const updateWill = useCharacterStore((state) => state.updateWill);
+
+    const stats = useCharacterStore((state) => state.stats);
+    const derived = useCharacterStore((state) => state.derived);
+    const activeStatuses = useCharacterStore((state) => state.statuses);
 
     const [maneuver, setManeuver] = useState('none');
     const [showClashModal, setShowClashModal] = useState(false);
@@ -157,14 +163,152 @@ export function TrackerSection() {
             );
     };
 
+    // --- DERIVE ACTIVE CONDITIONS ---
+    const conditions: Array<{ id: string; label: string; bg: string; text: string }> = [];
+
+    // 1. Pain Penalty
+    if (painEnabled) {
+        const hpCurr = health.hpCurr;
+        const hpMax = Math.max(1, health.hpMax);
+        let rawPenalty = 0;
+        
+        if (hpCurr <= 1) rawPenalty = 3;
+        else if (hpCurr <= Math.floor(hpMax / 2)) rawPenalty = 1;
+        
+        const finalPenalty = Math.max(0, rawPenalty - trackers.ignoredPain);
+        if (finalPenalty > 0) {
+            conditions.push({ id: 'pain', label: `Pain (-${finalPenalty} Succ)`, bg: '#c62828', text: '#fff' });
+        }
+    }
+
+    // 2. Status Effects
+    const statusPenalties = getStatusPenalties(useCharacterStore.getState());
+    activeStatuses.forEach((status) => {
+        if (status.name !== 'Healthy') {
+            const name = status.name === 'Custom...' ? status.customName || 'Custom' : status.name;
+            let label = name;
+            
+            // Inject mechanical hints for the two statuses that strictly deduct math
+            if (status.name === 'Paralysis' && statusPenalties.paralysisDexterityPenalty < 0) {
+                label = `Paralysis (${statusPenalties.paralysisDexterityPenalty} Dex)`;
+            } else if (status.name === 'Confusion' && statusPenalties.confusionPenalty < 0) {
+                label = `Confusion (${statusPenalties.confusionPenalty} Succ)`;
+            }
+            
+            const colors = STATUS_COLORS[status.name] || { bg: '#9C27B0', text: '#fff' };
+            conditions.push({ id: status.id, label, bg: colors.bg, text: colors.text });
+        }
+    });
+
+    // 3. Stat Buffs & Debuffs
+    const addStatCondition = (label: string, buff: number, debuff: number) => {
+        if (buff > 0) conditions.push({ id: `buff-${label}`, label: `${label} +${buff}`, bg: '#1976d2', text: '#fff' });
+        if (debuff > 0) conditions.push({ id: `debuff-${label}`, label: `${label} -${debuff}`, bg: '#d32f2f', text: '#fff' });
+    };
+
+    addStatCondition('STR', stats[CombatStat.STR].buff, stats[CombatStat.STR].debuff);
+    addStatCondition('DEX', stats[CombatStat.DEX].buff, stats[CombatStat.DEX].debuff);
+    addStatCondition('VIT', stats[CombatStat.VIT].buff, stats[CombatStat.VIT].debuff);
+    addStatCondition('SPE', stats[CombatStat.SPE].buff, stats[CombatStat.SPE].debuff);
+    addStatCondition('INS', stats[CombatStat.INS].buff, stats[CombatStat.INS].debuff);
+    addStatCondition('DEF', derived.defBuff, derived.defDebuff);
+    addStatCondition('S.DEF', derived.sdefBuff, derived.sdefDebuff);
+
     return (
         <CollapsingSection title="ROUND TRACKER" className="sheet-panel tracker-section">
             <div className="tracker-section__horizontal-wrapper">
                 
-                {/* LEFT COLUMN: Modifiers, Maneuvers, & Willpower */}
+                {/* LEFT COLUMN: Turn Economy (Evade, Clash, Actions, Maneuvers, Reset) */}
                 <div className="tracker-section__horizontal-col">
-                    <div className="tracker-section__maneuver-row">
-                        
+                    
+                    {/* Row 1: Evade & Clash (Left) | Actions (Right) */}
+                    <div className="tracker-section__row-space-between">
+                        <div className="tracker-section__buttons-group">
+                            <div className="tracker-section__toggle-group">
+                                <button
+                                    type="button"
+                                    onClick={handleEvadeRoll}
+                                    disabled={isMaxed}
+                                    style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
+                                    title={isMaxed ? 'Cannot Evade while Dynamaxed/Gigantamaxed' : ''}
+                                    className="action-button action-button--dark tracker-section__toggle-btn"
+                                >
+                                    🎲 Evade
+                                </button>
+                                <input
+                                    type="checkbox"
+                                    checked={trackers.evade}
+                                    disabled={isMaxed}
+                                    style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
+                                    title={isMaxed ? 'Cannot Evade while Dynamaxed/Gigantamaxed' : ''}
+                                    onChange={(event) => updateTracker('evade', event.target.checked)}
+                                    className="sheet-save tracker-section__checkbox"
+                                />
+                            </div>
+
+                            <div className="tracker-section__toggle-group">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowClashModal(true)}
+                                    disabled={isMaxed}
+                                    style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
+                                    title={isMaxed ? 'Cannot Clash while Dynamaxed/Gigantamaxed' : ''}
+                                    className="action-button action-button--dark tracker-section__toggle-btn"
+                                >
+                                    🎲 Clash
+                                </button>
+                                <input
+                                    type="checkbox"
+                                    checked={trackers.clash}
+                                    disabled={isMaxed}
+                                    style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
+                                    title={isMaxed ? 'Cannot Clash while Dynamaxed/Gigantamaxed' : ''}
+                                    onChange={(event) => updateTracker('clash', event.target.checked)}
+                                    className="sheet-save tracker-section__checkbox"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="tracker-section__action-group tracker-section__action-group--right">
+                            <span className="tracker-section__action-label">Actions</span>
+                            <TooltipIcon
+                                onClick={() => setTooltipInfo({ title: 'Actions', desc: 'Actions taken this round.' })}
+                            />
+                            :
+                            <NumberSpinner
+                                value={trackers.actions}
+                                onChange={(value) => updateTracker('actions', Math.max(0, Math.min(5, value)))}
+                                min={0}
+                                max={5}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Row 2: Maneuvers (Left) | 1st Hit (Right) */}
+                    <div className="tracker-section__row-space-between">
+                        <div className="tracker-section__maneuver-subrow">
+                            <select
+                                value={maneuver}
+                                onChange={(event) => setManeuver(event.target.value)}
+                                className="tracker-section__maneuver-select"
+                            >
+                                <option value="none">-- Maneuver --</option>
+                                <option value="ambush">Ambush (Dex+Stl)</option>
+                                <option value="cover">Cover Ally (Will)</option>
+                                <option value="grapple">Grapple (Str+Bwl)</option>
+                                <option value="run">Run (Dex+Ath)</option>
+                                <option value="stabilize">Stabilize (Cle+Med)</option>
+                                <option value="struggle">Struggle (Accuracy)</option>
+                            </select>
+                            <button
+                                type="button"
+                                onClick={rollManeuver}
+                                className="action-button action-button--dark tracker-section__maneuver-btn"
+                            >
+                                🎲
+                            </button>
+                        </div>
+
                         <div className="tracker-section__first-hit-group">
                             <span className="tracker-section__first-hit-label">
                                 1st Hit
@@ -197,31 +341,31 @@ export function TrackerSection() {
                                 Dmg
                             </label>
                         </div>
-
-                        <div className="tracker-section__maneuver-subrow">
-                            <select
-                                value={maneuver}
-                                onChange={(event) => setManeuver(event.target.value)}
-                                className="tracker-section__maneuver-select"
-                            >
-                                <option value="none">-- Maneuver --</option>
-                                <option value="ambush">Ambush (Dex+Stl)</option>
-                                <option value="cover">Cover Ally (Will)</option>
-                                <option value="grapple">Grapple (Str+Bwl)</option>
-                                <option value="run">Run (Dex+Ath)</option>
-                                <option value="stabilize">Stabilize (Cle+Med)</option>
-                                <option value="struggle">Struggle (Accuracy)</option>
-                            </select>
-                            <button
-                                type="button"
-                                onClick={rollManeuver}
-                                className="action-button action-button--dark tracker-section__maneuver-btn"
-                            >
-                                🎲
-                            </button>
-                        </div>
                     </div>
 
+                    {/* Row 3: Reset & Rest */}
+                    <div className="tracker-section__reset-rest-row">
+                        <button
+                            type="button"
+                            onClick={resetRound}
+                            className="action-button action-button--red tracker-section__reset-btn"
+                        >
+                            🔄 Reset
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setShowRestModal(true)}
+                            className="action-button tracker-section__rest-btn"
+                            title="Fully heal HP/Will and clear statuses"
+                        >
+                            🏕️ Rest
+                        </button>
+                    </div>
+                </div>
+
+                {/* RIGHT COLUMN: Meta Currency & Conditions */}
+                <div className="tracker-section__horizontal-col tracker-section__horizontal-col--right">
+                    
                     <div className="mobile-stack tracker-section__will-row">
                         {painEnabled && (
                             <button
@@ -277,91 +421,27 @@ export function TrackerSection() {
                             🎲 Roll
                         </button>
                     </div>
+
+                    <div className="tracker-section__conditions-container">
+                        <span className="tracker-section__conditions-label">Conditions:</span>
+                        <div className="tracker-section__conditions-list">
+                            {conditions.length === 0 ? (
+                                <span className="tracker-section__conditions-empty">None</span>
+                            ) : (
+                                conditions.map((c) => (
+                                    <span 
+                                        key={c.id} 
+                                        className="tracker-section__condition-pill" 
+                                        style={{ background: c.bg, color: c.text }}
+                                    >
+                                        {c.label}
+                                    </span>
+                                ))
+                            )}
+                        </div>
+                    </div>
+
                 </div>
-
-                {/* RIGHT COLUMN: Round Management */}
-                <div className="tracker-section__horizontal-col">
-                    <div className="tracker-section__actions-row">
-                        <div className="tracker-section__action-group">
-                            <span className="tracker-section__action-label">Actions</span>
-                            <TooltipIcon
-                                onClick={() => setTooltipInfo({ title: 'Actions', desc: 'Actions taken this round.' })}
-                            />
-                            :
-                            <NumberSpinner
-                                value={trackers.actions}
-                                onChange={(value) => updateTracker('actions', Math.max(0, Math.min(5, value)))}
-                                min={0}
-                                max={5}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="tracker-section__buttons-group">
-                        <div className="tracker-section__toggle-group">
-                            <button
-                                type="button"
-                                onClick={handleEvadeRoll}
-                                disabled={isMaxed}
-                                style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
-                                title={isMaxed ? 'Cannot Evade while Dynamaxed/Gigantamaxed' : ''}
-                                className="action-button action-button--dark tracker-section__toggle-btn"
-                            >
-                                🎲 Evade
-                            </button>
-                            <input
-                                type="checkbox"
-                                checked={trackers.evade}
-                                disabled={isMaxed}
-                                style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
-                                title={isMaxed ? 'Cannot Evade while Dynamaxed/Gigantamaxed' : ''}
-                                onChange={(event) => updateTracker('evade', event.target.checked)}
-                                className="sheet-save tracker-section__checkbox"
-                            />
-                        </div>
-
-                        <div className="tracker-section__toggle-group">
-                            <button
-                                type="button"
-                                onClick={() => setShowClashModal(true)}
-                                disabled={isMaxed}
-                                style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
-                                title={isMaxed ? 'Cannot Clash while Dynamaxed/Gigantamaxed' : ''}
-                                className="action-button action-button--dark tracker-section__toggle-btn"
-                            >
-                                🎲 Clash
-                            </button>
-                            <input
-                                type="checkbox"
-                                checked={trackers.clash}
-                                disabled={isMaxed}
-                                style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
-                                title={isMaxed ? 'Cannot Clash while Dynamaxed/Gigantamaxed' : ''}
-                                onChange={(event) => updateTracker('clash', event.target.checked)}
-                                className="sheet-save tracker-section__checkbox"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="tracker-section__reset-rest-row">
-                        <button
-                            type="button"
-                            onClick={resetRound}
-                            className="action-button action-button--red tracker-section__reset-btn"
-                        >
-                            🔄 Reset
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setShowRestModal(true)}
-                            className="action-button tracker-section__rest-btn"
-                            title="Fully heal HP/Will and clear statuses"
-                        >
-                            🏕️ Rest
-                        </button>
-                    </div>
-                </div>
-
             </div>
 
             {chancesModalOpen && <TakeChancesModal onClose={() => setChancesModalOpen(false)} />}
