@@ -171,10 +171,10 @@ export function TrackerSection() {
         const hpCurr = health.hpCurr;
         const hpMax = Math.max(1, health.hpMax);
         let rawPenalty = 0;
-        
+
         if (hpCurr <= 1) rawPenalty = 3;
         else if (hpCurr <= Math.floor(hpMax / 2)) rawPenalty = 1;
-        
+
         const finalPenalty = Math.max(0, rawPenalty - trackers.ignoredPain);
         if (finalPenalty > 0) {
             conditions.push({ id: 'pain', label: `Pain (-${finalPenalty} Succ)`, bg: '#c62828', text: '#fff' });
@@ -187,14 +187,14 @@ export function TrackerSection() {
         if (status.name !== 'Healthy') {
             const name = status.name === 'Custom...' ? status.customName || 'Custom' : status.name;
             let label = name;
-            
+
             // Inject mechanical hints for the two statuses that strictly deduct math
             if (status.name === 'Paralysis' && statusPenalties.paralysisDexterityPenalty < 0) {
                 label = `Paralysis (${statusPenalties.paralysisDexterityPenalty} Dex)`;
             } else if (status.name === 'Confusion' && statusPenalties.confusionPenalty < 0) {
                 label = `Confusion (${statusPenalties.confusionPenalty} Succ)`;
             }
-            
+
             const colors = STATUS_COLORS[status.name] || { bg: '#9C27B0', text: '#fff' };
             conditions.push({ id: status.id, label, bg: colors.bg, text: colors.text });
         }
@@ -203,7 +203,8 @@ export function TrackerSection() {
     // 3. Stat Buffs & Debuffs
     const addStatCondition = (label: string, buff: number, debuff: number) => {
         if (buff > 0) conditions.push({ id: `buff-${label}`, label: `${label} +${buff}`, bg: '#1976d2', text: '#fff' });
-        if (debuff > 0) conditions.push({ id: `debuff-${label}`, label: `${label} -${debuff}`, bg: '#d32f2f', text: '#fff' });
+        if (debuff > 0)
+            conditions.push({ id: `debuff-${label}`, label: `${label} -${debuff}`, bg: '#d32f2f', text: '#fff' });
     };
 
     addStatCondition('STR', stats[CombatStat.STR].buff, stats[CombatStat.STR].debuff);
@@ -217,10 +218,8 @@ export function TrackerSection() {
     return (
         <CollapsingSection title="ROUND TRACKER" className="sheet-panel tracker-section">
             <div className="tracker-section__horizontal-wrapper">
-                
                 {/* LEFT COLUMN: Turn Economy (Evade, Clash, Actions, Maneuvers, Reset) */}
                 <div className="tracker-section__horizontal-col">
-                    
                     {/* Row 1: Evade & Clash (Left) | Actions (Right) */}
                     <div className="tracker-section__row-space-between">
                         <div className="tracker-section__buttons-group">
@@ -365,7 +364,6 @@ export function TrackerSection() {
 
                 {/* RIGHT COLUMN: Meta Currency & Conditions */}
                 <div className="tracker-section__horizontal-col tracker-section__horizontal-col--right">
-                    
                     <div className="mobile-stack tracker-section__will-row">
                         {painEnabled && (
                             <button
@@ -396,7 +394,7 @@ export function TrackerSection() {
                             Take Your Chances
                         </button>
                     </div>
-                    
+
                     <div className="tracker-section__chances-row">
                         <span className="tracker-section__action-label">Take your Chances</span>
                         <TooltipIcon
@@ -429,9 +427,9 @@ export function TrackerSection() {
                                 <span className="tracker-section__conditions-empty">None</span>
                             ) : (
                                 conditions.map((c) => (
-                                    <span 
-                                        key={c.id} 
-                                        className="tracker-section__condition-pill" 
+                                    <span
+                                        key={c.id}
+                                        className="tracker-section__condition-pill"
                                         style={{ background: c.bg, color: c.text }}
                                     >
                                         {c.label}
@@ -440,7 +438,6 @@ export function TrackerSection() {
                             )}
                         </div>
                     </div>
-
                 </div>
             </div>
 

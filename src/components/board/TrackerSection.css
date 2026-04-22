@@ -8,16 +8,16 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
-    align-items: stretch; 
-    padding-top: 4px; 
+    align-items: stretch;
+    padding-top: 4px;
 }
 
 .tracker-section__horizontal-col {
     display: flex;
     flex-direction: column;
-    justify-content: space-between; 
+    justify-content: space-between;
     gap: 12px;
-    min-width: 0; 
+    min-width: 0;
     height: 100%;
 }
 
@@ -37,7 +37,7 @@
 }
 
 .tracker-section__action-group--right {
-    margin-left: auto; 
+    margin-left: auto;
     font-size: 0.75rem;
 }
 
@@ -49,7 +49,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    flex-wrap: wrap; 
+    flex-wrap: wrap;
 }
 
 .tracker-section__toggle-group {
@@ -61,7 +61,7 @@
 .tracker-section__toggle-btn {
     padding: 0 8px;
     white-space: nowrap;
-    height: 24px; 
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -79,9 +79,9 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    background: var(--row-odd); 
+    background: var(--row-odd);
     border: 1px solid var(--border);
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); 
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
     padding: 0 6px;
     border-radius: 4px;
     font-size: 0.75rem;
@@ -111,7 +111,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-wrap: wrap; 
+    flex-wrap: wrap;
     gap: 6px;
     font-size: 0.75rem;
 }
@@ -132,22 +132,22 @@
     font-family: inherit;
     border: 1px solid var(--border);
     font-size: 0.75rem;
-    flex: 1 1 100px; 
+    flex: 1 1 100px;
     min-width: 0;
-    background-color: var(--row-odd); 
+    background-color: var(--row-odd);
     color: var(--text-main);
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); 
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
     border-radius: 3px;
-    height: 28px; 
+    height: 28px;
     box-sizing: border-box;
     outline: none;
 }
 
 .tracker-section__maneuver-btn {
-    flex: 0 0 28px; 
-    height: 28px; 
-    min-height: 28px; 
-    max-height: 28px; 
+    flex: 0 0 28px;
+    height: 28px;
+    min-height: 28px;
+    max-height: 28px;
     margin: 0;
     padding: 0;
     text-align: center;
@@ -170,7 +170,7 @@
     flex: 1 1 80px;
     min-width: 80px;
     text-align: center;
-    padding: 0; 
+    padding: 0;
     height: 28px; /* Hard-locked to perfectly match the Conditions box */
     box-sizing: border-box;
     white-space: nowrap;
@@ -187,7 +187,7 @@
 
 .tracker-section__will-row {
     display: flex;
-    gap: 6px; 
+    gap: 6px;
     justify-content: space-between;
     align-items: stretch;
 }
@@ -209,10 +209,10 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 6px;
-    background: var(--row-odd); 
+    background: var(--row-odd);
     border: 1px solid var(--border);
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); 
-    padding: 0 8px; 
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 0 8px;
     border-radius: 4px;
     height: 28px; /* Hard-locked to perfectly match the Reset/Rest buttons */
     box-sizing: border-box;
@@ -237,7 +237,7 @@
     border-radius: 4px;
     font-size: 0.7rem;
     font-weight: bold;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     white-space: nowrap;
 }
 
