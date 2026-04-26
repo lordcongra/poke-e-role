@@ -24,7 +24,6 @@ function App() {
     const isPrinting = useCharacterStore((state) => state.identity.isPrinting);
 
     const gmOnlyMatchups = useCharacterStore((state) => state.identity.gmOnlyMatchups);
-    const showMatchups = !gmOnlyMatchups || role === 'GM';
 
     if (isNPC && role === 'PLAYER') {
         return (
@@ -32,7 +31,7 @@ function App() {
                 <div id="gm-lock-screen" className="app-gm-lock">
                     <h2 className="app-gm-lock__icon">🔒</h2>
                     <h3>This sheet is hidden by the GM.</h3>
-                    {showMatchups && (
+                    {!gmOnlyMatchups && (
                         <div className="app-gm-lock__content">
                             <TypeMatchups />
                         </div>
@@ -57,7 +56,7 @@ function App() {
                 {/* --- STATS & SKILLS --- */}
                 <div className="sheet-container__row">
                     <div className="sheet-container__column">
-                        {mode === 'Pokémon' && showMatchups && <TypeMatchups />}
+                        {mode === 'Pokémon' && <TypeMatchups />}
                         <CoreTable />
                         <SocialTable />
                         {mode === 'Trainer' && <TrainerBadges />}

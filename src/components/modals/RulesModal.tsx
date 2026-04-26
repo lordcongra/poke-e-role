@@ -145,7 +145,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                     setModalConfig({
                                         title: 'Type Matchups Visibility',
                                         content:
-                                            'Controls if players can see the Type Matchups chart on their sheets. Useful for hiding custom typings. (Global Room Setting)'
+                                            'Controls if players can see the Type Matchups chart on locked NPC sheets. Useful for hiding custom typings or boss weaknesses from players. (Global Room Setting)'
                                     })
                                 }
                             />
