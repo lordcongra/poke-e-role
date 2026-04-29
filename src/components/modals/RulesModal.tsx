@@ -28,7 +28,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                     setModalConfig({
                                         title: 'Dice Engine Settings',
                                         content:
-                                            'Select which Dice Extension to broadcast rolls to. Both engines support 3D dice and full sheet automation, but Custom Action Rolls may be better for performance and has more realiable accuracy with larger dice rolls.'
+                                            'Select which Dice Extension to broadcast rolls to. Both engines support 3D dice and full sheet automation, but Custom Action Rolls may be better for performance and has more reliable accuracy with larger dice rolls.'
                                     })
                                 }
                             />
