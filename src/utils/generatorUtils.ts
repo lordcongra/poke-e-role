@@ -1,8 +1,9 @@
 import type { TempBuild, TempMove, CharacterState, GeneratorConfig } from '../store/storeTypes';
-import { fetchPokemonData, fetchMoveData, MOVES_URLS } from './api';
+import { fetchPokemonData, fetchMoveData, MOVES_URLS, SPECIES_URLS, loadLocalDataset } from './api';
 import { getRankPoints, getAgePoints } from '../store/useCharacterStore';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { assignWildStats, assignMinMaxStats, assignAverageStats } from './generatorLogic';
+import { getLimit, getBase } from './macroHelpers';
 
 const RANK_HIERARCHY = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion'];
 const ALL_SKILLS = Object.values(Skill) as string[];
@@ -46,11 +47,31 @@ function normalizeSkill(value: string): string {
 }
 
 export async function generateBuild(config: GeneratorConfig, state: CharacterState): Promise<TempBuild | null> {
-    const speciesName = state.identity.species;
+    await loadLocalDataset();
+
+    let speciesName = state.identity.species;
+    
+    if (config.randomizeSpecies) {
+        const customNames = state.roomCustomPokemon.filter((p) => state.role === 'GM' || !p.gmOnly).map((p) => p.Name);
+        const baseNames = Object.keys(SPECIES_URLS);
+        const allSpecies = [...new Set([...baseNames, ...customNames])];
+        if (allSpecies.length > 0) {
+            speciesName = allSpecies[Math.floor(Math.random() * allSpecies.length)];
+        }
+    }
+
     if (!speciesName) return null;
 
     const pokemonData = await fetchPokemonData(speciesName);
     if (!pokemonData) return null;
+
+    const pdRecord = pokemonData as Record<string, unknown>;
+    const finalSpeciesName = String(pdRecord.Name || speciesName);
+
+    const type1 = config.randomizeSpecies ? String(pdRecord.Type1 || '') : state.identity.type1;
+    const type2 = config.randomizeSpecies ? String(pdRecord.Type2 || '') : state.identity.type2;
+    const hasType2 = type2 && type2 !== 'None';
+    const myTypes = [type1, type2].filter((type) => type && type !== 'None');
 
     const rank = state.identity.rank;
     const { core: rankCore, social: rankSocial, skills: rankSkill, skillLimit } = getRankPoints(rank);
@@ -60,12 +81,62 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     const socialPoints = rankSocial + ageSocial;
     const maxSkillRank = skillLimit;
 
+    // Bulletproof parsing to ensure NaN NEVER breaks the mathematical loops
+    let baseStr = Number(state.stats[CombatStat.STR].base) || 2;
+    let baseDex = Number(state.stats[CombatStat.DEX].base) || 2;
+    let baseVit = Number(state.stats[CombatStat.VIT].base) || 2;
+    let baseSpe = Number(state.stats[CombatStat.SPE].base) || 2;
+    let baseIns = Number(state.stats[CombatStat.INS].base) || 1;
+
+    let limitStr = Number(state.stats[CombatStat.STR].limit) || 5;
+    let limitDex = Number(state.stats[CombatStat.DEX].limit) || 5;
+    let limitVit = Number(state.stats[CombatStat.VIT].limit) || 5;
+    let limitSpe = Number(state.stats[CombatStat.SPE].limit) || 5;
+    let limitIns = Number(state.stats[CombatStat.INS].limit) || 5;
+
+    if (config.randomizeSpecies) {
+        baseStr = Number(getBase(pdRecord, 'Strength', 2)) || 2;
+        baseDex = Number(getBase(pdRecord, 'Dexterity', 2)) || 2;
+        baseVit = Number(getBase(pdRecord, 'Vitality', 2)) || 2;
+        baseSpe = Number(getBase(pdRecord, 'Special', 2)) || 2;
+        baseIns = Number(getBase(pdRecord, 'Insight', 1)) || 1;
+
+        limitStr = Number(getLimit(pdRecord, 'Strength')) || 5;
+        limitDex = Number(getLimit(pdRecord, 'Dexterity')) || 5;
+        limitVit = Number(getLimit(pdRecord, 'Vitality')) || 5;
+        limitSpe = Number(getLimit(pdRecord, 'Special')) || 5;
+        limitIns = Number(getLimit(pdRecord, 'Insight')) || 5;
+    }
+
     const attributeLimits: Record<string, number> = {
-        str: state.stats[CombatStat.STR].limit,
-        dex: state.stats[CombatStat.DEX].limit,
-        vit: state.stats[CombatStat.VIT].limit,
-        spe: state.stats[CombatStat.SPE].limit,
-        ins: state.stats[CombatStat.INS].limit
+        str: limitStr,
+        dex: limitDex,
+        vit: limitVit,
+        spe: limitSpe,
+        ins: limitIns
+    };
+
+    let effectiveBias = config.combatBias;
+
+    if (config.randomizeSpecies && config.autoSelectBias) {
+        const strScore = limitStr + baseStr;
+        const speScore = limitSpe + baseSpe;
+        
+        if (strScore > speScore) effectiveBias = 'physical';
+        else if (speScore > strScore) effectiveBias = 'special';
+        else effectiveBias = 'balanced';
+    }
+
+    const fakeState = {
+        ...state,
+        stats: {
+            ...state.stats,
+            [CombatStat.STR]: { ...state.stats[CombatStat.STR], base: baseStr, limit: limitStr },
+            [CombatStat.DEX]: { ...state.stats[CombatStat.DEX], base: baseDex, limit: limitDex },
+            [CombatStat.VIT]: { ...state.stats[CombatStat.VIT], base: baseVit, limit: limitVit },
+            [CombatStat.SPE]: { ...state.stats[CombatStat.SPE], base: baseSpe, limit: limitSpe },
+            [CombatStat.INS]: { ...state.stats[CombatStat.INS], base: baseIns, limit: limitIns }
+        }
     };
 
     const generatedAttributes: Record<string, number> = { str: 0, dex: 0, vit: 0, spe: 0, ins: 0 };
@@ -85,19 +156,13 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     ALL_SKILLS.forEach((skill) => (generatedSkills[skill] = 0));
     customSkillsList.forEach((skill) => (generatedSkills[skill] = 0));
 
-    const type1 = state.identity.type1;
-    const type2 = state.identity.type2;
-    const hasType2 = type2 && type2 !== 'None';
-    const myTypes = [type1, type2].filter((type) => type && type !== 'None');
-
-    const baseInsight = state.stats[CombatStat.INS].base;
     const totalTargetMoves = config.targetAtkCount + config.targetSupCount;
 
-    let neededInsightRank = Math.max(0, totalTargetMoves - 3 - baseInsight);
-    neededInsightRank = Math.min(neededInsightRank, attributeLimits['ins'] - baseInsight, attributePoints);
+    let neededInsightRank = Math.max(0, totalTargetMoves - 3 - baseIns);
+    neededInsightRank = Math.min(neededInsightRank, limitIns - baseIns, attributePoints);
     generatedAttributes['ins'] = neededInsightRank;
 
-    const draftedMax = baseInsight + generatedAttributes['ins'] + 3;
+    const draftedMax = baseIns + generatedAttributes['ins'] + 3;
     const adjustedAttributePoints = attributePoints - neededInsightRank;
     const currentRankIndex = Math.max(0, RANK_HIERARCHY.indexOf(rank));
 
@@ -107,8 +172,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     };
 
     const legalMoveNames: string[] = [];
-    const pd = pokemonData as Record<string, unknown>;
-
+    
     const extractMoves = (moveObject: unknown, ignoreRank = false) => {
         if (Array.isArray(moveObject)) {
             moveObject.forEach((move: unknown) => {
@@ -144,8 +208,8 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         }
     };
 
-    extractMoves(pd.Moves, false);
-    if (legalMoveNames.length < draftedMax) extractMoves(pd.Moves, true);
+    extractMoves(pdRecord.Moves, false);
+    if (legalMoveNames.length < draftedMax) extractMoves(pdRecord.Moves, true);
 
     const uniqueMoveNames = [...new Set(legalMoveNames)];
     const fetchedMoves: TempMove[] = [];
@@ -196,17 +260,12 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
 
     const draftedMoves: TempMove[] = [];
     let leftoverPool: TempMove[] = [];
-
+    
     const typeCounts = new Map<string, number>();
 
     let primaryDrafted = 0;
     let secondaryDrafted = 0;
     let coverageDrafted = 0;
-
-    const getTotalCoverage = () =>
-        Array.from(typeCounts.entries())
-            .filter(([t]) => t !== type1 && t !== type2)
-            .reduce((sum, [, count]) => sum + count, 0);
 
     if (config.buildType === 'wild') {
         leftoverPool = [...fetchedMoves].sort(() => 0.5 - Math.random());
@@ -214,8 +273,8 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         let supportPool = fetchedMoves.filter((move) => move.cat === 'Status');
         let attackPool = fetchedMoves.filter((move) => move.cat === 'Phys' || move.cat === 'Spec');
 
-        if (config.combatBias === 'physical') attackPool = attackPool.filter((move) => move.cat === 'Phys');
-        if (config.combatBias === 'special') attackPool = attackPool.filter((move) => move.cat === 'Spec');
+        if (effectiveBias === 'physical') attackPool = attackPool.filter((move) => move.cat === 'Phys');
+        if (effectiveBias === 'special') attackPool = attackPool.filter((move) => move.cat === 'Spec');
 
         const getDefensiveScore = (move: TempMove) => {
             let score = 0;
@@ -241,12 +300,15 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             return score;
         };
 
-        supportPool.sort((a, b) => {
-            let aScore = config.combatBias === 'tank' ? getDefensiveScore(a) * 10 : Math.random() * 5;
-            let bScore = config.combatBias === 'tank' ? getDefensiveScore(b) * 10 : Math.random() * 5;
+        const getTotalCoverage = () => Array.from(typeCounts.entries())
+            .filter(([t]) => t !== type1 && t !== type2)
+            .reduce((sum, [, count]) => sum + count, 0);
 
-            // Add a little bit of fuzz to tank scoring so it isn't completely rigid on rerolls
-            if (config.combatBias === 'tank') {
+        supportPool.sort((a, b) => {
+            let aScore = effectiveBias === 'tank' ? getDefensiveScore(a) * 10 : Math.random() * 5;
+            let bScore = effectiveBias === 'tank' ? getDefensiveScore(b) * 10 : Math.random() * 5;
+
+            if (effectiveBias === 'tank') {
                 aScore += Math.random() * 4;
                 bScore += Math.random() * 4;
             }
@@ -255,29 +317,28 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
                 const isPrimary = move.type === type1;
                 const isSecondary = hasType2 && move.type === type2;
                 const currentCount = typeCounts.get(move.type) || 0;
-
+                
                 if (isPrimary && config.overridePrimaryStab && currentCount < config.primaryStabCount) return 100;
                 if (isSecondary && config.overrideSecondaryStab && currentCount < config.secondaryStabCount) return 100;
-                if (!isPrimary && !isSecondary && config.overrideCoverage && getTotalCoverage() < config.coverageCount)
-                    return 100;
+                if (!isPrimary && !isSecondary && config.overrideCoverage && getTotalCoverage() < config.coverageCount) return 100;
                 return 0;
             };
 
-            return bScore + needsType(b) - (aScore + needsType(a));
+            return (bScore + needsType(b)) - (aScore + needsType(a));
         });
 
         for (let i = 0; i < config.targetSupCount && supportPool.length > 0; i++) {
             const move = supportPool.shift();
-            if (move) draftedMoves.push(move);
+            if (move) draftedMoves.push(move); 
         }
 
         attackPool.sort((a, b) => {
             let aBias = 0;
             let bBias = 0;
-            if (config.combatBias === 'physical') {
+            if (effectiveBias === 'physical') {
                 aBias = a.cat === 'Phys' ? 1 : 0;
                 bBias = b.cat === 'Phys' ? 1 : 0;
-            } else if (config.combatBias === 'special') {
+            } else if (effectiveBias === 'special') {
                 aBias = a.cat === 'Spec' ? 1 : 0;
                 bBias = b.cat === 'Spec' ? 1 : 0;
             }
@@ -288,10 +349,9 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             const bStab = myTypes.includes(b.type) ? 1 : 0;
 
             if (aStab !== bStab) return bStab - aStab;
-
-            // Fuzz power ties slightly so STABs aren't 100% rigid on every reroll
-            const aFuzz = a.power + Math.random() * 2;
-            const bFuzz = b.power + Math.random() * 2;
+            
+            const aFuzz = a.power + (Math.random() * 2);
+            const bFuzz = b.power + (Math.random() * 2);
             return bFuzz - aFuzz;
         });
 
@@ -300,13 +360,12 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
 
         for (const move of attackPool) {
             if (remainingAttackSlots <= 0) break;
-
+            
             const currentCount = typeCounts.get(move.type) || 0;
-
+            
             const isPrimary = type1 && move.type === type1;
             const isSecondary = hasType2 && move.type === type2;
-            const isStab = isPrimary || isSecondary;
-
+            
             let totalStabDrafted = Array.from(typeCounts.entries())
                 .filter(([t]) => t === type1 || t === type2)
                 .reduce((sum, [, count]) => sum + count, 0);
@@ -336,19 +395,11 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             if (canDraft) {
                 draftedMoves.push(move);
                 typeCounts.set(move.type, currentCount + 1);
-
+                
                 if (isPrimary) primaryDrafted++;
                 else if (isSecondary) secondaryDrafted++;
                 else coverageDrafted++;
-
-                if (
-                    isStab &&
-                    !(isPrimary && config.overridePrimaryStab) &&
-                    !(isSecondary && config.overrideSecondaryStab)
-                ) {
-                    totalStabDrafted++;
-                }
-
+                
                 remainingAttackSlots--;
             }
         }
@@ -365,7 +416,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             socialPoints,
             rankSkill,
             attributeLimits,
-            state,
+            fakeState,
             maxSkillRank,
             config,
             customSkillsList
@@ -379,9 +430,9 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             socialPoints,
             rankSkill,
             attributeLimits,
-            state,
+            fakeState,
             maxSkillRank,
-            config,
+            { ...config, combatBias: effectiveBias }, 
             customSkillsList,
             draftedMoves
         );
@@ -394,26 +445,26 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             socialPoints,
             rankSkill,
             attributeLimits,
-            state,
+            fakeState,
             maxSkillRank,
-            config,
+            { ...config, combatBias: effectiveBias },
             customSkillsList,
             draftedMoves
         );
     }
 
-    const finalDraftedMax = baseInsight + generatedAttributes['ins'] + 3;
+    const finalDraftedMax = baseIns + generatedAttributes['ins'] + 3;
 
     if (config.buildType !== 'wild') {
         const getStatValue = (statName: string) => {
             if (!statName) return 0;
             if (Object.values(CombatStat).includes(statName as CombatStat)) {
-                return state.stats[statName as CombatStat].base + (generatedAttributes[statName] || 0);
+                return fakeState.stats[statName as CombatStat].base + (generatedAttributes[statName] || 0);
             }
             if (Object.values(SocialStat).includes(statName as SocialStat)) {
-                return state.socials[statName as SocialStat].base + (generatedSocials[statName] || 0);
+                return fakeState.socials[statName as SocialStat].base + (generatedSocials[statName] || 0);
             }
-            if (statName === 'will') return state.will.willMax + (generatedAttributes['ins'] || 0);
+            if (statName === 'will') return fakeState.will.willMax + (generatedAttributes['ins'] || 0);
             return 0;
         };
 
@@ -421,9 +472,9 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             if (!skillName || skillName === 'none') return 0;
             let val = generatedSkills[skillName] || 0;
             if (Object.values(Skill).includes(skillName as Skill)) {
-                val += state.skills[skillName as Skill].base;
+                val += fakeState.skills[skillName as Skill].base;
             } else {
-                for (const cat of state.extraCategories) {
+                for (const cat of fakeState.extraCategories) {
                     const found = cat.skills.find((s) => s.id === skillName);
                     if (found) val += found.base;
                 }
@@ -433,37 +484,28 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
 
         while (draftedMoves.length < finalDraftedMax && leftoverPool.length > 0) {
             leftoverPool.sort((a, b) => {
-                const aScore =
-                    getStatValue(a.attr) +
-                    getSkillValue(a.skill) +
-                    (a.cat === 'Status' ? 0 : getStatValue(a.dmgStat) + a.power);
-                const bScore =
-                    getStatValue(b.attr) +
-                    getSkillValue(b.skill) +
-                    (b.cat === 'Status' ? 0 : getStatValue(b.dmgStat) + b.power);
+                const aScore = getStatValue(a.attr) + getSkillValue(a.skill) + (a.cat === 'Status' ? 0 : getStatValue(a.dmgStat) + a.power);
+                const bScore = getStatValue(b.attr) + getSkillValue(b.skill) + (b.cat === 'Status' ? 0 : getStatValue(b.dmgStat) + b.power);
 
                 const getDynamicBonus = (move: TempMove) => {
-                    if (move.cat === 'Status') return 0;
+                    if (move.cat === 'Status') return 0; 
 
                     const isPrimary = move.type === type1;
                     const isSecondary = hasType2 && move.type === type2;
                     const isStab = isPrimary || isSecondary;
                     const count = typeCounts.get(move.type) || 0;
+                    
+                    const getTotalCoverage = () => Array.from(typeCounts.entries())
+                        .filter(([t]) => t !== type1 && t !== type2)
+                        .reduce((sum, [, c]) => sum + c, 0);
 
                     let bonus = 0;
-                    if (isPrimary && config.overridePrimaryStab && primaryDrafted < config.primaryStabCount)
-                        bonus += 100;
-                    else if (
-                        isSecondary &&
-                        config.overrideSecondaryStab &&
-                        secondaryDrafted < config.secondaryStabCount
-                    )
-                        bonus += 100;
-                    else if (!isStab && config.overrideCoverage && coverageDrafted < config.coverageCount && count < 1)
-                        bonus += 100;
+                    if (isPrimary && config.overridePrimaryStab && primaryDrafted < config.primaryStabCount) bonus += 100;
+                    else if (isSecondary && config.overrideSecondaryStab && secondaryDrafted < config.secondaryStabCount) bonus += 100;
+                    else if (!isStab && config.overrideCoverage && getTotalCoverage() < config.coverageCount && count < 1) bonus += 100;
                     else {
                         if (isStab) bonus += 2;
-                        bonus -= count * 5;
+                        bonus -= (count * 5); 
                     }
                     return bonus;
                 };
@@ -471,11 +513,10 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
                 const getVariance = (move: TempMove) => {
                     if (move.cat === 'Status') return Math.random() * 5;
                     const isStab = myTypes.includes(move.type);
-                    // 2 points of fuzz for STAB, 8 points for coverage
-                    return isStab ? Math.random() * 2 : Math.random() * 8;
+                    return isStab ? (Math.random() * 2) : (Math.random() * 8);
                 };
 
-                return bScore + getDynamicBonus(b) + getVariance(b) - (aScore + getDynamicBonus(a) + getVariance(a));
+                return (bScore + getDynamicBonus(b) + getVariance(b)) - (aScore + getDynamicBonus(a) + getVariance(a));
             });
 
             const move = leftoverPool.shift();
@@ -504,22 +545,20 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             if (hasType2 && type === type2) return 2;
             return 3;
         };
-
+        
         const priorityA = getTypePriority(a.type);
         const priorityB = getTypePriority(b.type);
-
+        
         if (priorityA !== priorityB) return priorityA - priorityB;
-
         if (a.type !== b.type) return a.type.localeCompare(b.type);
-
         if (a.cat === 'Status' && b.cat !== 'Status') return 1;
         if (a.cat !== 'Status' && b.cat === 'Status') return -1;
-
+        
         return b.power - a.power;
     });
 
     return {
-        species: speciesName,
+        species: finalSpeciesName,
         attr: generatedAttributes,
         soc: generatedSocials,
         skills: generatedSkills,
@@ -527,6 +566,14 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         customSkillMap: customSkillMap,
         moves: draftedMoves,
         maxMoves: finalDraftedMax,
-        includePmd: config.includePmd
+        includePmd: config.includePmd,
+        pokemonData: pdRecord,
+        baseStats: {
+            str: baseStr,
+            dex: baseDex,
+            vit: baseVit,
+            spe: baseSpe,
+            ins: baseIns
+        }
     };
 }

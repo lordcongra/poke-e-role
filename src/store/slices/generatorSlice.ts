@@ -3,7 +3,7 @@ import type { CharacterState, GeneratorSlice, MoveData } from '../storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { saveToOwlbear } from '../../utils/obr';
 
-export const createGeneratorSlice: StateCreator<CharacterState, [], [], GeneratorSlice> = (set) => ({
+export const createGeneratorSlice: StateCreator<CharacterState, [], [], GeneratorSlice> = (set, get) => ({
     generatorConfig: {
         buildType: 'wild',
         combatBias: 'balanced',
@@ -16,35 +16,47 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
         overrideCoverage: false,
         primaryStabCount: 1,
         secondaryStabCount: 1,
-        coverageCount: 1
+        coverageCount: 1,
+        randomizeSpecies: false,
+        autoSelectBias: false
     },
 
     setGeneratorConfig: (config) => set((state) => ({ generatorConfig: { ...state.generatorConfig, ...config } })),
 
-    applyGeneratedBuild: (build) =>
+    applyGeneratedBuild: (build) => {
+        if (build.pokemonData && build.species !== get().identity.species) {
+            get().applySpeciesData(build.pokemonData, true, true);
+        }
+
         set((state) => {
             const newStats = { ...state.stats };
             const newSocials = { ...state.socials };
             const newSkills = { ...state.skills };
+            const newIdentity = { ...state.identity };
             const updatesToSave: Record<string, unknown> = {};
+
+            if (build.pokemonData && build.species !== state.identity.species) {
+                newIdentity.species = build.species;
+                updatesToSave['species'] = build.species;
+            }
 
             Object.values(CombatStat).forEach((statistic) => {
                 if (build.attr[statistic] !== undefined) {
-                    newStats[statistic].rank = build.attr[statistic];
+                    newStats[statistic] = { ...newStats[statistic], rank: build.attr[statistic] };
                     updatesToSave[`${statistic}-rank`] = build.attr[statistic];
                 }
             });
 
             Object.values(SocialStat).forEach((statistic) => {
                 if (build.soc[statistic] !== undefined) {
-                    newSocials[statistic].rank = build.soc[statistic];
+                    newSocials[statistic] = { ...newSocials[statistic], rank: build.soc[statistic] };
                     updatesToSave[`${statistic}-rank`] = build.soc[statistic];
                 }
             });
 
             Object.values(Skill).forEach((skill) => {
                 if (build.skills[skill] !== undefined) {
-                    newSkills[skill].base = build.skills[skill];
+                    newSkills[skill] = { ...newSkills[skill], base: build.skills[skill] };
                     updatesToSave[`${skill}-base`] = build.skills[skill];
                 }
             });
@@ -97,7 +109,9 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
                 socials: newSocials,
                 skills: newSkills,
                 moves: newMoves,
-                extraCategories: newExtraCategories
+                extraCategories: newExtraCategories,
+                identity: newIdentity
             };
-        })
+        });
+    }
 });

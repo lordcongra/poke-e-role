@@ -25,7 +25,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
             if (result) {
                 setPreviewBuild(result);
             } else {
-                alert(`Failed to generate build for ${speciesName}.`);
+                alert(`Failed to generate build. Check console for details.`);
             }
         } catch (error) {
             console.error('Auto-Build Error:', error);
@@ -76,6 +76,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                 value={config.combatBias}
                                 onChange={(e) => setConfig({ combatBias: e.target.value })}
                                 className="generator-modal__select"
+                                disabled={config.randomizeSpecies && config.autoSelectBias}
                             >
                                 <option value="balanced">Balanced</option>
                                 <option value="physical">Physical Attacker</option>
@@ -122,7 +123,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                             <label className="generator-modal__comp-title">Attack Type Ratios</label>
                             <p className="generator-modal__comp-desc">
                                 Check a box to lock a specific amount for that category. Unchecked categories will
-                                auto-fill to reach your total Moves.
+                                auto-fill to reach your total Attacks.
                             </p>
                             <div className="generator-modal__comp-row">
                                 <div className="generator-modal__comp-item">
@@ -195,6 +196,29 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                         <label className="generator-modal__checkbox-label">
                             <input
                                 type="checkbox"
+                                checked={config.randomizeSpecies}
+                                onChange={(e) => setConfig({ randomizeSpecies: e.target.checked })}
+                                className="generator-modal__checkbox"
+                            />
+                            <strong>Randomize Species (Overwrites Identity)</strong>
+                        </label>
+                        {config.randomizeSpecies && (
+                            <label
+                                className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced"
+                                style={{ paddingLeft: '20px' }}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={config.autoSelectBias}
+                                    onChange={(e) => setConfig({ autoSelectBias: e.target.checked })}
+                                    className="generator-modal__checkbox"
+                                />
+                                Auto-Detect Attack Bias (Physical vs Special)
+                            </label>
+                        )}
+                        <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced">
+                            <input
+                                type="checkbox"
                                 checked={config.includePmd}
                                 onChange={(e) => setConfig({ includePmd: e.target.checked })}
                                 className="generator-modal__checkbox"
@@ -228,7 +252,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                     <button
                         type="button"
                         onClick={handleGenerate}
-                        disabled={isGenerating}
+                        disabled={isGenerating || (!config.randomizeSpecies && !speciesName)}
                         className="action-button action-button--red generator-modal__btn"
                     >
                         {isGenerating ? '⏳' : '🎲 Generate'}

@@ -117,6 +117,8 @@ export interface TempBuild {
     moves: TempMove[];
     maxMoves: number;
     includePmd: boolean;
+    pokemonData?: Record<string, unknown>;
+    baseStats?: Record<string, number>;
 }
 
 export interface GeneratorConfig {
@@ -132,6 +134,8 @@ export interface GeneratorConfig {
     primaryStabCount: number;
     secondaryStabCount: number;
     coverageCount: number;
+    randomizeSpecies: boolean;
+    autoSelectBias: boolean;
 }
 
 export interface CustomAbility {
