@@ -16,6 +16,11 @@ import './IdentityHeader.css';
 
 export function IdentityHeader() {
     const identityStore = useCharacterStore((state) => state.identity) || {};
+    const setIdentity = useCharacterStore((state) => state.setIdentity);
+    const tokenId = useCharacterStore((state) => state.tokenId);
+    const role = useCharacterStore((state) => state.role);
+    const isGm = role === 'GM';
+
     const [isDark, setIsDark] = useState(false);
 
     const [modalConfig, setModalConfig] = useState<{ title: string; content: string | ReactNode } | null>(null);
@@ -127,15 +132,90 @@ export function IdentityHeader() {
         }
     };
 
+    const handleUpdateTokenImage = async () => {
+        if (!isGm) {
+            if (OBR.isAvailable) OBR.notification.show('Only the GM can update the scene token image.', 'ERROR');
+            return;
+        }
+
+        if (!OBR.isAvailable || !tokenId) {
+            const url = window.prompt(`Enter an Image URL:`);
+            if (url) {
+                setIdentity('tokenImageUrl', url);
+            }
+            return;
+        }
+
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let images: any = null;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if (typeof (OBR as any).assets?.downloadImages === 'function') {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                images = await (OBR as any).assets.downloadImages();
+            } else {
+                const url = window.prompt('Enter an Image URL:');
+                if (url) {
+                    setIdentity('tokenImageUrl', url);
+                    await OBR.scene.items.updateItems([tokenId], (items) => {
+                        for (const item of items) {
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            const imgItem = item as any;
+                            if (imgItem.image) imgItem.image.url = url;
+                        }
+                    });
+                }
+                return;
+            }
+
+            if (images && images.length > 0) {
+                let selectedUrl = '';
+                const img = images[0];
+
+                if (typeof img === 'string') selectedUrl = img;
+                else if (img.url) selectedUrl = img.url;
+                else if (img.image?.url) selectedUrl = img.image.url;
+                else if (img.src) selectedUrl = img.src;
+
+                if (selectedUrl) {
+                    setIdentity('tokenImageUrl', selectedUrl);
+                    await OBR.scene.items.updateItems([tokenId], (items) => {
+                        for (const item of items) {
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            const imgItem = item as any;
+                            if (imgItem.image) imgItem.image.url = selectedUrl;
+                        }
+                    });
+                } else {
+                    if (OBR.isAvailable) OBR.notification.show('Could not extract URL. Please check F12 Console!', 'ERROR');
+                }
+            }
+        } catch (e) {
+            console.error('Failed to pick manual token image:', e);
+        }
+    };
+
     const headerElements = (
-        <button
-            type="button"
-            className="action-button action-button--dark identity-header__changelog-btn"
-            onClick={() => setShowChangelog(true)}
-            title="View Update Log"
-        >
-            📢 What's New
-        </button>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {isGm && OBR.isAvailable && (
+                <button
+                    type="button"
+                    className="action-button action-button--dark identity-header__changelog-btn"
+                    onClick={handleUpdateTokenImage}
+                    title="Change this token's art manually (Useful for Evolution)."
+                >
+                    🖼️ Update Token Image
+                </button>
+            )}
+            <button
+                type="button"
+                className="action-button action-button--dark identity-header__changelog-btn"
+                onClick={() => setShowChangelog(true)}
+                title="View Update Log"
+            >
+                📢 What's New
+            </button>
+        </div>
     );
 
     return (
