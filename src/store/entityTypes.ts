@@ -126,7 +126,9 @@ export interface GeneratorConfig {
     targetSupCount: number;
     includePmd: boolean;
     includeCustom: boolean;
-    overrideStab: boolean;
+    overridePrimaryStab: boolean;
+    overrideSecondaryStab: boolean;
+    overrideCoverage: boolean;
     primaryStabCount: number;
     secondaryStabCount: number;
     coverageCount: number;

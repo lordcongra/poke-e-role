@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { TempBuild } from '../../store/storeTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
@@ -24,6 +24,11 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
 
     const [localBuild, setLocalBuild] = useState<TempBuild>(build);
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
+
+    // Sync the local state whenever the parent generates a new build via Reroll!
+    useEffect(() => {
+        setLocalBuild(build);
+    }, [build]);
 
     const updateAttribute = (statistic: string, value: number) => {
         setLocalBuild((previous) => ({ ...previous, attr: { ...previous.attr, [statistic]: Math.max(0, value) } }));

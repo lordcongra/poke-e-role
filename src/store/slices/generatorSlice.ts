@@ -7,11 +7,13 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
     generatorConfig: {
         buildType: 'wild',
         combatBias: 'balanced',
-        targetAtkCount: 2,
-        targetSupCount: 2,
+        targetAtkCount: 4,
+        targetSupCount: 1,
         includePmd: false,
         includeCustom: false,
-        overrideStab: false,
+        overridePrimaryStab: false,
+        overrideSecondaryStab: false,
+        overrideCoverage: false,
         primaryStabCount: 1,
         secondaryStabCount: 1,
         coverageCount: 1
