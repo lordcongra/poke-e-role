@@ -50,7 +50,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     await loadLocalDataset();
 
     let speciesName = state.identity.species;
-    
+
     if (config.randomizeSpecies) {
         const customNames = state.roomCustomPokemon.filter((p) => state.role === 'GM' || !p.gmOnly).map((p) => p.Name);
         const baseNames = Object.keys(SPECIES_URLS);
@@ -121,7 +121,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     if (config.randomizeSpecies && config.autoSelectBias) {
         const strScore = limitStr + baseStr;
         const speScore = limitSpe + baseSpe;
-        
+
         if (strScore > speScore) effectiveBias = 'physical';
         else if (speScore > strScore) effectiveBias = 'special';
         else effectiveBias = 'balanced';
@@ -172,7 +172,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     };
 
     const legalMoveNames: string[] = [];
-    
+
     const extractMoves = (moveObject: unknown, ignoreRank = false) => {
         if (Array.isArray(moveObject)) {
             moveObject.forEach((move: unknown) => {
@@ -260,7 +260,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
 
     const draftedMoves: TempMove[] = [];
     let leftoverPool: TempMove[] = [];
-    
+
     const typeCounts = new Map<string, number>();
 
     let primaryDrafted = 0;
@@ -300,9 +300,10 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             return score;
         };
 
-        const getTotalCoverage = () => Array.from(typeCounts.entries())
-            .filter(([t]) => t !== type1 && t !== type2)
-            .reduce((sum, [, count]) => sum + count, 0);
+        const getTotalCoverage = () =>
+            Array.from(typeCounts.entries())
+                .filter(([t]) => t !== type1 && t !== type2)
+                .reduce((sum, [, count]) => sum + count, 0);
 
         supportPool.sort((a, b) => {
             let aScore = effectiveBias === 'tank' ? getDefensiveScore(a) * 10 : Math.random() * 5;
@@ -317,19 +318,20 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
                 const isPrimary = move.type === type1;
                 const isSecondary = hasType2 && move.type === type2;
                 const currentCount = typeCounts.get(move.type) || 0;
-                
+
                 if (isPrimary && config.overridePrimaryStab && currentCount < config.primaryStabCount) return 100;
                 if (isSecondary && config.overrideSecondaryStab && currentCount < config.secondaryStabCount) return 100;
-                if (!isPrimary && !isSecondary && config.overrideCoverage && getTotalCoverage() < config.coverageCount) return 100;
+                if (!isPrimary && !isSecondary && config.overrideCoverage && getTotalCoverage() < config.coverageCount)
+                    return 100;
                 return 0;
             };
 
-            return (bScore + needsType(b)) - (aScore + needsType(a));
+            return bScore + needsType(b) - (aScore + needsType(a));
         });
 
         for (let i = 0; i < config.targetSupCount && supportPool.length > 0; i++) {
             const move = supportPool.shift();
-            if (move) draftedMoves.push(move); 
+            if (move) draftedMoves.push(move);
         }
 
         attackPool.sort((a, b) => {
@@ -349,9 +351,9 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             const bStab = myTypes.includes(b.type) ? 1 : 0;
 
             if (aStab !== bStab) return bStab - aStab;
-            
-            const aFuzz = a.power + (Math.random() * 2);
-            const bFuzz = b.power + (Math.random() * 2);
+
+            const aFuzz = a.power + Math.random() * 2;
+            const bFuzz = b.power + Math.random() * 2;
             return bFuzz - aFuzz;
         });
 
@@ -360,12 +362,12 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
 
         for (const move of attackPool) {
             if (remainingAttackSlots <= 0) break;
-            
+
             const currentCount = typeCounts.get(move.type) || 0;
-            
+
             const isPrimary = type1 && move.type === type1;
             const isSecondary = hasType2 && move.type === type2;
-            
+
             let totalStabDrafted = Array.from(typeCounts.entries())
                 .filter(([t]) => t === type1 || t === type2)
                 .reduce((sum, [, count]) => sum + count, 0);
@@ -395,11 +397,11 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             if (canDraft) {
                 draftedMoves.push(move);
                 typeCounts.set(move.type, currentCount + 1);
-                
+
                 if (isPrimary) primaryDrafted++;
                 else if (isSecondary) secondaryDrafted++;
                 else coverageDrafted++;
-                
+
                 remainingAttackSlots--;
             }
         }
@@ -432,7 +434,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             attributeLimits,
             fakeState,
             maxSkillRank,
-            { ...config, combatBias: effectiveBias }, 
+            { ...config, combatBias: effectiveBias },
             customSkillsList,
             draftedMoves
         );
@@ -484,28 +486,47 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
 
         while (draftedMoves.length < finalDraftedMax && leftoverPool.length > 0) {
             leftoverPool.sort((a, b) => {
-                const aScore = getStatValue(a.attr) + getSkillValue(a.skill) + (a.cat === 'Status' ? 0 : getStatValue(a.dmgStat) + a.power);
-                const bScore = getStatValue(b.attr) + getSkillValue(b.skill) + (b.cat === 'Status' ? 0 : getStatValue(b.dmgStat) + b.power);
+                const aScore =
+                    getStatValue(a.attr) +
+                    getSkillValue(a.skill) +
+                    (a.cat === 'Status' ? 0 : getStatValue(a.dmgStat) + a.power);
+                const bScore =
+                    getStatValue(b.attr) +
+                    getSkillValue(b.skill) +
+                    (b.cat === 'Status' ? 0 : getStatValue(b.dmgStat) + b.power);
 
                 const getDynamicBonus = (move: TempMove) => {
-                    if (move.cat === 'Status') return 0; 
+                    if (move.cat === 'Status') return 0;
 
                     const isPrimary = move.type === type1;
                     const isSecondary = hasType2 && move.type === type2;
                     const isStab = isPrimary || isSecondary;
                     const count = typeCounts.get(move.type) || 0;
-                    
-                    const getTotalCoverage = () => Array.from(typeCounts.entries())
-                        .filter(([t]) => t !== type1 && t !== type2)
-                        .reduce((sum, [, c]) => sum + c, 0);
+
+                    const getTotalCoverage = () =>
+                        Array.from(typeCounts.entries())
+                            .filter(([t]) => t !== type1 && t !== type2)
+                            .reduce((sum, [, c]) => sum + c, 0);
 
                     let bonus = 0;
-                    if (isPrimary && config.overridePrimaryStab && primaryDrafted < config.primaryStabCount) bonus += 100;
-                    else if (isSecondary && config.overrideSecondaryStab && secondaryDrafted < config.secondaryStabCount) bonus += 100;
-                    else if (!isStab && config.overrideCoverage && getTotalCoverage() < config.coverageCount && count < 1) bonus += 100;
+                    if (isPrimary && config.overridePrimaryStab && primaryDrafted < config.primaryStabCount)
+                        bonus += 100;
+                    else if (
+                        isSecondary &&
+                        config.overrideSecondaryStab &&
+                        secondaryDrafted < config.secondaryStabCount
+                    )
+                        bonus += 100;
+                    else if (
+                        !isStab &&
+                        config.overrideCoverage &&
+                        getTotalCoverage() < config.coverageCount &&
+                        count < 1
+                    )
+                        bonus += 100;
                     else {
                         if (isStab) bonus += 2;
-                        bonus -= (count * 5); 
+                        bonus -= count * 5;
                     }
                     return bonus;
                 };
@@ -513,10 +534,10 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
                 const getVariance = (move: TempMove) => {
                     if (move.cat === 'Status') return Math.random() * 5;
                     const isStab = myTypes.includes(move.type);
-                    return isStab ? (Math.random() * 2) : (Math.random() * 8);
+                    return isStab ? Math.random() * 2 : Math.random() * 8;
                 };
 
-                return (bScore + getDynamicBonus(b) + getVariance(b)) - (aScore + getDynamicBonus(a) + getVariance(a));
+                return bScore + getDynamicBonus(b) + getVariance(b) - (aScore + getDynamicBonus(a) + getVariance(a));
             });
 
             const move = leftoverPool.shift();
@@ -545,15 +566,15 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             if (hasType2 && type === type2) return 2;
             return 3;
         };
-        
+
         const priorityA = getTypePriority(a.type);
         const priorityB = getTypePriority(b.type);
-        
+
         if (priorityA !== priorityB) return priorityA - priorityB;
         if (a.type !== b.type) return a.type.localeCompare(b.type);
         if (a.cat === 'Status' && b.cat !== 'Status') return 1;
         if (a.cat !== 'Status' && b.cat === 'Status') return -1;
-        
+
         return b.power - a.power;
     });
 

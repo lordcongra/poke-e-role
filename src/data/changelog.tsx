@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-export const CURRENT_VERSION = '2.5.2';
+export const CURRENT_VERSION = '2.5.6';
 
 export interface ChangelogEntry {
     version: string;
@@ -10,13 +10,12 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
     {
-        version: '2.4.5',
+        version: '2.5.6',
         date: 'Recently',
         changes: [
-            'Added in Rules toggle for hiding Type Matchups from locked NPC tokens.',
+            'Updated the pokemon generator to better generate move variety. Also added ability to generate a random species of pokemon.',
+            'Added ability to update the image of a token from your OBR images - helpful for evolutions when you want to keep your sheet.',
             'Added new dice-roller engine option in Rules: Custom Action Rolls! Read up on it in the readme on github to learn more.',
-            'The default dice roller for the room will be whichever one the DM sets it to, it cannot be set per-player.',
-            'Added in GM Demo Mode to Rules where GM can control dice rolls.',
             <>
                 Find Custom Action Rolls manifest link here:{' '}
                 <a

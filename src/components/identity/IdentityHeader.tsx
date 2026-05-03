@@ -187,7 +187,8 @@ export function IdentityHeader() {
                         }
                     });
                 } else {
-                    if (OBR.isAvailable) OBR.notification.show('Could not extract URL. Please check F12 Console!', 'ERROR');
+                    if (OBR.isAvailable)
+                        OBR.notification.show('Could not extract URL. Please check F12 Console!', 'ERROR');
                 }
             }
         } catch (e) {

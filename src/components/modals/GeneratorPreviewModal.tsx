@@ -48,7 +48,7 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
 
     const handleApply = () => {
         applyGeneratedBuild(localBuild);
-        
+
         if (config.randomizeSpecies && OBR.isAvailable && tokenId) {
             setShowImagePrompt(true);
         } else {
@@ -105,7 +105,7 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
                 console.error('Failed to pick image:', e);
             }
         }
-        
+
         setShowImagePrompt(false);
         onClose();
     };
@@ -125,7 +125,7 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
 
     const getBaseAttribute = (attribute: string) => {
         if (attribute === 'will') return willMax;
-        
+
         if (localBuild.baseStats && Object.values(CombatStat).includes(attribute as CombatStat)) {
             return localBuild.baseStats[attribute as string] || 1;
         }
@@ -167,7 +167,7 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
     }));
 
     const allCategories = [...skillCategories, ...mappedExtraCategories];
-    const baseInsForMoves = localBuild.baseStats ? localBuild.baseStats['ins'] : (baseStats[CombatStat.INS]?.base || 1);
+    const baseInsForMoves = localBuild.baseStats ? localBuild.baseStats['ins'] : baseStats[CombatStat.INS]?.base || 1;
     const dynamicMaxMoves = baseInsForMoves + (localBuild.attr['ins'] || 0) + 3;
 
     return (
@@ -183,10 +183,19 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
                                 const baseVal = getBaseAttribute(statistic);
                                 return (
                                     <div key={statistic} className="generator-preview__stat-column">
-                                        <label className="generator-preview__stat-label" title={`Base: ${baseVal} | Total: ${baseVal + (localBuild.attr[statistic] || 0)}`}>
+                                        <label
+                                            className="generator-preview__stat-label"
+                                            title={`Base: ${baseVal} | Total: ${baseVal + (localBuild.attr[statistic] || 0)}`}
+                                        >
                                             {statistic.toUpperCase()}
                                         </label>
-                                        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                                        <span
+                                            style={{
+                                                fontSize: '0.65rem',
+                                                color: 'var(--text-muted)',
+                                                marginBottom: '4px'
+                                            }}
+                                        >
                                             Base: {baseVal}
                                         </span>
                                         <GeneratorPreviewStatSpinner
@@ -206,10 +215,19 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
                                 const baseVal = getBaseAttribute(statistic);
                                 return (
                                     <div key={statistic} className="generator-preview__stat-column">
-                                        <label className="generator-preview__stat-label" title={`Base: ${baseVal} | Total: ${baseVal + (localBuild.soc[statistic] || 0)}`}>
+                                        <label
+                                            className="generator-preview__stat-label"
+                                            title={`Base: ${baseVal} | Total: ${baseVal + (localBuild.soc[statistic] || 0)}`}
+                                        >
                                             {statistic.toUpperCase()}
                                         </label>
-                                        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                                        <span
+                                            style={{
+                                                fontSize: '0.65rem',
+                                                color: 'var(--text-muted)',
+                                                marginBottom: '4px'
+                                            }}
+                                        >
                                             Base: {baseVal}
                                         </span>
                                         <GeneratorPreviewStatSpinner
@@ -307,7 +325,9 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
             {showImagePrompt && (
                 <div className="generator-preview-tooltip__overlay" style={{ zIndex: 1400 }}>
                     <div className="generator-preview-tooltip__content">
-                        <h3 className="generator-preview-tooltip__title" style={{ textAlign: 'center' }}>🖼️ Update Token Image?</h3>
+                        <h3 className="generator-preview-tooltip__title" style={{ textAlign: 'center' }}>
+                            🖼️ Update Token Image?
+                        </h3>
                         <p className="generator-preview-tooltip__desc" style={{ textAlign: 'center' }}>
                             You generated a brand new species! Would you like to select a new image for this token?
                         </p>
