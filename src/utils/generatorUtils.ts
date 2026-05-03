@@ -85,7 +85,10 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     ALL_SKILLS.forEach((skill) => (generatedSkills[skill] = 0));
     customSkillsList.forEach((skill) => (generatedSkills[skill] = 0));
 
-    const myTypes = [state.identity.type1, state.identity.type2].filter((type) => type && type !== 'None');
+    const type1 = state.identity.type1;
+    const type2 = state.identity.type2;
+    const hasType2 = type2 && type2 !== 'None';
+    const myTypes = [type1, type2].filter((type) => type && type !== 'None');
 
     const baseInsight = state.stats[CombatStat.INS].base;
     const totalTargetMoves = config.targetAtkCount + config.targetSupCount;
@@ -195,6 +198,8 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     let leftoverPool: TempMove[] = [];
     let supportPool = fetchedMoves.filter((move) => move.cat === 'Status');
     let attackPool = fetchedMoves.filter((move) => move.cat === 'Phys' || move.cat === 'Spec');
+    
+    const typeCounts = new Map<string, number>();
 
     if (config.buildType === 'wild') {
         leftoverPool = [...fetchedMoves].sort(() => 0.5 - Math.random());
@@ -254,14 +259,55 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             return b.power - a.power;
         });
 
-        const coveredTypes = new Set<string>();
         let remainingAttackSlots = config.targetAtkCount + (config.targetSupCount - draftedMoves.length);
+        
+        let primaryDrafted = 0;
+        let secondaryDrafted = 0;
+        let coverageDrafted = 0;
+        
+        let totalStabDrafted = 0;
+        const maxStabAllowedTotal = Math.max(1, config.targetAtkCount - 1);
 
         for (const move of attackPool) {
             if (remainingAttackSlots <= 0) break;
-            if (!coveredTypes.has(move.type) || myTypes.includes(move.type)) {
+            
+            const currentCount = typeCounts.get(move.type) || 0;
+            
+            const isPrimary = type1 && move.type === type1;
+            const isSecondary = hasType2 && move.type === type2;
+            const isStab = isPrimary || isSecondary;
+            
+            let canDraft = false;
+
+            if (config.overrideStab) {
+                if (isPrimary && primaryDrafted < config.primaryStabCount) {
+                    canDraft = true;
+                    primaryDrafted++;
+                } else if (isSecondary && secondaryDrafted < config.secondaryStabCount) {
+                    canDraft = true;
+                    secondaryDrafted++;
+                } else if (!isStab && coverageDrafted < config.coverageCount) {
+                    if (currentCount < 1) { // Still prevent mono-coverage in override mode
+                        canDraft = true;
+                        coverageDrafted++;
+                    }
+                }
+            } else {
+                if (isStab) {
+                    if (currentCount < 2 && totalStabDrafted < maxStabAllowedTotal) {
+                        canDraft = true;
+                        totalStabDrafted++;
+                    }
+                } else {
+                    if (currentCount < 1) {
+                        canDraft = true;
+                    }
+                }
+            }
+
+            if (canDraft) {
                 draftedMoves.push(move);
-                coveredTypes.add(move.type);
+                typeCounts.set(move.type, currentCount + 1);
                 remainingAttackSlots--;
             }
         }
@@ -356,16 +402,25 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
                 getSkillValue(b.skill) +
                 (b.cat === 'Status' ? 0 : getStatValue(b.dmgStat) + b.power);
 
+            const aCount = typeCounts.get(a.type) || 0;
+            const bCount = typeCounts.get(b.type) || 0;
+
             const aStab = myTypes.includes(a.type) ? 2 : 0;
             const bStab = myTypes.includes(b.type) ? 2 : 0;
+            
+            const aPenalty = aCount * 5; 
+            const bPenalty = bCount * 5;
 
-            return bScore + bStab - (aScore + aStab);
+            return (bScore + bStab - bPenalty) - (aScore + aStab - aPenalty);
         });
     }
 
     while (draftedMoves.length < finalDraftedMax && leftoverPool.length > 0) {
         const move = leftoverPool.shift();
-        if (move) draftedMoves.push(move);
+        if (move) {
+            draftedMoves.push(move);
+            typeCounts.set(move.type, (typeCounts.get(move.type) || 0) + 1);
+        }
     }
 
     return {

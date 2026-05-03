@@ -126,6 +126,10 @@ export interface GeneratorConfig {
     targetSupCount: number;
     includePmd: boolean;
     includeCustom: boolean;
+    overrideStab: boolean;
+    primaryStabCount: number;
+    secondaryStabCount: number;
+    coverageCount: number;
 }
 
 export interface CustomAbility {

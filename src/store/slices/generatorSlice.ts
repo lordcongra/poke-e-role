@@ -10,7 +10,11 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
         targetAtkCount: 2,
         targetSupCount: 2,
         includePmd: false,
-        includeCustom: true
+        includeCustom: false,
+        overrideStab: false,
+        primaryStabCount: 1,
+        secondaryStabCount: 1,
+        coverageCount: 1
     },
 
     setGeneratorConfig: (config) => set((state) => ({ generatorConfig: { ...state.generatorConfig, ...config } })),

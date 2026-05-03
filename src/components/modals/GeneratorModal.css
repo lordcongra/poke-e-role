@@ -15,7 +15,9 @@
     background: var(--panel-bg);
     padding: 15px;
     border-radius: 8px;
-    width: 340px;
+    width: 360px;
+    max-height: 90vh;
+    overflow-y: auto;
     border: 2px solid var(--primary);
     color: var(--text-main);
 }
