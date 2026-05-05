@@ -5,7 +5,7 @@ import { saveToOwlbear } from '../../utils/obr';
 
 export const createGeneratorSlice: StateCreator<CharacterState, [], [], GeneratorSlice> = (set, get) => ({
     generatorConfig: {
-        buildType: 'wild',
+        buildType: 'minmax',
         combatBias: 'balanced',
         targetAtkCount: 4,
         targetSupCount: 1,
@@ -18,7 +18,10 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
         secondaryStabCount: 1,
         coverageCount: 1,
         randomizeSpecies: false,
-        autoSelectBias: false
+        autoSelectBias: false,
+        ensureDefenses: false,
+        minStats: { str: 0, dex: 0, vit: 0, spe: 0, ins: 0 },
+        minSocials: { tou: 0, coo: 0, bea: 0, cut: 0, cle: 0 }
     },
 
     setGeneratorConfig: (config) => set((state) => ({ generatorConfig: { ...state.generatorConfig, ...config } })),

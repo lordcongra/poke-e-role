@@ -15,7 +15,7 @@
     background: var(--panel-bg);
     padding: 15px;
     border-radius: 8px;
-    width: 360px;
+    width: 600px;
     max-height: 90vh;
     overflow-y: auto;
     border: 2px solid var(--primary);
@@ -50,6 +50,12 @@
     gap: 8px;
 }
 
+.generator-modal__side-by-side {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+}
+
 .generator-modal__col {
     flex: 1;
 }
@@ -74,7 +80,9 @@
     padding: 8px;
     border-radius: 4px;
     border: 1px solid var(--border);
-    margin-top: 4px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .generator-modal__comp-title {
@@ -98,6 +106,7 @@
     display: flex;
     justify-content: space-around;
     align-items: center;
+    margin-top: auto;
 }
 
 .generator-modal__comp-item {
@@ -120,6 +129,33 @@
     border-radius: 3px;
     background: var(--input-bg);
     color: var(--text-main);
+}
+
+.generator-modal__min-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    flex: 1;
+    padding: 10px 0;
+}
+
+.generator-modal__min-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+}
+
+.generator-modal__min-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.generator-modal__min-label {
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: var(--text-muted);
 }
 
 .generator-modal__checkbox-group {
@@ -166,4 +202,62 @@
 .generator-modal__btn {
     flex: 1;
     padding: 6px;
+}
+
+/* Tooltip Modal Styles (Reused from other parts of the app) */
+.generator-modal__tooltip-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1200;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.generator-modal__tooltip-content {
+    background: var(--panel-bg);
+    padding: 15px;
+    border-radius: 8px;
+    width: 280px;
+    border: 2px solid var(--primary);
+    color: var(--text-main);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.generator-modal__tooltip-title {
+    margin-top: 0;
+    color: var(--primary);
+    font-size: 1.1rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+    text-align: center;
+}
+
+.generator-modal__tooltip-desc {
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+    color: var(--text-muted);
+    white-space: pre-wrap;
+    line-height: 1.4;
+}
+
+.generator-modal__tooltip-actions {
+    display: flex;
+    justify-content: center;
+}
+
+.generator-modal__tooltip-btn {
+    width: 100%;
+    padding: 6px;
+}
+
+/* Mobile Overrides */
+@media (max-width: 768px) {
+    .generator-modal__side-by-side {
+        flex-direction: column;
+    }
 }

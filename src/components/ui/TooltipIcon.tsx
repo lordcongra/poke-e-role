@@ -2,7 +2,14 @@ import './UI.css';
 
 export function TooltipIcon({ onClick }: { onClick: () => void }) {
     return (
-        <span onClick={onClick} className="tooltip-icon">
+        <span
+            onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onClick();
+            }}
+            className="tooltip-icon"
+        >
             ?
         </span>
     );

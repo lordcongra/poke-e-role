@@ -5,6 +5,60 @@ const COMBAT_STATS = Object.values(CombatStat) as string[];
 const SOCIAL_STATS = Object.values(SocialStat) as string[];
 const ALL_SKILLS = Object.values(Skill) as string[];
 
+function preAllocateStats(
+    generatedAttributes: Record<string, number>,
+    generatedSocials: Record<string, number>,
+    config: GeneratorConfig,
+    state: CharacterState,
+    attributeLimits: Record<string, number>,
+    attributePoints: number,
+    remainingPoints: { attr: number; soc: number }
+) {
+    const minStats = config.minStats || {};
+    const minSocials = config.minSocials || {};
+
+    // 1. Process User-Defined Minimum Combat Stats
+    for (const attr of COMBAT_STATS) {
+        const minDesired = minStats[attr] || 0;
+        while (
+            remainingPoints.attr > 0 &&
+            generatedAttributes[attr] < minDesired &&
+            generatedAttributes[attr] + state.stats[attr as CombatStat].base < attributeLimits[attr]
+        ) {
+            generatedAttributes[attr]++;
+            remainingPoints.attr--;
+        }
+    }
+
+    // 2. Process User-Defined Minimum Social Stats
+    for (const soc of SOCIAL_STATS) {
+        const minDesired = minSocials[soc] || 0;
+        while (
+            remainingPoints.soc > 0 &&
+            generatedSocials[soc] < minDesired &&
+            generatedSocials[soc] + state.socials[soc as SocialStat].base < 5
+        ) {
+            generatedSocials[soc]++;
+            remainingPoints.soc--;
+        }
+    }
+
+    // 3. Process Smart Defense Quotas
+    if (config.ensureDefenses) {
+        const defenseQuota = Math.floor(attributePoints / 4); // 4->1, 8->2, 10->2, 14->3
+        ['vit', 'ins'].forEach((attr) => {
+            while (
+                remainingPoints.attr > 0 &&
+                generatedAttributes[attr] < defenseQuota &&
+                generatedAttributes[attr] + state.stats[attr as CombatStat].base < attributeLimits[attr]
+            ) {
+                generatedAttributes[attr]++;
+                remainingPoints.attr--;
+            }
+        });
+    }
+}
+
 export function assignWildStats(
     generatedAttributes: Record<string, number>,
     generatedSocials: Record<string, number>,
@@ -18,8 +72,11 @@ export function assignWildStats(
     config: GeneratorConfig,
     customSkillsList: string[]
 ) {
-    let remainingAttributePoints = attributePoints;
-    let remainingSocialPoints = socialPoints;
+    const points = { attr: attributePoints, soc: socialPoints };
+    preAllocateStats(generatedAttributes, generatedSocials, config, state, attributeLimits, attributePoints, points);
+
+    let remainingAttributePoints = points.attr;
+    let remainingSocialPoints = points.soc;
     let remainingSkillPoints = skillPoints;
 
     const attributesToAssign = [...COMBAT_STATS];
@@ -79,8 +136,11 @@ export function assignMinMaxStats(
     customSkillsList: string[],
     draftedMoves: TempMove[]
 ) {
-    let remainingAttributePoints = attributePoints;
-    let remainingSocialPoints = socialPoints;
+    const points = { attr: attributePoints, soc: socialPoints };
+    preAllocateStats(generatedAttributes, generatedSocials, config, state, attributeLimits, attributePoints, points);
+
+    let remainingAttributePoints = points.attr;
+    let remainingSocialPoints = points.soc;
     let remainingSkillPoints = skillPoints;
 
     const requiredAttributes: Record<string, number> = { str: 0, dex: 0, vit: 0, spe: 0, ins: 0 };
@@ -189,11 +249,10 @@ export function assignMinMaxStats(
     const totalDexterity = state.stats[CombatStat.DEX].base + generatedAttributes['dex'];
     const totalStrength = state.stats[CombatStat.STR].base + generatedAttributes['str'];
     const totalSpecial = state.stats[CombatStat.SPE].base + generatedAttributes['spe'];
-    
-    const primaryDefense = (totalDexterity >= Math.max(totalStrength, totalSpecial)) ? 'evasion' : 'clash';
-    const secondaryDefense = (primaryDefense === 'evasion') ? 'clash' : 'evasion';
 
-    // 1. Max Primary Defense
+    const primaryDefense = totalDexterity >= Math.max(totalStrength, totalSpecial) ? 'evasion' : 'clash';
+    const secondaryDefense = primaryDefense === 'evasion' ? 'clash' : 'evasion';
+
     if (validSkills.includes(primaryDefense)) {
         while (remainingSkillPoints > 0 && generatedSkills[primaryDefense] < maxSkillRank) {
             generatedSkills[primaryDefense]++;
@@ -201,13 +260,11 @@ export function assignMinMaxStats(
         }
     }
 
-    // 2. Secure at least 1 point in Alert for initiative
     if (validSkills.includes('alert') && remainingSkillPoints > 0 && generatedSkills['alert'] < maxSkillRank) {
         generatedSkills['alert']++;
         remainingSkillPoints--;
     }
 
-    // 3. Max Secondary Defense if we have plenty of points left
     if (validSkills.includes(secondaryDefense)) {
         while (remainingSkillPoints > 0 && generatedSkills[secondaryDefense] < maxSkillRank) {
             generatedSkills[secondaryDefense]++;
@@ -215,7 +272,6 @@ export function assignMinMaxStats(
         }
     }
 
-    // 4. Max out Alert if we still have points to burn
     if (validSkills.includes('alert')) {
         while (remainingSkillPoints > 0 && generatedSkills['alert'] < maxSkillRank) {
             generatedSkills['alert']++;
@@ -225,7 +281,6 @@ export function assignMinMaxStats(
 
     const tier2Utility = ['athletic', 'stealth'];
 
-    // 5. Bring secondary utility skills to a solid baseline before maxing them
     for (const skill of tier2Utility) {
         if (!validSkills.includes(skill)) continue;
         while (remainingSkillPoints > 0 && generatedSkills[skill] < Math.min(3, maxSkillRank)) {
@@ -234,7 +289,6 @@ export function assignMinMaxStats(
         }
     }
 
-    // 6. Max out tier 2 utility skills if points still remain
     for (const skill of tier2Utility) {
         if (!validSkills.includes(skill)) continue;
         while (remainingSkillPoints > 0 && generatedSkills[skill] < maxSkillRank) {
@@ -243,7 +297,6 @@ export function assignMinMaxStats(
         }
     }
 
-    // 7. Random dump into remaining valid skills
     while (remainingSkillPoints > 0 && validSkills.length > 0) {
         const randomSkill = validSkills[Math.floor(Math.random() * validSkills.length)];
         if (generatedSkills[randomSkill] < maxSkillRank) {
@@ -267,8 +320,11 @@ export function assignAverageStats(
     customSkillsList: string[],
     draftedMoves: TempMove[]
 ) {
-    let remainingAttributePoints = attributePoints;
-    let remainingSocialPoints = socialPoints;
+    const points = { attr: attributePoints, soc: socialPoints };
+    preAllocateStats(generatedAttributes, generatedSocials, config, state, attributeLimits, attributePoints, points);
+
+    let remainingAttributePoints = points.attr;
+    let remainingSocialPoints = points.soc;
     let remainingSkillPoints = skillPoints;
 
     const coreAttributes = new Set<string>();
@@ -292,12 +348,11 @@ export function assignAverageStats(
         coreAttributes.add('ins');
     }
 
-    // Add primary defense and alert to core skills for average builds so they aren't defenseless
     const totalDexterity = state.stats[CombatStat.DEX].base + generatedAttributes['dex'];
     const totalStrength = state.stats[CombatStat.STR].base + generatedAttributes['str'];
     const totalSpecial = state.stats[CombatStat.SPE].base + generatedAttributes['spe'];
-    const primaryDefense = (totalDexterity >= Math.max(totalStrength, totalSpecial)) ? 'evasion' : 'clash';
-    
+    const primaryDefense = totalDexterity >= Math.max(totalStrength, totalSpecial) ? 'evasion' : 'clash';
+
     coreSkills.add(primaryDefense);
     coreSkills.add('alert');
 

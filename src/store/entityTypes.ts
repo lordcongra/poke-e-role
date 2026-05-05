@@ -136,6 +136,9 @@ export interface GeneratorConfig {
     coverageCount: number;
     randomizeSpecies: boolean;
     autoSelectBias: boolean;
+    ensureDefenses: boolean;
+    minStats: Record<string, number>;
+    minSocials: Record<string, number>;
 }
 
 export interface CustomAbility {
