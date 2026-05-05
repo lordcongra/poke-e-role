@@ -189,14 +189,44 @@ export function assignMinMaxStats(
     const totalDexterity = state.stats[CombatStat.DEX].base + generatedAttributes['dex'];
     const totalStrength = state.stats[CombatStat.STR].base + generatedAttributes['str'];
     const totalSpecial = state.stats[CombatStat.SPE].base + generatedAttributes['spe'];
-    const utilitySkills = [];
+    
+    const primaryDefense = (totalDexterity >= Math.max(totalStrength, totalSpecial)) ? 'evasion' : 'clash';
+    const secondaryDefense = (primaryDefense === 'evasion') ? 'clash' : 'evasion';
 
-    if (totalDexterity >= Math.max(totalStrength, totalSpecial)) utilitySkills.push('evasion');
-    else utilitySkills.push('clash');
+    // 1. Max Primary Defense
+    if (validSkills.includes(primaryDefense)) {
+        while (remainingSkillPoints > 0 && generatedSkills[primaryDefense] < maxSkillRank) {
+            generatedSkills[primaryDefense]++;
+            remainingSkillPoints--;
+        }
+    }
 
-    utilitySkills.push('alert', 'athletic', 'stealth');
+    // 2. Secure at least 1 point in Alert for initiative
+    if (validSkills.includes('alert') && remainingSkillPoints > 0 && generatedSkills['alert'] < maxSkillRank) {
+        generatedSkills['alert']++;
+        remainingSkillPoints--;
+    }
 
-    for (const skill of utilitySkills) {
+    // 3. Max Secondary Defense if we have plenty of points left
+    if (validSkills.includes(secondaryDefense)) {
+        while (remainingSkillPoints > 0 && generatedSkills[secondaryDefense] < maxSkillRank) {
+            generatedSkills[secondaryDefense]++;
+            remainingSkillPoints--;
+        }
+    }
+
+    // 4. Max out Alert if we still have points to burn
+    if (validSkills.includes('alert')) {
+        while (remainingSkillPoints > 0 && generatedSkills['alert'] < maxSkillRank) {
+            generatedSkills['alert']++;
+            remainingSkillPoints--;
+        }
+    }
+
+    const tier2Utility = ['athletic', 'stealth'];
+
+    // 5. Bring secondary utility skills to a solid baseline before maxing them
+    for (const skill of tier2Utility) {
         if (!validSkills.includes(skill)) continue;
         while (remainingSkillPoints > 0 && generatedSkills[skill] < Math.min(3, maxSkillRank)) {
             generatedSkills[skill]++;
@@ -204,6 +234,16 @@ export function assignMinMaxStats(
         }
     }
 
+    // 6. Max out tier 2 utility skills if points still remain
+    for (const skill of tier2Utility) {
+        if (!validSkills.includes(skill)) continue;
+        while (remainingSkillPoints > 0 && generatedSkills[skill] < maxSkillRank) {
+            generatedSkills[skill]++;
+            remainingSkillPoints--;
+        }
+    }
+
+    // 7. Random dump into remaining valid skills
     while (remainingSkillPoints > 0 && validSkills.length > 0) {
         const randomSkill = validSkills[Math.floor(Math.random() * validSkills.length)];
         if (generatedSkills[randomSkill] < maxSkillRank) {
@@ -251,6 +291,15 @@ export function assignAverageStats(
         coreAttributes.add('vit');
         coreAttributes.add('ins');
     }
+
+    // Add primary defense and alert to core skills for average builds so they aren't defenseless
+    const totalDexterity = state.stats[CombatStat.DEX].base + generatedAttributes['dex'];
+    const totalStrength = state.stats[CombatStat.STR].base + generatedAttributes['str'];
+    const totalSpecial = state.stats[CombatStat.SPE].base + generatedAttributes['spe'];
+    const primaryDefense = (totalDexterity >= Math.max(totalStrength, totalSpecial)) ? 'evasion' : 'clash';
+    
+    coreSkills.add(primaryDefense);
+    coreSkills.add('alert');
 
     for (const attr of coreAttributes) {
         const targetRank = Math.max(1, Math.ceil((attributeLimits[attr] - state.stats[attr as CombatStat].base) / 2));
