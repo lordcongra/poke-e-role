@@ -2,6 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { CharacterState, GeneratorSlice, MoveData } from '../storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { saveToOwlbear } from '../../utils/obr';
+import { syncHealthAndWill } from '../../utils/macroHelpers';
 
 export const createGeneratorSlice: StateCreator<CharacterState, [], [], GeneratorSlice> = (set, get) => ({
     generatorConfig: {
@@ -36,6 +37,8 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
             const newSocials = { ...state.socials };
             const newSkills = { ...state.skills };
             const newIdentity = { ...state.identity };
+            const newHealth = { ...state.health };
+            const newWill = { ...state.will };
             const updatesToSave: Record<string, unknown> = {};
 
             if (build.pokemonData && build.species !== state.identity.species) {
@@ -97,6 +100,9 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
                 };
             });
 
+            // Properly synchronize HP and Will with the newly assigned ranks!
+            syncHealthAndWill(state, newStats, newIdentity, newHealth, newWill, updatesToSave);
+
             updatesToSave['moves-data'] = JSON.stringify(newMoves);
             if (newExtraCategories !== state.extraCategories)
                 updatesToSave['extra-skills-data'] = JSON.stringify(newExtraCategories);
@@ -113,7 +119,9 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
                 skills: newSkills,
                 moves: newMoves,
                 extraCategories: newExtraCategories,
-                identity: newIdentity
+                identity: newIdentity,
+                health: newHealth,
+                will: newWill
             };
         });
     }
