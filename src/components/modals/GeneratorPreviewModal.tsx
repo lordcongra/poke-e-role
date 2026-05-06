@@ -5,6 +5,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { GeneratorPreviewStatSpinner } from './GeneratorPreviewStatSpinner';
 import { GeneratorPreviewMoveRow } from './GeneratorPreviewMoveRow';
+import { getLimit } from '../../utils/macroHelpers';
 import './GeneratorPreviewModal.css';
 
 interface GeneratorPreviewModalProps {
@@ -139,6 +140,24 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
         return 0;
     };
 
+    const STAT_NAMES: Record<string, string> = {
+        str: 'Strength',
+        dex: 'Dexterity',
+        vit: 'Vitality',
+        spe: 'Special',
+        ins: 'Insight'
+    };
+
+    const getStatLimit = (attribute: string) => {
+        if (localBuild.pokemonData) {
+            return getLimit(localBuild.pokemonData as Record<string, unknown>, STAT_NAMES[attribute] || '') || 5;
+        }
+        if (Object.values(CombatStat).includes(attribute as CombatStat)) {
+            return baseStats[attribute as CombatStat]?.limit || 5;
+        }
+        return 5;
+    };
+
     const getBaseSkill = (skillName: string) => {
         if (baseSkills[skillName as Skill]) return baseSkills[skillName as Skill].base;
         for (const category of extraCategories) {
@@ -181,11 +200,12 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
                         <div className="generator-preview__grid-5">
                             {Object.values(CombatStat).map((statistic) => {
                                 const baseVal = getBaseAttribute(statistic);
+                                const limitVal = getStatLimit(statistic);
                                 return (
                                     <div key={statistic} className="generator-preview__stat-column">
                                         <label
                                             className="generator-preview__stat-label"
-                                            title={`Base: ${baseVal} | Total: ${baseVal + (localBuild.attr[statistic] || 0)}`}
+                                            title={`Base: ${baseVal} | Limit: ${limitVal} | Total: ${baseVal + (localBuild.attr[statistic] || 0)}`}
                                         >
                                             {statistic.toUpperCase()}
                                         </label>
@@ -193,10 +213,11 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
                                             style={{
                                                 fontSize: '0.65rem',
                                                 color: 'var(--text-muted)',
-                                                marginBottom: '4px'
+                                                marginBottom: '4px',
+                                                whiteSpace: 'nowrap'
                                             }}
                                         >
-                                            Base: {baseVal}
+                                            Base: {baseVal} | Limit: {limitVal}
                                         </span>
                                         <GeneratorPreviewStatSpinner
                                             value={localBuild.attr[statistic] || 0}
