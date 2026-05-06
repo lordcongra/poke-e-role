@@ -139,7 +139,10 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                             </div>
                         </div>
 
-                        <div className="generator-modal__col" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div
+                            className="generator-modal__col"
+                            style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}
+                        >
                             <div className="generator-modal__composition">
                                 <label className="generator-modal__comp-title">Move Composition</label>
                                 <p className="generator-modal__comp-desc">
@@ -175,8 +178,8 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                 <div className="generator-modal__composition">
                                     <label className="generator-modal__comp-title">Attack Type Ratios</label>
                                     <p className="generator-modal__comp-desc">
-                                        Check a box to lock a specific amount for that category. Unchecked categories will
-                                        auto-fill to reach your total Attacks.
+                                        Check a box to lock a specific amount for that category. Unchecked categories
+                                        will auto-fill to reach your total Attacks.
                                     </p>
                                     <div className="generator-modal__comp-row">
                                         <div className="generator-modal__comp-item">
@@ -184,7 +187,9 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                                 <input
                                                     type="checkbox"
                                                     checked={config.overridePrimaryStab}
-                                                    onChange={(e) => setConfig({ overridePrimaryStab: e.target.checked })}
+                                                    onChange={(e) =>
+                                                        setConfig({ overridePrimaryStab: e.target.checked })
+                                                    }
                                                     className="generator-modal__checkbox"
                                                 />
                                                 STAB 1
@@ -192,7 +197,9 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                             <input
                                                 type="number"
                                                 value={config.primaryStabCount}
-                                                onChange={(e) => setConfig({ primaryStabCount: Number(e.target.value) })}
+                                                onChange={(e) =>
+                                                    setConfig({ primaryStabCount: Number(e.target.value) })
+                                                }
                                                 min="0"
                                                 max="6"
                                                 className="generator-modal__comp-input"
@@ -205,7 +212,9 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                                     <input
                                                         type="checkbox"
                                                         checked={config.overrideSecondaryStab}
-                                                        onChange={(e) => setConfig({ overrideSecondaryStab: e.target.checked })}
+                                                        onChange={(e) =>
+                                                            setConfig({ overrideSecondaryStab: e.target.checked })
+                                                        }
                                                         className="generator-modal__checkbox"
                                                     />
                                                     STAB 2
@@ -213,7 +222,9 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                                 <input
                                                     type="number"
                                                     value={config.secondaryStabCount}
-                                                    onChange={(e) => setConfig({ secondaryStabCount: Number(e.target.value) })}
+                                                    onChange={(e) =>
+                                                        setConfig({ secondaryStabCount: Number(e.target.value) })
+                                                    }
                                                     min="0"
                                                     max="6"
                                                     className="generator-modal__comp-input"
