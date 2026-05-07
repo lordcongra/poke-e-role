@@ -1,7 +1,7 @@
 import type { TempBuild, TempMove, CharacterState, GeneratorConfig } from '../store/storeTypes';
 import { fetchPokemonData, fetchMoveData, MOVES_URLS, SPECIES_URLS, loadLocalDataset } from './api';
 import { getRankPoints, getAgePoints } from '../store/useCharacterStore';
-import { CombatStat, SocialStat, Skill } from '../types/enums';
+import { CombatStat, Skill } from '../types/enums';
 import { assignWildStats, assignMinMaxStats, assignAverageStats } from './generatorLogic';
 import { getLimit, getBase } from './macroHelpers';
 
@@ -185,7 +185,13 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
                           )
                         : 'Other';
 
-                if (moveName && MOVES_URLS[moveName.toLowerCase()] && (ignoreRank || isMoveAllowed(moveRank))) {
+                // Exact match check to ban Splash, but allow things like Splishy Splash
+                if (
+                    moveName && 
+                    moveName.toLowerCase().trim() !== 'splash' && 
+                    MOVES_URLS[moveName.toLowerCase()] && 
+                    (ignoreRank || isMoveAllowed(moveRank))
+                ) {
                     legalMoveNames.push(moveName);
                 }
             });
@@ -201,7 +207,14 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
                                           (move as Record<string, unknown>).Move ||
                                           ''
                                   );
-                        if (moveName && MOVES_URLS[moveName.toLowerCase()]) legalMoveNames.push(moveName);
+                        // Exact match check to ban Splash here as well
+                        if (
+                            moveName && 
+                            moveName.toLowerCase().trim() !== 'splash' && 
+                            MOVES_URLS[moveName.toLowerCase()]
+                        ) {
+                            legalMoveNames.push(moveName);
+                        }
                     });
                 }
             });
@@ -267,14 +280,64 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     let secondaryDrafted = 0;
     let coverageDrafted = 0;
 
+    const draftedAccAttrs = new Set<string>();
+    const draftedSkills = new Set<string>();
+
+    const getMoveScore = (move: TempMove) => {
+        let score = 0;
+        
+        // Defines whether a move functionally acts like a Physical or Special attack
+        const isFunctionallyPhysical = move.cat === 'Phys' || move.dmgStat === 'str';
+        const isFunctionallySpecial = move.cat === 'Spec' || move.dmgStat === 'spe';
+        
+        // STAB Match vs Bias Mismatch
+        if (effectiveBias === 'physical') {
+            if (isFunctionallyPhysical) score += 60;
+            else if (move.cat === 'Spec' && !isFunctionallyPhysical) score -= 80;
+            
+            // Pre-seed accuracy preference (Including VIT for bruisers)
+            if (move.attr === 'str' || move.attr === 'dex' || move.attr === 'vit') score += 20; 
+        } else if (effectiveBias === 'special') {
+            if (isFunctionallySpecial) score += 60;
+            else if (move.cat === 'Phys' && !isFunctionallySpecial) score -= 80;
+            
+            // Pre-seed accuracy preference
+            if (move.attr === 'spe' || move.attr === 'ins' || move.attr === 'will' || move.attr === 'dex') score += 20; 
+        } else if (effectiveBias === 'tank') {
+            if (move.attr === 'vit' || move.attr === 'ins' || move.attr === 'will') score += 20;
+        }
+        
+        if (myTypes.includes(move.type)) {
+            score += 40;
+        }
+        
+        // Dynamic Synergy Adjustments
+        if (draftedAccAttrs.has(move.attr)) score += 15;
+        // Will / Insight specific bridge since Will is a derived Insight stat
+        if (move.attr === 'will' && draftedAccAttrs.has('ins')) score += 15;
+        if (move.attr === 'ins' && draftedAccAttrs.has('will')) score += 15;
+
+        if (move.skill !== 'none' && draftedSkills.has(move.skill)) score += 10;
+        
+        // Handle Variable Damage Moves (Power 0 but not Status) so they aren't ignored
+        let effectivePower = move.power;
+        if (effectivePower === 0 && move.cat !== 'Status') {
+            effectivePower = 3; // Treat as an average-power move for drafting priority
+        }
+        score += effectivePower * 2;
+        
+        return score;
+    };
+
     if (config.buildType === 'wild') {
         leftoverPool = [...fetchedMoves].sort(() => 0.5 - Math.random());
+        while (draftedMoves.length < draftedMax && leftoverPool.length > 0) {
+            const move = leftoverPool.shift();
+            if (move) draftedMoves.push(move);
+        }
     } else {
         let supportPool = fetchedMoves.filter((move) => move.cat === 'Status');
         let attackPool = fetchedMoves.filter((move) => move.cat === 'Phys' || move.cat === 'Spec');
-
-        if (effectiveBias === 'physical') attackPool = attackPool.filter((move) => move.cat === 'Phys');
-        if (effectiveBias === 'special') attackPool = attackPool.filter((move) => move.cat === 'Spec');
 
         const getDefensiveScore = (move: TempMove) => {
             let score = 0;
@@ -305,110 +368,114 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
                 .filter(([t]) => t !== type1 && t !== type2)
                 .reduce((sum, [, count]) => sum + count, 0);
 
-        supportPool.sort((a, b) => {
-            let aScore = effectiveBias === 'tank' ? getDefensiveScore(a) * 10 : Math.random() * 5;
-            let bScore = effectiveBias === 'tank' ? getDefensiveScore(b) * 10 : Math.random() * 5;
-
-            if (effectiveBias === 'tank') {
-                aScore += Math.random() * 4;
-                bScore += Math.random() * 4;
-            }
-
-            const needsType = (move: TempMove) => {
-                const isPrimary = move.type === type1;
-                const isSecondary = hasType2 && move.type === type2;
-                const currentCount = typeCounts.get(move.type) || 0;
-
-                if (isPrimary && config.overridePrimaryStab && currentCount < config.primaryStabCount) return 100;
-                if (isSecondary && config.overrideSecondaryStab && currentCount < config.secondaryStabCount) return 100;
-                if (!isPrimary && !isSecondary && config.overrideCoverage && getTotalCoverage() < config.coverageCount)
-                    return 100;
-                return 0;
-            };
-
-            return bScore + needsType(b) - (aScore + needsType(a));
-        });
-
-        for (let i = 0; i < config.targetSupCount && supportPool.length > 0; i++) {
-            const move = supportPool.shift();
-            if (move) draftedMoves.push(move);
-        }
-
-        attackPool.sort((a, b) => {
-            let aBias = 0;
-            let bBias = 0;
-            if (effectiveBias === 'physical') {
-                aBias = a.cat === 'Phys' ? 1 : 0;
-                bBias = b.cat === 'Phys' ? 1 : 0;
-            } else if (effectiveBias === 'special') {
-                aBias = a.cat === 'Spec' ? 1 : 0;
-                bBias = b.cat === 'Spec' ? 1 : 0;
-            }
-
-            if (aBias !== bBias) return bBias - aBias;
-
-            const aStab = myTypes.includes(a.type) ? 1 : 0;
-            const bStab = myTypes.includes(b.type) ? 1 : 0;
-
-            if (aStab !== bStab) return bStab - aStab;
-
-            const aFuzz = a.power + Math.random() * 2;
-            const bFuzz = b.power + Math.random() * 2;
-            return bFuzz - aFuzz;
-        });
-
-        let remainingAttackSlots = config.targetAtkCount + (config.targetSupCount - draftedMoves.length);
+        // 1. DRAFT ATTACK POOL FIRST to establish the offensive skill/attribute footprint
+        let remainingAttackSlots = config.targetAtkCount;
         const maxStabAllowedTotal = Math.max(1, config.targetAtkCount - 1);
 
-        for (const move of attackPool) {
-            if (remainingAttackSlots <= 0) break;
+        // Greedy Draft Loop (Resorts every iteration to perfectly capture updating synergy!)
+        while (remainingAttackSlots > 0 && attackPool.length > 0 && draftedMoves.length < draftedMax) {
+            attackPool.sort((a, b) => {
+                const aScore = getMoveScore(a) + (Math.random() * 5);
+                const bScore = getMoveScore(b) + (Math.random() * 5);
+                return bScore - aScore;
+            });
 
-            const currentCount = typeCounts.get(move.type) || 0;
+            let draftedIndex = -1;
 
-            const isPrimary = type1 && move.type === type1;
-            const isSecondary = hasType2 && move.type === type2;
+            for (let i = 0; i < attackPool.length; i++) {
+                const move = attackPool[i];
+                const currentCount = typeCounts.get(move.type) || 0;
 
-            let totalStabDrafted = Array.from(typeCounts.entries())
-                .filter(([t]) => t === type1 || t === type2)
-                .reduce((sum, [, count]) => sum + count, 0);
+                const isPrimary = type1 && move.type === type1;
+                const isSecondary = hasType2 && move.type === type2;
 
-            let canDraft = false;
+                let totalStabDrafted = Array.from(typeCounts.entries())
+                    .filter(([t]) => t === type1 || t === type2)
+                    .reduce((sum, [, count]) => sum + count, 0);
 
-            if (isPrimary) {
-                if (config.overridePrimaryStab) {
-                    if (currentCount < config.primaryStabCount) canDraft = true;
+                let canDraft = false;
+
+                if (isPrimary) {
+                    if (config.overridePrimaryStab) {
+                        if (currentCount < config.primaryStabCount) canDraft = true;
+                    } else {
+                        if (currentCount < 2 && totalStabDrafted < maxStabAllowedTotal) canDraft = true;
+                    }
+                } else if (isSecondary) {
+                    if (config.overrideSecondaryStab) {
+                        if (currentCount < config.secondaryStabCount) canDraft = true;
+                    } else {
+                        if (currentCount < 2 && totalStabDrafted < maxStabAllowedTotal) canDraft = true;
+                    }
                 } else {
-                    if (currentCount < 2 && totalStabDrafted < maxStabAllowedTotal) canDraft = true;
+                    if (config.overrideCoverage) {
+                        if (getTotalCoverage() < config.coverageCount && currentCount < 1) canDraft = true;
+                    } else {
+                        if (currentCount < 1) canDraft = true;
+                    }
                 }
-            } else if (isSecondary) {
-                if (config.overrideSecondaryStab) {
-                    if (currentCount < config.secondaryStabCount) canDraft = true;
-                } else {
-                    if (currentCount < 2 && totalStabDrafted < maxStabAllowedTotal) canDraft = true;
-                }
-            } else {
-                if (config.overrideCoverage) {
-                    if (getTotalCoverage() < config.coverageCount && currentCount < 1) canDraft = true;
-                } else {
-                    if (currentCount < 1) canDraft = true;
+
+                if (canDraft) {
+                    draftedMoves.push(move);
+                    typeCounts.set(move.type, currentCount + 1);
+                    draftedAccAttrs.add(move.attr);
+                    if (move.skill !== 'none') draftedSkills.add(move.skill);
+
+                    draftedIndex = i;
+
+                    if (isPrimary) primaryDrafted++;
+                    else if (isSecondary) secondaryDrafted++;
+                    else coverageDrafted++;
+
+                    remainingAttackSlots--;
+                    break;
                 }
             }
 
-            if (canDraft) {
+            if (draftedIndex !== -1) {
+                attackPool.splice(draftedIndex, 1);
+            } else {
+                break; // No legal moves left in attack pool
+            }
+        }
+
+        // 2. DRAFT SUPPORT POOL SECOND (Now that we have a footprint, they will draft synergistically)
+        supportPool.sort((a, b) => {
+            let aScore = getMoveScore(a) + (effectiveBias === 'tank' ? getDefensiveScore(a) * 10 : Math.random() * 5);
+            let bScore = getMoveScore(b) + (effectiveBias === 'tank' ? getDefensiveScore(b) * 10 : Math.random() * 5);
+
+            return bScore - aScore;
+        });
+
+        let remainingSupportSlots = config.targetSupCount;
+        for (let i = 0; i < remainingSupportSlots && supportPool.length > 0 && draftedMoves.length < draftedMax; i++) {
+            const move = supportPool.shift();
+            if (move) {
                 draftedMoves.push(move);
-                typeCounts.set(move.type, currentCount + 1);
-
-                if (isPrimary) primaryDrafted++;
-                else if (isSecondary) secondaryDrafted++;
-                else coverageDrafted++;
-
-                remainingAttackSlots--;
+                draftedAccAttrs.add(move.attr);
+                if (move.skill !== 'none') draftedSkills.add(move.skill);
             }
         }
 
         leftoverPool = fetchedMoves.filter((move) => !draftedMoves.includes(move));
+
+        // Draft any remaining filler moves up to draftedMax BEFORE Stat Allocation!
+        while (draftedMoves.length < draftedMax && leftoverPool.length > 0) {
+            leftoverPool.sort((a, b) => {
+                const aScore = getMoveScore(a) + (Math.random() * 5);
+                const bScore = getMoveScore(b) + (Math.random() * 5);
+                return bScore - aScore;
+            });
+            const move = leftoverPool.shift();
+            if (move) {
+                draftedMoves.push(move);
+                draftedAccAttrs.add(move.attr);
+                if (move.skill !== 'none') draftedSkills.add(move.skill);
+            }
+        }
     }
 
+    // STAT ALLOCATION HAPPENS HERE (Now seeing all the drafted moves!)
     if (config.buildType === 'wild') {
         assignWildStats(
             generatedAttributes,
@@ -455,103 +522,18 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         );
     }
 
+    // A final check in case the Tank bias pushed Insight higher during stat allocation
     const finalDraftedMax = baseIns + generatedAttributes['ins'] + 3;
 
     if (config.buildType !== 'wild') {
-        const getStatValue = (statName: string) => {
-            if (!statName) return 0;
-            if (Object.values(CombatStat).includes(statName as CombatStat)) {
-                return fakeState.stats[statName as CombatStat].base + (generatedAttributes[statName] || 0);
-            }
-            if (Object.values(SocialStat).includes(statName as SocialStat)) {
-                return fakeState.socials[statName as SocialStat].base + (generatedSocials[statName] || 0);
-            }
-            if (statName === 'will') return fakeState.will.willMax + (generatedAttributes['ins'] || 0);
-            return 0;
-        };
-
-        const getSkillValue = (skillName: string) => {
-            if (!skillName || skillName === 'none') return 0;
-            let val = generatedSkills[skillName] || 0;
-            if (Object.values(Skill).includes(skillName as Skill)) {
-                val += fakeState.skills[skillName as Skill].base;
-            } else {
-                for (const cat of fakeState.extraCategories) {
-                    const found = cat.skills.find((s) => s.id === skillName);
-                    if (found) val += found.base;
-                }
-            }
-            return val;
-        };
-
         while (draftedMoves.length < finalDraftedMax && leftoverPool.length > 0) {
             leftoverPool.sort((a, b) => {
-                const aScore =
-                    getStatValue(a.attr) +
-                    getSkillValue(a.skill) +
-                    (a.cat === 'Status' ? 0 : getStatValue(a.dmgStat) + a.power);
-                const bScore =
-                    getStatValue(b.attr) +
-                    getSkillValue(b.skill) +
-                    (b.cat === 'Status' ? 0 : getStatValue(b.dmgStat) + b.power);
-
-                const getDynamicBonus = (move: TempMove) => {
-                    if (move.cat === 'Status') return 0;
-
-                    const isPrimary = move.type === type1;
-                    const isSecondary = hasType2 && move.type === type2;
-                    const isStab = isPrimary || isSecondary;
-                    const count = typeCounts.get(move.type) || 0;
-
-                    const getTotalCoverage = () =>
-                        Array.from(typeCounts.entries())
-                            .filter(([t]) => t !== type1 && t !== type2)
-                            .reduce((sum, [, c]) => sum + c, 0);
-
-                    let bonus = 0;
-                    if (isPrimary && config.overridePrimaryStab && primaryDrafted < config.primaryStabCount)
-                        bonus += 100;
-                    else if (
-                        isSecondary &&
-                        config.overrideSecondaryStab &&
-                        secondaryDrafted < config.secondaryStabCount
-                    )
-                        bonus += 100;
-                    else if (
-                        !isStab &&
-                        config.overrideCoverage &&
-                        getTotalCoverage() < config.coverageCount &&
-                        count < 1
-                    )
-                        bonus += 100;
-                    else {
-                        if (isStab) bonus += 2;
-                        bonus -= count * 5;
-                    }
-                    return bonus;
-                };
-
-                const getVariance = (move: TempMove) => {
-                    if (move.cat === 'Status') return Math.random() * 5;
-                    const isStab = myTypes.includes(move.type);
-                    return isStab ? Math.random() * 2 : Math.random() * 8;
-                };
-
-                return bScore + getDynamicBonus(b) + getVariance(b) - (aScore + getDynamicBonus(a) + getVariance(a));
+                const aScore = getMoveScore(a) + (Math.random() * 5);
+                const bScore = getMoveScore(b) + (Math.random() * 5);
+                return bScore - aScore;
             });
-
             const move = leftoverPool.shift();
-            if (move) {
-                draftedMoves.push(move);
-                if (move.cat !== 'Status') {
-                    typeCounts.set(move.type, (typeCounts.get(move.type) || 0) + 1);
-                    const isPrimary = type1 && move.type === type1;
-                    const isSecondary = hasType2 && move.type === type2;
-                    if (isPrimary) primaryDrafted++;
-                    else if (isSecondary) secondaryDrafted++;
-                    else coverageDrafted++;
-                }
-            }
+            if (move) draftedMoves.push(move);
         }
     } else {
         while (draftedMoves.length < finalDraftedMax && leftoverPool.length > 0) {

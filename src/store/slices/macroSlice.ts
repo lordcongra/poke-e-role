@@ -3,6 +3,7 @@ import type { CharacterState, MacroSlice, MoveData } from '../storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { saveToOwlbear } from '../../utils/obr';
 import OBR from '@owlbear-rodeo/sdk';
+import type { Image } from '@owlbear-rodeo/sdk';
 import {
     parseLearnset,
     getLimit,
@@ -122,7 +123,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
 
             const updatesToSave: Record<string, unknown> = {};
             let shouldRestoreImage = false;
-            let revertConfig: RestoreConfig = {}; // HOISTED to perfectly clear TS errors!
+            let revertConfig: RestoreConfig = {}; 
 
             if (isReverting) {
                 const previousTrans = state.identity.activeTransformation;
@@ -620,7 +621,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     OBR.scene.items
                         .updateItems([state.tokenId], (items) => {
                             for (const item of items) {
-                                const imgItem = item as any;
+                                const imgItem = item as Image;
                                 if (imgItem.image) imgItem.image.url = targetUrl;
                             }
                         })
@@ -706,6 +707,29 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             try {
                 saveToOwlbear(updatesToSave);
             } catch (e) {}
+
+            // Native OBR sync to ensure map tokens are renamed on manual species entry
+            if (OBR.isAvailable && state.tokenId) {
+                const targetName = String(data.Name || state.identity.species);
+                OBR.scene.items.updateItems([state.tokenId], (items) => {
+                    for (const item of items) {
+                        item.name = targetName;
+                        const imgItem = item as Image;
+                        if (imgItem.text) {
+                            imgItem.text.plainText = targetName;
+                        }
+                        
+                        // Forcefully overwrite Changr extension metadata if it exists
+                        const changrMeta = item.metadata['com.missing-link-dev.changr/metadata'] as Record<string, unknown>;
+                        if (changrMeta && Array.isArray(changrMeta.imageOptions)) {
+                            changrMeta.imageOptions.forEach((opt) => {
+                                const typedOpt = opt as Record<string, unknown>;
+                                if (typedOpt.name) typedOpt.name = targetName;
+                            });
+                        }
+                    }
+                }).catch((e) => console.warn('Failed to update OBR item name on manual species change:', e));
+            }
 
             return {
                 stats: newStats,

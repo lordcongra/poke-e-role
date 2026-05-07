@@ -156,16 +156,19 @@ export function assignMinMaxStats(
             if (requiredAttributes[move.dmgStat] !== undefined) requiredAttributes[move.dmgStat] += 2;
             else if (requiredSocials[move.dmgStat] !== undefined) requiredSocials[move.dmgStat] += 2;
         }
-        if (move.skill) requiredSkills[move.skill] = (requiredSkills[move.skill] || 0) + 2;
+        if (move.skill && move.skill !== 'none') {
+            requiredSkills[move.skill] = (requiredSkills[move.skill] || 0) + 2;
+        }
     });
 
+    // Overwhelming Combat Bias to ensure Primary Damage stat is aggressively capped first
     if (config.combatBias === 'tank') {
-        requiredAttributes['vit'] += 4;
-        requiredAttributes['ins'] += 4;
+        requiredAttributes['vit'] += 20;
+        requiredAttributes['ins'] += 20;
     } else if (config.combatBias === 'physical') {
-        requiredAttributes['str'] += 2;
+        requiredAttributes['str'] += 20;
     } else if (config.combatBias === 'special') {
-        requiredAttributes['spe'] += 2;
+        requiredAttributes['spe'] += 20;
     }
 
     let availableAttributes = Object.keys(requiredAttributes).filter((attr) => requiredAttributes[attr] > 0);
@@ -230,6 +233,7 @@ export function assignMinMaxStats(
         (skill) => config.includePmd || !pmdSkillsList.includes(skill)
     );
 
+    // Stage 1: Fund the skills demanded by the Move Pool
     let availableSkills = Object.keys(requiredSkills).filter((skill) => validSkills.includes(skill));
     while (remainingSkillPoints > 0 && availableSkills.length > 0) {
         const maxWeight = Math.max(...availableSkills.map((skill) => requiredSkills[skill]));
@@ -246,6 +250,7 @@ export function assignMinMaxStats(
         if (!assignedInLoop) availableSkills = availableSkills.filter((skill) => !topTierSkills.includes(skill));
     }
 
+    // Stage 2: Smart Defensive Dumps based on leftover points
     const totalDexterity = state.stats[CombatStat.DEX].base + generatedAttributes['dex'];
     const totalStrength = state.stats[CombatStat.STR].base + generatedAttributes['str'];
     const totalSpecial = state.stats[CombatStat.SPE].base + generatedAttributes['spe'];
@@ -253,6 +258,7 @@ export function assignMinMaxStats(
     const primaryDefense = totalDexterity >= Math.max(totalStrength, totalSpecial) ? 'evasion' : 'clash';
     const secondaryDefense = primaryDefense === 'evasion' ? 'clash' : 'evasion';
 
+    // Fund Primary Defense to Max First
     if (validSkills.includes(primaryDefense)) {
         while (remainingSkillPoints > 0 && generatedSkills[primaryDefense] < maxSkillRank) {
             generatedSkills[primaryDefense]++;
@@ -260,27 +266,38 @@ export function assignMinMaxStats(
         }
     }
 
-    if (validSkills.includes('alert') && remainingSkillPoints > 0 && generatedSkills['alert'] < maxSkillRank) {
-        generatedSkills['alert']++;
-        remainingSkillPoints--;
-    }
-
-    if (validSkills.includes(secondaryDefense)) {
-        while (remainingSkillPoints > 0 && generatedSkills[secondaryDefense] < maxSkillRank) {
-            generatedSkills[secondaryDefense]++;
-            remainingSkillPoints--;
+    // If we have plenty of points left, solidly fund the secondary defense.
+    // Otherwise, sprinkle the sparse points into Alert.
+    if (remainingSkillPoints >= maxSkillRank) {
+        if (validSkills.includes(secondaryDefense)) {
+            while (remainingSkillPoints > 0 && generatedSkills[secondaryDefense] < maxSkillRank) {
+                generatedSkills[secondaryDefense]++;
+                remainingSkillPoints--;
+            }
+        }
+        if (validSkills.includes('alert')) {
+            while (remainingSkillPoints > 0 && generatedSkills['alert'] < maxSkillRank) {
+                generatedSkills['alert']++;
+                remainingSkillPoints--;
+            }
+        }
+    } else {
+        if (validSkills.includes('alert')) {
+            while (remainingSkillPoints > 0 && generatedSkills['alert'] < maxSkillRank) {
+                generatedSkills['alert']++;
+                remainingSkillPoints--;
+            }
+        }
+        if (validSkills.includes(secondaryDefense)) {
+            while (remainingSkillPoints > 0 && generatedSkills[secondaryDefense] < maxSkillRank) {
+                generatedSkills[secondaryDefense]++;
+                remainingSkillPoints--;
+            }
         }
     }
 
-    if (validSkills.includes('alert')) {
-        while (remainingSkillPoints > 0 && generatedSkills['alert'] < maxSkillRank) {
-            generatedSkills['alert']++;
-            remainingSkillPoints--;
-        }
-    }
-
+    // Stage 3: Tier 2 Utility and Random Spillovers
     const tier2Utility = ['athletic', 'stealth'];
-
     for (const skill of tier2Utility) {
         if (!validSkills.includes(skill)) continue;
         while (remainingSkillPoints > 0 && generatedSkills[skill] < Math.min(3, maxSkillRank)) {
@@ -331,7 +348,7 @@ export function assignAverageStats(
     const coreSocials = new Set<string>();
     const coreSkills = new Set<string>();
 
-    draftedMoves.slice(0, 2).forEach((move) => {
+    draftedMoves.forEach((move) => {
         if (move.attr) {
             if (COMBAT_STATS.includes(move.attr)) coreAttributes.add(move.attr);
             else coreSocials.add(move.attr);
@@ -340,7 +357,7 @@ export function assignAverageStats(
             if (COMBAT_STATS.includes(move.dmgStat)) coreAttributes.add(move.dmgStat);
             else coreSocials.add(move.dmgStat);
         }
-        if (move.skill) coreSkills.add(move.skill);
+        if (move.skill && move.skill !== 'none') coreSkills.add(move.skill);
     });
 
     if (config.combatBias === 'tank') {
