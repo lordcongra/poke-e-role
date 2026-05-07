@@ -4,7 +4,6 @@ import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { saveToOwlbear } from '../../utils/obr';
 import { syncHealthAndWill } from '../../utils/macroHelpers';
 import OBR from '@owlbear-rodeo/sdk';
-import type { Image } from '@owlbear-rodeo/sdk';
 
 export const createGeneratorSlice: StateCreator<CharacterState, [], [], GeneratorSlice> = (set, get) => ({
     generatorConfig: {
@@ -34,6 +33,34 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
             get().applySpeciesData(build.pokemonData, true, true);
         }
 
+        // FORCEFUL OBR RENAME SCRIPT
+        // Runs unconditionally on generation after a 250ms delay to dodge saveToOwlbear race conditions!
+        setTimeout(() => {
+            if (OBR.isAvailable && get().tokenId) {
+                OBR.scene.items.updateItems([get().tokenId!], (items) => {
+                    for (const item of items) {
+                        item.name = build.species;
+                        
+                        // Forcefully overwrite Changr extension metadata if it exists
+                        if (item.metadata['com.missing-link-dev.changr/metadata']) {
+                            try {
+                                const changrMeta = JSON.parse(JSON.stringify(item.metadata['com.missing-link-dev.changr/metadata']));
+                                if (changrMeta && Array.isArray(changrMeta.imageOptions)) {
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    changrMeta.imageOptions.forEach((opt: any) => {
+                                        opt.name = build.species;
+                                    });
+                                }
+                                item.metadata['com.missing-link-dev.changr/metadata'] = changrMeta;
+                            } catch (e) {
+                                console.warn("Failed to overwrite Changr metadata", e);
+                            }
+                        }
+                    }
+                }).catch((e) => console.warn('Failed to update OBR item name:', e));
+            }
+        }, 250);
+
         set((state) => {
             const newStats = { ...state.stats };
             const newSocials = { ...state.socials };
@@ -46,28 +73,6 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
             if (build.pokemonData && build.species !== state.identity.species) {
                 newIdentity.species = build.species;
                 updatesToSave['species'] = build.species;
-
-                // Native OBR sync to fix Initiative Trackers (like Pretty Sordid) picking up the old species name
-                if (OBR.isAvailable && state.tokenId) {
-                    OBR.scene.items.updateItems([state.tokenId], (items) => {
-                        for (const item of items) {
-                            item.name = build.species;
-                            const imgItem = item as Image;
-                            if (imgItem.text) {
-                                imgItem.text.plainText = build.species;
-                            }
-                            
-                            // Forcefully overwrite Changr extension metadata if it exists
-                            const changrMeta = item.metadata['com.missing-link-dev.changr/metadata'] as Record<string, unknown>;
-                            if (changrMeta && Array.isArray(changrMeta.imageOptions)) {
-                                changrMeta.imageOptions.forEach((opt) => {
-                                    const typedOpt = opt as Record<string, unknown>;
-                                    if (typedOpt.name) typedOpt.name = build.species;
-                                });
-                            }
-                        }
-                    }).catch((e) => console.warn('Failed to update OBR item name:', e));
-                }
             }
 
             Object.values(CombatStat).forEach((statistic) => {

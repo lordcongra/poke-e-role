@@ -3,7 +3,6 @@ import type { CharacterState, MacroSlice, MoveData } from '../storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { saveToOwlbear } from '../../utils/obr';
 import OBR from '@owlbear-rodeo/sdk';
-import type { Image } from '@owlbear-rodeo/sdk';
 import {
     parseLearnset,
     getLimit,
@@ -621,7 +620,8 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     OBR.scene.items
                         .updateItems([state.tokenId], (items) => {
                             for (const item of items) {
-                                const imgItem = item as Image;
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                const imgItem = item as any;
                                 if (imgItem.image) imgItem.image.url = targetUrl;
                             }
                         })
@@ -644,7 +644,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             };
         }),
 
-    applySpeciesData: (data, wipeData = true, updateStats = true) =>
+    applySpeciesData: (data, wipeData = true, updateStats = true) => {
         set((state) => {
             if (!data || (!data.Name && !data.Moves)) return state;
             const newStats = { ...state.stats };
@@ -675,12 +675,15 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
 
             const newIdentity = {
                 ...state.identity,
+                species: String(data.Name || state.identity.species),
                 type1: String(data.Type1 || ''),
                 type2: String(data.Type2 || ''),
                 availableAbilities: abilities,
                 ability: abilities.length > 0 ? abilities[0] : '',
                 learnset: learnsetArray
             };
+            
+            updatesToSave['species'] = newIdentity.species;
             updatesToSave['type1'] = newIdentity.type1;
             updatesToSave['type2'] = newIdentity.type2;
             updatesToSave['ability'] = newIdentity.ability;
@@ -708,29 +711,6 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 saveToOwlbear(updatesToSave);
             } catch (e) {}
 
-            // Native OBR sync to ensure map tokens are renamed on manual species entry
-            if (OBR.isAvailable && state.tokenId) {
-                const targetName = String(data.Name || state.identity.species);
-                OBR.scene.items.updateItems([state.tokenId], (items) => {
-                    for (const item of items) {
-                        item.name = targetName;
-                        const imgItem = item as Image;
-                        if (imgItem.text) {
-                            imgItem.text.plainText = targetName;
-                        }
-                        
-                        // Forcefully overwrite Changr extension metadata if it exists
-                        const changrMeta = item.metadata['com.missing-link-dev.changr/metadata'] as Record<string, unknown>;
-                        if (changrMeta && Array.isArray(changrMeta.imageOptions)) {
-                            changrMeta.imageOptions.forEach((opt) => {
-                                const typedOpt = opt as Record<string, unknown>;
-                                if (typedOpt.name) typedOpt.name = targetName;
-                            });
-                        }
-                    }
-                }).catch((e) => console.warn('Failed to update OBR item name on manual species change:', e));
-            }
-
             return {
                 stats: newStats,
                 health: newHealth,
@@ -740,7 +720,40 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 moves: newMoves,
                 skillChecks: newChecks
             };
-        }),
+        });
+
+        // NATIVE OBR SYNC SIDE EFFECT
+        // Executed OUTSIDE the set() function so it fires properly after the state updates!
+        const tokenId = get().tokenId;
+        const targetName = String(data.Name || get().identity.species);
+
+        if (OBR.isAvailable && tokenId && data.Name) {
+            // 250ms timeout to ensure this runs completely separate from any batching or saveToOwlbear races!
+            setTimeout(() => {
+                OBR.scene.items.updateItems([tokenId], (items) => {
+                    for (const item of items) {
+                        item.name = targetName;
+                        
+                        // Forcefully overwrite Changr extension metadata if it exists
+                        if (item.metadata['com.missing-link-dev.changr/metadata']) {
+                            try {
+                                const changrMeta = JSON.parse(JSON.stringify(item.metadata['com.missing-link-dev.changr/metadata']));
+                                if (changrMeta && Array.isArray(changrMeta.imageOptions)) {
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    changrMeta.imageOptions.forEach((opt: any) => {
+                                        if (opt.name) opt.name = targetName;
+                                    });
+                                }
+                                item.metadata['com.missing-link-dev.changr/metadata'] = changrMeta;
+                            } catch (e) {
+                                console.warn("Failed to overwrite Changr metadata", e);
+                            }
+                        }
+                    }
+                }).catch((e) => console.warn('Failed to update OBR item name on manual species change:', e));
+            }, 250);
+        }
+    },
 
     refreshSpeciesData: (data) =>
         set((state) => {
