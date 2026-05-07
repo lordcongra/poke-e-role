@@ -34,7 +34,7 @@ export function buildGraphicDefinitions(
     const healthCenterX = -barWidth / 2 + data.xOffset * scale + data.hpOffsetX * scale;
 
     const willBaseX = startX + data.willOffsetX * scale;
-    const willBaseY = baseY - 2 * scale + data.willOffsetY * scale;
+    const willBaseY = baseY - 2 * scale + data.willOffsetX * scale;
     const willCenterX = -barWidth / 2 + data.xOffset * scale + data.willOffsetX * scale;
 
     const graphicDefinitions: Record<string, GraphicDefinition> = {};
@@ -88,40 +88,36 @@ export function buildGraphicDefinitions(
         };
 
         // Base HP bar (Green/Yellow/Red)
-        if (healthPercentage > 0) {
-            graphicDefinitions['hp-fill'] = {
-                type: 'CURVE',
-                points: [
-                    { x: healthBaseX, y: healthBaseY },
-                    { x: healthBaseX + barWidth * Math.max(0.001, healthPercentage), y: healthBaseY }
-                ],
-                color: finalHpColor,
-                strokeOpacity: 1,
-                width: 12 * scale,
-                closed: false,
-                fillOpacity: 0,
-                z: 3,
-                visible: isVisible
-            };
-        }
+        graphicDefinitions['hp-fill'] = {
+            type: 'CURVE',
+            points: [
+                { x: healthBaseX, y: healthBaseY },
+                { x: healthBaseX + barWidth * Math.max(0.001, healthPercentage), y: healthBaseY }
+            ],
+            color: finalHpColor,
+            strokeOpacity: healthPercentage > 0 ? 1 : 0,
+            width: 12 * scale,
+            closed: false,
+            fillOpacity: 0,
+            z: 3,
+            visible: isVisible && healthPercentage > 0
+        };
 
         // Temp HP bar (Purple overlay)
-        if (tempHpPercentage > 0) {
-            graphicDefinitions['temp-hp-fill'] = {
-                type: 'CURVE',
-                points: [
-                    { x: healthBaseX, y: healthBaseY },
-                    { x: healthBaseX + barWidth * Math.max(0.001, tempHpPercentage), y: healthBaseY }
-                ],
-                color: '#c326df',
-                strokeOpacity: 1,
-                width: 12 * scale,
-                closed: false,
-                fillOpacity: 0,
-                z: 4,
-                visible: isVisible
-            };
-        }
+        graphicDefinitions['temp-hp-fill'] = {
+            type: 'CURVE',
+            points: [
+                { x: healthBaseX, y: healthBaseY },
+                { x: healthBaseX + barWidth * Math.max(0.001, tempHpPercentage), y: healthBaseY }
+            ],
+            color: '#c326df',
+            strokeOpacity: tempHpPercentage > 0 ? 1 : 0,
+            width: 12 * scale,
+            closed: false,
+            fillOpacity: 0,
+            z: 4,
+            visible: isVisible && tempHpPercentage > 0
+        };
     }
 
     if (data.showHpText) {
@@ -195,39 +191,37 @@ export function buildGraphicDefinitions(
             visible: isVisible
         };
 
-        if (willPercentage > 0) {
-            graphicDefinitions['will-fill'] = {
-                type: 'CURVE',
-                points: [
-                    { x: willBaseX, y: willBaseY },
-                    { x: willBaseX + barWidth * Math.max(0.001, willPercentage), y: willBaseY }
-                ],
-                color: '#2196F3',
-                strokeOpacity: 1,
-                width: 12 * scale,
-                closed: false,
-                fillOpacity: 0,
-                z: 3,
-                visible: isVisible
-            };
-        }
+        // Will fill
+        graphicDefinitions['will-fill'] = {
+            type: 'CURVE',
+            points: [
+                { x: willBaseX, y: willBaseY },
+                { x: willBaseX + barWidth * Math.max(0.001, willPercentage), y: willBaseY }
+            ],
+            color: '#2196F3',
+            strokeOpacity: willPercentage > 0 ? 1 : 0,
+            width: 12 * scale,
+            closed: false,
+            fillOpacity: 0,
+            z: 3,
+            visible: isVisible && willPercentage > 0
+        };
 
-        if (tempWillPercentage > 0) {
-            graphicDefinitions['temp-will-fill'] = {
-                type: 'CURVE',
-                points: [
-                    { x: willBaseX, y: willBaseY },
-                    { x: willBaseX + barWidth * Math.max(0.001, tempWillPercentage), y: willBaseY }
-                ],
-                color: '#7e57c2',
-                strokeOpacity: 1,
-                width: 12 * scale,
-                closed: false,
-                fillOpacity: 0,
-                z: 4,
-                visible: isVisible
-            };
-        }
+        // Temp Will fill
+        graphicDefinitions['temp-will-fill'] = {
+            type: 'CURVE',
+            points: [
+                { x: willBaseX, y: willBaseY },
+                { x: willBaseX + barWidth * Math.max(0.001, tempWillPercentage), y: willBaseY }
+            ],
+            color: '#7e57c2',
+            strokeOpacity: tempWillPercentage > 0 ? 1 : 0,
+            width: 12 * scale,
+            closed: false,
+            fillOpacity: 0,
+            z: 4,
+            visible: isVisible && tempWillPercentage > 0
+        };
     }
 
     if (data.showWillText) {
