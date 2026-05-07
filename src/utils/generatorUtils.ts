@@ -187,9 +187,9 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
 
                 // Exact match check to ban Splash, but allow things like Splishy Splash
                 if (
-                    moveName && 
-                    moveName.toLowerCase().trim() !== 'splash' && 
-                    MOVES_URLS[moveName.toLowerCase()] && 
+                    moveName &&
+                    moveName.toLowerCase().trim() !== 'splash' &&
+                    MOVES_URLS[moveName.toLowerCase()] &&
                     (ignoreRank || isMoveAllowed(moveRank))
                 ) {
                     legalMoveNames.push(moveName);
@@ -209,8 +209,8 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
                                   );
                         // Exact match check to ban Splash here as well
                         if (
-                            moveName && 
-                            moveName.toLowerCase().trim() !== 'splash' && 
+                            moveName &&
+                            moveName.toLowerCase().trim() !== 'splash' &&
                             MOVES_URLS[moveName.toLowerCase()]
                         ) {
                             legalMoveNames.push(moveName);
@@ -285,32 +285,32 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
 
     const getMoveScore = (move: TempMove) => {
         let score = 0;
-        
+
         // Defines whether a move functionally acts like a Physical or Special attack
         const isFunctionallyPhysical = move.cat === 'Phys' || move.dmgStat === 'str';
         const isFunctionallySpecial = move.cat === 'Spec' || move.dmgStat === 'spe';
-        
+
         // STAB Match vs Bias Mismatch
         if (effectiveBias === 'physical') {
             if (isFunctionallyPhysical) score += 60;
             else if (move.cat === 'Spec' && !isFunctionallyPhysical) score -= 80;
-            
+
             // Pre-seed accuracy preference (Including VIT for bruisers)
-            if (move.attr === 'str' || move.attr === 'dex' || move.attr === 'vit') score += 20; 
+            if (move.attr === 'str' || move.attr === 'dex' || move.attr === 'vit') score += 20;
         } else if (effectiveBias === 'special') {
             if (isFunctionallySpecial) score += 60;
             else if (move.cat === 'Phys' && !isFunctionallySpecial) score -= 80;
-            
+
             // Pre-seed accuracy preference
-            if (move.attr === 'spe' || move.attr === 'ins' || move.attr === 'will' || move.attr === 'dex') score += 20; 
+            if (move.attr === 'spe' || move.attr === 'ins' || move.attr === 'will' || move.attr === 'dex') score += 20;
         } else if (effectiveBias === 'tank') {
             if (move.attr === 'vit' || move.attr === 'ins' || move.attr === 'will') score += 20;
         }
-        
+
         if (myTypes.includes(move.type)) {
             score += 40;
         }
-        
+
         // Dynamic Synergy Adjustments
         if (draftedAccAttrs.has(move.attr)) score += 15;
         // Will / Insight specific bridge since Will is a derived Insight stat
@@ -318,14 +318,14 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         if (move.attr === 'ins' && draftedAccAttrs.has('will')) score += 15;
 
         if (move.skill !== 'none' && draftedSkills.has(move.skill)) score += 10;
-        
+
         // Handle Variable Damage Moves (Power 0 but not Status) so they aren't ignored
         let effectivePower = move.power;
         if (effectivePower === 0 && move.cat !== 'Status') {
             effectivePower = 3; // Treat as an average-power move for drafting priority
         }
         score += effectivePower * 2;
-        
+
         return score;
     };
 
@@ -375,8 +375,8 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         // Greedy Draft Loop (Resorts every iteration to perfectly capture updating synergy!)
         while (remainingAttackSlots > 0 && attackPool.length > 0 && draftedMoves.length < draftedMax) {
             attackPool.sort((a, b) => {
-                const aScore = getMoveScore(a) + (Math.random() * 5);
-                const bScore = getMoveScore(b) + (Math.random() * 5);
+                const aScore = getMoveScore(a) + Math.random() * 5;
+                const bScore = getMoveScore(b) + Math.random() * 5;
                 return bScore - aScore;
             });
 
@@ -462,8 +462,8 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         // Draft any remaining filler moves up to draftedMax BEFORE Stat Allocation!
         while (draftedMoves.length < draftedMax && leftoverPool.length > 0) {
             leftoverPool.sort((a, b) => {
-                const aScore = getMoveScore(a) + (Math.random() * 5);
-                const bScore = getMoveScore(b) + (Math.random() * 5);
+                const aScore = getMoveScore(a) + Math.random() * 5;
+                const bScore = getMoveScore(b) + Math.random() * 5;
                 return bScore - aScore;
             });
             const move = leftoverPool.shift();
@@ -528,8 +528,8 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     if (config.buildType !== 'wild') {
         while (draftedMoves.length < finalDraftedMax && leftoverPool.length > 0) {
             leftoverPool.sort((a, b) => {
-                const aScore = getMoveScore(a) + (Math.random() * 5);
-                const bScore = getMoveScore(b) + (Math.random() * 5);
+                const aScore = getMoveScore(a) + Math.random() * 5;
+                const bScore = getMoveScore(b) + Math.random() * 5;
                 return bScore - aScore;
             });
             const move = leftoverPool.shift();

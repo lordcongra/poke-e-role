@@ -122,7 +122,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
 
             const updatesToSave: Record<string, unknown> = {};
             let shouldRestoreImage = false;
-            let revertConfig: RestoreConfig = {}; 
+            let revertConfig: RestoreConfig = {};
 
             if (isReverting) {
                 const previousTrans = state.identity.activeTransformation;
@@ -682,7 +682,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 ability: abilities.length > 0 ? abilities[0] : '',
                 learnset: learnsetArray
             };
-            
+
             updatesToSave['species'] = newIdentity.species;
             updatesToSave['type1'] = newIdentity.type1;
             updatesToSave['type2'] = newIdentity.type2;
@@ -730,27 +730,31 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
         if (OBR.isAvailable && tokenId && data.Name) {
             // 250ms timeout to ensure this runs completely separate from any batching or saveToOwlbear races!
             setTimeout(() => {
-                OBR.scene.items.updateItems([tokenId], (items) => {
-                    for (const item of items) {
-                        item.name = targetName;
-                        
-                        // Forcefully overwrite Changr extension metadata if it exists
-                        if (item.metadata['com.missing-link-dev.changr/metadata']) {
-                            try {
-                                const changrMeta = JSON.parse(JSON.stringify(item.metadata['com.missing-link-dev.changr/metadata']));
-                                if (changrMeta && Array.isArray(changrMeta.imageOptions)) {
-                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                    changrMeta.imageOptions.forEach((opt: any) => {
-                                        if (opt.name) opt.name = targetName;
-                                    });
+                OBR.scene.items
+                    .updateItems([tokenId], (items) => {
+                        for (const item of items) {
+                            item.name = targetName;
+
+                            // Forcefully overwrite Changr extension metadata if it exists
+                            if (item.metadata['com.missing-link-dev.changr/metadata']) {
+                                try {
+                                    const changrMeta = JSON.parse(
+                                        JSON.stringify(item.metadata['com.missing-link-dev.changr/metadata'])
+                                    );
+                                    if (changrMeta && Array.isArray(changrMeta.imageOptions)) {
+                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                        changrMeta.imageOptions.forEach((opt: any) => {
+                                            if (opt.name) opt.name = targetName;
+                                        });
+                                    }
+                                    item.metadata['com.missing-link-dev.changr/metadata'] = changrMeta;
+                                } catch (e) {
+                                    console.warn('Failed to overwrite Changr metadata', e);
                                 }
-                                item.metadata['com.missing-link-dev.changr/metadata'] = changrMeta;
-                            } catch (e) {
-                                console.warn("Failed to overwrite Changr metadata", e);
                             }
                         }
-                    }
-                }).catch((e) => console.warn('Failed to update OBR item name on manual species change:', e));
+                    })
+                    .catch((e) => console.warn('Failed to update OBR item name on manual species change:', e));
             }, 250);
         }
     },
