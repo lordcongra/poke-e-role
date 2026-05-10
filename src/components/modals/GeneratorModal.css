@@ -15,8 +15,8 @@
     background: var(--panel-bg);
     padding: 15px;
     border-radius: 8px;
-    width: 600px;
-    max-height: 90vh;
+    width: 780px;
+    max-height: 95vh;
     overflow-y: auto;
     border: 2px solid var(--primary);
     color: var(--text-main);
@@ -47,13 +47,7 @@
 
 .generator-modal__row {
     display: flex;
-    gap: 8px;
-}
-
-.generator-modal__side-by-side {
-    display: flex;
     gap: 10px;
-    align-items: stretch;
 }
 
 .generator-modal__col {
@@ -75,22 +69,29 @@
     color: var(--text-main);
 }
 
+/* 3-Column Box Layout */
+.generator-modal__side-by-side {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    align-items: stretch;
+}
+
 .generator-modal__composition {
     background: var(--panel-alt);
-    padding: 8px;
-    border-radius: 4px;
+    padding: 10px;
+    border-radius: 6px;
     border: 1px solid var(--border);
-    flex: 1;
     display: flex;
     flex-direction: column;
 }
 
 .generator-modal__comp-title {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: bold;
     color: var(--primary);
     display: block;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     text-align: center;
 }
 
@@ -122,13 +123,14 @@
 }
 
 .generator-modal__comp-input {
-    width: 40px;
+    width: 45px;
     text-align: center;
     padding: 2px;
     border: 1px solid var(--border);
     border-radius: 3px;
     background: var(--input-bg);
     color: var(--text-main);
+    font-weight: bold;
 }
 
 .generator-modal__min-wrapper {
@@ -136,7 +138,7 @@
     flex-direction: column;
     justify-content: space-evenly;
     flex: 1;
-    padding: 10px 0;
+    padding: 4px 0;
 }
 
 .generator-modal__min-grid {
@@ -149,19 +151,29 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
 }
 
 .generator-modal__min-label {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: bold;
     color: var(--text-muted);
 }
 
+/* 2-Column Checkbox Grid */
 .generator-modal__checkbox-group {
-    margin-top: 5px;
-    padding-top: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 15px;
+    padding-top: 15px;
     border-top: 1px solid var(--border);
+}
+
+.generator-modal__checkbox-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .generator-modal__checkbox-label {
@@ -173,17 +185,14 @@
     gap: 6px;
 }
 
-.generator-modal__checkbox-label--spaced {
-    margin-top: 6px;
-}
-
 .generator-modal__checkbox {
     transform: scale(1.1);
     cursor: pointer;
+    margin: 0;
 }
 
 .generator-modal__warning {
-    margin-bottom: 15px;
+    margin: 15px 0;
     padding: 8px;
     background: #ffcdd2;
     color: #c62828;
@@ -201,10 +210,10 @@
 
 .generator-modal__btn {
     flex: 1;
-    padding: 6px;
+    padding: 8px;
 }
 
-/* Tooltip Modal Styles (Reused from other parts of the app) */
+/* Tooltip Modal Styles */
 .generator-modal__tooltip-overlay {
     position: fixed;
     top: 0;
@@ -258,6 +267,9 @@
 /* Mobile Overrides */
 @media (max-width: 768px) {
     .generator-modal__side-by-side {
-        flex-direction: column;
+        grid-template-columns: 1fr;
+    }
+    .generator-modal__checkbox-group {
+        grid-template-columns: 1fr;
     }
 }

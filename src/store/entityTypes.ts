@@ -143,7 +143,7 @@ export interface GeneratorConfig {
     ensureDefenses: boolean;
     minStats: Record<string, number>;
     minSocials: Record<string, number>;
-    
+
     // EVOLUTION & OVERRANK TOGGLES
     includePreEvolutions: boolean;
     evo2Stage1Offset: number;

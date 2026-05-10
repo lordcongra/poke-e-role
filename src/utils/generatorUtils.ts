@@ -171,23 +171,23 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
 
     const legalMoveNames: string[] = [];
     const overrankMoveNames: string[] = [];
-    
+
     // Automatically climb back up the Evolution chain fetching data for backward compatibility!
-    const preEvos: { data: Record<string, unknown>, isTrueEvo: boolean }[] = [];
+    const preEvos: { data: Record<string, unknown>; isTrueEvo: boolean }[] = [];
     if (config.includePreEvolutions) {
         let currentSpeciesData = pdRecord;
         let guardCounter = 0; // Prevent infinite loops just in case
         while (currentSpeciesData.Evolutions && guardCounter < 5) {
             guardCounter++;
-            const fromEvo = (currentSpeciesData.Evolutions as Record<string, unknown>[]).find(e => e.From);
+            const fromEvo = (currentSpeciesData.Evolutions as Record<string, unknown>[]).find((e) => e.From);
             if (!fromEvo) break;
-            
+
             const fromName = String(fromEvo.From);
             const isFormChange = ['Mega', 'Gigantamax', 'Primal'].includes(String(fromEvo.Kind));
-            
+
             const fromData = await fetchPokemonData(fromName);
             if (!fromData) break;
-            
+
             preEvos.push({ data: fromData as Record<string, unknown>, isTrueEvo: !isFormChange });
             currentSpeciesData = fromData as Record<string, unknown>;
         }
@@ -198,7 +198,12 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             moveObject.forEach((move: unknown) => {
                 const moveRecord = move as Record<string, unknown>;
                 const moveName = typeof move === 'string' ? move : String(moveRecord.Name || moveRecord.Move || '');
-                const moveRank = typeof move === 'object' ? String(moveRecord.Learned || moveRecord.Learn || moveRecord.Level || moveRecord.Rank || 'Other') : 'Other';
+                const moveRank =
+                    typeof move === 'object'
+                        ? String(
+                              moveRecord.Learned || moveRecord.Learn || moveRecord.Level || moveRecord.Rank || 'Other'
+                          )
+                        : 'Other';
 
                 const rIdx = RANK_HIERARCHY.indexOf(moveRank.trim());
                 if (moveName && moveName.toLowerCase().trim() !== 'splash' && MOVES_URLS[moveName.toLowerCase()]) {
@@ -214,8 +219,19 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
                 if (maxRankIndex === 99 || (rIdx !== -1 && rIdx <= maxRankIndex && rIdx > minRankIndex)) {
                     if (Array.isArray(moveList)) {
                         moveList.forEach((move: unknown) => {
-                            const moveName = typeof move === 'string' ? move : String((move as Record<string, unknown>).Name || (move as Record<string, unknown>).Move || '');
-                            if (moveName && moveName.toLowerCase().trim() !== 'splash' && MOVES_URLS[moveName.toLowerCase()]) {
+                            const moveName =
+                                typeof move === 'string'
+                                    ? move
+                                    : String(
+                                          (move as Record<string, unknown>).Name ||
+                                              (move as Record<string, unknown>).Move ||
+                                              ''
+                                      );
+                            if (
+                                moveName &&
+                                moveName.toLowerCase().trim() !== 'splash' &&
+                                MOVES_URLS[moveName.toLowerCase()]
+                            ) {
                                 targetArray.push(moveName);
                             }
                         });
@@ -226,11 +242,11 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     };
 
     extractMoves(pdRecord.Moves, currentRankIndex, legalMoveNames);
-    
+
     if (config.includePreEvolutions) {
-        const trueEvoCount = preEvos.filter(p => p.isTrueEvo).length;
+        const trueEvoCount = preEvos.filter((p) => p.isTrueEvo).length;
         let currentTrueDepth = 0;
-        
+
         preEvos.forEach((pe) => {
             let offset = 0;
             if (pe.isTrueEvo) {
@@ -250,13 +266,13 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     if (legalMoveNames.length < draftedMax) {
         extractMoves(pdRecord.Moves, 99, legalMoveNames); // 99 indicates ignoreRank
     }
-    
+
     if (config.allowOverrank) {
         const overrankMax = Math.min(currentRankIndex + config.overrankAmount, RANK_HIERARCHY.length - 1);
         if (overrankMax > currentRankIndex) {
             // Strictly fetch moves that belong ONLY to the higher ranks (using minRankIndex)
             extractMoves(pdRecord.Moves, overrankMax, overrankMoveNames, currentRankIndex);
-            
+
             if (config.allowPreEvoOverrank && config.includePreEvolutions) {
                 preEvos.forEach((pe) => {
                     extractMoves(pe.data.Moves, overrankMax, overrankMoveNames, currentRankIndex);
@@ -265,7 +281,10 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         }
     }
 
-    const parseMoveData = (moveName: string, data: NonNullable<Awaited<ReturnType<typeof fetchMoveData>>>): TempMove => {
+    const parseMoveData = (
+        moveName: string,
+        data: NonNullable<Awaited<ReturnType<typeof fetchMoveData>>>
+    ): TempMove => {
         const rawCategory = String(data.Category || 'Physical').toLowerCase();
         let cat = 'Status';
         if (rawCategory.includes('phys')) cat = 'Phys';
@@ -313,7 +332,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
 
     const fetchedOverrankMoves: TempMove[] = [];
     if (config.allowOverrank && overrankMoveNames.length > 0) {
-        const uniqueOverrankNames = [...new Set(overrankMoveNames)].filter(name => !uniqueMoveNames.includes(name));
+        const uniqueOverrankNames = [...new Set(overrankMoveNames)].filter((name) => !uniqueMoveNames.includes(name));
         for (const moveName of uniqueOverrankNames) {
             const data = await fetchMoveData(moveName);
             if (data) fetchedOverrankMoves.push(parseMoveData(moveName, data));
@@ -336,9 +355,22 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         let score = 0;
         const text = (move.name + ' ' + move.desc).toLowerCase();
         const keywords = [
-            'protect', 'shield', 'guard', 'block', 'barrier', 'defense', 'sp. def',
-            'heal', 'recover', 'roost', 'synthesis', 'light screen', 'reflect',
-            'status', 'cure', 'rest'
+            'protect',
+            'shield',
+            'guard',
+            'block',
+            'barrier',
+            'defense',
+            'sp. def',
+            'heal',
+            'recover',
+            'roost',
+            'synthesis',
+            'light screen',
+            'reflect',
+            'status',
+            'cure',
+            'rest'
         ];
         for (const keyword of keywords) {
             if (text.includes(keyword)) score += 1;
@@ -370,7 +402,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         } else if (effectiveBias === 'support') {
             if (move.cat === 'Status') score += 60;
             else score -= 20;
-            score += getDefensiveScore(move) * 5; 
+            score += getDefensiveScore(move) * 5;
         }
 
         if (myTypes.includes(move.type)) {
@@ -399,7 +431,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         return score;
     };
 
-    let chosenOverrankMoveName = "";
+    let chosenOverrankMoveName = '';
 
     // 🌟 EVALUATE OVERRANK POOL 🌟
     if (config.allowOverrank && fetchedOverrankMoves.length > 0) {
@@ -408,7 +440,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             const bScore = getMoveScore(b) + Math.random() * 5;
             return bScore - aScore;
         });
-        
+
         const bestOverrankMove = fetchedOverrankMoves[0];
         chosenOverrankMoveName = bestOverrankMove.name;
         fetchedMoves.push(bestOverrankMove);
@@ -432,26 +464,26 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         let remainingAttackSlots = config.targetAtkCount;
         let remainingSupportSlots = config.targetSupCount;
         const maxStabAllowedTotal = Math.max(1, config.targetAtkCount - 1);
-        
+
         // INTERCEPT THE SCORED OVERRANK MOVE!
         if (chosenOverrankMoveName) {
-            const overrankMoveObj = fetchedMoves.find(m => m.name === chosenOverrankMoveName);
+            const overrankMoveObj = fetchedMoves.find((m) => m.name === chosenOverrankMoveName);
             if (overrankMoveObj) {
                 draftedMoves.push(overrankMoveObj);
                 typeCounts.set(overrankMoveObj.type, 1);
                 if (overrankMoveObj.attr) draftedAccAttrs.add(overrankMoveObj.attr);
                 if (overrankMoveObj.skill) draftedSkills.add(overrankMoveObj.skill);
-    
+
                 if (overrankMoveObj.cat === 'Status') {
                     if (remainingSupportSlots > 0) remainingSupportSlots--;
                 } else {
                     if (remainingAttackSlots > 0) remainingAttackSlots--;
                 }
-                
+
                 // Safely remove from the available pool so it can't be dual-drafted
-                const attackIndex = attackPool.findIndex(m => m.name === chosenOverrankMoveName);
+                const attackIndex = attackPool.findIndex((m) => m.name === chosenOverrankMoveName);
                 if (attackIndex !== -1) attackPool.splice(attackIndex, 1);
-                const supportIndex = supportPool.findIndex(m => m.name === chosenOverrankMoveName);
+                const supportIndex = supportPool.findIndex((m) => m.name === chosenOverrankMoveName);
                 if (supportIndex !== -1) supportPool.splice(supportIndex, 1);
             }
         }
@@ -600,12 +632,20 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     };
 
     // ✨ POST-GENERATION RESOLUTION FOR DUAL-SCALING MOVES ✨
-    const getBestAttribute = (rawAttr: string, genAttr: Record<string, number>, genSoc: Record<string, number>, bStats: Record<string, number>) => {
+    const getBestAttribute = (
+        rawAttr: string,
+        genAttr: Record<string, number>,
+        genSoc: Record<string, number>,
+        bStats: Record<string, number>
+    ) => {
         if (!rawAttr || rawAttr.toLowerCase() === 'none') return '';
-        const options = rawAttr.split('/').map(s => normalizeStatistic(ATTRIBUTE_MAPPING[s.trim()] || s.trim())).filter(Boolean);
+        const options = rawAttr
+            .split('/')
+            .map((s) => normalizeStatistic(ATTRIBUTE_MAPPING[s.trim()] || s.trim()))
+            .filter(Boolean);
         if (options.length === 0) return 'str';
         if (options.length === 1) return options[0];
-        
+
         let best = options[0];
         let maxVal = -1;
         for (const opt of options) {
@@ -617,14 +657,20 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             } else if (opt === 'will') {
                 val = state.will.willMax;
             }
-            if (val > maxVal) { maxVal = val; best = opt; }
+            if (val > maxVal) {
+                maxVal = val;
+                best = opt;
+            }
         }
         return best;
     };
 
     const getBestSkill = (rawSkill: string, genSkills: Record<string, number>) => {
         if (!rawSkill || rawSkill.toLowerCase().includes('none')) return 'none';
-        const options = rawSkill.split('/').map(s => normalizeSkill(s)).filter(s => s !== 'none');
+        const options = rawSkill
+            .split('/')
+            .map((s) => normalizeSkill(s))
+            .filter((s) => s !== 'none');
         if (options.length === 0) return 'none';
         if (options.length === 1) return options[0];
 
@@ -635,12 +681,18 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             if (state.skills[opt as Skill]) base = state.skills[opt as Skill].base;
             else {
                 for (const cat of state.extraCategories) {
-                    const sk = cat.skills.find(s => s.id === opt);
-                    if (sk) { base = sk.base; break; }
+                    const sk = cat.skills.find((s) => s.id === opt);
+                    if (sk) {
+                        base = sk.base;
+                        break;
+                    }
                 }
             }
             const val = (genSkills[opt] || 0) + base;
-            if (val > maxVal) { maxVal = val; best = opt; }
+            if (val > maxVal) {
+                maxVal = val;
+                best = opt;
+            }
         }
         return best;
     };
@@ -648,23 +700,27 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     const finalDraftedMax = baseIns + generatedAttributes['ins'] + 3;
 
     // 🌟 SPILLOVER RATIO LOGIC 🌟
-    if (config.useSpilloverRatio && config.buildType !== 'wild' && draftedMoves.length < finalDraftedMax && leftoverPool.length > 0) {
-        
+    if (
+        config.useSpilloverRatio &&
+        config.buildType !== 'wild' &&
+        draftedMoves.length < finalDraftedMax &&
+        leftoverPool.length > 0
+    ) {
         leftoverPool.sort((a, b) => {
             const aScore = getMoveScore(a) + Math.random() * 5;
             const bScore = getMoveScore(b) + Math.random() * 5;
             return bScore - aScore;
         });
 
-        const leftoverAtk = leftoverPool.filter(m => m.cat !== 'Status');
-        const leftoverSup = leftoverPool.filter(m => m.cat === 'Status');
-        
+        const leftoverAtk = leftoverPool.filter((m) => m.cat !== 'Status');
+        const leftoverSup = leftoverPool.filter((m) => m.cat === 'Status');
+
         let extraAtkDrafted = 0;
         let extraSupDrafted = 0;
 
         while (draftedMoves.length < finalDraftedMax && (leftoverAtk.length > 0 || leftoverSup.length > 0)) {
             let wantAtk = true;
-            
+
             if (config.spilloverSupRatio > 0) {
                 if (config.spilloverAtkRatio === 0) {
                     wantAtk = false;
@@ -674,7 +730,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
                 }
             }
 
-            if (config.spilloverJitter && Math.random() < 0.25) { 
+            if (config.spilloverJitter && Math.random() < 0.25) {
                 wantAtk = !wantAtk;
             }
 
@@ -712,10 +768,15 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         }
     }
 
-    draftedMoves.forEach(move => {
+    draftedMoves.forEach((move) => {
         move.attr = getBestAttribute(move.rawAcc1 || move.attr, generatedAttributes, generatedSocials, finalBaseStats);
         move.skill = getBestSkill(move.rawAcc2 || move.skill, generatedSkills);
-        move.dmgStat = getBestAttribute(move.rawDmg1 || move.dmgStat, generatedAttributes, generatedSocials, finalBaseStats);
+        move.dmgStat = getBestAttribute(
+            move.rawDmg1 || move.dmgStat,
+            generatedAttributes,
+            generatedSocials,
+            finalBaseStats
+        );
     });
 
     draftedMoves.sort((a, b) => {
