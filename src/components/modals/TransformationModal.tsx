@@ -21,6 +21,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
     const willCurr = useCharacterStore((state) => state.will.willCurr);
     const tempWill = useCharacterStore((state) => state.will.temporaryWill);
     const hpCurr = useCharacterStore((state) => state.health.hpCurr);
+    const tokenId = useCharacterStore((state) => state.tokenId);
 
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
     const roomCustomForms = useCharacterStore((state) => state.roomCustomForms);
@@ -54,11 +55,14 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
     };
 
     const handleSetImage = async (field: string, isCustomForm = false) => {
-        if (!OBR.isAvailable) return;
+        if (!OBR.isAvailable || !tokenId) return;
         try {
-            let images: any = null;
-            if (typeof (OBR as any).assets?.downloadImages === 'function') {
-                images = await (OBR as any).assets.downloadImages();
+            // Strictly type the undocumented assets API to avoid 'any'
+            const assetsApi = OBR.assets as unknown as { downloadImages?: () => Promise<unknown[]> };
+            let images: unknown[] | null = null;
+            
+            if (typeof assetsApi?.downloadImages === 'function') {
+                images = await assetsApi.downloadImages();
             } else {
                 const url = window.prompt('Enter an Image URL:');
                 if (url) {
@@ -73,12 +77,18 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
 
             if (images && images.length > 0) {
                 let selectedUrl = '';
-                const img = images[0];
+                const img = images[0] as Record<string, unknown> | string;
 
-                if (typeof img === 'string') selectedUrl = img;
-                else if (img.url) selectedUrl = img.url;
-                else if (img.image?.url) selectedUrl = img.image.url;
-                else if (img.src) selectedUrl = img.src;
+                if (typeof img === 'string') {
+                    selectedUrl = img;
+                } else if (img && typeof img === 'object') {
+                    if (typeof img.url === 'string') selectedUrl = img.url;
+                    else if (img.image && typeof (img.image as Record<string, unknown>).url === 'string') {
+                        selectedUrl = (img.image as Record<string, unknown>).url as string;
+                    } else if (typeof img.src === 'string') {
+                        selectedUrl = img.src;
+                    }
+                }
 
                 if (selectedUrl) {
                     if (isCustomForm) {
@@ -220,19 +230,8 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                     ))}
                                 </select>
 
-                                <div
-                                    style={{
-                                        marginTop: '10px',
-                                        padding: '10px',
-                                        border: '1px solid var(--border)',
-                                        borderRadius: '6px',
-                                        background: 'var(--row-odd)'
-                                    }}
-                                >
-                                    <label
-                                        className="transformation-modal__label"
-                                        style={{ marginBottom: '8px', display: 'block' }}
-                                    >
+                                <div className="transformation-modal__tera-category-box">
+                                    <label className="transformation-modal__label transformation-modal__tera-category-label">
                                         Tera Blast Category:
                                     </label>
                                     <select
@@ -248,21 +247,12 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                         )}
 
                         {(targetTrans === 'Dynamax' || targetTrans === 'Gigantamax') && !hasMaxForm && (
-                            <label
-                                className="transformation-modal__label"
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    cursor: 'pointer',
-                                    marginTop: '6px'
-                                }}
-                            >
+                            <label className="transformation-modal__label transformation-modal__label--checkbox">
                                 <input
                                     type="checkbox"
                                     checked={autoMaxMoves}
                                     onChange={(e) => setAutoMaxMoves(e.target.checked)}
-                                    style={{ transform: 'scale(1.2)' }}
+                                    className="transformation-modal__checkbox"
                                 />
                                 Auto-Convert to Max Moves?
                             </label>
@@ -282,23 +272,12 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                     const url = identityStore[field];
                                     if (url) {
                                         return (
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                <img
-                                                    src={url as string}
-                                                    alt="Form"
-                                                    style={{
-                                                        width: '30px',
-                                                        height: '30px',
-                                                        objectFit: 'contain',
-                                                        borderRadius: '4px',
-                                                        border: '1px solid var(--border)'
-                                                    }}
-                                                />
+                                            <div className="transformation-modal__image-preview">
+                                                <img src={url} alt="Form" className="transformation-modal__image" />
                                                 <button
                                                     type="button"
-                                                    onClick={() => setIdentity(field as any, '')}
-                                                    className="action-button action-button--red"
-                                                    style={{ padding: '2px 6px', fontSize: '0.7rem' }}
+                                                    onClick={() => setIdentity(field, '')}
+                                                    className="action-button action-button--red transformation-modal__clear-img-btn"
                                                 >
                                                     Clear
                                                 </button>
@@ -309,8 +288,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                         <button
                                             type="button"
                                             onClick={() => handleSetImage(field)}
-                                            className="action-button action-button--dark"
-                                            style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                                            className="action-button action-button--dark transformation-modal__select-img-btn"
                                         >
                                             🖼️ Select Token Image
                                         </button>
@@ -327,18 +305,8 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                     const url = identityStore.customFormImages[safeId];
                                     if (url) {
                                         return (
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                <img
-                                                    src={url}
-                                                    alt="Form"
-                                                    style={{
-                                                        width: '30px',
-                                                        height: '30px',
-                                                        objectFit: 'contain',
-                                                        borderRadius: '4px',
-                                                        border: '1px solid var(--border)'
-                                                    }}
-                                                />
+                                            <div className="transformation-modal__image-preview">
+                                                <img src={url} alt="Form" className="transformation-modal__image" />
                                                 <button
                                                     type="button"
                                                     onClick={() =>
@@ -347,8 +315,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                                             [safeId]: ''
                                                         })
                                                     }
-                                                    className="action-button action-button--red"
-                                                    style={{ padding: '2px 6px', fontSize: '0.7rem' }}
+                                                    className="action-button action-button--red transformation-modal__clear-img-btn"
                                                 >
                                                     Clear
                                                 </button>
@@ -359,8 +326,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                         <button
                                             type="button"
                                             onClick={() => handleSetImage(safeId, true)}
-                                            className="action-button action-button--dark"
-                                            style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                                            className="action-button action-button--dark transformation-modal__select-img-btn"
                                         >
                                             🖼️ Select Token Image
                                         </button>
@@ -374,7 +340,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                 <>
                                     Backs up your current stats, heals all HP/Will to full, and clears statuses.
                                     {hasAltForm && (
-                                        <div style={{ marginTop: '8px', color: 'var(--primary)', fontWeight: 'bold' }}>
+                                        <div className="transformation-modal__save-notice">
                                             ✨ Saved Mega form detected. Values will be restored!
                                         </div>
                                     )}
@@ -385,7 +351,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                 <>
                                     Grants 6 Temporary HP, triggers a 3-round timer, and prevents Evasion/Clashing.
                                     {hasMaxForm && (
-                                        <div style={{ marginTop: '8px', color: 'var(--primary)', fontWeight: 'bold' }}>
+                                        <div className="transformation-modal__save-notice">
                                             ✨ Saved Max form detected. Values will be restored!
                                         </div>
                                     )}
@@ -396,7 +362,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                     Grants 12 Temporary HP, +2 to STR/SPE/DEX/DEF/SPD, triggers a 3-round timer, and
                                     prevents Evasion/Clashing.
                                     {hasMaxForm && (
-                                        <div style={{ marginTop: '8px', color: 'var(--primary)', fontWeight: 'bold' }}>
+                                        <div className="transformation-modal__save-notice">
                                             ✨ Saved Max form detected. Values will be restored!
                                         </div>
                                     )}
@@ -414,7 +380,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                     {selectedCustomForm.description ||
                                         `Applies the ${selectedCustomForm.name} Custom Form.`}
                                     {hasCurrentCustomSave && (
-                                        <div style={{ marginTop: '8px', color: 'var(--primary)', fontWeight: 'bold' }}>
+                                        <div className="transformation-modal__save-notice">
                                             ✨ Saved memory detected. Values will be restored!
                                         </div>
                                     )}
@@ -429,12 +395,11 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                             )}
                         </div>
 
-                        <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                        <div className="transformation-modal__clear-saves-row">
                             {targetTrans === 'Mega' && hasAltForm && (
                                 <button
                                     type="button"
-                                    className="action-button action-button--dark"
-                                    style={{ flex: 1, fontSize: '0.8rem' }}
+                                    className="action-button action-button--dark transformation-modal__clear-save-btn"
                                     onClick={() => setClearConfirmType('Mega')}
                                 >
                                     🗑️ Clear Mega Save
@@ -443,8 +408,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                             {(targetTrans === 'Dynamax' || targetTrans === 'Gigantamax') && hasMaxForm && (
                                 <button
                                     type="button"
-                                    className="action-button action-button--dark"
-                                    style={{ flex: 1, fontSize: '0.8rem' }}
+                                    className="action-button action-button--dark transformation-modal__clear-save-btn"
                                     onClick={() => setClearConfirmType('Max')}
                                 >
                                     🗑️ Clear Max Save
@@ -453,8 +417,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                             {targetTrans === 'Custom' && hasCurrentCustomSave && (
                                 <button
                                     type="button"
-                                    className="action-button action-button--dark"
-                                    style={{ flex: 1, fontSize: '0.8rem' }}
+                                    className="action-button action-button--dark transformation-modal__clear-save-btn"
                                     onClick={() => setClearConfirmType('Custom')}
                                 >
                                     🗑️ Clear Form Save
@@ -464,7 +427,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                     </div>
                 ) : (
                     <div className="transformation-modal__section">
-                        <div className="transformation-modal__desc-box" style={{ textAlign: 'center' }}>
+                        <div className="transformation-modal__desc-box transformation-modal__desc-box--center">
                             You are currently transformed!
                             <br />
                             <br />
@@ -505,32 +468,10 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
             </div>
 
             {clearConfirmType && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundColor: 'rgba(0,0,0,0.8)',
-                        zIndex: 1600,
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                    }}
-                >
-                    <div
-                        style={{
-                            background: 'var(--panel-bg)',
-                            padding: '20px',
-                            borderRadius: '8px',
-                            border: '2px solid #c62828',
-                            maxWidth: '300px',
-                            textAlign: 'center'
-                        }}
-                    >
-                        <h3 style={{ color: '#c62828', marginTop: 0 }}>⚠️ Confirm Deletion</h3>
-                        <p style={{ fontSize: '0.9rem', marginBottom: '20px' }}>
+                <div className="transformation-modal__confirm-overlay">
+                    <div className="transformation-modal__confirm-content">
+                        <h3 className="transformation-modal__confirm-title">⚠️ Confirm Deletion</h3>
+                        <p className="transformation-modal__confirm-text">
                             Are you sure you want to delete your{' '}
                             {clearConfirmType === 'Mega'
                                 ? 'Mega'
@@ -539,17 +480,15 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                   : 'Custom Form'}{' '}
                             saved data? This cannot be undone.
                         </p>
-                        <div style={{ display: 'flex', gap: '10px' }}>
+                        <div className="transformation-modal__confirm-actions">
                             <button
-                                className="action-button action-button--dark"
-                                style={{ flex: 1, padding: '8px' }}
+                                className="action-button action-button--dark transformation-modal__confirm-btn"
                                 onClick={() => setClearConfirmType(null)}
                             >
                                 Cancel
                             </button>
                             <button
-                                className="action-button action-button--red"
-                                style={{ flex: 1, padding: '8px' }}
+                                className="action-button action-button--red transformation-modal__confirm-btn"
                                 onClick={confirmClearMemory}
                             >
                                 Delete
