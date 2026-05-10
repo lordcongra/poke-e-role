@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
-import { rollSkillCheck } from '../../utils/combatUtils';
+import { rollSkillCheck, rollDicePlus } from '../../utils/combatUtils';
 import { CollapsingSection } from '../ui/CollapsingSection';
+import { NumberSpinner } from '../ui/NumberSpinner';
 import './ActionRolls.css';
 
 const ATTRIBUTE_OPTIONS = [...Object.values(CombatStat), ...Object.values(SocialStat), 'will'] as const;
@@ -17,9 +18,31 @@ export function ActionRolls() {
     const extraCategories = useCharacterStore((state) => state.extraCategories);
 
     const [deleteRollId, setDeleteRollId] = useState<string | null>(null);
+    const [basicDiceCount, setBasicDiceCount] = useState(1);
+
+    const handleBasicRoll = () => {
+        const state = useCharacterStore.getState();
+        const nickname = state.identity.nickname || state.identity.species || 'Someone';
+        rollDicePlus(`${Math.max(1, basicDiceCount)}d6>3`, `🎲 ${nickname} rolled custom dice!`);
+    };
+
+    const headerElements = (
+        <div className="action-rolls__header-roller">
+            <span className="action-rolls__header-label">Quick Roll:</span>
+            <NumberSpinner value={basicDiceCount} onChange={setBasicDiceCount} min={1} max={99} />
+            <button
+                type="button"
+                className="action-button action-button--dark action-rolls__header-btn"
+                onClick={handleBasicRoll}
+                title="Roll Custom Dice"
+            >
+                🎲
+            </button>
+        </div>
+    );
 
     return (
-        <CollapsingSection title="ACTION ROLLS">
+        <CollapsingSection title="ACTION ROLLS" headerElements={headerElements}>
             <div className="table-responsive-wrapper">
                 <table className="data-table action-rolls__table">
                     <thead>

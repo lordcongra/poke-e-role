@@ -14,9 +14,9 @@
 
 .moves-table__desktop-modifiers {
     font-size: 0.75rem;
-    gap: 4px;
+    gap: 6px;
     background: var(--label-bg);
-    padding: 2px 4px;
+    padding: 2px 6px;
     border-radius: 3px;
     align-items: center;
     font-weight: normal;
@@ -34,13 +34,17 @@
     white-space: nowrap;
 }
 
+.moves-table__modifier-item + .moves-table__modifier-item {
+    border-left: 1px solid var(--text-muted);
+    padding-left: 6px;
+}
+
 .moves-table__modifier-pain {
     display: flex;
     align-items: center;
     gap: 2px;
-    margin-left: 4px;
-    border-left: 1px solid var(--border);
-    padding-left: 4px;
+    border-left: 1px solid var(--text-muted);
+    padding-left: 6px;
     white-space: nowrap;
 }
 
