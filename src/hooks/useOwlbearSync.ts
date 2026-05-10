@@ -327,11 +327,11 @@ export function useOwlbearSync() {
                         console.error('Failed to parse roll log on sync. Resetting cache.', error);
                         existing = [];
                     }
-                    
+
                     if (!existing.find((r) => r.id === rollData.id)) {
                         try {
                             localStorage.setItem('pkr_roll_log', JSON.stringify([rollData, ...existing].slice(0, 50)));
-                        } catch(error) {
+                        } catch (error) {
                             console.error('Failed to save synced roll to cache.', error);
                         }
                     }

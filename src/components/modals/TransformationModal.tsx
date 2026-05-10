@@ -60,7 +60,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
             // Strictly type the undocumented assets API to avoid 'any'
             const assetsApi = OBR.assets as unknown as { downloadImages?: () => Promise<unknown[]> };
             let images: unknown[] | null = null;
-            
+
             if (typeof assetsApi?.downloadImages === 'function') {
                 images = await assetsApi.downloadImages();
             } else {

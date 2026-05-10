@@ -103,7 +103,11 @@ function RollLog() {
         <div className="roll-log__container">
             <div className="roll-log__header">
                 <h3 className="roll-log__title">🎲 Roll Log</h3>
-                <button type="button" onClick={clearAll} className="action-button action-button--red roll-log__clear-btn">
+                <button
+                    type="button"
+                    onClick={clearAll}
+                    className="action-button action-button--red roll-log__clear-btn"
+                >
                     Clear All ✖
                 </button>
             </div>
@@ -113,7 +117,12 @@ function RollLog() {
                         <div className="roll-log__entry-header">
                             <img src={r.icon} alt="Token" className="roll-log__entry-icon" />
                             <strong className="roll-log__entry-player">{r.player}</strong>
-                            <button type="button" onClick={() => dismiss(r.id)} className="roll-log__entry-dismiss" title="Dismiss">
+                            <button
+                                type="button"
+                                onClick={() => dismiss(r.id)}
+                                className="roll-log__entry-dismiss"
+                                title="Dismiss"
+                            >
                                 ✖
                             </button>
                         </div>
