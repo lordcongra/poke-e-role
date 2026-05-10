@@ -23,7 +23,14 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
         autoSelectBias: false,
         ensureDefenses: false,
         minStats: { str: 0, dex: 0, vit: 0, spe: 0, ins: 0 },
-        minSocials: { tou: 0, coo: 0, bea: 0, cut: 0, cle: 0 }
+        minSocials: { tou: 0, coo: 0, bea: 0, cut: 0, cle: 0 },
+        includePreEvolutions: false,
+        evo2Stage1Offset: 1,
+        evo3Stage2Offset: 1,
+        evo3Stage1Offset: 2,
+        allowOverrank: false,
+        overrankAmount: 1,
+        allowPreEvoOverrank: false
     },
 
     setGeneratorConfig: (config) => set((state) => ({ generatorConfig: { ...state.generatorConfig, ...config } })),

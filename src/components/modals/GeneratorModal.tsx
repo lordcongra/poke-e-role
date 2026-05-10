@@ -5,6 +5,7 @@ import type { TempBuild } from '../../store/storeTypes';
 import { CombatStat, SocialStat } from '../../types/enums';
 import { GeneratorPreviewModal } from './GeneratorPreviewModal';
 import { TooltipIcon } from '../ui/TooltipIcon';
+import { NumberSpinner } from '../ui/NumberSpinner';
 import './GeneratorModal.css';
 
 export function GeneratorModal({ onClose }: { onClose: () => void }) {
@@ -276,6 +277,87 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                 }
                             />
                         </label>
+                        
+                        <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced">
+                            <input
+                                type="checkbox"
+                                checked={config.includePreEvolutions}
+                                onChange={(e) => setConfig({ includePreEvolutions: e.target.checked })}
+                                className="generator-modal__checkbox"
+                            />
+                            <strong>Include Pre-Evolution Moves (Backwards-Compatible)</strong>
+                            <TooltipIcon
+                                onClick={() =>
+                                    setTooltipInfo({
+                                        title: 'Pre-Evolution Fetching',
+                                        desc: 'Automatically traces your Pokémon\'s evolution line backwards to generate a broader move pool! Use the rank offset spinners below to simulate how many ranks ago this Pokémon evolved. Mega evolutions are automatically recognized and will share the base form\'s rank.'
+                                    })
+                                }
+                            />
+                        </label>
+                        {config.includePreEvolutions && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: '28px', marginTop: '6px' }}>
+                                <div style={{ background: 'var(--row-odd)', padding: '6px 10px', borderRadius: '4px', border: '1px solid var(--border)' }}>
+                                    <strong style={{ fontSize: '0.8rem', color: 'var(--primary)', display: 'block', marginBottom: '4px' }}>For 2-Stage Lines (e.g., Vulpix → Ninetales)</strong>
+                                    <div style={{ display: 'flex', gap: '15px' }}>
+                                        <div className="generator-modal__comp-item" style={{ alignItems: 'flex-start' }}>
+                                            <span className="generator-modal__comp-label" style={{color: 'var(--text-muted)'}}>Base Form (Offset Down)</span>
+                                            <NumberSpinner value={config.evo2Stage1Offset} onChange={(val) => setConfig({ evo2Stage1Offset: val })} min={0} max={7} />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style={{ background: 'var(--row-odd)', padding: '6px 10px', borderRadius: '4px', border: '1px solid var(--border)' }}>
+                                    <strong style={{ fontSize: '0.8rem', color: 'var(--primary)', display: 'block', marginBottom: '4px' }}>For 3-Stage Lines (e.g., Charmander → Charmeleon → Charizard)</strong>
+                                    <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                                        <div className="generator-modal__comp-item" style={{ alignItems: 'flex-start' }}>
+                                            <span className="generator-modal__comp-label" style={{color: 'var(--text-muted)'}}>Middle Form (Offset Down)</span>
+                                            <NumberSpinner value={config.evo3Stage2Offset} onChange={(val) => setConfig({ evo3Stage2Offset: val })} min={0} max={7} />
+                                        </div>
+                                        <div className="generator-modal__comp-item" style={{ alignItems: 'flex-start' }}>
+                                            <span className="generator-modal__comp-label" style={{color: 'var(--text-muted)'}}>Base Form (Offset Down)</span>
+                                            <NumberSpinner value={config.evo3Stage1Offset} onChange={(val) => setConfig({ evo3Stage1Offset: val })} min={0} max={7} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced">
+                            <input
+                                type="checkbox"
+                                checked={config.allowOverrank}
+                                onChange={(e) => setConfig({ allowOverrank: e.target.checked })}
+                                className="generator-modal__checkbox"
+                            />
+                            <strong>Allow Overrank (Draft 1 Move from Higher Rank)</strong>
+                            <TooltipIcon
+                                onClick={() =>
+                                    setTooltipInfo({
+                                        title: 'Overrank Generation',
+                                        desc: 'Forces the generator to select exactly one move that normally belongs to a higher rank tier, expanding your tactical options.'
+                                    })
+                                }
+                            />
+                        </label>
+                        {config.allowOverrank && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: '28px', marginTop: '6px' }}>
+                                <div className="generator-modal__comp-item" style={{ alignItems: 'flex-start' }}>
+                                    <span className="generator-modal__comp-label" style={{color: 'var(--text-muted)'}}>Max Ranks Above</span>
+                                    <NumberSpinner value={config.overrankAmount} onChange={(val) => setConfig({ overrankAmount: val })} min={1} max={7} />
+                                </div>
+                                <label className="generator-modal__checkbox-label">
+                                    <input
+                                        type="checkbox"
+                                        checked={config.allowPreEvoOverrank}
+                                        onChange={(e) => setConfig({ allowPreEvoOverrank: e.target.checked })}
+                                        className="generator-modal__checkbox"
+                                        disabled={!config.includePreEvolutions}
+                                    />
+                                    Include Pre-Evolutions in Overrank Pool
+                                </label>
+                            </div>
+                        )}
+
                         <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced">
                             <input
                                 type="checkbox"

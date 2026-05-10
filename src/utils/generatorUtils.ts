@@ -1,12 +1,14 @@
 import type { TempBuild, TempMove, CharacterState, GeneratorConfig } from '../store/storeTypes';
 import { fetchPokemonData, fetchMoveData, MOVES_URLS, SPECIES_URLS, loadLocalDataset } from './api';
 import { getRankPoints, getAgePoints } from '../store/useCharacterStore';
-import { CombatStat, Skill } from '../types/enums';
+import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { assignWildStats, assignMinMaxStats, assignAverageStats } from './generatorLogic';
 import { getLimit, getBase } from './macroHelpers';
 
 const RANK_HIERARCHY = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion'];
 const ALL_SKILLS = Object.values(Skill) as string[];
+const COMBAT_STATS = Object.values(CombatStat) as string[];
+const SOCIAL_STATS = Object.values(SocialStat) as string[];
 
 const ATTRIBUTE_MAPPING: Record<string, string> = {
     Strength: 'str',
@@ -39,10 +41,11 @@ function normalizeStatistic(value: string): string {
 }
 
 function normalizeSkill(value: string): string {
-    const stringValue = value.toLowerCase();
+    const stringValue = value.toLowerCase().trim();
     for (const skill of ALL_SKILLS) {
         if (stringValue.includes(skill)) return skill;
     }
+    // Fallback if the dataset has an odd string, but never default to 'none' since all moves use a skill
     return 'brawl';
 }
 
@@ -166,108 +169,154 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     const adjustedAttributePoints = attributePoints - neededInsightRank;
     const currentRankIndex = Math.max(0, RANK_HIERARCHY.indexOf(rank));
 
-    const isMoveAllowed = (moveRankRaw: string) => {
-        const rankIndex = RANK_HIERARCHY.indexOf(moveRankRaw.trim());
-        return rankIndex !== -1 && rankIndex <= currentRankIndex;
-    };
-
     const legalMoveNames: string[] = [];
+    const overrankMoveNames: string[] = [];
+    
+    // Automatically climb back up the Evolution chain fetching data for backward compatibility!
+    const preEvos: { data: Record<string, unknown>, isTrueEvo: boolean }[] = [];
+    if (config.includePreEvolutions) {
+        let currentSpeciesData = pdRecord;
+        let guardCounter = 0; // Prevent infinite loops just in case
+        while (currentSpeciesData.Evolutions && guardCounter < 5) {
+            guardCounter++;
+            const fromEvo = (currentSpeciesData.Evolutions as Record<string, unknown>[]).find(e => e.From);
+            if (!fromEvo) break;
+            
+            const fromName = String(fromEvo.From);
+            const isFormChange = ['Mega', 'Gigantamax', 'Primal'].includes(String(fromEvo.Kind));
+            
+            const fromData = await fetchPokemonData(fromName);
+            if (!fromData) break;
+            
+            preEvos.push({ data: fromData as Record<string, unknown>, isTrueEvo: !isFormChange });
+            currentSpeciesData = fromData as Record<string, unknown>;
+        }
+    }
 
-    const extractMoves = (moveObject: unknown, ignoreRank = false) => {
+    const extractMoves = (moveObject: unknown, maxRankIndex: number, targetArray: string[], minRankIndex = -1) => {
         if (Array.isArray(moveObject)) {
             moveObject.forEach((move: unknown) => {
                 const moveRecord = move as Record<string, unknown>;
                 const moveName = typeof move === 'string' ? move : String(moveRecord.Name || moveRecord.Move || '');
-                const moveRank =
-                    typeof move === 'object'
-                        ? String(
-                              moveRecord.Learned || moveRecord.Learn || moveRecord.Level || moveRecord.Rank || 'Other'
-                          )
-                        : 'Other';
+                const moveRank = typeof move === 'object' ? String(moveRecord.Learned || moveRecord.Learn || moveRecord.Level || moveRecord.Rank || 'Other') : 'Other';
 
-                // Exact match check to ban Splash, but allow things like Splishy Splash
-                if (
-                    moveName &&
-                    moveName.toLowerCase().trim() !== 'splash' &&
-                    MOVES_URLS[moveName.toLowerCase()] &&
-                    (ignoreRank || isMoveAllowed(moveRank))
-                ) {
-                    legalMoveNames.push(moveName);
+                const rIdx = RANK_HIERARCHY.indexOf(moveRank.trim());
+                if (moveName && moveName.toLowerCase().trim() !== 'splash' && MOVES_URLS[moveName.toLowerCase()]) {
+                    // Allow if it falls within the permitted rank bounds OR if we are ignoring ranks entirely (maxRankIndex = 99)
+                    if (maxRankIndex === 99 || (rIdx !== -1 && rIdx <= maxRankIndex && rIdx > minRankIndex)) {
+                        targetArray.push(moveName);
+                    }
                 }
             });
         } else if (typeof moveObject === 'object' && moveObject !== null) {
             Object.entries(moveObject).forEach(([moveRank, moveList]) => {
-                if ((ignoreRank || isMoveAllowed(moveRank)) && Array.isArray(moveList)) {
-                    moveList.forEach((move: unknown) => {
-                        const moveName =
-                            typeof move === 'string'
-                                ? move
-                                : String(
-                                      (move as Record<string, unknown>).Name ||
-                                          (move as Record<string, unknown>).Move ||
-                                          ''
-                                  );
-                        // Exact match check to ban Splash here as well
-                        if (
-                            moveName &&
-                            moveName.toLowerCase().trim() !== 'splash' &&
-                            MOVES_URLS[moveName.toLowerCase()]
-                        ) {
-                            legalMoveNames.push(moveName);
-                        }
-                    });
+                const rIdx = RANK_HIERARCHY.indexOf(moveRank.trim());
+                if (maxRankIndex === 99 || (rIdx !== -1 && rIdx <= maxRankIndex && rIdx > minRankIndex)) {
+                    if (Array.isArray(moveList)) {
+                        moveList.forEach((move: unknown) => {
+                            const moveName = typeof move === 'string' ? move : String((move as Record<string, unknown>).Name || (move as Record<string, unknown>).Move || '');
+                            if (moveName && moveName.toLowerCase().trim() !== 'splash' && MOVES_URLS[moveName.toLowerCase()]) {
+                                targetArray.push(moveName);
+                            }
+                        });
+                    }
                 }
             });
         }
     };
 
-    extractMoves(pdRecord.Moves, false);
-    if (legalMoveNames.length < draftedMax) extractMoves(pdRecord.Moves, true);
+    extractMoves(pdRecord.Moves, currentRankIndex, legalMoveNames);
+    
+    if (config.includePreEvolutions) {
+        const trueEvoCount = preEvos.filter(p => p.isTrueEvo).length;
+        let currentTrueDepth = 0;
+        
+        preEvos.forEach((pe) => {
+            let offset = 0;
+            if (pe.isTrueEvo) {
+                currentTrueDepth++;
+                if (trueEvoCount === 1) {
+                    offset = config.evo2Stage1Offset;
+                } else if (trueEvoCount >= 2) {
+                    if (currentTrueDepth === 1) offset = config.evo3Stage2Offset;
+                    else offset = config.evo3Stage1Offset;
+                }
+            }
+            const peMaxRank = Math.max(0, currentRankIndex - offset);
+            extractMoves(pe.data.Moves, peMaxRank, legalMoveNames);
+        });
+    }
+
+    if (legalMoveNames.length < draftedMax) {
+        extractMoves(pdRecord.Moves, 99, legalMoveNames); // 99 indicates ignoreRank
+    }
+    
+    if (config.allowOverrank) {
+        const overrankMax = Math.min(currentRankIndex + config.overrankAmount, RANK_HIERARCHY.length - 1);
+        if (overrankMax > currentRankIndex) {
+            // Strictly fetch moves that belong ONLY to the higher ranks (using minRankIndex)
+            extractMoves(pdRecord.Moves, overrankMax, overrankMoveNames, currentRankIndex);
+            
+            if (config.allowPreEvoOverrank && config.includePreEvolutions) {
+                preEvos.forEach((pe) => {
+                    extractMoves(pe.data.Moves, overrankMax, overrankMoveNames, currentRankIndex);
+                });
+            }
+        }
+    }
+
+    const parseMoveData = (moveName: string, data: NonNullable<Awaited<ReturnType<typeof fetchMoveData>>>): TempMove => {
+        const rawCategory = String(data.Category || 'Physical').toLowerCase();
+        let cat = 'Status';
+        if (rawCategory.includes('phys')) cat = 'Phys';
+        else if (rawCategory.includes('spec') || rawCategory.includes('var')) cat = 'Spec';
+
+        const rawAcc1 = String(data.Accuracy1 || '');
+        const rawAcc2 = String(data.Accuracy2 || '');
+        const rawDmg1 = String(data.Damage1 || '');
+
+        const accString = `Accuracy: ${rawAcc1} + ${rawAcc2}`;
+        const dmgString = cat === 'Status' ? '' : `Damage: ${rawDmg1}`;
+
+        const rawDesc = String(data.Effect || data.Description || '');
+        const retainedTags = rawDesc.match(/\[.*?\]/g)?.join(' ') || '';
+
+        let cleanDesc = rawDesc.replace(/\[.*?\]/g, '').trim();
+        cleanDesc = cleanDesc.replace(/\n\nAccuracy:[\s\S]*/i, '').trim();
+
+        const finalDesc =
+            `${cleanDesc}\n\n${accString}${dmgString ? '\n' + dmgString : ''}${retainedTags ? '\n\n' + retainedTags : ''}`.trim();
+
+        return {
+            id: crypto.randomUUID(),
+            name: moveName,
+            type: String(data.Type || 'Normal'),
+            cat: cat,
+            power: Number(data.Power) || 0,
+            desc: finalDesc,
+            dmgStat: normalizeStatistic(ATTRIBUTE_MAPPING[String(data.Damage1 || '')] || String(data.Damage1 || '')),
+            attr: normalizeStatistic(ATTRIBUTE_MAPPING[String(data.Accuracy1 || '')] || String(data.Accuracy1 || '')),
+            skill: normalizeSkill(String(data.Accuracy2 || '')),
+            rawAcc1: rawAcc1,
+            rawAcc2: rawAcc2,
+            rawDmg1: rawDmg1
+        };
+    };
 
     const uniqueMoveNames = [...new Set(legalMoveNames)];
     const fetchedMoves: TempMove[] = [];
 
     for (const moveName of uniqueMoveNames) {
         const data = await fetchMoveData(moveName);
-        if (data) {
-            const rawCategory = String(data.Category || 'Physical').toLowerCase();
-            let cat = 'Status';
-            if (rawCategory.includes('phys')) cat = 'Phys';
-            else if (rawCategory.includes('spec') || rawCategory.includes('var')) cat = 'Spec';
+        if (data) fetchedMoves.push(parseMoveData(moveName, data));
+    }
 
-            const rawAcc1 = String(data.Accuracy1 || 'STR');
-            const rawAcc2 = String(data.Accuracy2 || 'None');
-            const rawDmg1 = String(data.Damage1 || 'None');
-
-            const accString =
-                rawAcc2.toLowerCase() === 'none' ? `Accuracy: ${rawAcc1}` : `Accuracy: ${rawAcc1} + ${rawAcc2}`;
-            const dmgString = cat === 'Status' ? '' : `Damage: ${rawDmg1}`;
-
-            const rawDesc = String(data.Effect || data.Description || '');
-            const retainedTags = rawDesc.match(/\[.*?\]/g)?.join(' ') || '';
-
-            let cleanDesc = rawDesc.replace(/\[.*?\]/g, '').trim();
-            cleanDesc = cleanDesc.replace(/\n\nAccuracy:[\s\S]*/i, '').trim();
-
-            const finalDesc =
-                `${cleanDesc}\n\n${accString}${dmgString ? '\n' + dmgString : ''}${retainedTags ? '\n\n' + retainedTags : ''}`.trim();
-
-            fetchedMoves.push({
-                id: crypto.randomUUID(),
-                name: moveName,
-                type: String(data.Type || 'Normal'),
-                cat: cat,
-                power: Number(data.Power) || 0,
-                desc: finalDesc,
-                dmgStat: normalizeStatistic(
-                    ATTRIBUTE_MAPPING[String(data.Damage1 || '')] || String(data.Damage1 || '')
-                ),
-                attr:
-                    normalizeStatistic(
-                        ATTRIBUTE_MAPPING[String(data.Accuracy1 || '')] || String(data.Accuracy1 || '')
-                    ) || 'str',
-                skill: normalizeSkill(String(data.Accuracy2 || ''))
-            });
+    const fetchedOverrankMoves: TempMove[] = [];
+    if (config.allowOverrank && overrankMoveNames.length > 0) {
+        const uniqueOverrankNames = [...new Set(overrankMoveNames)].filter(name => !uniqueMoveNames.includes(name));
+        for (const moveName of uniqueOverrankNames) {
+            const data = await fetchMoveData(moveName);
+            if (data) fetchedOverrankMoves.push(parseMoveData(moveName, data));
         }
     }
 
@@ -317,7 +366,8 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         if (move.attr === 'will' && draftedAccAttrs.has('ins')) score += 15;
         if (move.attr === 'ins' && draftedAccAttrs.has('will')) score += 15;
 
-        if (move.skill !== 'none' && draftedSkills.has(move.skill)) score += 10;
+        // For early drafting, evaluating synergy based on the first skill parsed is acceptable
+        if (move.skill && draftedSkills.has(move.skill)) score += 10;
 
         // Handle Variable Damage Moves (Power 0 but not Status) so they aren't ignored
         let effectivePower = move.power;
@@ -328,6 +378,23 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
 
         return score;
     };
+
+    let chosenOverrankMoveName = "";
+
+    // 🌟 EVALUATE OVERRANK POOL 🌟
+    // By scoring the data first, we ensure the Overrank pull synergizes heavily with the combat bias and STAB typing
+    // instead of just randomly grabbing a useless status move out of a hat!
+    if (config.allowOverrank && fetchedOverrankMoves.length > 0) {
+        fetchedOverrankMoves.sort((a, b) => {
+            const aScore = getMoveScore(a) + Math.random() * 5;
+            const bScore = getMoveScore(b) + Math.random() * 5;
+            return bScore - aScore;
+        });
+        
+        const bestOverrankMove = fetchedOverrankMoves[0];
+        chosenOverrankMoveName = bestOverrankMove.name;
+        fetchedMoves.push(bestOverrankMove);
+    }
 
     if (config.buildType === 'wild') {
         leftoverPool = [...fetchedMoves].sort(() => 0.5 - Math.random());
@@ -368,10 +435,35 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
                 .filter(([t]) => t !== type1 && t !== type2)
                 .reduce((sum, [, count]) => sum + count, 0);
 
-        // 1. DRAFT ATTACK POOL FIRST to establish the offensive skill/attribute footprint
         let remainingAttackSlots = config.targetAtkCount;
+        let remainingSupportSlots = config.targetSupCount;
         const maxStabAllowedTotal = Math.max(1, config.targetAtkCount - 1);
+        
+        // INTERCEPT THE SCORED OVERRANK MOVE!
+        // Injecting it before the greedy loops ensures the Stat Allocation system shapes around it perfectly!
+        if (chosenOverrankMoveName) {
+            const overrankMoveObj = fetchedMoves.find(m => m.name === chosenOverrankMoveName);
+            if (overrankMoveObj) {
+                draftedMoves.push(overrankMoveObj);
+                typeCounts.set(overrankMoveObj.type, 1);
+                if (overrankMoveObj.attr) draftedAccAttrs.add(overrankMoveObj.attr);
+                if (overrankMoveObj.skill) draftedSkills.add(overrankMoveObj.skill);
+    
+                if (overrankMoveObj.cat === 'Status') {
+                    if (remainingSupportSlots > 0) remainingSupportSlots--;
+                } else {
+                    if (remainingAttackSlots > 0) remainingAttackSlots--;
+                }
+                
+                // Safely remove from the available pool so it can't be dual-drafted
+                const attackIndex = attackPool.findIndex(m => m.name === chosenOverrankMoveName);
+                if (attackIndex !== -1) attackPool.splice(attackIndex, 1);
+                const supportIndex = supportPool.findIndex(m => m.name === chosenOverrankMoveName);
+                if (supportIndex !== -1) supportPool.splice(supportIndex, 1);
+            }
+        }
 
+        // 1. DRAFT ATTACK POOL FIRST to establish the offensive skill/attribute footprint
         // Greedy Draft Loop (Resorts every iteration to perfectly capture updating synergy!)
         while (remainingAttackSlots > 0 && attackPool.length > 0 && draftedMoves.length < draftedMax) {
             attackPool.sort((a, b) => {
@@ -418,8 +510,8 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
                 if (canDraft) {
                     draftedMoves.push(move);
                     typeCounts.set(move.type, currentCount + 1);
-                    draftedAccAttrs.add(move.attr);
-                    if (move.skill !== 'none') draftedSkills.add(move.skill);
+                    if (move.attr) draftedAccAttrs.add(move.attr);
+                    if (move.skill) draftedSkills.add(move.skill);
 
                     draftedIndex = i;
 
@@ -447,13 +539,12 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             return bScore - aScore;
         });
 
-        let remainingSupportSlots = config.targetSupCount;
         for (let i = 0; i < remainingSupportSlots && supportPool.length > 0 && draftedMoves.length < draftedMax; i++) {
             const move = supportPool.shift();
             if (move) {
                 draftedMoves.push(move);
-                draftedAccAttrs.add(move.attr);
-                if (move.skill !== 'none') draftedSkills.add(move.skill);
+                if (move.attr) draftedAccAttrs.add(move.attr);
+                if (move.skill) draftedSkills.add(move.skill);
             }
         }
 
@@ -469,8 +560,8 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             const move = leftoverPool.shift();
             if (move) {
                 draftedMoves.push(move);
-                draftedAccAttrs.add(move.attr);
-                if (move.skill !== 'none') draftedSkills.add(move.skill);
+                if (move.attr) draftedAccAttrs.add(move.attr);
+                if (move.skill) draftedSkills.add(move.skill);
             }
         }
     }
@@ -522,6 +613,67 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         );
     }
 
+    const finalBaseStats = {
+        str: baseStr,
+        dex: baseDex,
+        vit: baseVit,
+        spe: baseSpe,
+        ins: baseIns
+    };
+
+    // ✨ POST-GENERATION RESOLUTION FOR DUAL-SCALING MOVES ✨
+    // We now have the fully generated stat profile, so we can definitively solve ties like "Strength / Dexterity"
+    const getBestAttribute = (rawAttr: string, genAttr: Record<string, number>, genSoc: Record<string, number>, bStats: Record<string, number>) => {
+        if (!rawAttr || rawAttr.toLowerCase() === 'none') return '';
+        const options = rawAttr.split('/').map(s => normalizeStatistic(ATTRIBUTE_MAPPING[s.trim()] || s.trim())).filter(Boolean);
+        if (options.length === 0) return 'str';
+        if (options.length === 1) return options[0];
+        
+        let best = options[0];
+        let maxVal = -1;
+        for (const opt of options) {
+            let val = 0;
+            if (COMBAT_STATS.includes(opt)) {
+                val = (genAttr[opt] || 0) + (bStats[opt] || 0);
+            } else if (SOCIAL_STATS.includes(opt)) {
+                val = (genSoc[opt] || 0) + (state.socials[opt as SocialStat]?.base || 0);
+            } else if (opt === 'will') {
+                val = state.will.willMax;
+            }
+            if (val > maxVal) { maxVal = val; best = opt; }
+        }
+        return best;
+    };
+
+    const getBestSkill = (rawSkill: string, genSkills: Record<string, number>) => {
+        if (!rawSkill) return 'brawl';
+        const options = rawSkill.split('/').map(s => normalizeSkill(s)).filter(Boolean);
+        if (options.length === 0) return 'brawl';
+        if (options.length === 1) return options[0];
+
+        let best = options[0];
+        let maxVal = -1;
+        for (const opt of options) {
+            let base = 0;
+            if (state.skills[opt as Skill]) base = state.skills[opt as Skill].base;
+            else {
+                for (const cat of state.extraCategories) {
+                    const sk = cat.skills.find(s => s.id === opt);
+                    if (sk) { base = sk.base; break; }
+                }
+            }
+            const val = (genSkills[opt] || 0) + base;
+            if (val > maxVal) { maxVal = val; best = opt; }
+        }
+        return best;
+    };
+
+    draftedMoves.forEach(move => {
+        move.attr = getBestAttribute(move.rawAcc1 || move.attr, generatedAttributes, generatedSocials, finalBaseStats);
+        move.skill = getBestSkill(move.rawAcc2 || move.skill, generatedSkills);
+        move.dmgStat = getBestAttribute(move.rawDmg1 || move.dmgStat, generatedAttributes, generatedSocials, finalBaseStats);
+    });
+
     // A final check in case the Tank bias pushed Insight higher during stat allocation
     const finalDraftedMax = baseIns + generatedAttributes['ins'] + 3;
 
@@ -533,12 +685,22 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
                 return bScore - aScore;
             });
             const move = leftoverPool.shift();
-            if (move) draftedMoves.push(move);
+            if (move) {
+                move.attr = getBestAttribute(move.rawAcc1 || move.attr, generatedAttributes, generatedSocials, finalBaseStats);
+                move.skill = getBestSkill(move.rawAcc2 || move.skill, generatedSkills);
+                move.dmgStat = getBestAttribute(move.rawDmg1 || move.dmgStat, generatedAttributes, generatedSocials, finalBaseStats);
+                draftedMoves.push(move);
+            }
         }
     } else {
         while (draftedMoves.length < finalDraftedMax && leftoverPool.length > 0) {
             const move = leftoverPool.shift();
-            if (move) draftedMoves.push(move);
+            if (move) {
+                move.attr = getBestAttribute(move.rawAcc1 || move.attr, generatedAttributes, generatedSocials, finalBaseStats);
+                move.skill = getBestSkill(move.rawAcc2 || move.skill, generatedSkills);
+                move.dmgStat = getBestAttribute(move.rawDmg1 || move.dmgStat, generatedAttributes, generatedSocials, finalBaseStats);
+                draftedMoves.push(move);
+            }
         }
     }
 
@@ -571,12 +733,6 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         maxMoves: finalDraftedMax,
         includePmd: config.includePmd,
         pokemonData: pdRecord,
-        baseStats: {
-            str: baseStr,
-            dex: baseDex,
-            vit: baseVit,
-            spe: baseSpe,
-            ins: baseIns
-        }
+        baseStats: finalBaseStats
     };
 }

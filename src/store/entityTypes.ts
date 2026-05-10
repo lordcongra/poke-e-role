@@ -105,6 +105,9 @@ export interface TempMove {
     dmgStat: string;
     power: number;
     desc: string;
+    rawAcc1?: string;
+    rawAcc2?: string;
+    rawDmg1?: string;
 }
 
 export interface TempBuild {
@@ -139,6 +142,15 @@ export interface GeneratorConfig {
     ensureDefenses: boolean;
     minStats: Record<string, number>;
     minSocials: Record<string, number>;
+    
+    // EVOLUTION & OVERRANK TOGGLES
+    includePreEvolutions: boolean;
+    evo2Stage1Offset: number;
+    evo3Stage2Offset: number;
+    evo3Stage1Offset: number;
+    allowOverrank: boolean;
+    overrankAmount: number;
+    allowPreEvoOverrank: boolean;
 }
 
 export interface CustomAbility {
