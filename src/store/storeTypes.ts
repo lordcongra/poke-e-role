@@ -433,3 +433,12 @@ export interface CharacterState
         IdentitySlice,
         MacroSlice,
         SyncSlice {}
+
+// Augment TempMove interface to include the raw pre-resolved strings for parsing dual-options
+declare module './entityTypes' {
+    interface TempMove {
+        rawAcc1?: string;
+        rawAcc2?: string;
+        rawDmg1?: string;
+    }
+}

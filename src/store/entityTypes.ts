@@ -134,6 +134,7 @@ export interface GeneratorConfig {
     overridePrimaryStab: boolean;
     overrideSecondaryStab: boolean;
     overrideCoverage: boolean;
+    coveragePreference: string;
     primaryStabCount: number;
     secondaryStabCount: number;
     coverageCount: number;
@@ -151,6 +152,12 @@ export interface GeneratorConfig {
     allowOverrank: boolean;
     overrankAmount: number;
     allowPreEvoOverrank: boolean;
+
+    // SPILLOVER LOGIC
+    useSpilloverRatio: boolean;
+    spilloverAtkRatio: number;
+    spilloverSupRatio: number;
+    spilloverJitter: boolean;
 }
 
 export interface CustomAbility {

@@ -16,6 +16,7 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
         overridePrimaryStab: false,
         overrideSecondaryStab: false,
         overrideCoverage: false,
+        coveragePreference: 'balanced',
         primaryStabCount: 1,
         secondaryStabCount: 1,
         coverageCount: 1,
@@ -30,7 +31,11 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
         evo3Stage1Offset: 2,
         allowOverrank: false,
         overrankAmount: 1,
-        allowPreEvoOverrank: false
+        allowPreEvoOverrank: false,
+        useSpilloverRatio: false,
+        spilloverAtkRatio: 2,
+        spilloverSupRatio: 1,
+        spilloverJitter: true
     },
 
     setGeneratorConfig: (config) => set((state) => ({ generatorConfig: { ...state.generatorConfig, ...config } })),
@@ -41,15 +46,12 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
         }
 
         // FORCEFUL OBR RENAME SCRIPT
-        // Runs unconditionally on generation after a 250ms delay to dodge saveToOwlbear race conditions!
         setTimeout(() => {
             if (OBR.isAvailable && get().tokenId) {
                 OBR.scene.items
                     .updateItems([get().tokenId!], (items) => {
                         for (const item of items) {
                             item.name = build.species;
-
-                            // Forcefully overwrite Changr extension metadata if it exists
                             if (item.metadata['com.missing-link-dev.changr/metadata']) {
                                 try {
                                     const changrMeta = JSON.parse(
@@ -140,7 +142,6 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
                 };
             });
 
-            // Properly synchronize HP and Will with the newly assigned ranks!
             syncHealthAndWill(state, newStats, newIdentity, newHealth, newWill, updatesToSave);
 
             updatesToSave['moves-data'] = JSON.stringify(newMoves);

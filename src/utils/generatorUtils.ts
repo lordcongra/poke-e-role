@@ -42,11 +42,11 @@ function normalizeStatistic(value: string): string {
 
 function normalizeSkill(value: string): string {
     const stringValue = value.toLowerCase().trim();
+    if (!stringValue || stringValue === 'none') return 'none';
     for (const skill of ALL_SKILLS) {
         if (stringValue.includes(skill)) return skill;
     }
-    // Fallback if the dataset has an odd string, but never default to 'none' since all moves use a skill
-    return 'brawl';
+    return 'none';
 }
 
 export async function generateBuild(config: GeneratorConfig, state: CharacterState): Promise<TempBuild | null> {
@@ -332,10 +332,23 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     const draftedAccAttrs = new Set<string>();
     const draftedSkills = new Set<string>();
 
+    const getDefensiveScore = (move: TempMove) => {
+        let score = 0;
+        const text = (move.name + ' ' + move.desc).toLowerCase();
+        const keywords = [
+            'protect', 'shield', 'guard', 'block', 'barrier', 'defense', 'sp. def',
+            'heal', 'recover', 'roost', 'synthesis', 'light screen', 'reflect',
+            'status', 'cure', 'rest'
+        ];
+        for (const keyword of keywords) {
+            if (text.includes(keyword)) score += 1;
+        }
+        return score;
+    };
+
     const getMoveScore = (move: TempMove) => {
         let score = 0;
 
-        // Defines whether a move functionally acts like a Physical or Special attack
         const isFunctionallyPhysical = move.cat === 'Phys' || move.dmgStat === 'str';
         const isFunctionallySpecial = move.cat === 'Spec' || move.dmgStat === 'spe';
 
@@ -343,36 +356,43 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         if (effectiveBias === 'physical') {
             if (isFunctionallyPhysical) score += 60;
             else if (move.cat === 'Spec' && !isFunctionallyPhysical) score -= 80;
-
             // Pre-seed accuracy preference (Including VIT for bruisers)
             if (move.attr === 'str' || move.attr === 'dex' || move.attr === 'vit') score += 20;
         } else if (effectiveBias === 'special') {
             if (isFunctionallySpecial) score += 60;
             else if (move.cat === 'Phys' && !isFunctionallySpecial) score -= 80;
-
             // Pre-seed accuracy preference
             if (move.attr === 'spe' || move.attr === 'ins' || move.attr === 'will' || move.attr === 'dex') score += 20;
         } else if (effectiveBias === 'tank') {
             if (move.attr === 'vit' || move.attr === 'ins' || move.attr === 'will') score += 20;
+            if (move.cat === 'Status') score += 20;
+            score += getDefensiveScore(move) * 10;
+        } else if (effectiveBias === 'support') {
+            if (move.cat === 'Status') score += 60;
+            else score -= 20;
+            score += getDefensiveScore(move) * 5; 
         }
 
         if (myTypes.includes(move.type)) {
             score += 40;
+        } else {
+            if (config.coveragePreference === 'heavy') score += 45;
+            else if (config.coveragePreference === 'none') score -= 100;
         }
 
         // Dynamic Synergy Adjustments
         if (draftedAccAttrs.has(move.attr)) score += 15;
-        // Will / Insight specific bridge since Will is a derived Insight stat
         if (move.attr === 'will' && draftedAccAttrs.has('ins')) score += 15;
         if (move.attr === 'ins' && draftedAccAttrs.has('will')) score += 15;
 
         // For early drafting, evaluating synergy based on the first skill parsed is acceptable
         if (move.skill && draftedSkills.has(move.skill)) score += 10;
 
-        // Handle Variable Damage Moves (Power 0 but not Status) so they aren't ignored
         let effectivePower = move.power;
-        if (effectivePower === 0 && move.cat !== 'Status') {
-            effectivePower = 3; // Treat as an average-power move for drafting priority
+        if (move.cat === 'Status') {
+            effectivePower = 3; // Give Status moves intrinsic power value so they don't get buried
+        } else if (effectivePower === 0) {
+            effectivePower = 3; // Treat Variable attacks as average
         }
         score += effectivePower * 2;
 
@@ -382,8 +402,6 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     let chosenOverrankMoveName = "";
 
     // 🌟 EVALUATE OVERRANK POOL 🌟
-    // By scoring the data first, we ensure the Overrank pull synergizes heavily with the combat bias and STAB typing
-    // instead of just randomly grabbing a useless status move out of a hat!
     if (config.allowOverrank && fetchedOverrankMoves.length > 0) {
         fetchedOverrankMoves.sort((a, b) => {
             const aScore = getMoveScore(a) + Math.random() * 5;
@@ -406,30 +424,6 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         let supportPool = fetchedMoves.filter((move) => move.cat === 'Status');
         let attackPool = fetchedMoves.filter((move) => move.cat === 'Phys' || move.cat === 'Spec');
 
-        const getDefensiveScore = (move: TempMove) => {
-            let score = 0;
-            const text = (move.name + ' ' + move.desc).toLowerCase();
-            const keywords = [
-                'protect',
-                'shield',
-                'guard',
-                'block',
-                'barrier',
-                'defense',
-                'sp. def',
-                'heal',
-                'recover',
-                'roost',
-                'synthesis',
-                'light screen',
-                'reflect'
-            ];
-            for (const keyword of keywords) {
-                if (text.includes(keyword)) score += 1;
-            }
-            return score;
-        };
-
         const getTotalCoverage = () =>
             Array.from(typeCounts.entries())
                 .filter(([t]) => t !== type1 && t !== type2)
@@ -440,7 +434,6 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         const maxStabAllowedTotal = Math.max(1, config.targetAtkCount - 1);
         
         // INTERCEPT THE SCORED OVERRANK MOVE!
-        // Injecting it before the greedy loops ensures the Stat Allocation system shapes around it perfectly!
         if (chosenOverrankMoveName) {
             const overrankMoveObj = fetchedMoves.find(m => m.name === chosenOverrankMoveName);
             if (overrankMoveObj) {
@@ -464,7 +457,6 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         }
 
         // 1. DRAFT ATTACK POOL FIRST to establish the offensive skill/attribute footprint
-        // Greedy Draft Loop (Resorts every iteration to perfectly capture updating synergy!)
         while (remainingAttackSlots > 0 && attackPool.length > 0 && draftedMoves.length < draftedMax) {
             attackPool.sort((a, b) => {
                 const aScore = getMoveScore(a) + Math.random() * 5;
@@ -500,8 +492,10 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
                         if (currentCount < 2 && totalStabDrafted < maxStabAllowedTotal) canDraft = true;
                     }
                 } else {
-                    if (config.overrideCoverage) {
+                    if (config.coveragePreference === 'fixed') {
                         if (getTotalCoverage() < config.coverageCount && currentCount < 1) canDraft = true;
+                    } else if (config.coveragePreference === 'none') {
+                        canDraft = false;
                     } else {
                         if (currentCount < 1) canDraft = true;
                     }
@@ -533,9 +527,8 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
 
         // 2. DRAFT SUPPORT POOL SECOND (Now that we have a footprint, they will draft synergistically)
         supportPool.sort((a, b) => {
-            let aScore = getMoveScore(a) + (effectiveBias === 'tank' ? getDefensiveScore(a) * 10 : Math.random() * 5);
-            let bScore = getMoveScore(b) + (effectiveBias === 'tank' ? getDefensiveScore(b) * 10 : Math.random() * 5);
-
+            let aScore = getMoveScore(a) + Math.random() * 5;
+            let bScore = getMoveScore(b) + Math.random() * 5;
             return bScore - aScore;
         });
 
@@ -549,24 +542,9 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         }
 
         leftoverPool = fetchedMoves.filter((move) => !draftedMoves.includes(move));
-
-        // Draft any remaining filler moves up to draftedMax BEFORE Stat Allocation!
-        while (draftedMoves.length < draftedMax && leftoverPool.length > 0) {
-            leftoverPool.sort((a, b) => {
-                const aScore = getMoveScore(a) + Math.random() * 5;
-                const bScore = getMoveScore(b) + Math.random() * 5;
-                return bScore - aScore;
-            });
-            const move = leftoverPool.shift();
-            if (move) {
-                draftedMoves.push(move);
-                if (move.attr) draftedAccAttrs.add(move.attr);
-                if (move.skill) draftedSkills.add(move.skill);
-            }
-        }
     }
 
-    // STAT ALLOCATION HAPPENS HERE (Now seeing all the drafted moves!)
+    // STAT ALLOCATION HAPPENS HERE
     if (config.buildType === 'wild') {
         assignWildStats(
             generatedAttributes,
@@ -622,7 +600,6 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     };
 
     // ✨ POST-GENERATION RESOLUTION FOR DUAL-SCALING MOVES ✨
-    // We now have the fully generated stat profile, so we can definitively solve ties like "Strength / Dexterity"
     const getBestAttribute = (rawAttr: string, genAttr: Record<string, number>, genSoc: Record<string, number>, bStats: Record<string, number>) => {
         if (!rawAttr || rawAttr.toLowerCase() === 'none') return '';
         const options = rawAttr.split('/').map(s => normalizeStatistic(ATTRIBUTE_MAPPING[s.trim()] || s.trim())).filter(Boolean);
@@ -646,9 +623,9 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     };
 
     const getBestSkill = (rawSkill: string, genSkills: Record<string, number>) => {
-        if (!rawSkill) return 'brawl';
-        const options = rawSkill.split('/').map(s => normalizeSkill(s)).filter(Boolean);
-        if (options.length === 0) return 'brawl';
+        if (!rawSkill || rawSkill.toLowerCase().includes('none')) return 'none';
+        const options = rawSkill.split('/').map(s => normalizeSkill(s)).filter(s => s !== 'none');
+        if (options.length === 0) return 'none';
         if (options.length === 1) return options[0];
 
         let best = options[0];
@@ -668,16 +645,55 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         return best;
     };
 
-    draftedMoves.forEach(move => {
-        move.attr = getBestAttribute(move.rawAcc1 || move.attr, generatedAttributes, generatedSocials, finalBaseStats);
-        move.skill = getBestSkill(move.rawAcc2 || move.skill, generatedSkills);
-        move.dmgStat = getBestAttribute(move.rawDmg1 || move.dmgStat, generatedAttributes, generatedSocials, finalBaseStats);
-    });
-
-    // A final check in case the Tank bias pushed Insight higher during stat allocation
     const finalDraftedMax = baseIns + generatedAttributes['ins'] + 3;
 
-    if (config.buildType !== 'wild') {
+    // 🌟 SPILLOVER RATIO LOGIC 🌟
+    if (config.useSpilloverRatio && config.buildType !== 'wild' && draftedMoves.length < finalDraftedMax && leftoverPool.length > 0) {
+        
+        leftoverPool.sort((a, b) => {
+            const aScore = getMoveScore(a) + Math.random() * 5;
+            const bScore = getMoveScore(b) + Math.random() * 5;
+            return bScore - aScore;
+        });
+
+        const leftoverAtk = leftoverPool.filter(m => m.cat !== 'Status');
+        const leftoverSup = leftoverPool.filter(m => m.cat === 'Status');
+        
+        let extraAtkDrafted = 0;
+        let extraSupDrafted = 0;
+
+        while (draftedMoves.length < finalDraftedMax && (leftoverAtk.length > 0 || leftoverSup.length > 0)) {
+            let wantAtk = true;
+            
+            if (config.spilloverSupRatio > 0) {
+                if (config.spilloverAtkRatio === 0) {
+                    wantAtk = false;
+                } else {
+                    const expectedAtk = (extraSupDrafted * config.spilloverAtkRatio) / config.spilloverSupRatio;
+                    wantAtk = extraAtkDrafted <= expectedAtk;
+                }
+            }
+
+            if (config.spilloverJitter && Math.random() < 0.25) { 
+                wantAtk = !wantAtk;
+            }
+
+            let moveToAdd;
+            if (wantAtk) {
+                moveToAdd = leftoverAtk.length > 0 ? leftoverAtk.shift() : leftoverSup.shift();
+                if (moveToAdd && moveToAdd.cat !== 'Status') extraAtkDrafted++;
+                else extraSupDrafted++;
+            } else {
+                moveToAdd = leftoverSup.length > 0 ? leftoverSup.shift() : leftoverAtk.shift();
+                if (moveToAdd && moveToAdd.cat === 'Status') extraSupDrafted++;
+                else extraAtkDrafted++;
+            }
+
+            if (moveToAdd) {
+                draftedMoves.push(moveToAdd);
+            }
+        }
+    } else if (config.buildType !== 'wild') {
         while (draftedMoves.length < finalDraftedMax && leftoverPool.length > 0) {
             leftoverPool.sort((a, b) => {
                 const aScore = getMoveScore(a) + Math.random() * 5;
@@ -686,23 +702,21 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             });
             const move = leftoverPool.shift();
             if (move) {
-                move.attr = getBestAttribute(move.rawAcc1 || move.attr, generatedAttributes, generatedSocials, finalBaseStats);
-                move.skill = getBestSkill(move.rawAcc2 || move.skill, generatedSkills);
-                move.dmgStat = getBestAttribute(move.rawDmg1 || move.dmgStat, generatedAttributes, generatedSocials, finalBaseStats);
                 draftedMoves.push(move);
             }
         }
-    } else {
+    } else if (config.buildType === 'wild') {
         while (draftedMoves.length < finalDraftedMax && leftoverPool.length > 0) {
             const move = leftoverPool.shift();
-            if (move) {
-                move.attr = getBestAttribute(move.rawAcc1 || move.attr, generatedAttributes, generatedSocials, finalBaseStats);
-                move.skill = getBestSkill(move.rawAcc2 || move.skill, generatedSkills);
-                move.dmgStat = getBestAttribute(move.rawDmg1 || move.dmgStat, generatedAttributes, generatedSocials, finalBaseStats);
-                draftedMoves.push(move);
-            }
+            if (move) draftedMoves.push(move);
         }
     }
+
+    draftedMoves.forEach(move => {
+        move.attr = getBestAttribute(move.rawAcc1 || move.attr, generatedAttributes, generatedSocials, finalBaseStats);
+        move.skill = getBestSkill(move.rawAcc2 || move.skill, generatedSkills);
+        move.dmgStat = getBestAttribute(move.rawDmg1 || move.dmgStat, generatedAttributes, generatedSocials, finalBaseStats);
+    });
 
     draftedMoves.sort((a, b) => {
         const getTypePriority = (type: string) => {

@@ -100,13 +100,14 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                     </div>
 
                     <div className="generator-modal__side-by-side">
-                        <div className="generator-modal__composition">
+                        {/* BOX 1: Min Stats */}
+                        <div className="generator-modal__composition" style={{ flex: 1, justifyContent: 'flex-start' }}>
                             <label className="generator-modal__comp-title">Guaranteed Minimum Ranks</label>
                             <p className="generator-modal__comp-desc">
                                 Force the generator to allocate points here before processing its primary logic.
                             </p>
 
-                            <div className="generator-modal__min-wrapper">
+                            <div className="generator-modal__min-wrapper" style={{ padding: '4px 0' }}>
                                 <div className="generator-modal__min-grid">
                                     {Object.values(CombatStat).map((stat) => (
                                         <div key={stat} className="generator-modal__min-item">
@@ -122,7 +123,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                         </div>
                                     ))}
                                 </div>
-                                <div className="generator-modal__min-grid">
+                                <div className="generator-modal__min-grid" style={{ marginTop: '10px' }}>
                                     {Object.values(SocialStat).map((stat) => (
                                         <div key={stat} className="generator-modal__min-item">
                                             <span className="generator-modal__min-label">{stat.toUpperCase()}</span>
@@ -140,124 +141,174 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                             </div>
                         </div>
 
-                        <div
-                            className="generator-modal__col"
-                            style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}
-                        >
-                            <div className="generator-modal__composition">
-                                <label className="generator-modal__comp-title">Move Composition</label>
-                                <p className="generator-modal__comp-desc">
-                                    Insight will automatically scale to fit this total.
-                                </p>
-                                <div className="generator-modal__comp-row">
-                                    <div className="generator-modal__comp-item">
-                                        <span className="generator-modal__comp-label">Attacks</span>
-                                        <input
-                                            type="number"
-                                            value={config.targetAtkCount}
-                                            onChange={(e) => setConfig({ targetAtkCount: Number(e.target.value) })}
-                                            min="0"
-                                            max="6"
-                                            className="generator-modal__comp-input"
-                                        />
-                                    </div>
-                                    <div className="generator-modal__comp-item">
-                                        <span className="generator-modal__comp-label">Support</span>
-                                        <input
-                                            type="number"
-                                            value={config.targetSupCount}
-                                            onChange={(e) => setConfig({ targetSupCount: Number(e.target.value) })}
-                                            min="0"
-                                            max="6"
-                                            className="generator-modal__comp-input"
-                                        />
-                                    </div>
+                        {/* BOX 2: Move Composition */}
+                        <div className="generator-modal__composition" style={{ flex: 1, justifyContent: 'flex-start' }}>
+                            <label className="generator-modal__comp-title">Move Composition</label>
+                            <p className="generator-modal__comp-desc">
+                                Insight will automatically scale to fit this total.
+                            </p>
+                            <div className="generator-modal__comp-row" style={{ marginTop: '0', marginBottom: '10px' }}>
+                                <div className="generator-modal__comp-item">
+                                    <span className="generator-modal__comp-label">Attacks</span>
+                                    <input
+                                        type="number"
+                                        value={config.targetAtkCount}
+                                        onChange={(e) => setConfig({ targetAtkCount: Number(e.target.value) })}
+                                        min="0"
+                                        max="6"
+                                        className="generator-modal__comp-input"
+                                    />
+                                </div>
+                                <div className="generator-modal__comp-item">
+                                    <span className="generator-modal__comp-label">Support</span>
+                                    <input
+                                        type="number"
+                                        value={config.targetSupCount}
+                                        onChange={(e) => setConfig({ targetSupCount: Number(e.target.value) })}
+                                        min="0"
+                                        max="6"
+                                        className="generator-modal__comp-input"
+                                    />
                                 </div>
                             </div>
 
-                            {config.buildType !== 'wild' && (
-                                <div className="generator-modal__composition">
-                                    <label className="generator-modal__comp-title">Attack Type Ratios</label>
-                                    <p className="generator-modal__comp-desc">
-                                        Check a box to lock a specific amount for that category. Unchecked categories
-                                        will auto-fill to reach your total Attacks.
-                                    </p>
-                                    <div className="generator-modal__comp-row">
-                                        <div className="generator-modal__comp-item">
-                                            <label className="generator-modal__checkbox-label" title={type1Label}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={config.overridePrimaryStab}
-                                                    onChange={(e) =>
-                                                        setConfig({ overridePrimaryStab: e.target.checked })
-                                                    }
-                                                    className="generator-modal__checkbox"
-                                                />
-                                                STAB 1
-                                            </label>
-                                            <input
-                                                type="number"
-                                                value={config.primaryStabCount}
-                                                onChange={(e) =>
-                                                    setConfig({ primaryStabCount: Number(e.target.value) })
-                                                }
-                                                min="0"
-                                                max="6"
-                                                className="generator-modal__comp-input"
-                                                disabled={!config.overridePrimaryStab}
-                                            />
-                                        </div>
-                                        {hasType2 && (
-                                            <div className="generator-modal__comp-item">
-                                                <label className="generator-modal__checkbox-label" title={type2Label}>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={config.overrideSecondaryStab}
-                                                        onChange={(e) =>
-                                                            setConfig({ overrideSecondaryStab: e.target.checked })
-                                                        }
-                                                        className="generator-modal__checkbox"
-                                                    />
-                                                    STAB 2
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    value={config.secondaryStabCount}
-                                                    onChange={(e) =>
-                                                        setConfig({ secondaryStabCount: Number(e.target.value) })
-                                                    }
-                                                    min="0"
-                                                    max="6"
-                                                    className="generator-modal__comp-input"
-                                                    disabled={!config.overrideSecondaryStab}
-                                                />
+                            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                <label className="generator-modal__checkbox-label" style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={config.useSpilloverRatio}
+                                        onChange={(e) => setConfig({ useSpilloverRatio: e.target.checked })}
+                                        className="generator-modal__checkbox"
+                                        style={{ transform: 'scale(1)' }}
+                                    />
+                                    Use Custom Spillover Ratio?
+                                    <TooltipIcon
+                                        onClick={() =>
+                                            setTooltipInfo({
+                                                title: 'Spillover Ratio',
+                                                desc: 'If high Insight grants you more Max Moves than your initial targets, this ratio determines how the extra slots are filled. (e.g. 2 Attacks for every 1 Support).'
+                                            })
+                                        }
+                                    />
+                                </label>
+                                
+                                {config.useSpilloverRatio && (
+                                    <>
+                                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', marginTop: '4px' }}>
+                                            <div className="generator-modal__comp-item" style={{ flexDirection: 'row' }}>
+                                                <NumberSpinner value={config.spilloverAtkRatio} onChange={(val) => setConfig({ spilloverAtkRatio: val })} min={0} max={9} />
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Atk</span>
                                             </div>
-                                        )}
-                                        <div className="generator-modal__comp-item">
-                                            <label className="generator-modal__checkbox-label">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={config.overrideCoverage}
-                                                    onChange={(e) => setConfig({ overrideCoverage: e.target.checked })}
-                                                    className="generator-modal__checkbox"
-                                                />
-                                                Coverage
-                                            </label>
-                                            <input
-                                                type="number"
-                                                value={config.coverageCount}
-                                                onChange={(e) => setConfig({ coverageCount: Number(e.target.value) })}
-                                                min="0"
-                                                max="6"
-                                                className="generator-modal__comp-input"
-                                                disabled={!config.overrideCoverage}
-                                            />
+                                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>:</span>
+                                            <div className="generator-modal__comp-item" style={{ flexDirection: 'row' }}>
+                                                <NumberSpinner value={config.spilloverSupRatio} onChange={(val) => setConfig({ spilloverSupRatio: val })} min={0} max={9} />
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Sup</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            )}
+                                        <label className="generator-modal__checkbox-label" style={{ fontSize: '0.7rem', justifyContent: 'center' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={config.spilloverJitter}
+                                                onChange={(e) => setConfig({ spilloverJitter: e.target.checked })}
+                                                className="generator-modal__checkbox"
+                                                style={{ transform: 'scale(1)' }}
+                                            />
+                                            Add +/- 25% Jitter
+                                        </label>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
+
+                    {/* BOX 3: Attack Type Ratios & Coverage */}
+                    {config.buildType !== 'wild' && (
+                        <div className="generator-modal__composition" style={{ marginTop: '10px' }}>
+                            <label className="generator-modal__comp-title">Attack Type Ratios</label>
+                            <p className="generator-modal__comp-desc">
+                                Override STAB counts, and choose a Coverage preference for the remaining slots.
+                            </p>
+                            <div className="generator-modal__comp-row" style={{ marginTop: '0', alignItems: 'flex-start' }}>
+                                <div className="generator-modal__comp-item">
+                                    <label className="generator-modal__checkbox-label" title={type1Label}>
+                                        <input
+                                            type="checkbox"
+                                            checked={config.overridePrimaryStab}
+                                            onChange={(e) =>
+                                                setConfig({ overridePrimaryStab: e.target.checked })
+                                            }
+                                            className="generator-modal__checkbox"
+                                        />
+                                        STAB 1
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={config.primaryStabCount}
+                                        onChange={(e) =>
+                                            setConfig({ primaryStabCount: Number(e.target.value) })
+                                        }
+                                        min="0"
+                                        max="6"
+                                        className="generator-modal__comp-input"
+                                        disabled={!config.overridePrimaryStab}
+                                    />
+                                </div>
+                                {hasType2 && (
+                                    <div className="generator-modal__comp-item">
+                                        <label className="generator-modal__checkbox-label" title={type2Label}>
+                                            <input
+                                                type="checkbox"
+                                                checked={config.overrideSecondaryStab}
+                                                onChange={(e) =>
+                                                    setConfig({ overrideSecondaryStab: e.target.checked })
+                                                }
+                                                className="generator-modal__checkbox"
+                                            />
+                                            STAB 2
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={config.secondaryStabCount}
+                                            onChange={(e) =>
+                                                setConfig({ secondaryStabCount: Number(e.target.value) })
+                                            }
+                                            min="0"
+                                            max="6"
+                                            className="generator-modal__comp-input"
+                                            disabled={!config.overrideSecondaryStab}
+                                        />
+                                    </div>
+                                )}
+                                <div className="generator-modal__comp-item" style={{ flex: 1, paddingLeft: '15px', borderLeft: '1px solid var(--border)', marginLeft: '5px' }}>
+                                    <label className="generator-modal__checkbox-label" style={{ fontWeight: 'bold' }}>
+                                        Coverage Preference
+                                    </label>
+                                    <select
+                                        value={config.coveragePreference}
+                                        onChange={(e) => setConfig({ coveragePreference: e.target.value })}
+                                        className="generator-modal__select"
+                                        style={{ marginTop: '4px', fontSize: '0.75rem' }}
+                                    >
+                                        <option value="balanced">Balanced (Auto)</option>
+                                        <option value="heavy">Prioritize Coverage</option>
+                                        <option value="none">STAB Only (No Coverage)</option>
+                                        <option value="fixed">Fixed Amount</option>
+                                    </select>
+                                    {config.coveragePreference === 'fixed' && (
+                                        <input
+                                            type="number"
+                                            value={config.coverageCount}
+                                            onChange={(e) => setConfig({ coverageCount: Number(e.target.value) })}
+                                            min="0"
+                                            max="6"
+                                            className="generator-modal__comp-input"
+                                            style={{ marginTop: '6px' }}
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="generator-modal__checkbox-group">
                         <label className="generator-modal__checkbox-label">
