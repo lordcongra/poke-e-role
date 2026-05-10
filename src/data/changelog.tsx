@@ -10,10 +10,10 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
     {
-        version: '2.5.6',
+        version: '2.6.0',
         date: 'Recently',
         changes: [
-            'Updated the pokemon generator to better generate move variety. Also added ability to generate a random species of pokemon.',
+            'Further improvements to the pokemon generator under the hood.',
             'Added ability to update the image of a token from your OBR images - helpful for evolutions when you want to keep your sheet.',
             'Added new dice-roller engine option in Rules: Custom Action Rolls! Read up on it in the readme on github to learn more.',
             <>
