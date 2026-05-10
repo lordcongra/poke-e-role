@@ -1,20 +1,23 @@
 import type { StateCreator } from 'zustand';
-import type { CharacterState, MacroSlice, MoveData } from '../storeTypes';
-import { CombatStat, SocialStat, Skill } from '../../types/enums';
+import type { CharacterState, MacroSlice } from '../storeTypes';
+import { CombatStat, Skill } from '../../types/enums';
 import { saveToOwlbear } from '../../utils/obr';
 import OBR from '@owlbear-rodeo/sdk';
+import type { Item } from '@owlbear-rodeo/sdk';
 import {
-    parseLearnset,
+    syncHealthAndWill,
+    type RestoreConfig,
     getLimit,
     getBase,
     extractAbilities,
-    syncHealthAndWill,
-    createFormBackup,
-    restoreFormBackup,
-    convertMovesToMax,
-    type RestoreConfig
+    parseLearnset
 } from '../../utils/macroHelpers';
-import { fetchMoveData } from '../../utils/api';
+import {
+    processReversion,
+    processTransformation,
+    handleTokenImageSwap,
+    type TransformationDraft
+} from '../../utils/transformationLogic';
 
 export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> = (set, get) => ({
     setMode: (newMode) =>
@@ -98,192 +101,25 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 targetTransformation === 'None' ||
                 (isCurrentlyTransformed && state.identity.activeTransformation === targetTransformation);
 
-            const newIdentity = { ...state.identity };
-            const newTrackers = { ...state.trackers };
-            const newStats = { ...state.stats };
-            const newSocials = { ...state.socials };
-            const newHealth = { ...state.health };
-            const newWill = { ...state.will };
-            const newDerived = { ...state.derived };
-            let newStatuses = [...state.statuses];
-            let newEffects = [...state.effects];
-
-            const draft = {
-                identity: newIdentity,
-                health: newHealth,
-                will: newWill,
-                derived: newDerived,
-                stats: newStats,
-                socials: newSocials,
+            const draft: TransformationDraft = {
+                identity: { ...state.identity },
+                health: { ...state.health },
+                will: { ...state.will },
+                derived: { ...state.derived },
+                stats: { ...state.stats },
+                socials: { ...state.socials },
                 moves: [...state.moves],
                 skills: { ...state.skills },
-                statuses: newStatuses
+                statuses: [...state.statuses],
+                effects: [...state.effects],
+                trackers: { ...state.trackers }
             };
 
             const updatesToSave: Record<string, unknown> = {};
-            let shouldRestoreImage = false;
             let revertConfig: RestoreConfig = {};
 
-            if (isReverting) {
-                const previousTrans = state.identity.activeTransformation;
-                const wasFainted = state.health.hpCurr <= 0;
-
-                let shouldWipeTempHp = false;
-                let shouldWipeTempWill = false;
-
-                if (previousTrans === 'Mega') {
-                    const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
-                    newIdentity.altFormData = backupStr;
-                    updatesToSave['alt-form-data'] = backupStr;
-                    revertConfig = {
-                        restoreBaseStats: true,
-                        restoreStatLimits: true,
-                        restoreStatRanks: true,
-                        restoreSkills: true,
-                        restoreMoves: true,
-                        restoreTyping: true,
-                        restoreAbilities: true,
-                        restoreHp: true,
-                        restoreWill: true,
-                        restoreStatuses: true,
-                        restoreBuffs: false,
-                        restoreDebuffs: false
-                    };
-                    shouldWipeTempHp = true;
-                    shouldWipeTempWill = true;
-                    if (state.identity.megaImageUrl) revertConfig.restoreImage = true;
-                } else if (['Dynamax', 'Gigantamax'].includes(previousTrans)) {
-                    const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
-                    newIdentity.maxFormData = backupStr;
-                    updatesToSave['max-form-data'] = backupStr;
-                    revertConfig = { restoreMoves: true };
-                    shouldWipeTempHp = true;
-                    if (state.identity.maxImageUrl) revertConfig.restoreImage = true;
-                } else if (previousTrans === 'Custom' && state.identity.activeFormId) {
-                    const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
-                    newIdentity.formSaves = { ...newIdentity.formSaves, [state.identity.activeFormId]: backupStr };
-                    updatesToSave['form-saves'] = JSON.stringify(newIdentity.formSaves);
-
-                    const activeForm = state.roomCustomForms.find((f) => f.id === state.identity.activeFormId);
-
-                    if (state.identity.customFormImages[state.identity.activeFormId]) {
-                        shouldRestoreImage = true;
-                    }
-
-                    revertConfig =
-                        state.identity.customFormConfig && Object.keys(state.identity.customFormConfig).length > 0
-                            ? state.identity.customFormConfig
-                            : activeForm
-                              ? {
-                                    restoreBaseStats: activeForm.swapBaseStats,
-                                    restoreStatLimits: activeForm.swapStatLimits,
-                                    restoreStatRanks: activeForm.swapStatRanks,
-                                    restoreSkills: activeForm.swapSkills,
-                                    restoreMoves: activeForm.swapMoves,
-                                    restoreTyping: activeForm.swapTyping,
-                                    restoreAbilities: activeForm.swapAbilities,
-                                    restoreHp: activeForm.restoreHp,
-                                    restoreWill: activeForm.restoreWill,
-                                    restoreBuffs: activeForm.swapBuffs || activeForm.freshBuffs,
-                                    restoreDebuffs: activeForm.swapDebuffs || activeForm.freshDebuffs,
-                                    restoreStatuses: activeForm.swapStatuses || activeForm.freshStatuses
-                                }
-                              : {
-                                    restoreBaseStats: true,
-                                    restoreStatLimits: true,
-                                    restoreStatRanks: true,
-                                    restoreSkills: true,
-                                    restoreMoves: true,
-                                    restoreTyping: true,
-                                    restoreAbilities: true,
-                                    restoreHp: true,
-                                    restoreWill: true
-                                };
-
-                    if (shouldRestoreImage) revertConfig.restoreImage = true;
-
-                    if (!revertConfig.restoreMoves) {
-                        const grantedMoves = activeForm ? activeForm.grantedMoves : [];
-                        if (grantedMoves && grantedMoves.length > 0) {
-                            const grantedNames = grantedMoves.map((m) => m.toLowerCase());
-                            draft.moves = draft.moves.filter((m) => !grantedNames.includes(m.name.toLowerCase()));
-                            updatesToSave['moves-data'] = JSON.stringify(draft.moves);
-                        }
-                    }
-
-                    if (activeForm) {
-                        if (activeForm.restoreHp || activeForm.tempHp > 0) shouldWipeTempHp = true;
-                        if (activeForm.restoreWill || activeForm.tempWill > 0) shouldWipeTempWill = true;
-                    }
-                } else if (previousTrans === 'Terastallize') {
-                    newIdentity.terastallizeAffinity = '';
-                    newIdentity.terastallizeBonusActive = false;
-                    updatesToSave['terastallize-affinity'] = '';
-                    updatesToSave['terastallize-bonus-active'] = false;
-
-                    draft.moves = draft.moves.filter(
-                        (m) => !(m.name === 'Tera Blast' && m.desc === 'Changes Type to match Terastallization.')
-                    );
-                    updatesToSave['moves-data'] = JSON.stringify(draft.moves);
-
-                    if (state.identity.teraImageUrl) revertConfig.restoreImage = true;
-                }
-
-                if (shouldWipeTempHp) {
-                    newHealth.temporaryHitPoints = 0;
-                    newHealth.temporaryHitPointsMax = 0;
-                    updatesToSave['temporary-hit-points'] = 0;
-                    updatesToSave['temporary-hit-points-max'] = 0;
-                }
-                if (shouldWipeTempWill) {
-                    newWill.temporaryWill = 0;
-                    newWill.temporaryWillMax = 0;
-                    updatesToSave['temporary-will'] = 0;
-                    updatesToSave['temporary-will-max'] = 0;
-                }
-
-                if (
-                    ['Mega', 'Custom', 'Dynamax', 'Gigantamax', 'Terastallize'].includes(previousTrans) &&
-                    state.identity.baseFormData
-                ) {
-                    restoreFormBackup(state.identity.baseFormData, draft, updatesToSave, revertConfig);
-                }
-
-                if (previousTrans === 'Mega' && wasFainted) {
-                    newHealth.hpCurr = 0;
-                    updatesToSave['hp-curr'] = 0;
-                }
-
-                if (previousTrans === 'Gigantamax') {
-                    newStats[CombatStat.STR].buff = Math.max(0, newStats[CombatStat.STR].buff - 2);
-                    newStats[CombatStat.SPE].buff = Math.max(0, newStats[CombatStat.SPE].buff - 2);
-                    newStats[CombatStat.DEX].buff = Math.max(0, newStats[CombatStat.DEX].buff - 2);
-                    newDerived.defBuff = Math.max(0, newDerived.defBuff - 2);
-                    newDerived.sdefBuff = Math.max(0, newDerived.sdefBuff - 2);
-
-                    updatesToSave[`${CombatStat.STR}-buff`] = newStats[CombatStat.STR].buff;
-                    updatesToSave[`${CombatStat.SPE}-buff`] = newStats[CombatStat.SPE].buff;
-                    updatesToSave[`${CombatStat.DEX}-buff`] = newStats[CombatStat.DEX].buff;
-                    updatesToSave['def-buff'] = newDerived.defBuff;
-                    updatesToSave['spd-buff'] = newDerived.sdefBuff;
-                }
-
-                newEffects = newEffects.filter((e) => !e.name.includes('Timer'));
-                updatesToSave['effects-data'] = JSON.stringify(newEffects);
-
-                newIdentity.activeTransformation = 'None';
-                newIdentity.activeFormId = '';
-                newIdentity.customFormConfig = {};
-
-                newTrackers.firstHitAcc = false;
-                newTrackers.firstHitDmg = false;
-
-                updatesToSave['active-transformation'] = 'None';
-                updatesToSave['active-form-id'] = '';
-                updatesToSave['custom-form-config'] = '{}';
-                updatesToSave['first-hit-acc-active'] = false;
-                updatesToSave['first-hit-dmg-active'] = false;
-            } else {
+            // 1. Check Costs & Requirements
+            if (!isReverting) {
                 let costHp = 0;
                 let costWill = 0;
 
@@ -297,294 +133,76 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     }
                 }
 
-                if (costHp > 0 && newHealth.hpCurr <= costHp) {
+                if (costHp > 0 && draft.health.hpCurr <= costHp) {
                     if (OBR.isAvailable) OBR.notification.show('Not enough HP to safely transform!', 'ERROR');
                     return state;
                 }
 
                 if (costWill > 0) {
                     let remainingWillCost = costWill;
-                    if (newWill.temporaryWill > 0) {
-                        const deduct = Math.min(newWill.temporaryWill, remainingWillCost);
-                        newWill.temporaryWill -= deduct;
+                    if (draft.will.temporaryWill > 0) {
+                        const deduct = Math.min(draft.will.temporaryWill, remainingWillCost);
+                        draft.will.temporaryWill -= deduct;
                         remainingWillCost -= deduct;
-                        updatesToSave['temporary-will'] = newWill.temporaryWill;
+                        updatesToSave['temporary-will'] = draft.will.temporaryWill;
                     }
                     if (remainingWillCost > 0) {
-                        if (newWill.willCurr < remainingWillCost) {
+                        if (draft.will.willCurr < remainingWillCost) {
                             if (OBR.isAvailable) OBR.notification.show('Not enough Willpower!', 'ERROR');
                             return state;
                         }
-                        newWill.willCurr -= remainingWillCost;
+                        draft.will.willCurr -= remainingWillCost;
                     }
                 }
 
-                newHealth.hpCurr -= costHp;
-
-                if (['Mega', 'Dynamax', 'Gigantamax', 'Custom', 'Terastallize'].includes(targetTransformation)) {
-                    const backupStr = createFormBackup(state, newHealth, newWill, draft.statuses);
-                    newIdentity.baseFormData = backupStr;
-                    updatesToSave['base-form-data'] = backupStr;
-
-                    if (targetTransformation === 'Mega') {
-                        newHealth.temporaryHitPoints = 0;
-                        newHealth.temporaryHitPointsMax = 0;
-                        updatesToSave['temporary-hit-points'] = 0;
-                        updatesToSave['temporary-hit-points-max'] = 0;
-                        newWill.temporaryWill = 0;
-                        newWill.temporaryWillMax = 0;
-                        updatesToSave['temporary-will'] = 0;
-                        updatesToSave['temporary-will-max'] = 0;
-                    } else if (targetTransformation === 'Custom' && customFormId) {
-                        const targetForm = state.roomCustomForms.find((f) => f.id === customFormId);
-                        if (targetForm) {
-                            if (targetForm.restoreHp) {
-                                newHealth.temporaryHitPoints = 0;
-                                newHealth.temporaryHitPointsMax = 0;
-                                updatesToSave['temporary-hit-points'] = 0;
-                                updatesToSave['temporary-hit-points-max'] = 0;
-                            }
-                            if (targetForm.restoreWill) {
-                                newWill.temporaryWill = 0;
-                                newWill.temporaryWillMax = 0;
-                                updatesToSave['temporary-will'] = 0;
-                                updatesToSave['temporary-will-max'] = 0;
-                            }
-                        }
-                    }
-
-                    if (targetTransformation === 'Mega' && state.identity.altFormData) {
-                        restoreFormBackup(state.identity.altFormData, draft, updatesToSave, {
-                            restoreBaseStats: true,
-                            restoreStatLimits: true,
-                            restoreStatRanks: true,
-                            restoreSkills: true,
-                            restoreMoves: true,
-                            restoreTyping: true,
-                            restoreAbilities: true,
-                            restoreHp: true,
-                            restoreWill: true,
-                            restoreStatuses: true
-                        });
-                    } else if (['Dynamax', 'Gigantamax'].includes(targetTransformation) && state.identity.maxFormData) {
-                        restoreFormBackup(state.identity.maxFormData, draft, updatesToSave, { restoreMoves: true });
-                    } else if (targetTransformation === 'Custom' && customFormId) {
-                        const targetForm = state.roomCustomForms.find((f) => f.id === customFormId);
-                        if (targetForm) {
-                            newTrackers.firstHitAcc = true;
-                            newTrackers.firstHitDmg = true;
-                            updatesToSave['first-hit-acc-active'] = true;
-                            updatesToSave['first-hit-dmg-active'] = true;
-
-                            const activateConfig: RestoreConfig = {
-                                restoreBaseStats: targetForm.swapBaseStats,
-                                restoreStatLimits: targetForm.swapStatLimits,
-                                restoreStatRanks: targetForm.swapStatRanks,
-                                restoreSkills: targetForm.swapSkills,
-                                restoreMoves: targetForm.swapMoves,
-                                restoreTyping: targetForm.swapTyping,
-                                restoreAbilities: targetForm.swapAbilities,
-                                restoreHp: targetForm.restoreHp,
-                                restoreWill: targetForm.restoreWill,
-                                restoreBuffs: targetForm.swapBuffs,
-                                restoreDebuffs: targetForm.swapDebuffs,
-                                restoreStatuses: targetForm.swapStatuses
-                            };
-
-                            const savedConfig: RestoreConfig = {
-                                restoreBaseStats: targetForm.swapBaseStats,
-                                restoreStatLimits: targetForm.swapStatLimits,
-                                restoreStatRanks: targetForm.swapStatRanks,
-                                restoreSkills: targetForm.swapSkills,
-                                restoreMoves: targetForm.swapMoves,
-                                restoreTyping: targetForm.swapTyping,
-                                restoreAbilities: targetForm.swapAbilities,
-                                restoreHp: targetForm.restoreHp,
-                                restoreWill: targetForm.restoreWill,
-                                restoreBuffs: targetForm.swapBuffs || targetForm.freshBuffs,
-                                restoreDebuffs: targetForm.swapDebuffs || targetForm.freshDebuffs,
-                                restoreStatuses: targetForm.swapStatuses || targetForm.freshStatuses
-                            };
-
-                            newIdentity.customFormConfig = savedConfig as Record<string, boolean>;
-                            updatesToSave['custom-form-config'] = JSON.stringify(savedConfig);
-
-                            if (newIdentity.formSaves[customFormId]) {
-                                restoreFormBackup(
-                                    newIdentity.formSaves[customFormId],
-                                    draft,
-                                    updatesToSave,
-                                    activateConfig
-                                );
-                            }
-
-                            if (targetForm.tempHp > 0) {
-                                newHealth.temporaryHitPoints = targetForm.tempHp;
-                                newHealth.temporaryHitPointsMax = targetForm.tempHp;
-                                updatesToSave['temporary-hit-points'] = targetForm.tempHp;
-                                updatesToSave['temporary-hit-points-max'] = targetForm.tempHp;
-                            }
-                            if (targetForm.tempWill > 0) {
-                                newWill.temporaryWill = targetForm.tempWill;
-                                newWill.temporaryWillMax = targetForm.tempWill;
-                                updatesToSave['temporary-will'] = targetForm.tempWill;
-                                updatesToSave['temporary-will-max'] = targetForm.tempWill;
-                            }
-                            if (targetForm.freshStatuses || targetForm.wipeStatuses) {
-                                draft.statuses = [
-                                    { id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }
-                                ];
-                                updatesToSave['status-list'] = JSON.stringify(draft.statuses);
-                            }
-                            if (targetForm.freshDebuffs || targetForm.wipeDebuffs) {
-                                Object.values(CombatStat).forEach((s) => {
-                                    newStats[s].debuff = 0;
-                                    updatesToSave[`${s}-debuff`] = 0;
-                                });
-                                Object.values(SocialStat).forEach((s) => {
-                                    newSocials[s].debuff = 0;
-                                    updatesToSave[`${s}-debuff`] = 0;
-                                });
-                                newDerived.defDebuff = 0;
-                                updatesToSave['def-debuff'] = 0;
-                                newDerived.sdefDebuff = 0;
-                                updatesToSave['spd-debuff'] = 0;
-                            }
-                            if (targetForm.freshBuffs || targetForm.wipeBuffs) {
-                                Object.values(CombatStat).forEach((s) => {
-                                    newStats[s].buff = 0;
-                                    updatesToSave[`${s}-buff`] = 0;
-                                });
-                                Object.values(SocialStat).forEach((s) => {
-                                    newSocials[s].buff = 0;
-                                    updatesToSave[`${s}-buff`] = 0;
-                                });
-                                newDerived.defBuff = 0;
-                                updatesToSave['def-buff'] = 0;
-                                newDerived.sdefBuff = 0;
-                                updatesToSave['spd-buff'] = 0;
-                            }
-                            if (targetForm.grantedMoves && targetForm.grantedMoves.length > 0) {
-                                targetForm.grantedMoves.forEach((moveName) => {
-                                    if (!draft.moves.find((m) => m.name.toLowerCase() === moveName.toLowerCase())) {
-                                        const newMoveId = crypto.randomUUID();
-                                        draft.moves.push({
-                                            id: newMoveId,
-                                            active: false,
-                                            name: moveName,
-                                            type: 'Normal',
-                                            category: 'Physical',
-                                            acc1: 'str',
-                                            acc2: 'none',
-                                            dmg1: 'str',
-                                            power: 1,
-                                            desc: 'Granted by Custom Form',
-                                            marker: ''
-                                        });
-
-                                        fetchMoveData(moveName)
-                                            .then((data) => {
-                                                if (data) {
-                                                    get().applyMoveData(newMoveId, data as Record<string, unknown>);
-                                                }
-                                            })
-                                            .catch((e) => console.warn('Failed to fetch granted move:', e));
-                                    }
-                                });
-                                updatesToSave['moves-data'] = JSON.stringify(draft.moves);
-                            }
-
-                            newIdentity.activeFormId = customFormId;
-                            updatesToSave['active-form-id'] = customFormId;
-                        }
-                    }
-                }
-
-                if (targetTransformation === 'Terastallize') {
-                    newIdentity.terastallizeAffinity = affinity;
-                    newIdentity.terastallizeBonusActive = true;
-                    updatesToSave['terastallize-affinity'] = affinity;
-                    updatesToSave['terastallize-bonus-active'] = true;
-
-                    if (teraBlastConfig) {
-                        const teraBlastMove: MoveData = {
-                            id: crypto.randomUUID(),
-                            active: false,
-                            name: 'Tera Blast',
-                            type: affinity,
-                            category: teraBlastConfig.category,
-                            acc1: teraBlastConfig.acc1,
-                            acc2: teraBlastConfig.acc2,
-                            dmg1: teraBlastConfig.dmg1,
-                            power: 3,
-                            desc: 'Changes Type to match Terastallization.',
-                            marker: ''
-                        };
-                        draft.moves.push(teraBlastMove);
-                        updatesToSave['moves-data'] = JSON.stringify(draft.moves);
-                    }
-                } else if (targetTransformation === 'Dynamax' || targetTransformation === 'Gigantamax') {
-                    newHealth.temporaryHitPoints = targetTransformation === 'Dynamax' ? 6 : 12;
-                    newHealth.temporaryHitPointsMax = newHealth.temporaryHitPoints;
-
-                    updatesToSave['temporary-hit-points'] = newHealth.temporaryHitPoints;
-                    updatesToSave['temporary-hit-points-max'] = newHealth.temporaryHitPointsMax;
-
-                    newEffects = [
-                        ...newEffects,
-                        { id: crypto.randomUUID(), name: `${targetTransformation} Timer`, rounds: 3 }
-                    ];
-                    updatesToSave['effects-data'] = JSON.stringify(newEffects);
-
-                    if (targetTransformation === 'Gigantamax') {
-                        newStats[CombatStat.STR].buff += 2;
-                        newStats[CombatStat.SPE].buff += 2;
-                        newStats[CombatStat.DEX].buff += 2;
-                        newDerived.defBuff += 2;
-                        newDerived.sdefBuff += 2;
-
-                        updatesToSave[`${CombatStat.STR}-buff`] = newStats[CombatStat.STR].buff;
-                        updatesToSave[`${CombatStat.SPE}-buff`] = newStats[CombatStat.SPE].buff;
-                        updatesToSave[`${CombatStat.DEX}-buff`] = newStats[CombatStat.DEX].buff;
-                        updatesToSave['def-buff'] = newDerived.defBuff;
-                        updatesToSave['spd-buff'] = newDerived.sdefBuff;
-                    }
-
-                    if (autoMaxMoves && !state.identity.maxFormData) {
-                        draft.moves = convertMovesToMax(draft.moves, state.roomCustomTypes);
-                        updatesToSave['moves-data'] = JSON.stringify(draft.moves);
-                    }
-                }
-
-                newIdentity.activeTransformation = targetTransformation;
-                updatesToSave['active-transformation'] = targetTransformation;
+                draft.health.hpCurr -= costHp;
             }
 
-            syncHealthAndWill(state, newStats, newIdentity, newHealth, newWill, updatesToSave, true);
+            // 2. Process Core Transformation Logic
+            if (isReverting) {
+                revertConfig = processReversion(draft, state, updatesToSave);
+            } else {
+                processTransformation(
+                    draft,
+                    state,
+                    updatesToSave,
+                    targetTransformation,
+                    customFormId,
+                    affinity,
+                    teraBlastConfig,
+                    autoMaxMoves
+                );
+            }
+
+            // 3. Mathematical Syncing (Derived HP / Will / Healing)
+            syncHealthAndWill(state, draft.stats, draft.identity, draft.health, draft.will, updatesToSave, true);
 
             if (!isReverting && targetTransformation === 'Mega') {
                 draft.statuses = [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }];
                 updatesToSave['status-list'] = JSON.stringify(draft.statuses);
 
-                newHealth.hpCurr = newHealth.hpMax;
-                updatesToSave['hp-curr'] = newHealth.hpCurr;
-                newWill.willCurr = newWill.willMax;
-                updatesToSave['will-curr'] = newWill.willCurr;
+                draft.health.hpCurr = draft.health.hpMax;
+                updatesToSave['hp-curr'] = draft.health.hpCurr;
+                draft.will.willCurr = draft.will.willMax;
+                updatesToSave['will-curr'] = draft.will.willCurr;
             }
 
             if (!isReverting && targetTransformation === 'Custom' && customFormId) {
                 const targetForm = state.roomCustomForms.find((f) => f.id === customFormId);
                 if (targetForm) {
                     if (targetForm.healHp) {
-                        newHealth.hpCurr = newHealth.hpMax;
-                        updatesToSave['hp-curr'] = newHealth.hpCurr;
+                        draft.health.hpCurr = draft.health.hpMax;
+                        updatesToSave['hp-curr'] = draft.health.hpCurr;
                     }
                     if (targetForm.healWill) {
-                        newWill.willCurr = newWill.willMax;
-                        updatesToSave['will-curr'] = newWill.willCurr;
+                        draft.will.willCurr = draft.will.willMax;
+                        updatesToSave['will-curr'] = draft.will.willMax;
                     }
                 }
             }
+
+            // 4. Final Updates
+            handleTokenImageSwap(state, draft, isReverting, targetTransformation, customFormId, revertConfig);
 
             try {
                 saveToOwlbear(updatesToSave);
@@ -592,58 +210,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 console.error('Failed to save transformation to Owlbear', e);
             }
 
-            // NATIVE OBR IMAGE SWAP LOGIC
-            if (OBR.isAvailable && state.tokenId) {
-                let targetUrl = '';
-                if (isReverting && newIdentity.tokenImageUrl) {
-                    if (revertConfig.restoreImage) targetUrl = newIdentity.tokenImageUrl;
-                } else if (!isReverting) {
-                    if (targetTransformation === 'Custom' && customFormId) {
-                        if (state.identity.customFormImages[customFormId]) {
-                            targetUrl = state.identity.customFormImages[customFormId];
-                            newIdentity.tokenImageUrl = targetUrl;
-                        }
-                    } else if (targetTransformation === 'Mega' && state.identity.megaImageUrl) {
-                        targetUrl = state.identity.megaImageUrl;
-                        newIdentity.tokenImageUrl = targetUrl;
-                    } else if (
-                        (targetTransformation === 'Dynamax' || targetTransformation === 'Gigantamax') &&
-                        state.identity.maxImageUrl
-                    ) {
-                        targetUrl = state.identity.maxImageUrl;
-                        newIdentity.tokenImageUrl = targetUrl;
-                    } else if (targetTransformation === 'Terastallize' && state.identity.teraImageUrl) {
-                        targetUrl = state.identity.teraImageUrl;
-                        newIdentity.tokenImageUrl = targetUrl;
-                    }
-                }
-
-                if (targetUrl) {
-                    OBR.scene.items
-                        .updateItems([state.tokenId], (items) => {
-                            for (const item of items) {
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                const imgItem = item as any;
-                                if (imgItem.image) imgItem.image.url = targetUrl;
-                            }
-                        })
-                        .catch((e) => console.warn('Failed to update token image:', e));
-                }
-            }
-
-            return {
-                identity: newIdentity,
-                stats: newStats,
-                socials: newSocials,
-                health: newHealth,
-                will: newWill,
-                derived: newDerived,
-                statuses: draft.statuses,
-                effects: newEffects,
-                moves: draft.moves,
-                skills: draft.skills,
-                trackers: newTrackers
-            };
+            return draft;
         }),
 
     applySpeciesData: (data, wipeData = true, updateStats = true) => {
@@ -733,7 +300,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             // 250ms timeout to ensure this runs completely separate from any batching or saveToOwlbear races!
             setTimeout(() => {
                 OBR.scene.items
-                    .updateItems([tokenId], (items) => {
+                    .updateItems([tokenId], (items: Item[]) => {
                         for (const item of items) {
                             item.name = targetName;
 
@@ -744,8 +311,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                                         JSON.stringify(item.metadata['com.missing-link-dev.changr/metadata'])
                                     );
                                     if (changrMeta && Array.isArray(changrMeta.imageOptions)) {
-                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                        changrMeta.imageOptions.forEach((opt: any) => {
+                                        changrMeta.imageOptions.forEach((opt: Record<string, unknown>) => {
                                             if (opt.name) opt.name = targetName;
                                         });
                                     }
@@ -756,7 +322,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                             }
                         }
                     })
-                    .catch((e) => console.warn('Failed to update OBR item name on manual species change:', e));
+                    .catch((e: unknown) => console.warn('Failed to update OBR item name on manual species change:', e));
             }, 250);
         }
     },
