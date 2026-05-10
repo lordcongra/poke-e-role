@@ -26,6 +26,17 @@
 .move-row__name-container {
     display: flex;
     align-items: center;
+    gap: 4px;
+}
+
+.move-row__marker-select {
+    font-size: 0.9rem;
+    text-align: center;
+    cursor: pointer;
+    padding: 2px 0;
+    width: auto;
+    min-width: unset;
+    color: var(--text-muted);
 }
 
 .move-row__name-input {
@@ -72,6 +83,11 @@
 .move-row__checkbox-cell {
     text-align: center;
 }
+
 .move-row__type-cell {
+    padding: 2px;
+}
+
+.move-row__tag-cell {
     padding: 2px;
 }

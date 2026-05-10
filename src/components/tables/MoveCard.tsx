@@ -114,6 +114,26 @@ export function MoveCard({ move, skills, extraCategories, onTarget, onDelete }: 
                 >
                     🎯
                 </button>
+                <button
+                    type="button"
+                    onClick={() => setEditModalOpen(true)}
+                    className="action-button action-button--transparent-white move-card__edit-btn"
+                    title="Edit Move & Tags"
+                >
+                    🏷️
+                </button>
+                <select
+                    value={move.marker || ''}
+                    onChange={(event) => updateMove(move.id, 'marker', event.target.value)}
+                    className="move-card__marker-select"
+                >
+                    <option value="">-</option>
+                    <option value="★">★</option>
+                    <option value="◼">◼</option>
+                    <option value="▲">▲</option>
+                    <option value="◆">◆</option>
+                    <option value="⬟">⬟</option>
+                </select>
                 <input
                     type="text"
                     list="move-list"
@@ -123,14 +143,6 @@ export function MoveCard({ move, skills, extraCategories, onTarget, onDelete }: 
                     placeholder="Move Name"
                     className="move-card__name-input"
                 />
-                <button
-                    type="button"
-                    onClick={() => setEditModalOpen(true)}
-                    className="action-button action-button--transparent-white move-card__edit-btn"
-                    title="Edit Move & Tags"
-                >
-                    🏷️
-                </button>
             </div>
 
             <div className="move-card__row">

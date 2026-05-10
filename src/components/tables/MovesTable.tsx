@@ -18,6 +18,7 @@ import { GlobalModifiersModal } from '../modals/GlobalModifiersModal';
 import { MovesTableModifiers } from './MovesTableModifiers';
 import { MovesTableLearnset } from './MovesTableLearnset';
 import { DualScaleModal } from '../modals/DualScaleModal';
+import { TooltipIcon } from '../ui/TooltipIcon';
 import './MovesTable.css';
 
 export function MovesTable() {
@@ -154,7 +155,19 @@ export function MovesTable() {
                                     ✔
                                 </th>
                                 <th className="moves-table__th-acc">Acc</th>
-                                <th>Name</th>
+                                <th>
+                                    Name{' '}
+                                    <TooltipIcon
+                                        onClick={() =>
+                                            setTooltipInfo({
+                                                title: 'Move Markers',
+                                                description:
+                                                    'Use the dropdown next to your move names to visually mark moves. For example, use a ★ to denote a move gained via Overrank!'
+                                            })
+                                        }
+                                    />
+                                </th>
+                                <th className="moves-table__th-tag">Tag</th>
                                 <th>Pool (Acc)</th>
                                 <th>Type</th>
                                 <th>Cat.</th>

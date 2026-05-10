@@ -72,6 +72,11 @@
     text-align: center;
 }
 
+.moves-table__th-tag {
+    width: 30px;
+    text-align: center;
+}
+
 .moves-table__th-dmg {
     width: 45px;
     text-align: center;

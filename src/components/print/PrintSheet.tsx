@@ -375,7 +375,10 @@ export function PrintSheet() {
                                       return (
                                           <tr key={i}>
                                               <td>
-                                                  <strong>{move.name}</strong>
+                                                  <strong>
+                                                      {move.marker ? `${move.marker} ` : ''}
+                                                      {move.name}
+                                                  </strong>
                                               </td>
                                               <td>{move.type}</td>
                                               <td>{move.category}</td>

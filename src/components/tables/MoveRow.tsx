@@ -122,6 +122,19 @@ export function MoveRow({ move, skills, extraCategories, onTarget, onDelete }: M
                 </td>
                 <td className="data-table__cell--middle">
                     <div className="move-row__name-container">
+                        <select
+                            value={move.marker || ''}
+                            onChange={(event) => updateMove(move.id, 'marker', event.target.value)}
+                            className="form-select--transparent move-row__marker-select"
+                            title="Mark Move"
+                        >
+                            <option value="">-</option>
+                            <option value="★">★</option>
+                            <option value="◼">◼</option>
+                            <option value="▲">▲</option>
+                            <option value="◆">◆</option>
+                            <option value="⬟">⬟</option>
+                        </select>
                         <input
                             type="text"
                             list="move-list"
@@ -131,15 +144,17 @@ export function MoveRow({ move, skills, extraCategories, onTarget, onDelete }: M
                             className="form-input--transparent move-row__name-input"
                             placeholder="Move Name"
                         />
-                        <button
-                            type="button"
-                            onClick={() => setEditModalOpen(true)}
-                            className="action-button action-button--transparent-white move-row__edit-btn"
-                            title="Edit Move & Tags"
-                        >
-                            🏷️
-                        </button>
                     </div>
+                </td>
+                <td className="data-table__cell--middle move-row__tag-cell">
+                    <button
+                        type="button"
+                        onClick={() => setEditModalOpen(true)}
+                        className="action-button action-button--transparent-white move-row__edit-btn"
+                        title="Edit Move & Tags"
+                    >
+                        🏷️
+                    </button>
                 </td>
                 <td className="data-table__cell--middle">
                     <div className="flex-layout--row-start">

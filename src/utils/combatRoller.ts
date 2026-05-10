@@ -189,7 +189,8 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
     if (ignoredAccuracyPenalty > 0) tags.push(`Ignored ${ignoredAccuracyPenalty} Low Acc`);
     if (moveLowAccuracy > 0) tags.push(`Low Accuracy ${moveLowAccuracy}`);
-    if (genericSuccessModifier !== 0) tags.push(`Net Mod ${genericSuccessModifier > 0 ? '+' : ''}${genericSuccessModifier} Succ`);
+    if (genericSuccessModifier !== 0)
+        tags.push(`Net Mod ${genericSuccessModifier > 0 ? '+' : ''}${genericSuccessModifier} Succ`);
     if (statuses.paralysisDexterityPenalty < 0 && move.acc1 === 'dex') tags.push(`Paralysis: -2 Dice`);
 
     if (customFirstHitAccTag) tags.push(customFirstHitAccTag);

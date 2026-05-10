@@ -318,7 +318,8 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             skill: normalizeSkill(String(data.Accuracy2 || '')),
             rawAcc1: rawAcc1,
             rawAcc2: rawAcc2,
-            rawDmg1: rawDmg1
+            rawDmg1: rawDmg1,
+            marker: ''
         };
     };
 
@@ -442,6 +443,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         });
 
         const bestOverrankMove = fetchedOverrankMoves[0];
+        bestOverrankMove.marker = '★';
         chosenOverrankMoveName = bestOverrankMove.name;
         fetchedMoves.push(bestOverrankMove);
     }

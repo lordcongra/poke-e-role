@@ -110,7 +110,8 @@ export const createSyncSlice: StateCreator<CharacterState, [], [], SyncSlice> = 
                             acc2: mapSkill(String(m.acc2 || m.Accuracy2 || 'none')),
                             dmg1: mapAttr(String(m.dmg1 || m.Damage1 || '')),
                             power: Number(m.power !== undefined ? m.power : m.Power || 0),
-                            desc: String(m.desc || m.Description || m.Effect || '')
+                            desc: String(m.desc || m.Description || m.Effect || ''),
+                            marker: String(m.marker || m.Marker || '')
                         };
                     });
                 }

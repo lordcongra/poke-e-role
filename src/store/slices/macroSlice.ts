@@ -478,7 +478,8 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                                             acc2: 'none',
                                             dmg1: 'str',
                                             power: 1,
-                                            desc: 'Granted by Custom Form'
+                                            desc: 'Granted by Custom Form',
+                                            marker: ''
                                         });
 
                                         fetchMoveData(moveName)
@@ -516,7 +517,8 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                             acc2: teraBlastConfig.acc2,
                             dmg1: teraBlastConfig.dmg1,
                             power: 3,
-                            desc: 'Changes Type to match Terastallization.'
+                            desc: 'Changes Type to match Terastallization.',
+                            marker: ''
                         };
                         draft.moves.push(teraBlastMove);
                         updatesToSave['moves-data'] = JSON.stringify(draft.moves);

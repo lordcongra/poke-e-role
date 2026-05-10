@@ -43,7 +43,8 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                     acc2: 'brawl',
                     dmg1: 'str',
                     power: 0,
-                    desc: ''
+                    desc: '',
+                    marker: ''
                 }
             ];
             try {
@@ -213,7 +214,8 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                         acc2: acc2Opts[0] || 'none',
                         dmg1: dmg1Opts[0] || '',
                         power: data.Power !== undefined && data.Power !== '' ? Number(data.Power) : m.power,
-                        desc: finalDesc
+                        desc: finalDesc,
+                        marker: m.marker || ''
                     };
                 }
                 return m;

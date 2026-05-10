@@ -32,6 +32,7 @@ export interface MoveData {
     dmg1: string;
     power: number;
     desc?: string;
+    marker?: string;
 }
 
 export interface StatusItem {
@@ -108,6 +109,7 @@ export interface TempMove {
     rawAcc1?: string;
     rawAcc2?: string;
     rawDmg1?: string;
+    marker?: string;
 }
 
 export interface TempBuild {

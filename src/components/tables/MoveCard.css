@@ -43,6 +43,20 @@
     flex-shrink: 0;
 }
 
+.move-card__marker-select {
+    width: 40px;
+    padding: 6px 2px;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-main);
+    outline: none;
+    font-size: 0.85rem;
+    text-align: center;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
 .move-card__name-input {
     flex: 1;
     min-width: 80px;

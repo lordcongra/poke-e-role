@@ -138,7 +138,8 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
                     accBonus: 0,
                     acc1: move.attr,
                     acc2: move.skill,
-                    dmg1: move.dmgStat
+                    dmg1: move.dmgStat,
+                    marker: move.marker || ''
                 };
             });
 
