@@ -1,7 +1,8 @@
 import { StrictMode, useEffect, useState } from 'react';
-import { createRoot } from 'react-dom/client';
+import { createRoot, type Root } from 'react-dom/client';
 import OBR from '@owlbear-rodeo/sdk';
 import './style.css';
+import './roll-log.css';
 
 interface RollData {
     id: string;
@@ -11,13 +12,23 @@ interface RollData {
     icon: string;
 }
 
+// Strictly type the custom Window property for HMR to avoid 'any'
+interface WindowWithReactRoot extends Window {
+    __REACT_ROOT__?: Root;
+}
+
 function RollLog() {
     const [rolls, setRolls] = useState<RollData[]>([]);
     const [theme, setTheme] = useState(localStorage.getItem('pokerole-theme') || 'light');
 
     const loadRolls = () => {
-        const data = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
-        setRolls(data);
+        try {
+            const data = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+            setRolls(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error('Failed to parse roll log from local storage. Resetting log.', error);
+            setRolls([]);
+        }
     };
 
     useEffect(() => {
@@ -67,110 +78,47 @@ function RollLog() {
 
     const dismiss = (id: string) => {
         const next = rolls.filter((r) => r.id !== id);
-        localStorage.setItem('pkr_roll_log', JSON.stringify(next));
+        try {
+            localStorage.setItem('pkr_roll_log', JSON.stringify(next));
+        } catch (error) {
+            console.error('Failed to save to localStorage', error);
+        }
         setRolls(next);
-        if (next.length === 0) OBR.popover.close('pkr-roll-log');
+        if (next.length === 0 && OBR.isAvailable) OBR.popover.close('pkr-roll-log');
     };
 
     const clearAll = () => {
-        localStorage.setItem('pkr_roll_log', '[]');
+        try {
+            localStorage.setItem('pkr_roll_log', '[]');
+        } catch (error) {
+            console.error('Failed to clear localStorage', error);
+        }
         setRolls([]);
-        OBR.popover.close('pkr-roll-log');
+        if (OBR.isAvailable) OBR.popover.close('pkr-roll-log');
     };
 
     if (rolls.length === 0) return null;
 
     return (
-        <div
-            style={{
-                padding: '10px',
-                background: 'var(--panel-bg)',
-                border: '2px solid var(--primary)',
-                borderRadius: '8px',
-                color: 'var(--text-main)',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                overflow: 'hidden',
-                boxSizing: 'border-box'
-            }}
-        >
-            <div
-                style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '10px',
-                    borderBottom: '1px solid var(--border)',
-                    paddingBottom: '6px',
-                    flexShrink: 0
-                }}
-            >
-                <h3 style={{ margin: 0, color: 'var(--primary)', fontSize: '1.1rem' }}>🎲 Roll Log</h3>
-                <button
-                    onClick={clearAll}
-                    className="action-button action-button--red"
-                    style={{ padding: '4px 10px', fontSize: '0.8rem' }}
-                >
+        <div className="roll-log__container">
+            <div className="roll-log__header">
+                <h3 className="roll-log__title">🎲 Roll Log</h3>
+                <button type="button" onClick={clearAll} className="action-button action-button--red roll-log__clear-btn">
                     Clear All ✖
                 </button>
             </div>
-            <div
-                style={{
-                    flex: 1,
-                    overflowY: 'auto',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px',
-                    paddingRight: '4px'
-                }}
-            >
+            <div className="roll-log__list">
                 {rolls.map((r) => (
-                    <div
-                        key={r.id}
-                        style={{
-                            background: 'var(--panel-alt)',
-                            padding: '10px',
-                            borderRadius: '6px',
-                            border: '1px solid var(--border)',
-                            position: 'relative'
-                        }}
-                    >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                            <img
-                                src={r.icon}
-                                alt="Token"
-                                style={{ width: '22px', height: '22px', objectFit: 'contain', borderRadius: '4px' }}
-                            />
-                            <strong style={{ fontSize: '0.9rem' }}>{r.player}</strong>
-                            <button
-                                onClick={() => dismiss(r.id)}
-                                style={{
-                                    position: 'absolute',
-                                    top: '6px',
-                                    right: '6px',
-                                    background: 'transparent',
-                                    border: 'none',
-                                    color: 'var(--text-muted)',
-                                    cursor: 'pointer',
-                                    fontWeight: 'bold',
-                                    fontSize: '1rem'
-                                }}
-                            >
+                    <div key={r.id} className="roll-log__entry">
+                        <div className="roll-log__entry-header">
+                            <img src={r.icon} alt="Token" className="roll-log__entry-icon" />
+                            <strong className="roll-log__entry-player">{r.player}</strong>
+                            <button type="button" onClick={() => dismiss(r.id)} className="roll-log__entry-dismiss" title="Dismiss">
                                 ✖
                             </button>
                         </div>
-                        <div
-                            style={{
-                                fontSize: '0.85rem',
-                                fontWeight: 'bold',
-                                color: 'var(--primary)',
-                                marginBottom: '4px'
-                            }}
-                        >
-                            {r.label}
-                        </div>
-                        <div style={{ fontSize: '0.95rem', whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>{r.result}</div>
+                        <div className="roll-log__entry-label">{r.label}</div>
+                        <div className="roll-log__entry-result">{r.result}</div>
                     </div>
                 ))}
             </div>
@@ -180,7 +128,7 @@ function RollLog() {
 
 // ⚠️ HMR-Safe React Root Injection!
 const container = document.getElementById('root')!;
-const win = window as any;
+const win = window as WindowWithReactRoot;
 if (!win.__REACT_ROOT__) {
     win.__REACT_ROOT__ = createRoot(container);
 }

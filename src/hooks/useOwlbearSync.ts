@@ -13,6 +13,16 @@ const EXTENSION_ID = 'pokerole-pmd-extension';
 
 const knownTransforms: Record<string, { x: number; y: number; r: number; metaStr: string }> = {};
 
+interface RollSyncData {
+    id: string;
+    targetVisibility: string;
+    playerId: string;
+    player: string;
+    label: string;
+    result: string;
+    icon: string;
+}
+
 export function useOwlbearSync() {
     useEffect(() => {
         let unsubs: Array<() => void> = [];
@@ -298,7 +308,8 @@ export function useOwlbearSync() {
 
                 // Receive the Roll Sync broadcast from REMOTE players
                 const unsubRollLogSync = OBR.broadcast.onMessage(`${EXTENSION_ID}/roll-log-sync`, async (event) => {
-                    const rollData = event.data as any;
+                    // Force strictly-typed variable
+                    const rollData = event.data as unknown as RollSyncData;
 
                     // GM PRIVACY FILTER
                     const myId = await OBR.player.getId();
@@ -307,9 +318,22 @@ export function useOwlbearSync() {
                         return; // Ignore this broadcast entirely if we aren't allowed to see it!
                     }
 
-                    const existing = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
-                    if (!existing.find((r: any) => r.id === rollData.id)) {
-                        localStorage.setItem('pkr_roll_log', JSON.stringify([rollData, ...existing].slice(0, 50)));
+                    // Defensive parsing
+                    let existing: RollSyncData[] = [];
+                    try {
+                        const stored = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+                        existing = Array.isArray(stored) ? stored : [];
+                    } catch (error) {
+                        console.error('Failed to parse roll log on sync. Resetting cache.', error);
+                        existing = [];
+                    }
+                    
+                    if (!existing.find((r) => r.id === rollData.id)) {
+                        try {
+                            localStorage.setItem('pkr_roll_log', JSON.stringify([rollData, ...existing].slice(0, 50)));
+                        } catch(error) {
+                            console.error('Failed to save synced roll to cache.', error);
+                        }
                     }
 
                     OBR.broadcast.sendMessage(`${EXTENSION_ID}/roll-log-update`, {}, { destination: 'LOCAL' });

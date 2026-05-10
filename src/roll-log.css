@@ -1,0 +1,99 @@
+.roll-log__container {
+    padding: 10px;
+    background: var(--panel-bg);
+    border: 2px solid var(--primary);
+    border-radius: 8px;
+    color: var(--text-main);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.roll-log__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+    flex-shrink: 0;
+}
+
+.roll-log__title {
+    margin: 0;
+    color: var(--primary);
+    font-size: 1.1rem;
+}
+
+.roll-log__clear-btn {
+    padding: 4px 10px;
+    font-size: 0.8rem;
+}
+
+.roll-log__list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-right: 4px;
+}
+
+.roll-log__entry {
+    background: var(--panel-alt);
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    position: relative;
+}
+
+.roll-log__entry-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.roll-log__entry-icon {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.roll-log__entry-player {
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.roll-log__entry-dismiss {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: color 0.2s ease;
+}
+
+.roll-log__entry-dismiss:hover {
+    color: var(--primary);
+}
+
+.roll-log__entry-label {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: var(--primary);
+    margin-bottom: 4px;
+}
+
+.roll-log__entry-result {
+    font-size: 0.95rem;
+    white-space: pre-wrap;
+    line-height: 1.4;
+}
