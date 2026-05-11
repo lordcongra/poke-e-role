@@ -3,7 +3,7 @@ import type { CharacterState, IdentitySlice } from '../storeTypes';
 import { saveToOwlbear } from '../../utils/obr';
 import OBR from '@owlbear-rodeo/sdk';
 import { CombatStat } from '../../types/enums';
-import { getAbilityText, parseCombatTags } from '../../utils/combatUtils';
+import { getAbilityText, parseCombatTags, calculateStatTotal } from '../../utils/combatUtils';
 
 const OBR_KEY_MAP: Record<string, string> = {
     showTrackers: 'show-trackers',
@@ -245,22 +245,8 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
                 const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
 
-                const vitTotal = Math.max(
-                    1,
-                    state.stats[CombatStat.VIT].base +
-                        state.stats[CombatStat.VIT].rank +
-                        state.stats[CombatStat.VIT].buff -
-                        state.stats[CombatStat.VIT].debuff +
-                        (invMods.stats.vit || 0)
-                );
-                const insTotal = Math.max(
-                    1,
-                    state.stats[CombatStat.INS].base +
-                        state.stats[CombatStat.INS].rank +
-                        state.stats[CombatStat.INS].buff -
-                        state.stats[CombatStat.INS].debuff +
-                        (invMods.stats.ins || 0)
-                );
+                const vitTotal = calculateStatTotal(CombatStat.VIT, state, invMods);
+                const insTotal = calculateStatTotal(CombatStat.INS, state, invMods);
 
                 let hpStat = vitTotal;
                 if (newRuleset === 'vg-high-hp') hpStat = Math.max(vitTotal, insTotal);
