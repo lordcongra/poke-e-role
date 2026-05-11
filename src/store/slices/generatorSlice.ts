@@ -58,9 +58,8 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
                                         JSON.stringify(item.metadata['com.missing-link-dev.changr/metadata'])
                                     );
                                     if (changrMeta && Array.isArray(changrMeta.imageOptions)) {
-                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                        changrMeta.imageOptions.forEach((opt: any) => {
-                                            opt.name = build.species;
+                                        changrMeta.imageOptions.forEach((opt: Record<string, unknown>) => {
+                                            if (opt.name) opt.name = build.species;
                                         });
                                     }
                                     item.metadata['com.missing-link-dev.changr/metadata'] = changrMeta;

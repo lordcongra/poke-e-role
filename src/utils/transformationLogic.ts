@@ -468,9 +468,8 @@ export function handleTokenImageSwap(
         OBR.scene.items
             .updateItems([state.tokenId], (items) => {
                 for (const item of items) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const imgItem = item as any;
-                    if (imgItem.image) imgItem.image.url = targetUrl;
+                    const imgItem = item as Record<string, unknown>;
+                    if (imgItem.image) (imgItem.image as Record<string, unknown>).url = targetUrl;
                 }
             })
             .catch((e) => console.warn('Failed to update token image:', e));
