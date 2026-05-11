@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { MoveData, SkillData, ExtraCategory } from '../../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
@@ -17,7 +17,7 @@ interface MoveRowProps {
     onDelete: (id: string) => void;
 }
 
-export function MoveRow({ move, skills, extraCategories, onTarget, onDelete }: MoveRowProps) {
+export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, onTarget, onDelete }: MoveRowProps) {
     const updateMove = useCharacterStore((state) => state.updateMove);
     const moveUpMove = useCharacterStore((state) => state.moveUpMove);
     const moveDownMove = useCharacterStore((state) => state.moveDownMove);
@@ -295,4 +295,4 @@ export function MoveRow({ move, skills, extraCategories, onTarget, onDelete }: M
             {editModalOpen && <MoveEditModal moveId={move.id} onClose={() => setEditModalOpen(false)} />}
         </>
     );
-}
+});
