@@ -2,7 +2,8 @@ import OBR from '@owlbear-rodeo/sdk';
 import type { MoveData, CharacterState, StatusItem } from '../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { useCharacterStore } from '../store/useCharacterStore';
-import { ATTRIBUTE_MAPPING, parseCombatTags, getPainPenalty, getStatusPenalties, getAbilityText } from './combatMath';
+import { ATTRIBUTE_MAPPING, getPainPenalty, getStatusPenalties, getAbilityText } from './combatMath';
+import { parseCombatTags } from './tagParser';
 import { rollDicePlus } from './diceRoller';
 
 export async function rollStatus(status: StatusItem, state: CharacterState) {
@@ -332,7 +333,7 @@ export async function executeDamageRoll(
     if (
         moveDescription.includes('recoil') ||
         itemBuffs.dmgItemNames.some(
-            (itemName) => itemName.toLowerCase().includes('life orb') || itemName.toLowerCase().includes('recoil')
+            (itemName: string) => itemName.toLowerCase().includes('life orb') || itemName.toLowerCase().includes('recoil')
         )
     ) {
         tags.push(`RECOIL: Roll success as user dmg ignoring def`);
