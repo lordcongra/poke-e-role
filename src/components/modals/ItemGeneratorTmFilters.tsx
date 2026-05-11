@@ -162,7 +162,7 @@ export function ItemGeneratorTmFilters({
                         onClick={() => removePowerPill(power)}
                     >
                         {power === 'support' ? 'Support' : power === 'variable' ? 'Variable' : `Power ${power}`}{' '}
-                        <span style={{ marginLeft: '2px' }}>✖</span>
+                        <span className="item-generator-modal__pill-close">✖</span>
                     </span>
                 ))}
             </div>
@@ -203,16 +203,13 @@ export function ItemGeneratorTmFilters({
                     .map((type) => (
                         <span
                             key={type}
-                            className="item-generator-modal__pill"
+                            className="item-generator-modal__pill item-generator-modal__pill--type"
                             style={{
-                                background: allTypeColors[type] || 'var(--dark)',
-                                color: 'white',
-                                textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
-                                borderColor: 'transparent'
+                                background: allTypeColors[type] || 'var(--dark)'
                             }}
                             onClick={() => removeTypePill(type)}
                         >
-                            {type} <span style={{ marginLeft: '2px' }}>✖</span>
+                            {type} <span className="item-generator-modal__pill-close">✖</span>
                         </span>
                     ))}
             </div>

@@ -252,8 +252,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
                                 Fresh Buffs (Clear on Shift)
                             </label>
                             <label
-                                className={`homebrew-form-card__checkbox-label ${cursorClass}`}
-                                style={{ color: '#c62828' }}
+                                className={`homebrew-form-card__checkbox-label homebrew-form-card__checkbox-label--danger ${cursorClass}`}
                             >
                                 <input
                                     type="checkbox"
@@ -264,7 +263,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
                                 Wipe Buffs (Permanent)
                             </label>
 
-                            <hr style={{ width: '100%', borderColor: 'var(--border)', margin: '2px 0' }} />
+                            <hr className="homebrew-form-card__divider" />
 
                             <label
                                 className={`homebrew-form-card__checkbox-label ${cursorClass}`}
@@ -291,8 +290,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
                                 Fresh Debuffs (Clear on Shift)
                             </label>
                             <label
-                                className={`homebrew-form-card__checkbox-label ${cursorClass}`}
-                                style={{ color: '#c62828' }}
+                                className={`homebrew-form-card__checkbox-label homebrew-form-card__checkbox-label--danger ${cursorClass}`}
                             >
                                 <input
                                     type="checkbox"
@@ -303,7 +301,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
                                 Wipe Debuffs (Permanent)
                             </label>
 
-                            <hr style={{ width: '100%', borderColor: 'var(--border)', margin: '2px 0' }} />
+                            <hr className="homebrew-form-card__divider" />
 
                             <label
                                 className={`homebrew-form-card__checkbox-label ${cursorClass}`}
@@ -330,8 +328,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
                                 Fresh Status (Clear on Shift)
                             </label>
                             <label
-                                className={`homebrew-form-card__checkbox-label ${cursorClass}`}
-                                style={{ color: '#c62828' }}
+                                className={`homebrew-form-card__checkbox-label homebrew-form-card__checkbox-label--danger ${cursorClass}`}
                             >
                                 <input
                                     type="checkbox"
@@ -346,8 +343,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
                         <div className="homebrew-form-card__settings-column">
                             <span className="homebrew-form-card__settings-header">Transform Effects</span>
                             <label
-                                className={`homebrew-form-card__checkbox-label ${cursorClass}`}
-                                style={{ color: '#c62828' }}
+                                className={`homebrew-form-card__checkbox-label homebrew-form-card__checkbox-label--danger ${cursorClass}`}
                             >
                                 Activation Cost (HP):
                                 <NumberSpinner
@@ -357,8 +353,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
                                 />
                             </label>
                             <label
-                                className={`homebrew-form-card__checkbox-label ${cursorClass}`}
-                                style={{ color: '#1976d2' }}
+                                className={`homebrew-form-card__checkbox-label homebrew-form-card__checkbox-label--info ${cursorClass}`}
                             >
                                 Activation Cost (Will):
                                 <NumberSpinner
@@ -368,7 +363,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
                                 />
                             </label>
 
-                            <hr style={{ width: '100%', borderColor: 'var(--border)', margin: '2px 0' }} />
+                            <hr className="homebrew-form-card__divider" />
 
                             <label
                                 className={`homebrew-form-card__checkbox-label ${cursorClass}`}
@@ -395,7 +390,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
                                 Maintain Distinct Will Pool
                             </label>
 
-                            <hr style={{ width: '100%', borderColor: 'var(--border)', margin: '2px 0' }} />
+                            <hr className="homebrew-form-card__divider" />
 
                             <label className={`homebrew-form-card__checkbox-label ${cursorClass}`}>
                                 <input
@@ -416,17 +411,14 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
                                 Heal Will to Max on Transform
                             </label>
 
-                            <div
-                                className="homebrew-form-card__temp-hp-row"
-                                style={{ marginTop: '8px', flexWrap: 'wrap' }}
-                            >
+                            <div className="homebrew-form-card__temp-hp-row homebrew-form-card__temp-hp-row--spaced">
                                 <span className="homebrew-form-card__temp-hp-label">Temp HP Shield:</span>
                                 <NumberSpinner
                                     value={form.tempHp}
                                     onChange={(val) => canEdit && updateCustomForm(form.id, 'tempHp', val)}
                                     disabled={!canEdit}
                                 />
-                                <span className="homebrew-form-card__temp-hp-label" style={{ marginLeft: '10px' }}>
+                                <span className="homebrew-form-card__temp-hp-label homebrew-form-card__temp-hp-label--spaced">
                                     Temp Will Power:
                                 </span>
                                 <NumberSpinner
@@ -483,7 +475,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
                         </div>
                     </div>
 
-                    <div className="homebrew-form-card__moves-section" style={{ marginTop: '8px' }}>
+                    <div className="homebrew-form-card__moves-section homebrew-form-card__moves-section--spaced">
                         <span className="homebrew-form-card__settings-header">Passive Tags</span>
                         <div className="homebrew-form-card__inputs-row">
                             <input

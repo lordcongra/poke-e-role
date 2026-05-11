@@ -57,7 +57,6 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
     const handleSetImage = async (field: string, isCustomForm = false) => {
         if (!OBR.isAvailable || !tokenId) return;
         try {
-            // Strictly type the undocumented assets API to avoid 'any'
             const assetsApi = OBR.assets as unknown as { downloadImages?: () => Promise<unknown[]> };
             let images: unknown[] | null = null;
 

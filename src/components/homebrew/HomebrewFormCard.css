@@ -39,6 +39,21 @@
     cursor: default;
 }
 
+.homebrew-form-card__checkbox-label--danger {
+    color: #c62828;
+}
+
+.homebrew-form-card__checkbox-label--info {
+    color: #1976d2;
+}
+
+.homebrew-form-card__divider {
+    width: 100%;
+    border-color: var(--border);
+    margin: 2px 0;
+    border-top: 1px solid var(--border);
+}
+
 .homebrew-form-card__temp-hp-row {
     display: flex;
     align-items: center;
@@ -46,8 +61,17 @@
     margin-top: 4px;
 }
 
+.homebrew-form-card__temp-hp-row--spaced {
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
 .homebrew-form-card__temp-hp-label {
     font-size: 0.8rem;
+}
+
+.homebrew-form-card__temp-hp-label--spaced {
+    margin-left: 10px;
 }
 
 .homebrew-form-card__moves-section {
@@ -55,6 +79,10 @@
     padding: 10px;
     border-radius: 6px;
     border: 1px solid var(--border);
+}
+
+.homebrew-form-card__moves-section--spaced {
+    margin-top: 8px;
 }
 
 .homebrew-form-card__inputs-row {
@@ -109,7 +137,8 @@
     .homebrew-card__header {
         flex-wrap: wrap;
     }
-    .homebrew-form-card__temp-hp-row {
+    .homebrew-form-card__temp-hp-row,
+    .homebrew-form-card__temp-hp-row--spaced {
         flex-direction: column;
         align-items: flex-start;
     }

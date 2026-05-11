@@ -314,6 +314,16 @@
         border-color 0.2s ease;
 }
 
+.item-generator-modal__pill--type {
+    color: white !important;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
+    border-color: transparent !important;
+}
+
+.item-generator-modal__pill-close {
+    margin-left: 2px;
+}
+
 .item-generator-modal__pill:hover {
     background: #ffcdd2;
     color: #c62828 !important;

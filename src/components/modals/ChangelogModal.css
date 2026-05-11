@@ -98,6 +98,12 @@
     margin-bottom: 6px;
 }
 
+.changelog-modal__link {
+    color: var(--primary);
+    font-weight: bold;
+    word-break: break-all;
+}
+
 .changelog-modal__actions {
     display: flex;
     justify-content: center;

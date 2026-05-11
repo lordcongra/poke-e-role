@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-export const CURRENT_VERSION = '2.5.6';
+export const CURRENT_VERSION = '2.6.0';
 
 export interface ChangelogEntry {
     version: string;
@@ -22,7 +22,7 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     href="https://action-manager.onrender.com/manifest.json"
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ color: 'var(--primary)', fontWeight: 'bold', wordBreak: 'break-all' }}
+                    className="changelog-modal__link"
                 >
                     https://action-manager.onrender.com/manifest.json
                 </a>
