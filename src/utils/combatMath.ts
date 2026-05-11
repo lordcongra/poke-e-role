@@ -1,6 +1,6 @@
 import type { MoveData, CharacterState, CustomAbility } from '../store/storeTypes';
-import { CombatStat, SocialStat } from '../types/enums';
-import { parseCombatTags } from './tagParser';
+import { CombatStat, SocialStat, Skill } from '../types/enums';
+import { parseCombatTags, type CombatBonuses } from './tagParser';
 
 // PROXY EXPORT: Prevents app crashes if a file is still directly importing from combatMath!
 export { parseCombatTags };
@@ -90,6 +90,48 @@ export function getStatusPenalties(state: CharacterState) {
     return { confusionPenalty, paralysisDexterityPenalty, isAsleep, isFrozen };
 }
 
+export function calculateStatTotal(statKey: string, state: CharacterState, itemBuffs: CombatBonuses): number {
+    if (statKey === 'will') return state.will.willMax;
+
+    const normalizedStat = ATTRIBUTE_MAPPING[statKey] || statKey;
+
+    if (Object.values(CombatStat).includes(normalizedStat as CombatStat)) {
+        const statistic = state.stats[normalizedStat as CombatStat];
+        return Math.max(
+            1,
+            statistic.base + statistic.rank + statistic.buff - statistic.debuff + (itemBuffs.stats[normalizedStat] || 0)
+        );
+    }
+
+    if (Object.values(SocialStat).includes(normalizedStat as SocialStat)) {
+        const statistic = state.socials[normalizedStat as SocialStat];
+        return Math.max(
+            1,
+            statistic.base + statistic.rank + statistic.buff - statistic.debuff + (itemBuffs.stats[normalizedStat] || 0)
+        );
+    }
+
+    return 1;
+}
+
+export function calculateSkillTotal(skillKey: string, state: CharacterState, itemBuffs: CombatBonuses): number {
+    if (!skillKey || skillKey === 'none') return 0;
+
+    if (Object.values(Skill).includes(skillKey as Skill)) {
+        const skillData = state.skills[skillKey as Skill];
+        return skillData.base + skillData.buff + (itemBuffs.skills[skillKey] || 0);
+    }
+
+    for (const category of state.extraCategories) {
+        const customSkill = category.skills.find((s) => s.id === skillKey);
+        if (customSkill) {
+            return customSkill.base + customSkill.buff + (itemBuffs.skills[skillKey] || 0);
+        }
+    }
+
+    return 0;
+}
+
 export function calculateBaseDamage(move: MoveData, state: CharacterState): number {
     const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
     const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, move, abilityText);
@@ -99,27 +141,7 @@ export function calculateBaseDamage(move: MoveData, state: CharacterState): numb
     const normalizedDamageStatistic = ATTRIBUTE_MAPPING[move.dmg1] || move.dmg1;
 
     if (normalizedDamageStatistic) {
-        if (state.stats[normalizedDamageStatistic as CombatStat]) {
-            const statistic = state.stats[normalizedDamageStatistic as CombatStat];
-            scalingValue = Math.max(
-                1,
-                statistic.base +
-                    statistic.rank +
-                    statistic.buff -
-                    statistic.debuff +
-                    (itemBuffs.stats[normalizedDamageStatistic] || 0)
-            );
-        } else if (state.socials[normalizedDamageStatistic as SocialStat]) {
-            const statistic = state.socials[normalizedDamageStatistic as SocialStat];
-            scalingValue = Math.max(
-                1,
-                statistic.base +
-                    statistic.rank +
-                    statistic.buff -
-                    statistic.debuff +
-                    (itemBuffs.stats[normalizedDamageStatistic] || 0)
-            );
-        }
+        scalingValue = calculateStatTotal(normalizedDamageStatistic, state, itemBuffs);
     }
 
     const abilityString = (state.identity.ability || '').toLowerCase();

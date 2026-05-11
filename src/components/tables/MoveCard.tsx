@@ -4,7 +4,14 @@ import type { MoveData, SkillData, ExtraCategory } from '../../store/storeTypes'
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { fetchMoveData } from '../../utils/api';
-import { rollAccuracy, calculateBaseDamage, parseCombatTags, getAbilityText } from '../../utils/combatUtils';
+import {
+    rollAccuracy,
+    calculateBaseDamage,
+    parseCombatTags,
+    getAbilityText,
+    calculateStatTotal,
+    calculateSkillTotal
+} from '../../utils/combatUtils';
 import { MoveEditModal } from '../modals/MoveEditModal';
 import { POKEMON_TYPES, TYPE_COLORS } from '../../data/constants';
 import './MoveCard.css';
@@ -40,10 +47,11 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
         }
     };
 
+    // Keep selectors to ensure the component re-renders when these change!
     const inventory = useCharacterStore((state) => state.inventory);
-    const will = useCharacterStore((state) => state.will);
-    const stats = useCharacterStore((state) => state.stats);
-    const socials = useCharacterStore((state) => state.socials);
+    useCharacterStore((state) => state.will);
+    useCharacterStore((state) => state.stats);
+    useCharacterStore((state) => state.socials);
     const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
     const ability = useCharacterStore((state) => state.identity.ability);
 
@@ -53,37 +61,10 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
 
     const abilityText = getAbilityText(ability, customAbilities);
     const itemBuffs = parseCombatTags(inventory, extraCategories, move, abilityText);
+    const fullState = useCharacterStore.getState();
 
-    let attributeTotal = 0;
-    if (move.acc1 === 'will') {
-        attributeTotal = will.willMax;
-    } else if (stats[move.acc1 as CombatStat]) {
-        const statistic = stats[move.acc1 as CombatStat];
-        attributeTotal = Math.max(
-            1,
-            statistic.base + statistic.rank + statistic.buff - statistic.debuff + (itemBuffs.stats[move.acc1] || 0)
-        );
-    } else if (socials[move.acc1 as SocialStat]) {
-        const statistic = socials[move.acc1 as SocialStat];
-        attributeTotal = Math.max(
-            1,
-            statistic.base + statistic.rank + statistic.buff - statistic.debuff + (itemBuffs.stats[move.acc1] || 0)
-        );
-    }
-
-    let skillTotal = 0;
-    if (move.acc2 !== 'none' && skills[move.acc2 as Skill]) {
-        skillTotal =
-            skills[move.acc2 as Skill].base + skills[move.acc2 as Skill].buff + (itemBuffs.skills[move.acc2] || 0);
-    } else if (move.acc2 !== 'none') {
-        for (const category of extraCategories) {
-            const extraSkill = category.skills.find((s) => s.id === move.acc2);
-            if (extraSkill) {
-                skillTotal = extraSkill.base + extraSkill.buff + (itemBuffs.skills[move.acc2] || 0);
-                break;
-            }
-        }
-    }
+    const attributeTotal = calculateStatTotal(move.acc1, fullState, itemBuffs);
+    const skillTotal = calculateSkillTotal(move.acc2, fullState, itemBuffs);
 
     const trackers = useCharacterStore((state) => state.trackers);
 
@@ -93,7 +74,7 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
     }
 
     const accuracyTotal = attributeTotal + skillTotal + trackers.globalAcc + itemBuffs.acc + customFirstHitAccTag;
-    const damageTotal = move.category === 'Status' ? '-' : calculateBaseDamage(move, useCharacterStore.getState());
+    const damageTotal = move.category === 'Status' ? '-' : calculateBaseDamage(move, fullState);
 
     return (
         <div className={`move-card ${!move.active ? '' : 'move-card--inactive'}`}>

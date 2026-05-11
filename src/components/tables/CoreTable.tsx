@@ -1,7 +1,7 @@
 import { useCharacterStore, getRankPoints, getAgePoints } from '../../store/useCharacterStore';
 import { CombatStat } from '../../types/enums';
 import { NumberSpinner } from '../ui/NumberSpinner';
-import { parseCombatTags, getAbilityText } from '../../utils/combatUtils';
+import { parseCombatTags, getAbilityText, calculateStatTotal } from '../../utils/combatUtils';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import './CoreTable.css';
 
@@ -32,6 +32,7 @@ export function CoreTable() {
 
     const abilityText = getAbilityText(ability, customAbilities);
     const inventoryModifiers = parseCombatTags(inventory, extraCategories, undefined, abilityText);
+    const fullState = useCharacterStore.getState();
 
     const visibleStatistics = Object.values(CombatStat).filter(
         (statistic) => !(mode === 'Trainer' && statistic === CombatStat.SPE)
@@ -76,8 +77,7 @@ export function CoreTable() {
                     <tbody>
                         {visibleStatistics.map((statistic) => {
                             const data = statistics[statistic];
-                            const itemBonus = inventoryModifiers.stats[statistic] || 0;
-                            const total = Math.max(1, data.base + data.rank + data.buff - data.debuff + itemBonus);
+                            const total = calculateStatTotal(statistic, fullState, inventoryModifiers);
                             return (
                                 <tr key={statistic} className="data-table__row--dynamic">
                                     <td

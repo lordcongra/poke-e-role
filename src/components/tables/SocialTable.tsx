@@ -1,7 +1,7 @@
 import { useCharacterStore, getRankPoints, getAgePoints } from '../../store/useCharacterStore';
 import { SocialStat } from '../../types/enums';
 import { NumberSpinner } from '../ui/NumberSpinner';
-import { parseCombatTags, getAbilityText } from '../../utils/combatUtils';
+import { parseCombatTags, getAbilityText, calculateStatTotal } from '../../utils/combatUtils';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import './SocialTable.css';
 
@@ -39,6 +39,7 @@ export function SocialTable() {
 
     const abilityText = getAbilityText(ability, customAbilities);
     const inventoryModifiers = parseCombatTags(inventory, extraCategories, undefined, abilityText);
+    const fullState = useCharacterStore.getState();
 
     const spentRank = Object.values(SocialStat).reduce(
         (accumulator, statistic) => accumulator + socials[statistic].rank,
@@ -81,8 +82,7 @@ export function SocialTable() {
                     <tbody>
                         {Object.values(SocialStat).map((statistic) => {
                             const data = socials[statistic];
-                            const itemBonus = inventoryModifiers.stats[statistic] || 0;
-                            const total = Math.max(1, data.base + data.rank + data.buff - data.debuff + itemBonus);
+                            const total = calculateStatTotal(statistic, fullState, inventoryModifiers);
                             return (
                                 <tr key={statistic} className="data-table__row--dynamic">
                                     <td

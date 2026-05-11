@@ -3,13 +3,12 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { CombatStat, Skill } from '../../types/enums';
 import { ResourceBox } from '../ui/ResourceBox';
 import { NumberSpinner } from '../ui/NumberSpinner';
-import { parseCombatTags } from '../../utils/tagParser';
-import { getAbilityText } from '../../utils/combatMath';
 import { rollDicePlus } from '../../utils/diceRoller';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { StatusBox } from '../board/StatusBox';
 import { TimerBox } from './TimerBox';
+import { parseCombatTags, getAbilityText, calculateStatTotal, calculateSkillTotal } from '../../utils/combatUtils';
 import './DerivedBoard.css';
 
 export function DerivedBoard() {
@@ -23,8 +22,11 @@ export function DerivedBoard() {
     const updateHealth = useCharacterStore((state) => state.updateHealth);
     const updateWill = useCharacterStore((state) => state.updateWill);
 
-    const stats = useCharacterStore((state) => state.stats);
-    const skills = useCharacterStore((state) => state.skills);
+    // Call selectors to ensure the component re-renders when these change,
+    // but without assigning them to unused variables!
+    useCharacterStore((state) => state.stats);
+    useCharacterStore((state) => state.skills);
+
     const derived = useCharacterStore((state) => state.derived);
     const setDerived = useCharacterStore((state) => state.setDerived);
 
@@ -45,60 +47,24 @@ export function DerivedBoard() {
 
     const abilityText = getAbilityText(ability, customAbilities);
     const inventoryModifiers = parseCombatTags(inventory, extraCategories, undefined, abilityText);
+    const fullState = useCharacterStore.getState();
 
-    const vitTotal = Math.max(
-        1,
-        stats[CombatStat.VIT].base +
-            stats[CombatStat.VIT].rank +
-            stats[CombatStat.VIT].buff -
-            stats[CombatStat.VIT].debuff +
-            (inventoryModifiers.stats.vit || 0)
-    );
-    const insTotal = Math.max(
-        1,
-        stats[CombatStat.INS].base +
-            stats[CombatStat.INS].rank +
-            stats[CombatStat.INS].buff -
-            stats[CombatStat.INS].debuff +
-            (inventoryModifiers.stats.ins || 0)
-    );
-    const dexTotal = Math.max(
-        1,
-        stats[CombatStat.DEX].base +
-            stats[CombatStat.DEX].rank +
-            stats[CombatStat.DEX].buff -
-            stats[CombatStat.DEX].debuff +
-            (inventoryModifiers.stats.dex || 0)
-    );
-    const strTotal = Math.max(
-        1,
-        stats[CombatStat.STR].base +
-            stats[CombatStat.STR].rank +
-            stats[CombatStat.STR].buff -
-            stats[CombatStat.STR].debuff +
-            (inventoryModifiers.stats.str || 0)
-    );
-    const speTotal = Math.max(
-        1,
-        stats[CombatStat.SPE].base +
-            stats[CombatStat.SPE].rank +
-            stats[CombatStat.SPE].buff -
-            stats[CombatStat.SPE].debuff +
-            (inventoryModifiers.stats.spe || 0)
-    );
+    const vitTotal = calculateStatTotal(CombatStat.VIT, fullState, inventoryModifiers);
+    const insTotal = calculateStatTotal(CombatStat.INS, fullState, inventoryModifiers);
+    const dexTotal = calculateStatTotal(CombatStat.DEX, fullState, inventoryModifiers);
+    const strTotal = calculateStatTotal(CombatStat.STR, fullState, inventoryModifiers);
+    const speTotal = calculateStatTotal(CombatStat.SPE, fullState, inventoryModifiers);
 
     const defTotal = Math.max(1, vitTotal + derived.defBuff - derived.defDebuff + inventoryModifiers.def);
     let sdefBase = insTotal;
     if (ruleset === 'tabletop') sdefBase = vitTotal;
     const sdefTotal = Math.max(1, sdefBase + derived.sdefBuff - derived.sdefDebuff + inventoryModifiers.spd);
 
-    const alertTotal = skills[Skill.ALERT].base + skills[Skill.ALERT].buff + (inventoryModifiers.skills.alert || 0);
+    const alertTotal = calculateSkillTotal(Skill.ALERT, fullState, inventoryModifiers);
     const initiative = dexTotal + alertTotal + inventoryModifiers.init;
 
-    const clashPhysical =
-        strTotal + skills[Skill.CLASH].base + skills[Skill.CLASH].buff + (inventoryModifiers.skills.clash || 0);
-    const clashSpecial =
-        speTotal + skills[Skill.CLASH].base + skills[Skill.CLASH].buff + (inventoryModifiers.skills.clash || 0);
+    const clashPhysical = strTotal + calculateSkillTotal(Skill.CLASH, fullState, inventoryModifiers);
+    const clashSpecial = speTotal + calculateSkillTotal(Skill.CLASH, fullState, inventoryModifiers);
 
     return (
         <CollapsingSection title="INFO">
@@ -223,10 +189,7 @@ export function DerivedBoard() {
                             />
                         </div>
                         <div className="derived-board__box-content derived-board__box-content--dark-text">
-                            {dexTotal +
-                                skills[Skill.EVASION].base +
-                                skills[Skill.EVASION].buff +
-                                (inventoryModifiers.skills.evasion || 0)}
+                            {dexTotal + calculateSkillTotal(Skill.EVASION, fullState, inventoryModifiers)}
                         </div>
                     </div>
 

@@ -34,9 +34,7 @@ export function TrainerBadges() {
         <CollapsingSection title="BADGES & ACHIEVEMENTS" headerElements={headerElements} className="sheet-panel">
             <div className="trainer-badges__list">
                 {badges.length === 0 ? (
-                    <div className="trainer-badges__empty">
-                        No badges collected yet.
-                    </div>
+                    <div className="trainer-badges__empty">No badges collected yet.</div>
                 ) : (
                     badges.map((badge) => (
                         <TrainerBadgeRow

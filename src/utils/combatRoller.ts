@@ -1,8 +1,14 @@
 import OBR from '@owlbear-rodeo/sdk';
-import type { MoveData, CharacterState, StatusItem } from '../store/storeTypes';
-import { CombatStat, SocialStat, Skill } from '../types/enums';
+import type { MoveData, CharacterState, StatusItem, SkillCheck } from '../store/storeTypes';
 import { useCharacterStore } from '../store/useCharacterStore';
-import { ATTRIBUTE_MAPPING, getPainPenalty, getStatusPenalties, getAbilityText } from './combatMath';
+import {
+    ATTRIBUTE_MAPPING,
+    getPainPenalty,
+    getStatusPenalties,
+    getAbilityText,
+    calculateStatTotal,
+    calculateSkillTotal
+} from './combatMath';
 import { parseCombatTags } from './tagParser';
 import { rollDicePlus } from './diceRoller';
 
@@ -16,56 +22,17 @@ export async function rollStatus(status: StatusItem, state: CharacterState) {
 
     if (status.name.includes('Burn')) {
         attribute = 'dex';
-        dicePool =
-            Math.max(
-                1,
-                state.stats.dex.base +
-                    state.stats.dex.rank +
-                    state.stats.dex.buff -
-                    state.stats.dex.debuff +
-                    (itemBuffs.stats.dex || 0)
-            ) +
-            state.skills.athletic.base +
-            state.skills.athletic.buff +
-            (itemBuffs.skills.athletic || 0);
+        dicePool = calculateStatTotal('dex', state, itemBuffs) + calculateSkillTotal('athletic', state, itemBuffs);
     } else if (status.name === 'Paralysis') {
         attribute = 'str';
-        dicePool =
-            Math.max(
-                1,
-                state.stats.str.base +
-                    state.stats.str.rank +
-                    state.stats.str.buff -
-                    state.stats.str.debuff +
-                    (itemBuffs.stats.str || 0)
-            ) +
-            state.skills.medicine.base +
-            state.skills.medicine.buff +
-            (itemBuffs.skills.medicine || 0);
+        dicePool = calculateStatTotal('str', state, itemBuffs) + calculateSkillTotal('medicine', state, itemBuffs);
     } else if (status.name === 'Sleep' || status.name === 'Confusion') {
         attribute = 'ins';
-        dicePool = Math.max(
-            1,
-            state.stats.ins.base +
-                state.stats.ins.rank +
-                state.stats.ins.buff -
-                state.stats.ins.debuff +
-                (itemBuffs.stats.ins || 0)
-        );
+        dicePool = calculateStatTotal('ins', state, itemBuffs);
         if (status.name === 'Sleep') useCharacterStore.getState().incrementAction();
     } else if (status.name === 'In Love') {
         attribute = 'ins';
-        dicePool = Math.max(
-            state.derived.loyal,
-            Math.max(
-                1,
-                state.stats.ins.base +
-                    state.stats.ins.rank +
-                    state.stats.ins.buff -
-                    state.stats.ins.debuff +
-                    (itemBuffs.stats.ins || 0)
-            )
-        );
+        dicePool = Math.max(state.derived.loyal, calculateStatTotal('ins', state, itemBuffs));
     } else {
         if (OBR.isAvailable) {
             OBR.notification.show(`⚠️ ${status.name} does not have a standard self-recovery roll.`, 'WARNING');
@@ -131,36 +98,8 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     const mathModifier =
         successModifier !== 0 ? (successModifier > 0 ? `+${successModifier}` : `${successModifier}`) : '';
 
-    let attributeTotal = 0;
-    if (move.acc1 === 'will') {
-        attributeTotal = state.will.willMax;
-    } else if (state.stats[move.acc1 as CombatStat]) {
-        const statistic = state.stats[move.acc1 as CombatStat];
-        attributeTotal = Math.max(
-            1,
-            statistic.base + statistic.rank + statistic.buff - statistic.debuff + (itemBuffs.stats[move.acc1] || 0)
-        );
-    } else if (state.socials[move.acc1 as SocialStat]) {
-        const statistic = state.socials[move.acc1 as SocialStat];
-        attributeTotal = Math.max(
-            1,
-            statistic.base + statistic.rank + statistic.buff - statistic.debuff + (itemBuffs.stats[move.acc1] || 0)
-        );
-    }
-
-    let skillTotal = 0;
-    if (move.acc2 !== 'none' && state.skills[move.acc2 as Skill]) {
-        const skillData = state.skills[move.acc2 as Skill];
-        skillTotal = skillData.base + skillData.buff + (itemBuffs.skills[move.acc2] || 0);
-    } else if (move.acc2 !== 'none') {
-        for (const category of state.extraCategories) {
-            const customSkill = category.skills.find((s) => s.id === move.acc2);
-            if (customSkill) {
-                skillTotal = customSkill.base + customSkill.buff + (itemBuffs.skills[move.acc2] || 0);
-                break;
-            }
-        }
-    }
+    const attributeTotal = calculateStatTotal(move.acc1, state, itemBuffs);
+    const skillTotal = calculateSkillTotal(move.acc2, state, itemBuffs);
 
     let dicePool = attributeTotal + skillTotal + extraDice;
     if (move.acc1 === 'dex') dicePool += statuses.paralysisDexterityPenalty;
@@ -358,4 +297,57 @@ export async function executeDamageRoll(
         'damage',
         payload
     );
+}
+
+export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {
+    const nickname = state.identity.nickname || state.identity.species || 'Someone';
+    const abilityString = state.identity.ability || '';
+    const statuses = getStatusPenalties(state);
+    const hasComatose = abilityString.toLowerCase().includes('comatose');
+
+    if (statuses.isAsleep && !hasComatose) {
+        if (OBR.isAvailable) OBR.notification.show('⚠️ You are Asleep and cannot perform actions!', 'WARNING');
+        return;
+    }
+
+    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+
+    const attributeTotal = calculateStatTotal(check.attr, state, itemBuffs);
+    const skillTotal = calculateSkillTotal(check.skill, state, itemBuffs);
+
+    let dicePool = attributeTotal + skillTotal;
+    if (check.attr === 'dex') dicePool += statuses.paralysisDexterityPenalty;
+
+    const pain = getPainPenalty(check.attr, state);
+    const tags: string[] = [];
+    if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
+
+    const genericSuccessModifier = state.trackers.globalSucc + statuses.confusionPenalty + pain;
+    const mathModifier =
+        genericSuccessModifier !== 0
+            ? genericSuccessModifier > 0
+                ? `+${genericSuccessModifier}`
+                : `${genericSuccessModifier}`
+            : '';
+    if (genericSuccessModifier !== 0)
+        tags.push(`Net Mod ${genericSuccessModifier > 0 ? '+' : ''}${genericSuccessModifier} Succ`);
+
+    const chancesUsed = state.trackers.chances;
+
+    if (chancesUsed > 0) tags.push(`Chances: Max ${chancesUsed} Rerolls`);
+    if (statuses.paralysisDexterityPenalty < 0 && check.attr === 'dex') tags.push(`Paralysis: -2 Dice`);
+
+    if (statuses.isAsleep) {
+        if (hasComatose) tags.push(`ASLEEP (Comatose)`);
+        else tags.push(`ASLEEP`);
+    }
+    if (statuses.isFrozen) {
+        tags.push(`❄️ FROZEN: Attacking Ice Block (5HP/2DEF). Fire/Super-Effective breaks instantly.`);
+    }
+
+    const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';
+    const rollName = (check.name || '').trim() || 'Skill Check';
+
+    await rollDicePlus(`${Math.max(1, dicePool)}d6>3${mathModifier}`, `🎲 ${nickname} rolled ${rollName}!${finalTags}`);
 }
