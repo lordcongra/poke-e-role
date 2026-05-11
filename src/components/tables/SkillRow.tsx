@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { Skill } from '../../types/enums';
 import { NumberSpinner } from '../ui/NumberSpinner';
-import { parseCombatTags, getAbilityText } from '../../utils/combatUtils';
+import { parseCombatTags, getAbilityText, calculateSkillTotal } from '../../utils/combatUtils';
 import './SkillRow.css';
 
 interface SkillRowProps {
@@ -13,6 +13,8 @@ interface SkillRowProps {
 export function SkillRow({ skill, defaultLabel }: SkillRowProps) {
     const data = useCharacterStore((state) => state.skills[skill]);
     const setSkill = useCharacterStore((state) => state.setSkill);
+
+    // Keep selectors to ensure the component re-renders when these change!
     const inventory = useCharacterStore((state) => state.inventory);
     const extraCategories = useCharacterStore((state) => state.extraCategories);
     const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
@@ -20,8 +22,9 @@ export function SkillRow({ skill, defaultLabel }: SkillRowProps) {
 
     const abilityText = getAbilityText(ability, customAbilities);
     const inventoryModifiers = parseCombatTags(inventory, extraCategories, undefined, abilityText);
-    const itemBonus = inventoryModifiers.skills[skill] || 0;
-    const total = data.base + data.buff + itemBonus;
+    const fullState = useCharacterStore.getState();
+
+    const total = calculateSkillTotal(skill, fullState, inventoryModifiers);
 
     const [localName, setLocalName] = useState(data.customName || defaultLabel);
 

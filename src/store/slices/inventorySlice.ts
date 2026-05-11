@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CharacterState, InventorySlice, InventoryItem, CustomInfo } from '../storeTypes';
 import { saveToOwlbear } from '../../utils/obr';
-import { parseCombatTags, getAbilityText } from '../../utils/combatUtils';
+import { parseCombatTags, getAbilityText, calculateStatTotal } from '../../utils/combatUtils';
 import { CombatStat } from '../../types/enums';
 
 const syncHealthWill = (
@@ -12,22 +12,8 @@ const syncHealthWill = (
     const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
     const inventoryModifiers = parseCombatTags(newInventory, state.extraCategories, undefined, abilityText);
 
-    const vitTotal = Math.max(
-        1,
-        state.stats[CombatStat.VIT].base +
-            state.stats[CombatStat.VIT].rank +
-            state.stats[CombatStat.VIT].buff -
-            state.stats[CombatStat.VIT].debuff +
-            (inventoryModifiers.stats.vit || 0)
-    );
-    const insTotal = Math.max(
-        1,
-        state.stats[CombatStat.INS].base +
-            state.stats[CombatStat.INS].rank +
-            state.stats[CombatStat.INS].buff -
-            state.stats[CombatStat.INS].debuff +
-            (inventoryModifiers.stats.ins || 0)
-    );
+    const vitTotal = calculateStatTotal(CombatStat.VIT, state, inventoryModifiers);
+    const insTotal = calculateStatTotal(CombatStat.INS, state, inventoryModifiers);
 
     let hpStat = vitTotal;
     if (state.identity.ruleset === 'vg-high-hp') hpStat = Math.max(vitTotal, insTotal);

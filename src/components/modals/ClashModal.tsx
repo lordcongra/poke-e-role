@@ -1,6 +1,12 @@
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { CombatStat, Skill } from '../../types/enums';
-import { rollGeneric, parseCombatTags, getAbilityText } from '../../utils/combatUtils';
+import {
+    rollGeneric,
+    parseCombatTags,
+    getAbilityText,
+    calculateStatTotal,
+    calculateSkillTotal
+} from '../../utils/combatUtils';
 
 interface ClashModalProps {
     onClose: () => void;
@@ -14,16 +20,10 @@ export function ClashModal({ onClose }: ClashModalProps) {
         const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
 
         const statistic = isPhysical ? CombatStat.STR : CombatStat.SPE;
-        const statTotal = Math.max(
-            1,
-            state.stats[statistic].base +
-                state.stats[statistic].rank +
-                state.stats[statistic].buff -
-                state.stats[statistic].debuff +
-                (itemBuffs.stats[statistic] || 0)
-        );
-        const clashTotal =
-            state.skills[Skill.CLASH].base + state.skills[Skill.CLASH].buff + (itemBuffs.skills.clash || 0);
+
+        const statTotal = calculateStatTotal(statistic, state, itemBuffs);
+        const clashTotal = calculateSkillTotal(Skill.CLASH, state, itemBuffs);
+
         rollGeneric(
             isPhysical ? 'Physical Clash' : 'Special Clash',
             statTotal + clashTotal,

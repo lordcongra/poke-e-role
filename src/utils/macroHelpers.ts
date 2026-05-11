@@ -1,6 +1,6 @@
 import type { CharacterState, MoveData, StatusItem, CustomType } from '../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
-import { parseCombatTags, getAbilityText } from './combatUtils';
+import { parseCombatTags, getAbilityText, calculateStatTotal } from './combatUtils';
 import { MAX_MOVES_DATA } from '../data/maxMoves';
 
 export const parseLearnset = (movesObj: unknown): Array<{ Learned: string; Name: string }> => {
@@ -75,22 +75,10 @@ export const syncHealthAndWill = (
     const abilityText = getAbilityText(newIdentity.ability, state.roomCustomAbilities);
     const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
 
-    const vitTotal = Math.max(
-        1,
-        newStats[CombatStat.VIT].base +
-            newStats[CombatStat.VIT].rank +
-            newStats[CombatStat.VIT].buff -
-            newStats[CombatStat.VIT].debuff +
-            (invMods.stats.vit || 0)
-    );
-    const insTotal = Math.max(
-        1,
-        newStats[CombatStat.INS].base +
-            newStats[CombatStat.INS].rank +
-            newStats[CombatStat.INS].buff -
-            newStats[CombatStat.INS].debuff +
-            (invMods.stats.ins || 0)
-    );
+    const fakeState = { ...state, stats: newStats, identity: newIdentity } as CharacterState;
+
+    const vitTotal = calculateStatTotal(CombatStat.VIT, fakeState, invMods);
+    const insTotal = calculateStatTotal(CombatStat.INS, fakeState, invMods);
 
     let hpStat = vitTotal;
     if (state.identity.ruleset === 'vg-high-hp') hpStat = Math.max(vitTotal, insTotal);

@@ -1,6 +1,6 @@
 import type { CharacterState, InventoryItem } from '../store/storeTypes';
 import { CombatStat } from '../types/enums';
-import { parseCombatTags, getAbilityText } from './combatUtils';
+import { parseCombatTags, getAbilityText, calculateStatTotal } from './combatUtils';
 
 export const DEFAULT_COLOR_ACT = '#4890fc';
 export const DEFAULT_COLOR_EVA = '#c387fc';
@@ -59,22 +59,9 @@ export function buildGraphicsFromState(meta: Record<string, unknown>, state: Cha
     const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
     const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
 
-    const vitTotal = Math.max(
-        1,
-        state.stats[CombatStat.VIT].base +
-            state.stats[CombatStat.VIT].rank +
-            state.stats[CombatStat.VIT].buff -
-            state.stats[CombatStat.VIT].debuff +
-            (invMods.stats.vit || 0)
-    );
-    const insTotal = Math.max(
-        1,
-        state.stats[CombatStat.INS].base +
-            state.stats[CombatStat.INS].rank +
-            state.stats[CombatStat.INS].buff -
-            state.stats[CombatStat.INS].debuff +
-            (invMods.stats.ins || 0)
-    );
+    const vitTotal = calculateStatTotal(CombatStat.VIT, state, invMods);
+    const insTotal = calculateStatTotal(CombatStat.INS, state, invMods);
+
     const defTotal = Math.max(1, vitTotal + state.derived.defBuff - state.derived.defDebuff + invMods.def);
     let sdefBase = insTotal;
     if (state.identity.ruleset === 'tabletop') sdefBase = vitTotal;

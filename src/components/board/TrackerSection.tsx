@@ -2,8 +2,15 @@ import { useState } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { NumberSpinner } from '../ui/NumberSpinner';
-import { CombatStat, Skill } from '../../types/enums';
-import { rollGeneric, parseCombatTags, getAbilityText, getStatusPenalties } from '../../utils/combatUtils';
+import { CombatStat, SocialStat, Skill } from '../../types/enums';
+import {
+    rollGeneric,
+    parseCombatTags,
+    getAbilityText,
+    getStatusPenalties,
+    calculateStatTotal,
+    calculateSkillTotal
+} from '../../utils/combatUtils';
 import { STATUS_COLORS } from '../../data/constants';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { TooltipIcon } from '../ui/TooltipIcon';
@@ -94,16 +101,9 @@ export function TrackerSection() {
         const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
         const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
 
-        const dexTotal = Math.max(
-            1,
-            state.stats[CombatStat.DEX].base +
-                state.stats[CombatStat.DEX].rank +
-                state.stats[CombatStat.DEX].buff -
-                state.stats[CombatStat.DEX].debuff +
-                (itemBuffs.stats.dex || 0)
-        );
-        const evadeTotal =
-            state.skills[Skill.EVASION].base + state.skills[Skill.EVASION].buff + (itemBuffs.skills.evasion || 0);
+        const dexTotal = calculateStatTotal(CombatStat.DEX, state, itemBuffs);
+        const evadeTotal = calculateSkillTotal(Skill.EVASION, state, itemBuffs);
+
         rollGeneric('Evasion', dexTotal + evadeTotal, 'dex', true, false, true);
     };
 
@@ -114,39 +114,50 @@ export function TrackerSection() {
         const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
         const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
 
-        const getStatistic = (statistic: CombatStat) =>
-            Math.max(
-                1,
-                state.stats[statistic].base +
-                    state.stats[statistic].rank +
-                    state.stats[statistic].buff -
-                    state.stats[statistic].debuff +
-                    (itemBuffs.stats[statistic] || 0)
-            );
-        const getSkill = (skillName: Skill) =>
-            state.skills[skillName].base + state.skills[skillName].buff + (itemBuffs.skills[skillName] || 0);
-        const getSocialStatistic = (statistic: 'cle') =>
-            Math.max(
-                1,
-                state.socials[statistic].base +
-                    state.socials[statistic].rank +
-                    state.socials[statistic].buff -
-                    state.socials[statistic].debuff +
-                    (itemBuffs.stats[statistic] || 0)
-            );
-
         if (maneuver === 'ambush')
-            rollGeneric('Ambush', getStatistic(CombatStat.DEX) + getSkill(Skill.STEALTH), 'dex', false, false, true);
+            rollGeneric(
+                'Ambush',
+                calculateStatTotal(CombatStat.DEX, state, itemBuffs) +
+                    calculateSkillTotal(Skill.STEALTH, state, itemBuffs),
+                'dex',
+                false,
+                false,
+                true
+            );
         else if (maneuver === 'cover')
-            rollGeneric('Cover an Ally', 3 + getStatistic(CombatStat.INS), 'will', false, false, true);
+            rollGeneric(
+                'Cover an Ally',
+                3 + calculateStatTotal(CombatStat.INS, state, itemBuffs),
+                'will',
+                false,
+                false,
+                true
+            );
         else if (maneuver === 'grapple')
-            rollGeneric('Grapple', getStatistic(CombatStat.STR) + getSkill(Skill.BRAWL), 'str', false, false, true);
+            rollGeneric(
+                'Grapple',
+                calculateStatTotal(CombatStat.STR, state, itemBuffs) +
+                    calculateSkillTotal(Skill.BRAWL, state, itemBuffs),
+                'str',
+                false,
+                false,
+                true
+            );
         else if (maneuver === 'run')
-            rollGeneric('Run Away', getStatistic(CombatStat.DEX) + getSkill(Skill.ATHLETIC), 'dex', false, false, true);
+            rollGeneric(
+                'Run Away',
+                calculateStatTotal(CombatStat.DEX, state, itemBuffs) +
+                    calculateSkillTotal(Skill.ATHLETIC, state, itemBuffs),
+                'dex',
+                false,
+                false,
+                true
+            );
         else if (maneuver === 'stabilize')
             rollGeneric(
                 'Stabilize Ally',
-                getSocialStatistic('cle') + getSkill(Skill.MEDICINE),
+                calculateStatTotal(SocialStat.CLE, state, itemBuffs) +
+                    calculateSkillTotal(Skill.MEDICINE, state, itemBuffs),
                 'cle',
                 false,
                 false,
@@ -155,7 +166,8 @@ export function TrackerSection() {
         else if (maneuver === 'struggle')
             rollGeneric(
                 'Struggle (Accuracy)',
-                getStatistic(CombatStat.DEX) + getSkill(Skill.BRAWL),
+                calculateStatTotal(CombatStat.DEX, state, itemBuffs) +
+                    calculateSkillTotal(Skill.BRAWL, state, itemBuffs),
                 'dex',
                 false,
                 false,

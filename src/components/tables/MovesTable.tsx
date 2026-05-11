@@ -8,7 +8,8 @@ import {
     executeDamageRoll,
     rollDicePlus,
     parseCombatTags,
-    getAbilityText
+    getAbilityText,
+    calculateStatTotal
 } from '../../utils/combatUtils';
 import { TargetingModal } from '../modals/TargetingModal';
 import { MoveCard } from './MoveCard';
@@ -41,6 +42,7 @@ export function MovesTable() {
     // 🔥 Reactive Selectors for Targeting Modal Syncing
     useCharacterStore((state) => state.trackers.firstHitDmg);
     useCharacterStore((state) => state.trackers.firstHitAcc);
+    useCharacterStore((state) => state.stats);
 
     const [targetingMove, setTargetingMove] = useState<MoveData | null>(null);
     const [deleteMoveId, setDeleteMoveId] = useState<string | null>(null);
@@ -57,17 +59,9 @@ export function MovesTable() {
     const abilityText = getAbilityText(ability, customAbilities);
     const itemBuffs = parseCombatTags(state.inventory, extraCategories, undefined, abilityText);
 
-    const insightStatistic = state.stats[CombatStat.INS];
-    const maxMoves =
-        3 +
-        Math.max(
-            1,
-            insightStatistic.base +
-                insightStatistic.rank +
-                insightStatistic.buff -
-                insightStatistic.debuff +
-                (itemBuffs.stats.ins || 0)
-        );
+    // Completely abstracted Insight math!
+    const insightTotal = calculateStatTotal(CombatStat.INS, state, itemBuffs);
+    const maxMoves = 3 + insightTotal;
 
     const handleTargetClick = (move: MoveData) => {
         if (move.category === 'Status') {
