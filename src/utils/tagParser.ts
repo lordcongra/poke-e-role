@@ -63,9 +63,7 @@ function extractStats(description: string, bonuses: CombatBonuses, triggers: Tag
 
 function extractSkills(description: string, escapedSkills: string, bonuses: CombatBonuses, triggers: TagTriggers) {
     if (!escapedSkills) return;
-    const skillMatches = description.matchAll(
-        new RegExp(`\\[\\s*(${escapedSkills})\\s*([+-]?\\s*\\d+)\\s*\\]`, 'gi')
-    );
+    const skillMatches = description.matchAll(new RegExp(`\\[\\s*(${escapedSkills})\\s*([+-]?\\s*\\d+)\\s*\\]`, 'gi'));
     for (const match of skillMatches) {
         bonuses.skills[match[1].toLowerCase()] = (bonuses.skills[match[1].toLowerCase()] || 0) + safeParseInt(match[2]);
         triggers.general = true;
@@ -178,7 +176,7 @@ function extractTempHp(description: string, bonuses: CombatBonuses, triggers: Ta
     const tempHpMatches = description.matchAll(/\[\s*gain temp hp\s*(\d+)\s*\]/gi);
     for (const match of tempHpMatches) {
         bonuses.gainTempHp += safeParseInt(match[1]);
-        triggers.damage = true; 
+        triggers.damage = true;
     }
 
     const tempHpOnHitMatches = description.matchAll(/\[\s*temp hp \+(\d+)\s*on hit\s*\]/gi);

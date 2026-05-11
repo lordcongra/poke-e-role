@@ -90,7 +90,6 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
             let diceTheme: unknown = undefined;
             try {
                 const roomMeta = await OBR.room.getMetadata();
-                // STRICT TYPING FIX: Replaced `any` with `Record<string, unknown>`
                 const allThemes = roomMeta['com.grupos-acciones.dice/roomDiceThemes'] as
                     | Record<string, unknown>
                     | undefined;
@@ -110,7 +109,6 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
 
             const broadcastPayload = { mensaje, icon, diceData, diceTheme };
 
-            // Restored the proper routing based on your test!
             if (targetVisibility === 'gm_only') {
                 await OBR.broadcast.sendMessage('tirada:mensaje', broadcastPayload, { destination: 'LOCAL' });
             } else {
@@ -130,8 +128,19 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                     targetVisibility
                 };
 
-                const existingLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
-                localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData, ...existingLog].slice(0, 50)));
+                // Defensive LocalStorage Interaction
+                try {
+                    const storedLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+                    const existingLog = Array.isArray(storedLog) ? storedLog : [];
+                    localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData, ...existingLog].slice(0, 50)));
+                } catch (error) {
+                    console.warn('Failed to update roll log cache safely. Resetting log.', error);
+                    try {
+                        localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData]));
+                    } catch (e) {
+                        console.error('LocalStorage is completely inaccessible.', e);
+                    }
+                }
 
                 await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-sync', rollLogData, {
                     destination: 'REMOTE'

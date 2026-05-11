@@ -63,7 +63,7 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
                 // Strictly type the undocumented assets API to avoid 'any'
                 const assetsApi = OBR.assets as unknown as { downloadImages?: () => Promise<unknown[]> };
                 let images: unknown[] | null = null;
-                
+
                 if (typeof assetsApi?.downloadImages === 'function') {
                     images = await assetsApi.downloadImages();
                 } else {
@@ -240,9 +240,7 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
                                         >
                                             {statistic.toUpperCase()}
                                         </label>
-                                        <span className="generator-preview__stat-subtext">
-                                            Base: {baseVal}
-                                        </span>
+                                        <span className="generator-preview__stat-subtext">Base: {baseVal}</span>
                                         <GeneratorPreviewStatSpinner
                                             value={localBuild.soc[statistic] || 0}
                                             onChange={(value) => updateSocial(statistic, value)}

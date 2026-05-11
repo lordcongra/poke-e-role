@@ -333,7 +333,8 @@ export async function executeDamageRoll(
     if (
         moveDescription.includes('recoil') ||
         itemBuffs.dmgItemNames.some(
-            (itemName: string) => itemName.toLowerCase().includes('life orb') || itemName.toLowerCase().includes('recoil')
+            (itemName: string) =>
+                itemName.toLowerCase().includes('life orb') || itemName.toLowerCase().includes('recoil')
         )
     ) {
         tags.push(`RECOIL: Roll success as user dmg ignoring def`);

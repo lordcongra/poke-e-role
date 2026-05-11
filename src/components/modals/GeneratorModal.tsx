@@ -414,9 +414,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                             2-Stage Lines (e.g. Vulpix → Ninetales)
                                         </strong>
                                         <div className="generator-modal__evo-row">
-                                            <span className="generator-modal__evo-label">
-                                                Base Form (Offset Down)
-                                            </span>
+                                            <span className="generator-modal__evo-label">Base Form (Offset Down)</span>
                                             <NumberSpinner
                                                 value={config.evo2Stage1Offset}
                                                 onChange={(val) => setConfig({ evo2Stage1Offset: val })}
@@ -441,9 +439,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                             />
                                         </div>
                                         <div className="generator-modal__evo-row">
-                                            <span className="generator-modal__evo-label">
-                                                Base Form (Offset Down)
-                                            </span>
+                                            <span className="generator-modal__evo-label">Base Form (Offset Down)</span>
                                             <NumberSpinner
                                                 value={config.evo3Stage1Offset}
                                                 onChange={(val) => setConfig({ evo3Stage1Offset: val })}

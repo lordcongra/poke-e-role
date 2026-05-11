@@ -40,10 +40,14 @@ export async function fetchWithCache<T>(url: string, cacheKey: string, itemName:
             return null;
         }
 
-        // If the live fetch fails (e.g. rate limit or no internet), silently fallback to whatever is in the cache
-        const cached = localStorage.getItem(`pkr_cache_${cacheKey}`);
-        if (cached) {
-            return JSON.parse(cached) as T;
+        // Defensive Offline Fallback parsing
+        try {
+            const cached = localStorage.getItem(`pkr_cache_${cacheKey}`);
+            if (cached) {
+                return JSON.parse(cached) as T;
+            }
+        } catch (fallbackError) {
+            console.error(`[Cache] Failed to parse offline fallback for ${itemName}`, fallbackError);
         }
 
         console.error(`Failed to load ${itemName}. No offline cache found.`);

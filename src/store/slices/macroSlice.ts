@@ -352,7 +352,19 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 [CombatStat.INS]: { ...state.stats[CombatStat.INS], limit: getLimit(data, 'Insight') }
             };
 
-            const updatesToSave = {
+            const newIdentity = {
+                ...state.identity,
+                availableAbilities: abilities,
+                ability: newAbility,
+                learnset: learnsetArray,
+                type1: newType1,
+                type2: newType2
+            };
+
+            const newHealth = { ...state.health };
+            const newWill = { ...state.will };
+
+            const updatesToSave: Record<string, unknown> = {
                 ability: newAbility,
                 'ability-list': abilities.join(','),
                 type1: newType1,
@@ -364,20 +376,19 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 'ins-limit': newStats[CombatStat.INS].limit
             };
 
+            // Always run the sync engine to ensure Max HP and Max Will match the latest stat limits
+            // This corrects legacy tokens that failed to store derived math properly without overwriting Base HP!
+            syncHealthAndWill(state, newStats, newIdentity, newHealth, newWill, updatesToSave);
+
             try {
                 saveToOwlbear(updatesToSave);
             } catch (e) {}
 
             return {
-                identity: {
-                    ...state.identity,
-                    availableAbilities: abilities,
-                    ability: newAbility,
-                    learnset: learnsetArray,
-                    type1: newType1,
-                    type2: newType2
-                },
-                stats: newStats
+                identity: newIdentity,
+                stats: newStats,
+                health: newHealth,
+                will: newWill
             };
         })
 });
