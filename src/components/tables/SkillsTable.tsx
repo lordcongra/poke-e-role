@@ -5,6 +5,7 @@ import { NumberSpinner } from '../ui/NumberSpinner';
 import { CategoryHeader } from '../ui/CategoryHeader';
 import { SkillRow } from './SkillRow';
 import { CollapsingSection } from '../ui/CollapsingSection';
+import { parseCombatTags, getAbilityText, calculateSkillTotal } from '../../utils/combatUtils';
 import './SkillsTable.css';
 
 export function SkillsTable() {
@@ -22,6 +23,10 @@ export function SkillsTable() {
     const mode = useCharacterStore((state) => state.identity.mode);
     const rankData = getRankPoints(currentRank);
 
+    const inventory = useCharacterStore((state) => state.inventory);
+    const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
+    const ability = useCharacterStore((state) => state.identity.ability);
+
     const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
 
     let spentSkill = Object.values(Skill).reduce(
@@ -32,6 +37,10 @@ export function SkillsTable() {
     const remainingPoints = rankData.skills + extras.skill - spentSkill;
 
     const isTrainer = mode === 'Trainer';
+
+    const abilityText = getAbilityText(ability, customAbilities);
+    const inventoryModifiers = parseCombatTags(inventory, extraCategories, undefined, abilityText);
+    const fullState = useCharacterStore.getState();
 
     return (
         <CollapsingSection title="SKILLS">
@@ -148,7 +157,7 @@ export function SkillsTable() {
                                             </div>
                                         </td>
                                         <td className="data-table__cell--middle skill-row__total-cell">
-                                            {extraSkill.base + extraSkill.buff}
+                                            {calculateSkillTotal(extraSkill.id, fullState, inventoryModifiers)}
                                         </td>
                                     </tr>
                                 ))}
