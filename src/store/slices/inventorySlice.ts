@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CharacterState, InventorySlice, InventoryItem, CustomInfo } from '../storeTypes';
 import { saveToOwlbear } from '../../utils/obr';
-import { parseCombatTags, getAbilityText } from '../../utils/combatMath';
+import { parseCombatTags, getAbilityText } from '../../utils/combatUtils';
 import { CombatStat } from '../../types/enums';
 
 const syncHealthWill = (

@@ -3,7 +3,7 @@ import type { CharacterState, IdentitySlice } from '../storeTypes';
 import { saveToOwlbear } from '../../utils/obr';
 import OBR from '@owlbear-rodeo/sdk';
 import { CombatStat } from '../../types/enums';
-import { getAbilityText, parseCombatTags } from '../../utils/combatMath';
+import { getAbilityText, parseCombatTags } from '../../utils/combatUtils';
 
 const OBR_KEY_MAP: Record<string, string> = {
     showTrackers: 'show-trackers',

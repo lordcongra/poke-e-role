@@ -90,6 +90,16 @@
     margin-bottom: 2px;
 }
 
+.generator-preview__stat-subtext {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.generator-preview__stat-subtext--nowrap {
+    white-space: nowrap;
+}
+
 .generator-preview__skill-category {
     display: flex;
     flex-direction: column;
@@ -213,6 +223,10 @@
     align-items: center;
 }
 
+.generator-preview-tooltip__overlay--high-z {
+    z-index: 1400;
+}
+
 .generator-preview-tooltip__content {
     background: var(--panel-bg);
     padding: 15px;
@@ -232,6 +246,10 @@
     text-align: center;
 }
 
+.generator-preview-tooltip__title--center {
+    text-align: center;
+}
+
 .generator-preview-tooltip__desc {
     font-size: 0.85rem;
     margin-bottom: 15px;
@@ -240,9 +258,18 @@
     line-height: 1.4;
 }
 
+.generator-preview-tooltip__desc--center {
+    text-align: center;
+}
+
 .generator-preview-tooltip__actions {
     display: flex;
     justify-content: center;
+}
+
+.generator-preview-tooltip__actions--spaced {
+    gap: 10px;
+    margin-top: 15px;
 }
 
 .generator-preview-tooltip__btn {

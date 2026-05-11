@@ -136,6 +136,33 @@
     text-align: center;
 }
 
+/* NEW MODAL CLASSES */
+.derived-board__modal-title--temp-hp {
+    color: #c326df;
+    border-color: #c326df;
+}
+
+.derived-board__modal-title--clear-hp {
+    color: #c62828;
+    border-color: #c62828;
+}
+
+.derived-board__modal-title--temp-will {
+    color: #7e57c2;
+    border-color: #7e57c2;
+}
+
+.derived-board__modal-title--clear-will {
+    color: #c62828;
+    border-color: #c62828;
+}
+
+.derived-board__spinner-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
 .derived-board__modal-desc {
     font-size: 0.85rem;
     margin-bottom: 15px;
@@ -149,9 +176,23 @@
     justify-content: center;
 }
 
+.derived-board__modal-btn-container--spaced {
+    gap: 10px;
+}
+
 .derived-board__modal-btn {
     width: 100%;
     padding: 6px;
+}
+
+.derived-board__modal-btn--temp-hp {
+    background-color: #c326df;
+    color: white;
+}
+
+.derived-board__modal-btn--temp-will {
+    background-color: #7e57c2;
+    color: white;
 }
 
 .derived-board__roll-btn {

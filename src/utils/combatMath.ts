@@ -2,6 +2,9 @@ import type { MoveData, CharacterState, CustomAbility } from '../store/storeType
 import { CombatStat, SocialStat } from '../types/enums';
 import { parseCombatTags } from './tagParser';
 
+// PROXY EXPORT: Prevents app crashes if a file is still directly importing from combatMath!
+export { parseCombatTags };
+
 export const ATTRIBUTE_MAPPING: Record<string, string> = {
     Strength: 'str',
     Dexterity: 'dex',

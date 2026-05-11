@@ -1,6 +1,6 @@
 import type { CharacterState, MoveData, StatusItem, CustomType } from '../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
-import { parseCombatTags, getAbilityText } from './combatMath';
+import { parseCombatTags, getAbilityText } from './combatUtils';
 import { MAX_MOVES_DATA } from '../data/maxMoves';
 
 export const parseLearnset = (movesObj: unknown): Array<{ Learned: string; Name: string }> => {

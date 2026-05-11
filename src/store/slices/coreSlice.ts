@@ -2,7 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { CharacterState, CoreSlice } from '../storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { saveToOwlbear } from '../../utils/obr';
-import { parseCombatTags, getAbilityText } from '../../utils/combatMath';
+import { parseCombatTags, getAbilityText } from '../../utils/combatUtils';
 
 export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = (set) => ({
     health: { hpCurr: 5, hpMax: 5, hpBase: 4, temporaryHitPoints: 0, temporaryHitPointsMax: 0 },

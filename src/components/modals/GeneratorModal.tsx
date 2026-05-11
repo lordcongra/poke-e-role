@@ -123,7 +123,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                         </div>
                                     ))}
                                 </div>
-                                <div className="generator-modal__min-grid" style={{ marginTop: '10px' }}>
+                                <div className="generator-modal__min-grid generator-modal__min-grid--spaced">
                                     {Object.values(SocialStat).map((stat) => (
                                         <div key={stat} className="generator-modal__min-item">
                                             <span className="generator-modal__min-label">{stat.toUpperCase()}</span>
@@ -147,7 +147,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                             <p className="generator-modal__comp-desc">
                                 Insight will automatically scale to fit this total.
                             </p>
-                            <div className="generator-modal__comp-row" style={{ marginTop: '0', marginBottom: '10px' }}>
+                            <div className="generator-modal__comp-row">
                                 <div className="generator-modal__comp-item">
                                     <span className="generator-modal__comp-label">Attacks</span>
                                     <input
@@ -172,19 +172,8 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                 </div>
                             </div>
 
-                            <div
-                                style={{
-                                    borderTop: '1px solid var(--border)',
-                                    paddingTop: '8px',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '6px'
-                                }}
-                            >
-                                <label
-                                    className="generator-modal__checkbox-label"
-                                    style={{ fontSize: '0.8rem', fontWeight: 'bold' }}
-                                >
+                            <div className="generator-modal__spillover-section">
+                                <label className="generator-modal__checkbox-label generator-modal__checkbox-label--bold">
                                     <input
                                         type="checkbox"
                                         checked={config.useSpilloverRatio}
@@ -204,45 +193,28 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
 
                                 {config.useSpilloverRatio && (
                                     <>
-                                        <div
-                                            style={{
-                                                display: 'flex',
-                                                justifyContent: 'center',
-                                                alignItems: 'center',
-                                                gap: '15px',
-                                                marginTop: '4px'
-                                            }}
-                                        >
-                                            <div
-                                                className="generator-modal__comp-item"
-                                                style={{ flexDirection: 'row' }}
-                                            >
+                                        <div className="generator-modal__spillover-inputs">
+                                            <div className="generator-modal__comp-item generator-modal__comp-item--row">
                                                 <NumberSpinner
                                                     value={config.spilloverAtkRatio}
                                                     onChange={(val) => setConfig({ spilloverAtkRatio: val })}
                                                     min={0}
                                                     max={9}
                                                 />
-                                                <span style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Atk</span>
+                                                <span className="generator-modal__spillover-text">Atk</span>
                                             </div>
-                                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>:</span>
-                                            <div
-                                                className="generator-modal__comp-item"
-                                                style={{ flexDirection: 'row' }}
-                                            >
+                                            <span className="generator-modal__spillover-colon">:</span>
+                                            <div className="generator-modal__comp-item generator-modal__comp-item--row">
                                                 <NumberSpinner
                                                     value={config.spilloverSupRatio}
                                                     onChange={(val) => setConfig({ spilloverSupRatio: val })}
                                                     min={0}
                                                     max={9}
                                                 />
-                                                <span style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>Sup</span>
+                                                <span className="generator-modal__spillover-text">Sup</span>
                                             </div>
                                         </div>
-                                        <label
-                                            className="generator-modal__checkbox-label"
-                                            style={{ fontSize: '0.7rem', justifyContent: 'center' }}
-                                        >
+                                        <label className="generator-modal__checkbox-label generator-modal__checkbox-label--center">
                                             <input
                                                 type="checkbox"
                                                 checked={config.spilloverJitter}
@@ -261,14 +233,8 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                             <div className="generator-modal__composition">
                                 <label className="generator-modal__comp-title">Attack Type Ratios</label>
                                 <p className="generator-modal__comp-desc">Override STAB counts & Coverage.</p>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center'
-                                        }}
-                                    >
+                                <div className="generator-modal__coverage-section">
+                                    <div className="generator-modal__coverage-row">
                                         <label className="generator-modal__checkbox-label" title={type1Label}>
                                             <input
                                                 type="checkbox"
@@ -289,13 +255,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                         />
                                     </div>
                                     {hasType2 && (
-                                        <div
-                                            style={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center'
-                                            }}
-                                        >
+                                        <div className="generator-modal__coverage-row">
                                             <label className="generator-modal__checkbox-label" title={type2Label}>
                                                 <input
                                                     type="checkbox"
@@ -321,27 +281,14 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                         </div>
                                     )}
 
-                                    <div
-                                        style={{
-                                            borderTop: '1px solid var(--border)',
-                                            paddingTop: '8px',
-                                            marginTop: '2px',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '4px'
-                                        }}
-                                    >
-                                        <label
-                                            className="generator-modal__checkbox-label"
-                                            style={{ fontWeight: 'bold', fontSize: '0.8rem' }}
-                                        >
+                                    <div className="generator-modal__coverage-select-wrapper">
+                                        <label className="generator-modal__coverage-select-label">
                                             Coverage Preference
                                         </label>
                                         <select
                                             value={config.coveragePreference}
                                             onChange={(e) => setConfig({ coveragePreference: e.target.value })}
-                                            className="generator-modal__select"
-                                            style={{ fontSize: '0.75rem', padding: '4px' }}
+                                            className="generator-modal__select generator-modal__coverage-select"
                                         >
                                             <option value="balanced">Balanced (Auto)</option>
                                             <option value="heavy">Prioritize Coverage</option>
@@ -349,15 +296,8 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                             <option value="fixed">Fixed Amount</option>
                                         </select>
                                         {config.coveragePreference === 'fixed' && (
-                                            <div
-                                                style={{
-                                                    display: 'flex',
-                                                    justifyContent: 'space-between',
-                                                    alignItems: 'center',
-                                                    marginTop: '4px'
-                                                }}
-                                            >
-                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                            <div className="generator-modal__coverage-fixed-row">
+                                                <span className="generator-modal__coverage-fixed-label">
                                                     Coverage Count
                                                 </span>
                                                 <input
@@ -376,11 +316,8 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                 </div>
                             </div>
                         ) : (
-                            <div
-                                className="generator-modal__composition"
-                                style={{ justifyContent: 'center', alignItems: 'center', opacity: 0.5 }}
-                            >
-                                <label className="generator-modal__comp-title" style={{ color: 'var(--text-muted)' }}>
+                            <div className="generator-modal__composition generator-modal__composition--disabled">
+                                <label className="generator-modal__comp-title generator-modal__comp-title--disabled">
                                     Attack Type Ratios
                                 </label>
                                 <p className="generator-modal__comp-desc">Disabled during Wild (Random) Generation.</p>
@@ -439,7 +376,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                 <strong>Randomize Species (Overwrites Identity)</strong>
                             </label>
                             {config.randomizeSpecies && (
-                                <label className="generator-modal__checkbox-label" style={{ paddingLeft: '24px' }}>
+                                <label className="generator-modal__checkbox-label generator-modal__checkbox-label--indented">
                                     <input
                                         type="checkbox"
                                         checked={config.autoSelectBias}
@@ -471,41 +408,13 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                 />
                             </label>
                             {config.includePreEvolutions && (
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '8px',
-                                        paddingLeft: '24px',
-                                        marginTop: '2px'
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            background: 'var(--row-odd)',
-                                            padding: '6px 8px',
-                                            borderRadius: '4px',
-                                            border: '1px solid var(--border)'
-                                        }}
-                                    >
-                                        <strong
-                                            style={{
-                                                fontSize: '0.75rem',
-                                                color: 'var(--primary)',
-                                                display: 'block',
-                                                marginBottom: '6px'
-                                            }}
-                                        >
+                                <div className="generator-modal__evo-group">
+                                    <div className="generator-modal__evo-box">
+                                        <strong className="generator-modal__evo-title">
                                             2-Stage Lines (e.g. Vulpix → Ninetales)
                                         </strong>
-                                        <div
-                                            style={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center'
-                                            }}
-                                        >
-                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                        <div className="generator-modal__evo-row">
+                                            <span className="generator-modal__evo-label">
                                                 Base Form (Offset Down)
                                             </span>
                                             <NumberSpinner
@@ -516,33 +425,12 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                             />
                                         </div>
                                     </div>
-                                    <div
-                                        style={{
-                                            background: 'var(--row-odd)',
-                                            padding: '6px 8px',
-                                            borderRadius: '4px',
-                                            border: '1px solid var(--border)'
-                                        }}
-                                    >
-                                        <strong
-                                            style={{
-                                                fontSize: '0.75rem',
-                                                color: 'var(--primary)',
-                                                display: 'block',
-                                                marginBottom: '6px'
-                                            }}
-                                        >
+                                    <div className="generator-modal__evo-box">
+                                        <strong className="generator-modal__evo-title">
                                             3-Stage Lines (e.g. Charmander → Charizard)
                                         </strong>
-                                        <div
-                                            style={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center',
-                                                marginBottom: '4px'
-                                            }}
-                                        >
-                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                        <div className="generator-modal__evo-row generator-modal__evo-row--spaced">
+                                            <span className="generator-modal__evo-label">
                                                 Middle Form (Offset Down)
                                             </span>
                                             <NumberSpinner
@@ -552,14 +440,8 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                                 max={7}
                                             />
                                         </div>
-                                        <div
-                                            style={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center'
-                                            }}
-                                        >
-                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                        <div className="generator-modal__evo-row">
+                                            <span className="generator-modal__evo-label">
                                                 Base Form (Offset Down)
                                             </span>
                                             <NumberSpinner
@@ -591,33 +473,9 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                 />
                             </label>
                             {config.allowOverrank && (
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '8px',
-                                        paddingLeft: '24px',
-                                        marginTop: '2px'
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            background: 'var(--row-odd)',
-                                            padding: '6px 8px',
-                                            borderRadius: '4px',
-                                            border: '1px solid var(--border)'
-                                        }}
-                                    >
-                                        <span
-                                            style={{
-                                                fontSize: '0.75rem',
-                                                color: 'var(--text-muted)',
-                                                fontWeight: 'bold'
-                                            }}
-                                        >
+                                <div className="generator-modal__evo-group">
+                                    <div className="generator-modal__evo-box generator-modal__evo-row">
+                                        <span className="generator-modal__evo-label" style={{ fontWeight: 'bold' }}>
                                             Max Ranks Above
                                         </span>
                                         <NumberSpinner

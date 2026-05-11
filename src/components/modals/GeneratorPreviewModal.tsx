@@ -60,21 +60,20 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
     const handleImageConfirm = async (wantsNewImage: boolean) => {
         if (wantsNewImage) {
             try {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                let images: any = null;
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                if (typeof (OBR as any).assets?.downloadImages === 'function') {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    images = await (OBR as any).assets.downloadImages();
+                // Strictly type the undocumented assets API to avoid 'any'
+                const assetsApi = OBR.assets as unknown as { downloadImages?: () => Promise<unknown[]> };
+                let images: unknown[] | null = null;
+                
+                if (typeof assetsApi?.downloadImages === 'function') {
+                    images = await assetsApi.downloadImages();
                 } else {
                     const url = window.prompt('Enter an Image URL:');
                     if (url) {
                         setIdentity('tokenImageUrl', url);
                         await OBR.scene.items.updateItems([tokenId!], (items) => {
                             for (const item of items) {
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                const imgItem = item as any;
-                                if (imgItem.image) imgItem.image.url = url;
+                                const imgItem = item as Record<string, unknown>;
+                                if (imgItem.image) (imgItem.image as Record<string, unknown>).url = url;
                             }
                         });
                     }
@@ -82,20 +81,25 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
 
                 if (images && images.length > 0) {
                     let selectedUrl = '';
-                    const img = images[0];
+                    const img = images[0] as Record<string, unknown> | string;
 
-                    if (typeof img === 'string') selectedUrl = img;
-                    else if (img.url) selectedUrl = img.url;
-                    else if (img.image?.url) selectedUrl = img.image.url;
-                    else if (img.src) selectedUrl = img.src;
+                    if (typeof img === 'string') {
+                        selectedUrl = img;
+                    } else if (img && typeof img === 'object') {
+                        if (typeof img.url === 'string') selectedUrl = img.url;
+                        else if (img.image && typeof (img.image as Record<string, unknown>).url === 'string') {
+                            selectedUrl = (img.image as Record<string, unknown>).url as string;
+                        } else if (typeof img.src === 'string') {
+                            selectedUrl = img.src;
+                        }
+                    }
 
                     if (selectedUrl) {
                         setIdentity('tokenImageUrl', selectedUrl);
                         await OBR.scene.items.updateItems([tokenId!], (items) => {
                             for (const item of items) {
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                const imgItem = item as any;
-                                if (imgItem.image) imgItem.image.url = selectedUrl;
+                                const imgItem = item as Record<string, unknown>;
+                                if (imgItem.image) (imgItem.image as Record<string, unknown>).url = selectedUrl;
                             }
                         });
                     } else {
@@ -191,6 +195,7 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
 
     return (
         <div className="generator-preview__overlay">
+            {/* The style object here is dynamic and permitted by our architectural rules */}
             <div className="generator-preview__content" style={{ display: showImagePrompt ? 'none' : 'flex' }}>
                 <h3 className="generator-preview__title">🔍 Build Preview: {localBuild.species}</h3>
 
@@ -209,14 +214,7 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
                                         >
                                             {statistic.toUpperCase()}
                                         </label>
-                                        <span
-                                            style={{
-                                                fontSize: '0.65rem',
-                                                color: 'var(--text-muted)',
-                                                marginBottom: '4px',
-                                                whiteSpace: 'nowrap'
-                                            }}
-                                        >
+                                        <span className="generator-preview__stat-subtext generator-preview__stat-subtext--nowrap">
                                             Base: {baseVal} | Limit: {limitVal}
                                         </span>
                                         <GeneratorPreviewStatSpinner
@@ -242,13 +240,7 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
                                         >
                                             {statistic.toUpperCase()}
                                         </label>
-                                        <span
-                                            style={{
-                                                fontSize: '0.65rem',
-                                                color: 'var(--text-muted)',
-                                                marginBottom: '4px'
-                                            }}
-                                        >
+                                        <span className="generator-preview__stat-subtext">
                                             Base: {baseVal}
                                         </span>
                                         <GeneratorPreviewStatSpinner
@@ -344,15 +336,15 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
             </div>
 
             {showImagePrompt && (
-                <div className="generator-preview-tooltip__overlay" style={{ zIndex: 1400 }}>
+                <div className="generator-preview-tooltip__overlay generator-preview-tooltip__overlay--high-z">
                     <div className="generator-preview-tooltip__content">
-                        <h3 className="generator-preview-tooltip__title" style={{ textAlign: 'center' }}>
+                        <h3 className="generator-preview-tooltip__title generator-preview-tooltip__title--center">
                             🖼️ Update Token Image?
                         </h3>
-                        <p className="generator-preview-tooltip__desc" style={{ textAlign: 'center' }}>
+                        <p className="generator-preview-tooltip__desc generator-preview-tooltip__desc--center">
                             You generated a brand new species! Would you like to select a new image for this token?
                         </p>
-                        <div className="generator-preview-tooltip__actions" style={{ gap: '10px', marginTop: '15px' }}>
+                        <div className="generator-preview-tooltip__actions generator-preview-tooltip__actions--spaced">
                             <button
                                 type="button"
                                 className="action-button action-button--dark generator-preview-tooltip__btn"

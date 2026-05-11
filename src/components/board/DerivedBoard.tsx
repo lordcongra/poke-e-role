@@ -3,7 +3,9 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { CombatStat, Skill } from '../../types/enums';
 import { ResourceBox } from '../ui/ResourceBox';
 import { NumberSpinner } from '../ui/NumberSpinner';
-import { parseCombatTags, getAbilityText, rollDicePlus } from '../../utils/combatUtils';
+import { parseCombatTags } from '../../utils/tagParser';
+import { getAbilityText } from '../../utils/combatMath';
+import { rollDicePlus } from '../../utils/diceRoller';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { StatusBox } from '../board/StatusBox';
@@ -314,16 +316,16 @@ export function DerivedBoard() {
             {showAddTempModal && (
                 <div className="derived-board__modal-overlay">
                     <div className="derived-board__modal-content">
-                        <h3 className="derived-board__modal-title" style={{ color: '#c326df', borderColor: '#c326df' }}>
+                        <h3 className="derived-board__modal-title derived-board__modal-title--temp-hp">
                             🛡️ Set Temporary HP
                         </h3>
                         <p className="derived-board__modal-desc">
                             Enter the amount of Temporary HP to grant. This will replace any existing shield.
                         </p>
-                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
+                        <div className="derived-board__spinner-wrapper">
                             <NumberSpinner value={newTempHp} onChange={setNewTempHp} min={0} max={999} />
                         </div>
-                        <div className="derived-board__modal-btn-container" style={{ gap: '10px' }}>
+                        <div className="derived-board__modal-btn-container derived-board__modal-btn-container--spaced">
                             <button
                                 type="button"
                                 className="action-button action-button--dark derived-board__modal-btn"
@@ -333,8 +335,7 @@ export function DerivedBoard() {
                             </button>
                             <button
                                 type="button"
-                                className="action-button derived-board__modal-btn"
-                                style={{ backgroundColor: '#c326df', color: 'white' }}
+                                className="action-button derived-board__modal-btn derived-board__modal-btn--temp-hp"
                                 onClick={() => {
                                     updateHealth('temporaryHitPointsMax', newTempHp);
                                     updateHealth('temporaryHitPoints', newTempHp);
@@ -351,13 +352,13 @@ export function DerivedBoard() {
             {showTempConfirm && (
                 <div className="derived-board__modal-overlay">
                     <div className="derived-board__modal-content">
-                        <h3 className="derived-board__modal-title" style={{ color: '#c62828', borderColor: '#c62828' }}>
+                        <h3 className="derived-board__modal-title derived-board__modal-title--clear-hp">
                             ⚠️ Clear Temp HP
                         </h3>
                         <p className="derived-board__modal-desc">
                             Are you sure you want to completely remove your Temporary HP Shield?
                         </p>
-                        <div className="derived-board__modal-btn-container" style={{ gap: '10px' }}>
+                        <div className="derived-board__modal-btn-container derived-board__modal-btn-container--spaced">
                             <button
                                 type="button"
                                 className="action-button action-button--dark derived-board__modal-btn"
@@ -384,17 +385,17 @@ export function DerivedBoard() {
             {showAddTempWillModal && (
                 <div className="derived-board__modal-overlay">
                     <div className="derived-board__modal-content">
-                        <h3 className="derived-board__modal-title" style={{ color: '#7e57c2', borderColor: '#7e57c2' }}>
+                        <h3 className="derived-board__modal-title derived-board__modal-title--temp-will">
                             🌟 Set Temp Willpower
                         </h3>
                         <p className="derived-board__modal-desc">
                             Enter the amount of Temporary Willpower to grant. This will replace any existing Temporary
                             Willpower.
                         </p>
-                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
+                        <div className="derived-board__spinner-wrapper">
                             <NumberSpinner value={newTempWill} onChange={setNewTempWill} min={0} max={999} />
                         </div>
-                        <div className="derived-board__modal-btn-container" style={{ gap: '10px' }}>
+                        <div className="derived-board__modal-btn-container derived-board__modal-btn-container--spaced">
                             <button
                                 type="button"
                                 className="action-button action-button--dark derived-board__modal-btn"
@@ -404,8 +405,7 @@ export function DerivedBoard() {
                             </button>
                             <button
                                 type="button"
-                                className="action-button derived-board__modal-btn"
-                                style={{ backgroundColor: '#7e57c2', color: 'white' }}
+                                className="action-button derived-board__modal-btn derived-board__modal-btn--temp-will"
                                 onClick={() => {
                                     updateWill('temporaryWillMax', newTempWill);
                                     updateWill('temporaryWill', newTempWill);
@@ -422,13 +422,13 @@ export function DerivedBoard() {
             {showTempWillConfirm && (
                 <div className="derived-board__modal-overlay">
                     <div className="derived-board__modal-content">
-                        <h3 className="derived-board__modal-title" style={{ color: '#c62828', borderColor: '#c62828' }}>
+                        <h3 className="derived-board__modal-title derived-board__modal-title--clear-will">
                             ⚠️ Clear Temp Willpower
                         </h3>
                         <p className="derived-board__modal-desc">
                             Are you sure you want to completely remove your Temporary Willpower?
                         </p>
-                        <div className="derived-board__modal-btn-container" style={{ gap: '10px' }}>
+                        <div className="derived-board__modal-btn-container derived-board__modal-btn-container--spaced">
                             <button
                                 type="button"
                                 className="action-button action-button--dark derived-board__modal-btn"
