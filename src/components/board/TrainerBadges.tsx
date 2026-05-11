@@ -34,15 +34,7 @@ export function TrainerBadges() {
         <CollapsingSection title="BADGES & ACHIEVEMENTS" headerElements={headerElements} className="sheet-panel">
             <div className="trainer-badges__list">
                 {badges.length === 0 ? (
-                    <div
-                        style={{
-                            textAlign: 'center',
-                            fontSize: '0.85rem',
-                            color: 'var(--text-muted)',
-                            fontStyle: 'italic',
-                            padding: '10px'
-                        }}
-                    >
+                    <div className="trainer-badges__empty">
                         No badges collected yet.
                     </div>
                 ) : (

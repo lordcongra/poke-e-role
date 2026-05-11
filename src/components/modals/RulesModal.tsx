@@ -193,7 +193,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                         <h3 className="rules-info__title">{modalConfig.title}</h3>
                         <hr className="rules-info__divider" />
                         <div className="rules-info__text">{modalConfig.content}</div>
-                        <div style={{ textAlign: 'center' }}>
+                        <div className="rules-info__actions">
                             <button
                                 className="action-button action-button--dark rules-modal__close-btn"
                                 onClick={() => setModalConfig(null)}

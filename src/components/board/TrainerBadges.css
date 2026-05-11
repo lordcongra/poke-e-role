@@ -14,6 +14,14 @@
     margin-bottom: 8px;
 }
 
+.trainer-badges__empty {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 10px;
+}
+
 .trainer-badges__add-btn {
     width: 100%;
     padding: 6px;

@@ -39,7 +39,6 @@ export function PrintSheet() {
 
     useEffect(() => {
         if (isReadyToPrint) {
-            // Wait for the browser to explicitly tell us the print dialog is closed before unmounting!
             const handleAfterPrint = () => {
                 useCharacterStore.getState().setIdentity('isPrinting', false);
             };
@@ -274,8 +273,8 @@ export function PrintSheet() {
                     <table className="print-sheet__ability-table">
                         <thead>
                             <tr>
-                                <th style={{ width: '5%', textAlign: 'center' }}>✔</th>
-                                <th style={{ width: '25%' }}>Ability</th>
+                                <th className="print-sheet__col-check">✔</th>
+                                <th className="print-sheet__col-ability">Ability</th>
                                 {config.abilityDescStyle !== 'none' && <th>Description / Effects</th>}
                             </tr>
                         </thead>
@@ -283,12 +282,12 @@ export function PrintSheet() {
                             {config.blankAbilities ? (
                                 <>
                                     <tr>
-                                        <td style={{ height: '25px' }}></td>
+                                        <td className="print-sheet__empty-cell"></td>
                                         <td></td>
                                         {config.abilityDescStyle !== 'none' && <td></td>}
                                     </tr>
                                     <tr>
-                                        <td style={{ height: '25px' }}></td>
+                                        <td className="print-sheet__empty-cell"></td>
                                         <td></td>
                                         {config.abilityDescStyle !== 'none' && <td></td>}
                                     </tr>
@@ -307,13 +306,10 @@ export function PrintSheet() {
 
                                         return (
                                             <tr key={i}>
-                                                <td style={{ textAlign: 'center' }}>
+                                                <td className="print-sheet__checkbox-container">
                                                     <div
-                                                        className="print-sheet__checkbox"
-                                                        style={{
-                                                            backgroundColor: isChecked ? 'black' : 'white',
-                                                            margin: '0 auto'
-                                                        }}
+                                                        className="print-sheet__checkbox print-sheet__checkbox-box"
+                                                        style={{ backgroundColor: isChecked ? 'black' : 'white' }}
                                                     />
                                                 </td>
                                                 <td>
@@ -333,12 +329,12 @@ export function PrintSheet() {
                     <table className="print-sheet__move-table">
                         <thead>
                             <tr>
-                                <th style={{ width: '20%' }}>Name</th>
-                                <th style={{ width: '10%' }}>Type</th>
-                                <th style={{ width: '8%' }}>Cat.</th>
-                                <th style={{ width: '8%' }}>Power</th>
-                                <th style={{ width: '15%' }}>Accuracy</th>
-                                <th style={{ width: '10%' }}>Damage</th>
+                                <th className="print-sheet__col-name">Name</th>
+                                <th className="print-sheet__col-type">Type</th>
+                                <th className="print-sheet__col-cat">Cat.</th>
+                                <th className="print-sheet__col-power">Power</th>
+                                <th className="print-sheet__col-acc">Accuracy</th>
+                                <th className="print-sheet__col-dmg">Damage</th>
                                 {!config.hideMoveDesc && <th>Description / Effects</th>}
                             </tr>
                         </thead>
@@ -346,7 +342,7 @@ export function PrintSheet() {
                             {config.blankMoves
                                 ? Array.from({ length: 6 }).map((_, i) => (
                                       <tr key={i}>
-                                          <td style={{ height: '25px' }}></td>
+                                          <td className="print-sheet__empty-cell"></td>
                                           <td></td>
                                           <td></td>
                                           <td></td>
