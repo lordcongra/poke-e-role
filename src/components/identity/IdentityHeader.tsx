@@ -69,7 +69,6 @@ export function IdentityHeader() {
             localStorage.setItem('pokerole-theme', themeValue);
         } catch (e) {}
 
-        // Tell any other open windows (like the Roll Log) to update their themes!
         if (OBR.isAvailable) {
             OBR.broadcast.sendMessage('pokerole-pmd-extension/theme-sync', themeValue, { destination: 'LOCAL' });
         }
@@ -109,7 +108,6 @@ export function IdentityHeader() {
         if (data) {
             const content = [];
 
-            // Safely extract properties regardless of casing
             const safeData = data as Record<string, unknown>;
             const keywords = safeData.Keywords || safeData.keywords;
             const desc = safeData.Description || safeData.description;
@@ -123,7 +121,6 @@ export function IdentityHeader() {
             if (statDown) content.push(`Stat Down: ${statDown}`);
             if (desc) content.push(String(desc));
 
-            // If we couldn't find any standard keys, just dump the raw JSON to the screen so it's never blank!
             if (content.length === 0) content.push(JSON.stringify(data, null, 2));
 
             setModalConfig({ title: `Nature: ${identityStore.nature}`, content: content.join('\n\n') });
@@ -147,21 +144,19 @@ export function IdentityHeader() {
         }
 
         try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            let images: any = null;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            if (typeof (OBR as any).assets?.downloadImages === 'function') {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                images = await (OBR as any).assets.downloadImages();
+            const assetsApi = OBR.assets as unknown as { downloadImages?: () => Promise<unknown[]> };
+            let images: unknown[] | null = null;
+
+            if (typeof assetsApi?.downloadImages === 'function') {
+                images = await assetsApi.downloadImages();
             } else {
                 const url = window.prompt('Enter an Image URL:');
                 if (url) {
                     setIdentity('tokenImageUrl', url);
                     await OBR.scene.items.updateItems([tokenId], (items) => {
                         for (const item of items) {
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            const imgItem = item as any;
-                            if (imgItem.image) imgItem.image.url = url;
+                            const imgItem = item as Record<string, unknown>;
+                            if (imgItem.image) (imgItem.image as Record<string, unknown>).url = url;
                         }
                     });
                 }
@@ -170,20 +165,25 @@ export function IdentityHeader() {
 
             if (images && images.length > 0) {
                 let selectedUrl = '';
-                const img = images[0];
+                const img = images[0] as Record<string, unknown> | string;
 
-                if (typeof img === 'string') selectedUrl = img;
-                else if (img.url) selectedUrl = img.url;
-                else if (img.image?.url) selectedUrl = img.image.url;
-                else if (img.src) selectedUrl = img.src;
+                if (typeof img === 'string') {
+                    selectedUrl = img;
+                } else if (img && typeof img === 'object') {
+                    if (typeof img.url === 'string') selectedUrl = img.url;
+                    else if (img.image && typeof (img.image as Record<string, unknown>).url === 'string') {
+                        selectedUrl = (img.image as Record<string, unknown>).url as string;
+                    } else if (typeof img.src === 'string') {
+                        selectedUrl = img.src;
+                    }
+                }
 
                 if (selectedUrl) {
                     setIdentity('tokenImageUrl', selectedUrl);
                     await OBR.scene.items.updateItems([tokenId], (items) => {
                         for (const item of items) {
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            const imgItem = item as any;
-                            if (imgItem.image) imgItem.image.url = selectedUrl;
+                            const imgItem = item as Record<string, unknown>;
+                            if (imgItem.image) (imgItem.image as Record<string, unknown>).url = selectedUrl;
                         }
                     });
                 } else {

@@ -123,7 +123,6 @@ export function IdentityControls({
         if (!importData) return;
         const store = useCharacterStore.getState();
         try {
-            // Safer check: A valid Owlbear Rodeo flat export will almost always have one of these keys.
             if (
                 importData['moves-data'] !== undefined ||
                 importData['hp-curr'] !== undefined ||
@@ -132,11 +131,8 @@ export function IdentityControls({
                 store.loadFromOwlbear(importData);
                 saveToOwlbear(importData);
             } else {
-                // It's a raw Zustand state JSON export
                 useCharacterStore.setState(importData as unknown as CharacterState);
 
-                // CRITICAL FIX: Pass the newly hydrated, fully-initialized Zustand state to the mapper,
-                // NOT the raw JSON variable. This guarantees properties like `state.health` actually exist!
                 const fullState = useCharacterStore.getState();
                 const metaToSave = flattenStateToMetadata(fullState);
                 saveToOwlbear(metaToSave);
