@@ -60,11 +60,15 @@ export function IdentityControls({
         identityStore.initiativeTrackerOffsetY,
         identityStore.initiativeTrackerLayout,
         identityStore.initiativeTrackerAvatarShape,
-        identityStore.initiativeTrackerWidthBuffer,
-        identityStore.initiativeTrackerHeightBuffer,
         identityStore.initiativeTrackerMaxWidth,
         identityStore.initiativeTrackerMaxHeight
     ]);
+
+    useEffect(() => {
+        if (OBR.isAvailable) {
+            OBR.broadcast.sendMessage('pkr-theme-update', isDark ? 'dark' : 'light', { destination: 'LOCAL' });
+        }
+    }, [isDark]);
 
     const handleRefresh = async () => {
         if (isRefreshing) return;
@@ -171,21 +175,19 @@ export function IdentityControls({
     };
 
     const openTracker = async (isReAnchor = false) => {
-        const { 
-            initiativeTrackerPreset, 
-            initiativeTrackerOffsetX, 
-            initiativeTrackerOffsetY, 
-            initiativeTrackerLayout, 
+        const {
+            initiativeTrackerPreset,
+            initiativeTrackerOffsetX,
+            initiativeTrackerOffsetY,
+            initiativeTrackerLayout,
             initiativeTrackerAvatarShape,
-            initiativeTrackerWidthBuffer,
-            initiativeTrackerHeightBuffer,
             initiativeTrackerMaxWidth,
             initiativeTrackerMaxHeight
         } = identityStore;
 
         const width = await OBR.viewport.getWidth();
         const height = await OBR.viewport.getHeight();
-        
+
         let anchorPosition = { top: 0, left: 0 };
         let transformOrigin = { vertical: 'TOP', horizontal: 'LEFT' };
 
@@ -229,27 +231,29 @@ export function IdentityControls({
 
         const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
         const themeToPass = document.body.getAttribute('data-theme') || 'light';
-        const url = `${baseUrl}/initiative-tracker.html?layout=${initiativeTrackerLayout}&theme=${themeToPass}&shape=${initiativeTrackerAvatarShape}&wb=${initiativeTrackerWidthBuffer}&hb=${initiativeTrackerHeightBuffer}&mw=${initiativeTrackerMaxWidth}&mh=${initiativeTrackerMaxHeight}`;
+        const url = `${baseUrl}/initiative-tracker.html?layout=${initiativeTrackerLayout}&theme=${themeToPass}&shape=${initiativeTrackerAvatarShape}&mw=${initiativeTrackerMaxWidth}&mh=${initiativeTrackerMaxHeight}`;
 
         const savedW = parseInt(localStorage.getItem('pkr_init_width') || '400');
         const savedH = parseInt(localStorage.getItem('pkr_init_height') || '150');
 
-        OBR.popover.open({
-            id: 'pkr-initiative-tracker',
-            url: url,
-            height: isReAnchor ? savedH : 150, 
-            width: isReAnchor ? savedW : 400,
-            disableClickAway: true,
-            anchorReference: 'POSITION',
-            anchorPosition: anchorPosition,
-            // @ts-ignore
-            transformOrigin: transformOrigin
-        }).catch(() => {});
+        OBR.popover
+            .open({
+                id: 'pkr-initiative-tracker',
+                url: url,
+                height: isReAnchor ? savedH : 150,
+                width: isReAnchor ? savedW : 400,
+                disableClickAway: true,
+                anchorReference: 'POSITION',
+                anchorPosition: anchorPosition,
+                // @ts-ignore
+                transformOrigin: transformOrigin
+            })
+            .catch(() => {});
     };
 
     const handleInitiativeToggle = async () => {
         if (!OBR.isAvailable) return;
-        
+
         let handled = false;
         const unsub = OBR.broadcast.onMessage('pkr-init-pong', () => {
             handled = true;
@@ -280,11 +284,22 @@ export function IdentityControls({
                     {isRefreshing ? '⏳ Refreshing...' : '↻ Refresh'}
                 </button>
 
-                <div style={{ display: 'flex', gap: '0px', flex: '1 1 25%', minWidth: '100px' }}>
+                <div style={{ display: 'flex', gap: '0px', flex: '1 1 25%', minWidth: '120px', maxWidth: '100%' }}>
                     <button
                         type="button"
                         className="action-button identity-header__btn"
-                        style={{ backgroundColor: '#f44336', borderColor: '#f44336', flex: 1, borderRadius: '4px 0 0 4px', borderRight: '1px solid #c62828' }}
+                        style={{
+                            backgroundColor: '#f44336',
+                            borderColor: '#f44336',
+                            color: 'white',
+                            flex: 1,
+                            borderRadius: '4px 0 0 4px',
+                            borderRight: '1px solid #c62828',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            minWidth: '0'
+                        }}
                         onClick={handleInitiativeToggle}
                     >
                         ⚔️ Initiative
@@ -292,7 +307,16 @@ export function IdentityControls({
                     <button
                         type="button"
                         className="action-button identity-header__btn"
-                        style={{ backgroundColor: '#f44336', borderColor: '#f44336', flex: '0 0 32px', padding: '0', borderRadius: '0 4px 4px 0' }}
+                        style={{
+                            backgroundColor: '#f44336',
+                            borderColor: '#f44336',
+                            color: 'white',
+                            flex: '0 0 32px',
+                            width: '32px',
+                            minWidth: '32px',
+                            padding: '0',
+                            borderRadius: '0 4px 4px 0'
+                        }}
                         onClick={() => setShowInitSettings(true)}
                         title="Initiative Settings"
                     >

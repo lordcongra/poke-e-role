@@ -376,8 +376,6 @@ export interface IdentitySlice {
         initiativeTrackerOffsetY: number;
         initiativeTrackerLayout: 'vertical' | 'horizontal';
         initiativeTrackerAvatarShape: 'circle' | 'square' | 'none';
-        initiativeTrackerWidthBuffer: number;
-        initiativeTrackerHeightBuffer: number;
         initiativeTrackerMaxWidth: number;
         initiativeTrackerMaxHeight: number;
 

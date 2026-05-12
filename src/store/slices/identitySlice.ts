@@ -103,7 +103,7 @@ let initialInitSettings = {
     offsetX: -80,
     offsetY: 0,
     layout: 'vertical',
-    shape: 'circle',
+    shape: 'none',
     wb: 27,
     hb: 33,
     mw: 0,
@@ -187,9 +187,15 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         initiativeTrackerOffsetX: Number(initialInitSettings.offsetX) || 0,
         initiativeTrackerOffsetY: Number(initialInitSettings.offsetY) || 0,
         initiativeTrackerLayout: (initialInitSettings.layout as 'vertical' | 'horizontal') || 'vertical',
-        initiativeTrackerAvatarShape: (initialInitSettings.shape as 'circle' | 'square' | 'none') || 'circle',
-        initiativeTrackerWidthBuffer: Number(initialInitSettings.wb) !== undefined && !isNaN(Number(initialInitSettings.wb)) ? Number(initialInitSettings.wb) : 27,
-        initiativeTrackerHeightBuffer: Number(initialInitSettings.hb) !== undefined && !isNaN(Number(initialInitSettings.hb)) ? Number(initialInitSettings.hb) : 33,
+        initiativeTrackerAvatarShape: (initialInitSettings.shape as 'circle' | 'square' | 'none') || 'none',
+        initiativeTrackerWidthBuffer:
+            Number(initialInitSettings.wb) !== undefined && !isNaN(Number(initialInitSettings.wb))
+                ? Number(initialInitSettings.wb)
+                : 27,
+        initiativeTrackerHeightBuffer:
+            Number(initialInitSettings.hb) !== undefined && !isNaN(Number(initialInitSettings.hb))
+                ? Number(initialInitSettings.hb)
+                : 33,
         initiativeTrackerMaxWidth: Number(initialInitSettings.mw) || 0,
         initiativeTrackerMaxHeight: Number(initialInitSettings.mh) || 0,
 
@@ -260,8 +266,6 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                     offsetY: newIdentity.initiativeTrackerOffsetY,
                     layout: newIdentity.initiativeTrackerLayout,
                     shape: newIdentity.initiativeTrackerAvatarShape,
-                    wb: newIdentity.initiativeTrackerWidthBuffer,
-                    hb: newIdentity.initiativeTrackerHeightBuffer,
                     mw: newIdentity.initiativeTrackerMaxWidth,
                     mh: newIdentity.initiativeTrackerMaxHeight
                 };

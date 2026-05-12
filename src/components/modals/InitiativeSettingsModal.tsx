@@ -15,7 +15,9 @@ export function InitiativeSettingsModal({ onClose }: { onClose: () => void }) {
                         X
                     </button>
                 </div>
-                <p className="init-settings__description">Customize how and where the Initiative Tracker appears on your screen.</p>
+                <p className="init-settings__description">
+                    Customize how and where the Initiative Tracker appears on your screen.
+                </p>
 
                 <div className="init-settings__section">
                     <div className="init-settings__row">
@@ -35,13 +37,15 @@ export function InitiativeSettingsModal({ onClose }: { onClose: () => void }) {
                             <option value="bottom-right">Bottom Right</option>
                         </select>
                     </div>
-                    
+
                     <div className="init-settings__row">
                         <span className="init-settings__label">Layout Style:</span>
                         <select
                             className="init-settings__input"
                             value={identityStore.initiativeTrackerLayout || 'vertical'}
-                            onChange={(e) => setIdentity('initiativeTrackerLayout', e.target.value as 'vertical' | 'horizontal')}
+                            onChange={(e) =>
+                                setIdentity('initiativeTrackerLayout', e.target.value as 'vertical' | 'horizontal')
+                            }
                         >
                             <option value="vertical">Vertical List</option>
                             <option value="horizontal">Horizontal Row</option>
@@ -53,7 +57,12 @@ export function InitiativeSettingsModal({ onClose }: { onClose: () => void }) {
                         <select
                             className="init-settings__input"
                             value={identityStore.initiativeTrackerAvatarShape || 'circle'}
-                            onChange={(e) => setIdentity('initiativeTrackerAvatarShape', e.target.value as 'circle' | 'square' | 'none')}
+                            onChange={(e) =>
+                                setIdentity(
+                                    'initiativeTrackerAvatarShape',
+                                    e.target.value as 'circle' | 'square' | 'none'
+                                )
+                            }
                         >
                             <option value="circle">Circle</option>
                             <option value="square">Square</option>
@@ -65,91 +74,141 @@ export function InitiativeSettingsModal({ onClose }: { onClose: () => void }) {
                         <div className="init-settings__offset-group">
                             <span className="init-settings__offset-text">X-Offset:</span>
                             <div className="init-settings__offset-controls">
-                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerOffsetX', (identityStore.initiativeTrackerOffsetX || 0) - 10)}>-10</button>
+                                <button
+                                    className="init-settings__step-btn"
+                                    onClick={() =>
+                                        setIdentity(
+                                            'initiativeTrackerOffsetX',
+                                            (identityStore.initiativeTrackerOffsetX || 0) - 10
+                                        )
+                                    }
+                                >
+                                    -10
+                                </button>
                                 <NumberSpinner
                                     value={identityStore.initiativeTrackerOffsetX || 0}
                                     onChange={(value) => setIdentity('initiativeTrackerOffsetX', value)}
                                     min={-9999}
                                     max={9999}
                                 />
-                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerOffsetX', (identityStore.initiativeTrackerOffsetX || 0) + 10)}>+10</button>
+                                <button
+                                    className="init-settings__step-btn"
+                                    onClick={() =>
+                                        setIdentity(
+                                            'initiativeTrackerOffsetX',
+                                            (identityStore.initiativeTrackerOffsetX || 0) + 10
+                                        )
+                                    }
+                                >
+                                    +10
+                                </button>
                             </div>
                         </div>
                         <div className="init-settings__offset-group">
                             <span className="init-settings__offset-text">Y-Offset:</span>
                             <div className="init-settings__offset-controls">
-                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerOffsetY', (identityStore.initiativeTrackerOffsetY || 0) - 10)}>-10</button>
+                                <button
+                                    className="init-settings__step-btn"
+                                    onClick={() =>
+                                        setIdentity(
+                                            'initiativeTrackerOffsetY',
+                                            (identityStore.initiativeTrackerOffsetY || 0) - 10
+                                        )
+                                    }
+                                >
+                                    -10
+                                </button>
                                 <NumberSpinner
                                     value={identityStore.initiativeTrackerOffsetY || 0}
                                     onChange={(value) => setIdentity('initiativeTrackerOffsetY', value)}
                                     min={-9999}
                                     max={9999}
                                 />
-                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerOffsetY', (identityStore.initiativeTrackerOffsetY || 0) + 10)}>+10</button>
+                                <button
+                                    className="init-settings__step-btn"
+                                    onClick={() =>
+                                        setIdentity(
+                                            'initiativeTrackerOffsetY',
+                                            (identityStore.initiativeTrackerOffsetY || 0) + 10
+                                        )
+                                    }
+                                >
+                                    +10
+                                </button>
                             </div>
                         </div>
                     </div>
 
                     <hr className="init-settings__divider" />
-                    
-                    <p className="init-settings__hint" style={{ marginBottom: 0, paddingBottom: 0 }}>Frame Max Size Boundaries (0 = Auto)</p>
+
+                    <p className="init-settings__hint" style={{ marginBottom: 0, paddingBottom: 0 }}>
+                        Frame Max Size Boundaries (0 = Auto)
+                    </p>
                     <div className="init-settings__offset-container" style={{ marginTop: '0' }}>
                         <div className="init-settings__offset-group">
                             <span className="init-settings__offset-text">Max Width (px):</span>
                             <div className="init-settings__offset-controls">
-                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerMaxWidth', Math.max(0, (identityStore.initiativeTrackerMaxWidth || 0) - 50))}>-50</button>
+                                <button
+                                    className="init-settings__step-btn"
+                                    onClick={() =>
+                                        setIdentity(
+                                            'initiativeTrackerMaxWidth',
+                                            Math.max(0, (identityStore.initiativeTrackerMaxWidth || 0) - 50)
+                                        )
+                                    }
+                                >
+                                    -50
+                                </button>
                                 <NumberSpinner
                                     value={identityStore.initiativeTrackerMaxWidth || 0}
                                     onChange={(value) => setIdentity('initiativeTrackerMaxWidth', value)}
                                     min={0}
                                     max={4000}
                                 />
-                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerMaxWidth', (identityStore.initiativeTrackerMaxWidth || 0) + 50)}>+50</button>
+                                <button
+                                    className="init-settings__step-btn"
+                                    onClick={() =>
+                                        setIdentity(
+                                            'initiativeTrackerMaxWidth',
+                                            (identityStore.initiativeTrackerMaxWidth || 0) + 50
+                                        )
+                                    }
+                                >
+                                    +50
+                                </button>
                             </div>
                         </div>
                         <div className="init-settings__offset-group">
                             <span className="init-settings__offset-text">Max Height (px):</span>
                             <div className="init-settings__offset-controls">
-                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerMaxHeight', Math.max(0, (identityStore.initiativeTrackerMaxHeight || 0) - 50))}>-50</button>
+                                <button
+                                    className="init-settings__step-btn"
+                                    onClick={() =>
+                                        setIdentity(
+                                            'initiativeTrackerMaxHeight',
+                                            Math.max(0, (identityStore.initiativeTrackerMaxHeight || 0) - 50)
+                                        )
+                                    }
+                                >
+                                    -50
+                                </button>
                                 <NumberSpinner
                                     value={identityStore.initiativeTrackerMaxHeight || 0}
                                     onChange={(value) => setIdentity('initiativeTrackerMaxHeight', value)}
                                     min={0}
                                     max={4000}
                                 />
-                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerMaxHeight', (identityStore.initiativeTrackerMaxHeight || 0) + 50)}>+50</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <hr className="init-settings__divider" />
-
-                    <p className="init-settings__hint" style={{ marginBottom: 0, paddingBottom: 0 }}>Frame Sizing Buffers (Fixes Scrollbars)</p>
-                    <div className="init-settings__offset-container" style={{ marginTop: '0' }}>
-                        <div className="init-settings__offset-group">
-                            <span className="init-settings__offset-text">Width Pad:</span>
-                            <div className="init-settings__offset-controls">
-                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerWidthBuffer', (identityStore.initiativeTrackerWidthBuffer || 27) - 10)}>-10</button>
-                                <NumberSpinner
-                                    value={identityStore.initiativeTrackerWidthBuffer || 27}
-                                    onChange={(value) => setIdentity('initiativeTrackerWidthBuffer', value)}
-                                    min={0}
-                                    max={200}
-                                />
-                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerWidthBuffer', (identityStore.initiativeTrackerWidthBuffer || 27) + 10)}>+10</button>
-                            </div>
-                        </div>
-                        <div className="init-settings__offset-group">
-                            <span className="init-settings__offset-text">Height Pad:</span>
-                            <div className="init-settings__offset-controls">
-                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerHeightBuffer', (identityStore.initiativeTrackerHeightBuffer || 33) - 10)}>-10</button>
-                                <NumberSpinner
-                                    value={identityStore.initiativeTrackerHeightBuffer || 33}
-                                    onChange={(value) => setIdentity('initiativeTrackerHeightBuffer', value)}
-                                    min={0}
-                                    max={200}
-                                />
-                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerHeightBuffer', (identityStore.initiativeTrackerHeightBuffer || 33) + 10)}>+10</button>
+                                <button
+                                    className="init-settings__step-btn"
+                                    onClick={() =>
+                                        setIdentity(
+                                            'initiativeTrackerMaxHeight',
+                                            (identityStore.initiativeTrackerMaxHeight || 0) + 50
+                                        )
+                                    }
+                                >
+                                    +50
+                                </button>
                             </div>
                         </div>
                     </div>

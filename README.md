@@ -1,22 +1,20 @@
-# Pokerole 3.0 Sheet v2.4.5 (Owlbear Rodeo Extension)
+# Pokerole 3.0 Sheet v2.7.0 (Owlbear Rodeo Extension)
 
 A highly automated, modular character sheet extension for playing **Pokerole 3.0** campaigns (including **Pokémon Mystery Dungeon / PMD** settings) within the Owlbear Rodeo VTT.
 
-_A massive thank you to the creator of the **Owl Trackers** extension. Their incredible UI work and data management architecture were a massive inspiration for the custom graphics engine for the overhaul of this sheet!_
+_A massive thank you to the creator of the **Owl Trackers** extension. Their incredible UI work and data management architecture were a massive inspiration for the custom graphics engine for this sheet!_
 
 ---
 
 ## ⚠️ REQUIRED PLUGINS
 
-To use all the features of this character sheet, you **MUST** install **Pretty Sordid** and **at least one (though having both is recommended to test which you like better)** of the following Dice Engines:
+To use all the features of this character sheet, you **MUST** install **at least one (though having both is recommended to test which you like better)** of the following Dice Engines:
 
 1. **[Custom Action Rolls (CAR)](https://owlbear.rogue.pub/extension/https://action-manager.onrender.com/manifest.json):** Handles 3D dice and features a persistent, pop-out chat log styled like the sheet(more consistent visual theming) to track roll history (found in "Log" button inside the CAR extension). Gives a more detailed breakdown of rolls in the log. Creating your dice visuals can take more time but has more options. This option tends to have better performance on Firefox.
    _- AND/OR -_
 2. **[Dice+](https://extensions.owlbear.rodeo/dice-plus):** The classic engine (this was the first integration, Custom Action Rolls is new). Handles 1-click 3D physics dice and has roll history but is somewhat more difficult to find. Is a physics-based engine so it can sometimes lose accuracy at high dice counts (trust the GM roll result). Creating your dice is faster usually but gated with some premium features.
 
 _(Note: You can swap between these engines at any time for the whole room using the "📜 Rules" menu on the sheet!)_
-
-3. **[Pretty Sordid (Initiative)](https://extensions.owlbear.rodeo/pretty-sordid):** Grabs Initiative rolls from the sheet and automatically sorts the combat order (including decimal tie-breakers!).
 
 ## 🎒 RECOMMENDED PLUGINS (Optional)
 
@@ -41,6 +39,13 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 ---
 
 ## 🌟 Features
+
+### ⚔️ The Initiative Tracker (Rebuilt for v2.7.0!)
+
+- **Native Integration:** A completely overhauled, lightning-fast initiative tracking HUD built directly into the sheet! _(If you are using the old "Pretty Sordid" initiative extension, you can safely uninstall it, it is no longer supported.)_
+- **Fully Customizable:** Your tracker layout saves instantly to your personal browser memory. Do you want a horizontal tracker on the bottom of your screen, while your GM wants a vertical list on the right? You can both have it!
+- **Auto-Scrolling:** Set strict maximum dimension limits so the tracker never dominates your screen. If the turn passes to a Pokémon that is hidden off-screen, the tracker will elegantly smooth-scroll them right into the center of your view.
+- **Hover-to-Delete:** Save massive screen real estate by hovering your mouse over any token's avatar to reveal a quick-remove overlay.
 
 ### 🧬 Form Shifts & Transformations
 
@@ -137,6 +142,6 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 To install this extension into your Owlbear Rodeo room, copy the Manifest URL below and paste it into your Owlbear Rodeo extension manager:
 
-`https://lordcongra.github.io/poke-e-role/manifest.json?v=2.4.5`
+`https://lordcongra.github.io/poke-e-role/manifest.json?v=2.7.0`
 
 _(Note: If the sheet updates, you can force Owlbear to fetch the newest version by bumping the version tag at the end of the URL!)_
