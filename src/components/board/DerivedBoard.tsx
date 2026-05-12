@@ -175,7 +175,9 @@ export function DerivedBoard() {
                             1d6 + {initiative}
                             <button
                                 className="action-button action-button--dark derived-board__roll-btn"
-                                onClick={() => rollDicePlus(`1d6+${initiative}`, 'Initiative', 'init')}
+                                onClick={() =>
+                                    rollDicePlus(`1d6+${initiative}`, 'Initiative', 'init', String(initiative))
+                                }
                             >
                                 🎲
                             </button>

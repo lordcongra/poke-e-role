@@ -2,6 +2,43 @@ import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../store/useCharacterStore';
 import { getPainPenalty, getStatusPenalties } from './combatMath';
 
+// New Helper Function to safely append and sort an Initiative Score to the Token!
+export async function assignInitiative(tokenId: string, successes: number, baseInit: number) {
+    if (!OBR.isAvailable) return;
+    try {
+        const items = await OBR.scene.items.getItems();
+        const existingInits = items.map((i) => {
+            const meta = i.metadata['pokerole-pmd-extension/initiative'] as { value?: number };
+            return meta?.value || -9999;
+        });
+
+        let finalInit = 0;
+        let isUnique = false;
+
+        // Math explanation: Successes are whole numbers. Base Init is a decimal (.XX). Random tie-breaker is tiny decimal (.XXXX)
+        while (!isUnique) {
+            const tieBreaker = Math.floor(Math.random() * 99);
+            finalInit = successes + baseInit / 100 + tieBreaker / 10000;
+            if (!existingInits.includes(finalInit)) {
+                isUnique = true;
+            }
+        }
+
+        await OBR.scene.items.updateItems([tokenId], (itemsToUpdate) => {
+            for (const item of itemsToUpdate) {
+                // Set our new Tracker logic
+                item.metadata['pokerole-pmd-extension/initiative'] = { value: finalInit };
+
+                // Backwards compatibility for people who haven't removed the external tracker extension
+                const old = (item.metadata['com.pretty-initiative/metadata'] as Record<string, unknown>) || {};
+                item.metadata['com.pretty-initiative/metadata'] = { ...old, count: finalInit.toString() };
+            }
+        });
+    } catch (e) {
+        console.error('Failed to assign Initiative to token:', e);
+    }
+}
+
 export async function rollDicePlus(notation: string, label: string, rollType = 'roll', payload = '') {
     if (!OBR.isAvailable) {
         console.log(`[Offline Roll] ${notation} for ${label}`);
@@ -27,7 +64,6 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
 
             let overrideDice: number[] | null = null;
 
-            // ⚠️ GM INTERCEPTOR PATTERN ⚠️
             if (isGmDemo && numDice > 0) {
                 overrideDice = await new Promise<number[] | null>((resolve) => {
                     useCharacterStore.getState().setPendingDemoRoll({
@@ -126,7 +162,6 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                     targetVisibility
                 };
 
-                // Defensive LocalStorage Interaction
                 try {
                     const storedLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
                     const existingLog = Array.isArray(storedLog) ? storedLog : [];
@@ -159,24 +194,9 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                     })
                     .catch(() => {});
 
-                if (rollType === 'init') {
-                    const tiebreaker = Math.floor(Math.random() * 6) + 1;
-                    const finalInit = finalSum + tiebreaker / 10;
-
-                    if (state.tokenId) {
-                        await OBR.scene.items.updateItems([state.tokenId], (items) => {
-                            for (const item of items) {
-                                const existing =
-                                    (item.metadata['com.pretty-initiative/metadata'] as Record<string, unknown>) || {};
-                                item.metadata['com.pretty-initiative/metadata'] = {
-                                    ...existing,
-                                    count: finalInit.toString(),
-                                    active: existing.active !== undefined ? existing.active : false,
-                                    group: existing.group !== undefined ? existing.group : 1
-                                };
-                            }
-                        });
-                    }
+                if (rollType === 'init' && state.tokenId) {
+                    const baseInit = parseInt(payload) || 0;
+                    await assignInitiative(state.tokenId, finalSuccesses, baseInit);
                 } else if (rollType === 'damage' && payload && finalSuccesses > 0) {
                     const [flatStr, ratioStr] = payload.split('_');
                     const flatGained = parseInt(flatStr) || 0;

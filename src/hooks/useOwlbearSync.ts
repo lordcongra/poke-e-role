@@ -6,6 +6,7 @@ import type { CustomType, CustomAbility, CustomMove, CustomPokemon, CustomItem, 
 import { fetchPokemonData, fetchMoveData, syncHomebrewToApi } from '../utils/api';
 import { buildGraphicsFromMeta, renderTokenGraphics, STATS_META_ID } from '../utils/graphicsManager';
 import { saveToOwlbear, setActiveTokenId, hasPendingUpdates } from '../utils/obr';
+import { assignInitiative } from '../utils/diceRoller';
 
 const METADATA_ID = STATS_META_ID;
 const ROOM_META_ID = 'pokerole-pmd-extension/room-settings';
@@ -308,7 +309,6 @@ export function useOwlbearSync() {
 
                 // Receive the Roll Sync broadcast from REMOTE players
                 const unsubRollLogSync = OBR.broadcast.onMessage(`${EXTENSION_ID}/roll-log-sync`, async (event) => {
-                    // Force strictly-typed variable
                     const rollData = event.data as unknown as RollSyncData;
 
                     // GM PRIVACY FILTER
@@ -368,26 +368,11 @@ export function useOwlbearSync() {
 
                             const resultObj = data.result as Record<string, unknown> | undefined;
 
+                            // ⚔️ INITIATIVE INTERCEPT
                             if (rollType === 'init' && targetTokenId && resultObj) {
-                                const total = parseInt(String(resultObj.totalValue)) || 0;
-                                const tiebreaker = Math.floor(Math.random() * 6) + 1;
-                                const finalInit = total + tiebreaker / 10;
-
-                                await OBR.scene.items.updateItems([targetTokenId], (items) => {
-                                    for (const item of items) {
-                                        const existing =
-                                            (item.metadata['com.pretty-initiative/metadata'] as Record<
-                                                string,
-                                                unknown
-                                            >) || {};
-                                        item.metadata['com.pretty-initiative/metadata'] = {
-                                            ...existing,
-                                            count: finalInit.toString(),
-                                            active: existing.active !== undefined ? existing.active : false,
-                                            group: existing.group !== undefined ? existing.group : 1
-                                        };
-                                    }
-                                });
+                                const successes = parseInt(String(resultObj.totalValue)) || 0;
+                                const baseInit = parseInt(String(payload)) || 0;
+                                await assignInitiative(targetTokenId, successes, baseInit);
                             } else if (rollType === 'status' && targetTokenId && parts.length > 2 && resultObj) {
                                 const statusId = parts[2];
                                 const successes = parseInt(String(resultObj.totalValue)) || 0;

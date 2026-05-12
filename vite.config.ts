@@ -10,7 +10,8 @@ export default defineConfig({
         rollupOptions: {
             input: {
                 main: 'index.html',
-                rollLog: 'roll-log.html'
+                rollLog: 'roll-log.html',
+                initTracker: 'initiative-tracker.html'
             }
         }
     },

@@ -158,6 +158,86 @@ export function IdentityControls({
                     {isRefreshing ? '⏳ Refreshing...' : '↻ Refresh'}
                 </button>
 
+                <button
+                    type="button"
+                    className="action-button identity-header__btn identity-header__btn--loot"
+                    style={{ backgroundColor: '#f44336', borderColor: '#f44336' }}
+                    onClick={async () => {
+                        if (!OBR.isAvailable) return;
+
+                        const {
+                            initiativeTrackerPreset,
+                            initiativeTrackerOffsetX,
+                            initiativeTrackerOffsetY,
+                            initiativeTrackerLayout
+                        } = identityStore;
+
+                        const width = await OBR.viewport.getWidth();
+                        const height = await OBR.viewport.getHeight();
+
+                        let anchorPosition = { top: 0, left: 0 };
+                        let transformOrigin = { vertical: 'TOP', horizontal: 'LEFT' };
+
+                        const posX = initiativeTrackerOffsetX || 0;
+                        const posY = initiativeTrackerOffsetY || 0;
+
+                        switch (initiativeTrackerPreset) {
+                            case 'top-left':
+                                anchorPosition = { top: posY, left: posX };
+                                transformOrigin = { vertical: 'TOP', horizontal: 'LEFT' };
+                                break;
+                            case 'top-right':
+                                anchorPosition = { top: posY, left: width + posX };
+                                transformOrigin = { vertical: 'TOP', horizontal: 'RIGHT' };
+                                break;
+                            case 'bottom-left':
+                                anchorPosition = { top: height + posY, left: posX };
+                                transformOrigin = { vertical: 'BOTTOM', horizontal: 'LEFT' };
+                                break;
+                            case 'bottom-right':
+                                anchorPosition = { top: height + posY, left: width + posX };
+                                transformOrigin = { vertical: 'BOTTOM', horizontal: 'RIGHT' };
+                                break;
+                            case 'center-left':
+                                anchorPosition = { top: height / 2 + posY, left: posX };
+                                transformOrigin = { vertical: 'CENTER', horizontal: 'LEFT' };
+                                break;
+                            case 'center-right':
+                                anchorPosition = { top: height / 2 + posY, left: width + posX };
+                                transformOrigin = { vertical: 'CENTER', horizontal: 'RIGHT' };
+                                break;
+                            case 'top-center':
+                                anchorPosition = { top: posY, left: width / 2 + posX };
+                                transformOrigin = { vertical: 'TOP', horizontal: 'CENTER' };
+                                break;
+                            case 'bottom-center':
+                                anchorPosition = { top: height + posY, left: width / 2 + posX };
+                                transformOrigin = { vertical: 'BOTTOM', horizontal: 'CENTER' };
+                                break;
+                        }
+
+                        const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+                        const themeToPass = document.body.getAttribute('data-theme') || 'light';
+                        const url = `${baseUrl}/initiative-tracker.html?layout=${initiativeTrackerLayout}&theme=${themeToPass}`;
+
+                        OBR.popover
+                            .open({
+                                id: 'pkr-initiative-tracker',
+                                url: url,
+                                height: 100,
+                                width: 100,
+                                disableClickAway: true,
+                                anchorReference: 'POSITION',
+                                anchorPosition: anchorPosition,
+                                // @ts-ignore
+                                transformOrigin: transformOrigin
+                            })
+                            .catch(() => {});
+                    }}
+                >
+                    ⚔️ Initiative
+                </button>
+
                 {showHomebrewButton && (
                     <button
                         type="button"

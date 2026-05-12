@@ -370,6 +370,12 @@ export interface IdentitySlice {
         gmOnlyMatchups: boolean;
         gmDemoMode: boolean;
 
+        // Initiative HUD User Settings
+        initiativeTrackerPreset: string;
+        initiativeTrackerOffsetX: number;
+        initiativeTrackerOffsetY: number;
+        initiativeTrackerLayout: 'vertical' | 'horizontal';
+
         colorAct: string;
         colorEva: string;
         colorCla: string;

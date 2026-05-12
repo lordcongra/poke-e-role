@@ -23,6 +23,10 @@ const OBR_KEY_MAP: Record<string, string> = {
     gmDefBadge: 'gm-def-badge',
     settingEcoBadge: 'setting-eco-badge',
     gmEcoBadge: 'gm-eco-badge',
+    initiativeTrackerPreset: 'initiative-tracker-preset',
+    initiativeTrackerOffsetX: 'initiative-tracker-offset-x',
+    initiativeTrackerOffsetY: 'initiative-tracker-offset-y',
+    initiativeTrackerLayout: 'initiative-tracker-layout',
     colorAct: 'color-act',
     colorEva: 'color-eva',
     colorCla: 'color-cla',
@@ -154,6 +158,11 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         gmOnlyMatchups: false,
         gmDemoMode: false,
 
+        initiativeTrackerPreset: 'center-right',
+        initiativeTrackerOffsetX: 0,
+        initiativeTrackerOffsetY: 0,
+        initiativeTrackerLayout: 'vertical',
+
         colorAct: '#4890fc',
         colorEva: '#c387fc',
         colorCla: '#dfad43',
@@ -212,6 +221,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         set((state) => {
             const obrKey = OBR_KEY_MAP[field as string] || (field as string);
 
+            // Global Room Settings syncing
             if (
                 field === 'ruleset' ||
                 field === 'pain' ||
