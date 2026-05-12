@@ -69,6 +69,9 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                         <strong>Auto-Scrolling:</strong> The tracker automatically smooth-scrolls to the active Pokémon
                         when turns pass!
                     </li>
+                    <li>
+                        <strong>Find any bugs?:</strong> Please let @congra know in the Pokerole Discord or report an issue on Github!
+                    </li>
                 </ul>
             </div>
         ]
