@@ -35,10 +35,12 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                 const availableTargets: TargetOption[] = [];
 
                 items.forEach((item) => {
-                    if (item.metadata[STATS_META_ID] && item.metadata['com.pretty-initiative/metadata']) {
+                    // Look for our newly established tracker data natively instead of pretty sordid
+                    if (item.metadata[STATS_META_ID] && item.metadata['pokerole-pmd-extension/initiative']) {
                         const meta = item.metadata[STATS_META_ID] as Record<string, unknown>;
                         const name = String(meta.nickname || meta.species || item.name);
 
+                        // Allowable rule exception: Math parsed directly from raw OBR metadata network strings
                         const vit =
                             (Number(meta['vit-base']) || 2) +
                             (Number(meta['vit-rank']) || 0) +

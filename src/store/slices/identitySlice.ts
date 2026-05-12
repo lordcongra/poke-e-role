@@ -27,6 +27,9 @@ const OBR_KEY_MAP: Record<string, string> = {
     initiativeTrackerOffsetX: 'initiative-tracker-offset-x',
     initiativeTrackerOffsetY: 'initiative-tracker-offset-y',
     initiativeTrackerLayout: 'initiative-tracker-layout',
+    initiativeTrackerAvatarShape: 'initiative-tracker-avatar-shape',
+    initiativeTrackerWidthBuffer: 'initiative-tracker-width-buffer',
+    initiativeTrackerHeightBuffer: 'initiative-tracker-height-buffer',
     colorAct: 'color-act',
     colorEva: 'color-eva',
     colorCla: 'color-cla',
@@ -91,6 +94,23 @@ const parseLearnset = (movesObj: unknown): Array<{ Learned: string; Name: string
     }
     return result;
 };
+
+// Initialize per-player HUD preferences safely from localStorage
+let initialInitSettings = {
+    preset: 'center-right',
+    offsetX: 0,
+    offsetY: 0,
+    layout: 'vertical',
+    shape: 'circle',
+    wb: 24,
+    hb: 24
+};
+try {
+    const stored = localStorage.getItem('pkr_init_settings');
+    if (stored) initialInitSettings = { ...initialInitSettings, ...JSON.parse(stored) };
+} catch (e) {
+    console.warn('Failed to parse init settings from local storage.');
+}
 
 export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentitySlice> = (set) => ({
     tokenId: null,
@@ -158,10 +178,14 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         gmOnlyMatchups: false,
         gmDemoMode: false,
 
-        initiativeTrackerPreset: 'center-right',
-        initiativeTrackerOffsetX: 0,
-        initiativeTrackerOffsetY: 0,
-        initiativeTrackerLayout: 'vertical',
+        // Apply Local Settings
+        initiativeTrackerPreset: initialInitSettings.preset,
+        initiativeTrackerOffsetX: Number(initialInitSettings.offsetX) || 0,
+        initiativeTrackerOffsetY: Number(initialInitSettings.offsetY) || 0,
+        initiativeTrackerLayout: (initialInitSettings.layout as 'vertical' | 'horizontal') || 'vertical',
+        initiativeTrackerAvatarShape: (initialInitSettings.shape as 'circle' | 'square' | 'none') || 'circle',
+        initiativeTrackerWidthBuffer: Number(initialInitSettings.wb) || 24,
+        initiativeTrackerHeightBuffer: Number(initialInitSettings.hb) || 24,
 
         colorAct: '#4890fc',
         colorEva: '#c387fc',
@@ -220,6 +244,28 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
     setIdentity: (field, value) =>
         set((state) => {
             const obrKey = OBR_KEY_MAP[field as string] || (field as string);
+
+            // Initiative HUD settings bypass OBR Sync completely. They are purely Local Storage per-player!
+            if (String(field).startsWith('initiativeTracker')) {
+                const newIdentity = { ...state.identity, [field]: value };
+                const settings = {
+                    preset: newIdentity.initiativeTrackerPreset,
+                    offsetX: newIdentity.initiativeTrackerOffsetX,
+                    offsetY: newIdentity.initiativeTrackerOffsetY,
+                    layout: newIdentity.initiativeTrackerLayout,
+                    shape: newIdentity.initiativeTrackerAvatarShape,
+                    wb: newIdentity.initiativeTrackerWidthBuffer,
+                    hb: newIdentity.initiativeTrackerHeightBuffer
+                };
+                try {
+                    localStorage.setItem('pkr_init_settings', JSON.stringify(settings));
+                    if (OBR.isAvailable) {
+                        // Immediately broadcast to our own popover to live-update the iframe!
+                        OBR.broadcast.sendMessage('pkr-init-settings-update', settings, { destination: 'LOCAL' });
+                    }
+                } catch (e) {}
+                return { identity: newIdentity };
+            }
 
             // Global Room Settings syncing
             if (

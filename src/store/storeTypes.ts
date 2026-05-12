@@ -375,6 +375,9 @@ export interface IdentitySlice {
         initiativeTrackerOffsetX: number;
         initiativeTrackerOffsetY: number;
         initiativeTrackerLayout: 'vertical' | 'horizontal';
+        initiativeTrackerAvatarShape: 'circle' | 'square' | 'none';
+        initiativeTrackerWidthBuffer: number;
+        initiativeTrackerHeightBuffer: number;
 
         colorAct: string;
         colorEva: string;
@@ -440,7 +443,6 @@ export interface CharacterState
         MacroSlice,
         SyncSlice {}
 
-// Augment TempMove interface to include the raw pre-resolved strings for parsing dual-options
 declare module './entityTypes' {
     interface TempMove {
         rawAcc1?: string;

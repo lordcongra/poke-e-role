@@ -26,12 +26,8 @@ export async function assignInitiative(tokenId: string, successes: number, baseI
 
         await OBR.scene.items.updateItems([tokenId], (itemsToUpdate) => {
             for (const item of itemsToUpdate) {
-                // Set our new Tracker logic
+                // Set our new Tracker logic exclusively
                 item.metadata['pokerole-pmd-extension/initiative'] = { value: finalInit };
-
-                // Backwards compatibility for people who haven't removed the external tracker extension
-                const old = (item.metadata['com.pretty-initiative/metadata'] as Record<string, unknown>) || {};
-                item.metadata['com.pretty-initiative/metadata'] = { ...old, count: finalInit.toString() };
             }
         });
     } catch (e) {
