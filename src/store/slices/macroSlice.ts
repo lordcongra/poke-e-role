@@ -303,23 +303,6 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     .updateItems([tokenId], (items: Item[]) => {
                         for (const item of items) {
                             item.name = targetName;
-
-                            // Forcefully overwrite Changr extension metadata if it exists
-                            if (item.metadata['com.missing-link-dev.changr/metadata']) {
-                                try {
-                                    const changrMeta = JSON.parse(
-                                        JSON.stringify(item.metadata['com.missing-link-dev.changr/metadata'])
-                                    );
-                                    if (changrMeta && Array.isArray(changrMeta.imageOptions)) {
-                                        changrMeta.imageOptions.forEach((opt: Record<string, unknown>) => {
-                                            if (opt.name) opt.name = targetName;
-                                        });
-                                    }
-                                    item.metadata['com.missing-link-dev.changr/metadata'] = changrMeta;
-                                } catch (e) {
-                                    console.warn('Failed to overwrite Changr metadata', e);
-                                }
-                            }
                         }
                     })
                     .catch((e: unknown) => console.warn('Failed to update OBR item name on manual species change:', e));
