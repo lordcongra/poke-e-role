@@ -61,7 +61,9 @@ export function IdentityControls({
         identityStore.initiativeTrackerLayout,
         identityStore.initiativeTrackerAvatarShape,
         identityStore.initiativeTrackerWidthBuffer,
-        identityStore.initiativeTrackerHeightBuffer
+        identityStore.initiativeTrackerHeightBuffer,
+        identityStore.initiativeTrackerMaxWidth,
+        identityStore.initiativeTrackerMaxHeight
     ]);
 
     const handleRefresh = async () => {
@@ -176,7 +178,9 @@ export function IdentityControls({
             initiativeTrackerLayout, 
             initiativeTrackerAvatarShape,
             initiativeTrackerWidthBuffer,
-            initiativeTrackerHeightBuffer
+            initiativeTrackerHeightBuffer,
+            initiativeTrackerMaxWidth,
+            initiativeTrackerMaxHeight
         } = identityStore;
 
         const width = await OBR.viewport.getWidth();
@@ -225,7 +229,7 @@ export function IdentityControls({
 
         const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
         const themeToPass = document.body.getAttribute('data-theme') || 'light';
-        const url = `${baseUrl}/initiative-tracker.html?layout=${initiativeTrackerLayout}&theme=${themeToPass}&shape=${initiativeTrackerAvatarShape}&wb=${initiativeTrackerWidthBuffer}&hb=${initiativeTrackerHeightBuffer}`;
+        const url = `${baseUrl}/initiative-tracker.html?layout=${initiativeTrackerLayout}&theme=${themeToPass}&shape=${initiativeTrackerAvatarShape}&wb=${initiativeTrackerWidthBuffer}&hb=${initiativeTrackerHeightBuffer}&mw=${initiativeTrackerMaxWidth}&mh=${initiativeTrackerMaxHeight}`;
 
         const savedW = parseInt(localStorage.getItem('pkr_init_width') || '400');
         const savedH = parseInt(localStorage.getItem('pkr_init_height') || '150');

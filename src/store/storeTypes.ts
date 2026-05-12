@@ -378,6 +378,8 @@ export interface IdentitySlice {
         initiativeTrackerAvatarShape: 'circle' | 'square' | 'none';
         initiativeTrackerWidthBuffer: number;
         initiativeTrackerHeightBuffer: number;
+        initiativeTrackerMaxWidth: number;
+        initiativeTrackerMaxHeight: number;
 
         colorAct: string;
         colorEva: string;

@@ -30,6 +30,8 @@ const OBR_KEY_MAP: Record<string, string> = {
     initiativeTrackerAvatarShape: 'initiative-tracker-avatar-shape',
     initiativeTrackerWidthBuffer: 'initiative-tracker-width-buffer',
     initiativeTrackerHeightBuffer: 'initiative-tracker-height-buffer',
+    initiativeTrackerMaxWidth: 'initiative-tracker-max-width',
+    initiativeTrackerMaxHeight: 'initiative-tracker-max-height',
     colorAct: 'color-act',
     colorEva: 'color-eva',
     colorCla: 'color-cla',
@@ -97,13 +99,15 @@ const parseLearnset = (movesObj: unknown): Array<{ Learned: string; Name: string
 
 // Initialize per-player HUD preferences safely from localStorage
 let initialInitSettings = {
-    preset: 'center-right',
-    offsetX: 0,
+    preset: 'top-right',
+    offsetX: -80,
     offsetY: 0,
     layout: 'vertical',
     shape: 'circle',
-    wb: 24,
-    hb: 24
+    wb: 27,
+    hb: 33,
+    mw: 0,
+    mh: 0
 };
 try {
     const stored = localStorage.getItem('pkr_init_settings');
@@ -184,8 +188,10 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         initiativeTrackerOffsetY: Number(initialInitSettings.offsetY) || 0,
         initiativeTrackerLayout: (initialInitSettings.layout as 'vertical' | 'horizontal') || 'vertical',
         initiativeTrackerAvatarShape: (initialInitSettings.shape as 'circle' | 'square' | 'none') || 'circle',
-        initiativeTrackerWidthBuffer: Number(initialInitSettings.wb) || 24,
-        initiativeTrackerHeightBuffer: Number(initialInitSettings.hb) || 24,
+        initiativeTrackerWidthBuffer: Number(initialInitSettings.wb) !== undefined && !isNaN(Number(initialInitSettings.wb)) ? Number(initialInitSettings.wb) : 27,
+        initiativeTrackerHeightBuffer: Number(initialInitSettings.hb) !== undefined && !isNaN(Number(initialInitSettings.hb)) ? Number(initialInitSettings.hb) : 33,
+        initiativeTrackerMaxWidth: Number(initialInitSettings.mw) || 0,
+        initiativeTrackerMaxHeight: Number(initialInitSettings.mh) || 0,
 
         colorAct: '#4890fc',
         colorEva: '#c387fc',
@@ -255,7 +261,9 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                     layout: newIdentity.initiativeTrackerLayout,
                     shape: newIdentity.initiativeTrackerAvatarShape,
                     wb: newIdentity.initiativeTrackerWidthBuffer,
-                    hb: newIdentity.initiativeTrackerHeightBuffer
+                    hb: newIdentity.initiativeTrackerHeightBuffer,
+                    mw: newIdentity.initiativeTrackerMaxWidth,
+                    mh: newIdentity.initiativeTrackerMaxHeight
                 };
                 try {
                     localStorage.setItem('pkr_init_settings', JSON.stringify(settings));

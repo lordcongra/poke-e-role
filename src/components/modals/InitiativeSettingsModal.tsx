@@ -90,36 +90,69 @@ export function InitiativeSettingsModal({ onClose }: { onClose: () => void }) {
                         </div>
                     </div>
 
+                    <hr className="init-settings__divider" />
+                    
+                    <p className="init-settings__hint" style={{ marginBottom: 0, paddingBottom: 0 }}>Frame Max Size Boundaries (0 = Auto)</p>
+                    <div className="init-settings__offset-container" style={{ marginTop: '0' }}>
+                        <div className="init-settings__offset-group">
+                            <span className="init-settings__offset-text">Max Width (px):</span>
+                            <div className="init-settings__offset-controls">
+                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerMaxWidth', Math.max(0, (identityStore.initiativeTrackerMaxWidth || 0) - 50))}>-50</button>
+                                <NumberSpinner
+                                    value={identityStore.initiativeTrackerMaxWidth || 0}
+                                    onChange={(value) => setIdentity('initiativeTrackerMaxWidth', value)}
+                                    min={0}
+                                    max={4000}
+                                />
+                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerMaxWidth', (identityStore.initiativeTrackerMaxWidth || 0) + 50)}>+50</button>
+                            </div>
+                        </div>
+                        <div className="init-settings__offset-group">
+                            <span className="init-settings__offset-text">Max Height (px):</span>
+                            <div className="init-settings__offset-controls">
+                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerMaxHeight', Math.max(0, (identityStore.initiativeTrackerMaxHeight || 0) - 50))}>-50</button>
+                                <NumberSpinner
+                                    value={identityStore.initiativeTrackerMaxHeight || 0}
+                                    onChange={(value) => setIdentity('initiativeTrackerMaxHeight', value)}
+                                    min={0}
+                                    max={4000}
+                                />
+                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerMaxHeight', (identityStore.initiativeTrackerMaxHeight || 0) + 50)}>+50</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr className="init-settings__divider" />
+
                     <p className="init-settings__hint" style={{ marginBottom: 0, paddingBottom: 0 }}>Frame Sizing Buffers (Fixes Scrollbars)</p>
                     <div className="init-settings__offset-container" style={{ marginTop: '0' }}>
                         <div className="init-settings__offset-group">
                             <span className="init-settings__offset-text">Width Pad:</span>
                             <div className="init-settings__offset-controls">
-                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerWidthBuffer', (identityStore.initiativeTrackerWidthBuffer || 24) - 1)}>-1</button>
+                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerWidthBuffer', (identityStore.initiativeTrackerWidthBuffer || 27) - 10)}>-10</button>
                                 <NumberSpinner
-                                    value={identityStore.initiativeTrackerWidthBuffer || 24}
+                                    value={identityStore.initiativeTrackerWidthBuffer || 27}
                                     onChange={(value) => setIdentity('initiativeTrackerWidthBuffer', value)}
                                     min={0}
                                     max={200}
                                 />
-                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerWidthBuffer', (identityStore.initiativeTrackerWidthBuffer || 24) + 1)}>+1</button>
+                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerWidthBuffer', (identityStore.initiativeTrackerWidthBuffer || 27) + 10)}>+10</button>
                             </div>
                         </div>
                         <div className="init-settings__offset-group">
                             <span className="init-settings__offset-text">Height Pad:</span>
                             <div className="init-settings__offset-controls">
-                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerHeightBuffer', (identityStore.initiativeTrackerHeightBuffer || 24) - 1)}>-1</button>
+                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerHeightBuffer', (identityStore.initiativeTrackerHeightBuffer || 33) - 10)}>-10</button>
                                 <NumberSpinner
-                                    value={identityStore.initiativeTrackerHeightBuffer || 24}
+                                    value={identityStore.initiativeTrackerHeightBuffer || 33}
                                     onChange={(value) => setIdentity('initiativeTrackerHeightBuffer', value)}
                                     min={0}
                                     max={200}
                                 />
-                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerHeightBuffer', (identityStore.initiativeTrackerHeightBuffer || 24) + 1)}>+1</button>
+                                <button className="init-settings__step-btn" onClick={() => setIdentity('initiativeTrackerHeightBuffer', (identityStore.initiativeTrackerHeightBuffer || 33) + 10)}>+10</button>
                             </div>
                         </div>
                     </div>
-                    
                 </div>
             </div>
         </div>

@@ -1,19 +1,64 @@
+/* THE FIX: Hard-lock the iframe root so the browser never attempts to scroll the whole window! */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: transparent;
+    box-sizing: border-box;
+}
+
+/* The wrapper absolutely pins itself to the iframe boundaries, leaving a 4px gap for the shadow */
+.init-tracker-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 4px;
+    display: flex;
+    box-sizing: border-box;
+}
+
 .init-tracker {
+    flex: 1; /* Perfectly fills the wrapper */
     background: var(--panel-bg);
     border: 2px solid var(--primary);
     border-radius: 8px;
     padding: 6px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
     display: flex;
     color: var(--text-main);
     font-family: sans-serif;
     
-    width: max-content;
-    min-width: 140px;
-    min-height: 50px;
-    margin: 4px;
-    overflow: hidden; 
+    /* 100% of the wrapper guarantees the border perfectly fits the iframe! */
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Outer box NEVER scrolls */
     box-sizing: border-box;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* The invisible ghost div overrides the constraints so we can measure its true width/height */
+.init-tracker--ghost {
+    position: absolute !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    width: max-content !important;
+    height: max-content !important;
+    top: -9999px !important;
+    left: -9999px !important;
+    margin: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+.init-tracker--ghost .init-tracker__list {
+    overflow: visible !important;
+    flex-wrap: nowrap !important;
 }
 
 .init-tracker--vertical {
@@ -22,52 +67,40 @@
 
 .init-tracker--horizontal {
     flex-direction: row;
-    align-items: flex-start;
+    align-items: stretch; /* Stretch header down to match the scrolling list */
 }
 
 .init-tracker__header {
+    flex-shrink: 0; /* Header NEVER shrinks */
     display: flex;
     justify-content: center;
     align-items: center;
     border-bottom: 2px solid var(--primary);
-    padding-bottom: 4px;
-    margin-bottom: 8px;
-    flex-shrink: 0;
+    padding-bottom: 6px;
+    margin-bottom: 4px;
 }
 
 .init-tracker__header--horizontal {
     border-bottom: none;
     border-right: 2px solid var(--primary);
     padding-bottom: 0;
-    padding-right: 6px;
+    padding-right: 8px;
     margin-bottom: 0;
-    margin-right: 6px;
+    margin-right: 4px;
     flex-direction: column;
-    height: 100%;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
 }
 
 .init-tracker__turn-controls {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
     width: 100%;
-    justify-content: space-between;
+    justify-content: center;
 }
 
 .init-tracker__header--horizontal .init-tracker__turn-controls {
     flex-direction: column;
-    gap: 4px;
-    justify-content: center;
-}
-
-.init-tracker__title {
-    font-size: 0.9rem;
-    font-weight: bold;
-    color: var(--primary);
-    letter-spacing: 0.5px;
+    height: 100%;
 }
 
 .init-tracker__turn-btn {
@@ -75,7 +108,7 @@
     border: 1px solid var(--border);
     color: var(--text-main);
     cursor: pointer;
-    font-size: 0.7rem;
+    font-size: 0.9rem;
     padding: 4px 8px;
     border-radius: 4px;
     transition: background 0.2s ease;
@@ -87,19 +120,49 @@
     border-color: var(--primary);
 }
 
+.init-tracker__empty {
+    padding: 10px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    flex: 1;
+}
+
 .init-tracker__list {
     display: flex;
+    flex: 1 1 auto; /* Fill all remaining space inside the tracker */
     gap: 8px;
+    padding: 8px; /* Crucial: Protects skewed left-edges from clipping */
+    min-width: 0; /* Crucial to activate internal scrolling */
+    min-height: 0; /* Crucial to activate internal scrolling */
 }
 
 .init-tracker__list--vertical {
     flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .init-tracker__list--horizontal {
     flex-direction: row;
-    flex-wrap: wrap; 
+    flex-wrap: nowrap; /* Single line */
+    overflow-x: auto;
+    overflow-y: hidden;
     align-items: center;
+}
+
+/* Custom sleek scrollbar */
+.init-tracker__list::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.init-tracker__list::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 3px;
+}
+.init-tracker__list::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+    border-radius: 3px;
 }
 
 .init-tracker__card {
@@ -115,14 +178,14 @@
     transform: skewX(-5deg);
     opacity: 1;
     transition: all 0.2s ease;
-    flex-shrink: 0; 
+    flex-shrink: 0; /* Prevents card from squishing */
 }
 
 .init-tracker__card--active {
     border: 2px solid #4CAF50;
     z-index: 2;
-    transform: skewX(-5deg) scale(1.05);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    transform: skewX(-5deg) scale(1.08); 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
 }
 
 .init-tracker__avatar-container, .init-tracker__info {

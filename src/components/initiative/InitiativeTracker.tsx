@@ -72,22 +72,26 @@ export function InitiativeTracker() {
     const [shape, setShape] = useState<'circle' | 'square' | 'none'>('circle');
     const [isReady, setIsReady] = useState(false);
     
-    // Explicit padding buffers from IdentityControls
-    const [wb, setWb] = useState(24);
-    const [hb, setHb] = useState(24);
-    
     const [activeTurnId, setActiveTurnId] = useState<string | null>(null);
-    const [maxWidth, setMaxWidth] = useState(800);
 
-    const containerRef = useRef<HTMLDivElement>(null);
+    const ghostRef = useRef<HTMLDivElement>(null);
+
+    // Explicit padding buffers from IdentityControls
+    const [wb, setWb] = useState(27);
+    const [hb, setHb] = useState(33);
+    const [mw, setMw] = useState(0);
+    const [mh, setMh] = useState(0);
+    const [maxWidth, setMaxWidth] = useState(800);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         setLayout((params.get('layout') as 'vertical' | 'horizontal') || 'vertical');
         setTheme(params.get('theme') || 'light');
         setShape((params.get('shape') as 'circle' | 'square' | 'none') || 'circle');
-        setWb(parseInt(params.get('wb') || '24', 10));
-        setHb(parseInt(params.get('hb') || '24', 10));
+        setWb(parseInt(params.get('wb') || '27', 10));
+        setHb(parseInt(params.get('hb') || '33', 10));
+        setMw(parseInt(params.get('mw') || '0', 10));
+        setMh(parseInt(params.get('mh') || '0', 10));
     }, []);
 
     useEffect(() => {
@@ -109,8 +113,12 @@ export function InitiativeTracker() {
             if (!isMounted) return;
             setIsReady(true);
 
-            const currentWidth = await OBR.viewport.getWidth();
-            setMaxWidth(currentWidth * 0.9);
+            try {
+                const currentWidth = await OBR.viewport.getWidth() ?? 800;
+                setMaxWidth(currentWidth * 0.9);
+            } catch (e) {
+                console.warn("Could not fetch viewport width", e);
+            }
 
             OBR.scene.getMetadata().then(meta => {
                 const turnMeta = meta['pokerole-pmd-extension/initiative-turn'] as string;
@@ -164,8 +172,10 @@ export function InitiativeTracker() {
                 const settings = event.data as Record<string, string>;
                 if (settings.layout) setLayout(settings.layout as 'vertical' | 'horizontal');
                 if (settings.shape) setShape(settings.shape as 'circle' | 'square' | 'none');
-                if (settings.wb) setWb(parseInt(settings.wb, 10));
-                if (settings.hb) setHb(parseInt(settings.hb, 10));
+                if (settings.wb !== undefined) setWb(parseInt(settings.wb, 10));
+                if (settings.hb !== undefined) setHb(parseInt(settings.hb, 10));
+                if (settings.mw !== undefined) setMw(parseInt(settings.mw, 10));
+                if (settings.mh !== undefined) setMh(parseInt(settings.mh, 10));
             });
 
             return () => {
@@ -182,8 +192,21 @@ export function InitiativeTracker() {
         };
     }, []);
 
+    // 🚀 Auto-Scroll to Active Combatant!
     useEffect(() => {
-        if (!isReady || !containerRef.current || !OBR.isAvailable) return;
+        if (activeTurnId && isReady) {
+            setTimeout(() => {
+                const activeCard = document.getElementById(`combatant-${activeTurnId}`);
+                if (activeCard) {
+                    activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
+            }, 50);
+        }
+    }, [activeTurnId, isReady]);
+
+    // ✨ The Flawless "Ghost Measurement" Engine
+    useEffect(() => {
+        if (!isReady || !ghostRef.current || !OBR.isAvailable) return;
 
         let animationFrameId: number;
 
@@ -191,11 +214,28 @@ export function InitiativeTracker() {
             cancelAnimationFrame(animationFrameId);
             
             animationFrameId = requestAnimationFrame(async () => {
-                const el = containerRef.current;
-                if (!el) return;
+                const ghostEl = ghostRef.current;
+                if (!ghostEl) return;
 
-                const targetWidth = Math.min(el.scrollWidth + wb, maxWidth);
-                const targetHeight = el.scrollHeight + hb;
+                // Using offsetWidth/Height guarantees we measure the borders of the element!
+                const naturalWidth = ghostEl.offsetWidth;
+                const naturalHeight = ghostEl.offsetHeight;
+
+                const limitW = mw > 0 ? mw : (maxWidth > 0 ? maxWidth : 800);
+                const limitH = mh > 0 ? mh : 9999;
+
+                // 8px added to perfectly account for the wrapper padding shadow buffer
+                let targetWidth = Math.min(naturalWidth + wb + 8, limitW);
+                let targetHeight = Math.min(naturalHeight + hb + 8, limitH);
+
+                // If the list hits the max-cap, a scrollbar spawns. 
+                // We expand the opposite axis by 8px to house the scrollbar so cards don't squish!
+                if (naturalWidth + wb + 8 > limitW && layout === 'horizontal') {
+                    targetHeight = Math.min(targetHeight + 8, limitH); 
+                }
+                if (naturalHeight + hb + 8 > limitH && layout === 'vertical') {
+                    targetWidth = Math.min(targetWidth + 8, limitW); 
+                }
 
                 try {
                     const currentW = (await OBR.popover.getWidth('pkr-initiative-tracker')) ?? 0;
@@ -212,12 +252,12 @@ export function InitiativeTracker() {
             });
         });
 
-        resizeObserver.observe(containerRef.current);
+        resizeObserver.observe(ghostRef.current);
         return () => {
             resizeObserver.disconnect();
             cancelAnimationFrame(animationFrameId);
         };
-    }, [isReady, combatants, layout, shape, wb, hb, maxWidth]);
+    }, [isReady, combatants, layout, shape, wb, hb, mw, mh, maxWidth]);
 
     const updateInit = async (id: string, newVal: number) => {
         if (isNaN(newVal) || !OBR.isAvailable) return;
@@ -266,31 +306,30 @@ export function InitiativeTracker() {
 
     if (!isReady) {
         return (
-            <div ref={containerRef} className={`init-tracker init-tracker--${layout}`}>
-                <div style={{ padding: '10px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    Connecting to Room...
+            <div className="init-tracker-wrapper">
+                <div className={`init-tracker init-tracker--${layout}`}>
+                    <div className="init-tracker__empty">Connecting to Room...</div>
                 </div>
             </div>
         );
     }
 
-    return (
-        <div ref={containerRef} className={`init-tracker init-tracker--${layout}`} style={{ maxWidth: `${maxWidth}px` }}>
+    const renderTrackerContent = (isGhost: boolean) => (
+        <>
             <div className={`init-tracker__header init-tracker__header--${layout}`}>
                 <div className="init-tracker__turn-controls">
                     <button type="button" className="init-tracker__turn-btn" onClick={prevTurn} title="Previous Turn">◀</button>
-                    {layout !== 'horizontal' && <span className="init-tracker__title">INITIATIVE</span>}
                     <button type="button" className="init-tracker__turn-btn" onClick={nextTurn} title="Next Turn">▶</button>
                 </div>
             </div>
             {combatants.length === 0 ? (
-                <div style={{ padding: '10px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                <div className="init-tracker__empty">
                     Waiting for rolls...
                 </div>
             ) : (
                 <div className={`init-tracker__list init-tracker__list--${layout}`}>
                     {combatants.map((c, index) => (
-                        <div style={{ display: 'flex', alignItems: 'center' }} key={c.id}>
+                        <div id={isGhost ? undefined : `combatant-${c.id}`} style={{ display: 'flex', alignItems: 'center' }} key={c.id}>
                             <CombatantCard
                                 c={c}
                                 shape={shape}
@@ -298,6 +337,7 @@ export function InitiativeTracker() {
                                 updateInit={updateInit}
                                 removeInit={removeInit}
                             />
+                            {/* Direction of flow arrows */}
                             {index < combatants.length - 1 && layout === 'horizontal' && (
                                 <span className="init-tracker__flow-arrow">❯</span>
                             )}
@@ -305,6 +345,26 @@ export function InitiativeTracker() {
                     ))}
                 </div>
             )}
-        </div>
+        </>
+    );
+
+    return (
+        <>
+            {/* The Invisible Ghost Tracker - Perfectly stretches to exact content size without limits */}
+            <div
+                ref={ghostRef}
+                className={`init-tracker init-tracker--${layout} init-tracker--ghost`}
+                aria-hidden="true"
+            >
+                {renderTrackerContent(true)}
+            </div>
+
+            {/* The Visible Tracker - Mathematically pinned to iframe bounds, activates scrollbars natively! */}
+            <div className="init-tracker-wrapper">
+                <div className={`init-tracker init-tracker--${layout}`}>
+                    {renderTrackerContent(false)}
+                </div>
+            </div>
+        </>
     );
 }
