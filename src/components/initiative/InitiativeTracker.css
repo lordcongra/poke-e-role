@@ -184,7 +184,7 @@ html, body {
 .init-tracker__card--active {
     border: 2px solid #4CAF50;
     z-index: 2;
-    transform: skewX(-5deg) scale(1.08); 
+    transform: skewX(-5deg);
     box-shadow: 0 4px 10px rgba(0,0,0,0.4);
 }
 
@@ -279,5 +279,6 @@ html, body {
     font-weight: bold;
     font-size: 0.9rem;
     margin: 0 2px;
+    transform: translateX(4px);
     user-select: none;
 }
