@@ -77,7 +77,9 @@ export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
             // Populate Moves
             if (ALL_MOVES.length === 0 && data.moves) {
                 const populateMoves = (arr: LocalIndexItem[]) => {
+                    if (!Array.isArray(arr)) return;
                     arr.forEach((moveItem) => {
+                        if (!moveItem || !moveItem.name) return; // Safeguard against null names
                         const cleanKey = moveItem.name.toLowerCase();
                         MOVES_URLS[cleanKey] = formatLocalPath(moveItem.path);
                         if (!ALL_MOVES.includes(moveItem.name)) ALL_MOVES.push(moveItem.name);
@@ -101,13 +103,16 @@ export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
                     Object.keys(data.items[pocket]).forEach((category) => {
                         if (!CATEGORIZED_ITEMS[category]) CATEGORIZED_ITEMS[category] = [];
 
-                        data.items[pocket][category].forEach((item) => {
-                            const cleanKey = item.name.toLowerCase();
-                            ITEMS_URLS[cleanKey] = formatLocalPath(item.path);
-                            if (!CATEGORIZED_ITEMS[category].includes(item.name)) {
-                                CATEGORIZED_ITEMS[category].push(item.name);
-                            }
-                        });
+                        if (Array.isArray(data.items[pocket][category])) {
+                            data.items[pocket][category].forEach((item) => {
+                                if (!item || !item.name) return; // Safeguard against null names
+                                const cleanKey = item.name.toLowerCase();
+                                ITEMS_URLS[cleanKey] = formatLocalPath(item.path);
+                                if (!CATEGORIZED_ITEMS[category].includes(item.name)) {
+                                    CATEGORIZED_ITEMS[category].push(item.name);
+                                }
+                            });
+                        }
                     });
                 });
             }
@@ -115,6 +120,7 @@ export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
             // Populate Pokemon
             if (Object.keys(SPECIES_URLS).length === 0 && data.pokemon) {
                 Object.values(data.pokemon).forEach((p) => {
+                    if (!p || !p.name) return; // Safeguard against null names
                     SPECIES_URLS[p.name.toLowerCase()] = formatLocalPath(p.path);
                 });
             }
@@ -122,6 +128,7 @@ export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
             // Populate Abilities
             if (ALL_ABILITIES.length === 0 && data.abilities) {
                 Object.values(data.abilities).forEach((a) => {
+                    if (!a || !a.name) return; // Safeguard against null names
                     ABILITIES_URLS[a.name.toLowerCase()] = formatLocalPath(a.path);
                     if (!ALL_ABILITIES.includes(a.name)) ALL_ABILITIES.push(a.name);
                 });
@@ -131,6 +138,7 @@ export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
             // Populate Natures
             if (Object.keys(NATURES_URLS).length === 0 && data.natures) {
                 Object.values(data.natures).forEach((n) => {
+                    if (!n || !n.name) return; // Safeguard against null names
                     NATURES_URLS[n.name.toLowerCase()] = formatLocalPath(n.path);
                 });
             }

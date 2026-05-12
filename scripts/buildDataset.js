@@ -29,7 +29,7 @@ console.log('🚀 Generating Index & Reorganizing Files...');
 
 // --- WEIGHT CALCULATION HELPERS ---
 function getMoveWeight(move, power) {
-    const rawCategory = String(move.Category || '').toLowerCase();
+    const rawCategory = String(move.Category || move.category || '').toLowerCase();
     if (rawCategory.includes('status') || rawCategory.includes('support')) return 50; // Uncommon
     if (power <= 1) return 100; // Common
     if (power === 2) return 50; // Uncommon
@@ -39,11 +39,11 @@ function getMoveWeight(move, power) {
 }
 
 function getItemWeight(item, category) {
-    const name = (item.Name || '').toLowerCase();
+    const name = (item.Name || item.name || '').toLowerCase();
     if (name.includes('masterball') || name.includes('rare candy')) return 1;
     if (category === 'MegaStone' || category === 'ZCrystal') return 5;
 
-    const priceStr = String(item.TrainerPrice || '').toLowerCase();
+    const priceStr = String(item.TrainerPrice || item.trainerPrice || '').toLowerCase();
     if (priceStr.includes('not for sale')) return 10;
     if (priceStr.includes('very rare')) return 5;
     if (priceStr.includes('rare')) return 20;
@@ -82,9 +82,9 @@ if (fs.existsSync(POKEDEX_DIR)) {
             const rawData = fs.readFileSync(filePath, 'utf-8');
             const data = JSON.parse(rawData);
             const fileName = path.basename(filePath);
-            const cleanName = (data.Name || fileName.replace('.json', '')).toLowerCase();
+            const cleanName = (data.Name || data.name || fileName.replace('.json', '')).toLowerCase();
             datasetIndex.pokemon[cleanName] = {
-                name: data.Name || fileName.replace('.json', ''),
+                name: data.Name || data.name || fileName.replace('.json', ''),
                 path: `/dataset/pokedex/${fileName}`
             };
         } catch (e) {}
@@ -100,9 +100,9 @@ if (fs.existsSync(ABILITIES_DIR)) {
             const rawData = fs.readFileSync(filePath, 'utf-8');
             const data = JSON.parse(rawData);
             const fileName = path.basename(filePath);
-            const cleanName = (data.Name || fileName.replace('.json', '')).toLowerCase();
+            const cleanName = (data.Name || data.name || fileName.replace('.json', '')).toLowerCase();
             datasetIndex.abilities[cleanName] = {
-                name: data.Name || fileName.replace('.json', ''),
+                name: data.Name || data.name || fileName.replace('.json', ''),
                 path: `/dataset/abilities/${fileName}`
             };
         } catch (e) {}
@@ -118,9 +118,9 @@ if (fs.existsSync(NATURES_DIR)) {
             const rawData = fs.readFileSync(filePath, 'utf-8');
             const data = JSON.parse(rawData);
             const fileName = path.basename(filePath);
-            const cleanName = (data.Name || fileName.replace('.json', '')).toLowerCase();
+            const cleanName = (data.Name || data.name || fileName.replace('.json', '')).toLowerCase();
             datasetIndex.natures[cleanName] = {
-                name: data.Name || fileName.replace('.json', ''),
+                name: data.Name || data.name || fileName.replace('.json', ''),
                 path: `/dataset/natures/${fileName}`
             };
         } catch (e) {}
@@ -137,9 +137,9 @@ if (fs.existsSync(MOVES_DIR)) {
             const move = JSON.parse(rawData);
             const fileName = path.basename(filePath);
 
-            const powerNum = Number(move.Power) || 0;
-            const rawCategory = String(move.Category || '').toLowerCase();
-            const dmg1 = String(move.Damage1 || '').toLowerCase();
+            const powerNum = Number(move.Power || move.power) || 0;
+            const rawCategory = String(move.Category || move.category || '').toLowerCase();
+            const dmg1 = String(move.Damage1 || move.damage1 || '').toLowerCase();
 
             let targetSubfolder = '';
             let indexRef = null;
@@ -179,8 +179,8 @@ if (fs.existsSync(MOVES_DIR)) {
             // ADD TO INDEX
             if (indexRef) {
                 indexRef.push({
-                    name: move.Name,
-                    type: move.Type,
+                    name: move.Name || move.name || fileName.replace('.json', ''),
+                    type: move.Type || move.type,
                     path: `/dataset/moves/${targetSubfolder}/${fileName}`,
                     weight: getMoveWeight(move, powerNum)
                 });
@@ -201,17 +201,17 @@ if (fs.existsSync(ITEMS_DIR)) {
             const item = JSON.parse(rawData);
             const fileName = path.basename(filePath);
 
-            let pocket = (item.Pocket || 'Uncategorized').replace(/[^a-zA-Z0-9_-]/g, '');
-            let category = (item.Category || 'Misc').replace(/[^a-zA-Z0-9_-]/g, '');
+            let pocket = (item.Pocket || item.pocket || 'Uncategorized').replace(/[^a-zA-Z0-9_-]/g, '');
+            let category = (item.Category || item.category || 'Misc').replace(/[^a-zA-Z0-9_-]/g, '');
             if (pocket === 'HeldItems' && category === 'Misc') category = 'BattleItem';
 
             if (!datasetIndex.items[pocket]) datasetIndex.items[pocket] = {};
             if (!datasetIndex.items[pocket][category]) datasetIndex.items[pocket][category] = [];
 
             datasetIndex.items[pocket][category].push({
-                name: item.Name,
+                name: item.Name || item.name || fileName.replace('.json', ''),
                 path: `/dataset/items/${pocket}/${category}/${fileName}`,
-                pmd: item.PMD || false,
+                pmd: item.PMD || item.pmd || false,
                 weight: getItemWeight(item, category)
             });
         } catch (error) {

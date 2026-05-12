@@ -70,14 +70,23 @@ export interface AbilityApiResponse {
 
 export interface ItemApiResponse {
     Name?: string;
+    name?: string;
     Description?: string;
+    description?: string;
     Effect?: string;
+    effect?: string;
     HealthRestored?: number;
+    healthRestored?: number;
     Cures?: string | string[];
+    cures?: string | string[];
     Boost?: string;
+    boost?: string;
     Value?: number;
+    value?: number;
     ForPokemon?: string;
+    forPokemon?: string;
     ForTypes?: string;
+    forTypes?: string;
 }
 
 export interface NatureApiResponse {

@@ -25,23 +25,30 @@ export const formatPokeballName = (name: string) => {
 export const formatItemDescription = (data: ItemApiResponse): string => {
     let extraInfo = '';
 
-    if (data.HealthRestored) {
-        extraInfo += `\n\nHealth Restored: ${data.HealthRestored}`;
+    const healthRestored = data.HealthRestored ?? data.healthRestored;
+    if (healthRestored) {
+        extraInfo += `\n\nHealth Restored: ${healthRestored}`;
     }
-    if (data.Cures) {
-        const curesList = Array.isArray(data.Cures) ? data.Cures.join(', ') : data.Cures;
+
+    const cures = data.Cures ?? data.cures;
+    if (cures) {
+        const curesList = Array.isArray(cures) ? cures.join(', ') : cures;
         extraInfo += `\nCures: ${curesList}`;
     }
-    if (data.Boost) {
-        const boosts = data.Boost.trim()
+
+    const boost = data.Boost ?? data.boost;
+    if (boost) {
+        const boosts = boost.trim()
             .split(/\s+/)
             .map((b) => formatCamelCase(b))
             .join(', ');
-        const val = data.Value ? ` +${data.Value}` : '';
+        const val = (data.Value ?? data.value) ? ` +${data.Value ?? data.value}` : '';
         extraInfo += `\nBoosts: ${boosts}${val}`;
     }
-    if (data.ForPokemon) {
-        const mons = data.ForPokemon.trim()
+
+    const forPokemon = data.ForPokemon ?? data.forPokemon;
+    if (forPokemon) {
+        const mons = forPokemon.trim()
             .split(/\s+/)
             .map((p) =>
                 p
@@ -52,11 +59,13 @@ export const formatItemDescription = (data: ItemApiResponse): string => {
             .join(', ');
         extraInfo += `\nFor Pokémon: ${mons}`;
     }
-    if (data.ForTypes) {
-        extraInfo += `\nFor Types: ${data.ForTypes}`;
+
+    const forTypes = data.ForTypes ?? data.forTypes;
+    if (forTypes) {
+        extraInfo += `\nFor Types: ${forTypes}`;
     }
 
-    const baseDescription = data.Description || data.Effect || '';
+    const baseDescription = data.Description || data.description || data.Effect || data.effect || '';
     return extraInfo ? `${baseDescription}${extraInfo}` : baseDescription;
 };
 
