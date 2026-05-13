@@ -38,7 +38,8 @@ export const formatItemDescription = (data: ItemApiResponse): string => {
 
     const boost = data.Boost ?? data.boost;
     if (boost) {
-        const boosts = boost.trim()
+        const boosts = boost
+            .trim()
             .split(/\s+/)
             .map((b) => formatCamelCase(b))
             .join(', ');
@@ -48,7 +49,8 @@ export const formatItemDescription = (data: ItemApiResponse): string => {
 
     const forPokemon = data.ForPokemon ?? data.forPokemon;
     if (forPokemon) {
-        const mons = forPokemon.trim()
+        const mons = forPokemon
+            .trim()
             .split(/\s+/)
             .map((p) =>
                 p

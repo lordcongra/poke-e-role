@@ -70,7 +70,8 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                         when turns pass!
                     </li>
                     <li>
-                        <strong>Find any bugs?:</strong> Please let @congra know in the Pokerole Discord or report an issue on Github!
+                        <strong>Find any bugs?:</strong> Please let @congra know in the Pokerole Discord or report an
+                        issue on Github!
                     </li>
                 </ul>
             </div>

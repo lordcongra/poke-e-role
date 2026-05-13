@@ -165,14 +165,20 @@ export function IdentityHeader() {
 
             if (images && images.length > 0) {
                 let selectedUrl = '';
+                let selectedWidth = 0;
+                let selectedHeight = 0;
+
                 const img = images[0] as Record<string, unknown> | string;
 
                 if (typeof img === 'string') {
                     selectedUrl = img;
                 } else if (img && typeof img === 'object') {
-                    if (typeof img.url === 'string') selectedUrl = img.url;
-                    else if (img.image && typeof (img.image as Record<string, unknown>).url === 'string') {
+                    if (typeof img.url === 'string') {
+                        selectedUrl = img.url;
+                    } else if (img.image && typeof (img.image as Record<string, unknown>).url === 'string') {
                         selectedUrl = (img.image as Record<string, unknown>).url as string;
+                        selectedWidth = ((img.image as Record<string, unknown>).width as number) || 0;
+                        selectedHeight = ((img.image as Record<string, unknown>).height as number) || 0;
                     } else if (typeof img.src === 'string') {
                         selectedUrl = img.src;
                     }
@@ -183,7 +189,27 @@ export function IdentityHeader() {
                     await OBR.scene.items.updateItems([tokenId], (items) => {
                         for (const item of items) {
                             const imgItem = item as Record<string, unknown>;
-                            if (imgItem.image) (imgItem.image as Record<string, unknown>).url = selectedUrl;
+                            if (imgItem.image) {
+                                const imageRecord = imgItem.image as Record<string, unknown>;
+                                const oldWidth = (imageRecord.width as number) || 1;
+                                const oldScaleX = item.scale.x || 1;
+                                const oldScaleY = item.scale.y || 1;
+
+                                imageRecord.url = selectedUrl;
+                                if (selectedWidth && selectedHeight) {
+                                    imageRecord.width = selectedWidth;
+                                    imageRecord.height = selectedHeight;
+
+                                    // Preserve the visual size on the board, maintaining the new aspect ratio
+                                    const physicalWidth = oldWidth * Math.abs(oldScaleX);
+                                    const newScale = physicalWidth / selectedWidth;
+
+                                    item.scale = {
+                                        x: newScale * (oldScaleX < 0 ? -1 : 1),
+                                        y: newScale * (oldScaleY < 0 ? -1 : 1)
+                                    };
+                                }
+                            }
                         }
                     });
                 } else {
