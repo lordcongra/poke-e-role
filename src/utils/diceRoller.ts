@@ -3,7 +3,7 @@ import { useCharacterStore } from '../store/useCharacterStore';
 import { getPainPenalty, getStatusPenalties } from './combatMath';
 
 // New Helper Function to safely append and sort an Initiative Score to the Token!
-export async function assignInitiative(tokenId: string, successes: number, baseInit: number) {
+export async function assignInitiative(tokenId: string, rollTotal: number, baseInit: number) {
     if (!OBR.isAvailable) return;
     try {
         const items = await OBR.scene.items.getItems();
@@ -15,10 +15,10 @@ export async function assignInitiative(tokenId: string, successes: number, baseI
         let finalInit = 0;
         let isUnique = false;
 
-        // Math explanation: Successes are whole numbers. Base Init is a decimal (.XX). Random tie-breaker is tiny decimal (.XXXX)
+        // Math explanation: rollTotal is whole numbers. Base Init is a decimal (.XX). Random tie-breaker is tiny decimal (.XXXX)
         while (!isUnique) {
             const tieBreaker = Math.floor(Math.random() * 99);
-            finalInit = successes + baseInit / 100 + tieBreaker / 10000;
+            finalInit = rollTotal + baseInit / 100 + tieBreaker / 10000;
             if (!existingInits.includes(finalInit)) {
                 isUnique = true;
             }
@@ -192,7 +192,8 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
 
                 if (rollType === 'init' && state.tokenId) {
                     const baseInit = parseInt(payload) || 0;
-                    await assignInitiative(state.tokenId, finalSuccesses, baseInit);
+                    const rollValue = isSuccessRoll ? finalSuccesses : finalSum;
+                    await assignInitiative(state.tokenId, rollValue, baseInit);
                 } else if (rollType === 'damage' && payload && finalSuccesses > 0) {
                     const [flatStr, ratioStr] = payload.split('_');
                     const flatGained = parseInt(flatStr) || 0;

@@ -370,9 +370,9 @@ export function useOwlbearSync() {
 
                             // ⚔️ INITIATIVE INTERCEPT
                             if (rollType === 'init' && targetTokenId && resultObj) {
-                                const successes = parseInt(String(resultObj.totalValue)) || 0;
+                                const rollTotal = parseInt(String(resultObj.totalValue)) || 0;
                                 const baseInit = parseInt(String(payload)) || 0;
-                                await assignInitiative(targetTokenId, successes, baseInit);
+                                await assignInitiative(targetTokenId, rollTotal, baseInit);
                             } else if (rollType === 'status' && targetTokenId && parts.length > 2 && resultObj) {
                                 const statusId = parts[2];
                                 const successes = parseInt(String(resultObj.totalValue)) || 0;
