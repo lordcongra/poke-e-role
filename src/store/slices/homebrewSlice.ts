@@ -54,14 +54,14 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         const currentTypes = get().roomCustomTypes;
         const target = currentTypes.find((t) => t.name === name);
         if (!target) return;
-        
+
         let copyName = `${target.name} (Copy)`;
         let counter = 1;
         while (currentTypes.some((t) => t.name === copyName)) {
             counter++;
             copyName = `${target.name} (Copy ${counter})`;
         }
-        
+
         const newType = { ...target, name: copyName };
         const newTypes = [...currentTypes, newType];
         set({ roomCustomTypes: newTypes });
@@ -95,7 +95,7 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         const currentAbilities = get().roomCustomAbilities;
         const target = currentAbilities.find((a) => a.id === id);
         if (!target) return;
-        
+
         let copyName = `${target.name} (Copy)`;
         let counter = 1;
         while (currentAbilities.some((a) => a.name === copyName)) {
@@ -144,7 +144,7 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         const currentMoves = get().roomCustomMoves;
         const target = currentMoves.find((m) => m.id === id);
         if (!target) return;
-        
+
         let copyName = `${target.name} (Copy)`;
         let counter = 1;
         while (currentMoves.some((m) => m.name === copyName)) {
@@ -206,7 +206,7 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         const currentPokemon = get().roomCustomPokemon;
         const target = currentPokemon.find((p) => p.id === id);
         if (!target) return;
-        
+
         let copyName = `${target.Name} (Copy)`;
         let counter = 1;
         while (currentPokemon.some((p) => p.Name === copyName)) {
@@ -252,7 +252,7 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         const currentItems = get().roomCustomItems;
         const target = currentItems.find((i) => i.id === id);
         if (!target) return;
-        
+
         let copyName = `${target.name} (Copy)`;
         let counter = 1;
         while (currentItems.some((i) => i.name === copyName)) {
@@ -319,7 +319,7 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         const currentForms = get().roomCustomForms;
         const target = currentForms.find((f) => f.id === id);
         if (!target) return;
-        
+
         let copyName = `${target.name} (Copy)`;
         let counter = 1;
         while (currentForms.some((f) => f.name === copyName)) {

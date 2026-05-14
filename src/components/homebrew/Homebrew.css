@@ -344,6 +344,15 @@
 
 /* --- Mobile Overrides --- */
 @media (max-width: 768px) {
+    .homebrew-card__header {
+        flex-wrap: wrap;
+    }
+
+    .homebrew-card__btn {
+        flex: 1 1 auto;
+        text-align: center;
+    }
+
     .homebrew-list__search-input {
         flex: 1 1 100%;
     }

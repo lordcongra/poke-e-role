@@ -73,12 +73,12 @@ export function HomebrewPokemonCard({
                 )}
                 {canEdit && (
                     <>
-                        <button 
-                            onClick={onDuplicate} 
-                            className="action-button action-button--dark homebrew-pokemon-card__delete-btn" 
+                        <button
+                            onClick={onDuplicate}
+                            className="action-button action-button--dark homebrew-pokemon-card__delete-btn"
                             title="Duplicate Pokémon"
                         >
-                            📋
+                            📋 Copy
                         </button>
                         <button
                             onClick={() => setShowDeleteConfirm(true)}

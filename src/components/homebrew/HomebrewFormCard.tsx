@@ -134,12 +134,12 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                 )}
                 {canEdit && (
                     <>
-                        <button 
-                            onClick={onDuplicate} 
-                            className="action-button action-button--dark homebrew-card__btn" 
+                        <button
+                            onClick={onDuplicate}
+                            className="action-button action-button--dark homebrew-card__btn"
                             title="Duplicate Form"
                         >
-                            📋
+                            📋 Copy
                         </button>
                         <button
                             onClick={() => setShowDeleteConfirm(true)}

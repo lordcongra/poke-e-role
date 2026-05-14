@@ -76,12 +76,12 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove, onDuplicate }:
                         >
                             🏷️ Tags
                         </button>
-                        <button 
-                            onClick={onDuplicate} 
-                            className="action-button action-button--dark homebrew-card__btn" 
+                        <button
+                            onClick={onDuplicate}
+                            className="action-button action-button--dark homebrew-card__btn"
                             title="Duplicate Item"
                         >
-                            📋
+                            📋 Copy
                         </button>
                         <button
                             onClick={() => setShowDeleteConfirm(true)}

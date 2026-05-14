@@ -17,7 +17,15 @@ interface HomebrewMoveCardProps {
     onDuplicate: () => void;
 }
 
-export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit, onRemove, onDuplicate }: HomebrewMoveCardProps) {
+export function HomebrewMoveCard({
+    move,
+    allTypes,
+    allTypeColors,
+    role,
+    canEdit,
+    onRemove,
+    onDuplicate
+}: HomebrewMoveCardProps) {
     const updateCustomMove = useCharacterStore((state) => state.updateCustomMove);
 
     const [localName, setLocalName] = useState(move.name);
@@ -74,12 +82,12 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                         >
                             🏷️ Tags
                         </button>
-                        <button 
-                            onClick={onDuplicate} 
-                            className="action-button action-button--dark homebrew-card__btn" 
+                        <button
+                            onClick={onDuplicate}
+                            className="action-button action-button--dark homebrew-card__btn"
                             title="Duplicate Move"
                         >
-                            📋
+                            📋 Copy
                         </button>
                         <button
                             onClick={() => setShowDeleteConfirm(true)}
@@ -163,7 +171,9 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                             <span className="homebrew-move__or-label">or</span>
                             <select
                                 value={move.acc1Alt || ''}
-                                onChange={(event) => canEdit && updateCustomMove(move.id, 'acc1Alt', event.target.value)}
+                                onChange={(event) =>
+                                    canEdit && updateCustomMove(move.id, 'acc1Alt', event.target.value)
+                                }
                                 disabled={!canEdit}
                                 className="homebrew-move__stat-select"
                             >
@@ -199,7 +209,9 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                             <span className="homebrew-move__or-label">or</span>
                             <select
                                 value={move.acc2Alt || ''}
-                                onChange={(event) => canEdit && updateCustomMove(move.id, 'acc2Alt', event.target.value)}
+                                onChange={(event) =>
+                                    canEdit && updateCustomMove(move.id, 'acc2Alt', event.target.value)
+                                }
                                 disabled={!canEdit}
                                 className="homebrew-move__stat-select"
                             >
@@ -237,7 +249,9 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                             <span className="homebrew-move__or-label">or</span>
                             <select
                                 value={move.dmg1Alt || ''}
-                                onChange={(event) => canEdit && updateCustomMove(move.id, 'dmg1Alt', event.target.value)}
+                                onChange={(event) =>
+                                    canEdit && updateCustomMove(move.id, 'dmg1Alt', event.target.value)
+                                }
                                 disabled={!canEdit}
                                 className="homebrew-move__stat-select"
                             >

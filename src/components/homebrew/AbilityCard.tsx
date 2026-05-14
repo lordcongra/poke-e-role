@@ -73,12 +73,12 @@ export function AbilityCard({ ability, role, canEdit, onRemove, onDuplicate }: A
                         >
                             🏷️ Tags
                         </button>
-                        <button 
-                            onClick={onDuplicate} 
-                            className="action-button action-button--dark homebrew-card__btn" 
+                        <button
+                            onClick={onDuplicate}
+                            className="action-button action-button--dark homebrew-card__btn"
                             title="Duplicate Ability"
                         >
-                            📋
+                            📋 Copy
                         </button>
                         <button
                             onClick={() => setShowDeleteConfirm(true)}
