@@ -230,26 +230,32 @@ export interface HomebrewSlice {
     addCustomType: (type: CustomType) => void;
     updateCustomType: (oldName: string, newType: CustomType) => void;
     removeCustomType: (name: string) => void;
+    duplicateCustomType: (name: string) => void;
 
     addCustomAbility: () => void;
     updateCustomAbility: <K extends keyof CustomAbility>(id: string, field: K, value: CustomAbility[K]) => void;
     removeCustomAbility: (id: string) => void;
+    duplicateCustomAbility: (id: string) => void;
 
     addCustomMove: () => void;
     updateCustomMove: <K extends keyof CustomMove>(id: string, field: K, value: CustomMove[K]) => void;
     removeCustomMove: (id: string) => void;
+    duplicateCustomMove: (id: string) => void;
 
     addCustomPokemon: () => void;
     updateCustomPokemon: <K extends keyof CustomPokemon>(id: string, field: K, value: CustomPokemon[K]) => void;
     removeCustomPokemon: (id: string) => void;
+    duplicateCustomPokemon: (id: string) => void;
 
     addCustomItem: () => void;
     updateCustomItem: <K extends keyof CustomItem>(id: string, field: K, value: CustomItem[K]) => void;
     removeCustomItem: (id: string) => void;
+    duplicateCustomItem: (id: string) => void;
 
     addCustomForm: (isMegaTemplate?: boolean) => void;
     updateCustomForm: <K extends keyof CustomForm>(id: string, field: K, value: CustomForm[K]) => void;
     removeCustomForm: (id: string) => void;
+    duplicateCustomForm: (id: string) => void;
 
     overwriteCustomTypeData: (types: CustomType[]) => void;
     overwriteCustomAbilityData: (abilities: CustomAbility[]) => void;

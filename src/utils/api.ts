@@ -226,14 +226,18 @@ export async function fetchMoveData(moveName: string): Promise<MoveApiResponse |
     // 1. Check Homebrew First
     const custom = homebrewMoves.find((m) => m.name.trim().toLowerCase() === cleanName);
     if (custom) {
+        const finalAcc1 = custom.acc1Alt && custom.acc1Alt !== 'none' && custom.acc1Alt !== '' ? `${custom.acc1}/${custom.acc1Alt}` : custom.acc1;
+        const finalAcc2 = custom.acc2Alt && custom.acc2Alt !== 'none' && custom.acc2Alt !== '' ? `${custom.acc2}/${custom.acc2Alt}` : custom.acc2;
+        const finalDmg1 = custom.dmg1Alt && custom.dmg1Alt !== 'none' && custom.dmg1Alt !== '' ? `${custom.dmg1}/${custom.dmg1Alt}` : custom.dmg1;
+
         return {
             Name: custom.name,
             Type: custom.type,
             Category: custom.category,
             Power: custom.power,
-            Accuracy1: custom.acc1,
-            Accuracy2: custom.acc2,
-            Damage1: custom.dmg1,
+            Accuracy1: finalAcc1,
+            Accuracy2: finalAcc2,
+            Damage1: finalDmg1,
             Effect: custom.desc
         };
     }

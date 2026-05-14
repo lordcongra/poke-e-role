@@ -13,6 +13,7 @@ interface HomebrewPokemonCardProps {
     role: string;
     canEdit: boolean;
     onRemove: () => void;
+    onDuplicate: () => void;
 }
 
 export function HomebrewPokemonCard({
@@ -21,7 +22,8 @@ export function HomebrewPokemonCard({
     allTypeColors,
     role,
     canEdit,
-    onRemove
+    onRemove,
+    onDuplicate
 }: HomebrewPokemonCardProps) {
     const updateCustomPokemon = useCharacterStore((state) => state.updateCustomPokemon);
 
@@ -70,12 +72,21 @@ export function HomebrewPokemonCard({
                     </label>
                 )}
                 {canEdit && (
-                    <button
-                        onClick={() => setShowDeleteConfirm(true)}
-                        className="action-button action-button--red homebrew-pokemon-card__delete-btn"
-                    >
-                        Delete
-                    </button>
+                    <>
+                        <button 
+                            onClick={onDuplicate} 
+                            className="action-button action-button--dark homebrew-pokemon-card__delete-btn" 
+                            title="Duplicate Pokémon"
+                        >
+                            📋
+                        </button>
+                        <button
+                            onClick={() => setShowDeleteConfirm(true)}
+                            className="action-button action-button--red homebrew-pokemon-card__delete-btn"
+                        >
+                            Delete
+                        </button>
+                    </>
                 )}
             </div>
 

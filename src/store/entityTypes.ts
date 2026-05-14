@@ -187,8 +187,11 @@ export interface CustomMove {
     category: 'Physical' | 'Special' | 'Status';
     power: number;
     acc1: string;
+    acc1Alt?: string;
     acc2: string;
+    acc2Alt?: string;
     dmg1: string;
+    dmg1Alt?: string;
     desc: string;
     gmOnly?: boolean;
 }

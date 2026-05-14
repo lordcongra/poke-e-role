@@ -12,9 +12,10 @@ interface HomebrewFormCardProps {
     role: string;
     canEdit: boolean;
     onRemove: () => void;
+    onDuplicate: () => void;
 }
 
-export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewFormCardProps) {
+export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }: HomebrewFormCardProps) {
     const updateCustomForm = useCharacterStore((state) => state.updateCustomForm);
     const roomCustomMoves = useCharacterStore((state) => state.roomCustomMoves);
 
@@ -132,12 +133,21 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove }: HomebrewForm
                     </label>
                 )}
                 {canEdit && (
-                    <button
-                        onClick={() => setShowDeleteConfirm(true)}
-                        className="action-button action-button--red homebrew-card__btn"
-                    >
-                        Delete
-                    </button>
+                    <>
+                        <button 
+                            onClick={onDuplicate} 
+                            className="action-button action-button--dark homebrew-card__btn" 
+                            title="Duplicate Form"
+                        >
+                            📋
+                        </button>
+                        <button
+                            onClick={() => setShowDeleteConfirm(true)}
+                            className="action-button action-button--red homebrew-card__btn"
+                        >
+                            Delete
+                        </button>
+                    </>
                 )}
             </div>
 

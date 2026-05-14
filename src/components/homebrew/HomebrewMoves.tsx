@@ -15,6 +15,7 @@ export function HomebrewMoves() {
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
     const addCustomMove = useCharacterStore((state) => state.addCustomMove);
     const removeCustomMove = useCharacterStore((state) => state.removeCustomMove);
+    const duplicateCustomMove = useCharacterStore((state) => state.duplicateCustomMove);
     const overwriteCustomMoveData = useCharacterStore((state) => state.overwriteCustomMoveData);
     const mergeCustomMoveData = useCharacterStore((state) => state.mergeCustomMoveData);
 
@@ -108,6 +109,7 @@ export function HomebrewMoves() {
                             role={role}
                             canEdit={canEdit}
                             onRemove={() => removeCustomMove(move.id)}
+                            onDuplicate={() => duplicateCustomMove(move.id)}
                         />
                     ))
                 )}

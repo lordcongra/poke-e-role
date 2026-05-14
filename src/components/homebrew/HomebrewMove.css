@@ -48,6 +48,20 @@
     border-radius: 3px;
 }
 
+.homebrew-move__dual-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.homebrew-move__or-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-align: center;
+    font-weight: bold;
+}
+
 /* Mobile Overrides */
 @media (max-width: 768px) {
     .homebrew-move__row,

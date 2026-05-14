@@ -10,9 +10,10 @@ interface HomebrewItemCardProps {
     role: string;
     canEdit: boolean;
     onRemove: () => void;
+    onDuplicate: () => void;
 }
 
-export function HomebrewItemCard({ item, role, canEdit, onRemove }: HomebrewItemCardProps) {
+export function HomebrewItemCard({ item, role, canEdit, onRemove, onDuplicate }: HomebrewItemCardProps) {
     const updateCustomItem = useCharacterStore((state) => state.updateCustomItem);
 
     const [localName, setLocalName] = useState(item.name);
@@ -68,20 +69,27 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove }: HomebrewItem
                     </label>
                 )}
                 {canEdit && (
-                    <button
-                        onClick={() => setShowTagBuilder(true)}
-                        className="action-button action-button--dark homebrew-card__btn"
-                    >
-                        🏷️ Tags
-                    </button>
-                )}
-                {canEdit && (
-                    <button
-                        onClick={() => setShowDeleteConfirm(true)}
-                        className="action-button action-button--red homebrew-card__btn"
-                    >
-                        Delete
-                    </button>
+                    <>
+                        <button
+                            onClick={() => setShowTagBuilder(true)}
+                            className="action-button action-button--dark homebrew-card__btn"
+                        >
+                            🏷️ Tags
+                        </button>
+                        <button 
+                            onClick={onDuplicate} 
+                            className="action-button action-button--dark homebrew-card__btn" 
+                            title="Duplicate Item"
+                        >
+                            📋
+                        </button>
+                        <button
+                            onClick={() => setShowDeleteConfirm(true)}
+                            className="action-button action-button--red homebrew-card__btn"
+                        >
+                            Delete
+                        </button>
+                    </>
                 )}
             </div>
 

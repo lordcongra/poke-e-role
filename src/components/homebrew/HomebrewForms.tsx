@@ -13,6 +13,7 @@ export function HomebrewForms() {
     const roomCustomForms = useCharacterStore((state) => state.roomCustomForms);
     const addCustomForm = useCharacterStore((state) => state.addCustomForm);
     const removeCustomForm = useCharacterStore((state) => state.removeCustomForm);
+    const duplicateCustomForm = useCharacterStore((state) => state.duplicateCustomForm);
     const overwriteCustomFormData = useCharacterStore((state) => state.overwriteCustomFormData);
     const mergeCustomFormData = useCharacterStore((state) => state.mergeCustomFormData);
 
@@ -108,6 +109,7 @@ export function HomebrewForms() {
                             role={role}
                             canEdit={canEdit}
                             onRemove={() => removeCustomForm(form.id)}
+                            onDuplicate={() => duplicateCustomForm(form.id)}
                         />
                     ))
                 )}

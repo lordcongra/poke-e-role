@@ -14,9 +14,10 @@ interface HomebrewMoveCardProps {
     role: string;
     canEdit: boolean;
     onRemove: () => void;
+    onDuplicate: () => void;
 }
 
-export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit, onRemove }: HomebrewMoveCardProps) {
+export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit, onRemove, onDuplicate }: HomebrewMoveCardProps) {
     const updateCustomMove = useCharacterStore((state) => state.updateCustomMove);
 
     const [localName, setLocalName] = useState(move.name);
@@ -66,20 +67,27 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
                     </label>
                 )}
                 {canEdit && (
-                    <button
-                        onClick={() => setShowTagBuilder(true)}
-                        className="action-button action-button--dark homebrew-card__btn"
-                    >
-                        🏷️ Tags
-                    </button>
-                )}
-                {canEdit && (
-                    <button
-                        onClick={() => setShowDeleteConfirm(true)}
-                        className="action-button action-button--red homebrew-card__btn"
-                    >
-                        Delete
-                    </button>
+                    <>
+                        <button
+                            onClick={() => setShowTagBuilder(true)}
+                            className="action-button action-button--dark homebrew-card__btn"
+                        >
+                            🏷️ Tags
+                        </button>
+                        <button 
+                            onClick={onDuplicate} 
+                            className="action-button action-button--dark homebrew-card__btn" 
+                            title="Duplicate Move"
+                        >
+                            📋
+                        </button>
+                        <button
+                            onClick={() => setShowDeleteConfirm(true)}
+                            className="action-button action-button--red homebrew-card__btn"
+                        >
+                            Delete
+                        </button>
+                    </>
                 )}
             </div>
 
@@ -133,60 +141,119 @@ export function HomebrewMoveCard({ move, allTypes, allTypeColors, role, canEdit,
 
                     <div className="homebrew-move__stat-row">
                         <span className="homebrew-move__label">Accuracy:</span>
-                        <select
-                            value={move.acc1}
-                            onChange={(event) => canEdit && updateCustomMove(move.id, 'acc1', event.target.value)}
-                            disabled={!canEdit}
-                            className="homebrew-move__stat-select"
-                        >
-                            {Object.values(CombatStat).map((stat) => (
-                                <option key={stat} value={stat}>
-                                    {stat.toUpperCase()}
-                                </option>
-                            ))}
-                            {Object.values(SocialStat).map((stat) => (
-                                <option key={stat} value={stat}>
-                                    {stat.toUpperCase()}
-                                </option>
-                            ))}
-                            <option value="will">WILL</option>
-                        </select>
+                        <div className="homebrew-move__dual-col">
+                            <select
+                                value={move.acc1}
+                                onChange={(event) => canEdit && updateCustomMove(move.id, 'acc1', event.target.value)}
+                                disabled={!canEdit}
+                                className="homebrew-move__stat-select"
+                            >
+                                {Object.values(CombatStat).map((stat) => (
+                                    <option key={stat} value={stat}>
+                                        {stat.toUpperCase()}
+                                    </option>
+                                ))}
+                                {Object.values(SocialStat).map((stat) => (
+                                    <option key={stat} value={stat}>
+                                        {stat.toUpperCase()}
+                                    </option>
+                                ))}
+                                <option value="will">WILL</option>
+                            </select>
+                            <span className="homebrew-move__or-label">or</span>
+                            <select
+                                value={move.acc1Alt || ''}
+                                onChange={(event) => canEdit && updateCustomMove(move.id, 'acc1Alt', event.target.value)}
+                                disabled={!canEdit}
+                                className="homebrew-move__stat-select"
+                            >
+                                <option value="">-- None --</option>
+                                {Object.values(CombatStat).map((stat) => (
+                                    <option key={`alt1-${stat}`} value={stat}>
+                                        {stat.toUpperCase()}
+                                    </option>
+                                ))}
+                                {Object.values(SocialStat).map((stat) => (
+                                    <option key={`alt1-${stat}`} value={stat}>
+                                        {stat.toUpperCase()}
+                                    </option>
+                                ))}
+                                <option value="will">WILL</option>
+                            </select>
+                        </div>
                         <span>+</span>
-                        <select
-                            value={move.acc2}
-                            onChange={(event) => canEdit && updateCustomMove(move.id, 'acc2', event.target.value)}
-                            disabled={!canEdit}
-                            className="homebrew-move__stat-select"
-                        >
-                            <option value="none">-- None --</option>
-                            {Object.values(Skill).map((skill) => (
-                                <option key={skill} value={skill}>
-                                    {skill.charAt(0).toUpperCase() + skill.slice(1)}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="homebrew-move__dual-col">
+                            <select
+                                value={move.acc2}
+                                onChange={(event) => canEdit && updateCustomMove(move.id, 'acc2', event.target.value)}
+                                disabled={!canEdit}
+                                className="homebrew-move__stat-select"
+                            >
+                                <option value="none">-- None --</option>
+                                {Object.values(Skill).map((skill) => (
+                                    <option key={skill} value={skill}>
+                                        {skill.charAt(0).toUpperCase() + skill.slice(1)}
+                                    </option>
+                                ))}
+                            </select>
+                            <span className="homebrew-move__or-label">or</span>
+                            <select
+                                value={move.acc2Alt || ''}
+                                onChange={(event) => canEdit && updateCustomMove(move.id, 'acc2Alt', event.target.value)}
+                                disabled={!canEdit}
+                                className="homebrew-move__stat-select"
+                            >
+                                <option value="">-- None --</option>
+                                {Object.values(Skill).map((skill) => (
+                                    <option key={`alt2-${skill}`} value={skill}>
+                                        {skill.charAt(0).toUpperCase() + skill.slice(1)}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
                     <div className="homebrew-move__stat-row">
                         <span className="homebrew-move__label">Damage:</span>
-                        <select
-                            value={move.dmg1}
-                            onChange={(event) => canEdit && updateCustomMove(move.id, 'dmg1', event.target.value)}
-                            disabled={!canEdit}
-                            className="homebrew-move__stat-select"
-                        >
-                            <option value="">-- None --</option>
-                            {Object.values(CombatStat).map((stat) => (
-                                <option key={stat} value={stat}>
-                                    {stat.toUpperCase()}
-                                </option>
-                            ))}
-                            {Object.values(SocialStat).map((stat) => (
-                                <option key={stat} value={stat}>
-                                    {stat.toUpperCase()}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="homebrew-move__dual-col">
+                            <select
+                                value={move.dmg1}
+                                onChange={(event) => canEdit && updateCustomMove(move.id, 'dmg1', event.target.value)}
+                                disabled={!canEdit}
+                                className="homebrew-move__stat-select"
+                            >
+                                <option value="">-- None --</option>
+                                {Object.values(CombatStat).map((stat) => (
+                                    <option key={stat} value={stat}>
+                                        {stat.toUpperCase()}
+                                    </option>
+                                ))}
+                                {Object.values(SocialStat).map((stat) => (
+                                    <option key={stat} value={stat}>
+                                        {stat.toUpperCase()}
+                                    </option>
+                                ))}
+                            </select>
+                            <span className="homebrew-move__or-label">or</span>
+                            <select
+                                value={move.dmg1Alt || ''}
+                                onChange={(event) => canEdit && updateCustomMove(move.id, 'dmg1Alt', event.target.value)}
+                                disabled={!canEdit}
+                                className="homebrew-move__stat-select"
+                            >
+                                <option value="">-- None --</option>
+                                {Object.values(CombatStat).map((stat) => (
+                                    <option key={`altdmg1-${stat}`} value={stat}>
+                                        {stat.toUpperCase()}
+                                    </option>
+                                ))}
+                                {Object.values(SocialStat).map((stat) => (
+                                    <option key={`altdmg1-${stat}`} value={stat}>
+                                        {stat.toUpperCase()}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
                     <textarea

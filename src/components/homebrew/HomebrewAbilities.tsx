@@ -13,6 +13,7 @@ export function HomebrewAbilities() {
     const roomCustomAbilities = useCharacterStore((state) => state.roomCustomAbilities);
     const addCustomAbility = useCharacterStore((state) => state.addCustomAbility);
     const removeCustomAbility = useCharacterStore((state) => state.removeCustomAbility);
+    const duplicateCustomAbility = useCharacterStore((state) => state.duplicateCustomAbility);
     const overwriteCustomAbilityData = useCharacterStore((state) => state.overwriteCustomAbilityData);
     const mergeCustomAbilityData = useCharacterStore((state) => state.mergeCustomAbilityData);
 
@@ -99,6 +100,7 @@ export function HomebrewAbilities() {
                             role={role}
                             canEdit={canEdit}
                             onRemove={() => removeCustomAbility(ability.id)}
+                            onDuplicate={() => duplicateCustomAbility(ability.id)}
                         />
                     ))
                 )}

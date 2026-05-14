@@ -195,6 +195,21 @@
     cursor: pointer;
 }
 
+.homebrew-types__list-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.homebrew-types__list-duplicate {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    color: var(--text-main);
+    padding: 0;
+}
+
 .homebrew-types__list-delete {
     background: transparent;
     border: none;
@@ -202,6 +217,7 @@
     cursor: pointer;
     font-weight: bold;
     font-size: 1rem;
+    padding: 0;
 }
 
 .homebrew-types__footer {

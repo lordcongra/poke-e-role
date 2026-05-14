@@ -14,6 +14,7 @@ export function HomebrewItems() {
     const roomCustomItems = useCharacterStore((state) => state.roomCustomItems);
     const addCustomItem = useCharacterStore((state) => state.addCustomItem);
     const removeCustomItem = useCharacterStore((state) => state.removeCustomItem);
+    const duplicateCustomItem = useCharacterStore((state) => state.duplicateCustomItem);
     const overwriteCustomItemData = useCharacterStore((state) => state.overwriteCustomItemData);
     const mergeCustomItemData = useCharacterStore((state) => state.mergeCustomItemData);
 
@@ -117,6 +118,7 @@ export function HomebrewItems() {
                             role={role}
                             canEdit={canEdit}
                             onRemove={() => removeCustomItem(item.id)}
+                            onDuplicate={() => duplicateCustomItem(item.id)}
                         />
                     ))
                 )}

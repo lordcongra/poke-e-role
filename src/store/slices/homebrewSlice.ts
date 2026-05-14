@@ -50,6 +50,23 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         set({ roomCustomTypes: newTypes });
         saveRoomMeta('customTypes', newTypes);
     },
+    duplicateCustomType: (name) => {
+        const currentTypes = get().roomCustomTypes;
+        const target = currentTypes.find((t) => t.name === name);
+        if (!target) return;
+        
+        let copyName = `${target.name} (Copy)`;
+        let counter = 1;
+        while (currentTypes.some((t) => t.name === copyName)) {
+            counter++;
+            copyName = `${target.name} (Copy ${counter})`;
+        }
+        
+        const newType = { ...target, name: copyName };
+        const newTypes = [...currentTypes, newType];
+        set({ roomCustomTypes: newTypes });
+        saveRoomMeta('customTypes', newTypes);
+    },
 
     addCustomAbility: () => {
         const newAbilities = [
@@ -70,6 +87,23 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
     },
     removeCustomAbility: (id) => {
         const newAbilities = get().roomCustomAbilities.filter((ability) => ability.id !== id);
+        set({ roomCustomAbilities: newAbilities });
+        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, newAbilities, get().roomCustomItems);
+        saveRoomMeta('customAbilities', newAbilities);
+    },
+    duplicateCustomAbility: (id) => {
+        const currentAbilities = get().roomCustomAbilities;
+        const target = currentAbilities.find((a) => a.id === id);
+        if (!target) return;
+        
+        let copyName = `${target.name} (Copy)`;
+        let counter = 1;
+        while (currentAbilities.some((a) => a.name === copyName)) {
+            counter++;
+            copyName = `${target.name} (Copy ${counter})`;
+        }
+
+        const newAbilities = [...currentAbilities, { ...target, id: crypto.randomUUID(), name: copyName }];
         set({ roomCustomAbilities: newAbilities });
         syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, newAbilities, get().roomCustomItems);
         saveRoomMeta('customAbilities', newAbilities);
@@ -102,6 +136,23 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
     },
     removeCustomMove: (id) => {
         const newMoves = get().roomCustomMoves.filter((move) => move.id !== id);
+        set({ roomCustomMoves: newMoves });
+        syncHomebrewToApi(get().roomCustomPokemon, newMoves, get().roomCustomAbilities, get().roomCustomItems);
+        saveRoomMeta('customMoves', newMoves);
+    },
+    duplicateCustomMove: (id) => {
+        const currentMoves = get().roomCustomMoves;
+        const target = currentMoves.find((m) => m.id === id);
+        if (!target) return;
+        
+        let copyName = `${target.name} (Copy)`;
+        let counter = 1;
+        while (currentMoves.some((m) => m.name === copyName)) {
+            counter++;
+            copyName = `${target.name} (Copy ${counter})`;
+        }
+
+        const newMoves = [...currentMoves, { ...target, id: crypto.randomUUID(), name: copyName }];
         set({ roomCustomMoves: newMoves });
         syncHomebrewToApi(get().roomCustomPokemon, newMoves, get().roomCustomAbilities, get().roomCustomItems);
         saveRoomMeta('customMoves', newMoves);
@@ -151,6 +202,23 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         syncHomebrewToApi(newPokemon, get().roomCustomMoves, get().roomCustomAbilities, get().roomCustomItems);
         saveRoomMeta('customPokemon', newPokemon);
     },
+    duplicateCustomPokemon: (id) => {
+        const currentPokemon = get().roomCustomPokemon;
+        const target = currentPokemon.find((p) => p.id === id);
+        if (!target) return;
+        
+        let copyName = `${target.Name} (Copy)`;
+        let counter = 1;
+        while (currentPokemon.some((p) => p.Name === copyName)) {
+            counter++;
+            copyName = `${target.Name} (Copy ${counter})`;
+        }
+
+        const newPokemon = [...currentPokemon, { ...target, id: crypto.randomUUID(), Name: copyName }];
+        set({ roomCustomPokemon: newPokemon });
+        syncHomebrewToApi(newPokemon, get().roomCustomMoves, get().roomCustomAbilities, get().roomCustomItems);
+        saveRoomMeta('customPokemon', newPokemon);
+    },
 
     addCustomItem: () => {
         const newItems: CustomItem[] = [
@@ -176,6 +244,23 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
     },
     removeCustomItem: (id) => {
         const newItems = get().roomCustomItems.filter((item) => item.id !== id);
+        set({ roomCustomItems: newItems });
+        syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, get().roomCustomAbilities, newItems);
+        saveRoomMeta('customItems', newItems);
+    },
+    duplicateCustomItem: (id) => {
+        const currentItems = get().roomCustomItems;
+        const target = currentItems.find((i) => i.id === id);
+        if (!target) return;
+        
+        let copyName = `${target.name} (Copy)`;
+        let counter = 1;
+        while (currentItems.some((i) => i.name === copyName)) {
+            counter++;
+            copyName = `${target.name} (Copy ${counter})`;
+        }
+
+        const newItems = [...currentItems, { ...target, id: crypto.randomUUID(), name: copyName }];
         set({ roomCustomItems: newItems });
         syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, get().roomCustomAbilities, newItems);
         saveRoomMeta('customItems', newItems);
@@ -227,6 +312,22 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
     },
     removeCustomForm: (id) => {
         const newForms = get().roomCustomForms.filter((form) => form.id !== id);
+        set({ roomCustomForms: newForms });
+        saveRoomMeta('customForms', newForms);
+    },
+    duplicateCustomForm: (id) => {
+        const currentForms = get().roomCustomForms;
+        const target = currentForms.find((f) => f.id === id);
+        if (!target) return;
+        
+        let copyName = `${target.name} (Copy)`;
+        let counter = 1;
+        while (currentForms.some((f) => f.name === copyName)) {
+            counter++;
+            copyName = `${target.name} (Copy ${counter})`;
+        }
+
+        const newForms = [...currentForms, { ...target, id: crypto.randomUUID(), name: copyName }];
         set({ roomCustomForms: newForms });
         saveRoomMeta('customForms', newForms);
     },

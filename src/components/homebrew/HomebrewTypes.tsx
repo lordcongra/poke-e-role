@@ -15,6 +15,7 @@ export function HomebrewTypes() {
     const addCustomType = useCharacterStore((state) => state.addCustomType);
     const updateCustomType = useCharacterStore((state) => state.updateCustomType);
     const removeCustomType = useCharacterStore((state) => state.removeCustomType);
+    const duplicateCustomType = useCharacterStore((state) => state.duplicateCustomType);
     const overwriteCustomTypeData = useCharacterStore((state) => state.overwriteCustomTypeData);
     const mergeCustomTypeData = useCharacterStore((state) => state.mergeCustomTypeData);
 
@@ -98,14 +99,24 @@ export function HomebrewTypes() {
                                 {customType.name} {canEdit && '✏️'}
                             </span>
                             {canEdit && (
-                                <button
-                                    type="button"
-                                    onClick={() => setDeleteTypeId(customType.name)}
-                                    className="homebrew-types__list-delete"
-                                    title="Delete"
-                                >
-                                    X
-                                </button>
+                                <div className="homebrew-types__list-actions">
+                                    <button
+                                        type="button"
+                                        onClick={() => duplicateCustomType(customType.name)}
+                                        className="homebrew-types__list-duplicate"
+                                        title="Duplicate Type"
+                                    >
+                                        📋
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setDeleteTypeId(customType.name)}
+                                        className="homebrew-types__list-delete"
+                                        title="Delete Type"
+                                    >
+                                        X
+                                    </button>
+                                </div>
                             )}
                         </div>
                     ))

@@ -18,6 +18,7 @@ export function HomebrewPokemon() {
     const roomCustomMoves = useCharacterStore((state) => state.roomCustomMoves);
     const addCustomPokemon = useCharacterStore((state) => state.addCustomPokemon);
     const removeCustomPokemon = useCharacterStore((state) => state.removeCustomPokemon);
+    const duplicateCustomPokemon = useCharacterStore((state) => state.duplicateCustomPokemon);
     const overwriteCustomPokemonData = useCharacterStore((state) => state.overwriteCustomPokemonData);
     const mergeCustomPokemonData = useCharacterStore((state) => state.mergeCustomPokemonData);
 
@@ -137,6 +138,7 @@ export function HomebrewPokemon() {
                             role={role}
                             canEdit={canEdit}
                             onRemove={() => removeCustomPokemon(pokemon.id)}
+                            onDuplicate={() => duplicateCustomPokemon(pokemon.id)}
                         />
                     ))
                 )}
