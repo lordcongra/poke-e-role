@@ -201,6 +201,5 @@ export const STATUS_OPTIONS = [
     'Frozen Solid',
     'In Love',
     'Paralysis',
-    'Sleep',
-    'Custom...'
+    'Sleep'
 ];

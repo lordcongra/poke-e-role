@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CharacterState, TrackerSlice } from '../storeTypes';
 import { saveToOwlbear } from '../../utils/obr';
+import { parseCombatTags, getAbilityText } from '../../utils/combatUtils';
 
 export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSlice> = (set) => ({
     statuses: [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }],
@@ -111,6 +112,36 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
 
     resetRound: () =>
         set((state) => {
+            const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+            const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+
+            const newHealth = { ...state.health };
+            const newWill = { ...state.will };
+
+            if (invMods.roundDamage > 0) {
+                newHealth.hpCurr = Math.max(0, newHealth.hpCurr - invMods.roundDamage);
+            }
+            if (invMods.roundHeal > 0 && newHealth.hpCurr > 0) {
+                newHealth.hpCurr = Math.min(newHealth.hpMax, newHealth.hpCurr + invMods.roundHeal);
+            }
+
+            if (invMods.roundWillDamage > 0) {
+                let remaining = invMods.roundWillDamage;
+                if (newWill.temporaryWill > 0) {
+                    const deduct = Math.min(newWill.temporaryWill, remaining);
+                    newWill.temporaryWill -= deduct;
+                    remaining -= deduct;
+                }
+                if (remaining > 0) {
+                    newWill.willCurr = Math.max(0, newWill.willCurr - remaining);
+                }
+            }
+            if (invMods.roundWillRestore > 0) {
+                newWill.willCurr = Math.min(newWill.willMax, newWill.willCurr + invMods.roundWillRestore);
+            }
+
+            const startingActions = Math.min(5, invMods.loseAction);
+
             const newEffects = state.effects
                 .map((e) => ({ ...e, rounds: Math.max(0, e.rounds - 1) }))
                 .filter((e) => e.rounds > 0);
@@ -118,18 +149,30 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
 
             try {
                 saveToOwlbear({
-                    'actions-used': 0,
+                    'actions-used': startingActions,
                     'evasions-used': false,
                     'clashes-used': false,
                     'chances-used': 0,
                     'fate-used': 0,
+                    'hp-curr': newHealth.hpCurr,
+                    'will-curr': newWill.willCurr,
+                    'temporary-will': newWill.temporaryWill,
                     'effects-data': JSON.stringify(newEffects),
                     'moves-data': JSON.stringify(newMoves)
                 });
             } catch (e) {}
 
             return {
-                trackers: { ...state.trackers, actions: 0, evade: false, clash: false, chances: 0, fate: 0 },
+                health: newHealth,
+                will: newWill,
+                trackers: {
+                    ...state.trackers,
+                    actions: startingActions,
+                    evade: false,
+                    clash: false,
+                    chances: 0,
+                    fate: 0
+                },
                 effects: newEffects,
                 moves: newMoves
             };

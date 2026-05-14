@@ -6,7 +6,14 @@ import './TagBuilderModal.css';
 
 interface TagBuilderModalProps {
     targetId: string;
-    targetType: 'item' | 'move' | 'homebrew_ability' | 'homebrew_move' | 'homebrew_item' | 'homebrew_form';
+    targetType:
+        | 'item'
+        | 'move'
+        | 'homebrew_ability'
+        | 'homebrew_move'
+        | 'homebrew_item'
+        | 'homebrew_form'
+        | 'homebrew_status';
     onClose: () => void;
 }
 
@@ -17,6 +24,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
     const updateCustomMove = useCharacterStore((state) => state.updateCustomMove);
     const updateCustomItem = useCharacterStore((state) => state.updateCustomItem);
     const updateCustomForm = useCharacterStore((state) => state.updateCustomForm);
+    const updateCustomStatus = useCharacterStore((state) => state.updateCustomStatus);
 
     const inventory = useCharacterStore((state) => state.inventory);
     const moves = useCharacterStore((state) => state.moves);
@@ -24,6 +32,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
     const customMoves = useCharacterStore((state) => state.roomCustomMoves);
     const customItems = useCharacterStore((state) => state.roomCustomItems);
     const customForms = useCharacterStore((state) => state.roomCustomForms);
+    const customStatuses = useCharacterStore((state) => state.roomCustomStatuses);
 
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
     const extraCategories = useCharacterStore((state) => state.extraCategories);
@@ -73,6 +82,17 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                 'Temp HP % Dmg'
             ];
 
+        if (category === 'turn_based')
+            return [
+                'Deal Damage End of Round',
+                'Reduce Will End of Round',
+                'Heal Round End',
+                'Restore Will Round End',
+                'Lose Action(s)',
+                'No Reactions',
+                'Extra Reaction(s)'
+            ];
+
         if (category === 'status')
             return [
                 '1st Degree Burn',
@@ -111,6 +131,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
         category === 'combat' ||
         (category === 'mechanic' &&
             ['Ignore Low Acc', 'Gain Temp HP', 'Temp HP on Hit', 'Temp HP % Dmg'].includes(target)) ||
+        (category === 'turn_based' && target !== 'No Reactions') ||
         (category === 'move_mechanics' && ['Low Accuracy', 'Set Damage'].includes(target));
 
     const handleConfirm = () => {
@@ -143,6 +164,15 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
             else if (target === 'Gain Temp HP') tag = `[Gain Temp HP ${Math.abs(numValue)}]`;
             else if (target === 'Temp HP on Hit') tag = `[Temp HP +${Math.abs(numValue)} on Hit]`;
             else if (target === 'Temp HP % Dmg') tag = `[Temp HP ${Math.abs(numValue)}% Dmg]`;
+        } else if (category === 'turn_based') {
+            if (target === 'Deal Damage End of Round') tag = `[Deal ${Math.abs(numValue)} Damage at End of Round]`;
+            else if (target === 'Reduce Will End of Round')
+                tag = `[Reduce Will by ${Math.abs(numValue)} at End of Round]`;
+            else if (target === 'Heal Round End') tag = `[Heal ${Math.abs(numValue)} Round End]`;
+            else if (target === 'Restore Will Round End') tag = `[Restore ${Math.abs(numValue)} Will Round End]`;
+            else if (target === 'Lose Action(s)') tag = `[Lose ${Math.abs(numValue)} Action]`;
+            else if (target === 'No Reactions') tag = `[No Reactions]`;
+            else if (target === 'Extra Reaction(s)') tag = `[${Math.abs(numValue)} Extra Reactions Per Turn]`;
         } else if (category === 'status') {
             tag = `[Status: ${target}]`;
         } else if (category === 'move_mechanics') {
@@ -181,6 +211,14 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
             } else if (targetType === 'homebrew_form') {
                 const hbForm = customForms.find((f) => f.id === targetId);
                 if (hbForm) updateCustomForm(targetId, 'tags', hbForm.tags ? `${hbForm.tags} ${tag}`.trim() : tag);
+            } else if (targetType === 'homebrew_status') {
+                const hbStatus = customStatuses.find((s) => s.id === targetId);
+                if (hbStatus)
+                    updateCustomStatus(
+                        targetId,
+                        'effects',
+                        hbStatus.effects ? `${hbStatus.effects} ${tag}`.trim() : tag
+                    );
             } else {
                 const item = inventory.find((i) => i.id === targetId);
                 if (item) updateInventoryItem(targetId, 'desc', item.desc ? `${item.desc} ${tag}`.trim() : tag);
@@ -208,6 +246,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                         <option value="combat">Combat Boost</option>
                         <option value="matchup">Matchup</option>
                         <option value="mechanic">Mechanic</option>
+                        <option value="turn_based">Turn-Based / Actions</option>
                         <option value="status">Status Condition</option>
                         {targetType === 'move' && <option value="move_mechanics">Move Mechanic</option>}
                     </select>

@@ -7,13 +7,15 @@ import { HomebrewMoves } from './HomebrewMoves';
 import { HomebrewPokemon } from './HomebrewPokemon';
 import { HomebrewItems } from './HomebrewItems';
 import { HomebrewForms } from './HomebrewForms';
+import { HomebrewStatuses } from './HomebrewStatuses';
 import type {
     CustomType,
     CustomAbility,
     CustomMove,
     CustomPokemon,
     CustomItem,
-    CustomForm
+    CustomForm,
+    CustomStatus
 } from '../../store/storeTypes';
 import './Homebrew.css';
 
@@ -22,9 +24,9 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
     const access = useCharacterStore((state) => state.identity.homebrewAccess);
     const canEdit = role === 'GM' || access === 'Full';
 
-    const [activeTab, setActiveTab] = useState<'types' | 'abilities' | 'moves' | 'pokemon' | 'items' | 'forms'>(
-        'types'
-    );
+    const [activeTab, setActiveTab] = useState<
+        'types' | 'abilities' | 'moves' | 'pokemon' | 'items' | 'forms' | 'statuses'
+    >('types');
     const overwriteAllHomebrewData = useCharacterStore((state) => state.overwriteAllHomebrewData);
     const mergeAllHomebrewData = useCharacterStore((state) => state.mergeAllHomebrewData);
 
@@ -36,6 +38,7 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
         mons: CustomPokemon[];
         items: CustomItem[];
         forms: CustomForm[];
+        statuses: CustomStatus[];
     } | null>(null);
 
     const handleExportAll = () => {
@@ -46,7 +49,8 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
             customMoves: role === 'GM' ? state.roomCustomMoves : [],
             customPokemon: role === 'GM' ? state.roomCustomPokemon : [],
             customItems: role === 'GM' ? state.roomCustomItems : [],
-            customForms: role === 'GM' ? state.roomCustomForms : []
+            customForms: role === 'GM' ? state.roomCustomForms : [],
+            customStatuses: role === 'GM' ? state.roomCustomStatuses : []
         };
         const dataStr = JSON.stringify(exportData, null, 2);
         const blob = new Blob([dataStr], { type: 'application/json' });
@@ -75,7 +79,8 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                         imported.customMoves ||
                         imported.customPokemon ||
                         imported.customItems ||
-                        imported.customForms)
+                        imported.customForms ||
+                        imported.customStatuses)
                 ) {
                     setImportAllData({
                         types: imported.customTypes || [],
@@ -83,7 +88,8 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                         moves: imported.customMoves || [],
                         mons: imported.customPokemon || [],
                         items: imported.customItems || [],
-                        forms: imported.customForms || []
+                        forms: imported.customForms || [],
+                        statuses: imported.customStatuses || []
                     });
                 } else {
                     if (OBR.isAvailable) OBR.notification.show('Invalid Homebrew Backup file.', 'ERROR');
@@ -106,7 +112,7 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                             X
                         </button>
                     </div>
-                    <div className="homebrew-modal__tabs">
+                    <div className="homebrew-modal__tabs" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                         <button
                             onClick={() => setActiveTab('types')}
                             className={`homebrew-modal__tab ${activeTab === 'types' ? 'homebrew-modal__tab--active' : ''}`}
@@ -143,6 +149,12 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                         >
                             Forms
                         </button>
+                        <button
+                            onClick={() => setActiveTab('statuses')}
+                            className={`homebrew-modal__tab ${activeTab === 'statuses' ? 'homebrew-modal__tab--active' : ''}`}
+                        >
+                            Statuses
+                        </button>
                     </div>
                 </div>
 
@@ -153,6 +165,7 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                     {activeTab === 'pokemon' && <HomebrewPokemon />}
                     {activeTab === 'items' && <HomebrewItems />}
                     {activeTab === 'forms' && <HomebrewForms />}
+                    {activeTab === 'statuses' && <HomebrewStatuses />}
                 </div>
 
                 <div className="homebrew-modal__footer">
@@ -208,7 +221,8 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                                         importAllData.moves,
                                         importAllData.mons,
                                         importAllData.items,
-                                        importAllData.forms
+                                        importAllData.forms,
+                                        importAllData.statuses
                                     );
                                     setImportAllData(null);
                                 }}
@@ -224,7 +238,8 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                                         importAllData.moves,
                                         importAllData.mons,
                                         importAllData.items,
-                                        importAllData.forms
+                                        importAllData.forms,
+                                        importAllData.statuses
                                     );
                                     setImportAllData(null);
                                 }}

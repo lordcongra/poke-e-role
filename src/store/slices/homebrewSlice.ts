@@ -1,20 +1,42 @@
 import type { StateCreator } from 'zustand';
-import type { CharacterState, HomebrewSlice, CustomMove, CustomPokemon, CustomItem, CustomForm } from '../storeTypes';
+import type {
+    CharacterState,
+    HomebrewSlice,
+    CustomMove,
+    CustomPokemon,
+    CustomItem,
+    CustomForm,
+    CustomStatus
+} from '../storeTypes';
 import { syncHomebrewToApi } from '../../utils/api';
 import OBR from '@owlbear-rodeo/sdk';
 
 const ROOM_META_ID = 'pokerole-pmd-extension/room-settings';
 
+let roomSaveTimeout: ReturnType<typeof setTimeout>;
+let pendingRoomUpdates: Record<string, unknown> = {};
+
 const saveRoomMeta = async (key: string, data: unknown) => {
     if (!OBR.isAvailable) return;
-    try {
-        const meta = await OBR.room.getMetadata();
-        const roomSettings = (meta[ROOM_META_ID] as Record<string, unknown>) || {};
-        roomSettings[key] = data;
-        await OBR.room.setMetadata({ [ROOM_META_ID]: roomSettings });
-    } catch (error) {
-        console.error('Failed to save room metadata:', error);
-    }
+
+    // BATCH REQUESTS TO PREVENT RATE LIMIT ERRORS (E.G. FROM COLOR PICKERS)
+    pendingRoomUpdates[key] = data;
+    clearTimeout(roomSaveTimeout);
+
+    roomSaveTimeout = setTimeout(async () => {
+        try {
+            const meta = await OBR.room.getMetadata();
+            const roomSettings = (meta[ROOM_META_ID] as Record<string, unknown>) || {};
+            Object.assign(roomSettings, pendingRoomUpdates);
+
+            // Clear pending updates before executing network request so fresh calls are queued cleanly
+            pendingRoomUpdates = {};
+
+            await OBR.room.setMetadata({ [ROOM_META_ID]: roomSettings });
+        } catch (error) {
+            console.error('Failed to save room metadata:', error);
+        }
+    }, 300);
 };
 
 export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewSlice> = (set, get) => ({
@@ -24,6 +46,7 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
     roomCustomPokemon: [],
     roomCustomItems: [],
     roomCustomForms: [],
+    roomCustomStatuses: [],
 
     setRoomCustomTypes: (types) => set({ roomCustomTypes: types }),
     setRoomCustomAbilities: (abilities) => set({ roomCustomAbilities: abilities }),
@@ -31,6 +54,7 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
     setRoomCustomPokemon: (pokemon) => set({ roomCustomPokemon: pokemon }),
     setRoomCustomItems: (items) => set({ roomCustomItems: items }),
     setRoomCustomForms: (forms) => set({ roomCustomForms: forms }),
+    setRoomCustomStatuses: (statuses) => set({ roomCustomStatuses: statuses }),
 
     addCustomType: (typeObject) => {
         const currentTypes = get().roomCustomTypes;
@@ -332,6 +356,52 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         saveRoomMeta('customForms', newForms);
     },
 
+    addCustomStatus: () => {
+        const newStatuses: CustomStatus[] = [
+            ...get().roomCustomStatuses,
+            {
+                id: crypto.randomUUID(),
+                name: 'New Status',
+                shorthand: '',
+                description: '',
+                effects: '',
+                recoveryAttr: 'none',
+                recoverySkill: 'none',
+                color: '#9C27B0',
+                textColor: '#ffffff',
+                gmOnly: false
+            }
+        ];
+        set({ roomCustomStatuses: newStatuses });
+        saveRoomMeta('customStatuses', newStatuses);
+    },
+    updateCustomStatus: (id, field, value) => {
+        const newStatuses = get().roomCustomStatuses.map((s) => (s.id === id ? { ...s, [field]: value } : s));
+        set({ roomCustomStatuses: newStatuses });
+        saveRoomMeta('customStatuses', newStatuses);
+    },
+    removeCustomStatus: (id) => {
+        const newStatuses = get().roomCustomStatuses.filter((s) => s.id !== id);
+        set({ roomCustomStatuses: newStatuses });
+        saveRoomMeta('customStatuses', newStatuses);
+    },
+    duplicateCustomStatus: (id) => {
+        const currentStatuses = get().roomCustomStatuses;
+        const target = currentStatuses.find((s) => s.id === id);
+        if (!target) return;
+
+        let copyName = `${target.name} (Copy)`;
+        let counter = 1;
+        while (currentStatuses.some((s) => s.name === copyName)) {
+            counter++;
+            copyName = `${target.name} (Copy ${counter})`;
+        }
+
+        const newStatuses = [...currentStatuses, { ...target, id: crypto.randomUUID(), name: copyName }];
+        set({ roomCustomStatuses: newStatuses });
+        saveRoomMeta('customStatuses', newStatuses);
+    },
+
     overwriteCustomTypeData: (types) => {
         set({ roomCustomTypes: types });
         saveRoomMeta('customTypes', types);
@@ -381,7 +451,11 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         set({ roomCustomForms: safeForms });
         saveRoomMeta('customForms', safeForms);
     },
-    overwriteAllHomebrewData: async (types, abilities, moves, pokemon, items, forms) => {
+    overwriteCustomStatusData: (statuses) => {
+        set({ roomCustomStatuses: statuses });
+        saveRoomMeta('customStatuses', statuses);
+    },
+    overwriteAllHomebrewData: async (types, abilities, moves, pokemon, items, forms, statuses) => {
         const safeForms = forms.map((f) => ({
             ...f,
             swapStatuses: f.swapStatuses ?? false,
@@ -410,7 +484,8 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             roomCustomMoves: moves,
             roomCustomPokemon: pokemon,
             roomCustomItems: items,
-            roomCustomForms: safeForms
+            roomCustomForms: safeForms,
+            roomCustomStatuses: statuses
         });
         syncHomebrewToApi(pokemon, moves, abilities, items);
 
@@ -424,7 +499,8 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
                 customMoves: moves,
                 customPokemon: pokemon,
                 customItems: items,
-                customForms: safeForms
+                customForms: safeForms,
+                customStatuses: statuses
             });
             await OBR.room.setMetadata({ [ROOM_META_ID]: roomSettings });
             OBR.notification.show('✅ Homebrew Workshop fully restored!');
@@ -544,7 +620,19 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         set({ roomCustomForms: mergedForms });
         saveRoomMeta('customForms', mergedForms);
     },
-    mergeAllHomebrewData: async (types, abilities, moves, pokemon, items, forms) => {
+    mergeCustomStatusData: (statuses) => {
+        const mergedStatuses = [...get().roomCustomStatuses];
+        statuses.forEach((status) => {
+            const index = mergedStatuses.findIndex(
+                (existing) => existing.name.toLowerCase() === status.name.toLowerCase()
+            );
+            if (index !== -1) mergedStatuses[index] = { ...status, id: mergedStatuses[index].id };
+            else mergedStatuses.push({ ...status, id: crypto.randomUUID() });
+        });
+        set({ roomCustomStatuses: mergedStatuses });
+        saveRoomMeta('customStatuses', mergedStatuses);
+    },
+    mergeAllHomebrewData: async (types, abilities, moves, pokemon, items, forms, statuses) => {
         const mergedTypes = [...get().roomCustomTypes];
         types.forEach((customType) => {
             const index = mergedTypes.findIndex(
@@ -634,13 +722,23 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             else mergedForms.push({ ...safeForm, id: crypto.randomUUID() });
         });
 
+        const mergedStatuses = [...get().roomCustomStatuses];
+        statuses.forEach((status) => {
+            const index = mergedStatuses.findIndex(
+                (existing) => existing.name.toLowerCase() === status.name.toLowerCase()
+            );
+            if (index !== -1) mergedStatuses[index] = { ...status, id: mergedStatuses[index].id };
+            else mergedStatuses.push({ ...status, id: crypto.randomUUID() });
+        });
+
         set({
             roomCustomTypes: mergedTypes,
             roomCustomAbilities: mergedAbilities,
             roomCustomMoves: mergedMoves,
             roomCustomPokemon: mergedPokemon,
             roomCustomItems: mergedItems,
-            roomCustomForms: mergedForms
+            roomCustomForms: mergedForms,
+            roomCustomStatuses: mergedStatuses
         });
         syncHomebrewToApi(mergedPokemon, mergedMoves, mergedAbilities, mergedItems);
 
@@ -654,7 +752,8 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
                 customMoves: mergedMoves,
                 customPokemon: mergedPokemon,
                 customItems: mergedItems,
-                customForms: mergedForms
+                customForms: mergedForms,
+                customStatuses: mergedStatuses
             });
             await OBR.room.setMetadata({ [ROOM_META_ID]: roomSettings });
             OBR.notification.show('✅ Homebrew Workshop successfully merged!');

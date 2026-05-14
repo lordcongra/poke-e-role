@@ -122,10 +122,11 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
                                         'In Love',
                                         'Flinch'
                                     ];
+
                                     const properName =
                                         properNames.find((s) => s.toLowerCase() === statusName.toLowerCase()) ||
                                         statusName;
-                                    const isCustom = !properNames.includes(properName);
+
                                     const exists = newStatuses.some(
                                         (s) =>
                                             s.name.toLowerCase() === properName.toLowerCase() ||
@@ -137,8 +138,8 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
                                             newStatuses = [];
                                         newStatuses.push({
                                             id: crypto.randomUUID(),
-                                            name: isCustom ? 'Custom...' : properName,
-                                            customName: isCustom ? properName : '',
+                                            name: properName,
+                                            customName: '',
                                             rounds: 0
                                         });
                                         statusChanged = true;

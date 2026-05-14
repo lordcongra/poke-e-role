@@ -20,7 +20,14 @@ export async function rollStatus(status: StatusItem, state: CharacterState) {
     const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
     const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
 
-    if (status.name.includes('Burn')) {
+    const customStatus = state.roomCustomStatuses.find((s) => s.name === status.name || s.name === status.customName);
+
+    if (customStatus && customStatus.recoveryAttr && customStatus.recoveryAttr !== 'none') {
+        attribute = customStatus.recoveryAttr;
+        dicePool =
+            calculateStatTotal(customStatus.recoveryAttr, state, itemBuffs) +
+            calculateSkillTotal(customStatus.recoverySkill || 'none', state, itemBuffs);
+    } else if (status.name.includes('Burn')) {
         attribute = 'dex';
         dicePool = calculateStatTotal('dex', state, itemBuffs) + calculateSkillTotal('athletic', state, itemBuffs);
     } else if (status.name === 'Paralysis') {

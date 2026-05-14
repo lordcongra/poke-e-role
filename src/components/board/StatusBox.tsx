@@ -6,11 +6,18 @@ import { STATUS_COLORS, STATUS_RULES, STATUS_OPTIONS } from '../../data/constant
 import './StatusBox.css';
 
 export function StatusBox() {
+    const role = useCharacterStore((state) => state.role);
     const statuses = useCharacterStore((state) => state.statuses);
+    const customStatuses = useCharacterStore((state) => state.roomCustomStatuses).filter(
+        (s) => role === 'GM' || !s.gmOnly
+    );
+
     const addStatus = useCharacterStore((state) => state.addStatus);
     const updateStatus = useCharacterStore((state) => state.updateStatus);
     const removeStatus = useCharacterStore((state) => state.removeStatus);
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
+
+    const STATUS_OPTIONS_COMBINED = [...STATUS_OPTIONS, ...customStatuses.map((s) => s.name)];
 
     return (
         <div className="sheet-panel health-section__box status-box">
@@ -27,7 +34,16 @@ export function StatusBox() {
             </div>
             <div className="status-box__content">
                 {statuses.map((status, index) => {
-                    const colors = STATUS_COLORS[status.name] || { bg: '#FFF', text: '#000' };
+                    const customStatusData = customStatuses.find((s) => s.name === status.name);
+                    const colors = customStatusData
+                        ? { bg: customStatusData.color, text: customStatusData.textColor }
+                        : STATUS_COLORS[status.name] || { bg: '#FFF', text: '#000' };
+
+                    let statusDesc = STATUS_RULES[status.name] || 'Custom Effect.';
+                    if (customStatusData) {
+                        statusDesc = `${customStatusData.description}\n\nEffects: ${customStatusData.effects}`;
+                    }
+
                     return (
                         <div key={status.id} className="status-box__row">
                             <select
@@ -36,7 +52,7 @@ export function StatusBox() {
                                 value={status.name}
                                 onChange={(event) => updateStatus(status.id, 'name', event.target.value)}
                             >
-                                {STATUS_OPTIONS.map((option) => (
+                                {STATUS_OPTIONS_COMBINED.map((option) => (
                                     <option key={option} value={option}>
                                         {option}
                                     </option>
@@ -47,20 +63,11 @@ export function StatusBox() {
                                 onClick={() =>
                                     setTooltipInfo({
                                         title: status.name,
-                                        desc: STATUS_RULES[status.name] || 'Custom Effect.'
+                                        desc: statusDesc
                                     })
                                 }
                             />
 
-                            {status.name === 'Custom...' && (
-                                <input
-                                    type="text"
-                                    className="status-box__custom-input"
-                                    value={status.customName}
-                                    onChange={(event) => updateStatus(status.id, 'customName', event.target.value)}
-                                    placeholder="Effect"
-                                />
-                            )}
                             <input
                                 type="number"
                                 className="status-box__rounds-input"

@@ -233,6 +233,19 @@ export interface CustomType {
     gmOnly?: boolean;
 }
 
+export interface CustomStatus {
+    id: string;
+    name: string;
+    shorthand?: string;
+    description: string;
+    effects: string;
+    recoveryAttr?: string;
+    recoverySkill?: string;
+    color: string;
+    textColor: string;
+    gmOnly?: boolean;
+}
+
 export interface PendingDemoRoll {
     notation: string;
     numDice: number;

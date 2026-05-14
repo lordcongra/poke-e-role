@@ -36,6 +36,7 @@ export function TrackerSection() {
     const stats = useCharacterStore((state) => state.stats);
     const derived = useCharacterStore((state) => state.derived);
     const activeStatuses = useCharacterStore((state) => state.statuses);
+    const customStatuses = useCharacterStore((state) => state.roomCustomStatuses);
 
     const [maneuver, setManeuver] = useState('none');
     const [showClashModal, setShowClashModal] = useState(false);
@@ -175,6 +176,13 @@ export function TrackerSection() {
             );
     };
 
+    // Parse global tags to see if Reactions are blocked
+    const currentState = useCharacterStore.getState();
+    const abilityTxt = getAbilityText(currentState.identity.ability, currentState.roomCustomAbilities);
+    const parsedGlobals = parseCombatTags(currentState.inventory, currentState.extraCategories, undefined, abilityTxt);
+
+    const disableReactions = isMaxed || parsedGlobals.noReactions;
+
     // --- DERIVE ACTIVE CONDITIONS ---
     const conditions: Array<{ id: string; label: string; bg: string; text: string }> = [];
 
@@ -197,18 +205,34 @@ export function TrackerSection() {
     const statusPenalties = getStatusPenalties(useCharacterStore.getState());
     activeStatuses.forEach((status) => {
         if (status.name !== 'Healthy') {
-            const name = status.name === 'Custom...' ? status.customName || 'Custom' : status.name;
-            let label = name;
+            const customStatusData = customStatuses.find((s) => s.name === status.name || s.name === status.customName);
 
-            // Inject mechanical hints for the two statuses that strictly deduct math
-            if (status.name === 'Paralysis' && statusPenalties.paralysisDexterityPenalty < 0) {
-                label = `Paralysis (${statusPenalties.paralysisDexterityPenalty} Dex)`;
-            } else if (status.name === 'Confusion' && statusPenalties.confusionPenalty < 0) {
-                label = `Confusion (${statusPenalties.confusionPenalty} Succ)`;
+            if (customStatusData) {
+                let label = customStatusData.shorthand || customStatusData.name;
+
+                // Parse effects string to automatically append stat penalties into the Condition Pill!
+                const parsedEffects = parseCombatTags([], [], undefined, customStatusData.effects);
+                const penalties: string[] = [];
+                Object.entries(parsedEffects.stats).forEach(([stat, val]) => {
+                    if (val !== 0) penalties.push(`${val > 0 ? '+' : ''}${val} ${stat.toUpperCase()}`);
+                });
+
+                if (penalties.length > 0) label += ` (${penalties.join(', ')})`;
+
+                conditions.push({ id: status.id, label, bg: customStatusData.color, text: customStatusData.textColor });
+            } else {
+                const name = status.name === 'Custom...' ? status.customName || 'Custom' : status.name;
+                let label = name;
+
+                if (status.name === 'Paralysis' && statusPenalties.paralysisDexterityPenalty < 0) {
+                    label = `Paralysis (${statusPenalties.paralysisDexterityPenalty} Dex)`;
+                } else if (status.name === 'Confusion' && statusPenalties.confusionPenalty < 0) {
+                    label = `Confusion (${statusPenalties.confusionPenalty} Succ)`;
+                }
+
+                const colors = STATUS_COLORS[status.name] || { bg: '#9C27B0', text: '#fff' };
+                conditions.push({ id: status.id, label, bg: colors.bg, text: colors.text });
             }
-
-            const colors = STATUS_COLORS[status.name] || { bg: '#9C27B0', text: '#fff' };
-            conditions.push({ id: status.id, label, bg: colors.bg, text: colors.text });
         }
     });
 
@@ -239,9 +263,14 @@ export function TrackerSection() {
                                 <button
                                     type="button"
                                     onClick={handleEvadeRoll}
-                                    disabled={isMaxed}
-                                    style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
-                                    title={isMaxed ? 'Cannot Evade while Dynamaxed/Gigantamaxed' : ''}
+                                    disabled={disableReactions}
+                                    style={{
+                                        opacity: disableReactions ? 0.5 : 1,
+                                        cursor: disableReactions ? 'not-allowed' : 'pointer'
+                                    }}
+                                    title={
+                                        disableReactions ? 'Reactions disabled by current Tags or Transformations!' : ''
+                                    }
                                     className="action-button action-button--dark tracker-section__toggle-btn"
                                 >
                                     🎲 Evade
@@ -249,9 +278,14 @@ export function TrackerSection() {
                                 <input
                                     type="checkbox"
                                     checked={trackers.evade}
-                                    disabled={isMaxed}
-                                    style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
-                                    title={isMaxed ? 'Cannot Evade while Dynamaxed/Gigantamaxed' : ''}
+                                    disabled={disableReactions}
+                                    style={{
+                                        opacity: disableReactions ? 0.5 : 1,
+                                        cursor: disableReactions ? 'not-allowed' : 'pointer'
+                                    }}
+                                    title={
+                                        disableReactions ? 'Reactions disabled by current Tags or Transformations!' : ''
+                                    }
                                     onChange={(event) => updateTracker('evade', event.target.checked)}
                                     className="sheet-save tracker-section__checkbox"
                                 />
@@ -261,9 +295,14 @@ export function TrackerSection() {
                                 <button
                                     type="button"
                                     onClick={() => setShowClashModal(true)}
-                                    disabled={isMaxed}
-                                    style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
-                                    title={isMaxed ? 'Cannot Clash while Dynamaxed/Gigantamaxed' : ''}
+                                    disabled={disableReactions}
+                                    style={{
+                                        opacity: disableReactions ? 0.5 : 1,
+                                        cursor: disableReactions ? 'not-allowed' : 'pointer'
+                                    }}
+                                    title={
+                                        disableReactions ? 'Reactions disabled by current Tags or Transformations!' : ''
+                                    }
                                     className="action-button action-button--dark tracker-section__toggle-btn"
                                 >
                                     🎲 Clash
@@ -271,9 +310,14 @@ export function TrackerSection() {
                                 <input
                                     type="checkbox"
                                     checked={trackers.clash}
-                                    disabled={isMaxed}
-                                    style={{ opacity: isMaxed ? 0.5 : 1, cursor: isMaxed ? 'not-allowed' : 'pointer' }}
-                                    title={isMaxed ? 'Cannot Clash while Dynamaxed/Gigantamaxed' : ''}
+                                    disabled={disableReactions}
+                                    style={{
+                                        opacity: disableReactions ? 0.5 : 1,
+                                        cursor: disableReactions ? 'not-allowed' : 'pointer'
+                                    }}
+                                    title={
+                                        disableReactions ? 'Reactions disabled by current Tags or Transformations!' : ''
+                                    }
                                     onChange={(event) => updateTracker('clash', event.target.checked)}
                                     className="sheet-save tracker-section__checkbox"
                                 />

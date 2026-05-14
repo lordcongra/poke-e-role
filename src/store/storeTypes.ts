@@ -19,6 +19,7 @@ import type {
     CustomItem,
     CustomMove,
     CustomPokemon,
+    CustomStatus,
     PendingDemoRoll,
     CustomType as BaseCustomType
 } from './entityTypes';
@@ -219,6 +220,7 @@ export interface HomebrewSlice {
     roomCustomPokemon: CustomPokemon[];
     roomCustomItems: CustomItem[];
     roomCustomForms: CustomForm[];
+    roomCustomStatuses: CustomStatus[];
 
     setRoomCustomTypes: (types: CustomType[]) => void;
     setRoomCustomAbilities: (abilities: CustomAbility[]) => void;
@@ -226,6 +228,7 @@ export interface HomebrewSlice {
     setRoomCustomPokemon: (pokemon: CustomPokemon[]) => void;
     setRoomCustomItems: (items: CustomItem[]) => void;
     setRoomCustomForms: (forms: CustomForm[]) => void;
+    setRoomCustomStatuses: (statuses: CustomStatus[]) => void;
 
     addCustomType: (type: CustomType) => void;
     updateCustomType: (oldName: string, newType: CustomType) => void;
@@ -257,12 +260,18 @@ export interface HomebrewSlice {
     removeCustomForm: (id: string) => void;
     duplicateCustomForm: (id: string) => void;
 
+    addCustomStatus: () => void;
+    updateCustomStatus: <K extends keyof CustomStatus>(id: string, field: K, value: CustomStatus[K]) => void;
+    removeCustomStatus: (id: string) => void;
+    duplicateCustomStatus: (id: string) => void;
+
     overwriteCustomTypeData: (types: CustomType[]) => void;
     overwriteCustomAbilityData: (abilities: CustomAbility[]) => void;
     overwriteCustomMoveData: (moves: CustomMove[]) => void;
     overwriteCustomPokemonData: (pokemon: CustomPokemon[]) => void;
     overwriteCustomItemData: (items: CustomItem[]) => void;
     overwriteCustomFormData: (forms: CustomForm[]) => void;
+    overwriteCustomStatusData: (statuses: CustomStatus[]) => void;
 
     overwriteAllHomebrewData: (
         types: CustomType[],
@@ -270,7 +279,8 @@ export interface HomebrewSlice {
         moves: CustomMove[],
         pokemon: CustomPokemon[],
         items: CustomItem[],
-        forms: CustomForm[]
+        forms: CustomForm[],
+        statuses: CustomStatus[]
     ) => void;
 
     mergeCustomTypeData: (types: CustomType[]) => void;
@@ -279,6 +289,7 @@ export interface HomebrewSlice {
     mergeCustomPokemonData: (pokemon: CustomPokemon[]) => void;
     mergeCustomItemData: (items: CustomItem[]) => void;
     mergeCustomFormData: (forms: CustomForm[]) => void;
+    mergeCustomStatusData: (statuses: CustomStatus[]) => void;
 
     mergeAllHomebrewData: (
         types: CustomType[],
@@ -286,7 +297,8 @@ export interface HomebrewSlice {
         moves: CustomMove[],
         pokemon: CustomPokemon[],
         items: CustomItem[],
-        forms: CustomForm[]
+        forms: CustomForm[],
+        statuses: CustomStatus[]
     ) => void;
 }
 

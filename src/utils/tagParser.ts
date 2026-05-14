@@ -20,6 +20,13 @@ export interface CombatBonuses {
     highCritStacks: number;
     stackingHighCritStacks: number;
     ignoreLowAcc: number;
+    roundHeal: number;
+    roundDamage: number;
+    roundWillRestore: number;
+    roundWillDamage: number;
+    loseAction: number;
+    noReactions: boolean;
+    extraReactions: number;
     itemNames: string[];
     accItemNames: string[];
     dmgItemNames: string[];
@@ -192,6 +199,49 @@ function extractTempHp(description: string, bonuses: CombatBonuses, triggers: Ta
     }
 }
 
+function extractRoundEffects(description: string, bonuses: CombatBonuses, triggers: TagTriggers) {
+    const damageMatch = description.matchAll(/\[\s*deal (\d+) damage at end of round\s*\]/gi);
+    for (const match of damageMatch) {
+        bonuses.roundDamage += safeParseInt(match[1]);
+        triggers.general = true;
+    }
+
+    const willDmgMatch = description.matchAll(/\[\s*reduce will by (\d+) at end of round\s*\]/gi);
+    for (const match of willDmgMatch) {
+        bonuses.roundWillDamage += safeParseInt(match[1]);
+        triggers.general = true;
+    }
+
+    const healMatch = description.matchAll(/\[\s*heal (\d+) round end\s*\]/gi);
+    for (const match of healMatch) {
+        bonuses.roundHeal += safeParseInt(match[1]);
+        triggers.general = true;
+    }
+
+    const willHealMatch = description.matchAll(/\[\s*restore (\d+) will round end\s*\]/gi);
+    for (const match of willHealMatch) {
+        bonuses.roundWillRestore += safeParseInt(match[1]);
+        triggers.general = true;
+    }
+
+    const loseActionMatch = description.matchAll(/\[\s*lose (\d+) action(?:s)?\s*\]/gi);
+    for (const match of loseActionMatch) {
+        bonuses.loseAction += safeParseInt(match[1]);
+        triggers.general = true;
+    }
+
+    if (/\[\s*no reactions\s*\]/i.test(description)) {
+        bonuses.noReactions = true;
+        triggers.general = true;
+    }
+
+    const extraReactionsMatch = description.matchAll(/\[\s*(\d+) extra reaction(?:s)? per turn\s*\]/gi);
+    for (const match of extraReactionsMatch) {
+        bonuses.extraReactions += safeParseInt(match[1]);
+        triggers.general = true;
+    }
+}
+
 function extractMechanics(description: string, bonuses: CombatBonuses, triggers: TagTriggers) {
     if (/\[\s*high crit\s*\]/i.test(description)) {
         bonuses.highCritStacks += 1;
@@ -237,6 +287,13 @@ export function parseCombatTags(
         highCritStacks: 0,
         stackingHighCritStacks: 0,
         ignoreLowAcc: 0,
+        roundHeal: 0,
+        roundDamage: 0,
+        roundWillRestore: 0,
+        roundWillDamage: 0,
+        loseAction: 0,
+        noReactions: false,
+        extraReactions: 0,
         itemNames: [],
         accItemNames: [],
         dmgItemNames: []
@@ -278,6 +335,18 @@ export function parseCombatTags(
         }
     }
 
+    // Automatically parse Active Status effects!
+    state.statuses.forEach((status) => {
+        const custom = state.roomCustomStatuses.find(
+            (cs) =>
+                cs.name.toLowerCase() === status.name.toLowerCase() ||
+                cs.name.toLowerCase() === status.customName.toLowerCase()
+        );
+        if (custom && custom.effects) {
+            itemsToParse.push({ name: custom.name, desc: custom.effects });
+        }
+    });
+
     itemsToParse.forEach((item) => {
         const description = item.desc.toLowerCase();
         const name = item.name.trim();
@@ -296,6 +365,7 @@ export function parseCombatTags(
         extractAccuracy(description, moveType, move, bonuses, triggers);
         extractFirstHit(description, bonuses, triggers);
         extractTempHp(description, bonuses, triggers);
+        extractRoundEffects(description, bonuses, triggers);
         extractMechanics(description, bonuses, triggers);
 
         if (name && name !== 'Ability' && name !== 'Move' && name !== 'Active Form') {
