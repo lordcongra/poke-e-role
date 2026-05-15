@@ -28,6 +28,7 @@ export interface CombatBonuses {
     noReactions: boolean;
     extraReactions: number;
     accFaceAddsDmg: number;
+    accFaceAddsDmgLimit: number;
     itemNames: string[];
     accItemNames: string[];
     dmgItemNames: string[];
@@ -39,7 +40,7 @@ interface TagTriggers {
     damage: boolean;
 }
 
-const safeParseInt = (value: string) => parseInt((value || '0').replace(/\s/g, '')) || 0;
+const safeParseInt = (value: string | undefined) => parseInt((value || '0').replace(/\s/g, '')) || 0;
 
 // =========================================
 // REGEX TAG EXTRACTORS
@@ -259,9 +260,11 @@ function extractMechanics(description: string, bonuses: CombatBonuses, triggers:
         triggers.accuracy = true;
     }
 
-    const accFaceMatch = description.matchAll(/\[\s*acc\s*(\d+)s\s*add(?:s)?\s*dmg\s*\]/gi);
+    // Capture both [Acc 6s Add Dmg] and [Acc 6s Add Dmg Limit 6]
+    const accFaceMatch = description.matchAll(/\[\s*acc\s*(\d+)s\s*add(?:s)?\s*dmg(?:\s*limit\s*(\d+))?\s*\]/gi);
     for (const match of accFaceMatch) {
         bonuses.accFaceAddsDmg = safeParseInt(match[1]);
+        bonuses.accFaceAddsDmgLimit = safeParseInt(match[2]) || 6; // Defaults to 6 if limit isn't explicitly defined!
         triggers.accuracy = true;
     }
 }
@@ -302,6 +305,7 @@ export function parseCombatTags(
         noReactions: false,
         extraReactions: 0,
         accFaceAddsDmg: 0,
+        accFaceAddsDmgLimit: 0,
         itemNames: [],
         accItemNames: [],
         dmgItemNames: []

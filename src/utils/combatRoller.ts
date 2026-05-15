@@ -149,7 +149,7 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     const isValidForBank = itemBuffs.accFaceAddsDmg > 0 && move.category !== 'Status';
 
     if (isValidForBank) {
-        tags.push(`Acc ${itemBuffs.accFaceAddsDmg}s Add Dmg`);
+        tags.push(`Acc ${itemBuffs.accFaceAddsDmg}s Add Dmg (Max ${itemBuffs.accFaceAddsDmgLimit})`);
     }
 
     if (statuses.isAsleep) {
@@ -171,7 +171,8 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';
 
     const rollType = isValidForBank ? 'acc_face' : 'roll';
-    const payload = isValidForBank ? `${move.id}_${itemBuffs.accFaceAddsDmg}` : '';
+    // Append the limit parameter as the third chunk of the payload so the interceptor can catch it!
+    const payload = isValidForBank ? `${move.id}_${itemBuffs.accFaceAddsDmg}_${itemBuffs.accFaceAddsDmgLimit}` : '';
 
     await rollDicePlus(
         `${Math.max(1, dicePool)}d6>3${mathModifier}`,

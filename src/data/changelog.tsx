@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ReactNode } from 'react';
 
-export const CURRENT_VERSION = '2.7.0';
+export const CURRENT_VERSION = '2.7.5';
 
 export interface ChangelogEntry {
     version: string;
@@ -11,7 +11,7 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
     {
-        version: '2.7.0',
+        version: '2.7.5',
         date: 'May 2026',
         changes: [
             <div
@@ -22,7 +22,7 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     borderRadius: '6px',
                     backgroundColor: 'rgba(76, 175, 80, 0.05)',
                     marginTop: '8px',
-                    marginBottom: '8px'
+                    marginBottom: '12px'
                 }}
             >
                 <div
@@ -74,7 +74,49 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                         issue on Github!
                     </li>
                 </ul>
-            </div>
+            </div>,
+            <div key="dice-deprecation" style={{ marginBottom: '12px' }}>
+                <strong style={{ color: '#e65100', fontSize: '1.05em' }}>⚠️ Dice+ Deprecation Notice</strong>
+                <p style={{ margin: '4px 0', fontSize: '0.9em' }}>
+                    The legacy <strong>Dice+</strong> engine will be deprecated in an upcoming release.{' '}
+                    <strong>Custom Action Rolls (CAR)</strong> is now the default and recommended engine for this sheet,
+                    as it supports advanced mechanics like exploding dice and dynamic roll logs. Please switch over in
+                    the Room Rules (📜) menu! Contact Congra in the Pokerole Discord with any questions about this
+                    change.
+                </p>
+            </div>,
+            <strong key="hb-status-title" style={{ color: '#9C27B0' }}>
+                ✨ Homebrew Statuses & Exploding Dice
+            </strong>,
+            <ul key="hb-status-list" style={{ paddingLeft: '20px', margin: '4px 0', fontSize: '0.9em' }}>
+                <li>
+                    <strong>Custom Statuses:</strong> You can now create custom status conditions in the Homebrew
+                    Workshop! They integrate natively into the sheet's tracker dropdowns, allowing for dynamic
+                    end-of-round damage/healing, action loss, and stat penalties.
+                </li>
+                <li>
+                    <strong>Exploding Dice Tag:</strong> Added the <code>[Acc Xs Add Dmg Limit Y]</code> tag to the Tag
+                    Builder. Roll a specific number on your accuracy dice to bank bonus damage for your attack!{' '}
+                    <em>(Requires the CAR engine)</em>
+                </li>
+                <li>
+                    <strong>Dual Scaling Moves:</strong> You can now properly configure alternative scaling options
+                    (like <em>Photon Geyser</em>) when creating custom moves in the Homebrew Workshop.
+                </li>
+                <li>
+                    <strong>Workshop Duplication:</strong> Added a handy Duplicate (📋 Copy) button to all Workshop
+                    items to speed up your homebrew creation!
+                </li>
+            </ul>
+        ]
+    },
+    {
+        version: '2.7.0',
+        date: 'May 2026',
+        changes: [
+            'Initiative Tracker completely rebuilt natively into the sheet.',
+            'Added Initiative HUD settings to customize placement, size, and layout.',
+            'Removed reliance on the Pretty Sordid extension.'
         ]
     },
     {

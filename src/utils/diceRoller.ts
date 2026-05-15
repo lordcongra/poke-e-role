@@ -41,7 +41,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
     }
     try {
         const state = useCharacterStore.getState();
-        const diceEngine = state.identity.diceEngine || 'dice-plus';
+        const diceEngine = state.identity.diceEngine || 'car';
         const isGmDemo = state.identity.gmDemoMode && state.role === 'GM' && diceEngine === 'car';
 
         const playerId = await OBR.player.getId();
@@ -187,16 +187,28 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                         }
                     }
                 } else if (rollType === 'acc_face' && state.tokenId && payload) {
-                    const [moveId, targetFaceStr] = payload.split('_');
+                    const [moveId, targetFaceStr, limitStr] = payload.split('_');
                     const targetFace = parseInt(targetFaceStr, 10) || 6;
+                    const limit = parseInt(limitStr, 10) || 6;
                     const matches = diceData.filter((d) => d.result === targetFace).length;
 
                     if (matches > 0) {
                         const store = useCharacterStore.getState();
                         const newBank = { ...store.trackers.bankedAccDice };
-                        newBank[moveId] = (newBank[moveId] || 0) + matches;
-                        store.updateTracker('bankedAccDice', newBank);
-                        popupMessage += `\n💥 Banked +${matches} Damage Dice!`;
+
+                        const currentBank = newBank[moveId] || 0;
+                        const spaceLeft = Math.max(0, limit - currentBank);
+                        const actualAdded = Math.min(matches, spaceLeft);
+
+                        if (actualAdded > 0) {
+                            newBank[moveId] = currentBank + actualAdded;
+                            store.updateTracker('bankedAccDice', newBank);
+
+                            const limitMsg = actualAdded < matches ? ` (Max ${limit})` : '';
+                            popupMessage += `\n💥 Banked +${actualAdded} Damage Dice!${limitMsg}`;
+                        } else {
+                            popupMessage += `\n💥 Bank is full! (Max ${limit})`;
+                        }
                     }
                 } else if (rollType === 'status' && payload) {
                     const statusId = payload;

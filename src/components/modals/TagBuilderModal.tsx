@@ -41,6 +41,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
     const [target, setTarget] = useState('Str');
     const [typeOption, setTypeOption] = useState('');
     const [value, setValue] = useState<number>(1);
+    const [value2, setValue2] = useState<number>(6); // Specifically used for the limit variable
 
     const formatEnum = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
@@ -80,7 +81,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                 'Gain Temp HP',
                 'Temp HP on Hit',
                 'Temp HP % Dmg',
-                'Acc [X]s Add Dmg'
+                'Acc [X]s Add Dmg Limit [Y]'
             ];
 
         if (category === 'turn_based')
@@ -131,9 +132,13 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
         category === 'skill' ||
         category === 'combat' ||
         (category === 'mechanic' &&
-            ['Ignore Low Acc', 'Gain Temp HP', 'Temp HP on Hit', 'Temp HP % Dmg', 'Acc [X]s Add Dmg'].includes(
-                target
-            )) ||
+            [
+                'Ignore Low Acc',
+                'Gain Temp HP',
+                'Temp HP on Hit',
+                'Temp HP % Dmg',
+                'Acc [X]s Add Dmg Limit [Y]'
+            ].includes(target)) ||
         (category === 'turn_based' && target !== 'No Reactions') ||
         (category === 'move_mechanics' && ['Low Accuracy', 'Set Damage'].includes(target));
 
@@ -141,6 +146,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
         let tag = '';
 
         const numValue = Number(value) || 0;
+        const numValue2 = Number(value2) || 0;
         const sign = numValue >= 0 ? `+${numValue}` : `${numValue}`;
 
         if (category === 'stat' || category === 'skill') {
@@ -167,7 +173,8 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
             else if (target === 'Gain Temp HP') tag = `[Gain Temp HP ${Math.abs(numValue)}]`;
             else if (target === 'Temp HP on Hit') tag = `[Temp HP +${Math.abs(numValue)} on Hit]`;
             else if (target === 'Temp HP % Dmg') tag = `[Temp HP ${Math.abs(numValue)}% Dmg]`;
-            else if (target === 'Acc [X]s Add Dmg') tag = `[Acc ${Math.abs(numValue)}s Add Dmg]`;
+            else if (target === 'Acc [X]s Add Dmg Limit [Y]')
+                tag = `[Acc ${Math.abs(numValue)}s Add Dmg Limit ${Math.abs(numValue2)}]`;
         } else if (category === 'turn_based') {
             if (target === 'Deal Damage End of Round') tag = `[Deal ${Math.abs(numValue)} Damage at End of Round]`;
             else if (target === 'Reduce Will End of Round')
@@ -292,6 +299,19 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                                 value={value}
                                 onChange={(e) => setValue(Number(e.target.value) || 0)}
                             />
+                            {target === 'Acc [X]s Add Dmg Limit [Y]' && (
+                                <>
+                                    <span className="tag-builder__value-label" style={{ marginLeft: '10px' }}>
+                                        Limit:
+                                    </span>
+                                    <input
+                                        type="number"
+                                        className="identity-grid__input tag-builder__value-input"
+                                        value={value2}
+                                        onChange={(e) => setValue2(Number(e.target.value) || 0)}
+                                    />
+                                </>
+                            )}
                         </div>
                     )}
                 </div>

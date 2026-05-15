@@ -35,7 +35,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                         </label>
                         <select
                             className="identity-grid__select rules-modal__select"
-                            value={id.diceEngine || 'dice-plus'}
+                            value={id.diceEngine || 'car'}
                             onChange={(e) => setIdentity('diceEngine', e.target.value as 'dice-plus' | 'car')}
                         >
                             <option value="dice-plus">Dice+ (3D Physics Dice)</option>

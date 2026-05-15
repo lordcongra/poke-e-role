@@ -1,4 +1,4 @@
-# Pokerole 3.0 Sheet v2.7.0 (Owlbear Rodeo Extension)
+# Pokerole 3.0 Sheet v2.7.5 (Owlbear Rodeo Extension)
 
 A highly automated, modular character sheet extension for playing **Pokerole 3.0** campaigns (including **Pokémon Mystery Dungeon / PMD** settings) within the Owlbear Rodeo VTT.
 
@@ -8,11 +8,11 @@ _A massive thank you to the creator of the **Owl Trackers** extension. Their inc
 
 ## ⚠️ REQUIRED PLUGINS
 
-To use all the features of this character sheet, you **MUST** install **at least one (though having both is recommended to test which you like better)** of the following Dice Engines:
+To use all the features of this character sheet, you **MUST** install **at least one** of the following Dice Engines. **(Note: CAR is the strongly recommended default!)**:
 
-1. **[Custom Action Rolls (CAR)](https://owlbear.rogue.pub/extension/https://action-manager.onrender.com/manifest.json):** Handles 3D dice and features a persistent, pop-out chat log styled like the sheet(more consistent visual theming) to track roll history (found in "Log" button inside the CAR extension). Gives a more detailed breakdown of rolls in the log. Creating your dice visuals can take more time but has more options. This option tends to have better performance on Firefox.
+1. **[Custom Action Rolls (CAR)](https://owlbear.rogue.pub/extension/https://action-manager.onrender.com/manifest.json):** The recommended engine. Handles 3D dice and features a persistent, pop-out chat log styled like the sheet to track roll history. It supports advanced mechanics like **Exploding Dice** and detailed roll breakdowns. This option tends to have better performance on Firefox.
    _- AND/OR -_
-2. **[Dice+](https://extensions.owlbear.rodeo/dice-plus):** The classic engine (this was the first integration, Custom Action Rolls is new). Handles 1-click 3D physics dice and has roll history but is somewhat more difficult to find. Is a physics-based engine so it can sometimes lose accuracy at high dice counts (trust the GM roll result). Creating your dice is faster usually but gated with some premium features.
+2. **[Dice+](https://extensions.owlbear.rodeo/dice-plus):** ⚠️ *DEPRECATION NOTICE: This legacy engine will be phased out in a future update.* The classic engine. Handles 1-click 3D physics dice. It is a pure physics-based engine, so it can sometimes lose accuracy at high dice counts, and it does *not* support advanced features like homebrew exploding dice reading. Maintaining two dice rollers with different functions has been challenging as well which contributes to this deprecation.
 
 _(Note: You can swap between these engines at any time for the whole room using the "📜 Rules" menu on the sheet!)_
 
@@ -57,7 +57,9 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 ### 🛠️ The Homebrew Workshop
 
 - **Fully Custom Database:** Create your own custom Pokémon, Moves, Abilities, Items, and even completely new Typings (with custom weakness/resistance charts).
+- **Custom Status Conditions:** Design completely custom statuses with unique colors, shorthand names, automated stat penalties, end-of-round damage/healing, and tailored recovery roll parameters!
 - **Custom Form Builder:** Design custom transformations (like Boss phases or unique forms). Define exactly what swaps (Base Stats, Typing, Abilities) vs what clears (Statuses, Buffs, Debuffs) and even configure custom HP/Will activation costs!
+- **1-Click Duplication:** Use the "Copy" button to instantly duplicate any Homebrew item, move, form, or status to speed up your creation process.
 - **Live Room Sync:** Anything you build in the Workshop instantly syncs to the room database, making it immediately available in the dropdown menus for every player!
 - **GM Spoiler Protection:** Check the "GM Only" box on any custom creation to keep it hidden from the players' Workshop and dropdown menus until you are ready to reveal the boss!
 - **Backup & Restore:** Easily export your entire Homebrew Workshop as a JSON file to share with other GMs or carry over to a new campaign room.
@@ -97,7 +99,7 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 - **Status Penalties:** Automatically applies mechanical penalties for Confusion (success drops scaling with Rank) and Paralysis (-2 Dice to Dex rolls), and prevents actions if Asleep or Frozen.
 - **Smart Ability Overrides:** Hardcoded exceptions for abilities like Limber, Comatose, Insomnia, Vital Spirit, and Sweet Veil so they properly bypass status penalties!
 - **Auto-Ticking Effects:** Track terrain, weather, or screens (like Tailwind or Reflect) in the "Timers" box. Clicking the "Reset Round" button automatically ticks these timers down by 1.
-- **1-Click Status Recovery:** Click the 🎲 icon next to a status to automatically calculate and roll your recovery pool.
+- **Custom & Built-in Statuses:** Custom statuses natively integrate into the sheet's tracker dropdowns alongside the base game's conditions. Click the 🎲 icon next to *any* status to automatically calculate and roll your recovery pool.
 - **Visual Map Trackers:** Any active timer, status, or HP/Will change automatically updates the highly visible, color-coded custom UI graphics natively drawn over your token on the map so the GM never loses track of combat!
 - **Roleplay Mode:** Click the "⚙️" icon on the Trackers bar at the top of the sheet to fully customize exactly which UI elements (Bars, Text, Badges) render over your token, allowing you to instantly hide trackers during intense roleplay moments.
 
@@ -112,7 +114,7 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 ### 🎒 Inventory, Tags, & Progression
 
-- **The Tag Builder:** Click the `🏷️` icon next to any item in your inventory or move in your move list to open the Tag Builder. This tool lets you easily attach mechanical modifiers (e.g., `[Dmg +2]`, `[Acc -1: Fire]`, `[Str +1]`, `[Status: Poison]`, `[High Crit]`, `[First Hit Dmg +3]`).
+- **The Tag Builder:** Click the `🏷️` icon next to any item in your inventory or move in your move list to open the Tag Builder. This tool lets you easily attach mechanical modifiers (e.g., `[Dmg +2]`, `[Acc -1: Fire]`, `[Status: Poison]`, `[First Hit Dmg +3]`, and even **Exploding Dice** with `[Acc 6s Add Dmg Limit 6]`).
 - **Smart Item Auto-Fill:** The sheet automatically recognizes standard items! Type "Life Orb", "Choice Scarf", or "Eviolite" into the name box, and the engine will automatically fetch the description and inject the perfect mechanical tags for you!
 - **Training Points (TP) & Poké (PD):** Keep track of your character's progression currency and wealth with dedicated, auto-saving trackers at the bottom of the sheet.
 
@@ -120,8 +122,8 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 - **Pure Math Routing:** Our engine handles the math for you! Broadcasts are natively formatted to support both the **Dice+** and **Custom Action Rolls (CAR)** extensions.
 - **Which should I choose?**
-    - **Custom Action Rolls (CAR):** Uses internal math rather than pure physics, making it more performance-lite (especially on Firefox) and perfectly synced for all players, regardless of how massive the dice pool gets. It also includes a persistent chat log!
-    - **Dice+:** A pure 3D physics-based roller. It runs smoothly on Google Chrome, but keep in mind that very large dice pools (12+ dice) might occasionally show visual inaccuracies for non-GMs due to physics desyncs across the network.
+    - **Custom Action Rolls (CAR) - RECOMMENDED:** Uses internal math rather than pure physics, making it more performance-lite (especially on Firefox) and perfectly synced for all players, regardless of how massive the dice pool gets. It includes a persistent chat log and supports advanced tag mechanics like Exploding Dice!
+    - **Dice+ (DEPRECATED):** ⚠️ *This engine is slated for removal in an upcoming release. Please migrate to CAR!* A pure 3D physics-based roller. It runs smoothly on Google Chrome, but does not support advanced die-face reading tags.
 - **OBR Notifications:** Every roll triggers an Owlbear Rodeo broadcast notification announcing the move, pain penalties, active item buffs, and required successes to the whole table!
 - **Smart Combat:** Automatically accounts for global Accuracy/Damage modifiers, STAB bonuses, Protean/Libero, Super Luck, and even grants +3 dice on Critical Hits for the _Sniper_ ability.
 
@@ -142,6 +144,6 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 To install this extension into your Owlbear Rodeo room, copy the Manifest URL below and paste it into your Owlbear Rodeo extension manager:
 
-`https://lordcongra.github.io/poke-e-role/manifest.json?v=2.7.0`
+`https://lordcongra.github.io/poke-e-role/manifest.json?v=2.7.5`
 
 _(Note: If the sheet updates, you can force Owlbear to fetch the newest version by bumping the version tag at the end of the URL!)_

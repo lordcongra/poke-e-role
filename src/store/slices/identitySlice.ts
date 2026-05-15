@@ -133,7 +133,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         gender: '',
         ruleset: 'vg-vit-hp',
         pain: 'Enabled',
-        diceEngine: 'dice-plus',
+        diceEngine: 'car',
         rolls: 'Public (Everyone)',
         homebrewAccess: 'Full',
         combat: '',
