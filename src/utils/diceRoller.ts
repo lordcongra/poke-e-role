@@ -1,6 +1,5 @@
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../store/useCharacterStore';
-import { getPainPenalty, getStatusPenalties } from './combatMath';
 
 // New Helper Function to safely append and sort an Initiative Score to the Token!
 export async function assignInitiative(tokenId: string, rollTotal: number, baseInit: number) {
@@ -76,9 +75,10 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 if (!overrideDice) return;
             }
 
-            const diceData = [];
-            const rollStrings = [];
-            const asteriskResults = [];
+            const diceData: { type: number; result: number }[] = [];
+            const rollStrings: string[] = [];
+            const asteriskResults: string[] = [];
+
             let rawSuccesses = 0;
             let rawSum = 0;
 
@@ -148,6 +148,84 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
             const delayMs = targetVisibility === 'gm_only' ? 250 : 3500;
 
             setTimeout(async () => {
+                // --- STATE RESOLUTION INTERCEPTS ---
+                if (rollType === 'init' && state.tokenId) {
+                    const baseInit = parseInt(payload) || 0;
+                    const rollValue = isSuccessRoll ? finalSuccesses : finalSum;
+                    await assignInitiative(state.tokenId, rollValue, baseInit);
+                } else if (rollType === 'damage' && payload && finalSuccesses > 0) {
+                    const [flatStr, ratioStr] = payload.split('_');
+                    const flatGained = parseInt(flatStr) || 0;
+
+                    let ratio = 0;
+                    if (ratioStr) {
+                        if (ratioStr.includes('%')) {
+                            ratio = parseFloat(ratioStr.replace('%', '')) / 100;
+                        } else if (ratioStr.includes('/')) {
+                            const [num, den] = ratioStr.split('/');
+                            ratio = parseFloat(num) / parseFloat(den);
+                        } else {
+                            ratio = parseFloat(ratioStr);
+                        }
+                    }
+
+                    let tempGained = flatGained;
+                    if (!isNaN(ratio) && ratio > 0) {
+                        tempGained += Math.floor(finalSuccesses * ratio);
+                    }
+
+                    if (tempGained > 0) {
+                        const store = useCharacterStore.getState();
+                        const currentTempMax = store.health.temporaryHitPointsMax || 0;
+
+                        if (tempGained > currentTempMax) {
+                            store.updateHealth('temporaryHitPointsMax', tempGained);
+                            store.updateHealth('temporaryHitPoints', tempGained);
+                            popupMessage += `\n🛡️ Gained ${tempGained} Temp HP`;
+                        } else {
+                            popupMessage += `\n🛡️ Current Shield Holds`;
+                        }
+                    }
+                } else if (rollType === 'acc_face' && state.tokenId && payload) {
+                    const [moveId, targetFaceStr] = payload.split('_');
+                    const targetFace = parseInt(targetFaceStr, 10) || 6;
+                    const matches = diceData.filter((d) => d.result === targetFace).length;
+
+                    if (matches > 0) {
+                        const store = useCharacterStore.getState();
+                        const newBank = { ...store.trackers.bankedAccDice };
+                        newBank[moveId] = (newBank[moveId] || 0) + matches;
+                        store.updateTracker('bankedAccDice', newBank);
+                        popupMessage += `\n💥 Banked +${matches} Damage Dice!`;
+                    }
+                } else if (rollType === 'status' && payload) {
+                    const statusId = payload;
+                    if (state.tokenId) {
+                        await OBR.scene.items.updateItems([state.tokenId], (items) => {
+                            for (const item of items) {
+                                const meta =
+                                    (item.metadata['pokerole-extension/stats'] as Record<string, unknown>) || {};
+                                const statusListStr = String(meta['status-list'] || '[]');
+                                try {
+                                    const statuses = JSON.parse(statusListStr);
+                                    let changed = false;
+                                    for (const s of statuses) {
+                                        if (s.id === statusId) {
+                                            s.rounds += finalSuccesses;
+                                            changed = true;
+                                        }
+                                    }
+                                    if (changed) meta['status-list'] = JSON.stringify(statuses);
+                                } catch (e) {}
+                            }
+                        });
+                    }
+                    if (finalSuccesses > 0) {
+                        popupMessage += `\n🩹 Reduced Status by ${finalSuccesses}`;
+                    }
+                }
+
+                // --- ROLL LOG BROADCAST ---
                 const rollLogData = {
                     id: crypto.randomUUID(),
                     player: playerName,
@@ -189,69 +267,6 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                         transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
                     })
                     .catch(() => {});
-
-                if (rollType === 'init' && state.tokenId) {
-                    const baseInit = parseInt(payload) || 0;
-                    const rollValue = isSuccessRoll ? finalSuccesses : finalSum;
-                    await assignInitiative(state.tokenId, rollValue, baseInit);
-                } else if (rollType === 'damage' && payload && finalSuccesses > 0) {
-                    const [flatStr, ratioStr] = payload.split('_');
-                    const flatGained = parseInt(flatStr) || 0;
-
-                    let ratio = 0;
-                    if (ratioStr) {
-                        if (ratioStr.includes('%')) {
-                            ratio = parseFloat(ratioStr.replace('%', '')) / 100;
-                        } else if (ratioStr.includes('/')) {
-                            const [num, den] = ratioStr.split('/');
-                            ratio = parseFloat(num) / parseFloat(den);
-                        } else {
-                            ratio = parseFloat(ratioStr);
-                        }
-                    }
-
-                    let tempGained = flatGained;
-                    if (!isNaN(ratio) && ratio > 0) {
-                        tempGained += Math.floor(finalSuccesses * ratio);
-                    }
-
-                    if (tempGained > 0) {
-                        const store = useCharacterStore.getState();
-                        const currentTempMax = store.health.temporaryHitPointsMax || 0;
-
-                        if (tempGained > currentTempMax) {
-                            store.updateHealth('temporaryHitPointsMax', tempGained);
-                            store.updateHealth('temporaryHitPoints', tempGained);
-                            OBR.notification.show(
-                                `✅ Result: ${finalSuccesses} Successes! (Gained ${tempGained} Temp HP 🛡️)`
-                            );
-                        } else {
-                            OBR.notification.show(`✅ Result: ${finalSuccesses} Successes! (Current Shield Holds 🛡️)`);
-                        }
-                    }
-                } else if (rollType === 'status' && payload) {
-                    const statusId = payload;
-                    if (state.tokenId) {
-                        await OBR.scene.items.updateItems([state.tokenId], (items) => {
-                            for (const item of items) {
-                                const meta =
-                                    (item.metadata['pokerole-extension/stats'] as Record<string, unknown>) || {};
-                                const statusListStr = String(meta['status-list'] || '[]');
-                                try {
-                                    const statuses = JSON.parse(statusListStr);
-                                    let changed = false;
-                                    for (const s of statuses) {
-                                        if (s.id === statusId) {
-                                            s.rounds += finalSuccesses;
-                                            changed = true;
-                                        }
-                                    }
-                                    if (changed) meta['status-list'] = JSON.stringify(statuses);
-                                } catch (e) {}
-                            }
-                        });
-                    }
-                }
             }, delayMs);
 
             return;
@@ -280,68 +295,4 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
     } catch (error) {
         console.error('Dice Engine Broadcast Error:', error);
     }
-}
-
-export async function rollGeneric(
-    actionName: string,
-    dicePool: number,
-    attribute: string,
-    incrementEvade = false,
-    incrementClash = false,
-    incrementAction = false
-) {
-    const state = useCharacterStore.getState();
-    const nickname = state.identity.nickname || state.identity.species || 'Someone';
-    const abilityString = (state.identity.ability || '').toLowerCase();
-
-    const statuses = getStatusPenalties(state);
-    const hasComatose = abilityString.includes('comatose');
-
-    if (statuses.isAsleep && !hasComatose) {
-        if (OBR.isAvailable) OBR.notification.show('⚠️ You are Asleep and cannot perform actions!', 'WARNING');
-        return;
-    }
-
-    if (incrementAction) {
-        useCharacterStore.getState().incrementAction();
-    }
-    if (incrementEvade) useCharacterStore.getState().updateTracker('evade', true);
-    if (incrementClash) useCharacterStore.getState().updateTracker('clash', true);
-
-    let finalDicePool = dicePool;
-    if (attribute.toLowerCase() === 'dex') finalDicePool += statuses.paralysisDexterityPenalty;
-
-    const pain = getPainPenalty(attribute, state);
-    const genericSuccessModifier = state.trackers.globalSucc + statuses.confusionPenalty + pain;
-    const mathModifier =
-        genericSuccessModifier !== 0
-            ? genericSuccessModifier > 0
-                ? `+${genericSuccessModifier}`
-                : `${genericSuccessModifier}`
-            : '';
-
-    const chancesUsed = state.trackers.chances;
-    const tags: string[] = [];
-
-    if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
-    if (genericSuccessModifier !== 0)
-        tags.push(`Net Mod ${genericSuccessModifier > 0 ? '+' : ''}${genericSuccessModifier} Succ`);
-    if (chancesUsed > 0) tags.push(`Chances: Max ${chancesUsed} Rerolls`);
-    if (statuses.paralysisDexterityPenalty < 0 && attribute.toLowerCase() === 'dex') tags.push(`Paralysis: -2 Dice`);
-
-    if (statuses.isAsleep) {
-        if (hasComatose) tags.push(`ASLEEP (Comatose)`);
-        else tags.push(`ASLEEP`);
-    }
-
-    if (statuses.isFrozen) {
-        tags.push(`❄️ FROZEN: Attacking Ice Block (5HP/2DEF). Fire/Super-Effective breaks instantly.`);
-    }
-
-    const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';
-
-    await rollDicePlus(
-        `${Math.max(1, finalDicePool)}d6>3${mathModifier}`,
-        `🎲 ${nickname} rolled ${actionName}!${finalTags}`
-    );
 }

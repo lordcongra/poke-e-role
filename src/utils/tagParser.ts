@@ -27,6 +27,7 @@ export interface CombatBonuses {
     loseAction: number;
     noReactions: boolean;
     extraReactions: number;
+    accFaceAddsDmg: number;
     itemNames: string[];
     accItemNames: string[];
     dmgItemNames: string[];
@@ -257,6 +258,12 @@ function extractMechanics(description: string, bonuses: CombatBonuses, triggers:
         bonuses.ignoreLowAcc += safeParseInt(match[1]);
         triggers.accuracy = true;
     }
+
+    const accFaceMatch = description.matchAll(/\[\s*acc\s*(\d+)s\s*add(?:s)?\s*dmg\s*\]/gi);
+    for (const match of accFaceMatch) {
+        bonuses.accFaceAddsDmg = safeParseInt(match[1]);
+        triggers.accuracy = true;
+    }
 }
 
 // =========================================
@@ -294,6 +301,7 @@ export function parseCombatTags(
         loseAction: 0,
         noReactions: false,
         extraReactions: 0,
+        accFaceAddsDmg: 0,
         itemNames: [],
         accItemNames: [],
         dmgItemNames: []

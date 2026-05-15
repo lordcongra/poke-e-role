@@ -146,6 +146,12 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     tags.push(`Need ${requiredSuccesses} Succ`);
     tags.push(`Crit on ${criticalRequirement}+`);
 
+    const isValidForBank = itemBuffs.accFaceAddsDmg > 0 && move.category !== 'Status';
+
+    if (isValidForBank) {
+        tags.push(`Acc ${itemBuffs.accFaceAddsDmg}s Add Dmg`);
+    }
+
     if (statuses.isAsleep) {
         if (hasComatose) tags.push(`ASLEEP (Comatose)`);
         else if (isSleepMove) tags.push(`ASLEEP (Bypassed)`);
@@ -164,9 +170,14 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
 
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';
 
+    const rollType = isValidForBank ? 'acc_face' : 'roll';
+    const payload = isValidForBank ? `${move.id}_${itemBuffs.accFaceAddsDmg}` : '';
+
     await rollDicePlus(
         `${Math.max(1, dicePool)}d6>3${mathModifier}`,
-        `🎯 ${nickname} rolled ${move.name || 'a Move'} (Acc)!${finalTags}`
+        `🎯 ${nickname} rolled ${move.name || 'a Move'} (Acc)!${finalTags}`,
+        rollType,
+        payload
     );
 }
 
@@ -213,6 +224,18 @@ export async function executeDamageRoll(
 
     if (normalizedDamageStatistic === 'dex' && statuses.paralysisDexterityPenalty < 0) {
         actualDicePool += statuses.paralysisDexterityPenalty;
+    }
+
+    // ✨ PULL FROM THE BANK ✨
+    let bankedDiceTag = '';
+    const bankedDice = state.trackers.bankedAccDice[move.id] || 0;
+    if (bankedDice > 0) {
+        actualDicePool += bankedDice;
+        bankedDiceTag = `Banked Excess Acc (+${bankedDice} Dmg)`;
+        // Clear the bank immediately!
+        const newBank = { ...state.trackers.bankedAccDice };
+        delete newBank[move.id];
+        useCharacterStore.getState().updateTracker('bankedAccDice', newBank);
     }
 
     actualDicePool = Math.max(1, actualDicePool);
@@ -262,6 +285,7 @@ export async function executeDamageRoll(
     if (teraBonusTags) tags.push(teraBonusTags);
     else if (stabBonus > 0) tags.push(stabTag);
 
+    if (bankedDiceTag) tags.push(bankedDiceTag);
     if (customFirstHitTag) tags.push(customFirstHitTag);
 
     if (itemBuffs.gainTempHp > 0) tags.push(`🛡️ Gains ${itemBuffs.gainTempHp} Temp HP`);
@@ -357,4 +381,68 @@ export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {
     const rollName = (check.name || '').trim() || 'Skill Check';
 
     await rollDicePlus(`${Math.max(1, dicePool)}d6>3${mathModifier}`, `🎲 ${nickname} rolled ${rollName}!${finalTags}`);
+}
+
+export async function rollGeneric(
+    actionName: string,
+    dicePool: number,
+    attribute: string,
+    incrementEvade = false,
+    incrementClash = false,
+    incrementAction = false
+) {
+    const state = useCharacterStore.getState();
+    const nickname = state.identity.nickname || state.identity.species || 'Someone';
+    const abilityString = (state.identity.ability || '').toLowerCase();
+
+    const statuses = getStatusPenalties(state);
+    const hasComatose = abilityString.includes('comatose');
+
+    if (statuses.isAsleep && !hasComatose) {
+        if (OBR.isAvailable) OBR.notification.show('⚠️ You are Asleep and cannot perform actions!', 'WARNING');
+        return;
+    }
+
+    if (incrementAction) {
+        useCharacterStore.getState().incrementAction();
+    }
+    if (incrementEvade) useCharacterStore.getState().updateTracker('evade', true);
+    if (incrementClash) useCharacterStore.getState().updateTracker('clash', true);
+
+    let finalDicePool = dicePool;
+    if (attribute.toLowerCase() === 'dex') finalDicePool += statuses.paralysisDexterityPenalty;
+
+    const pain = getPainPenalty(attribute, state);
+    const genericSuccessModifier = state.trackers.globalSucc + statuses.confusionPenalty + pain;
+    const mathModifier =
+        genericSuccessModifier !== 0
+            ? genericSuccessModifier > 0
+                ? `+${genericSuccessModifier}`
+                : `${genericSuccessModifier}`
+            : '';
+
+    const chancesUsed = state.trackers.chances;
+    const tags: string[] = [];
+
+    if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
+    if (genericSuccessModifier !== 0)
+        tags.push(`Net Mod ${genericSuccessModifier > 0 ? '+' : ''}${genericSuccessModifier} Succ`);
+    if (chancesUsed > 0) tags.push(`Chances: Max ${chancesUsed} Rerolls`);
+    if (statuses.paralysisDexterityPenalty < 0 && attribute.toLowerCase() === 'dex') tags.push(`Paralysis: -2 Dice`);
+
+    if (statuses.isAsleep) {
+        if (hasComatose) tags.push(`ASLEEP (Comatose)`);
+        else tags.push(`ASLEEP`);
+    }
+
+    if (statuses.isFrozen) {
+        tags.push(`❄️ FROZEN: Attacking Ice Block (5HP/2DEF). Fire/Super-Effective breaks instantly.`);
+    }
+
+    const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';
+
+    await rollDicePlus(
+        `${Math.max(1, finalDicePool)}d6>3${mathModifier}`,
+        `🎲 ${nickname} rolled ${actionName}!${finalTags}`
+    );
 }

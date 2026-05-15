@@ -38,6 +38,7 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
     };
 
     const [editModalOpen, setEditModalOpen] = useState(false);
+    const [bankModalOpen, setBankModalOpen] = useState(false);
 
     const handleNameBlur = async (event: React.FocusEvent<HTMLInputElement>) => {
         const value = event.target.value.trim();
@@ -67,6 +68,9 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
     const skillTotal = calculateSkillTotal(move.acc2, fullState, itemBuffs);
 
     const trackers = useCharacterStore((state) => state.trackers);
+    const bankedAccDice = trackers.bankedAccDice || {};
+    const bankedDiceForThisMove = bankedAccDice[move.id] || 0;
+    const totalBanked = Object.values(bankedAccDice).reduce((a, b) => a + b, 0);
 
     let customFirstHitAccTag = 0;
     if (itemBuffs.firstHitAcc !== 0 && firstHitAccActive) {
@@ -74,7 +78,28 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
     }
 
     const accuracyTotal = attributeTotal + skillTotal + trackers.globalAcc + itemBuffs.acc + customFirstHitAccTag;
-    const damageTotal = move.category === 'Status' ? '-' : calculateBaseDamage(move, fullState);
+
+    const baseDamage = move.category === 'Status' ? 0 : calculateBaseDamage(move, fullState);
+    const damageTotal = move.category === 'Status' ? '-' : baseDamage + bankedDiceForThisMove;
+
+    const handleAccuracyClick = () => {
+        if (totalBanked > 0) {
+            setBankModalOpen(true);
+        } else {
+            rollAccuracy(move, useCharacterStore.getState());
+        }
+    };
+
+    const confirmWipeBank = () => {
+        useCharacterStore.getState().updateTracker('bankedAccDice', {});
+        rollAccuracy(move, useCharacterStore.getState());
+        setBankModalOpen(false);
+    };
+
+    const confirmKeepBank = () => {
+        rollAccuracy(move, useCharacterStore.getState());
+        setBankModalOpen(false);
+    };
 
     return (
         <>
@@ -93,7 +118,7 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                         <span className="move-row__accuracy-text">{accuracyTotal}</span>
                         <button
                             type="button"
-                            onClick={() => rollAccuracy(move, useCharacterStore.getState())}
+                            onClick={handleAccuracyClick}
                             className="action-button action-button--dark move-row__roll-btn"
                             title="Roll Accuracy"
                         >
@@ -273,7 +298,47 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                     </button>
                 </td>
             </tr>
+
             {editModalOpen && <MoveEditModal moveId={move.id} onClose={() => setEditModalOpen(false)} />}
+
+            {bankModalOpen && (
+                <div className="moves-table__modal-overlay">
+                    <div className="moves-table__modal-content" style={{ width: '340px', maxWidth: '90%' }}>
+                        <h3 className="moves-table__modal-title">⚠️ Banked Dice Detected</h3>
+                        <p className="moves-table__modal-text" style={{ textAlign: 'left' }}>
+                            You currently have <strong>{totalBanked}</strong> extra Damage Dice banked from previous
+                            rolls.
+                            <br />
+                            <br />
+                            Are you abandoning your previous attack, or is this a Reaction move where you want to keep
+                            your previously banked dice?
+                        </p>
+                        <div className="moves-table__modal-actions">
+                            <button
+                                type="button"
+                                className="action-button action-button--dark moves-table__modal-btn"
+                                onClick={() => setBankModalOpen(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="action-button action-button--dark moves-table__modal-btn"
+                                onClick={confirmKeepBank}
+                            >
+                                Keep Bank
+                            </button>
+                            <button
+                                type="button"
+                                className="action-button action-button--red moves-table__modal-btn"
+                                onClick={confirmWipeBank}
+                            >
+                                Clear Bank
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 });

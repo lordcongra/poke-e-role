@@ -81,6 +81,7 @@ export interface Trackers {
     ignoredPain: number;
     firstHitAcc: boolean;
     firstHitDmg: boolean;
+    bankedAccDice: Record<string, number>;
 }
 
 export interface ExtraSkill {

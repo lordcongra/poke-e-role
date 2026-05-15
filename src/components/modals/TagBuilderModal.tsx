@@ -79,7 +79,8 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                 'Powder',
                 'Gain Temp HP',
                 'Temp HP on Hit',
-                'Temp HP % Dmg'
+                'Temp HP % Dmg',
+                'Acc [X]s Add Dmg'
             ];
 
         if (category === 'turn_based')
@@ -130,7 +131,9 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
         category === 'skill' ||
         category === 'combat' ||
         (category === 'mechanic' &&
-            ['Ignore Low Acc', 'Gain Temp HP', 'Temp HP on Hit', 'Temp HP % Dmg'].includes(target)) ||
+            ['Ignore Low Acc', 'Gain Temp HP', 'Temp HP on Hit', 'Temp HP % Dmg', 'Acc [X]s Add Dmg'].includes(
+                target
+            )) ||
         (category === 'turn_based' && target !== 'No Reactions') ||
         (category === 'move_mechanics' && ['Low Accuracy', 'Set Damage'].includes(target));
 
@@ -164,6 +167,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
             else if (target === 'Gain Temp HP') tag = `[Gain Temp HP ${Math.abs(numValue)}]`;
             else if (target === 'Temp HP on Hit') tag = `[Temp HP +${Math.abs(numValue)} on Hit]`;
             else if (target === 'Temp HP % Dmg') tag = `[Temp HP ${Math.abs(numValue)}% Dmg]`;
+            else if (target === 'Acc [X]s Add Dmg') tag = `[Acc ${Math.abs(numValue)}s Add Dmg]`;
         } else if (category === 'turn_based') {
             if (target === 'Deal Damage End of Round') tag = `[Deal ${Math.abs(numValue)} Damage at End of Round]`;
             else if (target === 'Reduce Will End of Round')

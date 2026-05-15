@@ -262,6 +262,14 @@ function parseExtras(meta: Record<string, unknown>) {
 }
 
 function parseTrackers(meta: Record<string, unknown>) {
+    let parsedBankedAccDice: Record<string, number> = {};
+    try {
+        const bankedStr = String(meta['banked-acc-dice'] || '{}');
+        parsedBankedAccDice = JSON.parse(bankedStr);
+    } catch (e) {
+        parsedBankedAccDice = {};
+    }
+
     return {
         actions: Number(meta['actions-used']) || 0,
         evade: meta['evasions-used'] === true || meta['evasions-used'] === 'true',
@@ -274,7 +282,8 @@ function parseTrackers(meta: Record<string, unknown>) {
         globalChance: Number(meta['global-chance-mod']) || 0,
         ignoredPain: Number(meta['ignored-pain-mod']) || 0,
         firstHitAcc: meta['first-hit-acc-active'] === true || meta['first-hit-acc-active'] === 'true',
-        firstHitDmg: meta['first-hit-dmg-active'] === true || meta['first-hit-dmg-active'] === 'true'
+        firstHitDmg: meta['first-hit-dmg-active'] === true || meta['first-hit-dmg-active'] === 'true',
+        bankedAccDice: parsedBankedAccDice
     };
 }
 
@@ -502,6 +511,8 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
                 flatMetadata['first-hit-acc-active'] = state.trackers.firstHitAcc;
             if (state.trackers.firstHitDmg !== undefined)
                 flatMetadata['first-hit-dmg-active'] = state.trackers.firstHitDmg;
+            if (state.trackers.bankedAccDice !== undefined)
+                flatMetadata['banked-acc-dice'] = JSON.stringify(state.trackers.bankedAccDice);
         }
 
         if (state.moves) flatMetadata['moves-data'] = JSON.stringify(state.moves);

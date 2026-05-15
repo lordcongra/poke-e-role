@@ -395,6 +395,14 @@ export function useOwlbearSync() {
                                         }
                                     }
                                 });
+                            } else if (rollType === 'acc_face' && targetTokenId && payload && resultObj) {
+                                const store = useCharacterStore.getState();
+                                if (store.identity.diceEngine === 'dice-plus') {
+                                    OBR.notification.show(
+                                        '⚠️ The [Acc Xs Add Dmg] tag requires Custom Action Rolls (CAR) to read individual die faces. Please switch your Dice Engine in the Room Rules menu!',
+                                        'WARNING'
+                                    );
+                                }
                             } else if (
                                 (rollType === 'roll' || rollType === 'chance' || rollType === 'damage') &&
                                 resultObj

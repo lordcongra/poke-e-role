@@ -18,7 +18,8 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
         globalChance: 0,
         ignoredPain: 0,
         firstHitAcc: false,
-        firstHitDmg: false
+        firstHitDmg: false,
+        bankedAccDice: {}
     },
 
     addStatus: () =>
@@ -93,9 +94,14 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
             else if (field === 'ignoredPain') obrKey = 'ignored-pain-mod';
             else if (field === 'firstHitAcc') obrKey = 'first-hit-acc-active';
             else if (field === 'firstHitDmg') obrKey = 'first-hit-dmg-active';
+            else if (field === 'bankedAccDice') obrKey = 'banked-acc-dice';
 
             try {
-                saveToOwlbear({ [obrKey]: value });
+                if (field === 'bankedAccDice') {
+                    saveToOwlbear({ [obrKey]: JSON.stringify(value) });
+                } else {
+                    saveToOwlbear({ [obrKey]: value });
+                }
             } catch (e) {}
             return { trackers: newTrackers };
         }),
@@ -158,7 +164,8 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
                     'will-curr': newWill.willCurr,
                     'temporary-will': newWill.temporaryWill,
                     'effects-data': JSON.stringify(newEffects),
-                    'moves-data': JSON.stringify(newMoves)
+                    'moves-data': JSON.stringify(newMoves),
+                    'banked-acc-dice': '{}'
                 });
             } catch (e) {}
 
@@ -171,7 +178,8 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
                     evade: false,
                     clash: false,
                     chances: 0,
-                    fate: 0
+                    fate: 0,
+                    bankedAccDice: {}
                 },
                 effects: newEffects,
                 moves: newMoves
@@ -188,6 +196,7 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
                     'hp-curr': state.health.hpMax,
                     'will-curr': state.will.willMax,
                     'ignored-pain-mod': 0,
+                    'banked-acc-dice': '{}',
                     'status-list': JSON.stringify(newStatuses)
                 });
             } catch (e) {}
@@ -195,7 +204,7 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
             return {
                 health: { ...state.health, hpCurr: state.health.hpMax },
                 will: { ...state.will, willCurr: state.will.willMax },
-                trackers: { ...state.trackers, ignoredPain: 0 },
+                trackers: { ...state.trackers, ignoredPain: 0, bankedAccDice: {} },
                 statuses: newStatuses
             };
         })
