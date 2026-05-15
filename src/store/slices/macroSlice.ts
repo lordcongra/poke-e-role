@@ -242,6 +242,22 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             const abilities = extractAbilities(data);
             const learnsetArray = parseLearnset(data.Moves);
 
+            let heightStr = '';
+            if (typeof data.Height === 'object' && data.Height !== null) {
+                const h = data.Height as { Meters?: number; Feet?: number };
+                heightStr = `${h.Meters || 0}m / ${h.Feet || 0}ft`;
+            } else if (typeof data.Height === 'string') {
+                heightStr = data.Height;
+            }
+
+            let weightStr = '';
+            if (typeof data.Weight === 'object' && data.Weight !== null) {
+                const w = data.Weight as { Kilograms?: number; Pounds?: number };
+                weightStr = `${w.Kilograms || 0}kg / ${w.Pounds || 0}lbs`;
+            } else if (typeof data.Weight === 'string') {
+                weightStr = data.Weight;
+            }
+
             const newIdentity = {
                 ...state.identity,
                 species: String(data.Name || state.identity.species),
@@ -249,7 +265,12 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 type2: String(data.Type2 || ''),
                 availableAbilities: abilities,
                 ability: abilities.length > 0 ? abilities[0] : '',
-                learnset: learnsetArray
+                learnset: learnsetArray,
+                dexId: String(data.DexID || ''),
+                dexCategory: String(data.DexCategory || ''),
+                height: heightStr,
+                weight: weightStr,
+                dexDescription: String(data.DexDescription || '')
             };
 
             updatesToSave['species'] = newIdentity.species;
@@ -257,6 +278,11 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             updatesToSave['type2'] = newIdentity.type2;
             updatesToSave['ability'] = newIdentity.ability;
             updatesToSave['ability-list'] = abilities.join(',');
+            updatesToSave['dex-id'] = newIdentity.dexId;
+            updatesToSave['dex-category'] = newIdentity.dexCategory;
+            updatesToSave['height'] = newIdentity.height;
+            updatesToSave['weight'] = newIdentity.weight;
+            updatesToSave['dex-description'] = newIdentity.dexDescription;
 
             syncHealthAndWill(state, newStats, newIdentity, newHealth, newWill, updatesToSave);
 
@@ -326,6 +352,22 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             const newType1 = String(data.Type1 || state.identity.type1 || '');
             const newType2 = String(data.Type2 || state.identity.type2 || '');
 
+            let heightStr = state.identity.height;
+            if (typeof data.Height === 'object' && data.Height !== null) {
+                const h = data.Height as { Meters?: number; Feet?: number };
+                heightStr = `${h.Meters || 0}m / ${h.Feet || 0}ft`;
+            } else if (typeof data.Height === 'string') {
+                heightStr = data.Height;
+            }
+
+            let weightStr = state.identity.weight;
+            if (typeof data.Weight === 'object' && data.Weight !== null) {
+                const w = data.Weight as { Kilograms?: number; Pounds?: number };
+                weightStr = `${w.Kilograms || 0}kg / ${w.Pounds || 0}lbs`;
+            } else if (typeof data.Weight === 'string') {
+                weightStr = data.Weight;
+            }
+
             const newStats = {
                 ...state.stats,
                 [CombatStat.STR]: { ...state.stats[CombatStat.STR], limit: getLimit(data, 'Strength') },
@@ -341,7 +383,12 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 ability: newAbility,
                 learnset: learnsetArray,
                 type1: newType1,
-                type2: newType2
+                type2: newType2,
+                dexId: String(data.DexID || state.identity.dexId || ''),
+                dexCategory: String(data.DexCategory || state.identity.dexCategory || ''),
+                height: heightStr,
+                weight: weightStr,
+                dexDescription: String(data.DexDescription || state.identity.dexDescription || '')
             };
 
             const newHealth = { ...state.health };
@@ -356,7 +403,12 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 'dex-limit': newStats[CombatStat.DEX].limit,
                 'vit-limit': newStats[CombatStat.VIT].limit,
                 'spe-limit': newStats[CombatStat.SPE].limit,
-                'ins-limit': newStats[CombatStat.INS].limit
+                'ins-limit': newStats[CombatStat.INS].limit,
+                'dex-id': newIdentity.dexId,
+                'dex-category': newIdentity.dexCategory,
+                height: newIdentity.height,
+                weight: newIdentity.weight,
+                'dex-description': newIdentity.dexDescription
             };
 
             // Always run the sync engine to ensure Max HP and Max Will match the latest stat limits

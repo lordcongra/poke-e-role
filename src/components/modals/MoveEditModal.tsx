@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { TagBuilderModal } from './TagBuilderModal';
+import { broadcastInfo } from '../../utils/diceRoller';
 import './MoveEditModal.css';
 
 interface MoveEditModalProps {
@@ -35,6 +36,17 @@ export function MoveEditModal({ moveId, onClose }: MoveEditModalProps) {
                         onClick={onClose}
                     >
                         Close
+                    </button>
+                    <button
+                        type="button"
+                        className="action-button move-edit__btn-tags"
+                        style={{ backgroundColor: '#1565c0', borderColor: '#1565c0', color: 'white' }}
+                        onClick={() => {
+                            broadcastInfo(move.name || 'Move', move.desc || 'No description provided.');
+                            onClose();
+                        }}
+                    >
+                        📢 Broadcast
                     </button>
                     <button
                         type="button"

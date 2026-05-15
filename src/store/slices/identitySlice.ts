@@ -64,7 +64,12 @@ const OBR_KEY_MAP: Record<string, string> = {
     megaImageUrl: 'mega-image-url',
     maxImageUrl: 'max-image-url',
     teraImageUrl: 'tera-image-url',
-    gmDemoMode: 'gm-demo-mode'
+    gmDemoMode: 'gm-demo-mode',
+    dexId: 'dex-id',
+    dexCategory: 'dex-category',
+    height: 'height',
+    weight: 'weight',
+    dexDescription: 'dex-description'
 };
 
 const parseLearnset = (movesObj: unknown): Array<{ Learned: string; Name: string }> => {
@@ -243,7 +248,13 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
             abilityDescStyle: 'all'
         },
         isPrinting: false,
-        pendingDemoRoll: null
+        pendingDemoRoll: null,
+
+        dexId: '',
+        dexCategory: '',
+        height: '',
+        weight: '',
+        dexDescription: ''
     },
 
     setTokenData: (tokenId, role) => set({ tokenId, role }),

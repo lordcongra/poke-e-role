@@ -1,3 +1,4 @@
+import { broadcastInfo } from '../../utils/diceRoller';
 import './ItemInfoModal.css';
 
 interface ItemInfoModalProps {
@@ -14,6 +15,16 @@ export function ItemInfoModal({ infoModal, onClose }: ItemInfoModalProps) {
                 <div className="item-info__actions">
                     <button className="action-button action-button--dark item-info__btn-close" onClick={onClose}>
                         Close
+                    </button>
+                    <button
+                        className="action-button item-info__btn-broadcast"
+                        style={{ backgroundColor: '#1565c0', borderColor: '#1565c0', color: 'white' }}
+                        onClick={() => {
+                            broadcastInfo(infoModal.title, infoModal.desc || 'No description provided.');
+                            onClose();
+                        }}
+                    >
+                        📢 Broadcast
                     </button>
                 </div>
             </div>

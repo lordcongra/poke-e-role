@@ -218,6 +218,11 @@ export interface CustomPokemon {
     HiddenAbility: string;
     EventAbilities: string;
     Moves: Array<{ Learned: string; Name: string }>;
+    DexID?: string;
+    DexCategory?: string;
+    Height?: string;
+    Weight?: string;
+    DexDescription?: string;
     gmOnly?: boolean;
 }
 

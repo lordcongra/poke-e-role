@@ -8,9 +8,10 @@ import { TransformationModal } from '../modals/TransformationModal';
 interface SpeciesSelectorProps {
     uniqueSpecies: string[];
     onOpenGenerator: () => void;
+    onOpenPokedex: () => void;
 }
 
-export function SpeciesSelector({ uniqueSpecies, onOpenGenerator }: SpeciesSelectorProps) {
+export function SpeciesSelector({ uniqueSpecies, onOpenGenerator, onOpenPokedex }: SpeciesSelectorProps) {
     const identityStore = useCharacterStore((state) => state.identity);
     const setIdentity = useCharacterStore((state) => state.setIdentity);
     const applySpeciesData = useCharacterStore((state) => state.applySpeciesData);
@@ -90,6 +91,14 @@ export function SpeciesSelector({ uniqueSpecies, onOpenGenerator }: SpeciesSelec
                                 title="Auto-Build Pokémon"
                             >
                                 🎲
+                            </button>
+                            <button
+                                type="button"
+                                className="action-button action-button--dark identity-header__species-btn"
+                                onClick={onOpenPokedex}
+                                title="Pokédex Info"
+                            >
+                                📖
                             </button>
                             <button
                                 type="button"

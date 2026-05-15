@@ -34,6 +34,60 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
     }
 }
 
+export async function broadcastInfo(title: string, description: string) {
+    if (!OBR.isAvailable) {
+        console.log(`[Offline Broadcast] ${title}: ${description}`);
+        return;
+    }
+    try {
+        const state = useCharacterStore.getState();
+        const playerId = await OBR.player.getId();
+        const playerName = await OBR.player.getName();
+        const targetVisibility = state.identity.rolls === 'Private (GM)' ? 'gm_only' : 'everyone';
+        const icon = state.identity.tokenImageUrl || 'https://lordcongra.github.io/poke-e-role/pokeball.svg';
+
+        const rollLogData = {
+            id: crypto.randomUUID(),
+            player: playerName,
+            playerId: playerId,
+            label: `📢 ${title}`,
+            result: description,
+            icon,
+            targetVisibility
+        };
+
+        // Cache locally so we see our own broadcast
+        try {
+            const storedLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+            const existingLog = Array.isArray(storedLog) ? storedLog : [];
+            localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData, ...existingLog].slice(0, 50)));
+        } catch (error) {
+            console.warn('Failed to update roll log cache safely.', error);
+        }
+
+        await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-sync', rollLogData, {
+            destination: 'REMOTE'
+        });
+        await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-update', {}, { destination: 'LOCAL' });
+
+        const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+        await OBR.popover
+            .open({
+                id: 'pkr-roll-log',
+                url: `${baseUrl}/roll-log.html`,
+                height: 380,
+                width: 320,
+                disableClickAway: true,
+                anchorReference: 'POSITION',
+                anchorPosition: { top: 99999, left: 99999 },
+                transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
+            })
+            .catch(() => {});
+    } catch (error) {
+        console.error('Broadcast Info Error:', error);
+    }
+}
+
 export async function rollDicePlus(notation: string, label: string, rollType = 'roll', payload = '') {
     if (!OBR.isAvailable) {
         console.log(`[Offline Roll] ${notation} for ${label}`);

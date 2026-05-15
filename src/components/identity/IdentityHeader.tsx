@@ -11,7 +11,9 @@ import { GeneratorModal } from '../modals/GeneratorModal';
 import { TrackerSettingsModal } from '../modals/TrackerSettingsModal';
 import { RulesModal } from '../modals/RulesModal';
 import { ChangelogModal } from '../modals/ChangelogModal';
+import { PokedexModal } from '../modals/PokedexModal';
 import { CURRENT_VERSION } from '../../data/changelog';
+import { broadcastInfo } from '../../utils/diceRoller';
 import './IdentityHeader.css';
 
 export function IdentityHeader() {
@@ -29,6 +31,7 @@ export function IdentityHeader() {
     const [showTrackerSettings, setShowTrackerSettings] = useState(false);
     const [showRulesModal, setShowRulesModal] = useState(false);
     const [showChangelog, setShowChangelog] = useState(false);
+    const [showPokedexModal, setShowPokedexModal] = useState(false);
 
     useEffect(() => {
         try {
@@ -255,6 +258,7 @@ export function IdentityHeader() {
                 onOpenGenerator={() => setShowGeneratorModal(true)}
                 onOpenAbility={openAbilityModal}
                 onOpenNature={openNatureModal}
+                onOpenPokedex={() => setShowPokedexModal(true)}
             />
 
             <IdentityControls
@@ -270,6 +274,7 @@ export function IdentityHeader() {
             {showTrackerSettings && <TrackerSettingsModal onClose={() => setShowTrackerSettings(false)} />}
             {showRulesModal && <RulesModal onClose={() => setShowRulesModal(false)} />}
             {showChangelog && <ChangelogModal onClose={handleCloseChangelog} />}
+            {showPokedexModal && <PokedexModal onClose={() => setShowPokedexModal(false)} />}
 
             {modalConfig && (
                 <div className="identity-header__modal-overlay identity-header__modal-overlay--high-z">
@@ -281,12 +286,24 @@ export function IdentityHeader() {
                         <div className="identity-header__modal-text identity-header__modal-text--pre-wrap">
                             {modalConfig.content}
                         </div>
-                        <div>
+                        <div className="identity-header__modal-actions">
                             <button
-                                className="action-button action-button--dark identity-header__modal-close-btn"
+                                className="action-button action-button--dark identity-header__modal-btn"
                                 onClick={() => setModalConfig(null)}
                             >
                                 Close
+                            </button>
+                            <button
+                                className="action-button identity-header__modal-btn"
+                                style={{ backgroundColor: '#1565c0', borderColor: '#1565c0', color: 'white' }}
+                                onClick={() => {
+                                    if (typeof modalConfig.content === 'string') {
+                                        broadcastInfo(modalConfig.title, modalConfig.content);
+                                        setModalConfig(null);
+                                    }
+                                }}
+                            >
+                                📢 Broadcast
                             </button>
                         </div>
                     </div>

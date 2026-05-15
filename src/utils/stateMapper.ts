@@ -370,7 +370,13 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
         evaOffsetX: Number(meta['eva-offset-x']) || 0,
         evaOffsetY: Number(meta['eva-offset-y']) || 0,
         claOffsetX: Number(meta['cla-offset-x']) || 0,
-        claOffsetY: Number(meta['cla-offset-y']) || 0
+        claOffsetY: Number(meta['cla-offset-y']) || 0,
+
+        dexId: String(meta['dex-id'] || ''),
+        dexCategory: String(meta['dex-category'] || ''),
+        height: String(meta['height'] || ''),
+        weight: String(meta['weight'] || ''),
+        dexDescription: String(meta['dex-description'] || '')
     };
 }
 
@@ -476,6 +482,13 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
                 flatMetadata['custom-form-first-hit-acc'] = state.identity.customFormFirstHitAccActive;
             if (state.identity.customFormFirstHitDmgActive !== undefined)
                 flatMetadata['custom-form-first-hit-dmg'] = state.identity.customFormFirstHitDmgActive;
+
+            if (state.identity.dexId !== undefined) flatMetadata['dex-id'] = state.identity.dexId;
+            if (state.identity.dexCategory !== undefined) flatMetadata['dex-category'] = state.identity.dexCategory;
+            if (state.identity.height !== undefined) flatMetadata['height'] = state.identity.height;
+            if (state.identity.weight !== undefined) flatMetadata['weight'] = state.identity.weight;
+            if (state.identity.dexDescription !== undefined)
+                flatMetadata['dex-description'] = state.identity.dexDescription;
 
             sanitizeBackup(state.identity.baseFormData, 'base-form-data');
             sanitizeBackup(state.identity.altFormData, 'alt-form-data');

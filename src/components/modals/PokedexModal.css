@@ -1,0 +1,112 @@
+.pokedex-modal__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1500;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.pokedex-modal__content {
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: 8px;
+    width: 320px;
+    border: 2px solid #1976d2;
+    color: var(--text-main);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+}
+
+.pokedex-modal__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+}
+
+.pokedex-modal__title {
+    margin: 0;
+    color: #1976d2;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pokedex-modal__close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-weight: bold;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 6px;
+    border-radius: 4px;
+}
+
+.pokedex-modal__close-btn:hover {
+    background: rgba(255, 0, 0, 0.1);
+    color: #1976d2;
+}
+
+.pokedex-modal__body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pokedex-modal__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--row-odd);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+}
+
+.pokedex-modal__label {
+    font-weight: bold;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.pokedex-modal__value {
+    font-size: 0.85rem;
+    color: var(--text-main);
+    font-weight: bold;
+}
+
+.pokedex-modal__desc-box {
+    margin-top: 8px;
+    padding: 10px;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    line-height: 1.5;
+    font-style: italic;
+}
+
+.pokedex-modal__actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    border-top: 1px solid var(--border);
+    padding-top: 15px;
+}
+
+.pokedex-modal__btn {
+    flex: 1;
+    padding: 8px;
+    font-size: 0.95rem;
+}

@@ -12,7 +12,7 @@ To use all the features of this character sheet, you **MUST** install **at least
 
 1. **[Custom Action Rolls (CAR)](https://owlbear.rogue.pub/extension/https://action-manager.onrender.com/manifest.json):** The recommended engine. Handles 3D dice and features a persistent, pop-out chat log styled like the sheet to track roll history. It supports advanced mechanics like **Exploding Dice** and detailed roll breakdowns. This option tends to have better performance on Firefox.
    _- AND/OR -_
-2. **[Dice+](https://extensions.owlbear.rodeo/dice-plus):** ⚠️ *DEPRECATION NOTICE: This legacy engine will be phased out in a future update.* The classic engine. Handles 1-click 3D physics dice. It is a pure physics-based engine, so it can sometimes lose accuracy at high dice counts, and it does *not* support advanced features like homebrew exploding dice reading. Maintaining two dice rollers with different functions has been challenging as well which contributes to this deprecation.
+2. **[Dice+](https://extensions.owlbear.rodeo/dice-plus):** ⚠️ _DEPRECATION NOTICE: This legacy engine will be phased out in a future update._ The classic engine. Handles 1-click 3D physics dice. It is a pure physics-based engine, so it can sometimes lose accuracy at high dice counts, and it does _not_ support advanced features like homebrew exploding dice reading. Maintaining two dice rollers with different functions has been challenging as well which contributes to this deprecation.
 
 _(Note: You can swap between these engines at any time for the whole room using the "📜 Rules" menu on the sheet!)_
 
@@ -99,7 +99,7 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 - **Status Penalties:** Automatically applies mechanical penalties for Confusion (success drops scaling with Rank) and Paralysis (-2 Dice to Dex rolls), and prevents actions if Asleep or Frozen.
 - **Smart Ability Overrides:** Hardcoded exceptions for abilities like Limber, Comatose, Insomnia, Vital Spirit, and Sweet Veil so they properly bypass status penalties!
 - **Auto-Ticking Effects:** Track terrain, weather, or screens (like Tailwind or Reflect) in the "Timers" box. Clicking the "Reset Round" button automatically ticks these timers down by 1.
-- **Custom & Built-in Statuses:** Custom statuses natively integrate into the sheet's tracker dropdowns alongside the base game's conditions. Click the 🎲 icon next to *any* status to automatically calculate and roll your recovery pool.
+- **Custom & Built-in Statuses:** Custom statuses natively integrate into the sheet's tracker dropdowns alongside the base game's conditions. Click the 🎲 icon next to _any_ status to automatically calculate and roll your recovery pool.
 - **Visual Map Trackers:** Any active timer, status, or HP/Will change automatically updates the highly visible, color-coded custom UI graphics natively drawn over your token on the map so the GM never loses track of combat!
 - **Roleplay Mode:** Click the "⚙️" icon on the Trackers bar at the top of the sheet to fully customize exactly which UI elements (Bars, Text, Badges) render over your token, allowing you to instantly hide trackers during intense roleplay moments.
 
@@ -123,7 +123,7 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 - **Pure Math Routing:** Our engine handles the math for you! Broadcasts are natively formatted to support both the **Dice+** and **Custom Action Rolls (CAR)** extensions.
 - **Which should I choose?**
     - **Custom Action Rolls (CAR) - RECOMMENDED:** Uses internal math rather than pure physics, making it more performance-lite (especially on Firefox) and perfectly synced for all players, regardless of how massive the dice pool gets. It includes a persistent chat log and supports advanced tag mechanics like Exploding Dice!
-    - **Dice+ (DEPRECATED):** ⚠️ *This engine is slated for removal in an upcoming release. Please migrate to CAR!* A pure 3D physics-based roller. It runs smoothly on Google Chrome, but does not support advanced die-face reading tags.
+    - **Dice+ (DEPRECATED):** ⚠️ _This engine is slated for removal in an upcoming release. Please migrate to CAR!_ A pure 3D physics-based roller. It runs smoothly on Google Chrome, but does not support advanced die-face reading tags.
 - **OBR Notifications:** Every roll triggers an Owlbear Rodeo broadcast notification announcing the move, pain penalties, active item buffs, and required successes to the whole table!
 - **Smart Combat:** Automatically accounts for global Accuracy/Damage modifiers, STAB bonuses, Protean/Libero, Super Luck, and even grants +3 dice on Critical Hits for the _Sniper_ ability.
 

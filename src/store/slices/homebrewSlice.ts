@@ -205,7 +205,12 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
                 Ability2: '',
                 HiddenAbility: '',
                 EventAbilities: '',
-                Moves: []
+                Moves: [],
+                DexID: '',
+                DexCategory: '',
+                Height: '',
+                Weight: '',
+                DexDescription: ''
             }
         ];
         set({ roomCustomPokemon: newPokemon });

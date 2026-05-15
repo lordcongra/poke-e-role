@@ -48,6 +48,11 @@ export interface PokemonApiResponse {
     Moves?:
         | Record<string, string[] | { Name?: string; Move?: string }[]>
         | { Learned?: string; Learn?: string; Level?: string; Rank?: string; Name?: string; Move?: string }[];
+    DexID?: string;
+    DexCategory?: string;
+    Height?: { Meters?: number; Feet?: number } | string;
+    Weight?: { Kilograms?: number; Pounds?: number } | string;
+    DexDescription?: string;
 }
 
 export interface MoveApiResponse {

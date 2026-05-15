@@ -11,9 +11,10 @@ interface IdentityGridProps {
     onOpenGenerator: () => void;
     onOpenAbility: () => void;
     onOpenNature: () => void;
+    onOpenPokedex: () => void;
 }
 
-export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature }: IdentityGridProps) {
+export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature, onOpenPokedex }: IdentityGridProps) {
     const identityStore = useCharacterStore((state) => state.identity) || {};
     const setIdentity = useCharacterStore((state) => state.setIdentity);
     const setMode = useCharacterStore((state) => state.setMode);
@@ -77,7 +78,11 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature }: I
                     />
                 </div>
 
-                <SpeciesSelector uniqueSpecies={uniqueSpecies} onOpenGenerator={onOpenGenerator} />
+                <SpeciesSelector
+                    uniqueSpecies={uniqueSpecies}
+                    onOpenGenerator={onOpenGenerator}
+                    onOpenPokedex={onOpenPokedex}
+                />
 
                 <div className="identity-grid__row">
                     <span className="identity-grid__label">

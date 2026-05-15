@@ -41,9 +41,11 @@
 .item-info__actions {
     display: flex;
     justify-content: center;
+    gap: 10px;
 }
 
-.item-info__btn-close {
-    width: 100%;
+.item-info__btn-close,
+.item-info__btn-broadcast {
+    flex: 1;
     padding: 6px;
 }

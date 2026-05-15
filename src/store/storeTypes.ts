@@ -422,6 +422,13 @@ export interface IdentitySlice {
         isPrinting: boolean;
 
         pendingDemoRoll: PendingDemoRoll | null;
+
+        // Pokédex Info
+        dexId: string;
+        dexCategory: string;
+        height: string;
+        weight: string;
+        dexDescription: string;
     };
 
     setIdentity: <K extends keyof IdentitySlice['identity']>(field: K, value: IdentitySlice['identity'][K]) => void;

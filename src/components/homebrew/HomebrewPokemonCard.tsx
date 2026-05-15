@@ -136,6 +136,58 @@ export function HomebrewPokemonCard({
                     <HomebrewPokemonStats pokemon={pokemon} canEdit={canEdit} />
                     <HomebrewPokemonAbilities pokemon={pokemon} canEdit={canEdit} />
                     <HomebrewPokemonLearnset pokemon={pokemon} canEdit={canEdit} />
+
+                    <div className="homebrew-pokemon-card__pokedex-section">
+                        <span className="homebrew-pokemon-card__section-header">Pokédex Info</span>
+                        <div className="homebrew-pokemon-card__types-row">
+                            <input
+                                type="text"
+                                value={pokemon.DexID || ''}
+                                onChange={(e) => canEdit && updateCustomPokemon(pokemon.id, 'DexID', e.target.value)}
+                                placeholder="Dex # (e.g. 025)"
+                                disabled={!canEdit}
+                                className="homebrew-pokemon-card__name-input"
+                            />
+                            <input
+                                type="text"
+                                value={pokemon.DexCategory || ''}
+                                onChange={(e) =>
+                                    canEdit && updateCustomPokemon(pokemon.id, 'DexCategory', e.target.value)
+                                }
+                                placeholder="Category (e.g. Mouse Pokémon)"
+                                disabled={!canEdit}
+                                className="homebrew-pokemon-card__name-input"
+                            />
+                        </div>
+                        <div className="homebrew-pokemon-card__types-row" style={{ marginTop: '8px' }}>
+                            <input
+                                type="text"
+                                value={pokemon.Height || ''}
+                                onChange={(e) => canEdit && updateCustomPokemon(pokemon.id, 'Height', e.target.value)}
+                                placeholder="Height (e.g. 0.4m / 1.04ft)"
+                                disabled={!canEdit}
+                                className="homebrew-pokemon-card__name-input"
+                            />
+                            <input
+                                type="text"
+                                value={pokemon.Weight || ''}
+                                onChange={(e) => canEdit && updateCustomPokemon(pokemon.id, 'Weight', e.target.value)}
+                                placeholder="Weight (e.g. 6.0kg / 13.2lbs)"
+                                disabled={!canEdit}
+                                className="homebrew-pokemon-card__name-input"
+                            />
+                        </div>
+                        <textarea
+                            value={pokemon.DexDescription || ''}
+                            onChange={(e) =>
+                                canEdit && updateCustomPokemon(pokemon.id, 'DexDescription', e.target.value)
+                            }
+                            placeholder="Pokédex Description"
+                            disabled={!canEdit}
+                            className="homebrew-card__textarea homebrew-card__textarea--small"
+                            style={{ marginTop: '8px' }}
+                        />
+                    </div>
                 </>
             )}
 

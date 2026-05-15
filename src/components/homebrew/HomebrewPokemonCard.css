@@ -179,6 +179,17 @@
     padding: 0 6px;
 }
 
+.homebrew-pokemon-card__section-header {
+    font-weight: bold;
+    font-size: 0.85rem;
+    color: var(--primary);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+    margin-top: 10px;
+    margin-bottom: 8px;
+    display: block;
+}
+
 /* Mobile Overrides */
 @media (max-width: 768px) {
     .homebrew-pokemon-card__stats-grid,
