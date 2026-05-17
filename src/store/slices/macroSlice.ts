@@ -340,41 +340,51 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
         set((state) => {
             if (!data || (!data.Name && !data.Moves)) return state;
 
-            const abilities = extractAbilities(data);
-            const learnsetArray = parseLearnset(data.Moves);
+            const dataRecord = data as Record<string, unknown>;
+
+            const abilities = extractAbilities(dataRecord);
+            const learnsetArray = parseLearnset(dataRecord.Moves);
 
             let newAbility = state.identity.ability;
-            const cleanAbilities = abilities.map((a) => a.replace(' (HA)', '').toLowerCase());
-            if (!cleanAbilities.includes(newAbility.toLowerCase()) && abilities.length > 0) {
+            // ONLY override the ability if the user hasn't selected one yet
+            // This protects Homebrew abilities from being wiped!
+            if (!newAbility && abilities.length > 0) {
                 newAbility = abilities[0].replace(' (HA)', '');
             }
 
-            const newType1 = String(data.Type1 || state.identity.type1 || '');
-            const newType2 = String(data.Type2 || state.identity.type2 || '');
+            // DO NOT override types if the user already has custom types set!
+            const newType1 = state.identity.type1 || String(dataRecord.Type1 || '');
+            const newType2 = state.identity.type2 || String(dataRecord.Type2 || '');
 
             let heightStr = state.identity.height;
-            if (typeof data.Height === 'object' && data.Height !== null) {
-                const h = data.Height as { Meters?: number; Feet?: number };
-                heightStr = `${h.Meters || 0}m / ${h.Feet || 0}ft`;
-            } else if (typeof data.Height === 'string') {
-                heightStr = data.Height;
+            // ONLY populate height if currently empty
+            if (!heightStr) {
+                if (typeof dataRecord.Height === 'object' && dataRecord.Height !== null) {
+                    const h = dataRecord.Height as { Meters?: number; Feet?: number };
+                    heightStr = `${h.Meters || 0}m / ${h.Feet || 0}ft`;
+                } else if (typeof dataRecord.Height === 'string') {
+                    heightStr = dataRecord.Height;
+                }
             }
 
             let weightStr = state.identity.weight;
-            if (typeof data.Weight === 'object' && data.Weight !== null) {
-                const w = data.Weight as { Kilograms?: number; Pounds?: number };
-                weightStr = `${w.Kilograms || 0}kg / ${w.Pounds || 0}lbs`;
-            } else if (typeof data.Weight === 'string') {
-                weightStr = data.Weight;
+            // ONLY populate weight if currently empty
+            if (!weightStr) {
+                if (typeof dataRecord.Weight === 'object' && dataRecord.Weight !== null) {
+                    const w = dataRecord.Weight as { Kilograms?: number; Pounds?: number };
+                    weightStr = `${w.Kilograms || 0}kg / ${w.Pounds || 0}lbs`;
+                } else if (typeof dataRecord.Weight === 'string') {
+                    weightStr = dataRecord.Weight;
+                }
             }
 
             const newStats = {
                 ...state.stats,
-                [CombatStat.STR]: { ...state.stats[CombatStat.STR], limit: getLimit(data, 'Strength') },
-                [CombatStat.DEX]: { ...state.stats[CombatStat.DEX], limit: getLimit(data, 'Dexterity') },
-                [CombatStat.VIT]: { ...state.stats[CombatStat.VIT], limit: getLimit(data, 'Vitality') },
-                [CombatStat.SPE]: { ...state.stats[CombatStat.SPE], limit: getLimit(data, 'Special') },
-                [CombatStat.INS]: { ...state.stats[CombatStat.INS], limit: getLimit(data, 'Insight') }
+                [CombatStat.STR]: { ...state.stats[CombatStat.STR], limit: getLimit(dataRecord, 'Strength') },
+                [CombatStat.DEX]: { ...state.stats[CombatStat.DEX], limit: getLimit(dataRecord, 'Dexterity') },
+                [CombatStat.VIT]: { ...state.stats[CombatStat.VIT], limit: getLimit(dataRecord, 'Vitality') },
+                [CombatStat.SPE]: { ...state.stats[CombatStat.SPE], limit: getLimit(dataRecord, 'Special') },
+                [CombatStat.INS]: { ...state.stats[CombatStat.INS], limit: getLimit(dataRecord, 'Insight') }
             };
 
             const newIdentity = {
@@ -384,11 +394,11 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 learnset: learnsetArray,
                 type1: newType1,
                 type2: newType2,
-                dexId: String(data.DexID || state.identity.dexId || ''),
-                dexCategory: String(data.DexCategory || state.identity.dexCategory || ''),
+                dexId: state.identity.dexId || String(dataRecord.DexID || ''),
+                dexCategory: state.identity.dexCategory || String(dataRecord.DexCategory || ''),
                 height: heightStr,
                 weight: weightStr,
-                dexDescription: String(data.DexDescription || state.identity.dexDescription || '')
+                dexDescription: state.identity.dexDescription || String(dataRecord.DexDescription || '')
             };
 
             const newHealth = { ...state.health };
@@ -412,7 +422,6 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             };
 
             // Always run the sync engine to ensure Max HP and Max Will match the latest stat limits
-            // This corrects legacy tokens that failed to store derived math properly without overwriting Base HP!
             syncHealthAndWill(state, newStats, newIdentity, newHealth, newWill, updatesToSave);
 
             try {
