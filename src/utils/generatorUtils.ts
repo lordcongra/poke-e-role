@@ -193,7 +193,31 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         }
     }
 
-    const extractMoves = (moveObject: unknown, maxRankIndex: number, targetArray: string[], minRankIndex = -1) => {
+    const extractMoves = (
+        moveObject: unknown,
+        maxRankIndex: number,
+        targetArray: string[],
+        minRankIndex = -1,
+        includeOther = false
+    ) => {
+        const processMove = (moveName: string, moveRank: string) => {
+            const normalizedRank = moveRank.trim().charAt(0).toUpperCase() + moveRank.trim().slice(1).toLowerCase();
+            const rIdx = RANK_HIERARCHY.indexOf(normalizedRank);
+
+            const cleanName = moveName.toLowerCase().trim();
+            const isCustomMove = state.roomCustomMoves.some((m) => m.name.toLowerCase() === cleanName);
+            const moveExists = MOVES_URLS[cleanName] || isCustomMove;
+
+            if (moveName && cleanName !== 'splash' && moveExists) {
+                const isWithinRank = rIdx !== -1 && rIdx <= maxRankIndex && rIdx > minRankIndex;
+                const isOther = rIdx === -1;
+
+                if (maxRankIndex === 99 || isWithinRank || (includeOther && isOther)) {
+                    targetArray.push(moveName);
+                }
+            }
+        };
+
         if (Array.isArray(moveObject)) {
             moveObject.forEach((move: unknown) => {
                 const moveRecord = move as Record<string, unknown>;
@@ -204,38 +228,22 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
                               moveRecord.Learned || moveRecord.Learn || moveRecord.Level || moveRecord.Rank || 'Other'
                           )
                         : 'Other';
-
-                const rIdx = RANK_HIERARCHY.indexOf(moveRank.trim());
-                if (moveName && moveName.toLowerCase().trim() !== 'splash' && MOVES_URLS[moveName.toLowerCase()]) {
-                    // Allow if it falls within the permitted rank bounds OR if we are ignoring ranks entirely (maxRankIndex = 99)
-                    if (maxRankIndex === 99 || (rIdx !== -1 && rIdx <= maxRankIndex && rIdx > minRankIndex)) {
-                        targetArray.push(moveName);
-                    }
-                }
+                processMove(moveName, moveRank);
             });
         } else if (typeof moveObject === 'object' && moveObject !== null) {
             Object.entries(moveObject).forEach(([moveRank, moveList]) => {
-                const rIdx = RANK_HIERARCHY.indexOf(moveRank.trim());
-                if (maxRankIndex === 99 || (rIdx !== -1 && rIdx <= maxRankIndex && rIdx > minRankIndex)) {
-                    if (Array.isArray(moveList)) {
-                        moveList.forEach((move: unknown) => {
-                            const moveName =
-                                typeof move === 'string'
-                                    ? move
-                                    : String(
-                                          (move as Record<string, unknown>).Name ||
-                                              (move as Record<string, unknown>).Move ||
-                                              ''
-                                      );
-                            if (
-                                moveName &&
-                                moveName.toLowerCase().trim() !== 'splash' &&
-                                MOVES_URLS[moveName.toLowerCase()]
-                            ) {
-                                targetArray.push(moveName);
-                            }
-                        });
-                    }
+                if (Array.isArray(moveList)) {
+                    moveList.forEach((move: unknown) => {
+                        const moveName =
+                            typeof move === 'string'
+                                ? move
+                                : String(
+                                      (move as Record<string, unknown>).Name ||
+                                          (move as Record<string, unknown>).Move ||
+                                          ''
+                                  );
+                        processMove(moveName, moveRank);
+                    });
                 }
             });
         }
@@ -264,7 +272,8 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     }
 
     if (legalMoveNames.length < draftedMax) {
-        extractMoves(pdRecord.Moves, 99, legalMoveNames); // 99 indicates ignoreRank
+        // Only pull "Other" (TM/Egg) moves to fill gaps, NOT higher rank moves!
+        extractMoves(pdRecord.Moves, currentRankIndex, legalMoveNames, -1, true);
     }
 
     if (config.allowOverrank) {
