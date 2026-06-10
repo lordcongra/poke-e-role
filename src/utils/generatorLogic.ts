@@ -351,11 +351,11 @@ export function assignAverageStats(
     draftedMoves.forEach((move) => {
         if (move.attr) {
             if (COMBAT_STATS.includes(move.attr)) coreAttributes.add(move.attr);
-            else coreSocials.add(move.attr);
+            else if (SOCIAL_STATS.includes(move.attr)) coreSocials.add(move.attr);
         }
         if (move.dmgStat) {
             if (COMBAT_STATS.includes(move.dmgStat)) coreAttributes.add(move.dmgStat);
-            else coreSocials.add(move.dmgStat);
+            else if (SOCIAL_STATS.includes(move.dmgStat)) coreSocials.add(move.dmgStat);
         }
         if (move.skill && move.skill !== 'none') coreSkills.add(move.skill);
     });
