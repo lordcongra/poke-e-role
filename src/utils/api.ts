@@ -220,11 +220,20 @@ export async function fetchAbilityData(abilityName: string): Promise<AbilityApiR
 
 export async function fetchMoveData(moveName: string): Promise<MoveApiResponse | null> {
     if (!moveName) return null;
-    const baseName = moveName.split(' (')[0].trim();
-    const cleanName = baseName.toLowerCase();
+    const exactName = moveName.trim();
+    const cleanExactName = exactName.toLowerCase();
+
+    // We retain the fallback string splitting just in case players type "Hidden Power (Fire)"
+    // when only "Hidden Power" exists in the DB.
+    const baseName = exactName.split(' (')[0].trim();
+    const cleanBaseName = baseName.toLowerCase();
 
     // 1. Check Homebrew First
-    const custom = homebrewMoves.find((m) => m.name.trim().toLowerCase() === cleanName);
+    let custom = homebrewMoves.find((m) => m.name.trim().toLowerCase() === cleanExactName);
+    if (!custom && cleanExactName !== cleanBaseName) {
+        custom = homebrewMoves.find((m) => m.name.trim().toLowerCase() === cleanBaseName);
+    }
+
     if (custom) {
         const finalAcc1 =
             custom.acc1Alt && custom.acc1Alt !== 'none' && custom.acc1Alt !== ''
@@ -253,10 +262,18 @@ export async function fetchMoveData(moveName: string): Promise<MoveApiResponse |
 
     // 2. Check Local Dataset
     await loadLocalDataset();
-    let targetPath = MOVES_URLS[cleanName];
+    let targetPath = MOVES_URLS[cleanExactName];
+    let fetchKey = cleanExactName;
+    let displayName = exactName;
+
+    if (!targetPath && cleanExactName !== cleanBaseName) {
+        targetPath = MOVES_URLS[cleanBaseName];
+        fetchKey = cleanBaseName;
+        displayName = baseName;
+    }
 
     if (targetPath) {
-        return await fetchWithCache<MoveApiResponse>(targetPath, `local_move_${cleanName}`, baseName);
+        return await fetchWithCache<MoveApiResponse>(targetPath, `local_move_${fetchKey}`, displayName);
     }
 
     console.warn(`[Local Fetch] Failed to find move ${moveName} in local dataset.`);
