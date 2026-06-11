@@ -7,6 +7,8 @@ interface ItemGeneratorTmFiltersProps {
     setTmTypes: (types: string[] | ((prev: string[]) => string[])) => void;
     allTypes: string[];
     allTypeColors: Record<string, string>;
+    includeHomebrewTms: boolean;
+    setIncludeHomebrewTms: (val: boolean) => void;
 }
 
 export function ItemGeneratorTmFilters({
@@ -15,7 +17,9 @@ export function ItemGeneratorTmFilters({
     tmTypes,
     setTmTypes,
     allTypes,
-    allTypeColors
+    allTypeColors,
+    includeHomebrewTms,
+    setIncludeHomebrewTms
 }: ItemGeneratorTmFiltersProps) {
     const hasBasic = ['1', '2', '3'].every((p) => tmPowers.includes(p));
     const hasHigh = ['4', '5', '6', '7', '8', '10'].every((p) => tmPowers.includes(p));
@@ -212,6 +216,18 @@ export function ItemGeneratorTmFilters({
                             {type} <span className="item-generator-modal__pill-close">✖</span>
                         </span>
                     ))}
+            </div>
+            
+            <div className="item-generator-modal__checkbox-list item-generator-modal__checkbox-list--flat" style={{ marginTop: '15px' }}>
+                <label className="item-generator-modal__checkbox-label">
+                    <input
+                        type="checkbox"
+                        className="item-generator-modal__checkbox"
+                        checked={includeHomebrewTms}
+                        onChange={(e) => setIncludeHomebrewTms(e.target.checked)}
+                    />
+                    Include Custom/Homebrew Moves
+                </label>
             </div>
         </div>
     );

@@ -99,6 +99,7 @@ export function generateLootPool(
 ): PoolItem[] {
     const masterPool: PoolItem[] = [];
 
+    // Safely dump ALL base items into their unified pocket buckets!
     if (index.items) {
         Object.keys(index.items).forEach((pocket) => {
             if (pocket === 'TechnicalMachine') return;
@@ -109,7 +110,7 @@ export function generateLootPool(
                         itemsArr.forEach((i) => {
                             const rarityStr = getRarityFromWeight(i.weight ?? 50);
                             if (rarityFilters[rarityStr])
-                                masterPool.push({ type: 'item', bucket: `Base_${pocket}`, data: i });
+                                masterPool.push({ type: 'item', bucket: pocket, data: i });
                         });
                     }
                 }
@@ -117,13 +118,14 @@ export function generateLootPool(
         });
     }
 
+    // Safely dump ALL custom items into those exact same unified pocket buckets!
     const visibleCustomItems = roomCustomItems.filter((i) => !i.gmOnly);
     visibleCustomItems.forEach((custom) => {
         const cPocket = custom.pocket || 'Custom';
         const cCategory = custom.category || 'Misc';
         const cRarity = custom.rarity || 'Uncommon';
         if (filters[`custom_item_${cPocket}_${cCategory}`] && rarityFilters[cRarity]) {
-            masterPool.push({ type: 'homebrew', bucket: `Custom_${cPocket}`, data: custom });
+            masterPool.push({ type: 'homebrew', bucket: cPocket, data: custom });
         }
     });
 
@@ -134,23 +136,24 @@ export function generateLootPool(
         return tmTypes.some((t) => t.toLowerCase() === type?.toLowerCase());
     };
 
-    const processMoveArray = (arr: LocalIndexItem[], bucketName: string) => {
+    const processMoveArray = (arr: LocalIndexItem[]) => {
         if (!Array.isArray(arr)) return;
         arr.forEach((m) => {
             if (isMoveTypeValid(m.type)) {
                 const rarityStr = getRarityFromWeight(m.weight ?? 20);
-                if (rarityFilters[rarityStr]) masterPool.push({ type: 'tm', bucket: bucketName, data: m });
+                // Dump directly into a unified TMs bucket!
+                if (rarityFilters[rarityStr]) masterPool.push({ type: 'tm', bucket: 'TMs', data: m });
             }
         });
     };
 
     if (selectedPowers.has('support') && index.moves?.support) {
-        processMoveArray(index.moves.support, 'Base_TMs');
+        processMoveArray(index.moves.support);
     }
 
     [1, 2, 3].forEach((power) => {
         if (selectedPowers.has(String(power)) && index.moves?.basic?.[`power_${power}`]) {
-            processMoveArray(index.moves.basic[`power_${power}`], 'Base_TMs');
+            processMoveArray(index.moves.basic[`power_${power}`]);
         }
     });
 
@@ -159,16 +162,17 @@ export function generateLootPool(
         if (selectedPowers.has(String(power))) {
             includesHighPower = true;
             if (index.moves?.highPower?.[`power_${power}`]) {
-                processMoveArray(index.moves.highPower[`power_${power}`], 'Base_TMs');
+                processMoveArray(index.moves.highPower[`power_${power}`]);
             }
         }
     });
 
     // Decoupled Variable Move processing
     if (selectedPowers.has('variable') && index.moves?.highPower?.variable) {
-        processMoveArray(index.moves.highPower.variable, 'Base_TMs');
+        processMoveArray(index.moves.highPower.variable);
     }
 
+    // Safely dump ALL custom moves into that exact same TMs bucket!
     const visibleCustomMoves = roomCustomMoves.filter((m) => !m.gmOnly);
     visibleCustomMoves.forEach((m) => {
         if (isMoveTypeValid(m.type)) {
@@ -184,7 +188,7 @@ export function generateLootPool(
                 if (rarityFilters[rarityStr]) {
                     masterPool.push({
                         type: 'tm',
-                        bucket: 'Custom_TMs',
+                        bucket: 'TMs',
                         data: { name: m.name, path: '', type: m.type, weight }
                     });
                 }

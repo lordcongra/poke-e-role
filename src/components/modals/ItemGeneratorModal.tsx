@@ -34,6 +34,7 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
     const [filters, setFilters] = useState<Record<string, boolean>>({});
     const [tmPowers, setTmPowers] = useState<string[]>([]);
     const [tmTypes, setTmTypes] = useState<string[]>(['Any']);
+    const [includeHomebrewTms, setIncludeHomebrewTms] = useState(true);
 
     const [rarityFilters, setRarityFilters] = useState<Record<string, boolean>>({
         Common: true,
@@ -136,6 +137,7 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
         setFilters(newFilters);
         setTmPowers(select ? ['support', '1', '2', '3', '4', '5', '6', '7', '8', '10', 'variable'] : []);
         setTmTypes(select ? ['Any'] : []);
+        setIncludeHomebrewTms(select);
     };
 
     const togglePocket = (pocketId: string) => {
@@ -156,7 +158,7 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
             tmPowers,
             tmTypes,
             roomCustomItems,
-            roomCustomMoves
+            includeHomebrewTms ? roomCustomMoves : []
         );
 
         if (masterPool.length === 0) {
@@ -268,6 +270,8 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
                             setTmTypes={setTmTypes}
                             allTypes={allTypes}
                             allTypeColors={allTypeColors}
+                            includeHomebrewTms={includeHomebrewTms}
+                            setIncludeHomebrewTms={setIncludeHomebrewTms}
                         />
 
                         <div className="item-generator-modal__filter-group">
