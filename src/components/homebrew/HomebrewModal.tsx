@@ -169,8 +169,22 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                 </div>
 
                 <div className="homebrew-modal__footer">
-                    <span className="homebrew-modal__footer-text">Changes automatically save to the Room.</span>
+                    <span className="homebrew-modal__footer-text">Changes save automatically to your browser.</span>
                     <div className="homebrew-modal__footer-actions">
+                        {canEdit && (
+                            <button
+                                onClick={() => {
+                                    if (!OBR.isAvailable) return;
+                                    const payload = useCharacterStore.getState().getHomebrewPayload();
+                                    OBR.broadcast.sendMessage('pokerole-pmd-extension/homebrew-share', payload, { destination: 'REMOTE' });
+                                    OBR.notification.show('📢 Homebrew shared with table!', 'SUCCESS');
+                                }}
+                                className="action-button homebrew-modal__footer-btn"
+                                style={{ backgroundColor: '#1565c0', borderColor: '#1565c0', color: 'white' }}
+                            >
+                                📢 Share with Table
+                            </button>
+                        )}
                         <button
                             onClick={handleExportAll}
                             className="action-button action-button--dark homebrew-modal__footer-btn"

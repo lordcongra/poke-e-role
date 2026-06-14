@@ -213,6 +213,16 @@ export interface TrackerSlice {
     longRest: () => void;
 }
 
+export interface HomebrewPayload {
+    customTypes: CustomType[];
+    customAbilities: CustomAbility[];
+    customMoves: CustomMove[];
+    customPokemon: CustomPokemon[];
+    customItems: CustomItem[];
+    customForms: CustomForm[];
+    customStatuses: CustomStatus[];
+}
+
 export interface HomebrewSlice {
     roomCustomTypes: CustomType[];
     roomCustomAbilities: CustomAbility[];
@@ -221,6 +231,9 @@ export interface HomebrewSlice {
     roomCustomItems: CustomItem[];
     roomCustomForms: CustomForm[];
     roomCustomStatuses: CustomStatus[];
+
+    loadHomebrewLocal: () => void;
+    getHomebrewPayload: () => HomebrewPayload;
 
     setRoomCustomTypes: (types: CustomType[]) => void;
     setRoomCustomAbilities: (abilities: CustomAbility[]) => void;
@@ -298,7 +311,8 @@ export interface HomebrewSlice {
         pokemon: CustomPokemon[],
         items: CustomItem[],
         forms: CustomForm[],
-        statuses: CustomStatus[]
+        statuses: CustomStatus[],
+        silent?: boolean
     ) => void;
 }
 

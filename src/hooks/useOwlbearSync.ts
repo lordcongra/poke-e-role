@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import type { Image } from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../store/useCharacterStore';
-import type { CustomType, CustomAbility, CustomMove, CustomPokemon, CustomItem, CustomForm } from '../store/storeTypes';
-import { fetchPokemonData, fetchMoveData, syncHomebrewToApi } from '../utils/api';
+import type { HomebrewPayload, CustomType, CustomAbility, CustomMove, CustomPokemon, CustomItem, CustomForm, CustomStatus } from '../store/storeTypes';
+import { fetchPokemonData, fetchMoveData } from '../utils/api';
 import { buildGraphicsFromMeta, renderTokenGraphics, STATS_META_ID } from '../utils/graphicsManager';
 import { saveToOwlbear, setActiveTokenId, hasPendingUpdates } from '../utils/obr';
 import { assignInitiative } from '../utils/diceRoller';
@@ -29,11 +29,62 @@ export function useOwlbearSync() {
         let unsubs: Array<() => void> = [];
         let isMounted = true;
 
+        // 1. Load Local Homebrew for this specific room immediately
+        useCharacterStore.getState().loadHomebrewLocal();
+
         if (OBR.isAvailable) {
             OBR.onReady(async () => {
                 if (!isMounted) return;
 
                 const role = await OBR.player.getRole();
+
+                // 2. Setup Peer-to-Peer Homebrew Handshake
+                const unsubHomebrewRequest = OBR.broadcast.onMessage(`${EXTENSION_ID}/homebrew-request`, () => {
+                    if (role === 'GM') {
+                        const payload = useCharacterStore.getState().getHomebrewPayload();
+                        OBR.broadcast.sendMessage(`${EXTENSION_ID}/homebrew-payload`, payload, { destination: 'REMOTE' });
+                    }
+                });
+                unsubs.push(unsubHomebrewRequest);
+
+                const unsubHomebrewPayload = OBR.broadcast.onMessage(`${EXTENSION_ID}/homebrew-payload`, (event) => {
+                    if (role !== 'GM') {
+                        const payload = event.data as unknown as HomebrewPayload;
+                        useCharacterStore.getState().mergeAllHomebrewData(
+                            payload.customTypes || [],
+                            payload.customAbilities || [],
+                            payload.customMoves || [],
+                            payload.customPokemon || [],
+                            payload.customItems || [],
+                            payload.customForms || [],
+                            payload.customStatuses || [],
+                            true // silent flag
+                        );
+                        OBR.notification.show('📥 Homebrew data synced from GM!', 'SUCCESS');
+                    }
+                });
+                unsubs.push(unsubHomebrewPayload);
+
+                const unsubHomebrewShare = OBR.broadcast.onMessage(`${EXTENSION_ID}/homebrew-share`, (event) => {
+                    const payload = event.data as unknown as HomebrewPayload;
+                    useCharacterStore.getState().mergeAllHomebrewData(
+                        payload.customTypes || [],
+                        payload.customAbilities || [],
+                        payload.customMoves || [],
+                        payload.customPokemon || [],
+                        payload.customItems || [],
+                        payload.customForms || [],
+                        payload.customStatuses || [],
+                        true // silent flag
+                    );
+                    OBR.notification.show('📥 New Homebrew shared to table!', 'SUCCESS');
+                });
+                unsubs.push(unsubHomebrewShare);
+
+                // 3. Fire the request if we are a player
+                if (role !== 'GM') {
+                    OBR.broadcast.sendMessage(`${EXTENSION_ID}/homebrew-request`, {}, { destination: 'REMOTE' });
+                }
 
                 const renderAllTokens = async (forceRebuild = false) => {
                     try {
@@ -238,19 +289,36 @@ export function useOwlbearSync() {
                         const data = roomMeta[ROOM_META_ID] as Record<string, unknown>;
                         const store = useCharacterStore.getState();
 
-                        if (data.customTypes) store.setRoomCustomTypes(data.customTypes as CustomType[]);
-                        if (data.customAbilities) store.setRoomCustomAbilities(data.customAbilities as CustomAbility[]);
-                        if (data.customMoves) store.setRoomCustomMoves(data.customMoves as CustomMove[]);
-                        if (data.customPokemon) store.setRoomCustomPokemon(data.customPokemon as CustomPokemon[]);
-                        if (data.customItems) store.setRoomCustomItems(data.customItems as CustomItem[]);
-                        if (data.customForms) store.setRoomCustomForms(data.customForms as CustomForm[]);
+                        // --- MIGRATION SCRIPT ---
+                        const hasLegacyHomebrew = data.customTypes || data.customAbilities || data.customMoves || data.customPokemon || data.customItems || data.customForms || data.customStatuses;
 
-                        syncHomebrewToApi(
-                            (data.customPokemon as CustomPokemon[]) || [],
-                            (data.customMoves as CustomMove[]) || [],
-                            (data.customAbilities as CustomAbility[]) || [],
-                            (data.customItems as CustomItem[]) || []
-                        );
+                        if (hasLegacyHomebrew) {
+                            console.log('Migrating legacy homebrew data to local storage...');
+                            store.mergeAllHomebrewData(
+                                (data.customTypes as CustomType[]) || [],
+                                (data.customAbilities as CustomAbility[]) || [],
+                                (data.customMoves as CustomMove[]) || [],
+                                (data.customPokemon as CustomPokemon[]) || [],
+                                (data.customItems as CustomItem[]) || [],
+                                (data.customForms as CustomForm[]) || [],
+                                (data.customStatuses as CustomStatus[]) || [],
+                                true // silent flag
+                            );
+
+                            if (role === 'GM') {
+                                const cleanedRoomSettings = { ...data };
+                                delete cleanedRoomSettings.customTypes;
+                                delete cleanedRoomSettings.customAbilities;
+                                delete cleanedRoomSettings.customMoves;
+                                delete cleanedRoomSettings.customPokemon;
+                                delete cleanedRoomSettings.customItems;
+                                delete cleanedRoomSettings.customForms;
+                                delete cleanedRoomSettings.customStatuses;
+
+                                await OBR.room.setMetadata({ [ROOM_META_ID]: cleanedRoomSettings });
+                                OBR.notification.show('⚙️ Legacy Homebrew Data successfully migrated to Local Storage!', 'SUCCESS');
+                            }
+                        }
 
                         if (data.ruleset !== undefined) store.setIdentity('ruleset', String(data.ruleset));
                         if (data.painEnabled !== undefined)
@@ -273,21 +341,6 @@ export function useOwlbearSync() {
                         if (meta[ROOM_META_ID]) {
                             const data = meta[ROOM_META_ID] as Record<string, unknown>;
                             const store = useCharacterStore.getState();
-
-                            if (data.customTypes) store.setRoomCustomTypes(data.customTypes as CustomType[]);
-                            if (data.customAbilities)
-                                store.setRoomCustomAbilities(data.customAbilities as CustomAbility[]);
-                            if (data.customMoves) store.setRoomCustomMoves(data.customMoves as CustomMove[]);
-                            if (data.customPokemon) store.setRoomCustomPokemon(data.customPokemon as CustomPokemon[]);
-                            if (data.customItems) store.setRoomCustomItems(data.customItems as CustomItem[]);
-                            if (data.customForms) store.setRoomCustomForms(data.customForms as CustomForm[]);
-
-                            syncHomebrewToApi(
-                                (data.customPokemon as CustomPokemon[]) || [],
-                                (data.customMoves as CustomMove[]) || [],
-                                (data.customAbilities as CustomAbility[]) || [],
-                                (data.customItems as CustomItem[]) || []
-                            );
 
                             if (data.ruleset !== undefined) store.setIdentity('ruleset', String(data.ruleset));
                             if (data.painEnabled !== undefined)
