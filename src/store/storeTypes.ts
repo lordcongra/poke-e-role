@@ -231,9 +231,12 @@ export interface HomebrewSlice {
     roomCustomItems: CustomItem[];
     roomCustomForms: CustomForm[];
     roomCustomStatuses: CustomStatus[];
+    needsBackup: boolean;
 
     loadHomebrewLocal: () => void;
     getHomebrewPayload: () => HomebrewPayload;
+    markHomebrewBackedUp: () => void;
+    processHomebrewPayload: (payload: HomebrewPayload) => void;
 
     setRoomCustomTypes: (types: CustomType[]) => void;
     setRoomCustomAbilities: (abilities: CustomAbility[]) => void;

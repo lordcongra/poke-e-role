@@ -109,8 +109,7 @@ export function generateLootPool(
                     if (Array.isArray(itemsArr)) {
                         itemsArr.forEach((i) => {
                             const rarityStr = getRarityFromWeight(i.weight ?? 50);
-                            if (rarityFilters[rarityStr])
-                                masterPool.push({ type: 'item', bucket: pocket, data: i });
+                            if (rarityFilters[rarityStr]) masterPool.push({ type: 'item', bucket: pocket, data: i });
                         });
                     }
                 }

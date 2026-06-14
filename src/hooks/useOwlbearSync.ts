@@ -2,7 +2,16 @@ import { useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import type { Image } from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../store/useCharacterStore';
-import type { HomebrewPayload, CustomType, CustomAbility, CustomMove, CustomPokemon, CustomItem, CustomForm, CustomStatus } from '../store/storeTypes';
+import type {
+    HomebrewPayload,
+    CustomType,
+    CustomAbility,
+    CustomMove,
+    CustomPokemon,
+    CustomItem,
+    CustomForm,
+    CustomStatus
+} from '../store/storeTypes';
 import { fetchPokemonData, fetchMoveData } from '../utils/api';
 import { buildGraphicsFromMeta, renderTokenGraphics, STATS_META_ID } from '../utils/graphicsManager';
 import { saveToOwlbear, setActiveTokenId, hasPendingUpdates } from '../utils/obr';
@@ -42,7 +51,9 @@ export function useOwlbearSync() {
                 const unsubHomebrewRequest = OBR.broadcast.onMessage(`${EXTENSION_ID}/homebrew-request`, () => {
                     if (role === 'GM') {
                         const payload = useCharacterStore.getState().getHomebrewPayload();
-                        OBR.broadcast.sendMessage(`${EXTENSION_ID}/homebrew-payload`, payload, { destination: 'REMOTE' });
+                        OBR.broadcast.sendMessage(`${EXTENSION_ID}/homebrew-payload`, payload, {
+                            destination: 'REMOTE'
+                        });
                     }
                 });
                 unsubs.push(unsubHomebrewRequest);
@@ -290,7 +301,14 @@ export function useOwlbearSync() {
                         const store = useCharacterStore.getState();
 
                         // --- MIGRATION SCRIPT ---
-                        const hasLegacyHomebrew = data.customTypes || data.customAbilities || data.customMoves || data.customPokemon || data.customItems || data.customForms || data.customStatuses;
+                        const hasLegacyHomebrew =
+                            data.customTypes ||
+                            data.customAbilities ||
+                            data.customMoves ||
+                            data.customPokemon ||
+                            data.customItems ||
+                            data.customForms ||
+                            data.customStatuses;
 
                         if (hasLegacyHomebrew) {
                             console.log('Migrating legacy homebrew data to local storage...');
@@ -316,7 +334,10 @@ export function useOwlbearSync() {
                                 delete cleanedRoomSettings.customStatuses;
 
                                 await OBR.room.setMetadata({ [ROOM_META_ID]: cleanedRoomSettings });
-                                OBR.notification.show('⚙️ Legacy Homebrew Data successfully migrated to Local Storage!', 'SUCCESS');
+                                OBR.notification.show(
+                                    '⚙️ Legacy Homebrew Data successfully migrated to Local Storage!',
+                                    'SUCCESS'
+                                );
                             }
                         }
 

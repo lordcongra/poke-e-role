@@ -30,6 +30,9 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
     const overwriteAllHomebrewData = useCharacterStore((state) => state.overwriteAllHomebrewData);
     const mergeAllHomebrewData = useCharacterStore((state) => state.mergeAllHomebrewData);
 
+    const needsBackup = useCharacterStore((state) => state.needsBackup);
+    const markHomebrewBackedUp = useCharacterStore((state) => state.markHomebrewBackedUp);
+
     const fileRef = useRef<HTMLInputElement>(null);
     const [importAllData, setImportAllData] = useState<{
         types: CustomType[];
@@ -41,16 +44,29 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
         statuses: CustomStatus[];
     } | null>(null);
 
+    const handleBroadcastSync = () => {
+        if (!OBR.isAvailable) return;
+        const payload = useCharacterStore.getState().getHomebrewPayload();
+
+        if (role === 'GM') {
+            OBR.broadcast.sendMessage('pokerole-pmd-extension/homebrew-payload', payload, { destination: 'REMOTE' });
+            OBR.notification.show('📢 Homebrew data pushed to all players!', 'SUCCESS');
+        } else {
+            OBR.broadcast.sendMessage('pokerole-pmd-extension/homebrew-share', payload, { destination: 'REMOTE' });
+            OBR.notification.show('📢 Homebrew shared with table!', 'SUCCESS');
+        }
+    };
+
     const handleExportAll = () => {
         const state = useCharacterStore.getState();
         const exportData = {
-            customTypes: role === 'GM' ? state.roomCustomTypes : [],
-            customAbilities: role === 'GM' ? state.roomCustomAbilities : [],
-            customMoves: role === 'GM' ? state.roomCustomMoves : [],
-            customPokemon: role === 'GM' ? state.roomCustomPokemon : [],
-            customItems: role === 'GM' ? state.roomCustomItems : [],
-            customForms: role === 'GM' ? state.roomCustomForms : [],
-            customStatuses: role === 'GM' ? state.roomCustomStatuses : []
+            customTypes: state.roomCustomTypes,
+            customAbilities: state.roomCustomAbilities,
+            customMoves: state.roomCustomMoves,
+            customPokemon: state.roomCustomPokemon,
+            customItems: state.roomCustomItems,
+            customForms: state.roomCustomForms,
+            customStatuses: state.roomCustomStatuses
         };
         const dataStr = JSON.stringify(exportData, null, 2);
         const blob = new Blob([dataStr], { type: 'application/json' });
@@ -62,6 +78,8 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+
+        markHomebrewBackedUp();
     };
 
     const handleImportAll = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -169,27 +187,29 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                 </div>
 
                 <div className="homebrew-modal__footer">
-                    <span className="homebrew-modal__footer-text">Changes save automatically to your browser.</span>
+                    <span
+                        className="homebrew-modal__footer-text"
+                        style={needsBackup ? { color: '#c62828', fontWeight: 'bold' } : {}}
+                    >
+                        {needsBackup
+                            ? '⚠️ Unexported changes! Please backup your work.'
+                            : 'Changes save automatically to your browser.'}
+                    </span>
                     <div className="homebrew-modal__footer-actions">
                         {canEdit && (
                             <button
-                                onClick={() => {
-                                    if (!OBR.isAvailable) return;
-                                    const payload = useCharacterStore.getState().getHomebrewPayload();
-                                    OBR.broadcast.sendMessage('pokerole-pmd-extension/homebrew-share', payload, { destination: 'REMOTE' });
-                                    OBR.notification.show('📢 Homebrew shared with table!', 'SUCCESS');
-                                }}
+                                onClick={handleBroadcastSync}
                                 className="action-button homebrew-modal__footer-btn"
                                 style={{ backgroundColor: '#1565c0', borderColor: '#1565c0', color: 'white' }}
                             >
-                                📢 Share with Table
+                                {role === 'GM' ? '📢 Sync to Players' : '📢 Share with Table'}
                             </button>
                         )}
                         <button
                             onClick={handleExportAll}
-                            className="action-button action-button--dark homebrew-modal__footer-btn"
+                            className={`action-button ${needsBackup ? 'action-button--red' : 'action-button--dark'} homebrew-modal__footer-btn`}
                         >
-                            💾 Backup All
+                            💾 {needsBackup ? 'Backup All*' : 'Backup All'}
                         </button>
                         {canEdit && (
                             <>

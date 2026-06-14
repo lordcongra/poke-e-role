@@ -217,8 +217,11 @@ export function ItemGeneratorTmFilters({
                         </span>
                     ))}
             </div>
-            
-            <div className="item-generator-modal__checkbox-list item-generator-modal__checkbox-list--flat" style={{ marginTop: '15px' }}>
+
+            <div
+                className="item-generator-modal__checkbox-list item-generator-modal__checkbox-list--flat"
+                style={{ marginTop: '15px' }}
+            >
                 <label className="item-generator-modal__checkbox-label">
                     <input
                         type="checkbox"
