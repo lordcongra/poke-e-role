@@ -24,11 +24,11 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     marginBottom: '16px'
                 }}
             >
-                <strong style={{ color: '#e65100', fontSize: '1.1em' }}>
-                    ⚠️ ACTION REQUIRED: Dice+ is retiring!
-                </strong>
+                <strong style={{ color: '#e65100', fontSize: '1.1em' }}>⚠️ ACTION REQUIRED: Dice+ is retiring!</strong>
                 <p style={{ marginTop: '6px', marginBottom: '8px', fontSize: '0.9em', lineHeight: '1.4' }}>
-                    The legacy <strong>Dice+</strong> engine is being fully deprecated and will be removed in an upcoming release. You MUST switch your room to use <strong>Custom Action Rolls (CAR)</strong> to ensure your dice continue to work. CAR natively supports advanced mechanics like exploding dice!
+                    The legacy <strong>Dice+</strong> engine is being fully deprecated and will be removed in an
+                    upcoming release. You MUST switch your room to use <strong>Custom Action Rolls (CAR)</strong> to
+                    ensure your dice continue to work. CAR natively supports advanced mechanics like exploding dice!
                 </p>
                 <p style={{ margin: 0, fontSize: '0.9em', fontWeight: 'bold' }}>
                     🔗 CAR Manifest Link:{' '}
@@ -56,16 +56,25 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 }}
             >
                 <li>
-                    <strong>Local Storage Migration:</strong> To prevent hitting Owlbear Rodeo's strict 16KB Room Data limit (which was causing room crashes), all Homebrew data is now saved directly to your browser's local storage. Your existing data will port over automatically!
+                    <strong>Local Storage Migration:</strong> To prevent hitting Owlbear Rodeo's strict 16KB Room Data
+                    limit (which was causing room crashes), all Homebrew data is now saved directly to your browser's
+                    local storage. Your existing data will port over automatically!
                 </li>
                 <li>
-                    <strong>Peer-to-Peer Syncing:</strong> Added a <strong>📢 Share with Table</strong> button! This uses direct WebRTC broadcasting to send your custom creations to everyone in the room without bloating the OBR database.
+                    <strong>Peer-to-Peer Syncing:</strong> Added a <strong>📢 Share with Table</strong> button! This
+                    uses direct WebRTC broadcasting to send your custom creations to everyone in the room without
+                    bloating the OBR database.
                 </li>
                 <li>
-                    <strong>Smart Merging:</strong> Receiving a broadcast from the GM or another player will now safely <em>merge</em> their homebrew with yours, preventing accidental overwrites of your own custom creations.
+                    <strong>Smart Merging:</strong> Receiving a broadcast from the GM or another player will now safely{' '}
+                    <em>merge</em> their homebrew with yours, preventing accidental overwrites of your own custom
+                    creations.
                 </li>
                 <li>
-                    <strong>Unsaved Changes Indicator:</strong> The "Backup All" button will now turn red and show a warning if you have unexported changes, ensuring you never forget to back up your hard work to a JSON file! For the very first time this extension loads after this update it will tell you that you need to back up even if you've backed up everything prior.
+                    <strong>Unsaved Changes Indicator:</strong> The "Backup All" button will now turn red and show a
+                    warning if you have unexported changes, ensuring you never forget to back up your hard work to a
+                    JSON file! For the very first time this extension loads after this update it will tell you that you
+                    need to back up even if you've backed up everything prior.
                 </li>
             </ul>
         ]

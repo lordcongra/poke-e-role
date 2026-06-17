@@ -7,6 +7,7 @@ import { saveToOwlbear } from '../../utils/obr';
 import { STATS_META_ID } from '../../utils/graphicsManager';
 import { canViewHomebrew } from '../../utils/helper';
 import { flattenStateToMetadata } from '../../utils/stateMapper';
+import { useObrReady } from '../../hooks/useObrReady';
 import { IdentityToggles } from './IdentityToggles';
 import { PrintSettingsModal } from '../modals/PrintSettingsModal';
 import { ItemGeneratorModal } from '../modals/ItemGeneratorModal';
@@ -27,6 +28,7 @@ export function IdentityControls({
     isDark,
     toggleTheme
 }: IdentityControlsProps) {
+    const isObrReady = useObrReady();
     const identityStore = useCharacterStore((state) => state.identity) || {};
     const addCustomInfo = useCharacterStore((state) => state.addCustomInfo);
     const refreshSpeciesData = useCharacterStore((state) => state.refreshSpeciesData);
@@ -44,8 +46,10 @@ export function IdentityControls({
     const fileInputReference = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
+        // Prevent broadcasting updates across the network until the OBR SDK channel is completely open
+        if (!isObrReady || !OBR.isAvailable) return;
+
         const timeout = setTimeout(() => {
-            if (!OBR.isAvailable) return;
             const unsub = OBR.broadcast.onMessage('pkr-init-pong', () => {
                 unsub();
                 openTracker(true);
@@ -55,6 +59,7 @@ export function IdentityControls({
         }, 300);
         return () => clearTimeout(timeout);
     }, [
+        isObrReady,
         identityStore.initiativeTrackerPreset,
         identityStore.initiativeTrackerOffsetX,
         identityStore.initiativeTrackerOffsetY,
@@ -65,10 +70,10 @@ export function IdentityControls({
     ]);
 
     useEffect(() => {
-        if (OBR.isAvailable) {
+        if (isObrReady && OBR.isAvailable) {
             OBR.broadcast.sendMessage('pkr-theme-update', isDark ? 'dark' : 'light', { destination: 'LOCAL' });
         }
-    }, [isDark]);
+    }, [isDark, isObrReady]);
 
     const handleRefresh = async () => {
         if (isRefreshing) return;
@@ -105,8 +110,8 @@ export function IdentityControls({
 
     const handleExport = async () => {
         const state = useCharacterStore.getState();
-        if (!state.tokenId || !OBR.isAvailable) {
-            if (OBR.isAvailable) OBR.notification.show('Please select a token to export.', 'WARNING');
+        if (!state.tokenId || !OBR.isAvailable || !isObrReady) {
+            if (OBR.isAvailable && isObrReady) OBR.notification.show('Please select a token to export.', 'WARNING');
             return;
         }
 
@@ -141,7 +146,7 @@ export function IdentityControls({
                 const imported = JSON.parse(fileEvent.target?.result as string);
                 setImportData(imported);
             } catch (error) {
-                if (OBR.isAvailable) OBR.notification.show('Invalid JSON file.', 'ERROR');
+                if (OBR.isAvailable && isObrReady) OBR.notification.show('Invalid JSON file.', 'ERROR');
             }
             if (fileInputReference.current) fileInputReference.current.value = '';
         };
@@ -168,13 +173,15 @@ export function IdentityControls({
             }
         } catch (error) {
             console.error('Failed to import character data:', error);
-            if (OBR.isAvailable) OBR.notification.show('Failed to import data.', 'ERROR');
+            if (OBR.isAvailable && isObrReady) OBR.notification.show('Failed to import data.', 'ERROR');
         } finally {
             setImportData(null);
         }
     };
 
     const openTracker = async (isReAnchor = false) => {
+        if (!isObrReady || !OBR.isAvailable) return;
+
         const {
             initiativeTrackerPreset,
             initiativeTrackerOffsetX,
@@ -252,7 +259,7 @@ export function IdentityControls({
     };
 
     const handleInitiativeToggle = async () => {
-        if (!OBR.isAvailable) return;
+        if (!OBR.isAvailable || !isObrReady) return;
 
         let handled = false;
         const unsub = OBR.broadcast.onMessage('pkr-init-pong', () => {

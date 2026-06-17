@@ -1,4 +1,5 @@
 import OBR from '@owlbear-rodeo/sdk';
+import { waitForObr } from './obrHelpers';
 
 export const METADATA_ID = 'pokerole-extension/stats';
 
@@ -17,7 +18,7 @@ export function hasPendingUpdates() {
 
 export async function saveToOwlbear(updates: Record<string, unknown>) {
     const currentToken = activeTokenId;
-    if (!OBR.isAvailable || !currentToken) return;
+    if (!currentToken) return;
 
     Object.assign(pendingUpdates, updates);
     clearTimeout(saveTimeout);
@@ -29,11 +30,18 @@ export async function saveToOwlbear(updates: Record<string, unknown>) {
         // 👇 FOOLPROOF TEST: This prints the exact flat payload right before it hits the database!
         console.log('🚀 PUSHING TO OWLBEAR:', updatesToPush);
 
-        await OBR.scene.items.updateItems([currentToken!], (items) => {
-            for (const item of items) {
-                if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
-                Object.assign(item.metadata[METADATA_ID] as Record<string, unknown>, updatesToPush);
-            }
-        });
+        try {
+            // Await our new readiness checker before interacting with the SDK
+            await waitForObr();
+
+            await OBR.scene.items.updateItems([currentToken], (items) => {
+                for (const item of items) {
+                    if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
+                    Object.assign(item.metadata[METADATA_ID] as Record<string, unknown>, updatesToPush);
+                }
+            });
+        } catch (error) {
+            console.error('Failed to securely save to Owlbear Rodeo:', error);
+        }
     }, 150);
 }
