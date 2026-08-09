@@ -3,7 +3,7 @@
     "Type": "Water",
     "Power": 2,
     "Damage1": "Strength",
-    "Damage2": "",
+    "Damage2": "Dexterity",
     "Accuracy1": "Dexterity",
     "Accuracy2": "Athletic",
     "Target": "Foe",
