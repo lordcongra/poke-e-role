@@ -1,4 +1,4 @@
-# Pokerole 3.0 Sheet v2.7.5 (Owlbear Rodeo Extension)
+# Pokerole 3.0 Sheet v2.8.1 (Owlbear Rodeo Extension)
 
 A highly automated, modular character sheet extension for playing **Pokerole 3.0** campaigns (including **Pokémon Mystery Dungeon / PMD** settings) within the Owlbear Rodeo VTT.
 
@@ -10,7 +10,7 @@ _A massive thank you to the creator of the **Owl Trackers** extension. Their inc
 
 To use all the features of this character sheet, you **MUST** install **at least one** of the following Dice Engines. **(Note: CAR is the strongly recommended default!)**:
 
-1. **[Custom Action Rolls (CAR)](https://owlbear.rogue.pub/extension/https://action-manager.onrender.com/manifest.json):** The recommended engine. Handles 3D dice and features a persistent, pop-out chat log styled like the sheet to track roll history. It supports advanced mechanics like **Exploding Dice** and detailed roll breakdowns. This option tends to have better performance on Firefox.
+1. **[Custom Action Rolls (CAR)](https://owlbear.rogue.pub/extension/https://custom-action-rolls.narcolepticdracu.com/manifest.json):** The recommended engine. Handles 3D dice and features a persistent, pop-out chat log styled like the sheet to track roll history. It supports advanced mechanics like **Exploding Dice** and detailed roll breakdowns. This option tends to have better performance on Firefox.
    _- AND/OR -_
 2. **[Dice+](https://extensions.owlbear.rodeo/dice-plus):** ⚠️ _DEPRECATION NOTICE: This legacy engine will be phased out in a future update._ The classic engine. Handles 1-click 3D physics dice. It is a pure physics-based engine, so it can sometimes lose accuracy at high dice counts, and it does _not_ support advanced features like homebrew exploding dice reading. Maintaining two dice rollers with different functions has been challenging as well which contributes to this deprecation.
 
@@ -21,7 +21,7 @@ _(Note: You can swap between these engines at any time for the whole room using 
 While these extensions do not tie directly into the character sheet, they are highly recommended for running immersive Pokerole campaigns:
 
 - **[Persistent Tokens](https://extensions.owlbear.rodeo/persistent-tokens):** Makes your tokens and their character sheets persist between scenes! Extremely helpful so you don't have to constantly export and import JSONs when switching maps.
-- **[Bag It!](https://extensions.owlbear.rodeo/bag-it):** Provides a real, visual inventory system for players to store, move, and trade items directly on the tabletop.
+- **[Bag It!](https://bag-it-extension.narcolepticdracu.com/manifest.json):** Provides a real, visual inventory system for players to store, move, and trade items directly on the tabletop.
 - **[Embers](https://extensions.owlbear.rodeo/embers):** An amazing tool for setting up visual spell and attack effects on the map.
     > **Pro Tip:** Want a head start on your move animations? Reach out to **`@congra`** in the Pokerole Discord to get a copy of his custom Embers spell effects JSON!
 
@@ -144,6 +144,6 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 To install this extension into your Owlbear Rodeo room, copy the Manifest URL below and paste it into your Owlbear Rodeo extension manager:
 
-`https://lordcongra.github.io/poke-e-role/manifest.json?v=2.7.5`
+`https://lordcongra.github.io/poke-e-role/manifest.json?v=2.8.1`
 
 _(Note: If the sheet updates, you can force Owlbear to fetch the newest version by bumping the version tag at the end of the URL!)_
