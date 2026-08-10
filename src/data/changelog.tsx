@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ReactNode } from 'react';
 
-export const CURRENT_VERSION = '2.8.0';
+export const CURRENT_VERSION = '2.8.1';
 
 export interface ChangelogEntry {
     version: string;
@@ -10,6 +10,38 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
+    {
+        version: '2.8.1',
+        date: 'August 2026',
+        changes: [
+            <div
+                key="car-link-update"
+                style={{
+                    border: '2px solid #e65100',
+                    padding: '12px',
+                    borderRadius: '6px',
+                    backgroundColor: 'rgba(230, 81, 0, 0.08)',
+                    marginBottom: '16px'
+                }}
+            >
+                <strong style={{ color: '#e65100', fontSize: '1.1em' }}>⚠️ Custom Action Rolls URL Change</strong>
+                <p style={{ marginTop: '6px', marginBottom: '8px', fontSize: '0.9em', lineHeight: '1.4' }}>
+                    The <strong>Custom Action Rolls (CAR)</strong> extension has moved to a new host! If your dice rolls have stopped working, or if you are installing it for the first time, please use the new manifest link below:
+                </p>
+                <p style={{ margin: 0, fontSize: '0.9em', fontWeight: 'bold' }}>
+                    🔗 New CAR Manifest Link:{' '}
+                    <a
+                        href="https://custom-action-rolls.narcolepticdracu.com/manifest.json"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: '#1976d2', wordBreak: 'break-all' }}
+                    >
+                        https://custom-action-rolls.narcolepticdracu.com/manifest.json
+                    </a>
+                </p>
+            </div>
+        ]
+    },
     {
         version: '2.8.0',
         date: 'June 2026',
@@ -33,12 +65,12 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 <p style={{ margin: 0, fontSize: '0.9em', fontWeight: 'bold' }}>
                     🔗 CAR Manifest Link:{' '}
                     <a
-                        href="https://action-manager.onrender.com/manifest.json"
+                        href="https://custom-action-rolls.narcolepticdracu.com/manifest.json"
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{ color: '#1976d2', wordBreak: 'break-all' }}
                     >
-                        https://action-manager.onrender.com/manifest.json
+                        https://custom-action-rolls.narcolepticdracu.com/manifest.json
                     </a>
                 </p>
             </div>,
@@ -198,12 +230,12 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
             <React.Fragment key="action-manager-link">
                 Find Custom Action Rolls manifest link here:{' '}
                 <a
-                    href="https://action-manager.onrender.com/manifest.json"
+                    href="https://custom-action-rolls.narcolepticdracu.com/manifest.json"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="changelog-modal__link"
                 >
-                    https://action-manager.onrender.com/manifest.json
+                    https://custom-action-rolls.narcolepticdracu.com/manifest.json
                 </a>
             </React.Fragment>
         ]
