@@ -265,18 +265,22 @@ export async function rollLootItem(
         finalItemDescription = selectedRoll.data.description;
     } else if (selectedRoll.type === 'tm') {
         const moveData = await fetchMoveData(selectedRoll.data.name);
+        finalItemName = `TM: ${selectedRoll.data.name}`;
+
         if (moveData) {
             const accuracyText = [moveData.Accuracy1, moveData.Accuracy2].filter(Boolean).join(' + ');
             const damageText = moveData.Damage1 || 'None';
             const effectText = moveData.Effect ? `\n\nEffect: ${moveData.Effect}` : '';
-
-            finalItemName = `TM: ${selectedRoll.data.name}`;
             finalItemDescription = `Teaches the move ${selectedRoll.data.name}.\n\nType: ${moveData.Type} | Cat: ${moveData.Category} | Power: ${moveData.Power}\nAcc: ${accuracyText || 'None'} | Dmg: ${damageText}${effectText}\n\n${moveData.Description}`;
+        } else {
+            finalItemDescription = 'Move data could not be loaded or is corrupted.';
         }
     } else if (selectedRoll.type === 'item') {
         const itemData = await fetchItemData(selectedRoll.data.name);
         finalItemName = formatPokeballName(selectedRoll.data.name);
-        finalItemDescription = itemData ? formatItemDescription(itemData) : '';
+        finalItemDescription = itemData
+            ? formatItemDescription(itemData)
+            : 'Item data could not be loaded or is corrupted.';
     }
 
     return { name: finalItemName, description: finalItemDescription };
