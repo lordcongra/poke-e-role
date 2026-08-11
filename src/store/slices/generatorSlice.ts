@@ -54,7 +54,7 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
                             item.name = build.species;
                         }
                     })
-                    .catch((e) => console.warn('Failed to update OBR item name:', e));
+                    .catch((e) => console.warn('[GeneratorSlice] Failed to update OBR item name on generation:', e));
             }
         }, 250);
 
@@ -136,7 +136,7 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
             try {
                 saveToOwlbear(updatesToSave);
             } catch (error) {
-                console.error(error);
+                console.error('[GeneratorSlice] Failed to save applied generation to Owlbear.', error);
             }
 
             return {

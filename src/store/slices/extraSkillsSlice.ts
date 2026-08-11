@@ -24,7 +24,7 @@ export const createExtraSkillsSlice: StateCreator<CharacterState, [], [], ExtraS
             try {
                 saveToOwlbear({ 'extra-skills-data': JSON.stringify(newCategories) });
             } catch (error) {
-                console.error(error);
+                console.error('[ExtraSkillsSlice] Failed to save new extra category to Owlbear.', error);
             }
             return { extraCategories: newCategories };
         }),
@@ -37,7 +37,7 @@ export const createExtraSkillsSlice: StateCreator<CharacterState, [], [], ExtraS
             try {
                 saveToOwlbear({ 'extra-skills-data': JSON.stringify(newCategories) });
             } catch (error) {
-                console.error(error);
+                console.error('[ExtraSkillsSlice] Failed to save updated extra category to Owlbear.', error);
             }
             return { extraCategories: newCategories };
         }),
@@ -58,7 +58,7 @@ export const createExtraSkillsSlice: StateCreator<CharacterState, [], [], ExtraS
             try {
                 saveToOwlbear({ 'extra-skills-data': JSON.stringify(newCategories) });
             } catch (error) {
-                console.error(error);
+                console.error('[ExtraSkillsSlice] Failed to save updated extra skill to Owlbear.', error);
             }
             return { extraCategories: newCategories };
         }),
@@ -69,7 +69,7 @@ export const createExtraSkillsSlice: StateCreator<CharacterState, [], [], ExtraS
             try {
                 saveToOwlbear({ 'extra-skills-data': JSON.stringify(newCategories) });
             } catch (error) {
-                console.error(error);
+                console.error('[ExtraSkillsSlice] Failed to save removed extra category to Owlbear.', error);
             }
             return { extraCategories: newCategories };
         })

@@ -25,7 +25,9 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
             });
             try {
                 saveToOwlbear({ 'moves-data': JSON.stringify(newMoves) });
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[MovesSlice] Failed to save resolved dual scale to Owlbear.', e);
+            }
             return { moves: newMoves, pendingDualScale: null };
         }),
 
@@ -49,7 +51,9 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
             ];
             try {
                 saveToOwlbear({ 'moves-data': JSON.stringify(newMoves) });
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[MovesSlice] Failed to save new move to Owlbear.', e);
+            }
             return { moves: newMoves };
         }),
     updateMove: (id, field, value) =>
@@ -57,7 +61,9 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
             const newMoves = state.moves.map((m) => (m.id === id ? { ...m, [field]: value } : m));
             try {
                 saveToOwlbear({ 'moves-data': JSON.stringify(newMoves) });
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[MovesSlice] Failed to save updated move to Owlbear.', e);
+            }
             return { moves: newMoves };
         }),
     removeMove: (id) =>
@@ -65,7 +71,9 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
             const newMoves = state.moves.filter((m) => m.id !== id);
             try {
                 saveToOwlbear({ 'moves-data': JSON.stringify(newMoves) });
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[MovesSlice] Failed to save removed move to Owlbear.', e);
+            }
             return { moves: newMoves };
         }),
     moveUpMove: (id) =>
@@ -76,7 +84,9 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
             [newMoves[index - 1], newMoves[index]] = [newMoves[index], newMoves[index - 1]];
             try {
                 saveToOwlbear({ 'moves-data': JSON.stringify(newMoves) });
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[MovesSlice] Failed to save reordered move to Owlbear.', e);
+            }
             return { moves: newMoves };
         }),
     moveDownMove: (id) =>
@@ -87,7 +97,9 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
             [newMoves[index + 1], newMoves[index]] = [newMoves[index], newMoves[index + 1]];
             try {
                 saveToOwlbear({ 'moves-data': JSON.stringify(newMoves) });
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[MovesSlice] Failed to save reordered move to Owlbear.', e);
+            }
             return { moves: newMoves };
         }),
 
@@ -223,7 +235,9 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
 
             try {
                 saveToOwlbear({ 'moves-data': JSON.stringify(newMoves) });
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[MovesSlice] Failed to save applied move data to Owlbear.', e);
+            }
 
             return {
                 moves: newMoves,
@@ -239,7 +253,9 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
             ];
             try {
                 saveToOwlbear({ 'skill-checks-data': JSON.stringify(newChecks) });
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[MovesSlice] Failed to save added skill check to Owlbear.', e);
+            }
             return { skillChecks: newChecks };
         }),
     updateSkillCheck: (id, field, value) =>
@@ -247,7 +263,9 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
             const newChecks = state.skillChecks.map((c) => (c.id === id ? { ...c, [field]: value } : c));
             try {
                 saveToOwlbear({ 'skill-checks-data': JSON.stringify(newChecks) });
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[MovesSlice] Failed to save updated skill check to Owlbear.', e);
+            }
             return { skillChecks: newChecks };
         }),
     removeSkillCheck: (id) =>
@@ -255,7 +273,9 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
             const newChecks = state.skillChecks.filter((c) => c.id !== id);
             try {
                 saveToOwlbear({ 'skill-checks-data': JSON.stringify(newChecks) });
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[MovesSlice] Failed to save removed skill check to Owlbear.', e);
+            }
             return { skillChecks: newChecks };
         })
 });

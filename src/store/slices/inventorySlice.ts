@@ -56,7 +56,7 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             try {
                 saveToOwlbear(updatesToSave);
             } catch (error) {
-                console.error('Failed to save to Owlbear:', error);
+                console.error('[InventorySlice] Failed to save added item to Owlbear:', error);
             }
             return { inventory: newInventory, health, will };
         }),
@@ -78,7 +78,7 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             try {
                 saveToOwlbear(updatesToSave);
             } catch (error) {
-                console.error('Failed to save to Owlbear:', error);
+                console.error('[InventorySlice] Failed to save specific item to Owlbear:', error);
             }
             return { inventory: newInventory, health, will };
         }),
@@ -192,7 +192,7 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             try {
                 saveToOwlbear(updatesToSave);
             } catch (error) {
-                console.error('Failed to save to Owlbear:', error);
+                console.error('[InventorySlice] Failed to save updated item to Owlbear:', error);
             }
             return { inventory: newInventory, health, will, ...(statusChanged ? { statuses: newStatuses } : {}) };
         }),
@@ -205,7 +205,7 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             try {
                 saveToOwlbear(updatesToSave);
             } catch (error) {
-                console.error('Failed to save to Owlbear:', error);
+                console.error('[InventorySlice] Failed to save removed item to Owlbear:', error);
             }
             return { inventory: newInventory, health, will };
         }),
@@ -219,7 +219,7 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             try {
                 saveToOwlbear({ 'inv-data': JSON.stringify(newInventory) });
             } catch (error) {
-                console.error('Failed to save to Owlbear:', error);
+                console.error('[InventorySlice] Failed to save moved item to Owlbear:', error);
             }
             return { inventory: newInventory };
         }),
@@ -232,7 +232,7 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             try {
                 saveToOwlbear({ 'inv-data': JSON.stringify(newInventory) });
             } catch (error) {
-                console.error('Failed to save to Owlbear:', error);
+                console.error('[InventorySlice] Failed to save moved item to Owlbear:', error);
             }
             return { inventory: newInventory };
         }),
@@ -241,7 +241,7 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             try {
                 saveToOwlbear({ notes: text });
             } catch (error) {
-                console.error('Failed to save to Owlbear:', error);
+                console.error('[InventorySlice] Failed to save notes to Owlbear:', error);
             }
             return { notes: text };
         }),
@@ -251,7 +251,7 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             try {
                 saveToOwlbear({ 'training-points': val });
             } catch (error) {
-                console.error('Failed to save to Owlbear:', error);
+                console.error('[InventorySlice] Failed to save TP to Owlbear:', error);
             }
             return { tp: val };
         }),
@@ -260,7 +260,7 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             try {
                 saveToOwlbear({ currency: val });
             } catch (error) {
-                console.error('Failed to save to Owlbear:', error);
+                console.error('[InventorySlice] Failed to save currency to Owlbear:', error);
             }
             return { currency: val };
         }),
@@ -271,7 +271,7 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             try {
                 saveToOwlbear({ 'custom-info-data': JSON.stringify(newInfo) });
             } catch (error) {
-                console.error('Failed to save to Owlbear:', error);
+                console.error('[InventorySlice] Failed to save custom info to Owlbear:', error);
             }
             return { customInfo: newInfo };
         }),
@@ -281,7 +281,7 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             try {
                 saveToOwlbear({ 'custom-info-data': JSON.stringify(newInfo) });
             } catch (error) {
-                console.error('Failed to save to Owlbear:', error);
+                console.error('[InventorySlice] Failed to save updated custom info to Owlbear:', error);
             }
             return { customInfo: newInfo };
         }),
@@ -291,7 +291,7 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
             try {
                 saveToOwlbear({ 'custom-info-data': JSON.stringify(newInfo) });
             } catch (error) {
-                console.error('Failed to save to Owlbear:', error);
+                console.error('[InventorySlice] Failed to save removed custom info to Owlbear:', error);
             }
             return { customInfo: newInfo };
         })

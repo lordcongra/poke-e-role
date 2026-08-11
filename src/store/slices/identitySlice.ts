@@ -118,7 +118,7 @@ try {
     const stored = localStorage.getItem('pkr_init_settings');
     if (stored) initialInitSettings = { ...initialInitSettings, ...JSON.parse(stored) };
 } catch (e) {
-    console.warn('Failed to parse init settings from local storage.');
+    console.warn('[IdentitySlice] Failed to parse init settings from local storage.');
 }
 
 export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentitySlice> = (set) => ({
@@ -286,7 +286,9 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                         // Immediately broadcast to our own popover to live-update the iframe!
                         OBR.broadcast.sendMessage('pkr-init-settings-update', settings, { destination: 'LOCAL' });
                     }
-                } catch (e) {}
+                } catch (e) {
+                    console.warn('[IdentitySlice] Failed to save initiative settings to localStorage.', e);
+                }
                 return { identity: newIdentity };
             }
 
@@ -365,7 +367,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 try {
                     if (Object.keys(updatesToSave).length > 0) saveToOwlbear(updatesToSave);
                 } catch (error) {
-                    console.error(error);
+                    console.error('[IdentitySlice] Failed to save identity update to Owlbear.', error);
                 }
             }
 

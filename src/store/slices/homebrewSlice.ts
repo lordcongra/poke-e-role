@@ -16,7 +16,9 @@ const getStorageKey = () => {
         if (OBR.isAvailable && OBR.room && OBR.room.id) {
             return `pkr_homebrew_${OBR.room.id}`;
         }
-    } catch (e) {}
+    } catch (e) {
+        console.warn('[HomebrewSlice] Failed to retrieve OBR room ID for storage key.', e);
+    }
     return 'pkr_homebrew_offline';
 };
 
@@ -34,7 +36,7 @@ const saveHomebrewLocal = (state: CharacterState) => {
         };
         localStorage.setItem(getStorageKey(), JSON.stringify(data));
     } catch (error) {
-        console.error('Failed to save homebrew data locally:', error);
+        console.error('[HomebrewSlice] Failed to save homebrew data locally.', error);
     }
 };
 
@@ -76,7 +78,7 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
                 syncHomebrewToApi(pokemon, moves, abilities, items);
             }
         } catch (error) {
-            console.error('Failed to load homebrew data from local storage:', error);
+            console.error('[HomebrewSlice] Failed to load homebrew data from local storage.', error);
         }
     },
 

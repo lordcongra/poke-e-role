@@ -30,7 +30,9 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
             ];
             try {
                 saveToOwlbear({ 'status-list': JSON.stringify(newStatuses) });
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[TrackerSlice] Failed to save new status to Owlbear.', e);
+            }
             return { statuses: newStatuses };
         }),
     updateStatus: (id, field, value) =>
@@ -38,7 +40,9 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
             const newStatuses = state.statuses.map((s) => (s.id === id ? { ...s, [field]: value } : s));
             try {
                 saveToOwlbear({ 'status-list': JSON.stringify(newStatuses) });
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[TrackerSlice] Failed to save updated status to Owlbear.', e);
+            }
             return { statuses: newStatuses };
         }),
     removeStatus: (id) =>
@@ -48,7 +52,9 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
                 newStatuses.push({ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 });
             try {
                 saveToOwlbear({ 'status-list': JSON.stringify(newStatuses) });
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[TrackerSlice] Failed to save removed status to Owlbear.', e);
+            }
             return { statuses: newStatuses };
         }),
 
@@ -57,7 +63,9 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
             const newEffects = [...state.effects, { id: crypto.randomUUID(), name: '', rounds: 0 }];
             try {
                 saveToOwlbear({ 'effects-data': JSON.stringify(newEffects) });
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[TrackerSlice] Failed to save new effect to Owlbear.', e);
+            }
             return { effects: newEffects };
         }),
     updateEffect: (id, field, value) =>
@@ -65,7 +73,9 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
             const newEffects = state.effects.map((e) => (e.id === id ? { ...e, [field]: value } : e));
             try {
                 saveToOwlbear({ 'effects-data': JSON.stringify(newEffects) });
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[TrackerSlice] Failed to save updated effect to Owlbear.', e);
+            }
             return { effects: newEffects };
         }),
     removeEffect: (id) =>
@@ -73,7 +83,9 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
             const newEffects = state.effects.filter((e) => e.id !== id);
             try {
                 saveToOwlbear({ 'effects-data': JSON.stringify(newEffects) });
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[TrackerSlice] Failed to save removed effect to Owlbear.', e);
+            }
             return { effects: newEffects };
         }),
 
@@ -102,7 +114,9 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
                 } else {
                     saveToOwlbear({ [obrKey]: value });
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.warn(`[TrackerSlice] Failed to save tracker update (${field}) to Owlbear.`, e);
+            }
             return { trackers: newTrackers };
         }),
 
@@ -112,7 +126,9 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
             const newActions = state.trackers.actions + 1;
             try {
                 saveToOwlbear({ 'actions-used': newActions });
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[TrackerSlice] Failed to save incremented action to Owlbear.', e);
+            }
             return { trackers: { ...state.trackers, actions: newActions } };
         }),
 
@@ -167,7 +183,9 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
                     'moves-data': JSON.stringify(newMoves),
                     'banked-acc-dice': '{}'
                 });
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[TrackerSlice] Failed to save reset round state to Owlbear.', e);
+            }
 
             return {
                 health: newHealth,
@@ -199,7 +217,9 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
                     'banked-acc-dice': '{}',
                     'status-list': JSON.stringify(newStatuses)
                 });
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[TrackerSlice] Failed to save long rest state to Owlbear.', e);
+            }
 
             return {
                 health: { ...state.health, hpCurr: state.health.hpMax },

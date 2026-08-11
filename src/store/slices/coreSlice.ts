@@ -46,7 +46,9 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
 
             try {
                 saveToOwlbear({ [obrKey]: value });
-            } catch (e) {}
+            } catch (e) {
+                console.warn(`[CoreSlice] Failed to save derived stat (${field}) to Owlbear.`, e);
+            }
             return { derived: newDerived };
         }),
 
@@ -87,7 +89,9 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
                     'temporary-hit-points-max': newHealth.temporaryHitPointsMax,
                     ...(field === 'hpBase' ? { 'hp-base': safeValue } : {})
                 });
-            } catch (e) {}
+            } catch (e) {
+                console.warn(`[CoreSlice] Failed to save health update (${field}) to Owlbear.`, e);
+            }
 
             return { health: newHealth };
         }),
@@ -124,7 +128,9 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
                     'temporary-will-max': newWill.temporaryWillMax,
                     ...(field === 'willBase' ? { 'will-base': safeValue } : {})
                 });
-            } catch (e) {}
+            } catch (e) {
+                console.warn(`[CoreSlice] Failed to save will update (${field}) to Owlbear.`, e);
+            }
 
             return { will: newWill };
         }),
@@ -134,7 +140,9 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
             const newExtras = { ...state.extras, [category]: value };
             try {
                 saveToOwlbear({ [`extra-${category}`]: value });
-            } catch (e) {}
+            } catch (e) {
+                console.warn(`[CoreSlice] Failed to save extra stat (${category}) to Owlbear.`, e);
+            }
             return { extras: newExtras };
         }),
 
@@ -176,7 +184,9 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
 
             try {
                 saveToOwlbear(updatesToSave);
-            } catch (e) {}
+            } catch (e) {
+                console.warn(`[CoreSlice] Failed to save stat update (${stat}) to Owlbear.`, e);
+            }
             return { stats: newStats, health: newHealth, will: newWill };
         }),
 
@@ -185,7 +195,9 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
             const newSocials = { ...state.socials, [stat]: { ...state.socials[stat], [field]: value } };
             try {
                 saveToOwlbear({ [`${stat}-${field}`]: value });
-            } catch (e) {}
+            } catch (e) {
+                console.warn(`[CoreSlice] Failed to save social stat (${stat}) to Owlbear.`, e);
+            }
             return { socials: newSocials };
         }),
 
@@ -195,7 +207,9 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
             try {
                 if (field === 'customName') saveToOwlbear({ [`label-${skill}`]: value });
                 else saveToOwlbear({ [`${skill}-${field}`]: value });
-            } catch (e) {}
+            } catch (e) {
+                console.warn(`[CoreSlice] Failed to save skill (${skill}) to Owlbear.`, e);
+            }
             return { skills: newSkills };
         })
 });

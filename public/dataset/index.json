@@ -6338,15 +6338,15 @@
         "weight": 50
       },
       {
-        "name": "Conversion 2",
-        "type": "Normal",
-        "path": "/dataset/moves/support/Conversion 2.json",
-        "weight": 50
-      },
-      {
         "name": "Conversion",
         "type": "Normal",
         "path": "/dataset/moves/support/Conversion.json",
+        "weight": 50
+      },
+      {
+        "name": "Conversion 2",
+        "type": "Normal",
+        "path": "/dataset/moves/support/Conversion 2.json",
         "weight": 50
       },
       {
@@ -6398,15 +6398,15 @@
         "weight": 50
       },
       {
-        "name": "Curse (Non-Ghost)",
-        "type": "Ghost",
-        "path": "/dataset/moves/support/Curse (Non-Ghost).json",
-        "weight": 50
-      },
-      {
         "name": "Curse",
         "type": "Ghost",
         "path": "/dataset/moves/support/Curse.json",
+        "weight": 50
+      },
+      {
+        "name": "Curse (Non-Ghost)",
+        "type": "Ghost",
+        "path": "/dataset/moves/support/Curse (Non-Ghost).json",
         "weight": 50
       },
       {
@@ -7202,15 +7202,15 @@
         "weight": 50
       },
       {
-        "name": "Reflect Type",
-        "type": "Normal",
-        "path": "/dataset/moves/support/Reflect Type.json",
-        "weight": 50
-      },
-      {
         "name": "Reflect",
         "type": "Psychic",
         "path": "/dataset/moves/support/Reflect.json",
+        "weight": 50
+      },
+      {
+        "name": "Reflect Type",
+        "type": "Normal",
+        "path": "/dataset/moves/support/Reflect Type.json",
         "weight": 50
       },
       {
@@ -7670,6 +7670,12 @@
         "weight": 50
       },
       {
+        "name": "Toxic",
+        "type": "Poison",
+        "path": "/dataset/moves/support/Toxic.json",
+        "weight": 50
+      },
+      {
         "name": "Toxic Spikes",
         "type": "Poison",
         "path": "/dataset/moves/support/Toxic Spikes.json",
@@ -7682,15 +7688,15 @@
         "weight": 50
       },
       {
-        "name": "Toxic",
-        "type": "Poison",
-        "path": "/dataset/moves/support/Toxic.json",
-        "weight": 50
-      },
-      {
         "name": "Transform",
         "type": "Normal",
         "path": "/dataset/moves/support/Transform.json",
+        "weight": 50
+      },
+      {
+        "name": "Trick",
+        "type": "Psychic",
+        "path": "/dataset/moves/support/Trick.json",
         "weight": 50
       },
       {
@@ -7703,12 +7709,6 @@
         "name": "Trick-Or-Treat",
         "type": "Ghost",
         "path": "/dataset/moves/support/Trick-Or-Treat.json",
-        "weight": 50
-      },
-      {
-        "name": "Trick",
-        "type": "Psychic",
-        "path": "/dataset/moves/support/Trick.json",
         "weight": 50
       },
       {
@@ -7838,12 +7838,6 @@
           "name": "Constrict",
           "type": "Normal",
           "path": "/dataset/moves/basic/power_1/Constrict.json",
-          "weight": 100
-        },
-        {
-          "name": "Contrict",
-          "type": "Normal",
-          "path": "/dataset/moves/basic/power_1/Contrict.json",
           "weight": 100
         },
         {
@@ -8107,15 +8101,15 @@
           "weight": 50
         },
         {
-          "name": "Acid Spray",
-          "type": "Poison",
-          "path": "/dataset/moves/basic/power_2/Acid Spray.json",
-          "weight": 50
-        },
-        {
           "name": "Acid",
           "type": "Poison",
           "path": "/dataset/moves/basic/power_2/Acid.json",
+          "weight": 50
+        },
+        {
+          "name": "Acid Spray",
+          "type": "Poison",
+          "path": "/dataset/moves/basic/power_2/Acid Spray.json",
           "weight": 50
         },
         {
@@ -9795,15 +9789,15 @@
           "weight": 20
         },
         {
-          "name": "Psychic Fangs",
-          "type": "Psychic",
-          "path": "/dataset/moves/basic/power_3/Psychic Fangs.json",
-          "weight": 20
-        },
-        {
           "name": "Psychic",
           "type": "Psychic",
           "path": "/dataset/moves/basic/power_3/Psychic.json",
+          "weight": 20
+        },
+        {
+          "name": "Psychic Fangs",
+          "type": "Psychic",
+          "path": "/dataset/moves/basic/power_3/Psychic Fangs.json",
           "weight": 20
         },
         {
@@ -12659,14 +12653,14 @@
           "weight": 100
         },
         {
-          "name": "Pokedex Upgrade",
-          "path": "/dataset/items/TrainerItems/Misc/Pokedex Upgrade.json",
+          "name": "Pokedex",
+          "path": "/dataset/items/TrainerItems/Misc/Pokedex.json",
           "pmd": false,
           "weight": 20
         },
         {
-          "name": "Pokedex",
-          "path": "/dataset/items/TrainerItems/Misc/Pokedex.json",
+          "name": "Pokedex Upgrade",
+          "path": "/dataset/items/TrainerItems/Misc/Pokedex Upgrade.json",
           "pmd": false,
           "weight": 20
         },
