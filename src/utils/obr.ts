@@ -26,16 +26,12 @@ export async function saveToOwlbear(updates: Record<string, unknown>) {
         const updatesToPush = { ...pendingUpdates };
         pendingUpdates = {};
 
-        // 👇 FOOLPROOF TEST: This prints the exact flat payload right before it hits the database!
         console.log('🚀 PUSHING DATA VIA ADAPTER:', updatesToPush);
 
         try {
-            // Route everything through the adapter!
             await storageAdapter.saveCharacter(currentToken, updatesToPush, METADATA_ID);
         } catch (error) {
             console.error('[OBR Engine] Failed to securely save data. Queuing for retry...', error);
-            // CRITICAL FIX: If the network drops or SDK fails, put the updates back into the queue
-            // while prioritizing any newly queued updates that happened during the failed await!
             Object.assign(pendingUpdates, { ...updatesToPush, ...pendingUpdates });
         }
     }, 150);

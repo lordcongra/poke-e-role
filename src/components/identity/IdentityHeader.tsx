@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
@@ -6,13 +6,9 @@ import { fetchAbilityData, fetchNatureData } from '../../utils/api';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { IdentityGrid } from './IdentityGrid';
 import { IdentityControls } from './IdentityControls';
-import { HomebrewModal } from '../homebrew/HomebrewModal';
 import { GeneratorModal } from '../modals/GeneratorModal';
 import { TrackerSettingsModal } from '../modals/TrackerSettingsModal';
-import { RulesModal } from '../modals/RulesModal';
-import { ChangelogModal } from '../modals/ChangelogModal';
 import { PokedexModal } from '../modals/PokedexModal';
-import { CURRENT_VERSION } from '../../data/changelog';
 import { broadcastInfo } from '../../utils/diceRoller';
 import './IdentityHeader.css';
 
@@ -23,66 +19,10 @@ export function IdentityHeader() {
     const role = useCharacterStore((state) => state.role);
     const isGm = role === 'GM';
 
-    const [isDark, setIsDark] = useState(false);
-
     const [modalConfig, setModalConfig] = useState<{ title: string; content: string | ReactNode } | null>(null);
-    const [showHomebrewModal, setShowHomebrewModal] = useState(false);
-    const [showGeneratorModal, setShowGeneratorModal] = useState(false);
-    const [showTrackerSettings, setShowTrackerSettings] = useState(false);
-    const [showRulesModal, setShowRulesModal] = useState(false);
-    const [showChangelog, setShowChangelog] = useState(false);
-    const [showPokedexModal, setShowPokedexModal] = useState(false);
-
-    useEffect(() => {
-        try {
-            const savedTheme = localStorage.getItem('pokerole-theme');
-            if (savedTheme === 'dark') {
-                setIsDark(true);
-                document.body.classList.add('dark-mode');
-                document.body.setAttribute('data-theme', 'dark');
-                document.documentElement.setAttribute('data-theme', 'dark');
-            }
-
-            const seenVersion = localStorage.getItem('pkr_changelog_seen');
-            if (seenVersion !== CURRENT_VERSION) {
-                setShowChangelog(true);
-            }
-        } catch (e) {
-            console.warn('Could not access localStorage', e);
-        }
-    }, []);
-
-    const toggleTheme = () => {
-        const newIsDark = !isDark;
-        setIsDark(newIsDark);
-
-        const themeValue = newIsDark ? 'dark' : 'light';
-
-        if (newIsDark) {
-            document.body.classList.add('dark-mode');
-            document.body.setAttribute('data-theme', 'dark');
-            document.documentElement.setAttribute('data-theme', 'dark');
-        } else {
-            document.body.classList.remove('dark-mode');
-            document.body.setAttribute('data-theme', 'light');
-            document.documentElement.setAttribute('data-theme', 'light');
-        }
-
-        try {
-            localStorage.setItem('pokerole-theme', themeValue);
-        } catch (e) {}
-
-        if (OBR.isAvailable) {
-            OBR.broadcast.sendMessage('pokerole-pmd-extension/theme-sync', themeValue, { destination: 'LOCAL' });
-        }
-    };
-
-    const handleCloseChangelog = () => {
-        try {
-            localStorage.setItem('pkr_changelog_seen', CURRENT_VERSION);
-        } catch (e) {}
-        setShowChangelog(false);
-    };
+    const [showGeneratorModal, setShowGeneratorModal] = useState<boolean>(false);
+    const [showTrackerSettings, setShowTrackerSettings] = useState<boolean>(false);
+    const [showPokedexModal, setShowPokedexModal] = useState<boolean>(false);
 
     const openAbilityModal = async () => {
         if (!identityStore.ability) {
@@ -203,7 +143,6 @@ export function IdentityHeader() {
                                     imageRecord.width = selectedWidth;
                                     imageRecord.height = selectedHeight;
 
-                                    // Preserve the visual size on the board, maintaining the new aspect ratio
                                     const physicalWidth = oldWidth * Math.abs(oldScaleX);
                                     const newScale = physicalWidth / selectedWidth;
 
@@ -220,8 +159,8 @@ export function IdentityHeader() {
                         OBR.notification.show('Could not extract URL. Please check F12 Console!', 'ERROR');
                 }
             }
-        } catch (e) {
-            console.error('Failed to pick manual token image:', e);
+        } catch (error) {
+            console.error('[IdentityHeader] Failed to pick manual token image:', error);
         }
     };
 
@@ -237,14 +176,6 @@ export function IdentityHeader() {
                     🖼️ Update Token Image
                 </button>
             )}
-            <button
-                type="button"
-                className="action-button action-button--dark identity-header__changelog-btn"
-                onClick={() => setShowChangelog(true)}
-                title="View Update Log"
-            >
-                📢 What's New
-            </button>
         </div>
     );
 
@@ -261,19 +192,10 @@ export function IdentityHeader() {
                 onOpenPokedex={() => setShowPokedexModal(true)}
             />
 
-            <IdentityControls
-                onOpenHomebrew={() => setShowHomebrewModal(true)}
-                onOpenTrackerSettings={() => setShowTrackerSettings(true)}
-                onOpenRules={() => setShowRulesModal(true)}
-                isDark={isDark}
-                toggleTheme={toggleTheme}
-            />
+            <IdentityControls onOpenTrackerSettings={() => setShowTrackerSettings(true)} />
 
-            {showHomebrewModal && <HomebrewModal onClose={() => setShowHomebrewModal(false)} />}
             {showGeneratorModal && <GeneratorModal onClose={() => setShowGeneratorModal(false)} />}
             {showTrackerSettings && <TrackerSettingsModal onClose={() => setShowTrackerSettings(false)} />}
-            {showRulesModal && <RulesModal onClose={() => setShowRulesModal(false)} />}
-            {showChangelog && <ChangelogModal onClose={handleCloseChangelog} />}
             {showPokedexModal && <PokedexModal onClose={() => setShowPokedexModal(false)} />}
 
             {modalConfig && (

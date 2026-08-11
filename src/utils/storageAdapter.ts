@@ -19,7 +19,7 @@ export const storageAdapter = {
                 const merged = { ...existing, ...updates };
                 localStorage.setItem(`${LOCAL_STORAGE_PREFIX}${id}`, JSON.stringify(merged));
             } catch (error) {
-                console.error('[StorageAdapter] Failed to save character to localStorage', error);
+                console.error('[storageAdapter] Failed to save character to localStorage', error);
                 throw error;
             }
         } else {
@@ -32,7 +32,7 @@ export const storageAdapter = {
                     }
                 });
             } catch (error) {
-                console.error('[StorageAdapter] Failed to securely save to Owlbear Rodeo.', error);
+                console.error('[storageAdapter] Failed to securely save to Owlbear Rodeo.', error);
                 throw error;
             }
         }
@@ -55,7 +55,7 @@ export const storageAdapter = {
                         metadata
                     });
                 } catch (e) {
-                    console.error('[StorageAdapter] Skipped corrupt local character data', e);
+                    console.error('[storageAdapter] Skipped corrupt local character data', e);
                 }
             }
         }
@@ -67,15 +67,15 @@ export const storageAdapter = {
      */
     async createLocalCharacter(name: string): Promise<string> {
         const newId = crypto.randomUUID();
-        const initialMetadata = {
-            nickname: name,
+        const initialMetadata = { 
+            nickname: name, 
             'v2-migrated': true // Instantly mark as v2 to prevent legacy migration scripts from firing
         };
-
+        
         try {
             localStorage.setItem(`${LOCAL_STORAGE_PREFIX}${newId}`, JSON.stringify(initialMetadata));
         } catch (error) {
-            console.error('[StorageAdapter] Failed to create new character', error);
+            console.error('[storageAdapter] Failed to create new character', error);
         }
         return newId;
     },
@@ -87,7 +87,7 @@ export const storageAdapter = {
         try {
             localStorage.removeItem(`${LOCAL_STORAGE_PREFIX}${id}`);
         } catch (error) {
-            console.error('[StorageAdapter] Failed to delete character', error);
+            console.error('[storageAdapter] Failed to delete character', error);
         }
     }
 };

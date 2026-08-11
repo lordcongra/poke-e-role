@@ -14,13 +14,14 @@ import { TrainerBadges } from './components/board/TrainerBadges';
 import { PrintSheet } from './components/print/PrintSheet';
 import { DemoRollModal } from './components/modals/DemoRollModal';
 import { MainMenu } from './components/standalone/MainMenu';
+import { GlobalToolbar } from './components/ui/GlobalToolbar';
 import { isStandaloneMode } from './utils/storageAdapter';
 import './App.css';
 import './style.css';
 
 function App() {
     useOwlbearSync();
-    
+
     const isNPC = useCharacterStore((state) => state.identity.isNPC);
     const role = useCharacterStore((state) => state.role);
     const mode = useCharacterStore((state) => state.identity.mode);
@@ -28,7 +29,7 @@ function App() {
     const gmOnlyMatchups = useCharacterStore((state) => state.identity.gmOnlyMatchups);
     const activeTokenId = useCharacterStore((state) => state.tokenId);
 
-    // 🚨 Intercept Standalone users if they haven't picked a character yet
+    // Intercept Standalone users if they haven't picked a character yet
     if (isStandaloneMode && !activeTokenId) {
         return <MainMenu />;
     }
@@ -36,6 +37,7 @@ function App() {
     if (isNPC && role === 'PLAYER') {
         return (
             <>
+                <GlobalToolbar />
                 <div id="gm-lock-screen" className="app-gm-lock">
                     <h2 className="app-gm-lock__icon">🔒</h2>
                     <h3>This sheet is hidden by the GM.</h3>
@@ -53,6 +55,7 @@ function App() {
     return (
         <>
             <div className="sheet-container app-container">
+                <GlobalToolbar />
                 <IdentityHeader />
                 <DerivedBoard />
 

@@ -5,48 +5,29 @@ import type { CharacterState } from '../../store/storeTypes';
 import { fetchPokemonData, fetchAbilityData, fetchMoveData, loadLocalDataset } from '../../utils/api';
 import { saveToOwlbear } from '../../utils/obr';
 import { STATS_META_ID } from '../../utils/graphicsManager';
-import { canViewHomebrew } from '../../utils/helper';
 import { flattenStateToMetadata } from '../../utils/stateMapper';
 import { useObrReady } from '../../hooks/useObrReady';
 import { IdentityToggles } from './IdentityToggles';
 import { PrintSettingsModal } from '../modals/PrintSettingsModal';
-import { ItemGeneratorModal } from '../modals/ItemGeneratorModal';
 import { InitiativeSettingsModal } from '../modals/InitiativeSettingsModal';
 
 interface IdentityControlsProps {
-    onOpenHomebrew: () => void;
     onOpenTrackerSettings: () => void;
-    onOpenRules: () => void;
-    isDark: boolean;
-    toggleTheme: () => void;
 }
 
-export function IdentityControls({
-    onOpenHomebrew,
-    onOpenTrackerSettings,
-    onOpenRules,
-    isDark,
-    toggleTheme
-}: IdentityControlsProps) {
+export function IdentityControls({ onOpenTrackerSettings }: IdentityControlsProps) {
     const isObrReady = useObrReady();
     const identityStore = useCharacterStore((state) => state.identity) || {};
     const addCustomInfo = useCharacterStore((state) => state.addCustomInfo);
     const refreshSpeciesData = useCharacterStore((state) => state.refreshSpeciesData);
-    const role = useCharacterStore((state) => state.role);
-
-    const access = identityStore.homebrewAccess || 'Full';
-    const showHomebrewButton = canViewHomebrew(role, access);
-    const showLootGenButton = role === 'GM' || identityStore.gmOnlyLootGen === false;
 
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [importData, setImportData] = useState<Record<string, unknown> | null>(null);
     const [showPrintModal, setShowPrintModal] = useState(false);
-    const [showLootGenModal, setShowLootGenModal] = useState(false);
     const [showInitSettings, setShowInitSettings] = useState(false);
     const fileInputReference = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        // Prevent broadcasting updates across the network until the OBR SDK channel is completely open
         if (!isObrReady || !OBR.isAvailable) return;
 
         const timeout = setTimeout(() => {
@@ -68,12 +49,6 @@ export function IdentityControls({
         identityStore.initiativeTrackerMaxWidth,
         identityStore.initiativeTrackerMaxHeight
     ]);
-
-    useEffect(() => {
-        if (isObrReady && OBR.isAvailable) {
-            OBR.broadcast.sendMessage('pkr-theme-update', isDark ? 'dark' : 'light', { destination: 'LOCAL' });
-        }
-    }, [isDark, isObrReady]);
 
     const handleRefresh = async () => {
         if (isRefreshing) return;
@@ -98,11 +73,11 @@ export function IdentityControls({
             if (identityStore.ability) {
                 const abilityData = await fetchAbilityData(identityStore.ability);
                 if (abilityData && (abilityData.Description || abilityData.Effect)) {
-                    console.log('Ability data validated.');
+                    console.log('[IdentityControls] Ability data validated.');
                 }
             }
         } catch (error) {
-            console.error('Refresh failed', error);
+            console.error('[IdentityControls] Refresh failed:', error);
         } finally {
             setTimeout(() => setIsRefreshing(false), 1500);
         }
@@ -133,7 +108,7 @@ export function IdentityControls({
             document.body.removeChild(linkElement);
             URL.revokeObjectURL(url);
         } catch (error) {
-            console.error('Export failed', error);
+            console.error('[IdentityControls] Export failed:', error);
         }
     };
 
@@ -172,7 +147,7 @@ export function IdentityControls({
                 saveToOwlbear(metaToSave);
             }
         } catch (error) {
-            console.error('Failed to import character data:', error);
+            console.error('[IdentityControls] Failed to import character data:', error);
             if (OBR.isAvailable && isObrReady) OBR.notification.show('Failed to import data.', 'ERROR');
         } finally {
             setImportData(null);
@@ -331,26 +306,6 @@ export function IdentityControls({
                     </button>
                 </div>
 
-                {showHomebrewButton && (
-                    <button
-                        type="button"
-                        className="action-button action-button--dark identity-header__btn identity-header__btn--homebrew"
-                        onClick={onOpenHomebrew}
-                    >
-                        🛠️ Homebrew
-                    </button>
-                )}
-
-                {showLootGenButton && (
-                    <button
-                        type="button"
-                        className="action-button identity-header__btn identity-header__btn--loot"
-                        onClick={() => setShowLootGenModal(true)}
-                    >
-                        🎁 Loot Gen
-                    </button>
-                )}
-
                 <button
                     type="button"
                     onClick={addCustomInfo}
@@ -392,18 +347,9 @@ export function IdentityControls({
                 >
                     🖨️
                 </button>
-
-                <button
-                    type="button"
-                    className="action-button action-button--dark identity-header__btn--small"
-                    onClick={toggleTheme}
-                    title="Toggle Dark Mode"
-                >
-                    {isDark ? '☀️' : '🌙'}
-                </button>
             </div>
 
-            <IdentityToggles onOpenTrackerSettings={onOpenTrackerSettings} onOpenRules={onOpenRules} />
+            <IdentityToggles onOpenTrackerSettings={onOpenTrackerSettings} />
 
             {importData && (
                 <div className="identity-header__modal-overlay">
@@ -434,7 +380,6 @@ export function IdentityControls({
 
             {showInitSettings && <InitiativeSettingsModal onClose={() => setShowInitSettings(false)} />}
             {showPrintModal && <PrintSettingsModal onClose={() => setShowPrintModal(false)} />}
-            {showLootGenModal && <ItemGeneratorModal onClose={() => setShowLootGenModal(false)} />}
         </>
     );
 }
