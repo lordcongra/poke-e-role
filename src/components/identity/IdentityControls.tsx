@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CharacterState } from '../../store/storeTypes';
@@ -9,7 +9,6 @@ import { flattenStateToMetadata } from '../../utils/stateMapper';
 import { useObrReady } from '../../hooks/useObrReady';
 import { IdentityToggles } from './IdentityToggles';
 import { PrintSettingsModal } from '../modals/PrintSettingsModal';
-import { InitiativeSettingsModal } from '../modals/InitiativeSettingsModal';
 
 interface IdentityControlsProps {
     onOpenTrackerSettings: () => void;
@@ -24,31 +23,7 @@ export function IdentityControls({ onOpenTrackerSettings }: IdentityControlsProp
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [importData, setImportData] = useState<Record<string, unknown> | null>(null);
     const [showPrintModal, setShowPrintModal] = useState(false);
-    const [showInitSettings, setShowInitSettings] = useState(false);
     const fileInputReference = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-        if (!isObrReady || !OBR.isAvailable) return;
-
-        const timeout = setTimeout(() => {
-            const unsub = OBR.broadcast.onMessage('pkr-init-pong', () => {
-                unsub();
-                openTracker(true);
-            });
-            OBR.broadcast.sendMessage('pkr-init-ping-check', {}, { destination: 'LOCAL' });
-            setTimeout(() => unsub(), 100);
-        }, 300);
-        return () => clearTimeout(timeout);
-    }, [
-        isObrReady,
-        identityStore.initiativeTrackerPreset,
-        identityStore.initiativeTrackerOffsetX,
-        identityStore.initiativeTrackerOffsetY,
-        identityStore.initiativeTrackerLayout,
-        identityStore.initiativeTrackerAvatarShape,
-        identityStore.initiativeTrackerMaxWidth,
-        identityStore.initiativeTrackerMaxHeight
-    ]);
 
     const handleRefresh = async () => {
         if (isRefreshing) return;
@@ -154,105 +129,6 @@ export function IdentityControls({ onOpenTrackerSettings }: IdentityControlsProp
         }
     };
 
-    const openTracker = async (isReAnchor = false) => {
-        if (!isObrReady || !OBR.isAvailable) return;
-
-        const {
-            initiativeTrackerPreset,
-            initiativeTrackerOffsetX,
-            initiativeTrackerOffsetY,
-            initiativeTrackerLayout,
-            initiativeTrackerAvatarShape,
-            initiativeTrackerMaxWidth,
-            initiativeTrackerMaxHeight
-        } = identityStore;
-
-        const width = await OBR.viewport.getWidth();
-        const height = await OBR.viewport.getHeight();
-
-        let anchorPosition = { top: 0, left: 0 };
-        let transformOrigin = { vertical: 'TOP', horizontal: 'LEFT' };
-
-        const posX = initiativeTrackerOffsetX || 0;
-        const posY = initiativeTrackerOffsetY || 0;
-
-        switch (initiativeTrackerPreset) {
-            case 'top-left':
-                anchorPosition = { top: posY, left: posX };
-                transformOrigin = { vertical: 'TOP', horizontal: 'LEFT' };
-                break;
-            case 'top-right':
-                anchorPosition = { top: posY, left: width + posX };
-                transformOrigin = { vertical: 'TOP', horizontal: 'RIGHT' };
-                break;
-            case 'bottom-left':
-                anchorPosition = { top: height + posY, left: posX };
-                transformOrigin = { vertical: 'BOTTOM', horizontal: 'LEFT' };
-                break;
-            case 'bottom-right':
-                anchorPosition = { top: height + posY, left: width + posX };
-                transformOrigin = { vertical: 'BOTTOM', horizontal: 'RIGHT' };
-                break;
-            case 'center-left':
-                anchorPosition = { top: height / 2 + posY, left: posX };
-                transformOrigin = { vertical: 'CENTER', horizontal: 'LEFT' };
-                break;
-            case 'center-right':
-                anchorPosition = { top: height / 2 + posY, left: width + posX };
-                transformOrigin = { vertical: 'CENTER', horizontal: 'RIGHT' };
-                break;
-            case 'top-center':
-                anchorPosition = { top: posY, left: width / 2 + posX };
-                transformOrigin = { vertical: 'TOP', horizontal: 'CENTER' };
-                break;
-            case 'bottom-center':
-                anchorPosition = { top: height + posY, left: width / 2 + posX };
-                transformOrigin = { vertical: 'BOTTOM', horizontal: 'CENTER' };
-                break;
-        }
-
-        const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-        const themeToPass = document.body.getAttribute('data-theme') || 'light';
-        const url = `${baseUrl}/initiative-tracker.html?layout=${initiativeTrackerLayout}&theme=${themeToPass}&shape=${initiativeTrackerAvatarShape}&mw=${initiativeTrackerMaxWidth}&mh=${initiativeTrackerMaxHeight}`;
-
-        const savedW = parseInt(localStorage.getItem('pkr_init_width') || '400');
-        const savedH = parseInt(localStorage.getItem('pkr_init_height') || '150');
-
-        OBR.popover
-            .open({
-                id: 'pkr-initiative-tracker',
-                url: url,
-                height: isReAnchor ? savedH : 150,
-                width: isReAnchor ? savedW : 400,
-                disableClickAway: true,
-                anchorReference: 'POSITION',
-                anchorPosition: anchorPosition,
-                // @ts-ignore
-                transformOrigin: transformOrigin
-            })
-            .catch(() => {});
-    };
-
-    const handleInitiativeToggle = async () => {
-        if (!OBR.isAvailable || !isObrReady) return;
-
-        let handled = false;
-        const unsub = OBR.broadcast.onMessage('pkr-init-pong', () => {
-            handled = true;
-            unsub();
-            OBR.popover.close('pkr-initiative-tracker').catch(() => {});
-        });
-
-        OBR.broadcast.sendMessage('pkr-init-ping-toggle', {}, { destination: 'LOCAL' });
-
-        setTimeout(() => {
-            unsub();
-            if (!handled) {
-                openTracker();
-            }
-        }, 150);
-    };
-
     return (
         <>
             <div className="identity-header__actions">
@@ -266,51 +142,12 @@ export function IdentityControls({ onOpenTrackerSettings }: IdentityControlsProp
                     {isRefreshing ? '⏳ Refreshing...' : '↻ Refresh'}
                 </button>
 
-                <div style={{ display: 'flex', gap: '0px', flex: '1 1 25%', minWidth: '120px', maxWidth: '100%' }}>
-                    <button
-                        type="button"
-                        className="action-button identity-header__btn"
-                        style={{
-                            backgroundColor: '#f44336',
-                            borderColor: '#f44336',
-                            color: 'white',
-                            flex: 1,
-                            borderRadius: '4px 0 0 4px',
-                            borderRight: '1px solid #c62828',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            minWidth: '0'
-                        }}
-                        onClick={handleInitiativeToggle}
-                    >
-                        ⚔️ Initiative
-                    </button>
-                    <button
-                        type="button"
-                        className="action-button identity-header__btn"
-                        style={{
-                            backgroundColor: '#f44336',
-                            borderColor: '#f44336',
-                            color: 'white',
-                            flex: '0 0 32px',
-                            width: '32px',
-                            minWidth: '32px',
-                            padding: '0',
-                            borderRadius: '0 4px 4px 0'
-                        }}
-                        onClick={() => setShowInitSettings(true)}
-                        title="Initiative Settings"
-                    >
-                        ⚙️
-                    </button>
-                </div>
-
                 <button
                     type="button"
                     onClick={addCustomInfo}
                     className="action-button identity-header__btn identity-header__btn--custom-field"
                     title="Add Custom Field"
+                    style={{ flex: 1 }}
                 >
                     ➕ Custom Field
                 </button>
@@ -378,7 +215,6 @@ export function IdentityControls({ onOpenTrackerSettings }: IdentityControlsProp
                 </div>
             )}
 
-            {showInitSettings && <InitiativeSettingsModal onClose={() => setShowInitSettings(false)} />}
             {showPrintModal && <PrintSettingsModal onClose={() => setShowPrintModal(false)} />}
         </>
     );

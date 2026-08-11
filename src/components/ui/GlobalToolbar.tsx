@@ -7,16 +7,20 @@ import { HomebrewModal } from '../homebrew/HomebrewModal';
 import { RulesModal } from '../modals/RulesModal';
 import { ItemGeneratorModal } from '../modals/ItemGeneratorModal';
 import { ChangelogModal } from '../modals/ChangelogModal';
+import { InitiativeSettingsModal } from '../modals/InitiativeSettingsModal';
 import { isStandaloneMode } from '../../utils/storageAdapter';
+import { useObrReady } from '../../hooks/useObrReady';
 import './GlobalToolbar.css';
 
 export function GlobalToolbar() {
+    const isObrReady = useObrReady();
     const storeRole = useCharacterStore((state) => state.role);
     const homebrewAccess = useCharacterStore((state) => state.identity.homebrewAccess) || 'Full';
     const gmOnlyLootGen = useCharacterStore((state) => state.identity.gmOnlyLootGen);
+    const identityStore = useCharacterStore((state) => state.identity) || {};
 
-    // Fetch the role locally on mount so we don't have to wait for a token click!
     const [localRole, setLocalRole] = useState<string>(isStandaloneMode ? 'GM' : storeRole);
+    const [isExpanded, setIsExpanded] = useState<boolean>(true);
 
     useEffect(() => {
         if (!isStandaloneMode && OBR.isAvailable) {
@@ -35,6 +39,7 @@ export function GlobalToolbar() {
     const [showRulesModal, setShowRulesModal] = useState<boolean>(false);
     const [showLootGenModal, setShowLootGenModal] = useState<boolean>(false);
     const [showChangelog, setShowChangelog] = useState<boolean>(false);
+    const [showInitSettings, setShowInitSettings] = useState<boolean>(false);
 
     useEffect(() => {
         try {
@@ -50,10 +55,146 @@ export function GlobalToolbar() {
             if (seenVersion !== CURRENT_VERSION) {
                 setShowChangelog(true);
             }
+
+            const savedExpanded = localStorage.getItem('pkr_global_toolbar_expanded');
+            if (savedExpanded !== null) {
+                setIsExpanded(savedExpanded === 'true');
+            }
         } catch (error) {
             console.warn('[GlobalToolbar] Could not read preferences from localStorage:', error);
         }
     }, []);
+
+    const toggleExpanded = () => {
+        const next = !isExpanded;
+        setIsExpanded(next);
+        try {
+            localStorage.setItem('pkr_global_toolbar_expanded', String(next));
+        } catch (e) {}
+    };
+
+    // --- INITIATIVE TRACKER LOGIC ---
+    useEffect(() => {
+        if (!isObrReady || !OBR.isAvailable || isStandaloneMode) return;
+
+        const timeout = setTimeout(() => {
+            const unsub = OBR.broadcast.onMessage('pkr-init-pong', () => {
+                unsub();
+                openTracker(true);
+            });
+            OBR.broadcast.sendMessage('pkr-init-ping-check', {}, { destination: 'LOCAL' });
+            setTimeout(() => unsub(), 100);
+        }, 300);
+        return () => clearTimeout(timeout);
+    }, [
+        isObrReady,
+        identityStore.initiativeTrackerPreset,
+        identityStore.initiativeTrackerOffsetX,
+        identityStore.initiativeTrackerOffsetY,
+        identityStore.initiativeTrackerLayout,
+        identityStore.initiativeTrackerAvatarShape,
+        identityStore.initiativeTrackerMaxWidth,
+        identityStore.initiativeTrackerMaxHeight
+    ]);
+
+    const openTracker = async (isReAnchor = false) => {
+        if (!isObrReady || !OBR.isAvailable) return;
+
+        const {
+            initiativeTrackerPreset,
+            initiativeTrackerOffsetX,
+            initiativeTrackerOffsetY,
+            initiativeTrackerLayout,
+            initiativeTrackerAvatarShape,
+            initiativeTrackerMaxWidth,
+            initiativeTrackerMaxHeight
+        } = identityStore;
+
+        const width = await OBR.viewport.getWidth();
+        const height = await OBR.viewport.getHeight();
+
+        let anchorPosition = { top: 0, left: 0 };
+        let transformOrigin = { vertical: 'TOP', horizontal: 'LEFT' };
+
+        const posX = initiativeTrackerOffsetX || 0;
+        const posY = initiativeTrackerOffsetY || 0;
+
+        switch (initiativeTrackerPreset) {
+            case 'top-left':
+                anchorPosition = { top: posY, left: posX };
+                transformOrigin = { vertical: 'TOP', horizontal: 'LEFT' };
+                break;
+            case 'top-right':
+                anchorPosition = { top: posY, left: width + posX };
+                transformOrigin = { vertical: 'TOP', horizontal: 'RIGHT' };
+                break;
+            case 'bottom-left':
+                anchorPosition = { top: height + posY, left: posX };
+                transformOrigin = { vertical: 'BOTTOM', horizontal: 'LEFT' };
+                break;
+            case 'bottom-right':
+                anchorPosition = { top: height + posY, left: width + posX };
+                transformOrigin = { vertical: 'BOTTOM', horizontal: 'RIGHT' };
+                break;
+            case 'center-left':
+                anchorPosition = { top: height / 2 + posY, left: posX };
+                transformOrigin = { vertical: 'CENTER', horizontal: 'LEFT' };
+                break;
+            case 'center-right':
+                anchorPosition = { top: height / 2 + posY, left: width + posX };
+                transformOrigin = { vertical: 'CENTER', horizontal: 'RIGHT' };
+                break;
+            case 'top-center':
+                anchorPosition = { top: posY, left: width / 2 + posX };
+                transformOrigin = { vertical: 'TOP', horizontal: 'CENTER' };
+                break;
+            case 'bottom-center':
+                anchorPosition = { top: height + posY, left: width / 2 + posX };
+                transformOrigin = { vertical: 'BOTTOM', horizontal: 'CENTER' };
+                break;
+        }
+
+        const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+        const themeToPass = document.body.getAttribute('data-theme') || 'light';
+        const url = `${baseUrl}/initiative-tracker.html?layout=${initiativeTrackerLayout || 'compact'}&theme=${themeToPass}&shape=${initiativeTrackerAvatarShape || 'circle'}&mw=${initiativeTrackerMaxWidth || 400}&mh=${initiativeTrackerMaxHeight || 600}`;
+
+        const savedW = parseInt(localStorage.getItem('pkr_init_width') || '400');
+        const savedH = parseInt(localStorage.getItem('pkr_init_height') || '150');
+
+        OBR.popover
+            .open({
+                id: 'pkr-initiative-tracker',
+                url: url,
+                height: isReAnchor ? savedH : 150,
+                width: isReAnchor ? savedW : 400,
+                disableClickAway: true,
+                anchorReference: 'POSITION',
+                anchorPosition: anchorPosition,
+                // @ts-ignore
+                transformOrigin: transformOrigin
+            })
+            .catch(() => {});
+    };
+
+    const handleInitiativeToggle = async () => {
+        if (!OBR.isAvailable || !isObrReady) return;
+
+        let handled = false;
+        const unsub = OBR.broadcast.onMessage('pkr-init-pong', () => {
+            handled = true;
+            unsub();
+            OBR.popover.close('pkr-initiative-tracker').catch(() => {});
+        });
+
+        OBR.broadcast.sendMessage('pkr-init-ping-toggle', {}, { destination: 'LOCAL' });
+
+        setTimeout(() => {
+            unsub();
+            if (!handled) {
+                openTracker();
+            }
+        }, 150);
+    };
 
     const toggleTheme = () => {
         const newIsDark = !isDark;
@@ -91,66 +232,98 @@ export function GlobalToolbar() {
     };
 
     return (
-        <>
-            <div className="global-toolbar">
-                <div className="global-toolbar__group">
-                    {showHomebrewButton && (
-                        <button
-                            type="button"
-                            className="global-toolbar__btn global-toolbar__btn--homebrew"
-                            onClick={() => setShowHomebrewModal(true)}
-                            title="Manage Table Custom Content"
-                        >
-                            🛠️ Homebrew Workshop
-                        </button>
-                    )}
-
-                    <button
-                        type="button"
-                        className="global-toolbar__btn global-toolbar__btn--rules"
-                        onClick={() => setShowRulesModal(true)}
-                        title="Configure Room Rules & Dice Engine"
-                    >
-                        📜 Room Rules
-                    </button>
-
-                    {showLootGenButton && (
-                        <button
-                            type="button"
-                            className="global-toolbar__btn global-toolbar__btn--loot"
-                            onClick={() => setShowLootGenModal(true)}
-                            title="Generate Items & TMs"
-                        >
-                            🎁 Loot Generator
-                        </button>
-                    )}
-                </div>
-
-                <div className="global-toolbar__group">
-                    <button
-                        type="button"
-                        className="global-toolbar__btn global-toolbar__btn--dark"
-                        onClick={() => setShowChangelog(true)}
-                        title="View System Updates"
-                    >
-                        📢 What's New
-                    </button>
-
-                    <button
-                        type="button"
-                        className="global-toolbar__btn global-toolbar__btn--dark"
-                        onClick={toggleTheme}
-                        title="Toggle Dark/Light Mode"
-                    >
-                        {isDark ? '☀️ Light' : '🌙 Dark'}
-                    </button>
-                </div>
+        <div className="global-toolbar-wrapper">
+            <div
+                className={`global-toolbar__header ${isExpanded ? 'global-toolbar__header--open' : ''}`}
+                onClick={toggleExpanded}
+            >
+                <span className={`global-toolbar__caret ${!isExpanded ? 'global-toolbar__caret--closed' : ''}`}>▼</span>
+                TABLE TOOLS & SETTINGS
             </div>
+
+            {isExpanded && (
+                <div className="global-toolbar__content">
+                    <div className="global-toolbar__main-tools">
+                        {!isStandaloneMode && OBR.isAvailable && (
+                            <div className="global-toolbar__init-group">
+                                <button
+                                    type="button"
+                                    className="global-toolbar__btn global-toolbar__btn--init-main"
+                                    onClick={handleInitiativeToggle}
+                                    title="Toggle Initiative Tracker window"
+                                >
+                                    ⚔️ Initiative
+                                </button>
+                                <button
+                                    type="button"
+                                    className="global-toolbar__btn global-toolbar__btn--init-cog"
+                                    onClick={() => setShowInitSettings(true)}
+                                    title="Initiative Settings"
+                                >
+                                    ⚙️
+                                </button>
+                            </div>
+                        )}
+
+                        {showHomebrewButton && (
+                            <button
+                                type="button"
+                                className="global-toolbar__btn global-toolbar__btn--homebrew"
+                                onClick={() => setShowHomebrewModal(true)}
+                                title="Manage Table Custom Content"
+                            >
+                                🛠️ Homebrew Workshop
+                            </button>
+                        )}
+
+                        <button
+                            type="button"
+                            className="global-toolbar__btn global-toolbar__btn--rules"
+                            onClick={() => setShowRulesModal(true)}
+                            title="Configure Room Rules & Dice Engine"
+                        >
+                            📜 Room Rules
+                        </button>
+
+                        {showLootGenButton && (
+                            <button
+                                type="button"
+                                className="global-toolbar__btn global-toolbar__btn--loot"
+                                onClick={() => setShowLootGenModal(true)}
+                                title="Generate Items & TMs"
+                            >
+                                🎁 Loot Generator
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="global-toolbar__side-tools">
+                        <button
+                            type="button"
+                            className="global-toolbar__btn global-toolbar__btn--dark"
+                            onClick={() => setShowChangelog(true)}
+                            title="View System Updates"
+                        >
+                            📢 What's New
+                        </button>
+
+                        <button
+                            type="button"
+                            className="global-toolbar__btn global-toolbar__btn--dark"
+                            onClick={toggleTheme}
+                            title="Toggle Dark/Light Mode"
+                        >
+                            {isDark ? '☀️ Light' : '🌙 Dark'}
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {showHomebrewModal && <HomebrewModal onClose={() => setShowHomebrewModal(false)} />}
             {showRulesModal && <RulesModal onClose={() => setShowRulesModal(false)} />}
             {showLootGenModal && <ItemGeneratorModal onClose={() => setShowLootGenModal(false)} />}
             {showChangelog && <ChangelogModal onClose={handleCloseChangelog} />}
-        </>
+            {showInitSettings && <InitiativeSettingsModal onClose={() => setShowInitSettings(false)} />}
+        </div>
     );
 }

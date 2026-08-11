@@ -67,11 +67,11 @@ export const storageAdapter = {
      */
     async createLocalCharacter(name: string): Promise<string> {
         const newId = crypto.randomUUID();
-        const initialMetadata = { 
-            nickname: name, 
+        const initialMetadata = {
+            nickname: name,
             'v2-migrated': true // Instantly mark as v2 to prevent legacy migration scripts from firing
         };
-        
+
         try {
             localStorage.setItem(`${LOCAL_STORAGE_PREFIX}${newId}`, JSON.stringify(initialMetadata));
         } catch (error) {

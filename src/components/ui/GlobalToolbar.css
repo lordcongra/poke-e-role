@@ -1,28 +1,73 @@
-.global-toolbar {
+.global-toolbar-wrapper {
+    background-color: var(--panel-bg, #242424);
+    border: 1px solid var(--border-color, #383838);
+    border-radius: 6px;
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+
+.global-toolbar__header {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: var(--panel-header-bg, #1a1a1a);
+    color: #c62828; /* Perfectly matched to your application's primary dark red */
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid transparent;
+}
+
+.global-toolbar__header--open {
+    border-bottom: 1px solid var(--border-color, #383838);
+}
+
+.global-toolbar__header:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.global-toolbar__caret {
+    margin-right: 8px;
+    color: #c62828; /* Perfectly matched to your application's primary dark red */
+    font-size: 0.8rem;
+    transition: transform 0.2s ease;
+}
+
+.global-toolbar__caret--closed {
+    transform: rotate(-90deg);
+}
+
+.global-toolbar__content {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 8px 12px;
-    background-color: var(--panel-bg, #242424);
-    border-bottom: 1px solid var(--border-color, #383838);
-    border-radius: 6px;
-    margin-bottom: 12px;
+    gap: 16px;
+    padding: 12px;
 }
 
-.global-toolbar__group {
+.global-toolbar__main-tools {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    flex: 1;
+    max-width: 600px;
+}
+
+.global-toolbar__side-tools {
     display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 6px;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 .global-toolbar__btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
-    padding: 6px 12px;
+    padding: 8px 12px;
     font-size: 0.85rem;
     font-weight: 600;
     border-radius: 4px;
@@ -30,12 +75,47 @@
     cursor: pointer;
     transition: background-color 0.15s ease, transform 0.1s ease;
     white-space: nowrap;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .global-toolbar__btn:hover {
     transform: translateY(-1px);
 }
 
+/* Initiative Split Button */
+.global-toolbar__init-group {
+    display: flex;
+    width: 100%;
+}
+
+.global-toolbar__btn--init-main {
+    background-color: #f44336;
+    border-color: #f44336;
+    color: #ffffff;
+    border-radius: 4px 0 0 4px;
+    border-right: 1px solid #c62828;
+}
+
+.global-toolbar__btn--init-main:hover {
+    background-color: #d32f2f;
+}
+
+.global-toolbar__btn--init-cog {
+    background-color: #f44336;
+    border-color: #f44336;
+    color: #ffffff;
+    border-radius: 0 4px 4px 0;
+    padding: 8px 10px;
+    width: auto;
+    flex-shrink: 0;
+}
+
+.global-toolbar__btn--init-cog:hover {
+    background-color: #d32f2f;
+}
+
+/* Standard Buttons */
 .global-toolbar__btn--homebrew {
     background-color: #00897b;
     border-color: #00796b;
@@ -77,17 +157,18 @@
 }
 
 @media (max-width: 768px) {
-    .global-toolbar {
+    .global-toolbar__content {
         flex-direction: column;
         align-items: stretch;
     }
 
-    .global-toolbar__group {
-        justify-content: space-between;
+    .global-toolbar__main-tools {
+        max-width: 100%;
+        grid-template-columns: 1fr;
     }
 
-    .global-toolbar__btn {
-        flex: 1 1 auto;
-        justify-content: center;
+    .global-toolbar__side-tools {
+        flex-direction: row;
+        justify-content: space-between;
     }
 }
