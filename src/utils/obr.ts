@@ -41,7 +41,10 @@ export async function saveToOwlbear(updates: Record<string, unknown>) {
                 }
             });
         } catch (error) {
-            console.error('Failed to securely save to Owlbear Rodeo:', error);
+            console.error('[OBR Engine] Failed to securely save to Owlbear Rodeo. Queuing for retry...', error);
+            // CRITICAL FIX: If the network drops or SDK fails, put the updates back into the queue
+            // while prioritizing any newly queued updates that happened during the failed await!
+            Object.assign(pendingUpdates, { ...updatesToPush, ...pendingUpdates });
         }
     }, 150);
 }

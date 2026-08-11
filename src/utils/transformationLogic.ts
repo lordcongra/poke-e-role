@@ -1,4 +1,5 @@
 import OBR from '@owlbear-rodeo/sdk';
+import type { Image } from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../store/useCharacterStore';
 import type { CharacterState, TransformationType, TeraBlastConfig, MoveData } from '../store/storeTypes';
 import { CombatStat, SocialStat } from '../types/enums';
@@ -359,7 +360,7 @@ export function processTransformation(
                                         .applyMoveData(newMoveId, data as Record<string, unknown>);
                                 }
                             })
-                            .catch((e) => console.warn('Failed to fetch granted move:', e));
+                            .catch((e) => console.warn('[TransformationLogic] Failed to fetch granted move:', e));
                     }
                 });
                 updatesToSave['moves-data'] = JSON.stringify(draft.moves);
@@ -468,10 +469,12 @@ export function handleTokenImageSwap(
         OBR.scene.items
             .updateItems([state.tokenId], (items) => {
                 for (const item of items) {
-                    const imgItem = item as Record<string, unknown>;
-                    if (imgItem.image) (imgItem.image as Record<string, unknown>).url = targetUrl;
+                    if (item.type === 'IMAGE') {
+                        const imgItem = item as Image;
+                        if (imgItem.image) imgItem.image.url = targetUrl;
+                    }
                 }
             })
-            .catch((e) => console.warn('Failed to update token image:', e));
+            .catch((e) => console.warn('[TransformationLogic] Failed to update token image:', e));
     }
 }

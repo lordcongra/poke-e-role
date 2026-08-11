@@ -38,7 +38,7 @@ export async function applyGraphicsToOwlbear(
         try {
             await OBR.scene.local.deleteItems(itemsToDelete);
         } catch (error) {
-            console.error('Error deleting graphics:', error);
+            console.error('[GraphicsEngine] Error deleting graphics:', error);
         }
     }
 
@@ -135,7 +135,7 @@ export async function applyGraphicsToOwlbear(
         try {
             await OBR.scene.local.addItems(itemsToCreate);
         } catch (error) {
-            console.error('Error creating graphics:', error);
+            console.error('[GraphicsEngine] Error creating graphics:', error);
         }
     }
 
@@ -289,7 +289,7 @@ export async function applyGraphicsToOwlbear(
                 }
             );
         } catch (error) {
-            console.error('Error updating graphics:', error);
+            console.error('[GraphicsEngine] Error updating graphics:', error);
         }
     }
 }
