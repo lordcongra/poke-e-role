@@ -23,7 +23,7 @@ export function MainMenu() {
     const loadCharacters = async () => {
         setIsLoading(true);
         try {
-            const chars = await StorageAdapter.getLocalCharacters();
+            const chars = await storageAdapter.getLocalCharacters();
             setCharacters(chars);
         } catch (error) {
             console.error('[MainMenu] Failed to load local characters', error);
@@ -54,7 +54,7 @@ export function MainMenu() {
     const handleCreate = async () => {
         if (!newCharName.trim()) return;
         try {
-            const newId = await StorageAdapter.createLocalCharacter(newCharName);
+            const newId = await storageAdapter.createLocalCharacter(newCharName);
             handleSelect(newId, { nickname: newCharName });
         } catch (error) {
             console.error('[MainMenu] Failed to generate local character', error);
@@ -64,7 +64,7 @@ export function MainMenu() {
     const handleDelete = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation(); // Prevent the parent div onClick from firing
         if (window.confirm('Are you sure you want to delete this character entirely?')) {
-            await StorageAdapter.deleteLocalCharacter(id);
+            await storageAdapter.deleteLocalCharacter(id);
             loadCharacters();
         }
     };
@@ -96,19 +96,12 @@ export function MainMenu() {
                         <p style={{ textAlign: 'center' }}>Loading saved characters...</p>
                     ) : characters.length > 0 ? (
                         characters.map((char) => (
-                            <div
-                                key={char.id}
-                                className="main-menu__card"
-                                onClick={() => handleSelect(char.id, char.metadata)}
-                            >
+                            <div key={char.id} className="main-menu__card" onClick={() => handleSelect(char.id, char.metadata)}>
                                 <div className="main-menu__card-info">
                                     <h3 className="main-menu__char-name">{char.name}</h3>
                                     <p className="main-menu__char-meta">ID: {char.id.substring(0, 8)}...</p>
                                 </div>
-                                <button
-                                    className="main-menu__btn main-menu__btn--danger"
-                                    onClick={(e) => handleDelete(e, char.id)}
-                                >
+                                <button className="main-menu__btn main-menu__btn--danger" onClick={(e) => handleDelete(e, char.id)}>
                                     Delete
                                 </button>
                             </div>

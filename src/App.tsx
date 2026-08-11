@@ -14,13 +14,13 @@ import { TrainerBadges } from './components/board/TrainerBadges';
 import { PrintSheet } from './components/print/PrintSheet';
 import { DemoRollModal } from './components/modals/DemoRollModal';
 import { MainMenu } from './components/standalone/MainMenu';
-import { isStandaloneMode } from './utils/StorageAdapter';
+import { isStandaloneMode } from './utils/storageAdapter';
 import './App.css';
 import './style.css';
 
 function App() {
     useOwlbearSync();
-
+    
     const isNPC = useCharacterStore((state) => state.identity.isNPC);
     const role = useCharacterStore((state) => state.role);
     const mode = useCharacterStore((state) => state.identity.mode);

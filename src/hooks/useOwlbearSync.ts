@@ -16,7 +16,7 @@ import { fetchPokemonData, fetchMoveData } from '../utils/api';
 import { buildGraphicsFromMeta, renderTokenGraphics, STATS_META_ID } from '../utils/graphicsManager';
 import { saveToOwlbear, setActiveTokenId, hasPendingUpdates } from '../utils/obr';
 import { assignInitiative } from '../utils/diceRoller';
-import { isStandaloneMode } from '../utils/StorageAdapter';
+import { isStandaloneMode } from '../utils/storageAdapter';
 
 const METADATA_ID = STATS_META_ID;
 const ROOM_META_ID = 'pokerole-pmd-extension/room-settings';
