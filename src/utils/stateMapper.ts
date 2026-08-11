@@ -448,15 +448,33 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             }
         };
 
+        // --- ROOT FIELDS ---
+        if (state.notes !== undefined) flatMetadata['notes'] = state.notes;
+        if (state.tp !== undefined) flatMetadata['training-points'] = state.tp;
+        if (state.currency !== undefined) flatMetadata['currency'] = state.currency;
+
+        // --- IDENTITY FIELDS ---
         if (state.identity) {
-            if (state.identity.nickname !== undefined) flatMetadata['name'] = state.identity.nickname;
+            // Core Identity
+            if (state.identity.nickname !== undefined) flatMetadata['nickname'] = state.identity.nickname;
             if (state.identity.species !== undefined) flatMetadata['species'] = state.identity.species;
             if (state.identity.nature !== undefined) flatMetadata['nature'] = state.identity.nature;
             if (state.identity.ability !== undefined) flatMetadata['ability'] = state.identity.ability;
+            if (state.identity.availableAbilities !== undefined)
+                flatMetadata['ability-list'] = state.identity.availableAbilities.join(',');
             if (state.identity.type1 !== undefined) flatMetadata['type1'] = state.identity.type1;
             if (state.identity.type2 !== undefined) flatMetadata['type2'] = state.identity.type2;
             if (state.identity.mode !== undefined) flatMetadata['mode'] = state.identity.mode;
+            if (state.identity.rank !== undefined) flatMetadata['rank'] = state.identity.rank;
+            if (state.identity.age !== undefined) flatMetadata['age'] = state.identity.age;
+            if (state.identity.gender !== undefined) flatMetadata['gender'] = state.identity.gender;
+            if (state.identity.rolls !== undefined) flatMetadata['rolls'] = state.identity.rolls;
+            if (state.identity.combat !== undefined) flatMetadata['combat'] = state.identity.combat;
+            if (state.identity.social !== undefined) flatMetadata['social'] = state.identity.social;
+            if (state.identity.hand !== undefined) flatMetadata['hand'] = state.identity.hand;
+            if (state.identity.isNPC !== undefined) flatMetadata['is-npc'] = state.identity.isNPC;
 
+            // Forms & Transformations
             if (state.identity.activeTransformation !== undefined)
                 flatMetadata['active-transformation'] = state.identity.activeTransformation;
             if (state.identity.activeFormId !== undefined) flatMetadata['active-form-id'] = state.identity.activeFormId;
@@ -483,12 +501,55 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (state.identity.customFormFirstHitDmgActive !== undefined)
                 flatMetadata['custom-form-first-hit-dmg'] = state.identity.customFormFirstHitDmgActive;
 
+            // Pokedex Info
             if (state.identity.dexId !== undefined) flatMetadata['dex-id'] = state.identity.dexId;
             if (state.identity.dexCategory !== undefined) flatMetadata['dex-category'] = state.identity.dexCategory;
             if (state.identity.height !== undefined) flatMetadata['height'] = state.identity.height;
             if (state.identity.weight !== undefined) flatMetadata['weight'] = state.identity.weight;
             if (state.identity.dexDescription !== undefined)
                 flatMetadata['dex-description'] = state.identity.dexDescription;
+
+            // UI & Settings
+            if (state.identity.showTrackers !== undefined) flatMetadata['show-trackers'] = state.identity.showTrackers;
+            if (state.identity.settingHpBar !== undefined) flatMetadata['setting-hp-bar'] = state.identity.settingHpBar;
+            if (state.identity.gmHpBar !== undefined) flatMetadata['gm-hp-bar'] = state.identity.gmHpBar;
+            if (state.identity.settingHpText !== undefined)
+                flatMetadata['setting-hp-text'] = state.identity.settingHpText;
+            if (state.identity.gmHpText !== undefined) flatMetadata['gm-hp-text'] = state.identity.gmHpText;
+            if (state.identity.settingWillBar !== undefined)
+                flatMetadata['setting-will-bar'] = state.identity.settingWillBar;
+            if (state.identity.gmWillBar !== undefined) flatMetadata['gm-will-bar'] = state.identity.gmWillBar;
+            if (state.identity.settingWillText !== undefined)
+                flatMetadata['setting-will-text'] = state.identity.settingWillText;
+            if (state.identity.gmWillText !== undefined) flatMetadata['gm-will-text'] = state.identity.gmWillText;
+            if (state.identity.settingDefBadge !== undefined)
+                flatMetadata['setting-def-badge'] = state.identity.settingDefBadge;
+            if (state.identity.gmDefBadge !== undefined) flatMetadata['gm-def-badge'] = state.identity.gmDefBadge;
+            if (state.identity.settingEcoBadge !== undefined)
+                flatMetadata['setting-eco-badge'] = state.identity.settingEcoBadge;
+            if (state.identity.gmEcoBadge !== undefined) flatMetadata['gm-eco-badge'] = state.identity.gmEcoBadge;
+            if (state.identity.gmOnlyLootGen !== undefined)
+                flatMetadata['gm-only-loot-gen'] = state.identity.gmOnlyLootGen;
+
+            if (state.identity.colorAct !== undefined) flatMetadata['color-act'] = state.identity.colorAct;
+            if (state.identity.colorEva !== undefined) flatMetadata['color-eva'] = state.identity.colorEva;
+            if (state.identity.colorCla !== undefined) flatMetadata['color-cla'] = state.identity.colorCla;
+
+            if (state.identity.trackerScale !== undefined) flatMetadata['tracker-scale'] = state.identity.trackerScale;
+            if (state.identity.xOffset !== undefined) flatMetadata['x-offset'] = state.identity.xOffset;
+            if (state.identity.yOffset !== undefined) flatMetadata['y-offset'] = state.identity.yOffset;
+            if (state.identity.hpOffsetX !== undefined) flatMetadata['hp-offset-x'] = state.identity.hpOffsetX;
+            if (state.identity.hpOffsetY !== undefined) flatMetadata['hp-offset-y'] = state.identity.hpOffsetY;
+            if (state.identity.willOffsetX !== undefined) flatMetadata['will-offset-x'] = state.identity.willOffsetX;
+            if (state.identity.willOffsetY !== undefined) flatMetadata['will-offset-y'] = state.identity.willOffsetY;
+            if (state.identity.defOffsetX !== undefined) flatMetadata['def-offset-x'] = state.identity.defOffsetX;
+            if (state.identity.defOffsetY !== undefined) flatMetadata['def-offset-y'] = state.identity.defOffsetY;
+            if (state.identity.actOffsetX !== undefined) flatMetadata['act-offset-x'] = state.identity.actOffsetX;
+            if (state.identity.actOffsetY !== undefined) flatMetadata['act-offset-y'] = state.identity.actOffsetY;
+            if (state.identity.evaOffsetX !== undefined) flatMetadata['eva-offset-x'] = state.identity.evaOffsetX;
+            if (state.identity.evaOffsetY !== undefined) flatMetadata['eva-offset-y'] = state.identity.evaOffsetY;
+            if (state.identity.claOffsetX !== undefined) flatMetadata['cla-offset-x'] = state.identity.claOffsetX;
+            if (state.identity.claOffsetY !== undefined) flatMetadata['cla-offset-y'] = state.identity.claOffsetY;
 
             sanitizeBackup(state.identity.baseFormData, 'base-form-data');
             sanitizeBackup(state.identity.altFormData, 'alt-form-data');
@@ -497,6 +558,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             sanitizeBackup(state.identity.trainerBackup, 'trainer-backup');
         }
 
+        // --- HEALTH & WILL ---
         if (state.health) {
             if (state.health.hpCurr !== undefined) flatMetadata['hp-curr'] = state.health.hpCurr;
             if (state.health.hpMax !== undefined) flatMetadata['hp-max-display'] = state.health.hpMax;
@@ -516,10 +578,37 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
                 flatMetadata['temporary-will-max'] = state.will.temporaryWillMax;
         }
 
-        if (state.tp !== undefined) flatMetadata['training-points'] = state.tp;
-        if (state.currency !== undefined) flatMetadata['currency'] = state.currency;
+        // --- DERIVED & EXTRAS ---
+        if (state.derived) {
+            if (state.derived.defBuff !== undefined) flatMetadata['def-buff'] = state.derived.defBuff;
+            if (state.derived.defDebuff !== undefined) flatMetadata['def-debuff'] = state.derived.defDebuff;
+            if (state.derived.sdefBuff !== undefined) flatMetadata['spd-buff'] = state.derived.sdefBuff;
+            if (state.derived.sdefDebuff !== undefined) flatMetadata['spd-debuff'] = state.derived.sdefDebuff;
+            if (state.derived.happy !== undefined) flatMetadata['happiness-curr'] = state.derived.happy;
+            if (state.derived.loyal !== undefined) flatMetadata['loyalty-curr'] = state.derived.loyal;
+        }
 
+        if (state.extras) {
+            if (state.extras.core !== undefined) flatMetadata['extra-core'] = state.extras.core;
+            if (state.extras.social !== undefined) flatMetadata['extra-social'] = state.extras.social;
+            if (state.extras.skill !== undefined) flatMetadata['extra-skill'] = state.extras.skill;
+        }
+
+        // --- TRACKERS ---
         if (state.trackers) {
+            if (state.trackers.actions !== undefined) flatMetadata['actions-used'] = state.trackers.actions;
+            if (state.trackers.evade !== undefined) flatMetadata['evasions-used'] = state.trackers.evade;
+            if (state.trackers.clash !== undefined) flatMetadata['clashes-used'] = state.trackers.clash;
+            if (state.trackers.chances !== undefined) flatMetadata['chances-used'] = state.trackers.chances;
+            if (state.trackers.fate !== undefined) flatMetadata['fate-used'] = state.trackers.fate;
+
+            if (state.trackers.globalAcc !== undefined) flatMetadata['global-acc-mod'] = state.trackers.globalAcc;
+            if (state.trackers.globalDmg !== undefined) flatMetadata['global-dmg-mod'] = state.trackers.globalDmg;
+            if (state.trackers.globalSucc !== undefined) flatMetadata['global-succ-mod'] = state.trackers.globalSucc;
+            if (state.trackers.globalChance !== undefined)
+                flatMetadata['global-chance-mod'] = state.trackers.globalChance;
+            if (state.trackers.ignoredPain !== undefined) flatMetadata['ignored-pain-mod'] = state.trackers.ignoredPain;
+
             if (state.trackers.firstHitAcc !== undefined)
                 flatMetadata['first-hit-acc-active'] = state.trackers.firstHitAcc;
             if (state.trackers.firstHitDmg !== undefined)
@@ -528,6 +617,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
                 flatMetadata['banked-acc-dice'] = JSON.stringify(state.trackers.bankedAccDice);
         }
 
+        // --- JSON STRINGIFIED OBJECTS ---
         if (state.moves) flatMetadata['moves-data'] = JSON.stringify(state.moves);
         if (state.inventory) flatMetadata['inv-data'] = JSON.stringify(state.inventory);
         if (state.skillChecks) flatMetadata['skill-checks-data'] = JSON.stringify(state.skillChecks);
@@ -536,6 +626,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
         if (state.effects) flatMetadata['effects-data'] = JSON.stringify(state.effects);
         if (state.customInfo) flatMetadata['custom-info-data'] = JSON.stringify(state.customInfo);
 
+        // --- STATS, SOCIALS, SKILLS LOOP ---
         if (state.stats) {
             Object.entries(state.stats).forEach(([stat, vals]) => {
                 flatMetadata[`${stat}-base`] = vals.base;

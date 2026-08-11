@@ -87,7 +87,9 @@ if (fs.existsSync(POKEDEX_DIR)) {
                 name: data.Name || data.name || fileName.replace('.json', ''),
                 path: `/dataset/pokedex/${fileName}`
             };
-        } catch (e) {}
+        } catch (error) {
+            console.error(`❌ Error processing Pokedex file ${filePath}:`, error.message);
+        }
     });
     console.log('✅ Pokedex indexed!');
 }
@@ -105,7 +107,9 @@ if (fs.existsSync(ABILITIES_DIR)) {
                 name: data.Name || data.name || fileName.replace('.json', ''),
                 path: `/dataset/abilities/${fileName}`
             };
-        } catch (e) {}
+        } catch (error) {
+            console.error(`❌ Error processing Ability file ${filePath}:`, error.message);
+        }
     });
     console.log('✅ Abilities indexed!');
 }
@@ -123,7 +127,9 @@ if (fs.existsSync(NATURES_DIR)) {
                 name: data.Name || data.name || fileName.replace('.json', ''),
                 path: `/dataset/natures/${fileName}`
             };
-        } catch (e) {}
+        } catch (error) {
+            console.error(`❌ Error processing Nature file ${filePath}:`, error.message);
+        }
     });
     console.log('✅ Natures indexed!');
 }
@@ -189,7 +195,14 @@ if (fs.existsSync(MOVES_DIR)) {
             console.error(`❌ Error processing move ${filePath}:`, error.message);
         }
     });
-    console.log('✅ Moves indexed and reorganized!');
+
+    // OPTIMIZATION: Pre-sort the move arrays so the React client doesn't have to spend CPU cycles doing it!
+    const sortByName = (a, b) => a.name.localeCompare(b.name);
+    datasetIndex.moves.support.sort(sortByName);
+    Object.keys(datasetIndex.moves.basic).forEach((k) => datasetIndex.moves.basic[k].sort(sortByName));
+    Object.keys(datasetIndex.moves.highPower).forEach((k) => datasetIndex.moves.highPower[k].sort(sortByName));
+
+    console.log('✅ Moves indexed, reorganized, and pre-sorted!');
 }
 
 // --- 5. PROCESS ITEMS ---
@@ -218,7 +231,16 @@ if (fs.existsSync(ITEMS_DIR)) {
             console.error(`❌ Error processing item ${filePath}:`, error.message);
         }
     });
-    console.log('✅ Items indexed!');
+
+    // OPTIMIZATION: Pre-sort the item arrays alphabetically.
+    const sortByName = (a, b) => a.name.localeCompare(b.name);
+    Object.keys(datasetIndex.items).forEach((pocket) => {
+        Object.keys(datasetIndex.items[pocket]).forEach((category) => {
+            datasetIndex.items[pocket][category].sort(sortByName);
+        });
+    });
+
+    console.log('✅ Items indexed and pre-sorted!');
 }
 
 // --- 6. WRITE INDEX FILE ---

@@ -19,6 +19,26 @@ import {
     type TransformationDraft
 } from '../../utils/transformationLogic';
 
+// --- LOCAL HELPERS FOR DRY PARSING ---
+const parseHeight = (dataHeight: unknown): string => {
+    if (typeof dataHeight === 'object' && dataHeight !== null) {
+        const h = dataHeight as { Meters?: number; Feet?: number };
+        return `${h.Meters || 0}m / ${h.Feet || 0}ft`;
+    }
+    if (typeof dataHeight === 'string') return dataHeight;
+    return '';
+};
+
+const parseWeight = (dataWeight: unknown): string => {
+    if (typeof dataWeight === 'object' && dataWeight !== null) {
+        const w = dataWeight as { Kilograms?: number; Pounds?: number };
+        return `${w.Kilograms || 0}kg / ${w.Pounds || 0}lbs`;
+    }
+    if (typeof dataWeight === 'string') return dataWeight;
+    return '';
+};
+// -------------------------------------
+
 export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> = (set, get) => ({
     setMode: (newMode) =>
         set((state) => {
@@ -69,7 +89,9 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                             updatesToSave[`${stat}-limit`] = parsed[`${stat}Limit`];
                         }
                     });
-                } catch (e) {}
+                } catch (e) {
+                    console.warn('[MacroSlice] Failed to parse backup data during mode switch.', e);
+                }
             } else if (isTrainer) {
                 newIdentity.type1 = '';
                 newIdentity.type2 = '';
@@ -89,7 +111,9 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
 
             try {
                 saveToOwlbear(updatesToSave);
-            } catch (e) {}
+            } catch (e) {
+                console.error('[MacroSlice] Failed to save mode switch metadata to Owlbear.', e);
+            }
 
             return { identity: newIdentity, stats: newStats, health: newHealth, will: newWill, skills: newSkills };
         }),
@@ -207,7 +231,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             try {
                 saveToOwlbear(updatesToSave);
             } catch (e) {
-                console.error('Failed to save transformation to Owlbear', e);
+                console.error('[MacroSlice] Failed to save transformation to Owlbear.', e);
             }
 
             return draft;
@@ -242,22 +266,6 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             const abilities = extractAbilities(data);
             const learnsetArray = parseLearnset(data.Moves);
 
-            let heightStr = '';
-            if (typeof data.Height === 'object' && data.Height !== null) {
-                const h = data.Height as { Meters?: number; Feet?: number };
-                heightStr = `${h.Meters || 0}m / ${h.Feet || 0}ft`;
-            } else if (typeof data.Height === 'string') {
-                heightStr = data.Height;
-            }
-
-            let weightStr = '';
-            if (typeof data.Weight === 'object' && data.Weight !== null) {
-                const w = data.Weight as { Kilograms?: number; Pounds?: number };
-                weightStr = `${w.Kilograms || 0}kg / ${w.Pounds || 0}lbs`;
-            } else if (typeof data.Weight === 'string') {
-                weightStr = data.Weight;
-            }
-
             const newIdentity = {
                 ...state.identity,
                 species: String(data.Name || state.identity.species),
@@ -268,8 +276,8 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 learnset: learnsetArray,
                 dexId: String(data.DexID || ''),
                 dexCategory: String(data.DexCategory || ''),
-                height: heightStr,
-                weight: weightStr,
+                height: parseHeight(data.Height),
+                weight: parseWeight(data.Weight),
                 dexDescription: String(data.DexDescription || '')
             };
 
@@ -304,7 +312,9 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
 
             try {
                 saveToOwlbear(updatesToSave);
-            } catch (e) {}
+            } catch (e) {
+                console.error('[MacroSlice] Failed to save applied species data to Owlbear.', e);
+            }
 
             return {
                 stats: newStats,
@@ -356,27 +366,8 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             const newType1 = state.identity.type1 || String(dataRecord.Type1 || '');
             const newType2 = state.identity.type2 || String(dataRecord.Type2 || '');
 
-            let heightStr = state.identity.height;
-            // ONLY populate height if currently empty
-            if (!heightStr) {
-                if (typeof dataRecord.Height === 'object' && dataRecord.Height !== null) {
-                    const h = dataRecord.Height as { Meters?: number; Feet?: number };
-                    heightStr = `${h.Meters || 0}m / ${h.Feet || 0}ft`;
-                } else if (typeof dataRecord.Height === 'string') {
-                    heightStr = dataRecord.Height;
-                }
-            }
-
-            let weightStr = state.identity.weight;
-            // ONLY populate weight if currently empty
-            if (!weightStr) {
-                if (typeof dataRecord.Weight === 'object' && dataRecord.Weight !== null) {
-                    const w = dataRecord.Weight as { Kilograms?: number; Pounds?: number };
-                    weightStr = `${w.Kilograms || 0}kg / ${w.Pounds || 0}lbs`;
-                } else if (typeof dataRecord.Weight === 'string') {
-                    weightStr = dataRecord.Weight;
-                }
-            }
+            const heightStr = state.identity.height || parseHeight(dataRecord.Height);
+            const weightStr = state.identity.weight || parseWeight(dataRecord.Weight);
 
             const newStats = {
                 ...state.stats,
@@ -426,7 +417,9 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
 
             try {
                 saveToOwlbear(updatesToSave);
-            } catch (e) {}
+            } catch (e) {
+                console.error('[MacroSlice] Failed to save refreshed species data to Owlbear.', e);
+            }
 
             return {
                 identity: newIdentity,

@@ -167,22 +167,15 @@ export async function fetchPokemonData(speciesName: string): Promise<PokemonApiR
 
     // 2. Check Local Dataset
     await loadLocalDataset();
-    let selectedUrl = SPECIES_URLS[cleanName];
-    let isLocal = true;
+    const selectedUrl = SPECIES_URLS[cleanName];
 
-    // 3. Fallback to Raw GitHub CDN (Bypasses API Rate Limits)
+    // 3. Prevent Fetching non-existent Data
     if (!selectedUrl) {
-        const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-        const formattedName = speciesName
-            .trim()
-            .split('-')
-            .map((w) => w.split(' ').map(capitalize).join(' '))
-            .join('-');
-        selectedUrl = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/v3.0/Pokedex/${formattedName}.json`;
-        isLocal = false;
+        console.warn(`[Local Fetch] Failed to find species ${speciesName} in local dataset.`);
+        return null;
     }
 
-    const cacheKey = isLocal ? `local_species_${cleanName}` : `live_species_${cleanName}`;
+    const cacheKey = `local_species_${cleanName}`;
     return await fetchWithCache<PokemonApiResponse>(selectedUrl, cacheKey, speciesName);
 }
 
@@ -199,22 +192,15 @@ export async function fetchAbilityData(abilityName: string): Promise<AbilityApiR
 
     // 2. Check Local Dataset
     await loadLocalDataset();
-    let selectedUrl = ABILITIES_URLS[cleanName];
-    let isLocal = true;
+    const selectedUrl = ABILITIES_URLS[cleanName];
 
-    // 3. Fallback to Raw GitHub CDN
+    // 3. Prevent Fetching non-existent Data
     if (!selectedUrl) {
-        const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
-        const formattedName = baseName
-            .trim()
-            .split('-')
-            .map((w) => w.split(' ').map(capitalize).join(' '))
-            .join('-');
-        selectedUrl = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/v3.0/Abilities/${formattedName}.json`;
-        isLocal = false;
+        console.warn(`[Local Fetch] Failed to find ability ${abilityName} in local dataset.`);
+        return null;
     }
 
-    const cacheKey = isLocal ? `local_ability_${cleanName}` : `live_ability_${cleanName}`;
+    const cacheKey = `local_ability_${cleanName}`;
     return await fetchWithCache<AbilityApiResponse>(selectedUrl, cacheKey, baseName);
 }
 
@@ -292,7 +278,7 @@ export async function fetchItemData(itemName: string): Promise<ItemApiResponse |
 
     // 2. Check Local Dataset
     await loadLocalDataset();
-    let targetPath = ITEMS_URLS[cleanName];
+    const targetPath = ITEMS_URLS[cleanName];
 
     if (targetPath) {
         return await fetchWithCache<ItemApiResponse>(targetPath, `local_item_${cleanName}`, itemName);
@@ -308,16 +294,14 @@ export async function fetchNatureData(natureName: string): Promise<NatureApiResp
 
     // 1. Check Local Dataset
     await loadLocalDataset();
-    let selectedUrl = NATURES_URLS[cleanName];
-    let isLocal = true;
+    const selectedUrl = NATURES_URLS[cleanName];
 
-    // 2. Fallback to Raw GitHub CDN
+    // 2. Prevent Fetching non-existent Data
     if (!selectedUrl) {
-        const formattedName = natureName.charAt(0).toUpperCase() + natureName.slice(1).toLowerCase();
-        selectedUrl = `https://raw.githubusercontent.com/Pokerole-Software-Development/Pokerole-Data/master/v3.0/Natures/${formattedName}.json`;
-        isLocal = false;
+        console.warn(`[Local Fetch] Failed to find nature ${natureName} in local dataset.`);
+        return null;
     }
 
-    const cacheKey = isLocal ? `local_nature_${cleanName}` : `live_nature_${cleanName}`;
+    const cacheKey = `local_nature_${cleanName}`;
     return await fetchWithCache<NatureApiResponse>(selectedUrl, cacheKey, natureName);
 }

@@ -26,7 +26,9 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
             >
                 <strong style={{ color: '#e65100', fontSize: '1.1em' }}>⚠️ Custom Action Rolls URL Change</strong>
                 <p style={{ marginTop: '6px', marginBottom: '8px', fontSize: '0.9em', lineHeight: '1.4' }}>
-                    The <strong>Custom Action Rolls (CAR)</strong> extension has moved to a new host! If your dice rolls have stopped working, or if you are installing it for the first time, please use the new manifest link below:
+                    The <strong>Custom Action Rolls (CAR)</strong> extension has moved to a new host! If your dice rolls
+                    have stopped working, or if you are installing it for the first time, please use the new manifest
+                    link below:
                 </p>
                 <p style={{ margin: 0, fontSize: '0.9em', fontWeight: 'bold' }}>
                     🔗 New CAR Manifest Link:{' '}
