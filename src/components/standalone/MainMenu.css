@@ -1,0 +1,131 @@
+.main-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px;
+    min-height: 100vh;
+    background-color: var(--color-background, #1a1a1a);
+    color: var(--color-text, #ffffff);
+    font-family: sans-serif;
+}
+
+.main-menu__container {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.main-menu__header {
+    text-align: center;
+}
+
+.main-menu__title {
+    font-size: 2rem;
+    margin: 0 0 8px 0;
+}
+
+.main-menu__subtitle {
+    font-size: 1rem;
+    color: var(--color-text-muted, #a0a0a0);
+    margin: 0;
+}
+
+.main-menu__create-section {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    background: var(--color-surface, #2a2a2a);
+    padding: 16px;
+    border-radius: 8px;
+}
+
+.main-menu__input {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border, #444);
+    border-radius: 4px;
+    background: var(--color-background, #1a1a1a);
+    color: var(--color-text, #fff);
+    font-size: 1rem;
+}
+
+.main-menu__btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 4px;
+    background: var(--color-primary, #4890fc);
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.main-menu__btn:hover {
+    background: var(--color-primary-hover, #3a7bd5);
+}
+
+.main-menu__btn--danger {
+    background: var(--color-danger, #e74c3c);
+}
+
+.main-menu__btn--danger:hover {
+    background: #c0392b;
+}
+
+.main-menu__list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.main-menu__card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--color-surface, #2a2a2a);
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border, #444);
+    transition:
+        transform 0.2s,
+        border-color 0.2s;
+    cursor: pointer;
+}
+
+.main-menu__card:hover {
+    border-color: var(--color-primary, #4890fc);
+    transform: translateY(-2px);
+}
+
+.main-menu__card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.main-menu__char-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin: 0;
+}
+
+.main-menu__char-meta {
+    font-size: 0.85rem;
+    color: var(--color-text-muted, #a0a0a0);
+    margin: 0;
+}
+
+/* Mobile Breakpoint Stack */
+@media (max-width: 768px) {
+    .main-menu__create-section {
+        flex-direction: column;
+    }
+
+    .main-menu__btn {
+        width: 100%;
+    }
+}

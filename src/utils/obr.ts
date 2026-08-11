@@ -1,5 +1,4 @@
-import OBR from '@owlbear-rodeo/sdk';
-import { waitForObr } from './obrHelpers';
+import { storageAdapter } from './storageAdapter';
 
 export const METADATA_ID = 'pokerole-extension/stats';
 
@@ -28,20 +27,13 @@ export async function saveToOwlbear(updates: Record<string, unknown>) {
         pendingUpdates = {};
 
         // 👇 FOOLPROOF TEST: This prints the exact flat payload right before it hits the database!
-        console.log('🚀 PUSHING TO OWLBEAR:', updatesToPush);
+        console.log('🚀 PUSHING DATA VIA ADAPTER:', updatesToPush);
 
         try {
-            // Await our new readiness checker before interacting with the SDK
-            await waitForObr();
-
-            await OBR.scene.items.updateItems([currentToken], (items) => {
-                for (const item of items) {
-                    if (!item.metadata[METADATA_ID]) item.metadata[METADATA_ID] = {};
-                    Object.assign(item.metadata[METADATA_ID] as Record<string, unknown>, updatesToPush);
-                }
-            });
+            // Route everything through the adapter!
+            await storageAdapter.saveCharacter(currentToken, updatesToPush, METADATA_ID);
         } catch (error) {
-            console.error('[OBR Engine] Failed to securely save to Owlbear Rodeo. Queuing for retry...', error);
+            console.error('[OBR Engine] Failed to securely save data. Queuing for retry...', error);
             // CRITICAL FIX: If the network drops or SDK fails, put the updates back into the queue
             // while prioritizing any newly queued updates that happened during the failed await!
             Object.assign(pendingUpdates, { ...updatesToPush, ...pendingUpdates });

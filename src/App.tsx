@@ -13,17 +13,25 @@ import { TrackerSection } from './components/board/TrackerSection';
 import { TrainerBadges } from './components/board/TrainerBadges';
 import { PrintSheet } from './components/print/PrintSheet';
 import { DemoRollModal } from './components/modals/DemoRollModal';
+import { MainMenu } from './components/standalone/MainMenu';
+import { isStandaloneMode } from './utils/StorageAdapter';
 import './App.css';
 import './style.css';
 
 function App() {
     useOwlbearSync();
+
     const isNPC = useCharacterStore((state) => state.identity.isNPC);
     const role = useCharacterStore((state) => state.role);
     const mode = useCharacterStore((state) => state.identity.mode);
     const isPrinting = useCharacterStore((state) => state.identity.isPrinting);
-
     const gmOnlyMatchups = useCharacterStore((state) => state.identity.gmOnlyMatchups);
+    const activeTokenId = useCharacterStore((state) => state.tokenId);
+
+    // 🚨 Intercept Standalone users if they haven't picked a character yet
+    if (isStandaloneMode && !activeTokenId) {
+        return <MainMenu />;
+    }
 
     if (isNPC && role === 'PLAYER') {
         return (

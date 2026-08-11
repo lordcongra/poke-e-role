@@ -16,6 +16,7 @@ import { fetchPokemonData, fetchMoveData } from '../utils/api';
 import { buildGraphicsFromMeta, renderTokenGraphics, STATS_META_ID } from '../utils/graphicsManager';
 import { saveToOwlbear, setActiveTokenId, hasPendingUpdates } from '../utils/obr';
 import { assignInitiative } from '../utils/diceRoller';
+import { isStandaloneMode } from '../utils/StorageAdapter';
 
 const METADATA_ID = STATS_META_ID;
 const ROOM_META_ID = 'pokerole-pmd-extension/room-settings';
@@ -40,6 +41,11 @@ export function useOwlbearSync() {
 
         // 1. Load Local Homebrew for this specific room immediately
         useCharacterStore.getState().loadHomebrewLocal();
+
+        // 🚨 NEW: Skip Owlbear bindings entirely if running as a standalone app!
+        if (isStandaloneMode) {
+            return;
+        }
 
         if (OBR.isAvailable) {
             OBR.onReady(async () => {
