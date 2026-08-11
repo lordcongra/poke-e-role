@@ -30,7 +30,7 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
             }
         });
     } catch (e) {
-        console.error('Failed to assign Initiative to token:', e);
+        console.error('[DiceRoller] Failed to assign Initiative to token:', e);
     }
 }
 
@@ -58,11 +58,22 @@ export async function broadcastInfo(title: string, description: string) {
 
         // Cache locally so we see our own broadcast
         try {
-            const storedLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
-            const existingLog = Array.isArray(storedLog) ? storedLog : [];
+            let existingLog: Record<string, unknown>[] = [];
+            try {
+                const storedLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+                existingLog = Array.isArray(storedLog) ? storedLog : [];
+            } catch (parseError) {
+                console.warn('[DiceRoller] Roll log cache corrupted. Starting fresh.', parseError);
+            }
             localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData, ...existingLog].slice(0, 50)));
         } catch (error) {
-            console.warn('Failed to update roll log cache safely.', error);
+            console.warn('[DiceRoller] Failed to append to roll log safely. Clearing and retrying.', error);
+            try {
+                localStorage.removeItem('pkr_roll_log');
+                localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData]));
+            } catch (e) {
+                console.error('[DiceRoller] LocalStorage is completely inaccessible.', e);
+            }
         }
 
         await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-sync', rollLogData, {
@@ -84,7 +95,7 @@ export async function broadcastInfo(title: string, description: string) {
             })
             .catch(() => {});
     } catch (error) {
-        console.error('Broadcast Info Error:', error);
+        console.error('[DiceRoller] Broadcast Info Error:', error);
     }
 }
 
@@ -188,7 +199,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                     }
                 }
             } catch (e) {
-                console.warn('Could not fetch CAR dice theme from metadata:', e);
+                console.warn('[DiceRoller] Could not fetch CAR dice theme from metadata:', e);
             }
 
             const broadcastPayload = { mensaje, icon, diceData, diceTheme };
@@ -282,7 +293,9 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                                         }
                                     }
                                     if (changed) meta['status-list'] = JSON.stringify(statuses);
-                                } catch (e) {}
+                                } catch (e) {
+                                    console.warn('[DiceRoller] Failed to parse token statuses during auto-heal.', e);
+                                }
                             }
                         });
                     }
@@ -303,15 +316,21 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 };
 
                 try {
-                    const storedLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
-                    const existingLog = Array.isArray(storedLog) ? storedLog : [];
+                    let existingLog: Record<string, unknown>[] = [];
+                    try {
+                        const storedLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+                        existingLog = Array.isArray(storedLog) ? storedLog : [];
+                    } catch (parseError) {
+                        console.warn('[DiceRoller] Roll log cache corrupted. Starting fresh.', parseError);
+                    }
                     localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData, ...existingLog].slice(0, 50)));
                 } catch (error) {
-                    console.warn('Failed to update roll log cache safely. Resetting log.', error);
+                    console.warn('[DiceRoller] Failed to update roll log cache safely. Resetting log.', error);
                     try {
+                        localStorage.removeItem('pkr_roll_log');
                         localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData]));
                     } catch (e) {
-                        console.error('LocalStorage is completely inaccessible.', e);
+                        console.error('[DiceRoller] LocalStorage is completely inaccessible.', e);
                     }
                 }
 
@@ -359,6 +378,6 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
             { destination: 'ALL' }
         );
     } catch (error) {
-        console.error('Dice Engine Broadcast Error:', error);
+        console.error('[DiceRoller] Dice Engine Broadcast Error:', error);
     }
 }

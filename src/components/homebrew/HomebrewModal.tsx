@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { HomebrewTypes } from './HomebrewTypes';
@@ -18,6 +18,28 @@ import type {
     CustomStatus
 } from '../../store/storeTypes';
 import './Homebrew.css';
+
+// --- STORAGE TRACKER HELPER ---
+const getStorageUsage = () => {
+    let key = 'pkr_homebrew_offline';
+    try {
+        if (OBR.isAvailable && OBR.room && OBR.room.id) {
+            key = `pkr_homebrew_${OBR.room.id}`;
+        }
+        const data = localStorage.getItem(key);
+        if (!data) return { mb: 0, percent: 0 };
+
+        // JavaScript strings are UTF-16, so 2 bytes per character
+        const bytes = data.length * 2;
+        const megabytes = bytes / (1024 * 1024);
+        const percent = Math.min(100, Math.max(0, (megabytes / 5) * 100)); // Browsers cap at ~5MB
+
+        return { mb: Number(megabytes.toFixed(2)), percent };
+    } catch (e) {
+        return { mb: 0, percent: 0 };
+    }
+};
+// -----------------------------
 
 export function HomebrewModal({ onClose }: { onClose: () => void }) {
     const role = useCharacterStore((state) => state.role);
@@ -43,6 +65,14 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
         forms: CustomForm[];
         statuses: CustomStatus[];
     } | null>(null);
+
+    // Dynamic Storage State
+    const [storageUsage, setStorageUsage] = useState({ mb: 0, percent: 0 });
+
+    // Update storage whenever needsBackup changes (which means they just edited something!)
+    useEffect(() => {
+        setStorageUsage(getStorageUsage());
+    }, [needsBackup]);
 
     const handleBroadcastSync = () => {
         if (!OBR.isAvailable) return;
@@ -120,6 +150,12 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
         reader.readAsText(file);
     };
 
+    // Determine Storage Bar Color
+    let progressColor = '#2e7d32'; // Green
+    if (storageUsage.percent > 90)
+        progressColor = '#c62828'; // Red
+    else if (storageUsage.percent > 70) progressColor = '#f57c00'; // Orange
+
     return (
         <div className="homebrew-modal__overlay">
             <div className="homebrew-modal__content">
@@ -187,6 +223,50 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                 </div>
 
                 <div className="homebrew-modal__footer">
+                    {/* --- NEW STORAGE TRACKER --- */}
+                    <div
+                        className="homebrew-modal__storage-tracker"
+                        title="Web browsers limit local domain storage to ~5MB. If you exceed this, you must export your data to clear space!"
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px',
+                            width: '100%',
+                            marginBottom: '10px'
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                fontSize: '0.8rem',
+                                color: '#666'
+                            }}
+                        >
+                            <span>💾 Storage Limit</span>
+                            <span>{storageUsage.mb}MB / 5.0MB</span>
+                        </div>
+                        <div
+                            style={{
+                                width: '100%',
+                                height: '8px',
+                                backgroundColor: '#e0e0e0',
+                                borderRadius: '4px',
+                                overflow: 'hidden'
+                            }}
+                        >
+                            <div
+                                style={{
+                                    height: '100%',
+                                    width: `${storageUsage.percent}%`,
+                                    backgroundColor: progressColor,
+                                    transition: 'width 0.3s ease'
+                                }}
+                            />
+                        </div>
+                    </div>
+                    {/* --------------------------- */}
+
                     <span
                         className="homebrew-modal__footer-text"
                         style={needsBackup ? { color: '#c62828', fontWeight: 'bold' } : {}}
