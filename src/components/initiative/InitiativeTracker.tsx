@@ -574,15 +574,20 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                 const limitW = maxTrackerWidth > 0 ? maxTrackerWidth : viewportMaxWidth > 0 ? viewportMaxWidth : 800;
                 const limitH = maxTrackerHeight > 0 ? maxTrackerHeight : 9999;
 
-                let targetWidth = Math.min(naturalWidth + 8, limitW);
-                let targetHeight = Math.min(naturalHeight + 8, limitH);
+                let targetWidth = naturalWidth + 8; // 4px padding on each side for .init-tracker-wrapper
+                let targetHeight = naturalHeight + 8; // 4px padding on top/bottom
 
-                if (naturalWidth + 8 > limitW && layout === 'horizontal') {
-                    targetHeight = Math.min(targetHeight + 8, limitH);
+                // If content overflows the limits, it will generate a scrollbar. 
+                // Add 6px (custom CSS scrollbar width) + 2px buffer to accommodate the bar exactly
+                if (targetWidth > limitW && layout === 'horizontal') {
+                    targetHeight += 8;
                 }
-                if (naturalHeight + 8 > limitH && layout === 'vertical') {
-                    targetWidth = Math.min(targetWidth + 8, limitW);
+                if (targetHeight > limitH && layout === 'vertical') {
+                    targetWidth += 8;
                 }
+
+                targetWidth = Math.min(targetWidth, limitW);
+                targetHeight = Math.min(targetHeight, limitH);
 
                 try {
                     const currentW = (await OBR.popover.getWidth('pkr-initiative-tracker')) ?? 0;

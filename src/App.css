@@ -15,10 +15,14 @@ body {
 }
 
 .app-layout {
+    /* Locks standalone firmly over the DOM, ignoring any edge cases where padding tries to force a scroll */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     display: flex;
     flex-direction: row;
-    height: 100vh;
-    width: 100vw;
     overflow: hidden;
     background-color: var(--bg);
 }
@@ -79,6 +83,7 @@ body {
     flex-direction: column;
     gap: 12px;
     min-height: 0;
+    overflow-y: auto; /* Allow standalone columns to scroll natively */
 }
 
 .standalone-tracker-dock {

@@ -60,7 +60,7 @@ body {
     font-family: sans-serif;
     color: var(--text-main);
     margin: 0;
-    padding: 10px;
+    padding: 0; /* Removed global padding to stop Standalone body scrolling */
     transition:
         background 0.3s ease,
         color 0.3s ease;
@@ -118,6 +118,11 @@ select option {
     width: 100%;
     overflow-x: auto;
     padding-bottom: 4px;
+}
+
+/* Moved padding here so OBR iframe sheets still maintain their nice visual breathing room */
+.app-container {
+    padding: 10px;
 }
 
 /* =========================================
