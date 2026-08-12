@@ -314,13 +314,12 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
         pokemonBackup: String(meta['pokemon-backup'] || ''),
         trainerBackup: String(meta['trainer-backup'] || ''),
 
-        // Safely extract the token image, falling back to pre-existing state to prevent wipe on refresh
         tokenImageUrl:
             meta['token-image-url'] !== undefined
                 ? String(meta['token-image-url'])
                 : meta['tokenImageUrl'] !== undefined
                   ? String(meta['tokenImageUrl'])
-                  : state.identity.tokenImageUrl || '',
+                  : '',
 
         activeTransformation: (meta['active-transformation'] as TransformationType) || 'None',
         activeFormId: String(meta['active-form-id'] || ''),
@@ -501,9 +500,9 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (state.identity.terastallizeBonusActive !== undefined)
                 flatMetadata['terastallize-bonus-active'] = state.identity.terastallizeBonusActive;
 
-            if (state.identity.megaImageUrl !== undefined) flatMetadata['mega-image-url'] = state.identity.megaImageUrl;
-            if (state.identity.maxImageUrl !== undefined) flatMetadata['max-image-url'] = state.identity.maxImageUrl;
-            if (state.identity.teraImageUrl !== undefined) flatMetadata['tera-image-url'] = state.identity.teraImageUrl;
+            flatMetadata['mega-image-url'] = state.identity.megaImageUrl || '';
+            flatMetadata['max-image-url'] = state.identity.maxImageUrl || '';
+            flatMetadata['tera-image-url'] = state.identity.teraImageUrl || '';
 
             if (state.identity.customFormFirstHitAccActive !== undefined)
                 flatMetadata['custom-form-first-hit-acc'] = state.identity.customFormFirstHitAccActive;

@@ -122,10 +122,7 @@ function App() {
                         <div className="standalone-main-col">
                             {showStandaloneTracker && initLayout === 'horizontal' && (
                                 <div className="standalone-layout-tracker--horizontal">
-                                    <InitiativeTracker
-                                        isStandaloneWidget={true}
-                                        onClose={() => setShowStandaloneTracker(false)}
-                                    />
+                                    <InitiativeTracker isStandaloneWidget={true} />
                                 </div>
                             )}
 
@@ -136,10 +133,7 @@ function App() {
                         <div className="standalone-right-sidebar">
                             {showStandaloneTracker && initLayout === 'vertical' && (
                                 <div className="standalone-tracker-dock">
-                                    <InitiativeTracker
-                                        isStandaloneWidget={true}
-                                        onClose={() => setShowStandaloneTracker(false)}
-                                    />
+                                    <InitiativeTracker isStandaloneWidget={true} />
                                 </div>
                             )}
 

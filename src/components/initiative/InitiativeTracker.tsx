@@ -30,13 +30,17 @@ interface StoredCharacterData extends Partial<CharacterState> {
     'pokerole-extension/stats'?: Record<string, unknown>;
 }
 
-interface LocalCharacterData {
-    tokenImageUrl?: string;
-    identity?: {
-        tokenImageUrl?: string;
-        [key: string]: unknown;
-    };
-    [key: string]: unknown;
+// Extracts the token image from deeply nested states or flat OBR metadata
+export function extractTokenImage(meta: Record<string, unknown> | null | undefined): string {
+    if (!meta) return '';
+    if (typeof meta['token-image-url'] === 'string' && meta['token-image-url']) return meta['token-image-url'];
+    if (typeof meta['tokenImageUrl'] === 'string' && meta['tokenImageUrl']) return meta['tokenImageUrl'];
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const stateObj = (meta.state || meta) as any;
+    if (stateObj?.identity?.tokenImageUrl) return String(stateObj.identity.tokenImageUrl);
+
+    return '';
 }
 
 export function calculateBaseInitFromCharacterData(
@@ -180,7 +184,6 @@ function CombatantCard({
         const parsed = parseFloat(value);
         const currentRounded = parseFloat(totalScore.toFixed(2));
         if (!isNaN(parsed) && parsed !== currentRounded) {
-            // Manual overrides strip the random tiebreaker and apply the exact typed value
             updateInit(c.id, parsed - baseValue, baseValue, 0);
         }
     };
@@ -253,20 +256,19 @@ function CombatantCard({
 
 interface InitiativeTrackerProps {
     isStandaloneWidget?: boolean;
-    onClose?: () => void;
 }
 
 export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrackerProps) {
     const storeIdentity = useCharacterStore((state) => state.identity);
     const globalState = useCharacterStore();
 
-    // Deconstruct globalState parts to efficiently watch for active sheet changes
     const activeTokenId = globalState.tokenId;
     const dexStat = globalState.stats?.dex;
     const alertSkill = globalState.skills?.alert;
     const inventory = globalState.inventory;
     const ability = globalState.identity?.ability;
     const extraCategories = globalState.extraCategories;
+    const tokenImageUrl = globalState.identity?.tokenImageUrl;
 
     const [combatants, setCombatants] = useState<Combatant[]>([]);
     const [layout, setLayout] = useState<'vertical' | 'horizontal'>('vertical');
@@ -295,12 +297,11 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                 const chars = await storageAdapter.getLocalCharacters();
                 const options = chars.map((c) => {
                     const meta = (c.metadata || {}) as Record<string, unknown>;
-                    const stateObj = (meta.state || meta) as CharacterState;
                     return {
                         id: c.id,
                         name: c.name,
-                        image: stateObj?.identity?.tokenImageUrl || (meta['token-image-url'] as string) || '',
-                        rawMetadata: c.metadata as Record<string, unknown>
+                        image: extractTokenImage(meta),
+                        rawMetadata: meta
                     };
                 });
                 setAvailableChars(options);
@@ -310,7 +311,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
         }
     }, []);
 
-    // LIVE STATS SYNC: Instantly updates baseInit of the active sheet in Standalone
+    // LIVE STATS SYNC: Instantly updates baseInit and image of the active sheet in Standalone
     useEffect(() => {
         if (!isStandaloneMode || !activeTokenId || combatants.length === 0) return;
 
@@ -322,10 +323,13 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                         globalState as unknown as Record<string, unknown>,
                         globalState
                     );
-                    if (newBase !== c.baseInit) {
+                    const newImage = tokenImageUrl || ''; // Guarantee a strict string
+
+                    // Trigger an update if the stats change OR if the image changes (even if it changes to blank!)
+                    if (newBase !== c.baseInit || newImage !== c.image) {
                         changed = true;
                         const newTotal = c.d6 > 0 ? c.d6 + newBase + c.tiebreaker : newBase + c.tiebreaker;
-                        return { ...c, baseInit: newBase, total: newTotal };
+                        return { ...c, baseInit: newBase, total: newTotal, image: newImage };
                     }
                 }
                 return c;
@@ -338,7 +342,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
             }
             return prev;
         });
-    }, [isStandaloneMode, activeTokenId, dexStat, alertSkill, inventory, ability, extraCategories]);
+    }, [isStandaloneMode, activeTokenId, dexStat, alertSkill, inventory, ability, extraCategories, tokenImageUrl]);
 
     useEffect(() => {
         if (showAddMenu) {
@@ -397,19 +401,13 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                                 const charId = String(item.id || '');
                                 const matchingChar = localChars.find((c) => c.id === charId);
 
-                                // Re-evaluate baseInit dynamically from storageAdapter to fix stale or bugged values
                                 let baseInitiative = typeof item.baseInit === 'number' ? item.baseInit : 0;
                                 let resolvedImage = String(item.image || '');
 
                                 if (matchingChar && matchingChar.metadata) {
                                     const meta = matchingChar.metadata as Record<string, unknown>;
                                     baseInitiative = calculateBaseInitFromCharacterData(meta, globalState);
-
-                                    // Make sure Image propagates properly
-                                    const stateObj = (meta.state || meta) as CharacterState;
-                                    const liveImage =
-                                        stateObj?.identity?.tokenImageUrl || (meta['token-image-url'] as string);
-                                    if (liveImage) resolvedImage = liveImage;
+                                    resolvedImage = extractTokenImage(meta);
                                 }
 
                                 const d6Value = typeof item.d6 === 'number' ? item.d6 : 0;
@@ -439,18 +437,25 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                 }
             };
 
+            const handleLocalDataChange = () => {
+                fetchAvailableCharacters();
+                loadLocalEncounter(); // Force the tracker list to re-pull from the disk!
+            };
+
             loadLocalEncounter();
             fetchAvailableCharacters();
 
             window.addEventListener('pkr-standalone-init-update', loadLocalEncounter);
             window.addEventListener('pkr-character-list-update', fetchAvailableCharacters);
-            window.addEventListener('storage', fetchAvailableCharacters);
+            window.addEventListener('pkr-local-data-changed', handleLocalDataChange);
+            window.addEventListener('storage', handleLocalDataChange);
 
             return () => {
                 isMounted = false;
                 window.removeEventListener('pkr-standalone-init-update', loadLocalEncounter);
                 window.removeEventListener('pkr-character-list-update', fetchAvailableCharacters);
-                window.removeEventListener('storage', fetchAvailableCharacters);
+                window.removeEventListener('pkr-local-data-changed', handleLocalDataChange);
+                window.removeEventListener('storage', handleLocalDataChange);
             };
         }
 
@@ -572,7 +577,6 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
         }
     }, [activeTurnId, isReady, isStandaloneWidget]);
 
-    // OBR Popover Resize Observer
     useEffect(() => {
         if (!isReady || !ghostRef.current || !OBR.isAvailable || isStandaloneMode) return;
 
@@ -808,11 +812,10 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                 const chars = await storageAdapter.getLocalCharacters();
                 const target = chars.find((c) => c.id === itemId);
                 if (target) {
-                    const meta = (target.metadata || {}) as LocalCharacterData;
                     handleAddStandaloneCombatant({
                         id: target.id,
                         name: target.name,
-                        image: meta.tokenImageUrl || meta.identity?.tokenImageUrl || '',
+                        image: extractTokenImage(target.metadata as Record<string, unknown>),
                         rawMetadata: target.metadata as Record<string, unknown>
                     });
                 }

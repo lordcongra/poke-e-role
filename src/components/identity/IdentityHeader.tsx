@@ -12,6 +12,7 @@ import { PokedexModal } from '../modals/PokedexModal';
 import { broadcastInfo } from '../../utils/diceRoller';
 import { isStandaloneMode } from '../../utils/storageAdapter';
 import { imageManager } from '../../utils/imageManager';
+import { saveToOwlbear } from '../../utils/obr';
 import './IdentityHeader.css';
 
 export function IdentityHeader() {
@@ -83,6 +84,8 @@ export function IdentityHeader() {
         const url = window.prompt('Enter an Image URL:');
         if (url) {
             setIdentity('tokenImageUrl', url);
+            // Explicitly force the adapter to write to LocalStorage!
+            saveToOwlbear({ 'token-image-url': url });
         }
         setShowImagePicker(false);
     };
@@ -94,6 +97,8 @@ export function IdentityHeader() {
         try {
             const imgId = await imageManager.saveImage(file);
             setIdentity('tokenImageUrl', imgId);
+            // Explicitly force the adapter to write the IndexedDB ID to LocalStorage!
+            saveToOwlbear({ 'token-image-url': imgId });
         } catch (error) {
             console.error('[IdentityHeader] Failed to save image to IndexedDB', error);
             alert('Failed to save image locally. It may be too large or your browser blocked the database.');
@@ -134,6 +139,7 @@ export function IdentityHeader() {
                 const url = window.prompt('Enter an Image URL:');
                 if (url) {
                     setIdentity('tokenImageUrl', url);
+                    saveToOwlbear({ 'token-image-url': url });
                     await OBR.scene.items.updateItems([tokenId], (items) => {
                         for (const item of items) {
                             const imgItem = item as Record<string, unknown>;
@@ -167,6 +173,7 @@ export function IdentityHeader() {
 
                 if (selectedUrl) {
                     setIdentity('tokenImageUrl', selectedUrl);
+                    saveToOwlbear({ 'token-image-url': selectedUrl });
                     await OBR.scene.items.updateItems([tokenId], (items) => {
                         for (const item of items) {
                             const imgItem = item as Record<string, unknown>;
