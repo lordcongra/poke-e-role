@@ -29,7 +29,7 @@ export function extractTokenImage(meta: Record<string, unknown> | null | undefin
     if (!meta) return '';
     if (typeof meta['token-image-url'] === 'string' && meta['token-image-url']) return meta['token-image-url'];
     if (typeof meta['tokenImageUrl'] === 'string' && meta['tokenImageUrl']) return meta['tokenImageUrl'];
-    
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const stateObj = (meta.state || meta) as any;
     if (stateObj?.identity?.tokenImageUrl) return String(stateObj.identity.tokenImageUrl);
@@ -43,12 +43,12 @@ export function extractTokenImage(meta: Record<string, unknown> | null | undefin
         const match2 = str.match(/"token-image-url":"([^"]+)"/);
         if (match2 && match2[1]) return match2[1];
     } catch (e) {}
-    
+
     return '';
 }
 
 export function calculateBaseInitFromCharacterData(
-    data: Record<string, unknown> | null | undefined, 
+    data: Record<string, unknown> | null | undefined,
     globalState: CharacterState
 ): number {
     if (!data) return 1;
@@ -73,17 +73,19 @@ export function calculateBaseInitFromCharacterData(
             let itemDexBuff = 0;
             let itemAlertBuff = 0;
             const inv = charData.inventory || charData.state?.inventory;
-            
+
             if (Array.isArray(inv)) {
                 const identityObj = (charData.identity || charData.state?.identity || {}) as Record<string, unknown>;
                 const abilityText = getAbilityText(
-                    (identityObj.ability as string) || '', 
-                    charData.roomCustomAbilities as CharacterState['roomCustomAbilities'] || globalState.roomCustomAbilities || []
+                    (identityObj.ability as string) || '',
+                    (charData.roomCustomAbilities as CharacterState['roomCustomAbilities']) ||
+                        globalState.roomCustomAbilities ||
+                        []
                 );
                 const itemBuffs = parseCombatTags(
-                    inv, 
-                    (charData.extraCategories || []) as CharacterState['extraCategories'], 
-                    undefined, 
+                    inv,
+                    (charData.extraCategories || []) as CharacterState['extraCategories'],
+                    undefined,
                     abilityText
                 );
                 itemDexBuff = itemBuffs.stats['dex'] || 0;
@@ -100,13 +102,18 @@ export function calculateBaseInitFromCharacterData(
 
         const partialState = hydrateStateFromMetadata(flatMeta, globalState);
         const characterState = { ...globalState, ...partialState } as CharacterState;
-        
+
         const abilityText = getAbilityText(characterState.identity.ability, characterState.roomCustomAbilities);
-        const itemBuffs = parseCombatTags(characterState.inventory, characterState.extraCategories, undefined, abilityText);
-        
+        const itemBuffs = parseCombatTags(
+            characterState.inventory,
+            characterState.extraCategories,
+            undefined,
+            abilityText
+        );
+
         const dex = calculateStatTotal('dex', characterState, itemBuffs);
         const alertSkill = calculateSkillTotal('alert', characterState, itemBuffs);
-        
+
         return Math.max(1, dex) + Math.max(0, alertSkill);
     } catch (e) {
         console.error('[InitiativeTracker] Error calculating base initiative:', e);
@@ -156,7 +163,7 @@ function CombatantCard({
 
     useEffect(() => {
         let isMounted = true;
-        
+
         const resolveImage = async () => {
             if (!c.image) {
                 if (isMounted) setResolvedImage('');
@@ -175,7 +182,9 @@ function CombatantCard({
         };
 
         resolveImage();
-        return () => { isMounted = false; };
+        return () => {
+            isMounted = false;
+        };
     }, [c.image]);
 
     const handleSave = () => {
@@ -190,9 +199,9 @@ function CombatantCard({
         const rolledD6 = Math.floor(Math.random() * 6) + 1;
         const tiebreakerDec = (Math.floor(Math.random() * 99) + 1) / 100;
         const total = rolledD6 + baseValue;
-        
+
         updateInit(c.id, rolledD6, baseValue, tiebreakerDec);
-        
+
         addRollLogEntry(
             `⚔️ Initiative Roll for ${c.name}`,
             `Rolled: ${rolledD6} + Base (${baseValue}) = ${total}\nTiebreaker Dec: +${tiebreakerDec}`,
@@ -203,9 +212,8 @@ function CombatantCard({
 
     return (
         <div className={`init-tracker__card ${isActive ? 'init-tracker__card--active' : ''}`}>
-            
-            <button 
-                type="button" 
+            <button
+                type="button"
                 className="init-tracker__card-close"
                 onClick={() => removeInit(c.id)}
                 title="Remove Combatant"
@@ -215,13 +223,19 @@ function CombatantCard({
 
             <div className="init-tracker__avatar-container" title={c.name}>
                 {resolvedImage && (
-                    <img src={resolvedImage} alt={c.name} className={`init-tracker__avatar init-tracker__avatar--${shape}`} />
+                    <img
+                        src={resolvedImage}
+                        alt={c.name}
+                        className={`init-tracker__avatar init-tracker__avatar--${shape}`}
+                    />
                 )}
             </div>
-            
+
             <div className="init-tracker__info">
-                <span className="init-tracker__name" title={c.name}>{c.name}</span>
-                
+                <span className="init-tracker__name" title={c.name}>
+                    {c.name}
+                </span>
+
                 <div className="init-tracker__controls">
                     <input
                         type="number"
@@ -233,8 +247,8 @@ function CombatantCard({
                         className="init-tracker__input no-spinners"
                         title={`Score (Base Init: ${baseValue})`}
                     />
-                    <button 
-                        type="button" 
+                    <button
+                        type="button"
                         onClick={handleRollSingle}
                         className="init-tracker__roll-btn"
                         title="Roll Initiative (1d6 + Base Init)"
@@ -279,7 +293,9 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
 
     const [showAddMenu, setShowAddMenu] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [availableChars, setAvailableChars] = useState<{ id: string; name: string; image: string; rawMetadata?: Record<string, unknown> }[]>([]);
+    const [availableChars, setAvailableChars] = useState<
+        { id: string; name: string; image: string; rawMetadata?: Record<string, unknown> }[]
+    >([]);
     const [availableObrChars, setAvailableObrChars] = useState<{ id: string; name: string; item: Item }[]>([]);
 
     const fetchAvailableCharacters = useCallback(async () => {
@@ -309,18 +325,21 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
             let changed = false;
             const next = prev.map((c) => {
                 if (c.id === activeTokenId) {
-                    const newBase = calculateBaseInitFromCharacterData(globalState as unknown as Record<string, unknown>, globalState);
-                    const newImage = tokenImageUrl || ''; 
-                    
+                    const newBase = calculateBaseInitFromCharacterData(
+                        globalState as unknown as Record<string, unknown>,
+                        globalState
+                    );
+                    const newImage = tokenImageUrl || '';
+
                     if (newBase !== c.baseInit || newImage !== c.image) {
                         changed = true;
-                        const newTotal = c.d6 > 0 ? (c.d6 + newBase + c.tiebreaker) : (newBase + c.tiebreaker);
+                        const newTotal = c.d6 > 0 ? c.d6 + newBase + c.tiebreaker : newBase + c.tiebreaker;
                         return { ...c, baseInit: newBase, total: newTotal, image: newImage };
                     }
                 }
                 return c;
             });
-            
+
             if (changed) {
                 const sorted = sortCombatants(next);
                 localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
@@ -355,7 +374,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
     }, [storeIdentity, isStandaloneMode]);
 
     useEffect(() => {
-        if (isStandaloneMode) return; 
+        if (isStandaloneMode) return;
 
         if (theme === 'dark') {
             document.body.classList.add('dark-mode');
@@ -373,7 +392,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
 
         if (isStandaloneMode) {
             setIsReady(true);
-            
+
             const loadLocalEncounter = async () => {
                 try {
                     const savedList = localStorage.getItem('pkr_standalone_init_list');
@@ -386,7 +405,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                             const normalizedList: Combatant[] = parsedList.map((item: Record<string, unknown>) => {
                                 const charId = String(item.id || '');
                                 const matchingChar = localChars.find((c) => c.id === charId);
-                                
+
                                 let baseInitiative = typeof item.baseInit === 'number' ? item.baseInit : 0;
                                 let resolvedImage = String(item.image || '');
 
@@ -398,10 +417,11 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
 
                                 const d6Value = typeof item.d6 === 'number' ? item.d6 : 0;
                                 const tiebreakerValue = typeof item.tiebreaker === 'number' ? item.tiebreaker : 0;
-                                
-                                const totalScore = d6Value > 0 
-                                    ? (d6Value + baseInitiative + tiebreakerValue) 
-                                    : (baseInitiative + tiebreakerValue);
+
+                                const totalScore =
+                                    d6Value > 0
+                                        ? d6Value + baseInitiative + tiebreakerValue
+                                        : baseInitiative + tiebreakerValue;
 
                                 return {
                                     id: charId || crypto.randomUUID(),
@@ -424,7 +444,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
 
             const handleLocalDataChange = () => {
                 fetchAvailableCharacters();
-                loadLocalEncounter(); 
+                loadLocalEncounter();
             };
 
             loadLocalEncounter();
@@ -435,8 +455,8 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
             window.addEventListener('pkr-local-data-changed', handleLocalDataChange);
             window.addEventListener('storage', handleLocalDataChange);
 
-            return () => { 
-                isMounted = false; 
+            return () => {
+                isMounted = false;
                 window.removeEventListener('pkr-standalone-init-update', loadLocalEncounter);
                 window.removeEventListener('pkr-character-list-update', fetchAvailableCharacters);
                 window.removeEventListener('pkr-local-data-changed', handleLocalDataChange);
@@ -459,10 +479,13 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                 console.warn('[InitiativeTracker] Could not fetch viewport width:', error);
             }
 
-            OBR.scene.getMetadata().then((meta) => {
-                const turnMeta = meta['pokerole-pmd-extension/initiative-turn'] as string;
-                if (turnMeta) setActiveTurnId(turnMeta);
-            }).catch((error) => console.error('[InitiativeTracker] Failed to read scene metadata:', error));
+            OBR.scene
+                .getMetadata()
+                .then((meta) => {
+                    const turnMeta = meta['pokerole-pmd-extension/initiative-turn'] as string;
+                    if (turnMeta) setActiveTurnId(turnMeta);
+                })
+                .catch((error) => console.error('[InitiativeTracker] Failed to read scene metadata:', error));
 
             const handleMetadataChange = (meta: Record<string, unknown>) => {
                 const turnMeta = meta['pokerole-pmd-extension/initiative-turn'] as string;
@@ -475,19 +498,20 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                     (item) =>
                         item.layer === 'CHARACTER' && item.metadata['pokerole-pmd-extension/initiative'] !== undefined
                 );
-                
+
                 const nonInitItems = items.filter(
-                    (item) => item.layer === 'CHARACTER' && item.metadata['pokerole-pmd-extension/initiative'] === undefined
+                    (item) =>
+                        item.layer === 'CHARACTER' && item.metadata['pokerole-pmd-extension/initiative'] === undefined
                 );
-                setAvailableObrChars(nonInitItems.map(i => ({ id: i.id, name: i.name, item: i })));
+                setAvailableObrChars(nonInitItems.map((i) => ({ id: i.id, name: i.name, item: i })));
 
                 const parsed: Combatant[] = initItems.map((item) => {
                     const meta = item.metadata['pokerole-pmd-extension/initiative'] as { value: number };
                     const imgItem = item as Image;
                     const val = meta.value || 0;
-                    
+
                     const dynamicBaseInit = calculateBaseInitFromCharacterData(item.metadata, globalState);
-                    
+
                     return {
                         id: item.id,
                         name: item.name,
@@ -542,8 +566,10 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
             };
         });
 
-        return () => { isMounted = false; };
-    }, [isStandaloneMode, fetchAvailableCharacters, globalState]); 
+        return () => {
+            isMounted = false;
+        };
+    }, [isStandaloneMode, fetchAvailableCharacters, globalState]);
 
     useEffect(() => {
         if (activeTurnId && isReady && !isStandaloneWidget) {
@@ -577,7 +603,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                 let targetWidth = naturalWidth + 8; // 4px padding on each side for .init-tracker-wrapper
                 let targetHeight = naturalHeight + 8; // 4px padding on top/bottom
 
-                // If content overflows the limits, it will generate a scrollbar. 
+                // If content overflows the limits, it will generate a scrollbar.
                 // Add 6px (custom CSS scrollbar width) + 2px buffer to accommodate the bar exactly
                 if (targetWidth > limitW && layout === 'horizontal') {
                     targetHeight += 8;
@@ -611,13 +637,25 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
             resizeObserver.disconnect();
             cancelAnimationFrame(animationFrameId);
         };
-    }, [isReady, combatants, layout, shape, maxTrackerWidth, maxTrackerHeight, viewportMaxWidth, isStandaloneMode, showAddMenu]);
+    }, [
+        isReady,
+        combatants,
+        layout,
+        shape,
+        maxTrackerWidth,
+        maxTrackerHeight,
+        viewportMaxWidth,
+        isStandaloneMode,
+        showAddMenu
+    ]);
 
     const updateInit = async (id: string, d6Value: number, baseInitiative: number, forceDecimal: number = 0) => {
         const total = d6Value + baseInitiative + forceDecimal;
-        
+
         if (isStandaloneMode) {
-            const updated = combatants.map((c) => c.id === id ? { ...c, d6: d6Value, baseInit: baseInitiative, total, tiebreaker: forceDecimal } : c);
+            const updated = combatants.map((c) =>
+                c.id === id ? { ...c, d6: d6Value, baseInit: baseInitiative, total, tiebreaker: forceDecimal } : c
+            );
             const sorted = sortCombatants(updated);
             setCombatants(sorted);
             localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
@@ -625,11 +663,13 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
         }
 
         if (!OBR.isAvailable) return;
-        await OBR.scene.items.updateItems([id], (items) => {
-            for (const item of items) {
-                item.metadata['pokerole-pmd-extension/initiative'] = { value: total };
-            }
-        }).catch((error) => console.error('[InitiativeTracker] Failed to update OBR items:', error));
+        await OBR.scene.items
+            .updateItems([id], (items) => {
+                for (const item of items) {
+                    item.metadata['pokerole-pmd-extension/initiative'] = { value: total };
+                }
+            })
+            .catch((error) => console.error('[InitiativeTracker] Failed to update OBR items:', error));
     };
 
     const handleRollAll = async () => {
@@ -640,15 +680,15 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
 
         const updated = combatants.map((c) => {
             const charObj = localChars.find((lc) => lc.id === c.id);
-            const baseScore = charObj?.metadata 
-                ? calculateBaseInitFromCharacterData(charObj.metadata as Record<string, unknown>, globalState) 
+            const baseScore = charObj?.metadata
+                ? calculateBaseInitFromCharacterData(charObj.metadata as Record<string, unknown>, globalState)
                 : c.baseInit;
 
             const rolledD6 = Math.floor(Math.random() * 6) + 1;
             const tiebreakerDec = (Math.floor(Math.random() * 99) + 1) / 100;
             const total = rolledD6 + baseScore + tiebreakerDec;
 
-            logSummary += `${c.name}: [${rolledD6}] + Base ${baseScore} = ${(rolledD6 + baseScore)}\n`;
+            logSummary += `${c.name}: [${rolledD6}] + Base ${baseScore} = ${rolledD6 + baseScore}\n`;
 
             return { ...c, d6: rolledD6, baseInit: baseScore, total, tiebreaker: tiebreakerDec };
         });
@@ -657,7 +697,12 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
         setCombatants(sorted);
         localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
 
-        addRollLogEntry('⚔️ Roll All Initiative', logSummary, `${import.meta.env.BASE_URL || '/'}pokeball.svg`, 'Initiative Engine');
+        addRollLogEntry(
+            '⚔️ Roll All Initiative',
+            logSummary,
+            `${import.meta.env.BASE_URL || '/'}pokeball.svg`,
+            'Initiative Engine'
+        );
     };
 
     const removeInit = async (id: string) => {
@@ -673,12 +718,14 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
         }
 
         if (!OBR.isAvailable) return;
-        await OBR.scene.items.updateItems([id], (items) => {
-            for (const item of items) {
-                delete item.metadata['pokerole-pmd-extension/initiative'];
-                delete item.metadata['com.pretty-initiative/metadata'];
-            }
-        }).catch((error) => console.error('[InitiativeTracker] Failed to remove OBR initiative metadata:', error));
+        await OBR.scene.items
+            .updateItems([id], (items) => {
+                for (const item of items) {
+                    delete item.metadata['pokerole-pmd-extension/initiative'];
+                    delete item.metadata['com.pretty-initiative/metadata'];
+                }
+            })
+            .catch((error) => console.error('[InitiativeTracker] Failed to remove OBR initiative metadata:', error));
     };
 
     const nextTurn = () => {
@@ -691,12 +738,14 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
             }
         }
         const nextId = combatants[nextIndex].id;
-        
+
         if (isStandaloneMode) {
             setActiveTurnId(nextId);
             localStorage.setItem('pkr_standalone_init_turn', nextId);
         } else if (OBR.isAvailable) {
-            OBR.scene.setMetadata({ 'pokerole-pmd-extension/initiative-turn': nextId }).catch((error) => console.warn('[InitiativeTracker] Failed to advance scene turn:', error));
+            OBR.scene
+                .setMetadata({ 'pokerole-pmd-extension/initiative-turn': nextId })
+                .catch((error) => console.warn('[InitiativeTracker] Failed to advance scene turn:', error));
         }
     };
 
@@ -715,19 +764,34 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
             setActiveTurnId(prevId);
             localStorage.setItem('pkr_standalone_init_turn', prevId);
         } else if (OBR.isAvailable) {
-            OBR.scene.setMetadata({ 'pokerole-pmd-extension/initiative-turn': prevId }).catch((error) => console.warn('[InitiativeTracker] Failed to reverse scene turn:', error));
+            OBR.scene
+                .setMetadata({ 'pokerole-pmd-extension/initiative-turn': prevId })
+                .catch((error) => console.warn('[InitiativeTracker] Failed to reverse scene turn:', error));
         }
     };
 
-    const handleAddStandaloneCombatant = (char: { id: string; name: string; image: string; rawMetadata?: Record<string, unknown> }) => {
+    const handleAddStandaloneCombatant = (char: {
+        id: string;
+        name: string;
+        image: string;
+        rawMetadata?: Record<string, unknown>;
+    }) => {
         if (combatants.find((c) => c.id === char.id)) return;
-        
+
         const baseInit = calculateBaseInitFromCharacterData(char.rawMetadata, globalState);
         const newList = sortCombatants([
-            ...combatants, 
-            { id: char.id, name: char.name, image: char.image, d6: 0, baseInit: baseInit, total: baseInit, tiebreaker: 0 }
+            ...combatants,
+            {
+                id: char.id,
+                name: char.name,
+                image: char.image,
+                d6: 0,
+                baseInit: baseInit,
+                total: baseInit,
+                tiebreaker: 0
+            }
         ]);
-        
+
         setCombatants(newList);
         localStorage.setItem('pkr_standalone_init_list', JSON.stringify(newList));
         setShowAddMenu(false);
@@ -752,7 +816,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
         event.preventDefault();
         const itemId = event.dataTransfer.getData('itemId');
         const itemType = event.dataTransfer.getData('itemType');
-        
+
         if (itemId && itemType === 'character') {
             try {
                 const chars = await storageAdapter.getLocalCharacters();
@@ -793,33 +857,47 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
         <>
             <div className={`init-tracker__header init-tracker__header--${layout}`}>
                 <div className="init-tracker__turn-controls">
-                    <button type="button" className="init-tracker__turn-btn" onClick={prevTurn} title="Previous Turn">◀</button>
-                    <button type="button" className="init-tracker__turn-btn" onClick={nextTurn} title="Next Turn">▶</button>
-                    
-                    {isStandaloneMode && (
-                        <button 
-                            type="button" 
-                            className="init-tracker__turn-btn" 
-                            onClick={handleRollAll} 
-                            title="Roll Initiative for All Combatants"
+                    {/* GROUP 1: Navigation Arrows (Side by side always) */}
+                    <div className="init-tracker__btn-group">
+                        <button
+                            type="button"
+                            className="init-tracker__turn-btn"
+                            onClick={prevTurn}
+                            title="Previous Turn"
                         >
-                            🎲
+                            ◀
                         </button>
-                    )}
+                        <button type="button" className="init-tracker__turn-btn" onClick={nextTurn} title="Next Turn">
+                            ▶
+                        </button>
+                    </div>
 
+                    {/* GROUP 2: Action Buttons (Side by side always) */}
                     {(isStandaloneMode || (isGM && !isStandaloneMode)) && (
-                        <button 
-                            type="button" 
-                            className="init-tracker__turn-btn" 
-                            onClick={() => setShowAddMenu(true)} 
-                            title="Add Combatant"
-                        >
-                            ➕
-                        </button>
+                        <div className="init-tracker__btn-group">
+                            {isStandaloneMode && (
+                                <button
+                                    type="button"
+                                    className="init-tracker__turn-btn"
+                                    onClick={handleRollAll}
+                                    title="Roll Initiative for All Combatants"
+                                >
+                                    🎲
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                className="init-tracker__turn-btn"
+                                onClick={() => setShowAddMenu(true)}
+                                title="Add Combatant"
+                            >
+                                ➕
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>
-            
+
             {combatants.length === 0 ? (
                 <div className="init-tracker__empty">
                     Waiting for rolls... {isStandaloneMode && '(Drag characters here)'}
@@ -853,9 +931,15 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                     <div className="init-tracker__modal" onClick={(e) => e.stopPropagation()}>
                         <div className="init-tracker__modal-header">
                             <h3 style={{ margin: 0, fontSize: '0.95rem' }}>Add Combatant</h3>
-                            <button type="button" className="init-tracker__modal-close" onClick={() => setShowAddMenu(false)}>✖</button>
+                            <button
+                                type="button"
+                                className="init-tracker__modal-close"
+                                onClick={() => setShowAddMenu(false)}
+                            >
+                                ✖
+                            </button>
                         </div>
-                        
+
                         <input
                             type="text"
                             placeholder="Search names..."
@@ -864,29 +948,32 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                             className="init-tracker__modal-search form-input--transparent"
                             autoFocus
                         />
-                        
+
                         <div className="init-tracker__modal-list">
-                            {isStandaloneMode && filteredStandaloneChars.map((char) => (
-                                <div 
-                                    key={char.id}
-                                    className="init-tracker__modal-item"
-                                    onClick={() => handleAddStandaloneCombatant(char)}
-                                >
-                                    {char.name}
-                                </div>
-                            ))}
-                            
-                            {!isStandaloneMode && filteredObrChars.map((char) => (
-                                <div 
-                                    key={char.id}
-                                    className="init-tracker__modal-item"
-                                    onClick={() => handleAddObrCombatant(char.item)}
-                                >
-                                    {char.name}
-                                </div>
-                            ))}
-                            
-                            {((isStandaloneMode && filteredStandaloneChars.length === 0) || (!isStandaloneMode && filteredObrChars.length === 0)) && (
+                            {isStandaloneMode &&
+                                filteredStandaloneChars.map((char) => (
+                                    <div
+                                        key={char.id}
+                                        className="init-tracker__modal-item"
+                                        onClick={() => handleAddStandaloneCombatant(char)}
+                                    >
+                                        {char.name}
+                                    </div>
+                                ))}
+
+                            {!isStandaloneMode &&
+                                filteredObrChars.map((char) => (
+                                    <div
+                                        key={char.id}
+                                        className="init-tracker__modal-item"
+                                        onClick={() => handleAddObrCombatant(char.item)}
+                                    >
+                                        {char.name}
+                                    </div>
+                                ))}
+
+                            {((isStandaloneMode && filteredStandaloneChars.length === 0) ||
+                                (!isStandaloneMode && filteredObrChars.length === 0)) && (
                                 <div style={{ fontSize: '0.8rem', opacity: 0.7, padding: '8px', textAlign: 'center' }}>
                                     No matching characters found.
                                 </div>
@@ -897,21 +984,19 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
             )}
 
             {/* In-flow spacer inside ghost container to expand OBR popover when modal is active */}
-            {isGhost && showAddMenu && (
-                <div className="init-tracker__ghost-spacer" />
-            )}
+            {isGhost && showAddMenu && <div className="init-tracker__ghost-spacer" />}
         </>
     );
 
     if (isStandaloneWidget) {
         return (
-            <div 
+            <div
                 className="init-tracker__standalone-wrapper"
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={handleDrop}
             >
-                <div 
-                    className={`init-tracker init-tracker--${layout} init-tracker__standalone-panel`} 
+                <div
+                    className={`init-tracker init-tracker--${layout} init-tracker__standalone-panel`}
                     style={{ flexDirection: layout === 'horizontal' ? 'row' : 'column' }}
                 >
                     {renderTrackerContent(false)}

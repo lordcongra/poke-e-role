@@ -31,7 +31,7 @@ function App() {
     const isPrinting = useCharacterStore((state) => state.identity.isPrinting);
     const gmOnlyMatchups = useCharacterStore((state) => state.identity.gmOnlyMatchups);
     const activeTokenId = useCharacterStore((state) => state.tokenId);
-    
+
     const initLayout = useCharacterStore((state) => state.identity.initiativeTrackerLayout) || 'vertical';
     const [showStandaloneTracker, setShowStandaloneTracker] = useState(false);
 
@@ -108,17 +108,16 @@ function App() {
     return (
         <div className="app-layout">
             <Sidebar />
-            
+
             <div className="app-main-content">
                 <GlobalToolbar />
-                
+
                 {!activeTokenId ? (
                     <div className="standalone-empty-state">
                         <p>👈 Select or create a file in the directory to begin</p>
                     </div>
                 ) : (
                     <div className="standalone-layout-wrapper">
-                        
                         {/* LEFT COLUMN: Main Sheet Content + Horizontal Tracker */}
                         <div className="standalone-main-col">
                             {showStandaloneTracker && initLayout === 'horizontal' && (
@@ -126,10 +125,8 @@ function App() {
                                     <InitiativeTracker isStandaloneWidget={true} />
                                 </div>
                             )}
-                            
-                            <div className="standalone-layout-sheet">
-                                {renderSheetContent()}
-                            </div>
+
+                            <div className="standalone-layout-sheet">{renderSheetContent()}</div>
                         </div>
 
                         {/* RIGHT COLUMN: Sidebar (Vertical Tracker + Docked Roll Log) */}
@@ -139,10 +136,9 @@ function App() {
                                     <InitiativeTracker isStandaloneWidget={true} />
                                 </div>
                             )}
-                            
+
                             <RollLogWidget isDocked={true} />
                         </div>
-
                     </div>
                 )}
 

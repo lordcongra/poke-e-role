@@ -209,7 +209,7 @@
     background: var(--panel-bg);
     border: 1px solid var(--border);
     border-radius: 6px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
     z-index: 9999; /* Absolute highest layer */
     min-width: 140px;
     display: flex;

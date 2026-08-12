@@ -21,7 +21,7 @@ export function Sidebar() {
 
     const [newName, setNewName] = useState<string>('');
     const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
-    
+
     // --- Context Menu State ---
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; item: TreeItem } | null>(null);
 
@@ -110,7 +110,7 @@ export function Sidebar() {
     // --- CONTEXT MENU ACTIONS ---
     const handleContextMenu = (e: React.MouseEvent, item: TreeItem) => {
         e.preventDefault(); // Stop native browser right-click menu
-        
+
         // Ensure menu doesn't spawn off the bottom of the screen
         const menuHeightEstimate = 120;
         let safeY = e.clientY;
@@ -125,12 +125,12 @@ export function Sidebar() {
         setContextMenu(null);
         const promptName = window.prompt(`Rename ${item.type}:`, item.name);
         if (!promptName || promptName.trim() === '' || promptName === item.name) return;
-        
+
         const newSafeName = promptName.trim();
 
         if (item.type === 'folder') {
             const flds = await storageAdapter.getFolders();
-            const updated = flds.map((f) => f.id === item.id ? { ...f, name: newSafeName } : f);
+            const updated = flds.map((f) => (f.id === item.id ? { ...f, name: newSafeName } : f));
             localStorage.setItem('pkr_folders', JSON.stringify(updated));
             window.dispatchEvent(new Event('pkr-local-data-changed'));
         } else {
@@ -140,7 +140,7 @@ export function Sidebar() {
                 meta.nickname = newSafeName; // Update internal nickname
                 localStorage.setItem(`pkr_char_${item.id}`, JSON.stringify(meta));
                 window.dispatchEvent(new Event('pkr-local-data-changed'));
-                
+
                 // If it's the active character, immediately update the store too
                 if (activeTokenId === item.id) {
                     useCharacterStore.getState().setIdentity('nickname', newSafeName);
@@ -152,14 +152,14 @@ export function Sidebar() {
     const executeDuplicate = async (item: TreeItem) => {
         setContextMenu(null);
         if (item.type === 'folder') return; // Folder duplication not yet supported
-        
+
         try {
             const charData = localStorage.getItem(`pkr_char_${item.id}`);
             if (charData) {
                 const meta = JSON.parse(charData);
                 const newName = `${item.name} (Copy)`;
                 meta.nickname = newName;
-                
+
                 // Create a blank sheet to get a valid ID, then overwrite it with copied data
                 const newId = await storageAdapter.createLocalCharacter(newName, item.parentId);
                 localStorage.setItem(`pkr_char_${newId}`, JSON.stringify(meta));
@@ -183,13 +183,16 @@ export function Sidebar() {
                     } else if (typeof item.meta['tokenImageUrl'] === 'string') {
                         tokenImageUrl = item.meta['tokenImageUrl'];
                     } else if (item.meta.state && (item.meta.state as Record<string, unknown>).identity) {
-                        const identity = (item.meta.state as Record<string, unknown>).identity as Record<string, unknown>;
+                        const identity = (item.meta.state as Record<string, unknown>).identity as Record<
+                            string,
+                            unknown
+                        >;
                         if (identity && typeof identity.tokenImageUrl === 'string') {
                             tokenImageUrl = identity.tokenImageUrl;
                         }
                     }
                 }
-                
+
                 if (tokenImageUrl && tokenImageUrl.startsWith('local-img:')) {
                     try {
                         await imageManager.deleteImage(tokenImageUrl);
@@ -239,7 +242,7 @@ export function Sidebar() {
             const chars = await storageAdapter.getLocalCharacters();
             const flds = await storageAdapter.getFolders();
             const backup = { type: 'pokerole-master-backup', version: 1, characters: chars, folders: flds };
-            
+
             const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -264,7 +267,7 @@ export function Sidebar() {
                 const data = JSON.parse(event.target?.result as string);
                 if (data.type === 'pokerole-master-backup') {
                     if (!window.confirm('WARNING: This will OVERWRITE your entire local directory! Proceed?')) return;
-                    
+
                     localStorage.setItem('pkr_folders', JSON.stringify(data.folders || []));
                     for (const char of data.characters || []) {
                         localStorage.setItem(`pkr_char_${char.id}`, JSON.stringify(char.metadata));
@@ -317,9 +320,12 @@ export function Sidebar() {
                             <span className="sidebar__item-icon">{item.type === 'folder' ? '📁' : '📄'}</span>
                             <span className="sidebar__item-name">{item.name}</span>
                         </div>
-                        <button 
-                            className="sidebar__delete-btn" 
-                            onClick={(e) => { e.stopPropagation(); executeDelete(item); }}
+                        <button
+                            className="sidebar__delete-btn"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                executeDelete(item);
+                            }}
                             title="Delete"
                         >
                             🗑️
@@ -372,26 +378,26 @@ export function Sidebar() {
                     </button>
                 </div>
                 <div className="sidebar__create-row sidebar__backup-row">
-                    <button 
-                        className="sidebar__btn sidebar__btn--backup" 
+                    <button
+                        className="sidebar__btn sidebar__btn--backup"
                         onClick={handleExportMasterBackup}
                         title="Export all folders and characters"
                     >
                         💾 Backup
                     </button>
-                    <button 
-                        className="sidebar__btn sidebar__btn--restore" 
+                    <button
+                        className="sidebar__btn sidebar__btn--restore"
                         onClick={() => restoreInputRef.current?.click()}
                         title="Restore from a Master Backup file"
                     >
                         📂 Restore
                     </button>
-                    <input 
-                        type="file" 
-                        ref={restoreInputRef} 
-                        onChange={handleRestoreMasterBackup} 
-                        accept=".json" 
-                        className="sidebar__hidden-input" 
+                    <input
+                        type="file"
+                        ref={restoreInputRef}
+                        onChange={handleRestoreMasterBackup}
+                        accept=".json"
+                        className="sidebar__hidden-input"
                     />
                 </div>
             </div>
@@ -405,7 +411,7 @@ export function Sidebar() {
 
             {/* Custom Right-Click Context Menu */}
             {contextMenu && (
-                <div 
+                <div
                     className="sidebar__context-menu"
                     style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
                     onClick={(e) => e.stopPropagation()}
@@ -413,14 +419,17 @@ export function Sidebar() {
                     <button className="sidebar__context-item" onClick={() => executeRename(contextMenu.item)}>
                         ✏️ Rename
                     </button>
-                    
+
                     {contextMenu.item.type === 'character' && (
                         <button className="sidebar__context-item" onClick={() => executeDuplicate(contextMenu.item)}>
                             📄 Duplicate
                         </button>
                     )}
-                    
-                    <button className="sidebar__context-item sidebar__context-item--danger" onClick={() => executeDelete(contextMenu.item)}>
+
+                    <button
+                        className="sidebar__context-item sidebar__context-item--danger"
+                        onClick={() => executeDelete(contextMenu.item)}
+                    >
                         🗑️ Delete
                     </button>
                 </div>

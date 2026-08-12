@@ -1,9 +1,9 @@
 .init-tracker-wrapper {
     position: absolute;
-    top: 0; 
+    top: 0;
     left: 0;
     bottom: 0;
-    right: 0; /* Shrink-wrap fix: lock wrapper to the resized OBR iframe edges */
+    right: 0;
     padding: 4px;
     display: flex;
 }
@@ -13,9 +13,10 @@
     color: var(--text-main);
     display: flex;
     font-family: inherit;
-    flex: 1; /* Stretch cleanly to fill wrapper */
-    min-height: 0; 
-    min-width: 0; /* Magic shrink rule allowing internal scroll without expanding iframe */
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    border: 2px solid #b71c1c; /* Restoring the signature red stroke */
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
@@ -27,7 +28,7 @@
 
 .init-tracker--horizontal {
     flex-direction: row;
-    align-items: stretch; /* Let children fill full height */
+    align-items: stretch;
     height: 100%;
 }
 
@@ -37,12 +38,12 @@
     left: -9999px;
     visibility: hidden;
     height: auto !important;
-    width: max-content !important; /* Forces accurate natural width measurement */
+    width: max-content !important;
     max-height: none !important;
     max-width: none !important;
     pointer-events: none;
     z-index: -1;
-    flex: none !important; /* Ignore wrapper stretching */
+    flex: none !important;
 }
 
 /* --- HEADER / CONTROLS --- */
@@ -55,26 +56,34 @@
 
 .init-tracker__header--vertical {
     border-bottom: 2px solid #b71c1c;
-    padding: 8px 12px;
+    padding: 6px 12px;
 }
 
 .init-tracker__header--horizontal {
-    flex-direction: column; /* Forces vertical stacking for horizontal mode */
+    flex-direction: column;
     justify-content: center;
     border-right: 2px solid #b71c1c;
     border-bottom: none;
-    padding: 8px 6px;
+    padding: 6px 8px;
     height: 100%;
 }
 
 .init-tracker__turn-controls {
     display: flex;
-    gap: 8px;
+    gap: 6px;
+    width: 100%;
+    justify-content: center;
 }
 
-/* Specific overwrite for horizontal stacked buttons */
+/* Horizontal mode stacks the groups to compress height */
 .init-tracker__header--horizontal .init-tracker__turn-controls {
     flex-direction: column;
+}
+
+/* Force groups into side-by-side rows */
+.init-tracker__btn-group {
+    display: flex;
+    gap: 6px;
 }
 
 .init-tracker__turn-btn {
@@ -83,13 +92,15 @@
     color: white;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 0.9rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    transition: background 0.2s, transform 0.1s;
+    width: 28px; /* Slimmer dimension */
+    height: 28px; /* Slimmer dimension */
+    transition:
+        background 0.2s,
+        transform 0.1s;
 }
 
 .init-tracker__turn-btn:hover {
@@ -104,9 +115,9 @@
 /* --- LIST --- */
 .init-tracker__list {
     display: flex;
-    flex: 1; 
-    min-height: 0; 
-    min-width: 0; /* Required for horizontal scrolling */
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
     scrollbar-width: thin;
 }
 
@@ -115,7 +126,7 @@
     height: 6px;
 }
 .init-tracker__list::-webkit-scrollbar-thumb {
-    background: #555;
+    background: #b71c1c; /* Changed to red to match the aesthetic */
     border-radius: 4px;
 }
 
@@ -131,7 +142,7 @@
     flex-direction: row;
     overflow-x: auto;
     overflow-y: hidden;
-    padding: 8px 12px;
+    padding: 6px 12px;
     gap: 12px;
 }
 
@@ -146,6 +157,7 @@
     color: var(--text-muted);
     text-align: center;
     font-style: italic;
+    flex: 1;
 }
 
 /* --- CARDS --- */
@@ -155,12 +167,15 @@
     border-radius: 6px;
     display: flex;
     align-items: center;
-    padding: 6px 12px 6px 6px;
-    gap: 10px;
-    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    padding: 4px 8px 4px 4px; /* Slimmer padding */
+    gap: 8px;
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s,
+        background 0.2s;
     transform: skewX(-5deg);
     position: relative;
-    min-width: 140px;
+    min-width: 120px; /* Compress the card */
 }
 
 .init-tracker__card--active {
@@ -170,8 +185,8 @@
 }
 
 .init-tracker__avatar-container {
-    width: 40px;
-    height: 40px;
+    width: 32px; /* Slimmer avatar */
+    height: 32px; /* Slimmer avatar */
     flex-shrink: 0;
     display: flex;
     justify-content: center;
@@ -201,36 +216,37 @@
 .init-tracker__info {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
     flex-grow: 1;
-    transform: skewX(5deg)
+    transform: skewX(5deg);
 }
 
 .init-tracker__name {
-    font-size: 0.85rem;
+    font-size: 0.75rem; /* Slightly smaller text to fit tight space */
     font-weight: bold;
     color: white;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 120px;
+    max-width: 100px;
 }
 
 .init-tracker__controls {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
 }
 
 .init-tracker__input {
     background: #1a1a1a;
     border: 1px solid #444;
     color: white;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     font-weight: bold;
     text-align: center;
-    width: 46px;
-    padding: 2px 4px;
+    width: 42px; /* Thinner input */
+    padding: 1px 2px;
+    height: 22px;
     border-radius: 4px;
 }
 
@@ -254,10 +270,12 @@
     background: transparent;
     border: none;
     cursor: pointer;
-    font-size: 1.1rem;
+    font-size: 1rem;
     padding: 0;
     opacity: 0.7;
-    transition: opacity 0.2s, transform 0.1s;
+    transition:
+        opacity 0.2s,
+        transform 0.1s;
 }
 
 .init-tracker__roll-btn:hover {
@@ -311,7 +329,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.7);
+    background: rgba(0, 0, 0, 0.7);
     display: flex;
     align-items: flex-start;
     justify-content: center;
@@ -327,7 +345,7 @@
     max-height: 250px;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     overflow: hidden;
 }
 
@@ -364,7 +382,7 @@
 
 .init-tracker__modal-search:focus {
     outline: none;
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .init-tracker__modal-list {
@@ -378,7 +396,7 @@
     padding: 8px 12px;
     font-size: 0.85rem;
     cursor: pointer;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .init-tracker__modal-item:hover {
@@ -393,17 +411,15 @@
     width: max-content;
     display: flex;
     flex-direction: column;
-    min-height: 0; 
+    min-height: 0;
     overflow: hidden;
     margin-left: auto;
 }
 
 .init-tracker__standalone-panel {
-    border: 1px solid var(--border);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     height: 100%;
-    width: max-content; 
+    width: max-content;
     box-sizing: border-box;
     display: flex;
 }

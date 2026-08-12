@@ -78,17 +78,7 @@ export async function autoCropTransparency(file: File): Promise<Blob> {
 
             if (!cropCtx) return resolve(file);
 
-            cropCtx.drawImage(
-                canvas,
-                left,
-                top,
-                width,
-                height,
-                padding,
-                padding,
-                width,
-                height
-            );
+            cropCtx.drawImage(canvas, left, top, width, height, padding, padding, width, height);
 
             cropCanvas.toBlob((blob) => {
                 if (blob) resolve(blob);
