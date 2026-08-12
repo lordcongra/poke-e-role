@@ -33,6 +33,16 @@ export function extractTokenImage(meta: Record<string, unknown> | null | undefin
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const stateObj = (meta.state || meta) as any;
     if (stateObj?.identity?.tokenImageUrl) return String(stateObj.identity.tokenImageUrl);
+    if (stateObj?.['token-image-url']) return String(stateObj['token-image-url']);
+
+    // Sledgehammer fallback: scan the raw JSON string just in case it is deeply nested
+    try {
+        const str = JSON.stringify(meta);
+        const match1 = str.match(/"tokenImageUrl":"([^"]+)"/);
+        if (match1 && match1[1]) return match1[1];
+        const match2 = str.match(/"token-image-url":"([^"]+)"/);
+        if (match2 && match2[1]) return match2[1];
+    } catch (e) {}
     
     return '';
 }
@@ -146,13 +156,25 @@ function CombatantCard({
 
     useEffect(() => {
         let isMounted = true;
-        if (isStandaloneMode && c.image && c.image.startsWith('local-img:')) {
-            imageManager.getImageUrl(c.image).then((url) => {
-                if (isMounted && url) setResolvedImage(url);
-            }).catch((error) => console.warn('[InitiativeTracker] Failed to resolve IndexedDB image url:', error));
-        } else {
-            setResolvedImage(c.image);
-        }
+        
+        const resolveImage = async () => {
+            if (!c.image) {
+                if (isMounted) setResolvedImage('');
+                return;
+            }
+            if (isStandaloneMode && c.image.startsWith('local-img:')) {
+                try {
+                    const url = await imageManager.getImageUrl(c.image);
+                    if (isMounted) setResolvedImage(url || '');
+                } catch (error) {
+                    if (isMounted) setResolvedImage('');
+                }
+            } else {
+                if (isMounted) setResolvedImage(c.image);
+            }
+        };
+
+        resolveImage();
         return () => { isMounted = false; };
     }, [c.image]);
 
