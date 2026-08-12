@@ -25,7 +25,7 @@ export function IdentityHeader() {
     const [showGeneratorModal, setShowGeneratorModal] = useState<boolean>(false);
     const [showTrackerSettings, setShowTrackerSettings] = useState<boolean>(false);
     const [showPokedexModal, setShowPokedexModal] = useState<boolean>(false);
-    
+
     // Standalone Image Picker State
     const [showImagePicker, setShowImagePicker] = useState<boolean>(false);
     const imageInputRef = useRef<HTMLInputElement>(null);
@@ -90,7 +90,7 @@ export function IdentityHeader() {
     const handleStandaloneFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
-        
+
         try {
             const imgId = await imageManager.saveImage(file);
             setIdentity('tokenImageUrl', imgId);
@@ -98,7 +98,7 @@ export function IdentityHeader() {
             console.error('[IdentityHeader] Failed to save image to IndexedDB', error);
             alert('Failed to save image locally. It may be too large or your browser blocked the database.');
         }
-        
+
         setShowImagePicker(false);
         if (imageInputRef.current) imageInputRef.current.value = ''; // Reset input so the same file can be chosen again if needed
     };
@@ -280,11 +280,16 @@ export function IdentityHeader() {
                         <p className="identity-header__modal-text" style={{ marginBottom: '15px' }}>
                             Choose how you'd like to supply the image for this character.
                         </p>
-                        
+
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            <button 
+                            <button
                                 className="action-button action-button--dark"
-                                style={{ padding: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                                style={{
+                                    padding: '10px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center'
+                                }}
                                 onClick={() => imageInputRef.current?.click()}
                             >
                                 <span style={{ fontSize: '1.1rem', marginBottom: '4px' }}>📁 Upload Local File</span>
@@ -292,10 +297,18 @@ export function IdentityHeader() {
                                     (Recommended - Saved safely to your browser's database)
                                 </span>
                             </button>
-                            
-                            <button 
+
+                            <button
                                 className="action-button"
-                                style={{ backgroundColor: '#1976d2', color: 'white', border: 'none', padding: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                                style={{
+                                    backgroundColor: '#1976d2',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '10px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center'
+                                }}
                                 onClick={handleStandaloneUrl}
                             >
                                 <span style={{ fontSize: '1.1rem', marginBottom: '4px' }}>🌐 Use Web URL</span>
@@ -306,7 +319,7 @@ export function IdentityHeader() {
                         </div>
 
                         <hr className="identity-header__modal-divider" style={{ margin: '15px 0' }} />
-                        
+
                         <button
                             className="action-button action-button--dark identity-header__modal-close-btn"
                             onClick={() => setShowImagePicker(false)}
@@ -318,12 +331,12 @@ export function IdentityHeader() {
             )}
 
             {/* Hidden Input for Local Uploads */}
-            <input 
-                type="file" 
-                ref={imageInputRef} 
-                onChange={handleStandaloneFile} 
-                accept="image/*" 
-                style={{ display: 'none' }} 
+            <input
+                type="file"
+                ref={imageInputRef}
+                onChange={handleStandaloneFile}
+                accept="image/*"
+                style={{ display: 'none' }}
             />
         </CollapsingSection>
     );

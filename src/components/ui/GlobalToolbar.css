@@ -12,7 +12,7 @@
     align-items: center;
     padding: 8px 10px;
     background-color: transparent;
-    color: var(--primary); 
+    color: var(--primary);
     font-weight: bold;
     font-size: 0.9rem;
     text-transform: uppercase;
@@ -79,7 +79,9 @@
     border-radius: 4px;
     border: 1px solid transparent;
     cursor: pointer;
-    transition: background-color 0.15s ease, transform 0.1s ease;
+    transition:
+        background-color 0.15s ease,
+        transform 0.1s ease;
     white-space: nowrap;
     width: 100%;
     box-sizing: border-box;

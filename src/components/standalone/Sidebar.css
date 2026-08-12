@@ -113,11 +113,11 @@
 
 /* Dynamically Alternate Background Colors for Files */
 .sidebar__node:nth-child(odd) > .sidebar__item {
-    background-color: var(--row-odd, rgba(255,255,255,0.02));
+    background-color: var(--row-odd, rgba(255, 255, 255, 0.02));
 }
 
 .sidebar__node:nth-child(even) > .sidebar__item {
-    background-color: var(--row-even, rgba(0,0,0,0.08));
+    background-color: var(--row-even, rgba(0, 0, 0, 0.08));
 }
 
 .sidebar__item {
@@ -176,7 +176,9 @@
     font-size: 0.9rem;
     cursor: pointer;
     opacity: 0;
-    transition: opacity 0.2s, transform 0.2s;
+    transition:
+        opacity 0.2s,
+        transform 0.2s;
 }
 
 .sidebar__item:hover .sidebar__delete-btn {

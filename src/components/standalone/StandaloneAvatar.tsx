@@ -41,10 +41,10 @@ export function StandaloneAvatar() {
             ) : (
                 <div className="standalone-avatar__placeholder">
                     {/* Fallback to the pokeball.svg in your public folder */}
-                    <img 
-                        src={`${import.meta.env.BASE_URL || '/'}pokeball.svg`} 
-                        alt="No Image" 
-                        className="standalone-avatar__fallback-icon" 
+                    <img
+                        src={`${import.meta.env.BASE_URL || '/'}pokeball.svg`}
+                        alt="No Image"
+                        className="standalone-avatar__fallback-icon"
                     />
                 </div>
             )}

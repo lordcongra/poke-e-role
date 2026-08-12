@@ -96,11 +96,11 @@ function App() {
     return (
         <div className="app-layout">
             <Sidebar />
-            
+
             <div className="app-main-content">
                 <div className="sheet-container app-container" style={{ maxWidth: '100%', margin: '0' }}>
                     <GlobalToolbar />
-                    
+
                     {!activeTokenId ? (
                         <div className="standalone-empty-state">
                             <p>👈 Select or create a file in the directory to begin</p>

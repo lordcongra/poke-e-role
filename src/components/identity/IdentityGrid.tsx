@@ -69,8 +69,9 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature, onO
 
     return (
         <>
-            <div className={`identity-grid identity-header__grid ${isStandaloneMode ? 'identity-grid--standalone' : ''}`}>
-                
+            <div
+                className={`identity-grid identity-header__grid ${isStandaloneMode ? 'identity-grid--standalone' : ''}`}
+            >
                 {/* Standalone Avatar spans exactly 6 rows down the left side! */}
                 {isStandaloneMode && <StandaloneAvatar />}
 

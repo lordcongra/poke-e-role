@@ -8,19 +8,25 @@ import { RulesModal } from '../modals/RulesModal';
 import { ItemGeneratorModal } from '../modals/ItemGeneratorModal';
 import { ChangelogModal } from '../modals/ChangelogModal';
 import { InitiativeSettingsModal } from '../modals/InitiativeSettingsModal';
+import { InitiativeTracker } from '../initiative/InitiativeTracker';
 import { isStandaloneMode } from '../../utils/storageAdapter';
 import { useObrReady } from '../../hooks/useObrReady';
+import { setActiveTokenId } from '../../utils/obr';
 import './GlobalToolbar.css';
 
 export function GlobalToolbar() {
     const isObrReady = useObrReady();
     const storeRole = useCharacterStore((state) => state.role);
+    const activeTokenId = useCharacterStore((state) => state.tokenId);
     const homebrewAccess = useCharacterStore((state) => state.identity.homebrewAccess) || 'Full';
     const gmOnlyLootGen = useCharacterStore((state) => state.identity.gmOnlyLootGen);
     const identityStore = useCharacterStore((state) => state.identity) || {};
 
     const [localRole, setLocalRole] = useState<string>(isStandaloneMode ? 'GM' : storeRole);
     const [isExpanded, setIsExpanded] = useState<boolean>(true);
+
+    // Standalone Tracker State
+    const [showStandaloneTracker, setShowStandaloneTracker] = useState<boolean>(false);
 
     useEffect(() => {
         if (!isStandaloneMode && OBR.isAvailable) {
@@ -71,6 +77,11 @@ export function GlobalToolbar() {
         try {
             localStorage.setItem('pkr_global_toolbar_expanded', String(next));
         } catch (e) {}
+    };
+
+    const handleReturnToMenu = () => {
+        useCharacterStore.setState({ tokenId: null });
+        setActiveTokenId(null);
     };
 
     // --- INITIATIVE TRACKER LOGIC ---
@@ -177,6 +188,12 @@ export function GlobalToolbar() {
     };
 
     const handleInitiativeToggle = async () => {
+        // Standalone Mode bypasses OBR entirely and opens our local overlay
+        if (isStandaloneMode) {
+            setShowStandaloneTracker(!showStandaloneTracker);
+            return;
+        }
+
         if (!OBR.isAvailable || !isObrReady) return;
 
         let handled = false;
@@ -237,34 +254,41 @@ export function GlobalToolbar() {
                 className={`global-toolbar__header ${isExpanded ? 'global-toolbar__header--open' : ''}`}
                 onClick={toggleExpanded}
             >
-                <span className={`global-toolbar__caret ${!isExpanded ? 'global-toolbar__caret--closed' : ''}`}>
-                    ▼
-                </span>
+                <span className={`global-toolbar__caret ${!isExpanded ? 'global-toolbar__caret--closed' : ''}`}>▼</span>
                 TABLE TOOLS & SETTINGS
             </div>
 
             {isExpanded && (
                 <div className="global-toolbar__content">
                     <div className="global-toolbar__main-tools">
-                        {!isStandaloneMode && OBR.isAvailable && (
-                            <div className="global-toolbar__init-group">
-                                <button
-                                    type="button"
-                                    className="global-toolbar__btn global-toolbar__btn--init-main"
-                                    onClick={handleInitiativeToggle}
-                                    title="Toggle Initiative Tracker window"
-                                >
-                                    ⚔️ Initiative
-                                </button>
-                                <button
-                                    type="button"
-                                    className="global-toolbar__btn global-toolbar__btn--init-cog"
-                                    onClick={() => setShowInitSettings(true)}
-                                    title="Initiative Settings"
-                                >
-                                    ⚙️
-                                </button>
-                            </div>
+                        <div className="global-toolbar__init-group">
+                            <button
+                                type="button"
+                                className="global-toolbar__btn global-toolbar__btn--init-main"
+                                onClick={handleInitiativeToggle}
+                                title="Toggle Initiative Tracker window"
+                            >
+                                ⚔️ Initiative
+                            </button>
+                            <button
+                                type="button"
+                                className="global-toolbar__btn global-toolbar__btn--init-cog"
+                                onClick={() => setShowInitSettings(true)}
+                                title="Initiative Settings"
+                            >
+                                ⚙️
+                            </button>
+                        </div>
+
+                        {isStandaloneMode && activeTokenId && (
+                            <button
+                                type="button"
+                                className="global-toolbar__btn global-toolbar__btn--back"
+                                onClick={handleReturnToMenu}
+                                title="Close sheet and return to file browser"
+                            >
+                                🔙 Back to Menu
+                            </button>
                         )}
 
                         {showHomebrewButton && (
@@ -319,6 +343,11 @@ export function GlobalToolbar() {
                         </button>
                     </div>
                 </div>
+            )}
+
+            {/* Standalone Tracker rendered directly into the web app when toggled */}
+            {isStandaloneMode && showStandaloneTracker && (
+                <InitiativeTracker isStandaloneWidget={true} onClose={() => setShowStandaloneTracker(false)} />
             )}
 
             {showHomebrewModal && <HomebrewModal onClose={() => setShowHomebrewModal(false)} />}

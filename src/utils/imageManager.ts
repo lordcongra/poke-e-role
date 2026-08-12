@@ -23,19 +23,19 @@ function getDB(): Promise<IDBDatabase> {
 
 export const imageManager = {
     /**
-     * Takes a raw File (from an <input type="file">), saves it to IndexedDB, 
+     * Takes a raw File (from an <input type="file">), saves it to IndexedDB,
      * and returns a formatted ID string to save in the character's metadata.
      */
     async saveImage(file: File): Promise<string> {
         const id = crypto.randomUUID();
         const db = await getDB();
-        
+
         return new Promise((resolve, reject) => {
             const transaction = db.transaction(STORE_NAME, 'readwrite');
             const store = transaction.objectStore(STORE_NAME);
-            
+
             const request = store.put(file, id);
-            
+
             request.onsuccess = () => {
                 // Prefix with local-img: so the sheet knows to fetch from IndexedDB instead of the web
                 resolve(`local-img:${id}`);
@@ -45,7 +45,7 @@ export const imageManager = {
     },
 
     /**
-     * Reads a formatted 'local-img:' ID, fetches the binary file from IndexedDB, 
+     * Reads a formatted 'local-img:' ID, fetches the binary file from IndexedDB,
      * and creates a temporary blob:// URL for the browser to render.
      */
     async getImageUrl(formattedId: string): Promise<string | null> {
