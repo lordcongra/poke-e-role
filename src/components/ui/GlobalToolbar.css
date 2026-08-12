@@ -4,21 +4,26 @@
     border-radius: 6px;
     margin-bottom: 12px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    /* Removed overflow: hidden so content can safely stretch if needed */
 }
 
 .global-toolbar__header {
     display: flex;
     align-items: center;
+    justify-content: space-between; /* Pushes the Back Button to the right edge */
     padding: 8px 10px;
     background-color: transparent;
-    color: var(--primary);
+    color: var(--primary); 
     font-weight: bold;
     font-size: 0.9rem;
     text-transform: uppercase;
     cursor: pointer;
     user-select: none;
     border-bottom: 1px solid transparent;
+}
+
+.global-toolbar__header-title {
+    display: flex;
+    align-items: center;
 }
 
 .global-toolbar__header--open {
@@ -45,9 +50,26 @@
     transform: rotate(-90deg);
 }
 
+.global-toolbar__btn--back-header {
+    background-color: #1565c0;
+    border: 1px solid #0d47a1;
+    color: #ffffff;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: filter 0.2s ease;
+    text-transform: none; /* Prevents button text from becoming uppercase */
+}
+
+.global-toolbar__btn--back-header:hover {
+    filter: brightness(1.2);
+}
+
 .global-toolbar__content {
     display: flex;
-    align-items: stretch; /* Forces all buttons to stretch to the same height */
+    align-items: stretch;
     justify-content: space-between;
     gap: 16px;
     padding: 12px;
@@ -79,9 +101,7 @@
     border-radius: 4px;
     border: 1px solid transparent;
     cursor: pointer;
-    transition:
-        background-color 0.15s ease,
-        transform 0.1s ease;
+    transition: background-color 0.15s ease, transform 0.1s ease;
     white-space: nowrap;
     width: 100%;
     box-sizing: border-box;
@@ -162,16 +182,6 @@
 
 .global-toolbar__btn--dark:hover {
     background-color: var(--border);
-}
-
-.global-toolbar__btn--back {
-    background-color: #1565c0;
-    border-color: #0d47a1;
-    color: #ffffff;
-}
-
-.global-toolbar__btn--back:hover {
-    background-color: #0d47a1;
 }
 
 @media (max-width: 768px) {

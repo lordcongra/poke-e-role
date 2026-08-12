@@ -1,10 +1,8 @@
 import OBR from '@owlbear-rodeo/sdk';
 import { waitForObr } from './obrHelpers';
 
-// Automatically detects if we are running as a top-level web app vs. inside an Owlbear iframe!
 export const isStandaloneMode = window.self === window.top;
 
-// The namespace prefix for all local storage keys to prevent collisions
 export const LOCAL_STORAGE_PREFIX = 'pkr_char_';
 export const FOLDER_STORAGE_KEY = 'pkr_folders';
 
@@ -14,6 +12,13 @@ export interface LocalFolder {
     parentId: string | null;
 }
 
+// Emits an event so the Sidebar instantly updates when data changes!
+const notifyChange = () => {
+    if (isStandaloneMode) {
+        window.dispatchEvent(new Event('pkr-local-data-changed'));
+    }
+};
+
 export const storageAdapter = {
     async saveCharacter(id: string, updates: Record<string, unknown>, metadataId: string): Promise<void> {
         if (isStandaloneMode) {
@@ -22,8 +27,9 @@ export const storageAdapter = {
                 const existing = existingStr ? JSON.parse(existingStr) : {};
                 const merged = { ...existing, ...updates };
                 localStorage.setItem(`${LOCAL_STORAGE_PREFIX}${id}`, JSON.stringify(merged));
+                notifyChange();
             } catch (error) {
-                console.error('[storageAdapter] Failed to save character to localStorage', error);
+                console.error('[storageAdapter] Failed to save character', error);
                 throw error;
             }
         } else {
@@ -42,9 +48,7 @@ export const storageAdapter = {
         }
     },
 
-    async getLocalCharacters(): Promise<
-        { id: string; name: string; parentId: string | null; metadata: Record<string, unknown> }[]
-    > {
+    async getLocalCharacters(): Promise<{ id: string; name: string; parentId: string | null; metadata: Record<string, unknown> }[]> {
         const characters = [];
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
@@ -68,14 +72,15 @@ export const storageAdapter = {
 
     async createLocalCharacter(name: string, parentId: string | null = null): Promise<string> {
         const newId = crypto.randomUUID();
-        const initialMetadata = {
-            nickname: name,
+        const initialMetadata = { 
+            nickname: name, 
             parentId: parentId,
             'v2-migrated': true
         };
-
+        
         try {
             localStorage.setItem(`${LOCAL_STORAGE_PREFIX}${newId}`, JSON.stringify(initialMetadata));
+            notifyChange();
         } catch (error) {
             console.error('[storageAdapter] Failed to create new character', error);
         }
@@ -85,7 +90,6 @@ export const storageAdapter = {
     async deleteLocalCharacter(id: string): Promise<void> {
         try {
             localStorage.removeItem(`${LOCAL_STORAGE_PREFIX}${id}`);
-            // Move any children to root to prevent orphan data lock
             const chars = await this.getLocalCharacters();
             for (const char of chars) {
                 if (char.parentId === id) await this.moveItem(char.id, null);
@@ -94,6 +98,7 @@ export const storageAdapter = {
             for (const f of folders) {
                 if (f.parentId === id) await this.moveFolder(f.id, null);
             }
+            notifyChange();
         } catch (error) {
             console.error('[storageAdapter] Failed to delete character', error);
         }
@@ -106,22 +111,18 @@ export const storageAdapter = {
                 const existing = JSON.parse(existingStr);
                 existing.parentId = parentId;
                 localStorage.setItem(`${LOCAL_STORAGE_PREFIX}${id}`, JSON.stringify(existing));
+                notifyChange();
             }
         } catch (error) {
             console.error('[storageAdapter] Failed to move character', error);
         }
     },
 
-    // ==========================================
-    // FOLDER MANAGEMENT
-    // ==========================================
-
     async getFolders(): Promise<LocalFolder[]> {
         try {
             const str = localStorage.getItem(FOLDER_STORAGE_KEY);
             return str ? JSON.parse(str) : [];
         } catch (error) {
-            console.error('[storageAdapter] Failed to parse folders', error);
             return [];
         }
     },
@@ -132,6 +133,7 @@ export const storageAdapter = {
         folders.push(newFolder);
         try {
             localStorage.setItem(FOLDER_STORAGE_KEY, JSON.stringify(folders));
+            notifyChange();
         } catch (error) {
             console.error('[storageAdapter] Failed to save new folder', error);
         }
@@ -140,20 +142,20 @@ export const storageAdapter = {
 
     async moveFolder(folderId: string, newParentId: string | null): Promise<void> {
         const folders = await this.getFolders();
-        const target = folders.find((f) => f.id === folderId);
+        const target = folders.find(f => f.id === folderId);
         if (target) {
             target.parentId = newParentId;
             localStorage.setItem(FOLDER_STORAGE_KEY, JSON.stringify(folders));
+            notifyChange();
         }
     },
 
     async deleteFolder(id: string): Promise<void> {
         const folders = await this.getFolders();
-        const filtered = folders.filter((f) => f.id !== id);
+        const filtered = folders.filter(f => f.id !== id);
         try {
             localStorage.setItem(FOLDER_STORAGE_KEY, JSON.stringify(filtered));
-
-            // Orphans to Root
+            
             const chars = await this.getLocalCharacters();
             for (const char of chars) {
                 if (char.parentId === id) await this.moveItem(char.id, null);
@@ -161,6 +163,7 @@ export const storageAdapter = {
             for (const f of folders) {
                 if (f.parentId === id) await this.moveFolder(f.id, null);
             }
+            notifyChange();
         } catch (error) {
             console.error('[storageAdapter] Failed to delete folder', error);
         }

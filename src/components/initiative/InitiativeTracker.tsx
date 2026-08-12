@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import type { Item, Image } from '@owlbear-rodeo/sdk';
 import { isStandaloneMode, storageAdapter } from '../../utils/storageAdapter';
@@ -37,19 +37,16 @@ function CombatantCard({
         }
     }, [c.initiative]);
 
-    // Asynchronously resolve IndexedDB images in Standalone Mode
     useEffect(() => {
         let isMounted = true;
         if (isStandaloneMode && c.image && c.image.startsWith('local-img:')) {
-            imageManager.getImageUrl(c.image).then((url) => {
+            imageManager.getImageUrl(c.image).then(url => {
                 if (isMounted && url) setResolvedImg(url);
             });
         } else {
             setResolvedImg(c.image);
         }
-        return () => {
-            isMounted = false;
-        };
+        return () => { isMounted = false; };
     }, [c.image]);
 
     const handleSave = () => {
@@ -60,6 +57,18 @@ function CombatantCard({
         }
     };
 
+    // Correct PokeRole Initiative: 1d6 + Base (Dex + Alert)
+    const handleRollInitiative = () => {
+        const base = isNaN(parseFloat(val)) ? 0 : Math.floor(parseFloat(val));
+        const d6 = Math.floor(Math.random() * 6) + 1;
+        
+        // Final score includes the tiny decimal tiebreaker so the list sorts properly
+        const finalInit = d6 + base + (Math.floor(Math.random() * 99) / 10000);
+        
+        updateInit(c.id, finalInit);
+        alert(`🎲 ${c.name} rolled Initiative!\n\nRolled: ${d6}\nBase: +${base}\nTotal: ${d6 + base}\n\nNew Score: ${finalInit.toFixed(4)}`);
+    };
+
     return (
         <div className={`init-tracker__card ${isActive ? 'init-tracker__card--active' : ''}`}>
             <div
@@ -68,15 +77,11 @@ function CombatantCard({
                 title="Remove from Initiative"
             >
                 {resolvedImg && (
-                    <img
-                        src={resolvedImg}
-                        alt={c.name}
-                        className={`init-tracker__avatar init-tracker__avatar--${shape}`}
-                    />
+                    <img src={resolvedImg} alt={c.name} className={`init-tracker__avatar init-tracker__avatar--${shape}`} />
                 )}
                 <div className={`init-tracker__avatar-overlay init-tracker__avatar-overlay--${shape}`}>✖</div>
             </div>
-            <div className="init-tracker__info">
+            <div className="init-tracker__info" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <span className="init-tracker__name">{c.name}</span>
                 <input
                     type="number"
@@ -87,6 +92,14 @@ function CombatantCard({
                     onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                     className="init-tracker__input no-spinners"
                 />
+                <button 
+                    type="button" 
+                    onClick={handleRollInitiative}
+                    title="Roll Initiative (1d6 + Current)"
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1.2rem', padding: '0 2px' }}
+                >
+                    🎲
+                </button>
             </div>
         </div>
     );
@@ -114,20 +127,15 @@ export function InitiativeTracker({ isStandaloneWidget = false, onClose }: Initi
     const [mh, setMh] = useState(0);
     const [maxWidth, setMaxWidth] = useState(800);
 
-    // Standalone "Add Combatant" UI State
     const [showAddMenu, setShowAddMenu] = useState(false);
     const [availableChars, setAvailableChars] = useState<{ id: string; name: string; image: string }[]>([]);
 
-    // ==========================================
-    // INITIALIZATION & SETTINGS
-    // ==========================================
     useEffect(() => {
         if (isStandaloneMode) {
             setLayout(storeIdentity.initiativeTrackerLayout || 'vertical');
             setShape(storeIdentity.initiativeTrackerAvatarShape || 'circle');
             setMw(storeIdentity.initiativeTrackerMaxWidth || 0);
             setMh(storeIdentity.initiativeTrackerMaxHeight || 0);
-            setTheme(document.body.getAttribute('data-theme') || 'light');
         } else {
             const params = new URLSearchParams(window.location.search);
             setLayout((params.get('layout') as 'vertical' | 'horizontal') || 'vertical');
@@ -139,6 +147,8 @@ export function InitiativeTracker({ isStandaloneWidget = false, onClose }: Initi
     }, [storeIdentity, isStandaloneMode]);
 
     useEffect(() => {
+        if (isStandaloneMode) return; 
+
         if (theme === 'dark') {
             document.body.classList.add('dark-mode');
             document.body.setAttribute('data-theme', 'dark');
@@ -148,35 +158,30 @@ export function InitiativeTracker({ isStandaloneWidget = false, onClose }: Initi
             document.body.setAttribute('data-theme', 'light');
             document.documentElement.setAttribute('data-theme', 'light');
         }
-    }, [theme]);
+    }, [theme, isStandaloneMode]);
 
-    // ==========================================
-    // DATA FETCHING (OBR vs STANDALONE)
-    // ==========================================
     useEffect(() => {
         let isMounted = true;
 
         if (isStandaloneMode) {
             setIsReady(true);
-
-            // Load Local Combatants
+            
             const loadLocalEncounter = () => {
                 try {
                     const savedList = localStorage.getItem('pkr_standalone_init_list');
                     const savedTurn = localStorage.getItem('pkr_standalone_init_turn');
                     if (savedList) setCombatants(JSON.parse(savedList));
                     if (savedTurn) setActiveTurnId(savedTurn);
-                } catch (e) {
-                    console.error('Failed to parse local initiative data', e);
-                }
+                } catch (e) {}
             };
 
             loadLocalEncounter();
 
-            // Setup the local character directory for the "Add" menu
-            storageAdapter.getLocalCharacters().then((chars) => {
+            window.addEventListener('pkr-standalone-init-update', loadLocalEncounter);
+
+            storageAdapter.getLocalCharacters().then(chars => {
                 if (!isMounted) return;
-                const options = chars.map((c) => ({
+                const options = chars.map(c => ({
                     id: c.id,
                     name: c.name,
                     image: (c.metadata.tokenImageUrl as string) || ''
@@ -184,12 +189,12 @@ export function InitiativeTracker({ isStandaloneWidget = false, onClose }: Initi
                 setAvailableChars(options);
             });
 
-            return () => {
-                isMounted = false;
+            return () => { 
+                isMounted = false; 
+                window.removeEventListener('pkr-standalone-init-update', loadLocalEncounter);
             };
         }
 
-        // --- NATIVE OBR SYNC LOGIC ---
         OBR.onReady(async () => {
             if (!isMounted) return;
             setIsReady(true);
@@ -197,9 +202,7 @@ export function InitiativeTracker({ isStandaloneWidget = false, onClose }: Initi
             try {
                 const currentWidth = (await OBR.viewport.getWidth()) ?? 800;
                 setMaxWidth(currentWidth * 0.9);
-            } catch (e) {
-                console.warn('Could not fetch viewport width', e);
-            }
+            } catch (e) {}
 
             OBR.scene.getMetadata().then((meta) => {
                 const turnMeta = meta['pokerole-pmd-extension/initiative-turn'] as string;
@@ -235,9 +238,7 @@ export function InitiativeTracker({ isStandaloneWidget = false, onClose }: Initi
                 try {
                     const items = await OBR.scene.items.getItems();
                     mapItemsToCombatants(items);
-                } catch (e) {
-                    console.error('Failed to fetch initiative items', e);
-                }
+                } catch (e) {}
             };
 
             initializeCombatants();
@@ -272,12 +273,9 @@ export function InitiativeTracker({ isStandaloneWidget = false, onClose }: Initi
             };
         });
 
-        return () => {
-            isMounted = false;
-        };
+        return () => { isMounted = false; };
     }, [isStandaloneMode]);
 
-    // Auto-scroll to active combatant
     useEffect(() => {
         if (activeTurnId && isReady && !isStandaloneWidget) {
             setTimeout(() => {
@@ -289,7 +287,6 @@ export function InitiativeTracker({ isStandaloneWidget = false, onClose }: Initi
         }
     }, [activeTurnId, isReady, isStandaloneWidget]);
 
-    // OBR Auto-Resize Popover Observer
     useEffect(() => {
         if (!isReady || !ghostRef.current || !OBR.isAvailable || isStandaloneMode) return;
 
@@ -340,14 +337,11 @@ export function InitiativeTracker({ isStandaloneWidget = false, onClose }: Initi
         };
     }, [isReady, combatants, layout, shape, mw, mh, maxWidth, isStandaloneMode]);
 
-    // ==========================================
-    // ACTIONS
-    // ==========================================
     const updateInit = async (id: string, newVal: number) => {
         if (isNaN(newVal)) return;
 
         if (isStandaloneMode) {
-            const updated = combatants.map((c) => (c.id === id ? { ...c, initiative: newVal } : c));
+            const updated = combatants.map(c => c.id === id ? { ...c, initiative: newVal } : c);
             updated.sort((a, b) => b.initiative - a.initiative);
             setCombatants(updated);
             localStorage.setItem('pkr_standalone_init_list', JSON.stringify(updated));
@@ -364,7 +358,7 @@ export function InitiativeTracker({ isStandaloneWidget = false, onClose }: Initi
 
     const removeInit = async (id: string) => {
         if (isStandaloneMode) {
-            const updated = combatants.filter((c) => c.id !== id);
+            const updated = combatants.filter(c => c.id !== id);
             setCombatants(updated);
             localStorage.setItem('pkr_standalone_init_list', JSON.stringify(updated));
             if (activeTurnId === id) {
@@ -393,7 +387,7 @@ export function InitiativeTracker({ isStandaloneWidget = false, onClose }: Initi
             }
         }
         const nextId = combatants[nextIndex].id;
-
+        
         if (isStandaloneMode) {
             setActiveTurnId(nextId);
             localStorage.setItem('pkr_standalone_init_turn', nextId);
@@ -422,7 +416,7 @@ export function InitiativeTracker({ isStandaloneWidget = false, onClose }: Initi
     };
 
     const handleAddStandaloneCombatant = (char: { id: string; name: string; image: string }) => {
-        if (combatants.find((c) => c.id === char.id)) return; // Prevent dupes
+        if (combatants.find(c => c.id === char.id)) return;
         const newList = [...combatants, { id: char.id, name: char.name, image: char.image, initiative: 0 }];
         newList.sort((a, b) => b.initiative - a.initiative);
         setCombatants(newList);
@@ -444,59 +438,37 @@ export function InitiativeTracker({ isStandaloneWidget = false, onClose }: Initi
         <>
             <div className={`init-tracker__header init-tracker__header--${layout}`}>
                 <div className="init-tracker__turn-controls">
-                    <button type="button" className="init-tracker__turn-btn" onClick={prevTurn} title="Previous Turn">
-                        ◀
-                    </button>
-                    <button type="button" className="init-tracker__turn-btn" onClick={nextTurn} title="Next Turn">
-                        ▶
-                    </button>
-
+                    <button type="button" className="init-tracker__turn-btn" onClick={prevTurn} title="Previous Turn">◀</button>
+                    <button type="button" className="init-tracker__turn-btn" onClick={nextTurn} title="Next Turn">▶</button>
+                    
                     {isStandaloneMode && (
                         <div style={{ position: 'relative', marginLeft: '6px' }}>
-                            <button
-                                type="button"
-                                className="init-tracker__turn-btn"
-                                style={{ background: '#00897b', borderColor: '#00796b' }}
-                                onClick={() => setShowAddMenu(!showAddMenu)}
+                            <button 
+                                type="button" 
+                                className="init-tracker__turn-btn" 
+                                onClick={() => setShowAddMenu(!showAddMenu)} 
                                 title="Add Combatant"
                             >
                                 ➕
                             </button>
                             {showAddMenu && (
-                                <div
-                                    style={{
-                                        position: 'absolute',
-                                        top: '100%',
-                                        left: 0,
-                                        marginTop: '4px',
-                                        background: 'var(--panel-bg)',
-                                        border: '1px solid var(--border)',
-                                        borderRadius: '4px',
-                                        padding: '6px',
-                                        zIndex: 100,
-                                        maxHeight: '200px',
-                                        overflowY: 'auto',
-                                        width: '180px',
-                                        boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
-                                    }}
-                                >
-                                    {availableChars.map((char) => (
-                                        <div
+                                <div style={{
+                                    position: 'absolute', top: '100%', left: 0, marginTop: '4px',
+                                    background: 'var(--panel-bg)', border: '1px solid var(--border)',
+                                    borderRadius: '4px', padding: '6px', zIndex: 100,
+                                    maxHeight: '200px', overflowY: 'auto', width: '180px',
+                                    boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+                                }}>
+                                    {availableChars.map(char => (
+                                        <div 
                                             key={char.id}
                                             onClick={() => handleAddStandaloneCombatant(char)}
-                                            style={{
-                                                padding: '4px 6px',
-                                                cursor: 'pointer',
-                                                borderBottom: '1px solid var(--border)',
-                                                fontSize: '0.85rem'
-                                            }}
+                                            style={{ padding: '4px 6px', cursor: 'pointer', borderBottom: '1px solid var(--border)', fontSize: '0.85rem' }}
                                         >
                                             {char.name}
                                         </div>
                                     ))}
-                                    {availableChars.length === 0 && (
-                                        <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>No characters found.</div>
-                                    )}
+                                    {availableChars.length === 0 && <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>No characters found.</div>}
                                 </div>
                             )}
                         </div>
@@ -504,23 +476,13 @@ export function InitiativeTracker({ isStandaloneWidget = false, onClose }: Initi
                 </div>
 
                 {isStandaloneWidget && (
-                    <button
-                        onClick={onClose}
-                        style={{
-                            background: 'transparent',
-                            border: 'none',
-                            color: 'inherit',
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                            fontSize: '1rem',
-                            marginLeft: 'auto'
-                        }}
-                    >
-                        ✖
-                    </button>
+                    <button onClick={onClose} style={{
+                        background: 'transparent', border: 'none', color: 'inherit',
+                        cursor: 'pointer', fontWeight: 'bold', fontSize: '1.2rem', marginLeft: 'auto', padding: '0 8px'
+                    }}>✖</button>
                 )}
             </div>
-
+            
             {combatants.length === 0 ? (
                 <div className="init-tracker__empty">Waiting for rolls...</div>
             ) : (
@@ -548,49 +510,20 @@ export function InitiativeTracker({ isStandaloneWidget = false, onClose }: Initi
         </>
     );
 
-    // ==========================================
-    // STANDALONE FIXED OVERLAY RENDER
-    // ==========================================
     if (isStandaloneWidget) {
-        const posX = storeIdentity.initiativeTrackerOffsetX || 0;
-        const posY = storeIdentity.initiativeTrackerOffsetY || 0;
-        const preset = storeIdentity.initiativeTrackerPreset || 'center-right';
-        const fixedStyle: React.CSSProperties = { position: 'fixed', zIndex: 2000, margin: 0, padding: 0 };
-
-        if (preset.includes('top')) fixedStyle.top = `${posY}px`;
-        if (preset.includes('bottom')) fixedStyle.bottom = `${posY}px`;
-        if (preset.includes('left')) fixedStyle.left = `${posX}px`;
-        if (preset.includes('right')) fixedStyle.right = `${posX}px`;
-
-        if (preset === 'center-left') {
-            fixedStyle.top = `calc(50% + ${posY}px)`;
-            fixedStyle.left = `${posX}px`;
-            fixedStyle.transform = 'translateY(-50%)';
-        }
-        if (preset === 'center-right') {
-            fixedStyle.top = `calc(50% + ${posY}px)`;
-            fixedStyle.right = `${posX}px`;
-            fixedStyle.transform = 'translateY(-50%)';
-        }
-        if (preset === 'top-center') {
-            fixedStyle.top = `${posY}px`;
-            fixedStyle.left = `calc(50% + ${posX}px)`;
-            fixedStyle.transform = 'translateX(-50%)';
-        }
-        if (preset === 'bottom-center') {
-            fixedStyle.bottom = `${posY}px`;
-            fixedStyle.left = `calc(50% + ${posX}px)`;
-            fixedStyle.transform = 'translateX(-50%)';
-        }
-
         return (
-            <div style={fixedStyle} className="init-tracker-wrapper init-tracker-wrapper--standalone">
-                <div
-                    className={`init-tracker init-tracker--${layout}`}
-                    style={{
-                        border: '2px solid var(--border)',
-                        boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
-                        borderRadius: '6px'
+            <div style={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+                <div 
+                    className={`init-tracker init-tracker--${layout}`} 
+                    style={{ 
+                        border: '1px solid var(--border)', 
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
+                        borderRadius: '6px', 
+                        height: '100%', 
+                        width: '100%', 
+                        boxSizing: 'border-box',
+                        display: 'flex',
+                        flexDirection: 'column'
                     }}
                 >
                     {renderTrackerContent(false)}
@@ -599,9 +532,6 @@ export function InitiativeTracker({ isStandaloneWidget = false, onClose }: Initi
         );
     }
 
-    // ==========================================
-    // NATIVE OBR POPOVER RENDER
-    // ==========================================
     return (
         <>
             <div

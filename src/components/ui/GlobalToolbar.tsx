@@ -8,7 +8,6 @@ import { RulesModal } from '../modals/RulesModal';
 import { ItemGeneratorModal } from '../modals/ItemGeneratorModal';
 import { ChangelogModal } from '../modals/ChangelogModal';
 import { InitiativeSettingsModal } from '../modals/InitiativeSettingsModal';
-import { InitiativeTracker } from '../initiative/InitiativeTracker';
 import { isStandaloneMode } from '../../utils/storageAdapter';
 import { useObrReady } from '../../hooks/useObrReady';
 import { setActiveTokenId } from '../../utils/obr';
@@ -24,9 +23,6 @@ export function GlobalToolbar() {
 
     const [localRole, setLocalRole] = useState<string>(isStandaloneMode ? 'GM' : storeRole);
     const [isExpanded, setIsExpanded] = useState<boolean>(true);
-
-    // Standalone Tracker State
-    const [showStandaloneTracker, setShowStandaloneTracker] = useState<boolean>(false);
 
     useEffect(() => {
         if (!isStandaloneMode && OBR.isAvailable) {
@@ -188,9 +184,9 @@ export function GlobalToolbar() {
     };
 
     const handleInitiativeToggle = async () => {
-        // Standalone Mode bypasses OBR entirely and opens our local overlay
+        // Standalone Mode emits a window event so App.tsx can flex the layout
         if (isStandaloneMode) {
-            setShowStandaloneTracker(!showStandaloneTracker);
+            window.dispatchEvent(new Event('toggle-standalone-tracker'));
             return;
         }
 
@@ -254,8 +250,23 @@ export function GlobalToolbar() {
                 className={`global-toolbar__header ${isExpanded ? 'global-toolbar__header--open' : ''}`}
                 onClick={toggleExpanded}
             >
-                <span className={`global-toolbar__caret ${!isExpanded ? 'global-toolbar__caret--closed' : ''}`}>▼</span>
-                TABLE TOOLS & SETTINGS
+                <div className="global-toolbar__header-title">
+                    <span className={`global-toolbar__caret ${!isExpanded ? 'global-toolbar__caret--closed' : ''}`}>
+                        ▼
+                    </span>
+                    TABLE TOOLS & SETTINGS
+                </div>
+
+                {isStandaloneMode && activeTokenId && (
+                    <button
+                        type="button"
+                        className="global-toolbar__btn--back-header"
+                        onClick={(e) => { e.stopPropagation(); handleReturnToMenu(); }}
+                        title="Close sheet and return to file browser"
+                    >
+                        🔙 Back to Menu
+                    </button>
+                )}
             </div>
 
             {isExpanded && (
@@ -279,17 +290,6 @@ export function GlobalToolbar() {
                                 ⚙️
                             </button>
                         </div>
-
-                        {isStandaloneMode && activeTokenId && (
-                            <button
-                                type="button"
-                                className="global-toolbar__btn global-toolbar__btn--back"
-                                onClick={handleReturnToMenu}
-                                title="Close sheet and return to file browser"
-                            >
-                                🔙 Back to Menu
-                            </button>
-                        )}
 
                         {showHomebrewButton && (
                             <button
@@ -343,11 +343,6 @@ export function GlobalToolbar() {
                         </button>
                     </div>
                 </div>
-            )}
-
-            {/* Standalone Tracker rendered directly into the web app when toggled */}
-            {isStandaloneMode && showStandaloneTracker && (
-                <InitiativeTracker isStandaloneWidget={true} onClose={() => setShowStandaloneTracker(false)} />
             )}
 
             {showHomebrewModal && <HomebrewModal onClose={() => setShowHomebrewModal(false)} />}

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useOwlbearSync } from './hooks/useOwlbearSync';
 import { useCharacterStore } from './store/useCharacterStore';
 import { IdentityHeader } from './components/identity/IdentityHeader';
@@ -15,6 +16,7 @@ import { PrintSheet } from './components/print/PrintSheet';
 import { DemoRollModal } from './components/modals/DemoRollModal';
 import { GlobalToolbar } from './components/ui/GlobalToolbar';
 import { Sidebar } from './components/standalone/Sidebar';
+import { InitiativeTracker } from './components/initiative/InitiativeTracker';
 import { isStandaloneMode } from './utils/storageAdapter';
 import './App.css';
 import './style.css';
@@ -28,6 +30,17 @@ function App() {
     const isPrinting = useCharacterStore((state) => state.identity.isPrinting);
     const gmOnlyMatchups = useCharacterStore((state) => state.identity.gmOnlyMatchups);
     const activeTokenId = useCharacterStore((state) => state.tokenId);
+    
+    // Read tracker layout from store to determine placement (Top vs Right)
+    const initLayout = useCharacterStore((state) => state.identity.initiativeTrackerLayout) || 'vertical';
+    const [showStandaloneTracker, setShowStandaloneTracker] = useState(false);
+
+    // Listen for toggle events from the Global Toolbar
+    useEffect(() => {
+        const handleToggle = () => setShowStandaloneTracker((prev) => !prev);
+        window.addEventListener('toggle-standalone-tracker', handleToggle);
+        return () => window.removeEventListener('toggle-standalone-tracker', handleToggle);
+    }, []);
 
     const renderSheetContent = () => {
         if (isNPC && role === 'PLAYER') {
@@ -45,7 +58,7 @@ function App() {
         }
 
         return (
-            <>
+            <div className="sheet-container app-container" style={{ maxWidth: '100%', margin: '0' }}>
                 <IdentityHeader />
                 <DerivedBoard />
 
@@ -69,7 +82,7 @@ function App() {
                 </div>
 
                 <InventoryTable />
-            </>
+            </div>
         );
     };
 
@@ -96,19 +109,37 @@ function App() {
     return (
         <div className="app-layout">
             <Sidebar />
-
+            
             <div className="app-main-content">
-                <div className="sheet-container app-container" style={{ maxWidth: '100%', margin: '0' }}>
-                    <GlobalToolbar />
-
-                    {!activeTokenId ? (
-                        <div className="standalone-empty-state">
-                            <p>👈 Select or create a file in the directory to begin</p>
+                <GlobalToolbar />
+                
+                {!activeTokenId ? (
+                    <div className="standalone-empty-state">
+                        <p>👈 Select or create a file in the directory to begin</p>
+                    </div>
+                ) : (
+                    <div className={`standalone-layout-wrapper ${showStandaloneTracker && initLayout === 'vertical' ? 'standalone-layout-wrapper--row' : 'standalone-layout-wrapper--col'}`}>
+                        
+                        {/* Horizontal Tracker Renders Above Sheet */}
+                        {showStandaloneTracker && initLayout === 'horizontal' && (
+                            <div className="standalone-layout-tracker--horizontal">
+                                <InitiativeTracker isStandaloneWidget={true} onClose={() => setShowStandaloneTracker(false)} />
+                            </div>
+                        )}
+                        
+                        <div className="standalone-layout-sheet">
+                            {renderSheetContent()}
                         </div>
-                    ) : (
-                        renderSheetContent()
-                    )}
-                </div>
+
+                        {/* Vertical Tracker Renders Right of Sheet */}
+                        {showStandaloneTracker && initLayout === 'vertical' && (
+                            <div className="standalone-layout-tracker--vertical">
+                                <InitiativeTracker isStandaloneWidget={true} onClose={() => setShowStandaloneTracker(false)} />
+                            </div>
+                        )}
+
+                    </div>
+                )}
 
                 <DemoRollModal />
                 {isPrinting && <PrintSheet />}

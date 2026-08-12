@@ -11,7 +11,7 @@
 
 .app-main-content {
     flex: 1;
-    overflow-y: auto;
+    overflow: hidden; /* Changed to hidden to let inner containers scroll independently */
     padding: 10px;
     display: flex;
     flex-direction: column;
@@ -28,4 +28,42 @@
     font-weight: bold;
     text-transform: uppercase;
     opacity: 0.5;
+}
+
+/* Standalone Tracker Flex Layouts */
+.standalone-layout-wrapper {
+    display: flex;
+    flex: 1;
+    gap: 12px;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.standalone-layout-wrapper--row {
+    flex-direction: row;
+}
+
+.standalone-layout-wrapper--col {
+    flex-direction: column;
+}
+
+.standalone-layout-sheet {
+    flex: 1;
+    overflow-y: auto;
+    min-width: 0;
+    padding-right: 4px; /* Room for scrollbar */
+}
+
+.standalone-layout-tracker--vertical {
+    width: 320px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.standalone-layout-tracker--horizontal {
+    height: 180px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
 }
