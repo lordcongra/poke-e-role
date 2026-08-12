@@ -11,8 +11,8 @@
     align-items: center;
     padding: 8px 12px;
     background-color: var(--panel-header-bg, #1a1a1a);
-    color: #c62828; /* Perfectly matched to your application's primary dark red */
-    font-weight: 700;
+    color: var(--primary); /* Dynamically matches Light/Dark modes perfectly! */
+    font-weight: bold;
     font-size: 0.9rem;
     text-transform: uppercase;
     cursor: pointer;
@@ -30,7 +30,7 @@
 
 .global-toolbar__caret {
     margin-right: 8px;
-    color: #c62828; /* Perfectly matched to your application's primary dark red */
+    color: var(--primary); /* Inherits the dynamic theme color */
     font-size: 0.8rem;
     transition: transform 0.2s ease;
 }
@@ -73,7 +73,9 @@
     border-radius: 4px;
     border: 1px solid transparent;
     cursor: pointer;
-    transition: background-color 0.15s ease, transform 0.1s ease;
+    transition:
+        background-color 0.15s ease,
+        transform 0.1s ease;
     white-space: nowrap;
     width: 100%;
     box-sizing: border-box;
