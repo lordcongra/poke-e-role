@@ -206,3 +206,26 @@
     margin: 10px;
     border-radius: 6px;
 }
+
+.sidebar__backup-row {
+    margin-top: 8px;
+    gap: 4px;
+}
+
+.sidebar__btn--backup {
+    background-color: #2e7d32;
+    color: white;
+    flex: 1;
+    padding: 4px;
+}
+
+.sidebar__btn--restore {
+    background-color: #1565c0;
+    color: white;
+    flex: 1;
+    padding: 4px;
+}
+
+.sidebar__hidden-input {
+    display: none;
+}

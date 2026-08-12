@@ -210,7 +210,7 @@ export function IdentityHeader() {
     };
 
     const headerElements = (
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div className="identity-header__actions-wrapper">
             {(isStandaloneMode || (isGm && OBR.isAvailable)) && (
                 <button
                     type="button"
@@ -263,8 +263,7 @@ export function IdentityHeader() {
                                 Close
                             </button>
                             <button
-                                className="action-button identity-header__modal-btn"
-                                style={{ backgroundColor: '#1565c0', borderColor: '#1565c0', color: 'white' }}
+                                className="action-button identity-header__modal-btn identity-header__modal-btn--broadcast"
                                 onClick={() => {
                                     if (typeof modalConfig.content === 'string') {
                                         broadcastInfo(modalConfig.title, modalConfig.content);
@@ -284,48 +283,33 @@ export function IdentityHeader() {
                 <div className="identity-header__modal-overlay identity-header__modal-overlay--high-z">
                     <div className="identity-header__modal-content">
                         <h3 className="identity-header__modal-title">🖼️ Update Artwork</h3>
-                        <p className="identity-header__modal-text" style={{ marginBottom: '15px' }}>
+                        <p className="identity-header__modal-text identity-header__picker-desc">
                             Choose how you'd like to supply the image for this character.
                         </p>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div className="identity-header__picker-options">
                             <button
-                                className="action-button action-button--dark"
-                                style={{
-                                    padding: '10px',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center'
-                                }}
+                                className="action-button action-button--dark identity-header__picker-btn"
                                 onClick={() => imageInputRef.current?.click()}
                             >
-                                <span style={{ fontSize: '1.1rem', marginBottom: '4px' }}>📁 Upload Local File</span>
-                                <span style={{ fontSize: '0.75rem', fontWeight: 'normal', opacity: 0.8 }}>
+                                <span className="identity-header__picker-btn-title">📁 Upload Local File</span>
+                                <span className="identity-header__picker-btn-sub">
                                     (Recommended - Saved safely to your browser's database)
                                 </span>
                             </button>
 
                             <button
-                                className="action-button"
-                                style={{
-                                    backgroundColor: '#1976d2',
-                                    color: 'white',
-                                    border: 'none',
-                                    padding: '10px',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center'
-                                }}
+                                className="action-button identity-header__picker-btn identity-header__picker-btn--web"
                                 onClick={handleStandaloneUrl}
                             >
-                                <span style={{ fontSize: '1.1rem', marginBottom: '4px' }}>🌐 Use Web URL</span>
-                                <span style={{ fontSize: '0.75rem', fontWeight: 'normal', opacity: 0.8 }}>
+                                <span className="identity-header__picker-btn-title">🌐 Use Web URL</span>
+                                <span className="identity-header__picker-btn-sub">
                                     (Lightweight - Image breaks if the web link dies)
                                 </span>
                             </button>
                         </div>
 
-                        <hr className="identity-header__modal-divider" style={{ margin: '15px 0' }} />
+                        <hr className="identity-header__modal-divider identity-header__picker-divider" />
 
                         <button
                             className="action-button action-button--dark identity-header__modal-close-btn"
@@ -343,7 +327,7 @@ export function IdentityHeader() {
                 ref={imageInputRef}
                 onChange={handleStandaloneFile}
                 accept="image/*"
-                style={{ display: 'none' }}
+                className="identity-header__file-input"
             />
         </CollapsingSection>
     );

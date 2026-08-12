@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { storageAdapter } from '../../utils/storageAdapter';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { setActiveTokenId } from '../../utils/obr';
@@ -21,6 +21,8 @@ export function Sidebar() {
     const [newName, setNewName] = useState<string>('');
     const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
 
+    const restoreInputRef = useRef<HTMLInputElement>(null);
+
     useEffect(() => {
         loadData();
 
@@ -30,6 +32,7 @@ export function Sidebar() {
         // Foolproof Interceptor: Catches any direct native saves to localStorage
         const originalSetItem = localStorage.setItem;
         localStorage.setItem = function (key, value) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             originalSetItem.apply(this, [key, value] as any);
             if (key.startsWith('pkr_char_') || key === 'pkr_folders') {
                 window.dispatchEvent(new Event('pkr-local-data-changed'));
@@ -73,7 +76,9 @@ export function Sidebar() {
             try {
                 const data = await fetchPokemonData(String(meta['species']));
                 if (data) store.refreshSpeciesData(data as Record<string, unknown>);
-            } catch (error) {}
+            } catch (error) {
+                // Ignore fetch errors
+            }
         } else {
             store.applyLearnset({ Moves: [] });
         }
@@ -131,6 +136,55 @@ export function Sidebar() {
                 setExpandedNodes((prev) => ({ ...prev, [targetParentId]: true }));
             }
         }
+    };
+
+    // --- MASTER BACKUP LOGIC ---
+    const handleExportMasterBackup = async () => {
+        try {
+            const chars = await storageAdapter.getLocalCharacters();
+            const flds = await storageAdapter.getFolders();
+            const backup = { type: 'pokerole-master-backup', version: 1, characters: chars, folders: flds };
+
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `PokeRole_Master_Backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('[Sidebar] Failed to create master backup', error);
+            alert('Failed to generate Master Backup.');
+        }
+    };
+
+    const handleRestoreMasterBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const data = JSON.parse(event.target?.result as string);
+                if (data.type === 'pokerole-master-backup') {
+                    if (!window.confirm('WARNING: This will OVERWRITE your entire local directory! Proceed?')) return;
+
+                    localStorage.setItem('pkr_folders', JSON.stringify(data.folders || []));
+                    for (const char of data.characters || []) {
+                        localStorage.setItem(`pkr_char_${char.id}`, JSON.stringify(char.metadata));
+                    }
+                    window.dispatchEvent(new Event('pkr-local-data-changed'));
+                    alert('Master Backup Restored Successfully!');
+                } else {
+                    alert('Invalid Master Backup file.');
+                }
+            } catch (err) {
+                alert('Failed to read backup file. It may be corrupted.');
+            }
+            if (restoreInputRef.current) restoreInputRef.current.value = '';
+        };
+        reader.readAsText(file);
     };
 
     const renderTree = (parentId: string | null, depth = 0) => {
@@ -216,6 +270,29 @@ export function Sidebar() {
                     <button className="sidebar__btn sidebar__btn--char" onClick={() => handleCreate('character')}>
                         📄 Add Sheet
                     </button>
+                </div>
+                <div className="sidebar__create-row sidebar__backup-row">
+                    <button
+                        className="sidebar__btn sidebar__btn--backup"
+                        onClick={handleExportMasterBackup}
+                        title="Export all folders and characters"
+                    >
+                        💾 Backup
+                    </button>
+                    <button
+                        className="sidebar__btn sidebar__btn--restore"
+                        onClick={() => restoreInputRef.current?.click()}
+                        title="Restore from a Master Backup file"
+                    >
+                        📂 Restore
+                    </button>
+                    <input
+                        type="file"
+                        ref={restoreInputRef}
+                        onChange={handleRestoreMasterBackup}
+                        accept=".json"
+                        className="sidebar__hidden-input"
+                    />
                 </div>
             </div>
 

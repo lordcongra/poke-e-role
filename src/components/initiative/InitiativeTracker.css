@@ -421,3 +421,34 @@ body {
 .init-tracker__modal-item:hover {
     background: var(--row-even);
 }
+
+.init-tracker__list-item {
+    display: flex;
+    align-items: center;
+}
+
+.init-tracker__standalone-wrapper {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    position: relative;
+}
+
+.init-tracker__standalone-panel {
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    height: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+}
+
+.init-tracker__ghost-spacer {
+    height: 300px;
+    width: 260px;
+    flex-shrink: 0;
+}

@@ -17,9 +17,22 @@
         print-color-adjust: exact !important;
     }
 
-    /* Hide the entire standard VTT application */
-    #root > *:not(.print-sheet-wrapper) {
+    /* Hide standard UI in both OBR & Standalone Modes */
+    .sidebar,
+    .global-toolbar,
+    .standalone-right-sidebar,
+    .standalone-layout-wrapper,
+    .standalone-empty-state,
+    .sheet-container {
         display: none !important;
+    }
+
+    /* Force the layout wrappers to act transparently for the print sheet */
+    .app-layout,
+    .app-main-content {
+        display: block !important;
+        height: auto !important;
+        overflow: visible !important;
     }
 
     .print-sheet-wrapper {

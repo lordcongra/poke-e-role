@@ -9,6 +9,7 @@ import { flattenStateToMetadata } from '../../utils/stateMapper';
 import { useObrReady } from '../../hooks/useObrReady';
 import { IdentityToggles } from './IdentityToggles';
 import { PrintSettingsModal } from '../modals/PrintSettingsModal';
+import { isStandaloneMode } from '../../utils/storageAdapter';
 
 interface IdentityControlsProps {
     onOpenTrackerSettings: () => void;
@@ -30,7 +31,6 @@ export function IdentityControls({ onOpenTrackerSettings }: IdentityControlsProp
         setIsRefreshing(true);
         try {
             await loadLocalDataset();
-
             const store = useCharacterStore.getState();
 
             for (const move of store.moves) {
@@ -46,10 +46,7 @@ export function IdentityControls({ onOpenTrackerSettings }: IdentityControlsProp
             }
 
             if (identityStore.ability) {
-                const abilityData = await fetchAbilityData(identityStore.ability);
-                if (abilityData && (abilityData.Description || abilityData.Effect)) {
-                    console.log('[IdentityControls] Ability data validated.');
-                }
+                await fetchAbilityData(identityStore.ability);
             }
         } catch (error) {
             console.error('[IdentityControls] Refresh failed:', error);
@@ -60,6 +57,29 @@ export function IdentityControls({ onOpenTrackerSettings }: IdentityControlsProp
 
     const handleExport = async () => {
         const state = useCharacterStore.getState();
+
+        if (isStandaloneMode) {
+            try {
+                const exportData = flattenStateToMetadata(state);
+                const dataString = JSON.stringify(exportData, null, 2);
+
+                const blob = new Blob([dataString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const linkElement = document.createElement('a');
+                const name = state.identity.nickname || state.identity.species || 'character';
+                linkElement.href = url;
+                linkElement.download = `${name.replace(/\s+/g, '_')}_pokerole.json`;
+                document.body.appendChild(linkElement);
+                linkElement.click();
+                document.body.removeChild(linkElement);
+                URL.revokeObjectURL(url);
+                return;
+            } catch (error) {
+                console.error('[IdentityControls] Standalone Export failed:', error);
+                return;
+            }
+        }
+
         if (!state.tokenId || !OBR.isAvailable || !isObrReady) {
             if (OBR.isAvailable && isObrReady) OBR.notification.show('Please select a token to export.', 'WARNING');
             return;
@@ -97,6 +117,7 @@ export function IdentityControls({ onOpenTrackerSettings }: IdentityControlsProp
                 setImportData(imported);
             } catch (error) {
                 if (OBR.isAvailable && isObrReady) OBR.notification.show('Invalid JSON file.', 'ERROR');
+                else alert('Invalid JSON file.');
             }
             if (fileInputReference.current) fileInputReference.current.value = '';
         };
@@ -116,7 +137,6 @@ export function IdentityControls({ onOpenTrackerSettings }: IdentityControlsProp
                 saveToOwlbear(importData);
             } else {
                 useCharacterStore.setState(importData as unknown as CharacterState);
-
                 const fullState = useCharacterStore.getState();
                 const metaToSave = flattenStateToMetadata(fullState);
                 saveToOwlbear(metaToSave);
@@ -124,6 +144,7 @@ export function IdentityControls({ onOpenTrackerSettings }: IdentityControlsProp
         } catch (error) {
             console.error('[IdentityControls] Failed to import character data:', error);
             if (OBR.isAvailable && isObrReady) OBR.notification.show('Failed to import data.', 'ERROR');
+            else alert('Failed to import data.');
         } finally {
             setImportData(null);
         }
@@ -136,10 +157,10 @@ export function IdentityControls({ onOpenTrackerSettings }: IdentityControlsProp
                     type="button"
                     onClick={handleRefresh}
                     disabled={isRefreshing}
-                    className="action-button action-button--dark identity-header__btn"
+                    className="action-button action-button--dark identity-header__btn identity-header__btn--refresh"
                     title="Refresh Data"
                 >
-                    {isRefreshing ? '⏳ Refreshing...' : '↻ Refresh'}
+                    {isRefreshing ? '⏳' : '↻'}
                 </button>
 
                 <button
@@ -147,7 +168,6 @@ export function IdentityControls({ onOpenTrackerSettings }: IdentityControlsProp
                     onClick={addCustomInfo}
                     className="action-button identity-header__btn identity-header__btn--custom-field"
                     title="Add Custom Field"
-                    style={{ flex: 1 }}
                 >
                     ➕ Custom Field
                 </button>
@@ -186,7 +206,7 @@ export function IdentityControls({ onOpenTrackerSettings }: IdentityControlsProp
                 </button>
             </div>
 
-            <IdentityToggles onOpenTrackerSettings={onOpenTrackerSettings} />
+            {!isStandaloneMode && <IdentityToggles onOpenTrackerSettings={onOpenTrackerSettings} />}
 
             {importData && (
                 <div className="identity-header__modal-overlay">

@@ -22,6 +22,27 @@
     margin: 0;
 }
 
+/* === NEW ALIGNMENT CLASSES === */
+.derived-board__group-left {
+    display: flex;
+    gap: 10px;
+    /* Spans exactly two standard columns plus the 10px gap between them */
+    flex: 0 0 calc(((100% - 20px) / 3) * 2 + 10px);
+    min-width: 0;
+}
+
+.derived-board__group-left--full {
+    flex: 1 1 100%;
+}
+
+.derived-board__group-right {
+    display: flex;
+    gap: 10px;
+    /* Spans exactly one standard column */
+    flex: 0 0 calc((100% - 20px) / 3);
+    min-width: 0;
+}
+
 .derived-board__box {
     flex: 1;
     padding: 0;
@@ -202,6 +223,12 @@
 /* Mobile overrides */
 @media (max-width: 768px) {
     .derived-board__health-row {
+        flex-direction: column;
+    }
+
+    .derived-board__group-left,
+    .derived-board__group-right {
+        flex: 1 1 auto;
         flex-direction: column;
     }
 }

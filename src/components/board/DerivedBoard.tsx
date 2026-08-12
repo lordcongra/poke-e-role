@@ -162,73 +162,86 @@ export function DerivedBoard() {
                 </div>
 
                 <div className="derived-board__health-row">
-                    <div className="sheet-panel health-section__box derived-board__box derived-board__box--large">
-                        <div className="derived-board__box-header derived-board__box-header--dark derived-board__box-header--small">
-                            INITIATIVE{' '}
-                            <TooltipIcon
-                                onClick={() =>
-                                    setTooltipInfo({ title: 'Initiative', desc: 'Initiative: Dexterity + Alert' })
-                                }
-                            />
+                    {/* Left Group (Matches width of HP + Will) */}
+                    <div
+                        className={`derived-board__group-left ${mode !== 'Pokémon' ? 'derived-board__group-left--full' : ''}`}
+                    >
+                        <div className="sheet-panel health-section__box derived-board__box derived-board__box--large">
+                            <div className="derived-board__box-header derived-board__box-header--dark derived-board__box-header--small">
+                                INITIATIVE{' '}
+                                <TooltipIcon
+                                    onClick={() =>
+                                        setTooltipInfo({ title: 'Initiative', desc: 'Initiative: Dexterity + Alert' })
+                                    }
+                                />
+                            </div>
+                            <div className="derived-board__box-content derived-board__box-content--dark-text">
+                                1d6 + {initiative}
+                                <button
+                                    className="action-button action-button--dark derived-board__roll-btn"
+                                    onClick={() =>
+                                        rollDicePlus(`1d6+${initiative}`, 'Initiative', 'init', String(initiative))
+                                    }
+                                >
+                                    🎲
+                                </button>
+                            </div>
                         </div>
-                        <div className="derived-board__box-content derived-board__box-content--dark-text">
-                            1d6 + {initiative}
-                            <button
-                                className="action-button action-button--dark derived-board__roll-btn"
-                                onClick={() =>
-                                    rollDicePlus(`1d6+${initiative}`, 'Initiative', 'init', String(initiative))
-                                }
-                            >
-                                🎲
-                            </button>
+                        <div className="sheet-panel health-section__box derived-board__box">
+                            <div className="derived-board__box-header derived-board__box-header--dark derived-board__box-header--small">
+                                EVADE{' '}
+                                <TooltipIcon
+                                    onClick={() =>
+                                        setTooltipInfo({ title: 'Evade', desc: 'Evade: Dexterity + Evasion' })
+                                    }
+                                />
+                            </div>
+                            <div className="derived-board__box-content derived-board__box-content--dark-text">
+                                {dexTotal + calculateSkillTotal(Skill.EVASION, fullState, inventoryModifiers)}
+                            </div>
                         </div>
-                    </div>
-                    <div className="sheet-panel health-section__box derived-board__box">
-                        <div className="derived-board__box-header derived-board__box-header--dark derived-board__box-header--small">
-                            EVADE{' '}
-                            <TooltipIcon
-                                onClick={() => setTooltipInfo({ title: 'Evade', desc: 'Evade: Dexterity + Evasion' })}
-                            />
-                        </div>
-                        <div className="derived-board__box-content derived-board__box-content--dark-text">
-                            {dexTotal + calculateSkillTotal(Skill.EVASION, fullState, inventoryModifiers)}
-                        </div>
+
+                        {mode === 'Pokémon' && (
+                            <>
+                                <div className="sheet-panel health-section__box derived-board__box">
+                                    <div className="derived-board__box-header derived-board__box-header--dark derived-board__box-header--small">
+                                        CLASH(P){' '}
+                                        <TooltipIcon
+                                            onClick={() =>
+                                                setTooltipInfo({
+                                                    title: 'Physical Clash',
+                                                    desc: 'Physical Clash: Strength + Clash'
+                                                })
+                                            }
+                                        />
+                                    </div>
+                                    <div className="derived-board__box-content derived-board__box-content--dark-text">
+                                        {clashPhysical}
+                                    </div>
+                                </div>
+                                <div className="sheet-panel health-section__box derived-board__box">
+                                    <div className="derived-board__box-header derived-board__box-header--dark derived-board__box-header--small">
+                                        CLASH(S){' '}
+                                        <TooltipIcon
+                                            onClick={() =>
+                                                setTooltipInfo({
+                                                    title: 'Special Clash',
+                                                    desc: 'Special Clash: Special + Clash'
+                                                })
+                                            }
+                                        />
+                                    </div>
+                                    <div className="derived-board__box-content derived-board__box-content--dark-text">
+                                        {clashSpecial}
+                                    </div>
+                                </div>
+                            </>
+                        )}
                     </div>
 
+                    {/* Right Group (Matches width of Status / Timers) */}
                     {mode === 'Pokémon' && (
-                        <>
-                            <div className="sheet-panel health-section__box derived-board__box">
-                                <div className="derived-board__box-header derived-board__box-header--dark derived-board__box-header--small">
-                                    CLASH(P){' '}
-                                    <TooltipIcon
-                                        onClick={() =>
-                                            setTooltipInfo({
-                                                title: 'Physical Clash',
-                                                desc: 'Physical Clash: Strength + Clash'
-                                            })
-                                        }
-                                    />
-                                </div>
-                                <div className="derived-board__box-content derived-board__box-content--dark-text">
-                                    {clashPhysical}
-                                </div>
-                            </div>
-                            <div className="sheet-panel health-section__box derived-board__box">
-                                <div className="derived-board__box-header derived-board__box-header--dark derived-board__box-header--small">
-                                    CLASH(S){' '}
-                                    <TooltipIcon
-                                        onClick={() =>
-                                            setTooltipInfo({
-                                                title: 'Special Clash',
-                                                desc: 'Special Clash: Special + Clash'
-                                            })
-                                        }
-                                    />
-                                </div>
-                                <div className="derived-board__box-content derived-board__box-content--dark-text">
-                                    {clashSpecial}
-                                </div>
-                            </div>
+                        <div className="derived-board__group-right">
                             <div className="sheet-panel health-section__box derived-board__box derived-board__box--yellow-border">
                                 <div className="derived-board__box-header derived-board__box-header--yellow derived-board__box-header--small">
                                     HAPPY
@@ -255,7 +268,7 @@ export function DerivedBoard() {
                                     />
                                 </div>
                             </div>
-                        </>
+                        </div>
                     )}
                 </div>
             </div>

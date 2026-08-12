@@ -887,7 +887,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                     {combatants.map((c, index) => (
                         <div
                             id={isGhost ? undefined : `combatant-${c.id}`}
-                            style={{ display: 'flex', alignItems: 'center' }}
+                            className="init-tracker__list-item"
                             key={c.id}
                         >
                             <CombatantCard
@@ -964,37 +964,20 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
             )}
 
             {/* In-flow spacer inside ghost container to expand OBR popover when modal is active */}
-            {isGhost && showAddMenu && <div style={{ height: '300px', width: '260px', flexShrink: 0 }} />}
+            {isGhost && showAddMenu && <div className="init-tracker__ghost-spacer" />}
         </>
     );
 
     if (isStandaloneWidget) {
         return (
             <div
-                style={{
-                    height: '100%',
-                    width: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    minHeight: 0,
-                    overflow: 'hidden',
-                    position: 'relative'
-                }}
+                className="init-tracker__standalone-wrapper"
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={handleDrop}
             >
                 <div
-                    className={`init-tracker init-tracker--${layout}`}
-                    style={{
-                        border: '1px solid var(--border)',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                        borderRadius: '6px',
-                        height: '100%',
-                        width: '100%',
-                        boxSizing: 'border-box',
-                        display: 'flex',
-                        flexDirection: layout === 'horizontal' ? 'row' : 'column'
-                    }}
+                    className={`init-tracker init-tracker--${layout} init-tracker__standalone-panel`}
+                    style={{ flexDirection: layout === 'horizontal' ? 'row' : 'column' }}
                 >
                     {renderTrackerContent(false)}
                 </div>
