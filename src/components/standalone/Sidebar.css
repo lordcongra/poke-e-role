@@ -1,0 +1,206 @@
+.sidebar {
+    width: 280px;
+    height: 100vh;
+    background-color: var(--panel-bg, #1a1a1a);
+    border-right: 1px solid var(--border, #333);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    color: var(--text-main, #fff);
+    transition: width 0.2s ease;
+}
+
+.sidebar--collapsed {
+    width: 40px;
+    align-items: center;
+    padding-top: 10px;
+}
+
+.sidebar__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background-color: var(--panel-header-bg, #111);
+    border-bottom: 1px solid var(--border, #333);
+}
+
+.sidebar__title {
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--primary, #c62828);
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.sidebar__toggle-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted, #aaa);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.sidebar__toggle-btn:hover {
+    color: var(--primary, #c62828);
+}
+
+.sidebar__create-panel {
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    gap: 8px;
+    border-bottom: 1px solid var(--border, #333);
+}
+
+.sidebar__create-row {
+    display: flex;
+    gap: 6px;
+    justify-content: space-between;
+}
+
+.sidebar__input {
+    flex: 1;
+    padding: 6px 8px;
+    background: var(--input-bg, #222);
+    border: 1px solid var(--border, #444);
+    color: var(--text-main, #fff);
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.sidebar__input:focus {
+    outline: none;
+    border-color: var(--primary, #c62828);
+}
+
+.sidebar__btn {
+    width: 120px;
+    flex-shrink: 0;
+    padding: 6px 0;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: filter 0.2s;
+    color: white;
+}
+
+.sidebar__btn:hover {
+    filter: brightness(1.2);
+}
+
+.sidebar__btn--folder {
+    background-color: var(--dark, #555);
+}
+
+.sidebar__btn--char {
+    background-color: var(--primary, #c62828);
+}
+
+.sidebar__tree {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+}
+
+.sidebar__node {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Dynamically Alternate Background Colors for Files */
+.sidebar__node:nth-child(odd) > .sidebar__item {
+    background-color: var(--row-odd, rgba(255,255,255,0.02));
+}
+
+.sidebar__node:nth-child(even) > .sidebar__item {
+    background-color: var(--row-even, rgba(0,0,0,0.08));
+}
+
+.sidebar__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: filter 0.1s;
+}
+
+.sidebar__item:hover {
+    filter: brightness(1.15); /* Brightens whatever the current row shade is */
+}
+
+.sidebar__item--active {
+    background-color: rgba(198, 40, 40, 0.15) !important; /* Force override for active item */
+    border-left: 3px solid var(--primary, #c62828);
+}
+
+.sidebar__item-content {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+
+.sidebar__caret {
+    font-size: 0.6rem;
+    color: var(--text-muted, #888);
+    width: 12px;
+    text-align: center;
+}
+
+.sidebar__caret-empty {
+    width: 12px;
+}
+
+.sidebar__item-icon {
+    font-size: 1rem;
+}
+
+.sidebar__item-name {
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar__delete-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted, #888);
+    font-size: 0.9rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.sidebar__item:hover .sidebar__delete-btn {
+    opacity: 1;
+}
+
+.sidebar__delete-btn:hover {
+    transform: scale(1.2);
+}
+
+.sidebar__empty {
+    text-align: center;
+    color: var(--text-muted, #888);
+    font-size: 0.85rem;
+    padding: 20px;
+}
+
+.sidebar__dropzone-root {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-muted, #555);
+    font-size: 0.8rem;
+    font-style: italic;
+    border: 2px dashed transparent;
+    margin: 10px;
+    border-radius: 6px;
+}

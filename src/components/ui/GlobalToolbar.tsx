@@ -237,7 +237,9 @@ export function GlobalToolbar() {
                 className={`global-toolbar__header ${isExpanded ? 'global-toolbar__header--open' : ''}`}
                 onClick={toggleExpanded}
             >
-                <span className={`global-toolbar__caret ${!isExpanded ? 'global-toolbar__caret--closed' : ''}`}>▼</span>
+                <span className={`global-toolbar__caret ${!isExpanded ? 'global-toolbar__caret--closed' : ''}`}>
+                    ▼
+                </span>
                 TABLE TOOLS & SETTINGS
             </div>
 

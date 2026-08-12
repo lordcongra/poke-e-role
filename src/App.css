@@ -1,25 +1,31 @@
-.app-gm-lock {
-    text-align: center;
-    padding-top: 100px;
-    color: var(--primary);
-    font-family: sans-serif;
+/* Add these new classes to the bottom of App.css */
+
+.app-layout {
+    display: flex;
+    flex-direction: row;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background-color: var(--bg);
 }
 
-.app-gm-lock__icon {
-    font-size: 2rem;
-    margin-bottom: 10px;
-}
-
-.app-gm-lock__content {
-    margin-top: 40px;
-    max-width: 350px;
-    margin-left: auto;
-    margin-right: auto;
-    text-align: left;
-}
-
-.app-container {
+.app-main-content {
+    flex: 1;
+    overflow-y: auto;
     padding: 10px;
-    max-width: 900px;
-    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.standalone-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    opacity: 0.5;
 }
