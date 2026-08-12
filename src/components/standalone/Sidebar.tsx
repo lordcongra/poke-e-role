@@ -17,7 +17,7 @@ export function Sidebar() {
     const activeTokenId = useCharacterStore((state) => state.tokenId);
     const [items, setItems] = useState<TreeItem[]>([]);
     const [isCollapsed, setIsCollapsed] = useState(false);
-    
+
     const [newName, setNewName] = useState<string>('');
     const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
 
@@ -29,7 +29,7 @@ export function Sidebar() {
 
         // Foolproof Interceptor: Catches any direct native saves to localStorage
         const originalSetItem = localStorage.setItem;
-        localStorage.setItem = function(key, value) {
+        localStorage.setItem = function (key, value) {
             originalSetItem.apply(this, [key, value] as any);
             if (key.startsWith('pkr_char_') || key === 'pkr_folders') {
                 window.dispatchEvent(new Event('pkr-local-data-changed'));
@@ -46,10 +46,16 @@ export function Sidebar() {
         try {
             const chars = await storageAdapter.getLocalCharacters();
             const flds = await storageAdapter.getFolders();
-            
+
             const combined: TreeItem[] = [
-                ...flds.map(f => ({ id: f.id, name: f.name, parentId: f.parentId, type: 'folder' as const })),
-                ...chars.map(c => ({ id: c.id, name: c.name, parentId: c.parentId, type: 'character' as const, meta: c.metadata }))
+                ...flds.map((f) => ({ id: f.id, name: f.name, parentId: f.parentId, type: 'folder' as const })),
+                ...chars.map((c) => ({
+                    id: c.id,
+                    name: c.name,
+                    parentId: c.parentId,
+                    type: 'character' as const,
+                    meta: c.metadata
+                }))
             ];
             setItems(combined);
         } catch (error) {
@@ -93,7 +99,7 @@ export function Sidebar() {
         if (window.confirm(`Delete ${item.type} "${item.name}"? (Nested items will be moved to root)`)) {
             if (item.type === 'folder') await storageAdapter.deleteFolder(item.id);
             else await storageAdapter.deleteLocalCharacter(item.id);
-            
+
             if (activeTokenId === item.id) {
                 useCharacterStore.setState({ tokenId: null });
                 setActiveTokenId(null);
@@ -103,7 +109,7 @@ export function Sidebar() {
 
     const toggleExpand = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
-        setExpandedNodes(prev => ({ ...prev, [id]: !prev[id] }));
+        setExpandedNodes((prev) => ({ ...prev, [id]: !prev[id] }));
     };
 
     const handleDragStart = (e: React.DragEvent, item: TreeItem) => {
@@ -116,28 +122,28 @@ export function Sidebar() {
         e.stopPropagation();
         const itemId = e.dataTransfer.getData('itemId');
         const itemType = e.dataTransfer.getData('itemType');
-        
+
         if (itemId && itemId !== targetParentId) {
             if (itemType === 'folder') await storageAdapter.moveFolder(itemId, targetParentId);
             else await storageAdapter.moveItem(itemId, targetParentId);
-            
+
             if (targetParentId) {
-                setExpandedNodes(prev => ({ ...prev, [targetParentId]: true }));
+                setExpandedNodes((prev) => ({ ...prev, [targetParentId]: true }));
             }
         }
     };
 
     const renderTree = (parentId: string | null, depth = 0) => {
-        const children = items.filter(i => i.parentId === parentId);
+        const children = items.filter((i) => i.parentId === parentId);
         if (children.length === 0) return null;
 
-        return children.map(item => {
-            const hasChildren = items.some(i => i.parentId === item.id);
+        return children.map((item) => {
+            const hasChildren = items.some((i) => i.parentId === item.id);
             const isExpanded = expandedNodes[item.id];
 
             return (
                 <div key={item.id} className="sidebar__node">
-                    <div 
+                    <div
                         className={`sidebar__item ${activeTokenId === item.id ? 'sidebar__item--active' : ''}`}
                         style={{ paddingLeft: `${depth * 16 + 8}px` }}
                         draggable
@@ -146,7 +152,7 @@ export function Sidebar() {
                         onDrop={(e) => handleDrop(e, item.id)}
                         onClick={() => {
                             if (item.type === 'character') handleSelectCharacter(item.id, item.meta!);
-                            else setExpandedNodes(prev => ({ ...prev, [item.id]: !prev[item.id] }));
+                            else setExpandedNodes((prev) => ({ ...prev, [item.id]: !prev[item.id] }));
                         }}
                     >
                         <div className="sidebar__item-content">
@@ -154,12 +160,16 @@ export function Sidebar() {
                                 <span className="sidebar__caret" onClick={(e) => toggleExpand(e, item.id)}>
                                     {isExpanded ? '▼' : '▶'}
                                 </span>
-                            ) : <span className="sidebar__caret-empty" />}
-                            
+                            ) : (
+                                <span className="sidebar__caret-empty" />
+                            )}
+
                             <span className="sidebar__item-icon">{item.type === 'folder' ? '📁' : '📄'}</span>
                             <span className="sidebar__item-name">{item.name}</span>
                         </div>
-                        <button className="sidebar__delete-btn" onClick={(e) => handleDelete(e, item)}>🗑️</button>
+                        <button className="sidebar__delete-btn" onClick={(e) => handleDelete(e, item)}>
+                            🗑️
+                        </button>
                     </div>
                     {isExpanded && renderTree(item.id, depth + 1)}
                 </div>
@@ -170,7 +180,9 @@ export function Sidebar() {
     if (isCollapsed) {
         return (
             <div className="sidebar sidebar--collapsed">
-                <button className="sidebar__toggle-btn" onClick={() => setIsCollapsed(false)}>☰</button>
+                <button className="sidebar__toggle-btn" onClick={() => setIsCollapsed(false)}>
+                    ☰
+                </button>
             </div>
         );
     }
@@ -179,7 +191,9 @@ export function Sidebar() {
         <div className="sidebar">
             <div className="sidebar__header">
                 <h2 className="sidebar__title">Directory</h2>
-                <button className="sidebar__toggle-btn" onClick={() => setIsCollapsed(true)}>◀</button>
+                <button className="sidebar__toggle-btn" onClick={() => setIsCollapsed(true)}>
+                    ◀
+                </button>
             </div>
 
             <div className="sidebar__create-panel">
@@ -205,16 +219,10 @@ export function Sidebar() {
                 </div>
             </div>
 
-            <div 
-                className="sidebar__tree"
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => handleDrop(e, null)}
-            >
+            <div className="sidebar__tree" onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleDrop(e, null)}>
                 {renderTree(null, 0)}
-                
-                {items.length === 0 && (
-                    <p className="sidebar__empty">Directory is empty. Create a file above!</p>
-                )}
+
+                {items.length === 0 && <p className="sidebar__empty">Directory is empty. Create a file above!</p>}
                 <div className="sidebar__dropzone-root">Drop here to move to Root</div>
             </div>
         </div>

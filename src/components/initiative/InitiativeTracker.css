@@ -32,6 +32,7 @@ body {
     display: flex;
     color: var(--text-main);
     font-family: sans-serif;
+    position: relative; /* Anchor for modal */
 
     /* 100% of the wrapper guarantees the border perfectly fits the iframe! */
     width: 100%;
@@ -68,11 +69,11 @@ body {
 
 .init-tracker--horizontal {
     flex-direction: row;
-    align-items: stretch; /* Stretch header down to match the scrolling list */
+    align-items: center;
 }
 
 .init-tracker__header {
-    flex-shrink: 0; /* Header NEVER shrinks */
+    flex-shrink: 0;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -82,26 +83,30 @@ body {
 }
 
 .init-tracker__header--horizontal {
+    flex: 0 0 auto;
     border-bottom: none;
     border-right: 2px solid var(--primary);
-    padding-bottom: 0;
-    padding-right: 8px;
-    margin-bottom: 0;
-    margin-right: 4px;
+    padding: 0 8px 0 0;
+    margin: 0 6px 0 0;
     flex-direction: column;
+    justify-content: center;
+    height: auto;
 }
 
 .init-tracker__turn-controls {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     width: 100%;
     justify-content: center;
 }
 
+/* --- HORIZONTAL LAYOUT SQUISH FIX --- */
 .init-tracker__header--horizontal .init-tracker__turn-controls {
-    flex-direction: column;
-    height: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 60px; /* Forces elements to wrap tightly */
+    gap: 4px;
 }
 
 .init-tracker__turn-btn {
@@ -110,9 +115,13 @@ body {
     color: var(--text-main);
     cursor: pointer;
     font-size: 0.9rem;
-    padding: 4px 8px;
+    padding: 4px 6px;
     border-radius: 4px;
     transition: background 0.2s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .init-tracker__turn-btn:hover {
@@ -120,6 +129,19 @@ body {
     color: white;
     border-color: var(--primary);
 }
+
+.init-tracker__header--horizontal .init-tracker__turn-btn {
+    flex: 1 1 26px; /* Arrows take exactly half the row */
+    padding: 2px 0;
+    min-height: 24px;
+    font-size: 0.8rem;
+}
+
+.init-tracker__header--horizontal .init-tracker__turn-btn:nth-child(n + 3) {
+    flex: 1 1 100%; /* Add button and Roll button span full bottom row */
+}
+
+/* ----------------------------------- */
 
 .init-tracker__empty {
     padding: 10px;
@@ -131,20 +153,22 @@ body {
 
 .init-tracker__list {
     display: flex;
-    flex: 1 1 auto; /* Fill all remaining space inside the tracker */
-    gap: 8px;
-    padding: 8px; /* Crucial: Protects skewed left-edges from clipping */
-    min-width: 0; /* Crucial to activate internal scrolling */
-    min-height: 0; /* Crucial to activate internal scrolling */
+    gap: 6px;
+    padding: 6px;
+    min-width: 0;
+    min-height: 0;
 }
 
 .init-tracker__list--vertical {
+    flex: 1 1 auto;
     flex-direction: column;
     overflow-y: auto;
     overflow-x: hidden;
 }
 
 .init-tracker__list--horizontal {
+    flex: 1 1 0; /* Ensures the flex child can shrink properly inside row */
+    width: 100%;
     flex-direction: row;
     flex-wrap: nowrap; /* Single line */
     overflow-x: auto;
@@ -169,15 +193,14 @@ body {
 .init-tracker__card {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     background: var(--panel-alt);
     border: 2px solid var(--border);
-    padding: 4px 8px;
+    padding: 4px 6px 4px 4px;
     border-radius: 6px;
     position: relative;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     transform: skewX(-5deg);
-    opacity: 1;
     transition: all 0.2s ease;
     flex-shrink: 0; /* Prevents card from squishing */
 }
@@ -189,6 +212,33 @@ body {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
 }
 
+.init-tracker__card-close {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 18px;
+    height: 18px;
+    background: #f44336;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+}
+.init-tracker__card:hover .init-tracker__card-close {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
 .init-tracker__avatar-container,
 .init-tracker__info {
     transform: skewX(5deg);
@@ -196,15 +246,17 @@ body {
 
 .init-tracker__avatar-container {
     position: relative;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0; /* Keep avatar from squishing */
 }
 
 .init-tracker__avatar {
-    width: 28px;
-    height: 28px;
+    width: 100%;
+    height: 100%;
 }
 
 .init-tracker__avatar--circle {
@@ -225,44 +277,13 @@ body {
     border: none;
     background: transparent;
     border-radius: 0;
-    width: 32px;
-    height: 32px;
     object-fit: contain;
-}
-
-.init-tracker__avatar-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(244, 67, 54, 0.85);
-    color: white;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 1.1rem;
-}
-
-.init-tracker__avatar-overlay--circle {
-    border-radius: 50%;
-}
-.init-tracker__avatar-overlay--square {
-    border-radius: 4px;
-}
-.init-tracker__avatar-overlay--none {
-    border-radius: 4px;
-}
-
-.init-tracker__avatar-container:hover .init-tracker__avatar-overlay {
-    display: flex;
 }
 
 .init-tracker__info {
     display: flex;
     flex-direction: column;
-    min-width: 80px;
+    min-width: 60px; /* Slimmer info layout */
 }
 
 .init-tracker__name {
@@ -271,11 +292,18 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100px;
+    max-width: 90px;
+}
+
+.init-tracker__controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
 }
 
 .init-tracker__input {
-    width: 50px;
+    width: 40px;
     background: var(--input-bg);
     border: 1px solid var(--border);
     color: var(--text-main);
@@ -283,6 +311,19 @@ body {
     font-weight: bold;
     padding: 1px 2px;
     font-size: 0.8rem;
+    text-align: center;
+}
+
+.init-tracker__roll-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0 2px;
+    transition: transform 0.1s ease;
+}
+.init-tracker__roll-btn:hover {
+    transform: scale(1.1);
 }
 
 .init-tracker__flow-arrow {
@@ -292,4 +333,91 @@ body {
     margin: 0 2px;
     transform: translateX(4px);
     user-select: none;
+}
+
+/* =========================================
+   ADD COMBATANT MODAL
+   ========================================= */
+
+.init-tracker__modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    border-radius: 6px;
+    padding: 8px;
+}
+
+.init-tracker__modal {
+    background: var(--bg);
+    border: 2px solid var(--primary);
+    border-radius: 6px;
+    width: 100%;
+    max-width: 300px;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.init-tracker__modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--primary);
+    color: white;
+    padding: 6px 10px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    flex-shrink: 0;
+}
+
+.init-tracker__modal-close {
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.init-tracker__modal-search {
+    width: calc(100% - 16px);
+    margin: 8px;
+    padding: 6px;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    border-radius: 4px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.init-tracker__modal-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 4px;
+}
+
+.init-tracker__modal-item {
+    flex-shrink: 0; /* Fixes vertical squishing */
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.init-tracker__modal-item:hover {
+    background: var(--row-even);
 }

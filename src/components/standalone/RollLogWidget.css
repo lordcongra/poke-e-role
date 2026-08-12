@@ -1,22 +1,45 @@
 .roll-log-widget {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    color: var(--text-main);
+    font-family: sans-serif;
+    transition:
+        max-height 0.3s ease,
+        flex 0.3s ease;
+}
+
+/* Float Mode (OBR standard or undocked) */
+.roll-log-widget--floating {
     position: fixed;
     bottom: 16px;
     right: 16px;
     width: 300px;
     max-height: 400px;
-    background: var(--panel-bg, #1e1e1e);
-    border: 1px solid var(--border, #333);
-    border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    color: var(--text-main, #fff);
-    font-family: sans-serif;
 }
 
-.roll-log-widget--collapsed {
+.roll-log-widget--floating.roll-log-widget--collapsed {
+    max-height: 42px;
+}
+
+/* Docked Mode (Standalone Sidebar) */
+.roll-log-widget--docked {
+    position: static;
+    width: 100%;
+    flex: 1; /* Grows to fill available vertical space under tracker */
+    min-height: 150px;
+    max-height: 100%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.roll-log-widget--docked.roll-log-widget--collapsed {
+    flex: 0 0 42px;
+    min-height: 42px;
     max-height: 42px;
 }
 
@@ -25,20 +48,21 @@
     align-items: center;
     justify-content: space-between;
     padding: 8px 12px;
-    background: var(--panel-header-bg, #111);
-    border-bottom: 1px solid var(--border, #333);
+    background: var(--panel-alt);
+    border-bottom: 1px solid var(--border);
     user-select: none;
+    flex-shrink: 0;
 }
 
 .roll-log-widget__title {
     font-size: 0.85rem;
     font-weight: bold;
-    color: var(--primary, #c62828);
+    color: var(--primary);
     cursor: pointer;
 }
 
 .roll-log-widget__btn-clear {
-    background: var(--primary, #c62828);
+    background: var(--primary);
     color: white;
     border: none;
     padding: 2px 6px;
@@ -50,7 +74,7 @@
 
 .roll-log-widget__btn-toggle {
     background: transparent;
-    color: var(--text-muted, #aaa);
+    color: var(--text-muted);
     border: none;
     cursor: pointer;
     font-size: 0.8rem;
@@ -63,16 +87,18 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    min-height: 0;
 }
 
 .roll-log-widget__entry {
-    background: var(--row-odd, rgba(255, 255, 255, 0.03));
-    border: 1px solid var(--border, #333);
+    background: var(--row-odd);
+    border: 1px solid var(--border);
     border-radius: 6px;
     padding: 8px;
     display: flex;
     flex-direction: column;
     gap: 4px;
+    flex-shrink: 0;
 }
 
 .roll-log-widget__entry-header {
@@ -90,14 +116,14 @@
 
 .roll-log-widget__player {
     font-size: 0.85rem;
-    color: var(--primary, #c62828);
+    color: var(--primary);
 }
 
 .roll-log-widget__dismiss {
     margin-left: auto;
     background: transparent;
     border: none;
-    color: var(--text-muted, #888);
+    color: var(--text-muted);
     cursor: pointer;
     font-size: 0.8rem;
 }
@@ -110,8 +136,8 @@
 .roll-log-widget__result {
     font-size: 0.8rem;
     white-space: pre-wrap;
-    background: var(--panel-alt, #2a2a2a);
+    background: var(--panel-alt);
     padding: 6px;
     border-radius: 4px;
-    color: var(--text-main, #e0e0e0);
+    color: var(--text-main);
 }

@@ -314,6 +314,7 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
         pokemonBackup: String(meta['pokemon-backup'] || ''),
         trainerBackup: String(meta['trainer-backup'] || ''),
 
+        tokenImageUrl: String(meta['token-image-url'] || ''),
         activeTransformation: (meta['active-transformation'] as TransformationType) || 'None',
         activeFormId: String(meta['active-form-id'] || ''),
         formSaves: meta['form-saves'] ? JSON.parse(String(meta['form-saves'])) : {},
@@ -475,6 +476,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (state.identity.isNPC !== undefined) flatMetadata['is-npc'] = state.identity.isNPC;
 
             // Forms & Transformations
+            flatMetadata['token-image-url'] = state.identity.tokenImageUrl || '';
             if (state.identity.activeTransformation !== undefined)
                 flatMetadata['active-transformation'] = state.identity.activeTransformation;
             if (state.identity.activeFormId !== undefined) flatMetadata['active-form-id'] = state.identity.activeFormId;

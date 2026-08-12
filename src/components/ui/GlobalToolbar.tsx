@@ -261,7 +261,10 @@ export function GlobalToolbar() {
                     <button
                         type="button"
                         className="global-toolbar__btn--back-header"
-                        onClick={(e) => { e.stopPropagation(); handleReturnToMenu(); }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleReturnToMenu();
+                        }}
                         title="Close sheet and return to file browser"
                     >
                         🔙 Back to Menu

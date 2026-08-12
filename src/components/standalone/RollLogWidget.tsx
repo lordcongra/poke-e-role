@@ -9,7 +9,11 @@ interface RollData {
     icon: string;
 }
 
-export function RollLogWidget() {
+interface RollLogWidgetProps {
+    isDocked?: boolean;
+}
+
+export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
     const [rolls, setRolls] = useState<RollData[]>([]);
     const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -49,7 +53,9 @@ export function RollLogWidget() {
     if (rolls.length === 0) return null;
 
     return (
-        <div className={`roll-log-widget ${isCollapsed ? 'roll-log-widget--collapsed' : ''}`}>
+        <div
+            className={`roll-log-widget ${isCollapsed ? 'roll-log-widget--collapsed' : ''} ${isDocked ? 'roll-log-widget--docked' : 'roll-log-widget--floating'}`}
+        >
             <div className="roll-log-widget__header">
                 <span className="roll-log-widget__title" onClick={() => setIsCollapsed(!isCollapsed)}>
                     🎲 Roll History ({rolls.length})
@@ -58,7 +64,11 @@ export function RollLogWidget() {
                     <button type="button" onClick={clearAll} className="roll-log-widget__btn-clear">
                         Clear All ✖
                     </button>
-                    <button type="button" onClick={() => setIsCollapsed(!isCollapsed)} className="roll-log-widget__btn-toggle">
+                    <button
+                        type="button"
+                        onClick={() => setIsCollapsed(!isCollapsed)}
+                        className="roll-log-widget__btn-toggle"
+                    >
                         {isCollapsed ? '▲' : '▼'}
                     </button>
                 </div>
@@ -71,7 +81,11 @@ export function RollLogWidget() {
                             <div className="roll-log-widget__entry-header">
                                 <img src={r.icon} alt="Avatar" className="roll-log-widget__icon" />
                                 <strong className="roll-log-widget__player">{r.player}</strong>
-                                <button type="button" onClick={() => dismiss(r.id)} className="roll-log-widget__dismiss">
+                                <button
+                                    type="button"
+                                    onClick={() => dismiss(r.id)}
+                                    className="roll-log-widget__dismiss"
+                                >
                                     ✖
                                 </button>
                             </div>

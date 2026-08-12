@@ -31,7 +31,7 @@ function App() {
     const isPrinting = useCharacterStore((state) => state.identity.isPrinting);
     const gmOnlyMatchups = useCharacterStore((state) => state.identity.gmOnlyMatchups);
     const activeTokenId = useCharacterStore((state) => state.tokenId);
-    
+
     const initLayout = useCharacterStore((state) => state.identity.initiativeTrackerLayout) || 'vertical';
     const [showStandaloneTracker, setShowStandaloneTracker] = useState(false);
 
@@ -108,41 +108,48 @@ function App() {
     return (
         <div className="app-layout">
             <Sidebar />
-            
+
             <div className="app-main-content">
                 <GlobalToolbar />
-                
+
                 {!activeTokenId ? (
                     <div className="standalone-empty-state">
                         <p>👈 Select or create a file in the directory to begin</p>
                     </div>
                 ) : (
-                    <div className={`standalone-layout-wrapper ${showStandaloneTracker && initLayout === 'vertical' ? 'standalone-layout-wrapper--row' : 'standalone-layout-wrapper--col'}`}>
-                        
-                        {/* Horizontal Tracker Renders Above Sheet */}
-                        {showStandaloneTracker && initLayout === 'horizontal' && (
-                            <div className="standalone-layout-tracker--horizontal">
-                                <InitiativeTracker isStandaloneWidget={true} onClose={() => setShowStandaloneTracker(false)} />
-                            </div>
-                        )}
-                        
-                        <div className="standalone-layout-sheet">
-                            {renderSheetContent()}
+                    <div className="standalone-layout-wrapper">
+                        {/* LEFT COLUMN: Main Sheet Content + Horizontal Tracker */}
+                        <div className="standalone-main-col">
+                            {showStandaloneTracker && initLayout === 'horizontal' && (
+                                <div className="standalone-layout-tracker--horizontal">
+                                    <InitiativeTracker
+                                        isStandaloneWidget={true}
+                                        onClose={() => setShowStandaloneTracker(false)}
+                                    />
+                                </div>
+                            )}
+
+                            <div className="standalone-layout-sheet">{renderSheetContent()}</div>
                         </div>
 
-                        {/* Vertical Tracker Renders Right of Sheet */}
-                        {showStandaloneTracker && initLayout === 'vertical' && (
-                            <div className="standalone-layout-tracker--vertical">
-                                <InitiativeTracker isStandaloneWidget={true} onClose={() => setShowStandaloneTracker(false)} />
-                            </div>
-                        )}
+                        {/* RIGHT COLUMN: Sidebar (Vertical Tracker + Docked Roll Log) */}
+                        <div className="standalone-right-sidebar">
+                            {showStandaloneTracker && initLayout === 'vertical' && (
+                                <div className="standalone-tracker-dock">
+                                    <InitiativeTracker
+                                        isStandaloneWidget={true}
+                                        onClose={() => setShowStandaloneTracker(false)}
+                                    />
+                                </div>
+                            )}
 
+                            <RollLogWidget isDocked={true} />
+                        </div>
                     </div>
                 )}
 
                 <DemoRollModal />
                 {isPrinting && <PrintSheet />}
-                <RollLogWidget />
             </div>
         </div>
     );

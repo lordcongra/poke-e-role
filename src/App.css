@@ -44,39 +44,52 @@ body {
     opacity: 0.5;
 }
 
-/* Standalone Tracker Flex Layouts */
+/* Standalone Split Layouts */
 .standalone-layout-wrapper {
     display: flex;
+    flex-direction: row;
     flex: 1;
     gap: 12px;
     min-height: 0;
     overflow: hidden;
 }
 
-.standalone-layout-wrapper--row {
-    flex-direction: row;
-}
-
-.standalone-layout-wrapper--col {
+/* The core character sheet + optional horizontal tracker stack here */
+.standalone-main-col {
+    display: flex;
     flex-direction: column;
+    flex: 1;
+    gap: 12px;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .standalone-layout-sheet {
     flex: 1;
     overflow-y: auto;
     min-width: 0;
-    padding-right: 4px;
+    padding-right: 4px; /* Space for the scrollbar */
 }
 
-.standalone-layout-tracker--vertical {
-    width: 320px;
+/* Dedicated right sidebar for Vertical Tracker + Docked Roll Log */
+.standalone-right-sidebar {
+    width: 260px; /* Slimmed down from 320px */
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+}
+
+.standalone-tracker-dock {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 250px;
 }
 
 .standalone-layout-tracker--horizontal {
-    height: 180px;
+    height: 120px; /* Slimmed down from 180px */
     flex-shrink: 0;
     display: flex;
     flex-direction: column;

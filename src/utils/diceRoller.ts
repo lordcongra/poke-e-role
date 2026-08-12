@@ -2,7 +2,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../store/useCharacterStore';
 import { isStandaloneMode } from './storageAdapter';
 
-// Defines the structure exactly as saved in the Local Storage
+// Defines the structure exactly as saved in Local Storage
 export interface StandaloneCombatant {
     id: string;
     name: string;
@@ -34,19 +34,30 @@ export function addRollLogEntry(label: string, result: string, icon: string, pla
 }
 
 export async function assignInitiative(tokenId: string, rollTotal: number, baseInit: number) {
+    // Note: The combat roll macro already computes D6 + BaseInit before invoking assignInitiative.
+    // Therefore `rollTotal` is the exact integer score (e.g. 8).
+    const tiebreakerDec = (Math.floor(Math.random() * 99) + 1) / 100;
+
     if (isStandaloneMode) {
         try {
             const listStr = localStorage.getItem('pkr_standalone_init_list');
             if (!listStr) return;
             const list: StandaloneCombatant[] = JSON.parse(listStr);
 
-            const updated = list.map((c) => c.id === tokenId ? { 
-                ...c, 
-                d6: rollTotal, 
-                baseInit, 
-                total: rollTotal + baseInit,
-                tiebreaker: 0 
-            } : c);
+            const rawD6 = rollTotal - baseInit;
+            const finalInit = rollTotal + tiebreakerDec;
+
+            const updated = list.map((c) =>
+                c.id === tokenId
+                    ? {
+                          ...c,
+                          d6: rawD6,
+                          baseInit: baseInit,
+                          total: finalInit,
+                          tiebreaker: tiebreakerDec
+                      }
+                    : c
+            );
 
             localStorage.setItem('pkr_standalone_init_list', JSON.stringify(updated));
             window.dispatchEvent(new Event('pkr-standalone-init-update'));
@@ -64,12 +75,13 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
             return meta?.value || -9999;
         });
 
-        let finalInit = rollTotal + baseInit;
-        let isUnique = false;
+        let finalInit = rollTotal + tiebreakerDec;
+        let isUnique = !existingInits.includes(finalInit);
 
+        // If the EXACT tiebreaker decimal collides with another token, re-roll the decimal
         while (!isUnique) {
-            const tieBreaker = Math.floor(Math.random() * 99);
-            finalInit = rollTotal + baseInit + tieBreaker / 100;
+            const newTieBreaker = (Math.floor(Math.random() * 99) + 1) / 100;
+            finalInit = rollTotal + newTieBreaker;
             if (!existingInits.includes(finalInit)) isUnique = true;
         }
 
@@ -121,16 +133,18 @@ export async function broadcastInfo(title: string, description: string) {
         await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-update', {}, { destination: 'LOCAL' });
 
         const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-        await OBR.popover.open({
-            id: 'pkr-roll-log',
-            url: `${baseUrl}/roll-log.html`,
-            height: 380,
-            width: 320,
-            disableClickAway: true,
-            anchorReference: 'POSITION',
-            anchorPosition: { top: 99999, left: 99999 },
-            transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
-        }).catch((e) => console.warn('[DiceRoller] Failed to open roll log popover', e));
+        await OBR.popover
+            .open({
+                id: 'pkr-roll-log',
+                url: `${baseUrl}/roll-log.html`,
+                height: 380,
+                width: 320,
+                disableClickAway: true,
+                anchorReference: 'POSITION',
+                anchorPosition: { top: 99999, left: 99999 },
+                transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
+            })
+            .catch((e) => console.warn('[DiceRoller] Failed to open roll log popover', e));
     } catch (error) {
         console.error('[DiceRoller] Broadcast Info Error:', error);
     }
@@ -291,7 +305,9 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
         let diceTheme: unknown = undefined;
         try {
             const roomMeta = await OBR.room.getMetadata();
-            const allThemes = roomMeta['com.grupos-acciones.dice/roomDiceThemes'] as Record<string, unknown> | undefined;
+            const allThemes = roomMeta['com.grupos-acciones.dice/roomDiceThemes'] as
+                | Record<string, unknown>
+                | undefined;
 
             if (allThemes && allThemes.players) {
                 const playersMap = allThemes.players as Record<string, Record<string, unknown>>;
@@ -316,7 +332,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
         const delayMs = targetVisibility === 'gm_only' ? 250 : 3500;
         setTimeout(async () => {
             const finalCompiledMsg = await executeStateIntercepts('');
-            
+
             const rollLogData = {
                 id: crypto.randomUUID(),
                 player: obrPlayerName,
@@ -345,20 +361,24 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 }
             }
 
-            await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-sync', rollLogData, { destination: 'REMOTE' });
+            await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-sync', rollLogData, {
+                destination: 'REMOTE'
+            });
             await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-update', {}, { destination: 'LOCAL' });
 
             const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-            await OBR.popover.open({
-                id: 'pkr-roll-log',
-                url: `${baseUrl}/roll-log.html`,
-                height: 380,
-                width: 320,
-                disableClickAway: true,
-                anchorReference: 'POSITION',
-                anchorPosition: { top: 99999, left: 99999 },
-                transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
-            }).catch((e) => console.warn('[DiceRoller] Roll log popover failed', e));
+            await OBR.popover
+                .open({
+                    id: 'pkr-roll-log',
+                    url: `${baseUrl}/roll-log.html`,
+                    height: 380,
+                    width: 320,
+                    disableClickAway: true,
+                    anchorReference: 'POSITION',
+                    anchorPosition: { top: 99999, left: 99999 },
+                    transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
+                })
+                .catch((e) => console.warn('[DiceRoller] Roll log popover failed', e));
         }, delayMs);
     }
 }

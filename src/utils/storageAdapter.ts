@@ -48,7 +48,9 @@ export const storageAdapter = {
         }
     },
 
-    async getLocalCharacters(): Promise<{ id: string; name: string; parentId: string | null; metadata: Record<string, unknown> }[]> {
+    async getLocalCharacters(): Promise<
+        { id: string; name: string; parentId: string | null; metadata: Record<string, unknown> }[]
+    > {
         const characters = [];
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
@@ -72,12 +74,12 @@ export const storageAdapter = {
 
     async createLocalCharacter(name: string, parentId: string | null = null): Promise<string> {
         const newId = crypto.randomUUID();
-        const initialMetadata = { 
-            nickname: name, 
+        const initialMetadata = {
+            nickname: name,
             parentId: parentId,
             'v2-migrated': true
         };
-        
+
         try {
             localStorage.setItem(`${LOCAL_STORAGE_PREFIX}${newId}`, JSON.stringify(initialMetadata));
             notifyChange();
@@ -142,7 +144,7 @@ export const storageAdapter = {
 
     async moveFolder(folderId: string, newParentId: string | null): Promise<void> {
         const folders = await this.getFolders();
-        const target = folders.find(f => f.id === folderId);
+        const target = folders.find((f) => f.id === folderId);
         if (target) {
             target.parentId = newParentId;
             localStorage.setItem(FOLDER_STORAGE_KEY, JSON.stringify(folders));
@@ -152,10 +154,10 @@ export const storageAdapter = {
 
     async deleteFolder(id: string): Promise<void> {
         const folders = await this.getFolders();
-        const filtered = folders.filter(f => f.id !== id);
+        const filtered = folders.filter((f) => f.id !== id);
         try {
             localStorage.setItem(FOLDER_STORAGE_KEY, JSON.stringify(filtered));
-            
+
             const chars = await this.getLocalCharacters();
             for (const char of chars) {
                 if (char.parentId === id) await this.moveItem(char.id, null);
