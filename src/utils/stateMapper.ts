@@ -314,7 +314,14 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
         pokemonBackup: String(meta['pokemon-backup'] || ''),
         trainerBackup: String(meta['trainer-backup'] || ''),
 
-        tokenImageUrl: String(meta['token-image-url'] || ''),
+        // Safely extract the token image, falling back to pre-existing state to prevent wipe on refresh
+        tokenImageUrl:
+            meta['token-image-url'] !== undefined
+                ? String(meta['token-image-url'])
+                : meta['tokenImageUrl'] !== undefined
+                  ? String(meta['tokenImageUrl'])
+                  : state.identity.tokenImageUrl || '',
+
         activeTransformation: (meta['active-transformation'] as TransformationType) || 'None',
         activeFormId: String(meta['active-form-id'] || ''),
         formSaves: meta['form-saves'] ? JSON.parse(String(meta['form-saves'])) : {},
