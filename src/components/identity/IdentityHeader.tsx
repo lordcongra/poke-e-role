@@ -11,7 +11,7 @@ import { TrackerSettingsModal } from '../modals/TrackerSettingsModal';
 import { PokedexModal } from '../modals/PokedexModal';
 import { broadcastInfo } from '../../utils/diceRoller';
 import { isStandaloneMode } from '../../utils/storageAdapter';
-import { imageManager } from '../../utils/imageManager';
+import { imageManager, autoCropTransparency } from '../../utils/imageManager';
 import { saveToOwlbear } from '../../utils/obr';
 import './IdentityHeader.css';
 
@@ -80,11 +80,15 @@ export function IdentityHeader() {
     };
 
     // --- STANDALONE IMAGE UPLOAD HANDLERS ---
-    const handleStandaloneUrl = () => {
+    const handleStandaloneUrl = async () => {
         const url = window.prompt('Enter an Image URL:');
         if (url) {
+            // Clean up old image if it was a local file!
+            if (identityStore.tokenImageUrl && identityStore.tokenImageUrl.startsWith('local-img:')) {
+                await imageManager.deleteImage(identityStore.tokenImageUrl);
+            }
+
             setIdentity('tokenImageUrl', url);
-            // Explicitly force the adapter to write to LocalStorage!
             saveToOwlbear({ 'token-image-url': url });
         }
         setShowImagePicker(false);
@@ -95,9 +99,18 @@ export function IdentityHeader() {
         if (!file) return;
 
         try {
-            const imgId = await imageManager.saveImage(file);
+            // Automatically trim empty pixel padding around the image
+            const croppedBlob = await autoCropTransparency(file);
+            const croppedFile = new File([croppedBlob], file.name, { type: croppedBlob.type });
+
+            const imgId = await imageManager.saveImage(croppedFile);
+
+            // Clean up old image from IndexedDB before applying the new one!
+            if (identityStore.tokenImageUrl && identityStore.tokenImageUrl.startsWith('local-img:')) {
+                await imageManager.deleteImage(identityStore.tokenImageUrl);
+            }
+
             setIdentity('tokenImageUrl', imgId);
-            // Explicitly force the adapter to write the IndexedDB ID to LocalStorage!
             saveToOwlbear({ 'token-image-url': imgId });
         } catch (error) {
             console.error('[IdentityHeader] Failed to save image to IndexedDB', error);
@@ -105,11 +118,10 @@ export function IdentityHeader() {
         }
 
         setShowImagePicker(false);
-        if (imageInputRef.current) imageInputRef.current.value = ''; // Reset input so the same file can be chosen again if needed
+        if (imageInputRef.current) imageInputRef.current.value = '';
     };
 
     const handleUpdateTokenImage = async () => {
-        // If we are in the web app, intercept and show our custom dual-option modal
         if (isStandaloneMode) {
             setShowImagePicker(true);
             return;

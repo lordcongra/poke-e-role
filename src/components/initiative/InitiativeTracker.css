@@ -1,425 +1,127 @@
-/* THE FIX: Hard-lock the iframe root so the browser never attempts to scroll the whole window! */
-html,
-body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background: transparent;
-    box-sizing: border-box;
-}
-
-/* The wrapper absolutely pins itself to the iframe boundaries, leaving a 4px gap for the shadow */
 .init-tracker-wrapper {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 4px;
     display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 8px;
+    height: 100%;
+    width: 100%;
     box-sizing: border-box;
 }
 
 .init-tracker {
-    flex: 1; /* Perfectly fills the wrapper */
     background: var(--panel-bg);
-    border: 2px solid var(--primary);
-    border-radius: 8px;
-    padding: 6px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
-    display: flex;
     color: var(--text-main);
-    font-family: sans-serif;
-    position: relative; /* Anchor for modal */
-
-    /* 100% of the wrapper guarantees the border perfectly fits the iframe! */
-    width: 100%;
-    height: 100%;
-    overflow: hidden; /* Outer box NEVER scrolls */
-    box-sizing: border-box;
-    min-width: 0;
-    min-height: 0;
+    display: flex;
+    font-family: inherit;
 }
 
-/* The invisible ghost div overrides the constraints so we can measure its true width/height */
-.init-tracker--ghost {
-    position: absolute !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
-    width: max-content !important;
-    height: max-content !important;
-    top: -9999px !important;
-    left: -9999px !important;
-    margin: 0 !important;
-    max-width: none !important;
-    max-height: none !important;
-    overflow: visible !important;
-}
-
-.init-tracker--ghost .init-tracker__list {
-    overflow: visible !important;
-    flex-wrap: nowrap !important;
-}
-
+/* Ensure the vertical layout tightly hugs the content width */
 .init-tracker--vertical {
     flex-direction: column;
+    width: max-content;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
 }
 
 .init-tracker--horizontal {
     flex-direction: row;
     align-items: center;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    padding-right: 12px;
 }
 
+.init-tracker--ghost {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+    visibility: hidden;
+    height: auto !important;
+    width: auto !important;
+    max-height: none !important;
+    max-width: none !important;
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* --- HEADER / CONTROLS --- */
 .init-tracker__header {
-    flex-shrink: 0;
+    background: var(--panel-alt);
     display: flex;
-    justify-content: center;
     align-items: center;
-    border-bottom: 2px solid var(--primary);
-    padding-bottom: 6px;
-    margin-bottom: 4px;
+    justify-content: space-between;
+}
+
+.init-tracker__header--vertical {
+    border-bottom: 2px solid #b71c1c;
+    padding: 8px 12px;
 }
 
 .init-tracker__header--horizontal {
-    flex: 0 0 auto;
-    border-bottom: none;
-    border-right: 2px solid var(--primary);
-    padding: 0 8px 0 0;
-    margin: 0 6px 0 0;
-    flex-direction: column;
-    justify-content: center;
-    height: auto;
+    border-right: 2px solid #b71c1c;
+    padding: 12px 16px;
+    height: 100%;
 }
 
 .init-tracker__turn-controls {
     display: flex;
-    align-items: center;
     gap: 8px;
-    width: 100%;
-    justify-content: center;
-}
-
-/* --- HORIZONTAL LAYOUT SQUISH FIX --- */
-.init-tracker__header--horizontal .init-tracker__turn-controls {
-    flex-direction: row;
-    flex-wrap: wrap;
-    width: 60px; /* Forces elements to wrap tightly */
-    gap: 4px;
 }
 
 .init-tracker__turn-btn {
-    background: var(--panel-alt);
-    border: 1px solid var(--border);
-    color: var(--text-main);
-    cursor: pointer;
-    font-size: 0.9rem;
-    padding: 4px 6px;
+    background: #333;
+    border: 1px solid #555;
+    color: white;
     border-radius: 4px;
-    transition: background 0.2s ease;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.init-tracker__turn-btn:hover {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
-}
-
-.init-tracker__header--horizontal .init-tracker__turn-btn {
-    flex: 1 1 26px; /* Arrows take exactly half the row */
-    padding: 2px 0;
-    min-height: 24px;
-    font-size: 0.8rem;
-}
-
-.init-tracker__header--horizontal .init-tracker__turn-btn:nth-child(n + 3) {
-    flex: 1 1 100%; /* Add button and Roll button span full bottom row */
-}
-
-/* ----------------------------------- */
-
-.init-tracker__empty {
-    padding: 10px;
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    flex: 1;
-}
-
-.init-tracker__list {
-    display: flex;
-    gap: 6px;
-    padding: 6px;
-    min-width: 0;
-    min-height: 0;
-}
-
-.init-tracker__list--vertical {
-    flex: 1 1 auto;
-    flex-direction: column;
-    overflow-y: auto;
-    overflow-x: hidden;
-}
-
-.init-tracker__list--horizontal {
-    flex: 1 1 0; /* Ensures the flex child can shrink properly inside row */
-    width: 100%;
-    flex-direction: row;
-    flex-wrap: nowrap; /* Single line */
-    overflow-x: auto;
-    overflow-y: hidden;
-    align-items: center;
-}
-
-/* Custom sleek scrollbar */
-.init-tracker__list::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-.init-tracker__list::-webkit-scrollbar-thumb {
-    background: var(--primary);
-    border-radius: 3px;
-}
-.init-tracker__list::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 3px;
-}
-
-.init-tracker__card {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--panel-alt);
-    border: 2px solid var(--border);
-    padding: 4px 6px 4px 4px;
-    border-radius: 6px;
-    position: relative;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transform: skewX(-5deg);
-    transition: all 0.2s ease;
-    flex-shrink: 0; /* Prevents card from squishing */
-}
-
-.init-tracker__card--active {
-    border: 2px solid #4caf50;
-    z-index: 2;
-    transform: skewX(-5deg);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-}
-
-.init-tracker__card-close {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    width: 18px;
-    height: 18px;
-    background: #f44336;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    font-size: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     cursor: pointer;
-    opacity: 0;
-    transition:
-        opacity 0.2s ease,
-        transform 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-    z-index: 10;
-}
-.init-tracker__card:hover .init-tracker__card-close {
-    opacity: 1;
-    transform: scale(1.1);
-}
-
-.init-tracker__avatar-container,
-.init-tracker__info {
-    transform: skewX(5deg);
-}
-
-.init-tracker__avatar-container {
-    position: relative;
+    font-size: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
     width: 32px;
     height: 32px;
-    flex-shrink: 0; /* Keep avatar from squishing */
+    transition: background 0.2s, transform 0.1s;
 }
 
-.init-tracker__avatar {
-    width: 100%;
-    height: 100%;
+.init-tracker__turn-btn:hover {
+    background: #444;
+    transform: scale(1.05);
 }
 
-.init-tracker__avatar--circle {
-    border-radius: 50%;
-    object-fit: cover;
-    border: 1px solid var(--primary);
-    background: transparent;
+.init-tracker__turn-btn:active {
+    transform: scale(0.95);
 }
 
-.init-tracker__avatar--square {
-    border-radius: 4px;
-    object-fit: contain;
-    border: 1px solid var(--primary);
-    background: transparent;
-}
-
-.init-tracker__avatar--none {
-    border: none;
-    background: transparent;
-    border-radius: 0;
-    object-fit: contain;
-}
-
-.init-tracker__info {
+/* --- LIST --- */
+.init-tracker__list {
     display: flex;
-    flex-direction: column;
-    min-width: 60px; /* Slimmer info layout */
-}
-
-.init-tracker__name {
-    font-size: 0.75rem;
-    font-weight: bold;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 90px;
-}
-
-.init-tracker__controls {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-top: 2px;
-}
-
-.init-tracker__input {
-    width: 40px;
-    background: var(--input-bg);
-    border: 1px solid var(--border);
-    color: var(--text-main);
-    border-radius: 4px;
-    font-weight: bold;
-    padding: 1px 2px;
-    font-size: 0.8rem;
-    text-align: center;
-}
-
-.init-tracker__roll-btn {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-size: 1.1rem;
-    padding: 0 2px;
-    transition: transform 0.1s ease;
-}
-.init-tracker__roll-btn:hover {
-    transform: scale(1.1);
-}
-
-.init-tracker__flow-arrow {
-    color: var(--text-muted);
-    font-weight: bold;
-    font-size: 0.9rem;
-    margin: 0 2px;
-    transform: translateX(4px);
-    user-select: none;
-}
-
-/* =========================================
-   ADD COMBATANT MODAL
-   ========================================= */
-
-.init-tracker__modal-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    border-radius: 6px;
-    padding: 8px;
-}
-
-.init-tracker__modal {
-    background: var(--bg);
-    border: 2px solid var(--primary);
-    border-radius: 6px;
-    width: 100%;
-    max-width: 300px;
-    max-height: 100%;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-}
-
-.init-tracker__modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: var(--primary);
-    color: white;
-    padding: 6px 10px;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
-    flex-shrink: 0;
-}
-
-.init-tracker__modal-close {
-    background: transparent;
-    border: none;
-    color: white;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-.init-tracker__modal-search {
-    width: calc(100% - 16px);
-    margin: 8px;
-    padding: 6px;
-    background: var(--input-bg);
-    border: 1px solid var(--border);
-    color: var(--text-main);
-    border-radius: 4px;
-    box-sizing: border-box;
-    flex-shrink: 0;
-}
-
-.init-tracker__modal-list {
-    flex: 1;
     overflow-y: auto;
-    display: flex;
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.init-tracker__list::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.init-tracker__list::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+}
+
+.init-tracker__list--vertical {
     flex-direction: column;
-    padding-bottom: 4px;
+    padding: 8px;
+    gap: 8px;
 }
 
-.init-tracker__modal-item {
-    flex-shrink: 0; /* Fixes vertical squishing */
+.init-tracker__list--horizontal {
+    flex-direction: row;
+    align-items: center;
     padding: 8px 12px;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    font-size: 0.85rem;
-    transition: background 0.2s ease;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.init-tracker__modal-item:hover {
-    background: var(--row-even);
+    gap: 12px;
 }
 
 .init-tracker__list-item {
@@ -427,6 +129,250 @@ body {
     align-items: center;
 }
 
+.init-tracker__empty {
+    padding: 20px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-align: center;
+    font-style: italic;
+}
+
+/* --- CARDS --- */
+.init-tracker__card {
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    padding: 6px 12px 6px 6px;
+    gap: 10px;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    position: relative;
+    min-width: 140px;
+}
+
+.init-tracker__card--active {
+    border-color: #4caf50;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+    background: #334033;
+}
+
+.init-tracker__avatar-container {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #111;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.init-tracker__avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.init-tracker__avatar--circle {
+    border-radius: 50%;
+}
+.init-tracker__avatar--square {
+    border-radius: 4px;
+}
+.init-tracker__avatar--none {
+    display: none;
+}
+
+.init-tracker__info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-grow: 1;
+}
+
+.init-tracker__name {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+}
+
+.init-tracker__controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.init-tracker__input {
+    background: #1a1a1a;
+    border: 1px solid #444;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-align: center;
+    width: 46px;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+.init-tracker__input:focus {
+    outline: none;
+    border-color: #b71c1c;
+}
+
+.no-spinners::-webkit-outer-spin-button,
+.no-spinners::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+}
+.no-spinners {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.init-tracker__roll-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0;
+    opacity: 0.7;
+    transition: opacity 0.2s, transform 0.1s;
+}
+
+.init-tracker__roll-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.init-tracker__roll-btn:active {
+    transform: scale(0.9);
+}
+
+.init-tracker__card-close {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    background: #d32f2f;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 10;
+}
+
+.init-tracker__card:hover .init-tracker__card-close {
+    opacity: 1;
+}
+
+.init-tracker__card-close:hover {
+    background: #f44336;
+    transform: scale(1.2);
+}
+
+.init-tracker__flow-arrow {
+    color: #666;
+    font-size: 1.2rem;
+    margin-left: 12px;
+}
+
+/* --- ADD COMBATANT MODAL --- */
+.init-tracker__modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    z-index: 100;
+    padding-top: 40px;
+}
+
+.init-tracker__modal {
+    background: var(--panel-bg);
+    border: 1px solid var(--primary);
+    border-radius: 6px;
+    width: 220px;
+    max-height: 250px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    overflow: hidden;
+}
+
+.init-tracker__modal-header {
+    background: var(--panel-alt);
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+}
+
+.init-tracker__modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.init-tracker__modal-close:hover {
+    opacity: 1;
+    color: #f44336;
+}
+
+.init-tracker__modal-search {
+    border: none;
+    border-bottom: 1px solid var(--border);
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    border-radius: 0;
+    margin: 0;
+}
+
+.init-tracker__modal-search:focus {
+    outline: none;
+    background: rgba(255,255,255,0.05);
+}
+
+.init-tracker__modal-list {
+    overflow-y: auto;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.init-tracker__modal-item {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.init-tracker__modal-item:hover {
+    background: var(--primary);
+    color: white;
+}
+
+/* --- STANDALONE OVERRIDES --- */
 .init-tracker__standalone-wrapper {
     height: 100%;
     width: 100%;
@@ -435,14 +381,16 @@ body {
     min-height: 0;
     overflow: hidden;
     position: relative;
+    /* Allow wrapper to tightly contain its children if not stretched */
+    align-items: flex-start; 
 }
 
 .init-tracker__standalone-panel {
     border: 1px solid var(--border);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     border-radius: 6px;
     height: 100%;
-    width: 100%;
+    width: max-content; /* THIS fixes the dead space issue! */
     box-sizing: border-box;
     display: flex;
 }

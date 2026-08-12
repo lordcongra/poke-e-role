@@ -20,17 +20,11 @@ export interface Combatant {
     tiebreaker: number;
 }
 
-// ---------------------------------------------------------------------------
-// HYDRATION INTERFACES & HELPERS
-// ---------------------------------------------------------------------------
-
-// Safely casts Zustand persist wrappers and OBR nested states
 interface StoredCharacterData extends Partial<CharacterState> {
     state?: Partial<CharacterState>;
     'pokerole-extension/stats'?: Record<string, unknown>;
 }
 
-// Extracts the token image from deeply nested states or flat OBR metadata
 export function extractTokenImage(meta: Record<string, unknown> | null | undefined): string {
     if (!meta) return '';
     if (typeof meta['token-image-url'] === 'string' && meta['token-image-url']) return meta['token-image-url'];
@@ -52,7 +46,6 @@ export function calculateBaseInitFromCharacterData(
     try {
         const charData = data as StoredCharacterData;
 
-        // Case A: Nested Zustand CharacterState object (Standalone / storageAdapter format)
         const statsObj = charData.stats || charData.state?.stats;
         const skillsObj = charData.skills || charData.state?.skills;
 
@@ -90,7 +83,6 @@ export function calculateBaseInitFromCharacterData(
             return Math.max(1, dexTotal + itemDexBuff) + Math.max(0, alertTotal + itemAlertBuff);
         }
 
-        // Case B: Flattened OBR metadata (or plugin namespace nested metadata)
         let flatMeta: Record<string, unknown> = data;
         if (charData['pokerole-extension/stats'] && typeof charData['pokerole-extension/stats'] === 'object') {
             flatMeta = charData['pokerole-extension/stats'] as Record<string, unknown>;
@@ -112,10 +104,6 @@ export function calculateBaseInitFromCharacterData(
     }
 }
 
-// Rule-Accurate PokeRole Sort:
-// 1. Total Roll (1d6 + BaseInit + Tiebreaker Decimal)
-// 2. Base Initiative Score (Dex + Alert)
-// 3. Exact Tiebreaker Fallback
 export function sortCombatants(list: Combatant[]): Combatant[] {
     return [...list].sort((a, b) => {
         const aTotal = typeof a.total === 'number' ? a.total : 0;
@@ -292,7 +280,6 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
         }
     }, []);
 
-    // LIVE STATS SYNC: Instantly updates baseInit and image of the active sheet in Standalone
     useEffect(() => {
         if (!isStandaloneMode || !activeTokenId || combatants.length === 0) return;
 
@@ -301,9 +288,8 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
             const next = prev.map((c) => {
                 if (c.id === activeTokenId) {
                     const newBase = calculateBaseInitFromCharacterData(globalState as unknown as Record<string, unknown>, globalState);
-                    const newImage = tokenImageUrl || ''; // Guarantee a strict string
+                    const newImage = tokenImageUrl || ''; 
                     
-                    // Trigger an update if the stats change OR if the image changes (even if it changes to blank!)
                     if (newBase !== c.baseInit || newImage !== c.image) {
                         changed = true;
                         const newTotal = c.d6 > 0 ? (c.d6 + newBase + c.tiebreaker) : (newBase + c.tiebreaker);
@@ -416,7 +402,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
 
             const handleLocalDataChange = () => {
                 fetchAvailableCharacters();
-                loadLocalEncounter(); // Force the tracker list to re-pull from the disk!
+                loadLocalEncounter(); 
             };
 
             loadLocalEncounter();
@@ -790,7 +776,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                             onClick={handleRollAll} 
                             title="Roll Initiative for All Combatants"
                         >
-                            🎲 Roll All
+                            🎲
                         </button>
                     )}
 
