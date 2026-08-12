@@ -6,6 +6,8 @@ import { POKEMON_TYPES, TYPE_COLORS, NATURES, AGES, RANKS } from '../../data/con
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { CustomInfoRow } from '../ui/CustomInfoRow';
 import { SpeciesSelector } from './SpeciesSelector';
+import { StandaloneAvatar } from '../standalone/StandaloneAvatar';
+import { isStandaloneMode } from '../../utils/storageAdapter';
 
 interface IdentityGridProps {
     onOpenGenerator: () => void;
@@ -67,7 +69,11 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature, onO
 
     return (
         <>
-            <div className="identity-grid identity-header__grid">
+            <div className={`identity-grid identity-header__grid ${isStandaloneMode ? 'identity-grid--standalone' : ''}`}>
+                
+                {/* Standalone Avatar spans exactly 6 rows down the left side! */}
+                {isStandaloneMode && <StandaloneAvatar />}
+
                 <div className="identity-grid__row">
                     <span className="identity-grid__label">Nickname</span>
                     <input
@@ -246,7 +252,9 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature, onO
                 </div>
 
                 {customInfo.map((info) => (
-                    <CustomInfoRow key={info.id} info={info} onDelete={() => setDeleteCustomInfoId(info.id)} />
+                    <div style={{ gridColumn: '1 / -1' }} key={info.id}>
+                        <CustomInfoRow info={info} onDelete={() => setDeleteCustomInfoId(info.id)} />
+                    </div>
                 ))}
             </div>
 

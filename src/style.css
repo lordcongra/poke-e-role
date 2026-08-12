@@ -164,6 +164,12 @@ select option {
     gap: 6px;
     align-items: center;
 }
+
+/* --- ADDED FOR STANDALONE AVATAR SUPPORT --- */
+.identity-grid--standalone {
+    grid-template-columns: 110px 1fr 1fr;
+}
+
 .identity-grid__row {
     display: flex;
     align-items: center;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { ReactNode } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
@@ -10,6 +10,8 @@ import { GeneratorModal } from '../modals/GeneratorModal';
 import { TrackerSettingsModal } from '../modals/TrackerSettingsModal';
 import { PokedexModal } from '../modals/PokedexModal';
 import { broadcastInfo } from '../../utils/diceRoller';
+import { isStandaloneMode } from '../../utils/storageAdapter';
+import { imageManager } from '../../utils/imageManager';
 import './IdentityHeader.css';
 
 export function IdentityHeader() {
@@ -23,6 +25,10 @@ export function IdentityHeader() {
     const [showGeneratorModal, setShowGeneratorModal] = useState<boolean>(false);
     const [showTrackerSettings, setShowTrackerSettings] = useState<boolean>(false);
     const [showPokedexModal, setShowPokedexModal] = useState<boolean>(false);
+    
+    // Standalone Image Picker State
+    const [showImagePicker, setShowImagePicker] = useState<boolean>(false);
+    const imageInputRef = useRef<HTMLInputElement>(null);
 
     const openAbilityModal = async () => {
         if (!identityStore.ability) {
@@ -72,7 +78,39 @@ export function IdentityHeader() {
         }
     };
 
+    // --- STANDALONE IMAGE UPLOAD HANDLERS ---
+    const handleStandaloneUrl = () => {
+        const url = window.prompt('Enter an Image URL:');
+        if (url) {
+            setIdentity('tokenImageUrl', url);
+        }
+        setShowImagePicker(false);
+    };
+
+    const handleStandaloneFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        
+        try {
+            const imgId = await imageManager.saveImage(file);
+            setIdentity('tokenImageUrl', imgId);
+        } catch (error) {
+            console.error('[IdentityHeader] Failed to save image to IndexedDB', error);
+            alert('Failed to save image locally. It may be too large or your browser blocked the database.');
+        }
+        
+        setShowImagePicker(false);
+        if (imageInputRef.current) imageInputRef.current.value = ''; // Reset input so the same file can be chosen again if needed
+    };
+
     const handleUpdateTokenImage = async () => {
+        // If we are in the web app, intercept and show our custom dual-option modal
+        if (isStandaloneMode) {
+            setShowImagePicker(true);
+            return;
+        }
+
+        // --- OWLBEAR RODEO NATIVE LOGIC ---
         if (!isGm) {
             if (OBR.isAvailable) OBR.notification.show('Only the GM can update the scene token image.', 'ERROR');
             return;
@@ -166,12 +204,12 @@ export function IdentityHeader() {
 
     const headerElements = (
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            {isGm && OBR.isAvailable && (
+            {(isStandaloneMode || (isGm && OBR.isAvailable)) && (
                 <button
                     type="button"
                     className="action-button action-button--dark identity-header__changelog-btn"
                     onClick={handleUpdateTokenImage}
-                    title="Change this token's art manually (Useful for Evolution)."
+                    title="Change this character's artwork."
                 >
                     🖼️ Update Token Image
                 </button>
@@ -194,10 +232,12 @@ export function IdentityHeader() {
 
             <IdentityControls onOpenTrackerSettings={() => setShowTrackerSettings(true)} />
 
+            {/* Main Application Modals */}
             {showGeneratorModal && <GeneratorModal onClose={() => setShowGeneratorModal(false)} />}
             {showTrackerSettings && <TrackerSettingsModal onClose={() => setShowTrackerSettings(false)} />}
             {showPokedexModal && <PokedexModal onClose={() => setShowPokedexModal(false)} />}
 
+            {/* Info Broadcast Modal */}
             {modalConfig && (
                 <div className="identity-header__modal-overlay identity-header__modal-overlay--high-z">
                     <div className="identity-header__modal-content identity-header__modal-content--large">
@@ -231,6 +271,60 @@ export function IdentityHeader() {
                     </div>
                 </div>
             )}
+
+            {/* Standalone Dual Image Picker Modal */}
+            {showImagePicker && (
+                <div className="identity-header__modal-overlay identity-header__modal-overlay--high-z">
+                    <div className="identity-header__modal-content">
+                        <h3 className="identity-header__modal-title">🖼️ Update Artwork</h3>
+                        <p className="identity-header__modal-text" style={{ marginBottom: '15px' }}>
+                            Choose how you'd like to supply the image for this character.
+                        </p>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <button 
+                                className="action-button action-button--dark"
+                                style={{ padding: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                                onClick={() => imageInputRef.current?.click()}
+                            >
+                                <span style={{ fontSize: '1.1rem', marginBottom: '4px' }}>📁 Upload Local File</span>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 'normal', opacity: 0.8 }}>
+                                    (Recommended - Saved safely to your browser's database)
+                                </span>
+                            </button>
+                            
+                            <button 
+                                className="action-button"
+                                style={{ backgroundColor: '#1976d2', color: 'white', border: 'none', padding: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                                onClick={handleStandaloneUrl}
+                            >
+                                <span style={{ fontSize: '1.1rem', marginBottom: '4px' }}>🌐 Use Web URL</span>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 'normal', opacity: 0.8 }}>
+                                    (Lightweight - Image breaks if the web link dies)
+                                </span>
+                            </button>
+                        </div>
+
+                        <hr className="identity-header__modal-divider" style={{ margin: '15px 0' }} />
+                        
+                        <button
+                            className="action-button action-button--dark identity-header__modal-close-btn"
+                            onClick={() => setShowImagePicker(false)}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Hidden Input for Local Uploads */}
+            <input 
+                type="file" 
+                ref={imageInputRef} 
+                onChange={handleStandaloneFile} 
+                accept="image/*" 
+                style={{ display: 'none' }} 
+            />
         </CollapsingSection>
     );
 }
