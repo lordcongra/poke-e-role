@@ -17,6 +17,7 @@ import { DemoRollModal } from './components/modals/DemoRollModal';
 import { GlobalToolbar } from './components/ui/GlobalToolbar';
 import { Sidebar } from './components/standalone/Sidebar';
 import { InitiativeTracker } from './components/initiative/InitiativeTracker';
+import { RollLogWidget } from './components/standalone/RollLogWidget';
 import { isStandaloneMode } from './utils/storageAdapter';
 import './App.css';
 import './style.css';
@@ -31,11 +32,9 @@ function App() {
     const gmOnlyMatchups = useCharacterStore((state) => state.identity.gmOnlyMatchups);
     const activeTokenId = useCharacterStore((state) => state.tokenId);
     
-    // Read tracker layout from store to determine placement (Top vs Right)
     const initLayout = useCharacterStore((state) => state.identity.initiativeTrackerLayout) || 'vertical';
     const [showStandaloneTracker, setShowStandaloneTracker] = useState(false);
 
-    // Listen for toggle events from the Global Toolbar
     useEffect(() => {
         const handleToggle = () => setShowStandaloneTracker((prev) => !prev);
         window.addEventListener('toggle-standalone-tracker', handleToggle);
@@ -143,6 +142,7 @@ function App() {
 
                 <DemoRollModal />
                 {isPrinting && <PrintSheet />}
+                <RollLogWidget />
             </div>
         </div>
     );

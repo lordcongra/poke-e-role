@@ -2,29 +2,53 @@ import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../store/useCharacterStore';
 import { isStandaloneMode } from './storageAdapter';
 
-export async function assignInitiative(tokenId: string, rollTotal: number, baseInit: number) {
-    let finalInit = 0;
-    let isUnique = false;
+// Defines the structure exactly as saved in the Local Storage
+export interface StandaloneCombatant {
+    id: string;
+    name: string;
+    image: string;
+    d6: number;
+    baseInit: number;
+    total: number;
+    tiebreaker: number;
+}
 
-    // --- STANDALONE OVERRIDE ---
+// Helper to push roll entries to local storage for the Standalone Roll Log widget
+export function addRollLogEntry(label: string, result: string, icon: string, player: string) {
+    const rollLogData = {
+        id: crypto.randomUUID(),
+        player,
+        label,
+        result,
+        icon: icon || `${import.meta.env.BASE_URL || '/'}pokeball.svg`
+    };
+    try {
+        const stored = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+        const existing = Array.isArray(stored) ? stored : [];
+        localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData, ...existing].slice(0, 50)));
+        window.dispatchEvent(new Event('pkr-roll-log-update'));
+        window.dispatchEvent(new Event('storage'));
+    } catch (e) {
+        console.error('[DiceRoller] Failed to log roll to localStorage:', e);
+    }
+}
+
+export async function assignInitiative(tokenId: string, rollTotal: number, baseInit: number) {
     if (isStandaloneMode) {
         try {
             const listStr = localStorage.getItem('pkr_standalone_init_list');
             if (!listStr) return;
-            const list = JSON.parse(listStr);
-            const existingInits = list.map((c: any) => c.initiative);
+            const list: StandaloneCombatant[] = JSON.parse(listStr);
 
-            while (!isUnique) {
-                const tieBreaker = Math.floor(Math.random() * 99);
-                finalInit = rollTotal + baseInit / 100 + tieBreaker / 10000;
-                if (!existingInits.includes(finalInit)) isUnique = true;
-            }
+            const updated = list.map((c) => c.id === tokenId ? { 
+                ...c, 
+                d6: rollTotal, 
+                baseInit, 
+                total: rollTotal + baseInit,
+                tiebreaker: 0 
+            } : c);
 
-            const updated = list.map((c: any) => c.id === tokenId ? { ...c, initiative: finalInit } : c);
-            updated.sort((a: any, b: any) => b.initiative - a.initiative);
             localStorage.setItem('pkr_standalone_init_list', JSON.stringify(updated));
-            
-            // Tell the Initiative Tracker to instantly re-render!
             window.dispatchEvent(new Event('pkr-standalone-init-update'));
         } catch (e) {
             console.error('[DiceRoller] Standalone Init Error:', e);
@@ -32,7 +56,6 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
         return;
     }
 
-    // --- OBR NATIVE LOGIC ---
     if (!OBR.isAvailable) return;
     try {
         const items = await OBR.scene.items.getItems();
@@ -41,12 +64,13 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
             return meta?.value || -9999;
         });
 
+        let finalInit = rollTotal + baseInit;
+        let isUnique = false;
+
         while (!isUnique) {
             const tieBreaker = Math.floor(Math.random() * 99);
-            finalInit = rollTotal + baseInit / 100 + tieBreaker / 10000;
-            if (!existingInits.includes(finalInit)) {
-                isUnique = true;
-            }
+            finalInit = rollTotal + baseInit + tieBreaker / 100;
+            if (!existingInits.includes(finalInit)) isUnique = true;
         }
 
         await OBR.scene.items.updateItems([tokenId], (itemsToUpdate) => {
@@ -60,21 +84,23 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
 }
 
 export async function broadcastInfo(title: string, description: string) {
+    const state = useCharacterStore.getState();
+    const playerName = state.identity.nickname || state.identity.species || 'Trainer';
+    const icon = state.identity.tokenImageUrl || `${import.meta.env.BASE_URL || '/'}pokeball.svg`;
+
     if (isStandaloneMode || !OBR.isAvailable) {
-        alert(`📢 ${title}\n\n${description}`);
+        addRollLogEntry(`📢 ${title}`, description, icon, playerName);
         return;
     }
 
     try {
-        const state = useCharacterStore.getState();
         const playerId = await OBR.player.getId();
-        const playerName = await OBR.player.getName();
+        const obrPlayerName = await OBR.player.getName();
         const targetVisibility = state.identity.rolls === 'Private (GM)' ? 'gm_only' : 'everyone';
-        const icon = state.identity.tokenImageUrl || 'https://lordcongra.github.io/poke-e-role/pokeball.svg';
 
         const rollLogData = {
             id: crypto.randomUUID(),
-            player: playerName,
+            player: obrPlayerName,
             playerId: playerId,
             label: `📢 ${title}`,
             result: description,
@@ -82,24 +108,14 @@ export async function broadcastInfo(title: string, description: string) {
             targetVisibility
         };
 
+        let existingLog: Record<string, unknown>[] = [];
         try {
-            let existingLog: Record<string, unknown>[] = [];
-            try {
-                const storedLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
-                existingLog = Array.isArray(storedLog) ? storedLog : [];
-            } catch (parseError) {
-                console.warn('[DiceRoller] Roll log cache corrupted. Starting fresh.', parseError);
-            }
-            localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData, ...existingLog].slice(0, 50)));
-        } catch (error) {
-            console.warn('[DiceRoller] Failed to append to roll log safely. Clearing and retrying.', error);
-            try {
-                localStorage.removeItem('pkr_roll_log');
-                localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData]));
-            } catch (e) {
-                console.error('[DiceRoller] LocalStorage is completely inaccessible.', e);
-            }
+            const storedLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+            existingLog = Array.isArray(storedLog) ? storedLog : [];
+        } catch (parseError) {
+            console.warn('[DiceRoller] Roll log cache corrupted', parseError);
         }
+        localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData, ...existingLog].slice(0, 50)));
 
         await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-sync', rollLogData, { destination: 'REMOTE' });
         await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-update', {}, { destination: 'LOCAL' });
@@ -114,7 +130,7 @@ export async function broadcastInfo(title: string, description: string) {
             anchorReference: 'POSITION',
             anchorPosition: { top: 99999, left: 99999 },
             transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
-        }).catch(() => {});
+        }).catch((e) => console.warn('[DiceRoller] Failed to open roll log popover', e));
     } catch (error) {
         console.error('[DiceRoller] Broadcast Info Error:', error);
     }
@@ -124,8 +140,9 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
     const state = useCharacterStore.getState();
     const diceEngine = state.identity.diceEngine || 'car';
     const isGmDemo = state.identity.gmDemoMode && state.role === 'GM' && diceEngine === 'car';
-
     const targetVisibility = state.identity.rolls === 'Private (GM)' ? 'gm_only' : 'everyone';
+    const playerName = state.identity.nickname || state.identity.species || 'Trainer';
+    const icon = state.identity.tokenImageUrl || `${import.meta.env.BASE_URL || '/'}pokeball.svg`;
 
     if (diceEngine === 'car') {
         const cleanNotation = notation.replace(/\s/g, '');
@@ -184,16 +201,13 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
 
         let popupMessage = '';
         if (numDice === 0) {
-            popupMessage = `${finalLabel}\nSet Damage → ${finalSuccesses}`;
+            popupMessage = `Set Damage → ${finalSuccesses}`;
         } else if (isSuccessRoll) {
-            popupMessage = `${finalLabel}\n[${asteriskResults.join(', ')}]${modStr} → ${finalSuccesses} Successes`;
+            popupMessage = `[${asteriskResults.join(', ')}]${modStr} → ${finalSuccesses} Successes`;
         } else {
-            popupMessage = `${finalLabel}\n[${diceData.map((d) => d.result).join(', ')}]${modStr} → ${finalSum}`;
+            popupMessage = `[${diceData.map((d) => d.result).join(', ')}]${modStr} → ${finalSum}`;
         }
 
-        // ==========================================
-        // STATE RESOLUTION INTERCEPTS (Common for Both)
-        // ==========================================
         const executeStateIntercepts = async (messageAppendix: string) => {
             let finalMsg = popupMessage + messageAppendix;
 
@@ -258,47 +272,21 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                         finalMsg += `\n💥 Bank is full! (Max ${limit})`;
                     }
                 }
-            } else if (rollType === 'status' && payload) {
-                const statusId = payload;
-                if (state.tokenId && !isStandaloneMode && OBR.isAvailable) {
-                    // Update OBR Token Statuses
-                    await OBR.scene.items.updateItems([state.tokenId], (items) => {
-                        for (const item of items) {
-                            const meta = (item.metadata['pokerole-extension/stats'] as Record<string, unknown>) || {};
-                            const statusListStr = String(meta['status-list'] || '[]');
-                            try {
-                                const statuses = JSON.parse(statusListStr);
-                                let changed = false;
-                                for (const s of statuses) {
-                                    if (s.id === statusId) {
-                                        s.rounds += finalSuccesses;
-                                        changed = true;
-                                    }
-                                }
-                                if (changed) meta['status-list'] = JSON.stringify(statuses);
-                            } catch (e) {}
-                        }
-                    });
-                }
-                if (finalSuccesses > 0) {
-                    finalMsg += `\n🩹 Reduced Status by ${finalSuccesses}`;
-                }
             }
             return finalMsg;
         };
 
-        // --- STANDALONE OVERRIDE ---
+        // --- STANDALONE OVERRIDE: Log directly to Roll Log widget ---
         if (isStandaloneMode || !OBR.isAvailable) {
             const compiledMessage = await executeStateIntercepts('');
-            alert(`🎲 Roll Results\n\n${compiledMessage}`);
+            addRollLogEntry(finalLabel, compiledMessage, icon, playerName);
             return;
         }
 
         // --- NATIVE OBR ROLL ---
         const playerId = await OBR.player.getId();
-        const playerName = await OBR.player.getName();
-        const icon = state.identity.tokenImageUrl || 'https://lordcongra.github.io/poke-e-role/pokeball.svg';
-        const mensaje = `${playerName} | ${finalLabel}`;
+        const obrPlayerName = await OBR.player.getName();
+        const mensaje = `${obrPlayerName} | ${finalLabel}`;
 
         let diceTheme: unknown = undefined;
         try {
@@ -314,7 +302,9 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                     diceTheme = playerThemeData.diceTheme;
                 }
             }
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[DiceRoller] Failed to load dice theme', e);
+        }
 
         const broadcastPayload = { mensaje, icon, diceData, diceTheme };
         if (targetVisibility === 'gm_only') {
@@ -329,10 +319,10 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
             
             const rollLogData = {
                 id: crypto.randomUUID(),
-                player: playerName,
+                player: obrPlayerName,
                 playerId: playerId,
                 label: finalLabel,
-                result: finalCompiledMsg, // Uses the message with all the Temp HP / Bank tags appended!
+                result: finalCompiledMsg,
                 icon,
                 targetVisibility
             };
@@ -342,13 +332,17 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 try {
                     const storedLog = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
                     existingLog = Array.isArray(storedLog) ? storedLog : [];
-                } catch (parseError) {}
+                } catch (parseError) {
+                    console.warn('[DiceRoller] Roll log cache corrupted', parseError);
+                }
                 localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData, ...existingLog].slice(0, 50)));
             } catch (error) {
                 try {
                     localStorage.removeItem('pkr_roll_log');
                     localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData]));
-                } catch (e) {}
+                } catch (e) {
+                    console.error('[DiceRoller] Local storage totally failed', e);
+                }
             }
 
             await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-sync', rollLogData, { destination: 'REMOTE' });
@@ -364,9 +358,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 anchorReference: 'POSITION',
                 anchorPosition: { top: 99999, left: 99999 },
                 transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
-            }).catch(() => {});
+            }).catch((e) => console.warn('[DiceRoller] Roll log popover failed', e));
         }, delayMs);
-
-        return;
     }
 }

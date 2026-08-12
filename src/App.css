@@ -1,4 +1,18 @@
-/* Add these new classes to the bottom of App.css */
+/* =========================================
+   📱 STANDALONE & OBR APP LAYOUTS
+   ========================================= */
+
+/* Ensure Owlbear Rodeo mode document scrolls naturally */
+body {
+    overflow-y: auto;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
 
 .app-layout {
     display: flex;
@@ -11,7 +25,7 @@
 
 .app-main-content {
     flex: 1;
-    overflow: hidden; /* Changed to hidden to let inner containers scroll independently */
+    overflow: hidden;
     padding: 10px;
     display: flex;
     flex-direction: column;
@@ -51,7 +65,7 @@
     flex: 1;
     overflow-y: auto;
     min-width: 0;
-    padding-right: 4px; /* Room for scrollbar */
+    padding-right: 4px;
 }
 
 .standalone-layout-tracker--vertical {
