@@ -83,10 +83,19 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
                                 )}
 
                                 <span className="sidebar__item-name">{item.name}</span>
-                                
+
                                 {initTag && (
-                                    <span className={`sidebar__init-badge ${initTag === '⚔️' ? 'sidebar__init-badge--combat' : ''}`}>
+                                    <span
+                                        className={`sidebar__init-badge ${initTag === '⚔️' ? 'sidebar__init-badge--combat' : ''}`}
+                                    >
                                         {initTag}
+                                    </span>
+                                )}
+
+                                {/* NEW: Transformation Status Badge */}
+                                {item.activeTrans && item.activeTrans !== 'None' && (
+                                    <span className="sidebar__trans-badge" title={`Transformed: ${item.activeTrans}`}>
+                                        🧬
                                     </span>
                                 )}
                             </div>
@@ -101,14 +110,8 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
                                 🗑️
                             </button>
                         </div>
-                        
-                        {isExpanded && (
-                            <SidebarTreeNode
-                                {...props}
-                                parentId={item.id}
-                                depth={depth + 1}
-                            />
-                        )}
+
+                        {isExpanded && <SidebarTreeNode {...props} parentId={item.id} depth={depth + 1} />}
                     </div>
                 );
             })}

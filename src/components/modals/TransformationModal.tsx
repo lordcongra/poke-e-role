@@ -1,12 +1,60 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { POKEMON_TYPES } from '../../data/constants';
 import type { TransformationType } from '../../store/storeTypes';
+import { isStandaloneMode } from '../../utils/storageAdapter';
+import { imageManager, autoCropTransparency } from '../../utils/imageManager';
 import './TransformationModal.css';
 
 interface TransformationModalProps {
     onClose: () => void;
+}
+
+// Sub-component to seamlessly handle local-img: string resolution for the preview box!
+function TransformationImagePreview({ url, onClear }: { url: string; onClear: () => void }) {
+    const [resolvedUrl, setResolvedUrl] = useState<string>('');
+
+    useEffect(() => {
+        let isMounted = true;
+        const resolveImage = async () => {
+            if (!url) {
+                if (isMounted) setResolvedUrl('');
+                return;
+            }
+            if (isStandaloneMode && url.startsWith('local-img:')) {
+                try {
+                    const resolved = await imageManager.getImageUrl(url);
+                    if (isMounted) setResolvedUrl(resolved || '');
+                } catch (error) {
+                    console.error('[TransformationModal] Failed to resolve preview image:', error);
+                    if (isMounted) setResolvedUrl('');
+                }
+            } else {
+                if (isMounted) setResolvedUrl(url);
+            }
+        };
+
+        resolveImage();
+        return () => {
+            isMounted = false;
+        };
+    }, [url]);
+
+    if (!resolvedUrl) return null;
+
+    return (
+        <div className="transformation-modal__image-preview">
+            <img src={resolvedUrl} alt="Form" className="transformation-modal__image" />
+            <button
+                type="button"
+                onClick={onClear}
+                className="action-button action-button--red transformation-modal__clear-img-btn"
+            >
+                Clear
+            </button>
+        </div>
+    );
 }
 
 export function TransformationModal({ onClose }: TransformationModalProps) {
@@ -54,7 +102,62 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
         localStorage.setItem('pokerole-last-trans', val);
     };
 
+    // Helper to safely delete local IndexedDB images before clearing state
+    const handleClearImage = async (
+        field: 'megaImageUrl' | 'maxImageUrl' | 'teraImageUrl' | string,
+        isCustomForm = false
+    ) => {
+        const targetUrl = isCustomForm
+            ? identityStore.customFormImages[field]
+            : identityStore[field as keyof typeof identityStore];
+
+        if (typeof targetUrl === 'string' && targetUrl.startsWith('local-img:')) {
+            try {
+                await imageManager.deleteImage(targetUrl);
+            } catch (error) {
+                console.warn('[TransformationModal] Failed to delete image from IndexedDB:', error);
+            }
+        }
+
+        if (isCustomForm) {
+            setIdentity('customFormImages', { ...identityStore.customFormImages, [field]: '' });
+        } else {
+            setIdentity(field as keyof typeof identityStore, '');
+        }
+    };
+
     const handleSetImage = async (field: string, isCustomForm = false) => {
+        if (isStandaloneMode) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = async (event) => {
+                const file = (event.target as HTMLInputElement).files?.[0];
+                if (!file) return;
+                try {
+                    const croppedBlob = await autoCropTransparency(file);
+                    const croppedFile = new File([croppedBlob], file.name, {
+                        type: croppedBlob.type || 'image/png'
+                    });
+
+                    // If an old local image exists, delete it first to prevent bloat!
+                    await handleClearImage(field, isCustomForm);
+
+                    const localId = await imageManager.saveImage(croppedFile);
+
+                    if (isCustomForm) {
+                        setIdentity('customFormImages', { ...identityStore.customFormImages, [field]: localId });
+                    } else {
+                        setIdentity(field as keyof typeof identityStore, localId);
+                    }
+                } catch (e) {
+                    console.error('[TransformationModal] Failed to save local image:', e);
+                }
+            };
+            input.click();
+            return;
+        }
+
         if (!OBR.isAvailable || !tokenId) return;
         try {
             const assetsApi = OBR.assets as unknown as { downloadImages?: () => Promise<unknown[]> };
@@ -96,8 +199,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                         setIdentity(field as keyof typeof identityStore, selectedUrl);
                     }
                 } else {
-                    if (OBR.isAvailable)
-                        OBR.notification.show('Could not extract URL. Please check F12 Console!', 'ERROR');
+                    OBR.notification.show('Could not extract URL. Please check F12 Console!', 'ERROR');
                 }
             }
         } catch (e) {
@@ -165,12 +267,15 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
 
     const confirmClearMemory = () => {
         if (clearConfirmType === 'Mega') {
+            handleClearImage('megaImageUrl');
             setIdentity('altFormData', '');
             if (OBR.isAvailable) OBR.notification.show('Mega Form Memory Cleared!', 'SUCCESS');
         } else if (clearConfirmType === 'Max') {
+            handleClearImage('maxImageUrl');
             setIdentity('maxFormData', '');
             if (OBR.isAvailable) OBR.notification.show('Dynamax / Gigantamax Memory Cleared!', 'SUCCESS');
         } else if (clearConfirmType === 'Custom' && targetFormId) {
+            handleClearImage(targetFormId, true);
             const newFormSaves = { ...formSaves };
             delete newFormSaves[targetFormId];
             setIdentity('formSaves', newFormSaves);
@@ -269,18 +374,13 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                     };
                                     const field = fieldMap[targetTrans as string];
                                     const url = identityStore[field];
+
                                     if (url) {
                                         return (
-                                            <div className="transformation-modal__image-preview">
-                                                <img src={url} alt="Form" className="transformation-modal__image" />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setIdentity(field, '')}
-                                                    className="action-button action-button--red transformation-modal__clear-img-btn"
-                                                >
-                                                    Clear
-                                                </button>
-                                            </div>
+                                            <TransformationImagePreview
+                                                url={url}
+                                                onClear={() => handleClearImage(field)}
+                                            />
                                         );
                                     }
                                     return (
@@ -302,23 +402,13 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                 {(() => {
                                     const safeId = targetFormId as string;
                                     const url = identityStore.customFormImages[safeId];
+
                                     if (url) {
                                         return (
-                                            <div className="transformation-modal__image-preview">
-                                                <img src={url} alt="Form" className="transformation-modal__image" />
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        setIdentity('customFormImages', {
-                                                            ...identityStore.customFormImages,
-                                                            [safeId]: ''
-                                                        })
-                                                    }
-                                                    className="action-button action-button--red transformation-modal__clear-img-btn"
-                                                >
-                                                    Clear
-                                                </button>
-                                            </div>
+                                            <TransformationImagePreview
+                                                url={url}
+                                                onClear={() => handleClearImage(safeId, true)}
+                                            />
                                         );
                                     }
                                     return (

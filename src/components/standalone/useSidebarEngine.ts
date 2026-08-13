@@ -11,6 +11,7 @@ export type TreeItem = {
     parentId: string | null;
     type: 'folder' | 'character';
     meta?: Record<string, unknown>;
+    activeTrans: string; // NEW: Track transformation status
 };
 
 export function useSidebarEngine() {
@@ -27,7 +28,6 @@ export function useSidebarEngine() {
     );
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; item: TreeItem } | null>(null);
 
-    // NEW: State to hold parsed backup data while the modal is open
     const [pendingRestoreData, setPendingRestoreData] = useState<Record<string, unknown> | null>(null);
     const restoreInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,14 +41,32 @@ export function useSidebarEngine() {
             customOrder.forEach((id, index) => orderMap.set(id, index));
 
             const combined: TreeItem[] = [
-                ...flds.map((f) => ({ id: f.id, name: f.name, parentId: f.parentId, type: 'folder' as const })),
-                ...chars.map((c) => ({
-                    id: c.id,
-                    name: c.name,
-                    parentId: c.parentId,
-                    type: 'character' as const,
-                    meta: c.metadata as Record<string, unknown>
-                }))
+                ...flds.map((f) => ({
+                    id: f.id,
+                    name: f.name,
+                    parentId: f.parentId,
+                    type: 'folder' as const,
+                    activeTrans: 'None'
+                })),
+                ...chars.map((c) => {
+                    const metaObj = c.metadata as Record<string, unknown> | undefined;
+                    const nestedState = metaObj?.state as Record<string, unknown> | undefined;
+                    const nestedIdentity = nestedState?.identity as Record<string, unknown> | undefined;
+
+                    // Safely extract the active transformation state from local storage metadata
+                    const currentTrans = String(
+                        metaObj?.['active-transformation'] || nestedIdentity?.activeTransformation || 'None'
+                    );
+
+                    return {
+                        id: c.id,
+                        name: c.name,
+                        parentId: c.parentId,
+                        type: 'character' as const,
+                        meta: metaObj,
+                        activeTrans: currentTrans
+                    };
+                })
             ];
 
             combined.sort((a, b) => {
@@ -410,7 +428,6 @@ export function useSidebarEngine() {
             try {
                 const data = JSON.parse(event.target?.result as string);
                 if (data.type === 'pokerole-master-backup') {
-                    // Instantly pop open the new Modal
                     setPendingRestoreData(data);
                 } else {
                     alert('Invalid Master Backup file.');
@@ -424,7 +441,6 @@ export function useSidebarEngine() {
         reader.readAsText(file);
     };
 
-    // --- MODAL EXECUTION METHODS ---
     const confirmRestoreMerge = () => {
         if (!pendingRestoreData) return;
         const data = pendingRestoreData as any;
@@ -447,7 +463,6 @@ export function useSidebarEngine() {
 
     const confirmRestoreOverwrite = () => {
         if (!pendingRestoreData) return;
-        // Final safety check just to prevent misclicks on the red button
         if (
             !window.confirm(
                 '⚠️ FINAL WARNING: Overwriting will delete all current local files not in the backup. Are you completely sure?'

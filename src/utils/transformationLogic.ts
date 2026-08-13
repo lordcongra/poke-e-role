@@ -434,47 +434,53 @@ export function processTransformation(
 export function handleTokenImageSwap(
     state: CharacterState,
     draft: TransformationDraft,
+    updatesToSave: Record<string, unknown>, // <-- NEW ARGUMENT
     isReverting: boolean,
     targetTransformation: TransformationType,
     customFormId?: string,
     revertConfig?: RestoreConfig
 ) {
-    if (!OBR.isAvailable || !state.tokenId) return;
-
     let targetUrl = '';
+
     if (isReverting && draft.identity.tokenImageUrl) {
         if (revertConfig?.restoreImage) targetUrl = draft.identity.tokenImageUrl;
     } else if (!isReverting) {
         if (targetTransformation === 'Custom' && customFormId) {
             if (state.identity.customFormImages[customFormId]) {
                 targetUrl = state.identity.customFormImages[customFormId];
-                draft.identity.tokenImageUrl = targetUrl;
             }
         } else if (targetTransformation === 'Mega' && state.identity.megaImageUrl) {
             targetUrl = state.identity.megaImageUrl;
-            draft.identity.tokenImageUrl = targetUrl;
         } else if (
             (targetTransformation === 'Dynamax' || targetTransformation === 'Gigantamax') &&
             state.identity.maxImageUrl
         ) {
             targetUrl = state.identity.maxImageUrl;
-            draft.identity.tokenImageUrl = targetUrl;
         } else if (targetTransformation === 'Terastallize' && state.identity.teraImageUrl) {
             targetUrl = state.identity.teraImageUrl;
-            draft.identity.tokenImageUrl = targetUrl;
         }
     }
 
+    // Only overwrite if a new URL is provided (preserves the base image if no form image is found!)
     if (targetUrl) {
-        OBR.scene.items
-            .updateItems([state.tokenId], (items) => {
-                for (const item of items) {
-                    if (item.type === 'IMAGE') {
-                        const imgItem = item as Image;
-                        if (imgItem.image) imgItem.image.url = targetUrl;
+        draft.identity.tokenImageUrl = targetUrl;
+
+        // Ensure it gets pushed to Local Storage
+        updatesToSave['tokenImageUrl'] = targetUrl;
+        updatesToSave['token-image-url'] = targetUrl;
+
+        // Ensure it updates the OBR token if in VTT mode
+        if (OBR.isAvailable && state.tokenId) {
+            OBR.scene.items
+                .updateItems([state.tokenId], (items) => {
+                    for (const item of items) {
+                        if (item.type === 'IMAGE') {
+                            const imgItem = item as Image;
+                            if (imgItem.image) imgItem.image.url = targetUrl;
+                        }
                     }
-                }
-            })
-            .catch((e) => console.warn('[TransformationLogic] Failed to update token image:', e));
+                })
+                .catch((e) => console.warn('[TransformationLogic] Failed to update token image:', e));
+        }
     }
 }

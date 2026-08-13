@@ -12,15 +12,15 @@ export function SidebarAvatar({ meta }: SidebarAvatarProps) {
 
     useEffect(() => {
         let isMounted = true;
-        
+
         const resolveImage = async () => {
             const imageString = extractTokenImage(meta);
-            
+
             if (!imageString) {
                 if (isMounted) setResolvedImage('');
                 return;
             }
-            
+
             if (isStandaloneMode && imageString.startsWith('local-img:')) {
                 try {
                     const url = await imageManager.getImageUrl(imageString);
@@ -34,19 +34,14 @@ export function SidebarAvatar({ meta }: SidebarAvatarProps) {
         };
 
         resolveImage();
-        return () => { isMounted = false; };
+        return () => {
+            isMounted = false;
+        };
     }, [meta]);
 
     if (!resolvedImage) {
         return <span className="sidebar__item-icon">📄</span>;
     }
 
-    return (
-        <img 
-            src={resolvedImage} 
-            alt="Character Avatar" 
-            className="sidebar__item-avatar" 
-            loading="lazy"
-        />
-    );
+    return <img src={resolvedImage} alt="Character Avatar" className="sidebar__item-avatar" loading="lazy" />;
 }

@@ -225,8 +225,16 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 }
             }
 
-            // 4. Final Updates
-            handleTokenImageSwap(state, draft, isReverting, targetTransformation, customFormId, revertConfig);
+            // 4. Final Updates (Pass updatesToSave so the image actually gets stored!)
+            handleTokenImageSwap(
+                state,
+                draft,
+                updatesToSave,
+                isReverting,
+                targetTransformation,
+                customFormId,
+                revertConfig
+            );
 
             try {
                 saveToOwlbear(updatesToSave);

@@ -207,6 +207,8 @@ export const restoreFormBackup = (
 
         if (config.restoreImage && loadedData.tokenImageUrl !== undefined) {
             draft.identity.tokenImageUrl = String(loadedData.tokenImageUrl);
+            updatesToSave['tokenImageUrl'] = draft.identity.tokenImageUrl;
+            updatesToSave['token-image-url'] = draft.identity.tokenImageUrl;
         }
 
         if (config.restoreTyping) {
