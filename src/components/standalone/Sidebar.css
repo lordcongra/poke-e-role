@@ -139,7 +139,7 @@
     cursor: pointer;
     user-select: none;
     border-bottom: 1px solid transparent;
-    border-top: 1px solid transparent; /* Allows top drop indicator to render clean */
+    border-top: 1px solid transparent; 
 }
 
 .sidebar__item:hover {
@@ -151,7 +151,6 @@
     border-bottom: 1px solid var(--primary);
 }
 
-/* Feature 2: Drag and Drop Highlight Targets */
 .sidebar__item--drag-before {
     border-top: 2px solid var(--primary);
 }
@@ -161,7 +160,7 @@
 }
 
 .sidebar__item--drag-inside {
-    background: rgba(185, 37, 24, 0.2);
+    background: rgba(185, 37, 24, 0.2); 
     border: 1px dashed var(--primary);
 }
 
@@ -193,6 +192,17 @@
     font-size: 1rem;
 }
 
+/* NEW: Styles for the injected avatar images */
+.sidebar__item-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px; /* Gentle rounded corners instead of a harsh circle */
+    object-fit: contain; /* Shows the full image without cropping */
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+    background: transparent; /* Allows PNG transparency to show cleanly */
+}
+
 .sidebar__item-name {
     font-size: 0.9rem;
     white-space: nowrap;
@@ -200,14 +210,13 @@
     text-overflow: ellipsis;
 }
 
-/* Feature 1: Initiative Tags */
 .sidebar__init-badge {
     font-size: 0.7rem;
     background: #1565c0;
     color: white;
     padding: 2px 6px;
     border-radius: 12px;
-    margin-left: auto; /* Push it cleanly to the right */
+    margin-left: auto; 
     font-weight: bold;
     flex-shrink: 0;
 }
@@ -239,12 +248,12 @@
 
 /* --- CONTEXT MENU --- */
 .sidebar__context-menu {
-    position: fixed;
+    position: fixed; 
     background: var(--panel-bg);
     border: 1px solid var(--border);
     border-radius: 6px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-    z-index: 9999;
+    z-index: 9999; 
     min-width: 140px;
     display: flex;
     flex-direction: column;

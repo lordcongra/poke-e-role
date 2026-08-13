@@ -1,4 +1,5 @@
 import type { TreeItem } from './useSidebarEngine';
+import { SidebarAvatar } from './SidebarAvatar';
 
 interface SidebarTreeNodeProps {
     parentId: string | null;
@@ -75,13 +76,16 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
                                     <span className="sidebar__caret-empty" />
                                 )}
 
-                                <span className="sidebar__item-icon">{item.type === 'folder' ? '📁' : '📄'}</span>
-                                <span className="sidebar__item-name">{item.name}</span>
+                                {item.type === 'folder' ? (
+                                    <span className="sidebar__item-icon">📁</span>
+                                ) : (
+                                    <SidebarAvatar meta={item.meta} />
+                                )}
 
+                                <span className="sidebar__item-name">{item.name}</span>
+                                
                                 {initTag && (
-                                    <span
-                                        className={`sidebar__init-badge ${initTag === '⚔️' ? 'sidebar__init-badge--combat' : ''}`}
-                                    >
+                                    <span className={`sidebar__init-badge ${initTag === '⚔️' ? 'sidebar__init-badge--combat' : ''}`}>
                                         {initTag}
                                     </span>
                                 )}
@@ -97,9 +101,14 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
                                 🗑️
                             </button>
                         </div>
-
-                        {/* Recursion happens here for nested folders! */}
-                        {isExpanded && <SidebarTreeNode {...props} parentId={item.id} depth={depth + 1} />}
+                        
+                        {isExpanded && (
+                            <SidebarTreeNode
+                                {...props}
+                                parentId={item.id}
+                                depth={depth + 1}
+                            />
+                        )}
                     </div>
                 );
             })}
