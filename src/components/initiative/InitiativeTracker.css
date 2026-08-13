@@ -198,3 +198,115 @@
     width: 260px;
     flex-shrink: 0;
 }
+
+/* =========================================
+   📱 MOBILE INITIATIVE DRAWER OVERRIDES
+   ========================================= */
+
+.init-tracker__mobile-toggle {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    /* The floating ⚔️ button */
+    .init-tracker__mobile-toggle {
+        display: flex;
+        position: fixed;
+        top: 8px;
+        right: 8px;
+        background: var(--panel-bg);
+        border: 2px solid #b71c1c;
+        color: white;
+        border-radius: 8px;
+        width: 42px;
+        height: 42px;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        z-index: 9002;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        transition: background 0.2s;
+    }
+
+    .init-tracker__mobile-toggle.is-active {
+        background: #b71c1c;
+    }
+
+    /* The slide-out drawer container */
+    .init-tracker__standalone-wrapper {
+        position: fixed !important;
+        top: 55px !important; 
+        right: 0 !important;
+        bottom: 10px !important;
+        
+        /* STRICT WIDTH LOCK - Kills any overriding styles */
+        width: 175px !important; 
+        min-width: 175px !important;
+        max-width: 175px !important;
+        
+        height: auto !important;
+        z-index: 9001;
+        background: transparent;
+        transform: translateX(120%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 10px !important;
+        box-sizing: border-box;
+        pointer-events: none; 
+    }
+
+    .init-tracker__standalone-wrapper.is-mobile-expanded {
+        transform: translateX(0);
+        pointer-events: auto; 
+    }
+
+    /* Restore the borders and force vertical layout! */
+    .init-tracker__standalone-panel {
+        width: 100% !important;
+        height: 100% !important;
+        border: 2px solid #b71c1c !important;
+        border-radius: 8px !important;
+        box-shadow: -4px 8px 24px rgba(0, 0, 0, 0.8) !important;
+        flex-direction: column !important; 
+        box-sizing: border-box;
+        background: var(--panel-bg) !important;
+    }
+
+    /* Force the internal header to act vertically regardless of user settings */
+    .init-tracker__standalone-panel .init-tracker__header--horizontal,
+    .init-tracker__standalone-panel .init-tracker__header--vertical {
+        flex-direction: row !important;
+        width: 100% !important;
+        height: auto !important;
+        border-right: none !important;
+        border-bottom: 2px solid #b71c1c !important;
+        padding: 6px 4px !important; /* Shrunk padding to fit buttons neatly */
+        box-sizing: border-box;
+    }
+
+    /* Force the buttons inside the header into a clean row */
+    .init-tracker__standalone-panel .init-tracker__header--horizontal .init-tracker__turn-controls,
+    .init-tracker__standalone-panel .init-tracker__turn-controls {
+        flex-direction: row !important;
+        width: 100% !important;
+        justify-content: center !important;
+        flex-wrap: wrap !important; /* Allows buttons to wrap safely if needed */
+    }
+
+    /* Force the list array to stack top-to-bottom */
+    .init-tracker__standalone-panel .init-tracker__list--horizontal,
+    .init-tracker__standalone-panel .init-tracker__list--vertical {
+        flex-direction: column !important;
+        height: 100% !important;
+        width: 100% !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        padding: 6px !important;
+        box-sizing: border-box;
+    }
+    
+    /* Hide the horizontal 'flow arrow' since we are stacking vertically */
+    .init-tracker__standalone-panel .init-tracker__flow-arrow {
+        display: none !important;
+    }
+}

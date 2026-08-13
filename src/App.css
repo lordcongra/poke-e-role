@@ -99,3 +99,77 @@ body {
     display: flex;
     flex-direction: column;
 }
+
+/* =========================================
+   📱 MOBILE & NARROW VIEWPORT OVERRIDES
+   ========================================= */
+@media (max-width: 768px) {
+    .app-layout {
+        flex-direction: column !important;
+        position: relative !important;
+        min-height: 100vh !important;
+        height: auto !important;
+        overflow-y: auto !important;
+    }
+
+    .app-main-content {
+        overflow: visible !important;
+        padding: 8px !important;
+        padding-top: 56px !important; /* Cushion so both ☰ and ⚔️ toggle buttons have space */
+    }
+
+    .standalone-layout-wrapper {
+        flex-direction: column !important;
+        overflow: visible !important;
+    }
+
+    .standalone-main-col,
+    .standalone-layout-sheet {
+        overflow: visible !important;
+    }
+
+    /* Collapse the empty wrapper space where the tracker used to sit! */
+    .standalone-layout-tracker--horizontal,
+    .standalone-tracker-dock {
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+    }
+
+    /* Let the Roll Log gracefully sit at the bottom of the page */
+    .standalone-right-sidebar {
+        width: 100% !important;
+        flex-direction: column !important;
+        max-height: none !important;
+        overflow: visible !important;
+        padding-bottom: 20px;
+    }
+
+    .sheet-container {
+        padding: 6px !important;
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    .identity-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .global-toolbar__row {
+        flex-wrap: wrap !important;
+    }
+
+    .global-toolbar__btn {
+        flex: 1 1 45% !important;
+        min-width: 120px;
+    }
+
+    .targeting-modal__content,
+    .transformation-modal__content,
+    .restore-modal__content {
+        width: 95vw !important;
+        padding: 12px !important;
+    }
+}

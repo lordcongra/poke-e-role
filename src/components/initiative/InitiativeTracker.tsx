@@ -35,6 +35,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
     } = useInitiativeEngine();
 
     const [showAddMenu, setShowAddMenu] = useState(false);
+    const [isMobileExpanded, setIsMobileExpanded] = useState(false); // NEW: Mobile drawer state
 
     // Fetch characters when the user explicitly opens the add menu
     useEffect(() => {
@@ -169,18 +170,29 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
 
     if (isStandaloneWidget) {
         return (
-            <div
-                className="init-tracker__standalone-wrapper"
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={handleDrop}
-            >
-                <div
-                    className={`init-tracker init-tracker--${layout} init-tracker__standalone-panel`}
-                    style={{ flexDirection: layout === 'horizontal' ? 'row' : 'column' }}
+            <>
+                {/* NEW: Mobile toggle bubble */}
+                <button
+                    className={`init-tracker__mobile-toggle ${isMobileExpanded ? 'is-active' : ''}`}
+                    onClick={() => setIsMobileExpanded(!isMobileExpanded)}
+                    title="Toggle Initiative Tracker"
                 >
-                    {renderTrackerContent(false)}
+                    ⚔️
+                </button>
+
+                <div
+                    className={`init-tracker__standalone-wrapper ${isMobileExpanded ? 'is-mobile-expanded' : ''}`}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={handleDrop}
+                >
+                    <div
+                        className={`init-tracker init-tracker--${layout} init-tracker__standalone-panel`}
+                        style={{ flexDirection: layout === 'horizontal' ? 'row' : 'column' }}
+                    >
+                        {renderTrackerContent(false)}
+                    </div>
                 </div>
-            </div>
+            </>
         );
     }
 

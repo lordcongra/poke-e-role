@@ -17,7 +17,7 @@ export type TreeItem = {
 export function useSidebarEngine() {
     const activeTokenId = useCharacterStore((state) => state.tokenId);
     const [items, setItems] = useState<TreeItem[]>([]);
-    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(() => window.innerWidth < 768);
 
     const [newName, setNewName] = useState<string>('');
     const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});

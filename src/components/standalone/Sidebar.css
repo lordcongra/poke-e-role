@@ -291,3 +291,38 @@
     flex-shrink: 0;
     cursor: help;
 }
+
+/* =========================================
+   📱 MOBILE DRAWER OVERLAYS
+   ========================================= */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 9000; /* Floats above the character sheet */
+        box-shadow: 4px 0 16px rgba(0, 0, 0, 0.5);
+    }
+
+    .sidebar--collapsed {
+        width: 40px !important;
+        height: 40px !important;
+        bottom: auto !important; /* Shrinks the overlay height so it doesn't block taps */
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .sidebar--collapsed .sidebar__toggle-btn {
+        position: fixed;
+        top: 8px;
+        left: 8px;
+        background: var(--panel-bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 6px 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        z-index: 9001;
+    }
+}
