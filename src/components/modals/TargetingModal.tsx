@@ -3,6 +3,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import type { MoveData } from '../../store/storeTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { STATS_META_ID } from '../../utils/graphicsManager';
+import { isStandaloneMode, storageAdapter } from '../../utils/storageAdapter';
 import './TargetingModal.css';
 
 interface TargetingModalProps {
@@ -30,48 +31,169 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
     const isPhysicalMove = String(move.category).startsWith('Phys');
 
     useEffect(() => {
-        if (OBR.isAvailable) {
-            OBR.scene.items.getItems().then((items) => {
-                const availableTargets: TargetOption[] = [];
+        let isMounted = true;
 
-                items.forEach((item) => {
-                    // Look for our newly established tracker data natively instead of pretty sordid
-                    if (item.metadata[STATS_META_ID] && item.metadata['pokerole-pmd-extension/initiative']) {
-                        const meta = item.metadata[STATS_META_ID] as Record<string, unknown>;
-                        const name = String(meta.nickname || meta.species || item.name);
+        const loadTargets = async () => {
+            const availableTargets: TargetOption[] = [];
 
-                        // Allowable rule exception: Math parsed directly from raw OBR metadata network strings
-                        const vit =
-                            (Number(meta['vit-base']) || 2) +
-                            (Number(meta['vit-rank']) || 0) +
-                            (Number(meta['vit-buff']) || 0) -
-                            (Number(meta['vit-debuff']) || 0);
-                        const ins =
-                            (Number(meta['ins-base']) || 1) +
-                            (Number(meta['ins-rank']) || 0) +
-                            (Number(meta['ins-buff']) || 0) -
-                            (Number(meta['ins-debuff']) || 0);
+            // --- PATH 1: STANDALONE MODE ---
+            if (isStandaloneMode) {
+                try {
+                    const savedList = localStorage.getItem('pkr_standalone_init_list');
+                    if (savedList) {
+                        const initList = JSON.parse(savedList) as Record<string, unknown>[];
+                        if (Array.isArray(initList)) {
+                            const localChars = await storageAdapter.getLocalCharacters();
 
-                        const defBuff = Number(meta['defBuff'] ?? meta['def-buff']) || 0;
-                        const defDebuff = Number(meta['defDebuff'] ?? meta['def-debuff']) || 0;
-                        const sdefBuff = Number(meta['sdefBuff'] ?? meta['spd-buff']) || 0;
-                        const sdefDebuff = Number(meta['sdefDebuff'] ?? meta['spd-debuff']) || 0;
+                            initList.forEach((c) => {
+                                const charId = String(c.id || '');
+                                const matchingChar = localChars.find((lc) => lc.id === charId);
 
-                        const def = vit + defBuff - defDebuff;
-                        let spd = ins + sdefBuff - sdefDebuff;
+                                let name = String(c.name || 'Unknown');
+                                let vit = 2;
+                                let ins = 1;
+                                let defBuff = 0;
+                                let defDebuff = 0;
+                                let sdefBuff = 0;
+                                let sdefDebuff = 0;
+                                let isTera = false;
 
-                        if (ruleset === 'tabletop') spd = vit + sdefBuff - sdefDebuff;
+                                if (matchingChar && matchingChar.metadata) {
+                                    const meta = matchingChar.metadata as Record<string, unknown>;
+                                    name = String(meta.nickname || meta.species || c.name || 'Unknown');
 
-                        const targetDef = isPhysicalMove ? def : spd;
-                        const isTera = meta['active-transformation'] === 'Terastallize';
+                                    const stateObj = (meta.state || meta) as Record<string, unknown>;
+                                    const statsObj = (meta.stats || stateObj?.stats) as
+                                        | Record<string, Record<string, number>>
+                                        | undefined;
 
-                        availableTargets.push({ id: item.id, name, def: Math.max(1, targetDef), isTera });
+                                    if (statsObj && typeof statsObj === 'object') {
+                                        vit = Math.max(
+                                            1,
+                                            (Number(statsObj.vit?.base) || 2) +
+                                                (Number(statsObj.vit?.rank) || 0) +
+                                                (Number(statsObj.vit?.buff) || 0) -
+                                                (Number(statsObj.vit?.debuff) || 0)
+                                        );
+                                        ins = Math.max(
+                                            1,
+                                            (Number(statsObj.ins?.base) || 1) +
+                                                (Number(statsObj.ins?.rank) || 0) +
+                                                (Number(statsObj.ins?.buff) || 0) -
+                                                (Number(statsObj.ins?.debuff) || 0)
+                                        );
+                                    } else {
+                                        vit =
+                                            (Number(meta['vit-base']) || 2) +
+                                            (Number(meta['vit-rank']) || 0) +
+                                            (Number(meta['vit-buff']) || 0) -
+                                            (Number(meta['vit-debuff']) || 0);
+                                        ins =
+                                            (Number(meta['ins-base']) || 1) +
+                                            (Number(meta['ins-rank']) || 0) +
+                                            (Number(meta['ins-buff']) || 0) -
+                                            (Number(meta['ins-debuff']) || 0);
+                                    }
+
+                                    defBuff = Number(meta['defBuff'] ?? meta['def-buff']) || 0;
+                                    defDebuff = Number(meta['defDebuff'] ?? meta['def-debuff']) || 0;
+                                    sdefBuff = Number(meta['sdefBuff'] ?? meta['spd-buff']) || 0;
+                                    sdefDebuff = Number(meta['sdefDebuff'] ?? meta['spd-debuff']) || 0;
+
+                                    const identityObj = (stateObj?.identity || meta.identity || {}) as Record<
+                                        string,
+                                        unknown
+                                    >;
+                                    isTera =
+                                        meta['active-transformation'] === 'Terastallize' ||
+                                        identityObj.activeTransformation === 'Terastallize';
+                                }
+
+                                const def = vit + defBuff - defDebuff;
+                                let spd = ins + sdefBuff - sdefDebuff;
+                                if (ruleset === 'tabletop') spd = vit + sdefBuff - sdefDebuff;
+
+                                const targetDef = isPhysicalMove ? def : spd;
+                                availableTargets.push({
+                                    id: charId,
+                                    name,
+                                    def: Math.max(1, targetDef),
+                                    isTera
+                                });
+                            });
+                        }
                     }
-                });
+                } catch (error) {
+                    console.error('[TargetingModal] Error loading standalone targets:', error);
+                }
+            }
+            // --- PATH 2: OWLBEAR RODEO MODE ---
+            else if (OBR.isAvailable) {
+                try {
+                    const items = await OBR.scene.items.getItems();
+                    items.forEach((item) => {
+                        // Allow targeting for any character token present in initiative
+                        if (item.metadata['pokerole-pmd-extension/initiative'] !== undefined) {
+                            const meta = (item.metadata[STATS_META_ID] || item.metadata) as Record<string, unknown>;
+                            const name = String(meta.nickname || meta.species || item.name);
 
-                setTargets(availableTargets);
+                            const vit =
+                                (Number(meta['vit-base']) || 2) +
+                                (Number(meta['vit-rank']) || 0) +
+                                (Number(meta['vit-buff']) || 0) -
+                                (Number(meta['vit-debuff']) || 0);
+                            const ins =
+                                (Number(meta['ins-base']) || 1) +
+                                (Number(meta['ins-rank']) || 0) +
+                                (Number(meta['ins-buff']) || 0) -
+                                (Number(meta['ins-debuff']) || 0);
+
+                            const defBuff = Number(meta['defBuff'] ?? meta['def-buff']) || 0;
+                            const defDebuff = Number(meta['defDebuff'] ?? meta['def-debuff']) || 0;
+                            const sdefBuff = Number(meta['sdefBuff'] ?? meta['spd-buff']) || 0;
+                            const sdefDebuff = Number(meta['sdefDebuff'] ?? meta['spd-debuff']) || 0;
+
+                            const def = vit + defBuff - defDebuff;
+                            let spd = ins + sdefBuff - sdefDebuff;
+
+                            if (ruleset === 'tabletop') spd = vit + sdefBuff - sdefDebuff;
+
+                            const targetDef = isPhysicalMove ? def : spd;
+                            const isTera = meta['active-transformation'] === 'Terastallize';
+
+                            availableTargets.push({ id: item.id, name, def: Math.max(1, targetDef), isTera });
+                        }
+                    });
+                } catch (error) {
+                    console.error('[TargetingModal] Error loading OBR targets:', error);
+                }
+            }
+
+            // Append stable #1, #2 duplicate indicators
+            const nameGroups: Record<string, string[]> = {};
+            availableTargets.forEach((t) => {
+                if (!nameGroups[t.name]) nameGroups[t.name] = [];
+                nameGroups[t.name].push(t.id);
             });
-        }
+            Object.values(nameGroups).forEach((ids) => ids.sort());
+
+            const formattedTargets = availableTargets.map((t) => {
+                const ids = nameGroups[t.name];
+                if (ids && ids.length > 1) {
+                    const num = ids.indexOf(t.id) + 1;
+                    return { ...t, name: `${t.name} #${num}` };
+                }
+                return t;
+            });
+
+            if (isMounted) setTargets(formattedTargets);
+        };
+
+        loadTargets();
+
+        return () => {
+            isMounted = false;
+        };
     }, [isPhysicalMove, ruleset]);
 
     const handleConfirm = () => {

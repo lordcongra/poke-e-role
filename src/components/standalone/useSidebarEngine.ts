@@ -372,6 +372,14 @@ export function useSidebarEngine() {
     };
 
     const handleExportMasterBackup = async () => {
+        const confirmed = window.confirm(
+            '⚠️ MASTER BACKUP NOTICE:\n\n' +
+                'This will export all folders and character sheets to a JSON file.\n' +
+                'Please note: Locally uploaded custom images are stored in browser storage and CANNOT be embedded into file backups. Only external image URLs will be fully preserved.\n\n' +
+                'Proceed with export?'
+        );
+        if (!confirmed) return;
+
         try {
             const chars = await storageAdapter.getLocalCharacters();
             const flds = await storageAdapter.getFolders();
@@ -400,18 +408,50 @@ export function useSidebarEngine() {
             try {
                 const data = JSON.parse(event.target?.result as string);
                 if (data.type === 'pokerole-master-backup') {
-                    if (!window.confirm('WARNING: This will OVERWRITE your entire local directory! Proceed?')) return;
+                    const restoreMode = window.confirm(
+                        '📂 RESTORE BACKUP:\n\n' +
+                            'Click OK to MERGE the backup files into your current directory.\n' +
+                            'Click Cancel if you want to OVERWRITE and replace your entire directory instead.'
+                    );
 
-                    localStorage.setItem('pkr_folders', JSON.stringify(data.folders || []));
-                    for (const char of data.characters || []) {
-                        localStorage.setItem(`pkr_char_${char.id}`, JSON.stringify(char.metadata));
+                    if (restoreMode) {
+                        // --- MERGE MODE ---
+                        const existingFoldersStr = localStorage.getItem('pkr_folders') || '[]';
+                        const existingFolders = JSON.parse(existingFoldersStr) as Record<string, unknown>[];
+                        const folderMap = new Map(existingFolders.map((f) => [String(f.id), f]));
+                        (data.folders || []).forEach((f: Record<string, unknown>) => {
+                            folderMap.set(String(f.id), f);
+                        });
+                        localStorage.setItem('pkr_folders', JSON.stringify(Array.from(folderMap.values())));
+
+                        for (const char of data.characters || []) {
+                            localStorage.setItem(`pkr_char_${char.id}`, JSON.stringify(char.metadata));
+                        }
+                        window.dispatchEvent(new Event('pkr-local-data-changed'));
+                        alert('Master Backup Merged Successfully!');
+                    } else {
+                        // --- OVERWRITE MODE ---
+                        if (
+                            !window.confirm(
+                                '⚠️ WARNING: Overwriting will delete all current local files not in the backup. Are you completely sure?'
+                            )
+                        ) {
+                            if (restoreInputRef.current) restoreInputRef.current.value = '';
+                            return;
+                        }
+
+                        localStorage.setItem('pkr_folders', JSON.stringify(data.folders || []));
+                        for (const char of data.characters || []) {
+                            localStorage.setItem(`pkr_char_${char.id}`, JSON.stringify(char.metadata));
+                        }
+                        window.dispatchEvent(new Event('pkr-local-data-changed'));
+                        alert('Master Backup Restored (Overwritten) Successfully!');
                     }
-                    window.dispatchEvent(new Event('pkr-local-data-changed'));
-                    alert('Master Backup Restored Successfully!');
                 } else {
                     alert('Invalid Master Backup file.');
                 }
             } catch (err) {
+                console.error('[SidebarEngine] Failed to read backup file:', err);
                 alert('Failed to read backup file. It may be corrupted.');
             }
             if (restoreInputRef.current) restoreInputRef.current.value = '';
