@@ -1,6 +1,7 @@
 import { useSidebarEngine } from './useSidebarEngine';
 import { SidebarContextMenu } from './SidebarContextMenu';
 import { SidebarTreeNode } from './SidebarTreeNode';
+import { RestoreBackupModal } from './RestoreBackupModal';
 import './Sidebar.css';
 
 export function Sidebar() {
@@ -15,9 +16,13 @@ export function Sidebar() {
         initTags,
         contextMenu,
         restoreInputRef,
+        pendingRestoreData,
         handleCreate,
         handleExportMasterBackup,
         handleRestoreMasterBackup,
+        confirmRestoreMerge,
+        confirmRestoreOverwrite,
+        cancelRestore,
         handleSelectCharacter,
         executeRename,
         executeDuplicate,
@@ -133,6 +138,15 @@ export function Sidebar() {
                     onMove={executeMove}
                     onDuplicate={executeDuplicate}
                     onDelete={executeDelete}
+                />
+            )}
+
+            {/* Custom Restore Modal */}
+            {pendingRestoreData && (
+                <RestoreBackupModal
+                    onMerge={confirmRestoreMerge}
+                    onOverwrite={confirmRestoreOverwrite}
+                    onCancel={cancelRestore}
                 />
             )}
         </div>

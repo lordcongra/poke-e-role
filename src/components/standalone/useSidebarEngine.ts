@@ -27,6 +27,8 @@ export function useSidebarEngine() {
     );
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; item: TreeItem } | null>(null);
 
+    // NEW: State to hold parsed backup data while the modal is open
+    const [pendingRestoreData, setPendingRestoreData] = useState<Record<string, unknown> | null>(null);
     const restoreInputRef = useRef<HTMLInputElement>(null);
 
     const loadData = useCallback(async () => {
@@ -408,45 +410,8 @@ export function useSidebarEngine() {
             try {
                 const data = JSON.parse(event.target?.result as string);
                 if (data.type === 'pokerole-master-backup') {
-                    const restoreMode = window.confirm(
-                        '📂 RESTORE BACKUP:\n\n' +
-                            'Click OK to MERGE the backup files into your current directory.\n' +
-                            'Click Cancel if you want to OVERWRITE and replace your entire directory instead.'
-                    );
-
-                    if (restoreMode) {
-                        // --- MERGE MODE ---
-                        const existingFoldersStr = localStorage.getItem('pkr_folders') || '[]';
-                        const existingFolders = JSON.parse(existingFoldersStr) as Record<string, unknown>[];
-                        const folderMap = new Map(existingFolders.map((f) => [String(f.id), f]));
-                        (data.folders || []).forEach((f: Record<string, unknown>) => {
-                            folderMap.set(String(f.id), f);
-                        });
-                        localStorage.setItem('pkr_folders', JSON.stringify(Array.from(folderMap.values())));
-
-                        for (const char of data.characters || []) {
-                            localStorage.setItem(`pkr_char_${char.id}`, JSON.stringify(char.metadata));
-                        }
-                        window.dispatchEvent(new Event('pkr-local-data-changed'));
-                        alert('Master Backup Merged Successfully!');
-                    } else {
-                        // --- OVERWRITE MODE ---
-                        if (
-                            !window.confirm(
-                                '⚠️ WARNING: Overwriting will delete all current local files not in the backup. Are you completely sure?'
-                            )
-                        ) {
-                            if (restoreInputRef.current) restoreInputRef.current.value = '';
-                            return;
-                        }
-
-                        localStorage.setItem('pkr_folders', JSON.stringify(data.folders || []));
-                        for (const char of data.characters || []) {
-                            localStorage.setItem(`pkr_char_${char.id}`, JSON.stringify(char.metadata));
-                        }
-                        window.dispatchEvent(new Event('pkr-local-data-changed'));
-                        alert('Master Backup Restored (Overwritten) Successfully!');
-                    }
+                    // Instantly pop open the new Modal
+                    setPendingRestoreData(data);
                 } else {
                     alert('Invalid Master Backup file.');
                 }
@@ -457,6 +422,52 @@ export function useSidebarEngine() {
             if (restoreInputRef.current) restoreInputRef.current.value = '';
         };
         reader.readAsText(file);
+    };
+
+    // --- MODAL EXECUTION METHODS ---
+    const confirmRestoreMerge = () => {
+        if (!pendingRestoreData) return;
+        const data = pendingRestoreData as any;
+
+        const existingFoldersStr = localStorage.getItem('pkr_folders') || '[]';
+        const existingFolders = JSON.parse(existingFoldersStr) as Record<string, unknown>[];
+        const folderMap = new Map(existingFolders.map((f) => [String(f.id), f]));
+        (data.folders || []).forEach((f: Record<string, unknown>) => {
+            folderMap.set(String(f.id), f);
+        });
+        localStorage.setItem('pkr_folders', JSON.stringify(Array.from(folderMap.values())));
+
+        for (const char of data.characters || []) {
+            localStorage.setItem(`pkr_char_${char.id}`, JSON.stringify(char.metadata));
+        }
+        window.dispatchEvent(new Event('pkr-local-data-changed'));
+        setPendingRestoreData(null);
+        alert('Master Backup Merged Successfully!');
+    };
+
+    const confirmRestoreOverwrite = () => {
+        if (!pendingRestoreData) return;
+        // Final safety check just to prevent misclicks on the red button
+        if (
+            !window.confirm(
+                '⚠️ FINAL WARNING: Overwriting will delete all current local files not in the backup. Are you completely sure?'
+            )
+        ) {
+            return;
+        }
+
+        const data = pendingRestoreData as any;
+        localStorage.setItem('pkr_folders', JSON.stringify(data.folders || []));
+        for (const char of data.characters || []) {
+            localStorage.setItem(`pkr_char_${char.id}`, JSON.stringify(char.metadata));
+        }
+        window.dispatchEvent(new Event('pkr-local-data-changed'));
+        setPendingRestoreData(null);
+        alert('Master Backup Restored (Overwritten) Successfully!');
+    };
+
+    const cancelRestore = () => {
+        setPendingRestoreData(null);
     };
 
     return {
@@ -470,9 +481,13 @@ export function useSidebarEngine() {
         initTags,
         contextMenu,
         restoreInputRef,
+        pendingRestoreData,
         handleCreate,
         handleExportMasterBackup,
         handleRestoreMasterBackup,
+        confirmRestoreMerge,
+        confirmRestoreOverwrite,
+        cancelRestore,
         handleSelectCharacter,
         executeRename,
         executeDuplicate,

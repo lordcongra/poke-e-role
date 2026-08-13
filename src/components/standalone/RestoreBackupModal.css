@@ -1,0 +1,92 @@
+.restore-modal__overlay {
+    position: fixed; /* Ensures it covers the entire window, escaping the sidebar */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.restore-modal__content {
+    background: var(--panel-bg);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    width: 450px;
+    max-width: 90vw;
+    padding: 20px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    color: var(--text-main);
+}
+
+.restore-modal__title {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--primary);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+}
+
+.restore-modal__desc {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: bold;
+}
+
+.restore-modal__options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.restore-modal__option {
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    padding: 12px;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.restore-modal__option h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text-main);
+}
+
+.restore-modal__option p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.restore-modal__btn {
+    align-self: flex-start;
+    padding: 6px 16px;
+    font-size: 0.9rem;
+}
+
+.restore-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+
+.restore-modal__btn-cancel {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    padding: 6px 16px;
+}
+
+.restore-modal__btn-cancel:hover {
+    background: var(--row-even);
+}
