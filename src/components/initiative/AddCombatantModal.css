@@ -1,0 +1,81 @@
+/* --- ADD COMBATANT MODAL --- */
+.init-tracker__modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    z-index: 100;
+    padding-top: 40px;
+}
+
+.init-tracker__modal {
+    background: var(--panel-bg);
+    border: 1px solid var(--primary);
+    border-radius: 6px;
+    width: 220px;
+    max-height: 250px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.init-tracker__modal-header {
+    background: var(--panel-alt);
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+}
+
+.init-tracker__modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.init-tracker__modal-close:hover {
+    opacity: 1;
+    color: #f44336;
+}
+
+.init-tracker__modal-search {
+    border: none;
+    border-bottom: 1px solid var(--border);
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    border-radius: 0;
+    margin: 0;
+}
+
+.init-tracker__modal-search:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.init-tracker__modal-list {
+    overflow-y: auto;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.init-tracker__modal-item {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.init-tracker__modal-item:hover {
+    background: var(--primary);
+    color: white;
+}

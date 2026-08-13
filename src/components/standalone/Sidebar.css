@@ -139,6 +139,7 @@
     cursor: pointer;
     user-select: none;
     border-bottom: 1px solid transparent;
+    border-top: 1px solid transparent; /* Allows top drop indicator to render clean */
 }
 
 .sidebar__item:hover {
@@ -148,6 +149,20 @@
 .sidebar__item--active {
     background: rgba(200, 38, 223, 0.2);
     border-bottom: 1px solid var(--primary);
+}
+
+/* Feature 2: Drag and Drop Highlight Targets */
+.sidebar__item--drag-before {
+    border-top: 2px solid var(--primary);
+}
+
+.sidebar__item--drag-after {
+    border-bottom: 2px solid var(--primary);
+}
+
+.sidebar__item--drag-inside {
+    background: rgba(185, 37, 24, 0.2);
+    border: 1px dashed var(--primary);
 }
 
 .sidebar__item-content {
@@ -185,6 +200,24 @@
     text-overflow: ellipsis;
 }
 
+/* Feature 1: Initiative Tags */
+.sidebar__init-badge {
+    font-size: 0.7rem;
+    background: #1565c0;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 12px;
+    margin-left: auto; /* Push it cleanly to the right */
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.sidebar__init-badge--combat {
+    background: #2e7d32;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
 .sidebar__delete-btn {
     background: transparent;
     border: none;
@@ -193,6 +226,7 @@
     opacity: 0;
     padding: 4px;
     transition: opacity 0.2s;
+    margin-left: 6px;
 }
 
 .sidebar__item:hover .sidebar__delete-btn {
@@ -205,12 +239,12 @@
 
 /* --- CONTEXT MENU --- */
 .sidebar__context-menu {
-    position: fixed; /* Ensures it escapes relative flow constraints */
+    position: fixed;
     background: var(--panel-bg);
     border: 1px solid var(--border);
     border-radius: 6px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-    z-index: 9999; /* Absolute highest layer */
+    z-index: 9999;
     min-width: 140px;
     display: flex;
     flex-direction: column;

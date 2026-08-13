@@ -22,6 +22,14 @@ export function Sidebar() {
     const [newName, setNewName] = useState<string>('');
     const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
 
+    // Feature 1: Initiative Tags state
+    const [initTags, setInitTags] = useState<Record<string, string>>({});
+
+    // Feature 2: Drag and Drop Reordering state
+    const [dragOverInfo, setDragOverInfo] = useState<{ id: string; position: 'before' | 'after' | 'inside' } | null>(
+        null
+    );
+
     // --- Context Menu State ---
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; item: TreeItem } | null>(null);
 
@@ -29,9 +37,11 @@ export function Sidebar() {
 
     useEffect(() => {
         loadData();
+        updateInitTags();
 
         const handleDataChange = () => loadData();
         window.addEventListener('pkr-local-data-changed', handleDataChange);
+        window.addEventListener('pkr-standalone-init-update', updateInitTags);
 
         const originalSetItem = localStorage.setItem;
         localStorage.setItem = function (key, value) {
@@ -48,15 +58,56 @@ export function Sidebar() {
 
         return () => {
             window.removeEventListener('pkr-local-data-changed', handleDataChange);
+            window.removeEventListener('pkr-standalone-init-update', updateInitTags);
             localStorage.setItem = originalSetItem;
             document.removeEventListener('click', closeContextMenu);
         };
     }, []);
 
+    const updateInitTags = () => {
+        const savedList = localStorage.getItem('pkr_standalone_init_list');
+        if (!savedList) {
+            setInitTags({});
+            return;
+        }
+        try {
+            const list = JSON.parse(savedList);
+            if (!Array.isArray(list)) return;
+
+            const nameGroups: Record<string, string[]> = {};
+            list.forEach((c) => {
+                if (c && c.name && c.id) {
+                    if (!nameGroups[c.name]) nameGroups[c.name] = [];
+                    nameGroups[c.name].push(c.id);
+                }
+            });
+
+            Object.values(nameGroups).forEach((ids) => ids.sort());
+
+            const newTags: Record<string, string> = {};
+            list.forEach((c) => {
+                if (!c || !c.name || !c.id) return;
+                const ids = nameGroups[c.name];
+                if (ids && ids.length > 1) {
+                    newTags[c.id] = `#${ids.indexOf(c.id) + 1}`;
+                } else {
+                    newTags[c.id] = '⚔️';
+                }
+            });
+            setInitTags(newTags);
+        } catch (e) {
+            console.error('[Sidebar] Failed to parse initiative list for tags', e);
+        }
+    };
+
     const loadData = async () => {
         try {
             const chars = await storageAdapter.getLocalCharacters();
             const flds = await storageAdapter.getFolders();
+
+            const customOrder = JSON.parse(localStorage.getItem('pkr_sidebar_order') || '[]') as string[];
+            const orderMap = new Map<string, number>();
+            customOrder.forEach((id, index) => orderMap.set(id, index));
 
             const combined: TreeItem[] = [
                 ...flds.map((f) => ({ id: f.id, name: f.name, parentId: f.parentId, type: 'folder' as const })),
@@ -68,6 +119,14 @@ export function Sidebar() {
                     meta: c.metadata
                 }))
             ];
+
+            combined.sort((a, b) => {
+                const indexA = orderMap.has(a.id) ? orderMap.get(a.id)! : 999999;
+                const indexB = orderMap.has(b.id) ? orderMap.get(b.id)! : 999999;
+                if (indexA !== indexB) return indexA - indexB;
+                return a.name.localeCompare(b.name);
+            });
+
             setItems(combined);
         } catch (error) {
             console.error('[Sidebar] Failed to load data:', error);
@@ -109,15 +168,12 @@ export function Sidebar() {
 
     // --- CONTEXT MENU ACTIONS ---
     const handleContextMenu = (e: React.MouseEvent, item: TreeItem) => {
-        e.preventDefault(); // Stop native browser right-click menu
-
-        // Ensure menu doesn't spawn off the bottom of the screen
-        const menuHeightEstimate = 120;
+        e.preventDefault();
+        const menuHeightEstimate = 180;
         let safeY = e.clientY;
         if (safeY + menuHeightEstimate > window.innerHeight) {
             safeY = window.innerHeight - menuHeightEstimate;
         }
-
         setContextMenu({ x: e.clientX, y: safeY, item });
     };
 
@@ -137,11 +193,10 @@ export function Sidebar() {
             const charData = localStorage.getItem(`pkr_char_${item.id}`);
             if (charData) {
                 const meta = JSON.parse(charData);
-                meta.nickname = newSafeName; // Update internal nickname
+                meta.nickname = newSafeName;
                 localStorage.setItem(`pkr_char_${item.id}`, JSON.stringify(meta));
                 window.dispatchEvent(new Event('pkr-local-data-changed'));
 
-                // If it's the active character, immediately update the store too
                 if (activeTokenId === item.id) {
                     useCharacterStore.getState().setIdentity('nickname', newSafeName);
                 }
@@ -151,7 +206,7 @@ export function Sidebar() {
 
     const executeDuplicate = async (item: TreeItem) => {
         setContextMenu(null);
-        if (item.type === 'folder') return; // Folder duplication not yet supported
+        if (item.type === 'folder') return;
 
         try {
             const charData = localStorage.getItem(`pkr_char_${item.id}`);
@@ -160,13 +215,38 @@ export function Sidebar() {
                 const newName = `${item.name} (Copy)`;
                 meta.nickname = newName;
 
-                // Create a blank sheet to get a valid ID, then overwrite it with copied data
                 const newId = await storageAdapter.createLocalCharacter(newName, item.parentId);
                 localStorage.setItem(`pkr_char_${newId}`, JSON.stringify(meta));
                 window.dispatchEvent(new Event('pkr-local-data-changed'));
             }
         } catch (error) {
             console.error('[Sidebar] Failed to duplicate character:', error);
+        }
+    };
+
+    const executeMove = (item: TreeItem, direction: 'up' | 'down') => {
+        setContextMenu(null);
+        const siblings = items.filter((i) => i.parentId === item.parentId);
+        const currentIndex = siblings.findIndex((i) => i.id === item.id);
+
+        if (direction === 'up' && currentIndex > 0) {
+            const currentOrder = items.map((i) => i.id);
+            const indexA = currentOrder.indexOf(siblings[currentIndex].id);
+            const indexB = currentOrder.indexOf(siblings[currentIndex - 1].id);
+            const temp = currentOrder[indexA];
+            currentOrder[indexA] = currentOrder[indexB];
+            currentOrder[indexB] = temp;
+            localStorage.setItem('pkr_sidebar_order', JSON.stringify(currentOrder));
+            loadData();
+        } else if (direction === 'down' && currentIndex < siblings.length - 1) {
+            const currentOrder = items.map((i) => i.id);
+            const indexA = currentOrder.indexOf(siblings[currentIndex].id);
+            const indexB = currentOrder.indexOf(siblings[currentIndex + 1].id);
+            const temp = currentOrder[indexA];
+            currentOrder[indexA] = currentOrder[indexB];
+            currentOrder[indexB] = temp;
+            localStorage.setItem('pkr_sidebar_order', JSON.stringify(currentOrder));
+            loadData();
         }
     };
 
@@ -216,25 +296,90 @@ export function Sidebar() {
         setExpandedNodes((prev) => ({ ...prev, [id]: !prev[id] }));
     };
 
+    // --- DRAG AND DROP HANDLERS ---
     const handleDragStart = (e: React.DragEvent, item: TreeItem) => {
         e.dataTransfer.setData('itemId', item.id);
         e.dataTransfer.setData('itemType', item.type);
     };
 
-    const handleDrop = async (e: React.DragEvent, targetParentId: string | null) => {
+    const handleDragOver = (e: React.DragEvent, item: TreeItem) => {
         e.preventDefault();
         e.stopPropagation();
-        const itemId = e.dataTransfer.getData('itemId');
-        const itemType = e.dataTransfer.getData('itemType');
 
-        if (itemId && itemId !== targetParentId) {
-            if (itemType === 'folder') await storageAdapter.moveFolder(itemId, targetParentId);
-            else await storageAdapter.moveItem(itemId, targetParentId);
+        const rect = e.currentTarget.getBoundingClientRect();
+        const y = e.clientY - rect.top;
 
-            if (targetParentId) {
-                setExpandedNodes((prev) => ({ ...prev, [targetParentId]: true }));
-            }
+        let pos: 'before' | 'after' | 'inside' = 'inside';
+
+        // Target top 25% for 'before', bottom 25% for 'after', middle 50% for 'inside'
+        if (y < rect.height * 0.25) pos = 'before';
+        else if (y > rect.height * 0.75) pos = 'after';
+
+        setDragOverInfo({ id: item.id, position: pos });
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+    };
+
+    const handleDrop = async (e: React.DragEvent, targetItem: TreeItem | null) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragOverInfo(null);
+
+        const draggedId = e.dataTransfer.getData('itemId');
+        const draggedType = e.dataTransfer.getData('itemType');
+
+        if (!draggedId || draggedId === targetItem?.id) return;
+
+        // Dropping into root directory
+        if (!targetItem) {
+            if (draggedType === 'folder') await storageAdapter.moveFolder(draggedId, null);
+            else await storageAdapter.moveItem(draggedId, null);
+            return;
         }
+
+        const position = dragOverInfo?.id === targetItem.id ? dragOverInfo.position : 'inside';
+
+        let newParentId = targetItem.parentId;
+        if (position === 'inside') {
+            newParentId = targetItem.id;
+        }
+
+        // Move item to new logical parent in storage
+        if (draggedType === 'folder') await storageAdapter.moveFolder(draggedId, newParentId);
+        else await storageAdapter.moveItem(draggedId, newParentId);
+
+        // Manage explicit visual sorting
+        const currentOrder = JSON.parse(localStorage.getItem('pkr_sidebar_order') || '[]') as string[];
+        const filteredOrder = currentOrder.filter((id) => id !== draggedId);
+
+        if (position === 'inside') {
+            filteredOrder.push(draggedId);
+        } else {
+            let targetIndex = filteredOrder.indexOf(targetItem.id);
+            if (targetIndex === -1) {
+                filteredOrder.push(targetItem.id);
+                targetIndex = filteredOrder.indexOf(targetItem.id);
+            }
+            if (position === 'after') targetIndex += 1;
+            filteredOrder.splice(targetIndex, 0, draggedId);
+        }
+
+        localStorage.setItem('pkr_sidebar_order', JSON.stringify(filteredOrder));
+
+        if (position === 'inside' || newParentId) {
+            setExpandedNodes((prev) => ({ ...prev, [newParentId!]: true }));
+        }
+
+        loadData();
+    };
+
+    const getDragClass = (itemId: string) => {
+        if (dragOverInfo?.id !== itemId) return '';
+        if (dragOverInfo.position === 'before') return 'sidebar__item--drag-before';
+        if (dragOverInfo.position === 'after') return 'sidebar__item--drag-after';
+        return 'sidebar__item--drag-inside';
     };
 
     const handleExportMasterBackup = async () => {
@@ -292,16 +437,18 @@ export function Sidebar() {
         return children.map((item) => {
             const hasChildren = items.some((i) => i.parentId === item.id);
             const isExpanded = expandedNodes[item.id];
+            const initTag = initTags[item.id];
 
             return (
                 <div key={item.id} className="sidebar__node">
                     <div
-                        className={`sidebar__item ${activeTokenId === item.id ? 'sidebar__item--active' : ''}`}
+                        className={`sidebar__item ${activeTokenId === item.id ? 'sidebar__item--active' : ''} ${getDragClass(item.id)}`}
                         style={{ paddingLeft: `${depth * 16 + 8}px` }}
                         draggable
                         onDragStart={(e) => handleDragStart(e, item)}
-                        onDragOver={(e) => e.preventDefault()}
-                        onDrop={(e) => handleDrop(e, item.id)}
+                        onDragOver={(e) => handleDragOver(e, item)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, item)}
                         onClick={() => {
                             if (item.type === 'character') handleSelectCharacter(item.id, item.meta!);
                             else setExpandedNodes((prev) => ({ ...prev, [item.id]: !prev[item.id] }));
@@ -319,6 +466,15 @@ export function Sidebar() {
 
                             <span className="sidebar__item-icon">{item.type === 'folder' ? '📁' : '📄'}</span>
                             <span className="sidebar__item-name">{item.name}</span>
+
+                            {/* Feature 1 UI: Render the badge if it is in the tracker */}
+                            {initTag && (
+                                <span
+                                    className={`sidebar__init-badge ${initTag === '⚔️' ? 'sidebar__init-badge--combat' : ''}`}
+                                >
+                                    {initTag}
+                                </span>
+                            )}
                         </div>
                         <button
                             className="sidebar__delete-btn"
@@ -402,7 +558,12 @@ export function Sidebar() {
                 </div>
             </div>
 
-            <div className="sidebar__tree" onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleDrop(e, null)}>
+            <div
+                className="sidebar__tree"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => handleDrop(e, null)}
+                onMouseLeave={() => setDragOverInfo(null)}
+            >
                 {renderTree(null, 0)}
 
                 {items.length === 0 && <p className="sidebar__empty">Directory is empty. Create a file above!</p>}
@@ -418,6 +579,14 @@ export function Sidebar() {
                 >
                     <button className="sidebar__context-item" onClick={() => executeRename(contextMenu.item)}>
                         ✏️ Rename
+                    </button>
+
+                    {/* Quick Move Operations */}
+                    <button className="sidebar__context-item" onClick={() => executeMove(contextMenu.item, 'up')}>
+                        ⬆️ Move Up
+                    </button>
+                    <button className="sidebar__context-item" onClick={() => executeMove(contextMenu.item, 'down')}>
+                        ⬇️ Move Down
                     </button>
 
                     {contextMenu.item.type === 'character' && (
