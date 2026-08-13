@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ReactNode } from 'react';
 
-export const CURRENT_VERSION = '2.8.1';
+export const CURRENT_VERSION = '2.9.0';
 
 export interface ChangelogEntry {
     version: string;
@@ -10,6 +10,54 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
+    {
+        version: '2.9.0',
+        date: 'August 2026',
+        changes: [
+            <div
+                key="pwa-update"
+                style={{
+                    border: '2px solid #2196F3',
+                    padding: '12px',
+                    borderRadius: '6px',
+                    backgroundColor: 'rgba(33, 150, 243, 0.08)',
+                    marginBottom: '16px'
+                }}
+            >
+                <strong style={{ color: '#1976D2', fontSize: '1.1em' }}>📱 Standalone App & Offline Mode (PWA)</strong>
+                <p style={{ marginTop: '6px', marginBottom: '0', fontSize: '0.9em', lineHeight: '1.4' }}>
+                    The sheet is now fully accessible as a <strong>Progressive Web App (PWA)</strong> outside of Owlbear Rodeo! You can visit the live site, install it directly to your phone or desktop home screen, and use it entirely offline. Standalone mode features a brand new local directory sidebar to easily organize all your characters and encounters into folders.
+                </p>
+            </div>,
+            <div
+                key="car-reminder-290"
+                style={{
+                    border: '2px solid #e65100',
+                    padding: '12px',
+                    borderRadius: '6px',
+                    backgroundColor: 'rgba(230, 81, 0, 0.08)',
+                    marginBottom: '12px'
+                }}
+            >
+                <strong style={{ color: '#e65100', fontSize: '1.1em' }}>⚠️ Reminder: Custom Action Rolls URL Change</strong>
+                <p style={{ marginTop: '6px', marginBottom: '8px', fontSize: '0.9em', lineHeight: '1.4' }}>
+                    If you haven't updated yet, the <strong>Custom Action Rolls (CAR)</strong> extension has moved! Please update your VTT room to use the new manifest link below to keep your dice rolling smoothly:
+                </p>
+                <p style={{ margin: 0, fontSize: '0.9em', fontWeight: 'bold' }}>
+                    🔗 New CAR Link:{' '}
+                    <a
+                        href="https://custom-action-rolls.narcolepticdracu.com/manifest.json"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: '#1976d2', wordBreak: 'break-all' }}
+                    >
+                        https://custom-action-rolls.narcolepticdracu.com/manifest.json
+                    </a>
+                </p>
+            </div>,
+            'Fixed a race condition bug in the Initiative Tracker that caused the UI to glitch when rapidly skipping turns.'
+        ]
+    },
     {
         version: '2.8.1',
         date: 'August 2026',
