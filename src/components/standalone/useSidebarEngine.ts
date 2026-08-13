@@ -11,7 +11,7 @@ export type TreeItem = {
     parentId: string | null;
     type: 'folder' | 'character';
     meta?: Record<string, unknown>;
-    activeTrans: string; // NEW: Track transformation status
+    activeTrans: string;
 };
 
 export function useSidebarEngine() {
@@ -237,7 +237,7 @@ export function useSidebarEngine() {
         }
     };
 
-    const executeMove = (item: TreeItem, direction: 'up' | 'down') => {
+    const executeMove = async (item: TreeItem, direction: 'up' | 'down' | 'in' | 'out') => {
         setContextMenu(null);
         const siblings = items.filter((i) => i.parentId === item.parentId);
         const currentIndex = siblings.findIndex((i) => i.id === item.id);
@@ -260,6 +260,37 @@ export function useSidebarEngine() {
             currentOrder[indexB] = temp;
             localStorage.setItem('pkr_sidebar_order', JSON.stringify(currentOrder));
             loadData();
+        } else if (direction === 'in') {
+            if (currentIndex > 0) {
+                const prevSibling = siblings[currentIndex - 1];
+                if (prevSibling.type === 'folder') {
+                    if (item.type === 'folder') {
+                        await storageAdapter.moveFolder(item.id, prevSibling.id);
+                    } else {
+                        await storageAdapter.moveItem(item.id, prevSibling.id);
+                    }
+                    setExpandedNodes((prev) => ({ ...prev, [prevSibling.id]: true }));
+                    loadData();
+                } else {
+                    alert('You can only move an item "Into" a folder positioned directly above it.');
+                }
+            } else {
+                alert('There is no folder above this item to move into.');
+            }
+        } else if (direction === 'out') {
+            if (item.parentId !== null) {
+                const parentFolder = items.find((i) => i.id === item.parentId);
+                const grandParentId = parentFolder ? parentFolder.parentId : null;
+
+                if (item.type === 'folder') {
+                    await storageAdapter.moveFolder(item.id, grandParentId);
+                } else {
+                    await storageAdapter.moveItem(item.id, grandParentId);
+                }
+                loadData();
+            } else {
+                alert('This item is already at the root level.');
+            }
         }
     };
 
@@ -443,6 +474,7 @@ export function useSidebarEngine() {
 
     const confirmRestoreMerge = () => {
         if (!pendingRestoreData) return;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const data = pendingRestoreData as any;
 
         const existingFoldersStr = localStorage.getItem('pkr_folders') || '[]';
@@ -471,6 +503,7 @@ export function useSidebarEngine() {
             return;
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const data = pendingRestoreData as any;
         localStorage.setItem('pkr_folders', JSON.stringify(data.folders || []));
         for (const char of data.characters || []) {

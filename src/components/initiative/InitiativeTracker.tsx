@@ -47,16 +47,14 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
     // Handle auto-scrolling to the active combatant
     useEffect(() => {
         if (activeTurnId && isReady) {
-            // Store the timeout in a variable
-            const scrollTimer = setTimeout(() => {
+            // Using requestAnimationFrame instead of a timer so we don't accidentally
+            // "debounce" and drop intermediate visual scrolls when you click rapidly!
+            requestAnimationFrame(() => {
                 const activeCards = document.querySelectorAll(`#combatant-${activeTurnId}`);
-                activeCards.forEach((card) => {
+                activeCards.forEach(card => {
                     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 });
-            }, 100); // Slightly increased delay to batch rapid-fire clicks safely
-
-            // Cleanup function: If activeTurnId changes again before 100ms, cancel the previous scroll!
-            return () => clearTimeout(scrollTimer);
+            });
         }
     }, [activeTurnId, isReady]);
 

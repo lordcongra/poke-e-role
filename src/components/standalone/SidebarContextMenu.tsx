@@ -3,7 +3,7 @@ import type { TreeItem } from './useSidebarEngine';
 interface SidebarContextMenuProps {
     contextMenu: { x: number; y: number; item: TreeItem };
     onRename: (item: TreeItem) => void;
-    onMove: (item: TreeItem, direction: 'up' | 'down') => void;
+    onMove: (item: TreeItem, direction: 'up' | 'down' | 'in' | 'out') => void;
     onDuplicate: (item: TreeItem) => void;
     onDelete: (item: TreeItem) => void;
 }
@@ -19,13 +19,20 @@ export function SidebarContextMenu({ contextMenu, onRename, onMove, onDuplicate,
                 ✏️ Rename
             </button>
 
-            {/* Quick Move Operations */}
+            {/* --- Quick Move Directional Pad --- */}
             <button className="sidebar__context-item" onClick={() => onMove(contextMenu.item, 'up')}>
                 ⬆️ Move Up
             </button>
             <button className="sidebar__context-item" onClick={() => onMove(contextMenu.item, 'down')}>
                 ⬇️ Move Down
             </button>
+            <button className="sidebar__context-item" onClick={() => onMove(contextMenu.item, 'in')}>
+                ➡️ Move Into Folder
+            </button>
+            <button className="sidebar__context-item" onClick={() => onMove(contextMenu.item, 'out')}>
+                ⬅️ Move Out (Level Up)
+            </button>
+            {/* ---------------------------------- */}
 
             {contextMenu.item.type === 'character' && (
                 <button className="sidebar__context-item" onClick={() => onDuplicate(contextMenu.item)}>

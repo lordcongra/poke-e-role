@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import type { Item, Image } from '@owlbear-rodeo/sdk';
 import { isStandaloneMode, storageAdapter } from '../../utils/storageAdapter';
@@ -35,6 +35,9 @@ export function useInitiativeEngine() {
 
     const [availableChars, setAvailableChars] = useState<StandaloneCharOption[]>([]);
     const [availableObrChars, setAvailableObrChars] = useState<ObrCharOption[]>([]);
+
+    // Lock to prevent rapid-fire clicking from breaking the smooth scroll animation
+    const scrollLock = useRef(false);
 
     const fetchAvailableCharacters = useCallback(async () => {
         if (isStandaloneMode) {
@@ -403,7 +406,12 @@ export function useInitiativeEngine() {
     };
 
     const nextTurn = () => {
-        if (combatants.length === 0) return;
+        if (combatants.length === 0 || scrollLock.current) return;
+        
+        scrollLock.current = true;
+        setTimeout(() => {
+            scrollLock.current = false;
+        }, 400);
 
         if (isStandaloneMode) {
             // Functional state update: completely immune to rapid-fire clicking
@@ -436,7 +444,12 @@ export function useInitiativeEngine() {
     };
 
     const prevTurn = () => {
-        if (combatants.length === 0) return;
+        if (combatants.length === 0 || scrollLock.current) return;
+        
+        scrollLock.current = true;
+        setTimeout(() => {
+            scrollLock.current = false;
+        }, 400);
 
         if (isStandaloneMode) {
             // Functional state update: completely immune to rapid-fire clicking
