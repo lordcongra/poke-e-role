@@ -3,6 +3,8 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { getAbilityText } from '../../utils/combatUtils';
 import { fetchAbilityData } from '../../utils/api';
+import { isStandaloneMode } from '../../utils/storageAdapter';
+import { imageManager } from '../../utils/imageManager';
 import './PrintSheet.css';
 
 export function PrintSheet() {
@@ -12,11 +14,28 @@ export function PrintSheet() {
     const statStyle = config.statStyle || 'dots';
 
     const [fetchedAbilities, setFetchedAbilities] = useState<Record<string, string>>({});
+    const [resolvedTokenUrl, setResolvedTokenUrl] = useState<string>('');
     const [isReadyToPrint, setIsReadyToPrint] = useState(false);
 
+    // 1. Resolve Local Token Images & Ability Text
     useEffect(() => {
         let isMounted = true;
         const preparePrint = async () => {
+            // Resolve Image
+            if (identity.tokenImageUrl) {
+                if (isStandaloneMode && identity.tokenImageUrl.startsWith('local-img:')) {
+                    try {
+                        const blobUrl = await imageManager.getImageUrl(identity.tokenImageUrl);
+                        if (isMounted) setResolvedTokenUrl(blobUrl || '');
+                    } catch (e) {
+                        if (isMounted) setResolvedTokenUrl('');
+                    }
+                } else if (isMounted) {
+                    setResolvedTokenUrl(identity.tokenImageUrl);
+                }
+            }
+
+            // Fetch missing ability descriptions
             const results: Record<string, string> = {};
             for (const abName of identity.availableAbilities) {
                 if (!getAbilityText(abName, roomCustomAbilities)) {
@@ -31,12 +50,14 @@ export function PrintSheet() {
                 setIsReadyToPrint(true);
             }
         };
+
         preparePrint();
         return () => {
             isMounted = false;
         };
-    }, [identity.availableAbilities, roomCustomAbilities]);
+    }, [identity.availableAbilities, identity.tokenImageUrl, roomCustomAbilities]);
 
+    // 2. Trigger Print Dialog once everything is resolved
     useEffect(() => {
         if (isReadyToPrint) {
             const handleAfterPrint = () => {
@@ -210,8 +231,8 @@ export function PrintSheet() {
 
                 <div className="print-sheet__top-grid">
                     <div className="print-sheet__portrait-box">
-                        {identity.tokenImageUrl && (
-                            <img src={identity.tokenImageUrl} className="print-sheet__portrait-img" alt="Token" />
+                        {resolvedTokenUrl && (
+                            <img src={resolvedTokenUrl} className="print-sheet__portrait-img" alt="Token" />
                         )}
                     </div>
                     <div className="print-sheet__stats-grid">

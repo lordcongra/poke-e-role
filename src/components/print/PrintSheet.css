@@ -7,45 +7,70 @@
 @media print {
     @page {
         margin: 0.4in;
+        size: auto;
     }
 
+    /* 1. Reset color schemes to light mode and collapse dead height */
+    html,
+    html[data-theme='dark'],
+    [data-theme='dark'],
     body {
+        color-scheme: light !important;
         background: #ffffff !important;
+        color: #000000 !important;
         margin: 0 !important;
         padding: 0 !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
 
-    /* Hide standard UI in both OBR & Standalone Modes */
+    /* 2. EXPLICIT HIDE: Target every non-print UI element regardless of nesting depth */
     .sidebar,
     .global-toolbar,
+    [class*="global-toolbar"],
+    [class*="GlobalToolbar"],
     .standalone-right-sidebar,
     .standalone-layout-wrapper,
     .standalone-empty-state,
-    .sheet-container {
+    .sheet-container,
+    .demo-roll-modal__overlay,
+    .targeting-modal__overlay,
+    .transformation-modal__overlay,
+    .restore-modal__overlay {
         display: none !important;
     }
 
-    /* Force the layout wrappers to act transparently for the print sheet */
+    /* 3. Collapse layout wrappers completely into pass-through containers */
+    #root,
     .app-layout,
     .app-main-content {
-        display: block !important;
-        height: auto !important;
-        overflow: visible !important;
+        display: contents !important;
     }
 
+    /* 4. Position the sheet cleanly at the top of the flow */
     .print-sheet-wrapper {
         display: block !important;
-        width: 100%;
-        color: black;
+        position: static !important;
+        width: 100% !important;
+        height: auto !important;
+        color: black !important;
         font-family: Arial, sans-serif;
+        background: white !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
     }
 
     .print-sheet {
         display: flex;
         flex-direction: column;
         gap: 10px;
+        background: white !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
     }
 
     /* --- Headers --- */
@@ -56,7 +81,7 @@
         border: 2px solid black;
         padding: 10px;
         border-radius: 8px;
-        background-color: #f9f9f9;
+        background-color: #f9f9f9 !important;
     }
 
     .print-sheet__field {
@@ -70,13 +95,14 @@
     .print-sheet__field-label {
         font-weight: bold;
         font-size: 0.85rem;
-        color: #555;
+        color: #555 !important;
         text-transform: uppercase;
     }
 
     .print-sheet__field-val {
         font-size: 1rem;
         font-weight: bold;
+        color: black !important;
     }
 
     /* --- Top Grid (Portrait + Stats) --- */
@@ -93,7 +119,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        background-color: #f0f0f0;
+        background-color: #f0f0f0 !important;
         overflow: hidden;
     }
 
@@ -116,6 +142,7 @@
         padding: 8px 10px;
         break-inside: avoid;
         page-break-inside: avoid;
+        background: white !important;
     }
 
     .print-sheet__section-title {
@@ -126,7 +153,8 @@
         margin-top: 0;
         margin-bottom: 6px;
         padding-bottom: 2px;
-        background-color: #ddd;
+        background-color: #ddd !important;
+        color: black !important;
         padding: 4px;
     }
 
@@ -142,6 +170,7 @@
         font-size: 0.85rem;
         font-weight: bold;
         width: 80px;
+        color: black !important;
     }
 
     .print-sheet__stat-value-container {
@@ -153,7 +182,7 @@
     .print-sheet__dots {
         font-size: 1.4rem;
         letter-spacing: 1px;
-        color: black;
+        color: black !important;
         line-height: 0.8;
     }
 
@@ -162,6 +191,7 @@
         font-weight: bold;
         min-width: 12px;
         text-align: right;
+        color: black !important;
     }
 
     /* --- Skills --- */
@@ -183,6 +213,7 @@
         text-align: center;
         border-bottom: 1px solid black;
         margin-bottom: 6px;
+        color: black !important;
     }
 
     /* --- Table Layouts --- */
@@ -208,6 +239,7 @@
         font-size: 0.85rem;
         border-top: 1px solid black;
         border-left: 1px solid black;
+        color: black !important;
     }
 
     .print-sheet__ability-table tr {
@@ -222,14 +254,15 @@
         padding: 6px;
         text-align: left;
         vertical-align: top;
+        color: black !important;
     }
 
     .print-sheet__ability-table th {
-        background-color: #f0f0f0;
+        background-color: #f0f0f0 !important;
         font-weight: bold;
     }
 
-    /* --- TABLE BORDER COLLAPSE FIX --- */
+    /* --- MOVE TABLE --- */
     .print-sheet__move-table {
         width: 100%;
         border-collapse: separate;
@@ -237,6 +270,7 @@
         font-size: 0.8rem;
         border-top: 1px solid black;
         border-left: 1px solid black;
+        color: black !important;
     }
 
     .print-sheet__move-table tr {
@@ -250,39 +284,23 @@
         border-bottom: 1px solid black;
         padding: 4px;
         text-align: left;
+        color: black !important;
     }
 
     .print-sheet__move-table th {
-        background-color: #f0f0f0;
+        background-color: #f0f0f0 !important;
         font-weight: bold;
     }
 
-    /* Table Column Widths & Utility Classes */
-    .print-sheet__col-check {
-        width: 5%;
-        text-align: center;
-    }
-    .print-sheet__col-ability {
-        width: 25%;
-    }
-    .print-sheet__col-name {
-        width: 20%;
-    }
-    .print-sheet__col-type {
-        width: 10%;
-    }
-    .print-sheet__col-cat {
-        width: 8%;
-    }
-    .print-sheet__col-power {
-        width: 8%;
-    }
-    .print-sheet__col-acc {
-        width: 15%;
-    }
-    .print-sheet__col-dmg {
-        width: 10%;
-    }
+    /* Column Widths */
+    .print-sheet__col-check { width: 5%; text-align: center; }
+    .print-sheet__col-ability { width: 25%; }
+    .print-sheet__col-name { width: 20%; }
+    .print-sheet__col-type { width: 10%; }
+    .print-sheet__col-cat { width: 8%; }
+    .print-sheet__col-power { width: 8%; }
+    .print-sheet__col-acc { width: 15%; }
+    .print-sheet__col-dmg { width: 10%; }
 
     .print-sheet__empty-cell {
         height: 25px;
@@ -311,85 +329,29 @@
         height: 25px;
     }
 
-    /* =========================================
-       COMPACT MODE OVERRIDES 
-       (Brutally shaves vertical space!)
-       ========================================= */
-    .print-sheet-wrapper--compact .print-sheet {
-        gap: 4px;
-    }
-    .print-sheet-wrapper--compact .print-sheet__header {
-        gap: 4px;
-        padding: 6px;
-    }
-    .print-sheet-wrapper--compact .print-sheet__field {
-        padding-bottom: 0px;
-    }
-    .print-sheet-wrapper--compact .print-sheet__field-label {
-        font-size: 0.75rem;
-    }
-    .print-sheet-wrapper--compact .print-sheet__field-val {
-        font-size: 0.85rem;
-    }
-    .print-sheet-wrapper--compact .print-sheet__top-grid {
-        grid-template-columns: 90px 1fr;
-        gap: 8px;
-    }
-    .print-sheet-wrapper--compact .print-sheet__portrait-box {
-        height: 90px;
-    }
-    .print-sheet-wrapper--compact .print-sheet__stats-grid {
-        gap: 8px;
-    }
-    .print-sheet-wrapper--compact .print-sheet__section {
-        padding: 4px;
-    }
-    .print-sheet-wrapper--compact .print-sheet__section-title {
-        font-size: 0.8rem;
-        margin-bottom: 4px;
-        padding: 2px 4px;
-    }
-    .print-sheet-wrapper--compact .print-sheet__stat-row {
-        margin-bottom: 0px;
-    }
-    .print-sheet-wrapper--compact .print-sheet__stat-name {
-        font-size: 0.75rem;
-    }
-    .print-sheet-wrapper--compact .print-sheet__dots {
-        font-size: 1.1rem;
-        line-height: 0.8;
-    }
-    .print-sheet-wrapper--compact .print-sheet__number {
-        font-size: 0.8rem;
-    }
-    .print-sheet-wrapper--compact .print-sheet__skill-col-title {
-        font-size: 0.75rem;
-        margin-bottom: 4px;
-    }
-    .print-sheet-wrapper--compact .print-sheet__ability-row {
-        margin-bottom: 2px;
-        font-size: 0.75rem;
-    }
+    /* --- COMPACT MODE --- */
+    .print-sheet-wrapper--compact .print-sheet { gap: 4px; }
+    .print-sheet-wrapper--compact .print-sheet__header { gap: 4px; padding: 6px; }
+    .print-sheet-wrapper--compact .print-sheet__field { padding-bottom: 0px; }
+    .print-sheet-wrapper--compact .print-sheet__field-label { font-size: 0.75rem; }
+    .print-sheet-wrapper--compact .print-sheet__field-val { font-size: 0.85rem; }
+    .print-sheet-wrapper--compact .print-sheet__top-grid { grid-template-columns: 90px 1fr; gap: 8px; }
+    .print-sheet-wrapper--compact .print-sheet__portrait-box { height: 90px; }
+    .print-sheet-wrapper--compact .print-sheet__stats-grid { gap: 8px; }
+    .print-sheet-wrapper--compact .print-sheet__section { padding: 4px; }
+    .print-sheet-wrapper--compact .print-sheet__section-title { font-size: 0.8rem; margin-bottom: 4px; padding: 2px 4px; }
+    .print-sheet-wrapper--compact .print-sheet__stat-row { margin-bottom: 0px; }
+    .print-sheet-wrapper--compact .print-sheet__stat-name { font-size: 0.75rem; }
+    .print-sheet-wrapper--compact .print-sheet__dots { font-size: 1.1rem; line-height: 0.8; }
+    .print-sheet-wrapper--compact .print-sheet__number { font-size: 0.8rem; }
+    .print-sheet-wrapper--compact .print-sheet__skill-col-title { font-size: 0.75rem; margin-bottom: 4px; }
+    .print-sheet-wrapper--compact .print-sheet__ability-row { margin-bottom: 2px; font-size: 0.75rem; }
     .print-sheet-wrapper--compact .print-sheet__ability-table th,
-    .print-sheet-wrapper--compact .print-sheet__ability-table td {
-        padding: 2px 4px;
-        font-size: 0.75rem;
-    }
+    .print-sheet-wrapper--compact .print-sheet__ability-table td { padding: 2px 4px; font-size: 0.75rem; }
     .print-sheet-wrapper--compact .print-sheet__move-table th,
-    .print-sheet-wrapper--compact .print-sheet__move-table td {
-        padding: 2px;
-        font-size: 0.7rem;
-    }
-    .print-sheet-wrapper--compact .print-sheet__items-grid {
-        gap: 4px;
-    }
-    .print-sheet-wrapper--compact .print-sheet__item-box {
-        height: 20px;
-    }
-    .print-sheet-wrapper--compact .print-sheet__notes-container {
-        gap: 4px;
-    }
-    .print-sheet-wrapper--compact .print-sheet__note-line {
-        height: 16px;
-    }
+    .print-sheet-wrapper--compact .print-sheet__move-table td { padding: 2px; font-size: 0.7rem; }
+    .print-sheet-wrapper--compact .print-sheet__items-grid { gap: 4px; }
+    .print-sheet-wrapper--compact .print-sheet__item-box { height: 20px; }
+    .print-sheet-wrapper--compact .print-sheet__notes-container { gap: 4px; }
+    .print-sheet-wrapper--compact .print-sheet__note-line { height: 16px; }
 }
