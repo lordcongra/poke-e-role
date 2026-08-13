@@ -236,15 +236,15 @@
     /* The slide-out drawer container */
     .init-tracker__standalone-wrapper {
         position: fixed !important;
-        top: 55px !important; 
+        top: 55px !important;
         right: 0 !important;
         bottom: 10px !important;
-        
+
         /* STRICT WIDTH LOCK - Kills any overriding styles */
-        width: 175px !important; 
+        width: 175px !important;
         min-width: 175px !important;
         max-width: 175px !important;
-        
+
         height: auto !important;
         z-index: 9001;
         background: transparent;
@@ -252,12 +252,12 @@
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         padding: 10px !important;
         box-sizing: border-box;
-        pointer-events: none; 
+        pointer-events: none;
     }
 
     .init-tracker__standalone-wrapper.is-mobile-expanded {
         transform: translateX(0);
-        pointer-events: auto; 
+        pointer-events: auto;
     }
 
     /* Restore the borders and force vertical layout! */
@@ -267,7 +267,7 @@
         border: 2px solid #b71c1c !important;
         border-radius: 8px !important;
         box-shadow: -4px 8px 24px rgba(0, 0, 0, 0.8) !important;
-        flex-direction: column !important; 
+        flex-direction: column !important;
         box-sizing: border-box;
         background: var(--panel-bg) !important;
     }
@@ -304,7 +304,7 @@
         padding: 6px !important;
         box-sizing: border-box;
     }
-    
+
     /* Hide the horizontal 'flow arrow' since we are stacking vertically */
     .init-tracker__standalone-panel .init-tracker__flow-arrow {
         display: none !important;

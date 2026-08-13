@@ -108,6 +108,16 @@
     flex: 1;
     overflow-y: auto;
     padding: 10px 0;
+    overscroll-behavior: contain; /* Prevents swiping from leaking to the background sheet! */
+}
+
+/* Freeze the entire app background when actively dragging a file on mobile */
+html.dnd-polyfilled,
+html.dnd-polyfilled body,
+html.dnd-polyfilled .app-layout {
+    overflow: hidden !important;
+    touch-action: none !important;
+    overscroll-behavior: none !important;
 }
 
 .sidebar__empty {
@@ -140,6 +150,10 @@
     user-select: none;
     border-bottom: 1px solid transparent;
     border-top: 1px solid transparent;
+
+    /* NEW: Prevent mobile text-selection and native popup menus on long-press */
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
 }
 
 .sidebar__item:hover {

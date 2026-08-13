@@ -46,15 +46,19 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
 
     // Handle auto-scrolling to the active combatant
     useEffect(() => {
-        if (activeTurnId && isReady && !isStandaloneWidget) {
-            setTimeout(() => {
-                const activeCard = document.getElementById(`combatant-${activeTurnId}`);
-                if (activeCard) {
-                    activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                }
-            }, 50);
+        if (activeTurnId && isReady) {
+            // Store the timeout in a variable
+            const scrollTimer = setTimeout(() => {
+                const activeCards = document.querySelectorAll(`#combatant-${activeTurnId}`);
+                activeCards.forEach((card) => {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                });
+            }, 100); // Slightly increased delay to batch rapid-fire clicks safely
+
+            // Cleanup function: If activeTurnId changes again before 100ms, cancel the previous scroll!
+            return () => clearTimeout(scrollTimer);
         }
-    }, [activeTurnId, isReady, isStandaloneWidget]);
+    }, [activeTurnId, isReady]);
 
     // Bind our custom Resize hook to the DOM
     const ghostRef = useOwlbearPopoverResize({

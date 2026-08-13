@@ -76,7 +76,9 @@
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.85rem;
-    transition: background 0.15s, border-color 0.15s;
+    transition:
+        background 0.15s,
+        border-color 0.15s;
 }
 
 .init-tracker__modal-item:hover {

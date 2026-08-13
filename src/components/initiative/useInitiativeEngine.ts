@@ -404,19 +404,31 @@ export function useInitiativeEngine() {
 
     const nextTurn = () => {
         if (combatants.length === 0) return;
-        let nextIndex = 0;
-        if (activeTurnId) {
-            const currentIndex = combatants.findIndex((c) => c.id === activeTurnId);
-            if (currentIndex !== -1) {
-                nextIndex = (currentIndex + 1) % combatants.length;
-            }
-        }
-        const nextId = combatants[nextIndex].id;
 
         if (isStandaloneMode) {
-            setActiveTurnId(nextId);
-            localStorage.setItem('pkr_standalone_init_turn', nextId);
+            // Functional state update: completely immune to rapid-fire clicking
+            setActiveTurnId((currentId) => {
+                let nextIndex = 0;
+                if (currentId) {
+                    const currentIndex = combatants.findIndex((c) => c.id === currentId);
+                    if (currentIndex !== -1) {
+                        nextIndex = (currentIndex + 1) % combatants.length;
+                    }
+                }
+                const nextId = combatants[nextIndex].id;
+                localStorage.setItem('pkr_standalone_init_turn', nextId);
+                return nextId;
+            });
         } else if (OBR.isAvailable) {
+            // OBR handles its own request queuing natively
+            let nextIndex = 0;
+            if (activeTurnId) {
+                const currentIndex = combatants.findIndex((c) => c.id === activeTurnId);
+                if (currentIndex !== -1) {
+                    nextIndex = (currentIndex + 1) % combatants.length;
+                }
+            }
+            const nextId = combatants[nextIndex].id;
             OBR.scene
                 .setMetadata({ 'pokerole-pmd-extension/initiative-turn': nextId })
                 .catch((error) => console.warn('[InitiativeEngine] Failed to advance scene turn:', error));
@@ -425,19 +437,30 @@ export function useInitiativeEngine() {
 
     const prevTurn = () => {
         if (combatants.length === 0) return;
-        let prevIndex = combatants.length - 1;
-        if (activeTurnId) {
-            const currentIndex = combatants.findIndex((c) => c.id === activeTurnId);
-            if (currentIndex !== -1) {
-                prevIndex = (currentIndex - 1 + combatants.length) % combatants.length;
-            }
-        }
-        const prevId = combatants[prevIndex].id;
 
         if (isStandaloneMode) {
-            setActiveTurnId(prevId);
-            localStorage.setItem('pkr_standalone_init_turn', prevId);
+            // Functional state update: completely immune to rapid-fire clicking
+            setActiveTurnId((currentId) => {
+                let prevIndex = combatants.length - 1;
+                if (currentId) {
+                    const currentIndex = combatants.findIndex((c) => c.id === currentId);
+                    if (currentIndex !== -1) {
+                        prevIndex = (currentIndex - 1 + combatants.length) % combatants.length;
+                    }
+                }
+                const prevId = combatants[prevIndex].id;
+                localStorage.setItem('pkr_standalone_init_turn', prevId);
+                return prevId;
+            });
         } else if (OBR.isAvailable) {
+            let prevIndex = combatants.length - 1;
+            if (activeTurnId) {
+                const currentIndex = combatants.findIndex((c) => c.id === activeTurnId);
+                if (currentIndex !== -1) {
+                    prevIndex = (currentIndex - 1 + combatants.length) % combatants.length;
+                }
+            }
+            const prevId = combatants[prevIndex].id;
             OBR.scene
                 .setMetadata({ 'pokerole-pmd-extension/initiative-turn': prevId })
                 .catch((error) => console.warn('[InitiativeEngine] Failed to reverse scene turn:', error));
