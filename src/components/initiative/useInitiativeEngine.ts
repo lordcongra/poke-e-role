@@ -82,6 +82,7 @@ export function useInitiativeEngine() {
             if (changed) {
                 const sorted = sortCombatants(next);
                 localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
+                window.dispatchEvent(new Event('pkr-standalone-init-update'));
                 return sorted;
             }
             return prev;
@@ -328,6 +329,7 @@ export function useInitiativeEngine() {
             const sorted = sortCombatants(updated);
             setCombatants(sorted);
             localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
+            window.dispatchEvent(new Event('pkr-standalone-init-update'));
             return;
         }
 
@@ -365,6 +367,7 @@ export function useInitiativeEngine() {
         const sorted = sortCombatants(updated);
         setCombatants(sorted);
         localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
+        window.dispatchEvent(new Event('pkr-standalone-init-update'));
 
         addRollLogEntry(
             '⚔️ Roll All Initiative',
@@ -379,6 +382,8 @@ export function useInitiativeEngine() {
             const updated = combatants.filter((c) => c.id !== id);
             setCombatants(updated);
             localStorage.setItem('pkr_standalone_init_list', JSON.stringify(updated));
+            window.dispatchEvent(new Event('pkr-standalone-init-update'));
+
             if (activeTurnId === id) {
                 setActiveTurnId(null);
                 localStorage.removeItem('pkr_standalone_init_turn');
@@ -458,6 +463,7 @@ export function useInitiativeEngine() {
 
         setCombatants(newList);
         localStorage.setItem('pkr_standalone_init_list', JSON.stringify(newList));
+        window.dispatchEvent(new Event('pkr-standalone-init-update'));
     };
 
     const handleAddObrCombatant = async (item: Item) => {
