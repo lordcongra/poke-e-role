@@ -9,7 +9,8 @@ export default defineConfig({
         react(),
         VitePWA({
             registerType: 'autoUpdate',
-            includeAssets: ['pokeball.svg', 'favicon.ico', 'robots.txt'],
+            // Added manifest.json to include assets so the Service Worker knows it exists
+            includeAssets: ['pokeball.svg', 'favicon.ico', 'robots.txt', 'manifest.json'],
             manifest: {
                 name: 'PokéRole Character Sheet',
                 short_name: 'PokéRole',
@@ -29,8 +30,9 @@ export default defineConfig({
                 ]
             },
             workbox: {
-                // Ensure all your multi-page html outputs get cached for offline use!
-                globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+                // CRITICAL FIX: Added 'json' to the globPatterns!
+                // Without this, your offline Pokemon/Move database will fail to load without internet.
+                globPatterns: ['**/*.{js,css,html,ico,png,svg,json}']
             }
         })
     ],

@@ -7,7 +7,7 @@
     "action": {
         "title": "Pokerole 3.0 Sheet",
         "icon": "https://lordcongra.github.io/poke-e-role/pokeball.svg",
-        "popover": "http://localhost:5173/poke-e-role/",
+        "popover": "https://lordcongra.github.io/poke-e-role/",
         "width": 850,
         "height": 700
     }
