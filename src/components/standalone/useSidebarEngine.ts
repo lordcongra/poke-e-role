@@ -165,15 +165,17 @@ export function useSidebarEngine() {
     };
 
     const handleCreate = async (type: 'folder' | 'character') => {
-        if (!newName.trim()) return;
+        // Fallback to a default name if the input box is empty
+        const finalName = newName.trim() || (type === 'folder' ? 'New Folder' : 'New Character');
+        
         try {
             if (type === 'folder') {
-                await storageAdapter.createFolder(newName, null);
+                await storageAdapter.createFolder(finalName, null);
             } else {
-                const newId = await storageAdapter.createLocalCharacter(newName, null);
-                handleSelectCharacter(newId, { nickname: newName, parentId: null });
+                const newId = await storageAdapter.createLocalCharacter(finalName, null);
+                handleSelectCharacter(newId, { nickname: finalName, parentId: null });
             }
-            setNewName('');
+            setNewName(''); // Clear the input box after creation
         } catch (error) {
             console.error('[SidebarEngine] Creation failed:', error);
         }
