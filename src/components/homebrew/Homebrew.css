@@ -16,20 +16,22 @@
     background: var(--panel-bg);
     border-radius: 8px;
     width: 550px;
-    border: 2px solid #00695c;
+    border: 2px solid var(--primary); /* 🔥 Dynamic Border */
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     max-height: 90vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    transition: border-color 0.3s ease;
 }
 
 .homebrew-modal__header {
-    background: #00695c;
+    background: var(--primary); /* 🔥 Dynamic Header */
     padding: 10px;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    transition: background 0.3s ease;
 }
 
 .homebrew-modal__title-row {
@@ -43,14 +45,27 @@
     color: white;
 }
 
+.homebrew-title-with-icon {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .homebrew-modal__close-btn {
     background: transparent;
     border: none;
     color: white;
     cursor: pointer;
     font-weight: bold;
-    font-size: 1.2rem;
-    padding: 0 5px;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.homebrew-modal__close-btn:hover {
+    transform: scale(1.1);
 }
 
 .homebrew-modal__tabs {
@@ -68,11 +83,14 @@
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.85rem;
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
 }
 
 .homebrew-modal__tab--active {
     background: var(--panel-bg);
-    color: #00695c;
+    color: var(--primary); /* 🔥 Dynamic Text */
 }
 
 .homebrew-modal__body {
@@ -128,13 +146,14 @@
     border-radius: 6px;
     max-width: 400px;
     width: 90%;
-    border: 2px solid #c62828;
+    border: 2px solid var(--semantic-danger);
     text-align: center;
 }
 
 .homebrew-import__title {
-    color: #c62828;
+    color: var(--semantic-danger);
     margin-top: 0;
+    justify-content: center;
 }
 
 .homebrew-import__text {
@@ -193,8 +212,8 @@
 
 .homebrew-list__create-btn {
     padding: 8px;
-    background: #00695c;
-    border-color: #00695c;
+    background: var(--primary); /* 🔥 Dynamic Button */
+    border-color: var(--primary);
     white-space: nowrap;
     text-align: center;
 }
@@ -258,7 +277,7 @@
     align-items: center;
     gap: 4px;
     font-size: 0.7rem;
-    color: #c62828;
+    color: var(--semantic-danger);
     font-weight: bold;
 }
 
@@ -315,15 +334,16 @@
     border-radius: 6px;
     max-width: 300px;
     width: 90%;
-    border: 2px solid #c62828;
+    border: 2px solid var(--semantic-danger);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     text-align: center;
 }
 
 .homebrew-confirm__title {
-    color: #c62828;
+    color: var(--semantic-danger);
     margin-top: 0;
     font-size: 1.1rem;
+    justify-content: center;
 }
 
 .homebrew-confirm__text {

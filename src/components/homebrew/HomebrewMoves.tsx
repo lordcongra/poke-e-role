@@ -4,6 +4,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomMove } from '../../store/storeTypes';
 import { HomebrewMoveCard } from './HomebrewMoveCard';
 import { POKEMON_TYPES, TYPE_COLORS } from '../../data/constants';
+import { Plus, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 
 export function HomebrewMoves() {
@@ -76,7 +77,7 @@ export function HomebrewMoves() {
             <div className="homebrew-list__search-row">
                 <input
                     type="text"
-                    placeholder="🔍 Search Moves..."
+                    placeholder="Search Moves..."
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
                     className="homebrew-list__search-input"
@@ -89,7 +90,7 @@ export function HomebrewMoves() {
                         }}
                         className="action-button action-button--dark homebrew-list__create-btn"
                     >
-                        + Create New
+                        <Plus size={16} /> Create New
                     </button>
                 )}
             </div>
@@ -117,7 +118,7 @@ export function HomebrewMoves() {
 
             <div className="homebrew-list__footer">
                 <button onClick={handleExport} className="action-button action-button--dark homebrew-list__footer-btn">
-                    💾 Export Moves
+                    <Save size={16} /> Export Moves
                 </button>
                 {canEdit && (
                     <>
@@ -125,7 +126,7 @@ export function HomebrewMoves() {
                             onClick={() => fileReference.current?.click()}
                             className="action-button action-button--dark homebrew-list__footer-btn"
                         >
-                            📂 Import Moves
+                            <FolderOpen size={16} /> Import Moves
                         </button>
                         <input
                             type="file"
@@ -141,7 +142,9 @@ export function HomebrewMoves() {
             {importData && (
                 <div className="homebrew-import__overlay">
                     <div className="homebrew-import__content">
-                        <h3 className="homebrew-import__title">⚠️ Confirm Import</h3>
+                        <h3 className="homebrew-import__title homebrew-title-with-icon">
+                            <AlertTriangle size={20} /> Confirm Import
+                        </h3>
                         <p className="homebrew-import__text">
                             How would you like to import this data? <b>Overwrite</b> will delete your existing Moves.{' '}
                             <b>Add / Merge</b> will safely combine them, updating any items with matching names.

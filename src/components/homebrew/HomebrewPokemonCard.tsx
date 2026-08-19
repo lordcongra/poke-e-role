@@ -4,6 +4,7 @@ import type { CustomPokemon } from '../../store/storeTypes';
 import { HomebrewPokemonStats } from './HomebrewPokemonStats';
 import { HomebrewPokemonAbilities } from './HomebrewPokemonAbilities';
 import { HomebrewPokemonLearnset } from './HomebrewPokemonLearnset';
+import { ChevronDown, Copy, X, AlertTriangle } from 'lucide-react';
 import './HomebrewPokemonCard.css';
 
 interface HomebrewPokemonCardProps {
@@ -42,10 +43,10 @@ export function HomebrewPokemonCard({
             <div className="homebrew-pokemon-card__header">
                 <button
                     type="button"
-                    className={`collapse-btn ${isCollapsed ? 'is-collapsed' : ''}`}
+                    className={`collapse-btn flex-layout--row-center ${isCollapsed ? 'is-collapsed' : ''}`}
                     onClick={() => setIsCollapsed(!isCollapsed)}
                 >
-                    ▼
+                    <ChevronDown size={16} />
                 </button>
                 <input
                     type="text"
@@ -78,13 +79,13 @@ export function HomebrewPokemonCard({
                             className="action-button action-button--dark homebrew-pokemon-card__delete-btn"
                             title="Duplicate Pokémon"
                         >
-                            📋 Copy
+                            <Copy size={14} /> Copy
                         </button>
                         <button
                             onClick={() => setShowDeleteConfirm(true)}
                             className="action-button action-button--red homebrew-pokemon-card__delete-btn"
                         >
-                            Delete
+                            <X size={14} /> Delete
                         </button>
                     </>
                 )}
@@ -194,7 +195,9 @@ export function HomebrewPokemonCard({
             {showDeleteConfirm && (
                 <div className="homebrew-confirm__overlay">
                     <div className="homebrew-confirm__content">
-                        <h3 className="homebrew-confirm__title">⚠️ Confirm Deletion</h3>
+                        <h3 className="homebrew-confirm__title homebrew-title-with-icon">
+                            <AlertTriangle size={20} /> Confirm Deletion
+                        </h3>
                         <p className="homebrew-confirm__text">Are you sure you want to delete this Custom Pokémon?</p>
                         <div className="homebrew-confirm__actions">
                             <button

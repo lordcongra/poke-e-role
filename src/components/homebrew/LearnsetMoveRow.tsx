@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
+import { X } from 'lucide-react';
 import './HomebrewPokemonCard.css';
 
 interface LearnsetMoveRowProps {
@@ -49,7 +50,7 @@ export function LearnsetMoveRow({ pokemonId, moveIndex, move, currentMoves, canE
                     onClick={handleRemove}
                     className="action-button action-button--red homebrew-pokemon-card__learnset-remove-btn"
                 >
-                    X
+                    <X size={14} />
                 </button>
             )}
         </div>

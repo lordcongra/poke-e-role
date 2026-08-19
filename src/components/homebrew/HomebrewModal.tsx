@@ -17,6 +17,7 @@ import type {
     CustomForm,
     CustomStatus
 } from '../../store/storeTypes';
+import { Hammer, X, HardDrive, AlertTriangle, Radio, Save, FolderOpen } from 'lucide-react';
 import './Homebrew.css';
 
 // --- STORAGE TRACKER HELPER ---
@@ -80,10 +81,10 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
 
         if (role === 'GM') {
             OBR.broadcast.sendMessage('pokerole-pmd-extension/homebrew-payload', payload, { destination: 'REMOTE' });
-            OBR.notification.show('📢 Homebrew data pushed to all players!', 'SUCCESS');
+            OBR.notification.show('Homebrew data pushed to all players!', 'SUCCESS');
         } else {
             OBR.broadcast.sendMessage('pokerole-pmd-extension/homebrew-share', payload, { destination: 'REMOTE' });
-            OBR.notification.show('📢 Homebrew shared with table!', 'SUCCESS');
+            OBR.notification.show('Homebrew shared with table!', 'SUCCESS');
         }
     };
 
@@ -152,8 +153,7 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
 
     // Determine Storage Bar Color
     let progressColor = '#2e7d32'; // Green
-    if (storageUsage.percent > 90)
-        progressColor = '#c62828'; // Red
+    if (storageUsage.percent > 90) progressColor = 'var(--semantic-danger)';
     else if (storageUsage.percent > 70) progressColor = '#f57c00'; // Orange
 
     return (
@@ -161,9 +161,18 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
             <div className="homebrew-modal__content">
                 <div className="homebrew-modal__header">
                     <div className="homebrew-modal__title-row">
-                        <h3 className="homebrew-modal__title">🛠️ Homebrew Workshop</h3>
-                        <button onClick={onClose} className="homebrew-modal__close-btn">
-                            X
+                        <h3
+                            className="homebrew-modal__title"
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                        >
+                            <Hammer size={20} /> Homebrew Workshop
+                        </h3>
+                        <button
+                            onClick={onClose}
+                            className="homebrew-modal__close-btn"
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                            <X size={20} />
                         </button>
                     </div>
                     <div className="homebrew-modal__tabs" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
@@ -240,17 +249,19 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                                 display: 'flex',
                                 justifyContent: 'space-between',
                                 fontSize: '0.8rem',
-                                color: '#666'
+                                color: 'var(--text-muted)'
                             }}
                         >
-                            <span>💾 Storage Limit</span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <HardDrive size={14} /> Storage Limit
+                            </span>
                             <span>{storageUsage.mb}MB / 5.0MB</span>
                         </div>
                         <div
                             style={{
                                 width: '100%',
                                 height: '8px',
-                                backgroundColor: '#e0e0e0',
+                                backgroundColor: 'var(--border)',
                                 borderRadius: '4px',
                                 overflow: 'hidden'
                             }}
@@ -269,11 +280,21 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
 
                     <span
                         className="homebrew-modal__footer-text"
-                        style={needsBackup ? { color: '#c62828', fontWeight: 'bold' } : {}}
+                        style={{
+                            color: needsBackup ? 'var(--semantic-danger)' : 'inherit',
+                            fontWeight: needsBackup ? 'bold' : 'normal',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                        }}
                     >
-                        {needsBackup
-                            ? '⚠️ Unexported changes! Please backup your work.'
-                            : 'Changes save automatically to your browser.'}
+                        {needsBackup ? (
+                            <>
+                                <AlertTriangle size={14} /> Unexported changes! Please backup your work.
+                            </>
+                        ) : (
+                            'Changes save automatically to your browser.'
+                        )}
                     </span>
                     <div className="homebrew-modal__footer-actions">
                         {canEdit && (
@@ -282,14 +303,14 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                                 className="action-button homebrew-modal__footer-btn"
                                 style={{ backgroundColor: '#1565c0', borderColor: '#1565c0', color: 'white' }}
                             >
-                                {role === 'GM' ? '📢 Sync to Players' : '📢 Share with Table'}
+                                <Radio size={16} /> {role === 'GM' ? 'Sync to Players' : 'Share with Table'}
                             </button>
                         )}
                         <button
                             onClick={handleExportAll}
                             className={`action-button ${needsBackup ? 'action-button--red' : 'action-button--dark'} homebrew-modal__footer-btn`}
                         >
-                            💾 {needsBackup ? 'Backup All*' : 'Backup All'}
+                            <Save size={16} /> Backup All{needsBackup ? '*' : ''}
                         </button>
                         {canEdit && (
                             <>
@@ -297,7 +318,7 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                                     onClick={() => fileRef.current?.click()}
                                     className="action-button action-button--dark homebrew-modal__footer-btn"
                                 >
-                                    📂 Restore All
+                                    <FolderOpen size={16} /> Restore All
                                 </button>
                                 <input
                                     type="file"
@@ -315,7 +336,12 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
             {importAllData && (
                 <div className="homebrew-import__overlay">
                     <div className="homebrew-import__content">
-                        <h3 className="homebrew-import__title">⚠️ Confirm Restore</h3>
+                        <h3
+                            className="homebrew-import__title"
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                        >
+                            <AlertTriangle size={20} /> Confirm Restore
+                        </h3>
                         <p className="homebrew-import__text">
                             How would you like to import this data? <b>Overwrite</b> will delete all existing Workshop
                             items. <b>Add / Merge</b> will safely combine them, updating any items with matching names.

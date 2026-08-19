@@ -4,6 +4,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomType } from '../../store/storeTypes';
 import { POKEMON_TYPES } from '../../data/constants';
 import { HomebrewTypeEditor } from './HomebrewTypeEditor';
+import { Pencil, Copy, X, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './HomebrewTypes.css';
 
 export function HomebrewTypes() {
@@ -70,9 +71,13 @@ export function HomebrewTypes() {
     return (
         <div className="homebrew-types__container">
             <p className="homebrew-types__description">
-                {editingType
-                    ? `✏️ Editing ${editingType.name}`
-                    : 'Create custom typings and define their combat matchups. These will appear in the Typing dropdowns.'}
+                {editingType ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <Pencil size={14} /> Editing {editingType.name}
+                    </span>
+                ) : (
+                    'Create custom typings and define their combat matchups. These will appear in the Typing dropdowns.'
+                )}
             </p>
 
             <HomebrewTypeEditor
@@ -96,7 +101,7 @@ export function HomebrewTypes() {
                                 style={{ background: customType.color }}
                                 title={canEdit ? 'Click to edit' : ''}
                             >
-                                {customType.name} {canEdit && '✏️'}
+                                {customType.name} {canEdit && <Pencil size={12} style={{ marginLeft: '4px' }} />}
                             </span>
                             {canEdit && (
                                 <div className="homebrew-types__list-actions">
@@ -106,7 +111,7 @@ export function HomebrewTypes() {
                                         className="homebrew-types__list-duplicate"
                                         title="Duplicate Type"
                                     >
-                                        📋
+                                        <Copy size={16} />
                                     </button>
                                     <button
                                         type="button"
@@ -114,7 +119,7 @@ export function HomebrewTypes() {
                                         className="homebrew-types__list-delete"
                                         title="Delete Type"
                                     >
-                                        X
+                                        <X size={16} />
                                     </button>
                                 </div>
                             )}
@@ -129,7 +134,7 @@ export function HomebrewTypes() {
                     onClick={handleExport}
                     className="action-button action-button--dark homebrew-types__footer-btn"
                 >
-                    💾 Export Types
+                    <Save size={16} /> Export Types
                 </button>
                 {canEdit && (
                     <>
@@ -138,7 +143,7 @@ export function HomebrewTypes() {
                             onClick={() => fileReference.current?.click()}
                             className="action-button action-button--dark homebrew-types__footer-btn"
                         >
-                            📂 Import Types
+                            <FolderOpen size={16} /> Import Types
                         </button>
                         <input
                             type="file"
@@ -154,7 +159,12 @@ export function HomebrewTypes() {
             {deleteTypeId && (
                 <div className="homebrew-types__modal-overlay">
                     <div className="homebrew-types__modal-content">
-                        <h3 className="homebrew-types__modal-title">⚠️ Confirm Deletion</h3>
+                        <h3
+                            className="homebrew-types__modal-title"
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                        >
+                            <AlertTriangle size={20} /> Confirm Deletion
+                        </h3>
                         <p className="homebrew-types__modal-text">
                             Are you sure you want to delete the Type "{deleteTypeId}"?
                         </p>
@@ -184,7 +194,12 @@ export function HomebrewTypes() {
             {importData && (
                 <div className="homebrew-types__modal-overlay">
                     <div className="homebrew-types__modal-content">
-                        <h3 className="homebrew-types__modal-title">⚠️ Confirm Import</h3>
+                        <h3
+                            className="homebrew-types__modal-title"
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                        >
+                            <AlertTriangle size={20} /> Confirm Import
+                        </h3>
                         <p className="homebrew-types__modal-text">
                             How would you like to import this data? <b>Overwrite</b> will delete your existing Types.{' '}
                             <b>Add / Merge</b> will safely combine them, updating any items with matching names.

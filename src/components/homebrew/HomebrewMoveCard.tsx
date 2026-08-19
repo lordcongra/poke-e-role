@@ -4,6 +4,7 @@ import type { CustomMove } from '../../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { TagBuilderModal } from '../modals/TagBuilderModal';
 import { NumberSpinner } from '../ui/NumberSpinner';
+import { ChevronDown, Tag, Copy, X, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 import './HomebrewMove.css';
 
@@ -47,10 +48,10 @@ export function HomebrewMoveCard({
             <div className="homebrew-card__header">
                 <button
                     type="button"
-                    className={`collapse-btn ${isCollapsed ? 'is-collapsed' : ''}`}
+                    className={`collapse-btn flex-layout--row-center ${isCollapsed ? 'is-collapsed' : ''}`}
                     onClick={() => setIsCollapsed(!isCollapsed)}
                 >
-                    ▼
+                    <ChevronDown size={16} />
                 </button>
                 <input
                     type="text"
@@ -80,20 +81,20 @@ export function HomebrewMoveCard({
                             onClick={() => setShowTagBuilder(true)}
                             className="action-button action-button--dark homebrew-card__btn"
                         >
-                            🏷️ Tags
+                            <Tag size={14} /> Tags
                         </button>
                         <button
                             onClick={onDuplicate}
                             className="action-button action-button--dark homebrew-card__btn"
                             title="Duplicate Move"
                         >
-                            📋 Copy
+                            <Copy size={14} /> Copy
                         </button>
                         <button
                             onClick={() => setShowDeleteConfirm(true)}
                             className="action-button action-button--red homebrew-card__btn"
                         >
-                            Delete
+                            <X size={14} /> Delete
                         </button>
                     </>
                 )}
@@ -296,7 +297,9 @@ export function HomebrewMoveCard({
             {showDeleteConfirm && (
                 <div className="homebrew-confirm__overlay">
                     <div className="homebrew-confirm__content">
-                        <h3 className="homebrew-confirm__title">⚠️ Confirm Deletion</h3>
+                        <h3 className="homebrew-confirm__title homebrew-title-with-icon">
+                            <AlertTriangle size={20} /> Confirm Deletion
+                        </h3>
                         <p className="homebrew-confirm__text">Are you sure you want to delete this Custom Move?</p>
                         <div className="homebrew-confirm__actions">
                             <button

@@ -44,7 +44,6 @@ const STANDARD_TYPE_COLORS: Record<string, string> = {
     Stellar: '#4FB1D2'
 };
 
-// Helper to mathematically calculate a harmonious analogous accent color
 const getHarmoniousAccentHex = (hex: string): string => {
     let c = hex.replace('#', '');
     if (c.length === 3)
@@ -81,9 +80,7 @@ const getHarmoniousAccentHex = (hex: string): string => {
         h /= 6;
     }
 
-    // Shift hue by ~45 degrees (0.12) for a harmonious analogous color!
     h = (h + 0.12) % 1;
-    // Boost saturation slightly for the accent
     s = Math.min(1, s + 0.15);
 
     let r1, g1, b1;
@@ -122,14 +119,13 @@ function App() {
     const gmOnlyMatchups = useCharacterStore((state) => state.identity.gmOnlyMatchups);
     const activeTokenId = useCharacterStore((state) => state.tokenId);
 
-    // Grab the primary typing to drive our dynamic CSS theming engine
+    // 🔥 FIX: ADDED SAFETY FALLBACK ARRAY
     const type1 = useCharacterStore((state) => state.identity.type1);
-    const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
+    const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes || []);
 
     const initLayout = useCharacterStore((state) => state.identity.initiativeTrackerLayout) || 'vertical';
     const [showStandaloneTracker, setShowStandaloneTracker] = useState(false);
 
-    // Inject the current Pokémon Type and its Harmonious Accent into the DOM
     useEffect(() => {
         let typeColor = '';
 
@@ -187,12 +183,10 @@ function App() {
                 <IdentityHeader />
                 <DerivedBoard />
 
-                {/* --- COMBAT DASHBOARD --- */}
                 <TrackerSection />
                 <MovesTable />
                 <ActionRolls />
 
-                {/* --- STATS & SKILLS --- */}
                 <div className="sheet-container__row">
                     <div className="sheet-container__column">
                         {mode === 'Pokémon' && <TypeMatchups />}
@@ -211,9 +205,6 @@ function App() {
         );
     };
 
-    // ==========================================
-    // PATH 1: OWLBEAR RODEO VTT MODE
-    // ==========================================
     if (!isStandaloneMode) {
         return (
             <>
@@ -228,9 +219,6 @@ function App() {
         );
     }
 
-    // ==========================================
-    // PATH 2: STANDALONE WEB APP MODE
-    // ==========================================
     return (
         <div className="app-layout">
             <Sidebar />
@@ -244,7 +232,6 @@ function App() {
                     </div>
                 ) : (
                     <div className="standalone-layout-wrapper">
-                        {/* LEFT COLUMN: Main Sheet Content + Horizontal Tracker */}
                         <div className="standalone-main-col">
                             {showStandaloneTracker && initLayout === 'horizontal' && (
                                 <div className="standalone-layout-tracker--horizontal">
@@ -255,7 +242,6 @@ function App() {
                             <div className="standalone-layout-sheet">{renderSheetContent()}</div>
                         </div>
 
-                        {/* RIGHT COLUMN: Sidebar (Vertical Tracker + Docked Roll Log) */}
                         <div className="standalone-right-sidebar">
                             {showStandaloneTracker && initLayout === 'vertical' && (
                                 <div className="standalone-tracker-dock">

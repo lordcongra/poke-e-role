@@ -3,6 +3,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomStatus } from '../../store/storeTypes';
 import { HomebrewStatusCard } from './HomebrewStatusCard';
+import { Plus, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 
 export function HomebrewStatuses() {
@@ -69,7 +70,7 @@ export function HomebrewStatuses() {
             <div className="homebrew-list__search-row">
                 <input
                     type="text"
-                    placeholder="🔍 Search Statuses..."
+                    placeholder="Search Statuses..."
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
                     className="homebrew-list__search-input"
@@ -82,7 +83,7 @@ export function HomebrewStatuses() {
                         }}
                         className="action-button action-button--dark homebrew-list__create-btn"
                     >
-                        + Create New
+                        <Plus size={16} /> Create New
                     </button>
                 )}
             </div>
@@ -108,7 +109,7 @@ export function HomebrewStatuses() {
 
             <div className="homebrew-list__footer">
                 <button onClick={handleExport} className="action-button action-button--dark homebrew-list__footer-btn">
-                    💾 Export Statuses
+                    <Save size={16} /> Export Statuses
                 </button>
                 {canEdit && (
                     <>
@@ -116,7 +117,7 @@ export function HomebrewStatuses() {
                             onClick={() => fileReference.current?.click()}
                             className="action-button action-button--dark homebrew-list__footer-btn"
                         >
-                            📂 Import Statuses
+                            <FolderOpen size={16} /> Import Statuses
                         </button>
                         <input
                             type="file"
@@ -132,7 +133,9 @@ export function HomebrewStatuses() {
             {importData && (
                 <div className="homebrew-import__overlay">
                     <div className="homebrew-import__content">
-                        <h3 className="homebrew-import__title">⚠️ Confirm Import</h3>
+                        <h3 className="homebrew-import__title homebrew-title-with-icon">
+                            <AlertTriangle size={20} /> Confirm Import
+                        </h3>
                         <p className="homebrew-import__text">
                             How would you like to import this data? <b>Overwrite</b> will delete your existing Statuses.{' '}
                             <b>Add / Merge</b> will safely combine them, updating any items with matching names.

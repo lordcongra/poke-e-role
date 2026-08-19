@@ -3,6 +3,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomAbility } from '../../store/storeTypes';
 import { AbilityCard } from './AbilityCard';
+import { Plus, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 
 export function HomebrewAbilities() {
@@ -69,7 +70,7 @@ export function HomebrewAbilities() {
             <div className="homebrew-list__search-row">
                 <input
                     type="text"
-                    placeholder="🔍 Search Abilities..."
+                    placeholder="Search Abilities..."
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
                     className="homebrew-list__search-input"
@@ -82,7 +83,7 @@ export function HomebrewAbilities() {
                         }}
                         className="action-button action-button--dark homebrew-list__create-btn"
                     >
-                        + Create New
+                        <Plus size={16} /> Create New
                     </button>
                 )}
             </div>
@@ -108,7 +109,7 @@ export function HomebrewAbilities() {
 
             <div className="homebrew-list__footer">
                 <button onClick={handleExport} className="action-button action-button--dark homebrew-list__footer-btn">
-                    💾 Export Abilities
+                    <Save size={16} /> Export Abilities
                 </button>
                 {canEdit && (
                     <>
@@ -116,7 +117,7 @@ export function HomebrewAbilities() {
                             onClick={() => fileReference.current?.click()}
                             className="action-button action-button--dark homebrew-list__footer-btn"
                         >
-                            📂 Import Abilities
+                            <FolderOpen size={16} /> Import Abilities
                         </button>
                         <input
                             type="file"
@@ -132,7 +133,12 @@ export function HomebrewAbilities() {
             {importData && (
                 <div className="homebrew-import__overlay">
                     <div className="homebrew-import__content">
-                        <h3 className="homebrew-import__title">⚠️ Confirm Import</h3>
+                        <h3
+                            className="homebrew-import__title"
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                        >
+                            <AlertTriangle size={20} /> Confirm Import
+                        </h3>
                         <p className="homebrew-import__text">
                             How would you like to import this data? <b>Overwrite</b> will delete your existing
                             Abilities. <b>Add / Merge</b> will safely combine them, updating any items with matching

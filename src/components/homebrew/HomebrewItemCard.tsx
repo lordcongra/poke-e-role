@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomItem } from '../../store/storeTypes';
 import { TagBuilderModal } from '../modals/TagBuilderModal';
+import { ChevronDown, Tag, Copy, X, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 import './HomebrewItemCard.css';
 
@@ -41,10 +42,10 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove, onDuplicate }:
             <div className="homebrew-card__header">
                 <button
                     type="button"
-                    className={`collapse-btn ${isCollapsed ? 'is-collapsed' : ''}`}
+                    className={`collapse-btn flex-layout--row-center ${isCollapsed ? 'is-collapsed' : ''}`}
                     onClick={() => setIsCollapsed(!isCollapsed)}
                 >
-                    ▼
+                    <ChevronDown size={16} />
                 </button>
                 <input
                     type="text"
@@ -74,20 +75,20 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove, onDuplicate }:
                             onClick={() => setShowTagBuilder(true)}
                             className="action-button action-button--dark homebrew-card__btn"
                         >
-                            🏷️ Tags
+                            <Tag size={14} /> Tags
                         </button>
                         <button
                             onClick={onDuplicate}
                             className="action-button action-button--dark homebrew-card__btn"
                             title="Duplicate Item"
                         >
-                            📋 Copy
+                            <Copy size={14} /> Copy
                         </button>
                         <button
                             onClick={() => setShowDeleteConfirm(true)}
                             className="action-button action-button--red homebrew-card__btn"
                         >
-                            Delete
+                            <X size={14} /> Delete
                         </button>
                     </>
                 )}
@@ -173,7 +174,9 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove, onDuplicate }:
             {showDeleteConfirm && (
                 <div className="homebrew-confirm__overlay">
                     <div className="homebrew-confirm__content">
-                        <h3 className="homebrew-confirm__title">⚠️ Confirm Deletion</h3>
+                        <h3 className="homebrew-confirm__title homebrew-title-with-icon">
+                            <AlertTriangle size={20} /> Confirm Deletion
+                        </h3>
                         <p className="homebrew-confirm__text">Are you sure you want to delete this Custom Item?</p>
                         <div className="homebrew-confirm__actions">
                             <button

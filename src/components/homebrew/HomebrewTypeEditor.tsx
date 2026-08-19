@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { CustomType } from '../../store/storeTypes';
 import { HomebrewTypeMatchupPills } from './HomebrewTypeMatchupPills';
+import { Plus, Save } from 'lucide-react';
 import './HomebrewTypes.css';
 
 interface HomebrewTypeEditorProps {
@@ -135,7 +136,7 @@ export function HomebrewTypeEditor({
                             onClick={() => addToArray(weaknesses, setWeaknesses)}
                             className="action-button action-button--dark homebrew-types__matchup-btn homebrew-types__matchup-btn--first"
                         >
-                            + Weak (2x)
+                            <Plus size={14} /> Weak (2x)
                         </button>
                         <HomebrewTypeMatchupPills
                             items={weaknesses}
@@ -148,7 +149,7 @@ export function HomebrewTypeEditor({
                             onClick={() => addToArray(resistances, setResistances)}
                             className="action-button action-button--dark homebrew-types__matchup-btn"
                         >
-                            + Resist (0.5x)
+                            <Plus size={14} /> Resist (0.5x)
                         </button>
                         <HomebrewTypeMatchupPills
                             items={resistances}
@@ -161,7 +162,7 @@ export function HomebrewTypeEditor({
                             onClick={() => addToArray(immunities, setImmunities)}
                             className="action-button action-button--dark homebrew-types__matchup-btn"
                         >
-                            + Immune (0x)
+                            <Plus size={14} /> Immune (0x)
                         </button>
                         <HomebrewTypeMatchupPills
                             items={immunities}
@@ -178,7 +179,7 @@ export function HomebrewTypeEditor({
                             onClick={() => addToArray(seAgainst, setSEAgainst)}
                             className="action-button action-button--dark homebrew-types__matchup-btn homebrew-types__matchup-btn--first"
                         >
-                            + S.Effective (2x)
+                            <Plus size={14} /> S.Effective (2x)
                         </button>
                         <HomebrewTypeMatchupPills
                             items={seAgainst}
@@ -191,7 +192,7 @@ export function HomebrewTypeEditor({
                             onClick={() => addToArray(nveAgainst, setNVEAgainst)}
                             className="action-button action-button--dark homebrew-types__matchup-btn"
                         >
-                            + N.V.E (0.5x)
+                            <Plus size={14} /> N.V.E (0.5x)
                         </button>
                         <HomebrewTypeMatchupPills
                             items={nveAgainst}
@@ -204,7 +205,7 @@ export function HomebrewTypeEditor({
                             onClick={() => addToArray(noEffectAgainst, setNoEffectAgainst)}
                             className="action-button action-button--dark homebrew-types__matchup-btn"
                         >
-                            + No Effect (0x)
+                            <Plus size={14} /> No Effect (0x)
                         </button>
                         <HomebrewTypeMatchupPills
                             items={noEffectAgainst}
@@ -226,7 +227,15 @@ export function HomebrewTypeEditor({
                     </button>
                 )}
                 <button type="button" onClick={handleSave} className="action-button homebrew-types__btn-save">
-                    {editingType ? '💾 Save Type' : '+ Add Type'}
+                    {editingType ? (
+                        <>
+                            <Save size={16} /> Save Type
+                        </>
+                    ) : (
+                        <>
+                            <Plus size={16} /> Add Type
+                        </>
+                    )}
                 </button>
             </div>
         </>

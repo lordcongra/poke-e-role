@@ -4,6 +4,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { loadLocalDataset } from '../../utils/api';
 import type { CustomItem } from '../../store/storeTypes';
 import { HomebrewItemCard } from './HomebrewItemCard';
+import { Plus, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 
 export function HomebrewItems() {
@@ -81,7 +82,7 @@ export function HomebrewItems() {
             <div className="homebrew-list__search-row">
                 <input
                     type="text"
-                    placeholder="🔍 Search Items..."
+                    placeholder="Search Items..."
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
                     className="homebrew-list__search-input"
@@ -94,7 +95,7 @@ export function HomebrewItems() {
                         }}
                         className="action-button action-button--dark homebrew-list__create-btn"
                     >
-                        + Create New
+                        <Plus size={16} /> Create New
                     </button>
                 )}
             </div>
@@ -126,7 +127,7 @@ export function HomebrewItems() {
 
             <div className="homebrew-list__footer">
                 <button onClick={handleExport} className="action-button action-button--dark homebrew-list__footer-btn">
-                    💾 Export Items
+                    <Save size={16} /> Export Items
                 </button>
                 {canEdit && (
                     <>
@@ -134,7 +135,7 @@ export function HomebrewItems() {
                             onClick={() => fileReference.current?.click()}
                             className="action-button action-button--dark homebrew-list__footer-btn"
                         >
-                            📂 Import Items
+                            <FolderOpen size={16} /> Import Items
                         </button>
                         <input
                             type="file"
@@ -150,7 +151,9 @@ export function HomebrewItems() {
             {importData && (
                 <div className="homebrew-import__overlay">
                     <div className="homebrew-import__content">
-                        <h3 className="homebrew-import__title">⚠️ Confirm Import</h3>
+                        <h3 className="homebrew-import__title homebrew-title-with-icon">
+                            <AlertTriangle size={20} /> Confirm Import
+                        </h3>
                         <p className="homebrew-import__text">
                             How would you like to import this data? <b>Overwrite</b> will delete your existing Items.{' '}
                             <b>Add / Merge</b> will safely combine them, updating any items with matching names.

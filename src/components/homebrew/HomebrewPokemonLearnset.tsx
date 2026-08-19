@@ -2,6 +2,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomPokemon } from '../../store/storeTypes';
 import { LearnsetMoveRow } from './LearnsetMoveRow';
 import { RANKS } from '../../data/constants';
+import { Plus } from 'lucide-react';
 import './HomebrewPokemonCard.css';
 
 interface HomebrewPokemonLearnsetProps {
@@ -42,7 +43,7 @@ export function HomebrewPokemonLearnset({ pokemon, canEdit }: HomebrewPokemonLea
                                     onClick={() => addLearnsetMove(rankOption)}
                                     className="action-button action-button--dark homebrew-pokemon-card__learnset-add-btn"
                                 >
-                                    + Add {rankOption} Move
+                                    <Plus size={14} /> Add {rankOption} Move
                                 </button>
                             )}
                         </div>

@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import './HomebrewTypes.css';
 
 interface HomebrewTypeMatchupPillsProps {
@@ -17,8 +18,9 @@ export function HomebrewTypeMatchupPills({ items, onRemove, canEdit }: HomebrewT
                     onClick={() => canEdit && onRemove(item)}
                     className={`homebrew-types__pill ${canEdit ? 'homebrew-types__pill--editable' : ''}`}
                     title={canEdit ? 'Click to remove' : ''}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                 >
-                    {item} {canEdit && 'x'}
+                    {item} {canEdit && <X size={12} />}
                 </span>
             ))}
         </div>

@@ -5,6 +5,7 @@ import type { CustomPokemon } from '../../store/storeTypes';
 import { ALL_ABILITIES, ALL_MOVES } from '../../utils/api';
 import { HomebrewPokemonCard } from './HomebrewPokemonCard';
 import { POKEMON_TYPES, TYPE_COLORS } from '../../data/constants';
+import { Plus, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 
 export function HomebrewPokemon() {
@@ -94,7 +95,7 @@ export function HomebrewPokemon() {
             <div className="homebrew-list__search-row">
                 <input
                     type="text"
-                    placeholder="🔍 Search Pokémon..."
+                    placeholder="Search Pokémon..."
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
                     className="homebrew-list__search-input"
@@ -107,7 +108,7 @@ export function HomebrewPokemon() {
                         }}
                         className="action-button action-button--dark homebrew-list__create-btn"
                     >
-                        + Create New
+                        <Plus size={16} /> Create New
                     </button>
                 )}
             </div>
@@ -146,7 +147,7 @@ export function HomebrewPokemon() {
 
             <div className="homebrew-list__footer">
                 <button onClick={handleExport} className="action-button action-button--dark homebrew-list__footer-btn">
-                    💾 Export Pokémon
+                    <Save size={16} /> Export Pokémon
                 </button>
                 {canEdit && (
                     <>
@@ -154,7 +155,7 @@ export function HomebrewPokemon() {
                             onClick={() => fileReference.current?.click()}
                             className="action-button action-button--dark homebrew-list__footer-btn"
                         >
-                            📂 Import Pokémon
+                            <FolderOpen size={16} /> Import Pokémon
                         </button>
                         <input
                             type="file"
@@ -170,7 +171,9 @@ export function HomebrewPokemon() {
             {importData && (
                 <div className="homebrew-import__overlay">
                     <div className="homebrew-import__content">
-                        <h3 className="homebrew-import__title">⚠️ Confirm Import</h3>
+                        <h3 className="homebrew-import__title homebrew-title-with-icon">
+                            <AlertTriangle size={20} /> Confirm Import
+                        </h3>
                         <p className="homebrew-import__text">
                             How would you like to import this data? <b>Overwrite</b> will delete your existing Pokémon.{' '}
                             <b>Add / Merge</b> will safely combine them, updating any items with matching names.

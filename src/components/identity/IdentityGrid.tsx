@@ -27,9 +27,11 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature, onO
     const removeCustomInfo = useCharacterStore((state) => state.removeCustomInfo);
 
     const role = useCharacterStore((state) => state.role);
-    const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
-    const roomCustomAbilities = useCharacterStore((state) => state.roomCustomAbilities);
-    const roomCustomPokemon = useCharacterStore((state) => state.roomCustomPokemon);
+
+    // 🔥 FIX: ADDED SAFETY FALLBACK ARRAYS
+    const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes || []);
+    const roomCustomAbilities = useCharacterStore((state) => state.roomCustomAbilities || []);
+    const roomCustomPokemon = useCharacterStore((state) => state.roomCustomPokemon || []);
 
     const filteredTypes = roomCustomTypes.filter((type) => role === 'GM' || !type.gmOnly);
     const filteredAbilities = roomCustomAbilities.filter((ability) => role === 'GM' || !ability.gmOnly);
@@ -74,7 +76,6 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature, onO
             <div
                 className={`identity-grid identity-header__grid ${isStandaloneMode ? 'identity-grid--standalone' : ''}`}
             >
-                {/* Standalone Avatar spans exactly 6 rows down the left side! */}
                 {isStandaloneMode && <StandaloneAvatar />}
 
                 <div className="identity-grid__row">
