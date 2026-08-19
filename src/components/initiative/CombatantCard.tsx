@@ -3,6 +3,7 @@ import { isStandaloneMode } from '../../utils/storageAdapter';
 import { imageManager } from '../../utils/imageManager';
 import { addRollLogEntry } from '../../utils/diceRoller';
 import type { Combatant } from '../../utils/initiativeHelpers';
+import { X, Dices } from 'lucide-react';
 import './CombatantCard.css';
 
 interface CombatantCardProps {
@@ -69,7 +70,7 @@ export function CombatantCard({ c, shape, isActive, updateInit, removeInit }: Co
         updateInit(c.id, rolledD6, baseValue, tiebreakerDec);
 
         addRollLogEntry(
-            `⚔️ Initiative Roll for ${c.name}`,
+            `Initiative Roll for ${c.name}`,
             `Rolled: ${rolledD6} + Base (${baseValue}) = ${total}\nTiebreaker Dec: +${tiebreakerDec}`,
             c.image,
             c.name
@@ -84,7 +85,7 @@ export function CombatantCard({ c, shape, isActive, updateInit, removeInit }: Co
                 onClick={() => removeInit(c.id)}
                 title="Remove Combatant"
             >
-                ✖
+                <X size={12} />
             </button>
 
             <div className="init-tracker__avatar-container" title={c.name}>
@@ -119,7 +120,7 @@ export function CombatantCard({ c, shape, isActive, updateInit, removeInit }: Co
                         className="init-tracker__roll-btn"
                         title="Roll Initiative (1d6 + Base Init)"
                     >
-                        🎲
+                        <Dices size={14} />
                     </button>
                 </div>
             </div>

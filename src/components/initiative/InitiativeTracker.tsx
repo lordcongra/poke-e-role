@@ -4,6 +4,7 @@ import { CombatantCard } from './CombatantCard';
 import { AddCombatantModal } from './AddCombatantModal';
 import { useOwlbearPopoverResize } from '../../hooks/useOwlbearPopoverResize';
 import { useInitiativeEngine } from './useInitiativeEngine';
+import { ChevronLeft, ChevronRight, Dices, Plus, Swords } from 'lucide-react';
 import './InitiativeTracker.css';
 
 interface InitiativeTrackerProps {
@@ -90,10 +91,10 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                             onClick={prevTurn}
                             title="Previous Turn"
                         >
-                            ◀
+                            <ChevronLeft size={16} />
                         </button>
                         <button type="button" className="init-tracker__turn-btn" onClick={nextTurn} title="Next Turn">
-                            ▶
+                            <ChevronRight size={16} />
                         </button>
                     </div>
 
@@ -106,7 +107,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                                     onClick={handleRollAll}
                                     title="Roll Initiative for All Combatants"
                                 >
-                                    🎲
+                                    <Dices size={16} />
                                 </button>
                             )}
                             <button
@@ -115,7 +116,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                                 onClick={() => setShowAddMenu(true)}
                                 title="Add Combatant"
                             >
-                                ➕
+                                <Plus size={16} />
                             </button>
                         </div>
                     )}
@@ -142,7 +143,9 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                                 removeInit={removeInit}
                             />
                             {index < combatants.length - 1 && layout === 'horizontal' && (
-                                <span className="init-tracker__flow-arrow">❯</span>
+                                <span className="init-tracker__flow-arrow">
+                                    <ChevronRight size={14} />
+                                </span>
                             )}
                         </div>
                     ))}
@@ -179,7 +182,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                     onClick={() => setIsMobileExpanded(!isMobileExpanded)}
                     title="Toggle Initiative Tracker"
                 >
-                    ⚔️
+                    <Swords size={20} />
                 </button>
 
                 <div

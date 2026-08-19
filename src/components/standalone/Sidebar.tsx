@@ -2,6 +2,7 @@ import { useSidebarEngine } from './useSidebarEngine';
 import { SidebarContextMenu } from './SidebarContextMenu';
 import { SidebarTreeNode } from './SidebarTreeNode';
 import { RestoreBackupModal } from './RestoreBackupModal';
+import { Menu, ChevronLeft, FolderPlus, FilePlus, Save, ArchiveRestore } from 'lucide-react';
 import './Sidebar.css';
 
 export function Sidebar() {
@@ -41,8 +42,8 @@ export function Sidebar() {
     if (isCollapsed) {
         return (
             <div className="sidebar sidebar--collapsed">
-                <button className="sidebar__toggle-btn" onClick={() => setIsCollapsed(false)}>
-                    ☰
+                <button className="sidebar__toggle-btn" onClick={() => setIsCollapsed(false)} title="Open Directory">
+                    <Menu size={20} />
                 </button>
             </div>
         );
@@ -52,8 +53,8 @@ export function Sidebar() {
         <div className="sidebar">
             <div className="sidebar__header">
                 <h2 className="sidebar__title">Directory</h2>
-                <button className="sidebar__toggle-btn" onClick={() => setIsCollapsed(true)}>
-                    ◀
+                <button className="sidebar__toggle-btn" onClick={() => setIsCollapsed(true)} title="Collapse Sidebar">
+                    <ChevronLeft size={20} />
                 </button>
             </div>
 
@@ -71,11 +72,19 @@ export function Sidebar() {
                     />
                 </div>
                 <div className="sidebar__create-row">
-                    <button className="sidebar__btn sidebar__btn--folder" onClick={() => handleCreate('folder')}>
-                        📁 Add Folder
+                    <button
+                        className="sidebar__btn sidebar__btn--folder"
+                        onClick={() => handleCreate('folder')}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                    >
+                        <FolderPlus size={14} /> Add Folder
                     </button>
-                    <button className="sidebar__btn sidebar__btn--char" onClick={() => handleCreate('character')}>
-                        📄 Add Sheet
+                    <button
+                        className="sidebar__btn sidebar__btn--char"
+                        onClick={() => handleCreate('character')}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                    >
+                        <FilePlus size={14} /> Add Sheet
                     </button>
                 </div>
                 <div className="sidebar__create-row sidebar__backup-row">
@@ -83,15 +92,29 @@ export function Sidebar() {
                         className="sidebar__btn sidebar__btn--backup"
                         onClick={handleExportMasterBackup}
                         title="Export all folders and characters"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px'
+                        }}
                     >
-                        💾 Backup
+                        <Save size={14} /> Backup
                     </button>
                     <button
                         className="sidebar__btn sidebar__btn--restore"
                         onClick={() => restoreInputRef.current?.click()}
                         title="Restore from a Master Backup file"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px'
+                        }}
                     >
-                        📂 Restore
+                        <ArchiveRestore size={14} /> Restore
                     </button>
                     <input
                         type="file"

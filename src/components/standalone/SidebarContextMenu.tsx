@@ -1,4 +1,5 @@
 import type { TreeItem } from './useSidebarEngine';
+import { Pencil, ArrowUp, ArrowDown, FolderInput, FolderOutput, Copy, Trash2 } from 'lucide-react';
 
 interface SidebarContextMenuProps {
     contextMenu: { x: number; y: number; item: TreeItem };
@@ -16,27 +17,27 @@ export function SidebarContextMenu({ contextMenu, onRename, onMove, onDuplicate,
             onClick={(e) => e.stopPropagation()}
         >
             <button className="sidebar__context-item" onClick={() => onRename(contextMenu.item)}>
-                ✏️ Rename
+                <Pencil size={14} /> Rename
             </button>
 
             {/* --- Quick Move Directional Pad --- */}
             <button className="sidebar__context-item" onClick={() => onMove(contextMenu.item, 'up')}>
-                ⬆️ Move Up
+                <ArrowUp size={14} /> Move Up
             </button>
             <button className="sidebar__context-item" onClick={() => onMove(contextMenu.item, 'down')}>
-                ⬇️ Move Down
+                <ArrowDown size={14} /> Move Down
             </button>
             <button className="sidebar__context-item" onClick={() => onMove(contextMenu.item, 'in')}>
-                ➡️ Move Into Folder
+                <FolderInput size={14} /> Move Into Folder
             </button>
             <button className="sidebar__context-item" onClick={() => onMove(contextMenu.item, 'out')}>
-                ⬅️ Move Out (Level Up)
+                <FolderOutput size={14} /> Move Out (Level Up)
             </button>
             {/* ---------------------------------- */}
 
             {contextMenu.item.type === 'character' && (
                 <button className="sidebar__context-item" onClick={() => onDuplicate(contextMenu.item)}>
-                    📄 Duplicate
+                    <Copy size={14} /> Duplicate
                 </button>
             )}
 
@@ -44,7 +45,7 @@ export function SidebarContextMenu({ contextMenu, onRename, onMove, onDuplicate,
                 className="sidebar__context-item sidebar__context-item--danger"
                 onClick={() => onDelete(contextMenu.item)}
             >
-                🗑️ Delete
+                <Trash2 size={14} /> Delete
             </button>
         </div>
     );

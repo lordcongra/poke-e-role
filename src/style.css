@@ -280,7 +280,8 @@ select option {
     transition:
         filter 0.2s ease,
         background 0.3s ease,
-        border-color 0.2s ease;
+        border-color 0.2s ease,
+        color 0.3s ease;
 
     display: inline-flex;
     align-items: center;
@@ -311,6 +312,19 @@ select option {
     color: white;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
+
+.action-button--ghost {
+    background: transparent;
+    color: var(--text-muted);
+    box-shadow: none;
+    border: 1px solid transparent;
+}
+.action-button--ghost:hover {
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    filter: none;
+}
+
 .action-button--full-width {
     width: 100%;
     padding: 4px;
@@ -369,6 +383,12 @@ select option {
     transition:
         background 0.2s ease,
         color 0.2s ease;
+
+    /* Vertical centering fix for SVGs */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
 }
 .number-spinner__button:first-child {
     border-radius: 4px 0 0 4px;
@@ -379,6 +399,9 @@ select option {
 .number-spinner__button:hover {
     background: color-mix(in srgb, var(--primary) 30%, var(--border));
     color: var(--text-main);
+}
+.number-spinner__button svg {
+    display: block;
 }
 
 .number-spinner__input {

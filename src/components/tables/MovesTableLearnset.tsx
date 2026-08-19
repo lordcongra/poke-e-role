@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { BookOpen } from 'lucide-react';
 
 interface MovesTableLearnsetProps {
     learnset: Array<{ Learned: string; Name: string }>;
@@ -34,7 +35,7 @@ export function MovesTableLearnset({ learnset }: MovesTableLearnsetProps) {
                 onClick={() => setShowLearnset(!showLearnset)}
                 className="action-button action-button--dark moves-table__learnset-toggle-btn"
             >
-                {showLearnset ? '📖 Hide Learnset' : '📖 View Learnset'}
+                <BookOpen size={16} /> {showLearnset ? 'Hide Learnset' : 'View Learnset'}
             </button>
             {showLearnset && (
                 <div className="moves-table__learnset-container">

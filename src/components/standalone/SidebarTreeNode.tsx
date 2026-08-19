@@ -1,5 +1,6 @@
 import type { TreeItem } from './useSidebarEngine';
 import { SidebarAvatar } from './SidebarAvatar';
+import { ChevronDown, ChevronRight, Folder, Dna, Trash2, Swords } from 'lucide-react';
 
 interface SidebarTreeNodeProps {
     parentId: string | null;
@@ -69,15 +70,24 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
                         >
                             <div className="sidebar__item-content">
                                 {hasChildren ? (
-                                    <span className="sidebar__caret" onClick={(e) => onToggleExpand(e, item.id)}>
-                                        {isExpanded ? '▼' : '▶'}
+                                    <span
+                                        className="sidebar__caret"
+                                        onClick={(e) => onToggleExpand(e, item.id)}
+                                        style={{ display: 'flex' }}
+                                    >
+                                        {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                                     </span>
                                 ) : (
                                     <span className="sidebar__caret-empty" />
                                 )}
 
                                 {item.type === 'folder' ? (
-                                    <span className="sidebar__item-icon">📁</span>
+                                    <span
+                                        className="sidebar__item-icon"
+                                        style={{ display: 'flex', color: 'var(--primary)' }}
+                                    >
+                                        <Folder size={16} />
+                                    </span>
                                 ) : (
                                     <SidebarAvatar meta={item.meta} />
                                 )}
@@ -87,15 +97,25 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
                                 {initTag && (
                                     <span
                                         className={`sidebar__init-badge ${initTag === '⚔️' ? 'sidebar__init-badge--combat' : ''}`}
+                                        title={initTag === '⚔️' ? 'In Initiative Tracker' : undefined}
+                                        style={
+                                            initTag === '⚔️'
+                                                ? { display: 'flex', alignItems: 'center', justifyContent: 'center' }
+                                                : undefined
+                                        }
                                     >
-                                        {initTag}
+                                        {initTag === '⚔️' ? <Swords size={12} /> : initTag}
                                     </span>
                                 )}
 
-                                {/* NEW: Transformation Status Badge */}
+                                {/* Transformation Status Badge */}
                                 {item.activeTrans && item.activeTrans !== 'None' && (
-                                    <span className="sidebar__trans-badge" title={`Transformed: ${item.activeTrans}`}>
-                                        🧬
+                                    <span
+                                        className="sidebar__trans-badge"
+                                        title={`Transformed: ${item.activeTrans}`}
+                                        style={{ display: 'flex', color: 'var(--primary)' }}
+                                    >
+                                        <Dna size={14} />
                                     </span>
                                 )}
                             </div>
@@ -106,8 +126,9 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
                                     onDelete(item);
                                 }}
                                 title="Delete"
+                                style={{ display: 'flex' }}
                             >
-                                🗑️
+                                <Trash2 size={16} />
                             </button>
                         </div>
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Item } from '@owlbear-rodeo/sdk';
+import { X } from 'lucide-react';
 import './AddCombatantModal.css';
 
 export interface StandaloneCharOption {
@@ -52,7 +53,7 @@ export function AddCombatantModal({
                 <div className="init-tracker__modal-header">
                     <h3 style={{ margin: 0, fontSize: '0.95rem' }}>Add Combatant</h3>
                     <button type="button" className="init-tracker__modal-close" onClick={onClose}>
-                        ✖
+                        <X size={16} />
                     </button>
                 </div>
 

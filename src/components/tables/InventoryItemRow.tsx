@@ -98,7 +98,7 @@ export function InventoryItemRow({
                     </button>
                     <button
                         type="button"
-                        className="action-button action-button--dark inventory-item__icon-btn"
+                        className="action-button action-button--ghost inventory-item__icon-btn"
                         onClick={() => setTagBuilderData({ id: item.id, type: 'item' })}
                         title="Add Smart Tags"
                     >

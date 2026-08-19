@@ -349,7 +349,7 @@ export function useInitiativeEngine() {
     const handleRollAll = async () => {
         if (!isStandaloneMode) return;
 
-        let logSummary = '⚔️ All Combatants Rolled Initiative:\n\n';
+        let logSummary = 'All Combatants Rolled Initiative:\n\n';
         const localChars = await storageAdapter.getLocalCharacters();
 
         const updated = combatants.map((c) => {
@@ -373,7 +373,7 @@ export function useInitiativeEngine() {
         window.dispatchEvent(new Event('pkr-standalone-init-update'));
 
         addRollLogEntry(
-            '⚔️ Roll All Initiative',
+            'Roll All Initiative',
             logSummary,
             `${import.meta.env.BASE_URL || '/'}pokeball.svg`,
             'Initiative Engine'
