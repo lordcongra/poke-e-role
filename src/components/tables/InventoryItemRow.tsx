@@ -4,6 +4,7 @@ import { fetchItemData } from '../../utils/api';
 import type { InventoryItem } from '../../store/storeTypes';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { KNOWN_ITEMS } from '../../data/constants';
+import { Info, Tag, ChevronUp, ChevronDown, X } from 'lucide-react';
 import './InventoryTable.css';
 
 interface InventoryItemRowProps {
@@ -88,18 +89,20 @@ export function InventoryItemRow({
                     />
                     <button
                         type="button"
-                        className="action-button inventory-item__icon-btn inventory-item__icon-btn--info"
+                        className="action-button action-button--dark inventory-item__icon-btn"
                         onClick={() => handleInfoClick(item.id, item.name, item.desc)}
                         disabled={fetchingItems[item.id]}
+                        title="View Details"
                     >
-                        ❔
+                        <Info size={14} />
                     </button>
                     <button
                         type="button"
-                        className="action-button inventory-item__icon-btn inventory-item__icon-btn--tag"
+                        className="action-button action-button--dark inventory-item__icon-btn"
                         onClick={() => setTagBuilderData({ id: item.id, type: 'item' })}
+                        title="Add Smart Tags"
                     >
-                        🏷️
+                        <Tag size={14} />
                     </button>
                 </div>
             </td>
@@ -116,22 +119,27 @@ export function InventoryItemRow({
                     <button
                         type="button"
                         onClick={() => moveUpInventoryItem(item.id)}
-                        className="inventory-item__sort-btn"
+                        className="action-button action-button--sort inventory-item__sort-btn"
                     >
-                        ▲
+                        <ChevronUp size={14} />
                     </button>
                     <button
                         type="button"
                         onClick={() => moveDownInventoryItem(item.id)}
-                        className="inventory-item__sort-btn"
+                        className="action-button action-button--sort inventory-item__sort-btn"
                     >
-                        ▼
+                        <ChevronDown size={14} />
                     </button>
                 </div>
             </td>
             <td className="data-table__cell--top">
-                <button type="button" onClick={() => setDeleteItemId(item.id)} className="inventory-item__delete-btn">
-                    X
+                <button
+                    type="button"
+                    onClick={() => setDeleteItemId(item.id)}
+                    className="action-button action-button--red inventory-item__delete-btn"
+                    title="Delete Item"
+                >
+                    <X size={16} />
                 </button>
             </td>
         </tr>

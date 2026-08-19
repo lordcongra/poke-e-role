@@ -17,6 +17,7 @@ import { TooltipIcon } from '../ui/TooltipIcon';
 import { TakeChancesModal } from '../modals/TakeChancesModal';
 import { ClashModal } from '../modals/ClashModal';
 import { RestModal } from '../modals/RestModal';
+import { Dices, RotateCcw, Tent } from 'lucide-react';
 import './TrackerSection.css';
 
 export function TrackerSection() {
@@ -176,17 +177,14 @@ export function TrackerSection() {
             );
     };
 
-    // Parse global tags to see if Reactions are blocked
     const currentState = useCharacterStore.getState();
     const abilityTxt = getAbilityText(currentState.identity.ability, currentState.roomCustomAbilities);
     const parsedGlobals = parseCombatTags(currentState.inventory, currentState.extraCategories, undefined, abilityTxt);
 
     const disableReactions = isMaxed || parsedGlobals.noReactions;
 
-    // --- DERIVE ACTIVE CONDITIONS ---
     const conditions: Array<{ id: string; label: string; bg: string; text: string }> = [];
 
-    // 1. Pain Penalty
     if (painEnabled) {
         const hpCurr = health.hpCurr;
         const hpMax = Math.max(1, health.hpMax);
@@ -201,7 +199,6 @@ export function TrackerSection() {
         }
     }
 
-    // 2. Status Effects
     const statusPenalties = getStatusPenalties(useCharacterStore.getState());
     activeStatuses.forEach((status) => {
         if (status.name !== 'Healthy') {
@@ -210,7 +207,6 @@ export function TrackerSection() {
             if (customStatusData) {
                 let label = customStatusData.shorthand || customStatusData.name;
 
-                // Parse effects string to automatically append stat penalties into the Condition Pill!
                 const parsedEffects = parseCombatTags([], [], undefined, customStatusData.effects);
                 const penalties: string[] = [];
                 Object.entries(parsedEffects.stats).forEach(([stat, val]) => {
@@ -236,7 +232,6 @@ export function TrackerSection() {
         }
     });
 
-    // 3. Stat Buffs & Debuffs
     const addStatCondition = (label: string, buff: number, debuff: number) => {
         if (buff > 0) conditions.push({ id: `buff-${label}`, label: `${label} +${buff}`, bg: '#1976d2', text: '#fff' });
         if (debuff > 0)
@@ -254,9 +249,7 @@ export function TrackerSection() {
     return (
         <CollapsingSection title="ROUND TRACKER" className="sheet-panel tracker-section">
             <div className="tracker-section__horizontal-wrapper">
-                {/* LEFT COLUMN: Turn Economy (Evade, Clash, Actions, Maneuvers, Reset) */}
                 <div className="tracker-section__horizontal-col">
-                    {/* Row 1: Evade & Clash (Left) | Actions (Right) */}
                     <div className="tracker-section__row-space-between">
                         <div className="tracker-section__buttons-group">
                             <div className="tracker-section__toggle-group">
@@ -273,7 +266,7 @@ export function TrackerSection() {
                                     }
                                     className="action-button action-button--dark tracker-section__toggle-btn"
                                 >
-                                    🎲 Evade
+                                    <Dices size={16} /> Evade
                                 </button>
                                 <input
                                     type="checkbox"
@@ -305,7 +298,7 @@ export function TrackerSection() {
                                     }
                                     className="action-button action-button--dark tracker-section__toggle-btn"
                                 >
-                                    🎲 Clash
+                                    <Dices size={16} /> Clash
                                 </button>
                                 <input
                                     type="checkbox"
@@ -339,7 +332,6 @@ export function TrackerSection() {
                         </div>
                     </div>
 
-                    {/* Row 2: Maneuvers (Left) | 1st Hit (Right) */}
                     <div className="tracker-section__row-space-between">
                         <div className="tracker-section__maneuver-subrow">
                             <select
@@ -360,7 +352,7 @@ export function TrackerSection() {
                                 onClick={rollManeuver}
                                 className="action-button action-button--dark tracker-section__maneuver-btn"
                             >
-                                🎲
+                                <Dices size={16} />
                             </button>
                         </div>
 
@@ -398,14 +390,13 @@ export function TrackerSection() {
                         </div>
                     </div>
 
-                    {/* Row 3: Reset & Rest */}
                     <div className="tracker-section__reset-rest-row">
                         <button
                             type="button"
                             onClick={resetRound}
                             className="action-button action-button--red tracker-section__reset-btn"
                         >
-                            🔄 Reset
+                            <RotateCcw size={16} /> Reset
                         </button>
                         <button
                             type="button"
@@ -413,12 +404,11 @@ export function TrackerSection() {
                             className="action-button tracker-section__rest-btn"
                             title="Fully heal HP/Will and clear statuses"
                         >
-                            🏕️ Rest
+                            <Tent size={16} /> Rest
                         </button>
                     </div>
                 </div>
 
-                {/* RIGHT COLUMN: Meta Currency & Conditions */}
                 <div className="tracker-section__horizontal-col tracker-section__horizontal-col--right">
                     <div className="mobile-stack tracker-section__will-row">
                         {painEnabled && (
@@ -472,7 +462,7 @@ export function TrackerSection() {
                             onClick={openChancesModal}
                             className="action-button action-button--dark tracker-section__roll-btn"
                         >
-                            🎲 Roll
+                            <Dices size={16} /> Roll
                         </button>
                     </div>
 

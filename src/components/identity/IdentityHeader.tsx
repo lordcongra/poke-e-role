@@ -13,6 +13,7 @@ import { broadcastInfo } from '../../utils/diceRoller';
 import { isStandaloneMode } from '../../utils/storageAdapter';
 import { imageManager, autoCropTransparency } from '../../utils/imageManager';
 import { saveToOwlbear } from '../../utils/obr';
+import { Image as ImageIcon, Radio, Upload, Globe } from 'lucide-react';
 import './IdentityHeader.css';
 
 export function IdentityHeader() {
@@ -27,7 +28,6 @@ export function IdentityHeader() {
     const [showTrackerSettings, setShowTrackerSettings] = useState<boolean>(false);
     const [showPokedexModal, setShowPokedexModal] = useState<boolean>(false);
 
-    // Standalone Image Picker State
     const [showImagePicker, setShowImagePicker] = useState<boolean>(false);
     const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -79,11 +79,9 @@ export function IdentityHeader() {
         }
     };
 
-    // --- STANDALONE IMAGE UPLOAD HANDLERS ---
     const handleStandaloneUrl = async () => {
         const url = window.prompt('Enter an Image URL:');
         if (url) {
-            // Clean up old image if it was a local file!
             if (identityStore.tokenImageUrl && identityStore.tokenImageUrl.startsWith('local-img:')) {
                 await imageManager.deleteImage(identityStore.tokenImageUrl);
             }
@@ -99,13 +97,11 @@ export function IdentityHeader() {
         if (!file) return;
 
         try {
-            // Automatically trim empty pixel padding around the image
             const croppedBlob = await autoCropTransparency(file);
             const croppedFile = new File([croppedBlob], file.name, { type: croppedBlob.type });
 
             const imgId = await imageManager.saveImage(croppedFile);
 
-            // Clean up old image from IndexedDB before applying the new one!
             if (identityStore.tokenImageUrl && identityStore.tokenImageUrl.startsWith('local-img:')) {
                 await imageManager.deleteImage(identityStore.tokenImageUrl);
             }
@@ -127,7 +123,6 @@ export function IdentityHeader() {
             return;
         }
 
-        // --- OWLBEAR RODEO NATIVE LOGIC ---
         if (!isGm) {
             if (OBR.isAvailable) OBR.notification.show('Only the GM can update the scene token image.', 'ERROR');
             return;
@@ -230,7 +225,7 @@ export function IdentityHeader() {
                     onClick={handleUpdateTokenImage}
                     title="Change this character's artwork."
                 >
-                    🖼️ Update Token Image
+                    <ImageIcon size={16} /> Update Token Image
                 </button>
             )}
         </div>
@@ -251,12 +246,10 @@ export function IdentityHeader() {
 
             <IdentityControls onOpenTrackerSettings={() => setShowTrackerSettings(true)} />
 
-            {/* Main Application Modals */}
             {showGeneratorModal && <GeneratorModal onClose={() => setShowGeneratorModal(false)} />}
             {showTrackerSettings && <TrackerSettingsModal onClose={() => setShowTrackerSettings(false)} />}
             {showPokedexModal && <PokedexModal onClose={() => setShowPokedexModal(false)} />}
 
-            {/* Info Broadcast Modal */}
             {modalConfig && (
                 <div className="identity-header__modal-overlay identity-header__modal-overlay--high-z">
                     <div className="identity-header__modal-content identity-header__modal-content--large">
@@ -283,18 +276,19 @@ export function IdentityHeader() {
                                     }
                                 }}
                             >
-                                📢 Broadcast
+                                <Radio size={16} /> Broadcast
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Standalone Dual Image Picker Modal */}
             {showImagePicker && (
                 <div className="identity-header__modal-overlay identity-header__modal-overlay--high-z">
                     <div className="identity-header__modal-content">
-                        <h3 className="identity-header__modal-title">🖼️ Update Artwork</h3>
+                        <h3 className="identity-header__modal-title modal-title-with-icon">
+                            <ImageIcon size={20} /> Update Artwork
+                        </h3>
                         <p className="identity-header__modal-text identity-header__picker-desc">
                             Choose how you'd like to supply the image for this character.
                         </p>
@@ -304,7 +298,9 @@ export function IdentityHeader() {
                                 className="action-button action-button--dark identity-header__picker-btn"
                                 onClick={() => imageInputRef.current?.click()}
                             >
-                                <span className="identity-header__picker-btn-title">📁 Upload Local File</span>
+                                <span className="identity-header__picker-btn-title">
+                                    <Upload size={16} /> Upload Local File
+                                </span>
                                 <span className="identity-header__picker-btn-sub">
                                     (Recommended - Saved safely to your browser's database)
                                 </span>
@@ -314,7 +310,9 @@ export function IdentityHeader() {
                                 className="action-button identity-header__picker-btn identity-header__picker-btn--web"
                                 onClick={handleStandaloneUrl}
                             >
-                                <span className="identity-header__picker-btn-title">🌐 Use Web URL</span>
+                                <span className="identity-header__picker-btn-title">
+                                    <Globe size={16} /> Use Web URL
+                                </span>
                                 <span className="identity-header__picker-btn-sub">
                                     (Lightweight - Image breaks if the web link dies)
                                 </span>
@@ -333,7 +331,6 @@ export function IdentityHeader() {
                 </div>
             )}
 
-            {/* Hidden Input for Local Uploads */}
             <input
                 type="file"
                 ref={imageInputRef}

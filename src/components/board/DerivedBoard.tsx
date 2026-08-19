@@ -9,6 +9,7 @@ import { TooltipIcon } from '../ui/TooltipIcon';
 import { StatusBox } from '../board/StatusBox';
 import { TimerBox } from './TimerBox';
 import { parseCombatTags, getAbilityText, calculateStatTotal, calculateSkillTotal } from '../../utils/combatUtils';
+import { Dices, Shield, AlertTriangle, Sparkles } from 'lucide-react';
 import './DerivedBoard.css';
 
 export function DerivedBoard() {
@@ -22,8 +23,6 @@ export function DerivedBoard() {
     const updateHealth = useCharacterStore((state) => state.updateHealth);
     const updateWill = useCharacterStore((state) => state.updateWill);
 
-    // Call selectors to ensure the component re-renders when these change,
-    // but without assigning them to unused variables!
     useCharacterStore((state) => state.stats);
     useCharacterStore((state) => state.skills);
 
@@ -35,12 +34,10 @@ export function DerivedBoard() {
 
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
 
-    // HP Modals
     const [showAddTempModal, setShowAddTempModal] = useState(false);
     const [newTempHp, setNewTempHp] = useState(0);
     const [showTempConfirm, setShowTempConfirm] = useState(false);
 
-    // Will Modals
     const [showAddTempWillModal, setShowAddTempWillModal] = useState(false);
     const [newTempWill, setNewTempWill] = useState(0);
     const [showTempWillConfirm, setShowTempWillConfirm] = useState(false);
@@ -162,7 +159,6 @@ export function DerivedBoard() {
                 </div>
 
                 <div className="derived-board__health-row">
-                    {/* Left Group (Matches width of HP + Will) */}
                     <div
                         className={`derived-board__group-left ${mode !== 'Pokémon' ? 'derived-board__group-left--full' : ''}`}
                     >
@@ -183,7 +179,7 @@ export function DerivedBoard() {
                                         rollDicePlus(`1d6+${initiative}`, 'Initiative', 'init', String(initiative))
                                     }
                                 >
-                                    🎲
+                                    <Dices size={16} />
                                 </button>
                             </div>
                         </div>
@@ -239,7 +235,6 @@ export function DerivedBoard() {
                         )}
                     </div>
 
-                    {/* Right Group (Matches width of Status / Timers) */}
                     {mode === 'Pokémon' && (
                         <div className="derived-board__group-right">
                             <div className="sheet-panel health-section__box derived-board__box derived-board__box--yellow-border">
@@ -294,8 +289,8 @@ export function DerivedBoard() {
             {showAddTempModal && (
                 <div className="derived-board__modal-overlay">
                     <div className="derived-board__modal-content">
-                        <h3 className="derived-board__modal-title derived-board__modal-title--temp-hp">
-                            🛡️ Set Temporary HP
+                        <h3 className="derived-board__modal-title derived-board__modal-title--temp-hp modal-title-with-icon">
+                            <Shield size={20} /> Set Temporary HP
                         </h3>
                         <p className="derived-board__modal-desc">
                             Enter the amount of Temporary HP to grant. This will replace any existing shield.
@@ -330,8 +325,8 @@ export function DerivedBoard() {
             {showTempConfirm && (
                 <div className="derived-board__modal-overlay">
                     <div className="derived-board__modal-content">
-                        <h3 className="derived-board__modal-title derived-board__modal-title--clear-hp">
-                            ⚠️ Clear Temp HP
+                        <h3 className="derived-board__modal-title derived-board__modal-title--clear-hp modal-title-with-icon">
+                            <AlertTriangle size={20} /> Clear Temp HP
                         </h3>
                         <p className="derived-board__modal-desc">
                             Are you sure you want to completely remove your Temporary HP Shield?
@@ -363,8 +358,8 @@ export function DerivedBoard() {
             {showAddTempWillModal && (
                 <div className="derived-board__modal-overlay">
                     <div className="derived-board__modal-content">
-                        <h3 className="derived-board__modal-title derived-board__modal-title--temp-will">
-                            🌟 Set Temp Willpower
+                        <h3 className="derived-board__modal-title derived-board__modal-title--temp-will modal-title-with-icon">
+                            <Sparkles size={20} /> Set Temp Willpower
                         </h3>
                         <p className="derived-board__modal-desc">
                             Enter the amount of Temporary Willpower to grant. This will replace any existing Temporary
@@ -400,8 +395,8 @@ export function DerivedBoard() {
             {showTempWillConfirm && (
                 <div className="derived-board__modal-overlay">
                     <div className="derived-board__modal-content">
-                        <h3 className="derived-board__modal-title derived-board__modal-title--clear-will">
-                            ⚠️ Clear Temp Willpower
+                        <h3 className="derived-board__modal-title derived-board__modal-title--clear-will modal-title-with-icon">
+                            <AlertTriangle size={20} /> Clear Temp Willpower
                         </h3>
                         <p className="derived-board__modal-desc">
                             Are you sure you want to completely remove your Temporary Willpower?

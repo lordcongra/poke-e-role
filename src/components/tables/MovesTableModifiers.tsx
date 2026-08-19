@@ -1,6 +1,7 @@
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import type { Trackers } from '../../store/storeTypes';
+import { Dices, Settings } from 'lucide-react';
 
 interface MovesTableModifiersProps {
     maxMoves: number;
@@ -96,8 +97,9 @@ export function MovesTableModifiers({
                         type="button"
                         onClick={handleGlobalChanceRoll}
                         className="action-button action-button--dark moves-table__chance-roll-btn"
+                        title="Roll Global Chance"
                     >
-                        🎲
+                        <Dices size={16} />
                     </button>
                 </span>
                 {painEnabled && (
@@ -127,7 +129,7 @@ export function MovesTableModifiers({
                 className="mobile-only-flex action-button action-button--dark moves-table__mobile-modifiers-btn"
                 onClick={() => setShowModifiersModal(true)}
             >
-                ⚙️ Modifiers
+                <Settings size={16} /> Modifiers
             </button>
         </>
     );

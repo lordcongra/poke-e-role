@@ -22,6 +22,96 @@ import { isStandaloneMode } from './utils/storageAdapter';
 import './App.css';
 import './style.css';
 
+const STANDARD_TYPE_COLORS: Record<string, string> = {
+    Normal: '#A8A878',
+    Fire: '#F08030',
+    Water: '#6890F0',
+    Electric: '#F8D030',
+    Grass: '#78C850',
+    Ice: '#98D8D8',
+    Fighting: '#C03028',
+    Poison: '#A040A0',
+    Ground: '#E0C068',
+    Flying: '#A890F0',
+    Psychic: '#F85888',
+    Bug: '#A8B820',
+    Rock: '#B8A038',
+    Ghost: '#705898',
+    Dragon: '#7038F8',
+    Dark: '#705848',
+    Steel: '#B8B8D0',
+    Fairy: '#EE99AC',
+    Stellar: '#4FB1D2'
+};
+
+// Helper to mathematically calculate a harmonious analogous accent color
+const getHarmoniousAccentHex = (hex: string): string => {
+    let c = hex.replace('#', '');
+    if (c.length === 3)
+        c = c
+            .split('')
+            .map((x) => x + x)
+            .join('');
+    if (c.length !== 6) return '#888888';
+
+    const r = parseInt(c.substring(0, 2), 16) / 255;
+    const g = parseInt(c.substring(2, 4), 16) / 255;
+    const b = parseInt(c.substring(4, 6), 16) / 255;
+
+    const max = Math.max(r, g, b),
+        min = Math.min(r, g, b);
+    let h = 0,
+        s = 0,
+        l = (max + min) / 2;
+
+    if (max !== min) {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+            case r:
+                h = (g - b) / d + (g < b ? 6 : 0);
+                break;
+            case g:
+                h = (b - r) / d + 2;
+                break;
+            case b:
+                h = (r - g) / d + 4;
+                break;
+        }
+        h /= 6;
+    }
+
+    // Shift hue by ~45 degrees (0.12) for a harmonious analogous color!
+    h = (h + 0.12) % 1;
+    // Boost saturation slightly for the accent
+    s = Math.min(1, s + 0.15);
+
+    let r1, g1, b1;
+    if (s === 0) {
+        r1 = g1 = b1 = l;
+    } else {
+        const hue2rgb = (p: number, q: number, t: number) => {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1 / 6) return p + (q - p) * 6 * t;
+            if (t < 1 / 2) return q;
+            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+            return p;
+        };
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        r1 = hue2rgb(p, q, h + 1 / 3);
+        g1 = hue2rgb(p, q, h);
+        b1 = hue2rgb(p, q, h - 1 / 3);
+    }
+
+    const toHex = (x: number) => {
+        const hexStr = Math.round(x * 255).toString(16);
+        return hexStr.length === 1 ? '0' + hexStr : hexStr;
+    };
+    return `#${toHex(r1)}${toHex(g1)}${toHex(b1)}`;
+};
+
 function App() {
     useOwlbearSync();
 
@@ -32,8 +122,44 @@ function App() {
     const gmOnlyMatchups = useCharacterStore((state) => state.identity.gmOnlyMatchups);
     const activeTokenId = useCharacterStore((state) => state.tokenId);
 
+    // Grab the primary typing to drive our dynamic CSS theming engine
+    const type1 = useCharacterStore((state) => state.identity.type1);
+    const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
+
     const initLayout = useCharacterStore((state) => state.identity.initiativeTrackerLayout) || 'vertical';
     const [showStandaloneTracker, setShowStandaloneTracker] = useState(false);
+
+    // Inject the current Pokémon Type and its Harmonious Accent into the DOM
+    useEffect(() => {
+        let typeColor = '';
+
+        if (type1) {
+            if (STANDARD_TYPE_COLORS[type1]) {
+                typeColor = STANDARD_TYPE_COLORS[type1];
+            } else {
+                const customType = roomCustomTypes.find((t) => t.name === type1);
+                if (customType && customType.color) {
+                    typeColor = customType.color;
+                }
+            }
+        }
+
+        if (typeColor) {
+            const secondaryColor = getHarmoniousAccentHex(typeColor);
+
+            document.body.style.setProperty('--dynamic-type-color', typeColor);
+            document.documentElement.style.setProperty('--dynamic-type-color', typeColor);
+
+            document.body.style.setProperty('--dynamic-secondary-color', secondaryColor);
+            document.documentElement.style.setProperty('--dynamic-secondary-color', secondaryColor);
+        } else {
+            document.body.style.removeProperty('--dynamic-type-color');
+            document.documentElement.style.removeProperty('--dynamic-type-color');
+
+            document.body.style.removeProperty('--dynamic-secondary-color');
+            document.documentElement.style.removeProperty('--dynamic-secondary-color');
+        }
+    }, [type1, roomCustomTypes]);
 
     useEffect(() => {
         const handleToggle = () => setShowStandaloneTracker((prev) => !prev);

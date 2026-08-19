@@ -20,6 +20,7 @@ import { MovesTableModifiers } from './MovesTableModifiers';
 import { MovesTableLearnset } from './MovesTableLearnset';
 import { DualScaleModal } from '../modals/DualScaleModal';
 import { TooltipIcon } from '../ui/TooltipIcon';
+import { Plus } from 'lucide-react';
 import './MovesTable.css';
 
 export function MovesTable() {
@@ -204,7 +205,7 @@ export function MovesTable() {
                     onClick={addMove}
                     className="action-button action-button--red action-button--full-width"
                 >
-                    + Add Move Slot
+                    <Plus size={16} /> Add Move Slot
                 </button>
 
                 <MovesTableLearnset learnset={learnset} />

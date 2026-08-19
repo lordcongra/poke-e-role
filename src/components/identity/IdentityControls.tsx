@@ -10,6 +10,7 @@ import { useObrReady } from '../../hooks/useObrReady';
 import { IdentityToggles } from './IdentityToggles';
 import { PrintSettingsModal } from '../modals/PrintSettingsModal';
 import { isStandaloneMode } from '../../utils/storageAdapter';
+import { RefreshCw, Save, Upload, Printer } from 'lucide-react';
 
 interface IdentityControlsProps {
     onOpenTrackerSettings: () => void;
@@ -18,7 +19,6 @@ interface IdentityControlsProps {
 export function IdentityControls({ onOpenTrackerSettings }: IdentityControlsProps) {
     const isObrReady = useObrReady();
     const identityStore = useCharacterStore((state) => state.identity) || {};
-    const addCustomInfo = useCharacterStore((state) => state.addCustomInfo);
     const refreshSpeciesData = useCharacterStore((state) => state.refreshSpeciesData);
 
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -152,58 +152,54 @@ export function IdentityControls({ onOpenTrackerSettings }: IdentityControlsProp
 
     return (
         <>
-            <div className="identity-header__actions">
+            <div
+                className="identity-header__actions"
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            >
                 <button
                     type="button"
                     onClick={handleRefresh}
                     disabled={isRefreshing}
-                    className="action-button action-button--dark identity-header__btn identity-header__btn--refresh"
-                    title="Refresh Data"
+                    className="action-button action-button--dark identity-header__btn"
+                    title="Sync and Refresh API Data"
                 >
-                    {isRefreshing ? '⏳' : '↻'}
+                    <RefreshCw size={16} className={isRefreshing ? 'spin-animation' : ''} /> Refresh Sync
                 </button>
 
-                <button
-                    type="button"
-                    onClick={addCustomInfo}
-                    className="action-button identity-header__btn identity-header__btn--custom-field"
-                    title="Add Custom Field"
-                >
-                    ➕ Custom Field
-                </button>
-
-                <button
-                    type="button"
-                    onClick={handleExport}
-                    className="action-button action-button--dark identity-header__btn--small"
-                    title="Export Character (Download JSON)"
-                >
-                    💾
-                </button>
-                <button
-                    type="button"
-                    onClick={() => fileInputReference.current?.click()}
-                    className="action-button action-button--dark identity-header__btn--small"
-                    title="Import Character (Upload JSON)"
-                >
-                    📂
-                </button>
-                <input
-                    type="file"
-                    ref={fileInputReference}
-                    onChange={handleImport}
-                    className="identity-header__file-input"
-                    accept=".json"
-                />
-
-                <button
-                    type="button"
-                    onClick={() => setShowPrintModal(true)}
-                    className="action-button action-button--dark identity-header__btn--small"
-                    title="Print Sheet"
-                >
-                    🖨️
-                </button>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                        type="button"
+                        onClick={handleExport}
+                        className="action-button action-button--dark identity-header__btn--small"
+                        title="Export Character (Download JSON)"
+                    >
+                        <Save size={16} />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => fileInputReference.current?.click()}
+                        className="action-button action-button--dark identity-header__btn--small"
+                        title="Import Character (Upload JSON)"
+                    >
+                        <Upload size={16} />
+                    </button>
+                    <input
+                        type="file"
+                        ref={fileInputReference}
+                        onChange={handleImport}
+                        className="identity-header__file-input"
+                        accept=".json"
+                        style={{ display: 'none' }}
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setShowPrintModal(true)}
+                        className="action-button action-button--dark identity-header__btn--small"
+                        title="Print Sheet"
+                    >
+                        <Printer size={16} />
+                    </button>
+                </div>
             </div>
 
             {!isStandaloneMode && <IdentityToggles onOpenTrackerSettings={onOpenTrackerSettings} />}

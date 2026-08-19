@@ -1,4 +1,5 @@
 import { NumberSpinner } from './NumberSpinner';
+import { Shield, Sparkles, X } from 'lucide-react';
 import './UI.css';
 
 interface ResourceBoxProps {
@@ -84,7 +85,15 @@ export function ResourceBox({
                                 className={`action-button ${addTempClass}`}
                                 title={isWill ? 'Add Temp Will Power' : 'Add Temporary Shield'}
                             >
-                                {isWill ? '🌟 +Temp' : '🛡️ +Temp'}
+                                {isWill ? (
+                                    <>
+                                        <Sparkles size={14} /> +Temp
+                                    </>
+                                ) : (
+                                    <>
+                                        <Shield size={14} /> +Temp
+                                    </>
+                                )}
                             </button>
                         ) : (
                             <>
@@ -94,7 +103,7 @@ export function ResourceBox({
                                         className={`action-button ${shieldBtnClass}`}
                                         title={isWill ? 'Set Temp Will Power' : 'Set Temporary Shield'}
                                     >
-                                        {isWill ? '🌟' : '🛡️'}
+                                        {isWill ? <Sparkles size={16} /> : <Shield size={16} />}
                                     </button>
                                 </div>
                                 <div className="resource-box__grid-center">
@@ -107,7 +116,7 @@ export function ResourceBox({
                                             className="action-button action-button--red resource-box__clear-temp-btn"
                                             title={isWill ? 'Remove Temp Will Power' : 'Remove Temp Shield'}
                                         >
-                                            X
+                                            <X size={14} />
                                         </button>
                                     )}
                                 </div>

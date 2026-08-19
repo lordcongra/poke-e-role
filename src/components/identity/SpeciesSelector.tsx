@@ -4,6 +4,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { fetchPokemonData } from '../../utils/api';
 import { SpeciesChangeModal } from '../modals/SpeciesChangeModal';
 import { TransformationModal } from '../modals/TransformationModal';
+import { Dices, BookOpen, Dna } from 'lucide-react';
 
 interface SpeciesSelectorProps {
     uniqueSpecies: string[];
@@ -90,7 +91,7 @@ export function SpeciesSelector({ uniqueSpecies, onOpenGenerator, onOpenPokedex 
                                 }}
                                 title="Auto-Build Pokémon"
                             >
-                                🎲
+                                <Dices size={16} />
                             </button>
                             <button
                                 type="button"
@@ -98,15 +99,11 @@ export function SpeciesSelector({ uniqueSpecies, onOpenGenerator, onOpenPokedex 
                                 onClick={onOpenPokedex}
                                 title="Pokédex Info"
                             >
-                                📖
+                                <BookOpen size={16} />
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--dark identity-header__species-btn"
-                                style={{
-                                    background: isTransformed ? '#00695C' : '#555',
-                                    borderColor: isTransformed ? '#00695C' : '#555'
-                                }}
+                                className={`action-button ${isTransformed ? 'action-button--theme' : 'action-button--dark'} identity-header__species-btn`}
                                 onClick={() => setShowTransformModal(true)}
                                 title={
                                     isTransformed
@@ -114,7 +111,7 @@ export function SpeciesSelector({ uniqueSpecies, onOpenGenerator, onOpenPokedex 
                                         : 'Transform (Mega, Dynamax, Tera, etc.)'
                                 }
                             >
-                                🧬
+                                <Dna size={16} />
                             </button>
                         </>
                     )}

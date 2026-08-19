@@ -8,6 +8,7 @@ import { CollapsingSection } from '../ui/CollapsingSection';
 import { InventoryItemRow } from './InventoryItemRow';
 import { ItemInfoModal } from '../modals/ItemInfoModal';
 import { SmartTagsGuideModal } from '../modals/SmartTagsGuideModal';
+import { AlertTriangle, Plus } from 'lucide-react';
 import './InventoryTable.css';
 
 export function InventoryTable() {
@@ -62,7 +63,14 @@ export function InventoryTable() {
     const bagHeaderElements = (
         <>
             <TooltipIcon onClick={() => setShowTagsGuide(true)} />
-            {activeCount > 1 && <div className="inventory-table__warning">⚠️ Multiple items active</div>}
+            {activeCount > 1 && (
+                <div
+                    className="inventory-table__warning"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                >
+                    <AlertTriangle size={14} color="var(--semantic-danger)" /> Multiple items active
+                </div>
+            )}
             <div className="inventory-table__currency-container">
                 <span className="inventory-table__currency-tp" title="Training Points">
                     TP:{' '}
@@ -128,7 +136,7 @@ export function InventoryTable() {
                     onClick={addInventoryItem}
                     className="action-button action-button--dark inventory-table__add-btn"
                 >
-                    + Add Item
+                    <Plus size={16} /> Add Item
                 </button>
             </CollapsingSection>
 

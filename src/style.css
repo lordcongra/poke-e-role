@@ -1,14 +1,32 @@
 /* =========================================
-   🌐 GLOBAL VARIABLES & THEMING
+   🌐 GLOBAL VARIABLES & DYNAMIC THEMING
    ========================================= */
 :root {
     color-scheme: light;
-    --primary: #b92518;
+
+    /* 1. Define our neutral base fallbacks */
+    --base-primary: #b92518;
+    --base-secondary: #0d47a1;
+    --base-bg: #f0f2f5;
+    --base-panel: #ffffff;
+    --base-panel-alt: #fafafa;
+    --base-border: #ccc;
+
+    /* Strict Semantic Colors (Never overriden by Pokémon Type) */
+    --semantic-danger: #d32f2f;
+    --semantic-danger-hover: #b71c1c;
+
+    /* 2. Determine our driving colors */
+    --primary: var(--dynamic-type-color, var(--base-primary));
+    --secondary: var(--dynamic-secondary-color, var(--base-secondary));
+
+    /* 3. LIGHT MODE COLOR MIXING (Subtle tints) */
+    --bg: color-mix(in srgb, var(--primary) 5%, var(--base-bg));
+    --panel-bg: color-mix(in srgb, var(--primary) 1%, var(--base-panel));
+    --panel-alt: color-mix(in srgb, var(--primary) 8%, var(--base-panel-alt));
+    --border: color-mix(in srgb, var(--primary) 30%, var(--base-border));
+
     --dark: #555;
-    --bg: #f0f2f5;
-    --border: #ccc;
-    --panel-bg: #fff;
-    --panel-alt: #fafafa;
     --text-main: #222;
     --text-muted: #333;
     --input-bg: transparent;
@@ -20,12 +38,30 @@
 html[data-theme='dark'],
 [data-theme='dark'] {
     color-scheme: dark !important;
-    --primary: #8b1c1c;
+
+    /* 1. Define our dark base fallbacks */
+    --base-primary-dark: #8b1c1c;
+    --base-secondary-dark: #42a5f5;
+    --base-bg-dark: #121212;
+    --base-panel-dark: #1e1e1e;
+    --base-panel-alt-dark: #2a2a2a;
+    --base-border-dark: #333;
+
+    /* Strict Semantic Colors */
+    --semantic-danger: #f44336;
+    --semantic-danger-hover: #d32f2f;
+
+    /* 2. Determine our driving colors */
+    --primary: var(--dynamic-type-color, var(--base-primary-dark));
+    --secondary: var(--dynamic-secondary-color, var(--base-secondary-dark));
+
+    /* 3. DARK MODE COLOR MIXING (Rich, glassy tints) */
+    --bg: color-mix(in srgb, var(--primary) 12%, var(--base-bg-dark));
+    --panel-bg: color-mix(in srgb, var(--primary) 6%, var(--base-panel-dark));
+    --panel-alt: color-mix(in srgb, var(--primary) 12%, var(--base-panel-alt-dark));
+    --border: color-mix(in srgb, var(--primary) 25%, var(--base-border-dark));
+
     --dark: #888;
-    --bg: #121212;
-    --border: #333;
-    --panel-bg: #1e1e1e;
-    --panel-alt: #2a2a2a;
     --text-main: #e0e0e0;
     --text-muted: #aaa;
     --input-bg: #2c2c2c;
@@ -60,10 +96,11 @@ body {
     font-family: sans-serif;
     color: var(--text-main);
     margin: 0;
-    padding: 0; /* Removed global padding to stop Standalone body scrolling */
+    padding: 0;
     transition:
         background 0.3s ease,
-        color 0.3s ease;
+        color 0.3s ease,
+        border-color 0.3s ease;
 }
 
 select option {
@@ -101,7 +138,10 @@ select option {
     border: 1px solid var(--border);
     border-radius: 6px;
     padding: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition:
+        background 0.3s ease,
+        border-color 0.3s ease;
 }
 
 .sheet-panel__header {
@@ -112,6 +152,7 @@ select option {
     justify-content: space-between;
     align-items: center;
     font-size: 0.9rem;
+    transition: color 0.3s ease;
 }
 
 .table-responsive-wrapper {
@@ -120,7 +161,6 @@ select option {
     padding-bottom: 4px;
 }
 
-/* Moved padding here so OBR iframe sheets still maintain their nice visual breathing room */
 .app-container {
     padding: 10px;
 }
@@ -170,7 +210,6 @@ select option {
     align-items: center;
 }
 
-/* --- ADDED FOR STANDALONE AVATAR SUPPORT --- */
 .identity-grid--standalone {
     grid-template-columns: 110px 1fr 1fr;
 }
@@ -196,13 +235,15 @@ select option {
     min-width: 0;
 }
 .identity-grid__label {
-    background: var(--label-bg);
+    /* 🔥 Labels now dynamically pull a subtle 15% tint of the primary color! */
+    background: color-mix(in srgb, var(--primary) 15%, var(--label-bg));
     color: var(--text-muted);
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 0.8rem;
     font-weight: bold;
     white-space: nowrap;
+    transition: background 0.3s ease;
 }
 
 .health-section__row {
@@ -224,6 +265,7 @@ select option {
     font-weight: bold;
     padding: 4px;
     font-size: 0.85rem;
+    transition: background 0.3s ease;
 }
 
 /* =========================================
@@ -234,15 +276,40 @@ select option {
     border-radius: 3px;
     cursor: pointer;
     font-weight: bold;
-    padding: 2px 6px;
+    padding: 4px 8px;
+    transition:
+        filter 0.2s ease,
+        background 0.3s ease,
+        border-color 0.2s ease;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
-.action-button--dark {
-    background: var(--dark);
-    color: white;
+.action-button:hover {
+    filter: brightness(1.15);
 }
-.action-button--red {
+
+.action-button--theme {
     background: var(--primary);
     color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.action-button--red {
+    background: var(--semantic-danger);
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+.action-button--red:hover {
+    background: var(--semantic-danger-hover);
+}
+
+.action-button--dark {
+    background: color-mix(in srgb, var(--secondary) 60%, var(--dark));
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 .action-button--full-width {
     width: 100%;
@@ -253,15 +320,15 @@ select option {
 .action-button--transparent-white {
     background: transparent;
     color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
+
 .action-button--sort {
-    background: var(--label-bg);
-    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--secondary) 15%, var(--label-bg));
+    border: 1px solid color-mix(in srgb, var(--secondary) 40%, var(--border));
     width: 24px;
     height: 24px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    padding: 0;
 }
 
 .collapse-btn {
@@ -272,7 +339,9 @@ select option {
     cursor: pointer;
     width: 24px;
     height: 24px;
-    transition: transform 0.2s ease;
+    transition:
+        transform 0.2s ease,
+        color 0.3s ease;
 }
 .collapse-btn.is-collapsed {
     transform: rotate(-90deg);
@@ -282,24 +351,36 @@ select option {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid var(--border);
+    border: 1px solid transparent; /* Removed harsh border */
     border-radius: 4px;
     background: var(--panel-bg);
     height: 22px;
 }
+
 .number-spinner__button {
-    background: var(--label-bg);
+    /* 🔥 Spinners now dynamically pull a subtle 12% tint of the primary color! */
+    background: color-mix(in srgb, var(--primary) 12%, var(--label-bg));
     border: none;
-    width: 16px;
+    width: 18px;
     height: 100%;
     cursor: pointer;
     font-weight: bold;
     color: var(--text-muted);
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+.number-spinner__button:first-child {
+    border-radius: 4px 0 0 4px;
+}
+.number-spinner__button:last-child {
+    border-radius: 0 4px 4px 0;
 }
 .number-spinner__button:hover {
-    background: var(--border);
+    background: color-mix(in srgb, var(--primary) 30%, var(--border));
     color: var(--text-main);
 }
+
 .number-spinner__input {
     border: none;
     text-align: center;
@@ -371,6 +452,12 @@ select option {
     color: var(--text-main);
 }
 
+.modal-title-with-icon {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 /* =========================================
    ❤️ RESOURCE BOXES (HP & WILL)
    ========================================= */
@@ -381,6 +468,7 @@ select option {
     background-color: var(--panel-bg);
     position: relative;
     overflow: hidden;
+    transition: background 0.3s ease;
 }
 .resource-bar-fill {
     position: absolute;
@@ -420,6 +508,7 @@ select option {
     font-weight: 900;
     color: var(--primary);
     font-size: 1.1rem;
+    transition: color 0.3s ease;
 }
 .resource-box__sub {
     display: flex;
@@ -438,18 +527,6 @@ select option {
 /* =========================================
    🌙 DARK MODE COLOR MUTING
    ========================================= */
-[data-theme='dark'] .identity-grid__label--blue {
-    background: #0d47a1;
-    color: #bbdefb;
-}
-[data-theme='dark'] .identity-grid__label--green {
-    background: #1a5e20;
-    color: #dcedc8;
-}
-[data-theme='dark'] .identity-grid__label--red {
-    background: #8b1c1c;
-    color: #ffcdd2;
-}
 [data-theme='dark'] .health-section__header[style*='background-color'] {
     filter: saturate(0.8) brightness(0.9);
     color: #fff !important;

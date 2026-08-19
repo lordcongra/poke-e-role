@@ -3,6 +3,7 @@ import { CombatStat } from '../../types/enums';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { parseCombatTags, getAbilityText, calculateStatTotal } from '../../utils/combatUtils';
 import { CollapsingSection } from '../ui/CollapsingSection';
+import { RotateCcw } from 'lucide-react';
 import './CoreTable.css';
 
 const STATISTIC_COLORS = {
@@ -55,7 +56,7 @@ export function CoreTable() {
             className="action-button action-button--dark core-table__reset-btn"
             title="Reset all Core Buffs & Debuffs to 0"
         >
-            🔄 Reset Buffs
+            <RotateCcw size={16} /> Reset Buffs
         </button>
     );
 

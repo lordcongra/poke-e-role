@@ -11,6 +11,7 @@ import { InitiativeSettingsModal } from '../modals/InitiativeSettingsModal';
 import { isStandaloneMode } from '../../utils/storageAdapter';
 import { useObrReady } from '../../hooks/useObrReady';
 import { setActiveTokenId } from '../../utils/obr';
+import { ChevronDown, ArrowLeft, Swords, Settings, Hammer, BookOpen, Package, Bell, Sun, Moon } from 'lucide-react';
 import './GlobalToolbar.css';
 
 export function GlobalToolbar() {
@@ -80,7 +81,6 @@ export function GlobalToolbar() {
         setActiveTokenId(null);
     };
 
-    // --- INITIATIVE TRACKER LOGIC ---
     useEffect(() => {
         if (!isObrReady || !OBR.isAvailable || isStandaloneMode) return;
 
@@ -184,7 +184,6 @@ export function GlobalToolbar() {
     };
 
     const handleInitiativeToggle = async () => {
-        // Standalone Mode emits a window event so App.tsx can flex the layout
         if (isStandaloneMode) {
             window.dispatchEvent(new Event('toggle-standalone-tracker'));
             return;
@@ -251,8 +250,15 @@ export function GlobalToolbar() {
                 onClick={toggleExpanded}
             >
                 <div className="global-toolbar__header-title">
-                    <span className={`global-toolbar__caret ${!isExpanded ? 'global-toolbar__caret--closed' : ''}`}>
-                        ▼
+                    <span className="global-toolbar__caret">
+                        <ChevronDown
+                            size={18}
+                            style={{
+                                transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)',
+                                transition: 'transform 0.2s',
+                                marginTop: '4px'
+                            }}
+                        />
                     </span>
                     TABLE TOOLS & SETTINGS
                 </div>
@@ -260,14 +266,14 @@ export function GlobalToolbar() {
                 {isStandaloneMode && activeTokenId && (
                     <button
                         type="button"
-                        className="global-toolbar__btn--back-header"
+                        className="global-toolbar__btn--back-header action-button"
                         onClick={(e) => {
                             e.stopPropagation();
                             handleReturnToMenu();
                         }}
                         title="Close sheet and return to file browser"
                     >
-                        🔙 Back to Menu
+                        <ArrowLeft size={16} /> Back to Menu
                     </button>
                 )}
             </div>
@@ -278,50 +284,50 @@ export function GlobalToolbar() {
                         <div className="global-toolbar__init-group">
                             <button
                                 type="button"
-                                className="global-toolbar__btn global-toolbar__btn--init-main"
+                                className="global-toolbar__btn global-toolbar__btn--init-main action-button--primary-hover"
                                 onClick={handleInitiativeToggle}
                                 title="Toggle Initiative Tracker window"
                             >
-                                ⚔️ Initiative
+                                <Swords size={16} color="var(--primary)" /> Initiative
                             </button>
                             <button
                                 type="button"
-                                className="global-toolbar__btn global-toolbar__btn--init-cog"
+                                className="global-toolbar__btn global-toolbar__btn--init-cog action-button--primary-hover"
                                 onClick={() => setShowInitSettings(true)}
                                 title="Initiative Settings"
                             >
-                                ⚙️
+                                <Settings size={16} color="var(--text-muted)" />
                             </button>
                         </div>
 
                         {showHomebrewButton && (
                             <button
                                 type="button"
-                                className="global-toolbar__btn global-toolbar__btn--homebrew"
+                                className="global-toolbar__btn action-button--secondary-hover"
                                 onClick={() => setShowHomebrewModal(true)}
                                 title="Manage Table Custom Content"
                             >
-                                🛠️ Homebrew Workshop
+                                <Hammer size={16} color="var(--secondary)" /> Homebrew Workshop
                             </button>
                         )}
 
                         <button
                             type="button"
-                            className="global-toolbar__btn global-toolbar__btn--rules"
+                            className="global-toolbar__btn action-button--primary-hover"
                             onClick={() => setShowRulesModal(true)}
                             title="Configure Room Rules & Dice Engine"
                         >
-                            📜 Room Rules
+                            <BookOpen size={16} color="var(--primary)" /> Room Rules
                         </button>
 
                         {showLootGenButton && (
                             <button
                                 type="button"
-                                className="global-toolbar__btn global-toolbar__btn--loot"
+                                className="global-toolbar__btn action-button--secondary-hover"
                                 onClick={() => setShowLootGenModal(true)}
                                 title="Generate Items & TMs"
                             >
-                                🎁 Loot Generator
+                                <Package size={16} color="var(--secondary)" /> Loot Generator
                             </button>
                         )}
                     </div>
@@ -329,20 +335,28 @@ export function GlobalToolbar() {
                     <div className="global-toolbar__side-tools">
                         <button
                             type="button"
-                            className="global-toolbar__btn global-toolbar__btn--dark"
+                            className="global-toolbar__btn action-button--neutral-hover"
                             onClick={() => setShowChangelog(true)}
                             title="View System Updates"
                         >
-                            📢 What's New
+                            <Bell size={16} color="var(--text-main)" /> What's New
                         </button>
 
                         <button
                             type="button"
-                            className="global-toolbar__btn global-toolbar__btn--dark"
+                            className="global-toolbar__btn action-button--neutral-hover"
                             onClick={toggleTheme}
                             title="Toggle Dark/Light Mode"
                         >
-                            {isDark ? '☀️ Light' : '🌙 Dark'}
+                            {isDark ? (
+                                <>
+                                    <Sun size={16} color="#F8D030" /> Light
+                                </>
+                            ) : (
+                                <>
+                                    <Moon size={16} color="#A890F0" /> Dark
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>

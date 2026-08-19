@@ -3,6 +3,7 @@ import { SocialStat } from '../../types/enums';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { parseCombatTags, getAbilityText, calculateStatTotal } from '../../utils/combatUtils';
 import { CollapsingSection } from '../ui/CollapsingSection';
+import { RotateCcw } from 'lucide-react';
 import './SocialTable.css';
 
 const SOCIAL_COLORS = {
@@ -61,7 +62,7 @@ export function SocialTable() {
             className="action-button action-button--dark social-table__reset-btn"
             title="Reset all Social Buffs & Debuffs to 0"
         >
-            🔄 Reset Buffs
+            <RotateCcw size={16} /> Reset Buffs
         </button>
     );
 

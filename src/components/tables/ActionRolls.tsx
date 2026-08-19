@@ -4,6 +4,7 @@ import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { rollSkillCheck, rollDicePlus } from '../../utils/combatUtils';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { NumberSpinner } from '../ui/NumberSpinner';
+import { Dices, Plus, X } from 'lucide-react';
 import './ActionRolls.css';
 
 const ATTRIBUTE_OPTIONS = [...Object.values(CombatStat), ...Object.values(SocialStat), 'will'] as const;
@@ -36,7 +37,7 @@ export function ActionRolls() {
                 onClick={handleBasicRoll}
                 title="Roll Custom Dice"
             >
-                🎲
+                <Dices size={16} />
             </button>
         </div>
     );
@@ -109,7 +110,7 @@ export function ActionRolls() {
                                         className="action-button action-button--dark action-rolls__icon-btn"
                                         onClick={() => rollSkillCheck(check, useCharacterStore.getState())}
                                     >
-                                        🎲
+                                        <Dices size={16} />
                                     </button>
                                 </td>
                                 <td className="data-table__cell--middle">
@@ -118,7 +119,7 @@ export function ActionRolls() {
                                         className="action-button action-button--red action-rolls__icon-btn"
                                         onClick={() => setDeleteRollId(check.id)}
                                     >
-                                        X
+                                        <X size={16} />
                                     </button>
                                 </td>
                             </tr>
@@ -128,10 +129,10 @@ export function ActionRolls() {
             </div>
             <button
                 type="button"
-                className="action-button action-button--dark action-rolls__add-btn"
+                className="action-button action-button--theme action-rolls__add-btn"
                 onClick={addSkillCheck}
             >
-                + Add Action Roll
+                <Plus size={16} /> Add Action Roll
             </button>
 
             {deleteRollId && (

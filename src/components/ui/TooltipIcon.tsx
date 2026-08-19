@@ -1,3 +1,4 @@
+import { HelpCircle } from 'lucide-react';
 import './UI.css';
 
 export function TooltipIcon({ onClick }: { onClick: () => void }) {
@@ -10,7 +11,7 @@ export function TooltipIcon({ onClick }: { onClick: () => void }) {
             }}
             className="tooltip-icon"
         >
-            ?
+            <HelpCircle size={14} />
         </span>
     );
 }

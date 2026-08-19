@@ -8,6 +8,7 @@ import { CustomInfoRow } from '../ui/CustomInfoRow';
 import { SpeciesSelector } from './SpeciesSelector';
 import { StandaloneAvatar } from '../standalone/StandaloneAvatar';
 import { isStandaloneMode } from '../../utils/storageAdapter';
+import { Plus } from 'lucide-react';
 
 interface IdentityGridProps {
     onOpenGenerator: () => void;
@@ -22,6 +23,7 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature, onO
     const setMode = useCharacterStore((state) => state.setMode);
 
     const customInfo = useCharacterStore((state) => state.customInfo);
+    const addCustomInfo = useCharacterStore((state) => state.addCustomInfo);
     const removeCustomInfo = useCharacterStore((state) => state.removeCustomInfo);
 
     const role = useCharacterStore((state) => state.role);
@@ -177,7 +179,7 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature, onO
                 </div>
 
                 <div className="identity-grid__row">
-                    <span className="identity-grid__label identity-grid__label--blue">Mode</span>
+                    <span className="identity-grid__label">Mode</span>
                     <select
                         className="identity-grid__select"
                         value={identityStore.mode || 'Pokémon'}
@@ -189,7 +191,7 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature, onO
                 </div>
 
                 <div className="identity-grid__row identity-header__age-gender-row">
-                    <span className="identity-grid__label identity-grid__label--blue">Age</span>
+                    <span className="identity-grid__label">Age</span>
                     <select
                         className="identity-grid__select identity-header__age-select"
                         value={identityStore.age || '--'}
@@ -201,9 +203,7 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature, onO
                             </option>
                         ))}
                     </select>
-                    <span className="identity-grid__label identity-grid__label--blue identity-header__label-margin">
-                        Gender
-                    </span>
+                    <span className="identity-grid__label identity-header__label-margin">Gender</span>
                     <input
                         type="text"
                         className="identity-grid__input identity-header__gender-input"
@@ -214,7 +214,7 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature, onO
                 </div>
 
                 <div className="identity-grid__row">
-                    <span className="identity-grid__label identity-grid__label--green">Combat</span>
+                    <span className="identity-grid__label">Combat</span>
                     <input
                         type="text"
                         className="identity-grid__input"
@@ -223,7 +223,7 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature, onO
                     />
                 </div>
                 <div className="identity-grid__row">
-                    <span className="identity-grid__label identity-grid__label--green">Social</span>
+                    <span className="identity-grid__label">Social</span>
                     <input
                         type="text"
                         className="identity-grid__input"
@@ -232,7 +232,7 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature, onO
                     />
                 </div>
                 <div className="identity-grid__row">
-                    <span className="identity-grid__label identity-grid__label--green">Hand</span>
+                    <span className="identity-grid__label">Hand</span>
                     <input
                         type="text"
                         className="identity-grid__input"
@@ -257,6 +257,18 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature, onO
                         <CustomInfoRow info={info} onDelete={() => setDeleteCustomInfoId(info.id)} />
                     </div>
                 ))}
+
+                <div style={{ gridColumn: '1 / -1', marginTop: '4px' }}>
+                    <button
+                        type="button"
+                        onClick={addCustomInfo}
+                        className="action-button action-button--dark"
+                        style={{ width: '100%', padding: '6px' }}
+                        title="Add Custom Field"
+                    >
+                        <Plus size={16} /> Add Custom Field
+                    </button>
+                </div>
             </div>
 
             {deleteCustomInfoId && (

@@ -14,6 +14,7 @@ import {
 } from '../../utils/combatUtils';
 import { MoveEditModal } from '../modals/MoveEditModal';
 import { POKEMON_TYPES, TYPE_COLORS } from '../../data/constants';
+import { Target, Tag, Swords, ChevronUp, ChevronDown, X } from 'lucide-react';
 import './MoveCard.css';
 
 interface MoveCardProps {
@@ -48,7 +49,6 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
         }
     };
 
-    // Keep selectors to ensure the component re-renders when these change!
     const inventory = useCharacterStore((state) => state.inventory);
     useCharacterStore((state) => state.will);
     useCharacterStore((state) => state.stats);
@@ -56,7 +56,6 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
     const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
     const ability = useCharacterStore((state) => state.identity.ability);
 
-    // 🔥 Reactive First Hit Selectors
     useCharacterStore((state) => state.trackers.firstHitDmg);
     const firstHitAccActive = useCharacterStore((state) => state.trackers.firstHitAcc);
 
@@ -119,15 +118,15 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
                         className="action-button action-button--dark move-card__roll-btn"
                         title="Roll Accuracy"
                     >
-                        🎯
+                        <Target size={16} />
                     </button>
                     <button
                         type="button"
                         onClick={() => setEditModalOpen(true)}
-                        className="action-button action-button--transparent-white move-card__edit-btn"
+                        className="action-button action-button--dark move-card__edit-btn"
                         title="Edit Move & Tags"
                     >
-                        🏷️
+                        <Tag size={14} />
                     </button>
                     <select
                         value={move.marker || ''}
@@ -265,7 +264,7 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
                             className="action-button action-button--red move-card__damage-btn"
                             title="Roll Damage"
                         >
-                            💥 Roll Dmg
+                            <Swords size={16} /> Roll Dmg
                         </button>
                     </div>
                     <div className="move-card__sort-container">
@@ -274,21 +273,22 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
                             onClick={() => moveUpMove(move.id)}
                             className="action-button action-button--sort move-card__sort-btn"
                         >
-                            ▲
+                            <ChevronUp size={16} />
                         </button>
                         <button
                             type="button"
                             onClick={() => moveDownMove(move.id)}
                             className="action-button action-button--sort move-card__sort-btn"
                         >
-                            ▼
+                            <ChevronDown size={16} />
                         </button>
                         <button
                             type="button"
                             onClick={() => onDelete(move.id)}
                             className="action-button action-button--red move-card__delete-btn"
+                            title="Delete Move"
                         >
-                            X
+                            <X size={16} />
                         </button>
                     </div>
                 </div>

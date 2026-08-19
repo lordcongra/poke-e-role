@@ -14,6 +14,7 @@ import {
 } from '../../utils/combatUtils';
 import { MoveEditModal } from '../modals/MoveEditModal';
 import { POKEMON_TYPES, TYPE_COLORS } from '../../data/constants';
+import { Target, Tag, Swords, ChevronUp, ChevronDown, X } from 'lucide-react';
 import './MoveRow.css';
 
 interface MoveRowProps {
@@ -48,7 +49,6 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
         }
     };
 
-    // Keep selectors to ensure the component re-renders when these change!
     const inventory = useCharacterStore((state) => state.inventory);
     useCharacterStore((state) => state.will);
     useCharacterStore((state) => state.stats);
@@ -56,7 +56,6 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
     const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
     const ability = useCharacterStore((state) => state.identity.ability);
 
-    // 🔥 Reactive First Hit Selectors
     useCharacterStore((state) => state.trackers.firstHitDmg);
     const firstHitAccActive = useCharacterStore((state) => state.trackers.firstHitAcc);
 
@@ -122,7 +121,7 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                             className="action-button action-button--dark move-row__roll-btn"
                             title="Roll Accuracy"
                         >
-                            🎯
+                            <Target size={16} />
                         </button>
                     </div>
                 </td>
@@ -156,10 +155,10 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                     <button
                         type="button"
                         onClick={() => setEditModalOpen(true)}
-                        className="action-button action-button--transparent-white move-row__edit-btn"
+                        className="action-button action-button--dark move-row__edit-btn"
                         title="Edit Move & Tags"
                     >
-                        🏷️
+                        <Tag size={14} />
                     </button>
                 </td>
                 <td className="data-table__cell--middle">
@@ -274,17 +273,17 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                             className="action-button action-button--red move-row__roll-btn"
                             title="Roll Damage"
                         >
-                            💥
+                            <Swords size={16} />
                         </button>
                     </div>
                 </td>
                 <td className="data-table__cell--middle">
                     <div className="flex-layout--column-center">
                         <button type="button" onClick={() => moveUpMove(move.id)} className="move-row__sort-btn">
-                            ▲
+                            <ChevronUp size={16} />
                         </button>
                         <button type="button" onClick={() => moveDownMove(move.id)} className="move-row__sort-btn">
-                            ▼
+                            <ChevronDown size={16} />
                         </button>
                     </div>
                 </td>
@@ -293,8 +292,9 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                         type="button"
                         onClick={() => onDelete(move.id)}
                         className="action-button action-button--red move-row__roll-btn"
+                        title="Delete Move"
                     >
-                        X
+                        <X size={16} />
                     </button>
                 </td>
             </tr>
