@@ -407,7 +407,7 @@ export function useInitiativeEngine() {
 
     const nextTurn = () => {
         if (combatants.length === 0 || scrollLock.current) return;
-        
+
         scrollLock.current = true;
         setTimeout(() => {
             scrollLock.current = false;
@@ -445,7 +445,7 @@ export function useInitiativeEngine() {
 
     const prevTurn = () => {
         if (combatants.length === 0 || scrollLock.current) return;
-        
+
         scrollLock.current = true;
         setTimeout(() => {
             scrollLock.current = false;

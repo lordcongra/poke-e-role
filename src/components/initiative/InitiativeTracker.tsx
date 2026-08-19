@@ -51,7 +51,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
             // "debounce" and drop intermediate visual scrolls when you click rapidly!
             requestAnimationFrame(() => {
                 const activeCards = document.querySelectorAll(`#combatant-${activeTurnId}`);
-                activeCards.forEach(card => {
+                activeCards.forEach((card) => {
                     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 });
             });

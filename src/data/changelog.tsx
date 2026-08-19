@@ -26,7 +26,10 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
             >
                 <strong style={{ color: '#1976D2', fontSize: '1.1em' }}>📱 Standalone App & Offline Mode (PWA)</strong>
                 <p style={{ marginTop: '6px', marginBottom: '0', fontSize: '0.9em', lineHeight: '1.4' }}>
-                    The sheet is now fully accessible as a <strong>Progressive Web App (PWA)</strong> outside of Owlbear Rodeo! You can visit the live site, install it directly to your phone or desktop home screen, and use it entirely offline. Standalone mode features a brand new local directory sidebar to easily organize all your characters and encounters into folders.
+                    The sheet is now fully accessible as a <strong>Progressive Web App (PWA)</strong> outside of Owlbear
+                    Rodeo! You can visit the live site, install it directly to your phone or desktop home screen, and
+                    use it entirely offline. Standalone mode features a brand new local directory sidebar to easily
+                    organize all your characters and encounters into folders.
                 </p>
             </div>,
             <div
@@ -39,9 +42,12 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     marginBottom: '12px'
                 }}
             >
-                <strong style={{ color: '#e65100', fontSize: '1.1em' }}>⚠️ Reminder: Custom Action Rolls URL Change</strong>
+                <strong style={{ color: '#e65100', fontSize: '1.1em' }}>
+                    ⚠️ Reminder: Custom Action Rolls URL Change
+                </strong>
                 <p style={{ marginTop: '6px', marginBottom: '8px', fontSize: '0.9em', lineHeight: '1.4' }}>
-                    If you haven't updated yet, the <strong>Custom Action Rolls (CAR)</strong> extension has moved! Please update your VTT room to use the new manifest link below to keep your dice rolling smoothly:
+                    If you haven't updated yet, the <strong>Custom Action Rolls (CAR)</strong> extension has moved!
+                    Please update your VTT room to use the new manifest link below to keep your dice rolling smoothly:
                 </p>
                 <p style={{ margin: 0, fontSize: '0.9em', fontWeight: 'bold' }}>
                     🔗 New CAR Link:{' '}

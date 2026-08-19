@@ -1,6 +1,6 @@
 # Pokerole 3.0 Sheet v2.9.0 (Standalone PWA & Owlbear Rodeo Extension)
 
-A highly automated, modular character sheet and GM Toolkit for playing **Pokerole 3.0** campaigns (including **Pokémon Mystery Dungeon / PMD** settings). 
+A highly automated, modular character sheet and GM Toolkit for playing **Pokerole 3.0** campaigns (including **Pokémon Mystery Dungeon / PMD** settings).
 
 You can run this app entirely on its own as an offline-first **Progressive Web App (PWA)**, or integrate it directly into the **Owlbear Rodeo VTT** as an extension!
 
@@ -11,10 +11,11 @@ _A massive thank you to the creator of the **Owl Trackers** extension. Their inc
 ## 📱 Standalone App & Offline Mode (New in v2.9.0!)
 
 Don't want to use a VTT? You can now use the Pokerole Sheet completely standalone!
+
 - **Play Anywhere:** Visit the live site on your phone, tablet, or desktop browser.
 - **Installable PWA:** Click "Add to Home Screen" (or the install icon in your URL bar) to download the app natively to your device.
 - **100% Offline Capable:** The built-in database caches locally. Once installed, you can generate Pokémon, manage sheets, and roll dice without an internet connection!
-- **Local Directory:** Standalone mode features a brand new sidebar to organize your characters into folders, allowing GMs to easily build and manage complex encounters. 
+- **Local Directory:** Standalone mode features a brand new sidebar to organize your characters into folders, allowing GMs to easily build and manage complex encounters.
 
 **[🔗 Click Here to open the Standalone App!](https://lordcongra.github.io/poke-e-role/)**
 
@@ -56,7 +57,7 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 ### ⚔️ The Initiative Tracker
 
-- **Native Integration:** A completely overhauled, lightning-fast initiative tracking HUD built directly into the sheet! 
+- **Native Integration:** A completely overhauled, lightning-fast initiative tracking HUD built directly into the sheet!
 - **Fully Customizable:** Your tracker layout saves instantly to your personal browser memory. Do you want a horizontal tracker on the bottom of your screen, while your GM wants a vertical list on the right? You can both have it!
 - **Auto-Scrolling:** Set strict maximum dimension limits so the tracker never dominates your screen. If the turn passes to a Pokémon that is hidden off-screen, the tracker will elegantly smooth-scroll them right into the center of your view.
 

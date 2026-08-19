@@ -1,6 +1,7 @@
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import OBR from '@owlbear-rodeo/sdk';
+import { imageManager } from './utils/imageManager';
 import './style.css';
 import './roll-log.css';
 
@@ -19,14 +20,29 @@ interface WindowWithReactRoot extends Window {
 
 function RollLog() {
     const [rolls, setRolls] = useState<RollData[]>([]);
+    const [resolvedIcons, setResolvedIcons] = useState<Record<string, string>>({});
     const [theme, setTheme] = useState(localStorage.getItem('pokerole-theme') || 'light');
 
-    const loadRolls = () => {
+    const loadRolls = async () => {
         try {
             const data = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
-            setRolls(Array.isArray(data) ? data : []);
+            const rawRolls: RollData[] = Array.isArray(data) ? data : [];
+            setRolls(rawRolls);
+
+            const newIcons: Record<string, string> = {};
+            for (const r of rawRolls) {
+                if (r.icon && r.icon.startsWith('local-img:')) {
+                    try {
+                        const url = await imageManager.getImageUrl(r.icon);
+                        if (url) newIcons[r.id] = url;
+                    } catch (e) {
+                        console.warn('[RollLog] Failed to resolve local image for roll log.', e);
+                    }
+                }
+            }
+            setResolvedIcons((prev) => ({ ...prev, ...newIcons }));
         } catch (error) {
-            console.error('Failed to parse roll log from local storage. Resetting log.', error);
+            console.error('[RollLog] Failed to parse roll log from local storage. Resetting log.', error);
             setRolls([]);
         }
     };
@@ -81,7 +97,7 @@ function RollLog() {
         try {
             localStorage.setItem('pkr_roll_log', JSON.stringify(next));
         } catch (error) {
-            console.error('Failed to save to localStorage', error);
+            console.error('[RollLog] Failed to save to localStorage', error);
         }
         setRolls(next);
         if (next.length === 0 && OBR.isAvailable) OBR.popover.close('pkr-roll-log');
@@ -91,7 +107,7 @@ function RollLog() {
         try {
             localStorage.setItem('pkr_roll_log', '[]');
         } catch (error) {
-            console.error('Failed to clear localStorage', error);
+            console.error('[RollLog] Failed to clear localStorage', error);
         }
         setRolls([]);
         if (OBR.isAvailable) OBR.popover.close('pkr-roll-log');
@@ -115,7 +131,7 @@ function RollLog() {
                 {rolls.map((r) => (
                     <div key={r.id} className="roll-log__entry">
                         <div className="roll-log__entry-header">
-                            <img src={r.icon} alt="Token" className="roll-log__entry-icon" />
+                            <img src={resolvedIcons[r.id] || r.icon} alt="Token" className="roll-log__entry-icon" />
                             <strong className="roll-log__entry-player">{r.player}</strong>
                             <button
                                 type="button"

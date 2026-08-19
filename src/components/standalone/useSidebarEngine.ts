@@ -167,7 +167,7 @@ export function useSidebarEngine() {
     const handleCreate = async (type: 'folder' | 'character') => {
         // Fallback to a default name if the input box is empty
         const finalName = newName.trim() || (type === 'folder' ? 'New Folder' : 'New Character');
-        
+
         try {
             if (type === 'folder') {
                 await storageAdapter.createFolder(finalName, null);

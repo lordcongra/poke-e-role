@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { imageManager } from '../../utils/imageManager';
 import './RollLogWidget.css';
 
 interface RollData {
@@ -15,13 +16,29 @@ interface RollLogWidgetProps {
 
 export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
     const [rolls, setRolls] = useState<RollData[]>([]);
+    const [resolvedIcons, setResolvedIcons] = useState<Record<string, string>>({});
     const [isCollapsed, setIsCollapsed] = useState(false);
 
-    const loadRolls = () => {
+    const loadRolls = async () => {
         try {
             const data = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
-            setRolls(Array.isArray(data) ? data : []);
+            const rawRolls: RollData[] = Array.isArray(data) ? data : [];
+            setRolls(rawRolls);
+
+            const newIcons: Record<string, string> = {};
+            for (const r of rawRolls) {
+                if (r.icon && r.icon.startsWith('local-img:')) {
+                    try {
+                        const url = await imageManager.getImageUrl(r.icon);
+                        if (url) newIcons[r.id] = url;
+                    } catch (e) {
+                        console.warn('[RollLogWidget] Failed to resolve local image for roll log.', e);
+                    }
+                }
+            }
+            setResolvedIcons((prev) => ({ ...prev, ...newIcons }));
         } catch (error) {
+            console.error('[RollLogWidget] Failed to parse roll log from local storage.', error);
             setRolls([]);
         }
     };
@@ -40,14 +57,22 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
     }, []);
 
     const dismiss = (id: string) => {
-        const next = rolls.filter((r) => r.id !== id);
-        localStorage.setItem('pkr_roll_log', JSON.stringify(next));
-        setRolls(next);
+        try {
+            const next = rolls.filter((r) => r.id !== id);
+            localStorage.setItem('pkr_roll_log', JSON.stringify(next));
+            setRolls(next);
+        } catch (error) {
+            console.error('[RollLogWidget] Failed to save dismissed roll to localStorage.', error);
+        }
     };
 
     const clearAll = () => {
-        localStorage.setItem('pkr_roll_log', '[]');
-        setRolls([]);
+        try {
+            localStorage.setItem('pkr_roll_log', '[]');
+            setRolls([]);
+        } catch (error) {
+            console.error('[RollLogWidget] Failed to clear roll log in localStorage.', error);
+        }
     };
 
     if (rolls.length === 0) return null;
@@ -79,7 +104,11 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
                     {rolls.map((r) => (
                         <div key={r.id} className="roll-log-widget__entry">
                             <div className="roll-log-widget__entry-header">
-                                <img src={r.icon} alt="Avatar" className="roll-log-widget__icon" />
+                                <img
+                                    src={resolvedIcons[r.id] || r.icon}
+                                    alt="Avatar"
+                                    className="roll-log-widget__icon"
+                                />
                                 <strong className="roll-log-widget__player">{r.player}</strong>
                                 <button
                                     type="button"
