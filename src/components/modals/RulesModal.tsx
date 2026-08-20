@@ -79,7 +79,8 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                 onClick={() =>
                                     setModalConfig({
                                         title: 'Pain Penalties',
-                                        content: 'Automatically applies -1 or -2 success penalties to rolls when at low HP.'
+                                        content:
+                                            'Automatically applies -1 or -2 success penalties to rolls when at low HP.'
                                     })
                                 }
                             />

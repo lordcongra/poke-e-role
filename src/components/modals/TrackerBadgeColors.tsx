@@ -110,7 +110,10 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
             </div>
 
             <div className="tracker-settings__offset-container">
-                <label className="tracker-settings__offset-label" title="Scales the entire HUD up or down! Default is 100%.">
+                <label
+                    className="tracker-settings__offset-label"
+                    title="Scales the entire HUD up or down! Default is 100%."
+                >
                     <span className="tracker-settings__offset-text">HUD Size (%):</span>
                     <NumberSpinner
                         value={identityStore.trackerScale ?? 100}

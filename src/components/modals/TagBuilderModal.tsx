@@ -323,7 +323,10 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                     <button className="action-button action-button--dark tag-builder__btn-cancel" onClick={onClose}>
                         <XCircle size={16} /> Cancel
                     </button>
-                    <button className="action-button action-button--theme tag-builder__btn-confirm" onClick={handleConfirm}>
+                    <button
+                        className="action-button action-button--theme tag-builder__btn-confirm"
+                        onClick={handleConfirm}
+                    >
                         <Tag size={16} /> Append Tag
                     </button>
                 </div>

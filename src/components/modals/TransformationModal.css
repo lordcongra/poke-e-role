@@ -51,7 +51,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: color 0.2s ease, background 0.2s ease;
+    transition:
+        color 0.2s ease,
+        background 0.2s ease;
 }
 
 .transformation-modal__close-btn:hover {
@@ -95,7 +97,9 @@
     font-family: inherit;
     font-size: 0.9rem;
     font-weight: bold;
-    transition: border-color 0.2s ease, background-color 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
 }
 
 .transformation-modal__select:focus {

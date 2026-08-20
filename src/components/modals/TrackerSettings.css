@@ -70,7 +70,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: color 0.2s ease, background 0.2s ease;
+    transition:
+        color 0.2s ease,
+        background 0.2s ease;
 }
 
 .tracker-settings__close-x:hover {
@@ -198,7 +200,9 @@
     color: var(--text-main);
     font-size: 0.8rem;
     outline: none;
-    transition: border-color 0.2s ease, background-color 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
 }
 
 .tracker-settings__color-input:focus {

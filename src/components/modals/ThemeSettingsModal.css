@@ -85,7 +85,9 @@
     color: var(--text-main);
     text-transform: uppercase;
     text-align: center;
-    transition: border-color 0.2s ease, background-color 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
 }
 
 .theme-modal__hex-input:focus {
