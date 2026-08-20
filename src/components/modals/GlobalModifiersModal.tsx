@@ -1,3 +1,4 @@
+import { SlidersHorizontal, Dices } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { TooltipIcon } from '../ui/TooltipIcon';
@@ -18,7 +19,9 @@ export function GlobalModifiersModal({ onClose, setTooltipInfo, handleGlobalChan
     return (
         <div className="global-modifiers__overlay">
             <div className="global-modifiers__content">
-                <h3 className="global-modifiers__title">⚙️ Global Modifiers</h3>
+                <h3 className="global-modifiers__title modal-title-with-icon">
+                    <SlidersHorizontal size={20} /> Global Modifiers
+                </h3>
 
                 <div className="global-modifiers__list">
                     <div className="global-modifiers__row">
@@ -86,7 +89,7 @@ export function GlobalModifiersModal({ onClose, setTooltipInfo, handleGlobalChan
                                 onClick={handleGlobalChanceRoll}
                                 className="action-button action-button--dark global-modifiers__roll-btn"
                             >
-                                🎲
+                                <Dices size={14} />
                             </button>
                         </span>
                         <NumberSpinner

@@ -28,6 +28,10 @@
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .move-edit__textarea {
@@ -43,6 +47,15 @@
     background: var(--input-bg);
     color: var(--text-main);
     margin-bottom: 10px;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.move-edit__textarea:focus {
+    border-color: var(--primary);
+    background-color: var(--panel-alt);
+    outline: none;
 }
 
 .move-edit__actions {
@@ -51,14 +64,13 @@
     gap: 8px;
 }
 
-.move-edit__btn-close {
+.move-edit__btn-close,
+.move-edit__btn-tags,
+.move-edit__btn-broadcast {
     flex: 1;
     padding: 6px;
-}
-
-.move-edit__btn-tags {
-    flex: 1;
-    padding: 6px;
-    background: #1976d2;
-    border-color: #1976d2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }

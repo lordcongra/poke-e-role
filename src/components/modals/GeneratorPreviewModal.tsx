@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
+import { Search, Dices, CheckCircle, XCircle, ImagePlus } from 'lucide-react';
 import type { TempBuild } from '../../store/storeTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
@@ -107,7 +108,7 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
                     }
                 }
             } catch (e) {
-                console.error('Failed to pick image:', e);
+                console.error('[GeneratorPreviewModal] Failed to pick image:', e);
             }
         }
 
@@ -197,7 +198,9 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
         <div className="generator-preview__overlay">
             {/* The style object here is dynamic and permitted by our architectural rules */}
             <div className="generator-preview__content" style={{ display: showImagePrompt ? 'none' : 'flex' }}>
-                <h3 className="generator-preview__title">🔍 Build Preview: {localBuild.species}</h3>
+                <h3 className="generator-preview__title modal-title-with-icon">
+                    <Search size={20} /> Build Preview: {localBuild.species}
+                </h3>
 
                 <div className="generator-preview__scroll-container">
                     <div className="generator-preview__section">
@@ -314,21 +317,21 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
                         onClick={onClose}
                         className="action-button action-button--dark generator-preview__btn-cancel"
                     >
-                        Discard
+                        <XCircle size={16} /> Discard
                     </button>
                     <button
                         type="button"
                         onClick={onReroll}
-                        className="action-button action-button--dark generator-preview__btn-reroll"
+                        className="action-button action-button--secondary generator-preview__btn-reroll"
                     >
-                        🎲 Reroll
+                        <Dices size={16} /> Reroll
                     </button>
                     <button
                         type="button"
                         onClick={handleApply}
                         className="action-button action-button--red generator-preview__btn-apply"
                     >
-                        ✅ Apply Build
+                        <CheckCircle size={16} /> Apply Build
                     </button>
                 </div>
             </div>
@@ -337,7 +340,7 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
                 <div className="generator-preview-tooltip__overlay generator-preview-tooltip__overlay--high-z">
                     <div className="generator-preview-tooltip__content">
                         <h3 className="generator-preview-tooltip__title generator-preview-tooltip__title--center">
-                            🖼️ Update Token Image?
+                            <ImagePlus size={20} /> Update Token Image?
                         </h3>
                         <p className="generator-preview-tooltip__desc generator-preview-tooltip__desc--center">
                             You generated a brand new species! Would you like to select a new image for this token?

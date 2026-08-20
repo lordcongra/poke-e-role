@@ -1,4 +1,5 @@
 import OBR from '@owlbear-rodeo/sdk';
+import { Dices, Backpack, XCircle } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import './ItemGeneratorResultModal.css';
 
@@ -18,7 +19,7 @@ export function ItemGeneratorResultModal({ item, onClose, onReroll }: ItemGenera
             quantity: 1,
             active: false
         });
-        if (OBR.isAvailable) OBR.notification.show(`✅ Added ${item.name} to inventory!`, 'SUCCESS');
+        if (OBR.isAvailable) OBR.notification.show(`Successfully added ${item.name} to inventory!`, 'SUCCESS');
         onClose();
     };
 
@@ -32,23 +33,23 @@ export function ItemGeneratorResultModal({ item, onClose, onReroll }: ItemGenera
                     <button
                         type="button"
                         onClick={onReroll}
-                        className="item-generator-result-modal__btn item-generator-result-modal__btn--reroll"
+                        className="action-button item-generator-result-modal__btn item-generator-result-modal__btn--reroll"
                     >
-                        🎲 Reroll
+                        <Dices size={16} /> Reroll
                     </button>
                     <button
                         type="button"
                         onClick={handleAddToBag}
-                        className="item-generator-result-modal__btn item-generator-result-modal__btn--add"
+                        className="action-button action-button--theme item-generator-result-modal__btn item-generator-result-modal__btn--add"
                     >
-                        🎒 Add to Bag
+                        <Backpack size={16} /> Add to Bag
                     </button>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="item-generator-result-modal__btn item-generator-result-modal__btn--close"
+                        className="action-button item-generator-result-modal__btn item-generator-result-modal__btn--close"
                     >
-                        Close
+                        <XCircle size={16} /> Close
                     </button>
                 </div>
             </div>

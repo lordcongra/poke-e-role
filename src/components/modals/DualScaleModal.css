@@ -16,18 +16,22 @@
     padding: 15px;
     border-radius: 8px;
     width: 320px;
-    border: 2px solid #8e24aa;
+    border: 2px solid var(--primary);
     color: var(--text-main);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
 }
 
 .dual-scale__title {
     margin-top: 0;
-    color: #8e24aa;
+    color: var(--primary);
     font-size: 1.1rem;
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .dual-scale__desc {
@@ -61,6 +65,14 @@
     color: var(--text-main);
     font-weight: bold;
     outline: none;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.dual-scale__select:focus {
+    border-color: var(--primary);
+    background-color: var(--panel-bg);
 }
 
 .dual-scale__actions {
@@ -72,6 +84,4 @@
 .dual-scale__btn {
     flex: 1;
     padding: 8px;
-    background: #8e24aa;
-    color: white;
 }

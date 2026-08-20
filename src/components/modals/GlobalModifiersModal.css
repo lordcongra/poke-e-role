@@ -28,6 +28,10 @@
     text-align: center;
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .global-modifiers__list {
@@ -52,7 +56,7 @@
 }
 
 .global-modifiers__label--pain {
-    color: #c62828;
+    color: var(--semantic-danger);
 }
 
 .global-modifiers__pain-container {
@@ -64,7 +68,7 @@
 }
 
 .global-modifiers__roll-btn {
-    padding: 1px 4px;
+    padding: 1px 6px;
 }
 
 .global-modifiers__close-btn {

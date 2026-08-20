@@ -1,3 +1,4 @@
+import { Megaphone, XCircle } from 'lucide-react';
 import { broadcastInfo } from '../../utils/diceRoller';
 import './ItemInfoModal.css';
 
@@ -14,17 +15,16 @@ export function ItemInfoModal({ infoModal, onClose }: ItemInfoModalProps) {
                 <p className="item-info__desc">{infoModal.desc}</p>
                 <div className="item-info__actions">
                     <button className="action-button action-button--dark item-info__btn-close" onClick={onClose}>
-                        Close
+                        <XCircle size={16} /> Close
                     </button>
                     <button
-                        className="action-button item-info__btn-broadcast"
-                        style={{ backgroundColor: '#1565c0', borderColor: '#1565c0', color: 'white' }}
+                        className="action-button action-button--theme item-info__btn-broadcast"
                         onClick={() => {
                             broadcastInfo(infoModal.title, infoModal.desc || 'No description provided.');
                             onClose();
                         }}
                     >
-                        📢 Broadcast
+                        <Megaphone size={16} /> Broadcast
                     </button>
                 </div>
             </div>

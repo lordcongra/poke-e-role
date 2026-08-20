@@ -18,7 +18,7 @@
     border-radius: 8px;
     width: 340px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    border: 2px solid #f44336;
+    border: 2px solid var(--primary);
     color: var(--text-main);
 }
 
@@ -33,24 +33,31 @@
 
 .init-settings__title {
     margin: 0;
-    color: #f44336;
+    color: var(--primary);
     font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .init-settings__close-x {
     background: transparent;
     border: none;
     color: var(--text-muted);
-    font-weight: bold;
-    font-size: 1.2rem;
     cursor: pointer;
-    padding: 0 6px;
+    padding: 4px;
     border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+        color 0.2s ease,
+        background 0.2s ease;
 }
 
 .init-settings__close-x:hover {
-    background: rgba(255, 0, 0, 0.1);
-    color: #f44336;
+    background: color-mix(in srgb, var(--semantic-danger) 10%, transparent);
+    color: var(--semantic-danger);
 }
 
 .init-settings__description {
@@ -88,6 +95,14 @@
     color: var(--text-main);
     font-size: 0.85rem;
     outline: none;
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.init-settings__input:focus {
+    border-color: var(--primary);
+    background-color: var(--panel-alt);
 }
 
 .init-settings__offset-container {
@@ -96,6 +111,10 @@
     align-items: center;
     gap: 10px;
     margin-top: 5px;
+}
+
+.init-settings__offset-container--compact {
+    margin-top: 0;
 }
 
 .init-settings__offset-group {
@@ -125,6 +144,10 @@
     padding: 2px 6px;
     font-size: 0.75rem;
     font-weight: bold;
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease;
 }
 
 .init-settings__step-btn:hover {
@@ -139,6 +162,11 @@
     font-style: italic;
     text-align: center;
     margin-top: 5px;
+}
+
+.init-settings__hint--compact {
+    margin-bottom: 0;
+    padding-bottom: 0;
 }
 
 .init-settings__divider {

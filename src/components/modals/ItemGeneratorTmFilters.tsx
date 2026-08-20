@@ -1,3 +1,4 @@
+import { Disc, X } from 'lucide-react';
 import './ItemGeneratorModal.css';
 
 interface ItemGeneratorTmFiltersProps {
@@ -97,7 +98,9 @@ export function ItemGeneratorTmFilters({
 
     return (
         <div className="item-generator-modal__filter-group">
-            <div className="item-generator-modal__filter-group-title">💿 Technical Machines</div>
+            <div className="item-generator-modal__filter-group-title">
+                <Disc size={18} /> Technical Machines
+            </div>
 
             <span className="item-generator-modal__type-label">TM Powers:</span>
 
@@ -166,7 +169,9 @@ export function ItemGeneratorTmFilters({
                         onClick={() => removePowerPill(power)}
                     >
                         {power === 'support' ? 'Support' : power === 'variable' ? 'Variable' : `Power ${power}`}{' '}
-                        <span className="item-generator-modal__pill-close">✖</span>
+                        <span className="item-generator-modal__pill-close">
+                            <X size={14} />
+                        </span>
                     </span>
                 ))}
             </div>
@@ -213,15 +218,15 @@ export function ItemGeneratorTmFilters({
                             }}
                             onClick={() => removeTypePill(type)}
                         >
-                            {type} <span className="item-generator-modal__pill-close">✖</span>
+                            {type}{' '}
+                            <span className="item-generator-modal__pill-close">
+                                <X size={14} />
+                            </span>
                         </span>
                     ))}
             </div>
 
-            <div
-                className="item-generator-modal__checkbox-list item-generator-modal__checkbox-list--flat"
-                style={{ marginTop: '15px' }}
-            >
+            <div className="item-generator-modal__checkbox-list item-generator-modal__checkbox-list--flat item-generator-modal__checkbox-list--spaced">
                 <label className="item-generator-modal__checkbox-label">
                     <input
                         type="checkbox"

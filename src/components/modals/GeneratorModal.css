@@ -29,6 +29,10 @@
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .generator-modal__desc {
@@ -217,6 +221,14 @@
     padding-left: 24px;
 }
 
+.generator-modal__checkbox-label--spaced {
+    margin-top: 4px;
+}
+
+.generator-modal__checkbox-label--small {
+    font-size: 0.75rem;
+}
+
 .generator-modal__checkbox {
     transform: scale(1.1);
     cursor: pointer;
@@ -225,13 +237,18 @@
 
 .generator-modal__warning {
     margin: 15px 0;
-    padding: 8px;
-    background: #ffcdd2;
-    color: #c62828;
+    padding: 10px;
+    background: color-mix(in srgb, var(--semantic-danger) 15%, var(--panel-bg));
+    color: var(--semantic-danger);
+    border: 1px solid var(--semantic-danger);
     border-radius: 4px;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     font-weight: bold;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .generator-modal__actions {
@@ -296,7 +313,7 @@
     padding: 6px;
 }
 
-/* NEW: Extracted Inline Styles */
+/* Extracted Inline Styles */
 .generator-modal__spillover-section {
     border-top: 1px solid var(--border);
     padding-top: 8px;
@@ -402,6 +419,10 @@
 .generator-modal__evo-label {
     font-size: 0.75rem;
     color: var(--text-muted);
+}
+
+.generator-modal__evo-label--bold {
+    font-weight: bold;
 }
 
 /* Mobile Overrides */

@@ -31,6 +31,10 @@
     padding-bottom: 8px;
     margin-bottom: 12px;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .generator-preview__scroll-container {
@@ -144,11 +148,6 @@
     padding: 6px;
 }
 
-.generator-preview__btn-reroll {
-    background: #1976d2;
-    border-color: #1976d2;
-}
-
 /* Spinner Component Styles */
 .generator-preview-spinner {
     display: flex;
@@ -164,6 +163,17 @@
     color: var(--text-main);
     padding: 2px 6px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.generator-preview-spinner__btn:hover {
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
 }
 
 .generator-preview-spinner__value {
@@ -207,6 +217,9 @@
     font-weight: bold;
     cursor: pointer;
     padding: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Tooltip Modal Styles */
@@ -244,6 +257,10 @@
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .generator-preview-tooltip__title--center {

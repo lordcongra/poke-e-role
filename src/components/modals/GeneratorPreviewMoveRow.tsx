@@ -1,3 +1,4 @@
+import { Info } from 'lucide-react';
 import type { TempMove } from '../../store/storeTypes';
 import './GeneratorPreviewModal.css';
 
@@ -33,7 +34,7 @@ export function GeneratorPreviewMoveRow({
                 [{move.cat.substring(0, 4)}] A:{accuracyPool} | D:{damagePool}
             </span>
             <button type="button" className="generator-preview-move__tooltip-btn" onClick={handleTooltipClick}>
-                ?
+                <Info size={14} />
             </button>
         </div>
     );

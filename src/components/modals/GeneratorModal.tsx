@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Dices, AlertTriangle, XCircle, Hourglass } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { generateBuild } from '../../utils/generatorUtils';
 import type { TempBuild } from '../../store/storeTypes';
@@ -40,7 +41,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                 alert(`Failed to generate build. Check console for details.`);
             }
         } catch (error) {
-            console.error('Auto-Build Error:', error);
+            console.error('[GeneratorModal] Auto-Build Error:', error);
             alert(
                 `An error occurred while generating the build: ${error instanceof Error ? error.message : 'Unknown Error'}`
             );
@@ -65,7 +66,9 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
     return (
         <div className="generator-modal__overlay">
             <div className="generator-modal__content">
-                <h3 className="generator-modal__title">🎲 Auto-Build Pokémon</h3>
+                <h3 className="generator-modal__title modal-title-with-icon">
+                    <Dices size={20} /> Auto-Build Pokémon
+                </h3>
                 <p className="generator-modal__desc">Generate stats, skills, and moves based on current Rank.</p>
 
                 <div className="generator-modal__form-group">
@@ -347,7 +350,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                 />
                             </label>
 
-                            <label className="generator-modal__checkbox-label" style={{ marginTop: '4px' }}>
+                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced">
                                 <input
                                     type="checkbox"
                                     checked={config.includePmd}
@@ -356,7 +359,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                 />
                                 Include Knowledge Skills (Lore, Medicine, etc.)
                             </label>
-                            <label className="generator-modal__checkbox-label" style={{ marginTop: '4px' }}>
+                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced">
                                 <input
                                     type="checkbox"
                                     checked={config.includeCustom}
@@ -366,7 +369,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                 Include Custom Homebrew Skills
                             </label>
 
-                            <label className="generator-modal__checkbox-label" style={{ marginTop: '4px' }}>
+                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced">
                                 <input
                                     type="checkbox"
                                     checked={config.randomizeSpecies}
@@ -451,7 +454,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                 </div>
                             )}
 
-                            <label className="generator-modal__checkbox-label" style={{ marginTop: '4px' }}>
+                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced">
                                 <input
                                     type="checkbox"
                                     checked={config.allowOverrank}
@@ -471,7 +474,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                             {config.allowOverrank && (
                                 <div className="generator-modal__evo-group">
                                     <div className="generator-modal__evo-box generator-modal__evo-row">
-                                        <span className="generator-modal__evo-label" style={{ fontWeight: 'bold' }}>
+                                        <span className="generator-modal__evo-label generator-modal__evo-label--bold">
                                             Max Ranks Above
                                         </span>
                                         <NumberSpinner
@@ -481,7 +484,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                             max={7}
                                         />
                                     </div>
-                                    <label className="generator-modal__checkbox-label" style={{ fontSize: '0.75rem' }}>
+                                    <label className="generator-modal__checkbox-label generator-modal__checkbox-label--small">
                                         <input
                                             type="checkbox"
                                             checked={config.allowPreEvoOverrank}
@@ -498,7 +501,8 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                 </div>
 
                 <div className="generator-modal__warning">
-                    ⚠️ WARNING: This will completely overwrite this token's current stats, skills, and moves!
+                    <AlertTriangle size={18} /> WARNING: This will completely overwrite this token's current stats,
+                    skills, and moves!
                 </div>
 
                 <div className="generator-modal__actions">
@@ -507,7 +511,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                         onClick={onClose}
                         className="action-button action-button--dark generator-modal__btn"
                     >
-                        Cancel
+                        <XCircle size={16} /> Cancel
                     </button>
                     <button
                         type="button"
@@ -515,7 +519,15 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                         disabled={isGenerating || (!config.randomizeSpecies && !speciesName)}
                         className="action-button action-button--red generator-modal__btn"
                     >
-                        {isGenerating ? '⏳' : '🎲 Generate'}
+                        {isGenerating ? (
+                            <>
+                                <Hourglass size={16} /> Generating...
+                            </>
+                        ) : (
+                            <>
+                                <Dices size={16} /> Generate
+                            </>
+                        )}
                     </button>
                 </div>
             </div>

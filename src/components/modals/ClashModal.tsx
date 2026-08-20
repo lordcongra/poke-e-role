@@ -1,3 +1,4 @@
+import { Swords, Dumbbell, Sparkles, X } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { CombatStat, Skill } from '../../types/enums';
 import {
@@ -37,7 +38,9 @@ export function ClashModal({ onClose }: ClashModalProps) {
     return (
         <div className="tracker-modal__overlay">
             <div className="tracker-modal__content tracker-modal__content--clash">
-                <h3 className="tracker-modal__title">⚔️ Select Clash Type</h3>
+                <h3 className="tracker-modal__title modal-title-with-icon">
+                    <Swords size={20} /> Select Clash Type
+                </h3>
                 <p className="tracker-modal__description">Which attribute are you using to Clash?</p>
                 <div className="tracker-modal__clash-actions">
                     <button
@@ -45,21 +48,21 @@ export function ClashModal({ onClose }: ClashModalProps) {
                         onClick={() => handleClashRoll(true)}
                         className="action-button action-button--dark tracker-modal__clash-btn-phys"
                     >
-                        💪 Physical (STR)
+                        <Dumbbell size={16} /> Physical (STR)
                     </button>
                     <button
                         type="button"
                         onClick={() => handleClashRoll(false)}
                         className="action-button action-button--dark tracker-modal__clash-btn-spec"
                     >
-                        ✨ Special (SPE)
+                        <Sparkles size={16} /> Special (SPE)
                     </button>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="action-button action-button--dark tracker-modal__clash-btn-cancel"
+                        className="action-button action-button--ghost tracker-modal__clash-btn-cancel"
                     >
-                        Cancel
+                        <X size={16} /> Cancel
                     </button>
                 </div>
             </div>

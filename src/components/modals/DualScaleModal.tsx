@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Scale, CheckCircle } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import './DualScaleModal.css';
 
@@ -34,7 +35,9 @@ export function DualScaleModal() {
     return (
         <div className="dual-scale__overlay">
             <div className="dual-scale__content">
-                <h3 className="dual-scale__title">⚖️ Move Options Detected</h3>
+                <h3 className="dual-scale__title modal-title-with-icon">
+                    <Scale size={20} /> Move Options Detected
+                </h3>
                 <p className="dual-scale__desc">
                     <b>{pendingDualScale.moveName}</b> has variable scaling or ambiguous options. Please select how you
                     want to roll it:
@@ -109,8 +112,12 @@ export function DualScaleModal() {
                 )}
 
                 <div className="dual-scale__actions">
-                    <button type="button" className="action-button dual-scale__btn" onClick={handleConfirm}>
-                        Apply Choice
+                    <button
+                        type="button"
+                        className="action-button action-button--theme dual-scale__btn"
+                        onClick={handleConfirm}
+                    >
+                        <CheckCircle size={16} /> Apply Choice
                     </button>
                 </div>
             </div>

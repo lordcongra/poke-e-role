@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
+import { Gift, X, Sparkles, Backpack, Wrench, Hourglass, Dices } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { loadLocalDataset } from '../../utils/api';
 import { generateLootPool, rollLootItem, formatCamelCase, type PoolItem } from '../../utils/lootGeneratorLogic';
@@ -147,7 +148,7 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
     const handleGenerate = async () => {
         const index = await loadLocalDataset();
         if (!index) {
-            if (OBR.isAvailable) OBR.notification.show('⚠️ Local dataset not found.', 'ERROR');
+            if (OBR.isAvailable) OBR.notification.show('Local dataset not found.', 'ERROR');
             return;
         }
 
@@ -162,7 +163,7 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
         );
 
         if (masterPool.length === 0) {
-            if (OBR.isAvailable) OBR.notification.show('⚠️ No items match these filters!', 'WARNING');
+            if (OBR.isAvailable) OBR.notification.show('No items match these filters!', 'WARNING');
             return;
         }
 
@@ -173,8 +174,8 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
             const item = await rollLootItem(masterPool, ignoreWeighting);
             setGeneratedItem(item);
         } catch (error) {
-            console.error('Loot Generator Error:', error);
-            if (OBR.isAvailable) OBR.notification.show('⚠️ Error generating item.', 'ERROR');
+            console.error('[ItemGenerator] Loot Generator Error:', error);
+            if (OBR.isAvailable) OBR.notification.show('Error generating item.', 'ERROR');
         } finally {
             setIsGenerating(false);
         }
@@ -188,9 +189,11 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
             <div className="item-generator-modal__overlay">
                 <div className="item-generator-modal__content">
                     <div className="item-generator-modal__header">
-                        <h3 className="item-generator-modal__title">🎁 Random Loot Generator</h3>
+                        <h3 className="item-generator-modal__title">
+                            <Gift size={20} /> Random Loot Generator
+                        </h3>
                         <button onClick={onClose} className="item-generator-modal__close-btn" title="Close">
-                            X
+                            <X size={20} strokeWidth={2.5} />
                         </button>
                     </div>
                     <p className="item-generator-modal__desc">Select one or more categories to build your loot pool.</p>
@@ -213,7 +216,9 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
                     </div>
 
                     <div className="item-generator-modal__rarity-container">
-                        <div className="item-generator-modal__rarity-header">✨ Drop Rarity Filters</div>
+                        <div className="item-generator-modal__rarity-header">
+                            <Sparkles size={16} /> Drop Rarity Filters
+                        </div>
                         <div className="item-generator-modal__rarity-grid">
                             {['Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary'].map((rarity) => (
                                 <label key={rarity} className="item-generator-modal__checkbox-label">
@@ -248,7 +253,9 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
 
                     <div className="item-generator-modal__filters-container">
                         <div className="item-generator-modal__filter-group">
-                            <div className="item-generator-modal__filter-group-title">🎒 Base Items</div>
+                            <div className="item-generator-modal__filter-group-title">
+                                <Backpack size={18} /> Base Items
+                            </div>
                             {basePockets.length === 0 && <div className="item-generator-modal__desc">Loading...</div>}
                             {basePockets.map((group) => (
                                 <ItemGeneratorPocketGroup
@@ -275,7 +282,9 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
                         />
 
                         <div className="item-generator-modal__filter-group">
-                            <div className="item-generator-modal__filter-group-title">🛠️ Custom Items</div>
+                            <div className="item-generator-modal__filter-group-title">
+                                <Wrench size={18} /> Custom Items
+                            </div>
                             {customPockets.length === 0 && (
                                 <div className="item-generator-modal__desc">No Custom Items available.</div>
                             )}
@@ -300,7 +309,15 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
                             disabled={isGenerating || !isAnySelected || !isAnyRaritySelected}
                             className="action-button action-button--red item-generator-modal__btn"
                         >
-                            {isGenerating ? '⏳ Generating...' : '🎲 Generate'}
+                            {isGenerating ? (
+                                <>
+                                    <Hourglass size={18} /> Generating...
+                                </>
+                            ) : (
+                                <>
+                                    <Dices size={18} /> Generate
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>

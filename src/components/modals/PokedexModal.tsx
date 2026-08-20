@@ -1,3 +1,4 @@
+import { Book, X, Megaphone, XCircle } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { broadcastInfo } from '../../utils/diceRoller';
 import './PokedexModal.css';
@@ -19,9 +20,11 @@ export function PokedexModal({ onClose }: PokedexModalProps) {
         <div className="pokedex-modal__overlay">
             <div className="pokedex-modal__content">
                 <div className="pokedex-modal__header">
-                    <h3 className="pokedex-modal__title">📖 Pokédex Data</h3>
+                    <h3 className="pokedex-modal__title modal-title-with-icon">
+                        <Book size={20} /> Pokédex Data
+                    </h3>
                     <button onClick={onClose} className="pokedex-modal__close-btn" title="Close">
-                        X
+                        <X size={20} strokeWidth={2.5} />
                     </button>
                 </div>
 
@@ -54,14 +57,10 @@ export function PokedexModal({ onClose }: PokedexModalProps) {
 
                 <div className="pokedex-modal__actions">
                     <button className="action-button action-button--dark pokedex-modal__btn" onClick={onClose}>
-                        Close
+                        <XCircle size={16} /> Close
                     </button>
-                    <button
-                        className="action-button pokedex-modal__btn"
-                        style={{ backgroundColor: '#1565c0', borderColor: '#1565c0', color: 'white' }}
-                        onClick={handleBroadcast}
-                    >
-                        📢 Broadcast
+                    <button className="action-button action-button--theme pokedex-modal__btn" onClick={handleBroadcast}>
+                        <Megaphone size={16} /> Broadcast
                     </button>
                 </div>
             </div>

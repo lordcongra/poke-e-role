@@ -53,11 +53,17 @@
     cursor: pointer;
     padding: 0 6px;
     border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+        color 0.2s ease,
+        background 0.2s ease;
 }
 
 .item-generator-modal__close-btn:hover {
-    background: rgba(255, 0, 0, 0.1);
-    color: var(--primary);
+    background: color-mix(in srgb, var(--semantic-danger) 10%, transparent);
+    color: var(--semantic-danger);
 }
 
 .item-generator-modal__desc {
@@ -209,6 +215,9 @@
     color: var(--primary);
     font-size: 0.9rem;
     margin-right: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: transform 0.2s ease;
 }
 
@@ -230,6 +239,10 @@
     padding-left: 5px;
     border-left: none;
     margin-left: 0;
+}
+
+.item-generator-modal__checkbox-list--spaced {
+    margin-top: 15px;
 }
 
 .item-generator-modal__checkbox-grid {
@@ -322,12 +335,15 @@
 
 .item-generator-modal__pill-close {
     margin-left: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .item-generator-modal__pill:hover {
-    background: #ffcdd2;
-    color: #c62828 !important;
-    border-color: #c62828 !important;
+    background: color-mix(in srgb, var(--semantic-danger) 15%, var(--panel-bg));
+    color: var(--semantic-danger) !important;
+    border-color: var(--semantic-danger) !important;
     transform: scale(1.05);
 }
 

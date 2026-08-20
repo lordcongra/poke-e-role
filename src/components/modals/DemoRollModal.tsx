@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Clapperboard, CheckCircle, XCircle } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import './DemoRollModal.css';
 
@@ -51,7 +52,9 @@ export function DemoRollModal() {
     return (
         <div className="demo-roll-modal__overlay">
             <div className="demo-roll-modal__content">
-                <h3 className="demo-roll-modal__title">🎬 GM Demo Mode Intercept</h3>
+                <h3 className="demo-roll-modal__title">
+                    <Clapperboard size={20} /> GM Demo Mode
+                </h3>
                 <p className="demo-roll-modal__desc">
                     Rolling: <strong>{notation}</strong> <br />({numDice} Dice | Threshold: {successThreshold} | Flat
                     Mod: {flatMod > 0 ? `+${flatMod}` : flatMod})
@@ -106,10 +109,10 @@ export function DemoRollModal() {
 
                 <div className="demo-roll-modal__actions">
                     <button className="action-button action-button--dark demo-roll-modal__btn" onClick={handleCancel}>
-                        Cancel Roll
+                        <XCircle size={16} /> Cancel
                     </button>
                     <button className="action-button action-button--red demo-roll-modal__btn" onClick={handleConfirm}>
-                        Confirm Fake Roll
+                        <CheckCircle size={16} /> Confirm Fake Roll
                     </button>
                 </div>
             </div>

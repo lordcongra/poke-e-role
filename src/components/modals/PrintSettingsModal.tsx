@@ -1,3 +1,4 @@
+import { Printer, X } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import './PrintSettingsModal.css';
 
@@ -23,9 +24,11 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
         <div className="print-settings__overlay">
             <div className="print-settings__content print-settings__content--expanded">
                 <div className="print-settings__header-row">
-                    <h3 className="print-settings__title">🖨️ Print Settings</h3>
+                    <h3 className="print-settings__title modal-title-with-icon">
+                        <Printer size={20} /> Print Settings
+                    </h3>
                     <button onClick={onClose} className="print-settings__close-x" title="Close">
-                        X
+                        <X size={20} strokeWidth={2.5} />
                     </button>
                 </div>
                 <p className="print-settings__desc">Customize how your sheet will look on paper.</p>
@@ -172,7 +175,7 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         />
                         Hide Age (Gender Only)
                     </label>
-                    <label className="print-settings__checkbox-label" style={{ gridColumn: 'span 2' }}>
+                    <label className="print-settings__checkbox-label print-settings__checkbox-label--full">
                         <input
                             type="checkbox"
                             checked={printConfig.compactMode}
@@ -181,7 +184,7 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         />
                         Compact Layout (Fit More on Page 1)
                     </label>
-                    <label className="print-settings__checkbox-label" style={{ gridColumn: 'span 2' }}>
+                    <label className="print-settings__checkbox-label print-settings__checkbox-label--full">
                         <input
                             type="checkbox"
                             checked={printConfig.coreSkillsOnly}
@@ -190,7 +193,7 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         />
                         Display Core 3 Skill Categories Only (Centered)
                     </label>
-                    <label className="print-settings__checkbox-label" style={{ gridColumn: 'span 2' }}>
+                    <label className="print-settings__checkbox-label print-settings__checkbox-label--full">
                         <input
                             type="checkbox"
                             checked={printConfig.showOnlyActiveAbility}
@@ -242,7 +245,7 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         onClick={handlePrint}
                         className="action-button action-button--dark print-settings__btn"
                     >
-                        🖨️ Print Sheet
+                        <Printer size={18} /> Print Sheet
                     </button>
                 </div>
             </div>

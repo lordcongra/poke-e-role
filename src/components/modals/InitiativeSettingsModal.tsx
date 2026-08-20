@@ -1,3 +1,4 @@
+import { Settings, X } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { isStandaloneMode } from '../../utils/storageAdapter';
@@ -11,9 +12,11 @@ export function InitiativeSettingsModal({ onClose }: { onClose: () => void }) {
         <div className="init-settings__overlay">
             <div className="init-settings__content">
                 <div className="init-settings__header-row">
-                    <h3 className="init-settings__title">⚙️ Initiative Settings</h3>
+                    <h3 className="init-settings__title">
+                        <Settings size={20} /> Initiative Settings
+                    </h3>
                     <button onClick={onClose} className="init-settings__close-x" title="Close">
-                        X
+                        <X size={20} strokeWidth={2.5} />
                     </button>
                 </div>
                 <p className="init-settings__description">
@@ -146,10 +149,10 @@ export function InitiativeSettingsModal({ onClose }: { onClose: () => void }) {
 
                             <hr className="init-settings__divider" />
 
-                            <p className="init-settings__hint" style={{ marginBottom: 0, paddingBottom: 0 }}>
+                            <p className="init-settings__hint init-settings__hint--compact">
                                 Frame Max Size Boundaries (0 = Auto)
                             </p>
-                            <div className="init-settings__offset-container" style={{ marginTop: '0' }}>
+                            <div className="init-settings__offset-container init-settings__offset-container--compact">
                                 <div className="init-settings__offset-group">
                                     <span className="init-settings__offset-text">Max Width (px):</span>
                                     <div className="init-settings__offset-controls">

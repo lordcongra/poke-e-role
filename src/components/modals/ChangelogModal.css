@@ -49,16 +49,20 @@
     background: transparent;
     border: none;
     color: var(--text-muted);
-    font-weight: bold;
-    font-size: 1.2rem;
     cursor: pointer;
-    padding: 0 6px;
+    padding: 4px;
     border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+        color 0.2s ease,
+        background 0.2s ease;
 }
 
 .changelog-modal__close-x:hover {
     background: rgba(255, 0, 0, 0.1);
-    color: var(--primary);
+    color: var(--semantic-danger);
 }
 
 .changelog-modal__body {

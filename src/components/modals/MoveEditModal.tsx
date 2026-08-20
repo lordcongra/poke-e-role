@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Pencil, XCircle, Megaphone, Tags } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { TagBuilderModal } from './TagBuilderModal';
 import { broadcastInfo } from '../../utils/diceRoller';
@@ -20,7 +21,9 @@ export function MoveEditModal({ moveId, onClose }: MoveEditModalProps) {
     return (
         <div className="move-edit__overlay">
             <div className="move-edit__content">
-                <h3 className="move-edit__title">{move.name || 'Move Name'}</h3>
+                <h3 className="move-edit__title modal-title-with-icon">
+                    <Pencil size={20} /> {move.name || 'Move Name'}
+                </h3>
 
                 <textarea
                     className="move-edit__textarea"
@@ -35,25 +38,24 @@ export function MoveEditModal({ moveId, onClose }: MoveEditModalProps) {
                         className="action-button action-button--dark move-edit__btn-close"
                         onClick={onClose}
                     >
-                        Close
+                        <XCircle size={16} /> Close
                     </button>
                     <button
                         type="button"
-                        className="action-button move-edit__btn-tags"
-                        style={{ backgroundColor: '#1565c0', borderColor: '#1565c0', color: 'white' }}
+                        className="action-button action-button--theme move-edit__btn-broadcast"
                         onClick={() => {
                             broadcastInfo(move.name || 'Move', move.desc || 'No description provided.');
                             onClose();
                         }}
                     >
-                        📢 Broadcast
+                        <Megaphone size={16} /> Broadcast
                     </button>
                     <button
                         type="button"
                         className="action-button action-button--dark move-edit__btn-tags"
                         onClick={() => setShowTagBuilder(true)}
                     >
-                        🏷️ Tags
+                        <Tags size={16} /> Tags
                     </button>
                 </div>
             </div>

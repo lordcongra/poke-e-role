@@ -1,3 +1,4 @@
+import { ChevronRight } from 'lucide-react';
 import './ItemGeneratorModal.css';
 
 interface ItemCategory {
@@ -56,7 +57,7 @@ export function ItemGeneratorPocketGroup({
                 <span
                     className={`item-generator-modal__pocket-chevron ${expandedPockets[uniqueKey] ? 'item-generator-modal__pocket-chevron--open' : ''}`}
                 >
-                    ▶
+                    <ChevronRight size={16} />
                 </span>
                 <span className="item-generator-modal__pocket-title">{pocketGroup.label}</span>
             </div>

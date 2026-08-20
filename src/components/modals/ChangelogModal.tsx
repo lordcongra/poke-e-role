@@ -1,3 +1,4 @@
+import { Megaphone, X, PartyPopper } from 'lucide-react';
 import { CHANGELOG_DATA, CURRENT_VERSION } from '../../data/changelog';
 import './ChangelogModal.css';
 
@@ -10,9 +11,11 @@ export function ChangelogModal({ onClose }: ChangelogModalProps) {
         <div className="changelog-modal__overlay">
             <div className="changelog-modal__content">
                 <div className="changelog-modal__header">
-                    <h3 className="changelog-modal__title">📢 What's New in v{CURRENT_VERSION}</h3>
+                    <h3 className="changelog-modal__title">
+                        <Megaphone size={20} /> What's New in v{CURRENT_VERSION}
+                    </h3>
                     <button onClick={onClose} className="changelog-modal__close-x" title="Close">
-                        X
+                        <X size={20} strokeWidth={2.5} />
                     </button>
                 </div>
 
@@ -37,7 +40,7 @@ export function ChangelogModal({ onClose }: ChangelogModalProps) {
                         className="action-button action-button--dark changelog-modal__btn"
                         onClick={onClose}
                     >
-                        Wahoo!
+                        <PartyPopper size={18} /> Wahoo!
                     </button>
                 </div>
             </div>

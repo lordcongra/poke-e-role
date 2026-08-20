@@ -17,18 +17,22 @@
     padding: 20px;
     border-radius: 8px;
     width: 320px;
-    border: 2px solid #e65100;
+    border: 2px solid var(--primary);
     color: var(--text-main);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
 }
 
 .demo-roll-modal__title {
     margin-top: 0;
-    color: #e65100;
+    color: var(--primary);
     font-size: 1.2rem;
     border-bottom: 1px solid var(--border);
     padding-bottom: 8px;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .demo-roll-modal__desc {
@@ -54,12 +58,19 @@
     border-radius: 4px;
     font-weight: bold;
     font-size: 0.8rem;
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease;
 }
 
 .demo-roll-modal__tab--active {
-    background: #e65100;
+    background: var(--primary);
     color: white;
-    border-color: #e65100;
+    border-color: var(--primary);
+    text-shadow:
+        1px 1px 2px rgba(0, 0, 0, 0.8),
+        0 1px 4px rgba(0, 0, 0, 0.6);
 }
 
 .demo-roll-modal__body {
@@ -87,6 +98,15 @@
     font-size: 1rem;
     text-align: center;
     box-sizing: border-box;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.demo-roll-modal__input:focus {
+    border-color: var(--primary);
+    background-color: var(--panel-alt);
+    outline: none;
 }
 
 .demo-roll-modal__subtext {

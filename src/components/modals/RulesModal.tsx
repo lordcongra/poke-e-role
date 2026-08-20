@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ScrollText, X, XCircle } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { isStandaloneMode } from '../../utils/storageAdapter';
@@ -14,9 +15,11 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
         <div className="rules-modal__overlay">
             <div className="rules-modal__content">
                 <div className="rules-modal__header-row">
-                    <h3 className="rules-modal__title">📜 Room Rules & Permissions</h3>
+                    <h3 className="rules-modal__title modal-title-with-icon">
+                        <ScrollText size={20} /> Room Rules & Permissions
+                    </h3>
                     <button onClick={onClose} className="rules-modal__close-x" title="Close">
-                        X
+                        <X size={20} strokeWidth={2.5} />
                     </button>
                 </div>
 
@@ -76,8 +79,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                 onClick={() =>
                                     setModalConfig({
                                         title: 'Pain Penalties',
-                                        content:
-                                            'Automatically applies -1 or -2 success penalties to rolls when at low HP.'
+                                        content: 'Automatically applies -1 or -2 success penalties to rolls when at low HP.'
                                     })
                                 }
                             />
@@ -191,6 +193,14 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                         </>
                     )}
                 </div>
+
+                <button
+                    type="button"
+                    className="action-button action-button--dark rules-modal__close-btn"
+                    onClick={onClose}
+                >
+                    <XCircle size={18} /> Close
+                </button>
             </div>
 
             {modalConfig && (
@@ -201,10 +211,11 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                         <div className="rules-info__text">{modalConfig.content}</div>
                         <div className="rules-info__actions">
                             <button
+                                type="button"
                                 className="action-button action-button--dark rules-modal__close-btn"
                                 onClick={() => setModalConfig(null)}
                             >
-                                Close
+                                <XCircle size={18} /> Close
                             </button>
                         </div>
                     </div>
