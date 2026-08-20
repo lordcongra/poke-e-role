@@ -18,8 +18,9 @@
     /* 2. Determine our driving colors */
     --primary: var(--dynamic-type-color, var(--base-primary));
 
-    /* 🔥 Use the injected secondary override OR fall back to the perfectly harmonized color mix */
-    --secondary: var(--dynamic-secondary-color, color-mix(in srgb, var(--primary) 45%, #757575));
+    /* 🔥 Prettier-Safe Secondary Fallback: Extracted to prevent Vite line-break crashes */
+    --secondary-fallback: color-mix(in srgb, var(--primary) 80%, #000000);
+    --secondary: var(--dynamic-secondary-color, var(--secondary-fallback));
 
     /* 3. LIGHT MODE COLOR MIXING (Subtle tints) */
     --bg: color-mix(in srgb, var(--primary) 5%, var(--base-bg));
@@ -54,14 +55,15 @@ html[data-theme='dark'],
     /* 2. Determine our driving colors */
     --primary: var(--dynamic-type-color, var(--base-primary-dark));
 
-    /* 🔥 Dark mode secondary fallback */
-    --secondary: var(--dynamic-secondary-color, color-mix(in srgb, var(--primary) 40%, #555555));
+    /* 🔥 Dark Mode Prettier-Safe Fallback: 60/40 mix with white for higher contrast on pale types like Steel */
+    --secondary-fallback: color-mix(in srgb, var(--primary) 60%, #ffffff);
+    --secondary: var(--dynamic-secondary-color, var(--secondary-fallback));
 
-    /* 3. DARK MODE COLOR MIXING (Rich, glassy tints) */
-    --bg: color-mix(in srgb, var(--primary) 12%, var(--base-bg-dark));
-    --panel-bg: color-mix(in srgb, var(--primary) 6%, var(--base-panel-dark));
-    --panel-alt: color-mix(in srgb, var(--primary) 12%, var(--base-panel-alt-dark));
-    --border: color-mix(in srgb, var(--primary) 25%, var(--base-border-dark));
+    /* 3. DARK MODE COLOR MIXING (Pushed percentages higher so muted types bleed through more) */
+    --bg: color-mix(in srgb, var(--primary) 16%, var(--base-bg-dark));
+    --panel-bg: color-mix(in srgb, var(--primary) 10%, var(--base-panel-dark));
+    --panel-alt: color-mix(in srgb, var(--primary) 16%, var(--base-panel-alt-dark));
+    --border: color-mix(in srgb, var(--primary) 30%, var(--base-border-dark));
 
     --dark: #888;
     --text-main: #e0e0e0;
