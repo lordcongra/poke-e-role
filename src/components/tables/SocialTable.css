@@ -8,9 +8,15 @@
 }
 
 .social-table__statistic-label {
-    color: #111111;
+    color: #ffffff;
     font-weight: bold;
     width: 60px;
+    text-shadow:
+        -1px -1px 0 rgba(0, 0, 0, 0.4),
+        1px -1px 0 rgba(0, 0, 0, 0.4),
+        -1px 1px 0 rgba(0, 0, 0, 0.4),
+        1px 1px 0 rgba(0, 0, 0, 0.4),
+        0px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .social-table__total-cell {

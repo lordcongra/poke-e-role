@@ -45,7 +45,6 @@ export function TypeMatchups() {
         stringsToParse.push(abilityText.toLowerCase());
     }
 
-    // Parse passive tags from the active Custom Form
     if (activeTransformation === 'Custom' && activeFormId) {
         const activeForm = roomCustomForms.find((f) => f.id === activeFormId);
         if (activeForm && activeForm.tags) {
@@ -61,11 +60,15 @@ export function TypeMatchups() {
             <div className="type-matchups__group-row">
                 <span className="type-matchups__group-label">{label}</span>
                 <div className="type-matchups__pill-container">
-                    {types.map((t) => (
-                        <span key={t} className="type-matchups__pill" style={{ background: ALL_COLORS[t] || '#777' }}>
-                            {t}
-                        </span>
-                    ))}
+                    {types.map((t) => {
+                        const bgColor = ALL_COLORS[t] || '#777';
+
+                        return (
+                            <span key={t} className="type-matchups__pill" style={{ background: bgColor }}>
+                                {t}
+                            </span>
+                        );
+                    })}
                 </div>
             </div>
         );

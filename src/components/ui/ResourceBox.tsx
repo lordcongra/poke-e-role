@@ -1,3 +1,4 @@
+// src/components/ui/ResourceBox.tsx
 import { NumberSpinner } from './NumberSpinner';
 import { Shield, Sparkles, X } from 'lucide-react';
 import './UI.css';

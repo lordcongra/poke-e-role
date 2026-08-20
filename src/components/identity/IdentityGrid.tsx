@@ -70,10 +70,13 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: Ide
     );
 
     const getTypeTextProps = (type: string) => {
-        const lightTypes = ['Bug', 'Electric', 'Normal', 'Flying', 'Ice', 'Steel', 'Fairy', 'Grass'];
-        if (!type || type === 'None') return { color: 'inherit', textShadow: 'none' };
-        if (lightTypes.includes(type)) return { color: '#111', textShadow: 'none' };
-        return { color: 'white', textShadow: '1px 1px 2px rgba(0,0,0,0.8)' };
+        if (!type || type === 'None') return { color: 'var(--text-main)', textShadow: 'none' };
+
+        return {
+            color: '#ffffff',
+            textShadow:
+                '-1px -1px 0 rgba(0, 0, 0, 0.4), 1px -1px 0 rgba(0, 0, 0, 0.4), -1px 1px 0 rgba(0, 0, 0, 0.4), 1px 1px 0 rgba(0, 0, 0, 0.4), 0px 2px 4px rgba(0, 0, 0, 0.6)'
+        };
     };
 
     return (

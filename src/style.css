@@ -1,3 +1,4 @@
+/* src/style.css */
 /* =========================================
    🌐 GLOBAL VARIABLES & DYNAMIC THEMING
    ========================================= */
@@ -271,13 +272,22 @@ body {
     overflow: hidden;
     background: var(--panel-alt);
 }
-.health-section__header {
+
+/* 🔥 Reverted to white text but added multi-layered stroke/shadow for readability on bright backgrounds */
+.health-section__header,
+.theme-header--primary {
     background: var(--primary);
-    color: white;
+    color: #ffffff;
     font-weight: bold;
     padding: 4px;
     font-size: 0.85rem;
     transition: background 0.3s ease;
+    text-shadow:
+        -1px -1px 0 rgba(0, 0, 0, 0.4),
+        1px -1px 0 rgba(0, 0, 0, 0.4),
+        -1px 1px 0 rgba(0, 0, 0, 0.4),
+        1px 1px 0 rgba(0, 0, 0, 0.4),
+        0px 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 /* =========================================
@@ -304,16 +314,21 @@ body {
     filter: brightness(1.15);
 }
 
+/* Replaced the harsh 360-degree stroke with a clean, deep drop-shadow for buttons */
 .action-button--theme {
     background: var(--primary);
-    color: white;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    color: #ffffff;
+    text-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.8),
+        0 1px 1px rgba(0, 0, 0, 0.6);
 }
 
 .action-button--red {
     background: var(--semantic-danger);
-    color: white;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    color: #ffffff;
+    text-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.8),
+        0 1px 1px rgba(0, 0, 0, 0.6);
 }
 .action-button--red:hover {
     background: var(--semantic-danger-hover);

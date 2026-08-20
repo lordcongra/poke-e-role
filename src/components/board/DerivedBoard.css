@@ -69,11 +69,13 @@
 }
 
 .derived-board__box-header {
-    color: white;
-    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
+    /* 🔥 Dynamically pull the text color (white or dark-blend) */
+    color: var(--text-on-primary);
     text-align: center;
     font-weight: bold;
     padding: 4px;
+    /* 🔥 Removed the heavy black text-shadow so dark text renders cleanly */
+    transition: color 0.3s ease;
 }
 
 .derived-board__box-content {

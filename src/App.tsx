@@ -1,3 +1,4 @@
+// src/App.tsx
 import { useState, useEffect } from 'react';
 import { useOwlbearSync } from './hooks/useOwlbearSync';
 import { useCharacterStore } from './store/useCharacterStore';
@@ -19,6 +20,7 @@ import { Sidebar } from './components/standalone/Sidebar';
 import { InitiativeTracker } from './components/initiative/InitiativeTracker';
 import { RollLogWidget } from './components/standalone/RollLogWidget';
 import { isStandaloneMode } from './utils/storageAdapter';
+import { getContrastColor } from './utils/colorUtils';
 import './App.css';
 import './style.css';
 
@@ -119,7 +121,6 @@ function App() {
     const gmOnlyMatchups = useCharacterStore((state) => state.identity.gmOnlyMatchups);
     const activeTokenId = useCharacterStore((state) => state.tokenId);
 
-    // 🔥 FIX: ADDED SAFETY FALLBACK ARRAY
     const type1 = useCharacterStore((state) => state.identity.type1);
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes || []);
 
@@ -142,18 +143,25 @@ function App() {
 
         if (typeColor) {
             const secondaryColor = getHarmoniousAccentHex(typeColor);
+            const textColor = getContrastColor(typeColor, 0.55); // Dynamic contrast threshold
 
             document.body.style.setProperty('--dynamic-type-color', typeColor);
             document.documentElement.style.setProperty('--dynamic-type-color', typeColor);
 
             document.body.style.setProperty('--dynamic-secondary-color', secondaryColor);
             document.documentElement.style.setProperty('--dynamic-secondary-color', secondaryColor);
+
+            document.body.style.setProperty('--dynamic-text-color', textColor);
+            document.documentElement.style.setProperty('--dynamic-text-color', textColor);
         } else {
             document.body.style.removeProperty('--dynamic-type-color');
             document.documentElement.style.removeProperty('--dynamic-type-color');
 
             document.body.style.removeProperty('--dynamic-secondary-color');
             document.documentElement.style.removeProperty('--dynamic-secondary-color');
+
+            document.body.style.removeProperty('--dynamic-text-color');
+            document.documentElement.style.removeProperty('--dynamic-text-color');
         }
     }, [type1, roomCustomTypes]);
 
