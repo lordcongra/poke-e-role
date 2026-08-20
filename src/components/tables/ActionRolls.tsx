@@ -116,7 +116,7 @@ export function ActionRolls() {
                                 <td className="data-table__cell--middle">
                                     <button
                                         type="button"
-                                        className="action-button action-button--red action-rolls__icon-btn"
+                                        className="action-button action-button--dark action-rolls__icon-btn"
                                         onClick={() => setDeleteRollId(check.id)}
                                     >
                                         <X size={16} />

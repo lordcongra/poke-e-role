@@ -394,7 +394,7 @@ export function TrackerSection() {
                         <button
                             type="button"
                             onClick={resetRound}
-                            className="action-button action-button--red tracker-section__reset-btn"
+                            className="action-button action-button--theme tracker-section__reset-btn"
                         >
                             <RotateCcw size={16} /> Reset
                         </button>

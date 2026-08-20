@@ -96,22 +96,31 @@
     flex-shrink: 0;
 }
 
+/* 🔥 Lock the row height so all buttons align perfectly */
 .identity-header__actions-wrapper {
     display: flex;
     gap: 6px;
-    align-items: center;
+    align-items: stretch;
     justify-content: flex-end;
     width: auto;
+    height: 28px;
 }
 
 .identity-header__btn {
-    flex: 0 0 auto; /* 🔥 STOP EXPANDING! */
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.85rem;
-    padding: 4px 8px;
+    padding: 0 10px;
     white-space: nowrap;
+    box-sizing: border-box;
+}
+
+/* Forces the refresh button to remain perfectly square */
+.identity-header__btn--icon {
+    padding: 0;
+    width: 28px;
 }
 
 .identity-header__actions {
@@ -264,12 +273,6 @@
 
 .identity-header__file-input {
     display: none;
-}
-
-.identity-header__changelog-btn {
-    font-size: 0.75rem;
-    padding: 2px 8px;
-    margin-left: auto;
 }
 
 .identity-header__btn--refresh {

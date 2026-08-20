@@ -17,7 +17,22 @@ import { PrintSettingsModal } from '../modals/PrintSettingsModal';
 import { isStandaloneMode } from '../../utils/storageAdapter';
 import { useObrReady } from '../../hooks/useObrReady';
 import { setActiveTokenId } from '../../utils/obr';
-import { ChevronDown, ArrowLeft, Swords, Settings, Hammer, BookOpen, Package, Bell, Sun, Moon, Save, Upload, Printer, Wand2 } from 'lucide-react';
+import {
+    ChevronDown,
+    ArrowLeft,
+    Swords,
+    Settings,
+    Hammer,
+    BookOpen,
+    Package,
+    Bell,
+    Sun,
+    Moon,
+    Save,
+    Upload,
+    Printer,
+    Wand2
+} from 'lucide-react';
 import './GlobalToolbar.css';
 
 export function GlobalToolbar() {
@@ -453,7 +468,10 @@ export function GlobalToolbar() {
                         )}
                     </div>
 
-                    <div className="global-toolbar__side-tools" style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
+                    <div
+                        className="global-toolbar__side-tools"
+                        style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}
+                    >
                         <div style={{ display: 'flex', gap: '4px' }}>
                             <button
                                 type="button"
@@ -481,7 +499,7 @@ export function GlobalToolbar() {
                                 )}
                             </button>
                         </div>
-                        
+
                         <div style={{ display: 'flex', gap: '4px' }}>
                             <button
                                 type="button"
@@ -521,7 +539,14 @@ export function GlobalToolbar() {
 
             {importData && (
                 <div className="identity-header__modal-overlay" style={{ zIndex: 9999 }}>
-                    <div className="identity-header__modal-content" style={{ background: 'var(--panel-bg)', color: 'var(--text-main)', border: '1px solid var(--border)' }}>
+                    <div
+                        className="identity-header__modal-content"
+                        style={{
+                            background: 'var(--panel-bg)',
+                            color: 'var(--text-main)',
+                            border: '1px solid var(--border)'
+                        }}
+                    >
                         <h3 className="identity-header__modal-title">⚠️ Confirm Import</h3>
                         <p className="identity-header__modal-text" style={{ marginBottom: '16px' }}>
                             Import character data? This will completely overwrite the current token.

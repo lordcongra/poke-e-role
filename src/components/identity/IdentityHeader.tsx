@@ -259,11 +259,12 @@ export function IdentityHeader() {
             >
                 <Dna size={14} /> Formshift
             </button>
+
             <button
                 type="button"
                 onClick={handleRefresh}
                 disabled={isRefreshing}
-                className="action-button action-button--dark identity-header__btn"
+                className="action-button action-button--dark identity-header__btn identity-header__btn--icon"
                 title="Sync and Refresh API Data"
             >
                 <RefreshCw size={14} className={isRefreshing ? 'spin-animation' : ''} />
@@ -272,7 +273,7 @@ export function IdentityHeader() {
             {(isStandaloneMode || (isGm && OBR.isAvailable)) && (
                 <button
                     type="button"
-                    className="action-button action-button--dark identity-header__changelog-btn"
+                    className="action-button action-button--dark identity-header__btn"
                     onClick={handleUpdateTokenImage}
                     title="Change this character's artwork."
                 >

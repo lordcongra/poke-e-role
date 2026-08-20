@@ -271,7 +271,7 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                         <button
                             type="button"
                             onClick={() => onTarget(move)}
-                            className="action-button action-button--red move-row__roll-btn"
+                            className="action-button action-button--theme move-row__roll-btn"
                             title="Roll Damage"
                         >
                             <Swords size={16} />
@@ -292,7 +292,7 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                     <button
                         type="button"
                         onClick={() => onDelete(move.id)}
-                        className="action-button action-button--red move-row__roll-btn"
+                        className="action-button action-button--dark move-row__roll-btn"
                         title="Delete Move"
                     >
                         <X size={16} />

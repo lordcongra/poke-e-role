@@ -30,6 +30,8 @@
     width: 100%;
     padding: 2px;
     border: 1px solid var(--border);
+    background-color: var(--panel-bg);
+    color: var(--text-main);
 }
 
 .action-rolls__icon-btn {

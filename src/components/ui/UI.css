@@ -10,14 +10,29 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-muted);
+    color: var(--text-muted); /* 🔥 Safe baseline that dynamically adapts to light/dark mode */
+    opacity: 0.85;
     cursor: pointer;
     margin-left: 6px;
-    transition: color 0.2s ease;
+    position: relative;
+    transition:
+        color 0.2s ease,
+        opacity 0.2s ease,
+        transform 0.1s ease;
 }
 
 .tooltip-icon:hover {
-    color: var(--primary);
+    color: var(--primary); /* Pops to theme color on hover */
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Surgical vertical alignment tweaks for non-flex text headers */
+.identity-grid__label .tooltip-icon,
+.derived-board__box-header .tooltip-icon,
+.status-box__header-title .tooltip-icon,
+.timer-box__header-title .tooltip-icon {
+    top: 2px;
 }
 
 /* 🔥 NEW THEME UTILITIES FOR GLOBAL USE */
@@ -42,7 +57,10 @@
 .status-box__header .tooltip-icon,
 .timer-box__header .tooltip-icon,
 .derived-board__box-header .tooltip-icon {
-    color: rgba(255, 255, 255, 0.7) !important;
+    color: #ffffff !important;
+    opacity: 0.9 !important;
+    /* 🔥 Apply the exact same drop-shadow as the header text so it pops perfectly! */
+    filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.8)) !important;
 }
 
 .theme-header--primary .tooltip-icon:hover,
@@ -52,6 +70,9 @@
 .timer-box__header .tooltip-icon:hover,
 .derived-board__box-header .tooltip-icon:hover {
     color: #ffffff !important;
+    opacity: 1 !important;
+    filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 1)) !important;
+    transform: scale(1.1);
 }
 
 /* Forcing Status and Timers to obey the secondary theme borders */
