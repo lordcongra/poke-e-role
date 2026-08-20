@@ -18,8 +18,9 @@
     /* 2. Determine our driving colors */
     --primary: var(--dynamic-type-color, var(--base-primary));
 
-    /* 🔥 Secondary is now ALWAYS a perfectly harmonized, muted version of the Primary color! */
-    --secondary: color-mix(in srgb, var(--primary) 80%, #88888888);
+    /* 🔥 Secondary is now a perfectly harmonized, soft, desaturated version of the Primary color! 
+       (Mixing 45% of the primary hue into a solid neutral grey prevents it from looking muddy) */
+    --secondary: color-mix(in srgb, var(--primary) 45%, #757575);
 
     /* 3. LIGHT MODE COLOR MIXING (Subtle tints) */
     --bg: color-mix(in srgb, var(--primary) 5%, var(--base-bg));
@@ -54,8 +55,8 @@ html[data-theme='dark'],
     /* 2. Determine our driving colors */
     --primary: var(--dynamic-type-color, var(--base-primary-dark));
 
-    /* 🔥 Secondary is now ALWAYS a perfectly harmonized, muted version of the Primary color! */
-    --secondary: color-mix(in srgb, var(--primary) 65%, #9e9e9e);
+    /* 🔥 Dark mode secondary mix. Slightly darker grey to keep text contrast legible! */
+    --secondary: color-mix(in srgb, var(--primary) 40%, #555555);
 
     /* 3. DARK MODE COLOR MIXING (Rich, glassy tints) */
     --bg: color-mix(in srgb, var(--primary) 12%, var(--base-bg-dark));
@@ -230,7 +231,10 @@ body {
 .identity-grid__input,
 .identity-grid__select {
     border: none;
-    background-color: rgba(0, 0, 0, 0.001); /* 🔥 Invisible Chrome Dropdown Hack */
+    /* 🔥 Assigning a solid tinted background forces Chrome to paint the dropdown natively in our colors! */
+    background-color: var(--row-even);
+    border-radius: 4px;
+    padding: 2px 4px;
     font-family: inherit;
     width: 100%;
     outline: none;
@@ -238,12 +242,9 @@ body {
     color: var(--text-main);
     min-width: 0;
 }
-[data-theme='dark'] .identity-grid__input,
-[data-theme='dark'] .identity-grid__select {
-    background-color: rgba(255, 255, 255, 0.001); /* 🔥 Invisible Chrome Dropdown Hack */
-}
-.identity-grid__select:focus {
-    background-color: var(--panel-bg);
+.identity-grid__select:focus,
+.identity-grid__input:focus {
+    background-color: var(--panel-alt);
 }
 
 .identity-grid__label {
@@ -376,14 +377,13 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid transparent; /* Removed harsh border */
+    border: 1px solid transparent;
     border-radius: 4px;
     background: var(--panel-bg);
     height: 22px;
 }
 
 .number-spinner__button {
-    /* 🔥 Spinners now dynamically pull a subtle 12% tint of the primary color! */
     background: color-mix(in srgb, var(--primary) 12%, var(--label-bg));
     border: none;
     width: 18px;
@@ -395,7 +395,6 @@ body {
         background 0.2s ease,
         color 0.2s ease;
 
-    /* Vertical centering fix for SVGs */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -466,16 +465,16 @@ body {
 
 .form-input--transparent {
     border: 1px solid transparent;
-    background-color: rgba(0, 0, 0, 0.001); /* 🔥 Invisible Chrome Dropdown Hack */
+    background-color: var(--row-even); /* 🔥 Dropdown fix */
+    border-radius: 4px;
+    padding: 2px 4px;
     width: 90%;
     color: var(--text-main);
-}
-[data-theme='dark'] .form-input--transparent {
-    background-color: rgba(255, 255, 255, 0.001);
 }
 
 .form-input--transparent:focus {
     border: 1px solid var(--primary);
+    background-color: var(--panel-alt);
     outline: none;
 }
 .form-select--bordered {
@@ -486,12 +485,12 @@ body {
 }
 .form-select--transparent {
     border: none;
-    background-color: rgba(0, 0, 0, 0.001); /* 🔥 Invisible Chrome Dropdown Hack */
+    background-color: var(--row-even); /* 🔥 Dropdown fix */
+    border-radius: 4px;
+    padding: 2px 4px;
     color: var(--text-main);
 }
-[data-theme='dark'] .form-select--transparent {
-    background-color: rgba(255, 255, 255, 0.001);
-}
+
 .form-select--transparent:focus {
     background-color: var(--panel-bg);
 }
