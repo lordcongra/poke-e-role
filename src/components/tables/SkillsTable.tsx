@@ -6,6 +6,7 @@ import { CategoryHeader } from '../ui/CategoryHeader';
 import { SkillRow } from './SkillRow';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { parseCombatTags, getAbilityText, calculateSkillTotal } from '../../utils/combatUtils';
+import { Plus, Trash2, AlertTriangle, XCircle } from 'lucide-react';
 import './SkillsTable.css';
 
 export function SkillsTable() {
@@ -157,7 +158,7 @@ export function SkillsTable() {
                                             </div>
                                         </td>
                                         <td className="data-table__cell--middle skill-row__total-cell">
-                                            {calculateSkillTotal(extraSkill.id, fullState, inventoryModifiers)}
+                                            {calculateSkillTotal(extraSkill.id as Skill, fullState, inventoryModifiers)}
                                         </td>
                                     </tr>
                                 ))}
@@ -166,9 +167,9 @@ export function SkillsTable() {
                                         <button
                                             type="button"
                                             onClick={() => setDeleteCategoryId(category.id)}
-                                            className="action-button action-button--red action-button--full-width"
+                                            className="action-button action-button--red skills-table__category-delete-btn"
                                         >
-                                            - Delete "{category.name || 'Category'}"
+                                            <Trash2 size={16} /> Delete "{category.name || 'Category'}"
                                         </button>
                                     </td>
                                 </tr>
@@ -182,13 +183,15 @@ export function SkillsTable() {
                 onClick={addExtraCategory}
                 className="action-button action-button--dark skills-table__add-btn"
             >
-                + Add Skill Category
+                <Plus size={16} /> Add Skill Category
             </button>
 
             {deleteCategoryId && (
                 <div className="skills-table__modal-overlay">
                     <div className="skills-table__modal-content">
-                        <h3 className="skills-table__modal-title">⚠️ Confirm Deletion</h3>
+                        <h3 className="skills-table__modal-title modal-title-with-icon">
+                            <AlertTriangle size={20} /> Confirm Deletion
+                        </h3>
                         <p className="skills-table__modal-text">
                             Are you sure you want to delete this custom skill category?
                         </p>
@@ -198,7 +201,7 @@ export function SkillsTable() {
                                 className="action-button action-button--dark skills-table__modal-btn"
                                 onClick={() => setDeleteCategoryId(null)}
                             >
-                                Cancel
+                                <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
@@ -208,7 +211,7 @@ export function SkillsTable() {
                                     setDeleteCategoryId(null);
                                 }}
                             >
-                                Delete
+                                <Trash2 size={16} /> Delete
                             </button>
                         </div>
                     </div>

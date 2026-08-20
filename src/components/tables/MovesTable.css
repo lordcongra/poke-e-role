@@ -15,7 +15,6 @@
 .moves-table__desktop-modifiers {
     font-size: 0.75rem;
     gap: 6px;
-    /* 🔥 Dynamically pulls theme color instead of boring label-bg */
     background: color-mix(in srgb, var(--primary) 12%, var(--label-bg));
     padding: 2px 6px;
     border-radius: 3px;
@@ -161,7 +160,7 @@
     border-radius: 6px;
     max-width: 300px;
     width: 90%;
-    border: 2px solid #c62828;
+    border: 2px solid var(--semantic-danger);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     text-align: center;
 }
@@ -175,9 +174,13 @@
 }
 
 .moves-table__modal-title {
-    color: #c62828;
+    color: var(--semantic-danger);
     margin-top: 0;
     font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .moves-table__modal-title--tooltip {
@@ -216,6 +219,10 @@
 .moves-table__modal-btn {
     flex: 1;
     padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 .moves-table__modal-btn--full {
     width: 100%;

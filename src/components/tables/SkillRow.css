@@ -12,6 +12,14 @@
     width: 90px;
     padding: 3px 4px;
     outline: none;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.skill-row__input:focus {
+    border-color: var(--primary);
+    background-color: var(--panel-alt);
 }
 
 .skill-row__total-cell {

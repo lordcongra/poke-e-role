@@ -1,7 +1,7 @@
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import type { Trackers } from '../../store/storeTypes';
-import { Dices, Settings } from 'lucide-react';
+import { Dices } from 'lucide-react';
 
 interface MovesTableModifiersProps {
     maxMoves: number;
@@ -19,8 +19,7 @@ export function MovesTableModifiers({
     updateTracker,
     handleGlobalChanceRoll,
     painEnabled,
-    setTooltipInfo,
-    setShowModifiersModal
+    setTooltipInfo
 }: MovesTableModifiersProps) {
     return (
         <>
@@ -123,14 +122,6 @@ export function MovesTableModifiers({
                     </span>
                 )}
             </div>
-
-            <button
-                type="button"
-                className="mobile-only-flex action-button action-button--dark moves-table__mobile-modifiers-btn"
-                onClick={() => setShowModifiersModal(true)}
-            >
-                <Settings size={16} /> Modifiers
-            </button>
         </>
     );
 }

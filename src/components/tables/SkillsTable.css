@@ -15,7 +15,7 @@
 }
 
 .skills-table__negative-remaining {
-    color: #c62828;
+    color: var(--semantic-danger);
 }
 
 .skills-table__max-label {
@@ -55,10 +55,26 @@
     width: 90px;
     padding: 3px 4px;
     outline: none;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.skills-table__custom-skill-input:focus {
+    border-color: var(--primary);
+    background-color: var(--panel-alt);
 }
 
 .skills-table__delete-cell {
     padding: 6px 4px 12px 4px;
+}
+
+.skills-table__category-delete-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
 }
 
 .skills-table__modal-overlay {
@@ -80,15 +96,19 @@
     border-radius: 6px;
     max-width: 300px;
     width: 90%;
-    border: 2px solid #c62828;
+    border: 2px solid var(--semantic-danger);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     text-align: center;
 }
 
 .skills-table__modal-title {
-    color: #c62828;
+    color: var(--semantic-danger);
     margin-top: 0;
     font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .skills-table__modal-text {
@@ -105,9 +125,17 @@
 .skills-table__add-btn {
     width: 100%;
     margin-top: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 
 .skills-table__modal-btn {
     flex: 1;
     padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }

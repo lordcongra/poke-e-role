@@ -1,5 +1,5 @@
 .core-table__header-row {
-    background-color: #555555;
+    background-color: var(--dark);
     color: white;
 }
 
@@ -7,7 +7,7 @@
     padding: 4px;
 }
 
-/* 🔥 Updated text shadow to match the global standard */
+/* Updated text shadow to match the global standard */
 .core-table__statistic-label {
     color: #ffffff;
     font-weight: bold;
@@ -38,11 +38,14 @@
 }
 
 .core-table__negative-remaining {
-    color: #f44336;
+    color: var(--semantic-danger);
 }
 
 .core-table__reset-btn {
     font-size: 0.75rem;
     padding: 2px 6px;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }

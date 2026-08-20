@@ -34,6 +34,7 @@ export function MovesTableLearnset({ learnset }: MovesTableLearnsetProps) {
                 type="button"
                 onClick={() => setShowLearnset(!showLearnset)}
                 className="action-button action-button--dark moves-table__learnset-toggle-btn"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
             >
                 <BookOpen size={16} /> {showLearnset ? 'Hide Learnset' : 'View Learnset'}
             </button>

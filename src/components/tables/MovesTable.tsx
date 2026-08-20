@@ -20,7 +20,7 @@ import { MovesTableModifiers } from './MovesTableModifiers';
 import { MovesTableLearnset } from './MovesTableLearnset';
 import { DualScaleModal } from '../modals/DualScaleModal';
 import { TooltipIcon } from '../ui/TooltipIcon';
-import { Plus } from 'lucide-react';
+import { Plus, AlertTriangle, Trash2, XCircle, Check } from 'lucide-react';
 import './MovesTable.css';
 
 export function MovesTable() {
@@ -147,7 +147,7 @@ export function MovesTable() {
                         <thead>
                             <tr className="moves-table__header-row">
                                 <th className="moves-table__th-checkbox" title="Used this round?">
-                                    ✔
+                                    <Check size={16} />
                                 </th>
                                 <th className="moves-table__th-acc">Acc</th>
                                 <th>
@@ -231,7 +231,9 @@ export function MovesTable() {
             {deleteMoveId && (
                 <div className="moves-table__modal-overlay">
                     <div className="moves-table__modal-content">
-                        <h3 className="moves-table__modal-title">⚠️ Confirm Deletion</h3>
+                        <h3 className="moves-table__modal-title modal-title-with-icon">
+                            <AlertTriangle size={20} /> Confirm Deletion
+                        </h3>
                         <p className="moves-table__modal-text">Are you sure you want to delete this Move?</p>
                         <div className="moves-table__modal-actions">
                             <button
@@ -239,7 +241,7 @@ export function MovesTable() {
                                 className="action-button action-button--dark moves-table__modal-btn"
                                 onClick={() => setDeleteMoveId(null)}
                             >
-                                Cancel
+                                <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
@@ -249,7 +251,7 @@ export function MovesTable() {
                                     setDeleteMoveId(null);
                                 }}
                             >
-                                Delete
+                                <Trash2 size={16} /> Delete
                             </button>
                         </div>
                     </div>

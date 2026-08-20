@@ -136,7 +136,7 @@ export function InventoryItemRow({
                 <button
                     type="button"
                     onClick={() => setDeleteItemId(item.id)}
-                    className="action-button action-button--dark inventory-item__delete-btn"
+                    className="action-button action-button--red inventory-item__delete-btn"
                     title="Delete Item"
                 >
                     <X size={16} />

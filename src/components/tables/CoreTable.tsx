@@ -56,7 +56,7 @@ export function CoreTable() {
             className="action-button action-button--dark core-table__reset-btn"
             title="Reset all Core Buffs & Debuffs to 0"
         >
-            <RotateCcw size={16} /> Reset Buffs
+            <RotateCcw size={14} /> Reset Buffs
         </button>
     );
 

@@ -1,5 +1,5 @@
 .action-rolls__header-row {
-    background-color: #333333;
+    background-color: var(--dark);
     color: white;
     font-size: 0.8rem;
 }
@@ -37,11 +37,18 @@
 .action-rolls__icon-btn {
     padding: 2px 6px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .action-rolls__add-btn {
     width: 100%;
     margin-top: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 
 .action-rolls__modal-overlay {
@@ -63,15 +70,19 @@
     border-radius: 6px;
     max-width: 300px;
     width: 90%;
-    border: 2px solid #c62828;
+    border: 2px solid var(--semantic-danger);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     text-align: center;
 }
 
 .action-rolls__modal-title {
-    color: #c62828;
+    color: var(--semantic-danger);
     margin-top: 0;
     font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .action-rolls__modal-text {
@@ -88,6 +99,10 @@
 .action-rolls__modal-btn {
     flex: 1;
     padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 
 .action-rolls__table {
@@ -110,4 +125,7 @@
 
 .action-rolls__header-btn {
     padding: 2px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }

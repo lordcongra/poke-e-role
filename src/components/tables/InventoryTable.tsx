@@ -8,7 +8,7 @@ import { CollapsingSection } from '../ui/CollapsingSection';
 import { InventoryItemRow } from './InventoryItemRow';
 import { ItemInfoModal } from '../modals/ItemInfoModal';
 import { SmartTagsGuideModal } from '../modals/SmartTagsGuideModal';
-import { AlertTriangle, Plus } from 'lucide-react';
+import { AlertTriangle, Plus, Check, Trash2, XCircle } from 'lucide-react';
 import './InventoryTable.css';
 
 export function InventoryTable() {
@@ -108,7 +108,7 @@ export function InventoryTable() {
                         <thead>
                             <tr className="inventory-table__header-row">
                                 <th className="inventory-table__header-cell-check" title="Equipped?">
-                                    ✔
+                                    <Check size={16} />
                                 </th>
                                 <th className="inventory-table__header-cell-qty">Qty</th>
                                 <th className="inventory-table__header-cell-name">Item Name</th>
@@ -164,7 +164,9 @@ export function InventoryTable() {
             {deleteItemId && (
                 <div className="inventory-table__modal-overlay">
                     <div className="inventory-table__modal-content">
-                        <h3 className="inventory-table__modal-title">⚠️ Confirm Deletion</h3>
+                        <h3 className="inventory-table__modal-title modal-title-with-icon">
+                            <AlertTriangle size={20} /> Confirm Deletion
+                        </h3>
                         <p className="inventory-table__modal-text">Are you sure you want to delete this Item?</p>
                         <div className="inventory-table__modal-actions">
                             <button
@@ -172,7 +174,7 @@ export function InventoryTable() {
                                 className="action-button action-button--dark inventory-table__modal-btn"
                                 onClick={() => setDeleteItemId(null)}
                             >
-                                Cancel
+                                <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
@@ -182,7 +184,7 @@ export function InventoryTable() {
                                     setDeleteItemId(null);
                                 }}
                             >
-                                Delete
+                                <Trash2 size={16} /> Delete
                             </button>
                         </div>
                     </div>

@@ -10,7 +10,7 @@
 }
 
 .inventory-table__header-row {
-    background-color: #333333;
+    background-color: var(--dark);
     color: white;
 }
 
@@ -42,7 +42,7 @@
 }
 
 .inventory-table__warning {
-    color: #d32f2f;
+    color: var(--semantic-danger);
     font-size: 0.75rem;
     font-weight: bold;
     text-align: center;
@@ -81,6 +81,14 @@
     background: var(--input-bg);
     color: var(--text-main);
     outline: none;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.inventory-table__currency-input:focus {
+    border-color: var(--primary);
+    background-color: var(--panel-alt);
 }
 
 .inventory-table__currency-input--tp {
@@ -104,6 +112,15 @@
     box-sizing: border-box;
     background: var(--input-bg);
     color: var(--text-main);
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.inventory-table__notes-area:focus {
+    border-color: var(--primary);
+    background-color: var(--panel-alt);
+    outline: none;
 }
 
 /* Modals */
@@ -126,15 +143,19 @@
     border-radius: 6px;
     max-width: 300px;
     width: 90%;
-    border: 2px solid #c62828;
+    border: 2px solid var(--semantic-danger);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     text-align: center;
 }
 
 .inventory-table__modal-title {
-    color: #c62828;
+    color: var(--semantic-danger);
     margin-top: 0;
     font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .inventory-table__modal-text {
@@ -151,6 +172,10 @@
 .inventory-table__modal-btn {
     flex: 1;
     padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 
 /* Inventory Item Row */
@@ -182,10 +207,13 @@
     background: transparent;
     padding: 0;
     font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .inventory-item__icon-btn--info {
-    color: #1976d2;
+    color: var(--primary);
 }
 
 .inventory-item__icon-btn--tag {
@@ -203,6 +231,15 @@
     background: var(--input-bg);
     padding: 4px;
     min-height: 30px;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.inventory-item__desc-input:focus {
+    border-color: var(--primary);
+    background-color: var(--panel-alt);
+    outline: none;
 }
 
 .inventory-item__sort-container {
@@ -219,14 +256,20 @@
     background: transparent;
     border: none;
     color: var(--text-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .inventory-item__delete-btn {
     cursor: pointer;
-    background: #c62828;
+    background: var(--semantic-danger);
     border: none;
     color: white;
     font-weight: bold;
     padding: 2px 6px;
     border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }

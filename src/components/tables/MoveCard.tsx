@@ -14,7 +14,18 @@ import {
 } from '../../utils/combatUtils';
 import { MoveEditModal } from '../modals/MoveEditModal';
 import { POKEMON_TYPES, TYPE_COLORS } from '../../data/constants';
-import { Target, Tag, Swords, ChevronUp, ChevronDown, X } from 'lucide-react';
+import {
+    Target,
+    Tag,
+    Swords,
+    ChevronUp,
+    ChevronDown,
+    X,
+    AlertTriangle,
+    XCircle,
+    Trash2,
+    PiggyBank
+} from 'lucide-react';
 import './MoveCard.css';
 
 interface MoveCardProps {
@@ -299,7 +310,9 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
             {bankModalOpen && (
                 <div className="moves-table__modal-overlay">
                     <div className="moves-table__modal-content" style={{ width: '340px', maxWidth: '90%' }}>
-                        <h3 className="moves-table__modal-title">⚠️ Banked Dice Detected</h3>
+                        <h3 className="moves-table__modal-title modal-title-with-icon">
+                            <AlertTriangle size={20} /> Banked Dice Detected
+                        </h3>
                         <p className="moves-table__modal-text" style={{ textAlign: 'left' }}>
                             You currently have <strong>{totalBanked}</strong> extra Damage Dice banked from previous
                             rolls.
@@ -314,21 +327,21 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
                                 className="action-button action-button--dark moves-table__modal-btn"
                                 onClick={() => setBankModalOpen(false)}
                             >
-                                Cancel
+                                <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--dark moves-table__modal-btn"
+                                className="action-button action-button--theme moves-table__modal-btn"
                                 onClick={confirmKeepBank}
                             >
-                                Keep Bank
+                                <PiggyBank size={16} /> Keep Bank
                             </button>
                             <button
                                 type="button"
                                 className="action-button action-button--red moves-table__modal-btn"
                                 onClick={confirmWipeBank}
                             >
-                                Clear Bank
+                                <Trash2 size={16} /> Clear Bank
                             </button>
                         </div>
                     </div>

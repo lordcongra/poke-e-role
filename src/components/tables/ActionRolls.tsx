@@ -4,7 +4,7 @@ import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { rollSkillCheck, rollDicePlus } from '../../utils/combatUtils';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { NumberSpinner } from '../ui/NumberSpinner';
-import { Dices, Plus, X } from 'lucide-react';
+import { Dices, Plus, X, AlertTriangle, XCircle, Trash2 } from 'lucide-react';
 import './ActionRolls.css';
 
 const ATTRIBUTE_OPTIONS = [...Object.values(CombatStat), ...Object.values(SocialStat), 'will'] as const;
@@ -138,7 +138,9 @@ export function ActionRolls() {
             {deleteRollId && (
                 <div className="action-rolls__modal-overlay">
                     <div className="action-rolls__modal-content">
-                        <h3 className="action-rolls__modal-title">⚠️ Confirm Deletion</h3>
+                        <h3 className="action-rolls__modal-title modal-title-with-icon">
+                            <AlertTriangle size={20} /> Confirm Deletion
+                        </h3>
                         <p className="action-rolls__modal-text">Are you sure you want to delete this Action Roll?</p>
                         <div className="action-rolls__modal-actions">
                             <button
@@ -146,7 +148,7 @@ export function ActionRolls() {
                                 className="action-button action-button--dark action-rolls__modal-btn"
                                 onClick={() => setDeleteRollId(null)}
                             >
-                                Cancel
+                                <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
@@ -156,7 +158,7 @@ export function ActionRolls() {
                                     setDeleteRollId(null);
                                 }}
                             >
-                                Delete
+                                <Trash2 size={16} /> Delete
                             </button>
                         </div>
                     </div>
