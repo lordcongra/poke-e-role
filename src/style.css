@@ -18,9 +18,8 @@
     /* 2. Determine our driving colors */
     --primary: var(--dynamic-type-color, var(--base-primary));
 
-    /* 🔥 Secondary is now a perfectly harmonized, soft, desaturated version of the Primary color! 
-       (Mixing 45% of the primary hue into a solid neutral grey prevents it from looking muddy) */
-    --secondary: color-mix(in srgb, var(--primary) 45%, #757575);
+    /* 🔥 Use the injected secondary override OR fall back to the perfectly harmonized color mix */
+    --secondary: var(--dynamic-secondary-color, color-mix(in srgb, var(--primary) 45%, #757575));
 
     /* 3. LIGHT MODE COLOR MIXING (Subtle tints) */
     --bg: color-mix(in srgb, var(--primary) 5%, var(--base-bg));
@@ -55,8 +54,8 @@ html[data-theme='dark'],
     /* 2. Determine our driving colors */
     --primary: var(--dynamic-type-color, var(--base-primary-dark));
 
-    /* 🔥 Dark mode secondary mix. Slightly darker grey to keep text contrast legible! */
-    --secondary: color-mix(in srgb, var(--primary) 40%, #555555);
+    /* 🔥 Dark mode secondary fallback */
+    --secondary: var(--dynamic-secondary-color, color-mix(in srgb, var(--primary) 40%, #555555));
 
     /* 3. DARK MODE COLOR MIXING (Rich, glassy tints) */
     --bg: color-mix(in srgb, var(--primary) 12%, var(--base-bg-dark));
@@ -271,7 +270,6 @@ body {
     background: var(--panel-alt);
 }
 
-/* 🔥 Unified soft shadow for all colored headers */
 .health-section__header,
 .theme-header--primary,
 .theme-header--secondary {
@@ -313,7 +311,6 @@ body {
     filter: brightness(1.15);
 }
 
-/* 🔥 Unified Text Shadow Across ALL Colored Action Buttons (including Secondary and Dark) */
 .action-button--theme,
 .action-button--secondary,
 .action-button--red,

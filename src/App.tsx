@@ -1,4 +1,3 @@
-// src/App.tsx
 import { useState, useEffect } from 'react';
 import { useOwlbearSync } from './hooks/useOwlbearSync';
 import { useCharacterStore } from './store/useCharacterStore';
@@ -155,12 +154,12 @@ function App() {
         if (themePrimaryOverride) {
             finalPrimary = themePrimaryOverride;
             finalSecondary = themeSecondaryOverride || getHarmoniousAccentHex(themePrimaryOverride);
-        } 
+        }
         // Priority 2: User's Global Browser Override
         else if (globalOverride) {
             finalPrimary = globalOverride.p;
             finalSecondary = globalOverride.s || getHarmoniousAccentHex(globalOverride.p);
-        } 
+        }
         // Priority 3: Default Pokémon Type Math
         else if (type1) {
             let typeColor = '';
@@ -177,7 +176,7 @@ function App() {
             }
         }
 
-        // Apply final resolved theme
+        // Apply final resolved theme to DOM
         if (finalPrimary) {
             document.body.style.setProperty('--dynamic-type-color', finalPrimary);
             document.documentElement.style.setProperty('--dynamic-type-color', finalPrimary);

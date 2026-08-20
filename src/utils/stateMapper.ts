@@ -379,6 +379,10 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
         claOffsetX: Number(meta['cla-offset-x']) || 0,
         claOffsetY: Number(meta['cla-offset-y']) || 0,
 
+        // 🔥 Hydrate overrides
+        themePrimaryOverride: String(meta['theme-primary-override'] || ''),
+        themeSecondaryOverride: String(meta['theme-secondary-override'] || ''),
+
         dexId: String(meta['dex-id'] || ''),
         dexCategory: String(meta['dex-category'] || ''),
         height: String(meta['height'] || ''),
@@ -558,6 +562,12 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (state.identity.evaOffsetY !== undefined) flatMetadata['eva-offset-y'] = state.identity.evaOffsetY;
             if (state.identity.claOffsetX !== undefined) flatMetadata['cla-offset-x'] = state.identity.claOffsetX;
             if (state.identity.claOffsetY !== undefined) flatMetadata['cla-offset-y'] = state.identity.claOffsetY;
+
+            // 🔥 Export overrides
+            if (state.identity.themePrimaryOverride !== undefined)
+                flatMetadata['theme-primary-override'] = state.identity.themePrimaryOverride;
+            if (state.identity.themeSecondaryOverride !== undefined)
+                flatMetadata['theme-secondary-override'] = state.identity.themeSecondaryOverride;
 
             sanitizeBackup(state.identity.baseFormData, 'base-form-data');
             sanitizeBackup(state.identity.altFormData, 'alt-form-data');
