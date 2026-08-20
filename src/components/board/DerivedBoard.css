@@ -68,14 +68,15 @@
     flex: 1.5;
 }
 
+/* 🔥 Ensure all derived board headers receive the uniform drop shadow */
 .derived-board__box-header {
-    /* 🔥 Dynamically pull the text color (white or dark-blend) */
-    color: var(--text-on-primary);
+    color: #ffffff;
     text-align: center;
     font-weight: bold;
     padding: 4px;
-    /* 🔥 Removed the heavy black text-shadow so dark text renders cleanly */
-    transition: color 0.3s ease;
+    text-shadow:
+        1px 1px 2px rgba(0, 0, 0, 0.8),
+        0 1px 4px rgba(0, 0, 0, 0.6);
 }
 
 .derived-board__box-content {

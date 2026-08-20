@@ -226,6 +226,7 @@
     align-items: center;
 }
 
+/* 🔥 Updated condition pills to lock text to white with the unified shadow */
 .tracker-section__condition-pill {
     padding: 2px 6px;
     border-radius: 4px;
@@ -233,6 +234,10 @@
     font-weight: bold;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     white-space: nowrap;
+    color: #ffffff !important;
+    text-shadow:
+        1px 1px 2px rgba(0, 0, 0, 0.8),
+        0 1px 4px rgba(0, 0, 0, 0.6);
 }
 
 .tracker-section__conditions-empty {
@@ -305,9 +310,13 @@
     padding: 6px;
 }
 
+/* 🔥 Applied text-shadow to rest modal btn */
 .tracker-modal__btn-rest {
     background-color: #2e7d32;
     color: white;
+    text-shadow:
+        1px 1px 2px rgba(0, 0, 0, 0.8),
+        0 1px 4px rgba(0, 0, 0, 0.6);
 }
 
 .tracker-modal__clash-actions {
@@ -316,11 +325,16 @@
     gap: 8px;
 }
 
+/* 🔥 Applied text-shadow to clash modal btns */
 .tracker-modal__clash-btn-phys {
     background-color: #e65100;
     border-color: #e65100;
     padding: 8px;
     font-size: 0.9rem;
+    color: white;
+    text-shadow:
+        1px 1px 2px rgba(0, 0, 0, 0.8),
+        0 1px 4px rgba(0, 0, 0, 0.6);
 }
 
 .tracker-modal__clash-btn-spec {
@@ -328,6 +342,10 @@
     border-color: #1565c0;
     padding: 8px;
     font-size: 0.9rem;
+    color: white;
+    text-shadow:
+        1px 1px 2px rgba(0, 0, 0, 0.8),
+        0 1px 4px rgba(0, 0, 0, 0.6);
 }
 
 .tracker-modal__clash-btn-cancel {

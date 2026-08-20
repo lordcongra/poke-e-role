@@ -1,4 +1,3 @@
-/* src/style.css */
 /* =========================================
    🌐 GLOBAL VARIABLES & DYNAMIC THEMING
    ========================================= */
@@ -232,7 +231,6 @@ body {
 .identity-grid__input,
 .identity-grid__select {
     border: none;
-    /* 🔥 Assigning a solid tinted background forces Chrome to paint the dropdown natively in our colors! */
     background-color: var(--row-even);
     border-radius: 4px;
     padding: 2px 4px;
@@ -273,21 +271,22 @@ body {
     background: var(--panel-alt);
 }
 
-/* 🔥 Reverted to white text but added multi-layered stroke/shadow for readability on bright backgrounds */
+/* 🔥 Unified soft shadow for all colored headers */
 .health-section__header,
-.theme-header--primary {
-    background: var(--primary);
-    color: #ffffff;
+.theme-header--primary,
+.theme-header--secondary {
+    color: #ffffff !important;
     font-weight: bold;
     padding: 4px;
     font-size: 0.85rem;
     transition: background 0.3s ease;
     text-shadow:
-        -1px -1px 0 rgba(0, 0, 0, 0.4),
-        1px -1px 0 rgba(0, 0, 0, 0.4),
-        -1px 1px 0 rgba(0, 0, 0, 0.4),
-        1px 1px 0 rgba(0, 0, 0, 0.4),
-        0px 2px 4px rgba(0, 0, 0, 0.6);
+        1px 1px 2px rgba(0, 0, 0, 0.8),
+        0 1px 4px rgba(0, 0, 0, 0.6) !important;
+}
+
+.health-section__header {
+    background: var(--primary);
 }
 
 /* =========================================
@@ -314,21 +313,27 @@ body {
     filter: brightness(1.15);
 }
 
-/* Replaced the harsh 360-degree stroke with a clean, deep drop-shadow for buttons */
+/* 🔥 Unified Text Shadow Across ALL Colored Action Buttons (including Secondary and Dark) */
+.action-button--theme,
+.action-button--secondary,
+.action-button--red,
+.action-button--dark {
+    color: #ffffff !important;
+    text-shadow:
+        1px 1px 2px rgba(0, 0, 0, 0.8),
+        0 1px 4px rgba(0, 0, 0, 0.6) !important;
+}
+
 .action-button--theme {
     background: var(--primary);
-    color: #ffffff;
-    text-shadow:
-        0 1px 3px rgba(0, 0, 0, 0.8),
-        0 1px 1px rgba(0, 0, 0, 0.6);
+}
+
+.action-button--secondary {
+    background: var(--secondary);
 }
 
 .action-button--red {
     background: var(--semantic-danger);
-    color: #ffffff;
-    text-shadow:
-        0 1px 3px rgba(0, 0, 0, 0.8),
-        0 1px 1px rgba(0, 0, 0, 0.6);
 }
 .action-button--red:hover {
     background: var(--semantic-danger-hover);
@@ -336,8 +341,6 @@ body {
 
 .action-button--dark {
     background: color-mix(in srgb, var(--secondary) 60%, var(--dark));
-    color: white;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .action-button--ghost {
@@ -360,8 +363,8 @@ body {
 }
 .action-button--transparent-white {
     background: transparent;
-    color: white;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    color: white !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
 }
 
 .action-button--sort {
@@ -588,7 +591,7 @@ body {
 [data-theme='dark'] .health-section__header[style*='background-color'] {
     filter: saturate(0.8) brightness(0.9);
     color: #fff !important;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9) !important;
 }
 
 /* =========================================

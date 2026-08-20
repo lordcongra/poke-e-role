@@ -69,13 +69,13 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: Ide
         ])
     );
 
+    // 🔥 Updated to provide the unified standard drop shadow
     const getTypeTextProps = (type: string) => {
         if (!type || type === 'None') return { color: 'var(--text-main)', textShadow: 'none' };
 
         return {
             color: '#ffffff',
-            textShadow:
-                '-1px -1px 0 rgba(0, 0, 0, 0.4), 1px -1px 0 rgba(0, 0, 0, 0.4), -1px 1px 0 rgba(0, 0, 0, 0.4), 1px 1px 0 rgba(0, 0, 0, 0.4), 0px 2px 4px rgba(0, 0, 0, 0.6)'
+            textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8), 0 1px 4px rgba(0, 0, 0, 0.6)'
         };
     };
 

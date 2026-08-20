@@ -14,6 +14,7 @@ import { ChangelogModal } from '../modals/ChangelogModal';
 import { InitiativeSettingsModal } from '../modals/InitiativeSettingsModal';
 import { GeneratorModal } from '../modals/GeneratorModal';
 import { PrintSettingsModal } from '../modals/PrintSettingsModal';
+import { ThemeSettingsModal } from '../modals/ThemeSettingsModal';
 import { isStandaloneMode } from '../../utils/storageAdapter';
 import { useObrReady } from '../../hooks/useObrReady';
 import { setActiveTokenId } from '../../utils/obr';
@@ -31,7 +32,8 @@ import {
     Save,
     Upload,
     Printer,
-    Wand2
+    Wand2,
+    Palette
 } from 'lucide-react';
 import './GlobalToolbar.css';
 
@@ -67,6 +69,7 @@ export function GlobalToolbar() {
     const [showInitSettings, setShowInitSettings] = useState<boolean>(false);
     const [showGeneratorModal, setShowGeneratorModal] = useState<boolean>(false);
     const [showPrintModal, setShowPrintModal] = useState<boolean>(false);
+    const [showThemeModal, setShowThemeModal] = useState<boolean>(false);
     const [importData, setImportData] = useState<Record<string, unknown> | null>(null);
 
     const fileInputReference = useRef<HTMLInputElement>(null);
@@ -476,6 +479,15 @@ export function GlobalToolbar() {
                             <button
                                 type="button"
                                 className="global-toolbar__btn action-button--neutral-hover"
+                                onClick={() => setShowThemeModal(true)}
+                                title="Override Theme Colors"
+                            >
+                                <Palette size={16} color="var(--text-main)" /> Theme
+                            </button>
+
+                            <button
+                                type="button"
+                                className="global-toolbar__btn action-button--neutral-hover"
                                 onClick={() => setShowChangelog(true)}
                                 title="View System Updates"
                             >
@@ -580,6 +592,7 @@ export function GlobalToolbar() {
             {showChangelog && <ChangelogModal onClose={handleCloseChangelog} />}
             {showInitSettings && <InitiativeSettingsModal onClose={() => setShowInitSettings(false)} />}
             {showPrintModal && <PrintSettingsModal onClose={() => setShowPrintModal(false)} />}
+            {showThemeModal && <ThemeSettingsModal onClose={() => setShowThemeModal(false)} />}
         </div>
     );
 }

@@ -65,6 +65,8 @@ const OBR_KEY_MAP: Record<string, string> = {
     maxImageUrl: 'max-image-url',
     teraImageUrl: 'tera-image-url',
     gmDemoMode: 'gm-demo-mode',
+    themePrimaryOverride: 'theme-primary-override',
+    themeSecondaryOverride: 'theme-secondary-override',
     dexId: 'dex-id',
     dexCategory: 'dex-category',
     height: 'height',
@@ -223,6 +225,9 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         evaOffsetY: 0,
         claOffsetX: 0,
         claOffsetY: 0,
+
+        themePrimaryOverride: '',
+        themeSecondaryOverride: '',
 
         tokenImageUrl: null,
         printConfig: {

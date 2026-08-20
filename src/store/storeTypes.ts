@@ -434,6 +434,10 @@ export interface IdentitySlice {
         claOffsetX: number;
         claOffsetY: number;
 
+        // 🔥 Dynamic Theming Overrides
+        themePrimaryOverride: string;
+        themeSecondaryOverride: string;
+
         tokenImageUrl: string | null;
         printConfig: PrintConfig;
         isPrinting: boolean;

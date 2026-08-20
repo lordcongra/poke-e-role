@@ -20,7 +20,6 @@ import { Sidebar } from './components/standalone/Sidebar';
 import { InitiativeTracker } from './components/initiative/InitiativeTracker';
 import { RollLogWidget } from './components/standalone/RollLogWidget';
 import { isStandaloneMode } from './utils/storageAdapter';
-import { getContrastColor } from './utils/colorUtils';
 import './App.css';
 import './style.css';
 
@@ -124,46 +123,75 @@ function App() {
     const type1 = useCharacterStore((state) => state.identity.type1);
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes || []);
 
+    const themePrimaryOverride = useCharacterStore((state) => state.identity.themePrimaryOverride);
+    const themeSecondaryOverride = useCharacterStore((state) => state.identity.themeSecondaryOverride);
+
     const initLayout = useCharacterStore((state) => state.identity.initiativeTrackerLayout) || 'vertical';
     const [showStandaloneTracker, setShowStandaloneTracker] = useState(false);
+    const [globalOverride, setGlobalOverride] = useState<{ p: string; s: string } | null>(null);
 
     useEffect(() => {
-        let typeColor = '';
+        const checkGlobalTheme = () => {
+            try {
+                const p = localStorage.getItem('pkr_global_theme_primary');
+                const s = localStorage.getItem('pkr_global_theme_secondary');
+                if (p) setGlobalOverride({ p, s: s || '' });
+                else setGlobalOverride(null);
+            } catch (e) {
+                console.warn('[App] Failed to access local storage for global theme.', e);
+            }
+        };
 
-        if (type1) {
+        checkGlobalTheme();
+        window.addEventListener('theme-override-updated', checkGlobalTheme);
+        return () => window.removeEventListener('theme-override-updated', checkGlobalTheme);
+    }, []);
+
+    useEffect(() => {
+        let finalPrimary = '';
+        let finalSecondary = '';
+
+        // Priority 1: Token-Specific Override
+        if (themePrimaryOverride) {
+            finalPrimary = themePrimaryOverride;
+            finalSecondary = themeSecondaryOverride || getHarmoniousAccentHex(themePrimaryOverride);
+        } 
+        // Priority 2: User's Global Browser Override
+        else if (globalOverride) {
+            finalPrimary = globalOverride.p;
+            finalSecondary = globalOverride.s || getHarmoniousAccentHex(globalOverride.p);
+        } 
+        // Priority 3: Default Pokémon Type Math
+        else if (type1) {
+            let typeColor = '';
             if (STANDARD_TYPE_COLORS[type1]) {
                 typeColor = STANDARD_TYPE_COLORS[type1];
             } else {
                 const customType = roomCustomTypes.find((t) => t.name === type1);
-                if (customType && customType.color) {
-                    typeColor = customType.color;
-                }
+                if (customType && customType.color) typeColor = customType.color;
+            }
+
+            if (typeColor) {
+                finalPrimary = typeColor;
+                finalSecondary = getHarmoniousAccentHex(typeColor);
             }
         }
 
-        if (typeColor) {
-            const secondaryColor = getHarmoniousAccentHex(typeColor);
-            const textColor = getContrastColor(typeColor, 0.55); // Dynamic contrast threshold
+        // Apply final resolved theme
+        if (finalPrimary) {
+            document.body.style.setProperty('--dynamic-type-color', finalPrimary);
+            document.documentElement.style.setProperty('--dynamic-type-color', finalPrimary);
 
-            document.body.style.setProperty('--dynamic-type-color', typeColor);
-            document.documentElement.style.setProperty('--dynamic-type-color', typeColor);
-
-            document.body.style.setProperty('--dynamic-secondary-color', secondaryColor);
-            document.documentElement.style.setProperty('--dynamic-secondary-color', secondaryColor);
-
-            document.body.style.setProperty('--dynamic-text-color', textColor);
-            document.documentElement.style.setProperty('--dynamic-text-color', textColor);
+            document.body.style.setProperty('--dynamic-secondary-color', finalSecondary);
+            document.documentElement.style.setProperty('--dynamic-secondary-color', finalSecondary);
         } else {
             document.body.style.removeProperty('--dynamic-type-color');
             document.documentElement.style.removeProperty('--dynamic-type-color');
 
             document.body.style.removeProperty('--dynamic-secondary-color');
             document.documentElement.style.removeProperty('--dynamic-secondary-color');
-
-            document.body.style.removeProperty('--dynamic-text-color');
-            document.documentElement.style.removeProperty('--dynamic-text-color');
         }
-    }, [type1, roomCustomTypes]);
+    }, [type1, roomCustomTypes, themePrimaryOverride, themeSecondaryOverride, globalOverride]);
 
     useEffect(() => {
         const handleToggle = () => setShowStandaloneTracker((prev) => !prev);
