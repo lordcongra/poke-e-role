@@ -68,7 +68,7 @@
     flex: 1.5;
 }
 
-/* 🔥 Ensure all derived board headers receive the uniform drop shadow */
+/* Ensure all derived board headers receive the uniform drop shadow */
 .derived-board__box-header {
     color: #ffffff;
     text-align: center;

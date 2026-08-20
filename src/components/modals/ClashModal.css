@@ -1,0 +1,60 @@
+.clash-modal__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1500;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.clash-modal__content {
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: 8px;
+    width: 320px;
+    border: 2px solid var(--primary);
+    color: var(--text-main);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+}
+
+.clash-modal__title {
+    margin-top: 0;
+    color: var(--primary);
+    font-size: 1.2rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.clash-modal__description {
+    font-size: 0.9rem;
+    text-align: center;
+    margin: 15px 0;
+    color: var(--text-muted);
+}
+
+.clash-modal__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.clash-modal__btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}

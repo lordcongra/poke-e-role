@@ -34,7 +34,7 @@
     overflow: hidden;
     transform: skewX(
         5deg
-    ); /* 🔥 Fixes warped images! Counter-skews the image wrapper to sit perfectly vertical inside the parallelogram */
+    ); /* Fixes warped images! Counter-skews the image wrapper to sit perfectly vertical inside the parallelogram */
 }
 
 .init-tracker__avatar {

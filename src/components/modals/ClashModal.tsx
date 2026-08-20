@@ -1,4 +1,4 @@
-import { Swords, Dumbbell, Sparkles, X } from 'lucide-react';
+import { Swords, Dumbbell, Sparkles, XCircle } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { CombatStat, Skill } from '../../types/enums';
 import {
@@ -8,6 +8,7 @@ import {
     calculateStatTotal,
     calculateSkillTotal
 } from '../../utils/combatUtils';
+import './ClashModal.css';
 
 interface ClashModalProps {
     onClose: () => void;
@@ -36,33 +37,33 @@ export function ClashModal({ onClose }: ClashModalProps) {
     };
 
     return (
-        <div className="tracker-modal__overlay">
-            <div className="tracker-modal__content tracker-modal__content--clash">
-                <h3 className="tracker-modal__title modal-title-with-icon">
+        <div className="clash-modal__overlay">
+            <div className="clash-modal__content">
+                <h3 className="clash-modal__title modal-title-with-icon">
                     <Swords size={20} /> Select Clash Type
                 </h3>
-                <p className="tracker-modal__description">Which attribute are you using to Clash?</p>
-                <div className="tracker-modal__clash-actions">
+                <p className="clash-modal__description">Which attribute are you using to Clash?</p>
+                <div className="clash-modal__actions">
                     <button
                         type="button"
                         onClick={() => handleClashRoll(true)}
-                        className="action-button action-button--dark tracker-modal__clash-btn-phys"
+                        className="action-button action-button--theme clash-modal__btn"
                     >
-                        <Dumbbell size={16} /> Physical (STR)
+                        <Dumbbell size={18} /> Physical (STR)
                     </button>
                     <button
                         type="button"
                         onClick={() => handleClashRoll(false)}
-                        className="action-button action-button--dark tracker-modal__clash-btn-spec"
+                        className="action-button action-button--secondary clash-modal__btn"
                     >
-                        <Sparkles size={16} /> Special (SPE)
+                        <Sparkles size={18} /> Special (SPE)
                     </button>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="action-button action-button--ghost tracker-modal__clash-btn-cancel"
+                        className="action-button action-button--dark clash-modal__btn"
                     >
-                        <X size={16} /> Cancel
+                        <XCircle size={18} /> Cancel
                     </button>
                 </div>
             </div>
