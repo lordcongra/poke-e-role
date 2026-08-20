@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
+import { RefreshCw, Move, RotateCcw, AlertTriangle, XCircle, CheckCircle } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { STATS_META_ID } from '../../utils/graphicsManager';
 import { NumberSpinner } from '../ui/NumberSpinner';
@@ -44,9 +45,9 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                     }
                 }
             );
-            OBR.notification.show('🎨 Tracker colors synced across all tokens!');
+            OBR.notification.show('Tracker colors synced across all tokens!', 'SUCCESS');
         } catch (error) {
-            console.error('Failed to sync colors:', error);
+            console.error('[TrackerBadgeColors] Failed to sync colors:', error);
         }
         setShowSyncConfirm(false);
     };
@@ -109,10 +110,7 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
             </div>
 
             <div className="tracker-settings__offset-container">
-                <label
-                    className="tracker-settings__offset-label"
-                    title="Scales the entire HUD up or down! Default is 100%."
-                >
+                <label className="tracker-settings__offset-label" title="Scales the entire HUD up or down! Default is 100%.">
                     <span className="tracker-settings__offset-text">HUD Size (%):</span>
                     <NumberSpinner
                         value={identityStore.trackerScale ?? 100}
@@ -156,31 +154,33 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                     onClick={() => setShowResetConfirm(true)}
                     className="action-button action-button--dark tracker-settings__modal-btn"
                 >
-                    Reset Colors
+                    <RotateCcw size={16} /> Reset
                 </button>
                 {role === 'GM' && (
                     <button
                         type="button"
                         onClick={() => setShowSyncConfirm(true)}
-                        className="action-button action-button--dark tracker-settings__modal-btn tracker-settings__btn-sync"
+                        className="action-button action-button--theme tracker-settings__modal-btn"
                     >
-                        🔄 Sync Colors
+                        <RefreshCw size={16} /> Sync
                     </button>
                 )}
             </div>
 
             <button
                 type="button"
-                className="action-button action-button--dark tracker-settings__btn-placement"
+                className="action-button action-button--secondary tracker-settings__btn-placement"
                 onClick={onOpenPlacementModal}
             >
-                🎯 Fine-Tune Placements
+                <Move size={16} /> Fine-Tune Placements
             </button>
 
             {showResetConfirm && (
                 <div className="tracker-settings__overlay tracker-settings__overlay--high-z">
                     <div className="tracker-settings__content tracker-settings__content--confirm">
-                        <h3 className="tracker-settings__title tracker-settings__title--confirm">⚠️ Reset Colors</h3>
+                        <h3 className="tracker-settings__title tracker-settings__title--confirm modal-title-with-icon">
+                            <AlertTriangle size={20} /> Reset Colors
+                        </h3>
                         <p className="tracker-settings__description">
                             Are you sure you want to reset your tracker colors to default?
                         </p>
@@ -190,14 +190,14 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                                 className="action-button action-button--dark tracker-settings__modal-btn"
                                 onClick={() => setShowResetConfirm(false)}
                             >
-                                Cancel
+                                <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
                                 className="action-button action-button--red tracker-settings__modal-btn"
                                 onClick={confirmResetColors}
                             >
-                                Reset
+                                <RotateCcw size={16} /> Reset
                             </button>
                         </div>
                     </div>
@@ -207,7 +207,9 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
             {showSyncConfirm && (
                 <div className="tracker-settings__overlay tracker-settings__overlay--high-z">
                     <div className="tracker-settings__content tracker-settings__content--sync">
-                        <h3 className="tracker-settings__title tracker-settings__title--sync">🔄 Sync Colors</h3>
+                        <h3 className="tracker-settings__title tracker-settings__title--sync modal-title-with-icon">
+                            <RefreshCw size={20} /> Sync Colors
+                        </h3>
                         <p className="tracker-settings__description">
                             This will push your current tracker colors to EVERY token on the map. Are you sure?
                         </p>
@@ -217,14 +219,14 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                                 className="action-button action-button--dark tracker-settings__modal-btn"
                                 onClick={() => setShowSyncConfirm(false)}
                             >
-                                Cancel
+                                <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--dark tracker-settings__modal-btn tracker-settings__btn-sync"
+                                className="action-button action-button--theme tracker-settings__modal-btn"
                                 onClick={confirmSyncColors}
                             >
-                                Sync
+                                <CheckCircle size={16} /> Sync
                             </button>
                         </div>
                     </div>

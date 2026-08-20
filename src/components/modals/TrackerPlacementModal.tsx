@@ -1,3 +1,4 @@
+import { Move, CheckCircle, RotateCcw } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { NumberSpinner } from '../ui/NumberSpinner';
 
@@ -27,7 +28,9 @@ export function TrackerPlacementModal({ onClose }: TrackerPlacementModalProps) {
     return (
         <div className="tracker-settings__overlay tracker-settings__overlay--high-z">
             <div className="tracker-settings__content tracker-settings__content--placement">
-                <h3 className="tracker-settings__title tracker-settings__title--placement">🎯 Fine-Tune Placements</h3>
+                <h3 className="tracker-settings__title tracker-settings__title--placement modal-title-with-icon">
+                    <Move size={20} /> Fine-Tune Placements
+                </h3>
 
                 <div className="tracker-settings__placement-grid">
                     <div className="tracker-settings__placement-header">Element</div>
@@ -129,14 +132,14 @@ export function TrackerPlacementModal({ onClose }: TrackerPlacementModalProps) {
                         onClick={resetPlacements}
                         className="action-button action-button--dark tracker-settings__modal-btn"
                     >
-                        Reset Placements
+                        <RotateCcw size={16} /> Reset
                     </button>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="action-button action-button--dark tracker-settings__modal-btn tracker-settings__btn-done"
+                        className="action-button action-button--theme tracker-settings__modal-btn"
                     >
-                        Done
+                        <CheckCircle size={16} /> Done
                     </button>
                 </div>
             </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Settings, X } from 'lucide-react';
 import { TrackerVisibilityToggles } from './TrackerVisibilityToggles';
 import { TrackerBadgeColors } from './TrackerBadgeColors';
 import { TrackerPlacementModal } from './TrackerPlacementModal';
@@ -11,9 +12,11 @@ export function TrackerSettingsModal({ onClose }: { onClose: () => void }) {
         <div className="tracker-settings__overlay">
             <div className="tracker-settings__content">
                 <div className="tracker-settings__header-row">
-                    <h3 className="tracker-settings__title">⚙️ Tracker Settings</h3>
+                    <h3 className="tracker-settings__title modal-title-with-icon">
+                        <Settings size={20} /> Tracker Settings
+                    </h3>
                     <button onClick={onClose} className="tracker-settings__close-x" title="Close">
-                        X
+                        <X size={20} strokeWidth={2.5} />
                     </button>
                 </div>
                 <p className="tracker-settings__description">Customize what this token displays on the map.</p>

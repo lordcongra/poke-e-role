@@ -16,17 +16,21 @@
     padding: 15px;
     border-radius: 8px;
     width: 280px;
-    border: 2px solid #c62828;
+    border: 2px solid var(--primary);
     color: var(--text-main);
 }
 
 .tag-builder__title {
     margin-top: 0;
-    color: #c62828;
+    color: var(--primary);
     font-size: 1.1rem;
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .tag-builder__form-group {
@@ -62,14 +66,12 @@
     gap: 8px;
 }
 
-.tag-builder__btn-cancel {
-    flex: 1;
-    padding: 6px;
-}
-
+.tag-builder__btn-cancel,
 .tag-builder__btn-confirm {
-    background: #c62828;
-    color: white;
     flex: 1;
     padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }

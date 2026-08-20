@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
+import { Target, XCircle, Swords } from 'lucide-react';
 import type { MoveData } from '../../store/storeTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { STATS_META_ID } from '../../utils/graphicsManager';
@@ -218,7 +219,9 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
     return (
         <div className="targeting-modal__overlay">
             <div className="targeting-modal__content">
-                <h3 className="targeting-modal__title">🎯 Select Target</h3>
+                <h3 className="targeting-modal__title modal-title-with-icon">
+                    <Target size={20} /> Select Target
+                </h3>
 
                 <div className="targeting-modal__form-group">
                     <label className="targeting-modal__label">Enemy Token:</label>
@@ -275,14 +278,14 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                         className="action-button action-button--dark targeting-modal__btn"
                         onClick={onClose}
                     >
-                        Cancel
+                        <XCircle size={16} /> Cancel
                     </button>
                     <button
                         type="button"
                         className="action-button action-button--red targeting-modal__btn"
                         onClick={handleConfirm}
                     >
-                        💥 Roll Damage
+                        <Swords size={16} /> Roll Damage
                     </button>
                 </div>
             </div>

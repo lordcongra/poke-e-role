@@ -1,3 +1,4 @@
+import { Dna, Sparkles, AlertTriangle, XCircle } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import './SpeciesChangeModal.css';
 
@@ -12,7 +13,9 @@ export function SpeciesChangeModal({ pendingSpeciesData, onClose }: SpeciesChang
     return (
         <div className="species-change__overlay">
             <div className="species-change__content">
-                <h3 className="species-change__title">🧬 Species Changed</h3>
+                <h3 className="species-change__title modal-title-with-icon">
+                    <Dna size={20} /> Species Changed
+                </h3>
                 <p className="species-change__desc">
                     You loaded a new Pokémon. How do you want to handle your existing sheet data?
                 </p>
@@ -25,10 +28,11 @@ export function SpeciesChangeModal({ pendingSpeciesData, onClose }: SpeciesChang
                             applySpeciesData(pendingSpeciesData, false, true);
                             onClose();
                         }}
-                        className="action-button species-change__btn-evolve"
+                        className="action-button action-button--secondary species-change__btn-evolve"
                     >
-                        ✨ Evolve / Mega / Form Shift
-                        <br />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Sparkles size={16} /> Evolve / Mega / Form Shift
+                        </div>
                         <span className="species-change__btn-subtitle">
                             (Updates Stats, Limits & Typing. Keeps Moves/Skills)
                         </span>
@@ -41,10 +45,11 @@ export function SpeciesChangeModal({ pendingSpeciesData, onClose }: SpeciesChang
                             applySpeciesData(pendingSpeciesData, false, false);
                             onClose();
                         }}
-                        className="action-button species-change__btn-form"
+                        className="action-button action-button--theme species-change__btn-form"
                     >
-                        🧬 Type / Ability Shift Only
-                        <br />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Dna size={16} /> Type / Ability Shift Only
+                        </div>
                         <span className="species-change__btn-subtitle">
                             (Updates Typing & Abilities ONLY. Keeps current Stats)
                         </span>
@@ -59,8 +64,9 @@ export function SpeciesChangeModal({ pendingSpeciesData, onClose }: SpeciesChang
                         }}
                         className="action-button action-button--red species-change__btn-new"
                     >
-                        ⚠️ Brand New Pokémon
-                        <br />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <AlertTriangle size={16} /> Brand New Pokémon
+                        </div>
                         <span className="species-change__btn-subtitle">(Wipes Moves & Skills completely)</span>
                     </button>
 
@@ -69,7 +75,7 @@ export function SpeciesChangeModal({ pendingSpeciesData, onClose }: SpeciesChang
                         onClick={onClose}
                         className="action-button action-button--dark species-change__btn-cancel"
                     >
-                        Cancel Change
+                        <XCircle size={16} /> Cancel Change
                     </button>
                 </div>
             </div>

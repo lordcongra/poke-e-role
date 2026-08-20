@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { Clover, Dices, XCircle } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { rollDicePlus } from '../../utils/combatUtils';
 import { NumberSpinner } from '../ui/NumberSpinner';
+import './TakeChancesModal.css';
 
 interface TakeChancesModalProps {
     onClose: () => void;
@@ -25,15 +27,17 @@ export function TakeChancesModal({ onClose }: TakeChancesModalProps) {
     };
 
     return (
-        <div className="tracker-modal__overlay">
-            <div className="tracker-modal__content">
-                <h3 className="tracker-modal__title">🍀 Take Your Chances</h3>
-                <p className="tracker-modal__description">
+        <div className="take-chances__overlay">
+            <div className="take-chances__content">
+                <h3 className="take-chances__title modal-title-with-icon">
+                    <Clover size={20} /> Take Your Chances
+                </h3>
+                <p className="take-chances__description">
                     How many failed dice are you rerolling? <br />
                     (You have {trackers.chances} stack(s) active this round)
                 </p>
 
-                <div className="tracker-modal__spinner-container">
+                <div className="take-chances__spinner-container">
                     <NumberSpinner
                         value={chancesToRoll}
                         onChange={(value) => setChancesToRoll(Math.max(1, Math.min(trackers.chances, value)))}
@@ -42,20 +46,20 @@ export function TakeChancesModal({ onClose }: TakeChancesModalProps) {
                     />
                 </div>
 
-                <div className="tracker-modal__actions">
+                <div className="take-chances__actions">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="action-button action-button--dark tracker-modal__btn-cancel"
+                        className="action-button action-button--dark take-chances__btn"
                     >
-                        Cancel
+                        <XCircle size={16} /> Cancel
                     </button>
                     <button
                         type="button"
                         onClick={confirmChancesRoll}
-                        className="action-button action-button--red tracker-modal__btn-confirm"
+                        className="action-button action-button--theme take-chances__btn"
                     >
-                        🎲 Reroll
+                        <Dices size={16} /> Reroll
                     </button>
                 </div>
             </div>

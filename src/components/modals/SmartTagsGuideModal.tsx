@@ -1,10 +1,13 @@
+import { Tag, XCircle } from 'lucide-react';
 import './SmartTagsGuideModal.css';
 
 export function SmartTagsGuideModal({ onClose }: { onClose: () => void }) {
     return (
         <div className="tags-guide__overlay">
             <div className="tags-guide__content">
-                <h3 className="tags-guide__title">🏷️ Smart Tags Guide</h3>
+                <h3 className="tags-guide__title modal-title-with-icon">
+                    <Tag size={20} /> Smart Tags Guide
+                </h3>
                 <p className="tags-guide__desc">
                     Type these exactly as shown (with brackets) into an equipped item's Name or Notes to automatically
                     apply mechanics.
@@ -33,7 +36,7 @@ export function SmartTagsGuideModal({ onClose }: { onClose: () => void }) {
                         onClick={onClose}
                         className="action-button action-button--dark tags-guide__btn-close"
                     >
-                        Close Guide
+                        <XCircle size={16} /> Close Guide
                     </button>
                 </div>
             </div>

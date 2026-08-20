@@ -45,16 +45,18 @@
     background: transparent;
     border: none;
     color: var(--text-muted);
-    font-weight: bold;
-    font-size: 1.2rem;
     cursor: pointer;
-    padding: 0 6px;
+    padding: 4px;
     border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease, background 0.2s ease;
 }
 
 .transformation-modal__close-btn:hover {
-    background: rgba(255, 0, 0, 0.1);
-    color: var(--primary);
+    background: color-mix(in srgb, var(--semantic-danger) 10%, transparent);
+    color: var(--semantic-danger);
 }
 
 .transformation-modal__section {
@@ -93,6 +95,13 @@
     font-family: inherit;
     font-size: 0.9rem;
     font-weight: bold;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.transformation-modal__select:focus {
+    border-color: var(--primary);
+    background-color: var(--panel-alt);
+    outline: none;
 }
 
 .transformation-modal__tera-category-box {
@@ -133,14 +142,23 @@
     border: 1px solid var(--border);
 }
 
+.transformation-modal__clear-img-btn,
+.transformation-modal__select-img-btn,
+.transformation-modal__clear-save-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
 .transformation-modal__clear-img-btn {
-    padding: 2px 6px;
-    font-size: 0.7rem;
+    padding: 4px 8px;
+    font-size: 0.75rem;
 }
 
 .transformation-modal__select-img-btn {
-    padding: 4px 8px;
-    font-size: 0.75rem;
+    padding: 6px 10px;
+    font-size: 0.8rem;
 }
 
 .transformation-modal__desc-box {
@@ -161,10 +179,13 @@
     margin-top: 8px;
     color: var(--primary);
     font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .transformation-modal__cost-warning {
-    color: #d32f2f;
+    color: var(--semantic-danger);
     font-weight: bold;
     margin-top: 6px;
     display: block;
@@ -179,6 +200,7 @@
 .transformation-modal__clear-save-btn {
     flex: 1;
     font-size: 0.8rem;
+    padding: 6px;
 }
 
 .transformation-modal__actions {
@@ -193,6 +215,10 @@
     flex: 1;
     padding: 10px;
     font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 
 .transformation-modal__btn--revert {
@@ -225,14 +251,18 @@
     background: var(--panel-bg);
     padding: 20px;
     border-radius: 8px;
-    border: 2px solid #c62828;
+    border: 2px solid var(--semantic-danger);
     max-width: 300px;
     text-align: center;
 }
 
 .transformation-modal__confirm-title {
-    color: #c62828;
+    color: var(--semantic-danger);
     margin-top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .transformation-modal__confirm-text {
@@ -248,4 +278,8 @@
 .transformation-modal__confirm-btn {
     flex: 1;
     padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }

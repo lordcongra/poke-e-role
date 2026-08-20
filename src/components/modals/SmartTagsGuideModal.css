@@ -29,6 +29,10 @@
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .tags-guide__desc {
@@ -54,4 +58,8 @@
 .tags-guide__btn-close {
     width: 100%;
     padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }

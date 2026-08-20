@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { Palette, Trash2, Save, X } from 'lucide-react';
+import { Palette, Trash2, Save, XCircle } from 'lucide-react';
 import './ThemeSettingsModal.css';
 
 interface ThemeSettingsModalProps {
@@ -39,7 +39,7 @@ export function ThemeSettingsModal({ onClose }: ThemeSettingsModalProps) {
                 localStorage.setItem('pkr_global_theme_secondary', secondaryHex);
                 window.dispatchEvent(new Event('theme-override-updated'));
             } catch (e) {
-                console.error('Failed to save global theme.', e);
+                console.error('[ThemeSettingsModal] Failed to save global theme.', e);
             }
             if (activeTokenId) {
                 setIdentity('themePrimaryOverride', '');
@@ -54,7 +54,9 @@ export function ThemeSettingsModal({ onClose }: ThemeSettingsModalProps) {
                 localStorage.removeItem('pkr_global_theme_primary');
                 localStorage.removeItem('pkr_global_theme_secondary');
                 window.dispatchEvent(new Event('theme-override-updated'));
-            } catch (e) {}
+            } catch (e) {
+                console.error('[ThemeSettingsModal] Failed to remove global theme.', e);
+            }
         }
         onClose();
     };
@@ -68,14 +70,16 @@ export function ThemeSettingsModal({ onClose }: ThemeSettingsModalProps) {
             localStorage.removeItem('pkr_global_theme_primary');
             localStorage.removeItem('pkr_global_theme_secondary');
             window.dispatchEvent(new Event('theme-override-updated'));
-        } catch (e) {}
+        } catch (e) {
+            console.error('[ThemeSettingsModal] Failed to clear global theme.', e);
+        }
         onClose();
     };
 
     return (
         <div className="theme-modal__overlay">
             <div className="theme-modal__content">
-                <h3 className="theme-modal__title">
+                <h3 className="theme-modal__title modal-title-with-icon">
                     <Palette size={20} /> Custom Theme Colors
                 </h3>
                 <p className="theme-modal__desc">
@@ -141,7 +145,7 @@ export function ThemeSettingsModal({ onClose }: ThemeSettingsModalProps) {
                         className="action-button action-button--dark theme-modal__btn"
                         onClick={onClose}
                     >
-                        <X size={16} /> Cancel
+                        <XCircle size={16} /> Cancel
                     </button>
                     <button
                         type="button"

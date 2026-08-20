@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Tag, XCircle } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { POKEMON_TYPES } from '../../data/constants';
@@ -241,7 +242,9 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
     return (
         <div className="tag-builder__overlay">
             <div className="tag-builder__content">
-                <h3 className="tag-builder__title">🏷️ Tag Builder</h3>
+                <h3 className="tag-builder__title modal-title-with-icon">
+                    <Tag size={20} /> Tag Builder
+                </h3>
 
                 <div className="tag-builder__form-group">
                     <select
@@ -318,10 +321,10 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
 
                 <div className="tag-builder__actions">
                     <button className="action-button action-button--dark tag-builder__btn-cancel" onClick={onClose}>
-                        Cancel
+                        <XCircle size={16} /> Cancel
                     </button>
-                    <button className="action-button tag-builder__btn-confirm" onClick={handleConfirm}>
-                        🏷️ Append Tag
+                    <button className="action-button action-button--theme tag-builder__btn-confirm" onClick={handleConfirm}>
+                        <Tag size={16} /> Append Tag
                     </button>
                 </div>
             </div>

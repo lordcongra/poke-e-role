@@ -28,6 +28,10 @@
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .species-change__desc {
@@ -44,29 +48,33 @@
 }
 
 .species-change__btn-evolve {
-    background: #1976d2;
-    border-color: #1976d2;
     padding: 8px;
     font-size: 0.9rem;
-    color: white;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .species-change__btn-form {
-    background: #00695c;
-    border-color: #00695c;
     padding: 8px;
     font-size: 0.9rem;
-    color: white;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .species-change__btn-new {
     padding: 8px;
     font-size: 0.9rem;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .species-change__btn-cancel {
     padding: 6px;
     margin-top: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 
 .species-change__btn-subtitle {
