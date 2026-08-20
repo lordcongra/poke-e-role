@@ -203,7 +203,7 @@ export function MovesTable() {
                 <button
                     type="button"
                     onClick={addMove}
-                    className="action-button action-button--red action-button--full-width"
+                    className="action-button action-button--theme action-button--full-width"
                 >
                     <Plus size={16} /> Add Move Slot
                 </button>

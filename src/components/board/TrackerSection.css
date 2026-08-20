@@ -179,12 +179,6 @@
     justify-content: center;
 }
 
-.tracker-section__rest-btn {
-    background-color: #2e7d32;
-    border-color: #2e7d32;
-    color: white;
-}
-
 .tracker-section__will-row {
     display: flex;
     gap: 6px;

@@ -134,7 +134,7 @@ export function InventoryTable() {
                 <button
                     type="button"
                     onClick={addInventoryItem}
-                    className="action-button action-button--dark inventory-table__add-btn"
+                    className="action-button action-button--theme inventory-table__add-btn"
                 >
                     <Plus size={16} /> Add Item
                 </button>

@@ -147,6 +147,7 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                             onChange={(event) => updateMove(move.id, 'name', event.target.value)}
                             onBlur={handleNameBlur}
                             className="form-input--transparent move-row__name-input"
+                            style={{ border: '1px solid var(--border)', borderRadius: '4px', padding: '2px 6px' }}
                             placeholder="Move Name"
                         />
                     </div>
@@ -155,10 +156,10 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                     <button
                         type="button"
                         onClick={() => setEditModalOpen(true)}
-                        className="action-button action-button--dark move-row__edit-btn"
+                        className="action-button action-button--ghost move-row__edit-btn"
                         title="Edit Move & Tags"
                     >
-                        <Tag size={14} />
+                        <Tag size={16} />
                     </button>
                 </td>
                 <td className="data-table__cell--middle">

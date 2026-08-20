@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { rollStatus } from '../../utils/combatUtils';
 import { TooltipIcon } from '../ui/TooltipIcon';
+import { NumberSpinner } from '../ui/NumberSpinner';
 import { STATUS_COLORS, STATUS_RULES, STATUS_OPTIONS } from '../../data/constants';
 import './StatusBox.css';
 
@@ -21,14 +22,18 @@ export function StatusBox() {
 
     return (
         <div className="sheet-panel health-section__box status-box">
-            <div className="status-box__header">
+            <div className="status-box__header theme-header--secondary" style={{ padding: '4px' }}>
                 <span className="status-box__header-title">
                     STATUS{' '}
                     <TooltipIcon
                         onClick={() => setTooltipInfo({ title: 'Status Effects', desc: 'Apply a status effect.' })}
                     />
                 </span>
-                <button onClick={addStatus} className="action-button action-button--dark status-box__add-btn">
+                <button
+                    onClick={addStatus}
+                    className="action-button action-button--dark status-box__add-btn"
+                    style={{ padding: '2px 6px', fontSize: '0.75rem', margin: '0' }}
+                >
                     + Add
                 </button>
             </div>
@@ -68,13 +73,12 @@ export function StatusBox() {
                                 }
                             />
 
-                            <input
-                                type="number"
-                                className="status-box__rounds-input"
+                            <NumberSpinner
                                 value={status.rounds}
-                                onChange={(event) => updateStatus(status.id, 'rounds', Number(event.target.value) || 0)}
-                                title="Successes/Rounds"
+                                onChange={(val: number) => updateStatus(status.id, 'rounds', val)}
+                                min={0}
                             />
+
                             {status.name !== 'Healthy' && (
                                 <button
                                     onClick={() => rollStatus(status, useCharacterStore.getState())}

@@ -11,13 +11,12 @@ import { isStandaloneMode } from '../../utils/storageAdapter';
 import { Plus } from 'lucide-react';
 
 interface IdentityGridProps {
-    onOpenGenerator: () => void;
     onOpenAbility: () => void;
     onOpenNature: () => void;
     onOpenPokedex: () => void;
 }
 
-export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature, onOpenPokedex }: IdentityGridProps) {
+export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: IdentityGridProps) {
     const identityStore = useCharacterStore((state) => state.identity) || {};
     const setIdentity = useCharacterStore((state) => state.setIdentity);
     const setMode = useCharacterStore((state) => state.setMode);
@@ -28,7 +27,6 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature, onO
 
     const role = useCharacterStore((state) => state.role);
 
-    // 🔥 FIX: ADDED SAFETY FALLBACK ARRAYS
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes || []);
     const roomCustomAbilities = useCharacterStore((state) => state.roomCustomAbilities || []);
     const roomCustomPokemon = useCharacterStore((state) => state.roomCustomPokemon || []);
@@ -71,6 +69,13 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature, onO
         ])
     );
 
+    const getTypeTextProps = (type: string) => {
+        const lightTypes = ['Bug', 'Electric', 'Normal', 'Flying', 'Ice', 'Steel', 'Fairy', 'Grass'];
+        if (!type || type === 'None') return { color: 'inherit', textShadow: 'none' };
+        if (lightTypes.includes(type)) return { color: '#111', textShadow: 'none' };
+        return { color: 'white', textShadow: '1px 1px 2px rgba(0,0,0,0.8)' };
+    };
+
     return (
         <>
             <div
@@ -88,11 +93,7 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature, onO
                     />
                 </div>
 
-                <SpeciesSelector
-                    uniqueSpecies={uniqueSpecies}
-                    onOpenGenerator={onOpenGenerator}
-                    onOpenPokedex={onOpenPokedex}
-                />
+                <SpeciesSelector uniqueSpecies={uniqueSpecies} onOpenPokedex={onOpenPokedex} />
 
                 <div className="identity-grid__row">
                     <span className="identity-grid__label">
@@ -132,7 +133,7 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature, onO
                             className="identity-grid__select identity-header__type-select"
                             style={{
                                 background: allTypeColors[identityStore.type1] || 'var(--panel-alt)',
-                                color: identityStore.type1 ? 'white' : 'inherit'
+                                ...getTypeTextProps(identityStore.type1)
                             }}
                             value={identityStore.type1 || ''}
                             onChange={(event) => setIdentity('type1', event.target.value)}
@@ -147,7 +148,7 @@ export function IdentityGrid({ onOpenGenerator, onOpenAbility, onOpenNature, onO
                             className="identity-grid__select identity-header__type-select"
                             style={{
                                 background: allTypeColors[identityStore.type2] || 'var(--panel-alt)',
-                                color: identityStore.type2 && identityStore.type2 !== 'None' ? 'white' : 'inherit'
+                                ...getTypeTextProps(identityStore.type2)
                             }}
                             value={identityStore.type2 || ''}
                             onChange={(event) => setIdentity('type2', event.target.value)}

@@ -2,34 +2,65 @@ import { useState, useRef } from 'react';
 import type { ReactNode } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { fetchAbilityData, fetchNatureData } from '../../utils/api';
+import { fetchPokemonData, fetchAbilityData, fetchNatureData, fetchMoveData, loadLocalDataset } from '../../utils/api';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { IdentityGrid } from './IdentityGrid';
 import { IdentityControls } from './IdentityControls';
-import { GeneratorModal } from '../modals/GeneratorModal';
 import { TrackerSettingsModal } from '../modals/TrackerSettingsModal';
 import { PokedexModal } from '../modals/PokedexModal';
+import { TransformationModal } from '../modals/TransformationModal';
 import { broadcastInfo } from '../../utils/diceRoller';
 import { isStandaloneMode } from '../../utils/storageAdapter';
 import { imageManager, autoCropTransparency } from '../../utils/imageManager';
 import { saveToOwlbear } from '../../utils/obr';
-import { Image as ImageIcon, Radio, Upload, Globe } from 'lucide-react';
+import { Image as ImageIcon, Radio, Upload, Globe, RefreshCw, Dna } from 'lucide-react';
 import './IdentityHeader.css';
 
 export function IdentityHeader() {
     const identityStore = useCharacterStore((state) => state.identity) || {};
     const setIdentity = useCharacterStore((state) => state.setIdentity);
+    const refreshSpeciesData = useCharacterStore((state) => state.refreshSpeciesData);
     const tokenId = useCharacterStore((state) => state.tokenId);
     const role = useCharacterStore((state) => state.role);
     const isGm = role === 'GM';
 
     const [modalConfig, setModalConfig] = useState<{ title: string; content: string | ReactNode } | null>(null);
-    const [showGeneratorModal, setShowGeneratorModal] = useState<boolean>(false);
     const [showTrackerSettings, setShowTrackerSettings] = useState<boolean>(false);
     const [showPokedexModal, setShowPokedexModal] = useState<boolean>(false);
+    const [showTransformationModal, setShowTransformationModal] = useState<boolean>(false);
 
     const [showImagePicker, setShowImagePicker] = useState<boolean>(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const imageInputRef = useRef<HTMLInputElement>(null);
+
+    const handleRefresh = async () => {
+        if (isRefreshing) return;
+        setIsRefreshing(true);
+        try {
+            await loadLocalDataset();
+            const store = useCharacterStore.getState();
+
+            for (const move of store.moves) {
+                if (move.name) {
+                    const data = await fetchMoveData(move.name);
+                    if (data) store.applyMoveData(move.id, data as Record<string, unknown>);
+                }
+            }
+
+            if (identityStore.species && identityStore.mode === 'Pokémon') {
+                const data = await fetchPokemonData(identityStore.species);
+                if (data) refreshSpeciesData(data as Record<string, unknown>);
+            }
+
+            if (identityStore.ability) {
+                await fetchAbilityData(identityStore.ability);
+            }
+        } catch (error) {
+            console.error('[IdentityHeader] Refresh failed:', error);
+        } finally {
+            setTimeout(() => setIsRefreshing(false), 1500);
+        }
+    };
 
     const openAbilityModal = async () => {
         if (!identityStore.ability) {
@@ -216,8 +247,28 @@ export function IdentityHeader() {
         }
     };
 
+    const isTransformed = identityStore.activeTransformation !== 'None';
+
     const headerElements = (
         <div className="identity-header__actions-wrapper">
+            <button
+                type="button"
+                className={`action-button ${isTransformed ? 'action-button--theme' : 'action-button--dark'} identity-header__btn`}
+                onClick={() => setShowTransformationModal(true)}
+                title={isTransformed ? 'Manage Active Transformation' : 'Transform (Mega, Dynamax, Tera, etc.)'}
+            >
+                <Dna size={14} /> Formshift
+            </button>
+            <button
+                type="button"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="action-button action-button--dark identity-header__btn"
+                title="Sync and Refresh API Data"
+            >
+                <RefreshCw size={14} className={isRefreshing ? 'spin-animation' : ''} />
+            </button>
+
             {(isStandaloneMode || (isGm && OBR.isAvailable)) && (
                 <button
                     type="button"
@@ -225,7 +276,7 @@ export function IdentityHeader() {
                     onClick={handleUpdateTokenImage}
                     title="Change this character's artwork."
                 >
-                    <ImageIcon size={16} /> Update Token Image
+                    <ImageIcon size={14} /> Update Token Image
                 </button>
             )}
         </div>
@@ -238,7 +289,6 @@ export function IdentityHeader() {
             className="sheet-panel identity-header"
         >
             <IdentityGrid
-                onOpenGenerator={() => setShowGeneratorModal(true)}
                 onOpenAbility={openAbilityModal}
                 onOpenNature={openNatureModal}
                 onOpenPokedex={() => setShowPokedexModal(true)}
@@ -246,9 +296,9 @@ export function IdentityHeader() {
 
             <IdentityControls onOpenTrackerSettings={() => setShowTrackerSettings(true)} />
 
-            {showGeneratorModal && <GeneratorModal onClose={() => setShowGeneratorModal(false)} />}
             {showTrackerSettings && <TrackerSettingsModal onClose={() => setShowTrackerSettings(false)} />}
             {showPokedexModal && <PokedexModal onClose={() => setShowPokedexModal(false)} />}
+            {showTransformationModal && <TransformationModal onClose={() => setShowTransformationModal(false)} />}
 
             {modalConfig && (
                 <div className="identity-header__modal-overlay identity-header__modal-overlay--high-z">

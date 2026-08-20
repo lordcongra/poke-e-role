@@ -141,7 +141,7 @@
 }
 
 .homebrew-types__btn-save {
-    background: #00695c;
+    background: var(--primary); /* 🔥 Now maps to dynamic primary instead of legacy teal */
     color: white;
     flex: 1;
     padding: 8px;
@@ -149,6 +149,11 @@
     border-radius: 4px;
     font-weight: bold;
     cursor: pointer;
+    transition: filter 0.2s ease;
+}
+
+.homebrew-types__btn-save:hover {
+    filter: brightness(1.15);
 }
 
 .homebrew-types__list-section {

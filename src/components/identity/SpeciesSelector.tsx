@@ -3,30 +3,26 @@ import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { fetchPokemonData } from '../../utils/api';
 import { SpeciesChangeModal } from '../modals/SpeciesChangeModal';
-import { TransformationModal } from '../modals/TransformationModal';
-import { Dices, BookOpen, Dna } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 
 interface SpeciesSelectorProps {
     uniqueSpecies: string[];
-    onOpenGenerator: () => void;
     onOpenPokedex: () => void;
 }
 
-export function SpeciesSelector({ uniqueSpecies, onOpenGenerator, onOpenPokedex }: SpeciesSelectorProps) {
+export function SpeciesSelector({ uniqueSpecies, onOpenPokedex }: SpeciesSelectorProps) {
     const identityStore = useCharacterStore((state) => state.identity);
     const setIdentity = useCharacterStore((state) => state.setIdentity);
     const applySpeciesData = useCharacterStore((state) => state.applySpeciesData);
 
     const [isFetching, setIsFetching] = useState(false);
     const [pendingSpeciesData, setPendingSpeciesData] = useState<Record<string, unknown> | null>(null);
-    const [showTransformModal, setShowTransformModal] = useState(false);
 
     const handleFetch = async () => {
         if (identityStore.mode === 'Trainer') return;
 
         const speciesName = identityStore.species || '';
 
-        // If the user completely cleared the input box, wipe the stats!
         if (speciesName.trim() === '') {
             applySpeciesData({ Name: '', Moves: [] }, true, true);
             return;
@@ -36,7 +32,6 @@ export function SpeciesSelector({ uniqueSpecies, onOpenGenerator, onOpenPokedex 
         try {
             const data = await fetchPokemonData(speciesName);
             if (data) {
-                // ALWAYS trigger the modal so the user has explicit control over how the stats apply!
                 setPendingSpeciesData(data as Record<string, unknown>);
             } else {
                 if (OBR.isAvailable) {
@@ -49,8 +44,6 @@ export function SpeciesSelector({ uniqueSpecies, onOpenGenerator, onOpenPokedex 
             setIsFetching(false);
         }
     };
-
-    const isTransformed = identityStore.activeTransformation !== 'None';
 
     return (
         <>
@@ -77,43 +70,14 @@ export function SpeciesSelector({ uniqueSpecies, onOpenGenerator, onOpenPokedex 
                     {isFetching && <span className="identity-header__loading-icon">⏳</span>}
 
                     {identityStore.mode === 'Pokémon' && (
-                        <>
-                            <button
-                                type="button"
-                                className="action-button action-button--dark identity-header__species-btn"
-                                onClick={() => {
-                                    if (!identityStore.species) {
-                                        if (OBR.isAvailable)
-                                            OBR.notification.show('⚠️ Please select a Species first!', 'WARNING');
-                                        return;
-                                    }
-                                    onOpenGenerator();
-                                }}
-                                title="Auto-Build Pokémon"
-                            >
-                                <Dices size={16} />
-                            </button>
-                            <button
-                                type="button"
-                                className="action-button action-button--dark identity-header__species-btn"
-                                onClick={onOpenPokedex}
-                                title="Pokédex Info"
-                            >
-                                <BookOpen size={16} />
-                            </button>
-                            <button
-                                type="button"
-                                className={`action-button ${isTransformed ? 'action-button--theme' : 'action-button--dark'} identity-header__species-btn`}
-                                onClick={() => setShowTransformModal(true)}
-                                title={
-                                    isTransformed
-                                        ? 'Manage Active Transformation'
-                                        : 'Transform (Mega, Dynamax, Tera, etc.)'
-                                }
-                            >
-                                <Dna size={16} />
-                            </button>
-                        </>
+                        <button
+                            type="button"
+                            className="action-button action-button--dark identity-header__species-btn"
+                            onClick={onOpenPokedex}
+                            title="Pokédex Info"
+                        >
+                            <BookOpen size={16} />
+                        </button>
                     )}
                 </div>
             </div>
@@ -124,8 +88,6 @@ export function SpeciesSelector({ uniqueSpecies, onOpenGenerator, onOpenPokedex 
                     onClose={() => setPendingSpeciesData(null)}
                 />
             )}
-
-            {showTransformModal && <TransformationModal onClose={() => setShowTransformModal(false)} />}
         </>
     );
 }

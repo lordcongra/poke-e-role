@@ -1,17 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { canViewHomebrew } from '../../utils/helper';
 import { CURRENT_VERSION } from '../../data/changelog';
+import { flattenStateToMetadata } from '../../utils/stateMapper';
+import { STATS_META_ID } from '../../utils/graphicsManager';
+import { saveToOwlbear } from '../../utils/obr';
+import type { CharacterState } from '../../store/storeTypes';
 import { HomebrewModal } from '../homebrew/HomebrewModal';
 import { RulesModal } from '../modals/RulesModal';
 import { ItemGeneratorModal } from '../modals/ItemGeneratorModal';
 import { ChangelogModal } from '../modals/ChangelogModal';
 import { InitiativeSettingsModal } from '../modals/InitiativeSettingsModal';
+import { GeneratorModal } from '../modals/GeneratorModal';
+import { PrintSettingsModal } from '../modals/PrintSettingsModal';
 import { isStandaloneMode } from '../../utils/storageAdapter';
 import { useObrReady } from '../../hooks/useObrReady';
 import { setActiveTokenId } from '../../utils/obr';
-import { ChevronDown, ArrowLeft, Swords, Settings, Hammer, BookOpen, Package, Bell, Sun, Moon } from 'lucide-react';
+import { ChevronDown, ArrowLeft, Swords, Settings, Hammer, BookOpen, Package, Bell, Sun, Moon, Save, Upload, Printer, Wand2 } from 'lucide-react';
 import './GlobalToolbar.css';
 
 export function GlobalToolbar() {
@@ -36,6 +42,7 @@ export function GlobalToolbar() {
 
     const showHomebrewButton = isStandaloneMode || canViewHomebrew(localRole, homebrewAccess);
     const showLootGenButton = isStandaloneMode || localRole === 'GM' || gmOnlyLootGen === false;
+    const showPokemonGeneratorButton = isStandaloneMode || !!activeTokenId;
 
     const [isDark, setIsDark] = useState<boolean>(false);
     const [showHomebrewModal, setShowHomebrewModal] = useState<boolean>(false);
@@ -43,6 +50,11 @@ export function GlobalToolbar() {
     const [showLootGenModal, setShowLootGenModal] = useState<boolean>(false);
     const [showChangelog, setShowChangelog] = useState<boolean>(false);
     const [showInitSettings, setShowInitSettings] = useState<boolean>(false);
+    const [showGeneratorModal, setShowGeneratorModal] = useState<boolean>(false);
+    const [showPrintModal, setShowPrintModal] = useState<boolean>(false);
+    const [importData, setImportData] = useState<Record<string, unknown> | null>(null);
+
+    const fileInputReference = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         try {
@@ -243,6 +255,101 @@ export function GlobalToolbar() {
         setShowChangelog(false);
     };
 
+    const handleExport = async () => {
+        const state = useCharacterStore.getState();
+
+        if (isStandaloneMode) {
+            try {
+                const exportData = flattenStateToMetadata(state);
+                const dataString = JSON.stringify(exportData, null, 2);
+
+                const blob = new Blob([dataString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const linkElement = document.createElement('a');
+                const name = state.identity.nickname || state.identity.species || 'character';
+                linkElement.href = url;
+                linkElement.download = `${name.replace(/\s+/g, '_')}_pokerole.json`;
+                document.body.appendChild(linkElement);
+                linkElement.click();
+                document.body.removeChild(linkElement);
+                URL.revokeObjectURL(url);
+                return;
+            } catch (error) {
+                console.error('[GlobalToolbar] Standalone Export failed:', error);
+                return;
+            }
+        }
+
+        if (!state.tokenId || !OBR.isAvailable || !isObrReady) {
+            if (OBR.isAvailable && isObrReady) OBR.notification.show('Please select a token to export.', 'WARNING');
+            return;
+        }
+
+        try {
+            const items = await OBR.scene.items.getItems([state.tokenId]);
+            if (items.length === 0) return;
+
+            const exportData = items[0].metadata[STATS_META_ID] || {};
+            const dataString = JSON.stringify(exportData, null, 2);
+
+            const blob = new Blob([dataString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const linkElement = document.createElement('a');
+            const name = state.identity.nickname || state.identity.species || 'character';
+            linkElement.href = url;
+            linkElement.download = `${name.replace(/\s+/g, '_')}_pokerole.json`;
+            document.body.appendChild(linkElement);
+            linkElement.click();
+            document.body.removeChild(linkElement);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('[GlobalToolbar] Export failed:', error);
+        }
+    };
+
+    const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (fileEvent) => {
+            try {
+                const imported = JSON.parse(fileEvent.target?.result as string);
+                setImportData(imported);
+            } catch (error) {
+                if (OBR.isAvailable && isObrReady) OBR.notification.show('Invalid JSON file.', 'ERROR');
+                else alert('Invalid JSON file.');
+            }
+            if (fileInputReference.current) fileInputReference.current.value = '';
+        };
+        reader.readAsText(file);
+    };
+
+    const confirmImport = () => {
+        if (!importData) return;
+        const store = useCharacterStore.getState();
+        try {
+            if (
+                importData['moves-data'] !== undefined ||
+                importData['hp-curr'] !== undefined ||
+                importData['v2-migrated']
+            ) {
+                store.loadFromOwlbear(importData);
+                saveToOwlbear(importData);
+            } else {
+                useCharacterStore.setState(importData as unknown as CharacterState);
+                const fullState = useCharacterStore.getState();
+                const metaToSave = flattenStateToMetadata(fullState);
+                saveToOwlbear(metaToSave);
+            }
+        } catch (error) {
+            console.error('[GlobalToolbar] Failed to import character data:', error);
+            if (OBR.isAvailable && isObrReady) OBR.notification.show('Failed to import data.', 'ERROR');
+            else alert('Failed to import data.');
+        } finally {
+            setImportData(null);
+        }
+    };
+
     return (
         <div className="global-toolbar-wrapper">
             <div
@@ -303,11 +410,11 @@ export function GlobalToolbar() {
                         {showHomebrewButton && (
                             <button
                                 type="button"
-                                className="global-toolbar__btn action-button--secondary-hover"
+                                className="global-toolbar__btn action-button--primary-hover"
                                 onClick={() => setShowHomebrewModal(true)}
                                 title="Manage Table Custom Content"
                             >
-                                <Hammer size={16} color="var(--secondary)" /> Homebrew Workshop
+                                <Hammer size={16} color="var(--primary)" /> Homebrew Workshop
                             </button>
                         )}
 
@@ -320,44 +427,123 @@ export function GlobalToolbar() {
                             <BookOpen size={16} color="var(--primary)" /> Room Rules
                         </button>
 
-                        {showLootGenButton && (
-                            <button
-                                type="button"
-                                className="global-toolbar__btn action-button--secondary-hover"
-                                onClick={() => setShowLootGenModal(true)}
-                                title="Generate Items & TMs"
-                            >
-                                <Package size={16} color="var(--secondary)" /> Loot Generator
-                            </button>
+                        {(showPokemonGeneratorButton || showLootGenButton) && (
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                                {showPokemonGeneratorButton && (
+                                    <button
+                                        type="button"
+                                        className="global-toolbar__btn action-button--secondary-hover"
+                                        onClick={() => setShowGeneratorModal(true)}
+                                        title="Open Pokémon Generator"
+                                    >
+                                        <Wand2 size={16} color="var(--secondary)" /> PKMN Generator
+                                    </button>
+                                )}
+                                {showLootGenButton && (
+                                    <button
+                                        type="button"
+                                        className="global-toolbar__btn action-button--secondary-hover"
+                                        onClick={() => setShowLootGenModal(true)}
+                                        title="Generate Items & TMs"
+                                    >
+                                        <Package size={16} color="var(--secondary)" /> Loot Generator
+                                    </button>
+                                )}
+                            </div>
                         )}
                     </div>
 
-                    <div className="global-toolbar__side-tools">
-                        <button
-                            type="button"
-                            className="global-toolbar__btn action-button--neutral-hover"
-                            onClick={() => setShowChangelog(true)}
-                            title="View System Updates"
-                        >
-                            <Bell size={16} color="var(--text-main)" /> What's New
-                        </button>
+                    <div className="global-toolbar__side-tools" style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                            <button
+                                type="button"
+                                className="global-toolbar__btn action-button--neutral-hover"
+                                onClick={() => setShowChangelog(true)}
+                                title="View System Updates"
+                            >
+                                <Bell size={16} color="var(--text-main)" /> What's New
+                            </button>
 
-                        <button
-                            type="button"
-                            className="global-toolbar__btn action-button--neutral-hover"
-                            onClick={toggleTheme}
-                            title="Toggle Dark/Light Mode"
-                        >
-                            {isDark ? (
-                                <>
-                                    <Sun size={16} color="#F8D030" /> Light
-                                </>
-                            ) : (
-                                <>
-                                    <Moon size={16} color="#A890F0" /> Dark
-                                </>
-                            )}
-                        </button>
+                            <button
+                                type="button"
+                                className="global-toolbar__btn action-button--neutral-hover"
+                                onClick={toggleTheme}
+                                title="Toggle Dark/Light Mode"
+                            >
+                                {isDark ? (
+                                    <>
+                                        <Sun size={16} color="#F8D030" /> Light
+                                    </>
+                                ) : (
+                                    <>
+                                        <Moon size={16} color="#A890F0" /> Dark
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                        
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                            <button
+                                type="button"
+                                onClick={handleExport}
+                                className="action-button action-button--dark"
+                                title="Export Character (Download JSON)"
+                            >
+                                <Save size={14} />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => fileInputReference.current?.click()}
+                                className="action-button action-button--dark"
+                                title="Import Character (Upload JSON)"
+                            >
+                                <Upload size={14} />
+                            </button>
+                            <input
+                                type="file"
+                                ref={fileInputReference}
+                                onChange={handleImport}
+                                accept=".json"
+                                style={{ display: 'none' }}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPrintModal(true)}
+                                className="action-button action-button--dark"
+                                title="Print Sheet"
+                            >
+                                <Printer size={14} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {importData && (
+                <div className="identity-header__modal-overlay" style={{ zIndex: 9999 }}>
+                    <div className="identity-header__modal-content" style={{ background: 'var(--panel-bg)', color: 'var(--text-main)', border: '1px solid var(--border)' }}>
+                        <h3 className="identity-header__modal-title">⚠️ Confirm Import</h3>
+                        <p className="identity-header__modal-text" style={{ marginBottom: '16px' }}>
+                            Import character data? This will completely overwrite the current token.
+                        </p>
+                        <div className="identity-header__modal-actions" style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                                type="button"
+                                className="action-button action-button--dark"
+                                onClick={() => setImportData(null)}
+                                style={{ flex: 1, padding: '8px' }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="action-button action-button--red"
+                                onClick={confirmImport}
+                                style={{ flex: 1, padding: '8px' }}
+                            >
+                                Import
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -365,8 +551,10 @@ export function GlobalToolbar() {
             {showHomebrewModal && <HomebrewModal onClose={() => setShowHomebrewModal(false)} />}
             {showRulesModal && <RulesModal onClose={() => setShowRulesModal(false)} />}
             {showLootGenModal && <ItemGeneratorModal onClose={() => setShowLootGenModal(false)} />}
+            {showGeneratorModal && <GeneratorModal onClose={() => setShowGeneratorModal(false)} />}
             {showChangelog && <ChangelogModal onClose={handleCloseChangelog} />}
             {showInitSettings && <InitiativeSettingsModal onClose={() => setShowInitSettings(false)} />}
+            {showPrintModal && <PrintSettingsModal onClose={() => setShowPrintModal(false)} />}
         </div>
     );
 }

@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { CombatStat, Skill } from '../../types/enums';
-import { ResourceBox } from '../ui/ResourceBox';
-import { NumberSpinner } from '../ui/NumberSpinner';
-import { rollDicePlus } from '../../utils/diceRoller';
+import { rollDicePlus } from '../../utils/combatUtils';
 import { CollapsingSection } from '../ui/CollapsingSection';
+import { NumberSpinner } from '../ui/NumberSpinner';
+import { Dices, Shield, AlertTriangle, Sparkles } from 'lucide-react';
+import { ResourceBox } from '../ui/ResourceBox';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { StatusBox } from '../board/StatusBox';
 import { TimerBox } from './TimerBox';
 import { parseCombatTags, getAbilityText, calculateStatTotal, calculateSkillTotal } from '../../utils/combatUtils';
-import { Dices, Shield, AlertTriangle, Sparkles } from 'lucide-react';
 import './DerivedBoard.css';
 
 export function DerivedBoard() {
@@ -111,8 +111,13 @@ export function DerivedBoard() {
                 </div>
 
                 <div className="derived-board__health-row">
-                    <div className="sheet-panel health-section__box derived-board__box">
-                        <div className="derived-board__box-header derived-board__box-header--primary">DEFENSE</div>
+                    <div className="sheet-panel health-section__box derived-board__box derived-board__box--primary-border">
+                        <div
+                            className="derived-board__box-header theme-header--primary"
+                            style={{ fontSize: '0.85rem' }}
+                        >
+                            DEFENSE
+                        </div>
                         <div className="derived-board__box-content">
                             <span className="derived-board__total-text">
                                 Total: <strong>{defTotal}</strong>
@@ -132,8 +137,11 @@ export function DerivedBoard() {
                         </div>
                     </div>
 
-                    <div className="sheet-panel health-section__box derived-board__box">
-                        <div className="derived-board__box-header derived-board__box-header--primary">
+                    <div className="sheet-panel health-section__box derived-board__box derived-board__box--primary-border">
+                        <div
+                            className="derived-board__box-header theme-header--primary"
+                            style={{ fontSize: '0.85rem' }}
+                        >
                             SPEC. DEFENSE
                         </div>
                         <div className="derived-board__box-content">
@@ -162,8 +170,11 @@ export function DerivedBoard() {
                     <div
                         className={`derived-board__group-left ${mode !== 'Pokémon' ? 'derived-board__group-left--full' : ''}`}
                     >
-                        <div className="sheet-panel health-section__box derived-board__box derived-board__box--large">
-                            <div className="derived-board__box-header derived-board__box-header--dark derived-board__box-header--small">
+                        <div className="sheet-panel health-section__box derived-board__box derived-board__box--large derived-board__box--secondary-border">
+                            <div
+                                className="derived-board__box-header theme-header--secondary"
+                                style={{ fontSize: '0.75rem' }}
+                            >
                                 INITIATIVE{' '}
                                 <TooltipIcon
                                     onClick={() =>
@@ -183,8 +194,11 @@ export function DerivedBoard() {
                                 </button>
                             </div>
                         </div>
-                        <div className="sheet-panel health-section__box derived-board__box">
-                            <div className="derived-board__box-header derived-board__box-header--dark derived-board__box-header--small">
+                        <div className="sheet-panel health-section__box derived-board__box derived-board__box--secondary-border">
+                            <div
+                                className="derived-board__box-header theme-header--secondary"
+                                style={{ fontSize: '0.75rem' }}
+                            >
                                 EVADE{' '}
                                 <TooltipIcon
                                     onClick={() =>
@@ -199,8 +213,11 @@ export function DerivedBoard() {
 
                         {mode === 'Pokémon' && (
                             <>
-                                <div className="sheet-panel health-section__box derived-board__box">
-                                    <div className="derived-board__box-header derived-board__box-header--dark derived-board__box-header--small">
+                                <div className="sheet-panel health-section__box derived-board__box derived-board__box--secondary-border">
+                                    <div
+                                        className="derived-board__box-header theme-header--secondary"
+                                        style={{ fontSize: '0.75rem' }}
+                                    >
                                         CLASH(P){' '}
                                         <TooltipIcon
                                             onClick={() =>
@@ -215,8 +232,11 @@ export function DerivedBoard() {
                                         {clashPhysical}
                                     </div>
                                 </div>
-                                <div className="sheet-panel health-section__box derived-board__box">
-                                    <div className="derived-board__box-header derived-board__box-header--dark derived-board__box-header--small">
+                                <div className="sheet-panel health-section__box derived-board__box derived-board__box--secondary-border">
+                                    <div
+                                        className="derived-board__box-header theme-header--secondary"
+                                        style={{ fontSize: '0.75rem' }}
+                                    >
                                         CLASH(S){' '}
                                         <TooltipIcon
                                             onClick={() =>
@@ -237,8 +257,11 @@ export function DerivedBoard() {
 
                     {mode === 'Pokémon' && (
                         <div className="derived-board__group-right">
-                            <div className="sheet-panel health-section__box derived-board__box derived-board__box--yellow-border">
-                                <div className="derived-board__box-header derived-board__box-header--yellow derived-board__box-header--small">
+                            <div className="sheet-panel health-section__box derived-board__box derived-board__box--secondary-border">
+                                <div
+                                    className="derived-board__box-header theme-header--secondary"
+                                    style={{ fontSize: '0.75rem' }}
+                                >
                                     HAPPY
                                 </div>
                                 <div className="derived-board__box-content">
@@ -250,8 +273,11 @@ export function DerivedBoard() {
                                     />
                                 </div>
                             </div>
-                            <div className="sheet-panel health-section__box derived-board__box derived-board__box--purple-border">
-                                <div className="derived-board__box-header derived-board__box-header--purple derived-board__box-header--small">
+                            <div className="sheet-panel health-section__box derived-board__box derived-board__box--secondary-border">
+                                <div
+                                    className="derived-board__box-header theme-header--secondary"
+                                    style={{ fontSize: '0.75rem' }}
+                                >
                                     LOYAL
                                 </div>
                                 <div className="derived-board__box-content">

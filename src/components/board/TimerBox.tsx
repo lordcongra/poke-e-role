@@ -13,7 +13,7 @@ export function TimerBox() {
 
     return (
         <div className="sheet-panel health-section__box timer-box">
-            <div className="timer-box__header">
+            <div className="timer-box__header theme-header--secondary" style={{ padding: '4px' }}>
                 <span className="timer-box__header-title">
                     TIMERS{' '}
                     <TooltipIcon
@@ -25,7 +25,11 @@ export function TimerBox() {
                         }
                     />
                 </span>
-                <button onClick={addEffect} className="action-button action-button--dark timer-box__add-btn">
+                <button
+                    onClick={addEffect}
+                    className="action-button action-button--dark timer-box__add-btn"
+                    style={{ padding: '2px 6px', fontSize: '0.75rem', margin: '0' }}
+                >
                     + Add
                 </button>
             </div>

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { NumberSpinner } from '../ui/NumberSpinner';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import {
     rollGeneric,
@@ -14,6 +13,7 @@ import {
 import { STATUS_COLORS } from '../../data/constants';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { TooltipIcon } from '../ui/TooltipIcon';
+import { NumberSpinner } from '../ui/NumberSpinner';
 import { TakeChancesModal } from '../modals/TakeChancesModal';
 import { ClashModal } from '../modals/ClashModal';
 import { RestModal } from '../modals/RestModal';
@@ -401,7 +401,7 @@ export function TrackerSection() {
                         <button
                             type="button"
                             onClick={() => setShowRestModal(true)}
-                            className="action-button tracker-section__rest-btn"
+                            className="action-button action-button--secondary tracker-section__rest-btn"
                             title="Fully heal HP/Will and clear statuses"
                         >
                             <Tent size={16} /> Rest

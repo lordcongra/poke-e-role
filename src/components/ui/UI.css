@@ -20,6 +20,60 @@
     color: var(--primary);
 }
 
+/* 🔥 NEW THEME UTILITIES FOR GLOBAL USE */
+.theme-header--primary {
+    background: var(--primary) !important;
+    color: white !important;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
+    font-weight: bold;
+}
+
+.theme-header--secondary {
+    background: var(--secondary) !important;
+    color: white !important;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
+    font-weight: bold;
+}
+
+/* Overrides to make the tooltips pop against the bright theme headers */
+.theme-header--primary .tooltip-icon,
+.theme-header--secondary .tooltip-icon,
+.health-section__header .tooltip-icon,
+.status-box__header .tooltip-icon,
+.timer-box__header .tooltip-icon,
+.derived-board__box-header .tooltip-icon {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.theme-header--primary .tooltip-icon:hover,
+.theme-header--secondary .tooltip-icon:hover,
+.health-section__header .tooltip-icon:hover,
+.status-box__header .tooltip-icon:hover,
+.timer-box__header .tooltip-icon:hover,
+.derived-board__box-header .tooltip-icon:hover {
+    color: #ffffff !important;
+}
+
+/* Forcing Status and Timers to obey the secondary theme borders */
+.status-box,
+.timer-box {
+    border-color: var(--secondary) !important;
+}
+.status-box__header,
+.timer-box__header {
+    background-color: var(--secondary) !important;
+    color: white !important;
+}
+
+.action-button--secondary {
+    background: var(--secondary);
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+.action-button--secondary:hover {
+    filter: brightness(1.15);
+}
+
 .health-section__header--shadow {
     text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
 }
