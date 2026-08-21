@@ -304,11 +304,11 @@ export function IdentityHeader() {
             {modalConfig && (
                 <div className="identity-header__modal-overlay identity-header__modal-overlay--high-z">
                     <div className="identity-header__modal-content identity-header__modal-content--large">
-                        <h3 className="identity-header__modal-title identity-header__modal-title--large">
+                        <h3 className="identity-header__modal-title identity-header__modal-title--large text-title-primary">
                             {modalConfig.title}
                         </h3>
                         <hr className="identity-header__modal-divider" />
-                        <div className="identity-header__modal-text identity-header__modal-text--pre-wrap">
+                        <div className="identity-header__modal-text identity-header__modal-text--pre-wrap text-subtext">
                             {modalConfig.content}
                         </div>
                         <div className="identity-header__modal-actions">
@@ -337,10 +337,13 @@ export function IdentityHeader() {
             {showImagePicker && (
                 <div className="identity-header__modal-overlay identity-header__modal-overlay--high-z">
                     <div className="identity-header__modal-content">
-                        <h3 className="identity-header__modal-title modal-title-with-icon">
+                        <h3
+                            className="identity-header__modal-title text-title-primary"
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                        >
                             <ImageIcon size={20} /> Update Artwork
                         </h3>
-                        <p className="identity-header__modal-text identity-header__picker-desc">
+                        <p className="identity-header__modal-text identity-header__picker-desc text-subtext">
                             Choose how you'd like to supply the image for this character.
                         </p>
 
@@ -349,10 +352,13 @@ export function IdentityHeader() {
                                 className="action-button action-button--dark identity-header__picker-btn"
                                 onClick={() => imageInputRef.current?.click()}
                             >
-                                <span className="identity-header__picker-btn-title">
+                                <span className="identity-header__picker-btn-title text-theme-header">
                                     <Upload size={16} /> Upload Local File
                                 </span>
-                                <span className="identity-header__picker-btn-sub">
+                                <span
+                                    className="identity-header__picker-btn-sub text-subtext"
+                                    style={{ color: 'white' }}
+                                >
                                     (Recommended - Saved safely to your browser's database)
                                 </span>
                             </button>
@@ -361,10 +367,13 @@ export function IdentityHeader() {
                                 className="action-button identity-header__picker-btn identity-header__picker-btn--web"
                                 onClick={handleStandaloneUrl}
                             >
-                                <span className="identity-header__picker-btn-title">
+                                <span className="identity-header__picker-btn-title text-theme-header">
                                     <Globe size={16} /> Use Web URL
                                 </span>
-                                <span className="identity-header__picker-btn-sub">
+                                <span
+                                    className="identity-header__picker-btn-sub text-subtext"
+                                    style={{ color: 'white' }}
+                                >
                                     (Lightweight - Image breaks if the web link dies)
                                 </span>
                             </button>

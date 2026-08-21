@@ -13,7 +13,7 @@ export function IdentityToggles({ onOpenTrackerSettings }: IdentityTogglesProps)
     return (
         <div className="identity-header__toggles">
             <div className="identity-header__toggle-box identity-header__toggle-box--blue">
-                <label className="identity-header__toggle-label">
+                <label className="identity-header__toggle-label text-theme-header">
                     <input
                         type="checkbox"
                         checked={identityStore.showTrackers ?? true}
@@ -24,8 +24,9 @@ export function IdentityToggles({ onOpenTrackerSettings }: IdentityTogglesProps)
                 <button
                     type="button"
                     onClick={onOpenTrackerSettings}
-                    className="action-button identity-header__settings-btn"
+                    className="action-button identity-header__settings-btn text-theme-header"
                     title="Tracker Settings"
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
                     <Settings size={14} />
                 </button>
@@ -33,7 +34,7 @@ export function IdentityToggles({ onOpenTrackerSettings }: IdentityTogglesProps)
 
             {role === 'GM' && (
                 <div className="identity-header__toggle-box identity-header__toggle-box--primary">
-                    <label className="identity-header__toggle-label">
+                    <label className="identity-header__toggle-label text-theme-header">
                         <input
                             type="checkbox"
                             checked={identityStore.isNPC}

@@ -3,7 +3,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { fetchPokemonData } from '../../utils/api';
 import { SpeciesChangeModal } from '../modals/SpeciesChangeModal';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Loader2 } from 'lucide-react';
 
 interface SpeciesSelectorProps {
     uniqueSpecies: string[];
@@ -35,7 +35,7 @@ export function SpeciesSelector({ uniqueSpecies, onOpenPokedex }: SpeciesSelecto
                 setPendingSpeciesData(data as Record<string, unknown>);
             } else {
                 if (OBR.isAvailable) {
-                    OBR.notification.show(`⚠️ Species "${speciesName}" not found.`, 'WARNING');
+                    OBR.notification.show(`Species "${speciesName}" not found.`, 'WARNING');
                 }
             }
         } catch (error) {
@@ -48,12 +48,14 @@ export function SpeciesSelector({ uniqueSpecies, onOpenPokedex }: SpeciesSelecto
     return (
         <>
             <div className="identity-grid__row">
-                <span className="identity-grid__label">{identityStore.mode === 'Trainer' ? 'Concept' : 'Species'}</span>
+                <span className="identity-grid__label text-label">
+                    {identityStore.mode === 'Trainer' ? 'Concept' : 'Species'}
+                </span>
                 <div className="identity-header__species-container">
                     <input
                         type="text"
                         list="species-datalist"
-                        className="identity-grid__input identity-header__flex-input"
+                        className="identity-grid__input identity-header__flex-input text-label"
                         placeholder={identityStore.mode === 'Trainer' ? 'e.g. Bug Catcher' : 'e.g. Aron'}
                         value={identityStore.species || ''}
                         onChange={(event) => setIdentity('species', event.target.value)}
@@ -67,7 +69,14 @@ export function SpeciesSelector({ uniqueSpecies, onOpenPokedex }: SpeciesSelecto
                             <option key={species} value={species} />
                         ))}
                     </datalist>
-                    {isFetching && <span className="identity-header__loading-icon">⏳</span>}
+                    {isFetching && (
+                        <span
+                            className="identity-header__loading-icon"
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                            <Loader2 size={14} className="spin-animation" color="var(--primary)" />
+                        </span>
+                    )}
 
                     {identityStore.mode === 'Pokémon' && (
                         <button
@@ -75,8 +84,9 @@ export function SpeciesSelector({ uniqueSpecies, onOpenPokedex }: SpeciesSelecto
                             className="action-button action-button--dark identity-header__species-btn"
                             onClick={onOpenPokedex}
                             title="Pokédex Info"
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         >
-                            <BookOpen size={16} />
+                            <BookOpen size={14} />
                         </button>
                     )}
                 </div>

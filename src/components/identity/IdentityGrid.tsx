@@ -8,7 +8,7 @@ import { CustomInfoRow } from '../ui/CustomInfoRow';
 import { SpeciesSelector } from './SpeciesSelector';
 import { StandaloneAvatar } from '../standalone/StandaloneAvatar';
 import { isStandaloneMode } from '../../utils/storageAdapter';
-import { Plus } from 'lucide-react';
+import { Plus, AlertTriangle } from 'lucide-react';
 
 interface IdentityGridProps {
     onOpenAbility: () => void;
@@ -69,16 +69,6 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: Ide
         ])
     );
 
-    // 🔥 Updated to provide the unified standard drop shadow
-    const getTypeTextProps = (type: string) => {
-        if (!type || type === 'None') return { color: 'var(--text-main)', textShadow: 'none' };
-
-        return {
-            color: '#ffffff',
-            textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8), 0 1px 4px rgba(0, 0, 0, 0.6)'
-        };
-    };
-
     return (
         <>
             <div
@@ -87,10 +77,10 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: Ide
                 {isStandaloneMode && <StandaloneAvatar />}
 
                 <div className="identity-grid__row">
-                    <span className="identity-grid__label">Nickname</span>
+                    <span className="identity-grid__label text-label">Nickname</span>
                     <input
                         type="text"
-                        className="identity-grid__input"
+                        className="identity-grid__input text-label"
                         value={identityStore.nickname || ''}
                         onChange={(event) => setIdentity('nickname', event.target.value)}
                     />
@@ -99,11 +89,11 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: Ide
                 <SpeciesSelector uniqueSpecies={uniqueSpecies} onOpenPokedex={onOpenPokedex} />
 
                 <div className="identity-grid__row">
-                    <span className="identity-grid__label">
+                    <span className="identity-grid__label text-label">
                         Nature <TooltipIcon onClick={onOpenNature} />
                     </span>
                     <select
-                        className="identity-grid__select"
+                        className="identity-grid__select text-label"
                         value={identityStore.nature || ''}
                         onChange={(event) => setIdentity('nature', event.target.value)}
                     >
@@ -115,9 +105,9 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: Ide
                     </select>
                 </div>
                 <div className="identity-grid__row">
-                    <span className="identity-grid__label">Rank</span>
+                    <span className="identity-grid__label text-label">Rank</span>
                     <select
-                        className="identity-grid__select"
+                        className="identity-grid__select text-label"
                         value={identityStore.rank || 'Starter'}
                         onChange={(event) => setIdentity('rank', event.target.value as Rank)}
                     >
@@ -130,13 +120,12 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: Ide
                 </div>
 
                 <div className="identity-grid__row">
-                    <span className="identity-grid__label">Typing</span>
+                    <span className="identity-grid__label text-label">Typing</span>
                     <div className="identity-header__typing-container">
                         <select
-                            className="identity-grid__select identity-header__type-select"
+                            className={`identity-grid__select identity-header__type-select ${identityStore.type1 && identityStore.type1 !== 'None' ? 'text-theme-header' : 'text-label'}`}
                             style={{
-                                background: allTypeColors[identityStore.type1] || 'var(--panel-alt)',
-                                ...getTypeTextProps(identityStore.type1)
+                                background: allTypeColors[identityStore.type1] || 'var(--panel-alt)'
                             }}
                             value={identityStore.type1 || ''}
                             onChange={(event) => setIdentity('type1', event.target.value)}
@@ -148,10 +137,9 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: Ide
                             ))}
                         </select>
                         <select
-                            className="identity-grid__select identity-header__type-select"
+                            className={`identity-grid__select identity-header__type-select ${identityStore.type2 && identityStore.type2 !== 'None' ? 'text-theme-header' : 'text-label'}`}
                             style={{
-                                background: allTypeColors[identityStore.type2] || 'var(--panel-alt)',
-                                ...getTypeTextProps(identityStore.type2)
+                                background: allTypeColors[identityStore.type2] || 'var(--panel-alt)'
                             }}
                             value={identityStore.type2 || ''}
                             onChange={(event) => setIdentity('type2', event.target.value)}
@@ -165,13 +153,13 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: Ide
                     </div>
                 </div>
                 <div className="identity-grid__row">
-                    <span className="identity-grid__label">
+                    <span className="identity-grid__label text-label">
                         Ability <TooltipIcon onClick={onOpenAbility} />
                     </span>
                     <input
                         type="text"
                         list="ability-datalist"
-                        className="identity-grid__input"
+                        className="identity-grid__input text-label"
                         value={identityStore.ability || ''}
                         onChange={(event) => setIdentity('ability', event.target.value)}
                         placeholder="Type or select..."
@@ -184,9 +172,9 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: Ide
                 </div>
 
                 <div className="identity-grid__row">
-                    <span className="identity-grid__label">Mode</span>
+                    <span className="identity-grid__label text-label">Mode</span>
                     <select
-                        className="identity-grid__select"
+                        className="identity-grid__select text-label"
                         value={identityStore.mode || 'Pokémon'}
                         onChange={(event) => setMode(event.target.value as 'Pokémon' | 'Trainer')}
                     >
@@ -196,9 +184,9 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: Ide
                 </div>
 
                 <div className="identity-grid__row identity-header__age-gender-row">
-                    <span className="identity-grid__label">Age</span>
+                    <span className="identity-grid__label text-label">Age</span>
                     <select
-                        className="identity-grid__select identity-header__age-select"
+                        className="identity-grid__select identity-header__age-select text-label"
                         value={identityStore.age || '--'}
                         onChange={(event) => setIdentity('age', event.target.value)}
                     >
@@ -208,10 +196,10 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: Ide
                             </option>
                         ))}
                     </select>
-                    <span className="identity-grid__label identity-header__label-margin">Gender</span>
+                    <span className="identity-grid__label identity-header__label-margin text-label">Gender</span>
                     <input
                         type="text"
-                        className="identity-grid__input identity-header__gender-input"
+                        className="identity-grid__input identity-header__gender-input text-label"
                         value={identityStore.gender || ''}
                         onChange={(event) => setIdentity('gender', event.target.value)}
                         placeholder="..."
@@ -219,36 +207,36 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: Ide
                 </div>
 
                 <div className="identity-grid__row">
-                    <span className="identity-grid__label">Combat</span>
+                    <span className="identity-grid__label text-label">Combat</span>
                     <input
                         type="text"
-                        className="identity-grid__input"
+                        className="identity-grid__input text-label"
                         value={identityStore.combat || ''}
                         onChange={(event) => setIdentity('combat', event.target.value)}
                     />
                 </div>
                 <div className="identity-grid__row">
-                    <span className="identity-grid__label">Social</span>
+                    <span className="identity-grid__label text-label">Social</span>
                     <input
                         type="text"
-                        className="identity-grid__input"
+                        className="identity-grid__input text-label"
                         value={identityStore.social || ''}
                         onChange={(event) => setIdentity('social', event.target.value)}
                     />
                 </div>
                 <div className="identity-grid__row">
-                    <span className="identity-grid__label">Hand</span>
+                    <span className="identity-grid__label text-label">Hand</span>
                     <input
                         type="text"
-                        className="identity-grid__input"
+                        className="identity-grid__input text-label"
                         value={identityStore.hand || ''}
                         onChange={(event) => setIdentity('hand', event.target.value)}
                     />
                 </div>
                 <div className="identity-grid__row">
-                    <span className="identity-grid__label">Rolls</span>
+                    <span className="identity-grid__label text-label">Rolls</span>
                     <select
-                        className="identity-grid__select"
+                        className="identity-grid__select text-label"
                         value={identityStore.rolls || 'Public (Everyone)'}
                         onChange={(event) => setIdentity('rolls', event.target.value)}
                     >
@@ -279,8 +267,19 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: Ide
             {deleteCustomInfoId && (
                 <div className="identity-header__modal-overlay">
                     <div className="identity-header__modal-content">
-                        <h3 className="identity-header__modal-title">⚠️ Confirm Deletion</h3>
-                        <p className="identity-header__modal-text">
+                        <h3
+                            className="identity-header__modal-title text-title-primary"
+                            style={{
+                                color: 'var(--semantic-danger)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                            }}
+                        >
+                            <AlertTriangle size={20} /> Confirm Deletion
+                        </h3>
+                        <p className="identity-header__modal-text text-subtext">
                             Are you sure you want to delete this Custom Field?
                         </p>
                         <div className="identity-header__modal-actions">
