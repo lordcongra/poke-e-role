@@ -87,7 +87,7 @@
     flex-shrink: 0;
 }
 
-/* 🔥 Lock the row height so all buttons align perfectly */
+/* 🔥 Lock the row height so all buttons align perfectly on desktop */
 .identity-header__actions-wrapper {
     display: flex;
     gap: 6px;
@@ -289,4 +289,12 @@
 .identity-header__modal-btn--broadcast {
     background-color: var(--secondary);
     border-color: var(--secondary);
+}
+
+/* 🔥 MOBILE RESPONSIVE FIXES 🔥 */
+@media (max-width: 768px) {
+    .identity-header__actions-wrapper {
+        flex-wrap: wrap; /* Allows cutoff buttons to drop to next line */
+        height: auto; /* Removes strict height constraint to accommodate wrap */
+    }
 }

@@ -15,11 +15,12 @@
     opacity: 0.5;
 }
 
+/* 🔥 Changed to flex-wrap: wrap so inputs and buttons don't bleed out */
 .move-card__header {
     display: flex;
     align-items: center;
     gap: 8px;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
 }
 
 .move-card__checkbox {
@@ -53,8 +54,8 @@
 }
 
 .move-card__name-input {
-    flex: 1;
-    min-width: 80px;
+    flex: 1 1 auto; /* Allows input to stretch across new line if pushed */
+    min-width: 100px;
     padding: 6px 8px;
     background: var(--input-bg);
     border: 1px solid var(--border);
@@ -113,6 +114,7 @@
     margin-left: auto;
 }
 
+/* 🔥 Added flex-wrap: wrap so Damage button isn't vertically squished */
 .move-card__footer {
     display: flex;
     align-items: center;
@@ -120,6 +122,7 @@
     gap: 8px;
     padding-top: 6px;
     border-top: 1px solid var(--border);
+    flex-wrap: wrap;
 }
 
 .move-card__damage-container {

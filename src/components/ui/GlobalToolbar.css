@@ -3,7 +3,7 @@
     border: 1px solid var(--border);
     border-radius: 6px;
     margin-bottom: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--dark) 15%, transparent);
     transition:
         background-color 0.3s ease,
         border-color 0.3s ease;
@@ -128,7 +128,7 @@
 
 .global-toolbar__btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px color-mix(in srgb, var(--dark) 10%, transparent);
 }
 
 /* Initiative Split Button specific logic */
@@ -175,7 +175,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: color-mix(in srgb, var(--dark) 70%, transparent);
     z-index: 9999;
     display: flex;
     justify-content: center;
@@ -190,7 +190,7 @@
     width: 90%;
     border: 2px solid var(--semantic-danger);
     color: var(--text-main);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
     text-align: center;
 }
 
@@ -207,7 +207,6 @@
     padding-bottom: 8px;
 }
 
-/* Typography pruned: relies on .text-subtext */
 .global-toolbar__modal-text {
     margin-bottom: 16px;
     line-height: 1.4;
@@ -227,6 +226,7 @@
     gap: 6px;
 }
 
+/* 🔥 MOBILE RESPONSIVE FIXES 🔥 */
 @media (max-width: 768px) {
     .global-toolbar__content {
         flex-direction: column;
@@ -240,6 +240,11 @@
 
     .global-toolbar__side-tools {
         flex-direction: row;
-        justify-content: space-between;
+        flex-wrap: wrap; /* Prevent blowout */
+        justify-content: flex-start;
+    }
+
+    .global-toolbar__side-tools > div {
+        flex-wrap: wrap; /* Prevent inner grouping blowout */
     }
 }

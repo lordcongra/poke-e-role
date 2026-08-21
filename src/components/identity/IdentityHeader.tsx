@@ -23,8 +23,6 @@ export function IdentityHeader() {
     const setIdentity = useCharacterStore((state) => state.setIdentity);
     const refreshSpeciesData = useCharacterStore((state) => state.refreshSpeciesData);
     const tokenId = useCharacterStore((state) => state.tokenId);
-    const role = useCharacterStore((state) => state.role);
-    const isGm = role === 'GM';
 
     const [modalConfig, setModalConfig] = useState<{ title: string; content: string | ReactNode } | null>(null);
     const [showTrackerSettings, setShowTrackerSettings] = useState<boolean>(false);
@@ -156,11 +154,6 @@ export function IdentityHeader() {
             return;
         }
 
-        if (!isGm) {
-            if (OBR.isAvailable) OBR.notification.show('Only the GM can update the scene token image.', 'ERROR');
-            return;
-        }
-
         if (!OBR.isAvailable || !tokenId) {
             const url = window.prompt(`Enter an Image URL:`);
             if (url) {
@@ -272,7 +265,7 @@ export function IdentityHeader() {
                 <RefreshCw size={14} className={isRefreshing ? 'spin-animation' : ''} style={{ filter: ICON_SHADOW }} />
             </button>
 
-            {(isStandaloneMode || (isGm && OBR.isAvailable)) && (
+            {(isStandaloneMode || OBR.isAvailable) && (
                 <button
                     type="button"
                     className="action-button action-button--dark identity-header__btn"
