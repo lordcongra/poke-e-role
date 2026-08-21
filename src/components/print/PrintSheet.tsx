@@ -5,6 +5,7 @@ import { getAbilityText } from '../../utils/combatUtils';
 import { fetchAbilityData } from '../../utils/api';
 import { isStandaloneMode } from '../../utils/storageAdapter';
 import { imageManager } from '../../utils/imageManager';
+import { Check } from 'lucide-react';
 import './PrintSheet.css';
 
 export function PrintSheet() {
@@ -294,7 +295,11 @@ export function PrintSheet() {
                     <table className="print-sheet__ability-table">
                         <thead>
                             <tr>
-                                <th className="print-sheet__col-check">✔</th>
+                                <th className="print-sheet__col-check">
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Check size={14} color="black" strokeWidth={3} />
+                                    </div>
+                                </th>
                                 <th className="print-sheet__col-ability">Ability</th>
                                 {config.abilityDescStyle !== 'none' && <th>Description / Effects</th>}
                             </tr>
