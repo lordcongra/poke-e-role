@@ -17,10 +17,10 @@ export function RestModal({ onClose }: RestModalProps) {
     return (
         <div className="rest-modal__overlay">
             <div className="rest-modal__content">
-                <h3 className="rest-modal__title modal-title-with-icon">
+                <h3 className="rest-modal__title modal-title-with-icon text-title-primary">
                     <Tent size={22} /> Take a Long Rest?
                 </h3>
-                <p className="rest-modal__description">
+                <p className="rest-modal__description text-subtext">
                     This will fully heal HP and Will, clear all Status Conditions, and reset Ignored Pain.
                 </p>
                 <div className="rest-modal__actions">

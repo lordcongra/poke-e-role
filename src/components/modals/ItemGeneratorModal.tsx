@@ -189,39 +189,45 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
             <div className="item-generator-modal__overlay">
                 <div className="item-generator-modal__content">
                     <div className="item-generator-modal__header">
-                        <h3 className="item-generator-modal__title">
+                        <h3 className="item-generator-modal__title text-title-primary">
                             <Gift size={20} /> Random Loot Generator
                         </h3>
-                        <button onClick={onClose} className="item-generator-modal__close-btn" title="Close">
+                        <button
+                            onClick={onClose}
+                            className="item-generator-modal__close-btn text-subtext"
+                            title="Close"
+                        >
                             <X size={20} strokeWidth={2.5} />
                         </button>
                     </div>
-                    <p className="item-generator-modal__desc">Select one or more categories to build your loot pool.</p>
+                    <p className="item-generator-modal__desc text-subtext">
+                        Select one or more categories to build your loot pool.
+                    </p>
 
                     <div className="item-generator-modal__filter-actions">
                         <button
                             type="button"
                             onClick={() => handleSelectAll(true)}
-                            className="item-generator-modal__btn-small"
+                            className="item-generator-modal__btn-small text-label"
                         >
                             Select All
                         </button>
                         <button
                             type="button"
                             onClick={() => handleSelectAll(false)}
-                            className="item-generator-modal__btn-small"
+                            className="item-generator-modal__btn-small text-label"
                         >
                             Deselect All
                         </button>
                     </div>
 
                     <div className="item-generator-modal__rarity-container">
-                        <div className="item-generator-modal__rarity-header">
+                        <div className="item-generator-modal__rarity-header text-title-primary">
                             <Sparkles size={16} /> Drop Rarity Filters
                         </div>
                         <div className="item-generator-modal__rarity-grid">
                             {['Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary'].map((rarity) => (
-                                <label key={rarity} className="item-generator-modal__checkbox-label">
+                                <label key={rarity} className="item-generator-modal__checkbox-label text-label">
                                     <input
                                         type="checkbox"
                                         className="item-generator-modal__checkbox"
@@ -238,7 +244,7 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
                                 className="item-generator-modal__rarity-flat-odds"
                                 title="If checked, Common Potions and Legendary Masterballs will have the exact same probability of dropping!"
                             >
-                                <label className="item-generator-modal__checkbox-label">
+                                <label className="item-generator-modal__checkbox-label text-subtext">
                                     <input
                                         type="checkbox"
                                         className="item-generator-modal__checkbox"
@@ -253,10 +259,12 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
 
                     <div className="item-generator-modal__filters-container">
                         <div className="item-generator-modal__filter-group">
-                            <div className="item-generator-modal__filter-group-title">
+                            <div className="item-generator-modal__filter-group-title text-title-primary">
                                 <Backpack size={18} /> Base Items
                             </div>
-                            {basePockets.length === 0 && <div className="item-generator-modal__desc">Loading...</div>}
+                            {basePockets.length === 0 && (
+                                <div className="item-generator-modal__desc text-subtext">Loading...</div>
+                            )}
                             {basePockets.map((group) => (
                                 <ItemGeneratorPocketGroup
                                     key={`base_${group.pocket}`}
@@ -282,11 +290,13 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
                         />
 
                         <div className="item-generator-modal__filter-group">
-                            <div className="item-generator-modal__filter-group-title">
+                            <div className="item-generator-modal__filter-group-title text-title-primary">
                                 <Wrench size={18} /> Custom Items
                             </div>
                             {customPockets.length === 0 && (
-                                <div className="item-generator-modal__desc">No Custom Items available.</div>
+                                <div className="item-generator-modal__desc text-subtext">
+                                    No Custom Items available.
+                                </div>
                             )}
                             {customPockets.map((group) => (
                                 <ItemGeneratorPocketGroup
@@ -307,7 +317,7 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
                             type="button"
                             onClick={handleGenerate}
                             disabled={isGenerating || !isAnySelected || !isAnyRaritySelected}
-                            className="action-button action-button--red item-generator-modal__btn"
+                            className="action-button action-button--red item-generator-modal__btn text-theme-header"
                         >
                             {isGenerating ? (
                                 <>

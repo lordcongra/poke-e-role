@@ -20,37 +20,50 @@ export function PokedexModal({ onClose }: PokedexModalProps) {
         <div className="pokedex-modal__overlay">
             <div className="pokedex-modal__content">
                 <div className="pokedex-modal__header">
-                    <h3 className="pokedex-modal__title modal-title-with-icon">
+                    <h3 className="pokedex-modal__title modal-title-with-icon text-title-primary">
                         <Book size={20} /> Pokédex Data
                     </h3>
-                    <button onClick={onClose} className="pokedex-modal__close-btn" title="Close">
+                    <button onClick={onClose} className="pokedex-modal__close-btn text-subtext" title="Close">
                         <X size={20} strokeWidth={2.5} />
                     </button>
                 </div>
 
                 <div className="pokedex-modal__body">
                     <div className="pokedex-modal__row">
-                        <span className="pokedex-modal__label">Species:</span>
-                        <span className="pokedex-modal__value">{identity.species || '???'}</span>
+                        <span className="text-label">Species:</span>
+                        <span className="text-label" style={{ color: 'var(--text-main)' }}>
+                            {identity.species || '???'}
+                        </span>
                     </div>
                     <div className="pokedex-modal__row">
-                        <span className="pokedex-modal__label">Dex No:</span>
-                        <span className="pokedex-modal__value">{identity.dexId || '???'}</span>
+                        <span className="text-label">Dex No:</span>
+                        <span className="text-label" style={{ color: 'var(--text-main)' }}>
+                            {identity.dexId || '???'}
+                        </span>
                     </div>
                     <div className="pokedex-modal__row">
-                        <span className="pokedex-modal__label">Category:</span>
-                        <span className="pokedex-modal__value">{identity.dexCategory || '???'}</span>
+                        <span className="text-label">Category:</span>
+                        <span className="text-label" style={{ color: 'var(--text-main)' }}>
+                            {identity.dexCategory || '???'}
+                        </span>
                     </div>
                     <div className="pokedex-modal__row">
-                        <span className="pokedex-modal__label">Height:</span>
-                        <span className="pokedex-modal__value">{identity.height || '???'}</span>
+                        <span className="text-label">Height:</span>
+                        <span className="text-label" style={{ color: 'var(--text-main)' }}>
+                            {identity.height || '???'}
+                        </span>
                     </div>
                     <div className="pokedex-modal__row">
-                        <span className="pokedex-modal__label">Weight:</span>
-                        <span className="pokedex-modal__value">{identity.weight || '???'}</span>
+                        <span className="text-label">Weight:</span>
+                        <span className="text-label" style={{ color: 'var(--text-main)' }}>
+                            {identity.weight || '???'}
+                        </span>
                     </div>
 
-                    <div className="pokedex-modal__desc-box">
+                    <div
+                        className="pokedex-modal__desc-box text-subtext"
+                        style={{ fontStyle: 'italic', color: 'var(--text-main)' }}
+                    >
                         {identity.dexDescription || 'No description available.'}
                     </div>
                 </div>

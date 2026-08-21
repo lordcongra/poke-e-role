@@ -34,7 +34,7 @@ export function ItemGeneratorPocketGroup({
 
     if (pocketGroup.isFlat) {
         return (
-            <label className="item-generator-modal__checkbox-label item-generator-modal__pocket-header">
+            <label className="item-generator-modal__checkbox-label item-generator-modal__pocket-header text-label">
                 <input
                     type="checkbox"
                     className="item-generator-modal__checkbox"
@@ -53,7 +53,7 @@ export function ItemGeneratorPocketGroup({
 
     return (
         <div>
-            <div className="item-generator-modal__pocket-header" onClick={() => togglePocket(uniqueKey)}>
+            <div className="item-generator-modal__pocket-header text-label" onClick={() => togglePocket(uniqueKey)}>
                 <span
                     className={`item-generator-modal__pocket-chevron ${expandedPockets[uniqueKey] ? 'item-generator-modal__pocket-chevron--open' : ''}`}
                 >
@@ -65,7 +65,7 @@ export function ItemGeneratorPocketGroup({
             {expandedPockets[uniqueKey] && (
                 <div className="item-generator-modal__checkbox-list">
                     {pocketGroup.categories.map((category) => (
-                        <label key={category.id} className="item-generator-modal__checkbox-label">
+                        <label key={category.id} className="item-generator-modal__checkbox-label text-subtext">
                             <input
                                 type="checkbox"
                                 className="item-generator-modal__checkbox"

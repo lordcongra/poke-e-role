@@ -98,14 +98,14 @@ export function ItemGeneratorTmFilters({
 
     return (
         <div className="item-generator-modal__filter-group">
-            <div className="item-generator-modal__filter-group-title">
+            <div className="item-generator-modal__filter-group-title text-title-primary">
                 <Disc size={18} /> Technical Machines
             </div>
 
-            <span className="item-generator-modal__type-label">TM Powers:</span>
+            <span className="item-generator-modal__type-label text-label">TM Powers:</span>
 
             <div className="item-generator-modal__checkbox-list item-generator-modal__checkbox-list--flat">
-                <label className="item-generator-modal__checkbox-label">
+                <label className="item-generator-modal__checkbox-label text-subtext">
                     <input
                         type="checkbox"
                         className="item-generator-modal__checkbox"
@@ -114,7 +114,7 @@ export function ItemGeneratorTmFilters({
                     />
                     Support Moves (Power 0)
                 </label>
-                <label className="item-generator-modal__checkbox-label">
+                <label className="item-generator-modal__checkbox-label text-subtext">
                     <input
                         type="checkbox"
                         className="item-generator-modal__checkbox"
@@ -123,7 +123,7 @@ export function ItemGeneratorTmFilters({
                     />
                     Basic Moves (Power 1-3)
                 </label>
-                <label className="item-generator-modal__checkbox-label">
+                <label className="item-generator-modal__checkbox-label text-subtext">
                     <input
                         type="checkbox"
                         className="item-generator-modal__checkbox"
@@ -132,7 +132,7 @@ export function ItemGeneratorTmFilters({
                     />
                     High Power Moves (Power 4+)
                 </label>
-                <label className="item-generator-modal__checkbox-label">
+                <label className="item-generator-modal__checkbox-label text-subtext">
                     <input
                         type="checkbox"
                         className="item-generator-modal__checkbox"
@@ -144,7 +144,11 @@ export function ItemGeneratorTmFilters({
             </div>
 
             <div className="item-generator-modal__dropdown-row">
-                <select className="item-generator-modal__type-select" value="" onChange={handlePowerDropdown}>
+                <select
+                    className="item-generator-modal__type-select text-label"
+                    value=""
+                    onChange={handlePowerDropdown}
+                >
                     <option value="" disabled>
                         + Add Specific Power...
                     </option>
@@ -176,10 +180,10 @@ export function ItemGeneratorTmFilters({
                 ))}
             </div>
 
-            <span className="item-generator-modal__type-label">TM Types:</span>
+            <span className="item-generator-modal__type-label text-label">TM Types:</span>
 
             <div className="item-generator-modal__checkbox-list item-generator-modal__checkbox-list--flat">
-                <label className="item-generator-modal__checkbox-label">
+                <label className="item-generator-modal__checkbox-label text-subtext">
                     <input
                         type="checkbox"
                         className="item-generator-modal__checkbox"
@@ -191,7 +195,7 @@ export function ItemGeneratorTmFilters({
             </div>
 
             <div className="item-generator-modal__dropdown-row">
-                <select className="item-generator-modal__type-select" value="" onChange={handleTypeDropdown}>
+                <select className="item-generator-modal__type-select text-label" value="" onChange={handleTypeDropdown}>
                     <option value="" disabled>
                         + Add Specific Type...
                     </option>
@@ -212,7 +216,7 @@ export function ItemGeneratorTmFilters({
                     .map((type) => (
                         <span
                             key={type}
-                            className="item-generator-modal__pill item-generator-modal__pill--type"
+                            className="item-generator-modal__pill item-generator-modal__pill--type text-theme-header"
                             style={{
                                 background: allTypeColors[type] || 'var(--dark)'
                             }}
@@ -227,7 +231,7 @@ export function ItemGeneratorTmFilters({
             </div>
 
             <div className="item-generator-modal__checkbox-list item-generator-modal__checkbox-list--flat item-generator-modal__checkbox-list--spaced">
-                <label className="item-generator-modal__checkbox-label">
+                <label className="item-generator-modal__checkbox-label text-subtext">
                     <input
                         type="checkbox"
                         className="item-generator-modal__checkbox"

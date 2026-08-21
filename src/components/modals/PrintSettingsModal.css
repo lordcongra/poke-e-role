@@ -4,7 +4,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: color-mix(in srgb, var(--dark) 60%, transparent);
     z-index: 1500;
     display: flex;
     justify-content: center;
@@ -17,8 +17,7 @@
     border-radius: 8px;
     width: 320px;
     border: 2px solid var(--primary);
-    color: var(--text-main);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
     display: flex;
     flex-direction: column;
 }
@@ -40,8 +39,6 @@
 
 .print-settings__title {
     margin: 0;
-    color: var(--primary);
-    font-size: 1.1rem;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -50,7 +47,6 @@
 .print-settings__close-x {
     background: transparent;
     border: none;
-    color: var(--text-muted);
     cursor: pointer;
     padding: 4px;
     border-radius: 4px;
@@ -68,20 +64,18 @@
 }
 
 .print-settings__desc {
-    font-size: 0.85rem;
     text-align: center;
     margin-bottom: 8px;
-    color: var(--text-muted);
 }
 
 .print-settings__desc--sub {
     margin-bottom: 4px;
-    font-weight: bold;
 }
 
 .print-settings__divider {
     border-top: 1px solid var(--border);
     margin: 2px 0 6px 0;
+    width: 100%;
 }
 
 .print-settings__grid {
@@ -99,9 +93,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.75rem;
     cursor: pointer;
-    color: var(--text-main);
 }
 
 .print-settings__checkbox-label--full {
@@ -129,9 +121,6 @@
 }
 
 .print-settings__dropdown-label {
-    font-size: 0.75rem;
-    font-weight: bold;
-    color: var(--text-main);
     display: block;
     margin-bottom: 4px;
 }
@@ -142,9 +131,7 @@
     border-radius: 4px;
     border: 1px solid var(--border);
     background: var(--input-bg);
-    color: var(--text-main);
     font-family: inherit;
-    font-size: 0.8rem;
     transition: border-color 0.2s ease;
 }
 
@@ -161,7 +148,6 @@
 .print-settings__btn {
     width: 100%;
     padding: 6px;
-    font-size: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;

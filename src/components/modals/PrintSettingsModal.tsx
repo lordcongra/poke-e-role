@@ -24,17 +24,20 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
         <div className="print-settings__overlay">
             <div className="print-settings__content print-settings__content--expanded">
                 <div className="print-settings__header-row">
-                    <h3 className="print-settings__title modal-title-with-icon">
+                    <h3 className="print-settings__title modal-title-with-icon text-title-primary">
                         <Printer size={20} /> Print Settings
                     </h3>
-                    <button onClick={onClose} className="print-settings__close-x" title="Close">
+                    <button onClick={onClose} className="print-settings__close-x text-subtext" title="Close">
                         <X size={20} strokeWidth={2.5} />
                     </button>
                 </div>
-                <p className="print-settings__desc">Customize how your sheet will look on paper.</p>
+                <p className="print-settings__desc text-subtext">Customize how your sheet will look on paper.</p>
 
                 <div className="print-settings__grid">
-                    <label className="print-settings__checkbox-label">
+                    <label
+                        className="print-settings__checkbox-label text-subtext"
+                        style={{ color: 'var(--text-main)' }}
+                    >
                         <input
                             type="checkbox"
                             checked={printConfig.blankName}
@@ -43,7 +46,10 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         />
                         Blank Name
                     </label>
-                    <label className="print-settings__checkbox-label">
+                    <label
+                        className="print-settings__checkbox-label text-subtext"
+                        style={{ color: 'var(--text-main)' }}
+                    >
                         <input
                             type="checkbox"
                             checked={printConfig.blankSpecies}
@@ -52,7 +58,10 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         />
                         Blank Species
                     </label>
-                    <label className="print-settings__checkbox-label">
+                    <label
+                        className="print-settings__checkbox-label text-subtext"
+                        style={{ color: 'var(--text-main)' }}
+                    >
                         <input
                             type="checkbox"
                             checked={printConfig.blankType}
@@ -61,7 +70,10 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         />
                         Blank Type
                     </label>
-                    <label className="print-settings__checkbox-label">
+                    <label
+                        className="print-settings__checkbox-label text-subtext"
+                        style={{ color: 'var(--text-main)' }}
+                    >
                         <input
                             type="checkbox"
                             checked={printConfig.blankNature}
@@ -70,7 +82,10 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         />
                         Blank Nature
                     </label>
-                    <label className="print-settings__checkbox-label">
+                    <label
+                        className="print-settings__checkbox-label text-subtext"
+                        style={{ color: 'var(--text-main)' }}
+                    >
                         <input
                             type="checkbox"
                             checked={printConfig.blankRank}
@@ -79,7 +94,10 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         />
                         Blank Rank
                     </label>
-                    <label className="print-settings__checkbox-label">
+                    <label
+                        className="print-settings__checkbox-label text-subtext"
+                        style={{ color: 'var(--text-main)' }}
+                    >
                         <input
                             type="checkbox"
                             checked={printConfig.blankAgeGender}
@@ -88,7 +106,10 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         />
                         Blank Age/Gender
                     </label>
-                    <label className="print-settings__checkbox-label">
+                    <label
+                        className="print-settings__checkbox-label text-subtext"
+                        style={{ color: 'var(--text-main)' }}
+                    >
                         <input
                             type="checkbox"
                             checked={printConfig.blankStats}
@@ -97,7 +118,10 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         />
                         Blank Core Stats
                     </label>
-                    <label className="print-settings__checkbox-label">
+                    <label
+                        className="print-settings__checkbox-label text-subtext"
+                        style={{ color: 'var(--text-main)' }}
+                    >
                         <input
                             type="checkbox"
                             checked={printConfig.blankSocials}
@@ -106,7 +130,10 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         />
                         Blank Socials
                     </label>
-                    <label className="print-settings__checkbox-label">
+                    <label
+                        className="print-settings__checkbox-label text-subtext"
+                        style={{ color: 'var(--text-main)' }}
+                    >
                         <input
                             type="checkbox"
                             checked={printConfig.blankSkills}
@@ -115,7 +142,10 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         />
                         Blank Skills
                     </label>
-                    <label className="print-settings__checkbox-label">
+                    <label
+                        className="print-settings__checkbox-label text-subtext"
+                        style={{ color: 'var(--text-main)' }}
+                    >
                         <input
                             type="checkbox"
                             checked={printConfig.blankAbilities}
@@ -124,7 +154,10 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         />
                         Blank Abilities
                     </label>
-                    <label className="print-settings__checkbox-label">
+                    <label
+                        className="print-settings__checkbox-label text-subtext"
+                        style={{ color: 'var(--text-main)' }}
+                    >
                         <input
                             type="checkbox"
                             checked={printConfig.blankMoves}
@@ -136,10 +169,13 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                 </div>
 
                 <div className="print-settings__divider" />
-                <p className="print-settings__desc print-settings__desc--sub">Visibility Options</p>
+                <p className="print-settings__desc print-settings__desc--sub text-label">Visibility Options</p>
 
                 <div className="print-settings__grid">
-                    <label className="print-settings__checkbox-label">
+                    <label
+                        className="print-settings__checkbox-label text-subtext"
+                        style={{ color: 'var(--text-main)' }}
+                    >
                         <input
                             type="checkbox"
                             checked={printConfig.hideMoveDesc}
@@ -148,7 +184,10 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         />
                         Hide Move Descriptions
                     </label>
-                    <label className="print-settings__checkbox-label">
+                    <label
+                        className="print-settings__checkbox-label text-subtext"
+                        style={{ color: 'var(--text-main)' }}
+                    >
                         <input
                             type="checkbox"
                             checked={printConfig.hideKnowledgeSkills}
@@ -157,7 +196,10 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         />
                         Hide Knowledge Skills
                     </label>
-                    <label className="print-settings__checkbox-label">
+                    <label
+                        className="print-settings__checkbox-label text-subtext"
+                        style={{ color: 'var(--text-main)' }}
+                    >
                         <input
                             type="checkbox"
                             checked={printConfig.hideCustomSkills}
@@ -166,7 +208,10 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         />
                         Hide Custom Skills
                     </label>
-                    <label className="print-settings__checkbox-label">
+                    <label
+                        className="print-settings__checkbox-label text-subtext"
+                        style={{ color: 'var(--text-main)' }}
+                    >
                         <input
                             type="checkbox"
                             checked={printConfig.hideAge}
@@ -175,7 +220,10 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         />
                         Hide Age (Gender Only)
                     </label>
-                    <label className="print-settings__checkbox-label print-settings__checkbox-label--full">
+                    <label
+                        className="print-settings__checkbox-label print-settings__checkbox-label--full text-subtext"
+                        style={{ color: 'var(--text-main)' }}
+                    >
                         <input
                             type="checkbox"
                             checked={printConfig.compactMode}
@@ -184,7 +232,10 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         />
                         Compact Layout (Fit More on Page 1)
                     </label>
-                    <label className="print-settings__checkbox-label print-settings__checkbox-label--full">
+                    <label
+                        className="print-settings__checkbox-label print-settings__checkbox-label--full text-subtext"
+                        style={{ color: 'var(--text-main)' }}
+                    >
                         <input
                             type="checkbox"
                             checked={printConfig.coreSkillsOnly}
@@ -193,7 +244,10 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                         />
                         Display Core 3 Skill Categories Only (Centered)
                     </label>
-                    <label className="print-settings__checkbox-label print-settings__checkbox-label--full">
+                    <label
+                        className="print-settings__checkbox-label print-settings__checkbox-label--full text-subtext"
+                        style={{ color: 'var(--text-main)' }}
+                    >
                         <input
                             type="checkbox"
                             checked={printConfig.showOnlyActiveAbility}
@@ -205,17 +259,18 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                 </div>
 
                 <div className="print-settings__divider" />
-                <p className="print-settings__desc print-settings__desc--sub">Display Styles</p>
+                <p className="print-settings__desc print-settings__desc--sub text-label">Display Styles</p>
 
                 <div className="print-settings__dropdowns-wrapper">
                     <div className="print-settings__dropdown-container">
-                        <label className="print-settings__dropdown-label">Stat Format:</label>
+                        <label className="print-settings__dropdown-label text-label">Stat Format:</label>
                         <select
                             value={printConfig.statStyle || 'dots'}
                             onChange={(e) =>
                                 setPrintConfig({ statStyle: e.target.value as 'dots' | 'numbers' | 'both' })
                             }
-                            className="print-settings__select"
+                            className="print-settings__select text-subtext"
+                            style={{ color: 'var(--text-main)' }}
                         >
                             <option value="dots">Dots Only</option>
                             <option value="numbers">Numbers Only</option>
@@ -224,13 +279,14 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                     </div>
 
                     <div className="print-settings__dropdown-container">
-                        <label className="print-settings__dropdown-label">Ability Desc:</label>
+                        <label className="print-settings__dropdown-label text-label">Ability Desc:</label>
                         <select
                             value={printConfig.abilityDescStyle || 'all'}
                             onChange={(e) =>
                                 setPrintConfig({ abilityDescStyle: e.target.value as 'all' | 'selected' | 'none' })
                             }
-                            className="print-settings__select"
+                            className="print-settings__select text-subtext"
+                            style={{ color: 'var(--text-main)' }}
                         >
                             <option value="all">Show All</option>
                             <option value="selected">Active Only</option>
@@ -243,7 +299,7 @@ export function PrintSettingsModal({ onClose }: PrintSettingsModalProps) {
                     <button
                         type="button"
                         onClick={handlePrint}
-                        className="action-button action-button--dark print-settings__btn"
+                        className="action-button action-button--dark print-settings__btn text-theme-header"
                     >
                         <Printer size={18} /> Print Sheet
                     </button>

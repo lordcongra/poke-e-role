@@ -4,7 +4,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: color-mix(in srgb, var(--dark) 60%, transparent);
     z-index: 1000;
     display: flex;
     justify-content: center;
@@ -17,14 +17,11 @@
     border-radius: 8px;
     width: 300px;
     border: 2px solid var(--primary);
-    color: var(--text-main);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 20%, transparent);
 }
 
 .move-edit__title {
     margin-top: 0;
-    color: var(--primary);
-    font-size: 1.1rem;
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
     text-align: center;
@@ -41,11 +38,9 @@
     border-radius: 4px;
     padding: 4px;
     font-family: inherit;
-    font-size: 0.85rem;
     resize: vertical;
     box-sizing: border-box;
     background: var(--input-bg);
-    color: var(--text-main);
     margin-bottom: 10px;
     transition:
         border-color 0.2s ease,

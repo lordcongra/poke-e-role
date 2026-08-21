@@ -26,8 +26,13 @@ export function ItemGeneratorResultModal({ item, onClose, onReroll }: ItemGenera
     return (
         <div className="item-generator-result-modal__overlay">
             <div className="item-generator-result-modal__content">
-                <div className="item-generator-result-modal__name">{item.name}</div>
-                <div className="item-generator-result-modal__desc">{item.description}</div>
+                <div className="item-generator-result-modal__name text-title-primary">{item.name}</div>
+                <div
+                    className="item-generator-result-modal__desc text-subtext"
+                    style={{ color: 'var(--text-main)', fontSize: '0.95rem' }}
+                >
+                    {item.description}
+                </div>
 
                 <div className="item-generator-result-modal__actions">
                     <button

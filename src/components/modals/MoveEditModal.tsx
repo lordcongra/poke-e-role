@@ -21,12 +21,13 @@ export function MoveEditModal({ moveId, onClose }: MoveEditModalProps) {
     return (
         <div className="move-edit__overlay">
             <div className="move-edit__content">
-                <h3 className="move-edit__title modal-title-with-icon">
+                <h3 className="move-edit__title modal-title-with-icon text-title-primary">
                     <Pencil size={20} /> {move.name || 'Move Name'}
                 </h3>
 
                 <textarea
-                    className="move-edit__textarea"
+                    className="move-edit__textarea text-subtext"
+                    style={{ color: 'var(--text-main)' }}
                     placeholder="Move description and tags..."
                     value={move.desc || ''}
                     onChange={(e) => updateMove(move.id, 'desc', e.target.value)}

@@ -12,23 +12,23 @@ export function InitiativeSettingsModal({ onClose }: { onClose: () => void }) {
         <div className="init-settings__overlay">
             <div className="init-settings__content">
                 <div className="init-settings__header-row">
-                    <h3 className="init-settings__title">
+                    <h3 className="init-settings__title text-title-primary">
                         <Settings size={20} /> Initiative Settings
                     </h3>
-                    <button onClick={onClose} className="init-settings__close-x" title="Close">
+                    <button onClick={onClose} className="init-settings__close-x text-subtext" title="Close">
                         <X size={20} strokeWidth={2.5} />
                     </button>
                 </div>
-                <p className="init-settings__description">
+                <p className="init-settings__description text-subtext">
                     Customize how and where the Initiative Tracker appears on your screen.
                 </p>
 
                 <div className="init-settings__section">
                     {!isStandaloneMode && (
                         <div className="init-settings__row">
-                            <span className="init-settings__label">Anchor Corner:</span>
+                            <span className="init-settings__label text-label">Anchor Corner:</span>
                             <select
-                                className="init-settings__input"
+                                className="init-settings__input text-label"
                                 value={identityStore.initiativeTrackerPreset || 'center-right'}
                                 onChange={(e) => setIdentity('initiativeTrackerPreset', e.target.value)}
                             >
@@ -45,9 +45,9 @@ export function InitiativeSettingsModal({ onClose }: { onClose: () => void }) {
                     )}
 
                     <div className="init-settings__row">
-                        <span className="init-settings__label">Layout Style:</span>
+                        <span className="init-settings__label text-label">Layout Style:</span>
                         <select
-                            className="init-settings__input"
+                            className="init-settings__input text-label"
                             value={identityStore.initiativeTrackerLayout || 'vertical'}
                             onChange={(e) =>
                                 setIdentity('initiativeTrackerLayout', e.target.value as 'vertical' | 'horizontal')
@@ -59,9 +59,9 @@ export function InitiativeSettingsModal({ onClose }: { onClose: () => void }) {
                     </div>
 
                     <div className="init-settings__row">
-                        <span className="init-settings__label">Token Image:</span>
+                        <span className="init-settings__label text-label">Token Image:</span>
                         <select
-                            className="init-settings__input"
+                            className="init-settings__input text-label"
                             value={identityStore.initiativeTrackerAvatarShape || 'circle'}
                             onChange={(e) =>
                                 setIdentity(
@@ -80,10 +80,11 @@ export function InitiativeSettingsModal({ onClose }: { onClose: () => void }) {
                         <>
                             <div className="init-settings__offset-container">
                                 <div className="init-settings__offset-group">
-                                    <span className="init-settings__offset-text">X-Offset:</span>
+                                    <span className="text-label">X-Offset:</span>
                                     <div className="init-settings__offset-controls">
                                         <button
-                                            className="init-settings__step-btn"
+                                            className="init-settings__step-btn text-label"
+                                            style={{ color: 'inherit' }}
                                             onClick={() =>
                                                 setIdentity(
                                                     'initiativeTrackerOffsetX',
@@ -100,7 +101,8 @@ export function InitiativeSettingsModal({ onClose }: { onClose: () => void }) {
                                             max={9999}
                                         />
                                         <button
-                                            className="init-settings__step-btn"
+                                            className="init-settings__step-btn text-label"
+                                            style={{ color: 'inherit' }}
                                             onClick={() =>
                                                 setIdentity(
                                                     'initiativeTrackerOffsetX',
@@ -113,10 +115,11 @@ export function InitiativeSettingsModal({ onClose }: { onClose: () => void }) {
                                     </div>
                                 </div>
                                 <div className="init-settings__offset-group">
-                                    <span className="init-settings__offset-text">Y-Offset:</span>
+                                    <span className="text-label">Y-Offset:</span>
                                     <div className="init-settings__offset-controls">
                                         <button
-                                            className="init-settings__step-btn"
+                                            className="init-settings__step-btn text-label"
+                                            style={{ color: 'inherit' }}
                                             onClick={() =>
                                                 setIdentity(
                                                     'initiativeTrackerOffsetY',
@@ -133,7 +136,8 @@ export function InitiativeSettingsModal({ onClose }: { onClose: () => void }) {
                                             max={9999}
                                         />
                                         <button
-                                            className="init-settings__step-btn"
+                                            className="init-settings__step-btn text-label"
+                                            style={{ color: 'inherit' }}
                                             onClick={() =>
                                                 setIdentity(
                                                     'initiativeTrackerOffsetY',
@@ -149,15 +153,16 @@ export function InitiativeSettingsModal({ onClose }: { onClose: () => void }) {
 
                             <hr className="init-settings__divider" />
 
-                            <p className="init-settings__hint init-settings__hint--compact">
+                            <p className="init-settings__hint init-settings__hint--compact text-subtext">
                                 Frame Max Size Boundaries (0 = Auto)
                             </p>
                             <div className="init-settings__offset-container init-settings__offset-container--compact">
                                 <div className="init-settings__offset-group">
-                                    <span className="init-settings__offset-text">Max Width (px):</span>
+                                    <span className="text-label">Max Width (px):</span>
                                     <div className="init-settings__offset-controls">
                                         <button
-                                            className="init-settings__step-btn"
+                                            className="init-settings__step-btn text-label"
+                                            style={{ color: 'inherit' }}
                                             onClick={() =>
                                                 setIdentity(
                                                     'initiativeTrackerMaxWidth',
@@ -174,7 +179,8 @@ export function InitiativeSettingsModal({ onClose }: { onClose: () => void }) {
                                             max={4000}
                                         />
                                         <button
-                                            className="init-settings__step-btn"
+                                            className="init-settings__step-btn text-label"
+                                            style={{ color: 'inherit' }}
                                             onClick={() =>
                                                 setIdentity(
                                                     'initiativeTrackerMaxWidth',
@@ -187,10 +193,11 @@ export function InitiativeSettingsModal({ onClose }: { onClose: () => void }) {
                                     </div>
                                 </div>
                                 <div className="init-settings__offset-group">
-                                    <span className="init-settings__offset-text">Max Height (px):</span>
+                                    <span className="text-label">Max Height (px):</span>
                                     <div className="init-settings__offset-controls">
                                         <button
-                                            className="init-settings__step-btn"
+                                            className="init-settings__step-btn text-label"
+                                            style={{ color: 'inherit' }}
                                             onClick={() =>
                                                 setIdentity(
                                                     'initiativeTrackerMaxHeight',
@@ -207,7 +214,8 @@ export function InitiativeSettingsModal({ onClose }: { onClose: () => void }) {
                                             max={4000}
                                         />
                                         <button
-                                            className="init-settings__step-btn"
+                                            className="init-settings__step-btn text-label"
+                                            style={{ color: 'inherit' }}
                                             onClick={() =>
                                                 setIdentity(
                                                     'initiativeTrackerMaxHeight',
