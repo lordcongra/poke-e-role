@@ -43,7 +43,7 @@ export function LearnsetMoveRow({ pokemonId, moveIndex, move, currentMoves, canE
                 list="hb-move-list"
                 placeholder="Move Name"
                 disabled={!canEdit}
-                className="homebrew-pokemon-card__learnset-input"
+                className="homebrew-pokemon-card__learnset-input text-label"
             />
             {canEdit && (
                 <button

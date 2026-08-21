@@ -60,7 +60,7 @@ export function HomebrewForms() {
 
     return (
         <div className="homebrew-list__container">
-            <p className="homebrew-list__desc">
+            <p className="homebrew-list__desc text-subtext">
                 Design specific mechanical templates for form shifts (Mega Evolutions, Stance Changes, Custom Forms).
                 Players can select these when transforming.
             </p>
@@ -89,7 +89,7 @@ export function HomebrewForms() {
                                 setSearchQuery('');
                                 addCustomForm(true); // Triggers the Mega Template defaults!
                             }}
-                            className="action-button action-button--red homebrew-list__create-btn"
+                            className="action-button action-button--theme homebrew-list__create-btn"
                         >
                             <Sparkles size={16} /> Add Mega
                         </button>
@@ -99,7 +99,7 @@ export function HomebrewForms() {
 
             <div className="homebrew-list__scroll-area">
                 {filteredForms.length === 0 ? (
-                    <div className="homebrew-list__empty">
+                    <div className="homebrew-list__empty text-subtext" style={{ fontStyle: 'italic' }}>
                         {visibleForms.length === 0 ? 'No custom forms yet.' : 'No forms match your search.'}
                     </div>
                 ) : (
@@ -142,10 +142,19 @@ export function HomebrewForms() {
             {importData && (
                 <div className="homebrew-import__overlay">
                     <div className="homebrew-import__content">
-                        <h3 className="homebrew-import__title homebrew-title-with-icon">
+                        <h3
+                            className="homebrew-import__title text-title-primary"
+                            style={{
+                                color: 'var(--semantic-danger)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                            }}
+                        >
                             <AlertTriangle size={20} /> Confirm Import
                         </h3>
-                        <p className="homebrew-import__text">
+                        <p className="homebrew-import__text text-subtext">
                             How would you like to import this data? <b>Overwrite</b> will delete your existing Forms.{' '}
                             <b>Add / Merge</b> will safely combine them.
                         </p>

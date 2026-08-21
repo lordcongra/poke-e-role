@@ -17,10 +17,8 @@
     flex: 1;
     padding: 2px;
     background: var(--input-bg);
-    color: var(--text-main);
     border: 1px solid var(--border);
     border-radius: 3px;
-    font-weight: bold;
 }
 
 .homebrew-status-card__shorthand-input {
@@ -32,12 +30,6 @@
     display: flex;
     align-items: center;
     gap: 6px;
-}
-
-.homebrew-status-card__color-label {
-    font-size: 0.8rem;
-    font-weight: bold;
-    color: var(--text-muted);
 }
 
 .homebrew-status-card__color-picker {

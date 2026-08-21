@@ -57,10 +57,10 @@ export function HomebrewPokemonCard({
                     }
                     placeholder="Pokémon Species Name"
                     disabled={!canEdit}
-                    className="homebrew-pokemon-card__name-input"
+                    className="homebrew-pokemon-card__name-input text-label"
                 />
                 {role === 'GM' && (
-                    <label className="homebrew-pokemon-card__gm-label">
+                    <label className="homebrew-pokemon-card__gm-label text-subtext">
                         <input
                             type="checkbox"
                             checked={localGameMasterOnly}
@@ -100,11 +100,9 @@ export function HomebrewPokemonCard({
                                 canEdit && updateCustomPokemon(pokemon.id, 'Type1', event.target.value)
                             }
                             disabled={!canEdit}
-                            className="homebrew-pokemon-card__type-select"
+                            className={`homebrew-pokemon-card__type-select ${pokemon.Type1 && pokemon.Type1 !== 'None' ? 'text-theme-header' : 'text-label'}`}
                             style={{
-                                background: allTypeColors[pokemon.Type1] || 'var(--input-bg)',
-                                color: pokemon.Type1 && pokemon.Type1 !== 'None' ? 'white' : 'var(--text-main)',
-                                textShadow: pokemon.Type1 ? '1px 1px 1px rgba(0,0,0,0.8)' : 'none'
+                                background: allTypeColors[pokemon.Type1] || 'var(--input-bg)'
                             }}
                         >
                             {allTypes.map((typeOption) => (
@@ -119,11 +117,9 @@ export function HomebrewPokemonCard({
                                 canEdit && updateCustomPokemon(pokemon.id, 'Type2', event.target.value)
                             }
                             disabled={!canEdit}
-                            className="homebrew-pokemon-card__type-select"
+                            className={`homebrew-pokemon-card__type-select ${pokemon.Type2 && pokemon.Type2 !== 'None' ? 'text-theme-header' : 'text-label'}`}
                             style={{
-                                background: allTypeColors[pokemon.Type2] || 'var(--input-bg)',
-                                color: pokemon.Type2 && pokemon.Type2 !== 'None' ? 'white' : 'var(--text-main)',
-                                textShadow: pokemon.Type2 ? '1px 1px 1px rgba(0,0,0,0.8)' : 'none'
+                                background: allTypeColors[pokemon.Type2] || 'var(--input-bg)'
                             }}
                         >
                             {allTypes.map((typeOption) => (
@@ -139,7 +135,7 @@ export function HomebrewPokemonCard({
                     <HomebrewPokemonLearnset pokemon={pokemon} canEdit={canEdit} />
 
                     <div className="homebrew-pokemon-card__pokedex-section">
-                        <span className="homebrew-pokemon-card__section-header">Pokédex Info</span>
+                        <span className="homebrew-pokemon-card__section-header text-title-primary">Pokédex Info</span>
                         <div className="homebrew-pokemon-card__types-row">
                             <input
                                 type="text"
@@ -147,7 +143,7 @@ export function HomebrewPokemonCard({
                                 onChange={(e) => canEdit && updateCustomPokemon(pokemon.id, 'DexID', e.target.value)}
                                 placeholder="Dex # (e.g. 025)"
                                 disabled={!canEdit}
-                                className="homebrew-pokemon-card__name-input"
+                                className="homebrew-pokemon-card__name-input text-label"
                             />
                             <input
                                 type="text"
@@ -157,7 +153,7 @@ export function HomebrewPokemonCard({
                                 }
                                 placeholder="Category (e.g. Mouse Pokémon)"
                                 disabled={!canEdit}
-                                className="homebrew-pokemon-card__name-input"
+                                className="homebrew-pokemon-card__name-input text-label"
                             />
                         </div>
                         <div className="homebrew-pokemon-card__types-row" style={{ marginTop: '8px' }}>
@@ -167,7 +163,7 @@ export function HomebrewPokemonCard({
                                 onChange={(e) => canEdit && updateCustomPokemon(pokemon.id, 'Height', e.target.value)}
                                 placeholder="Height (e.g. 0.4m / 1.04ft)"
                                 disabled={!canEdit}
-                                className="homebrew-pokemon-card__name-input"
+                                className="homebrew-pokemon-card__name-input text-label"
                             />
                             <input
                                 type="text"
@@ -175,7 +171,7 @@ export function HomebrewPokemonCard({
                                 onChange={(e) => canEdit && updateCustomPokemon(pokemon.id, 'Weight', e.target.value)}
                                 placeholder="Weight (e.g. 6.0kg / 13.2lbs)"
                                 disabled={!canEdit}
-                                className="homebrew-pokemon-card__name-input"
+                                className="homebrew-pokemon-card__name-input text-label"
                             />
                         </div>
                         <textarea
@@ -185,7 +181,7 @@ export function HomebrewPokemonCard({
                             }
                             placeholder="Pokédex Description"
                             disabled={!canEdit}
-                            className="homebrew-card__textarea homebrew-card__textarea--small"
+                            className="homebrew-card__textarea homebrew-card__textarea--small text-subtext"
                             style={{ marginTop: '8px' }}
                         />
                     </div>
@@ -195,10 +191,21 @@ export function HomebrewPokemonCard({
             {showDeleteConfirm && (
                 <div className="homebrew-confirm__overlay">
                     <div className="homebrew-confirm__content">
-                        <h3 className="homebrew-confirm__title homebrew-title-with-icon">
+                        <h3
+                            className="homebrew-confirm__title text-title-primary"
+                            style={{
+                                color: 'var(--semantic-danger)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                            }}
+                        >
                             <AlertTriangle size={20} /> Confirm Deletion
                         </h3>
-                        <p className="homebrew-confirm__text">Are you sure you want to delete this Custom Pokémon?</p>
+                        <p className="homebrew-confirm__text text-subtext">
+                            Are you sure you want to delete this Custom Pokémon?
+                        </p>
                         <div className="homebrew-confirm__actions">
                             <button
                                 type="button"

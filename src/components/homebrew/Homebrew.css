@@ -5,7 +5,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: color-mix(in srgb, var(--dark) 60%, transparent);
     z-index: 1200;
     display: flex;
     justify-content: center;
@@ -17,7 +17,7 @@
     border-radius: 8px;
     width: 550px;
     border: 2px solid var(--primary); /* 🔥 Dynamic Border */
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
     max-height: 90vh;
     display: flex;
     flex-direction: column;
@@ -42,7 +42,6 @@
 
 .homebrew-modal__title {
     margin: 0;
-    color: white;
 }
 
 .homebrew-title-with-icon {
@@ -54,9 +53,7 @@
 .homebrew-modal__close-btn {
     background: transparent;
     border: none;
-    color: white;
     cursor: pointer;
-    font-weight: bold;
     padding: 4px;
     display: flex;
     align-items: center;
@@ -76,13 +73,10 @@
 
 .homebrew-modal__tab {
     padding: 8px 4px;
-    font-weight: bold;
-    background: rgba(0, 0, 0, 0.2);
-    color: white;
+    background: var(--row-even);
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 0.85rem;
     transition:
         background 0.2s ease,
         color 0.2s ease;
@@ -111,11 +105,6 @@
     align-items: center;
 }
 
-.homebrew-modal__footer-text {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-}
-
 .homebrew-modal__footer-actions {
     display: flex;
     gap: 4px;
@@ -123,7 +112,6 @@
 
 .homebrew-modal__footer-btn {
     padding: 4px 8px;
-    font-size: 0.75rem;
 }
 
 /* --- Homebrew Import Confirm Modal --- */
@@ -133,7 +121,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: color-mix(in srgb, var(--dark) 60%, transparent);
     z-index: 1300;
     display: flex;
     justify-content: center;
@@ -151,14 +139,11 @@
 }
 
 .homebrew-import__title {
-    color: var(--semantic-danger);
     margin-top: 0;
     justify-content: center;
 }
 
 .homebrew-import__text {
-    font-size: 0.9rem;
-    color: var(--text-main);
     margin-bottom: 20px;
 }
 
@@ -170,11 +155,6 @@
 .homebrew-import__btn {
     flex: 1;
     padding: 8px;
-}
-
-.homebrew-import__btn--merge {
-    background: #1976d2;
-    color: white;
 }
 
 /* --- Homebrew Lists (Shared) --- */
@@ -189,8 +169,6 @@
 
 .homebrew-list__desc {
     margin: 0;
-    font-size: 0.85rem;
-    color: var(--text-muted);
 }
 
 .homebrew-list__search-row {
@@ -230,9 +208,6 @@
 
 .homebrew-list__empty {
     text-align: center;
-    font-style: italic;
-    color: var(--text-muted);
-    font-size: 0.9rem;
     padding: 20px;
 }
 
@@ -265,9 +240,7 @@
 .homebrew-card__name-input {
     flex: 1;
     padding: 6px;
-    font-weight: bold;
     background: var(--input-bg);
-    color: var(--text-main);
     border: 1px solid var(--border);
     border-radius: 4px;
 }
@@ -276,9 +249,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 0.7rem;
     color: var(--semantic-danger);
-    font-weight: bold;
 }
 
 .homebrew-card__btn {
@@ -290,11 +261,9 @@
     padding: 6px;
     resize: vertical;
     background: var(--input-bg);
-    color: var(--text-main);
     border: 1px solid var(--border);
     border-radius: 4px;
     font-family: inherit;
-    font-size: 0.85rem;
     box-sizing: border-box;
 }
 
@@ -310,6 +279,7 @@
     flex: 1;
     padding: 8px;
 }
+
 .homebrew-file-input {
     display: none;
 }
@@ -321,7 +291,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: color-mix(in srgb, var(--dark) 60%, transparent);
     z-index: 1400;
     display: flex;
     justify-content: center;
@@ -335,20 +305,16 @@
     max-width: 300px;
     width: 90%;
     border: 2px solid var(--semantic-danger);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
     text-align: center;
 }
 
 .homebrew-confirm__title {
-    color: var(--semantic-danger);
     margin-top: 0;
-    font-size: 1.1rem;
     justify-content: center;
 }
 
 .homebrew-confirm__text {
-    font-size: 0.9rem;
-    color: var(--text-main);
     margin-bottom: 20px;
 }
 

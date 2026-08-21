@@ -21,10 +21,10 @@ export function HomebrewPokemonStats({ pokemon, canEdit }: HomebrewPokemonStatsP
         const isHealthPoints = baseField === maxField;
         return (
             <div className="homebrew-pokemon-card__stat-box">
-                <span className="homebrew-pokemon-card__stat-label">{label}</span>
+                <span className="homebrew-pokemon-card__stat-label text-label">{label}</span>
                 <div className="homebrew-pokemon-card__stat-inputs">
                     <div className="homebrew-pokemon-card__stat-column">
-                        <span className="homebrew-pokemon-card__stat-sublabel">Base</span>
+                        <span className="homebrew-pokemon-card__stat-sublabel text-subtext">Base</span>
                         <div className="homebrew-pokemon-card__spinner-wrapper">
                             <NumberSpinner
                                 value={baseValue}
@@ -38,9 +38,9 @@ export function HomebrewPokemonStats({ pokemon, canEdit }: HomebrewPokemonStatsP
                     </div>
                     {!isHealthPoints && (
                         <>
-                            <span className="homebrew-pokemon-card__stat-divider">/</span>
+                            <span className="homebrew-pokemon-card__stat-divider text-label">/</span>
                             <div className="homebrew-pokemon-card__stat-column">
-                                <span className="homebrew-pokemon-card__stat-sublabel">Limit</span>
+                                <span className="homebrew-pokemon-card__stat-sublabel text-subtext">Limit</span>
                                 <div className="homebrew-pokemon-card__spinner-wrapper">
                                     <NumberSpinner
                                         value={maxValue}

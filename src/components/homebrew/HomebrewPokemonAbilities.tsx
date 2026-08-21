@@ -37,7 +37,7 @@ export function HomebrewPokemonAbilities({ pokemon, canEdit }: HomebrewPokemonAb
                     updateCustomPokemon(pokemon.id, 'Ability1', localAbility1)
                 }
                 placeholder="Ability 1"
-                className="homebrew-pokemon-card__ability-input"
+                className="homebrew-pokemon-card__ability-input text-label"
             />
             <input
                 type="text"
@@ -51,7 +51,7 @@ export function HomebrewPokemonAbilities({ pokemon, canEdit }: HomebrewPokemonAb
                     updateCustomPokemon(pokemon.id, 'Ability2', localAbility2)
                 }
                 placeholder="Ability 2"
-                className="homebrew-pokemon-card__ability-input"
+                className="homebrew-pokemon-card__ability-input text-label"
             />
             <input
                 type="text"
@@ -65,7 +65,7 @@ export function HomebrewPokemonAbilities({ pokemon, canEdit }: HomebrewPokemonAb
                     updateCustomPokemon(pokemon.id, 'HiddenAbility', localHiddenAbility)
                 }
                 placeholder="Hidden Ability"
-                className="homebrew-pokemon-card__ability-input"
+                className="homebrew-pokemon-card__ability-input text-label"
             />
             <input
                 type="text"
@@ -79,7 +79,7 @@ export function HomebrewPokemonAbilities({ pokemon, canEdit }: HomebrewPokemonAb
                     updateCustomPokemon(pokemon.id, 'EventAbilities', localEventAbilities)
                 }
                 placeholder="Event Ability"
-                className="homebrew-pokemon-card__ability-input"
+                className="homebrew-pokemon-card__ability-input text-label"
             />
         </div>
     );

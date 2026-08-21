@@ -54,10 +54,10 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove, onDuplicate }:
                     onBlur={() => canEdit && localName !== item.name && updateCustomItem(item.id, 'name', localName)}
                     placeholder="Item Name"
                     disabled={!canEdit}
-                    className="homebrew-card__name-input"
+                    className="homebrew-card__name-input text-label"
                 />
                 {role === 'GM' && (
-                    <label className="homebrew-card__gm-label">
+                    <label className="homebrew-card__gm-label text-subtext">
                         <input
                             type="checkbox"
                             checked={localGameMasterOnly}
@@ -158,7 +158,7 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove, onDuplicate }:
                         }
                         placeholder="Item Effect / Description and Tags"
                         disabled={!canEdit}
-                        className="homebrew-card__textarea homebrew-card__textarea--large"
+                        className="homebrew-card__textarea homebrew-card__textarea--large text-subtext"
                     />
                 </>
             )}
@@ -174,10 +174,21 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove, onDuplicate }:
             {showDeleteConfirm && (
                 <div className="homebrew-confirm__overlay">
                     <div className="homebrew-confirm__content">
-                        <h3 className="homebrew-confirm__title homebrew-title-with-icon">
+                        <h3
+                            className="homebrew-confirm__title text-title-primary"
+                            style={{
+                                color: 'var(--semantic-danger)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                            }}
+                        >
                             <AlertTriangle size={20} /> Confirm Deletion
                         </h3>
-                        <p className="homebrew-confirm__text">Are you sure you want to delete this Custom Item?</p>
+                        <p className="homebrew-confirm__text text-subtext">
+                            Are you sure you want to delete this Custom Item?
+                        </p>
                         <div className="homebrew-confirm__actions">
                             <button
                                 type="button"

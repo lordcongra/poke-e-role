@@ -1,15 +1,12 @@
 .homebrew-types__container {
     display: flex;
     flex-direction: column;
-    color: var(--text-main);
     flex: 1;
     min-height: 0;
 }
 
 .homebrew-types__description {
     margin-top: 0;
-    font-size: 0.85rem;
-    color: var(--text-muted);
 }
 
 .homebrew-types__editor-row {
@@ -34,8 +31,6 @@
     border: 1px solid var(--border);
     border-radius: 4px;
     background: var(--input-bg);
-    color: var(--text-main);
-    font-size: 0.8rem;
 }
 
 .homebrew-types__name-input {
@@ -44,7 +39,6 @@
     border: 1px solid var(--border);
     border-radius: 4px;
     background: var(--input-bg);
-    color: var(--text-main);
     min-width: 0;
 }
 
@@ -52,9 +46,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.8rem;
-    color: #c62828;
-    font-weight: bold;
+    color: var(--semantic-danger);
 }
 
 .homebrew-types__matchup-panel {
@@ -88,18 +80,11 @@
 }
 
 .homebrew-types__matchup-title {
-    font-size: 0.8rem;
     margin: 0 0 4px 0;
-    color: var(--primary);
-}
-
-.homebrew-types__matchup-title--offensive {
-    color: #1976d2;
 }
 
 .homebrew-types__matchup-btn {
     width: 100%;
-    font-size: 0.7rem;
     padding: 4px;
     margin-top: 6px;
 }
@@ -117,11 +102,9 @@
 
 .homebrew-types__pill {
     background: var(--panel-bg);
-    color: var(--text-main);
     border: 1px solid var(--border);
     padding: 2px 6px;
     border-radius: 12px;
-    font-size: 0.75rem;
     cursor: default;
 }
 
@@ -141,19 +124,8 @@
 }
 
 .homebrew-types__btn-save {
-    background: var(--primary); /* 🔥 Now maps to dynamic primary instead of legacy teal */
-    color: white;
     flex: 1;
     padding: 8px;
-    border: none;
-    border-radius: 4px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: filter 0.2s ease;
-}
-
-.homebrew-types__btn-save:hover {
-    filter: brightness(1.15);
 }
 
 .homebrew-types__list-section {
@@ -170,9 +142,6 @@
 
 .homebrew-types__empty-list {
     text-align: center;
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    font-style: italic;
 }
 
 .homebrew-types__list-item {
@@ -187,12 +156,8 @@
 }
 
 .homebrew-types__list-badge {
-    color: white;
     padding: 2px 8px;
     border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
     cursor: default;
 }
 
@@ -210,18 +175,14 @@
     background: transparent;
     border: none;
     cursor: pointer;
-    font-size: 1.1rem;
-    color: var(--text-main);
     padding: 0;
 }
 
 .homebrew-types__list-delete {
     background: transparent;
     border: none;
-    color: #c62828;
+    color: var(--semantic-danger);
     cursor: pointer;
-    font-weight: bold;
-    font-size: 1rem;
     padding: 0;
 }
 
@@ -245,7 +206,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: color-mix(in srgb, var(--dark) 60%, transparent);
     z-index: 1300;
     display: flex;
     justify-content: center;
@@ -258,18 +219,15 @@
     border-radius: 6px;
     max-width: 400px;
     width: 90%;
-    border: 2px solid #c62828;
+    border: 2px solid var(--semantic-danger);
     text-align: center;
 }
 
 .homebrew-types__modal-title {
-    color: #c62828;
     margin-top: 0;
 }
 
 .homebrew-types__modal-text {
-    font-size: 0.9rem;
-    color: var(--text-main);
     margin-bottom: 20px;
 }
 
@@ -281,11 +239,6 @@
 .homebrew-types__modal-btn {
     flex: 1;
     padding: 8px;
-}
-
-.homebrew-types__modal-btn--merge {
-    background: #1976d2;
-    color: white;
 }
 
 .homebrew-types__file-input {

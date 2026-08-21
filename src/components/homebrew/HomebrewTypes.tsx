@@ -70,7 +70,7 @@ export function HomebrewTypes() {
 
     return (
         <div className="homebrew-types__container">
-            <p className="homebrew-types__description">
+            <p className="homebrew-types__description text-subtext">
                 {editingType ? (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                         <Pencil size={14} /> Editing {editingType.name}
@@ -91,13 +91,15 @@ export function HomebrewTypes() {
 
             <div className="homebrew-types__list-section">
                 {visibleTypes.length === 0 ? (
-                    <div className="homebrew-types__empty-list">No custom types added yet.</div>
+                    <div className="homebrew-types__empty-list text-subtext" style={{ fontStyle: 'italic' }}>
+                        No custom types added yet.
+                    </div>
                 ) : (
                     visibleTypes.map((customType) => (
                         <div key={customType.name} className="homebrew-types__list-item">
                             <span
                                 onClick={() => canEdit && setEditingType(customType)}
-                                className={`homebrew-types__list-badge ${canEdit ? 'homebrew-types__list-badge--editable' : ''}`}
+                                className={`homebrew-types__list-badge text-theme-header ${canEdit ? 'homebrew-types__list-badge--editable' : ''}`}
                                 style={{ background: customType.color }}
                                 title={canEdit ? 'Click to edit' : ''}
                             >
@@ -110,14 +112,16 @@ export function HomebrewTypes() {
                                         onClick={() => duplicateCustomType(customType.name)}
                                         className="homebrew-types__list-duplicate"
                                         title="Duplicate Type"
+                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                     >
-                                        <Copy size={16} />
+                                        <Copy size={16} color="var(--text-main)" />
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setDeleteTypeId(customType.name)}
                                         className="homebrew-types__list-delete"
                                         title="Delete Type"
+                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                     >
                                         <X size={16} />
                                     </button>
@@ -160,12 +164,18 @@ export function HomebrewTypes() {
                 <div className="homebrew-types__modal-overlay">
                     <div className="homebrew-types__modal-content">
                         <h3
-                            className="homebrew-types__modal-title"
-                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                            className="homebrew-types__modal-title text-title-primary"
+                            style={{
+                                color: 'var(--semantic-danger)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                            }}
                         >
                             <AlertTriangle size={20} /> Confirm Deletion
                         </h3>
-                        <p className="homebrew-types__modal-text">
+                        <p className="homebrew-types__modal-text text-subtext">
                             Are you sure you want to delete the Type "{deleteTypeId}"?
                         </p>
                         <div className="homebrew-types__modal-actions">
@@ -195,12 +205,18 @@ export function HomebrewTypes() {
                 <div className="homebrew-types__modal-overlay">
                     <div className="homebrew-types__modal-content">
                         <h3
-                            className="homebrew-types__modal-title"
-                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                            className="homebrew-types__modal-title text-title-primary"
+                            style={{
+                                color: 'var(--semantic-danger)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                            }}
                         >
                             <AlertTriangle size={20} /> Confirm Import
                         </h3>
-                        <p className="homebrew-types__modal-text">
+                        <p className="homebrew-types__modal-text text-subtext">
                             How would you like to import this data? <b>Overwrite</b> will delete your existing Types.{' '}
                             <b>Add / Merge</b> will safely combine them, updating any items with matching names.
                         </p>
@@ -218,7 +234,7 @@ export function HomebrewTypes() {
                                     mergeCustomTypeData(importData);
                                     setImportData(null);
                                 }}
-                                className="action-button homebrew-types__modal-btn homebrew-types__modal-btn--merge"
+                                className="action-button action-button--secondary homebrew-types__modal-btn"
                             >
                                 Add / Merge
                             </button>

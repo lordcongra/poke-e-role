@@ -52,10 +52,10 @@ export function AbilityCard({ ability, role, canEdit, onRemove, onDuplicate }: A
                     }
                     placeholder="Ability Name"
                     disabled={!canEdit}
-                    className="homebrew-card__name-input"
+                    className="homebrew-card__name-input text-label"
                 />
                 {role === 'GM' && (
-                    <label className="homebrew-card__gm-label">
+                    <label className="homebrew-card__gm-label text-subtext">
                         <input
                             type="checkbox"
                             checked={localGameMasterOnly}
@@ -104,7 +104,7 @@ export function AbilityCard({ ability, role, canEdit, onRemove, onDuplicate }: A
                         }
                         placeholder="Flavor Text / Description"
                         disabled={!canEdit}
-                        className="homebrew-card__textarea homebrew-card__textarea--small"
+                        className="homebrew-card__textarea homebrew-card__textarea--small text-subtext"
                     />
                     <textarea
                         value={localEffect}
@@ -116,7 +116,7 @@ export function AbilityCard({ ability, role, canEdit, onRemove, onDuplicate }: A
                         }
                         placeholder="Mechanical Effect (e.g. [Str +2])"
                         disabled={!canEdit}
-                        className="homebrew-card__textarea homebrew-card__textarea--small"
+                        className="homebrew-card__textarea homebrew-card__textarea--small text-subtext"
                     />
                 </>
             )}
@@ -133,12 +133,20 @@ export function AbilityCard({ ability, role, canEdit, onRemove, onDuplicate }: A
                 <div className="homebrew-confirm__overlay">
                     <div className="homebrew-confirm__content">
                         <h3
-                            className="homebrew-confirm__title"
-                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                            className="homebrew-confirm__title text-title-primary"
+                            style={{
+                                color: 'var(--semantic-danger)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                            }}
                         >
                             <AlertTriangle size={20} /> Confirm Deletion
                         </h3>
-                        <p className="homebrew-confirm__text">Are you sure you want to delete this Custom Ability?</p>
+                        <p className="homebrew-confirm__text text-subtext">
+                            Are you sure you want to delete this Custom Ability?
+                        </p>
                         <div className="homebrew-confirm__actions">
                             <button
                                 type="button"

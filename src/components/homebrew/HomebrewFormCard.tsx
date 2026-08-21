@@ -118,10 +118,10 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                     onBlur={() => canEdit && localName !== form.name && updateCustomForm(form.id, 'name', localName)}
                     placeholder="Form Name (e.g. Mega Mewtwo X)"
                     disabled={!canEdit}
-                    className="homebrew-card__name-input"
+                    className="homebrew-card__name-input text-label"
                 />
                 {role === 'GM' && (
-                    <label className="homebrew-card__gm-label">
+                    <label className="homebrew-card__gm-label text-subtext">
                         <input
                             type="checkbox"
                             checked={localGmOnly}
@@ -164,13 +164,15 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                         }
                         placeholder="Form Description / Flavor Text"
                         disabled={!canEdit}
-                        className="homebrew-card__textarea homebrew-card__textarea--small"
+                        className="homebrew-card__textarea homebrew-card__textarea--small text-subtext"
                     />
 
                     <div className="homebrew-form-card__settings-grid">
                         <div className="homebrew-form-card__settings-column">
-                            <span className="homebrew-form-card__settings-header">Data Swaps (Blank Slates)</span>
-                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`}>
+                            <span className="homebrew-form-card__settings-header text-label">
+                                Data Swaps (Blank Slates)
+                            </span>
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass} text-subtext`}>
                                 <input
                                     type="checkbox"
                                     disabled={!canEdit}
@@ -179,7 +181,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                                 />
                                 Swap Base Stats
                             </label>
-                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`}>
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass} text-subtext`}>
                                 <input
                                     type="checkbox"
                                     disabled={!canEdit}
@@ -188,7 +190,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                                 />
                                 Swap Stat Limits
                             </label>
-                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`}>
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass} text-subtext`}>
                                 <input
                                     type="checkbox"
                                     disabled={!canEdit}
@@ -197,7 +199,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                                 />
                                 Swap Stat Ranks
                             </label>
-                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`}>
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass} text-subtext`}>
                                 <input
                                     type="checkbox"
                                     disabled={!canEdit}
@@ -206,7 +208,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                                 />
                                 Swap Skills
                             </label>
-                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`}>
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass} text-subtext`}>
                                 <input
                                     type="checkbox"
                                     disabled={!canEdit}
@@ -215,7 +217,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                                 />
                                 Swap Abilities
                             </label>
-                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`}>
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass} text-subtext`}>
                                 <input
                                     type="checkbox"
                                     disabled={!canEdit}
@@ -224,7 +226,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                                 />
                                 Swap Move-Set
                             </label>
-                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`}>
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass} text-subtext`}>
                                 <input
                                     type="checkbox"
                                     disabled={!canEdit}
@@ -236,10 +238,12 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                         </div>
 
                         <div className="homebrew-form-card__settings-column">
-                            <span className="homebrew-form-card__settings-header">Buffs, Debuffs, Status</span>
+                            <span className="homebrew-form-card__settings-header text-label">
+                                Buffs, Debuffs, Status
+                            </span>
 
                             <label
-                                className={`homebrew-form-card__checkbox-label ${cursorClass}`}
+                                className={`homebrew-form-card__checkbox-label ${cursorClass} text-subtext`}
                                 title="Maintains a separate set of Buffs for this form."
                             >
                                 <input
@@ -251,7 +255,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                                 Swap Buffs (Separate Track)
                             </label>
                             <label
-                                className={`homebrew-form-card__checkbox-label ${cursorClass}`}
+                                className={`homebrew-form-card__checkbox-label ${cursorClass} text-subtext`}
                                 title="Sets Buffs to 0 on transform. Base Buffs return on revert."
                             >
                                 <input
@@ -263,7 +267,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                                 Fresh Buffs (Clear on Shift)
                             </label>
                             <label
-                                className={`homebrew-form-card__checkbox-label homebrew-form-card__checkbox-label--danger ${cursorClass}`}
+                                className={`homebrew-form-card__checkbox-label homebrew-form-card__checkbox-label--danger ${cursorClass} text-subtext`}
                             >
                                 <input
                                     type="checkbox"
@@ -277,7 +281,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                             <hr className="homebrew-form-card__divider" />
 
                             <label
-                                className={`homebrew-form-card__checkbox-label ${cursorClass}`}
+                                className={`homebrew-form-card__checkbox-label ${cursorClass} text-subtext`}
                                 title="Maintains a separate set of Debuffs for this form."
                             >
                                 <input
@@ -289,7 +293,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                                 Swap Debuffs (Separate Track)
                             </label>
                             <label
-                                className={`homebrew-form-card__checkbox-label ${cursorClass}`}
+                                className={`homebrew-form-card__checkbox-label ${cursorClass} text-subtext`}
                                 title="Sets Debuffs to 0 on transform. Base Debuffs return on revert."
                             >
                                 <input
@@ -301,7 +305,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                                 Fresh Debuffs (Clear on Shift)
                             </label>
                             <label
-                                className={`homebrew-form-card__checkbox-label homebrew-form-card__checkbox-label--danger ${cursorClass}`}
+                                className={`homebrew-form-card__checkbox-label homebrew-form-card__checkbox-label--danger ${cursorClass} text-subtext`}
                             >
                                 <input
                                     type="checkbox"
@@ -315,7 +319,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                             <hr className="homebrew-form-card__divider" />
 
                             <label
-                                className={`homebrew-form-card__checkbox-label ${cursorClass}`}
+                                className={`homebrew-form-card__checkbox-label ${cursorClass} text-subtext`}
                                 title="Maintains a separate set of Statuses for this form."
                             >
                                 <input
@@ -327,7 +331,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                                 Swap Statuses (Separate Track)
                             </label>
                             <label
-                                className={`homebrew-form-card__checkbox-label ${cursorClass}`}
+                                className={`homebrew-form-card__checkbox-label ${cursorClass} text-subtext`}
                                 title="Sets Status to Healthy on transform. Base Status returns on revert."
                             >
                                 <input
@@ -339,7 +343,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                                 Fresh Status (Clear on Shift)
                             </label>
                             <label
-                                className={`homebrew-form-card__checkbox-label homebrew-form-card__checkbox-label--danger ${cursorClass}`}
+                                className={`homebrew-form-card__checkbox-label homebrew-form-card__checkbox-label--danger ${cursorClass} text-subtext`}
                             >
                                 <input
                                     type="checkbox"
@@ -352,9 +356,9 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                         </div>
 
                         <div className="homebrew-form-card__settings-column">
-                            <span className="homebrew-form-card__settings-header">Transform Effects</span>
+                            <span className="homebrew-form-card__settings-header text-label">Transform Effects</span>
                             <label
-                                className={`homebrew-form-card__checkbox-label homebrew-form-card__checkbox-label--danger ${cursorClass}`}
+                                className={`homebrew-form-card__checkbox-label homebrew-form-card__checkbox-label--danger ${cursorClass} text-subtext`}
                             >
                                 Activation Cost (HP):
                                 <NumberSpinner
@@ -364,7 +368,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                                 />
                             </label>
                             <label
-                                className={`homebrew-form-card__checkbox-label homebrew-form-card__checkbox-label--info ${cursorClass}`}
+                                className={`homebrew-form-card__checkbox-label homebrew-form-card__checkbox-label--info ${cursorClass} text-subtext`}
                             >
                                 Activation Cost (Will):
                                 <NumberSpinner
@@ -377,7 +381,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                             <hr className="homebrew-form-card__divider" />
 
                             <label
-                                className={`homebrew-form-card__checkbox-label ${cursorClass}`}
+                                className={`homebrew-form-card__checkbox-label ${cursorClass} text-subtext`}
                                 title="Stores a distinct HP pool. Reverting will load whatever HP you had prior to transforming."
                             >
                                 <input
@@ -389,7 +393,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                                 Maintain Distinct HP Pool
                             </label>
                             <label
-                                className={`homebrew-form-card__checkbox-label ${cursorClass}`}
+                                className={`homebrew-form-card__checkbox-label ${cursorClass} text-subtext`}
                                 title="Stores a distinct Will pool. Reverting will load whatever Will you had prior to transforming."
                             >
                                 <input
@@ -403,7 +407,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
 
                             <hr className="homebrew-form-card__divider" />
 
-                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`}>
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass} text-subtext`}>
                                 <input
                                     type="checkbox"
                                     disabled={!canEdit}
@@ -412,7 +416,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                                 />
                                 Heal HP to Max on Transform
                             </label>
-                            <label className={`homebrew-form-card__checkbox-label ${cursorClass}`}>
+                            <label className={`homebrew-form-card__checkbox-label ${cursorClass} text-subtext`}>
                                 <input
                                     type="checkbox"
                                     disabled={!canEdit}
@@ -423,13 +427,13 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                             </label>
 
                             <div className="homebrew-form-card__temp-hp-row homebrew-form-card__temp-hp-row--spaced">
-                                <span className="homebrew-form-card__temp-hp-label">Temp HP Shield:</span>
+                                <span className="homebrew-form-card__temp-hp-label text-subtext">Temp HP Shield:</span>
                                 <NumberSpinner
                                     value={form.tempHp}
                                     onChange={(val) => canEdit && updateCustomForm(form.id, 'tempHp', val)}
                                     disabled={!canEdit}
                                 />
-                                <span className="homebrew-form-card__temp-hp-label homebrew-form-card__temp-hp-label--spaced">
+                                <span className="homebrew-form-card__temp-hp-label homebrew-form-card__temp-hp-label--spaced text-subtext">
                                     Temp Will Power:
                                 </span>
                                 <NumberSpinner
@@ -442,7 +446,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                     </div>
 
                     <div className="homebrew-form-card__moves-section">
-                        <span className="homebrew-form-card__settings-header">Granted Moves</span>
+                        <span className="homebrew-form-card__settings-header text-label">Granted Moves</span>
                         <div className="homebrew-form-card__inputs-row">
                             <input
                                 list={`moves-list-${form.id}`}
@@ -452,7 +456,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                                 onKeyDown={(e) => e.key === 'Enter' && handleAddMove()}
                                 placeholder="Add a move (e.g. Tera Blast)"
                                 disabled={!canEdit}
-                                className="homebrew-card__name-input"
+                                className="homebrew-card__name-input text-label"
                             />
                             <datalist id={`moves-list-${form.id}`}>
                                 {moveOptions.map((m) => (
@@ -487,7 +491,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                     </div>
 
                     <div className="homebrew-form-card__moves-section homebrew-form-card__moves-section--spaced">
-                        <span className="homebrew-form-card__settings-header">Passive Tags</span>
+                        <span className="homebrew-form-card__settings-header text-label">Passive Tags</span>
                         <div className="homebrew-form-card__inputs-row">
                             <input
                                 type="text"
@@ -498,7 +502,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                                 }
                                 placeholder="Passive Tags (e.g. [Str +2] [First Hit Dmg +3])"
                                 disabled={!canEdit}
-                                className="homebrew-card__name-input"
+                                className="homebrew-card__name-input text-label"
                             />
                             {canEdit && (
                                 <button
@@ -525,10 +529,21 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
             {showDeleteConfirm && (
                 <div className="homebrew-confirm__overlay">
                     <div className="homebrew-confirm__content">
-                        <h3 className="homebrew-confirm__title homebrew-title-with-icon">
+                        <h3
+                            className="homebrew-confirm__title text-title-primary"
+                            style={{
+                                color: 'var(--semantic-danger)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                            }}
+                        >
                             <AlertTriangle size={20} /> Confirm Deletion
                         </h3>
-                        <p className="homebrew-confirm__text">Are you sure you want to delete this Custom Form?</p>
+                        <p className="homebrew-confirm__text text-subtext">
+                            Are you sure you want to delete this Custom Form?
+                        </p>
                         <div className="homebrew-confirm__actions">
                             <button
                                 type="button"

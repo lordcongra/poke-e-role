@@ -67,10 +67,10 @@ export function HomebrewStatusCard({ status, role, canEdit, onRemove, onDuplicat
                     }
                     placeholder="Status Name"
                     disabled={!canEdit}
-                    className="homebrew-card__name-input"
+                    className="homebrew-card__name-input text-label"
                 />
                 {role === 'GM' && (
-                    <label className="homebrew-card__gm-label">
+                    <label className="homebrew-card__gm-label text-subtext">
                         <input
                             type="checkbox"
                             checked={localGameMasterOnly}
@@ -121,11 +121,11 @@ export function HomebrewStatusCard({ status, role, canEdit, onRemove, onDuplicat
                             }
                             placeholder="Shorthand Label (Optional)"
                             disabled={!canEdit}
-                            className="homebrew-card__name-input homebrew-status-card__shorthand-input"
+                            className="homebrew-card__name-input homebrew-status-card__shorthand-input text-label"
                         />
 
                         <div className="homebrew-status-card__color-group">
-                            <span className="homebrew-status-card__color-label">BG:</span>
+                            <span className="homebrew-status-card__color-label text-label">BG:</span>
                             <input
                                 type="color"
                                 value={localColor}
@@ -141,7 +141,7 @@ export function HomebrewStatusCard({ status, role, canEdit, onRemove, onDuplicat
                         </div>
 
                         <div className="homebrew-status-card__color-group">
-                            <span className="homebrew-status-card__color-label">Text:</span>
+                            <span className="homebrew-status-card__color-label text-label">Text:</span>
                             <input
                                 type="color"
                                 value={localTextColor}
@@ -158,7 +158,7 @@ export function HomebrewStatusCard({ status, role, canEdit, onRemove, onDuplicat
                     </div>
 
                     <div className="homebrew-status-card__row homebrew-status-card__row--recovery">
-                        <span className="homebrew-status-card__color-label">Recovery Roll:</span>
+                        <span className="homebrew-status-card__color-label text-label">Recovery Roll:</span>
                         <select
                             value={localRecoveryAttr}
                             onChange={(event) => canEdit && setLocalRecoveryAttr(event.target.value)}
@@ -168,7 +168,7 @@ export function HomebrewStatusCard({ status, role, canEdit, onRemove, onDuplicat
                                 updateCustomStatus(status.id, 'recoveryAttr', localRecoveryAttr)
                             }
                             disabled={!canEdit}
-                            className="homebrew-status-card__select"
+                            className="homebrew-status-card__select text-label"
                         >
                             <option value="none">-- None --</option>
                             {Object.values(CombatStat).map((stat) => (
@@ -183,7 +183,7 @@ export function HomebrewStatusCard({ status, role, canEdit, onRemove, onDuplicat
                             ))}
                             <option value="will">WILL</option>
                         </select>
-                        <span>+</span>
+                        <span className="text-label">+</span>
                         <select
                             value={localRecoverySkill}
                             onChange={(event) => canEdit && setLocalRecoverySkill(event.target.value)}
@@ -193,7 +193,7 @@ export function HomebrewStatusCard({ status, role, canEdit, onRemove, onDuplicat
                                 updateCustomStatus(status.id, 'recoverySkill', localRecoverySkill)
                             }
                             disabled={!canEdit}
-                            className="homebrew-status-card__select"
+                            className="homebrew-status-card__select text-label"
                         >
                             <option value="none">-- None --</option>
                             {Object.values(Skill).map((skillName) => (
@@ -225,7 +225,7 @@ export function HomebrewStatusCard({ status, role, canEdit, onRemove, onDuplicat
                         }
                         placeholder="Flavor Text / Description"
                         disabled={!canEdit}
-                        className="homebrew-card__textarea homebrew-card__textarea--small"
+                        className="homebrew-card__textarea homebrew-card__textarea--small text-subtext"
                     />
                     <textarea
                         value={localEffects}
@@ -237,7 +237,7 @@ export function HomebrewStatusCard({ status, role, canEdit, onRemove, onDuplicat
                         }
                         placeholder="Mechanical Tags & Setup"
                         disabled={!canEdit}
-                        className="homebrew-card__textarea homebrew-card__textarea--small"
+                        className="homebrew-card__textarea homebrew-card__textarea--small text-subtext"
                     />
                 </>
             )}
@@ -253,10 +253,21 @@ export function HomebrewStatusCard({ status, role, canEdit, onRemove, onDuplicat
             {showDeleteConfirm && (
                 <div className="homebrew-confirm__overlay">
                     <div className="homebrew-confirm__content">
-                        <h3 className="homebrew-confirm__title homebrew-title-with-icon">
+                        <h3
+                            className="homebrew-confirm__title text-title-primary"
+                            style={{
+                                color: 'var(--semantic-danger)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                            }}
+                        >
                             <AlertTriangle size={20} /> Confirm Deletion
                         </h3>
-                        <p className="homebrew-confirm__text">Are you sure you want to delete this Custom Status?</p>
+                        <p className="homebrew-confirm__text text-subtext">
+                            Are you sure you want to delete this Custom Status?
+                        </p>
                         <div className="homebrew-confirm__actions">
                             <button
                                 type="button"

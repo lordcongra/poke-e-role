@@ -18,9 +18,7 @@
 .homebrew-pokemon-card__name-input {
     flex: 1;
     padding: 6px;
-    font-weight: bold;
     background: var(--input-bg);
-    color: var(--text-main);
     border: 1px solid var(--border);
     border-radius: 4px;
 }
@@ -29,9 +27,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 0.7rem;
-    color: #c62828;
-    font-weight: bold;
+    color: var(--semantic-danger);
 }
 
 .homebrew-pokemon-card__delete-btn {
@@ -48,7 +44,6 @@
     padding: 4px;
     border: 1px solid var(--border);
     border-radius: 4px;
-    font-weight: bold;
 }
 
 .homebrew-pokemon-card__stats-grid {
@@ -67,12 +62,6 @@
     border: 1px solid var(--border);
 }
 
-.homebrew-pokemon-card__stat-label {
-    font-size: 0.8rem;
-    font-weight: bold;
-    color: var(--text-muted);
-}
-
 .homebrew-pokemon-card__stat-inputs {
     display: flex;
     align-items: center;
@@ -86,21 +75,16 @@
 }
 
 .homebrew-pokemon-card__stat-sublabel {
-    font-size: 0.6rem;
-    color: var(--text-muted);
     margin-bottom: 2px;
-    font-weight: bold;
 }
 
 .homebrew-pokemon-card__spinner-wrapper {
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--dark) 50%, transparent);
     border-radius: 4px;
 }
 
 .homebrew-pokemon-card__stat-divider {
-    color: var(--text-muted);
     margin-top: 10px;
-    font-weight: bold;
 }
 
 .homebrew-pokemon-card__abilities-grid {
@@ -112,21 +96,13 @@
 .homebrew-pokemon-card__ability-input {
     padding: 4px;
     background: var(--input-bg);
-    color: var(--text-main);
     border: 1px solid var(--border);
     border-radius: 4px;
-    font-size: 0.8rem;
 }
 
 .homebrew-pokemon-card__learnset-section {
     border-top: 1px solid var(--border);
     padding-top: 10px;
-}
-
-.homebrew-pokemon-card__learnset-title {
-    font-size: 0.85rem;
-    font-weight: bold;
-    color: var(--primary);
 }
 
 .homebrew-pokemon-card__learnset-list {
@@ -147,15 +123,11 @@
 }
 
 .homebrew-pokemon-card__learnset-rank-title {
-    font-size: 0.8rem;
-    font-weight: bold;
-    color: var(--primary);
     margin-bottom: 4px;
 }
 
 .homebrew-pokemon-card__learnset-add-btn {
     padding: 2px 6px;
-    font-size: 0.75rem;
     margin-top: 2px;
 }
 
@@ -169,10 +141,8 @@
     flex: 1;
     padding: 4px;
     background: var(--input-bg);
-    color: var(--text-main);
     border: 1px solid var(--border);
     border-radius: 4px;
-    font-size: 0.8rem;
 }
 
 .homebrew-pokemon-card__learnset-remove-btn {
@@ -180,9 +150,6 @@
 }
 
 .homebrew-pokemon-card__section-header {
-    font-weight: bold;
-    font-size: 0.85rem;
-    color: var(--primary);
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
     margin-top: 10px;

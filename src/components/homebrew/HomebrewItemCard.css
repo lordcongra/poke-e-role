@@ -10,7 +10,6 @@
     color: var(--text-main);
     border: 1px solid var(--border);
     border-radius: 4px;
-    font-weight: bold;
 }
 
 .homebrew-item-card__input {
@@ -20,6 +19,5 @@
     color: var(--text-main);
     border: 1px solid var(--border);
     border-radius: 4px;
-    font-weight: bold;
     min-width: 0;
 }

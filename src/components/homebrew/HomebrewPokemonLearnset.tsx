@@ -19,7 +19,7 @@ export function HomebrewPokemonLearnset({ pokemon, canEdit }: HomebrewPokemonLea
 
     return (
         <div className="homebrew-pokemon-card__learnset-section">
-            <span className="homebrew-pokemon-card__learnset-title">Learnset Categories</span>
+            <span className="homebrew-pokemon-card__learnset-title text-title-primary">Learnset Categories</span>
             <div className="homebrew-pokemon-card__learnset-list">
                 {[...RANKS, 'Other'].map((rankOption) => {
                     const movesInRank = pokemon.Moves.map((move, index) => ({ move, index })).filter(
@@ -27,7 +27,9 @@ export function HomebrewPokemonLearnset({ pokemon, canEdit }: HomebrewPokemonLea
                     );
                     return (
                         <div key={rankOption} className="homebrew-pokemon-card__learnset-rank-box">
-                            <div className="homebrew-pokemon-card__learnset-rank-title">{rankOption}</div>
+                            <div className="homebrew-pokemon-card__learnset-rank-title text-title-primary">
+                                {rankOption}
+                            </div>
                             {movesInRank.map(({ move, index }) => (
                                 <LearnsetMoveRow
                                     key={index}

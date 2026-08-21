@@ -69,7 +69,7 @@ export function HomebrewMoves() {
 
     return (
         <div className="homebrew-list__container">
-            <p className="homebrew-list__desc">
+            <p className="homebrew-list__desc text-subtext">
                 Create custom moves. These will appear in the move dropdowns and automatically populate their formulas
                 when selected.
             </p>
@@ -97,7 +97,7 @@ export function HomebrewMoves() {
 
             <div className="homebrew-list__scroll-area">
                 {filteredMoves.length === 0 ? (
-                    <div className="homebrew-list__empty">
+                    <div className="homebrew-list__empty text-subtext" style={{ fontStyle: 'italic' }}>
                         {visibleMoves.length === 0 ? 'No custom moves yet.' : 'No moves match your search.'}
                     </div>
                 ) : (
@@ -142,10 +142,19 @@ export function HomebrewMoves() {
             {importData && (
                 <div className="homebrew-import__overlay">
                     <div className="homebrew-import__content">
-                        <h3 className="homebrew-import__title homebrew-title-with-icon">
+                        <h3
+                            className="homebrew-import__title text-title-primary"
+                            style={{
+                                color: 'var(--semantic-danger)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                            }}
+                        >
                             <AlertTriangle size={20} /> Confirm Import
                         </h3>
-                        <p className="homebrew-import__text">
+                        <p className="homebrew-import__text text-subtext">
                             How would you like to import this data? <b>Overwrite</b> will delete your existing Moves.{' '}
                             <b>Add / Merge</b> will safely combine them, updating any items with matching names.
                         </p>

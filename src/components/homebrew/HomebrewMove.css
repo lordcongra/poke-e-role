@@ -10,7 +10,6 @@
     color: var(--text-main);
     border: 1px solid var(--border);
     border-radius: 4px;
-    font-weight: bold;
 }
 
 .homebrew-move__power-box {
@@ -21,12 +20,6 @@
     padding: 2px 6px;
     border-radius: 4px;
     background: var(--input-bg);
-}
-
-.homebrew-move__label {
-    font-size: 0.8rem;
-    font-weight: bold;
-    color: var(--text-muted);
 }
 
 .homebrew-move__stat-row {
@@ -56,10 +49,7 @@
 }
 
 .homebrew-move__or-label {
-    font-size: 0.7rem;
-    color: var(--text-muted);
     text-align: center;
-    font-weight: bold;
 }
 
 /* Mobile Overrides */

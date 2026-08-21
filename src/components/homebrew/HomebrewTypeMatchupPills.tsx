@@ -1,4 +1,3 @@
-// src/components/homebrew/HomebrewTypeMatchupPills.tsx
 import { X } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { TYPE_COLORS } from '../../data/constants';
@@ -20,18 +19,19 @@ export function HomebrewTypeMatchupPills({ items, onRemove, canEdit }: HomebrewT
     return (
         <div className="homebrew-types__pill-container">
             {items.map((item) => {
-                const bgColor = ALL_COLORS[item] || '#777777';
+                const bgColor = ALL_COLORS[item] || 'var(--dark)';
                 const textColor = getContrastColor(bgColor, 0.55);
 
                 return (
                     <span
                         key={item}
                         onClick={() => canEdit && onRemove(item)}
-                        className={`homebrew-types__pill ${canEdit ? 'homebrew-types__pill--editable' : ''}`}
+                        className={`homebrew-types__pill text-subtext ${canEdit ? 'homebrew-types__pill--editable' : ''}`}
                         title={canEdit ? 'Click to remove' : ''}
                         style={{
                             background: bgColor,
                             color: textColor,
+                            fontWeight: 'bold',
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '4px'

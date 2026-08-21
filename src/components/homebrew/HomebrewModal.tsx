@@ -151,10 +151,10 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
         reader.readAsText(file);
     };
 
-    // Determine Storage Bar Color
-    let progressColor = '#2e7d32'; // Green
+    // Determine Storage Bar Color using our semantic variables
+    let progressColor = 'var(--primary)';
     if (storageUsage.percent > 90) progressColor = 'var(--semantic-danger)';
-    else if (storageUsage.percent > 70) progressColor = '#f57c00'; // Orange
+    else if (storageUsage.percent > 70) progressColor = 'var(--secondary)';
 
     return (
         <div className="homebrew-modal__overlay">
@@ -162,16 +162,12 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                 <div className="homebrew-modal__header">
                     <div className="homebrew-modal__title-row">
                         <h3
-                            className="homebrew-modal__title"
-                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                            className="homebrew-modal__title text-theme-header"
+                            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                         >
                             <Hammer size={20} /> Homebrew Workshop
                         </h3>
-                        <button
-                            onClick={onClose}
-                            className="homebrew-modal__close-btn"
-                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
+                        <button onClick={onClose} className="homebrew-modal__close-btn text-theme-header">
                             <X size={20} />
                         </button>
                     </div>
@@ -231,61 +227,108 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                     {activeTab === 'statuses' && <HomebrewStatuses />}
                 </div>
 
-                <div className="homebrew-modal__footer">
-                    {/* --- NEW STORAGE TRACKER --- */}
+                <div
+                    className="homebrew-modal__footer"
+                    style={{ flexDirection: 'column', alignItems: 'stretch', gap: '8px' }}
+                >
                     <div
-                        className="homebrew-modal__storage-tracker"
-                        title="Web browsers limit local domain storage to ~5MB. If you exceed this, you must export your data to clear space!"
                         style={{
                             display: 'flex',
-                            flexDirection: 'column',
-                            gap: '4px',
-                            width: '100%',
-                            marginBottom: '10px'
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-end',
+                            gap: '10px'
                         }}
                     >
+                        {/* --- NEW STORAGE TRACKER --- */}
                         <div
+                            className="homebrew-modal__storage-tracker"
+                            title="Web browsers limit local domain storage to ~5MB. If you exceed this, you must export your data to clear space!"
                             style={{
                                 display: 'flex',
-                                justifyContent: 'space-between',
-                                fontSize: '0.8rem',
-                                color: 'var(--text-muted)'
-                            }}
-                        >
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <HardDrive size={14} /> Storage Limit
-                            </span>
-                            <span>{storageUsage.mb}MB / 5.0MB</span>
-                        </div>
-                        <div
-                            style={{
-                                width: '100%',
-                                height: '8px',
-                                backgroundColor: 'var(--border)',
-                                borderRadius: '4px',
-                                overflow: 'hidden'
+                                flexDirection: 'column',
+                                gap: '4px',
+                                flex: 1
                             }}
                         >
                             <div
                                 style={{
-                                    height: '100%',
-                                    width: `${storageUsage.percent}%`,
-                                    backgroundColor: progressColor,
-                                    transition: 'width 0.3s ease'
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    fontSize: '0.8rem',
+                                    color: 'var(--text-muted)'
                                 }}
-                            />
+                            >
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <HardDrive size={14} /> Storage Limit
+                                </span>
+                                <span>{storageUsage.mb}MB / 5.0MB</span>
+                            </div>
+                            <div
+                                style={{
+                                    width: '100%',
+                                    height: '8px',
+                                    backgroundColor: 'var(--border)',
+                                    borderRadius: '4px',
+                                    overflow: 'hidden'
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        height: '100%',
+                                        width: `${storageUsage.percent}%`,
+                                        backgroundColor: progressColor,
+                                        transition: 'width 0.3s ease, background-color 0.3s ease'
+                                    }}
+                                />
+                            </div>
+                        </div>
+                        {/* --------------------------- */}
+
+                        <div className="homebrew-modal__footer-actions" style={{ flexShrink: 0 }}>
+                            {canEdit && (
+                                <button
+                                    onClick={handleBroadcastSync}
+                                    className="action-button action-button--secondary homebrew-modal__footer-btn"
+                                >
+                                    <Radio size={16} /> {role === 'GM' ? 'Sync to Players' : 'Share with Table'}
+                                </button>
+                            )}
+                            <button
+                                onClick={handleExportAll}
+                                className={`action-button ${needsBackup ? 'action-button--red' : 'action-button--dark'} homebrew-modal__footer-btn`}
+                            >
+                                <Save size={16} /> Backup All{needsBackup ? '*' : ''}
+                            </button>
+                            {canEdit && (
+                                <>
+                                    <button
+                                        onClick={() => fileRef.current?.click()}
+                                        className="action-button action-button--dark homebrew-modal__footer-btn"
+                                    >
+                                        <FolderOpen size={16} /> Restore All
+                                    </button>
+                                    <input
+                                        type="file"
+                                        ref={fileRef}
+                                        onChange={handleImportAll}
+                                        className="homebrew-file-input"
+                                        accept=".json"
+                                    />
+                                </>
+                            )}
                         </div>
                     </div>
-                    {/* --------------------------- */}
 
                     <span
-                        className="homebrew-modal__footer-text"
+                        className="text-subtext"
                         style={{
-                            color: needsBackup ? 'var(--semantic-danger)' : 'inherit',
+                            color: needsBackup ? 'var(--semantic-danger)' : 'var(--text-muted)',
                             fontWeight: needsBackup ? 'bold' : 'normal',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '4px'
+                            justifyContent: 'center',
+                            gap: '6px',
+                            textAlign: 'center'
                         }}
                     >
                         {needsBackup ? (
@@ -296,40 +339,6 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                             'Changes save automatically to your browser.'
                         )}
                     </span>
-                    <div className="homebrew-modal__footer-actions">
-                        {canEdit && (
-                            <button
-                                onClick={handleBroadcastSync}
-                                className="action-button homebrew-modal__footer-btn"
-                                style={{ backgroundColor: '#1565c0', borderColor: '#1565c0', color: 'white' }}
-                            >
-                                <Radio size={16} /> {role === 'GM' ? 'Sync to Players' : 'Share with Table'}
-                            </button>
-                        )}
-                        <button
-                            onClick={handleExportAll}
-                            className={`action-button ${needsBackup ? 'action-button--red' : 'action-button--dark'} homebrew-modal__footer-btn`}
-                        >
-                            <Save size={16} /> Backup All{needsBackup ? '*' : ''}
-                        </button>
-                        {canEdit && (
-                            <>
-                                <button
-                                    onClick={() => fileRef.current?.click()}
-                                    className="action-button action-button--dark homebrew-modal__footer-btn"
-                                >
-                                    <FolderOpen size={16} /> Restore All
-                                </button>
-                                <input
-                                    type="file"
-                                    ref={fileRef}
-                                    onChange={handleImportAll}
-                                    className="homebrew-file-input"
-                                    accept=".json"
-                                />
-                            </>
-                        )}
-                    </div>
                 </div>
             </div>
 
@@ -337,12 +346,17 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                 <div className="homebrew-import__overlay">
                     <div className="homebrew-import__content">
                         <h3
-                            className="homebrew-import__title"
-                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                            className="homebrew-import__title text-title-primary"
+                            style={{
+                                color: 'var(--semantic-danger)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                            }}
                         >
                             <AlertTriangle size={20} /> Confirm Restore
                         </h3>
-                        <p className="homebrew-import__text">
+                        <p className="homebrew-import__text text-subtext">
                             How would you like to import this data? <b>Overwrite</b> will delete all existing Workshop
                             items. <b>Add / Merge</b> will safely combine them, updating any items with matching names.
                         </p>
@@ -366,7 +380,7 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                                     );
                                     setImportAllData(null);
                                 }}
-                                className="action-button homebrew-import__btn homebrew-import__btn--merge"
+                                className="action-button action-button--secondary homebrew-import__btn"
                             >
                                 Add / Merge
                             </button>

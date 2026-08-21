@@ -62,7 +62,7 @@ export function HomebrewAbilities() {
 
     return (
         <div className="homebrew-list__container">
-            <p className="homebrew-list__desc">
+            <p className="homebrew-list__desc text-subtext">
                 Create custom abilities. When players assign these to their sheets, your custom descriptions and tags
                 will automatically appear!
             </p>
@@ -90,7 +90,7 @@ export function HomebrewAbilities() {
 
             <div className="homebrew-list__scroll-area">
                 {filteredAbilities.length === 0 ? (
-                    <div className="homebrew-list__empty">
+                    <div className="homebrew-list__empty text-subtext" style={{ fontStyle: 'italic' }}>
                         {visibleAbilities.length === 0 ? 'No custom abilities yet.' : 'No abilities match your search.'}
                     </div>
                 ) : (
@@ -134,12 +134,18 @@ export function HomebrewAbilities() {
                 <div className="homebrew-import__overlay">
                     <div className="homebrew-import__content">
                         <h3
-                            className="homebrew-import__title"
-                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                            className="homebrew-import__title text-title-primary"
+                            style={{
+                                color: 'var(--semantic-danger)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                            }}
                         >
                             <AlertTriangle size={20} /> Confirm Import
                         </h3>
-                        <p className="homebrew-import__text">
+                        <p className="homebrew-import__text text-subtext">
                             How would you like to import this data? <b>Overwrite</b> will delete your existing
                             Abilities. <b>Add / Merge</b> will safely combine them, updating any items with matching
                             names.
@@ -156,7 +162,7 @@ export function HomebrewAbilities() {
                                     mergeCustomAbilityData(importData);
                                     setImportData(null);
                                 }}
-                                className="action-button homebrew-import__btn homebrew-import__btn--merge"
+                                className="action-button action-button--secondary homebrew-import__btn"
                             >
                                 Add / Merge
                             </button>

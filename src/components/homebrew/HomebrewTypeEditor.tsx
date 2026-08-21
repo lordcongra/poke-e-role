@@ -96,17 +96,17 @@ export function HomebrewTypeEditor({
                     type="text"
                     value={color}
                     onChange={(event) => setColor(event.target.value)}
-                    className="homebrew-types__color-input"
+                    className="homebrew-types__color-input text-label"
                 />
                 <input
                     type="text"
                     value={name}
                     onChange={(event) => setName(event.target.value)}
                     placeholder="Type Name"
-                    className="homebrew-types__name-input"
+                    className="homebrew-types__name-input text-label"
                 />
                 {role === 'GM' && (
-                    <label className="homebrew-types__gm-label">
+                    <label className="homebrew-types__gm-label text-subtext">
                         <input type="checkbox" checked={gmOnly} onChange={(event) => setGmOnly(event.target.checked)} />
                         GM Only
                     </label>
@@ -116,7 +116,7 @@ export function HomebrewTypeEditor({
             <div className="homebrew-types__matchup-panel">
                 <div className="homebrew-types__dropdown-row">
                     <select
-                        className="identity-grid__select homebrew-types__select"
+                        className="identity-grid__select homebrew-types__select text-label"
                         value={selectedDropdown}
                         onChange={(event) => setSelectedDropdown(event.target.value)}
                     >
@@ -130,7 +130,7 @@ export function HomebrewTypeEditor({
 
                 <div className="homebrew-types__matchup-grid">
                     <div className="homebrew-types__matchup-col">
-                        <h4 className="homebrew-types__matchup-title">Defensive</h4>
+                        <h4 className="homebrew-types__matchup-title text-title-primary">Defensive</h4>
                         <button
                             type="button"
                             onClick={() => addToArray(weaknesses, setWeaknesses)}
@@ -171,7 +171,10 @@ export function HomebrewTypeEditor({
                         />
                     </div>
                     <div className="homebrew-types__matchup-col">
-                        <h4 className="homebrew-types__matchup-title homebrew-types__matchup-title--offensive">
+                        <h4
+                            className="homebrew-types__matchup-title text-title-primary"
+                            style={{ color: 'var(--secondary)' }}
+                        >
                             Offensive
                         </h4>
                         <button
@@ -226,7 +229,11 @@ export function HomebrewTypeEditor({
                         Cancel Edit
                     </button>
                 )}
-                <button type="button" onClick={handleSave} className="action-button homebrew-types__btn-save">
+                <button
+                    type="button"
+                    onClick={handleSave}
+                    className="action-button action-button--theme homebrew-types__btn-save"
+                >
                     {editingType ? (
                         <>
                             <Save size={16} /> Save Type

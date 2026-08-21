@@ -16,8 +16,6 @@
 }
 
 .homebrew-form-card__settings-header {
-    font-weight: bold;
-    font-size: 0.85rem;
     color: var(--primary);
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
@@ -25,7 +23,6 @@
 }
 
 .homebrew-form-card__checkbox-label {
-    font-size: 0.75rem;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -40,11 +37,11 @@
 }
 
 .homebrew-form-card__checkbox-label--danger {
-    color: #c62828;
+    color: var(--semantic-danger);
 }
 
 .homebrew-form-card__checkbox-label--info {
-    color: #1976d2;
+    color: var(--secondary);
 }
 
 .homebrew-form-card__divider {
@@ -64,10 +61,6 @@
 .homebrew-form-card__temp-hp-row--spaced {
     margin-top: 8px;
     flex-wrap: wrap;
-}
-
-.homebrew-form-card__temp-hp-label {
-    font-size: 0.8rem;
 }
 
 .homebrew-form-card__temp-hp-label--spaced {
@@ -123,7 +116,7 @@
 }
 
 .homebrew-form-card__pill-delete:hover {
-    color: #ffcccc;
+    color: var(--semantic-danger);
 }
 
 /* Mobile Overrides */
