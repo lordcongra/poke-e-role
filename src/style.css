@@ -647,3 +647,44 @@ body {
         min-height: 36px;
     }
 }
+
+/* =========================================
+   🔤 GLOBAL TYPOGRAPHY UTILITIES
+   ========================================= */
+
+/* 1. Theme Headers (High Contrast White on Dynamic Colors) */
+.text-theme-header {
+    color: #ffffff !important;
+    font-weight: bold;
+    text-shadow:
+        1px 1px 2px rgba(0, 0, 0, 0.8),
+        0 1px 4px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* 2. Primary Titles (Modals & Major Section Titles) */
+.text-title-primary {
+    color: var(--primary);
+    font-size: 1.15rem;
+    font-weight: bold;
+}
+
+/* 3. Field & Grid Labels */
+.text-label {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: var(--text-muted);
+}
+
+/* 4. Subtext, Hints, and Tooltip Descriptions */
+.text-subtext {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.3;
+}
+
+/* 5. Numeric Totals & Highlighted Values */
+.text-value-highlight {
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--primary);
+}

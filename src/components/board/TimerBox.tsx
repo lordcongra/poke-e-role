@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { TooltipIcon } from '../ui/TooltipIcon';
+import { Plus, X, XCircle } from 'lucide-react';
 import './TimerBox.css';
 
 export function TimerBox() {
@@ -13,7 +14,7 @@ export function TimerBox() {
 
     return (
         <div className="sheet-panel health-section__box timer-box">
-            <div className="timer-box__header theme-header--secondary" style={{ padding: '4px' }}>
+            <div className="timer-box__header theme-header--secondary">
                 <span className="timer-box__header-title">
                     TIMERS{' '}
                     <TooltipIcon
@@ -25,12 +26,8 @@ export function TimerBox() {
                         }
                     />
                 </span>
-                <button
-                    onClick={addEffect}
-                    className="action-button action-button--dark timer-box__add-btn"
-                    style={{ padding: '2px 6px', fontSize: '0.75rem', margin: '0' }}
-                >
-                    + Add
+                <button onClick={addEffect} className="action-button action-button--dark timer-box__add-btn">
+                    <Plus size={14} /> Add
                 </button>
             </div>
             <div className="timer-box__content">
@@ -57,8 +54,9 @@ export function TimerBox() {
                             <button
                                 onClick={() => removeEffect(effect.id)}
                                 className="action-button action-button--red timer-box__icon-btn"
+                                title="Delete Timer"
                             >
-                                X
+                                <X size={14} />
                             </button>
                         </div>
                     ))
@@ -76,7 +74,7 @@ export function TimerBox() {
                                 className="action-button action-button--dark timer-box__modal-btn"
                                 onClick={() => setTooltipInfo(null)}
                             >
-                                Close
+                                <XCircle size={16} /> Close
                             </button>
                         </div>
                     </div>

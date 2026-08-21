@@ -79,6 +79,14 @@
         0 1px 4px rgba(0, 0, 0, 0.6);
 }
 
+.derived-board__box-header--medium {
+    font-size: 0.85rem;
+}
+
+.derived-board__box-header--small {
+    font-size: 0.75rem;
+}
+
 .derived-board__box-content {
     padding: 6px;
     display: flex;
@@ -100,11 +108,11 @@
 }
 
 .derived-board__plus {
-    color: #4caf50;
+    color: var(--text-main);
 }
 
 .derived-board__minus {
-    color: #f44336;
+    color: var(--semantic-danger);
 }
 
 .derived-board__modal-overlay {
@@ -137,27 +145,31 @@
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 /* NEW MODAL CLASSES */
 .derived-board__modal-title--temp-hp {
-    color: #c326df;
-    border-color: #c326df;
+    color: var(--primary);
+    border-color: var(--primary);
 }
 
 .derived-board__modal-title--clear-hp {
-    color: #c62828;
-    border-color: #c62828;
+    color: var(--semantic-danger);
+    border-color: var(--semantic-danger);
 }
 
 .derived-board__modal-title--temp-will {
-    color: #7e57c2;
-    border-color: #7e57c2;
+    color: var(--secondary);
+    border-color: var(--secondary);
 }
 
 .derived-board__modal-title--clear-will {
-    color: #c62828;
-    border-color: #c62828;
+    color: var(--semantic-danger);
+    border-color: var(--semantic-danger);
 }
 
 .derived-board__spinner-wrapper {
@@ -186,20 +198,17 @@
 .derived-board__modal-btn {
     width: 100%;
     padding: 6px;
-}
-
-.derived-board__modal-btn--temp-hp {
-    background-color: #c326df;
-    color: white;
-}
-
-.derived-board__modal-btn--temp-will {
-    background-color: #7e57c2;
-    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 
 .derived-board__roll-btn {
-    padding: 1px 6px;
+    padding: 2px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Mobile overrides */

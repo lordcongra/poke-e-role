@@ -4,7 +4,7 @@ import { CombatStat, Skill } from '../../types/enums';
 import { rollDicePlus } from '../../utils/combatUtils';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { NumberSpinner } from '../ui/NumberSpinner';
-import { Dices, Shield, AlertTriangle, Sparkles } from 'lucide-react';
+import { Dices, Shield, AlertTriangle, Sparkles, XCircle, Trash2 } from 'lucide-react';
 import { ResourceBox } from '../ui/ResourceBox';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { StatusBox } from '../board/StatusBox';
@@ -112,10 +112,7 @@ export function DerivedBoard() {
 
                 <div className="derived-board__health-row">
                     <div className="sheet-panel health-section__box derived-board__box derived-board__box--primary-border">
-                        <div
-                            className="derived-board__box-header theme-header--primary"
-                            style={{ fontSize: '0.85rem' }}
-                        >
+                        <div className="derived-board__box-header theme-header--primary derived-board__box-header--medium">
                             DEFENSE
                         </div>
                         <div className="derived-board__box-content">
@@ -138,10 +135,7 @@ export function DerivedBoard() {
                     </div>
 
                     <div className="sheet-panel health-section__box derived-board__box derived-board__box--primary-border">
-                        <div
-                            className="derived-board__box-header theme-header--primary"
-                            style={{ fontSize: '0.85rem' }}
-                        >
+                        <div className="derived-board__box-header theme-header--primary derived-board__box-header--medium">
                             SPEC. DEFENSE
                         </div>
                         <div className="derived-board__box-content">
@@ -171,10 +165,7 @@ export function DerivedBoard() {
                         className={`derived-board__group-left ${mode !== 'Pokémon' ? 'derived-board__group-left--full' : ''}`}
                     >
                         <div className="sheet-panel health-section__box derived-board__box derived-board__box--large derived-board__box--secondary-border">
-                            <div
-                                className="derived-board__box-header theme-header--secondary"
-                                style={{ fontSize: '0.75rem' }}
-                            >
+                            <div className="derived-board__box-header theme-header--secondary derived-board__box-header--small">
                                 INITIATIVE{' '}
                                 <TooltipIcon
                                     onClick={() =>
@@ -195,10 +186,7 @@ export function DerivedBoard() {
                             </div>
                         </div>
                         <div className="sheet-panel health-section__box derived-board__box derived-board__box--secondary-border">
-                            <div
-                                className="derived-board__box-header theme-header--secondary"
-                                style={{ fontSize: '0.75rem' }}
-                            >
+                            <div className="derived-board__box-header theme-header--secondary derived-board__box-header--small">
                                 EVADE{' '}
                                 <TooltipIcon
                                     onClick={() =>
@@ -214,10 +202,7 @@ export function DerivedBoard() {
                         {mode === 'Pokémon' && (
                             <>
                                 <div className="sheet-panel health-section__box derived-board__box derived-board__box--secondary-border">
-                                    <div
-                                        className="derived-board__box-header theme-header--secondary"
-                                        style={{ fontSize: '0.75rem' }}
-                                    >
+                                    <div className="derived-board__box-header theme-header--secondary derived-board__box-header--small">
                                         CLASH(P){' '}
                                         <TooltipIcon
                                             onClick={() =>
@@ -233,10 +218,7 @@ export function DerivedBoard() {
                                     </div>
                                 </div>
                                 <div className="sheet-panel health-section__box derived-board__box derived-board__box--secondary-border">
-                                    <div
-                                        className="derived-board__box-header theme-header--secondary"
-                                        style={{ fontSize: '0.75rem' }}
-                                    >
+                                    <div className="derived-board__box-header theme-header--secondary derived-board__box-header--small">
                                         CLASH(S){' '}
                                         <TooltipIcon
                                             onClick={() =>
@@ -258,10 +240,7 @@ export function DerivedBoard() {
                     {mode === 'Pokémon' && (
                         <div className="derived-board__group-right">
                             <div className="sheet-panel health-section__box derived-board__box derived-board__box--secondary-border">
-                                <div
-                                    className="derived-board__box-header theme-header--secondary"
-                                    style={{ fontSize: '0.75rem' }}
-                                >
+                                <div className="derived-board__box-header theme-header--secondary derived-board__box-header--small">
                                     HAPPY
                                 </div>
                                 <div className="derived-board__box-content">
@@ -274,10 +253,7 @@ export function DerivedBoard() {
                                 </div>
                             </div>
                             <div className="sheet-panel health-section__box derived-board__box derived-board__box--secondary-border">
-                                <div
-                                    className="derived-board__box-header theme-header--secondary"
-                                    style={{ fontSize: '0.75rem' }}
-                                >
+                                <div className="derived-board__box-header theme-header--secondary derived-board__box-header--small">
                                     LOYAL
                                 </div>
                                 <div className="derived-board__box-content">
@@ -305,7 +281,7 @@ export function DerivedBoard() {
                                 className="action-button action-button--dark derived-board__modal-btn"
                                 onClick={() => setTooltipInfo(null)}
                             >
-                                Close
+                                <XCircle size={16} /> Close
                             </button>
                         </div>
                     </div>
@@ -330,18 +306,18 @@ export function DerivedBoard() {
                                 className="action-button action-button--dark derived-board__modal-btn"
                                 onClick={() => setShowAddTempModal(false)}
                             >
-                                Cancel
+                                <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button derived-board__modal-btn derived-board__modal-btn--temp-hp"
+                                className="action-button action-button--theme derived-board__modal-btn"
                                 onClick={() => {
                                     updateHealth('temporaryHitPointsMax', newTempHp);
                                     updateHealth('temporaryHitPoints', newTempHp);
                                     setShowAddTempModal(false);
                                 }}
                             >
-                                Apply Shield
+                                <Shield size={16} /> Apply Shield
                             </button>
                         </div>
                     </div>
@@ -363,7 +339,7 @@ export function DerivedBoard() {
                                 className="action-button action-button--dark derived-board__modal-btn"
                                 onClick={() => setShowTempConfirm(false)}
                             >
-                                Cancel
+                                <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
@@ -374,7 +350,7 @@ export function DerivedBoard() {
                                     setShowTempConfirm(false);
                                 }}
                             >
-                                Clear
+                                <Trash2 size={16} /> Clear
                             </button>
                         </div>
                     </div>
@@ -400,18 +376,18 @@ export function DerivedBoard() {
                                 className="action-button action-button--dark derived-board__modal-btn"
                                 onClick={() => setShowAddTempWillModal(false)}
                             >
-                                Cancel
+                                <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button derived-board__modal-btn derived-board__modal-btn--temp-will"
+                                className="action-button action-button--secondary derived-board__modal-btn"
                                 onClick={() => {
                                     updateWill('temporaryWillMax', newTempWill);
                                     updateWill('temporaryWill', newTempWill);
                                     setShowAddTempWillModal(false);
                                 }}
                             >
-                                Apply Temp Will
+                                <Sparkles size={16} /> Apply Temp Will
                             </button>
                         </div>
                     </div>
@@ -433,7 +409,7 @@ export function DerivedBoard() {
                                 className="action-button action-button--dark derived-board__modal-btn"
                                 onClick={() => setShowTempWillConfirm(false)}
                             >
-                                Cancel
+                                <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
@@ -444,7 +420,7 @@ export function DerivedBoard() {
                                     setShowTempWillConfirm(false);
                                 }}
                             >
-                                Clear
+                                <Trash2 size={16} /> Clear
                             </button>
                         </div>
                     </div>

@@ -4,6 +4,7 @@ import { rollStatus } from '../../utils/combatUtils';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { STATUS_COLORS, STATUS_RULES, STATUS_OPTIONS } from '../../data/constants';
+import { Plus, Dices, X, XCircle } from 'lucide-react';
 import './StatusBox.css';
 
 export function StatusBox() {
@@ -22,19 +23,15 @@ export function StatusBox() {
 
     return (
         <div className="sheet-panel health-section__box status-box">
-            <div className="status-box__header theme-header--secondary" style={{ padding: '4px' }}>
+            <div className="status-box__header theme-header--secondary">
                 <span className="status-box__header-title">
                     STATUS{' '}
                     <TooltipIcon
                         onClick={() => setTooltipInfo({ title: 'Status Effects', desc: 'Apply a status effect.' })}
                     />
                 </span>
-                <button
-                    onClick={addStatus}
-                    className="action-button action-button--dark status-box__add-btn"
-                    style={{ padding: '2px 6px', fontSize: '0.75rem', margin: '0' }}
-                >
-                    + Add
+                <button onClick={addStatus} className="action-button action-button--dark status-box__add-btn">
+                    <Plus size={14} /> Add
                 </button>
             </div>
             <div className="status-box__content">
@@ -83,16 +80,18 @@ export function StatusBox() {
                                 <button
                                     onClick={() => rollStatus(status, useCharacterStore.getState())}
                                     className="action-button action-button--dark status-box__icon-btn"
+                                    title="Roll Status Check"
                                 >
-                                    🎲
+                                    <Dices size={14} />
                                 </button>
                             )}
                             {index > 0 && (
                                 <button
                                     onClick={() => removeStatus(status.id)}
                                     className="action-button action-button--red status-box__icon-btn"
+                                    title="Delete Status"
                                 >
-                                    X
+                                    <X size={14} />
                                 </button>
                             )}
                         </div>
@@ -111,7 +110,7 @@ export function StatusBox() {
                                 className="action-button action-button--dark status-box__modal-btn"
                                 onClick={() => setTooltipInfo(null)}
                             >
-                                Close
+                                <XCircle size={16} /> Close
                             </button>
                         </div>
                     </div>

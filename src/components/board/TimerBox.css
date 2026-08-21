@@ -1,14 +1,14 @@
 .timer-box {
     flex: 1;
     padding: 0;
-    border: 1px solid #4fc3f7;
+    border: 1px solid var(--secondary);
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 
 .timer-box__header {
-    background: #4fc3f7;
+    background: var(--secondary);
     color: white;
     text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
     text-align: center;
@@ -26,8 +26,25 @@
 
 .timer-box__add-btn {
     background: transparent;
-    padding: 0 4px;
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: 4px;
     text-shadow: none;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.timer-box__add-btn:hover {
+    background: color-mix(in srgb, var(--primary) 20%, transparent);
+    border-color: color-mix(in srgb, var(--primary) 40%, transparent);
 }
 
 .timer-box__content {
@@ -82,7 +99,10 @@
 }
 
 .timer-box__icon-btn {
-    padding: 0 4px;
+    padding: 2px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .timer-box__modal-overlay {
@@ -133,4 +153,8 @@
 .timer-box__modal-btn {
     width: 100%;
     padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
