@@ -221,7 +221,7 @@
 }
 .resource-box__divider {
     font-weight: 900;
-    color: #bdc3c7;
+    color: var(--border);
     font-size: 1.3rem;
     margin: 0 2px;
 }

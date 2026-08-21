@@ -1,5 +1,5 @@
 .category-header__row {
-    background-color: #c62828;
+    background-color: var(--dark);
     color: white;
 }
 

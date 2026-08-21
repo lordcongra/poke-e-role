@@ -22,7 +22,9 @@
     cursor: pointer;
     user-select: none;
     border-bottom: 1px solid transparent;
-    transition: color 0.3s ease;
+    transition:
+        color 0.3s ease,
+        background-color 0.2s ease;
 }
 
 .global-toolbar__header-title {
@@ -46,6 +48,16 @@
     justify-content: center;
     width: 24px;
     height: 24px;
+}
+
+/* Dynamically rotate the caret purely via CSS class toggling */
+.global-toolbar__caret svg {
+    transition: transform 0.2s ease;
+    transform: rotate(-90deg);
+}
+
+.global-toolbar__header--open .global-toolbar__caret svg {
+    transform: rotate(0deg);
 }
 
 .global-toolbar__btn--back-header {
@@ -152,6 +164,67 @@
 .global-toolbar__btn.action-button--neutral-hover:hover {
     background-color: var(--row-even);
     border-color: var(--text-muted);
+}
+
+/* =========================================
+   🔘 IMPORT CONFIRMATION MODAL
+   ========================================= */
+.global-toolbar__modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.global-toolbar__modal-content {
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 320px;
+    width: 90%;
+    border: 2px solid var(--semantic-danger);
+    color: var(--text-main);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    text-align: center;
+}
+
+.global-toolbar__modal-title {
+    color: var(--semantic-danger);
+    margin-top: 0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+}
+
+.global-toolbar__modal-text {
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+    line-height: 1.4;
+}
+
+.global-toolbar__modal-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.global-toolbar__modal-btn {
+    flex: 1;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 
 @media (max-width: 768px) {

@@ -33,7 +33,9 @@ import {
     Upload,
     Printer,
     Wand2,
-    Palette
+    Palette,
+    AlertTriangle,
+    XCircle
 } from 'lucide-react';
 import './GlobalToolbar.css';
 
@@ -376,14 +378,7 @@ export function GlobalToolbar() {
             >
                 <div className="global-toolbar__header-title">
                     <span className="global-toolbar__caret">
-                        <ChevronDown
-                            size={18}
-                            style={{
-                                transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)',
-                                transition: 'transform 0.2s',
-                                marginTop: '4px'
-                            }}
-                        />
+                        <ChevronDown size={18} />
                     </span>
                     TABLE TOOLS & SETTINGS
                 </div>
@@ -550,35 +545,28 @@ export function GlobalToolbar() {
             )}
 
             {importData && (
-                <div className="identity-header__modal-overlay" style={{ zIndex: 9999 }}>
-                    <div
-                        className="identity-header__modal-content"
-                        style={{
-                            background: 'var(--panel-bg)',
-                            color: 'var(--text-main)',
-                            border: '1px solid var(--border)'
-                        }}
-                    >
-                        <h3 className="identity-header__modal-title">⚠️ Confirm Import</h3>
-                        <p className="identity-header__modal-text" style={{ marginBottom: '16px' }}>
+                <div className="global-toolbar__modal-overlay">
+                    <div className="global-toolbar__modal-content">
+                        <h3 className="global-toolbar__modal-title modal-title-with-icon">
+                            <AlertTriangle size={20} /> Confirm Import
+                        </h3>
+                        <p className="global-toolbar__modal-text">
                             Import character data? This will completely overwrite the current token.
                         </p>
-                        <div className="identity-header__modal-actions" style={{ display: 'flex', gap: '8px' }}>
+                        <div className="global-toolbar__modal-actions">
                             <button
                                 type="button"
-                                className="action-button action-button--dark"
+                                className="action-button action-button--dark global-toolbar__modal-btn"
                                 onClick={() => setImportData(null)}
-                                style={{ flex: 1, padding: '8px' }}
                             >
-                                Cancel
+                                <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--red"
+                                className="action-button action-button--red global-toolbar__modal-btn"
                                 onClick={confirmImport}
-                                style={{ flex: 1, padding: '8px' }}
                             >
-                                Import
+                                <Upload size={16} /> Import
                             </button>
                         </div>
                     </div>

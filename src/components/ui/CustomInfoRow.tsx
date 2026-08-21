@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomInfo } from '../../store/storeTypes';
 
@@ -30,7 +31,7 @@ export function CustomInfoRow({ info, onDelete }: CustomInfoRowProps) {
                 onClick={() => onDelete(info.id)}
                 className="action-button action-button--red identity-header__custom-info-delete"
             >
-                X
+                <X size={14} />
             </button>
         </div>
     );
