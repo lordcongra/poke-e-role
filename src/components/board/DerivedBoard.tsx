@@ -12,6 +12,8 @@ import { TimerBox } from './TimerBox';
 import { parseCombatTags, getAbilityText, calculateStatTotal, calculateSkillTotal } from '../../utils/combatUtils';
 import './DerivedBoard.css';
 
+const ICON_SHADOW = 'drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8)) drop-shadow(0 1px 4px rgba(0, 0, 0, 0.6))';
+
 export function DerivedBoard() {
     const ruleset = useCharacterStore((state) => state.identity.ruleset);
     const mode = useCharacterStore((state) => state.identity.mode);
@@ -115,8 +117,8 @@ export function DerivedBoard() {
                         <div className="derived-board__box-header theme-header--primary derived-board__box-header--medium">
                             DEFENSE
                         </div>
-                        <div className="derived-board__box-content">
-                            <span className="derived-board__total-text">
+                        <div className="derived-board__box-content text-label" style={{ color: 'var(--text-main)' }}>
+                            <span className="text-subtext" style={{ color: 'var(--text-main)' }}>
                                 Total: <strong>{defTotal}</strong>
                             </span>
                             <span className="derived-board__plus">+</span>
@@ -138,8 +140,8 @@ export function DerivedBoard() {
                         <div className="derived-board__box-header theme-header--primary derived-board__box-header--medium">
                             SPEC. DEFENSE
                         </div>
-                        <div className="derived-board__box-content">
-                            <span className="derived-board__total-text">
+                        <div className="derived-board__box-content text-label" style={{ color: 'var(--text-main)' }}>
+                            <span className="text-subtext" style={{ color: 'var(--text-main)' }}>
                                 Total: <strong>{sdefTotal}</strong>
                             </span>
                             <span className="derived-board__plus">+</span>
@@ -173,15 +175,18 @@ export function DerivedBoard() {
                                     }
                                 />
                             </div>
-                            <div className="derived-board__box-content derived-board__box-content--dark-text">
+                            <div
+                                className="derived-board__box-content text-label"
+                                style={{ color: 'var(--text-main)' }}
+                            >
                                 1d6 + {initiative}
                                 <button
-                                    className="action-button action-button--dark derived-board__roll-btn"
+                                    className="action-button action-button--dark derived-board__roll-btn text-theme-header"
                                     onClick={() =>
                                         rollDicePlus(`1d6+${initiative}`, 'Initiative', 'init', String(initiative))
                                     }
                                 >
-                                    <Dices size={16} />
+                                    <Dices size={16} style={{ filter: ICON_SHADOW }} />
                                 </button>
                             </div>
                         </div>
@@ -194,7 +199,10 @@ export function DerivedBoard() {
                                     }
                                 />
                             </div>
-                            <div className="derived-board__box-content derived-board__box-content--dark-text">
+                            <div
+                                className="derived-board__box-content text-label"
+                                style={{ color: 'var(--text-main)' }}
+                            >
                                 {dexTotal + calculateSkillTotal(Skill.EVASION, fullState, inventoryModifiers)}
                             </div>
                         </div>
@@ -213,7 +221,10 @@ export function DerivedBoard() {
                                             }
                                         />
                                     </div>
-                                    <div className="derived-board__box-content derived-board__box-content--dark-text">
+                                    <div
+                                        className="derived-board__box-content text-label"
+                                        style={{ color: 'var(--text-main)' }}
+                                    >
                                         {clashPhysical}
                                     </div>
                                 </div>
@@ -229,7 +240,10 @@ export function DerivedBoard() {
                                             }
                                         />
                                     </div>
-                                    <div className="derived-board__box-content derived-board__box-content--dark-text">
+                                    <div
+                                        className="derived-board__box-content text-label"
+                                        style={{ color: 'var(--text-main)' }}
+                                    >
                                         {clashSpecial}
                                     </div>
                                 </div>
@@ -272,13 +286,13 @@ export function DerivedBoard() {
 
             {tooltipInfo && (
                 <div className="derived-board__modal-overlay">
-                    <div className="derived-board__modal-content">
+                    <div className="derived-board__modal-content" style={{ color: 'var(--text-main)' }}>
                         <h3 className="derived-board__modal-title text-title-primary">{tooltipInfo.title}</h3>
                         <p className="derived-board__modal-desc text-subtext">{tooltipInfo.desc}</p>
                         <div className="derived-board__modal-btn-container">
                             <button
                                 type="button"
-                                className="action-button action-button--dark derived-board__modal-btn"
+                                className="action-button action-button--dark derived-board__modal-btn text-theme-header"
                                 onClick={() => setTooltipInfo(null)}
                             >
                                 <XCircle size={16} /> Close
@@ -290,7 +304,7 @@ export function DerivedBoard() {
 
             {showAddTempModal && (
                 <div className="derived-board__modal-overlay">
-                    <div className="derived-board__modal-content">
+                    <div className="derived-board__modal-content" style={{ color: 'var(--text-main)' }}>
                         <h3 className="derived-board__modal-title derived-board__modal-title--temp-hp text-title-primary">
                             <Shield size={20} /> Set Temporary HP
                         </h3>
@@ -303,14 +317,14 @@ export function DerivedBoard() {
                         <div className="derived-board__modal-btn-container derived-board__modal-btn-container--spaced">
                             <button
                                 type="button"
-                                className="action-button action-button--dark derived-board__modal-btn"
+                                className="action-button action-button--dark derived-board__modal-btn text-theme-header"
                                 onClick={() => setShowAddTempModal(false)}
                             >
                                 <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--theme derived-board__modal-btn"
+                                className="action-button action-button--theme derived-board__modal-btn text-theme-header"
                                 onClick={() => {
                                     updateHealth('temporaryHitPointsMax', newTempHp);
                                     updateHealth('temporaryHitPoints', newTempHp);
@@ -326,7 +340,7 @@ export function DerivedBoard() {
 
             {showTempConfirm && (
                 <div className="derived-board__modal-overlay">
-                    <div className="derived-board__modal-content">
+                    <div className="derived-board__modal-content" style={{ color: 'var(--text-main)' }}>
                         <h3 className="derived-board__modal-title derived-board__modal-title--clear-hp text-title-primary">
                             <AlertTriangle size={20} /> Clear Temp HP
                         </h3>
@@ -336,14 +350,14 @@ export function DerivedBoard() {
                         <div className="derived-board__modal-btn-container derived-board__modal-btn-container--spaced">
                             <button
                                 type="button"
-                                className="action-button action-button--dark derived-board__modal-btn"
+                                className="action-button action-button--dark derived-board__modal-btn text-theme-header"
                                 onClick={() => setShowTempConfirm(false)}
                             >
                                 <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--red derived-board__modal-btn"
+                                className="action-button action-button--red derived-board__modal-btn text-theme-header"
                                 onClick={() => {
                                     updateHealth('temporaryHitPoints', 0);
                                     updateHealth('temporaryHitPointsMax', 0);
@@ -359,7 +373,7 @@ export function DerivedBoard() {
 
             {showAddTempWillModal && (
                 <div className="derived-board__modal-overlay">
-                    <div className="derived-board__modal-content">
+                    <div className="derived-board__modal-content" style={{ color: 'var(--text-main)' }}>
                         <h3 className="derived-board__modal-title derived-board__modal-title--temp-will text-title-primary">
                             <Sparkles size={20} /> Set Temp Willpower
                         </h3>
@@ -373,14 +387,14 @@ export function DerivedBoard() {
                         <div className="derived-board__modal-btn-container derived-board__modal-btn-container--spaced">
                             <button
                                 type="button"
-                                className="action-button action-button--dark derived-board__modal-btn"
+                                className="action-button action-button--dark derived-board__modal-btn text-theme-header"
                                 onClick={() => setShowAddTempWillModal(false)}
                             >
                                 <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--secondary derived-board__modal-btn"
+                                className="action-button action-button--secondary derived-board__modal-btn text-theme-header"
                                 onClick={() => {
                                     updateWill('temporaryWillMax', newTempWill);
                                     updateWill('temporaryWill', newTempWill);
@@ -396,7 +410,7 @@ export function DerivedBoard() {
 
             {showTempWillConfirm && (
                 <div className="derived-board__modal-overlay">
-                    <div className="derived-board__modal-content">
+                    <div className="derived-board__modal-content" style={{ color: 'var(--text-main)' }}>
                         <h3 className="derived-board__modal-title derived-board__modal-title--clear-will text-title-primary">
                             <AlertTriangle size={20} /> Clear Temp Willpower
                         </h3>
@@ -406,14 +420,14 @@ export function DerivedBoard() {
                         <div className="derived-board__modal-btn-container derived-board__modal-btn-container--spaced">
                             <button
                                 type="button"
-                                className="action-button action-button--dark derived-board__modal-btn"
+                                className="action-button action-button--dark derived-board__modal-btn text-theme-header"
                                 onClick={() => setShowTempWillConfirm(false)}
                             >
                                 <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--red derived-board__modal-btn"
+                                className="action-button action-button--red derived-board__modal-btn text-theme-header"
                                 onClick={() => {
                                     updateWill('temporaryWill', 0);
                                     updateWill('temporaryWillMax', 0);

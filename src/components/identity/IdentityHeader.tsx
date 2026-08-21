@@ -16,6 +16,8 @@ import { saveToOwlbear } from '../../utils/obr';
 import { Image as ImageIcon, Radio, Upload, Globe, RefreshCw, Dna } from 'lucide-react';
 import './IdentityHeader.css';
 
+const ICON_SHADOW = 'drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8)) drop-shadow(0 1px 4px rgba(0, 0, 0, 0.6))';
+
 export function IdentityHeader() {
     const identityStore = useCharacterStore((state) => state.identity) || {};
     const setIdentity = useCharacterStore((state) => state.setIdentity);
@@ -267,7 +269,7 @@ export function IdentityHeader() {
                 className="action-button action-button--dark identity-header__btn identity-header__btn--icon"
                 title="Sync and Refresh API Data"
             >
-                <RefreshCw size={14} className={isRefreshing ? 'spin-animation' : ''} />
+                <RefreshCw size={14} className={isRefreshing ? 'spin-animation' : ''} style={{ filter: ICON_SHADOW }} />
             </button>
 
             {(isStandaloneMode || (isGm && OBR.isAvailable)) && (

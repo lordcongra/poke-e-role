@@ -39,6 +39,8 @@ import {
 } from 'lucide-react';
 import './GlobalToolbar.css';
 
+const ICON_SHADOW = 'drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8)) drop-shadow(0 1px 4px rgba(0, 0, 0, 0.6))';
+
 export function GlobalToolbar() {
     const isObrReady = useObrReady();
     const storeRole = useCharacterStore((state) => state.role);
@@ -514,7 +516,7 @@ export function GlobalToolbar() {
                                 className="action-button action-button--dark"
                                 title="Export Character (Download JSON)"
                             >
-                                <Save size={14} />
+                                <Save size={14} style={{ filter: ICON_SHADOW }} />
                             </button>
                             <button
                                 type="button"
@@ -522,7 +524,7 @@ export function GlobalToolbar() {
                                 className="action-button action-button--dark"
                                 title="Import Character (Upload JSON)"
                             >
-                                <Upload size={14} />
+                                <Upload size={14} style={{ filter: ICON_SHADOW }} />
                             </button>
                             <input
                                 type="file"
@@ -537,7 +539,7 @@ export function GlobalToolbar() {
                                 className="action-button action-button--dark"
                                 title="Print Sheet"
                             >
-                                <Printer size={14} />
+                                <Printer size={14} style={{ filter: ICON_SHADOW }} />
                             </button>
                         </div>
                     </div>

@@ -93,22 +93,14 @@
     flex: 1;
 }
 
-.derived-board__box-content--dark-text {
-    font-weight: bold;
-    color: var(--text-main);
-}
-
-.derived-board__total-text {
-    color: var(--text-main);
-    font-size: 0.85rem;
-}
-
 .derived-board__plus {
-    color: var(--text-main);
+    color: #4caf50;
+    font-weight: bold;
 }
 
 .derived-board__minus {
     color: var(--semantic-danger);
+    font-weight: bold;
 }
 
 .derived-board__modal-overlay {
@@ -117,7 +109,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: color-mix(in srgb, var(--dark) 60%, transparent);
     z-index: 1400;
     display: flex;
     justify-content: center;
@@ -130,11 +122,9 @@
     border-radius: 8px;
     width: 280px;
     border: 2px solid var(--primary);
-    color: var(--text-main);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
 }
 
-/* Typography pruned: relies on .text-title-primary */
 .derived-board__modal-title {
     margin-top: 0;
     border-bottom: 1px solid var(--border);
@@ -172,7 +162,6 @@
     margin-bottom: 15px;
 }
 
-/* Typography pruned: relies on .text-subtext */
 .derived-board__modal-desc {
     margin-bottom: 15px;
     white-space: pre-wrap;
