@@ -65,7 +65,8 @@ export function GlobalToolbar() {
     const showLootGenButton = isStandaloneMode || localRole === 'GM' || gmOnlyLootGen === false;
     const showPokemonGeneratorButton = isStandaloneMode || !!activeTokenId;
 
-    const [isDark, setIsDark] = useState<boolean>(false);
+    // 🔥 Default to true so Dark Mode is the standard!
+    const [isDark, setIsDark] = useState<boolean>(true);
     const [showHomebrewModal, setShowHomebrewModal] = useState<boolean>(false);
     const [showRulesModal, setShowRulesModal] = useState<boolean>(false);
     const [showLootGenModal, setShowLootGenModal] = useState<boolean>(false);
@@ -81,7 +82,13 @@ export function GlobalToolbar() {
     useEffect(() => {
         try {
             const savedTheme = localStorage.getItem('pokerole-theme');
-            if (savedTheme === 'dark') {
+            // If the user explicitly chose light, honor it. Otherwise, default to dark.
+            if (savedTheme === 'light') {
+                setIsDark(false);
+                document.body.classList.remove('dark-mode');
+                document.body.setAttribute('data-theme', 'light');
+                document.documentElement.setAttribute('data-theme', 'light');
+            } else {
                 setIsDark(true);
                 document.body.classList.add('dark-mode');
                 document.body.setAttribute('data-theme', 'dark');
@@ -196,7 +203,7 @@ export function GlobalToolbar() {
         }
 
         const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-        const themeToPass = document.body.getAttribute('data-theme') || 'light';
+        const themeToPass = document.body.getAttribute('data-theme') || 'dark'; // Fallback correctly
         const url = `${baseUrl}/initiative-tracker.html?layout=${initiativeTrackerLayout || 'compact'}&theme=${themeToPass}&shape=${initiativeTrackerAvatarShape || 'circle'}&mw=${initiativeTrackerMaxWidth || 400}&mh=${initiativeTrackerMaxHeight || 600}`;
 
         const savedW = parseInt(localStorage.getItem('pkr_init_width') || '400');

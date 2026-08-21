@@ -22,7 +22,9 @@ interface WindowWithReactRoot extends Window {
 function RollLog() {
     const [rolls, setRolls] = useState<RollData[]>([]);
     const [resolvedIcons, setResolvedIcons] = useState<Record<string, string>>({});
-    const [theme, setTheme] = useState(localStorage.getItem('pokerole-theme') || 'light');
+
+    // 🔥 Default to dark instead of light
+    const [theme, setTheme] = useState(localStorage.getItem('pokerole-theme') || 'dark');
 
     const loadRolls = async () => {
         try {
@@ -49,14 +51,14 @@ function RollLog() {
     };
 
     useEffect(() => {
-        if (theme === 'dark') {
-            document.body.classList.add('dark-mode');
-            document.body.setAttribute('data-theme', 'dark');
-            document.documentElement.setAttribute('data-theme', 'dark');
-        } else {
+        if (theme === 'light') {
             document.body.classList.remove('dark-mode');
             document.body.setAttribute('data-theme', 'light');
             document.documentElement.setAttribute('data-theme', 'light');
+        } else {
+            document.body.classList.add('dark-mode');
+            document.body.setAttribute('data-theme', 'dark');
+            document.documentElement.setAttribute('data-theme', 'dark');
         }
     }, [theme]);
 
@@ -135,10 +137,7 @@ function RollLog() {
                     <div key={r.id} className="roll-log__entry">
                         <div className="roll-log__entry-header">
                             <img src={resolvedIcons[r.id] || r.icon} alt="Token" className="roll-log__entry-icon" />
-                            <strong
-                                className="roll-log__entry-player text-title-primary"
-                                style={{ fontSize: '0.9rem' }}
-                            >
+                            <strong className="text-title-primary" style={{ fontSize: '0.9rem' }}>
                                 {r.player}
                             </strong>
                             <button

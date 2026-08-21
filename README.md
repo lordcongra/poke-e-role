@@ -1,4 +1,4 @@
-# Pokerole 3.0 Sheet v2.9.0 (Standalone PWA & Owlbear Rodeo Extension)
+# Pokerole 3.0 Sheet v3.0.0 (Standalone PWA & Owlbear Rodeo Extension)
 
 A highly automated, modular character sheet and GM Toolkit for playing **Pokerole 3.0** campaigns (including **Pokémon Mystery Dungeon / PMD** settings).
 
@@ -8,7 +8,7 @@ _A massive thank you to the creator of the **Owl Trackers** extension. Their inc
 
 ---
 
-## 📱 Standalone App & Offline Mode (New in v2.9.0!)
+## 📱 Standalone App & Offline Mode
 
 Don't want to use a VTT? You can now use the Pokerole Sheet completely standalone!
 
@@ -54,6 +54,12 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 ---
 
 ## 🌟 Features
+
+### 🎨 Dynamic UI & Theming
+
+- **Adaptive Type Colors:** The sheet automatically checks your Pokémon's primary typing and dynamically restyles the entire UI (buttons, text highlights, table borders, and accents) to match!
+- **Custom Global Overrides:** Playing a shiny, a special regional variant, or just have a favorite color? Click the "Theme" button in the global toolbar to completely override the sheet's colors to anything you want!
+- **Clean Iconography:** The entire app utilizes crisp, accessible SVG icons rather than flat text emojis, ensuring it looks beautifully professional on any device. I called this "Project Demojification."
 
 ### ⚔️ The Initiative Tracker
 
@@ -142,7 +148,7 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 ### 🛡️ Auto-Calculating Type Matchups
 
-- Never stop combat to check a type chart again. The sheet automatically calculates and displays a Pokémon's defensive weaknesses and resistances (4x, 2x, 0.5x, 0.25x, 0x) based on their current typing or dual-typing.
+- Never stop combat to check a type chart again. The sheet automatically calculates and displays a defensive weaknesses and resistances (4x, 2x, 0.5x, 0.25x, 0x) based on their current typing or dual-typing.
 - Fully supports items like the _Ring Target_ or _Iron Ball_ to dynamically rewrite the type chart on the fly!
 
 ### 🔒 Room Rules & GM Tools
@@ -157,6 +163,6 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 To install this extension into your Owlbear Rodeo room, copy the Manifest URL below and paste it into your Owlbear Rodeo extension manager:
 
-`https://lordcongra.github.io/poke-e-role/manifest.json?v=2.9.0`
+`https://lordcongra.github.io/poke-e-role/manifest.json?v=3.0.0`
 
 _(Note: If the sheet updates, you can force Owlbear to fetch the newest version by bumping the version tag at the end of the URL!)_

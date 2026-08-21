@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ReactNode } from 'react';
 
-export const CURRENT_VERSION = '2.9.0';
+export const CURRENT_VERSION = '3.0.0';
 
 export interface ChangelogEntry {
     version: string;
@@ -11,9 +11,41 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
     {
-        version: '2.9.0',
+        version: '3.0.0',
         date: 'August 2026',
         changes: [
+            <strong key="ui-title" style={{ color: '#1976D2', fontSize: '1.1em' }}>
+                🎨 Dynamic Theming UI Overhaul
+            </strong>,
+            <ul
+                key="ui-list"
+                style={{
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Dynamic Type Themes:</strong> The entire character sheet now dynamically styles its buttons,
+                    highlights, and accents based on your Pokémon's primary typing! No more flat gray sheets—every
+                    Pokémon feels unique.
+                </li>
+                <li>
+                    <strong>Global Theme Overrides:</strong> Don't like your Pokémon's default type color? You can now
+                    click the "Theme" button in the Global Toolbar to enforce a completely custom color scheme for your
+                    sheet!
+                </li>
+                <li>
+                    <strong>Project Demojification:</strong> Replaced the old, inconsistent raw emojis across the app
+                    with clean, professionally-styled SVG icons (courtesy of Lucide React).
+                </li>
+                <li>
+                    <strong>Standardized Typography:</strong> Completely rebuilt the CSS architecture under the hood to
+                    use unified, accessible text scaling across the board.
+                </li>
+            </ul>,
             <div
                 key="pwa-update"
                 style={{
@@ -33,7 +65,7 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 </p>
             </div>,
             <div
-                key="car-reminder-290"
+                key="car-reminder-300"
                 style={{
                     border: '2px solid #e65100',
                     padding: '12px',
