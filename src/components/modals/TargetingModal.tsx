@@ -219,13 +219,18 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
     return (
         <div className="targeting-modal__overlay">
             <div className="targeting-modal__content">
-                <h3 className="targeting-modal__title modal-title-with-icon">
+                <h3 className="targeting-modal__title modal-title-with-icon text-title-primary">
                     <Target size={20} /> Select Target
                 </h3>
 
                 <div className="targeting-modal__form-group">
-                    <label className="targeting-modal__label">Enemy Token:</label>
-                    <select onChange={handleTargetSelect} className="targeting-modal__select" defaultValue="manual">
+                    <label className="targeting-modal__label text-label">Enemy Token:</label>
+                    <select
+                        onChange={handleTargetSelect}
+                        className="targeting-modal__select text-label"
+                        style={{ color: 'var(--text-main)' }}
+                        defaultValue="manual"
+                    >
                         <option value="manual">-- Manual Entry --</option>
                         {targets.map((t) => (
                             <option key={t.id} value={t.id}>
@@ -236,7 +241,7 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                 </div>
 
                 <div className="targeting-modal__form-group targeting-modal__form-group--large">
-                    <label className="targeting-modal__label">
+                    <label className="targeting-modal__label text-label">
                         <span>{isPhysicalMove ? 'Defense' : 'Special Defense'}</span> Reduction:
                     </label>
                     <input
@@ -244,12 +249,15 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                         value={reduction}
                         onChange={(e) => setReduction(Number(e.target.value) || 0)}
                         min="0"
-                        className="targeting-modal__input"
+                        className="targeting-modal__input text-value-highlight"
                     />
                 </div>
 
                 <div className="targeting-modal__checkbox-row">
-                    <label className="targeting-modal__checkbox-label targeting-modal__checkbox-label--crit">
+                    <label
+                        className="targeting-modal__checkbox-label text-label"
+                        style={{ color: 'var(--semantic-danger)' }}
+                    >
                         <input
                             type="checkbox"
                             checked={isCrit}
@@ -259,7 +267,8 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                         Critical Hit?
                     </label>
                     <label
-                        className="targeting-modal__checkbox-label targeting-modal__checkbox-label--se"
+                        className="targeting-modal__checkbox-label text-label"
+                        style={{ color: 'var(--secondary)' }}
                         title="Check this if the move is Super Effective, OR if both you and the target are Terastallized!"
                     >
                         <input
@@ -275,14 +284,14 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                 <div className="targeting-modal__actions">
                     <button
                         type="button"
-                        className="action-button action-button--dark targeting-modal__btn"
+                        className="action-button action-button--dark targeting-modal__btn text-theme-header"
                         onClick={onClose}
                     >
                         <XCircle size={16} /> Cancel
                     </button>
                     <button
                         type="button"
-                        className="action-button action-button--red targeting-modal__btn"
+                        className="action-button action-button--red targeting-modal__btn text-theme-header"
                         onClick={handleConfirm}
                     >
                         <Swords size={16} /> Roll Damage

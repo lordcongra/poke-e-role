@@ -18,10 +18,7 @@ export function TakeChancesModal({ onClose }: TakeChancesModalProps) {
         if (finalRoll > 0) {
             const state = useCharacterStore.getState();
             const nickname = state.identity.nickname || state.identity.species || 'Someone';
-            rollDicePlus(
-                `${finalRoll}d6>3`,
-                `🍀 ${nickname} used Take Your Chances to reroll ${finalRoll} failed dice!`
-            );
+            rollDicePlus(`${finalRoll}d6>3`, `[Take Chances] ${nickname} rerolled ${finalRoll} failed dice!`);
         }
         onClose();
     };
@@ -29,12 +26,12 @@ export function TakeChancesModal({ onClose }: TakeChancesModalProps) {
     return (
         <div className="take-chances__overlay">
             <div className="take-chances__content">
-                <h3 className="take-chances__title modal-title-with-icon">
+                <h3 className="take-chances__title modal-title-with-icon text-title-primary">
                     <Clover size={20} /> Take Your Chances
                 </h3>
-                <p className="take-chances__description">
+                <p className="take-chances__description text-subtext" style={{ color: 'var(--text-main)' }}>
                     How many failed dice are you rerolling? <br />
-                    (You have {trackers.chances} stack(s) active this round)
+                    <span className="text-subtext">(You have {trackers.chances} stack(s) active this round)</span>
                 </p>
 
                 <div className="take-chances__spinner-container">

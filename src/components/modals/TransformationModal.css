@@ -4,7 +4,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: color-mix(in srgb, var(--dark) 60%, transparent);
     z-index: 1500;
     display: flex;
     justify-content: center;
@@ -17,8 +17,7 @@
     border-radius: 8px;
     width: 320px;
     border: 2px solid var(--primary);
-    color: var(--text-main);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
     display: flex;
     flex-direction: column;
 }
@@ -34,8 +33,6 @@
 
 .transformation-modal__title {
     margin: 0;
-    color: var(--primary);
-    font-size: 1.2rem;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -44,7 +41,6 @@
 .transformation-modal__close-btn {
     background: transparent;
     border: none;
-    color: var(--text-muted);
     cursor: pointer;
     padding: 4px;
     border-radius: 4px;
@@ -68,12 +64,6 @@
     margin-bottom: 15px;
 }
 
-.transformation-modal__label {
-    font-weight: bold;
-    font-size: 0.9rem;
-    color: var(--text-main);
-}
-
 .transformation-modal__label--checkbox {
     display: flex;
     align-items: center;
@@ -93,10 +83,6 @@
     border-radius: 4px;
     border: 1px solid var(--border);
     background: var(--input-bg);
-    color: var(--text-main);
-    font-family: inherit;
-    font-size: 0.9rem;
-    font-weight: bold;
     transition:
         border-color 0.2s ease,
         background-color 0.2s ease;
@@ -157,12 +143,10 @@
 
 .transformation-modal__clear-img-btn {
     padding: 4px 8px;
-    font-size: 0.75rem;
 }
 
 .transformation-modal__select-img-btn {
     padding: 6px 10px;
-    font-size: 0.8rem;
 }
 
 .transformation-modal__desc-box {
@@ -170,9 +154,6 @@
     border: 1px solid var(--border);
     border-radius: 6px;
     padding: 10px;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    line-height: 1.4;
 }
 
 .transformation-modal__desc-box--center {
@@ -181,16 +162,12 @@
 
 .transformation-modal__save-notice {
     margin-top: 8px;
-    color: var(--primary);
-    font-weight: bold;
     display: flex;
     align-items: center;
     gap: 6px;
 }
 
 .transformation-modal__cost-warning {
-    color: var(--semantic-danger);
-    font-weight: bold;
     margin-top: 6px;
     display: block;
 }
@@ -203,7 +180,6 @@
 
 .transformation-modal__clear-save-btn {
     flex: 1;
-    font-size: 0.8rem;
     padding: 6px;
 }
 
@@ -218,7 +194,6 @@
 .transformation-modal__btn {
     flex: 1;
     padding: 10px;
-    font-size: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -228,7 +203,6 @@
 .transformation-modal__btn--revert {
     background: var(--input-bg);
     border: 1px solid var(--border);
-    color: var(--text-main);
 }
 
 .transformation-modal__btn--revert:hover {
@@ -244,7 +218,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: color-mix(in srgb, var(--dark) 80%, transparent);
     z-index: 1600;
     display: flex;
     justify-content: center;
@@ -261,7 +235,6 @@
 }
 
 .transformation-modal__confirm-title {
-    color: var(--semantic-danger);
     margin-top: 0;
     display: flex;
     align-items: center;
@@ -270,7 +243,6 @@
 }
 
 .transformation-modal__confirm-text {
-    font-size: 0.9rem;
     margin-bottom: 20px;
 }
 

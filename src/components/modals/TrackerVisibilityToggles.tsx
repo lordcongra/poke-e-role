@@ -8,7 +8,7 @@ export function TrackerVisibilityToggles() {
     return (
         <>
             <div className="tracker-settings__toggle-row">
-                <label className="tracker-settings__toggle-label">
+                <label className="tracker-settings__toggle-label text-label" style={{ color: 'var(--text-main)' }}>
                     <input
                         type="checkbox"
                         checked={identityStore.settingHpBar}
@@ -17,7 +17,10 @@ export function TrackerVisibilityToggles() {
                     Show HP Bar
                 </label>
                 {role === 'GM' && (
-                    <label className="tracker-settings__gm-label" title="Hide this UI element from Players entirely.">
+                    <label
+                        className="tracker-settings__gm-label text-subtext"
+                        title="Hide this UI element from Players entirely."
+                    >
                         <input
                             type="checkbox"
                             checked={identityStore.gmHpBar}
@@ -29,7 +32,7 @@ export function TrackerVisibilityToggles() {
             </div>
 
             <div className="tracker-settings__toggle-row">
-                <label className="tracker-settings__toggle-label">
+                <label className="tracker-settings__toggle-label text-label" style={{ color: 'var(--text-main)' }}>
                     <input
                         type="checkbox"
                         checked={identityStore.settingHpText}
@@ -38,7 +41,7 @@ export function TrackerVisibilityToggles() {
                     Show HP Numbers
                 </label>
                 {role === 'GM' && (
-                    <label className="tracker-settings__gm-label">
+                    <label className="tracker-settings__gm-label text-subtext">
                         <input
                             type="checkbox"
                             checked={identityStore.gmHpText}
@@ -50,7 +53,7 @@ export function TrackerVisibilityToggles() {
             </div>
 
             <div className="tracker-settings__toggle-row">
-                <label className="tracker-settings__toggle-label">
+                <label className="tracker-settings__toggle-label text-label" style={{ color: 'var(--text-main)' }}>
                     <input
                         type="checkbox"
                         checked={identityStore.settingWillBar}
@@ -59,7 +62,7 @@ export function TrackerVisibilityToggles() {
                     Show Will Bar
                 </label>
                 {role === 'GM' && (
-                    <label className="tracker-settings__gm-label">
+                    <label className="tracker-settings__gm-label text-subtext">
                         <input
                             type="checkbox"
                             checked={identityStore.gmWillBar}
@@ -71,7 +74,7 @@ export function TrackerVisibilityToggles() {
             </div>
 
             <div className="tracker-settings__toggle-row">
-                <label className="tracker-settings__toggle-label">
+                <label className="tracker-settings__toggle-label text-label" style={{ color: 'var(--text-main)' }}>
                     <input
                         type="checkbox"
                         checked={identityStore.settingWillText}
@@ -80,7 +83,7 @@ export function TrackerVisibilityToggles() {
                     Show Will Numbers
                 </label>
                 {role === 'GM' && (
-                    <label className="tracker-settings__gm-label">
+                    <label className="tracker-settings__gm-label text-subtext">
                         <input
                             type="checkbox"
                             checked={identityStore.gmWillText}
@@ -94,7 +97,7 @@ export function TrackerVisibilityToggles() {
             <hr className="tracker-settings__divider" />
 
             <div className="tracker-settings__toggle-row">
-                <label className="tracker-settings__toggle-label">
+                <label className="tracker-settings__toggle-label text-label" style={{ color: 'var(--text-main)' }}>
                     <input
                         type="checkbox"
                         checked={identityStore.settingDefBadge}
@@ -103,7 +106,7 @@ export function TrackerVisibilityToggles() {
                     Show Defenses
                 </label>
                 {role === 'GM' && (
-                    <label className="tracker-settings__gm-label">
+                    <label className="tracker-settings__gm-label text-subtext">
                         <input
                             type="checkbox"
                             checked={identityStore.gmDefBadge}
@@ -115,7 +118,7 @@ export function TrackerVisibilityToggles() {
             </div>
 
             <div className="tracker-settings__toggle-row">
-                <label className="tracker-settings__toggle-label">
+                <label className="tracker-settings__toggle-label text-label" style={{ color: 'var(--text-main)' }}>
                     <input
                         type="checkbox"
                         checked={identityStore.settingEcoBadge}
@@ -124,7 +127,7 @@ export function TrackerVisibilityToggles() {
                     Show Actions
                 </label>
                 {role === 'GM' && (
-                    <label className="tracker-settings__gm-label">
+                    <label className="tracker-settings__gm-label text-subtext">
                         <input
                             type="checkbox"
                             checked={identityStore.gmEcoBadge}

@@ -55,10 +55,10 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
     return (
         <>
             <div className="tracker-settings__color-group">
-                <label className="tracker-settings__subtitle">Badge Colors</label>
+                <label className="tracker-settings__subtitle text-title-primary">Badge Colors</label>
 
                 <div className="tracker-settings__color-row">
-                    <span className="tracker-settings__color-label">Action:</span>
+                    <span className="tracker-settings__color-label text-label">Action:</span>
                     <input
                         type="color"
                         value={identityStore.colorAct}
@@ -70,12 +70,13 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                         type="text"
                         value={identityStore.colorAct}
                         onChange={(event) => setIdentity('colorAct', event.target.value)}
-                        className="tracker-settings__color-input"
+                        className="tracker-settings__color-input text-label"
+                        style={{ color: 'var(--text-main)' }}
                     />
                 </div>
 
                 <div className="tracker-settings__color-row">
-                    <span className="tracker-settings__color-label">Evade:</span>
+                    <span className="tracker-settings__color-label text-label">Evade:</span>
                     <input
                         type="color"
                         value={identityStore.colorEva}
@@ -87,12 +88,13 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                         type="text"
                         value={identityStore.colorEva}
                         onChange={(event) => setIdentity('colorEva', event.target.value)}
-                        className="tracker-settings__color-input"
+                        className="tracker-settings__color-input text-label"
+                        style={{ color: 'var(--text-main)' }}
                     />
                 </div>
 
                 <div className="tracker-settings__color-row">
-                    <span className="tracker-settings__color-label">Clash:</span>
+                    <span className="tracker-settings__color-label text-label">Clash:</span>
                     <input
                         type="color"
                         value={identityStore.colorCla}
@@ -104,7 +106,8 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                         type="text"
                         value={identityStore.colorCla}
                         onChange={(event) => setIdentity('colorCla', event.target.value)}
-                        className="tracker-settings__color-input"
+                        className="tracker-settings__color-input text-label"
+                        style={{ color: 'var(--text-main)' }}
                     />
                 </div>
             </div>
@@ -114,7 +117,7 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                     className="tracker-settings__offset-label"
                     title="Scales the entire HUD up or down! Default is 100%."
                 >
-                    <span className="tracker-settings__offset-text">HUD Size (%):</span>
+                    <span className="text-label">HUD Size (%):</span>
                     <NumberSpinner
                         value={identityStore.trackerScale ?? 100}
                         onChange={(value) => setIdentity('trackerScale', value)}
@@ -129,7 +132,7 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                     className="tracker-settings__offset-label"
                     title="Positive numbers push the UI down, Negative numbers pull it up!"
                 >
-                    <span className="tracker-settings__offset-text">Y-Offset:</span>
+                    <span className="text-label">Y-Offset:</span>
                     <NumberSpinner
                         value={identityStore.yOffset}
                         onChange={(value) => setIdentity('yOffset', value)}
@@ -141,7 +144,7 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                     className="tracker-settings__offset-label"
                     title="Positive numbers push the UI right, Negative numbers pull it left!"
                 >
-                    <span className="tracker-settings__offset-text">X-Offset:</span>
+                    <span className="text-label">X-Offset:</span>
                     <NumberSpinner
                         value={identityStore.xOffset}
                         onChange={(value) => setIdentity('xOffset', value)}
@@ -155,7 +158,7 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                 <button
                     type="button"
                     onClick={() => setShowResetConfirm(true)}
-                    className="action-button action-button--dark tracker-settings__modal-btn"
+                    className="action-button action-button--dark tracker-settings__modal-btn text-theme-header"
                 >
                     <RotateCcw size={16} /> Reset
                 </button>
@@ -163,7 +166,7 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                     <button
                         type="button"
                         onClick={() => setShowSyncConfirm(true)}
-                        className="action-button action-button--theme tracker-settings__modal-btn"
+                        className="action-button action-button--theme tracker-settings__modal-btn text-theme-header"
                     >
                         <RefreshCw size={16} /> Sync
                     </button>
@@ -172,7 +175,7 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
 
             <button
                 type="button"
-                className="action-button action-button--secondary tracker-settings__btn-placement"
+                className="action-button action-button--secondary tracker-settings__btn-placement text-theme-header"
                 onClick={onOpenPlacementModal}
             >
                 <Move size={16} /> Fine-Tune Placements
@@ -181,23 +184,26 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
             {showResetConfirm && (
                 <div className="tracker-settings__overlay tracker-settings__overlay--high-z">
                     <div className="tracker-settings__content tracker-settings__content--confirm">
-                        <h3 className="tracker-settings__title tracker-settings__title--confirm modal-title-with-icon">
+                        <h3
+                            className="tracker-settings__title tracker-settings__title--confirm modal-title-with-icon text-title-primary"
+                            style={{ color: 'var(--semantic-danger)' }}
+                        >
                             <AlertTriangle size={20} /> Reset Colors
                         </h3>
-                        <p className="tracker-settings__description">
+                        <p className="tracker-settings__description text-subtext">
                             Are you sure you want to reset your tracker colors to default?
                         </p>
                         <div className="tracker-settings__modal-actions">
                             <button
                                 type="button"
-                                className="action-button action-button--dark tracker-settings__modal-btn"
+                                className="action-button action-button--dark tracker-settings__modal-btn text-theme-header"
                                 onClick={() => setShowResetConfirm(false)}
                             >
                                 <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--red tracker-settings__modal-btn"
+                                className="action-button action-button--red tracker-settings__modal-btn text-theme-header"
                                 onClick={confirmResetColors}
                             >
                                 <RotateCcw size={16} /> Reset
@@ -210,23 +216,23 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
             {showSyncConfirm && (
                 <div className="tracker-settings__overlay tracker-settings__overlay--high-z">
                     <div className="tracker-settings__content tracker-settings__content--sync">
-                        <h3 className="tracker-settings__title tracker-settings__title--sync modal-title-with-icon">
+                        <h3 className="tracker-settings__title tracker-settings__title--sync modal-title-with-icon text-title-primary">
                             <RefreshCw size={20} /> Sync Colors
                         </h3>
-                        <p className="tracker-settings__description">
+                        <p className="tracker-settings__description text-subtext">
                             This will push your current tracker colors to EVERY token on the map. Are you sure?
                         </p>
                         <div className="tracker-settings__modal-actions">
                             <button
                                 type="button"
-                                className="action-button action-button--dark tracker-settings__modal-btn"
+                                className="action-button action-button--dark tracker-settings__modal-btn text-theme-header"
                                 onClick={() => setShowSyncConfirm(false)}
                             >
                                 <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--theme tracker-settings__modal-btn"
+                                className="action-button action-button--theme tracker-settings__modal-btn text-theme-header"
                                 onClick={confirmSyncColors}
                             >
                                 <CheckCircle size={16} /> Sync

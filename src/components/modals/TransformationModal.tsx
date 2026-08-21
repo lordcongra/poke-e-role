@@ -50,7 +50,7 @@ function TransformationImagePreview({ url, onClear }: { url: string; onClear: ()
             <button
                 type="button"
                 onClick={onClear}
-                className="action-button action-button--red transformation-modal__clear-img-btn"
+                className="action-button action-button--red transformation-modal__clear-img-btn text-theme-header"
             >
                 <Trash2 size={14} /> Clear
             </button>
@@ -289,21 +289,22 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
         <div className="transformation-modal__overlay">
             <div className="transformation-modal__content">
                 <div className="transformation-modal__header">
-                    <h3 className="transformation-modal__title modal-title-with-icon">
+                    <h3 className="transformation-modal__title modal-title-with-icon text-title-primary">
                         <Dna size={20} /> {isTransforming ? 'Transform' : 'Manage Transformation'}
                     </h3>
-                    <button onClick={onClose} className="transformation-modal__close-btn" title="Close">
+                    <button onClick={onClose} className="transformation-modal__close-btn text-subtext" title="Close">
                         <X size={20} strokeWidth={2.5} />
                     </button>
                 </div>
 
                 {isTransforming ? (
                     <div className="transformation-modal__section">
-                        <label className="transformation-modal__label">Transformation Type:</label>
+                        <label className="text-label">Transformation Type:</label>
                         <select
                             value={selectedTrans}
                             onChange={handleSelectTrans}
-                            className="transformation-modal__select"
+                            className="transformation-modal__select text-label"
+                            style={{ color: 'var(--text-main)' }}
                         >
                             <option value="Mega">Mega Evolution</option>
                             <option value="Dynamax">Dynamax</option>
@@ -322,11 +323,12 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
 
                         {targetTrans === 'Terastallize' && (
                             <>
-                                <label className="transformation-modal__label">Tera Affinity:</label>
+                                <label className="text-label">Tera Affinity:</label>
                                 <select
                                     value={affinity}
                                     onChange={(e) => setAffinity(e.target.value)}
-                                    className="transformation-modal__select"
+                                    className="transformation-modal__select text-label"
+                                    style={{ color: 'var(--text-main)' }}
                                 >
                                     {allTypes.map((type) => (
                                         <option key={type} value={type}>
@@ -336,13 +338,14 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                 </select>
 
                                 <div className="transformation-modal__tera-category-box">
-                                    <label className="transformation-modal__label transformation-modal__tera-category-label">
+                                    <label className="transformation-modal__tera-category-label text-label">
                                         Tera Blast Category:
                                     </label>
                                     <select
                                         value={teraCategory}
                                         onChange={(e) => setTeraCategory(e.target.value as 'Physical' | 'Special')}
-                                        className="transformation-modal__select"
+                                        className="transformation-modal__select text-label"
+                                        style={{ color: 'var(--text-main)' }}
                                     >
                                         <option value="Physical">Physical (Uses STR)</option>
                                         <option value="Special">Special (Uses SPE)</option>
@@ -352,7 +355,10 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                         )}
 
                         {(targetTrans === 'Dynamax' || targetTrans === 'Gigantamax') && !hasMaxForm && (
-                            <label className="transformation-modal__label transformation-modal__label--checkbox">
+                            <label
+                                className="transformation-modal__label--checkbox text-subtext"
+                                style={{ color: 'var(--text-main)' }}
+                            >
                                 <input
                                     type="checkbox"
                                     checked={autoMaxMoves}
@@ -365,7 +371,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
 
                         {['Mega', 'Dynamax', 'Gigantamax', 'Terastallize'].includes(targetTrans) && (
                             <div className="transformation-modal__image-row">
-                                <span className="transformation-modal__label">{targetTrans} Image:</span>
+                                <span className="text-label">{targetTrans} Image:</span>
                                 {(() => {
                                     const fieldMap: Record<string, 'megaImageUrl' | 'maxImageUrl' | 'teraImageUrl'> = {
                                         Mega: 'megaImageUrl',
@@ -388,7 +394,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                         <button
                                             type="button"
                                             onClick={() => handleSetImage(field)}
-                                            className="action-button action-button--dark transformation-modal__select-img-btn"
+                                            className="action-button action-button--dark transformation-modal__select-img-btn text-theme-header"
                                         >
                                             <ImageIcon size={14} /> Select Token Image
                                         </button>
@@ -399,7 +405,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
 
                         {targetTrans === 'Custom' && targetFormId && (
                             <div className="transformation-modal__image-row">
-                                <span className="transformation-modal__label">Custom Form Image:</span>
+                                <span className="text-label">Custom Form Image:</span>
                                 {(() => {
                                     const safeId = targetFormId as string;
                                     const url = identityStore.customFormImages[safeId];
@@ -416,7 +422,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                         <button
                                             type="button"
                                             onClick={() => handleSetImage(safeId, true)}
-                                            className="action-button action-button--dark transformation-modal__select-img-btn"
+                                            className="action-button action-button--dark transformation-modal__select-img-btn text-theme-header"
                                         >
                                             <ImageIcon size={14} /> Select Token Image
                                         </button>
@@ -425,23 +431,34 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                             </div>
                         )}
 
-                        <div className="transformation-modal__desc-box">
+                        <div className="transformation-modal__desc-box text-subtext">
                             {targetTrans === 'Mega' && (
                                 <>
                                     Backs up your current stats, heals all HP/Will to full, and clears statuses.
                                     {hasAltForm && (
-                                        <div className="transformation-modal__save-notice">
+                                        <div
+                                            className="transformation-modal__save-notice"
+                                            style={{ color: 'var(--primary)', fontWeight: 'bold' }}
+                                        >
                                             <Sparkles size={14} /> Saved Mega form detected. Values will be restored!
                                         </div>
                                     )}
-                                    <span className="transformation-modal__cost-warning">Costs 1 Willpower.</span>
+                                    <span
+                                        className="transformation-modal__cost-warning"
+                                        style={{ color: 'var(--semantic-danger)', fontWeight: 'bold' }}
+                                    >
+                                        Costs 1 Willpower.
+                                    </span>
                                 </>
                             )}
                             {targetTrans === 'Dynamax' && (
                                 <>
                                     Grants 6 Temporary HP, triggers a 3-round timer, and prevents Evasion/Clashing.
                                     {hasMaxForm && (
-                                        <div className="transformation-modal__save-notice">
+                                        <div
+                                            className="transformation-modal__save-notice"
+                                            style={{ color: 'var(--primary)', fontWeight: 'bold' }}
+                                        >
                                             <Sparkles size={14} /> Saved Max form detected. Values will be restored!
                                         </div>
                                     )}
@@ -452,7 +469,10 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                     Grants 12 Temporary HP, +2 to STR/SPE/DEX/DEF/SPD, triggers a 3-round timer, and
                                     prevents Evasion/Clashing.
                                     {hasMaxForm && (
-                                        <div className="transformation-modal__save-notice">
+                                        <div
+                                            className="transformation-modal__save-notice"
+                                            style={{ color: 'var(--primary)', fontWeight: 'bold' }}
+                                        >
                                             <Sparkles size={14} /> Saved Max form detected. Values will be restored!
                                         </div>
                                     )}
@@ -462,7 +482,12 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                 <>
                                     Replaces your typing with Stellar, applies STAB to your affinity type, and grants
                                     bonus damage to your next attack.
-                                    <span className="transformation-modal__cost-warning">Costs 1 Willpower.</span>
+                                    <span
+                                        className="transformation-modal__cost-warning"
+                                        style={{ color: 'var(--semantic-danger)', fontWeight: 'bold' }}
+                                    >
+                                        Costs 1 Willpower.
+                                    </span>
                                 </>
                             )}
                             {targetTrans === 'Custom' && selectedCustomForm && (
@@ -470,12 +495,18 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                                     {selectedCustomForm.description ||
                                         `Applies the ${selectedCustomForm.name} Custom Form.`}
                                     {hasCurrentCustomSave && (
-                                        <div className="transformation-modal__save-notice">
+                                        <div
+                                            className="transformation-modal__save-notice"
+                                            style={{ color: 'var(--primary)', fontWeight: 'bold' }}
+                                        >
                                             <Sparkles size={14} /> Saved memory detected. Values will be restored!
                                         </div>
                                     )}
                                     {(hpCost > 0 || willCost > 0) && (
-                                        <span className="transformation-modal__cost-warning">
+                                        <span
+                                            className="transformation-modal__cost-warning"
+                                            style={{ color: 'var(--semantic-danger)', fontWeight: 'bold' }}
+                                        >
                                             Costs {hpCost > 0 ? `${hpCost} HP` : ''}
                                             {hpCost > 0 && willCost > 0 ? ' and ' : ''}
                                             {willCost > 0 ? `${willCost} Will` : ''}.
@@ -489,7 +520,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                             {targetTrans === 'Mega' && hasAltForm && (
                                 <button
                                     type="button"
-                                    className="action-button action-button--dark transformation-modal__clear-save-btn"
+                                    className="action-button action-button--dark transformation-modal__clear-save-btn text-theme-header"
                                     onClick={() => setClearConfirmType('Mega')}
                                 >
                                     <Trash2 size={14} /> Clear Mega Save
@@ -498,7 +529,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                             {(targetTrans === 'Dynamax' || targetTrans === 'Gigantamax') && hasMaxForm && (
                                 <button
                                     type="button"
-                                    className="action-button action-button--dark transformation-modal__clear-save-btn"
+                                    className="action-button action-button--dark transformation-modal__clear-save-btn text-theme-header"
                                     onClick={() => setClearConfirmType('Max')}
                                 >
                                     <Trash2 size={14} /> Clear Max Save
@@ -507,7 +538,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                             {targetTrans === 'Custom' && hasCurrentCustomSave && (
                                 <button
                                     type="button"
-                                    className="action-button action-button--dark transformation-modal__clear-save-btn"
+                                    className="action-button action-button--dark transformation-modal__clear-save-btn text-theme-header"
                                     onClick={() => setClearConfirmType('Custom')}
                                 >
                                     <Trash2 size={14} /> Clear Form Save
@@ -517,7 +548,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                     </div>
                 ) : (
                     <div className="transformation-modal__section">
-                        <div className="transformation-modal__desc-box transformation-modal__desc-box--center">
+                        <div className="transformation-modal__desc-box transformation-modal__desc-box--center text-subtext">
                             You are currently transformed!
                             <br />
                             <br />
@@ -531,14 +562,14 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                         <>
                             <button
                                 type="button"
-                                className="action-button action-button--dark transformation-modal__btn"
+                                className="action-button action-button--dark transformation-modal__btn text-theme-header"
                                 onClick={onClose}
                             >
                                 <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--theme transformation-modal__btn"
+                                className="action-button action-button--theme transformation-modal__btn text-theme-header"
                                 onClick={handleApply}
                                 style={{ opacity: canAfford ? 1 : 0.6 }}
                             >
@@ -548,7 +579,8 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                     ) : (
                         <button
                             type="button"
-                            className="action-button transformation-modal__btn transformation-modal__btn--revert"
+                            className="action-button transformation-modal__btn transformation-modal__btn--revert text-label"
+                            style={{ color: 'var(--text-main)' }}
                             onClick={handleRevert}
                         >
                             <RotateCcw size={16} /> Revert to Base Form
@@ -560,10 +592,16 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
             {clearConfirmType && (
                 <div className="transformation-modal__confirm-overlay">
                     <div className="transformation-modal__confirm-content">
-                        <h3 className="transformation-modal__confirm-title">
+                        <h3
+                            className="transformation-modal__confirm-title text-title-primary"
+                            style={{ color: 'var(--semantic-danger)' }}
+                        >
                             <AlertTriangle size={20} /> Confirm Deletion
                         </h3>
-                        <p className="transformation-modal__confirm-text">
+                        <p
+                            className="transformation-modal__confirm-text text-subtext"
+                            style={{ color: 'var(--text-main)', fontSize: '0.9rem' }}
+                        >
                             Are you sure you want to delete your{' '}
                             {clearConfirmType === 'Mega'
                                 ? 'Mega'
@@ -574,13 +612,13 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
                         </p>
                         <div className="transformation-modal__confirm-actions">
                             <button
-                                className="action-button action-button--dark transformation-modal__confirm-btn"
+                                className="action-button action-button--dark transformation-modal__confirm-btn text-theme-header"
                                 onClick={() => setClearConfirmType(null)}
                             >
                                 <XCircle size={16} /> Cancel
                             </button>
                             <button
-                                className="action-button action-button--red transformation-modal__confirm-btn"
+                                className="action-button action-button--red transformation-modal__confirm-btn text-theme-header"
                                 onClick={confirmClearMemory}
                             >
                                 <Trash2 size={16} /> Delete

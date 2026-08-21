@@ -12,14 +12,16 @@ export function TrackerSettingsModal({ onClose }: { onClose: () => void }) {
         <div className="tracker-settings__overlay">
             <div className="tracker-settings__content">
                 <div className="tracker-settings__header-row">
-                    <h3 className="tracker-settings__title modal-title-with-icon">
+                    <h3 className="tracker-settings__title modal-title-with-icon text-title-primary">
                         <Settings size={20} /> Tracker Settings
                     </h3>
-                    <button onClick={onClose} className="tracker-settings__close-x" title="Close">
+                    <button onClick={onClose} className="tracker-settings__close-x text-subtext" title="Close">
                         <X size={20} strokeWidth={2.5} />
                     </button>
                 </div>
-                <p className="tracker-settings__description">Customize what this token displays on the map.</p>
+                <p className="tracker-settings__description text-subtext">
+                    Customize what this token displays on the map.
+                </p>
 
                 <div className="tracker-settings__section">
                     <TrackerVisibilityToggles />

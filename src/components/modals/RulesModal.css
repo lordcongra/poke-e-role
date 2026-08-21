@@ -4,7 +4,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: color-mix(in srgb, var(--dark) 60%, transparent);
     z-index: 1200;
     display: flex;
     justify-content: center;
@@ -18,7 +18,7 @@
     max-width: 350px;
     width: 90%;
     border: 2px solid var(--primary);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
 }
 
 .rules-modal__header-row {
@@ -31,9 +31,7 @@
 }
 
 .rules-modal__title {
-    color: var(--primary);
     margin: 0;
-    font-size: 1.1rem;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -67,9 +65,6 @@
 }
 
 .rules-modal__label {
-    font-size: 0.85rem;
-    font-weight: bold;
-    color: var(--text-main);
     display: flex;
     align-items: center;
     gap: 4px;
@@ -81,7 +76,6 @@
     border: 1px solid var(--border);
     border-radius: 4px;
     background: var(--input-bg);
-    color: var(--text-main);
     margin-top: 4px;
     transition:
         border-color 0.2s ease,
@@ -97,8 +91,6 @@
 .rules-modal__close-btn {
     width: 100%;
     padding: 8px;
-    font-size: 1rem;
-    font-weight: bold;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -112,7 +104,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: color-mix(in srgb, var(--dark) 60%, transparent);
     z-index: 1300;
     display: flex;
     justify-content: center;
@@ -126,14 +118,12 @@
     max-width: 400px;
     width: 90%;
     border: 2px solid var(--primary);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
 }
 
 .rules-info__title {
-    color: var(--primary);
     text-align: center;
     margin-top: 0;
-    font-size: 1.2rem;
 }
 
 .rules-info__divider {
@@ -142,8 +132,6 @@
 }
 
 .rules-info__text {
-    color: var(--text-main);
-    font-size: 0.95rem;
     white-space: pre-wrap;
     margin-bottom: 20px;
     line-height: 1.4;

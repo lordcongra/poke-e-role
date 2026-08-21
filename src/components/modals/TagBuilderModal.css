@@ -4,7 +4,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: color-mix(in srgb, var(--dark) 60%, transparent);
     z-index: 1050;
     display: flex;
     justify-content: center;
@@ -17,13 +17,10 @@
     border-radius: 8px;
     width: 280px;
     border: 2px solid var(--primary);
-    color: var(--text-main);
 }
 
 .tag-builder__title {
     margin-top: 0;
-    color: var(--primary);
-    font-size: 1.1rem;
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
     text-align: center;
@@ -48,11 +45,6 @@
     display: flex;
     align-items: center;
     gap: 8px;
-}
-
-.tag-builder__value-label {
-    font-size: 0.85rem;
-    font-weight: bold;
 }
 
 .tag-builder__value-input {

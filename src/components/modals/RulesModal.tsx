@@ -15,7 +15,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
         <div className="rules-modal__overlay">
             <div className="rules-modal__content">
                 <div className="rules-modal__header-row">
-                    <h3 className="rules-modal__title modal-title-with-icon">
+                    <h3 className="rules-modal__title modal-title-with-icon text-title-primary">
                         <ScrollText size={20} /> Room Rules & Permissions
                     </h3>
                     <button onClick={onClose} className="rules-modal__close-x" title="Close">
@@ -26,7 +26,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                 <div className="rules-modal__form-group">
                     {!isStandaloneMode && (
                         <div>
-                            <label className="rules-modal__label">
+                            <label className="rules-modal__label text-label" style={{ color: 'var(--text-main)' }}>
                                 Dice Engine{' '}
                                 <TooltipIcon
                                     onClick={() =>
@@ -39,7 +39,8 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                 />
                             </label>
                             <select
-                                className="identity-grid__select rules-modal__select"
+                                className="identity-grid__select rules-modal__select text-subtext"
+                                style={{ color: 'var(--text-main)' }}
                                 value={id.diceEngine || 'car'}
                                 onChange={(e) => setIdentity('diceEngine', e.target.value as 'dice-plus' | 'car')}
                             >
@@ -50,7 +51,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                     )}
 
                     <div>
-                        <label className="rules-modal__label">
+                        <label className="rules-modal__label text-label" style={{ color: 'var(--text-main)' }}>
                             Ruleset{' '}
                             <TooltipIcon
                                 onClick={() =>
@@ -62,7 +63,8 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                             />
                         </label>
                         <select
-                            className="identity-grid__select rules-modal__select"
+                            className="identity-grid__select rules-modal__select text-subtext"
+                            style={{ color: 'var(--text-main)' }}
                             value={id.ruleset || 'vg-vit-hp'}
                             onChange={(e) => setIdentity('ruleset', e.target.value)}
                         >
@@ -73,7 +75,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                     </div>
 
                     <div>
-                        <label className="rules-modal__label">
+                        <label className="rules-modal__label text-label" style={{ color: 'var(--text-main)' }}>
                             Pain Penalties{' '}
                             <TooltipIcon
                                 onClick={() =>
@@ -86,7 +88,8 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                             />
                         </label>
                         <select
-                            className="identity-grid__select rules-modal__select"
+                            className="identity-grid__select rules-modal__select text-subtext"
+                            style={{ color: 'var(--text-main)' }}
                             value={id.pain || 'Enabled'}
                             onChange={(e) => setIdentity('pain', e.target.value)}
                         >
@@ -98,7 +101,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                     {!isStandaloneMode && (
                         <>
                             <div>
-                                <label className="rules-modal__label">
+                                <label className="rules-modal__label text-label" style={{ color: 'var(--text-main)' }}>
                                     Homebrew Access{' '}
                                     <TooltipIcon
                                         onClick={() =>
@@ -111,7 +114,8 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                     />
                                 </label>
                                 <select
-                                    className="identity-grid__select rules-modal__select"
+                                    className="identity-grid__select rules-modal__select text-subtext"
+                                    style={{ color: 'var(--text-main)' }}
                                     value={id.homebrewAccess || 'Full'}
                                     onChange={(e) => setIdentity('homebrewAccess', e.target.value)}
                                 >
@@ -122,7 +126,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                             </div>
 
                             <div>
-                                <label className="rules-modal__label">
+                                <label className="rules-modal__label text-label" style={{ color: 'var(--text-main)' }}>
                                     Loot Generator{' '}
                                     <TooltipIcon
                                         onClick={() =>
@@ -135,7 +139,8 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                     />
                                 </label>
                                 <select
-                                    className="identity-grid__select rules-modal__select"
+                                    className="identity-grid__select rules-modal__select text-subtext"
+                                    style={{ color: 'var(--text-main)' }}
                                     value={id.gmOnlyLootGen === false ? 'Everyone' : 'GM Only'}
                                     onChange={(e) => setIdentity('gmOnlyLootGen', e.target.value === 'GM Only')}
                                 >
@@ -145,7 +150,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                             </div>
 
                             <div>
-                                <label className="rules-modal__label">
+                                <label className="rules-modal__label text-label" style={{ color: 'var(--text-main)' }}>
                                     Type Matchups{' '}
                                     <TooltipIcon
                                         onClick={() =>
@@ -158,7 +163,8 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                     />
                                 </label>
                                 <select
-                                    className="identity-grid__select rules-modal__select"
+                                    className="identity-grid__select rules-modal__select text-subtext"
+                                    style={{ color: 'var(--text-main)' }}
                                     value={id.gmOnlyMatchups ? 'GM Only' : 'Everyone'}
                                     onChange={(e) => setIdentity('gmOnlyMatchups', e.target.value === 'GM Only')}
                                 >
@@ -169,7 +175,10 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
 
                             {role === 'GM' && (
                                 <div>
-                                    <label className="rules-modal__label">
+                                    <label
+                                        className="rules-modal__label text-label"
+                                        style={{ color: 'var(--text-main)' }}
+                                    >
                                         GM Demo Mode (CAR Only){' '}
                                         <TooltipIcon
                                             onClick={() =>
@@ -182,7 +191,8 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                         />
                                     </label>
                                     <select
-                                        className="identity-grid__select rules-modal__select"
+                                        className="identity-grid__select rules-modal__select text-subtext"
+                                        style={{ color: 'var(--text-main)' }}
                                         value={id.gmDemoMode ? 'Enabled' : 'Disabled'}
                                         onChange={(e) => setIdentity('gmDemoMode', e.target.value === 'Enabled')}
                                     >
@@ -207,9 +217,14 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
             {modalConfig && (
                 <div className="rules-info__overlay">
                     <div className="rules-info__content">
-                        <h3 className="rules-info__title">{modalConfig.title}</h3>
+                        <h3 className="rules-info__title text-title-primary">{modalConfig.title}</h3>
                         <hr className="rules-info__divider" />
-                        <div className="rules-info__text">{modalConfig.content}</div>
+                        <div
+                            className="rules-info__text text-subtext"
+                            style={{ color: 'var(--text-main)', fontSize: '0.95rem' }}
+                        >
+                            {modalConfig.content}
+                        </div>
                         <div className="rules-info__actions">
                             <button
                                 type="button"

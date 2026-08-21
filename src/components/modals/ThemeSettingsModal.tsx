@@ -79,16 +79,16 @@ export function ThemeSettingsModal({ onClose }: ThemeSettingsModalProps) {
     return (
         <div className="theme-modal__overlay">
             <div className="theme-modal__content">
-                <h3 className="theme-modal__title modal-title-with-icon">
+                <h3 className="theme-modal__title modal-title-with-icon text-title-primary">
                     <Palette size={20} /> Custom Theme Colors
                 </h3>
-                <p className="theme-modal__desc">
+                <p className="theme-modal__desc text-subtext">
                     Override the dynamic typing colors with your own custom Hex codes. Leave the Secondary Color blank
                     to auto-generate a matching accent!
                 </p>
 
                 <div className="theme-modal__row">
-                    <span className="theme-modal__label">Primary Color</span>
+                    <span className="theme-modal__label text-label">Primary Color</span>
                     <div className="theme-modal__input-group">
                         <input
                             type="color"
@@ -98,7 +98,8 @@ export function ThemeSettingsModal({ onClose }: ThemeSettingsModalProps) {
                         />
                         <input
                             type="text"
-                            className="theme-modal__hex-input"
+                            className="theme-modal__hex-input text-label"
+                            style={{ color: 'var(--text-main)' }}
                             value={primaryHex}
                             placeholder="#HEX"
                             onChange={(e) => setPrimaryHex(e.target.value)}
@@ -107,7 +108,7 @@ export function ThemeSettingsModal({ onClose }: ThemeSettingsModalProps) {
                 </div>
 
                 <div className="theme-modal__row">
-                    <span className="theme-modal__label">Secondary Color</span>
+                    <span className="theme-modal__label text-label">Secondary Color</span>
                     <div className="theme-modal__input-group">
                         <input
                             type="color"
@@ -117,7 +118,8 @@ export function ThemeSettingsModal({ onClose }: ThemeSettingsModalProps) {
                         />
                         <input
                             type="text"
-                            className="theme-modal__hex-input"
+                            className="theme-modal__hex-input text-label"
+                            style={{ color: 'var(--text-main)' }}
                             value={secondaryHex}
                             placeholder="Auto"
                             onChange={(e) => setSecondaryHex(e.target.value)}
@@ -132,8 +134,10 @@ export function ThemeSettingsModal({ onClose }: ThemeSettingsModalProps) {
                         checked={applyGlobally}
                         onChange={(e) => setApplyGlobally(e.target.checked)}
                     />
-                    <div className="theme-modal__checkbox-text">
-                        <span className="theme-modal__checkbox-title">Apply as Default (Global)</span>
+                    <div className="text-subtext" style={{ color: 'var(--text-main)' }}>
+                        <span className="theme-modal__checkbox-title text-title-primary">
+                            Apply as Default (Global)
+                        </span>
                         Applies these colors to ALL sheets on your screen. Uncheck to apply to this specific character
                         only.
                     </div>
@@ -142,21 +146,21 @@ export function ThemeSettingsModal({ onClose }: ThemeSettingsModalProps) {
                 <div className="theme-modal__actions">
                     <button
                         type="button"
-                        className="action-button action-button--dark theme-modal__btn"
+                        className="action-button action-button--dark theme-modal__btn text-theme-header"
                         onClick={onClose}
                     >
                         <XCircle size={16} /> Cancel
                     </button>
                     <button
                         type="button"
-                        className="action-button action-button--red theme-modal__btn"
+                        className="action-button action-button--red theme-modal__btn text-theme-header"
                         onClick={handleClear}
                     >
                         <Trash2 size={16} /> Clear
                     </button>
                     <button
                         type="button"
-                        className="action-button action-button--theme theme-modal__btn"
+                        className="action-button action-button--theme theme-modal__btn text-theme-header"
                         onClick={handleSave}
                     >
                         <Save size={16} /> Save

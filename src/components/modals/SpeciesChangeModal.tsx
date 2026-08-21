@@ -13,10 +13,10 @@ export function SpeciesChangeModal({ pendingSpeciesData, onClose }: SpeciesChang
     return (
         <div className="species-change__overlay">
             <div className="species-change__content">
-                <h3 className="species-change__title modal-title-with-icon">
+                <h3 className="species-change__title modal-title-with-icon text-title-primary">
                     <Dna size={20} /> Species Changed
                 </h3>
-                <p className="species-change__desc">
+                <p className="species-change__desc text-subtext">
                     You loaded a new Pokémon. How do you want to handle your existing sheet data?
                 </p>
 
@@ -33,7 +33,7 @@ export function SpeciesChangeModal({ pendingSpeciesData, onClose }: SpeciesChang
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <Sparkles size={16} /> Evolve / Mega / Form Shift
                         </div>
-                        <span className="species-change__btn-subtitle">
+                        <span className="text-subtext" style={{ color: 'inherit' }}>
                             (Updates Stats, Limits & Typing. Keeps Moves/Skills)
                         </span>
                     </button>
@@ -50,7 +50,7 @@ export function SpeciesChangeModal({ pendingSpeciesData, onClose }: SpeciesChang
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <Dna size={16} /> Type / Ability Shift Only
                         </div>
-                        <span className="species-change__btn-subtitle">
+                        <span className="text-subtext" style={{ color: 'inherit' }}>
                             (Updates Typing & Abilities ONLY. Keeps current Stats)
                         </span>
                     </button>
@@ -67,13 +67,15 @@ export function SpeciesChangeModal({ pendingSpeciesData, onClose }: SpeciesChang
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <AlertTriangle size={16} /> Brand New Pokémon
                         </div>
-                        <span className="species-change__btn-subtitle">(Wipes Moves & Skills completely)</span>
+                        <span className="text-subtext" style={{ color: 'inherit' }}>
+                            (Wipes Moves & Skills completely)
+                        </span>
                     </button>
 
                     <button
                         type="button"
                         onClick={onClose}
-                        className="action-button action-button--dark species-change__btn-cancel"
+                        className="action-button action-button--dark species-change__btn-cancel text-theme-header"
                     >
                         <XCircle size={16} /> Cancel Change
                     </button>

@@ -242,13 +242,14 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
     return (
         <div className="tag-builder__overlay">
             <div className="tag-builder__content">
-                <h3 className="tag-builder__title modal-title-with-icon">
+                <h3 className="tag-builder__title modal-title-with-icon text-title-primary">
                     <Tag size={20} /> Tag Builder
                 </h3>
 
                 <div className="tag-builder__form-group">
                     <select
-                        className="identity-grid__select tag-builder__select"
+                        className="identity-grid__select tag-builder__select text-label"
+                        style={{ color: 'var(--text-main)' }}
                         value={category}
                         onChange={(e) => {
                             setCategory(e.target.value);
@@ -266,7 +267,8 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                     </select>
 
                     <select
-                        className="identity-grid__select tag-builder__select"
+                        className="identity-grid__select tag-builder__select text-label"
+                        style={{ color: 'var(--text-main)' }}
                         value={target}
                         onChange={(e) => setTarget(e.target.value)}
                     >
@@ -280,7 +282,8 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
 
                     {showTypeSelect && (
                         <select
-                            className="identity-grid__select tag-builder__select"
+                            className="identity-grid__select tag-builder__select text-label"
+                            style={{ color: 'var(--text-main)' }}
                             value={typeOption}
                             onChange={(e) => setTypeOption(e.target.value)}
                         >
@@ -295,21 +298,23 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
 
                     {showValueInput && (
                         <div className="tag-builder__value-row">
-                            <span className="tag-builder__value-label">Value:</span>
+                            <span className="text-label">Value:</span>
                             <input
                                 type="number"
-                                className="identity-grid__input tag-builder__value-input"
+                                className="identity-grid__input tag-builder__value-input text-label"
+                                style={{ color: 'var(--text-main)' }}
                                 value={value}
                                 onChange={(e) => setValue(Number(e.target.value) || 0)}
                             />
                             {target === 'Acc [X]s Add Dmg Limit [Y]' && (
                                 <>
-                                    <span className="tag-builder__value-label" style={{ marginLeft: '10px' }}>
+                                    <span className="text-label" style={{ marginLeft: '10px' }}>
                                         Limit:
                                     </span>
                                     <input
                                         type="number"
-                                        className="identity-grid__input tag-builder__value-input"
+                                        className="identity-grid__input tag-builder__value-input text-label"
+                                        style={{ color: 'var(--text-main)' }}
                                         value={value2}
                                         onChange={(e) => setValue2(Number(e.target.value) || 0)}
                                     />
@@ -320,11 +325,14 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                 </div>
 
                 <div className="tag-builder__actions">
-                    <button className="action-button action-button--dark tag-builder__btn-cancel" onClick={onClose}>
+                    <button
+                        className="action-button action-button--dark tag-builder__btn-cancel text-theme-header"
+                        onClick={onClose}
+                    >
                         <XCircle size={16} /> Cancel
                     </button>
                     <button
-                        className="action-button action-button--theme tag-builder__btn-confirm"
+                        className="action-button action-button--theme tag-builder__btn-confirm text-theme-header"
                         onClick={handleConfirm}
                     >
                         <Tag size={16} /> Append Tag

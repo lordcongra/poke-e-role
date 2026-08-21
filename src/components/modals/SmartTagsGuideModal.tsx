@@ -5,14 +5,14 @@ export function SmartTagsGuideModal({ onClose }: { onClose: () => void }) {
     return (
         <div className="tags-guide__overlay">
             <div className="tags-guide__content">
-                <h3 className="tags-guide__title modal-title-with-icon">
+                <h3 className="tags-guide__title modal-title-with-icon text-title-primary">
                     <Tag size={20} /> Smart Tags Guide
                 </h3>
-                <p className="tags-guide__desc">
+                <p className="tags-guide__desc text-subtext">
                     Type these exactly as shown (with brackets) into an equipped item's Name or Notes to automatically
                     apply mechanics.
                 </p>
-                <ul className="tags-guide__list">
+                <ul className="tags-guide__list text-subtext" style={{ color: 'var(--text-main)' }}>
                     <li>
                         <b>Stats/Skills:</b> <code>[Dex -2]</code>, <code>[Brawl +2]</code>, <code>[Def +1]</code>,{' '}
                         <code>[Spd +1]</code>
@@ -34,7 +34,7 @@ export function SmartTagsGuideModal({ onClose }: { onClose: () => void }) {
                     <button
                         type="button"
                         onClick={onClose}
-                        className="action-button action-button--dark tags-guide__btn-close"
+                        className="action-button action-button--dark tags-guide__btn-close text-theme-header"
                     >
                         <XCircle size={16} /> Close Guide
                     </button>

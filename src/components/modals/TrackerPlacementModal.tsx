@@ -28,20 +28,20 @@ export function TrackerPlacementModal({ onClose }: TrackerPlacementModalProps) {
     return (
         <div className="tracker-settings__overlay tracker-settings__overlay--high-z">
             <div className="tracker-settings__content tracker-settings__content--placement">
-                <h3 className="tracker-settings__title tracker-settings__title--placement modal-title-with-icon">
+                <h3 className="tracker-settings__title tracker-settings__title--placement modal-title-with-icon text-title-primary">
                     <Move size={20} /> Fine-Tune Placements
                 </h3>
 
                 <div className="tracker-settings__placement-grid">
-                    <div className="tracker-settings__placement-header">Element</div>
-                    <div className="tracker-settings__placement-header tracker-settings__placement-header--center">
+                    <div className="tracker-settings__placement-header text-subtext">Element</div>
+                    <div className="tracker-settings__placement-header tracker-settings__placement-header--center text-subtext">
                         X Shift
                     </div>
-                    <div className="tracker-settings__placement-header tracker-settings__placement-header--center">
+                    <div className="tracker-settings__placement-header tracker-settings__placement-header--center text-subtext">
                         Y Shift
                     </div>
 
-                    <span className="tracker-settings__placement-label">HP Bar</span>
+                    <span className="text-label">HP Bar</span>
                     <NumberSpinner
                         value={identityStore.hpOffsetX}
                         onChange={(value) => setIdentity('hpOffsetX', value)}
@@ -55,7 +55,7 @@ export function TrackerPlacementModal({ onClose }: TrackerPlacementModalProps) {
                         max={9999}
                     />
 
-                    <span className="tracker-settings__placement-label">Will Bar</span>
+                    <span className="text-label">Will Bar</span>
                     <NumberSpinner
                         value={identityStore.willOffsetX}
                         onChange={(value) => setIdentity('willOffsetX', value)}
@@ -69,7 +69,7 @@ export function TrackerPlacementModal({ onClose }: TrackerPlacementModalProps) {
                         max={9999}
                     />
 
-                    <span className="tracker-settings__placement-label">Defenses</span>
+                    <span className="text-label">Defenses</span>
                     <NumberSpinner
                         value={identityStore.defOffsetX}
                         onChange={(value) => setIdentity('defOffsetX', value)}
@@ -83,7 +83,7 @@ export function TrackerPlacementModal({ onClose }: TrackerPlacementModalProps) {
                         max={9999}
                     />
 
-                    <span className="tracker-settings__placement-label">Action Badge</span>
+                    <span className="text-label">Action Badge</span>
                     <NumberSpinner
                         value={identityStore.actOffsetX}
                         onChange={(value) => setIdentity('actOffsetX', value)}
@@ -97,7 +97,7 @@ export function TrackerPlacementModal({ onClose }: TrackerPlacementModalProps) {
                         max={9999}
                     />
 
-                    <span className="tracker-settings__placement-label">Evade Badge</span>
+                    <span className="text-label">Evade Badge</span>
                     <NumberSpinner
                         value={identityStore.evaOffsetX}
                         onChange={(value) => setIdentity('evaOffsetX', value)}
@@ -111,7 +111,7 @@ export function TrackerPlacementModal({ onClose }: TrackerPlacementModalProps) {
                         max={9999}
                     />
 
-                    <span className="tracker-settings__placement-label">Clash Badge</span>
+                    <span className="text-label">Clash Badge</span>
                     <NumberSpinner
                         value={identityStore.claOffsetX}
                         onChange={(value) => setIdentity('claOffsetX', value)}
@@ -130,14 +130,14 @@ export function TrackerPlacementModal({ onClose }: TrackerPlacementModalProps) {
                     <button
                         type="button"
                         onClick={resetPlacements}
-                        className="action-button action-button--dark tracker-settings__modal-btn"
+                        className="action-button action-button--dark tracker-settings__modal-btn text-theme-header"
                     >
                         <RotateCcw size={16} /> Reset
                     </button>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="action-button action-button--theme tracker-settings__modal-btn"
+                        className="action-button action-button--theme tracker-settings__modal-btn text-theme-header"
                     >
                         <CheckCircle size={16} /> Done
                     </button>

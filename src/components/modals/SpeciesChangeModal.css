@@ -4,7 +4,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: color-mix(in srgb, var(--dark) 60%, transparent);
     z-index: 1000;
     display: flex;
     justify-content: center;
@@ -17,14 +17,11 @@
     border-radius: 8px;
     width: 320px;
     border: 2px solid var(--primary);
-    color: var(--text-main);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
 }
 
 .species-change__title {
     margin-top: 0;
-    color: var(--primary);
-    font-size: 1.1rem;
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
     text-align: center;
@@ -35,10 +32,8 @@
 }
 
 .species-change__desc {
-    font-size: 0.85rem;
     text-align: center;
     margin-bottom: 15px;
-    color: var(--text-muted);
 }
 
 .species-change__btn-group {
@@ -49,21 +44,18 @@
 
 .species-change__btn-evolve {
     padding: 8px;
-    font-size: 0.9rem;
     flex-direction: column;
     gap: 2px;
 }
 
 .species-change__btn-form {
     padding: 8px;
-    font-size: 0.9rem;
     flex-direction: column;
     gap: 2px;
 }
 
 .species-change__btn-new {
     padding: 8px;
-    font-size: 0.9rem;
     flex-direction: column;
     gap: 2px;
 }
@@ -75,9 +67,4 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-}
-
-.species-change__btn-subtitle {
-    font-size: 0.7rem;
-    font-weight: normal;
 }
