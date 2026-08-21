@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { TrainerBadgeRow } from './TrainerBadgeRow';
+import { Plus, Trash2, XCircle, AlertTriangle } from 'lucide-react';
 import './TrainerBadges.css';
 
 export function TrainerBadges() {
@@ -28,13 +29,13 @@ export function TrainerBadges() {
         );
     };
 
-    const headerElements = <div className="trainer-badges__count">Total: {badges.length}</div>;
+    const headerElements = <div className="text-subtext">Total: {badges.length}</div>;
 
     return (
         <CollapsingSection title="BADGES & ACHIEVEMENTS" headerElements={headerElements} className="sheet-panel">
             <div className="trainer-badges__list">
                 {badges.length === 0 ? (
-                    <div className="trainer-badges__empty">No badges collected yet.</div>
+                    <div className="trainer-badges__empty text-subtext">No badges collected yet.</div>
                 ) : (
                     badges.map((badge) => (
                         <TrainerBadgeRow
@@ -51,21 +52,28 @@ export function TrainerBadges() {
                 onClick={addBadge}
                 className="action-button action-button--dark trainer-badges__add-btn"
             >
-                + Add Badge
+                <Plus size={16} /> Add Badge
             </button>
 
             {deleteBadgeId && (
                 <div className="trainer-badges__modal-overlay">
                     <div className="trainer-badges__modal-content">
-                        <h3 className="trainer-badges__modal-title">⚠️ Confirm Deletion</h3>
-                        <p className="trainer-badges__modal-text">Are you sure you want to delete this Badge?</p>
+                        <h3
+                            className="trainer-badges__modal-title text-title-primary"
+                            style={{ color: 'var(--semantic-danger)' }}
+                        >
+                            <AlertTriangle size={20} /> Confirm Deletion
+                        </h3>
+                        <p className="trainer-badges__modal-text text-subtext">
+                            Are you sure you want to delete this Badge?
+                        </p>
                         <div className="trainer-badges__modal-actions">
                             <button
                                 type="button"
                                 className="action-button action-button--dark trainer-badges__modal-btn"
                                 onClick={() => setDeleteBadgeId(null)}
                             >
-                                Cancel
+                                <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
@@ -75,7 +83,7 @@ export function TrainerBadges() {
                                     setDeleteBadgeId(null);
                                 }}
                             >
-                                Delete
+                                <Trash2 size={16} /> Delete
                             </button>
                         </div>
                     </div>

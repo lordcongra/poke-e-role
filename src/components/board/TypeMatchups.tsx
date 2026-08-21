@@ -2,6 +2,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { getAbilityText, getMatchupGroups } from '../../utils/combatUtils';
 import { TYPE_COLORS } from '../../data/constants';
 import { CollapsingSection } from '../ui/CollapsingSection';
+import { ChevronDown } from 'lucide-react';
 import './TypeMatchups.css';
 
 export function TypeMatchups() {
@@ -27,8 +28,10 @@ export function TypeMatchups() {
     if (!type1 && !type2) {
         return (
             <div className="sheet-panel type-matchups__panel">
-                <div className="sheet-panel__header type-matchups__header--left">▼ TYPE MATCHUPS</div>
-                <div className="type-matchups__empty">Load a Pokémon to see matchups...</div>
+                <div className="sheet-panel__header type-matchups__header--left">
+                    <ChevronDown size={18} style={{ marginRight: '6px' }} /> TYPE MATCHUPS
+                </div>
+                <div className="type-matchups__empty text-subtext">Load a Pokémon to see matchups...</div>
             </div>
         );
     }
@@ -58,7 +61,7 @@ export function TypeMatchups() {
         if (types.length === 0) return null;
         return (
             <div className="type-matchups__group-row">
-                <span className="type-matchups__group-label">{label}</span>
+                <span className="type-matchups__group-label text-label">{label}</span>
                 <div className="type-matchups__pill-container">
                     {types.map((t) => {
                         const bgColor = ALL_COLORS[t] || '#777';

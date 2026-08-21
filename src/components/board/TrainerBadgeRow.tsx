@@ -1,4 +1,5 @@
 import type { Badge } from '../../store/storeTypes';
+import { Trash2 } from 'lucide-react';
 import './TrainerBadges.css';
 
 interface TrainerBadgeRowProps {
@@ -21,7 +22,7 @@ export function TrainerBadgeRow({ badge, onUpdate, onRemove }: TrainerBadgeRowPr
 
             <input
                 type="text"
-                className="trainer-badge-row__input"
+                className="trainer-badge-row__input text-label"
                 placeholder="Badge Name..."
                 value={badge.name}
                 onChange={(e) => onUpdate('name', e.target.value)}
@@ -33,7 +34,7 @@ export function TrainerBadgeRow({ badge, onUpdate, onRemove }: TrainerBadgeRowPr
                 onClick={onRemove}
                 title="Delete Badge"
             >
-                X
+                <Trash2 size={16} />
             </button>
         </div>
     );

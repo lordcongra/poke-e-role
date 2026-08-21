@@ -38,11 +38,6 @@
 
 .tracker-section__action-group--right {
     margin-left: auto;
-    font-size: 0.75rem;
-}
-
-.tracker-section__action-label {
-    font-weight: bold;
 }
 
 .tracker-section__buttons-group {
@@ -84,15 +79,12 @@
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
     padding: 0 6px;
     border-radius: 4px;
-    font-size: 0.75rem;
     flex: 0 1 auto;
     height: 28px; /* Matched to Maneuver Dropdown */
     box-sizing: border-box;
 }
 
 .tracker-section__first-hit-label {
-    font-weight: bold;
-    color: var(--text-main);
     display: flex;
     align-items: center;
     gap: 4px;
@@ -103,8 +95,6 @@
     align-items: center;
     gap: 4px;
     cursor: pointer;
-    color: var(--text-main);
-    font-weight: bold;
 }
 
 .tracker-section__chances-row {
@@ -113,11 +103,14 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 6px;
-    font-size: 0.75rem;
 }
 
 .tracker-section__roll-btn {
     padding: 2px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
 }
 
 .tracker-section__maneuver-subrow {
@@ -131,7 +124,6 @@
     padding: 0 6px;
     font-family: inherit;
     border: 1px solid var(--border);
-    font-size: 0.75rem;
     flex: 1 1 100px;
     min-width: 0;
     background-color: var(--row-odd);
@@ -177,6 +169,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 6px;
 }
 
 .tracker-section__will-row {
@@ -213,9 +206,6 @@
 }
 
 .tracker-section__conditions-label {
-    font-size: 0.75rem;
-    font-weight: bold;
-    color: var(--text-muted);
     white-space: nowrap;
 }
 
@@ -240,12 +230,6 @@
         0 1px 4px rgba(0, 0, 0, 0.6);
 }
 
-.tracker-section__conditions-empty {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    font-style: italic;
-}
-
 /* Modals */
 .tracker-modal__overlay {
     position: fixed;
@@ -253,114 +237,55 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1500;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-family: sans-serif;
 }
 
 .tracker-modal__content {
     background-color: var(--panel-bg);
-    padding: 15px;
+    padding: 20px;
     border-radius: 8px;
     width: 280px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     border: 2px solid var(--primary);
 }
 
-.tracker-modal__content--clash {
-    width: 260px;
-}
-
-.tracker-modal__content--rest {
-    border-color: #2e7d32;
-}
-
 .tracker-modal__title {
-    margin-top: 0;
-    color: var(--primary);
-    font-size: 1.1rem;
     border-bottom: 1px solid var(--border);
-    padding-bottom: 4px;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
     text-align: center;
-}
-
-.tracker-modal__title--rest {
-    color: #2e7d32;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .tracker-modal__description {
-    font-size: 0.85rem;
     text-align: center;
-    margin-bottom: 15px;
-    color: var(--text-muted);
+    margin-bottom: 20px;
 }
 
 .tracker-modal__actions {
     display: flex;
     justify-content: space-between;
-    gap: 8px;
-}
-
-.tracker-modal__btn-cancel,
-.tracker-modal__btn-confirm {
-    flex: 1;
-    padding: 6px;
-}
-
-/* 🔥 Applied text-shadow to rest modal btn */
-.tracker-modal__btn-rest {
-    background-color: #2e7d32;
-    color: white;
-    text-shadow:
-        1px 1px 2px rgba(0, 0, 0, 0.8),
-        0 1px 4px rgba(0, 0, 0, 0.6);
-}
-
-.tracker-modal__clash-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-/* 🔥 Applied text-shadow to clash modal btns */
-.tracker-modal__clash-btn-phys {
-    background-color: #e65100;
-    border-color: #e65100;
-    padding: 8px;
-    font-size: 0.9rem;
-    color: white;
-    text-shadow:
-        1px 1px 2px rgba(0, 0, 0, 0.8),
-        0 1px 4px rgba(0, 0, 0, 0.6);
-}
-
-.tracker-modal__clash-btn-spec {
-    background-color: #1565c0;
-    border-color: #1565c0;
-    padding: 8px;
-    font-size: 0.9rem;
-    color: white;
-    text-shadow:
-        1px 1px 2px rgba(0, 0, 0, 0.8),
-        0 1px 4px rgba(0, 0, 0, 0.6);
-}
-
-.tracker-modal__clash-btn-cancel {
-    padding: 6px;
-    margin-top: 4px;
-}
-
-.tracker-modal__spinner-container {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 15px;
+    gap: 10px;
 }
 
 .tracker-modal__actions--center {
     justify-content: center;
+}
+
+.tracker-modal__btn-cancel {
+    flex: 1;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 
 /* Mobile Overrides */

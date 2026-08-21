@@ -17,7 +17,7 @@ import { NumberSpinner } from '../ui/NumberSpinner';
 import { TakeChancesModal } from '../modals/TakeChancesModal';
 import { ClashModal } from '../modals/ClashModal';
 import { RestModal } from '../modals/RestModal';
-import { Dices, RotateCcw, Tent } from 'lucide-react';
+import { Dices, RotateCcw, Tent, XCircle } from 'lucide-react';
 import './TrackerSection.css';
 
 export function TrackerSection() {
@@ -266,7 +266,7 @@ export function TrackerSection() {
                                     }
                                     className="action-button action-button--dark tracker-section__toggle-btn"
                                 >
-                                    <Dices size={16} /> Evade
+                                    <Dices size={14} style={{ marginRight: '4px' }} /> Evade
                                 </button>
                                 <input
                                     type="checkbox"
@@ -298,7 +298,7 @@ export function TrackerSection() {
                                     }
                                     className="action-button action-button--dark tracker-section__toggle-btn"
                                 >
-                                    <Dices size={16} /> Clash
+                                    <Dices size={14} style={{ marginRight: '4px' }} /> Clash
                                 </button>
                                 <input
                                     type="checkbox"
@@ -318,7 +318,7 @@ export function TrackerSection() {
                         </div>
 
                         <div className="tracker-section__action-group tracker-section__action-group--right">
-                            <span className="tracker-section__action-label">Actions</span>
+                            <span className="tracker-section__action-label text-label">Actions</span>
                             <TooltipIcon
                                 onClick={() => setTooltipInfo({ title: 'Actions', desc: 'Actions taken this round.' })}
                             />
@@ -337,7 +337,7 @@ export function TrackerSection() {
                             <select
                                 value={maneuver}
                                 onChange={(event) => setManeuver(event.target.value)}
-                                className="tracker-section__maneuver-select"
+                                className="tracker-section__maneuver-select text-label"
                             >
                                 <option value="none">-- Maneuver --</option>
                                 <option value="ambush">Ambush (Dex+Stl)</option>
@@ -357,7 +357,7 @@ export function TrackerSection() {
                         </div>
 
                         <div className="tracker-section__first-hit-group">
-                            <span className="tracker-section__first-hit-label">
+                            <span className="tracker-section__first-hit-label text-label">
                                 1st Hit
                                 <TooltipIcon
                                     onClick={() =>
@@ -369,7 +369,7 @@ export function TrackerSection() {
                                 />
                                 :
                             </span>
-                            <label className="tracker-section__first-hit-check">
+                            <label className="tracker-section__first-hit-check text-label">
                                 <input
                                     type="checkbox"
                                     checked={trackers.firstHitAcc}
@@ -378,7 +378,7 @@ export function TrackerSection() {
                                 />{' '}
                                 Acc
                             </label>
-                            <label className="tracker-section__first-hit-check">
+                            <label className="tracker-section__first-hit-check text-label">
                                 <input
                                     type="checkbox"
                                     checked={trackers.firstHitDmg}
@@ -396,7 +396,7 @@ export function TrackerSection() {
                             onClick={resetRound}
                             className="action-button action-button--theme tracker-section__reset-btn"
                         >
-                            <RotateCcw size={16} /> Reset
+                            <RotateCcw size={14} /> Reset
                         </button>
                         <button
                             type="button"
@@ -404,7 +404,7 @@ export function TrackerSection() {
                             className="action-button action-button--secondary tracker-section__rest-btn"
                             title="Fully heal HP/Will and clear statuses"
                         >
-                            <Tent size={16} /> Rest
+                            <Tent size={14} /> Rest
                         </button>
                     </div>
                 </div>
@@ -442,7 +442,7 @@ export function TrackerSection() {
                     </div>
 
                     <div className="tracker-section__chances-row">
-                        <span className="tracker-section__action-label">Take your Chances</span>
+                        <span className="tracker-section__action-label text-label">Take your Chances</span>
                         <TooltipIcon
                             onClick={() =>
                                 setTooltipInfo({
@@ -451,7 +451,7 @@ export function TrackerSection() {
                                 })
                             }
                         />
-                        :
+                        <span className="text-label">:</span>
                         <NumberSpinner
                             value={trackers.chances}
                             onChange={(value) => updateTracker('chances', value)}
@@ -462,15 +462,15 @@ export function TrackerSection() {
                             onClick={openChancesModal}
                             className="action-button action-button--dark tracker-section__roll-btn"
                         >
-                            <Dices size={16} /> Roll
+                            <Dices size={14} /> Roll
                         </button>
                     </div>
 
                     <div className="tracker-section__conditions-container">
-                        <span className="tracker-section__conditions-label">Conditions:</span>
+                        <span className="tracker-section__conditions-label text-label">Conditions:</span>
                         <div className="tracker-section__conditions-list">
                             {conditions.length === 0 ? (
-                                <span className="tracker-section__conditions-empty">None</span>
+                                <span className="tracker-section__conditions-empty text-subtext">None</span>
                             ) : (
                                 conditions.map((c) => (
                                     <span
@@ -494,15 +494,15 @@ export function TrackerSection() {
             {tooltipInfo && (
                 <div className="tracker-modal__overlay">
                     <div className="tracker-modal__content">
-                        <h3 className="tracker-modal__title">{tooltipInfo.title}</h3>
-                        <p className="tracker-modal__description">{tooltipInfo.desc}</p>
+                        <h3 className="tracker-modal__title text-title-primary">{tooltipInfo.title}</h3>
+                        <p className="tracker-modal__description text-subtext">{tooltipInfo.desc}</p>
                         <div className="tracker-modal__actions tracker-modal__actions--center">
                             <button
                                 type="button"
                                 className="action-button action-button--dark tracker-modal__btn-cancel"
                                 onClick={() => setTooltipInfo(null)}
                             >
-                                Close
+                                <XCircle size={16} /> Close
                             </button>
                         </div>
                     </div>
