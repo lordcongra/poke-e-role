@@ -4,7 +4,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: color-mix(in srgb, var(--dark) 60%, transparent);
     z-index: 1500;
     display: flex;
     justify-content: center;
@@ -17,16 +17,13 @@
     border-radius: 8px;
     width: 320px;
     border: 2px solid var(--primary);
-    color: var(--text-main);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
     display: flex;
     flex-direction: column;
 }
 
 .clash-modal__title {
     margin-top: 0;
-    color: var(--primary);
-    font-size: 1.2rem;
     border-bottom: 1px solid var(--border);
     padding-bottom: 8px;
     text-align: center;
@@ -37,10 +34,8 @@
 }
 
 .clash-modal__description {
-    font-size: 0.9rem;
     text-align: center;
     margin: 15px 0;
-    color: var(--text-muted);
 }
 
 .clash-modal__actions {
@@ -52,7 +47,6 @@
 .clash-modal__btn {
     width: 100%;
     padding: 10px;
-    font-size: 0.95rem;
     display: flex;
     align-items: center;
     justify-content: center;

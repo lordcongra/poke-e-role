@@ -35,19 +35,19 @@ export function DualScaleModal() {
     return (
         <div className="dual-scale__overlay">
             <div className="dual-scale__content">
-                <h3 className="dual-scale__title modal-title-with-icon">
+                <h3 className="dual-scale__title modal-title-with-icon text-title-primary">
                     <Scale size={20} /> Move Options Detected
                 </h3>
-                <p className="dual-scale__desc">
+                <p className="dual-scale__desc text-subtext">
                     <b>{pendingDualScale.moveName}</b> has variable scaling or ambiguous options. Please select how you
                     want to roll it:
                 </p>
 
                 {pendingDualScale.categoryOptions && (
                     <div className="dual-scale__section">
-                        <div className="dual-scale__section-title">Move Category:</div>
+                        <div className="dual-scale__section-title text-label">Move Category:</div>
                         <select
-                            className="dual-scale__select"
+                            className="dual-scale__select text-label"
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value as 'Physical' | 'Special' | 'Status')}
                         >
@@ -62,9 +62,9 @@ export function DualScaleModal() {
 
                 {pendingDualScale.acc1Options && (
                     <div className="dual-scale__section">
-                        <div className="dual-scale__section-title">Accuracy Attribute:</div>
+                        <div className="dual-scale__section-title text-label">Accuracy Attribute:</div>
                         <select
-                            className="dual-scale__select"
+                            className="dual-scale__select text-label"
                             value={selectedAcc1}
                             onChange={(e) => setSelectedAcc1(e.target.value)}
                         >
@@ -79,9 +79,9 @@ export function DualScaleModal() {
 
                 {pendingDualScale.acc2Options && (
                     <div className="dual-scale__section">
-                        <div className="dual-scale__section-title">Accuracy Skill:</div>
+                        <div className="dual-scale__section-title text-label">Accuracy Skill:</div>
                         <select
-                            className="dual-scale__select"
+                            className="dual-scale__select text-label"
                             value={selectedAcc2}
                             onChange={(e) => setSelectedAcc2(e.target.value)}
                         >
@@ -96,9 +96,9 @@ export function DualScaleModal() {
 
                 {pendingDualScale.dmg1Options && (
                     <div className="dual-scale__section">
-                        <div className="dual-scale__section-title">Damage Attribute:</div>
+                        <div className="dual-scale__section-title text-label">Damage Attribute:</div>
                         <select
-                            className="dual-scale__select"
+                            className="dual-scale__select text-label"
                             value={selectedDmg1}
                             onChange={(e) => setSelectedDmg1(e.target.value)}
                         >

@@ -12,7 +12,9 @@ export function GeneratorPreviewStatSpinner({ value, onChange }: GeneratorPrevie
             <button type="button" onClick={() => onChange(value - 1)} className="generator-preview-spinner__btn">
                 <Minus size={14} />
             </button>
-            <span className="generator-preview-spinner__value">{value}</span>
+            <span className="generator-preview-spinner__value text-label" style={{ color: 'var(--text-main)' }}>
+                {value}
+            </span>
             <button type="button" onClick={() => onChange(value + 1)} className="generator-preview-spinner__btn">
                 <Plus size={14} />
             </button>

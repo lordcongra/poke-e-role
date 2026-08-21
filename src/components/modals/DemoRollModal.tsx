@@ -52,23 +52,23 @@ export function DemoRollModal() {
     return (
         <div className="demo-roll-modal__overlay">
             <div className="demo-roll-modal__content">
-                <h3 className="demo-roll-modal__title">
+                <h3 className="demo-roll-modal__title text-title-primary">
                     <Clapperboard size={20} /> GM Demo Mode
                 </h3>
-                <p className="demo-roll-modal__desc">
+                <p className="demo-roll-modal__desc text-subtext">
                     Rolling: <strong>{notation}</strong> <br />({numDice} Dice | Threshold: {successThreshold} | Flat
                     Mod: {flatMod > 0 ? `+${flatMod}` : flatMod})
                 </p>
 
                 <div className="demo-roll-modal__tabs">
                     <button
-                        className={`demo-roll-modal__tab ${mode === 'target' ? 'demo-roll-modal__tab--active' : ''}`}
+                        className={`demo-roll-modal__tab ${mode === 'target' ? 'text-theme-header' : 'text-label'}`}
                         onClick={() => setMode('target')}
                     >
                         Target Successes
                     </button>
                     <button
-                        className={`demo-roll-modal__tab ${mode === 'exact' ? 'demo-roll-modal__tab--active' : ''}`}
+                        className={`demo-roll-modal__tab ${mode === 'exact' ? 'text-theme-header' : 'text-label'}`}
                         onClick={() => setMode('exact')}
                     >
                         Exact Dice Array
@@ -78,31 +78,37 @@ export function DemoRollModal() {
                 <div className="demo-roll-modal__body">
                     {mode === 'target' ? (
                         <div className="demo-roll-modal__form-group">
-                            <label className="demo-roll-modal__label">Desired Raw Dice Successes (Max {numDice})</label>
+                            <label className="demo-roll-modal__label text-label">
+                                Desired Raw Dice Successes (Max {numDice})
+                            </label>
                             <input
                                 type="number"
-                                className="demo-roll-modal__input"
+                                className="demo-roll-modal__input text-value-highlight"
                                 value={targetSuccesses}
                                 onChange={(e) => setTargetSuccesses(parseInt(e.target.value) || 0)}
                                 min={0}
                                 max={numDice}
                             />
-                            <p className="demo-roll-modal__subtext">
+                            <p className="demo-roll-modal__subtext text-subtext">
                                 The flat modifier ({flatMod}) will be mathematically added to your choice during final
                                 output!
                             </p>
                         </div>
                     ) : (
                         <div className="demo-roll-modal__form-group">
-                            <label className="demo-roll-modal__label">Exact Dice Values (Comma separated)</label>
+                            <label className="demo-roll-modal__label text-label">
+                                Exact Dice Values (Comma separated)
+                            </label>
                             <input
                                 type="text"
-                                className="demo-roll-modal__input"
+                                className="demo-roll-modal__input text-value-highlight"
                                 value={exactDice}
                                 onChange={(e) => setExactDice(e.target.value)}
                                 placeholder="e.g. 6, 2, 4"
                             />
-                            <p className="demo-roll-modal__subtext">You must provide exactly {numDice} numbers.</p>
+                            <p className="demo-roll-modal__subtext text-subtext">
+                                You must provide exactly {numDice} numbers.
+                            </p>
                         </div>
                     )}
                 </div>

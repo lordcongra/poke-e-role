@@ -51,7 +51,9 @@ export function AddCombatantModal({
         <div className="init-tracker__modal-overlay" onClick={onClose}>
             <div className="init-tracker__modal" onClick={(e) => e.stopPropagation()}>
                 <div className="init-tracker__modal-header">
-                    <h3 style={{ margin: 0, fontSize: '0.95rem' }}>Add Combatant</h3>
+                    <h3 className="text-title-primary" style={{ margin: 0 }}>
+                        Add Combatant
+                    </h3>
                     <button type="button" className="init-tracker__modal-close" onClick={onClose}>
                         <X size={16} />
                     </button>
@@ -62,7 +64,7 @@ export function AddCombatantModal({
                     placeholder="Search names..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="init-tracker__modal-search form-input--transparent"
+                    className="init-tracker__modal-search form-input--transparent text-label"
                     autoFocus
                 />
 
@@ -71,7 +73,7 @@ export function AddCombatantModal({
                         filteredStandaloneChars.map((char) => (
                             <div
                                 key={char.id}
-                                className="init-tracker__modal-item"
+                                className="init-tracker__modal-item text-label"
                                 onClick={() => onAddStandalone(char)}
                             >
                                 {char.name}
@@ -80,13 +82,17 @@ export function AddCombatantModal({
 
                     {!isStandaloneMode &&
                         filteredObrChars.map((char) => (
-                            <div key={char.id} className="init-tracker__modal-item" onClick={() => onAddObr(char.item)}>
+                            <div
+                                key={char.id}
+                                className="init-tracker__modal-item text-label"
+                                onClick={() => onAddObr(char.item)}
+                            >
                                 {char.name}
                             </div>
                         ))}
 
                     {noResults && (
-                        <div style={{ fontSize: '0.8rem', opacity: 0.7, padding: '8px', textAlign: 'center' }}>
+                        <div className="text-subtext" style={{ padding: '8px', textAlign: 'center' }}>
                             No matching characters found.
                         </div>
                     )}

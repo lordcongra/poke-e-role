@@ -198,13 +198,15 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
         <div className="generator-preview__overlay">
             {/* The style object here is dynamic and permitted by our architectural rules */}
             <div className="generator-preview__content" style={{ display: showImagePrompt ? 'none' : 'flex' }}>
-                <h3 className="generator-preview__title modal-title-with-icon">
+                <h3 className="generator-preview__title modal-title-with-icon text-title-primary">
                     <Search size={20} /> Build Preview: {localBuild.species}
                 </h3>
 
                 <div className="generator-preview__scroll-container">
                     <div className="generator-preview__section">
-                        <div className="generator-preview__section-title">Attributes (Rank Added)</div>
+                        <div className="generator-preview__section-title text-title-primary">
+                            Attributes (Rank Added)
+                        </div>
                         <div className="generator-preview__grid-5">
                             {Object.values(CombatStat).map((statistic) => {
                                 const baseVal = getBaseAttribute(statistic);
@@ -212,12 +214,12 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
                                 return (
                                     <div key={statistic} className="generator-preview__stat-column">
                                         <label
-                                            className="generator-preview__stat-label"
+                                            className="text-label"
                                             title={`Base: ${baseVal} | Limit: ${limitVal} | Total: ${baseVal + (localBuild.attr[statistic] || 0)}`}
                                         >
                                             {statistic.toUpperCase()}
                                         </label>
-                                        <span className="generator-preview__stat-subtext generator-preview__stat-subtext--nowrap">
+                                        <span className="generator-preview__stat-subtext--nowrap text-subtext">
                                             Base: {baseVal} | Limit: {limitVal}
                                         </span>
                                         <GeneratorPreviewStatSpinner
@@ -231,19 +233,19 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
                     </div>
 
                     <div className="generator-preview__section">
-                        <div className="generator-preview__section-title">Socials (Rank Added)</div>
+                        <div className="generator-preview__section-title text-title-primary">Socials (Rank Added)</div>
                         <div className="generator-preview__grid-5">
                             {Object.values(SocialStat).map((statistic) => {
                                 const baseVal = getBaseAttribute(statistic);
                                 return (
                                     <div key={statistic} className="generator-preview__stat-column">
                                         <label
-                                            className="generator-preview__stat-label"
+                                            className="text-label"
                                             title={`Base: ${baseVal} | Total: ${baseVal + (localBuild.soc[statistic] || 0)}`}
                                         >
                                             {statistic.toUpperCase()}
                                         </label>
-                                        <span className="generator-preview__stat-subtext">Base: {baseVal}</span>
+                                        <span className="text-subtext">Base: {baseVal}</span>
                                         <GeneratorPreviewStatSpinner
                                             value={localBuild.soc[statistic] || 0}
                                             onChange={(value) => updateSocial(statistic, value)}
@@ -255,17 +257,20 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
                     </div>
 
                     <div className="generator-preview__section">
-                        <div className="generator-preview__section-title generator-preview__section-title--spaced">
+                        <div className="generator-preview__section-title generator-preview__section-title--spaced text-title-primary">
                             Skills
                         </div>
                         <div className="generator-preview__grid-4">
                             {allCategories.map((category, index) => (
                                 <div key={`${category.title}-${index}`} className="generator-preview__skill-category">
-                                    <div className="generator-preview__skill-category-title">{category.title}</div>
+                                    <div className="generator-preview__skill-category-title text-label">
+                                        {category.title}
+                                    </div>
                                     {category.skills.map((skillName) => (
                                         <div key={skillName} className="generator-preview__skill-row">
                                             <label
-                                                className="generator-preview__skill-label"
+                                                className="generator-preview__skill-label text-label"
+                                                style={{ color: 'var(--text-main)' }}
                                                 title={getSkillLabel(skillName)}
                                             >
                                                 {getSkillLabel(skillName)}
@@ -282,7 +287,9 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
                     </div>
 
                     <div className="generator-preview__section">
-                        <div className="generator-preview__section-title">Moves (Max: {dynamicMaxMoves})</div>
+                        <div className="generator-preview__section-title text-title-primary">
+                            Moves (Max: {dynamicMaxMoves})
+                        </div>
                         <div className="generator-preview__grid-2">
                             {localBuild.moves.map((move, index) => {
                                 const accuracyAttributeTotal =
@@ -339,10 +346,10 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
             {showImagePrompt && (
                 <div className="generator-preview-tooltip__overlay generator-preview-tooltip__overlay--high-z">
                     <div className="generator-preview-tooltip__content">
-                        <h3 className="generator-preview-tooltip__title generator-preview-tooltip__title--center">
+                        <h3 className="generator-preview-tooltip__title generator-preview-tooltip__title--center text-title-primary">
                             <ImagePlus size={20} /> Update Token Image?
                         </h3>
-                        <p className="generator-preview-tooltip__desc generator-preview-tooltip__desc--center">
+                        <p className="generator-preview-tooltip__desc generator-preview-tooltip__desc--center text-subtext">
                             You generated a brand new species! Would you like to select a new image for this token?
                         </p>
                         <div className="generator-preview-tooltip__actions generator-preview-tooltip__actions--spaced">
@@ -368,8 +375,8 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
             {tooltipInfo && (
                 <div className="generator-preview-tooltip__overlay">
                     <div className="generator-preview-tooltip__content">
-                        <h3 className="generator-preview-tooltip__title">{tooltipInfo.title}</h3>
-                        <p className="generator-preview-tooltip__desc">{tooltipInfo.desc}</p>
+                        <h3 className="generator-preview-tooltip__title text-title-primary">{tooltipInfo.title}</h3>
+                        <p className="generator-preview-tooltip__desc text-subtext">{tooltipInfo.desc}</p>
                         <div className="generator-preview-tooltip__actions">
                             <button
                                 type="button"

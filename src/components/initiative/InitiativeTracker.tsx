@@ -74,7 +74,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
         return (
             <div className="init-tracker-wrapper">
                 <div className={`init-tracker init-tracker--${layout}`}>
-                    <div className="init-tracker__empty">Connecting...</div>
+                    <div className="init-tracker__empty text-subtext">Connecting...</div>
                 </div>
             </div>
         );
@@ -87,13 +87,18 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                     <div className="init-tracker__btn-group">
                         <button
                             type="button"
-                            className="init-tracker__turn-btn"
+                            className="action-button action-button--dark init-tracker__turn-btn"
                             onClick={prevTurn}
                             title="Previous Turn"
                         >
                             <ChevronLeft size={16} />
                         </button>
-                        <button type="button" className="init-tracker__turn-btn" onClick={nextTurn} title="Next Turn">
+                        <button
+                            type="button"
+                            className="action-button action-button--dark init-tracker__turn-btn"
+                            onClick={nextTurn}
+                            title="Next Turn"
+                        >
                             <ChevronRight size={16} />
                         </button>
                     </div>
@@ -103,7 +108,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                             {isStandaloneMode && (
                                 <button
                                     type="button"
-                                    className="init-tracker__turn-btn"
+                                    className="action-button action-button--dark init-tracker__turn-btn"
                                     onClick={handleRollAll}
                                     title="Roll Initiative for All Combatants"
                                 >
@@ -112,7 +117,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                             )}
                             <button
                                 type="button"
-                                className="init-tracker__turn-btn"
+                                className="action-button action-button--dark init-tracker__turn-btn"
                                 onClick={() => setShowAddMenu(true)}
                                 title="Add Combatant"
                             >
@@ -124,7 +129,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
             </div>
 
             {combatants.length === 0 ? (
-                <div className="init-tracker__empty">
+                <div className="init-tracker__empty text-subtext">
                     Waiting for rolls... {isStandaloneMode && '(Drag characters here)'}
                 </div>
             ) : (
@@ -144,7 +149,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                             />
                             {index < combatants.length - 1 && layout === 'horizontal' && (
                                 <span className="init-tracker__flow-arrow">
-                                    <ChevronRight size={14} />
+                                    <ChevronRight size={16} />
                                 </span>
                             )}
                         </div>
@@ -178,7 +183,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
             <>
                 {/* NEW: Mobile toggle bubble */}
                 <button
-                    className={`init-tracker__mobile-toggle ${isMobileExpanded ? 'is-active' : ''}`}
+                    className={`action-button init-tracker__mobile-toggle ${isMobileExpanded ? 'action-button--theme is-active' : 'action-button--dark'}`}
                     onClick={() => setIsMobileExpanded(!isMobileExpanded)}
                     title="Toggle Initiative Tracker"
                 >

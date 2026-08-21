@@ -66,19 +66,21 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
     return (
         <div className="generator-modal__overlay">
             <div className="generator-modal__content">
-                <h3 className="generator-modal__title modal-title-with-icon">
+                <h3 className="generator-modal__title modal-title-with-icon text-title-primary">
                     <Dices size={20} /> Auto-Build Pokémon
                 </h3>
-                <p className="generator-modal__desc">Generate stats, skills, and moves based on current Rank.</p>
+                <p className="generator-modal__desc text-subtext">
+                    Generate stats, skills, and moves based on current Rank.
+                </p>
 
                 <div className="generator-modal__form-group">
                     <div className="generator-modal__row">
                         <div className="generator-modal__col">
-                            <label className="generator-modal__label">Build Tier:</label>
+                            <label className="text-label">Build Tier:</label>
                             <select
                                 value={config.buildType}
                                 onChange={(e) => setConfig({ buildType: e.target.value })}
-                                className="generator-modal__select"
+                                className="generator-modal__select text-label"
                             >
                                 <option value="wild">Wild (Random)</option>
                                 <option value="average">Average</option>
@@ -86,11 +88,11 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                             </select>
                         </div>
                         <div className="generator-modal__col">
-                            <label className="generator-modal__label">Combat Bias:</label>
+                            <label className="text-label">Combat Bias:</label>
                             <select
                                 value={config.combatBias}
                                 onChange={(e) => setConfig({ combatBias: e.target.value })}
-                                className="generator-modal__select"
+                                className="generator-modal__select text-label"
                                 disabled={config.randomizeSpecies && config.autoSelectBias}
                             >
                                 <option value="balanced">Balanced</option>
@@ -105,8 +107,10 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                     <div className="generator-modal__side-by-side">
                         {/* COLUMN 1: Min Stats */}
                         <div className="generator-modal__composition">
-                            <label className="generator-modal__comp-title">Guaranteed Minimum Ranks</label>
-                            <p className="generator-modal__comp-desc">
+                            <label className="generator-modal__comp-title text-title-primary">
+                                Guaranteed Minimum Ranks
+                            </label>
+                            <p className="generator-modal__comp-desc text-subtext">
                                 Force the generator to allocate points here before processing its primary logic.
                             </p>
 
@@ -114,7 +118,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                 <div className="generator-modal__min-grid">
                                     {Object.values(CombatStat).map((stat) => (
                                         <div key={stat} className="generator-modal__min-item">
-                                            <span className="generator-modal__min-label">{stat.toUpperCase()}</span>
+                                            <span className="text-label text-subtext">{stat.toUpperCase()}</span>
                                             <input
                                                 type="number"
                                                 value={config.minStats?.[stat] || 0}
@@ -129,7 +133,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                 <div className="generator-modal__min-grid generator-modal__min-grid--spaced">
                                     {Object.values(SocialStat).map((stat) => (
                                         <div key={stat} className="generator-modal__min-item">
-                                            <span className="generator-modal__min-label">{stat.toUpperCase()}</span>
+                                            <span className="text-label text-subtext">{stat.toUpperCase()}</span>
                                             <input
                                                 type="number"
                                                 value={config.minSocials?.[stat] || 0}
@@ -146,13 +150,13 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
 
                         {/* COLUMN 2: Move Composition */}
                         <div className="generator-modal__composition">
-                            <label className="generator-modal__comp-title">Move Composition</label>
-                            <p className="generator-modal__comp-desc">
+                            <label className="generator-modal__comp-title text-title-primary">Move Composition</label>
+                            <p className="generator-modal__comp-desc text-subtext">
                                 Insight will automatically scale to fit this total.
                             </p>
                             <div className="generator-modal__comp-row">
                                 <div className="generator-modal__comp-item">
-                                    <span className="generator-modal__comp-label">Attacks</span>
+                                    <span className="text-label">Attacks</span>
                                     <input
                                         type="number"
                                         value={config.targetAtkCount}
@@ -163,7 +167,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                     />
                                 </div>
                                 <div className="generator-modal__comp-item">
-                                    <span className="generator-modal__comp-label">Support</span>
+                                    <span className="text-label">Support</span>
                                     <input
                                         type="number"
                                         value={config.targetSupCount}
@@ -176,7 +180,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                             </div>
 
                             <div className="generator-modal__spillover-section">
-                                <label className="generator-modal__checkbox-label generator-modal__checkbox-label--bold">
+                                <label className="generator-modal__checkbox-label text-label">
                                     <input
                                         type="checkbox"
                                         checked={config.useSpilloverRatio}
@@ -204,9 +208,9 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                                     min={0}
                                                     max={9}
                                                 />
-                                                <span className="generator-modal__spillover-text">Atk</span>
+                                                <span className="text-label">Atk</span>
                                             </div>
-                                            <span className="generator-modal__spillover-colon">:</span>
+                                            <span className="text-subtext">:</span>
                                             <div className="generator-modal__comp-item generator-modal__comp-item--row">
                                                 <NumberSpinner
                                                     value={config.spilloverSupRatio}
@@ -214,10 +218,10 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                                     min={0}
                                                     max={9}
                                                 />
-                                                <span className="generator-modal__spillover-text">Sup</span>
+                                                <span className="text-label">Sup</span>
                                             </div>
                                         </div>
-                                        <label className="generator-modal__checkbox-label generator-modal__checkbox-label--center">
+                                        <label className="generator-modal__checkbox-label generator-modal__checkbox-label--center text-subtext">
                                             <input
                                                 type="checkbox"
                                                 checked={config.spilloverJitter}
@@ -234,11 +238,18 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                         {/* COLUMN 3: Attack Type Ratios */}
                         {config.buildType !== 'wild' ? (
                             <div className="generator-modal__composition">
-                                <label className="generator-modal__comp-title">Attack Type Ratios</label>
-                                <p className="generator-modal__comp-desc">Override STAB counts & Coverage.</p>
+                                <label className="generator-modal__comp-title text-title-primary">
+                                    Attack Type Ratios
+                                </label>
+                                <p className="generator-modal__comp-desc text-subtext">
+                                    Override STAB counts & Coverage.
+                                </p>
                                 <div className="generator-modal__coverage-section">
                                     <div className="generator-modal__coverage-row">
-                                        <label className="generator-modal__checkbox-label" title={type1Label}>
+                                        <label
+                                            className="generator-modal__checkbox-label text-label"
+                                            title={type1Label}
+                                        >
                                             <input
                                                 type="checkbox"
                                                 checked={config.overridePrimaryStab}
@@ -259,7 +270,10 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                     </div>
                                     {hasType2 && (
                                         <div className="generator-modal__coverage-row">
-                                            <label className="generator-modal__checkbox-label" title={type2Label}>
+                                            <label
+                                                className="generator-modal__checkbox-label text-label"
+                                                title={type2Label}
+                                            >
                                                 <input
                                                     type="checkbox"
                                                     checked={config.overrideSecondaryStab}
@@ -285,13 +299,11 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                     )}
 
                                     <div className="generator-modal__coverage-select-wrapper">
-                                        <label className="generator-modal__coverage-select-label">
-                                            Coverage Preference
-                                        </label>
+                                        <label className="text-label">Coverage Preference</label>
                                         <select
                                             value={config.coveragePreference}
                                             onChange={(e) => setConfig({ coveragePreference: e.target.value })}
-                                            className="generator-modal__select generator-modal__coverage-select"
+                                            className="generator-modal__select generator-modal__coverage-select text-subtext"
                                         >
                                             <option value="balanced">Balanced (Auto)</option>
                                             <option value="heavy">Prioritize Coverage</option>
@@ -300,9 +312,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                         </select>
                                         {config.coveragePreference === 'fixed' && (
                                             <div className="generator-modal__coverage-fixed-row">
-                                                <span className="generator-modal__coverage-fixed-label">
-                                                    Coverage Count
-                                                </span>
+                                                <span className="text-subtext">Coverage Count</span>
                                                 <input
                                                     type="number"
                                                     value={config.coverageCount}
@@ -320,10 +330,12 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                             </div>
                         ) : (
                             <div className="generator-modal__composition generator-modal__composition--disabled">
-                                <label className="generator-modal__comp-title generator-modal__comp-title--disabled">
+                                <label className="generator-modal__comp-title generator-modal__comp-title--disabled text-title-primary">
                                     Attack Type Ratios
                                 </label>
-                                <p className="generator-modal__comp-desc">Disabled during Wild (Random) Generation.</p>
+                                <p className="generator-modal__comp-desc text-subtext">
+                                    Disabled during Wild (Random) Generation.
+                                </p>
                             </div>
                         )}
                     </div>
@@ -332,14 +344,14 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                     <div className="generator-modal__checkbox-group">
                         {/* LEFT COLUMN: Basic Settings */}
                         <div className="generator-modal__checkbox-col">
-                            <label className="generator-modal__checkbox-label">
+                            <label className="generator-modal__checkbox-label text-label">
                                 <input
                                     type="checkbox"
                                     checked={config.ensureDefenses}
                                     onChange={(e) => setConfig({ ensureDefenses: e.target.checked })}
                                     className="generator-modal__checkbox"
                                 />
-                                <strong>Ensure Minimum Defenses (Scales with Rank)</strong>
+                                Ensure Minimum Defenses (Scales with Rank)
                                 <TooltipIcon
                                     onClick={() =>
                                         setTooltipInfo({
@@ -350,57 +362,59 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                 />
                             </label>
 
-                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced">
+                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced text-label">
                                 <input
                                     type="checkbox"
                                     checked={config.includePmd}
                                     onChange={(e) => setConfig({ includePmd: e.target.checked })}
                                     className="generator-modal__checkbox"
                                 />
-                                Include Knowledge Skills (Lore, Medicine, etc.)
+                                <span style={{ fontWeight: 'normal' }}>
+                                    Include Knowledge Skills (Lore, Medicine, etc.)
+                                </span>
                             </label>
-                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced">
+                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced text-label">
                                 <input
                                     type="checkbox"
                                     checked={config.includeCustom}
                                     onChange={(e) => setConfig({ includeCustom: e.target.checked })}
                                     className="generator-modal__checkbox"
                                 />
-                                Include Custom Homebrew Skills
+                                <span style={{ fontWeight: 'normal' }}>Include Custom Homebrew Skills</span>
                             </label>
 
-                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced">
+                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced text-label">
                                 <input
                                     type="checkbox"
                                     checked={config.randomizeSpecies}
                                     onChange={(e) => setConfig({ randomizeSpecies: e.target.checked })}
                                     className="generator-modal__checkbox"
                                 />
-                                <strong>Randomize Species (Overwrites Identity)</strong>
+                                Randomize Species (Overwrites Identity)
                             </label>
                             {config.randomizeSpecies && (
-                                <label className="generator-modal__checkbox-label generator-modal__checkbox-label--indented">
+                                <label className="generator-modal__checkbox-label generator-modal__checkbox-label--indented text-label">
                                     <input
                                         type="checkbox"
                                         checked={config.autoSelectBias}
                                         onChange={(e) => setConfig({ autoSelectBias: e.target.checked })}
                                         className="generator-modal__checkbox"
                                     />
-                                    Auto-Detect Attack Bias (Phys vs Spec)
+                                    <span style={{ fontWeight: 'normal' }}>Auto-Detect Attack Bias (Phys vs Spec)</span>
                                 </label>
                             )}
                         </div>
 
                         {/* RIGHT COLUMN: Advanced Engine Settings */}
                         <div className="generator-modal__checkbox-col">
-                            <label className="generator-modal__checkbox-label">
+                            <label className="generator-modal__checkbox-label text-label">
                                 <input
                                     type="checkbox"
                                     checked={config.includePreEvolutions}
                                     onChange={(e) => setConfig({ includePreEvolutions: e.target.checked })}
                                     className="generator-modal__checkbox"
                                 />
-                                <strong>Include Pre-Evolution Moves</strong>
+                                Include Pre-Evolution Moves
                                 <TooltipIcon
                                     onClick={() =>
                                         setTooltipInfo({
@@ -413,11 +427,11 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                             {config.includePreEvolutions && (
                                 <div className="generator-modal__evo-group">
                                     <div className="generator-modal__evo-box">
-                                        <strong className="generator-modal__evo-title">
+                                        <strong className="generator-modal__evo-title text-title-primary">
                                             2-Stage Lines (e.g. Vulpix → Ninetales)
                                         </strong>
                                         <div className="generator-modal__evo-row">
-                                            <span className="generator-modal__evo-label">Base Form (Offset Down)</span>
+                                            <span className="text-subtext">Base Form (Offset Down)</span>
                                             <NumberSpinner
                                                 value={config.evo2Stage1Offset}
                                                 onChange={(val) => setConfig({ evo2Stage1Offset: val })}
@@ -427,13 +441,11 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                         </div>
                                     </div>
                                     <div className="generator-modal__evo-box">
-                                        <strong className="generator-modal__evo-title">
+                                        <strong className="generator-modal__evo-title text-title-primary">
                                             3-Stage Lines (e.g. Charmander → Charizard)
                                         </strong>
                                         <div className="generator-modal__evo-row generator-modal__evo-row--spaced">
-                                            <span className="generator-modal__evo-label">
-                                                Middle Form (Offset Down)
-                                            </span>
+                                            <span className="text-subtext">Middle Form (Offset Down)</span>
                                             <NumberSpinner
                                                 value={config.evo3Stage2Offset}
                                                 onChange={(val) => setConfig({ evo3Stage2Offset: val })}
@@ -442,7 +454,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                             />
                                         </div>
                                         <div className="generator-modal__evo-row">
-                                            <span className="generator-modal__evo-label">Base Form (Offset Down)</span>
+                                            <span className="text-subtext">Base Form (Offset Down)</span>
                                             <NumberSpinner
                                                 value={config.evo3Stage1Offset}
                                                 onChange={(val) => setConfig({ evo3Stage1Offset: val })}
@@ -454,14 +466,14 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                 </div>
                             )}
 
-                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced">
+                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced text-label">
                                 <input
                                     type="checkbox"
                                     checked={config.allowOverrank}
                                     onChange={(e) => setConfig({ allowOverrank: e.target.checked })}
                                     className="generator-modal__checkbox"
                                 />
-                                <strong>Allow Overrank (Draft 1 Higher Rank Move)</strong>
+                                Allow Overrank (Draft 1 Higher Rank Move)
                                 <TooltipIcon
                                     onClick={() =>
                                         setTooltipInfo({
@@ -474,9 +486,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                             {config.allowOverrank && (
                                 <div className="generator-modal__evo-group">
                                     <div className="generator-modal__evo-box generator-modal__evo-row">
-                                        <span className="generator-modal__evo-label generator-modal__evo-label--bold">
-                                            Max Ranks Above
-                                        </span>
+                                        <span className="text-label">Max Ranks Above</span>
                                         <NumberSpinner
                                             value={config.overrankAmount}
                                             onChange={(val) => setConfig({ overrankAmount: val })}
@@ -484,7 +494,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                             max={7}
                                         />
                                     </div>
-                                    <label className="generator-modal__checkbox-label generator-modal__checkbox-label--small">
+                                    <label className="generator-modal__checkbox-label text-subtext">
                                         <input
                                             type="checkbox"
                                             checked={config.allowPreEvoOverrank}
@@ -492,7 +502,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                             className="generator-modal__checkbox"
                                             disabled={!config.includePreEvolutions}
                                         />
-                                        Include Pre-Evolutions in Pool
+                                        <span style={{ fontWeight: 'normal' }}>Include Pre-Evolutions in Pool</span>
                                     </label>
                                 </div>
                             )}
@@ -535,8 +545,8 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
             {tooltipInfo && (
                 <div className="generator-modal__tooltip-overlay">
                     <div className="generator-modal__tooltip-content">
-                        <h3 className="generator-modal__tooltip-title">{tooltipInfo.title}</h3>
-                        <p className="generator-modal__tooltip-desc">{tooltipInfo.desc}</p>
+                        <h3 className="generator-modal__tooltip-title text-title-primary">{tooltipInfo.title}</h3>
+                        <p className="generator-modal__tooltip-desc text-subtext">{tooltipInfo.desc}</p>
                         <div className="generator-modal__tooltip-actions">
                             <button
                                 type="button"

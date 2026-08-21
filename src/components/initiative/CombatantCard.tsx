@@ -99,7 +99,7 @@ export function CombatantCard({ c, shape, isActive, updateInit, removeInit }: Co
             </div>
 
             <div className="init-tracker__info">
-                <span className="init-tracker__name" title={c.name}>
+                <span className="init-tracker__name text-label" title={c.name}>
                     {c.name}
                 </span>
 
@@ -111,7 +111,7 @@ export function CombatantCard({ c, shape, isActive, updateInit, removeInit }: Co
                         onChange={(event) => setValue(event.target.value)}
                         onBlur={handleSave}
                         onKeyDown={(event) => event.key === 'Enter' && handleSave()}
-                        className="init-tracker__input no-spinners"
+                        className="init-tracker__input no-spinners text-value-highlight"
                         title={`Score (Base Init: ${baseValue})`}
                     />
                     <button

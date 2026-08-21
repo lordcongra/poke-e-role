@@ -27,10 +27,14 @@ export function GeneratorPreviewMoveRow({
 
     return (
         <div className="generator-preview-move">
-            <span className="generator-preview-move__name" title={move.name}>
+            <span
+                className="generator-preview-move__name text-label"
+                style={{ color: 'var(--text-main)' }}
+                title={move.name}
+            >
                 {move.name}
             </span>
-            <span className="generator-preview-move__stats">
+            <span className="generator-preview-move__stats text-subtext">
                 [{move.cat.substring(0, 4)}] A:{accuracyPool} | D:{damagePool}
             </span>
             <button type="button" className="generator-preview-move__tooltip-btn" onClick={handleTooltipClick}>

@@ -39,10 +39,10 @@ export function ClashModal({ onClose }: ClashModalProps) {
     return (
         <div className="clash-modal__overlay">
             <div className="clash-modal__content">
-                <h3 className="clash-modal__title modal-title-with-icon">
+                <h3 className="clash-modal__title modal-title-with-icon text-title-primary">
                     <Swords size={20} /> Select Clash Type
                 </h3>
-                <p className="clash-modal__description">Which attribute are you using to Clash?</p>
+                <p className="clash-modal__description text-subtext">Which attribute are you using to Clash?</p>
                 <div className="clash-modal__actions">
                     <button
                         type="button"

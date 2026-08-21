@@ -4,7 +4,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.6);
+    background: color-mix(in srgb, var(--dark) 60%, transparent);
     z-index: 1000;
     display: flex;
     justify-content: center;
@@ -24,8 +24,6 @@
 
 .generator-modal__title {
     margin-top: 0;
-    color: var(--primary);
-    font-size: 1.1rem;
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
     text-align: center;
@@ -36,10 +34,8 @@
 }
 
 .generator-modal__desc {
-    font-size: 0.85rem;
     text-align: center;
     margin-bottom: 15px;
-    color: var(--text-muted);
 }
 
 .generator-modal__form-group {
@@ -56,12 +52,6 @@
 
 .generator-modal__col {
     flex: 1;
-}
-
-.generator-modal__label {
-    font-size: 0.8rem;
-    font-weight: bold;
-    color: var(--text-muted);
 }
 
 .generator-modal__select {
@@ -97,9 +87,6 @@
 }
 
 .generator-modal__comp-title {
-    font-size: 0.85rem;
-    font-weight: bold;
-    color: var(--primary);
     display: block;
     margin-bottom: 4px;
     text-align: center;
@@ -110,8 +97,6 @@
 }
 
 .generator-modal__comp-desc {
-    font-size: 0.7rem;
-    color: var(--text-muted);
     text-align: center;
     margin: 0 0 8px 0;
     line-height: 1.2;
@@ -134,11 +119,6 @@
 
 .generator-modal__comp-item--row {
     flex-direction: row;
-}
-
-.generator-modal__comp-label {
-    font-size: 0.75rem;
-    font-weight: bold;
 }
 
 .generator-modal__comp-input {
@@ -177,12 +157,6 @@
     gap: 2px;
 }
 
-.generator-modal__min-label {
-    font-size: 0.7rem;
-    font-weight: bold;
-    color: var(--text-muted);
-}
-
 /* 2-Column Checkbox Grid */
 .generator-modal__checkbox-group {
     display: grid;
@@ -200,20 +174,13 @@
 }
 
 .generator-modal__checkbox-label {
-    font-size: 0.8rem;
     cursor: pointer;
-    color: var(--text-main);
     display: flex;
     align-items: center;
     gap: 6px;
 }
 
-.generator-modal__checkbox-label--bold {
-    font-weight: bold;
-}
-
 .generator-modal__checkbox-label--center {
-    font-size: 0.7rem;
     justify-content: center;
 }
 
@@ -223,10 +190,6 @@
 
 .generator-modal__checkbox-label--spaced {
     margin-top: 4px;
-}
-
-.generator-modal__checkbox-label--small {
-    font-size: 0.75rem;
 }
 
 .generator-modal__checkbox {
@@ -269,7 +232,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: color-mix(in srgb, var(--dark) 60%, transparent);
     z-index: 1200;
     display: flex;
     justify-content: center;
@@ -283,22 +246,18 @@
     width: 280px;
     border: 2px solid var(--primary);
     color: var(--text-main);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
 }
 
 .generator-modal__tooltip-title {
     margin-top: 0;
-    color: var(--primary);
-    font-size: 1.1rem;
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
     text-align: center;
 }
 
 .generator-modal__tooltip-desc {
-    font-size: 0.85rem;
     margin-bottom: 15px;
-    color: var(--text-muted);
     white-space: pre-wrap;
     line-height: 1.4;
 }
@@ -330,16 +289,6 @@
     margin-top: 4px;
 }
 
-.generator-modal__spillover-text {
-    font-size: 0.75rem;
-    font-weight: bold;
-}
-
-.generator-modal__spillover-colon {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-}
-
 .generator-modal__coverage-section {
     display: flex;
     flex-direction: column;
@@ -361,11 +310,6 @@
     gap: 4px;
 }
 
-.generator-modal__coverage-select-label {
-    font-weight: bold;
-    font-size: 0.8rem;
-}
-
 .generator-modal__coverage-select {
     font-size: 0.75rem;
     padding: 4px;
@@ -376,11 +320,6 @@
     justify-content: space-between;
     align-items: center;
     margin-top: 4px;
-}
-
-.generator-modal__coverage-fixed-label {
-    font-size: 0.75rem;
-    color: var(--text-muted);
 }
 
 .generator-modal__evo-group {
@@ -399,11 +338,8 @@
 }
 
 .generator-modal__evo-title {
-    font-size: 0.75rem;
-    color: var(--primary);
     display: block;
     margin-bottom: 6px;
-    font-weight: bold;
 }
 
 .generator-modal__evo-row {
@@ -414,15 +350,6 @@
 
 .generator-modal__evo-row--spaced {
     margin-bottom: 4px;
-}
-
-.generator-modal__evo-label {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-}
-
-.generator-modal__evo-label--bold {
-    font-weight: bold;
 }
 
 /* Mobile Overrides */

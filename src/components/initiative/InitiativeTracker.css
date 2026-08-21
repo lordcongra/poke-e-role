@@ -16,9 +16,9 @@
     flex: 1;
     min-height: 0;
     min-width: 0;
-    border: 2px solid #b71c1c;
+    border: 2px solid var(--primary);
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--dark) 40%, transparent);
 
     /* FIX: Clip the header's square background to the parent's curved border */
     overflow: hidden;
@@ -59,14 +59,14 @@
 }
 
 .init-tracker__header--vertical {
-    border-bottom: 2px solid #b71c1c;
+    border-bottom: 2px solid var(--primary);
     padding: 6px 12px;
 }
 
 .init-tracker__header--horizontal {
     flex-direction: column;
     justify-content: center;
-    border-right: 2px solid #b71c1c;
+    border-right: 2px solid var(--primary);
     border-bottom: none;
     padding: 6px 8px;
     height: 100%;
@@ -91,29 +91,12 @@
 }
 
 .init-tracker__turn-btn {
-    background: #333;
-    border: 1px solid #555;
-    color: white;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
+    width: 28px;
+    height: 28px;
+    padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
-    transition:
-        background 0.2s,
-        transform 0.1s;
-}
-
-.init-tracker__turn-btn:hover {
-    background: #444;
-    transform: scale(1.05);
-}
-
-.init-tracker__turn-btn:active {
-    transform: scale(0.95);
 }
 
 /* --- LIST --- */
@@ -130,7 +113,7 @@
     height: 6px;
 }
 .init-tracker__list::-webkit-scrollbar-thumb {
-    background: #b71c1c;
+    background: var(--primary);
     border-radius: 4px;
 }
 
@@ -157,17 +140,16 @@
 
 .init-tracker__empty {
     padding: 20px;
-    font-size: 0.9rem;
-    color: var(--text-muted);
     text-align: center;
     font-style: italic;
     flex: 1;
 }
 
 .init-tracker__flow-arrow {
-    color: #666;
-    font-size: 1.2rem;
+    color: var(--dark);
     margin-left: 12px;
+    display: flex;
+    align-items: center;
 }
 
 /* --- STANDALONE OVERRIDES --- */
@@ -185,7 +167,7 @@
 }
 
 .init-tracker__standalone-panel {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--dark) 20%, transparent);
     height: 100%;
     width: max-content;
     max-width: 100%;
@@ -208,29 +190,19 @@
 }
 
 @media (max-width: 768px) {
-    /* The floating ⚔️ button */
+    /* The floating toggle button */
     .init-tracker__mobile-toggle {
         display: flex;
         position: fixed;
         top: 8px;
         right: 8px;
-        background: var(--panel-bg);
-        border: 2px solid #b71c1c;
-        color: white;
         border-radius: 8px;
         width: 42px;
         height: 42px;
         align-items: center;
         justify-content: center;
-        font-size: 1.3rem;
         z-index: 9002;
-        cursor: pointer;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-        transition: background 0.2s;
-    }
-
-    .init-tracker__mobile-toggle.is-active {
-        background: #b71c1c;
+        box-shadow: 0 4px 12px color-mix(in srgb, var(--dark) 50%, transparent);
     }
 
     /* The slide-out drawer container */
@@ -264,9 +236,9 @@
     .init-tracker__standalone-panel {
         width: 100% !important;
         height: 100% !important;
-        border: 2px solid #b71c1c !important;
+        border: 2px solid var(--primary) !important;
         border-radius: 8px !important;
-        box-shadow: -4px 8px 24px rgba(0, 0, 0, 0.8) !important;
+        box-shadow: -4px 8px 24px color-mix(in srgb, var(--dark) 80%, transparent) !important;
         flex-direction: column !important;
         box-sizing: border-box;
         background: var(--panel-bg) !important;
@@ -279,7 +251,7 @@
         width: 100% !important;
         height: auto !important;
         border-right: none !important;
-        border-bottom: 2px solid #b71c1c !important;
+        border-bottom: 2px solid var(--primary) !important;
         padding: 6px 4px !important; /* Shrunk padding to fit buttons neatly */
         box-sizing: border-box;
     }

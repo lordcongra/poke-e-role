@@ -19,13 +19,13 @@ export function GlobalModifiersModal({ onClose, setTooltipInfo, handleGlobalChan
     return (
         <div className="global-modifiers__overlay">
             <div className="global-modifiers__content">
-                <h3 className="global-modifiers__title modal-title-with-icon">
+                <h3 className="global-modifiers__title modal-title-with-icon text-title-primary">
                     <SlidersHorizontal size={20} /> Global Modifiers
                 </h3>
 
                 <div className="global-modifiers__list">
                     <div className="global-modifiers__row">
-                        <span className="global-modifiers__label">
+                        <span className="global-modifiers__label text-label">
                             Acc
                             <TooltipIcon
                                 onClick={() =>
@@ -44,7 +44,7 @@ export function GlobalModifiersModal({ onClose, setTooltipInfo, handleGlobalChan
                     </div>
 
                     <div className="global-modifiers__row">
-                        <span className="global-modifiers__label">
+                        <span className="global-modifiers__label text-label">
                             Dmg
                             <TooltipIcon
                                 onClick={() =>
@@ -63,7 +63,7 @@ export function GlobalModifiersModal({ onClose, setTooltipInfo, handleGlobalChan
                     </div>
 
                     <div className="global-modifiers__row">
-                        <span className="global-modifiers__label">
+                        <span className="global-modifiers__label text-label">
                             Succ
                             <TooltipIcon
                                 onClick={() =>
@@ -82,7 +82,7 @@ export function GlobalModifiersModal({ onClose, setTooltipInfo, handleGlobalChan
                     </div>
 
                     <div className="global-modifiers__row">
-                        <span className="global-modifiers__label">
+                        <span className="global-modifiers__label text-label">
                             Chance
                             <button
                                 type="button"
@@ -101,7 +101,7 @@ export function GlobalModifiersModal({ onClose, setTooltipInfo, handleGlobalChan
 
                     {painEnabled && (
                         <div className="global-modifiers__pain-container">
-                            <span className="global-modifiers__label global-modifiers__label--pain">
+                            <span className="global-modifiers__label global-modifiers__label--pain text-label">
                                 Ign.Pain
                                 <TooltipIcon
                                     onClick={() =>

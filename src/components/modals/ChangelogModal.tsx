@@ -11,7 +11,7 @@ export function ChangelogModal({ onClose }: ChangelogModalProps) {
         <div className="changelog-modal__overlay">
             <div className="changelog-modal__content">
                 <div className="changelog-modal__header">
-                    <h3 className="changelog-modal__title">
+                    <h3 className="changelog-modal__title text-title-primary">
                         <Megaphone size={20} /> What's New in v{CURRENT_VERSION}
                     </h3>
                     <button onClick={onClose} className="changelog-modal__close-x" title="Close">
@@ -22,10 +22,10 @@ export function ChangelogModal({ onClose }: ChangelogModalProps) {
                 <div className="changelog-modal__body">
                     {CHANGELOG_DATA.map((log) => (
                         <div key={log.version} className="changelog-modal__version-block">
-                            <h4 className="changelog-modal__version-title">
-                                v{log.version} <span className="changelog-modal__date">- {log.date}</span>
+                            <h4 className="changelog-modal__version-title text-title-primary">
+                                v{log.version} <span className="changelog-modal__date text-subtext">- {log.date}</span>
                             </h4>
-                            <ul className="changelog-modal__list">
+                            <ul className="changelog-modal__list text-subtext" style={{ color: 'var(--text-main)' }}>
                                 {log.changes.map((change, idx) => (
                                     <li key={idx}>{change}</li>
                                 ))}
