@@ -77,7 +77,7 @@ export function useOwlbearSync() {
                             payload.customStatuses || [],
                             true // silent flag
                         );
-                        OBR.notification.show('📥 Homebrew data synced from GM!', 'SUCCESS');
+                        OBR.notification.show('[ ↓ ] Homebrew data synced from GM!', 'SUCCESS');
                     }
                 });
                 unsubs.push(unsubHomebrewPayload);
@@ -94,7 +94,7 @@ export function useOwlbearSync() {
                         payload.customStatuses || [],
                         true // silent flag
                     );
-                    OBR.notification.show('📥 New Homebrew shared to table!', 'SUCCESS');
+                    OBR.notification.show('[ ↓ ] New Homebrew shared to table!', 'SUCCESS');
                 });
                 unsubs.push(unsubHomebrewShare);
 
@@ -166,7 +166,7 @@ export function useOwlbearSync() {
                                     );
                                     if (OBR.isAvailable)
                                         OBR.notification.show(
-                                            '⚠️ Token data corrupted. Sheet reset to prevent crash.',
+                                            '[ ! ] Token data corrupted. Sheet reset to prevent crash.',
                                             'ERROR'
                                         );
                                     store.loadFromOwlbear({});
@@ -341,7 +341,7 @@ export function useOwlbearSync() {
 
                                 await OBR.room.setMetadata({ [ROOM_META_ID]: cleanedRoomSettings });
                                 OBR.notification.show(
-                                    '⚙️ Legacy Homebrew Data successfully migrated to Local Storage!',
+                                    '[ ⚙ ] Legacy Homebrew Data successfully migrated to Local Storage!',
                                     'SUCCESS'
                                 );
                             }
@@ -448,7 +448,7 @@ export function useOwlbearSync() {
 
                             const resultObj = data.result as Record<string, unknown> | undefined;
 
-                            // ⚔️ INITIATIVE INTERCEPT
+                            // [ Initiative Intercept ]
                             if (rollType === 'init' && targetTokenId && resultObj) {
                                 const rollTotal = parseInt(String(resultObj.totalValue)) || 0;
                                 const baseInit = parseInt(String(payload)) || 0;
@@ -479,7 +479,7 @@ export function useOwlbearSync() {
                                 const store = useCharacterStore.getState();
                                 if (store.identity.diceEngine === 'dice-plus') {
                                     OBR.notification.show(
-                                        '⚠️ The [Acc Xs Add Dmg] tag requires Custom Action Rolls (CAR) to read individual die faces. Please switch your Dice Engine in the Room Rules menu!',
+                                        '[ ! ] The [Acc Xs Add Dmg] tag requires Custom Action Rolls (CAR) to read individual die faces. Please switch your Dice Engine in the Room Rules menu!',
                                         'WARNING'
                                     );
                                 }
@@ -490,8 +490,8 @@ export function useOwlbearSync() {
                                 const val = parseInt(String(resultObj.totalValue)) || 0;
                                 let msg =
                                     val > 0
-                                        ? `✅ Result: ${val} Success${val > 1 ? 'es' : ''}!`
-                                        : `❌ Result: Failure! (0)`;
+                                        ? `[ ✓ ] Result: ${val} Success${val > 1 ? 'es' : ''}!`
+                                        : `[ ✕ ] Result: Failure! (0)`;
 
                                 if (rollType === 'damage' && payload && val > 0) {
                                     const [flatStr, ratioStr] = payload.split('_');
@@ -521,9 +521,9 @@ export function useOwlbearSync() {
                                         if (tempGained > currentTempMax) {
                                             store.updateHealth('temporaryHitPointsMax', tempGained);
                                             store.updateHealth('temporaryHitPoints', tempGained);
-                                            msg = `✅ Result: ${val} Successes! (Gained ${tempGained} Temp HP 🛡️)`;
+                                            msg = `[ ✓ ] Result: ${val} Successes! (Gained ${tempGained} Temp HP [ ⛨ ])`;
                                         } else {
-                                            msg = `✅ Result: ${val} Successes! (Current Shield Holds 🛡️)`;
+                                            msg = `[ ✓ ] Result: ${val} Successes! (Current Shield Holds [ ⛨ ])`;
                                         }
                                     }
                                 }

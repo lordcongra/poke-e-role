@@ -41,9 +41,6 @@ body {
     align-items: center;
     justify-content: center;
     height: 100%;
-    color: var(--text-muted);
-    font-size: 1.2rem;
-    font-weight: bold;
     text-transform: uppercase;
     opacity: 0.5;
 }

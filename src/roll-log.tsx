@@ -2,6 +2,7 @@ import { StrictMode, useEffect, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import OBR from '@owlbear-rodeo/sdk';
 import { imageManager } from './utils/imageManager';
+import { Dices, Trash2, X } from 'lucide-react';
 import './style.css';
 import './roll-log.css';
 
@@ -118,13 +119,15 @@ function RollLog() {
     return (
         <div className="roll-log__container">
             <div className="roll-log__header">
-                <h3 className="roll-log__title">🎲 Roll Log</h3>
+                <h3 className="roll-log__title text-title-primary">
+                    <Dices size={20} /> Roll Log
+                </h3>
                 <button
                     type="button"
                     onClick={clearAll}
-                    className="action-button action-button--red roll-log__clear-btn"
+                    className="action-button action-button--red roll-log__clear-btn text-theme-header"
                 >
-                    Clear All ✖
+                    <Trash2 size={14} /> Clear All
                 </button>
             </div>
             <div className="roll-log__list">
@@ -132,18 +135,27 @@ function RollLog() {
                     <div key={r.id} className="roll-log__entry">
                         <div className="roll-log__entry-header">
                             <img src={resolvedIcons[r.id] || r.icon} alt="Token" className="roll-log__entry-icon" />
-                            <strong className="roll-log__entry-player">{r.player}</strong>
+                            <strong
+                                className="roll-log__entry-player text-title-primary"
+                                style={{ fontSize: '0.9rem' }}
+                            >
+                                {r.player}
+                            </strong>
                             <button
                                 type="button"
                                 onClick={() => dismiss(r.id)}
-                                className="roll-log__entry-dismiss"
+                                className="roll-log__entry-dismiss text-subtext"
                                 title="Dismiss"
                             >
-                                ✖
+                                <X size={16} />
                             </button>
                         </div>
-                        <div className="roll-log__entry-label">{r.label}</div>
-                        <div className="roll-log__entry-result">{r.result}</div>
+                        <div className="roll-log__entry-label text-label" style={{ color: 'var(--primary)' }}>
+                            {r.label}
+                        </div>
+                        <div className="roll-log__entry-result text-subtext" style={{ color: 'var(--text-main)' }}>
+                            {r.result}
+                        </div>
                     </div>
                 ))}
             </div>

@@ -1,4 +1,3 @@
-// src/App.tsx
 import { useState, useEffect } from 'react';
 import { useOwlbearSync } from './hooks/useOwlbearSync';
 import { useCharacterStore } from './store/useCharacterStore';
@@ -20,6 +19,7 @@ import { Sidebar } from './components/standalone/Sidebar';
 import { InitiativeTracker } from './components/initiative/InitiativeTracker';
 import { RollLogWidget } from './components/standalone/RollLogWidget';
 import { isStandaloneMode } from './utils/storageAdapter';
+import { Lock, ArrowLeft } from 'lucide-react';
 import './App.css';
 import './style.css';
 
@@ -140,8 +140,12 @@ function App() {
         if (isNPC && role === 'PLAYER') {
             return (
                 <div id="gm-lock-screen" className="app-gm-lock">
-                    <h2 className="app-gm-lock__icon">🔒</h2>
-                    <h3>This sheet is hidden by the GM.</h3>
+                    <h2 className="app-gm-lock__icon text-title-primary">
+                        <Lock size={40} />
+                    </h2>
+                    <h3 className="text-label" style={{ color: 'var(--text-main)' }}>
+                        This sheet is hidden by the GM.
+                    </h3>
                     {!gmOnlyMatchups && (
                         <div className="app-gm-lock__content">
                             <TypeMatchups />
@@ -200,8 +204,10 @@ function App() {
                 <GlobalToolbar />
 
                 {!activeTokenId ? (
-                    <div className="standalone-empty-state">
-                        <p>👈 Select or create a file in the directory to begin</p>
+                    <div className="standalone-empty-state text-subtext">
+                        <p style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <ArrowLeft size={20} /> Select or create a file in the directory to begin
+                        </p>
                     </div>
                 ) : (
                     <div className="standalone-layout-wrapper">
