@@ -32,7 +32,7 @@ export function TimerBox() {
             </div>
             <div className="timer-box__content">
                 {effects.length === 0 ? (
-                    <div className="timer-box__empty">No active effects.</div>
+                    <div className="timer-box__empty text-subtext">No active effects.</div>
                 ) : (
                     effects.map((effect) => (
                         <div key={effect.id} className="timer-box__row">
@@ -43,7 +43,7 @@ export function TimerBox() {
                                 onChange={(event) => updateEffect(effect.id, 'name', event.target.value)}
                                 placeholder="Effect Name"
                             />
-                            <span className="timer-box__rounds-label">Rds:</span>
+                            <span className="timer-box__rounds-label text-subtext">Rds:</span>
                             <input
                                 type="number"
                                 className="timer-box__rounds-input"
@@ -66,8 +66,8 @@ export function TimerBox() {
             {tooltipInfo && (
                 <div className="timer-box__modal-overlay">
                     <div className="timer-box__modal-content">
-                        <h3 className="timer-box__modal-title">{tooltipInfo.title}</h3>
-                        <p className="timer-box__modal-desc">{tooltipInfo.desc}</p>
+                        <h3 className="timer-box__modal-title text-title-primary">{tooltipInfo.title}</h3>
+                        <p className="timer-box__modal-desc text-subtext">{tooltipInfo.desc}</p>
                         <div className="timer-box__modal-btn-container">
                             <button
                                 type="button"

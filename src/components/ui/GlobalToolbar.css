@@ -207,8 +207,8 @@
     padding-bottom: 8px;
 }
 
+/* Typography pruned: relies on .text-subtext */
 .global-toolbar__modal-text {
-    font-size: 0.9rem;
     margin-bottom: 16px;
     line-height: 1.4;
 }

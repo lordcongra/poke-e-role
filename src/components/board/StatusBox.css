@@ -117,21 +117,19 @@
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
 }
 
+/* Typography pruned: relies on .text-title-primary */
 .status-box__modal-title {
     margin-top: 0;
-    color: var(--primary);
-    font-size: 1.1rem;
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
     text-align: center;
 }
 
+/* Typography pruned: relies on .text-subtext */
 .status-box__modal-desc {
-    font-size: 0.85rem;
     margin-bottom: 15px;
-    color: var(--text-muted);
     white-space: pre-wrap;
-    line-height: 1.4;
+    text-align: center;
 }
 
 .status-box__modal-btn-container {

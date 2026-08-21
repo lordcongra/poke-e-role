@@ -273,8 +273,8 @@ export function DerivedBoard() {
             {tooltipInfo && (
                 <div className="derived-board__modal-overlay">
                     <div className="derived-board__modal-content">
-                        <h3 className="derived-board__modal-title">{tooltipInfo.title}</h3>
-                        <p className="derived-board__modal-desc">{tooltipInfo.desc}</p>
+                        <h3 className="derived-board__modal-title text-title-primary">{tooltipInfo.title}</h3>
+                        <p className="derived-board__modal-desc text-subtext">{tooltipInfo.desc}</p>
                         <div className="derived-board__modal-btn-container">
                             <button
                                 type="button"
@@ -291,10 +291,10 @@ export function DerivedBoard() {
             {showAddTempModal && (
                 <div className="derived-board__modal-overlay">
                     <div className="derived-board__modal-content">
-                        <h3 className="derived-board__modal-title derived-board__modal-title--temp-hp modal-title-with-icon">
+                        <h3 className="derived-board__modal-title derived-board__modal-title--temp-hp text-title-primary">
                             <Shield size={20} /> Set Temporary HP
                         </h3>
-                        <p className="derived-board__modal-desc">
+                        <p className="derived-board__modal-desc text-subtext">
                             Enter the amount of Temporary HP to grant. This will replace any existing shield.
                         </p>
                         <div className="derived-board__spinner-wrapper">
@@ -327,10 +327,10 @@ export function DerivedBoard() {
             {showTempConfirm && (
                 <div className="derived-board__modal-overlay">
                     <div className="derived-board__modal-content">
-                        <h3 className="derived-board__modal-title derived-board__modal-title--clear-hp modal-title-with-icon">
+                        <h3 className="derived-board__modal-title derived-board__modal-title--clear-hp text-title-primary">
                             <AlertTriangle size={20} /> Clear Temp HP
                         </h3>
-                        <p className="derived-board__modal-desc">
+                        <p className="derived-board__modal-desc text-subtext">
                             Are you sure you want to completely remove your Temporary HP Shield?
                         </p>
                         <div className="derived-board__modal-btn-container derived-board__modal-btn-container--spaced">
@@ -360,10 +360,10 @@ export function DerivedBoard() {
             {showAddTempWillModal && (
                 <div className="derived-board__modal-overlay">
                     <div className="derived-board__modal-content">
-                        <h3 className="derived-board__modal-title derived-board__modal-title--temp-will modal-title-with-icon">
+                        <h3 className="derived-board__modal-title derived-board__modal-title--temp-will text-title-primary">
                             <Sparkles size={20} /> Set Temp Willpower
                         </h3>
-                        <p className="derived-board__modal-desc">
+                        <p className="derived-board__modal-desc text-subtext">
                             Enter the amount of Temporary Willpower to grant. This will replace any existing Temporary
                             Willpower.
                         </p>
@@ -397,10 +397,10 @@ export function DerivedBoard() {
             {showTempWillConfirm && (
                 <div className="derived-board__modal-overlay">
                     <div className="derived-board__modal-content">
-                        <h3 className="derived-board__modal-title derived-board__modal-title--clear-will modal-title-with-icon">
+                        <h3 className="derived-board__modal-title derived-board__modal-title--clear-will text-title-primary">
                             <AlertTriangle size={20} /> Clear Temp Willpower
                         </h3>
-                        <p className="derived-board__modal-desc">
+                        <p className="derived-board__modal-desc text-subtext">
                             Are you sure you want to completely remove your Temporary Willpower?
                         </p>
                         <div className="derived-board__modal-btn-container derived-board__modal-btn-container--spaced">

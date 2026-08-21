@@ -1,4 +1,3 @@
-// src/components/ui/ResourceBox.tsx
 import { NumberSpinner } from './NumberSpinner';
 import { Shield, Sparkles, X } from 'lucide-react';
 import './UI.css';
@@ -55,7 +54,7 @@ export function ResourceBox({
 
     return (
         <div className="health-section__box">
-            <div className="health-section__header health-section__header--shadow">{title}</div>
+            <div className="health-section__header text-theme-header">{title}</div>
             <div className="resource-box">
                 <div className="resource-bar-fill" style={{ backgroundColor: barColor, width: `${pct}%` }}></div>
 
@@ -65,7 +64,7 @@ export function ResourceBox({
 
                 <div className="resource-box__main resource-box__content-layer">
                     <div className="resource-box__grid-left">
-                        <span className="resource-box__label">Curr:</span>
+                        <span className="text-label">Curr:</span>
                     </div>
                     <div className="resource-box__grid-center">
                         <NumberSpinner value={curr} onChange={onCurrChange} min={0} />
@@ -126,7 +125,7 @@ export function ResourceBox({
                     </div>
                 )}
 
-                <div className="resource-box__sub resource-box__content-layer">
+                <div className="resource-box__sub resource-box__content-layer text-subtext">
                     <span>Base:</span>
                     <NumberSpinner value={base} onChange={onBaseChange} min={0} />
                 </div>

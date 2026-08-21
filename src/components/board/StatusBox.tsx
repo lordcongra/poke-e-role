@@ -102,8 +102,8 @@ export function StatusBox() {
             {tooltipInfo && (
                 <div className="status-box__modal-overlay">
                     <div className="status-box__modal-content">
-                        <h3 className="status-box__modal-title">{tooltipInfo.title}</h3>
-                        <p className="status-box__modal-desc">{tooltipInfo.desc}</p>
+                        <h3 className="status-box__modal-title text-title-primary">{tooltipInfo.title}</h3>
+                        <p className="status-box__modal-desc text-subtext">{tooltipInfo.desc}</p>
                         <div className="status-box__modal-btn-container">
                             <button
                                 type="button"

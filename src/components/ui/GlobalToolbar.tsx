@@ -547,10 +547,10 @@ export function GlobalToolbar() {
             {importData && (
                 <div className="global-toolbar__modal-overlay">
                     <div className="global-toolbar__modal-content">
-                        <h3 className="global-toolbar__modal-title modal-title-with-icon">
+                        <h3 className="global-toolbar__modal-title">
                             <AlertTriangle size={20} /> Confirm Import
                         </h3>
-                        <p className="global-toolbar__modal-text">
+                        <p className="global-toolbar__modal-text text-subtext">
                             Import character data? This will completely overwrite the current token.
                         </p>
                         <div className="global-toolbar__modal-actions">

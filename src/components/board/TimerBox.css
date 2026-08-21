@@ -56,11 +56,10 @@
     max-height: 80px;
 }
 
+/* Typography pruned: relies on .text-subtext */
 .timer-box__empty {
     text-align: center;
-    color: var(--text-muted);
     font-style: italic;
-    font-size: 0.8rem;
 }
 
 .timer-box__row {
@@ -81,11 +80,6 @@
     font-size: 0.75rem;
     min-width: 60px;
     outline: none;
-}
-
-.timer-box__rounds-label {
-    font-size: 0.7rem;
-    color: var(--text-muted);
 }
 
 .timer-box__rounds-input {
@@ -128,21 +122,19 @@
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
 }
 
+/* Typography pruned: relies on .text-title-primary */
 .timer-box__modal-title {
     margin-top: 0;
-    color: var(--primary);
-    font-size: 1.1rem;
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
     text-align: center;
 }
 
+/* Typography pruned: relies on .text-subtext */
 .timer-box__modal-desc {
-    font-size: 0.85rem;
     margin-bottom: 15px;
-    color: var(--text-muted);
     white-space: pre-wrap;
-    line-height: 1.4;
+    text-align: center;
 }
 
 .timer-box__modal-btn-container {
