@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { imageManager } from '../../utils/imageManager';
+import { Dices, Trash2, ChevronUp, ChevronDown, X } from 'lucide-react';
 import './RollLogWidget.css';
 
 interface RollData {
@@ -82,19 +83,22 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
             className={`roll-log-widget ${isCollapsed ? 'roll-log-widget--collapsed' : ''} ${isDocked ? 'roll-log-widget--docked' : 'roll-log-widget--floating'}`}
         >
             <div className="roll-log-widget__header">
-                <span className="roll-log-widget__title" onClick={() => setIsCollapsed(!isCollapsed)}>
-                    🎲 Roll History ({rolls.length})
+                <span
+                    className="roll-log-widget__title text-title-primary"
+                    onClick={() => setIsCollapsed(!isCollapsed)}
+                >
+                    <Dices size={16} /> Roll History ({rolls.length})
                 </span>
                 <div style={{ display: 'flex', gap: '6px' }}>
-                    <button type="button" onClick={clearAll} className="roll-log-widget__btn-clear">
-                        Clear All ✖
+                    <button type="button" onClick={clearAll} className="roll-log-widget__btn-clear text-theme-header">
+                        Clear All <Trash2 size={14} />
                     </button>
                     <button
                         type="button"
                         onClick={() => setIsCollapsed(!isCollapsed)}
-                        className="roll-log-widget__btn-toggle"
+                        className="roll-log-widget__btn-toggle text-subtext"
                     >
-                        {isCollapsed ? '▲' : '▼'}
+                        {isCollapsed ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                     </button>
                 </div>
             </div>
@@ -109,17 +113,22 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
                                     alt="Avatar"
                                     className="roll-log-widget__icon"
                                 />
-                                <strong className="roll-log-widget__player">{r.player}</strong>
+                                <strong className="text-title-primary" style={{ fontSize: '0.85rem' }}>
+                                    {r.player}
+                                </strong>
                                 <button
                                     type="button"
                                     onClick={() => dismiss(r.id)}
-                                    className="roll-log-widget__dismiss"
+                                    className="roll-log-widget__dismiss text-subtext"
+                                    title="Dismiss Roll"
                                 >
-                                    ✖
+                                    <X size={14} />
                                 </button>
                             </div>
-                            <div className="roll-log-widget__label">{r.label}</div>
-                            <div className="roll-log-widget__result">{r.result}</div>
+                            <div className="text-label">{r.label}</div>
+                            <div className="roll-log-widget__result text-subtext" style={{ color: 'var(--text-main)' }}>
+                                {r.result}
+                            </div>
                         </div>
                     ))}
                 </div>

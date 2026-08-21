@@ -109,7 +109,7 @@ export function useSidebarEngine() {
                 if (ids && ids.length > 1) {
                     newTags[c.id] = `#${ids.indexOf(c.id) + 1}`;
                 } else {
-                    newTags[c.id] = '⚔️';
+                    newTags[c.id] = 'init_active';
                 }
             });
             setInitTags(newTags);
@@ -426,7 +426,7 @@ export function useSidebarEngine() {
 
     const handleExportMasterBackup = async () => {
         const confirmed = window.confirm(
-            '⚠️ MASTER BACKUP NOTICE:\n\n' +
+            'MASTER BACKUP NOTICE:\n\n' +
                 'This will export all folders and character sheets to a JSON file.\n' +
                 'Please note: Locally uploaded custom images are stored in browser storage and CANNOT be embedded into file backups. Only external image URLs will be fully preserved.\n\n' +
                 'Proceed with export?'
@@ -499,7 +499,7 @@ export function useSidebarEngine() {
         if (!pendingRestoreData) return;
         if (
             !window.confirm(
-                '⚠️ FINAL WARNING: Overwriting will delete all current local files not in the backup. Are you completely sure?'
+                'FINAL WARNING: Overwriting will delete all current local files not in the backup. Are you completely sure?'
             )
         ) {
             return;

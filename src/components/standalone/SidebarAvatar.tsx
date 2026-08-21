@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { isStandaloneMode } from '../../utils/storageAdapter';
 import { imageManager } from '../../utils/imageManager';
 import { extractTokenImage } from '../../utils/initiativeHelpers';
+import { File } from 'lucide-react';
 
 interface SidebarAvatarProps {
     meta?: Record<string, unknown>;
@@ -40,7 +41,14 @@ export function SidebarAvatar({ meta }: SidebarAvatarProps) {
     }, [meta]);
 
     if (!resolvedImage) {
-        return <span className="sidebar__item-icon">📄</span>;
+        return (
+            <span
+                className="sidebar__item-icon"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+                <File size={16} color="var(--text-muted)" />
+            </span>
+        );
     }
 
     return <img src={resolvedImage} alt="Character Avatar" className="sidebar__item-avatar" loading="lazy" />;

@@ -42,7 +42,11 @@ export function Sidebar() {
     if (isCollapsed) {
         return (
             <div className="sidebar sidebar--collapsed">
-                <button className="sidebar__toggle-btn" onClick={() => setIsCollapsed(false)} title="Open Directory">
+                <button
+                    className="sidebar__toggle-btn text-label"
+                    onClick={() => setIsCollapsed(false)}
+                    title="Open Directory"
+                >
                     <Menu size={20} />
                 </button>
             </div>
@@ -52,8 +56,12 @@ export function Sidebar() {
     return (
         <div className="sidebar">
             <div className="sidebar__header">
-                <h2 className="sidebar__title">Directory</h2>
-                <button className="sidebar__toggle-btn" onClick={() => setIsCollapsed(true)} title="Collapse Sidebar">
+                <h2 className="sidebar__title text-title-primary">Directory</h2>
+                <button
+                    className="sidebar__toggle-btn text-label"
+                    onClick={() => setIsCollapsed(true)}
+                    title="Collapse Sidebar"
+                >
                     <ChevronLeft size={20} />
                 </button>
             </div>
@@ -62,7 +70,7 @@ export function Sidebar() {
                 <div className="sidebar__create-row">
                     <input
                         type="text"
-                        className="sidebar__input"
+                        className="sidebar__input text-label"
                         placeholder="New Name..."
                         value={newName}
                         onChange={(e) => setNewName(e.target.value)}
@@ -73,46 +81,30 @@ export function Sidebar() {
                 </div>
                 <div className="sidebar__create-row">
                     <button
-                        className="sidebar__btn sidebar__btn--folder"
+                        className="action-button action-button--dark sidebar__btn text-theme-header"
                         onClick={() => handleCreate('folder')}
-                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
                     >
                         <FolderPlus size={14} /> Add Folder
                     </button>
                     <button
-                        className="sidebar__btn sidebar__btn--char"
+                        className="action-button action-button--theme sidebar__btn text-theme-header"
                         onClick={() => handleCreate('character')}
-                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
                     >
                         <FilePlus size={14} /> Add Sheet
                     </button>
                 </div>
                 <div className="sidebar__create-row sidebar__backup-row">
                     <button
-                        className="sidebar__btn sidebar__btn--backup"
+                        className="action-button action-button--dark sidebar__btn text-theme-header"
                         onClick={handleExportMasterBackup}
                         title="Export all folders and characters"
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyItems: 'center',
-                            justifyContent: 'center',
-                            gap: '4px'
-                        }}
                     >
                         <Save size={14} /> Backup
                     </button>
                     <button
-                        className="sidebar__btn sidebar__btn--restore"
+                        className="action-button action-button--secondary sidebar__btn text-theme-header"
                         onClick={() => restoreInputRef.current?.click()}
                         title="Restore from a Master Backup file"
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyItems: 'center',
-                            justifyContent: 'center',
-                            gap: '4px'
-                        }}
                     >
                         <ArchiveRestore size={14} /> Restore
                     </button>
@@ -150,8 +142,10 @@ export function Sidebar() {
                     onDelete={executeDelete}
                 />
 
-                {items.length === 0 && <p className="sidebar__empty">Directory is empty. Create a file above!</p>}
-                <div className="sidebar__dropzone-root">Drop here to move to Root</div>
+                {items.length === 0 && (
+                    <p className="sidebar__empty text-subtext">Directory is empty. Create a file above!</p>
+                )}
+                <div className="sidebar__dropzone-root text-subtext">Drop here to move to Root</div>
             </div>
 
             {contextMenu && (

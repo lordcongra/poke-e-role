@@ -16,34 +16,35 @@ export function SidebarContextMenu({ contextMenu, onRename, onMove, onDuplicate,
             style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
             onClick={(e) => e.stopPropagation()}
         >
-            <button className="sidebar__context-item" onClick={() => onRename(contextMenu.item)}>
+            <button className="sidebar__context-item text-label" onClick={() => onRename(contextMenu.item)}>
                 <Pencil size={14} /> Rename
             </button>
 
             {/* --- Quick Move Directional Pad --- */}
-            <button className="sidebar__context-item" onClick={() => onMove(contextMenu.item, 'up')}>
+            <button className="sidebar__context-item text-label" onClick={() => onMove(contextMenu.item, 'up')}>
                 <ArrowUp size={14} /> Move Up
             </button>
-            <button className="sidebar__context-item" onClick={() => onMove(contextMenu.item, 'down')}>
+            <button className="sidebar__context-item text-label" onClick={() => onMove(contextMenu.item, 'down')}>
                 <ArrowDown size={14} /> Move Down
             </button>
-            <button className="sidebar__context-item" onClick={() => onMove(contextMenu.item, 'in')}>
+            <button className="sidebar__context-item text-label" onClick={() => onMove(contextMenu.item, 'in')}>
                 <FolderInput size={14} /> Move Into Folder
             </button>
-            <button className="sidebar__context-item" onClick={() => onMove(contextMenu.item, 'out')}>
+            <button className="sidebar__context-item text-label" onClick={() => onMove(contextMenu.item, 'out')}>
                 <FolderOutput size={14} /> Move Out (Level Up)
             </button>
             {/* ---------------------------------- */}
 
             {contextMenu.item.type === 'character' && (
-                <button className="sidebar__context-item" onClick={() => onDuplicate(contextMenu.item)}>
+                <button className="sidebar__context-item text-label" onClick={() => onDuplicate(contextMenu.item)}>
                     <Copy size={14} /> Duplicate
                 </button>
             )}
 
             <button
-                className="sidebar__context-item sidebar__context-item--danger"
+                className="sidebar__context-item sidebar__context-item--danger text-label"
                 onClick={() => onDelete(contextMenu.item)}
+                style={{ color: 'var(--semantic-danger)' }}
             >
                 <Trash2 size={14} /> Delete
             </button>

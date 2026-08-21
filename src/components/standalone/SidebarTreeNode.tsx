@@ -49,6 +49,9 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
                 const isExpanded = expandedNodes[item.id];
                 const initTag = initTags[item.id];
 
+                // Track our newly injected tag string
+                const isInitActive = initTag === 'init_active';
+
                 return (
                     <div key={item.id} className="sidebar__node">
                         <div
@@ -70,11 +73,7 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
                         >
                             <div className="sidebar__item-content">
                                 {hasChildren ? (
-                                    <span
-                                        className="sidebar__caret"
-                                        onClick={(e) => onToggleExpand(e, item.id)}
-                                        style={{ display: 'flex' }}
-                                    >
+                                    <span className="sidebar__caret" onClick={(e) => onToggleExpand(e, item.id)}>
                                         {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                                     </span>
                                 ) : (
@@ -82,29 +81,28 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
                                 )}
 
                                 {item.type === 'folder' ? (
-                                    <span
-                                        className="sidebar__item-icon"
-                                        style={{ display: 'flex', color: 'var(--primary)' }}
-                                    >
+                                    <span className="sidebar__item-icon" style={{ color: 'var(--primary)' }}>
                                         <Folder size={16} />
                                     </span>
                                 ) : (
                                     <SidebarAvatar meta={item.meta} />
                                 )}
 
-                                <span className="sidebar__item-name">{item.name}</span>
+                                <span className="sidebar__item-name text-label" style={{ color: 'var(--text-main)' }}>
+                                    {item.name}
+                                </span>
 
                                 {initTag && (
                                     <span
-                                        className={`sidebar__init-badge ${initTag === '⚔️' ? 'sidebar__init-badge--combat' : ''}`}
-                                        title={initTag === '⚔️' ? 'In Initiative Tracker' : undefined}
+                                        className={`sidebar__init-badge text-theme-header ${isInitActive ? 'sidebar__init-badge--combat' : ''}`}
+                                        title={isInitActive ? 'In Initiative Tracker' : undefined}
                                         style={
-                                            initTag === '⚔️'
+                                            isInitActive
                                                 ? { display: 'flex', alignItems: 'center', justifyContent: 'center' }
                                                 : undefined
                                         }
                                     >
-                                        {initTag === '⚔️' ? <Swords size={12} /> : initTag}
+                                        {isInitActive ? <Swords size={14} /> : initTag}
                                     </span>
                                 )}
 
@@ -113,7 +111,7 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
                                     <span
                                         className="sidebar__trans-badge"
                                         title={`Transformed: ${item.activeTrans}`}
-                                        style={{ display: 'flex', color: 'var(--primary)' }}
+                                        style={{ color: 'var(--primary)' }}
                                     >
                                         <Dna size={14} />
                                     </span>
@@ -126,7 +124,6 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
                                     onDelete(item);
                                 }}
                                 title="Delete"
-                                style={{ display: 'flex' }}
                             >
                                 <Trash2 size={16} />
                             </button>

@@ -5,8 +5,6 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    color: var(--text-main);
-    font-family: sans-serif;
     transition:
         max-height 0.3s ease,
         flex 0.3s ease;
@@ -19,7 +17,7 @@
     right: 16px;
     width: 300px;
     max-height: 400px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--dark) 40%, transparent);
     z-index: 9999;
 }
 
@@ -34,7 +32,7 @@
     flex: 1; /* Grows to fill available vertical space under tracker */
     min-height: 150px;
     max-height: 100%;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--dark) 10%, transparent);
 }
 
 .roll-log-widget--docked.roll-log-widget--collapsed {
@@ -55,29 +53,32 @@
 }
 
 .roll-log-widget__title {
-    font-size: 0.85rem;
-    font-weight: bold;
-    color: var(--primary);
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .roll-log-widget__btn-clear {
     background: var(--primary);
-    color: white;
     border: none;
-    padding: 2px 6px;
+    padding: 4px 8px;
     border-radius: 4px;
-    font-size: 0.75rem;
     cursor: pointer;
-    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 
 .roll-log-widget__btn-toggle {
     background: transparent;
-    color: var(--text-muted);
     border: none;
     cursor: pointer;
-    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
 }
 
 .roll-log-widget__list {
@@ -114,30 +115,20 @@
     object-fit: cover;
 }
 
-.roll-log-widget__player {
-    font-size: 0.85rem;
-    color: var(--primary);
-}
-
 .roll-log-widget__dismiss {
     margin-left: auto;
     background: transparent;
     border: none;
-    color: var(--text-muted);
     cursor: pointer;
-    font-size: 0.8rem;
-}
-
-.roll-log-widget__label {
-    font-size: 0.8rem;
-    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
 }
 
 .roll-log-widget__result {
-    font-size: 0.8rem;
     white-space: pre-wrap;
     background: var(--panel-alt);
     padding: 6px;
     border-radius: 4px;
-    color: var(--text-main);
 }
