@@ -33,19 +33,27 @@ export function MovesTableLearnset({ learnset }: MovesTableLearnsetProps) {
             <button
                 type="button"
                 onClick={() => setShowLearnset(!showLearnset)}
-                className="action-button action-button--dark moves-table__learnset-toggle-btn"
+                className="action-button action-button--dark moves-table__learnset-toggle-btn text-theme-header"
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
             >
                 <BookOpen size={16} /> {showLearnset ? 'Hide Learnset' : 'View Learnset'}
             </button>
             {showLearnset && (
-                <div className="moves-table__learnset-container">
+                <div
+                    className="moves-table__learnset-container text-label"
+                    style={{ color: 'var(--text-main)', fontSize: '0.8rem' }}
+                >
                     {sortedRanks.map((rank) => (
                         <div key={rank} className="moves-table__learnset-rank-group">
-                            <div className="moves-table__learnset-rank-title">{rank}</div>
+                            <div
+                                className="moves-table__learnset-rank-title text-title-primary"
+                                style={{ color: 'var(--primary)' }}
+                            >
+                                {rank}
+                            </div>
                             <div className="moves-table__learnset-moves-list">
                                 {groupedLearnset[rank].map((moveName, index) => (
-                                    <span key={index} className="moves-table__learnset-pill">
+                                    <span key={index} className="moves-table__learnset-pill text-subtext">
                                         {moveName}
                                     </span>
                                 ))}

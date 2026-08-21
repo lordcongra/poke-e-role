@@ -81,7 +81,8 @@ export function InventoryItemRow({
                     <input
                         type="text"
                         list="item-list"
-                        className="identity-grid__input inventory-item__name-input"
+                        className="identity-grid__input inventory-item__name-input text-label"
+                        style={{ color: 'var(--text-main)' }}
                         value={localName}
                         onChange={(event) => setLocalName(event.target.value)}
                         onBlur={handleNameBlur}
@@ -89,7 +90,7 @@ export function InventoryItemRow({
                     />
                     <button
                         type="button"
-                        className="action-button action-button--dark inventory-item__icon-btn"
+                        className="action-button action-button--dark inventory-item__icon-btn inventory-item__icon-btn--info"
                         onClick={() => handleInfoClick(item.id, item.name, item.desc)}
                         disabled={fetchingItems[item.id]}
                         title="View Details"
@@ -98,7 +99,7 @@ export function InventoryItemRow({
                     </button>
                     <button
                         type="button"
-                        className="action-button action-button--ghost inventory-item__icon-btn"
+                        className="action-button action-button--ghost inventory-item__icon-btn inventory-item__icon-btn--tag"
                         onClick={() => setTagBuilderData({ id: item.id, type: 'item' })}
                         title="Add Smart Tags"
                     >
@@ -108,7 +109,8 @@ export function InventoryItemRow({
             </td>
             <td className="inventory-item__desc-cell">
                 <textarea
-                    className="identity-grid__input form-input--item-desc inventory-item__desc-input"
+                    className="identity-grid__input form-input--item-desc inventory-item__desc-input text-subtext"
+                    style={{ color: 'var(--text-main)' }}
                     value={item.desc}
                     onChange={(event) => updateInventoryItem(item.id, 'desc', event.target.value)}
                     placeholder="Effect / Notes..."
@@ -119,14 +121,14 @@ export function InventoryItemRow({
                     <button
                         type="button"
                         onClick={() => moveUpInventoryItem(item.id)}
-                        className="action-button action-button--sort inventory-item__sort-btn"
+                        className="action-button action-button--sort inventory-item__sort-btn text-label"
                     >
                         <ChevronUp size={14} />
                     </button>
                     <button
                         type="button"
                         onClick={() => moveDownInventoryItem(item.id)}
-                        className="action-button action-button--sort inventory-item__sort-btn"
+                        className="action-button action-button--sort inventory-item__sort-btn text-label"
                     >
                         <ChevronDown size={14} />
                     </button>
@@ -136,7 +138,7 @@ export function InventoryItemRow({
                 <button
                     type="button"
                     onClick={() => setDeleteItemId(item.id)}
-                    className="action-button action-button--red inventory-item__delete-btn"
+                    className="action-button action-button--dark inventory-item__delete-btn text-theme-header"
                     title="Delete Item"
                 >
                     <X size={16} />

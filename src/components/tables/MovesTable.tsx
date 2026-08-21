@@ -78,7 +78,7 @@ export function MovesTable() {
             const nickname = currentState.identity.nickname || currentState.identity.species || 'Someone';
             rollDicePlus(
                 `0d6+${damageValue}`,
-                `💥 ${nickname} used ${move.name || 'a Move'}! (Deals exactly ${damageValue} Set Damage, ignores defenses)`
+                `[Set Damage] ${nickname} used ${move.name || 'a Move'}! (Deals exactly ${damageValue} Set Damage, ignores defenses)`
             );
             return;
         }
@@ -115,7 +115,7 @@ export function MovesTable() {
 
         const nickname = currentState.identity.nickname || currentState.identity.species || 'Someone';
         const tags = parsedItems.chance > 0 ? ` [ Item Bonus +${parsedItems.chance} ]` : '';
-        rollDicePlus(`${totalChance}d6>5`, `🍀 ${nickname} rolled a Chance Roll!${tags}`, 'chance');
+        rollDicePlus(`${totalChance}d6>5`, `[Chance Roll] ${nickname} rolled a Chance Roll!${tags}`, 'chance');
     };
 
     const headerElements = (
@@ -145,28 +145,39 @@ export function MovesTable() {
                 <div className="desktop-only-flex table-responsive-wrapper">
                     <table className="data-table moves-table__table">
                         <thead>
-                            <tr className="moves-table__header-row">
+                            <tr className="moves-table__header-row text-theme-header">
                                 <th className="moves-table__th-checkbox" title="Used this round?">
                                     <Check size={16} />
                                 </th>
                                 <th className="moves-table__th-acc">Acc</th>
-                                <th>
-                                    Name{' '}
-                                    <TooltipIcon
-                                        onClick={() =>
-                                            setTooltipInfo({
-                                                title: 'Move Markers',
-                                                description:
-                                                    'Use the dropdown next to your move names to visually mark moves. For example, use a ★ to denote a move gained via Overrank!'
-                                            })
-                                        }
-                                    />
+                                <th className="moves-table__th-name">
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <div style={{ width: '25px', display: 'flex', justifyContent: 'center' }}>
+                                            <span
+                                                style={{
+                                                    display: 'flex',
+                                                    filter: 'drop-shadow(1px 1px 2px rgba(0,0,0,0.8)) drop-shadow(0 1px 4px rgba(0,0,0,0.6))'
+                                                }}
+                                            >
+                                                <TooltipIcon
+                                                    onClick={() =>
+                                                        setTooltipInfo({
+                                                            title: 'Move Markers',
+                                                            description:
+                                                                'Use the dropdown next to your move names to visually mark moves. For example, use a ★ to denote a move gained via Overrank!'
+                                                        })
+                                                    }
+                                                />
+                                            </span>
+                                        </div>
+                                        <div style={{ flex: 1, textAlign: 'center', paddingRight: '25px' }}>Name</div>
+                                    </div>
                                 </th>
                                 <th className="moves-table__th-tag">Tag</th>
-                                <th>Pool (Acc)</th>
-                                <th>Type</th>
-                                <th>Cat.</th>
-                                <th>Damage</th>
+                                <th className="moves-table__th-pool">Pool (Acc)</th>
+                                <th className="moves-table__th-type">Type</th>
+                                <th className="moves-table__th-cat">Cat.</th>
+                                <th className="moves-table__th-damage">Damage</th>
                                 <th className="moves-table__th-dmg">Dmg</th>
                                 <th className="moves-table__th-sort">Sort</th>
                                 <th className="moves-table__th-del">Del</th>
@@ -203,7 +214,7 @@ export function MovesTable() {
                 <button
                     type="button"
                     onClick={addMove}
-                    className="action-button action-button--theme action-button--full-width"
+                    className="action-button action-button--theme action-button--full-width text-theme-header"
                 >
                     <Plus size={16} /> Add Move Slot
                 </button>
@@ -231,21 +242,29 @@ export function MovesTable() {
             {deleteMoveId && (
                 <div className="moves-table__modal-overlay">
                     <div className="moves-table__modal-content">
-                        <h3 className="moves-table__modal-title modal-title-with-icon">
+                        <h3
+                            className="moves-table__modal-title modal-title-with-icon text-title-primary"
+                            style={{ color: 'var(--semantic-danger)' }}
+                        >
                             <AlertTriangle size={20} /> Confirm Deletion
                         </h3>
-                        <p className="moves-table__modal-text">Are you sure you want to delete this Move?</p>
+                        <p
+                            className="moves-table__modal-text text-subtext"
+                            style={{ color: 'var(--text-main)', fontSize: '0.9rem' }}
+                        >
+                            Are you sure you want to delete this Move?
+                        </p>
                         <div className="moves-table__modal-actions">
                             <button
                                 type="button"
-                                className="action-button action-button--dark moves-table__modal-btn"
+                                className="action-button action-button--dark moves-table__modal-btn text-theme-header"
                                 onClick={() => setDeleteMoveId(null)}
                             >
                                 <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--red moves-table__modal-btn"
+                                className="action-button action-button--red moves-table__modal-btn text-theme-header"
                                 onClick={() => {
                                     removeMove(deleteMoveId);
                                     setDeleteMoveId(null);
@@ -261,16 +280,19 @@ export function MovesTable() {
             {tooltipInfo && (
                 <div className="moves-table__modal-overlay">
                     <div className="moves-table__modal-content moves-table__modal-content--tooltip">
-                        <h3 className="moves-table__modal-title moves-table__modal-title--tooltip">
+                        <h3
+                            className="moves-table__modal-title moves-table__modal-title--tooltip text-title-primary"
+                            style={{ color: 'var(--primary)' }}
+                        >
                             {tooltipInfo.title}
                         </h3>
-                        <p className="moves-table__modal-text moves-table__modal-text--tooltip">
+                        <p className="moves-table__modal-text moves-table__modal-text--tooltip text-subtext">
                             {tooltipInfo.description}
                         </p>
                         <div className="moves-table__modal-actions moves-table__modal-actions--center">
                             <button
                                 type="button"
-                                className="action-button action-button--dark moves-table__modal-btn--full"
+                                className="action-button action-button--dark moves-table__modal-btn--full text-theme-header"
                                 onClick={() => setTooltipInfo(null)}
                             >
                                 Close

@@ -40,7 +40,8 @@ export function SkillRow({ skill, defaultLabel }: SkillRowProps) {
                     value={localName}
                     onChange={(event) => setLocalName(event.target.value)}
                     onBlur={() => setSkill(skill, 'customName', localName || defaultLabel)}
-                    className="skill-row__input"
+                    className="skill-row__input text-label"
+                    style={{ color: 'var(--text-main)' }}
                 />
             </td>
             <td className="data-table__cell--middle">
@@ -62,7 +63,7 @@ export function SkillRow({ skill, defaultLabel }: SkillRowProps) {
                     />
                 </div>
             </td>
-            <td className="data-table__cell--middle skill-row__total-cell">{total}</td>
+            <td className="data-table__cell--middle text-value-highlight">{total}</td>
         </tr>
     );
 }

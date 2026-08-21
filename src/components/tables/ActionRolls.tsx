@@ -24,16 +24,16 @@ export function ActionRolls() {
     const handleBasicRoll = () => {
         const state = useCharacterStore.getState();
         const nickname = state.identity.nickname || state.identity.species || 'Someone';
-        rollDicePlus(`${Math.max(1, basicDiceCount)}d6>3`, `🎲 ${nickname} rolled custom dice!`);
+        rollDicePlus(`${Math.max(1, basicDiceCount)}d6>3`, `[Action Roll] ${nickname} rolled custom dice!`);
     };
 
     const headerElements = (
         <div className="action-rolls__header-roller">
-            <span className="action-rolls__header-label">Quick Roll:</span>
+            <span className="text-label">Quick Roll:</span>
             <NumberSpinner value={basicDiceCount} onChange={setBasicDiceCount} min={1} max={99} />
             <button
                 type="button"
-                className="action-button action-button--dark action-rolls__header-btn"
+                className="action-button action-button--dark action-rolls__header-btn text-theme-header"
                 onClick={handleBasicRoll}
                 title="Roll Custom Dice"
             >
@@ -47,7 +47,7 @@ export function ActionRolls() {
             <div className="table-responsive-wrapper">
                 <table className="data-table action-rolls__table">
                     <thead>
-                        <tr className="action-rolls__header-row">
+                        <tr className="action-rolls__header-row text-theme-header">
                             <th className="action-rolls__name-column">Action Name</th>
                             <th>Attribute</th>
                             <th>Skill</th>
@@ -57,11 +57,12 @@ export function ActionRolls() {
                     </thead>
                     <tbody>
                         {skillChecks.map((check) => (
-                            <tr key={check.id} className="data-table__row--dynamic action-rolls__row">
+                            <tr key={check.id} className="data-table__row--dynamic">
                                 <td className="data-table__cell--middle">
                                     <input
                                         type="text"
-                                        className="identity-grid__input action-rolls__input"
+                                        className="identity-grid__input action-rolls__input text-label"
+                                        style={{ color: 'var(--text-main)' }}
                                         placeholder="e.g. Investigate"
                                         value={check.name}
                                         onChange={(event) => updateSkillCheck(check.id, 'name', event.target.value)}
@@ -69,7 +70,8 @@ export function ActionRolls() {
                                 </td>
                                 <td className="data-table__cell--middle action-rolls__select-cell">
                                     <select
-                                        className="identity-grid__select action-rolls__select"
+                                        className="identity-grid__select action-rolls__select text-label"
+                                        style={{ color: 'var(--text-main)' }}
                                         value={check.attr}
                                         onChange={(event) => updateSkillCheck(check.id, 'attr', event.target.value)}
                                     >
@@ -82,7 +84,8 @@ export function ActionRolls() {
                                 </td>
                                 <td className="data-table__cell--middle action-rolls__select-cell">
                                     <select
-                                        className="identity-grid__select action-rolls__select"
+                                        className="identity-grid__select action-rolls__select text-label"
+                                        style={{ color: 'var(--text-main)' }}
                                         value={check.skill}
                                         onChange={(event) => updateSkillCheck(check.id, 'skill', event.target.value)}
                                     >
@@ -107,7 +110,7 @@ export function ActionRolls() {
                                 <td className="data-table__cell--middle">
                                     <button
                                         type="button"
-                                        className="action-button action-button--dark action-rolls__icon-btn"
+                                        className="action-button action-button--dark action-rolls__icon-btn text-theme-header"
                                         onClick={() => rollSkillCheck(check, useCharacterStore.getState())}
                                     >
                                         <Dices size={16} />
@@ -116,7 +119,7 @@ export function ActionRolls() {
                                 <td className="data-table__cell--middle">
                                     <button
                                         type="button"
-                                        className="action-button action-button--dark action-rolls__icon-btn"
+                                        className="action-button action-button--dark action-rolls__icon-btn text-theme-header"
                                         onClick={() => setDeleteRollId(check.id)}
                                     >
                                         <X size={16} />
@@ -129,7 +132,7 @@ export function ActionRolls() {
             </div>
             <button
                 type="button"
-                className="action-button action-button--theme action-rolls__add-btn"
+                className="action-button action-button--theme action-rolls__add-btn text-theme-header"
                 onClick={addSkillCheck}
             >
                 <Plus size={16} /> Add Action Roll
@@ -138,21 +141,29 @@ export function ActionRolls() {
             {deleteRollId && (
                 <div className="action-rolls__modal-overlay">
                     <div className="action-rolls__modal-content">
-                        <h3 className="action-rolls__modal-title modal-title-with-icon">
+                        <h3
+                            className="action-rolls__modal-title modal-title-with-icon text-title-primary"
+                            style={{ color: 'var(--semantic-danger)' }}
+                        >
                             <AlertTriangle size={20} /> Confirm Deletion
                         </h3>
-                        <p className="action-rolls__modal-text">Are you sure you want to delete this Action Roll?</p>
+                        <p
+                            className="action-rolls__modal-text text-subtext"
+                            style={{ color: 'var(--text-main)', fontSize: '0.9rem' }}
+                        >
+                            Are you sure you want to delete this Action Roll?
+                        </p>
                         <div className="action-rolls__modal-actions">
                             <button
                                 type="button"
-                                className="action-button action-button--dark action-rolls__modal-btn"
+                                className="action-button action-button--dark action-rolls__modal-btn text-theme-header"
                                 onClick={() => setDeleteRollId(null)}
                             >
                                 <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--red action-rolls__modal-btn"
+                                className="action-button action-button--red action-rolls__modal-btn text-theme-header"
                                 onClick={() => {
                                     removeSkillCheck(deleteRollId);
                                     setDeleteRollId(null);

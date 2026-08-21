@@ -1,7 +1,5 @@
 .action-rolls__header-row {
     background-color: var(--dark);
-    color: white;
-    font-size: 0.8rem;
 }
 
 .action-rolls__name-column {
@@ -11,10 +9,6 @@
 .action-rolls__button-column {
     width: 35px;
     text-align: center;
-}
-
-.action-rolls__row {
-    font-size: 0.85rem;
 }
 
 .action-rolls__input {
@@ -31,7 +25,15 @@
     padding: 2px;
     border: 1px solid var(--border);
     background-color: var(--panel-bg);
-    color: var(--text-main);
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.action-rolls__select:focus {
+    border-color: var(--primary);
+    background-color: var(--panel-alt);
+    outline: none;
 }
 
 .action-rolls__icon-btn {
@@ -57,7 +59,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: color-mix(in srgb, var(--dark) 60%, transparent);
     z-index: 1200;
     display: flex;
     justify-content: center;
@@ -71,14 +73,12 @@
     max-width: 300px;
     width: 90%;
     border: 2px solid var(--semantic-danger);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
     text-align: center;
 }
 
 .action-rolls__modal-title {
-    color: var(--semantic-danger);
     margin-top: 0;
-    font-size: 1.1rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -86,8 +86,6 @@
 }
 
 .action-rolls__modal-text {
-    font-size: 0.9rem;
-    color: var(--text-main);
     margin-bottom: 20px;
 }
 
@@ -114,13 +112,6 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.8rem;
-    color: var(--text-main);
-}
-
-.action-rolls__header-label {
-    font-weight: bold;
-    color: var(--text-muted);
 }
 
 .action-rolls__header-btn {

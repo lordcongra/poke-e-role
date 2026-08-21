@@ -65,29 +65,40 @@ export function InventoryTable() {
             <TooltipIcon onClick={() => setShowTagsGuide(true)} />
             {activeCount > 1 && (
                 <div
-                    className="inventory-table__warning"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                    className="inventory-table__warning text-label"
+                    style={{
+                        color: 'var(--semantic-danger)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                    }}
                 >
                     <AlertTriangle size={14} color="var(--semantic-danger)" /> Multiple items active
                 </div>
             )}
             <div className="inventory-table__currency-container">
-                <span className="inventory-table__currency-tp" title="Training Points">
+                <span
+                    className="inventory-table__currency-tp text-label"
+                    style={{ color: 'var(--secondary)' }}
+                    title="Training Points"
+                >
                     TP:{' '}
                     <input
                         type="number"
                         value={trainingPoints}
                         onChange={(event) => setTrainingPoints(Number(event.target.value) || 0)}
-                        className="no-spinners inventory-table__currency-input inventory-table__currency-input--tp"
+                        className="no-spinners inventory-table__currency-input inventory-table__currency-input--tp text-subtext"
+                        style={{ color: 'var(--text-main)' }}
                     />
                 </span>
-                <span className="inventory-table__currency-pd">
+                <span className="inventory-table__currency-pd text-label" style={{ color: 'var(--primary)' }}>
                     PD:{' '}
                     <input
                         type="number"
                         value={pokedollars}
                         onChange={(event) => setPokedollars(Number(event.target.value) || 0)}
-                        className="no-spinners inventory-table__currency-input"
+                        className="no-spinners inventory-table__currency-input text-subtext"
+                        style={{ color: 'var(--text-main)' }}
                     />
                 </span>
             </div>
@@ -106,9 +117,11 @@ export function InventoryTable() {
                 <div className="table-responsive-wrapper">
                     <table className="data-table inventory-table__table">
                         <thead>
-                            <tr className="inventory-table__header-row">
+                            <tr className="inventory-table__header-row text-theme-header">
                                 <th className="inventory-table__header-cell-check" title="Equipped?">
-                                    <Check size={16} />
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Check size={16} />
+                                    </div>
                                 </th>
                                 <th className="inventory-table__header-cell-qty">Qty</th>
                                 <th className="inventory-table__header-cell-name">Item Name</th>
@@ -134,7 +147,7 @@ export function InventoryTable() {
                 <button
                     type="button"
                     onClick={addInventoryItem}
-                    className="action-button action-button--theme inventory-table__add-btn"
+                    className="action-button action-button--theme inventory-table__add-btn text-theme-header"
                 >
                     <Plus size={16} /> Add Item
                 </button>
@@ -142,7 +155,8 @@ export function InventoryTable() {
 
             <CollapsingSection title="NOTES">
                 <textarea
-                    className="inventory-table__notes-area"
+                    className="inventory-table__notes-area text-subtext"
+                    style={{ color: 'var(--text-main)' }}
                     placeholder="Add any extra notes, traits, or character backstory here..."
                     value={notes}
                     onChange={(event) => setNotes(event.target.value)}
@@ -164,21 +178,29 @@ export function InventoryTable() {
             {deleteItemId && (
                 <div className="inventory-table__modal-overlay">
                     <div className="inventory-table__modal-content">
-                        <h3 className="inventory-table__modal-title modal-title-with-icon">
+                        <h3
+                            className="inventory-table__modal-title modal-title-with-icon text-title-primary"
+                            style={{ color: 'var(--semantic-danger)' }}
+                        >
                             <AlertTriangle size={20} /> Confirm Deletion
                         </h3>
-                        <p className="inventory-table__modal-text">Are you sure you want to delete this Item?</p>
+                        <p
+                            className="inventory-table__modal-text text-subtext"
+                            style={{ color: 'var(--text-main)', fontSize: '0.9rem' }}
+                        >
+                            Are you sure you want to delete this Item?
+                        </p>
                         <div className="inventory-table__modal-actions">
                             <button
                                 type="button"
-                                className="action-button action-button--dark inventory-table__modal-btn"
+                                className="action-button action-button--dark inventory-table__modal-btn text-theme-header"
                                 onClick={() => setDeleteItemId(null)}
                             >
                                 <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--red inventory-table__modal-btn"
+                                className="action-button action-button--red inventory-table__modal-btn text-theme-header"
                                 onClick={() => {
                                     removeInventoryItem(deleteItemId);
                                     setDeleteItemId(null);

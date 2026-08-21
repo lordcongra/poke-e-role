@@ -23,8 +23,11 @@ export function MovesTableModifiers({
 }: MovesTableModifiersProps) {
     return (
         <>
-            <span className="moves-table__max-label">(Max: {maxMoves})</span>
-            <div className="desktop-only-flex moves-table__desktop-modifiers">
+            <span className="moves-table__max-label text-subtext">(Max: {maxMoves})</span>
+            <div
+                className="desktop-only-flex moves-table__desktop-modifiers text-label"
+                style={{ color: 'var(--primary)' }}
+            >
                 <span className="moves-table__modifier-item">
                     Acc
                     <TooltipIcon
@@ -95,7 +98,7 @@ export function MovesTableModifiers({
                     <button
                         type="button"
                         onClick={handleGlobalChanceRoll}
-                        className="action-button action-button--dark moves-table__chance-roll-btn"
+                        className="action-button action-button--dark moves-table__chance-roll-btn text-theme-header"
                         title="Roll Global Chance"
                     >
                         <Dices size={16} />

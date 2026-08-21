@@ -3,28 +3,26 @@
     align-items: center;
     gap: 4px;
     flex-shrink: 0;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .moves-table__max-label {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    font-weight: normal;
-    margin-left: 4px;
+    margin-left: 2px;
+    white-space: nowrap;
+    font-size: 0.7rem;
 }
 
 .moves-table__desktop-modifiers {
-    font-size: 0.75rem;
-    gap: 6px;
+    gap: 3px;
     background: color-mix(in srgb, var(--primary) 12%, var(--label-bg));
-    padding: 2px 6px;
+    padding: 2px 4px;
     border-radius: 3px;
     align-items: center;
-    font-weight: bold;
-    color: var(--primary);
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
+    flex-wrap: nowrap; /* Forces a single line to prevent Pain dropping down */
+    white-space: nowrap;
     margin-left: auto;
+    font-size: 0.7rem;
 }
 
 .moves-table__modifier-item {
@@ -36,7 +34,7 @@
 
 .moves-table__modifier-item + .moves-table__modifier-item {
     border-left: 1px solid color-mix(in srgb, var(--primary) 30%, var(--text-muted));
-    padding-left: 6px;
+    padding-left: 4px;
 }
 
 .moves-table__modifier-pain {
@@ -44,47 +42,83 @@
     align-items: center;
     gap: 2px;
     border-left: 1px solid color-mix(in srgb, var(--primary) 30%, var(--text-muted));
-    padding-left: 6px;
+    padding-left: 4px;
     white-space: nowrap;
 }
 
 .moves-table__chance-roll-btn {
-    padding: 1px 4px;
+    padding: 1px 3px;
+    margin-left: 2px;
 }
 
 .moves-table__mobile-modifiers-btn {
     padding: 2px 6px;
-    font-size: 0.75rem;
     margin-left: auto;
 }
 
-.moves-table__header-row {
+/* Explicit Table Widths to ensure Name aligns with the input below */
+.moves-table__table {
     text-align: left;
+    width: 100%;
+}
+
+.moves-table__table th,
+.moves-table__table td {
+    padding: 2px 1px;
 }
 
 .moves-table__th-checkbox {
-    width: 25px;
+    width: 22px;
     text-align: center;
 }
 
 .moves-table__th-acc {
-    width: 45px;
+    width: 36px;
     text-align: center;
+}
+
+.moves-table__th-name {
+    width: auto;
+    text-align: left;
 }
 
 .moves-table__th-tag {
-    width: 30px;
+    width: 24px;
     text-align: center;
+}
+
+.moves-table__th-pool {
+    width: 100px;
+    text-align: center; /* Centered over dual selects */
+}
+
+.moves-table__th-type {
+    width: 55px;
+    text-align: left;
+}
+
+.moves-table__th-cat {
+    width: 45px;
+    text-align: left;
+}
+
+.moves-table__th-damage {
+    width: 75px;
+    text-align: center; /* Centered over power + select */
 }
 
 .moves-table__th-dmg {
-    width: 45px;
+    width: 36px;
     text-align: center;
 }
 
-.moves-table__th-sort,
+.moves-table__th-sort {
+    width: 20px;
+    text-align: center;
+}
+
 .moves-table__th-del {
-    width: 30px;
+    width: 24px;
     text-align: center;
 }
 
@@ -99,7 +133,6 @@
 
 .moves-table__learnset-toggle-btn {
     width: 100%;
-    font-size: 0.8rem;
     padding: 4px;
     margin: 0;
 }
@@ -112,7 +145,6 @@
     margin-top: 4px;
     max-height: 200px;
     overflow-y: auto;
-    font-size: 0.8rem;
 }
 
 .moves-table__learnset-rank-group {
@@ -120,8 +152,6 @@
 }
 
 .moves-table__learnset-rank-title {
-    font-weight: bold;
-    color: var(--primary);
     border-bottom: 1px solid var(--border);
     margin-bottom: 4px;
     text-transform: capitalize;
@@ -137,8 +167,6 @@
     background: var(--label-bg);
     padding: 2px 6px;
     border-radius: 12px;
-    font-size: 0.75rem;
-    color: var(--text-muted);
 }
 
 .moves-table__modal-overlay {
@@ -147,7 +175,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: color-mix(in srgb, var(--dark) 60%, transparent);
     z-index: 1200;
     display: flex;
     justify-content: center;
@@ -161,7 +189,7 @@
     max-width: 300px;
     width: 90%;
     border: 2px solid var(--semantic-danger);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
     text-align: center;
 }
 
@@ -170,13 +198,10 @@
     border-radius: 8px;
     width: 280px;
     border: 2px solid var(--primary);
-    color: var(--text-main);
 }
 
 .moves-table__modal-title {
-    color: var(--semantic-danger);
     margin-top: 0;
-    font-size: 1.1rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -184,21 +209,16 @@
 }
 
 .moves-table__modal-title--tooltip {
-    color: var(--primary);
     border-bottom: 1px solid var(--border);
     padding-bottom: 4px;
 }
 
 .moves-table__modal-text {
-    font-size: 0.9rem;
-    color: var(--text-main);
-    margin-bottom: 20px;
+    margin: 15px 0;
 }
 
 .moves-table__modal-text--tooltip {
-    font-size: 0.85rem;
     margin-bottom: 15px;
-    color: var(--text-muted);
     white-space: pre-wrap;
     line-height: 1.4;
     text-align: left;
@@ -207,12 +227,9 @@
 .moves-table__modal-actions {
     display: flex;
     gap: 10px;
+    margin-top: auto;
 }
 
-.moves-table__table {
-    text-align: left;
-    width: 100%;
-}
 .moves-table__modal-actions--center {
     justify-content: center;
 }

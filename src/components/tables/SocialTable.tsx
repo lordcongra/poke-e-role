@@ -59,7 +59,7 @@ export function SocialTable() {
         <button
             type="button"
             onClick={handleResetBuffs}
-            className="action-button action-button--dark social-table__reset-btn"
+            className="action-button action-button--dark social-table__reset-btn text-theme-header"
             title="Reset all Social Buffs & Debuffs to 0"
         >
             <RotateCcw size={14} /> Reset Buffs
@@ -69,9 +69,9 @@ export function SocialTable() {
     return (
         <CollapsingSection title="SOCIAL ATTRIBUTES" headerElements={headerElements}>
             <div className="table-responsive-wrapper">
-                <table className="data-table">
+                <table className="data-table social-table__table">
                     <thead>
-                        <tr className="social-table__header-row">
+                        <tr className="social-table__header-row text-theme-header">
                             <th className="social-table__header-cell">SOCIAL</th>
                             <th>Base</th>
                             <th>Rank</th>
@@ -86,11 +86,13 @@ export function SocialTable() {
                             const total = calculateStatTotal(statistic, fullState, inventoryModifiers);
                             return (
                                 <tr key={statistic} className="data-table__row--dynamic">
-                                    <td
-                                        className="social-table__statistic-label"
-                                        style={{ background: SOCIAL_COLORS[statistic] }}
-                                    >
-                                        {SOCIAL_LABELS[statistic]}
+                                    <td>
+                                        <div
+                                            className="social-table__statistic-label text-theme-header"
+                                            style={{ background: SOCIAL_COLORS[statistic] }}
+                                        >
+                                            {SOCIAL_LABELS[statistic]}
+                                        </div>
                                     </td>
                                     <td className="data-table__cell--middle">
                                         <NumberSpinner
@@ -120,22 +122,22 @@ export function SocialTable() {
                                             min={0}
                                         />
                                     </td>
-                                    <td className="data-table__cell--middle social-table__total-cell">{total}</td>
+                                    <td className="data-table__cell--middle text-value-highlight">{total}</td>
                                 </tr>
                             );
                         })}
                     </tbody>
                 </table>
             </div>
-            <div className="social-table__footer">
+            <div className="social-table__footer text-label">
                 <span>
                     Remaining:{' '}
                     <strong className={remainingPoints < 0 ? 'social-table__negative-remaining' : ''}>
                         {remainingPoints}
                     </strong>
                 </span>
-                <span className="social-table__max-label">(Max 5 per stat)</span>
-                <span className="social-table__extra-container">
+                <span className="text-subtext">(Max 5 per stat)</span>
+                <span className="social-table__extra-container text-subtext">
                     Extra:{' '}
                     <NumberSpinner
                         value={extras.social}

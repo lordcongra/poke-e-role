@@ -122,11 +122,16 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
                         className="move-card__checkbox"
                         title="Mark as used this round"
                     />
-                    <span className="move-card__accuracy-text">{accuracyTotal}</span>
+                    <span
+                        className="move-card__accuracy-text text-value-highlight"
+                        style={{ color: 'var(--text-main)' }}
+                    >
+                        {accuracyTotal}
+                    </span>
                     <button
                         type="button"
                         onClick={handleAccuracyClick}
-                        className="action-button action-button--dark move-card__roll-btn"
+                        className="action-button action-button--dark move-card__roll-btn text-theme-header"
                         title="Roll Accuracy"
                     >
                         <Target size={16} />
@@ -134,7 +139,8 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
                     <button
                         type="button"
                         onClick={() => setEditModalOpen(true)}
-                        className="action-button action-button--dark move-card__edit-btn"
+                        className="action-button action-button--dark move-card__edit-btn text-theme-header"
+                        style={{ color: 'var(--primary)' }}
                         title="Edit Move & Tags"
                     >
                         <Tag size={14} />
@@ -142,7 +148,8 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
                     <select
                         value={move.marker || ''}
                         onChange={(event) => updateMove(move.id, 'marker', event.target.value)}
-                        className="move-card__marker-select"
+                        className="move-card__marker-select text-subtext"
+                        style={{ color: 'var(--text-muted)' }}
                     >
                         <option value="">-</option>
                         <option value="★">★</option>
@@ -158,7 +165,8 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
                         onChange={(event) => updateMove(move.id, 'name', event.target.value)}
                         onBlur={handleNameBlur}
                         placeholder="Move Name"
-                        className="move-card__name-input"
+                        className="move-card__name-input text-label"
+                        style={{ color: 'var(--text-main)' }}
                     />
                 </div>
 
@@ -166,7 +174,7 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
                     <select
                         value={move.type}
                         onChange={(event) => updateMove(move.id, 'type', event.target.value)}
-                        className="move-card__select"
+                        className="move-card__select text-label"
                         style={{
                             background: combinedColors[move.type] || 'var(--panel-alt)',
                             color: move.type ? 'white' : 'var(--text-main)',
@@ -185,7 +193,8 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
                         onChange={(event) =>
                             updateMove(move.id, 'category', event.target.value as 'Physical' | 'Special' | 'Status')
                         }
-                        className="move-card__select move-card__select--static"
+                        className="move-card__select move-card__select--static text-label"
+                        style={{ color: 'var(--text-main)' }}
                     >
                         <option value="Physical">Physical</option>
                         <option value="Special">Special</option>
@@ -195,11 +204,14 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
 
                 <div className="move-card__stat-row">
                     <div className="move-card__stat-group">
-                        <span className="move-card__stat-label">ACC:</span>
+                        <span className="move-card__stat-label text-label" style={{ color: 'var(--text-muted)' }}>
+                            ACC:
+                        </span>
                         <select
                             value={move.acc1}
                             onChange={(event) => updateMove(move.id, 'acc1', event.target.value)}
-                            className="move-card__stat-select"
+                            className="move-card__stat-select text-label"
+                            style={{ color: 'var(--text-main)' }}
                         >
                             {Object.values(CombatStat).map((statistic) => (
                                 <option key={statistic} value={statistic}>
@@ -213,11 +225,12 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
                             ))}
                             <option value="will">WILL</option>
                         </select>
-                        <span className="move-card__plus-sign">+</span>
+                        <span className="text-label">+</span>
                         <select
                             value={move.acc2}
                             onChange={(event) => updateMove(move.id, 'acc2', event.target.value)}
-                            className="move-card__stat-select"
+                            className="move-card__stat-select text-label"
+                            style={{ color: 'var(--text-main)' }}
                         >
                             <option value="none">-- None --</option>
                             {Object.values(Skill).map((skillName) => (
@@ -240,16 +253,19 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
                     </div>
 
                     <div className="move-card__stat-group">
-                        <span className="move-card__stat-label">DMG:</span>
+                        <span className="move-card__stat-label text-label" style={{ color: 'var(--text-muted)' }}>
+                            DMG:
+                        </span>
                         <NumberSpinner
                             value={move.power}
                             onChange={(value: number) => updateMove(move.id, 'power', value)}
                         />
-                        <span className="move-card__plus-sign--right">+</span>
+                        <span className="move-card__plus-sign--right text-label">+</span>
                         <select
                             value={move.dmg1}
                             onChange={(event) => updateMove(move.id, 'dmg1', event.target.value)}
-                            className="move-card__stat-select"
+                            className="move-card__stat-select text-label"
+                            style={{ color: 'var(--text-main)' }}
                         >
                             <option value="">-</option>
                             {Object.values(CombatStat).map((statistic) => (
@@ -268,11 +284,16 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
 
                 <div className="move-card__footer">
                     <div className="move-card__damage-container">
-                        <span className="move-card__damage-text">{damageTotal}</span>
+                        <span
+                            className="move-card__damage-text text-value-highlight"
+                            style={{ color: 'var(--primary)' }}
+                        >
+                            {damageTotal}
+                        </span>
                         <button
                             type="button"
                             onClick={() => onTarget(move)}
-                            className="action-button action-button--red move-card__damage-btn"
+                            className="action-button action-button--red move-card__damage-btn text-theme-header"
                             title="Roll Damage"
                         >
                             <Swords size={16} /> Roll Dmg
@@ -282,21 +303,21 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
                         <button
                             type="button"
                             onClick={() => moveUpMove(move.id)}
-                            className="action-button action-button--sort move-card__sort-btn"
+                            className="action-button action-button--sort move-card__sort-btn text-theme-header"
                         >
                             <ChevronUp size={16} />
                         </button>
                         <button
                             type="button"
                             onClick={() => moveDownMove(move.id)}
-                            className="action-button action-button--sort move-card__sort-btn"
+                            className="action-button action-button--sort move-card__sort-btn text-theme-header"
                         >
                             <ChevronDown size={16} />
                         </button>
                         <button
                             type="button"
                             onClick={() => onDelete(move.id)}
-                            className="action-button action-button--red move-card__delete-btn"
+                            className="action-button action-button--dark move-card__delete-btn text-theme-header"
                             title="Delete Move"
                         >
                             <X size={16} />
@@ -310,10 +331,16 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
             {bankModalOpen && (
                 <div className="moves-table__modal-overlay">
                     <div className="moves-table__modal-content" style={{ width: '340px', maxWidth: '90%' }}>
-                        <h3 className="moves-table__modal-title modal-title-with-icon">
+                        <h3
+                            className="moves-table__modal-title modal-title-with-icon text-title-primary"
+                            style={{ color: 'var(--semantic-danger)' }}
+                        >
                             <AlertTriangle size={20} /> Banked Dice Detected
                         </h3>
-                        <p className="moves-table__modal-text" style={{ textAlign: 'left' }}>
+                        <p
+                            className="moves-table__modal-text text-subtext"
+                            style={{ textAlign: 'left', color: 'var(--text-muted)' }}
+                        >
                             You currently have <strong>{totalBanked}</strong> extra Damage Dice banked from previous
                             rolls.
                             <br />
@@ -324,21 +351,21 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
                         <div className="moves-table__modal-actions">
                             <button
                                 type="button"
-                                className="action-button action-button--dark moves-table__modal-btn"
+                                className="action-button action-button--dark moves-table__modal-btn text-theme-header"
                                 onClick={() => setBankModalOpen(false)}
                             >
                                 <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--theme moves-table__modal-btn"
+                                className="action-button action-button--theme moves-table__modal-btn text-theme-header"
                                 onClick={confirmKeepBank}
                             >
                                 <PiggyBank size={16} /> Keep Bank
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--red moves-table__modal-btn"
+                                className="action-button action-button--red moves-table__modal-btn text-theme-header"
                                 onClick={confirmWipeBank}
                             >
                                 <Trash2 size={16} /> Clear Bank

@@ -53,7 +53,7 @@ export function CoreTable() {
         <button
             type="button"
             onClick={handleResetBuffs}
-            className="action-button action-button--dark core-table__reset-btn"
+            className="action-button action-button--dark core-table__reset-btn text-theme-header"
             title="Reset all Core Buffs & Debuffs to 0"
         >
             <RotateCcw size={14} /> Reset Buffs
@@ -63,9 +63,9 @@ export function CoreTable() {
     return (
         <CollapsingSection title="CORE ATTRIBUTES" headerElements={headerElements}>
             <div className="table-responsive-wrapper">
-                <table className="data-table">
+                <table className="data-table core-table__table">
                     <thead>
-                        <tr className="core-table__header-row">
+                        <tr className="core-table__header-row text-theme-header">
                             <th className="core-table__header-cell">ATTR</th>
                             <th>Base</th>
                             <th>Limit</th>
@@ -81,11 +81,13 @@ export function CoreTable() {
                             const total = calculateStatTotal(statistic, fullState, inventoryModifiers);
                             return (
                                 <tr key={statistic} className="data-table__row--dynamic">
-                                    <td
-                                        className="core-table__statistic-label"
-                                        style={{ background: STATISTIC_COLORS[statistic] }}
-                                    >
-                                        {statistic.toUpperCase()}
+                                    <td>
+                                        <div
+                                            className="core-table__statistic-label text-theme-header"
+                                            style={{ background: STATISTIC_COLORS[statistic] }}
+                                        >
+                                            {statistic.toUpperCase()}
+                                        </div>
                                     </td>
                                     <td className="data-table__cell--middle">
                                         <NumberSpinner
@@ -122,14 +124,14 @@ export function CoreTable() {
                                             min={0}
                                         />
                                     </td>
-                                    <td className="data-table__cell--middle core-table__total-cell">{total}</td>
+                                    <td className="data-table__cell--middle text-value-highlight">{total}</td>
                                 </tr>
                             );
                         })}
                     </tbody>
                 </table>
             </div>
-            <div className="core-table__footer">
+            <div className="core-table__footer text-label">
                 <span>
                     Remaining:{' '}
                     <strong className={remainingPoints < 0 ? 'core-table__negative-remaining' : ''}>

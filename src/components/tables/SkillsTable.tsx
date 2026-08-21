@@ -45,22 +45,23 @@ export function SkillsTable() {
 
     return (
         <CollapsingSection title="SKILLS">
-            <div className="skills-table__info-bar">
+            <div className="skills-table__info-bar text-label">
                 <span>
                     Pts Remaining:{' '}
                     <strong
-                        className={`skills-table__remaining-text ${
+                        className={`text-value-highlight ${
                             remainingPoints < 0 ? 'skills-table__negative-remaining' : ''
                         }`}
+                        style={{ fontSize: '1rem' }}
                     >
                         {remainingPoints}
                     </strong>{' '}
-                    <span className="skills-table__max-label">
+                    <span className="text-subtext">
                         (Max Rank: <span>{rankData.skillLimit}</span>)
                     </span>
                 </span>
                 <span className="skills-table__extra-container">
-                    Extra Pts:{' '}
+                    <span className="text-subtext">Extra Pts:</span>
                     <NumberSpinner
                         value={extras.skill}
                         onChange={(value: number) => setExtra('skill', value)}
@@ -108,7 +109,7 @@ export function SkillsTable() {
                                                     updateExtraCategory(category.id, event.target.value)
                                                 }
                                                 placeholder="CAT NAME"
-                                                className="skills-table__custom-category-input"
+                                                className="skills-table__custom-category-input text-theme-header"
                                             />
                                         </div>
                                     </th>
@@ -131,7 +132,8 @@ export function SkillsTable() {
                                                     )
                                                 }
                                                 placeholder="Skill"
-                                                className="skills-table__custom-skill-input"
+                                                className="skills-table__custom-skill-input text-label"
+                                                style={{ color: 'var(--text-main)' }}
                                             />
                                         </td>
                                         <td className="data-table__cell--middle">
@@ -157,7 +159,7 @@ export function SkillsTable() {
                                                 />
                                             </div>
                                         </td>
-                                        <td className="data-table__cell--middle skill-row__total-cell">
+                                        <td className="data-table__cell--middle text-value-highlight">
                                             {calculateSkillTotal(extraSkill.id as Skill, fullState, inventoryModifiers)}
                                         </td>
                                     </tr>
@@ -167,7 +169,7 @@ export function SkillsTable() {
                                         <button
                                             type="button"
                                             onClick={() => setDeleteCategoryId(category.id)}
-                                            className="action-button action-button--red skills-table__category-delete-btn"
+                                            className="action-button action-button--red skills-table__category-delete-btn text-theme-header"
                                         >
                                             <Trash2 size={16} /> Delete "{category.name || 'Category'}"
                                         </button>
@@ -181,7 +183,7 @@ export function SkillsTable() {
             <button
                 type="button"
                 onClick={addExtraCategory}
-                className="action-button action-button--dark skills-table__add-btn"
+                className="action-button action-button--dark skills-table__add-btn text-theme-header"
             >
                 <Plus size={16} /> Add Skill Category
             </button>
@@ -189,23 +191,29 @@ export function SkillsTable() {
             {deleteCategoryId && (
                 <div className="skills-table__modal-overlay">
                     <div className="skills-table__modal-content">
-                        <h3 className="skills-table__modal-title modal-title-with-icon">
+                        <h3
+                            className="skills-table__modal-title modal-title-with-icon text-title-primary"
+                            style={{ color: 'var(--semantic-danger)' }}
+                        >
                             <AlertTriangle size={20} /> Confirm Deletion
                         </h3>
-                        <p className="skills-table__modal-text">
+                        <p
+                            className="skills-table__modal-text text-subtext"
+                            style={{ color: 'var(--text-main)', fontSize: '0.9rem' }}
+                        >
                             Are you sure you want to delete this custom skill category?
                         </p>
                         <div className="skills-table__modal-actions">
                             <button
                                 type="button"
-                                className="action-button action-button--dark skills-table__modal-btn"
+                                className="action-button action-button--dark skills-table__modal-btn text-theme-header"
                                 onClick={() => setDeleteCategoryId(null)}
                             >
                                 <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--red skills-table__modal-btn"
+                                className="action-button action-button--red skills-table__modal-btn text-theme-header"
                                 onClick={() => {
                                     removeExtraCategory(deleteCategoryId);
                                     setDeleteCategoryId(null);

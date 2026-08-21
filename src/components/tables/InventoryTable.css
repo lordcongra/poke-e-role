@@ -11,7 +11,6 @@
 
 .inventory-table__header-row {
     background-color: var(--dark);
-    color: white;
 }
 
 .inventory-table__header-cell-check {
@@ -42,17 +41,12 @@
 }
 
 .inventory-table__warning {
-    color: var(--semantic-danger);
-    font-size: 0.75rem;
-    font-weight: bold;
     text-align: center;
     flex: 1 1 auto;
     white-space: nowrap;
 }
 
 .inventory-table__currency-container {
-    font-size: 0.85rem;
-    font-weight: bold;
     flex: 1 1 auto;
     display: flex;
     justify-content: flex-end;
@@ -62,17 +56,14 @@
 }
 
 .inventory-table__currency-tp {
-    color: #d35400;
     white-space: nowrap;
 }
 
 .inventory-table__currency-pd {
-    color: #1a5e20;
     white-space: nowrap;
 }
 
 .inventory-table__currency-input {
-    font-weight: normal;
     width: 60px;
     text-align: right;
     border: 1px solid var(--border);
@@ -107,7 +98,6 @@
     border-radius: 4px;
     padding: 4px;
     font-family: inherit;
-    font-size: 0.85rem;
     resize: vertical;
     box-sizing: border-box;
     background: var(--input-bg);
@@ -130,7 +120,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: color-mix(in srgb, var(--dark) 60%, transparent);
     z-index: 1200;
     display: flex;
     justify-content: center;
@@ -144,14 +134,12 @@
     max-width: 300px;
     width: 90%;
     border: 2px solid var(--semantic-danger);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
     text-align: center;
 }
 
 .inventory-table__modal-title {
-    color: var(--semantic-danger);
     margin-top: 0;
-    font-size: 1.1rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -159,8 +147,6 @@
 }
 
 .inventory-table__modal-text {
-    font-size: 0.9rem;
-    color: var(--text-main);
     margin-bottom: 20px;
 }
 
@@ -206,7 +192,6 @@
 .inventory-item__icon-btn {
     background: transparent;
     padding: 0;
-    font-size: 1.1rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -251,7 +236,6 @@
 
 .inventory-item__sort-btn {
     padding: 0 4px;
-    font-size: 0.6rem;
     cursor: pointer;
     background: transparent;
     border: none;
@@ -262,13 +246,7 @@
 }
 
 .inventory-item__delete-btn {
-    cursor: pointer;
-    background: var(--semantic-danger);
-    border: none;
-    color: white;
-    font-weight: bold;
     padding: 2px 6px;
-    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;

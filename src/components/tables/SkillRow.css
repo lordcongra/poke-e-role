@@ -6,9 +6,7 @@
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 3px;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
-    color: var(--text-main);
-    font-weight: bold;
+    box-shadow: inset 0 1px 3px color-mix(in srgb, var(--dark) 50%, transparent);
     width: 90px;
     padding: 3px 4px;
     outline: none;
@@ -20,10 +18,4 @@
 .skill-row__input:focus {
     border-color: var(--primary);
     background-color: var(--panel-alt);
-}
-
-.skill-row__total-cell {
-    font-weight: bold;
-    color: var(--primary);
-    font-size: 1rem;
 }

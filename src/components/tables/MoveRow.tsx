@@ -125,11 +125,16 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                 </td>
                 <td className="data-table__cell--middle">
                     <div className="flex-layout--row-center">
-                        <span className="move-row__accuracy-text">{accuracyTotal}</span>
+                        <span
+                            className="move-row__accuracy-text text-value-highlight"
+                            style={{ color: 'var(--text-main)' }}
+                        >
+                            {accuracyTotal}
+                        </span>
                         <button
                             type="button"
                             onClick={handleAccuracyClick}
-                            className="action-button action-button--dark move-row__roll-btn"
+                            className="action-button action-button--dark move-row__roll-btn text-theme-header"
                             title="Roll Accuracy"
                         >
                             <Target size={16} />
@@ -141,7 +146,8 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                         <select
                             value={move.marker || ''}
                             onChange={(event) => updateMove(move.id, 'marker', event.target.value)}
-                            className="form-select--transparent move-row__marker-select"
+                            className="form-select--transparent move-row__marker-select text-subtext"
+                            style={{ color: 'var(--text-muted)' }}
                             title="Mark Move"
                         >
                             <option value="">-</option>
@@ -157,8 +163,13 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                             value={move.name}
                             onChange={(event) => updateMove(move.id, 'name', event.target.value)}
                             onBlur={handleNameBlur}
-                            className="form-input--transparent move-row__name-input"
-                            style={{ border: '1px solid var(--border)', borderRadius: '4px', padding: '2px 6px' }}
+                            className="form-input--transparent move-row__name-input text-label"
+                            style={{
+                                border: '1px solid var(--border)',
+                                borderRadius: '4px',
+                                padding: '2px 4px',
+                                color: 'var(--text-main)'
+                            }}
                             placeholder="Move Name"
                         />
                     </div>
@@ -167,7 +178,8 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                     <button
                         type="button"
                         onClick={() => setEditModalOpen(true)}
-                        className="action-button action-button--ghost move-row__edit-btn"
+                        className="action-button action-button--ghost move-row__edit-btn text-theme-header"
+                        style={{ color: 'var(--primary)' }}
                         title="Edit Move & Tags"
                     >
                         <Tag size={16} />
@@ -178,7 +190,8 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                         <select
                             value={move.acc1}
                             onChange={(event) => updateMove(move.id, 'acc1', event.target.value)}
-                            className="form-select--bordered move-row__select-stat"
+                            className="form-select--bordered move-row__select-stat text-label"
+                            style={{ color: 'var(--text-main)' }}
                         >
                             {Object.values(CombatStat).map((statistic) => (
                                 <option key={statistic} value={statistic}>
@@ -196,7 +209,8 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                         <select
                             value={move.acc2}
                             onChange={(event) => updateMove(move.id, 'acc2', event.target.value)}
-                            className="form-select--bordered move-row__select-skill"
+                            className="form-select--bordered move-row__select-skill text-label"
+                            style={{ color: 'var(--text-main)' }}
                         >
                             <option value="none">-- None --</option>
                             {Object.values(Skill).map((skillName) => (
@@ -222,7 +236,7 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                     <select
                         value={move.type}
                         onChange={(event) => updateMove(move.id, 'type', event.target.value)}
-                        className="form-select--transparent move-row__type-select"
+                        className="form-select--transparent move-row__type-select text-label"
                         style={{
                             background: combinedColors[move.type] || 'transparent',
                             color: move.type ? 'white' : 'inherit',
@@ -243,7 +257,8 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                         onChange={(event) =>
                             updateMove(move.id, 'category', event.target.value as 'Physical' | 'Special' | 'Status')
                         }
-                        className="form-select--transparent"
+                        className="form-select--transparent text-label move-row__cat-select"
+                        style={{ color: 'var(--text-main)' }}
                     >
                         <option value="Physical">Phys</option>
                         <option value="Special">Spec</option>
@@ -260,7 +275,8 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                         <select
                             value={move.dmg1}
                             onChange={(event) => updateMove(move.id, 'dmg1', event.target.value)}
-                            className="form-select--bordered move-row__select-stat"
+                            className="form-select--bordered move-row__select-stat text-label"
+                            style={{ color: 'var(--text-main)' }}
                         >
                             <option value="">-</option>
                             {Object.values(CombatStat).map((statistic) => (
@@ -278,11 +294,16 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                 </td>
                 <td className="data-table__cell--middle">
                     <div className="flex-layout--row-center">
-                        <span className="move-row__damage-text">{damageTotal}</span>
+                        <span
+                            className="move-row__damage-text text-value-highlight"
+                            style={{ color: 'var(--primary)' }}
+                        >
+                            {damageTotal}
+                        </span>
                         <button
                             type="button"
                             onClick={() => onTarget(move)}
-                            className="action-button action-button--theme move-row__roll-btn"
+                            className="action-button action-button--theme move-row__roll-btn text-theme-header"
                             title="Roll Damage"
                         >
                             <Swords size={16} />
@@ -291,10 +312,20 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                 </td>
                 <td className="data-table__cell--middle">
                     <div className="flex-layout--column-center">
-                        <button type="button" onClick={() => moveUpMove(move.id)} className="move-row__sort-btn">
+                        <button
+                            type="button"
+                            onClick={() => moveUpMove(move.id)}
+                            className="move-row__sort-btn text-theme-header"
+                            style={{ color: 'var(--text-main)' }}
+                        >
                             <ChevronUp size={16} />
                         </button>
-                        <button type="button" onClick={() => moveDownMove(move.id)} className="move-row__sort-btn">
+                        <button
+                            type="button"
+                            onClick={() => moveDownMove(move.id)}
+                            className="move-row__sort-btn text-theme-header"
+                            style={{ color: 'var(--text-main)' }}
+                        >
                             <ChevronDown size={16} />
                         </button>
                     </div>
@@ -303,7 +334,7 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                     <button
                         type="button"
                         onClick={() => onDelete(move.id)}
-                        className="action-button action-button--dark move-row__roll-btn"
+                        className="action-button action-button--dark move-row__roll-btn text-theme-header"
                         title="Delete Move"
                     >
                         <X size={16} />
@@ -316,10 +347,16 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
             {bankModalOpen && (
                 <div className="moves-table__modal-overlay">
                     <div className="moves-table__modal-content" style={{ width: '340px', maxWidth: '90%' }}>
-                        <h3 className="moves-table__modal-title modal-title-with-icon">
+                        <h3
+                            className="moves-table__modal-title modal-title-with-icon text-title-primary"
+                            style={{ color: 'var(--semantic-danger)' }}
+                        >
                             <AlertTriangle size={20} /> Banked Dice Detected
                         </h3>
-                        <p className="moves-table__modal-text" style={{ textAlign: 'left' }}>
+                        <p
+                            className="moves-table__modal-text text-subtext"
+                            style={{ textAlign: 'left', color: 'var(--text-muted)' }}
+                        >
                             You currently have <strong>{totalBanked}</strong> extra Damage Dice banked from previous
                             rolls.
                             <br />
@@ -330,21 +367,21 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                         <div className="moves-table__modal-actions">
                             <button
                                 type="button"
-                                className="action-button action-button--dark moves-table__modal-btn"
+                                className="action-button action-button--dark moves-table__modal-btn text-theme-header"
                                 onClick={() => setBankModalOpen(false)}
                             >
                                 <XCircle size={16} /> Cancel
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--theme moves-table__modal-btn"
+                                className="action-button action-button--theme moves-table__modal-btn text-theme-header"
                                 onClick={confirmKeepBank}
                             >
                                 <PiggyBank size={16} /> Keep Bank
                             </button>
                             <button
                                 type="button"
-                                className="action-button action-button--red moves-table__modal-btn"
+                                className="action-button action-button--red moves-table__modal-btn text-theme-header"
                                 onClick={confirmWipeBank}
                             >
                                 <Trash2 size={16} /> Clear Bank
