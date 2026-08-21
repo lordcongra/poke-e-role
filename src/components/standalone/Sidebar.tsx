@@ -5,6 +5,8 @@ import { RestoreBackupModal } from './RestoreBackupModal';
 import { Menu, ChevronLeft, FolderPlus, FilePlus, Save, ArchiveRestore } from 'lucide-react';
 import './Sidebar.css';
 
+const ICON_SHADOW = 'drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8)) drop-shadow(0 1px 4px rgba(0, 0, 0, 0.6))';
+
 export function Sidebar() {
     const {
         activeTokenId,
@@ -71,6 +73,7 @@ export function Sidebar() {
                     <input
                         type="text"
                         className="sidebar__input text-label"
+                        style={{ color: 'var(--text-main)' }}
                         placeholder="New Name..."
                         value={newName}
                         onChange={(e) => setNewName(e.target.value)}
@@ -84,13 +87,13 @@ export function Sidebar() {
                         className="action-button action-button--dark sidebar__btn text-theme-header"
                         onClick={() => handleCreate('folder')}
                     >
-                        <FolderPlus size={14} /> Add Folder
+                        <FolderPlus size={14} style={{ filter: ICON_SHADOW }} /> Add Folder
                     </button>
                     <button
                         className="action-button action-button--theme sidebar__btn text-theme-header"
                         onClick={() => handleCreate('character')}
                     >
-                        <FilePlus size={14} /> Add Sheet
+                        <FilePlus size={14} style={{ filter: ICON_SHADOW }} /> Add Sheet
                     </button>
                 </div>
                 <div className="sidebar__create-row sidebar__backup-row">
@@ -99,14 +102,14 @@ export function Sidebar() {
                         onClick={handleExportMasterBackup}
                         title="Export all folders and characters"
                     >
-                        <Save size={14} /> Backup
+                        <Save size={14} style={{ filter: ICON_SHADOW }} /> Backup
                     </button>
                     <button
                         className="action-button action-button--secondary sidebar__btn text-theme-header"
                         onClick={() => restoreInputRef.current?.click()}
                         title="Restore from a Master Backup file"
                     >
-                        <ArchiveRestore size={14} /> Restore
+                        <ArchiveRestore size={14} style={{ filter: ICON_SHADOW }} /> Restore
                     </button>
                     <input
                         type="file"
