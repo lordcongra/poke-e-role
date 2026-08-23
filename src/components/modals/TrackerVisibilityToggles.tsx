@@ -8,7 +8,7 @@ export function TrackerVisibilityToggles() {
     return (
         <>
             <div className="tracker-settings__toggle-row">
-                <label className="tracker-settings__toggle-label text-label" style={{ color: 'var(--text-main)' }}>
+                <label className="tracker-settings__toggle-label text-label">
                     <input
                         type="checkbox"
                         checked={identityStore.settingHpBar}
@@ -32,7 +32,7 @@ export function TrackerVisibilityToggles() {
             </div>
 
             <div className="tracker-settings__toggle-row">
-                <label className="tracker-settings__toggle-label text-label" style={{ color: 'var(--text-main)' }}>
+                <label className="tracker-settings__toggle-label text-label">
                     <input
                         type="checkbox"
                         checked={identityStore.settingHpText}
@@ -53,7 +53,7 @@ export function TrackerVisibilityToggles() {
             </div>
 
             <div className="tracker-settings__toggle-row">
-                <label className="tracker-settings__toggle-label text-label" style={{ color: 'var(--text-main)' }}>
+                <label className="tracker-settings__toggle-label text-label">
                     <input
                         type="checkbox"
                         checked={identityStore.settingWillBar}
@@ -74,7 +74,7 @@ export function TrackerVisibilityToggles() {
             </div>
 
             <div className="tracker-settings__toggle-row">
-                <label className="tracker-settings__toggle-label text-label" style={{ color: 'var(--text-main)' }}>
+                <label className="tracker-settings__toggle-label text-label">
                     <input
                         type="checkbox"
                         checked={identityStore.settingWillText}
@@ -97,7 +97,7 @@ export function TrackerVisibilityToggles() {
             <hr className="tracker-settings__divider" />
 
             <div className="tracker-settings__toggle-row">
-                <label className="tracker-settings__toggle-label text-label" style={{ color: 'var(--text-main)' }}>
+                <label className="tracker-settings__toggle-label text-label">
                     <input
                         type="checkbox"
                         checked={identityStore.settingDefBadge}
@@ -118,7 +118,7 @@ export function TrackerVisibilityToggles() {
             </div>
 
             <div className="tracker-settings__toggle-row">
-                <label className="tracker-settings__toggle-label text-label" style={{ color: 'var(--text-main)' }}>
+                <label className="tracker-settings__toggle-label text-label">
                     <input
                         type="checkbox"
                         checked={identityStore.settingEcoBadge}

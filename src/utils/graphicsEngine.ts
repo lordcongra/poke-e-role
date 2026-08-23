@@ -48,7 +48,9 @@ export async function applyGraphicsToOwlbear(
         const explicitId = `${token.id}-${role}${CURRENT_VERSION}`;
         const existing = validExistingItems.find((item) => item.id === explicitId);
 
-        if (!existing && definition.visible) {
+        // 🚨 FIX: Removed `&& definition.visible` so we ALWAYS build the attachments.
+        // If they are hidden, they will simply be created with `.visible(false)` so the GM can still see them faded!
+        if (!existing) {
             if (definition.type === 'CURVE') {
                 const curveObject = buildCurve()
                     .id(explicitId)

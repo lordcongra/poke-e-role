@@ -22,7 +22,8 @@ const METADATA_ID = STATS_META_ID;
 const ROOM_META_ID = 'pokerole-pmd-extension/room-settings';
 const EXTENSION_ID = 'pokerole-pmd-extension';
 
-const knownTransforms: Record<string, { x: number; y: number; r: number; metaStr: string }> = {};
+// NEW: We now track `v: boolean` (visibility) so the engine redraws when tokens are hidden/unhidden!
+const knownTransforms: Record<string, { x: number; y: number; r: number; v: boolean; metaStr: string }> = {};
 
 interface RollSyncData {
     id: string;
@@ -42,7 +43,7 @@ export function useOwlbearSync() {
         // 1. Load Local Homebrew for this specific room immediately
         useCharacterStore.getState().loadHomebrewLocal();
 
-        // 🚨 NEW: Skip Owlbear bindings entirely if running as a standalone app!
+        // 🚨 Skip Owlbear bindings entirely if running as a standalone app!
         if (isStandaloneMode) {
             return;
         }
@@ -114,13 +115,14 @@ export function useOwlbearSync() {
                                 x: item.scale.x,
                                 y: item.scale.y,
                                 r: item.rotation,
+                                v: item.visible,
                                 metaStr: JSON.stringify(meta)
                             };
                             const gData = buildGraphicsFromMeta(meta);
                             await renderTokenGraphics(item, gData, role, forceRebuild);
                         }
                     } catch (e) {
-                        console.error('Error rendering tokens on load:', e);
+                        console.error('[SyncEngine] Error rendering tokens on load:', e);
                     }
                 };
 
@@ -161,7 +163,7 @@ export function useOwlbearSync() {
                                     store.loadFromOwlbear(meta);
                                 } catch (e) {
                                     console.error(
-                                        'CRITICAL: Corrupted token metadata detected. Resetting sheet to protect engine.',
+                                        '[SyncEngine] CRITICAL: Corrupted token metadata detected. Resetting sheet to protect engine.',
                                         e
                                     );
                                     if (OBR.isAvailable)
@@ -203,13 +205,16 @@ export function useOwlbearSync() {
                                                         .refreshSpeciesData(data as Record<string, unknown>);
                                             })
                                             .catch((e) =>
-                                                console.warn('Failed to fetch species data on token load:', e)
+                                                console.warn(
+                                                    '[SyncEngine] Failed to fetch species data on token load:',
+                                                    e
+                                                )
                                             );
                                     } else {
                                         store.applyLearnset({ Moves: [] });
                                     }
                                 } catch (e) {
-                                    console.error('Error during post-load fetches:', e);
+                                    console.error('[SyncEngine] Error during post-load fetches:', e);
                                 }
                             } else {
                                 store.loadFromOwlbear({});
@@ -217,7 +222,7 @@ export function useOwlbearSync() {
                             }
                         }
                     } catch (error) {
-                        console.error('FATAL: Engine prevented from crashing during token load.', error);
+                        console.error('[SyncEngine] FATAL: Engine prevented from crashing during token load.', error);
                     }
                 };
 
@@ -227,7 +232,7 @@ export function useOwlbearSync() {
                         await loadTokenAndLearnset(selected[0]);
                     }
                 } catch (e) {
-                    console.error('Engine recovered from startup selection crash:', e);
+                    console.error('[SyncEngine] Engine recovered from startup selection crash:', e);
                 }
 
                 const unsubPlayer = OBR.player.onChange(async (player) => {
@@ -235,7 +240,7 @@ export function useOwlbearSync() {
                         try {
                             await loadTokenAndLearnset(player.selection[0]);
                         } catch (e) {
-                            console.error('Engine recovered from token click crash:', e);
+                            console.error('[SyncEngine] Engine recovered from token click crash:', e);
                         }
                     }
                 });
@@ -251,25 +256,28 @@ export function useOwlbearSync() {
                                 const rawX = item.scale.x;
                                 const rawY = item.scale.y;
                                 const rawR = item.rotation;
+                                const rawV = item.visible;
                                 const metaStr = JSON.stringify(meta);
 
                                 let needsGraphicsUpdate = false;
 
                                 if (!lastTransform) {
-                                    knownTransforms[item.id] = { x: rawX, y: rawY, r: rawR, metaStr };
+                                    knownTransforms[item.id] = { x: rawX, y: rawY, r: rawR, v: rawV, metaStr };
                                     needsGraphicsUpdate = true;
                                 } else {
                                     const diffX = Math.abs(lastTransform.x - rawX);
                                     const diffY = Math.abs(lastTransform.y - rawY);
                                     const diffR = Math.abs(lastTransform.r - rawR);
+                                    const diffV = lastTransform.v !== rawV;
 
                                     if (
                                         diffX > 0.005 ||
                                         diffY > 0.005 ||
                                         diffR > 0.005 ||
+                                        diffV ||
                                         lastTransform.metaStr !== metaStr
                                     ) {
-                                        knownTransforms[item.id] = { x: rawX, y: rawY, r: rawR, metaStr };
+                                        knownTransforms[item.id] = { x: rawX, y: rawY, r: rawR, v: rawV, metaStr };
                                         needsGraphicsUpdate = true;
                                     }
                                 }
@@ -293,7 +301,7 @@ export function useOwlbearSync() {
                                     }
                                 }
                             } catch (e) {
-                                console.error('Engine recovered from background item sync crash:', e);
+                                console.error('[SyncEngine] Engine recovered from background item sync crash:', e);
                             }
                         }
                     }
@@ -317,7 +325,7 @@ export function useOwlbearSync() {
                             data.customStatuses;
 
                         if (hasLegacyHomebrew) {
-                            console.log('Migrating legacy homebrew data to local storage...');
+                            console.log('[SyncEngine] Migrating legacy homebrew data to local storage...');
                             store.mergeAllHomebrewData(
                                 (data.customTypes as CustomType[]) || [],
                                 (data.customAbilities as CustomAbility[]) || [],
@@ -360,7 +368,7 @@ export function useOwlbearSync() {
                             store.setIdentity('gmOnlyMatchups', Boolean(data.gmOnlyMatchups));
                     }
                 } catch (e) {
-                    console.error('Engine recovered from room metadata crash:', e);
+                    console.error('[SyncEngine] Engine recovered from room metadata crash:', e);
                 }
 
                 const unsubRoom = OBR.room.onMetadataChange((meta) => {
@@ -382,7 +390,7 @@ export function useOwlbearSync() {
                                 store.setIdentity('gmOnlyMatchups', Boolean(data.gmOnlyMatchups));
                         }
                     } catch (e) {
-                        console.error('Engine recovered from room metadata sync crash:', e);
+                        console.error('[SyncEngine] Engine recovered from room metadata sync crash:', e);
                     }
                 });
                 unsubs.push(unsubRoom);
@@ -404,7 +412,7 @@ export function useOwlbearSync() {
                         const stored = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
                         existing = Array.isArray(stored) ? stored : [];
                     } catch (error) {
-                        console.error('Failed to parse roll log on sync. Resetting cache.', error);
+                        console.error('[SyncEngine] Failed to parse roll log on sync. Resetting cache.', error);
                         existing = [];
                     }
 
@@ -412,7 +420,7 @@ export function useOwlbearSync() {
                         try {
                             localStorage.setItem('pkr_roll_log', JSON.stringify([rollData, ...existing].slice(0, 50)));
                         } catch (error) {
-                            console.error('Failed to save synced roll to cache.', error);
+                            console.error('[SyncEngine] Failed to save synced roll to cache.', error);
                         }
                     }
 
@@ -471,7 +479,7 @@ export function useOwlbearSync() {
                                             }
                                             if (changed) meta['status-list'] = JSON.stringify(statuses);
                                         } catch (e) {
-                                            console.warn('Failed to parse status list for update:', e);
+                                            console.warn('[SyncEngine] Failed to parse status list for update:', e);
                                         }
                                     }
                                 });
@@ -532,7 +540,7 @@ export function useOwlbearSync() {
                             }
                         }
                     } catch (e) {
-                        console.error('Engine recovered from roll result sync crash:', e);
+                        console.error('[SyncEngine] Engine recovered from roll result sync crash:', e);
                     }
                 });
                 unsubs.push(unsubRollResult);
