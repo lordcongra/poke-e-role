@@ -4,9 +4,15 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { canViewHomebrew } from '../../utils/helper';
 import { CURRENT_VERSION } from '../../data/changelog';
 import { flattenStateToMetadata } from '../../utils/stateMapper';
-import { STATS_META_ID } from '../../utils/graphicsManager';
 import { saveToOwlbear } from '../../utils/obr';
+import { isStandaloneMode } from '../../utils/storageAdapter';
+import { useObrReady } from '../../hooks/useObrReady';
+import { setActiveTokenId } from '../../utils/obr';
+import { useInitiativePopover } from '../../hooks/useInitiativePopover';
+import { exportCharacterData, parseImportedFile } from '../../utils/fileSystemHelpers';
 import type { CharacterState } from '../../store/storeTypes';
+
+// Modals
 import { HomebrewModal } from '../homebrew/HomebrewModal';
 import { RulesModal } from '../modals/RulesModal';
 import { ItemGeneratorModal } from '../modals/ItemGeneratorModal';
@@ -16,9 +22,8 @@ import { GeneratorModal } from '../modals/GeneratorModal';
 import { PrintSettingsModal } from '../modals/PrintSettingsModal';
 import { ThemeSettingsModal } from '../modals/ThemeSettingsModal';
 import { AccessibilityModal } from '../modals/AccessibilityModal';
-import { isStandaloneMode } from '../../utils/storageAdapter';
-import { useObrReady } from '../../hooks/useObrReady';
-import { setActiveTokenId } from '../../utils/obr';
+
+// Icons
 import {
     ChevronDown,
     ArrowLeft,
@@ -43,16 +48,41 @@ import './GlobalToolbar.css';
 
 const ICON_SHADOW = 'drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8)) drop-shadow(0 1px 4px rgba(0, 0, 0, 0.6))';
 
+type ActiveModal =
+    | 'homebrew'
+    | 'rules'
+    | 'loot'
+    | 'changelog'
+    | 'init'
+    | 'generator'
+    | 'print'
+    | 'theme'
+    | 'accessibility'
+    | null;
+
 export function GlobalToolbar() {
     const isObrReady = useObrReady();
+    const { handleInitiativeToggle } = useInitiativePopover(isObrReady);
+    const store = useCharacterStore();
+
     const storeRole = useCharacterStore((state) => state.role);
     const activeTokenId = useCharacterStore((state) => state.tokenId);
     const homebrewAccess = useCharacterStore((state) => state.identity.homebrewAccess) || 'Full';
     const gmOnlyLootGen = useCharacterStore((state) => state.identity.gmOnlyLootGen);
-    const identityStore = useCharacterStore((state) => state.identity) || {};
 
     const [localRole, setLocalRole] = useState<string>(isStandaloneMode ? 'GM' : storeRole);
     const [isExpanded, setIsExpanded] = useState<boolean>(true);
+    const [isDark, setIsDark] = useState<boolean>(true);
+
+    // Consolidated State
+    const [activeModal, setActiveModal] = useState<ActiveModal>(null);
+    const [importData, setImportData] = useState<Record<string, unknown> | null>(null);
+
+    const fileInputReference = useRef<HTMLInputElement>(null);
+
+    const showHomebrewButton = isStandaloneMode || canViewHomebrew(localRole, homebrewAccess);
+    const showLootGenButton = isStandaloneMode || localRole === 'GM' || gmOnlyLootGen === false;
+    const showPokemonGeneratorButton = isStandaloneMode || !!activeTokenId;
 
     useEffect(() => {
         if (!isStandaloneMode && OBR.isAvailable) {
@@ -62,24 +92,6 @@ export function GlobalToolbar() {
             });
         }
     }, []);
-
-    const showHomebrewButton = isStandaloneMode || canViewHomebrew(localRole, homebrewAccess);
-    const showLootGenButton = isStandaloneMode || localRole === 'GM' || gmOnlyLootGen === false;
-    const showPokemonGeneratorButton = isStandaloneMode || !!activeTokenId;
-
-    const [isDark, setIsDark] = useState<boolean>(true);
-    const [showHomebrewModal, setShowHomebrewModal] = useState<boolean>(false);
-    const [showRulesModal, setShowRulesModal] = useState<boolean>(false);
-    const [showLootGenModal, setShowLootGenModal] = useState<boolean>(false);
-    const [showChangelog, setShowChangelog] = useState<boolean>(false);
-    const [showInitSettings, setShowInitSettings] = useState<boolean>(false);
-    const [showGeneratorModal, setShowGeneratorModal] = useState<boolean>(false);
-    const [showPrintModal, setShowPrintModal] = useState<boolean>(false);
-    const [showThemeModal, setShowThemeModal] = useState<boolean>(false);
-    const [showAccessibilityModal, setShowAccessibilityModal] = useState<boolean>(false);
-    const [importData, setImportData] = useState<Record<string, unknown> | null>(null);
-
-    const fileInputReference = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         try {
@@ -97,14 +109,13 @@ export function GlobalToolbar() {
             }
 
             const savedContrast = localStorage.getItem('pkr_high_contrast');
-            const contrastEnabled = savedContrast === null ? true : savedContrast === 'true';
-            if (contrastEnabled) {
+            if (savedContrast === null || savedContrast === 'true') {
                 document.body.setAttribute('data-high-contrast', 'true');
             }
 
             const seenVersion = localStorage.getItem('pkr_changelog_seen');
             if (seenVersion !== CURRENT_VERSION) {
-                setShowChangelog(true);
+                setActiveModal('changelog');
             }
 
             const savedExpanded = localStorage.getItem('pkr_global_toolbar_expanded');
@@ -129,133 +140,6 @@ export function GlobalToolbar() {
     const handleReturnToMenu = () => {
         useCharacterStore.setState({ tokenId: null });
         setActiveTokenId(null);
-    };
-
-    useEffect(() => {
-        if (!isObrReady || !OBR.isAvailable || isStandaloneMode) return;
-
-        const timeout = setTimeout(() => {
-            const unsub = OBR.broadcast.onMessage('pkr-init-pong', () => {
-                unsub();
-                openTracker(true);
-            });
-            OBR.broadcast.sendMessage('pkr-init-ping-check', {}, { destination: 'LOCAL' });
-            setTimeout(() => unsub(), 100);
-        }, 300);
-        return () => clearTimeout(timeout);
-    }, [
-        isObrReady,
-        identityStore.initiativeTrackerPreset,
-        identityStore.initiativeTrackerOffsetX,
-        identityStore.initiativeTrackerOffsetY,
-        identityStore.initiativeTrackerLayout,
-        identityStore.initiativeTrackerAvatarShape,
-        identityStore.initiativeTrackerMaxWidth,
-        identityStore.initiativeTrackerMaxHeight
-    ]);
-
-    const openTracker = async (isReAnchor = false) => {
-        if (!isObrReady || !OBR.isAvailable) return;
-
-        const {
-            initiativeTrackerPreset,
-            initiativeTrackerOffsetX,
-            initiativeTrackerOffsetY,
-            initiativeTrackerLayout,
-            initiativeTrackerAvatarShape,
-            initiativeTrackerMaxWidth,
-            initiativeTrackerMaxHeight
-        } = identityStore;
-
-        const width = await OBR.viewport.getWidth();
-        const height = await OBR.viewport.getHeight();
-
-        let anchorPosition = { top: 0, left: 0 };
-        let transformOrigin = { vertical: 'TOP', horizontal: 'LEFT' };
-
-        const posX = initiativeTrackerOffsetX || 0;
-        const posY = initiativeTrackerOffsetY || 0;
-
-        switch (initiativeTrackerPreset) {
-            case 'top-left':
-                anchorPosition = { top: posY, left: posX };
-                transformOrigin = { vertical: 'TOP', horizontal: 'LEFT' };
-                break;
-            case 'top-right':
-                anchorPosition = { top: posY, left: width + posX };
-                transformOrigin = { vertical: 'TOP', horizontal: 'RIGHT' };
-                break;
-            case 'bottom-left':
-                anchorPosition = { top: height + posY, left: posX };
-                transformOrigin = { vertical: 'BOTTOM', horizontal: 'LEFT' };
-                break;
-            case 'bottom-right':
-                anchorPosition = { top: height + posY, left: width + posX };
-                transformOrigin = { vertical: 'BOTTOM', horizontal: 'RIGHT' };
-                break;
-            case 'center-left':
-                anchorPosition = { top: height / 2 + posY, left: posX };
-                transformOrigin = { vertical: 'CENTER', horizontal: 'LEFT' };
-                break;
-            case 'center-right':
-                anchorPosition = { top: height / 2 + posY, left: width + posX };
-                transformOrigin = { vertical: 'CENTER', horizontal: 'RIGHT' };
-                break;
-            case 'top-center':
-                anchorPosition = { top: posY, left: width / 2 + posX };
-                transformOrigin = { vertical: 'TOP', horizontal: 'CENTER' };
-                break;
-            case 'bottom-center':
-                anchorPosition = { top: height + posY, left: width / 2 + posX };
-                transformOrigin = { vertical: 'BOTTOM', horizontal: 'CENTER' };
-                break;
-        }
-
-        const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-        const themeToPass = document.body.getAttribute('data-theme') || 'dark';
-        const url = `${baseUrl}/initiative-tracker.html?layout=${initiativeTrackerLayout || 'compact'}&theme=${themeToPass}&shape=${initiativeTrackerAvatarShape || 'circle'}&mw=${initiativeTrackerMaxWidth || 400}&mh=${initiativeTrackerMaxHeight || 600}`;
-
-        const savedW = parseInt(localStorage.getItem('pkr_init_width') || '400');
-        const savedH = parseInt(localStorage.getItem('pkr_init_height') || '150');
-
-        OBR.popover
-            .open({
-                id: 'pkr-initiative-tracker',
-                url: url,
-                height: isReAnchor ? savedH : 150,
-                width: isReAnchor ? savedW : 400,
-                disableClickAway: true,
-                anchorReference: 'POSITION',
-                anchorPosition: anchorPosition,
-                // @ts-ignore
-                transformOrigin: transformOrigin
-            })
-            .catch(() => {});
-    };
-
-    const handleInitiativeToggle = async () => {
-        if (isStandaloneMode) {
-            window.dispatchEvent(new Event('toggle-standalone-tracker'));
-            return;
-        }
-
-        if (!OBR.isAvailable || !isObrReady) return;
-
-        let handled = false;
-        const unsub = OBR.broadcast.onMessage('pkr-init-pong', () => {
-            handled = true;
-            unsub();
-            OBR.popover.close('pkr-initiative-tracker').catch(() => {});
-        });
-
-        OBR.broadcast.sendMessage('pkr-init-ping-toggle', {}, { destination: 'LOCAL' });
-
-        setTimeout(() => {
-            unsub();
-            if (!handled) {
-                openTracker();
-            }
-        }, 150);
     };
 
     const toggleTheme = () => {
@@ -288,81 +172,24 @@ export function GlobalToolbar() {
         try {
             localStorage.setItem('pkr_changelog_seen', CURRENT_VERSION);
         } catch (error) {}
-        setShowChangelog(false);
+        setActiveModal(null);
     };
 
-    const handleExport = async () => {
-        const state = useCharacterStore.getState();
-
-        if (isStandaloneMode) {
-            try {
-                const exportData = flattenStateToMetadata(state);
-                const dataString = JSON.stringify(exportData, null, 2);
-
-                const blob = new Blob([dataString], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const linkElement = document.createElement('a');
-                const name = state.identity.nickname || state.identity.species || 'character';
-                linkElement.href = url;
-                linkElement.download = `${name.replace(/\s+/g, '_')}_pokerole.json`;
-                document.body.appendChild(linkElement);
-                linkElement.click();
-                document.body.removeChild(linkElement);
-                URL.revokeObjectURL(url);
-                return;
-            } catch (error) {
-                console.error('[GlobalToolbar] Standalone Export failed:', error);
-                return;
-            }
-        }
-
-        if (!state.tokenId || !OBR.isAvailable || !isObrReady) {
-            if (OBR.isAvailable && isObrReady) OBR.notification.show('Please select a token to export.', 'WARNING');
-            return;
-        }
-
-        try {
-            const items = await OBR.scene.items.getItems([state.tokenId]);
-            if (items.length === 0) return;
-
-            const exportData = items[0].metadata[STATS_META_ID] || {};
-            const dataString = JSON.stringify(exportData, null, 2);
-
-            const blob = new Blob([dataString], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const linkElement = document.createElement('a');
-            const name = state.identity.nickname || state.identity.species || 'character';
-            linkElement.href = url;
-            linkElement.download = `${name.replace(/\s+/g, '_')}_pokerole.json`;
-            document.body.appendChild(linkElement);
-            linkElement.click();
-            document.body.removeChild(linkElement);
-            URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error('[GlobalToolbar] Export failed:', error);
-        }
-    };
-
-    const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImportChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (fileEvent) => {
-            try {
-                const imported = JSON.parse(fileEvent.target?.result as string);
-                setImportData(imported);
-            } catch (error) {
-                if (OBR.isAvailable && isObrReady) OBR.notification.show('Invalid JSON file.', 'ERROR');
-                else alert('Invalid JSON file.');
-            }
-            if (fileInputReference.current) fileInputReference.current.value = '';
-        };
-        reader.readAsText(file);
+        try {
+            const data = await parseImportedFile(file);
+            setImportData(data);
+        } catch (error) {
+            if (OBR.isAvailable && isObrReady) OBR.notification.show('Invalid JSON file.', 'ERROR');
+            else alert('Invalid JSON file.');
+        }
+        if (fileInputReference.current) fileInputReference.current.value = '';
     };
 
     const confirmImport = () => {
         if (!importData) return;
-        const store = useCharacterStore.getState();
         try {
             if (
                 importData['moves-data'] !== undefined ||
@@ -429,7 +256,7 @@ export function GlobalToolbar() {
                             <button
                                 type="button"
                                 className="global-toolbar__btn global-toolbar__btn--init-cog action-button--primary-hover"
-                                onClick={() => setShowInitSettings(true)}
+                                onClick={() => setActiveModal('init')}
                                 title="Initiative Settings"
                             >
                                 <Settings size={16} color="var(--text-muted)" />
@@ -440,7 +267,7 @@ export function GlobalToolbar() {
                             <button
                                 type="button"
                                 className="global-toolbar__btn action-button--primary-hover"
-                                onClick={() => setShowHomebrewModal(true)}
+                                onClick={() => setActiveModal('homebrew')}
                                 title="Manage Table Custom Content"
                             >
                                 <Hammer size={16} color="var(--primary)" /> Homebrew Workshop
@@ -450,7 +277,7 @@ export function GlobalToolbar() {
                         <button
                             type="button"
                             className="global-toolbar__btn action-button--primary-hover"
-                            onClick={() => setShowRulesModal(true)}
+                            onClick={() => setActiveModal('rules')}
                             title="Configure Room Rules & Dice Engine"
                         >
                             <BookOpen size={16} color="var(--primary)" /> Room Rules
@@ -462,7 +289,7 @@ export function GlobalToolbar() {
                                     <button
                                         type="button"
                                         className="global-toolbar__btn action-button--secondary-hover"
-                                        onClick={() => setShowGeneratorModal(true)}
+                                        onClick={() => setActiveModal('generator')}
                                         title="Open Pokémon Generator"
                                     >
                                         <Wand2 size={16} color="var(--secondary)" /> PKMN Generator
@@ -472,7 +299,7 @@ export function GlobalToolbar() {
                                     <button
                                         type="button"
                                         className="global-toolbar__btn action-button--secondary-hover"
-                                        onClick={() => setShowLootGenModal(true)}
+                                        onClick={() => setActiveModal('loot')}
                                         title="Generate Items & TMs"
                                     >
                                         <Package size={16} color="var(--secondary)" /> Loot Generator
@@ -487,7 +314,7 @@ export function GlobalToolbar() {
                             <button
                                 type="button"
                                 className="global-toolbar__btn action-button--neutral-hover"
-                                onClick={() => setShowThemeModal(true)}
+                                onClick={() => setActiveModal('theme')}
                                 title="Override Theme Colors"
                             >
                                 <Palette size={16} color="var(--text-main)" /> Theme
@@ -496,7 +323,7 @@ export function GlobalToolbar() {
                             <button
                                 type="button"
                                 className="global-toolbar__btn action-button--neutral-hover"
-                                onClick={() => setShowChangelog(true)}
+                                onClick={() => setActiveModal('changelog')}
                                 title="View System Updates"
                             >
                                 <Bell size={16} color="var(--text-main)" /> What's New
@@ -505,7 +332,7 @@ export function GlobalToolbar() {
                             <button
                                 type="button"
                                 className="global-toolbar__btn action-button--neutral-hover"
-                                onClick={() => setShowAccessibilityModal(true)}
+                                onClick={() => setActiveModal('accessibility')}
                                 title="Accessibility Options (Contrast & Fonts)"
                             >
                                 <Eye size={16} color="var(--primary)" /> Accessibility
@@ -532,7 +359,7 @@ export function GlobalToolbar() {
                         <div className="global-toolbar__icon-row">
                             <button
                                 type="button"
-                                onClick={handleExport}
+                                onClick={() => exportCharacterData(store, isStandaloneMode, isObrReady)}
                                 className="action-button action-button--dark"
                                 title="Export Character (Download JSON)"
                             >
@@ -549,13 +376,13 @@ export function GlobalToolbar() {
                             <input
                                 type="file"
                                 ref={fileInputReference}
-                                onChange={handleImport}
+                                onChange={handleImportChange}
                                 accept=".json"
                                 style={{ display: 'none' }}
                             />
                             <button
                                 type="button"
-                                onClick={() => setShowPrintModal(true)}
+                                onClick={() => setActiveModal('print')}
                                 className="action-button action-button--dark"
                                 title="Print Sheet"
                             >
@@ -566,6 +393,7 @@ export function GlobalToolbar() {
                 </div>
             )}
 
+            {/* Standalone Import Prompt */}
             {importData && (
                 <div className="global-toolbar__modal-overlay">
                     <div className="global-toolbar__modal-content">
@@ -595,15 +423,16 @@ export function GlobalToolbar() {
                 </div>
             )}
 
-            {showHomebrewModal && <HomebrewModal onClose={() => setShowHomebrewModal(false)} />}
-            {showRulesModal && <RulesModal onClose={() => setShowRulesModal(false)} />}
-            {showLootGenModal && <ItemGeneratorModal onClose={() => setShowLootGenModal(false)} />}
-            {showGeneratorModal && <GeneratorModal onClose={() => setShowGeneratorModal(false)} />}
-            {showChangelog && <ChangelogModal onClose={handleCloseChangelog} />}
-            {showInitSettings && <InitiativeSettingsModal onClose={() => setShowInitSettings(false)} />}
-            {showPrintModal && <PrintSettingsModal onClose={() => setShowPrintModal(false)} />}
-            {showThemeModal && <ThemeSettingsModal onClose={() => setShowThemeModal(false)} />}
-            {showAccessibilityModal && <AccessibilityModal onClose={() => setShowAccessibilityModal(false)} />}
+            {/* Conditionally Rendered Modals */}
+            {activeModal === 'homebrew' && <HomebrewModal onClose={() => setActiveModal(null)} />}
+            {activeModal === 'rules' && <RulesModal onClose={() => setActiveModal(null)} />}
+            {activeModal === 'loot' && <ItemGeneratorModal onClose={() => setActiveModal(null)} />}
+            {activeModal === 'generator' && <GeneratorModal onClose={() => setActiveModal(null)} />}
+            {activeModal === 'changelog' && <ChangelogModal onClose={handleCloseChangelog} />}
+            {activeModal === 'init' && <InitiativeSettingsModal onClose={() => setActiveModal(null)} />}
+            {activeModal === 'print' && <PrintSettingsModal onClose={() => setActiveModal(null)} />}
+            {activeModal === 'theme' && <ThemeSettingsModal onClose={() => setActiveModal(null)} />}
+            {activeModal === 'accessibility' && <AccessibilityModal onClose={() => setActiveModal(null)} />}
         </div>
     );
 }
