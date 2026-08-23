@@ -66,14 +66,19 @@ function App() {
     const [showStandaloneTracker, setShowStandaloneTracker] = useState(false);
     const [globalOverride, setGlobalOverride] = useState<{ p: string; s: string } | null>(null);
 
-    // Contrast Settings State
+    // Accessibility States
     const [isHighContrast, setIsHighContrast] = useState<boolean>(() => {
         const saved = localStorage.getItem('pkr_high_contrast');
         return saved === null ? true : saved === 'true';
     });
 
-    const [contrastIntensity, setContrastIntensity] = useState<number>(() => {
-        const saved = localStorage.getItem('pkr_contrast_intensity');
+    const [contrastPrimary, setContrastPrimary] = useState<number>(() => {
+        const saved = localStorage.getItem('pkr_contrast_primary');
+        return saved ? parseFloat(saved) : 0.2;
+    });
+
+    const [contrastSecondary, setContrastSecondary] = useState<number>(() => {
+        const saved = localStorage.getItem('pkr_contrast_secondary');
         return saved ? parseFloat(saved) : 0.2;
     });
 
@@ -86,7 +91,27 @@ function App() {
         return saved ? JSON.parse(saved) : [];
     });
 
-    // Listeners for global toggle or specific settings adjustments
+    const [fontScale, setFontScale] = useState<number>(() => {
+        const saved = localStorage.getItem('pkr_font_scale');
+        return saved ? parseInt(saved) : 100;
+    });
+
+    const [dyslexiaFont, setDyslexiaFont] = useState<boolean>(() => {
+        return localStorage.getItem('pkr_dyslexia') === 'true';
+    });
+
+    // Font Scaling & Dyslexia Application
+    useEffect(() => {
+        document.documentElement.style.fontSize = fontScale === 100 ? '' : `${fontScale}%`;
+
+        if (dyslexiaFont) {
+            document.body.classList.add('dyslexia-mode');
+        } else {
+            document.body.classList.remove('dyslexia-mode');
+        }
+    }, [fontScale, dyslexiaFont]);
+
+    // Listeners for global toggles
     useEffect(() => {
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
@@ -97,17 +122,21 @@ function App() {
         });
         observer.observe(document.body, { attributes: true });
 
-        const handleContrastUpdate = () => {
-            setContrastIntensity(parseFloat(localStorage.getItem('pkr_contrast_intensity') || '0.20'));
+        const handleAccessibilityUpdate = () => {
+            setContrastPrimary(parseFloat(localStorage.getItem('pkr_contrast_primary') || '0.20'));
+            setContrastSecondary(parseFloat(localStorage.getItem('pkr_contrast_secondary') || '0.20'));
             setContrastForceAll(localStorage.getItem('pkr_contrast_force') === 'true');
+            setFontScale(parseInt(localStorage.getItem('pkr_font_scale') || '100'));
+            setDyslexiaFont(localStorage.getItem('pkr_dyslexia') === 'true');
+
             const types = localStorage.getItem('pkr_contrast_types');
             setContrastSpecificTypes(types ? JSON.parse(types) : []);
         };
-        window.addEventListener('contrast-settings-updated', handleContrastUpdate);
+        window.addEventListener('accessibility-settings-updated', handleAccessibilityUpdate);
 
         return () => {
             observer.disconnect();
-            window.removeEventListener('contrast-settings-updated', handleContrastUpdate);
+            window.removeEventListener('accessibility-settings-updated', handleAccessibilityUpdate);
         };
     }, []);
 
@@ -153,12 +182,12 @@ function App() {
             }
         }
 
-        // Apply final resolved theme to DOM, utilizing our robust contrast logic
+        // Apply final resolved theme to DOM
         if (finalPrimary) {
             const isForceDarkened = contrastForceAll || (type1 ? contrastSpecificTypes.includes(type1) : false);
 
             const accessiblePrimary = isHighContrast
-                ? getContrastColor(finalPrimary, 0.65, contrastIntensity, isForceDarkened)
+                ? getContrastColor(finalPrimary, 0.65, contrastPrimary, isForceDarkened)
                 : finalPrimary;
 
             document.body.style.setProperty('--dynamic-type-color', accessiblePrimary);
@@ -172,7 +201,7 @@ function App() {
             const isForceDarkened = contrastForceAll || (type1 ? contrastSpecificTypes.includes(type1) : false);
 
             const accessibleSecondary = isHighContrast
-                ? getContrastColor(finalSecondary, 0.65, contrastIntensity, isForceDarkened)
+                ? getContrastColor(finalSecondary, 0.65, contrastSecondary, isForceDarkened)
                 : finalSecondary;
 
             document.body.style.setProperty('--dynamic-secondary-color', accessibleSecondary);
@@ -188,7 +217,8 @@ function App() {
         themeSecondaryOverride,
         globalOverride,
         isHighContrast,
-        contrastIntensity,
+        contrastPrimary,
+        contrastSecondary,
         contrastForceAll,
         contrastSpecificTypes
     ]);

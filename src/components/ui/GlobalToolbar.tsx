@@ -15,6 +15,7 @@ import { InitiativeSettingsModal } from '../modals/InitiativeSettingsModal';
 import { GeneratorModal } from '../modals/GeneratorModal';
 import { PrintSettingsModal } from '../modals/PrintSettingsModal';
 import { ThemeSettingsModal } from '../modals/ThemeSettingsModal';
+import { AccessibilityModal } from '../modals/AccessibilityModal';
 import { isStandaloneMode } from '../../utils/storageAdapter';
 import { useObrReady } from '../../hooks/useObrReady';
 import { setActiveTokenId } from '../../utils/obr';
@@ -67,7 +68,6 @@ export function GlobalToolbar() {
     const showPokemonGeneratorButton = isStandaloneMode || !!activeTokenId;
 
     const [isDark, setIsDark] = useState<boolean>(true);
-    const [isHighContrast, setIsHighContrast] = useState<boolean>(true);
     const [showHomebrewModal, setShowHomebrewModal] = useState<boolean>(false);
     const [showRulesModal, setShowRulesModal] = useState<boolean>(false);
     const [showLootGenModal, setShowLootGenModal] = useState<boolean>(false);
@@ -76,6 +76,7 @@ export function GlobalToolbar() {
     const [showGeneratorModal, setShowGeneratorModal] = useState<boolean>(false);
     const [showPrintModal, setShowPrintModal] = useState<boolean>(false);
     const [showThemeModal, setShowThemeModal] = useState<boolean>(false);
+    const [showAccessibilityModal, setShowAccessibilityModal] = useState<boolean>(false);
     const [importData, setImportData] = useState<Record<string, unknown> | null>(null);
 
     const fileInputReference = useRef<HTMLInputElement>(null);
@@ -83,7 +84,6 @@ export function GlobalToolbar() {
     useEffect(() => {
         try {
             const savedTheme = localStorage.getItem('pokerole-theme');
-            // If the user explicitly chose light, honor it. Otherwise, default to dark.
             if (savedTheme === 'light') {
                 setIsDark(false);
                 document.body.classList.remove('dark-mode');
@@ -96,14 +96,10 @@ export function GlobalToolbar() {
                 document.documentElement.setAttribute('data-theme', 'dark');
             }
 
-            // High Contrast defaults to true for accessibility
             const savedContrast = localStorage.getItem('pkr_high_contrast');
             const contrastEnabled = savedContrast === null ? true : savedContrast === 'true';
-            setIsHighContrast(contrastEnabled);
-
             if (contrastEnabled) {
                 document.body.setAttribute('data-high-contrast', 'true');
-                document.documentElement.setAttribute('data-high-contrast', 'true');
             }
 
             const seenVersion = localStorage.getItem('pkr_changelog_seen');
@@ -216,7 +212,7 @@ export function GlobalToolbar() {
         }
 
         const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-        const themeToPass = document.body.getAttribute('data-theme') || 'dark'; // Fallback correctly
+        const themeToPass = document.body.getAttribute('data-theme') || 'dark';
         const url = `${baseUrl}/initiative-tracker.html?layout=${initiativeTrackerLayout || 'compact'}&theme=${themeToPass}&shape=${initiativeTrackerAvatarShape || 'circle'}&mw=${initiativeTrackerMaxWidth || 400}&mh=${initiativeTrackerMaxHeight || 600}`;
 
         const savedW = parseInt(localStorage.getItem('pkr_init_width') || '400');
@@ -288,31 +284,10 @@ export function GlobalToolbar() {
         }
     };
 
-    const toggleHighContrast = () => {
-        const newValue = !isHighContrast;
-        setIsHighContrast(newValue);
-
-        if (newValue) {
-            document.body.setAttribute('data-high-contrast', 'true');
-            document.documentElement.setAttribute('data-high-contrast', 'true');
-        } else {
-            document.body.removeAttribute('data-high-contrast');
-            document.documentElement.removeAttribute('data-high-contrast');
-        }
-
-        try {
-            localStorage.setItem('pkr_high_contrast', String(newValue));
-        } catch (error) {
-            console.warn('[GlobalToolbar] Could not persist contrast selection:', error);
-        }
-    };
-
     const handleCloseChangelog = () => {
         try {
             localStorage.setItem('pkr_changelog_seen', CURRENT_VERSION);
-        } catch (error) {
-            console.warn('[GlobalToolbar] Could not mark changelog as seen:', error);
-        }
+        } catch (error) {}
         setShowChangelog(false);
     };
 
@@ -482,7 +457,7 @@ export function GlobalToolbar() {
                         </button>
 
                         {(showPokemonGeneratorButton || showLootGenButton) && (
-                            <div style={{ display: 'flex', gap: '4px' }}>
+                            <div className="global-toolbar__split-group">
                                 {showPokemonGeneratorButton && (
                                     <button
                                         type="button"
@@ -507,11 +482,8 @@ export function GlobalToolbar() {
                         )}
                     </div>
 
-                    <div
-                        className="global-toolbar__side-tools"
-                        style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}
-                    >
-                        <div style={{ display: 'flex', gap: '4px' }}>
+                    <div className="global-toolbar__side-tools">
+                        <div className="global-toolbar__side-grid">
                             <button
                                 type="button"
                                 className="global-toolbar__btn action-button--neutral-hover"
@@ -530,15 +502,13 @@ export function GlobalToolbar() {
                                 <Bell size={16} color="var(--text-main)" /> What's New
                             </button>
 
-                            {/* Accessibility Contrast Toggle */}
                             <button
                                 type="button"
                                 className="global-toolbar__btn action-button--neutral-hover"
-                                onClick={toggleHighContrast}
-                                title="Toggle High Contrast for bright theme colors"
+                                onClick={() => setShowAccessibilityModal(true)}
+                                title="Accessibility Options (Contrast & Fonts)"
                             >
-                                <Eye size={16} color={isHighContrast ? 'var(--primary)' : 'var(--text-main)'} />
-                                {isHighContrast ? 'Contrast ON' : 'Contrast OFF'}
+                                <Eye size={16} color="var(--primary)" /> Accessibility
                             </button>
 
                             <button
@@ -559,7 +529,7 @@ export function GlobalToolbar() {
                             </button>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '4px' }}>
+                        <div className="global-toolbar__icon-row">
                             <button
                                 type="button"
                                 onClick={handleExport}
@@ -633,6 +603,7 @@ export function GlobalToolbar() {
             {showInitSettings && <InitiativeSettingsModal onClose={() => setShowInitSettings(false)} />}
             {showPrintModal && <PrintSettingsModal onClose={() => setShowPrintModal(false)} />}
             {showThemeModal && <ThemeSettingsModal onClose={() => setShowThemeModal(false)} />}
+            {showAccessibilityModal && <AccessibilityModal onClose={() => setShowAccessibilityModal(false)} />}
         </div>
     );
 }

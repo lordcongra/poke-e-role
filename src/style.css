@@ -688,3 +688,14 @@ body {
     font-weight: bold;
     color: var(--primary);
 }
+
+/* =========================================
+   🧠 DYSLEXIA ACCESSIBILITY OVERRIDE
+   ========================================= */
+.dyslexia-mode,
+.dyslexia-mode button,
+.dyslexia-mode input,
+.dyslexia-mode select,
+.dyslexia-mode textarea {
+    font-family: 'Comic Sans MS', 'Lexend', 'OpenDyslexic', sans-serif !important;
+}

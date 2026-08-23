@@ -93,11 +93,31 @@
     max-width: 600px;
 }
 
+.global-toolbar__split-group {
+    display: flex;
+    gap: 4px;
+    width: 100%;
+}
+
 .global-toolbar__side-tools {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     flex-shrink: 0;
+    width: max-content;
+}
+
+.global-toolbar__side-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+}
+
+.global-toolbar__icon-row {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+    width: 100%;
 }
 
 /* =========================================
@@ -121,7 +141,9 @@
         border-color 0.2s ease,
         transform 0.1s ease,
         box-shadow 0.2s ease;
-    white-space: nowrap;
+    white-space: normal; /* Allows text to safely wrap if constrained */
+    line-height: 1.2;
+    text-align: center;
     width: 100%;
     box-sizing: border-box;
 }
@@ -238,13 +260,21 @@
         grid-template-columns: 1fr;
     }
 
-    .global-toolbar__side-tools {
-        flex-direction: row;
-        flex-wrap: wrap; /* Prevent blowout */
-        justify-content: flex-start;
+    .global-toolbar__split-group {
+        flex-direction: column; /* Safely stacks the Generators on narrow OBR screens */
     }
 
-    .global-toolbar__side-tools > div {
-        flex-wrap: wrap; /* Prevent inner grouping blowout */
+    .global-toolbar__side-tools {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .global-toolbar__side-grid {
+        grid-template-columns: repeat(2, 1fr);
+        width: 100%;
+    }
+
+    .global-toolbar__icon-row {
+        justify-content: flex-start;
     }
 }
