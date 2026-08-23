@@ -19,6 +19,7 @@ import { Sidebar } from './components/standalone/Sidebar';
 import { InitiativeTracker } from './components/initiative/InitiativeTracker';
 import { RollLogWidget } from './components/standalone/RollLogWidget';
 import { isStandaloneMode } from './utils/storageAdapter';
+import { getContrastColor } from './utils/colorUtils';
 import { Lock, ArrowLeft } from 'lucide-react';
 import './App.css';
 import './style.css';
@@ -65,6 +66,51 @@ function App() {
     const [showStandaloneTracker, setShowStandaloneTracker] = useState(false);
     const [globalOverride, setGlobalOverride] = useState<{ p: string; s: string } | null>(null);
 
+    // Contrast Settings State
+    const [isHighContrast, setIsHighContrast] = useState<boolean>(() => {
+        const saved = localStorage.getItem('pkr_high_contrast');
+        return saved === null ? true : saved === 'true';
+    });
+
+    const [contrastIntensity, setContrastIntensity] = useState<number>(() => {
+        const saved = localStorage.getItem('pkr_contrast_intensity');
+        return saved ? parseFloat(saved) : 0.2;
+    });
+
+    const [contrastForceAll, setContrastForceAll] = useState<boolean>(() => {
+        return localStorage.getItem('pkr_contrast_force') === 'true';
+    });
+
+    const [contrastSpecificTypes, setContrastSpecificTypes] = useState<string[]>(() => {
+        const saved = localStorage.getItem('pkr_contrast_types');
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    // Listeners for global toggle or specific settings adjustments
+    useEffect(() => {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'data-high-contrast') {
+                    setIsHighContrast(document.body.hasAttribute('data-high-contrast'));
+                }
+            });
+        });
+        observer.observe(document.body, { attributes: true });
+
+        const handleContrastUpdate = () => {
+            setContrastIntensity(parseFloat(localStorage.getItem('pkr_contrast_intensity') || '0.20'));
+            setContrastForceAll(localStorage.getItem('pkr_contrast_force') === 'true');
+            const types = localStorage.getItem('pkr_contrast_types');
+            setContrastSpecificTypes(types ? JSON.parse(types) : []);
+        };
+        window.addEventListener('contrast-settings-updated', handleContrastUpdate);
+
+        return () => {
+            observer.disconnect();
+            window.removeEventListener('contrast-settings-updated', handleContrastUpdate);
+        };
+    }, []);
+
     useEffect(() => {
         const checkGlobalTheme = () => {
             try {
@@ -86,18 +132,13 @@ function App() {
         let finalPrimary = '';
         let finalSecondary = '';
 
-        // Priority 1: Token-Specific Override
         if (themePrimaryOverride) {
             finalPrimary = themePrimaryOverride;
             finalSecondary = themeSecondaryOverride || '';
-        }
-        // Priority 2: User's Global Browser Override
-        else if (globalOverride) {
+        } else if (globalOverride) {
             finalPrimary = globalOverride.p;
             finalSecondary = globalOverride.s || '';
-        }
-        // Priority 3: Default Pokémon Type Math
-        else if (type1) {
+        } else if (type1) {
             let typeColor = '';
             if (STANDARD_TYPE_COLORS[type1]) {
                 typeColor = STANDARD_TYPE_COLORS[type1];
@@ -108,27 +149,49 @@ function App() {
 
             if (typeColor) {
                 finalPrimary = typeColor;
-                finalSecondary = ''; // Let CSS color-mix handle it naturally!
+                finalSecondary = '';
             }
         }
 
-        // Apply final resolved theme to DOM
+        // Apply final resolved theme to DOM, utilizing our robust contrast logic
         if (finalPrimary) {
-            document.body.style.setProperty('--dynamic-type-color', finalPrimary);
-            document.documentElement.style.setProperty('--dynamic-type-color', finalPrimary);
+            const isForceDarkened = contrastForceAll || (type1 ? contrastSpecificTypes.includes(type1) : false);
+
+            const accessiblePrimary = isHighContrast
+                ? getContrastColor(finalPrimary, 0.65, contrastIntensity, isForceDarkened)
+                : finalPrimary;
+
+            document.body.style.setProperty('--dynamic-type-color', accessiblePrimary);
+            document.documentElement.style.setProperty('--dynamic-type-color', accessiblePrimary);
         } else {
             document.body.style.removeProperty('--dynamic-type-color');
             document.documentElement.style.removeProperty('--dynamic-type-color');
         }
 
         if (finalSecondary) {
-            document.body.style.setProperty('--dynamic-secondary-color', finalSecondary);
-            document.documentElement.style.setProperty('--dynamic-secondary-color', finalSecondary);
+            const isForceDarkened = contrastForceAll || (type1 ? contrastSpecificTypes.includes(type1) : false);
+
+            const accessibleSecondary = isHighContrast
+                ? getContrastColor(finalSecondary, 0.65, contrastIntensity, isForceDarkened)
+                : finalSecondary;
+
+            document.body.style.setProperty('--dynamic-secondary-color', accessibleSecondary);
+            document.documentElement.style.setProperty('--dynamic-secondary-color', accessibleSecondary);
         } else {
             document.body.style.removeProperty('--dynamic-secondary-color');
             document.documentElement.style.removeProperty('--dynamic-secondary-color');
         }
-    }, [type1, roomCustomTypes, themePrimaryOverride, themeSecondaryOverride, globalOverride]);
+    }, [
+        type1,
+        roomCustomTypes,
+        themePrimaryOverride,
+        themeSecondaryOverride,
+        globalOverride,
+        isHighContrast,
+        contrastIntensity,
+        contrastForceAll,
+        contrastSpecificTypes
+    ]);
 
     useEffect(() => {
         const handleToggle = () => setShowStandaloneTracker((prev) => !prev);

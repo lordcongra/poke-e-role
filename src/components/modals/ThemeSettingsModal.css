@@ -19,6 +19,8 @@
     padding: 15px 20px;
     width: 100%;
     max-width: 320px;
+    max-height: 90vh;
+    overflow-y: auto;
     box-shadow: 0 8px 24px color-mix(in srgb, var(--dark) 30%, transparent);
 }
 
@@ -97,6 +99,12 @@
     border-radius: 4px;
 }
 
+.theme-modal__checkbox-container--alt {
+    background: var(--row-odd);
+    border: 1px dashed var(--border);
+    margin-top: 10px;
+}
+
 .theme-modal__checkbox {
     margin-top: 2px;
     cursor: pointer;
@@ -105,6 +113,71 @@
 
 .theme-modal__checkbox-title {
     display: block;
+}
+
+.theme-modal__divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
+    width: 100%;
+}
+
+.theme-modal__slider-group {
+    margin: 10px 0;
+    padding: 8px;
+    background: var(--row-even);
+    border-radius: 4px;
+    border: 1px solid var(--border);
+}
+
+.theme-modal__slider-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.theme-modal__slider {
+    width: 100%;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+
+.theme-modal__pill-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 6px;
+    background: var(--row-odd);
+    border-radius: 4px;
+    border: 1px dashed var(--border);
+}
+
+.theme-modal__pill {
+    background: color-mix(in srgb, var(--primary) 15%, var(--panel-bg));
+    border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border));
+    padding: 2px 6px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-main);
+}
+
+.theme-modal__pill button {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    color: var(--semantic-danger);
+    transition: transform 0.2s ease;
+}
+
+.theme-modal__pill button:hover {
+    transform: scale(1.2);
 }
 
 .theme-modal__actions {

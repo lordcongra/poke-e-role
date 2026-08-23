@@ -35,7 +35,8 @@ import {
     Wand2,
     Palette,
     AlertTriangle,
-    XCircle
+    XCircle,
+    Eye
 } from 'lucide-react';
 import './GlobalToolbar.css';
 
@@ -65,8 +66,8 @@ export function GlobalToolbar() {
     const showLootGenButton = isStandaloneMode || localRole === 'GM' || gmOnlyLootGen === false;
     const showPokemonGeneratorButton = isStandaloneMode || !!activeTokenId;
 
-    // 🔥 Default to true so Dark Mode is the standard!
     const [isDark, setIsDark] = useState<boolean>(true);
+    const [isHighContrast, setIsHighContrast] = useState<boolean>(true);
     const [showHomebrewModal, setShowHomebrewModal] = useState<boolean>(false);
     const [showRulesModal, setShowRulesModal] = useState<boolean>(false);
     const [showLootGenModal, setShowLootGenModal] = useState<boolean>(false);
@@ -95,6 +96,16 @@ export function GlobalToolbar() {
                 document.documentElement.setAttribute('data-theme', 'dark');
             }
 
+            // High Contrast defaults to true for accessibility
+            const savedContrast = localStorage.getItem('pkr_high_contrast');
+            const contrastEnabled = savedContrast === null ? true : savedContrast === 'true';
+            setIsHighContrast(contrastEnabled);
+
+            if (contrastEnabled) {
+                document.body.setAttribute('data-high-contrast', 'true');
+                document.documentElement.setAttribute('data-high-contrast', 'true');
+            }
+
             const seenVersion = localStorage.getItem('pkr_changelog_seen');
             if (seenVersion !== CURRENT_VERSION) {
                 setShowChangelog(true);
@@ -114,7 +125,9 @@ export function GlobalToolbar() {
         setIsExpanded(next);
         try {
             localStorage.setItem('pkr_global_toolbar_expanded', String(next));
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[GlobalToolbar] Failed to save toolbar state:', e);
+        }
     };
 
     const handleReturnToMenu = () => {
@@ -272,6 +285,25 @@ export function GlobalToolbar() {
 
         if (OBR.isAvailable) {
             OBR.broadcast.sendMessage('pokerole-pmd-extension/theme-sync', themeValue, { destination: 'LOCAL' });
+        }
+    };
+
+    const toggleHighContrast = () => {
+        const newValue = !isHighContrast;
+        setIsHighContrast(newValue);
+
+        if (newValue) {
+            document.body.setAttribute('data-high-contrast', 'true');
+            document.documentElement.setAttribute('data-high-contrast', 'true');
+        } else {
+            document.body.removeAttribute('data-high-contrast');
+            document.documentElement.removeAttribute('data-high-contrast');
+        }
+
+        try {
+            localStorage.setItem('pkr_high_contrast', String(newValue));
+        } catch (error) {
+            console.warn('[GlobalToolbar] Could not persist contrast selection:', error);
         }
     };
 
@@ -496,6 +528,17 @@ export function GlobalToolbar() {
                                 title="View System Updates"
                             >
                                 <Bell size={16} color="var(--text-main)" /> What's New
+                            </button>
+
+                            {/* Accessibility Contrast Toggle */}
+                            <button
+                                type="button"
+                                className="global-toolbar__btn action-button--neutral-hover"
+                                onClick={toggleHighContrast}
+                                title="Toggle High Contrast for bright theme colors"
+                            >
+                                <Eye size={16} color={isHighContrast ? 'var(--primary)' : 'var(--text-main)'} />
+                                {isHighContrast ? 'Contrast ON' : 'Contrast OFF'}
                             </button>
 
                             <button
