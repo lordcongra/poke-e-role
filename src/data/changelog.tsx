@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ReactNode } from 'react';
 
-export const CURRENT_VERSION = '3.0.0';
+export const CURRENT_VERSION = '3.1.0';
 
 export interface ChangelogEntry {
     version: string;
@@ -11,15 +11,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
     {
-        version: '3.0.0',
+        version: '3.1.0',
         date: 'August 2026',
         changes: [
-            <strong key="ui-title" style={{ color: '#1976D2', fontSize: '1.1em' }}>
+            <strong key="ui-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
                 🎨 Dynamic Theming UI Overhaul
             </strong>,
             <ul
                 key="ui-list"
+                className="text-subtext"
                 style={{
+                    color: 'var(--text-main)',
                     paddingLeft: '20px',
                     marginTop: '6px',
                     marginBottom: '16px',
@@ -49,51 +51,106 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
             <div
                 key="pwa-update"
                 style={{
-                    border: '2px solid #2196F3',
+                    border: '2px solid var(--primary)',
                     padding: '12px',
                     borderRadius: '6px',
-                    backgroundColor: 'rgba(33, 150, 243, 0.08)',
+                    backgroundColor: 'color-mix(in srgb, var(--primary) 10%, transparent)',
                     marginBottom: '16px'
                 }}
             >
-                <strong style={{ color: '#1976D2', fontSize: '1.1em' }}>📱 Standalone App & Offline Mode (PWA)</strong>
-                <p style={{ marginTop: '6px', marginBottom: '0', fontSize: '0.9em', lineHeight: '1.4' }}>
+                <strong className="text-title-primary" style={{ fontSize: '1.1em' }}>
+                    📱 Standalone App & Offline Mode (PWA)
+                </strong>
+                <p
+                    className="text-subtext"
+                    style={{
+                        color: 'var(--text-main)',
+                        marginTop: '6px',
+                        marginBottom: '0',
+                        fontSize: '0.9em',
+                        lineHeight: '1.4'
+                    }}
+                >
                     The sheet is now fully accessible as a <strong>Progressive Web App (PWA)</strong> outside of Owlbear
                     Rodeo! You can visit the live site, install it directly to your phone or desktop home screen, and
                     use it entirely offline. Standalone mode features a brand new local directory sidebar to easily
                     organize all your characters and encounters into folders.
                 </p>
             </div>,
-            <div
-                key="car-reminder-300"
+            <strong key="combat-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
+                ⚔️ Combat Engine & Targeting Upgrades
+            </strong>,
+            <ul
+                key="combat-list"
+                className="text-subtext"
                 style={{
-                    border: '2px solid #e65100',
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Damage Overrides:</strong> GMs (and permitted players) can now manually override damage
+                    directly in the Targeting Modal! Select between Dice Pool (Vs Def), Dice Pool (Ignore Def), or True
+                    Damage (Flat).
+                </li>
+                <li>
+                    <strong>Advanced Matchups & Effectiveness:</strong> The Targeting Modal now features options for 4x,
+                    2x, 0.5x, and 0.25x effectiveness! Damage modifications are automatically calculated into the chat
+                    log and gracefully drop if the base attack rolls 0 successes.
+                </li>
+                <li>
+                    <strong>Expanded Smart Tags:</strong> You can now attach explicit move keywords to your combat tags
+                    to trigger conditionally! For example: <code>[Dmg +1: Projectile Move]</code> or{' '}
+                    <code>[Acc +2: Sound Move]</code>.
+                </li>
+            </ul>,
+            <div
+                key="car-reminder-310"
+                style={{
+                    border: '2px solid var(--semantic-danger)',
                     padding: '12px',
                     borderRadius: '6px',
-                    backgroundColor: 'rgba(230, 81, 0, 0.08)',
+                    backgroundColor: 'color-mix(in srgb, var(--semantic-danger) 10%, transparent)',
                     marginBottom: '12px'
                 }}
             >
-                <strong style={{ color: '#e65100', fontSize: '1.1em' }}>
+                <strong style={{ color: 'var(--semantic-danger)', fontSize: '1.1em' }}>
                     ⚠️ Reminder: Custom Action Rolls URL Change
                 </strong>
-                <p style={{ marginTop: '6px', marginBottom: '8px', fontSize: '0.9em', lineHeight: '1.4' }}>
+                <p
+                    className="text-subtext"
+                    style={{
+                        color: 'var(--text-main)',
+                        marginTop: '6px',
+                        marginBottom: '8px',
+                        fontSize: '0.9em',
+                        lineHeight: '1.4'
+                    }}
+                >
                     If you haven't updated yet, the <strong>Custom Action Rolls (CAR)</strong> extension has moved!
                     Please update your VTT room to use the new manifest link below to keep your dice rolling smoothly:
                 </p>
-                <p style={{ margin: 0, fontSize: '0.9em', fontWeight: 'bold' }}>
+                <p style={{ margin: 0, fontSize: '0.9em', fontWeight: 'bold', color: 'var(--text-main)' }}>
                     🔗 New CAR Link:{' '}
                     <a
                         href="https://custom-action-rolls.narcolepticdracu.com/manifest.json"
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{ color: '#1976d2', wordBreak: 'break-all' }}
+                        className="text-value-highlight"
+                        style={{ wordBreak: 'break-all' }}
                     >
                         https://custom-action-rolls.narcolepticdracu.com/manifest.json
                     </a>
                 </p>
             </div>,
-            'Fixed a race condition bug in the Initiative Tracker that caused the UI to glitch when rapidly skipping turns.'
+            <span key="init-bugfix" className="text-subtext" style={{ color: 'var(--text-main)' }}>
+                Fixed a race condition bug in the Initiative Tracker that caused the UI to glitch when rapidly skipping
+                turns.
+            </span>
         ]
     },
     {
@@ -103,26 +160,38 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
             <div
                 key="car-link-update"
                 style={{
-                    border: '2px solid #e65100',
+                    border: '2px solid var(--semantic-danger)',
                     padding: '12px',
                     borderRadius: '6px',
-                    backgroundColor: 'rgba(230, 81, 0, 0.08)',
+                    backgroundColor: 'color-mix(in srgb, var(--semantic-danger) 10%, transparent)',
                     marginBottom: '16px'
                 }}
             >
-                <strong style={{ color: '#e65100', fontSize: '1.1em' }}>⚠️ Custom Action Rolls URL Change</strong>
-                <p style={{ marginTop: '6px', marginBottom: '8px', fontSize: '0.9em', lineHeight: '1.4' }}>
+                <strong style={{ color: 'var(--semantic-danger)', fontSize: '1.1em' }}>
+                    ⚠️ Custom Action Rolls URL Change
+                </strong>
+                <p
+                    className="text-subtext"
+                    style={{
+                        color: 'var(--text-main)',
+                        marginTop: '6px',
+                        marginBottom: '8px',
+                        fontSize: '0.9em',
+                        lineHeight: '1.4'
+                    }}
+                >
                     The <strong>Custom Action Rolls (CAR)</strong> extension has moved to a new host! If your dice rolls
                     have stopped working, or if you are installing it for the first time, please use the new manifest
                     link below:
                 </p>
-                <p style={{ margin: 0, fontSize: '0.9em', fontWeight: 'bold' }}>
+                <p style={{ margin: 0, fontSize: '0.9em', fontWeight: 'bold', color: 'var(--text-main)' }}>
                     🔗 New CAR Manifest Link:{' '}
                     <a
                         href="https://custom-action-rolls.narcolepticdracu.com/manifest.json"
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{ color: '#1976d2', wordBreak: 'break-all' }}
+                        className="text-value-highlight"
+                        style={{ wordBreak: 'break-all' }}
                     >
                         https://custom-action-rolls.narcolepticdracu.com/manifest.json
                     </a>
@@ -137,37 +206,51 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
             <div
                 key="dice-deprecation"
                 style={{
-                    border: '2px solid #e65100',
+                    border: '2px solid var(--semantic-danger)',
                     padding: '12px',
                     borderRadius: '6px',
-                    backgroundColor: 'rgba(230, 81, 0, 0.08)',
+                    backgroundColor: 'color-mix(in srgb, var(--semantic-danger) 10%, transparent)',
                     marginBottom: '16px'
                 }}
             >
-                <strong style={{ color: '#e65100', fontSize: '1.1em' }}>⚠️ ACTION REQUIRED: Dice+ is retiring!</strong>
-                <p style={{ marginTop: '6px', marginBottom: '8px', fontSize: '0.9em', lineHeight: '1.4' }}>
+                <strong style={{ color: 'var(--semantic-danger)', fontSize: '1.1em' }}>
+                    ⚠️ ACTION REQUIRED: Dice+ is retiring!
+                </strong>
+                <p
+                    className="text-subtext"
+                    style={{
+                        color: 'var(--text-main)',
+                        marginTop: '6px',
+                        marginBottom: '8px',
+                        fontSize: '0.9em',
+                        lineHeight: '1.4'
+                    }}
+                >
                     The legacy <strong>Dice+</strong> engine is being fully deprecated and will be removed in an
                     upcoming release. You MUST switch your room to use <strong>Custom Action Rolls (CAR)</strong> to
                     ensure your dice continue to work. CAR natively supports advanced mechanics like exploding dice!
                 </p>
-                <p style={{ margin: 0, fontSize: '0.9em', fontWeight: 'bold' }}>
+                <p style={{ margin: 0, fontSize: '0.9em', fontWeight: 'bold', color: 'var(--text-main)' }}>
                     🔗 CAR Manifest Link:{' '}
                     <a
                         href="https://custom-action-rolls.narcolepticdracu.com/manifest.json"
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{ color: '#1976d2', wordBreak: 'break-all' }}
+                        className="text-value-highlight"
+                        style={{ wordBreak: 'break-all' }}
                     >
                         https://custom-action-rolls.narcolepticdracu.com/manifest.json
                     </a>
                 </p>
             </div>,
-            <strong key="hb-title" style={{ color: '#00695c', fontSize: '1.1em' }}>
+            <strong key="hb-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
                 🛠️ Homebrew Workshop Overhaul (Anti-Crash Update)
             </strong>,
             <ul
                 key="hb-list"
+                className="text-subtext"
                 style={{
+                    color: 'var(--text-main)',
                     paddingLeft: '20px',
                     marginTop: '6px',
                     marginBottom: '12px',
@@ -206,18 +289,18 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
             <div
                 key="init-update"
                 style={{
-                    border: '2px solid #4CAF50',
+                    border: '2px solid var(--secondary)',
                     padding: '12px',
                     borderRadius: '6px',
-                    backgroundColor: 'rgba(76, 175, 80, 0.05)',
+                    backgroundColor: 'color-mix(in srgb, var(--secondary) 10%, transparent)',
                     marginTop: '8px',
                     marginBottom: '12px'
                 }}
             >
                 <div
+                    className="text-theme-header"
                     style={{
-                        backgroundColor: '#f44336',
-                        color: 'white',
+                        backgroundColor: 'var(--semantic-danger)',
                         padding: '10px',
                         borderRadius: '4px',
                         marginBottom: '12px',
@@ -228,13 +311,20 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 >
                     🚨 IMPORTANT: You can now safely uninstall the "Pretty Sordid" extension! 🚨
                 </div>
-                <strong style={{ color: '#4CAF50', fontSize: '1.1em' }}>🚀 Initiative Tracker Complete Overhaul</strong>
-                <p style={{ marginTop: '6px', marginBottom: '8px', fontSize: '0.9em' }}>
+                <strong style={{ color: 'var(--secondary)', fontSize: '1.1em' }}>
+                    🚀 Initiative Tracker Complete Overhaul
+                </strong>
+                <p
+                    className="text-subtext"
+                    style={{ color: 'var(--text-main)', marginTop: '6px', marginBottom: '8px', fontSize: '0.9em' }}
+                >
                     The built-in tracker has been rebuilt from the ground up to perfectly integrate into your screen
                     without layout bugs.
                 </p>
                 <ul
+                    className="text-subtext"
                     style={{
+                        color: 'var(--text-main)',
                         paddingLeft: '20px',
                         marginTop: '4px',
                         marginBottom: 0,
@@ -265,8 +355,10 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 </ul>
             </div>,
             <div key="dice-deprecation" style={{ marginBottom: '12px' }}>
-                <strong style={{ color: '#e65100', fontSize: '1.05em' }}>⚠️ Dice+ Deprecation Notice</strong>
-                <p style={{ margin: '4px 0', fontSize: '0.9em' }}>
+                <strong style={{ color: 'var(--semantic-danger)', fontSize: '1.05em' }}>
+                    ⚠️ Dice+ Deprecation Notice
+                </strong>
+                <p className="text-subtext" style={{ color: 'var(--text-main)', margin: '4px 0', fontSize: '0.9em' }}>
                     The legacy <strong>Dice+</strong> engine will be deprecated in an upcoming release.{' '}
                     <strong>Custom Action Rolls (CAR)</strong> is now the default and recommended engine for this sheet,
                     as it supports advanced mechanics like exploding dice and dynamic roll logs. Please switch over in
@@ -274,10 +366,14 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     change.
                 </p>
             </div>,
-            <strong key="hb-status-title" style={{ color: '#9C27B0' }}>
+            <strong key="hb-status-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
                 ✨ Homebrew Statuses & Exploding Dice
             </strong>,
-            <ul key="hb-status-list" style={{ paddingLeft: '20px', margin: '4px 0', fontSize: '0.9em' }}>
+            <ul
+                key="hb-status-list"
+                className="text-subtext"
+                style={{ color: 'var(--text-main)', paddingLeft: '20px', margin: '4px 0', fontSize: '0.9em' }}
+            >
                 <li>
                     <strong>Custom Statuses:</strong> You can now create custom status conditions in the Homebrew
                     Workshop! They integrate natively into the sheet's tracker dropdowns, allowing for dynamic
@@ -303,25 +399,41 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
         version: '2.7.0',
         date: 'May 2026',
         changes: [
-            'Initiative Tracker completely rebuilt natively into the sheet.',
-            'Added Initiative HUD settings to customize placement, size, and layout.',
-            'Removed reliance on the Pretty Sordid extension.'
+            <span key="init-rebuild" className="text-subtext" style={{ color: 'var(--text-main)' }}>
+                Initiative Tracker completely rebuilt natively into the sheet.
+            </span>,
+            <span key="init-hud" className="text-subtext" style={{ color: 'var(--text-main)' }}>
+                Added Initiative HUD settings to customize placement, size, and layout.
+            </span>,
+            <span key="init-sordid" className="text-subtext" style={{ color: 'var(--text-main)' }}>
+                Removed reliance on the Pretty Sordid extension.
+            </span>
         ]
     },
     {
         version: '2.6.0',
         date: 'Idk there are lots from various versions here',
         changes: [
-            'Further improvements to the pokemon generator under the hood.',
-            'Added ability to update the image of a token from your OBR images - helpful for evolutions when you want to keep your sheet.',
-            'Added new dice-roller engine option in Rules: Custom Action Rolls! Read up on it in the readme on github to learn more.',
+            <span key="gen-update" className="text-subtext" style={{ color: 'var(--text-main)' }}>
+                Further improvements to the pokemon generator under the hood.
+            </span>,
+            <span key="img-update" className="text-subtext" style={{ color: 'var(--text-main)' }}>
+                Added ability to update the image of a token from your OBR images - helpful for evolutions when you want
+                to keep your sheet.
+            </span>,
+            <span key="car-update" className="text-subtext" style={{ color: 'var(--text-main)' }}>
+                Added new dice-roller engine option in Rules: Custom Action Rolls! Read up on it in the readme on github
+                to learn more.
+            </span>,
             <React.Fragment key="action-manager-link">
-                Find Custom Action Rolls manifest link here:{' '}
+                <span className="text-subtext" style={{ color: 'var(--text-main)' }}>
+                    Find Custom Action Rolls manifest link here:{' '}
+                </span>
                 <a
                     href="https://custom-action-rolls.narcolepticdracu.com/manifest.json"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="changelog-modal__link"
+                    className="text-value-highlight"
                 >
                     https://custom-action-rolls.narcolepticdracu.com/manifest.json
                 </a>

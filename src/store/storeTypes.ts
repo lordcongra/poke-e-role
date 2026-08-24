@@ -403,6 +403,7 @@ export interface IdentitySlice {
 
         gmOnlyLootGen: boolean;
         gmOnlyMatchups: boolean;
+        gmOnlyDamageOverride: boolean;
         gmDemoMode: boolean;
 
         // Initiative HUD User Settings
@@ -434,7 +435,7 @@ export interface IdentitySlice {
         claOffsetX: number;
         claOffsetY: number;
 
-        // 🔥 Dynamic Theming Overrides
+        // Dynamic Theming Overrides
         themePrimaryOverride: string;
         themeSecondaryOverride: string;
 

@@ -42,7 +42,7 @@ export async function rollStatus(status: StatusItem, state: CharacterState) {
         dicePool = Math.max(state.derived.loyal, calculateStatTotal('ins', state, itemBuffs));
     } else {
         if (OBR.isAvailable) {
-            OBR.notification.show(`⚠️ ${status.name} does not have a standard self-recovery roll.`, 'WARNING');
+            OBR.notification.show(`[WARNING] ${status.name} does not have a standard self-recovery roll.`, 'WARNING');
         }
         return;
     }
@@ -63,7 +63,7 @@ export async function rollStatus(status: StatusItem, state: CharacterState) {
 
     await rollDicePlus(
         `${Math.max(1, dicePool)}d6>3${mathModifier}`,
-        `🩹 ${nickname} rolled ${status.name} Recovery!${tagString}`,
+        `${nickname} rolled ${status.name} Recovery!${tagString}`,
         rollType,
         status.id
     );
@@ -82,7 +82,7 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     const hasComatose = abilityString.toLowerCase().includes('comatose');
 
     if (statuses.isAsleep && !isSleepMove && !hasComatose) {
-        if (OBR.isAvailable) OBR.notification.show('⚠️ You are Asleep and cannot perform actions!', 'WARNING');
+        if (OBR.isAvailable) OBR.notification.show('[WARNING] You are Asleep and cannot perform actions!', 'WARNING');
         return;
     }
 
@@ -159,7 +159,7 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     }
 
     if (statuses.isFrozen) {
-        tags.push(`❄️ FROZEN: Attacking Ice Block (5HP/2DEF). Fire/Super-Effective breaks instantly.`);
+        tags.push(`FROZEN: Attacking Ice Block (5HP/2DEF). Fire/Super-Effective breaks instantly.`);
     }
 
     if (moveDescription.includes('never miss') || moveDescription.includes('cannot be evaded')) {
@@ -176,7 +176,7 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
 
     await rollDicePlus(
         `${Math.max(1, dicePool)}d6>3${mathModifier}`,
-        `🎯 ${nickname} rolled ${move.name || 'a Move'} (Acc)!${finalTags}`,
+        `${nickname} rolled ${move.name || 'a Move'} (Acc)!${finalTags}`,
         rollType,
         payload
     );
@@ -187,8 +187,9 @@ export async function executeDamageRoll(
     state: CharacterState,
     baseDamage: number,
     isCritical: boolean,
-    isSuperEffective: boolean,
-    reduction: number
+    effectiveness: number,
+    reduction: number,
+    override: { active: boolean; type: 'dice' | 'flat' | 'dice-ignore'; value: number }
 ) {
     const nickname = state.identity.nickname || state.identity.species || 'Someone';
     const abilityString = (state.identity.ability || '').toLowerCase();
@@ -199,9 +200,30 @@ export async function executeDamageRoll(
     const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, move, abilityText);
 
     let actualDicePool = baseDamage - reduction;
+    let finalFlatMod = state.trackers.globalSucc;
+    const tags: string[] = [];
+
+    // Deal with Overrides
+    if (override.active) {
+        if (override.type === 'flat') {
+            actualDicePool = 0;
+            finalFlatMod = override.value; // Ignore all standard logic for True Damage
+            tags.push(`Manual Override: ${override.value} True Damage`);
+        } else if (override.type === 'dice') {
+            actualDicePool = override.value - reduction;
+            finalFlatMod += effectiveness;
+            tags.push(`Manual Override: ${override.value} Base Dice`);
+        } else if (override.type === 'dice-ignore') {
+            actualDicePool = override.value; // Ignore Defense reduction completely
+            finalFlatMod += effectiveness;
+            tags.push(`Manual Override: ${override.value} Dice (Ignores Def)`);
+        }
+    } else {
+        finalFlatMod += effectiveness;
+    }
 
     let superEffectiveDamageBonus = 0;
-    if (isSuperEffective) {
+    if (effectiveness > 0) {
         state.inventory
             .filter((item) => item.active)
             .forEach((item) => {
@@ -211,7 +233,11 @@ export async function executeDamageRoll(
                     superEffectiveDamageBonus += parseInt(match[1]) || 0;
                 }
             });
-        actualDicePool += superEffectiveDamageBonus;
+
+        // Items strictly apply bonus dice to the pool as normal
+        if (!override.active || override.type !== 'flat') {
+            actualDicePool += superEffectiveDamageBonus;
+        }
     }
 
     const isProtean = abilityString.includes('protean') || abilityString.includes('libero');
@@ -220,81 +246,86 @@ export async function executeDamageRoll(
     const normalizedDamageStatistic = ATTRIBUTE_MAPPING[move.dmg1] || move.dmg1;
 
     if (isCritical) {
-        actualDicePool += isSniper ? 3 : 2;
-    }
-
-    if (normalizedDamageStatistic === 'dex' && statuses.paralysisDexterityPenalty < 0) {
-        actualDicePool += statuses.paralysisDexterityPenalty;
-    }
-
-    // ✨ PULL FROM THE BANK ✨
-    let bankedDiceTag = '';
-    const bankedDice = state.trackers.bankedAccDice[move.id] || 0;
-    if (bankedDice > 0) {
-        actualDicePool += bankedDice;
-        bankedDiceTag = `Banked Excess Acc (+${bankedDice} Dmg)`;
-        // Clear the bank immediately!
-        const newBank = { ...state.trackers.bankedAccDice };
-        delete newBank[move.id];
-        useCharacterStore.getState().updateTracker('bankedAccDice', newBank);
-    }
-
-    actualDicePool = Math.max(1, actualDicePool);
-
-    let stabBonus = 0;
-    let stabTag = '';
-    if (hasTypeMatch || isProtean) {
-        stabBonus = 1;
-        stabTag = isProtean && !hasTypeMatch ? ' Protean STAB' : ' STAB';
-    }
-
-    const isTera = state.identity.activeTransformation === 'Terastallize';
-    const teraAffinity = state.identity.terastallizeAffinity;
-    const teraBonusActive = state.identity.terastallizeBonusActive;
-    let teraBonusTags = '';
-
-    if (isTera && move.type === teraAffinity) {
-        if (teraBonusActive) {
-            const matchesOriginal = state.identity.type1 === teraAffinity || state.identity.type2 === teraAffinity;
-            teraBonusTags = matchesOriginal ? 'Tera Burst (+3 Dice)' : 'Tera Burst (+2 Dice)';
-            useCharacterStore.getState().setIdentity('terastallizeBonusActive', false);
-        } else {
-            teraBonusTags = 'Tera Boost (+1 Dice)';
+        if (!override.active || override.type !== 'flat') {
+            actualDicePool += isSniper ? 3 : 2;
         }
+        tags.push(isSniper ? `Sniper Crit (+3 Dice)` : `CRITICAL HIT`);
     }
 
-    let customFirstHitTag = '';
-    if (itemBuffs.firstHitDmg !== 0 && state.trackers.firstHitDmg) {
-        const sign = itemBuffs.firstHitDmg > 0 ? '+' : '';
-        customFirstHitTag = `First Hit (${sign}${itemBuffs.firstHitDmg} Dice)`;
-        useCharacterStore.getState().updateTracker('firstHitDmg', false);
+    if (!override.active || override.type !== 'flat') {
+        if (normalizedDamageStatistic === 'dex' && statuses.paralysisDexterityPenalty < 0) {
+            actualDicePool += statuses.paralysisDexterityPenalty;
+        }
+
+        // ✨ PULL FROM THE BANK ✨
+        let bankedDiceTag = '';
+        const bankedDice = state.trackers.bankedAccDice[move.id] || 0;
+        if (bankedDice > 0) {
+            actualDicePool += bankedDice;
+            bankedDiceTag = `Banked Excess Acc (+${bankedDice} Dmg)`;
+            // Clear the bank immediately!
+            const newBank = { ...state.trackers.bankedAccDice };
+            delete newBank[move.id];
+            useCharacterStore.getState().updateTracker('bankedAccDice', newBank);
+            tags.push(bankedDiceTag);
+        }
+
+        actualDicePool = Math.max(1, actualDicePool);
+
+        let stabBonus = 0;
+        let stabTag = '';
+        if (hasTypeMatch || isProtean) {
+            stabBonus = 1;
+            stabTag = isProtean && !hasTypeMatch ? ' Protean STAB' : ' STAB';
+        }
+
+        const isTera = state.identity.activeTransformation === 'Terastallize';
+        const teraAffinity = state.identity.terastallizeAffinity;
+        const teraBonusActive = state.identity.terastallizeBonusActive;
+        let teraBonusTags = '';
+
+        if (isTera && move.type === teraAffinity) {
+            if (teraBonusActive) {
+                const matchesOriginal = state.identity.type1 === teraAffinity || state.identity.type2 === teraAffinity;
+                teraBonusTags = matchesOriginal ? 'Tera Burst (+3 Dice)' : 'Tera Burst (+2 Dice)';
+                useCharacterStore.getState().setIdentity('terastallizeBonusActive', false);
+            } else {
+                teraBonusTags = 'Tera Boost (+1 Dice)';
+            }
+        }
+
+        let customFirstHitTag = '';
+        if (itemBuffs.firstHitDmg !== 0 && state.trackers.firstHitDmg) {
+            const sign = itemBuffs.firstHitDmg > 0 ? '+' : '';
+            customFirstHitTag = `First Hit (${sign}${itemBuffs.firstHitDmg} Dice)`;
+            useCharacterStore.getState().updateTracker('firstHitDmg', false);
+        }
+
+        const pain = getPainPenalty(normalizedDamageStatistic, state);
+        finalFlatMod += pain;
+
+        if (teraBonusTags) tags.push(teraBonusTags);
+        else if (stabBonus > 0) tags.push(stabTag);
+
+        if (customFirstHitTag) tags.push(customFirstHitTag);
+        if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
     }
 
-    const pain = getPainPenalty(normalizedDamageStatistic, state);
-    const successModifier = state.trackers.globalSucc + pain;
-    const mathModifier =
-        successModifier !== 0 ? (successModifier > 0 ? `+${successModifier}` : `${successModifier}`) : '';
+    // Apply Effectiveness Readouts
+    if (effectiveness === 2) tags.push('4x Super Effective (+2 Extra Dmg)');
+    else if (effectiveness === 1) tags.push('2x Super Effective (+1 Extra Dmg)');
+    else if (effectiveness === -1) tags.push('0.5x Not Very Effective (-1 Extra Dmg)');
+    else if (effectiveness === -2) tags.push('0.25x Not Very Effective (-2 Extra Dmg)');
 
-    const tags: string[] = [];
-    if (isCritical) {
-        if (isSniper) tags.push(`Sniper Crit (+3 Dice)`);
-        else tags.push(`CRITICAL HIT`);
+    if (superEffectiveDamageBonus > 0) tags.push(`Item SE Boost (+${superEffectiveDamageBonus} Dice)`);
+
+    if (itemBuffs.gainTempHp > 0) tags.push(`Gains ${itemBuffs.gainTempHp} Temp HP`);
+    if (itemBuffs.tempHpOnHit > 0) tags.push(`Gains ${itemBuffs.tempHpOnHit} Temp HP on Hit`);
+    if (itemBuffs.tempHpDmgRatio) tags.push(`Gains ${itemBuffs.tempHpDmgRatio} Dmg as Temp HP`);
+
+    if (finalFlatMod !== 0 && (!override.active || override.type !== 'flat')) {
+        tags.push(`Net Mod ${finalFlatMod > 0 ? '+' : ''}${finalFlatMod} Succ/Dmg`);
     }
-    if (isSuperEffective) tags.push(`Super Effective`);
-    if (superEffectiveDamageBonus > 0) tags.push(`Item SE Dmg +${superEffectiveDamageBonus}`);
-
-    if (teraBonusTags) tags.push(teraBonusTags);
-    else if (stabBonus > 0) tags.push(stabTag);
-
-    if (bankedDiceTag) tags.push(bankedDiceTag);
-    if (customFirstHitTag) tags.push(customFirstHitTag);
-
-    if (itemBuffs.gainTempHp > 0) tags.push(`🛡️ Gains ${itemBuffs.gainTempHp} Temp HP`);
-    if (itemBuffs.tempHpOnHit > 0) tags.push(`🛡️ Gains ${itemBuffs.tempHpOnHit} Temp HP on Hit`);
-    if (itemBuffs.tempHpDmgRatio) tags.push(`🛡️ Gains ${itemBuffs.tempHpDmgRatio} Dmg as Temp HP`);
-
-    if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
-    if (successModifier !== 0) tags.push(`Net Mod ${successModifier > 0 ? '+' : ''}${successModifier} Succ`);
 
     const moveDescription = (move.desc || '').toLowerCase();
 
@@ -311,21 +342,33 @@ export async function executeDamageRoll(
         tags.push(`RECOIL: Roll success as user dmg ignoring def`);
     }
 
-    if (statuses.paralysisDexterityPenalty < 0 && normalizedDamageStatistic === 'dex')
-        tags.push(`Paralysis minus 2 Dmg`);
+    if (
+        statuses.paralysisDexterityPenalty < 0 &&
+        normalizedDamageStatistic === 'dex' &&
+        (!override.active || override.type !== 'flat')
+    ) {
+        tags.push(`Paralysis minus 2 Dmg Dice`);
+    }
 
     if (itemBuffs.dmgItemNames.length > 0) tags.push(`Item: ${itemBuffs.dmgItemNames.join(', ')}`);
 
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';
+    const mathModifier = finalFlatMod !== 0 ? (finalFlatMod > 0 ? `+${finalFlatMod}` : `${finalFlatMod}`) : '';
 
-    // Bundle the flat On Hit value and the Dmg Ratio into a single payload string
+    // Extract the flat SE modifier so the dice engine can check if it needs to negate it on 0 base successes
+    let seFlatMod = 0;
+    if (effectiveness > 0 && (!override.active || override.type !== 'flat')) {
+        seFlatMod = effectiveness;
+    }
+
+    // Bundle the flat On Hit value, the Dmg Ratio, and the SE Flat Mod into a single payload string
     const ratioPayload = itemBuffs.tempHpDmgRatio || '0';
     const flatPayload = itemBuffs.tempHpOnHit || 0;
-    const payload = `${flatPayload}_${ratioPayload}`;
+    const payload = `${flatPayload}_${ratioPayload}_${seFlatMod}`;
 
     await rollDicePlus(
         `${actualDicePool}d6>3${mathModifier}`,
-        `💥 ${nickname} rolled ${move.name || 'Damage'} (Dmg)!${finalTags}`,
+        `${nickname} rolled ${move.name || 'Damage'} (Dmg)!${finalTags}`,
         'damage',
         payload
     );
@@ -338,7 +381,7 @@ export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {
     const hasComatose = abilityString.toLowerCase().includes('comatose');
 
     if (statuses.isAsleep && !hasComatose) {
-        if (OBR.isAvailable) OBR.notification.show('⚠️ You are Asleep and cannot perform actions!', 'WARNING');
+        if (OBR.isAvailable) OBR.notification.show('[WARNING] You are Asleep and cannot perform actions!', 'WARNING');
         return;
     }
 
@@ -375,13 +418,13 @@ export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {
         else tags.push(`ASLEEP`);
     }
     if (statuses.isFrozen) {
-        tags.push(`❄️ FROZEN: Attacking Ice Block (5HP/2DEF). Fire/Super-Effective breaks instantly.`);
+        tags.push(`FROZEN: Attacking Ice Block (5HP/2DEF). Fire/Super-Effective breaks instantly.`);
     }
 
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';
     const rollName = (check.name || '').trim() || 'Skill Check';
 
-    await rollDicePlus(`${Math.max(1, dicePool)}d6>3${mathModifier}`, `🎲 ${nickname} rolled ${rollName}!${finalTags}`);
+    await rollDicePlus(`${Math.max(1, dicePool)}d6>3${mathModifier}`, `${nickname} rolled ${rollName}!${finalTags}`);
 }
 
 export async function rollGeneric(
@@ -400,7 +443,7 @@ export async function rollGeneric(
     const hasComatose = abilityString.includes('comatose');
 
     if (statuses.isAsleep && !hasComatose) {
-        if (OBR.isAvailable) OBR.notification.show('⚠️ You are Asleep and cannot perform actions!', 'WARNING');
+        if (OBR.isAvailable) OBR.notification.show('[WARNING] You are Asleep and cannot perform actions!', 'WARNING');
         return;
     }
 
@@ -437,13 +480,13 @@ export async function rollGeneric(
     }
 
     if (statuses.isFrozen) {
-        tags.push(`❄️ FROZEN: Attacking Ice Block (5HP/2DEF). Fire/Super-Effective breaks instantly.`);
+        tags.push(`FROZEN: Attacking Ice Block (5HP/2DEF). Fire/Super-Effective breaks instantly.`);
     }
 
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';
 
     await rollDicePlus(
         `${Math.max(1, finalDicePool)}d6>3${mathModifier}`,
-        `🎲 ${nickname} rolled ${actionName}!${finalTags}`
+        `${nickname} rolled ${actionName}!${finalTags}`
     );
 }

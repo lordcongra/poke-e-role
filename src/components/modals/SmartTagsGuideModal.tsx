@@ -18,8 +18,8 @@ export function SmartTagsGuideModal({ onClose }: { onClose: () => void }) {
                         <code>[Spd +1]</code>
                     </li>
                     <li>
-                        <b>Combat:</b> <code>[Dmg +1]</code>, <code>[Dmg +1: Physical]</code>, <code>[Acc +1]</code>,{' '}
-                        <code>[Chance +2]</code>
+                        <b>Combat:</b> <code>[Dmg +1]</code>, <code>[Dmg +1: Projectile Move]</code>,{' '}
+                        <code>[Acc +1]</code>, <code>[Chance +2]</code>
                     </li>
                     <li>
                         <b>Matchups:</b> <code>[Immune: Ground]</code>, <code>[Remove Immunity: Type]</code>,{' '}

@@ -86,15 +86,22 @@ export function MovesTable() {
         setTargetingMove(move);
     };
 
-    const handleExecuteDamage = (baseDamage: number, isCrit: boolean, isSuperEffective: boolean, reduction: number) => {
+    const handleExecuteDamage = (
+        baseDamage: number,
+        isCrit: boolean,
+        effectiveness: number,
+        reduction: number,
+        override: { active: boolean; type: 'dice' | 'flat' | 'dice-ignore'; value: number }
+    ) => {
         if (targetingMove) {
             executeDamageRoll(
                 targetingMove,
                 useCharacterStore.getState(),
                 baseDamage,
                 isCrit,
-                isSuperEffective,
-                reduction
+                effectiveness,
+                reduction,
+                override
             );
         }
         setTargetingMove(null);

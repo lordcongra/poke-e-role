@@ -151,6 +151,30 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
 
                             <div>
                                 <label className="rules-modal__label text-label" style={{ color: 'var(--text-main)' }}>
+                                    Damage Override{' '}
+                                    <TooltipIcon
+                                        onClick={() =>
+                                            setModalConfig({
+                                                title: 'Damage Override Permission',
+                                                content:
+                                                    'Controls if players can use the manual damage override tools in the Targeting Modal. (Global Room Setting)'
+                                            })
+                                        }
+                                    />
+                                </label>
+                                <select
+                                    className="identity-grid__select rules-modal__select text-subtext"
+                                    style={{ color: 'var(--text-main)' }}
+                                    value={id.gmOnlyDamageOverride ? 'GM Only' : 'Everyone'}
+                                    onChange={(e) => setIdentity('gmOnlyDamageOverride', e.target.value === 'GM Only')}
+                                >
+                                    <option value="Everyone">Everyone</option>
+                                    <option value="GM Only">GM Only</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="rules-modal__label text-label" style={{ color: 'var(--text-main)' }}>
                                     Type Matchups{' '}
                                     <TooltipIcon
                                         onClick={() =>

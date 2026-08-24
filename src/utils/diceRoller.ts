@@ -167,6 +167,15 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
         const successThreshold = match && match[2] ? parseInt(match[2], 10) : 3;
         const flatMod = match && match[3] ? parseInt(match[3].replace(/\s/g, ''), 10) : 0;
 
+        // Parse SE Flat Mod injection to safely strip it if base dice roll completely fails
+        let seFlatMod = 0;
+        if (rollType === 'damage' && payload) {
+            const parts = payload.split('_');
+            if (parts.length >= 3) {
+                seFlatMod = parseInt(parts[2], 10) || 0;
+            }
+        }
+
         let overrideDice: number[] | null = null;
 
         if (isGmDemo && numDice > 0 && !isStandaloneMode) {
@@ -198,28 +207,53 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
             if (result > successThreshold) {
                 rawSuccesses++;
                 rollStrings.push(`${result}✓`);
-                asteriskResults.push(`${result}*`);
+                asteriskResults.push(`${result}✓`);
             } else {
                 rollStrings.push(`${result}✖`);
-                asteriskResults.push(`${result}`);
+                asteriskResults.push(`${result}✖`);
             }
         }
 
-        const finalSuccesses = Math.max(0, rawSuccesses + flatMod);
-        const finalSum = rawSum + flatMod;
-        const modStr = flatMod > 0 ? ` + ${flatMod}` : flatMod < 0 ? ` - ${Math.abs(flatMod)}` : '';
+        let actualFlatMod = flatMod;
+        let seNegated = false;
 
-        const cleanLabel = label.replace(/^[🎲💥🩹🍀🎯]\s*/u, '').trim();
+        // Apply Pokerole rule: Flat Super Effective bonuses do not apply if base attack completely missed (0 Successes)
+        if (rollType === 'damage' && rawSuccesses === 0 && seFlatMod > 0 && numDice > 0) {
+            actualFlatMod -= seFlatMod;
+            seNegated = true;
+        }
+
+        const finalSuccesses = Math.max(0, rawSuccesses + actualFlatMod);
+        const finalSum = rawSum + actualFlatMod;
+        const modStr = actualFlatMod > 0 ? `+${actualFlatMod}` : actualFlatMod < 0 ? `-${Math.abs(actualFlatMod)}` : '';
+
+        // Safely wipe emojis strictly from the start in case they were appended
+        const cleanLabel = label.replace(/^[🎲💥🩹🍀🎯🛡️❄️]\s*/u, '').trim();
         const privacyTag = targetVisibility === 'gm_only' ? '[PRIVATE] ' : '';
         const finalLabel = `${privacyTag}${cleanLabel}`;
 
         let popupMessage = '';
         if (numDice === 0) {
-            popupMessage = `Set Damage → ${finalSuccesses}`;
+            if (rollType === 'damage') {
+                popupMessage = `Direct Damage Override -> ${finalSuccesses} Total Damage`;
+            } else {
+                popupMessage = `Set Value -> ${finalSuccesses}`;
+            }
         } else if (isSuccessRoll) {
-            popupMessage = `[${asteriskResults.join(', ')}]${modStr} → ${finalSuccesses} Successes`;
+            if (rollType === 'damage' && actualFlatMod !== 0) {
+                const sign = actualFlatMod > 0 ? '+' : '-';
+                popupMessage = `[${asteriskResults.join(', ')}] -> ${rawSuccesses} Succ ${sign} ${Math.abs(actualFlatMod)} Extra Dmg = ${finalSuccesses} Total Damage`;
+            } else if (rollType === 'damage') {
+                popupMessage = `[${asteriskResults.join(', ')}] -> ${finalSuccesses} Total Damage`;
+            } else {
+                popupMessage = `[${asteriskResults.join(', ')}]${modStr} -> ${finalSuccesses} Successes`;
+            }
         } else {
-            popupMessage = `[${diceData.map((d) => d.result).join(', ')}]${modStr} → ${finalSum}`;
+            popupMessage = `[${diceData.map((d) => d.result).join(', ')}]${modStr} -> ${finalSum}`;
+        }
+
+        if (seNegated) {
+            popupMessage += `\n( 0 base successes: Super Effective bonus negated )`;
         }
 
         const executeStateIntercepts = async (messageAppendix: string) => {

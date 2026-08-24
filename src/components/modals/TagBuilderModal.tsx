@@ -40,18 +40,54 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
 
     const [category, setCategory] = useState('stat');
     const [target, setTarget] = useState('Str');
+
+    // Split Dropdown States
+    const [reqGroup, setReqGroup] = useState<'none' | 'type' | 'category' | 'modifier' | 'misc'>('none');
     const [typeOption, setTypeOption] = useState('');
+
     const [value, setValue] = useState<number>(1);
     const [value2, setValue2] = useState<number>(6); // Specifically used for the limit variable
 
     const formatEnum = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
-    const dynamicTypeOptions = [
-        ...POKEMON_TYPES.filter((t) => t !== ''),
-        ...roomCustomTypes.map((t) => t.name),
-        'Physical',
-        'Special',
-        'Super Effective'
+    const TYPES = [...POKEMON_TYPES.filter((t) => t !== ''), ...roomCustomTypes.map((t) => t.name)];
+
+    const CATEGORIES = ['Physical', 'Special'];
+
+    const MISC = ['Super Effective'];
+
+    const MODIFIERS = [
+        'Charge Move',
+        'Copy Move',
+        'Force Field',
+        'Basic Heal',
+        'Complete Heal',
+        'Minor Heal',
+        'High Critical',
+        'Low Accuracy',
+        'Bite Move',
+        'Cutter Move',
+        'Fist Move',
+        'Projectile Move',
+        'Wind Move',
+        'Never Miss',
+        'Must Recharge',
+        'Ongoing Damage',
+        'Out of Range',
+        'Powder Move',
+        'Rampage',
+        'Ranged Move',
+        'Reaction',
+        'Late Reaction',
+        'Recoil',
+        'Set Damage',
+        'Sound Move',
+        'Shield Move',
+        'Successive Actions',
+        'Double Action',
+        'Triple Action',
+        'Switcher Move',
+        'Unique Move'
     ];
 
     const getTargetOptions = () => {
@@ -161,7 +197,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
             if (target === 'Remove Immunities') tag = `[Remove Immunities]`;
             else if (typeOption) tag = `[${target}: ${typeOption}]`;
             else {
-                alert('Must select a type for matchups!');
+                alert('Must select a target type for matchups!');
                 return;
             }
         } else if (category === 'mechanic') {
@@ -252,8 +288,12 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                         style={{ color: 'var(--text-main)' }}
                         value={category}
                         onChange={(e) => {
-                            setCategory(e.target.value);
+                            const newCat = e.target.value;
+                            setCategory(newCat);
                             setTarget('');
+                            setTypeOption('');
+                            if (newCat === 'matchup') setReqGroup('type');
+                            else setReqGroup('none');
                         }}
                     >
                         <option value="stat">Stat Modifier</option>
@@ -281,19 +321,63 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                     </select>
 
                     {showTypeSelect && (
-                        <select
-                            className="identity-grid__select tag-builder__select text-label"
-                            style={{ color: 'var(--text-main)' }}
-                            value={typeOption}
-                            onChange={(e) => setTypeOption(e.target.value)}
-                        >
-                            <option value="">-- Any Type --</option>
-                            {dynamicTypeOptions.map((t) => (
-                                <option key={t} value={t}>
-                                    {t}
-                                </option>
-                            ))}
-                        </select>
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                            <select
+                                className="identity-grid__select tag-builder__select text-label"
+                                style={{
+                                    color: 'var(--text-main)',
+                                    flex: reqGroup === 'none' ? 'none' : 1,
+                                    width: reqGroup === 'none' ? '100%' : 'auto',
+                                    marginTop: 0
+                                }}
+                                value={reqGroup}
+                                onChange={(e) => {
+                                    setReqGroup(e.target.value as any);
+                                    setTypeOption('');
+                                }}
+                            >
+                                {category !== 'matchup' && <option value="none">-- No Requirement --</option>}
+                                <option value="type">Pokemon Type</option>
+                                <option value="modifier">Move Keyword</option>
+                                <option value="category">Damage Category</option>
+                                <option value="misc">Miscellaneous</option>
+                            </select>
+
+                            {reqGroup !== 'none' && (
+                                <select
+                                    className="identity-grid__select tag-builder__select text-label"
+                                    style={{ color: 'var(--text-main)', flex: 1, marginTop: 0 }}
+                                    value={typeOption}
+                                    onChange={(e) => setTypeOption(e.target.value)}
+                                >
+                                    <option value="">-- Select Target --</option>
+                                    {reqGroup === 'type' &&
+                                        TYPES.map((t) => (
+                                            <option key={t} value={t}>
+                                                {t}
+                                            </option>
+                                        ))}
+                                    {reqGroup === 'modifier' &&
+                                        MODIFIERS.map((t) => (
+                                            <option key={t} value={t}>
+                                                {t}
+                                            </option>
+                                        ))}
+                                    {reqGroup === 'category' &&
+                                        CATEGORIES.map((t) => (
+                                            <option key={t} value={t}>
+                                                {t}
+                                            </option>
+                                        ))}
+                                    {reqGroup === 'misc' &&
+                                        MISC.map((t) => (
+                                            <option key={t} value={t}>
+                                                {t}
+                                            </option>
+                                        ))}
+                                </select>
+                            )}
+                        </div>
                     )}
 
                     {showValueInput && (

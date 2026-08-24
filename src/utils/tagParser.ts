@@ -46,6 +46,40 @@ const safeParseInt = (value: string | undefined) => parseInt((value || '0').repl
 // REGEX TAG EXTRACTORS
 // =========================================
 
+const MOVE_MODIFIERS = [
+    'charge move',
+    'copy move',
+    'force field',
+    'basic heal',
+    'complete heal',
+    'minor heal',
+    'high critical',
+    'low accuracy',
+    'bite move',
+    'cutter move',
+    'fist move',
+    'projectile move',
+    'wind move',
+    'never miss',
+    'must recharge',
+    'ongoing damage',
+    'out of range',
+    'powder move',
+    'rampage',
+    'ranged move',
+    'reaction',
+    'late reaction',
+    'recoil',
+    'set damage',
+    'sound move',
+    'shield move',
+    'successive actions',
+    'double action',
+    'triple action',
+    'switcher move',
+    'unique move'
+];
+
 function extractStats(description: string, bonuses: CombatBonuses, triggers: TagTriggers) {
     const statMatches = description.matchAll(
         /\[\s*(str|strength|dex|dexterity|vit|vitality|spe|special|ins|insight|tou|tough|coo|cool|bea|beauty|cut|cute|cle|clever)\s*([+-]?\s*\d+)\s*\]/gi
@@ -131,6 +165,13 @@ function extractDamage(
         } else if (move && requirement === 'special' && move.category === 'Special') {
             bonuses.dmg += safeParseInt(match[1]);
             triggers.damage = true;
+        } else if (move && MOVE_MODIFIERS.includes(requirement)) {
+            const moveDesc = (move.desc || '').toLowerCase();
+            const moveName = (move.name || '').toLowerCase();
+            if (moveDesc.includes(requirement) || moveName.includes(requirement)) {
+                bonuses.dmg += safeParseInt(match[1]);
+                triggers.damage = true;
+            }
         }
     }
 
@@ -163,6 +204,13 @@ function extractAccuracy(
         } else if (move && requirement === 'special' && move.category === 'Special') {
             bonuses.acc += safeParseInt(match[1]);
             triggers.accuracy = true;
+        } else if (move && MOVE_MODIFIERS.includes(requirement)) {
+            const moveDesc = (move.desc || '').toLowerCase();
+            const moveName = (move.name || '').toLowerCase();
+            if (moveDesc.includes(requirement) || moveName.includes(requirement)) {
+                bonuses.acc += safeParseInt(match[1]);
+                triggers.accuracy = true;
+            }
         }
     }
 }

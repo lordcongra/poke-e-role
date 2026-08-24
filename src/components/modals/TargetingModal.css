@@ -15,7 +15,7 @@
     background: var(--panel-bg);
     padding: 15px;
     border-radius: 8px;
-    width: 280px;
+    width: 290px;
     box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 20%, transparent);
     border: 2px solid var(--primary);
 }
@@ -59,6 +59,20 @@
     outline: none;
 }
 
+.targeting-modal__override-box {
+    margin-bottom: 15px;
+    padding: 8px;
+    background: var(--panel-alt);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.targeting-modal__override-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
 .targeting-modal__checkbox-row {
     margin-bottom: 15px;
     display: flex;
@@ -91,4 +105,49 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
+}
+
+/* Nested Info Modal */
+.targeting-info__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: color-mix(in srgb, var(--dark) 60%, transparent);
+    z-index: 1300;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.targeting-info__content {
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: 6px;
+    max-width: 320px;
+    width: 90%;
+    border: 2px solid var(--primary);
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
+}
+
+.targeting-info__title {
+    text-align: center;
+    margin-top: 0;
+}
+
+.targeting-info__divider {
+    border-top: 1px solid var(--border);
+    margin-bottom: 15px;
+}
+
+.targeting-info__text {
+    white-space: pre-wrap;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.targeting-info__actions {
+    display: flex;
+    justify-content: center;
 }
