@@ -48,6 +48,34 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     use unified, accessible text scaling across the board.
                 </li>
             </ul>,
+            <strong key="a11y-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
+                ♿ Accessibility Settings
+            </strong>,
+            <ul
+                key="a11y-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Theme Contrast:</strong> You can now dynamically adjust the visual contrast of the sheet's
+                    colors (either globally or per-type) to fit your specific visual needs.
+                </li>
+                <li>
+                    <strong>Dyslexic-Friendly Font:</strong> A new toggle allows you to swap the entire sheet to a
+                    dyslexic-friendly font for drastically improved readability.
+                </li>
+                <li>
+                    <strong>Adjustable Font Size:</strong> Need larger text? You can now scale the global font size up
+                    or down directly from the Accessibility settings.
+                </li>
+            </ul>,
             <div
                 key="pwa-update"
                 style={{
