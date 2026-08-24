@@ -20,6 +20,7 @@ export interface CombatBonuses {
     highCritStacks: number;
     stackingHighCritStacks: number;
     ignoreLowAcc: number;
+    addLowAcc: number;
     roundHeal: number;
     roundDamage: number;
     roundWillRestore: number;
@@ -215,6 +216,37 @@ function extractAccuracy(
     }
 }
 
+function extractLowAccuracy(
+    description: string,
+    moveType: string,
+    move: MoveData | undefined,
+    bonuses: CombatBonuses,
+    triggers: TagTriggers
+) {
+    const lowAccMatches = description.matchAll(/\[\s*low acc(?:uracy)?\s*([+-]?\s*\d+)(?:\s*:\s*([\w\s]+))?\s*\]/gi);
+    for (const match of lowAccMatches) {
+        const requirement = match[2]?.toLowerCase().trim();
+
+        if (!requirement || requirement === moveType) {
+            bonuses.addLowAcc += safeParseInt(match[1]);
+            triggers.accuracy = true;
+        } else if (move && requirement === 'physical' && move.category === 'Physical') {
+            bonuses.addLowAcc += safeParseInt(match[1]);
+            triggers.accuracy = true;
+        } else if (move && requirement === 'special' && move.category === 'Special') {
+            bonuses.addLowAcc += safeParseInt(match[1]);
+            triggers.accuracy = true;
+        } else if (move && MOVE_MODIFIERS.includes(requirement)) {
+            const moveDesc = (move.desc || '').toLowerCase();
+            const moveName = (move.name || '').toLowerCase();
+            if (moveDesc.includes(requirement) || moveName.includes(requirement)) {
+                bonuses.addLowAcc += safeParseInt(match[1]);
+                triggers.accuracy = true;
+            }
+        }
+    }
+}
+
 function extractFirstHit(description: string, bonuses: CombatBonuses, triggers: TagTriggers) {
     const firstHitDmgMatches = description.matchAll(/\[\s*first hit dmg\s*([+-]?\s*\d+)\s*\]/gi);
     for (const match of firstHitDmgMatches) {
@@ -345,6 +377,7 @@ export function parseCombatTags(
         highCritStacks: 0,
         stackingHighCritStacks: 0,
         ignoreLowAcc: 0,
+        addLowAcc: 0,
         roundHeal: 0,
         roundDamage: 0,
         roundWillRestore: 0,
@@ -423,6 +456,7 @@ export function parseCombatTags(
         extractInitiativeAndChance(description, bonuses, triggers);
         extractDamage(description, moveType, move, isComboMove, bonuses, triggers);
         extractAccuracy(description, moveType, move, bonuses, triggers);
+        extractLowAccuracy(description, moveType, move, bonuses, triggers);
         extractFirstHit(description, bonuses, triggers);
         extractTempHp(description, bonuses, triggers);
         extractRoundEffects(description, bonuses, triggers);

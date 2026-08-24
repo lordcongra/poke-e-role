@@ -92,9 +92,15 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
 
     let moveLowAccuracy = 0;
     let ignoredAccuracyPenalty = 0;
+
+    // Stack native Low Accuracy with dynamic Low Accuracy injected via Tags
+    let baseLowAccuracy = itemBuffs.addLowAcc;
     const lowAccuracyMatch = moveDescription.match(/low accuracy\s*(\d+)/i);
     if (lowAccuracyMatch) {
-        const baseLowAccuracy = parseInt(lowAccuracyMatch[1]) || 0;
+        baseLowAccuracy += parseInt(lowAccuracyMatch[1]) || 0;
+    }
+
+    if (baseLowAccuracy > 0) {
         moveLowAccuracy = Math.max(0, baseLowAccuracy - itemBuffs.ignoreLowAcc);
         ignoredAccuracyPenalty = baseLowAccuracy - moveLowAccuracy;
     }

@@ -45,8 +45,9 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
     const [reqGroup, setReqGroup] = useState<'none' | 'type' | 'category' | 'modifier' | 'misc'>('none');
     const [typeOption, setTypeOption] = useState('');
 
-    const [value, setValue] = useState<number>(1);
-    const [value2, setValue2] = useState<number>(6); // Specifically used for the limit variable
+    // Use string | number to allow intermediate values like "-" to exist in state without defaulting to 0
+    const [value, setValue] = useState<string | number>(1);
+    const [value2, setValue2] = useState<string | number>(6); // Specifically used for the limit variable
 
     const formatEnum = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
@@ -104,7 +105,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
             return [...Object.values(Skill).map(formatEnum), ...customSkillNames];
         }
         if (category === 'combat')
-            return ['Dmg', 'Acc', 'Init', 'Chance', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc'];
+            return ['Dmg', 'Acc', 'Init', 'Chance', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc', 'Low Acc Penalty'];
         if (category === 'matchup') return ['Immune', 'Resist', 'Weak', 'Remove Immunities', 'Remove Immunity'];
 
         if (category === 'mechanic')
@@ -189,10 +190,16 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
         if (category === 'stat' || category === 'skill') {
             tag = `[${target} ${sign}]`;
         } else if (category === 'combat') {
-            if (['Init', 'Chance', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc'].includes(target))
+            if (['Init', 'Chance', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc'].includes(target)) {
                 tag = `[${target} ${sign}]`;
-            else if (typeOption) tag = `[${target} ${sign}: ${typeOption}]`;
-            else tag = `[${target} ${sign}]`;
+            } else if (target === 'Low Acc Penalty') {
+                const actualTarget = 'Low Acc';
+                if (typeOption) tag = `[${actualTarget} ${sign}: ${typeOption}]`;
+                else tag = `[${actualTarget} ${sign}]`;
+            } else {
+                if (typeOption) tag = `[${target} ${sign}: ${typeOption}]`;
+                else tag = `[${target} ${sign}]`;
+            }
         } else if (category === 'matchup') {
             if (target === 'Remove Immunities') tag = `[Remove Immunities]`;
             else if (typeOption) tag = `[${target}: ${typeOption}]`;
@@ -332,7 +339,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                                 }}
                                 value={reqGroup}
                                 onChange={(e) => {
-                                    setReqGroup(e.target.value as any);
+                                    setReqGroup(e.target.value as 'none' | 'type' | 'category' | 'modifier' | 'misc');
                                     setTypeOption('');
                                 }}
                             >
@@ -388,7 +395,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                                 className="identity-grid__input tag-builder__value-input text-label"
                                 style={{ color: 'var(--text-main)' }}
                                 value={value}
-                                onChange={(e) => setValue(Number(e.target.value) || 0)}
+                                onChange={(e) => setValue(e.target.value)}
                             />
                             {target === 'Acc [X]s Add Dmg Limit [Y]' && (
                                 <>
@@ -400,7 +407,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                                         className="identity-grid__input tag-builder__value-input text-label"
                                         style={{ color: 'var(--text-main)' }}
                                         value={value2}
-                                        onChange={(e) => setValue2(Number(e.target.value) || 0)}
+                                        onChange={(e) => setValue2(e.target.value)}
                                     />
                                 </>
                             )}

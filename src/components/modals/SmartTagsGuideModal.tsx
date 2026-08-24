@@ -10,7 +10,7 @@ export function SmartTagsGuideModal({ onClose }: { onClose: () => void }) {
                 </h3>
                 <p className="tags-guide__desc text-subtext">
                     Type these exactly as shown (with brackets) into an equipped item's Name or Notes to automatically
-                    apply mechanics.
+                    apply mechanics. You can use negative numbers to subtract dice!
                 </p>
                 <ul className="tags-guide__list text-subtext" style={{ color: 'var(--text-main)' }}>
                     <li>
@@ -18,8 +18,7 @@ export function SmartTagsGuideModal({ onClose }: { onClose: () => void }) {
                         <code>[Spd +1]</code>
                     </li>
                     <li>
-                        <b>Combat:</b> <code>[Dmg +1]</code>, <code>[Dmg +1: Projectile Move]</code>,{' '}
-                        <code>[Acc +1]</code>, <code>[Chance +2]</code>
+                        <b>Combat:</b> <code>[Dmg +1]</code>, <code>[Acc -1: Physical]</code>, <code>[Chance +2]</code>
                     </li>
                     <li>
                         <b>Matchups:</b> <code>[Immune: Ground]</code>, <code>[Remove Immunity: Type]</code>,{' '}
@@ -28,6 +27,10 @@ export function SmartTagsGuideModal({ onClose }: { onClose: () => void }) {
                     <li>
                         <b>Mechanics:</b> <code>[High Crit]</code>, <code>[Ignore Low Acc 2]</code>,{' '}
                         <code>[Status: Poison]</code>, <code>[Recoil]</code>
+                    </li>
+                    <li style={{ marginTop: '8px' }}>
+                        <b>Example ("Hustle" Ability):</b> Add <code>[Low Acc +1: Physical] [Dmg +2: Physical]</code> to
+                        lower successes but increase damage on all physical moves!
                     </li>
                 </ul>
                 <div className="tags-guide__actions">
