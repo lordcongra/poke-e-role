@@ -353,7 +353,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                                 }}
                             >
                                 {category !== 'matchup' && <option value="none">-- No Requirement --</option>}
-                                <option value="type">Pokemon Type</option>
+                                <option value="type">Move Type</option>
                                 <option value="modifier">Move Keyword</option>
                                 <option value="category">Damage Category</option>
                                 <option value="misc">Miscellaneous</option>
