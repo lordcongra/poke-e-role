@@ -28,8 +28,6 @@ const OBR_KEY_MAP: Record<string, string> = {
     initiativeTrackerOffsetY: 'initiative-tracker-offset-y',
     initiativeTrackerLayout: 'initiative-tracker-layout',
     initiativeTrackerAvatarShape: 'initiative-tracker-avatar-shape',
-    initiativeTrackerWidthBuffer: 'initiative-tracker-width-buffer',
-    initiativeTrackerHeightBuffer: 'initiative-tracker-height-buffer',
     initiativeTrackerMaxWidth: 'initiative-tracker-max-width',
     initiativeTrackerMaxHeight: 'initiative-tracker-max-height',
     colorAct: 'color-act',
@@ -65,6 +63,7 @@ const OBR_KEY_MAP: Record<string, string> = {
     maxImageUrl: 'max-image-url',
     teraImageUrl: 'tera-image-url',
     gmDemoMode: 'gm-demo-mode',
+    gmOnlyDamageOverride: 'gm-only-damage-override',
     themePrimaryOverride: 'theme-primary-override',
     themeSecondaryOverride: 'theme-secondary-override',
     dexId: 'dex-id',
@@ -111,8 +110,6 @@ let initialInitSettings = {
     offsetY: 0,
     layout: 'vertical',
     shape: 'none',
-    wb: 27,
-    hb: 33,
     mw: 0,
     mh: 0
 };
@@ -187,6 +184,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
 
         gmOnlyLootGen: true,
         gmOnlyMatchups: false,
+        gmOnlyDamageOverride: false,
         gmDemoMode: false,
 
         // Apply Local Settings
@@ -195,14 +193,6 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         initiativeTrackerOffsetY: Number(initialInitSettings.offsetY) || 0,
         initiativeTrackerLayout: (initialInitSettings.layout as 'vertical' | 'horizontal') || 'vertical',
         initiativeTrackerAvatarShape: (initialInitSettings.shape as 'circle' | 'square' | 'none') || 'none',
-        initiativeTrackerWidthBuffer:
-            Number(initialInitSettings.wb) !== undefined && !isNaN(Number(initialInitSettings.wb))
-                ? Number(initialInitSettings.wb)
-                : 27,
-        initiativeTrackerHeightBuffer:
-            Number(initialInitSettings.hb) !== undefined && !isNaN(Number(initialInitSettings.hb))
-                ? Number(initialInitSettings.hb)
-                : 33,
         initiativeTrackerMaxWidth: Number(initialInitSettings.mw) || 0,
         initiativeTrackerMaxHeight: Number(initialInitSettings.mh) || 0,
 
@@ -305,6 +295,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 field === 'homebrewAccess' ||
                 field === 'gmOnlyLootGen' ||
                 field === 'gmOnlyMatchups' ||
+                field === 'gmOnlyDamageOverride' ||
                 field === 'gmDemoMode'
             ) {
                 if (OBR.isAvailable) {
@@ -317,6 +308,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                         if (field === 'homebrewAccess') roomMeta.homebrewAccess = value;
                         if (field === 'gmOnlyLootGen') roomMeta.gmOnlyLootGen = value;
                         if (field === 'gmOnlyMatchups') roomMeta.gmOnlyMatchups = value;
+                        if (field === 'gmOnlyDamageOverride') roomMeta.gmOnlyDamageOverride = value;
                         if (field === 'gmDemoMode') roomMeta.gmDemoMode = value;
                         OBR.room.setMetadata({ 'pokerole-pmd-extension/room-settings': roomMeta });
                     });
