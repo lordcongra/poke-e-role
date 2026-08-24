@@ -21,6 +21,7 @@ export interface CombatBonuses {
     stackingHighCritStacks: number;
     ignoreLowAcc: number;
     addLowAcc: number;
+    ignorePain: boolean;
     roundHeal: number;
     roundDamage: number;
     roundWillRestore: number;
@@ -42,6 +43,13 @@ interface TagTriggers {
 }
 
 const safeParseInt = (value: string | undefined) => parseInt((value || '0').replace(/\s/g, '')) || 0;
+
+function checkCondition(conditionStr: string | undefined, isHalfHp: boolean): boolean {
+    if (!conditionStr) return true;
+    const cond = conditionStr.toLowerCase().trim();
+    if (cond === 'half hp' || cond === 'half hp or less') return isHalfHp;
+    return true; // Default to true if condition is unrecognized
+}
 
 // =========================================
 // REGEX TAG EXTRACTORS
@@ -81,11 +89,12 @@ const MOVE_MODIFIERS = [
     'unique move'
 ];
 
-function extractStats(description: string, bonuses: CombatBonuses, triggers: TagTriggers) {
+function extractStats(description: string, bonuses: CombatBonuses, triggers: TagTriggers, isHalfHp: boolean) {
     const statMatches = description.matchAll(
-        /\[\s*(str|strength|dex|dexterity|vit|vitality|spe|special|ins|insight|tou|tough|coo|cool|bea|beauty|cut|cute|cle|clever)\s*([+-]?\s*\d+)\s*\]/gi
+        /\[\s*(str|strength|dex|dexterity|vit|vitality|spe|special|ins|insight|tou|tough|coo|cool|bea|beauty|cut|cute|cle|clever)\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi
     );
     for (const match of statMatches) {
+        if (!checkCondition(match[3], isHalfHp)) continue;
         const rawStatistic = match[1].toLowerCase();
         const map: Record<string, string> = {
             strength: 'str',
@@ -105,38 +114,56 @@ function extractStats(description: string, bonuses: CombatBonuses, triggers: Tag
     }
 }
 
-function extractSkills(description: string, escapedSkills: string, bonuses: CombatBonuses, triggers: TagTriggers) {
+function extractSkills(
+    description: string,
+    escapedSkills: string,
+    bonuses: CombatBonuses,
+    triggers: TagTriggers,
+    isHalfHp: boolean
+) {
     if (!escapedSkills) return;
-    const skillMatches = description.matchAll(new RegExp(`\\[\\s*(${escapedSkills})\\s*([+-]?\\s*\\d+)\\s*\\]`, 'gi'));
+    const skillMatches = description.matchAll(
+        new RegExp(`\\[\\s*(${escapedSkills})\\s*([+-]?\\s*\\d+)(?:\\s*@\\s*([^\\]]+))?\\s*\\]`, 'gi')
+    );
     for (const match of skillMatches) {
+        if (!checkCondition(match[3], isHalfHp)) continue;
         bonuses.skills[match[1].toLowerCase()] = (bonuses.skills[match[1].toLowerCase()] || 0) + safeParseInt(match[2]);
         triggers.general = true;
     }
 }
 
-function extractDefenses(description: string, bonuses: CombatBonuses, triggers: TagTriggers) {
-    const defenseMatches = description.matchAll(/\[\s*def\s*([+-]?\s*\d+)\s*\]/gi);
+function extractDefenses(description: string, bonuses: CombatBonuses, triggers: TagTriggers, isHalfHp: boolean) {
+    const defenseMatches = description.matchAll(/\[\s*def\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of defenseMatches) {
+        if (!checkCondition(match[2], isHalfHp)) continue;
         bonuses.def += safeParseInt(match[1]);
         triggers.general = true;
     }
 
-    const specialDefenseMatches = description.matchAll(/\[\s*spd\s*([+-]?\s*\d+)\s*\]/gi);
+    const specialDefenseMatches = description.matchAll(/\[\s*spd\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of specialDefenseMatches) {
+        if (!checkCondition(match[2], isHalfHp)) continue;
         bonuses.spd += safeParseInt(match[1]);
         triggers.general = true;
     }
 }
 
-function extractInitiativeAndChance(description: string, bonuses: CombatBonuses, triggers: TagTriggers) {
-    const initiativeMatches = description.matchAll(/\[\s*init\s*([+-]?\s*\d+)\s*\]/gi);
+function extractInitiativeAndChance(
+    description: string,
+    bonuses: CombatBonuses,
+    triggers: TagTriggers,
+    isHalfHp: boolean
+) {
+    const initiativeMatches = description.matchAll(/\[\s*init\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of initiativeMatches) {
+        if (!checkCondition(match[2], isHalfHp)) continue;
         bonuses.init += safeParseInt(match[1]);
         triggers.general = true;
     }
 
-    const chanceMatches = description.matchAll(/\[\s*chance\s*([+-]?\s*\d+)\s*\]/gi);
+    const chanceMatches = description.matchAll(/\[\s*chance\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of chanceMatches) {
+        if (!checkCondition(match[2], isHalfHp)) continue;
         bonuses.chance += safeParseInt(match[1]);
         triggers.general = true;
     }
@@ -148,10 +175,14 @@ function extractDamage(
     move: MoveData | undefined,
     isComboMove: boolean,
     bonuses: CombatBonuses,
-    triggers: TagTriggers
+    triggers: TagTriggers,
+    isHalfHp: boolean
 ) {
-    const damageMatches = description.matchAll(/\[\s*dmg\s*([+-]?\s*\d+)(?:\s*:\s*([\w\s]+))?\s*\]/gi);
+    const damageMatches = description.matchAll(
+        /\[\s*dmg\s*([+-]?\s*\d+)(?:\s*:\s*([^\]@]+))?(?:\s*@\s*([^\]]+))?\s*\]/gi
+    );
     for (const match of damageMatches) {
+        if (!checkCondition(match[3], isHalfHp)) continue;
         const requirement = match[2]?.toLowerCase().trim();
 
         if (!requirement || requirement === moveType) {
@@ -176,8 +207,9 @@ function extractDamage(
         }
     }
 
-    const comboMatches = description.matchAll(/\[\s*combo dmg\s*([+-]?\s*\d+)\s*\]/gi);
+    const comboMatches = description.matchAll(/\[\s*combo dmg\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of comboMatches) {
+        if (!checkCondition(match[2], isHalfHp)) continue;
         if (isComboMove) {
             bonuses.dmg += safeParseInt(match[1]);
             triggers.damage = true;
@@ -190,10 +222,14 @@ function extractAccuracy(
     moveType: string,
     move: MoveData | undefined,
     bonuses: CombatBonuses,
-    triggers: TagTriggers
+    triggers: TagTriggers,
+    isHalfHp: boolean
 ) {
-    const accuracyMatches = description.matchAll(/\[\s*acc\s*([+-]?\s*\d+)(?:\s*:\s*([\w\s]+))?\s*\]/gi);
+    const accuracyMatches = description.matchAll(
+        /\[\s*acc\s*([+-]?\s*\d+)(?:\s*:\s*([^\]@]+))?(?:\s*@\s*([^\]]+))?\s*\]/gi
+    );
     for (const match of accuracyMatches) {
+        if (!checkCondition(match[3], isHalfHp)) continue;
         const requirement = match[2]?.toLowerCase().trim();
 
         if (!requirement || requirement === moveType) {
@@ -221,10 +257,14 @@ function extractLowAccuracy(
     moveType: string,
     move: MoveData | undefined,
     bonuses: CombatBonuses,
-    triggers: TagTriggers
+    triggers: TagTriggers,
+    isHalfHp: boolean
 ) {
-    const lowAccMatches = description.matchAll(/\[\s*low acc(?:uracy)?\s*([+-]?\s*\d+)(?:\s*:\s*([\w\s]+))?\s*\]/gi);
+    const lowAccMatches = description.matchAll(
+        /\[\s*low acc(?:uracy)?\s*([+-]?\s*\d+)(?:\s*:\s*([^\]@]+))?(?:\s*@\s*([^\]]+))?\s*\]/gi
+    );
     for (const match of lowAccMatches) {
+        if (!checkCondition(match[3], isHalfHp)) continue;
         const requirement = match[2]?.toLowerCase().trim();
 
         if (!requirement || requirement === moveType) {
@@ -247,102 +287,157 @@ function extractLowAccuracy(
     }
 }
 
-function extractFirstHit(description: string, bonuses: CombatBonuses, triggers: TagTriggers) {
-    const firstHitDmgMatches = description.matchAll(/\[\s*first hit dmg\s*([+-]?\s*\d+)\s*\]/gi);
+function extractFirstHit(description: string, bonuses: CombatBonuses, triggers: TagTriggers, isHalfHp: boolean) {
+    const firstHitDmgMatches = description.matchAll(/\[\s*first hit dmg\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of firstHitDmgMatches) {
+        if (!checkCondition(match[2], isHalfHp)) continue;
         bonuses.firstHitDmg += safeParseInt(match[1]);
         triggers.damage = true;
     }
 
-    const firstHitAccMatches = description.matchAll(/\[\s*first hit acc\s*([+-]?\s*\d+)\s*\]/gi);
+    const firstHitAccMatches = description.matchAll(/\[\s*first hit acc\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of firstHitAccMatches) {
+        if (!checkCondition(match[2], isHalfHp)) continue;
         bonuses.firstHitAcc += safeParseInt(match[1]);
         triggers.accuracy = true;
     }
 }
 
-function extractTempHp(description: string, bonuses: CombatBonuses, triggers: TagTriggers) {
-    const tempHpMatches = description.matchAll(/\[\s*gain temp hp\s*(\d+)\s*\]/gi);
+function extractTempHp(description: string, bonuses: CombatBonuses, triggers: TagTriggers, isHalfHp: boolean) {
+    const tempHpMatches = description.matchAll(/\[\s*gain temp hp\s*(\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of tempHpMatches) {
+        if (!checkCondition(match[2], isHalfHp)) continue;
         bonuses.gainTempHp += safeParseInt(match[1]);
         triggers.damage = true;
     }
 
-    const tempHpOnHitMatches = description.matchAll(/\[\s*temp hp \+(\d+)\s*on hit\s*\]/gi);
+    const tempHpOnHitMatches = description.matchAll(/\[\s*temp hp \+(\d+)\s*on hit(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of tempHpOnHitMatches) {
+        if (!checkCondition(match[2], isHalfHp)) continue;
         bonuses.tempHpOnHit += safeParseInt(match[1]);
         triggers.damage = true;
     }
 
-    const tempHpDmgMatches = description.matchAll(/\[\s*temp hp\s*([\d./%]+)\s*dmg\s*\]/gi);
+    const tempHpDmgMatches = description.matchAll(/\[\s*temp hp\s*([\d./%]+)\s*dmg(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of tempHpDmgMatches) {
+        if (!checkCondition(match[2], isHalfHp)) continue;
         bonuses.tempHpDmgRatio = match[1].trim();
         triggers.damage = true;
     }
 }
 
-function extractRoundEffects(description: string, bonuses: CombatBonuses, triggers: TagTriggers) {
-    const damageMatch = description.matchAll(/\[\s*deal (\d+) damage at end of round\s*\]/gi);
+function extractRoundEffects(description: string, bonuses: CombatBonuses, triggers: TagTriggers, isHalfHp: boolean) {
+    const damageMatch = description.matchAll(/\[\s*deal (\d+) damage at end of round(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of damageMatch) {
+        if (!checkCondition(match[2], isHalfHp)) continue;
         bonuses.roundDamage += safeParseInt(match[1]);
         triggers.general = true;
     }
 
-    const willDmgMatch = description.matchAll(/\[\s*reduce will by (\d+) at end of round\s*\]/gi);
+    const willDmgMatch = description.matchAll(/\[\s*reduce will by (\d+) at end of round(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of willDmgMatch) {
+        if (!checkCondition(match[2], isHalfHp)) continue;
         bonuses.roundWillDamage += safeParseInt(match[1]);
         triggers.general = true;
     }
 
-    const healMatch = description.matchAll(/\[\s*heal (\d+) round end\s*\]/gi);
+    const healMatch = description.matchAll(/\[\s*heal (\d+) round end(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of healMatch) {
+        if (!checkCondition(match[2], isHalfHp)) continue;
         bonuses.roundHeal += safeParseInt(match[1]);
         triggers.general = true;
     }
 
-    const willHealMatch = description.matchAll(/\[\s*restore (\d+) will round end\s*\]/gi);
+    const willHealMatch = description.matchAll(/\[\s*restore (\d+) will round end(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of willHealMatch) {
+        if (!checkCondition(match[2], isHalfHp)) continue;
         bonuses.roundWillRestore += safeParseInt(match[1]);
         triggers.general = true;
     }
 
-    const loseActionMatch = description.matchAll(/\[\s*lose (\d+) action(?:s)?\s*\]/gi);
+    const loseActionMatch = description.matchAll(/\[\s*lose (\d+) action(?:s)?(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of loseActionMatch) {
+        if (!checkCondition(match[2], isHalfHp)) continue;
         bonuses.loseAction += safeParseInt(match[1]);
         triggers.general = true;
     }
 
-    if (/\[\s*no reactions\s*\]/i.test(description)) {
+    const noReactMatch = description.matchAll(/\[\s*no reactions(?:\s*@\s*([^\]]+))?\s*\]/gi);
+    for (const match of noReactMatch) {
+        if (!checkCondition(match[1], isHalfHp)) continue;
         bonuses.noReactions = true;
         triggers.general = true;
     }
 
-    const extraReactionsMatch = description.matchAll(/\[\s*(\d+) extra reaction(?:s)? per turn\s*\]/gi);
+    const extraReactionsMatch = description.matchAll(
+        /\[\s*(\d+) extra reaction(?:s)? per turn(?:\s*@\s*([^\]]+))?\s*\]/gi
+    );
     for (const match of extraReactionsMatch) {
+        if (!checkCondition(match[2], isHalfHp)) continue;
         bonuses.extraReactions += safeParseInt(match[1]);
         triggers.general = true;
     }
 }
 
-function extractMechanics(description: string, bonuses: CombatBonuses, triggers: TagTriggers) {
-    if (/\[\s*high crit\s*\]/i.test(description)) {
+function extractMechanics(
+    description: string,
+    moveType: string,
+    move: MoveData | undefined,
+    bonuses: CombatBonuses,
+    triggers: TagTriggers,
+    isHalfHp: boolean
+) {
+    const hcMatches = description.matchAll(/\[\s*high crit(?:\s*@\s*([^\]]+))?\s*\]/gi);
+    for (const match of hcMatches) {
+        if (!checkCondition(match[1], isHalfHp)) continue;
         bonuses.highCritStacks += 1;
         triggers.accuracy = true;
     }
-    if (/\[\s*stacking high crit\s*\]/i.test(description)) {
+
+    const stackHcMatches = description.matchAll(/\[\s*stacking high crit(?:\s*@\s*([^\]]+))?\s*\]/gi);
+    for (const match of stackHcMatches) {
+        if (!checkCondition(match[1], isHalfHp)) continue;
         bonuses.stackingHighCritStacks += 1;
         triggers.accuracy = true;
     }
 
-    const ignoreAccuracyMatches = description.matchAll(/\[\s*ignore low acc\s*(\d+)\s*\]/gi);
+    const ignorePainMatches = description.matchAll(/\[\s*ignore pain(?:\s*:\s*([^\]@]+))?(?:\s*@\s*([^\]]+))?\s*\]/gi);
+    for (const match of ignorePainMatches) {
+        if (!checkCondition(match[2], isHalfHp)) continue;
+        const requirement = match[1]?.toLowerCase().trim();
+
+        if (!requirement || requirement === moveType) {
+            bonuses.ignorePain = true;
+            triggers.general = true;
+        } else if (move && requirement === 'physical' && move.category === 'Physical') {
+            bonuses.ignorePain = true;
+            triggers.general = true;
+        } else if (move && requirement === 'special' && move.category === 'Special') {
+            bonuses.ignorePain = true;
+            triggers.general = true;
+        } else if (move && MOVE_MODIFIERS.includes(requirement)) {
+            const moveDesc = (move.desc || '').toLowerCase();
+            const moveName = (move.name || '').toLowerCase();
+            if (moveDesc.includes(requirement) || moveName.includes(requirement)) {
+                bonuses.ignorePain = true;
+                triggers.general = true;
+            }
+        }
+    }
+
+    const ignoreAccuracyMatches = description.matchAll(/\[\s*ignore low acc\s*(\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of ignoreAccuracyMatches) {
+        if (!checkCondition(match[2], isHalfHp)) continue;
         bonuses.ignoreLowAcc += safeParseInt(match[1]);
         triggers.accuracy = true;
     }
 
     // Capture both [Acc 6s Add Dmg] and [Acc 6s Add Dmg Limit 6]
-    const accFaceMatch = description.matchAll(/\[\s*acc\s*(\d+)s\s*add(?:s)?\s*dmg(?:\s*limit\s*(\d+))?\s*\]/gi);
+    const accFaceMatch = description.matchAll(
+        /\[\s*acc\s*(\d+)s\s*add(?:s)?\s*dmg(?:\s*limit\s*(\d+))?(?:\s*@\s*([^\]]+))?\s*\]/gi
+    );
     for (const match of accFaceMatch) {
+        if (!checkCondition(match[3], isHalfHp)) continue;
         bonuses.accFaceAddsDmg = safeParseInt(match[1]);
         bonuses.accFaceAddsDmgLimit = safeParseInt(match[2]) || 6; // Defaults to 6 if limit isn't explicitly defined!
         triggers.accuracy = true;
@@ -378,6 +473,7 @@ export function parseCombatTags(
         stackingHighCritStacks: 0,
         ignoreLowAcc: 0,
         addLowAcc: 0,
+        ignorePain: false,
         roundHeal: 0,
         roundDamage: 0,
         roundWillRestore: 0,
@@ -391,6 +487,11 @@ export function parseCombatTags(
         accItemNames: [],
         dmgItemNames: []
     };
+
+    const state = useCharacterStore.getState();
+    const hpCurr = Number(state.health.hpCurr) || 0;
+    const hpMax = Math.max(1, Number(state.health.hpMax) || 1);
+    const isHalfHp = hpCurr <= Math.floor(hpMax / 2);
 
     const moveType = (move?.type || '').trim().toLowerCase();
     const moveDescription = (move?.desc || '').toLowerCase();
@@ -420,7 +521,6 @@ export function parseCombatTags(
         itemsToParse.push({ name: move.name || 'Move', desc: move.desc });
     }
 
-    const state = useCharacterStore.getState();
     if (state.identity.activeTransformation === 'Custom' && state.identity.activeFormId) {
         const customForm = state.roomCustomForms.find((f) => f.id === state.identity.activeFormId);
         if (customForm && customForm.tags) {
@@ -450,17 +550,17 @@ export function parseCombatTags(
             damage: false
         };
 
-        extractStats(description, bonuses, triggers);
-        extractSkills(description, escapedSkills, bonuses, triggers);
-        extractDefenses(description, bonuses, triggers);
-        extractInitiativeAndChance(description, bonuses, triggers);
-        extractDamage(description, moveType, move, isComboMove, bonuses, triggers);
-        extractAccuracy(description, moveType, move, bonuses, triggers);
-        extractLowAccuracy(description, moveType, move, bonuses, triggers);
-        extractFirstHit(description, bonuses, triggers);
-        extractTempHp(description, bonuses, triggers);
-        extractRoundEffects(description, bonuses, triggers);
-        extractMechanics(description, bonuses, triggers);
+        extractStats(description, bonuses, triggers, isHalfHp);
+        extractSkills(description, escapedSkills, bonuses, triggers, isHalfHp);
+        extractDefenses(description, bonuses, triggers, isHalfHp);
+        extractInitiativeAndChance(description, bonuses, triggers, isHalfHp);
+        extractDamage(description, moveType, move, isComboMove, bonuses, triggers, isHalfHp);
+        extractAccuracy(description, moveType, move, bonuses, triggers, isHalfHp);
+        extractLowAccuracy(description, moveType, move, bonuses, triggers, isHalfHp);
+        extractFirstHit(description, bonuses, triggers, isHalfHp);
+        extractTempHp(description, bonuses, triggers, isHalfHp);
+        extractRoundEffects(description, bonuses, triggers, isHalfHp);
+        extractMechanics(description, moveType, move, bonuses, triggers, isHalfHp);
 
         if (name && name !== 'Ability' && name !== 'Move' && name !== 'Active Form') {
             if (triggers.general || triggers.accuracy || triggers.damage) bonuses.itemNames.push(name);

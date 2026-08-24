@@ -26,7 +26,11 @@ export function SmartTagsGuideModal({ onClose }: { onClose: () => void }) {
                     </li>
                     <li>
                         <b>Mechanics:</b> <code>[High Crit]</code>, <code>[Ignore Low Acc 2]</code>,{' '}
-                        <code>[Status: Poison]</code>, <code>[Recoil]</code>
+                        <code>[Status: Poison]</code>, <code>[Recoil]</code>, <code>[Ignore Pain: Bug]</code>
+                    </li>
+                    <li style={{ marginTop: '8px' }}>
+                        <b>Conditions:</b> Append <code>@ Half HP</code> to any tag to make it activate only when at 50%
+                        health or less! Example: <code>[Dmg +2: Bug @ Half HP]</code>
                     </li>
                     <li style={{ marginTop: '8px' }}>
                         <b>Example ("Hustle" Ability):</b> Add <code>[Low Acc +1: Physical] [Dmg +2: Physical]</code> to

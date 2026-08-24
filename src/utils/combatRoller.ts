@@ -47,7 +47,9 @@ export async function rollStatus(status: StatusItem, state: CharacterState) {
         return;
     }
 
-    const pain = getPainPenalty(attribute, state);
+    let pain = getPainPenalty(attribute, state);
+    if (itemBuffs.ignorePain) pain = 0;
+
     const successModifier = state.trackers.globalSucc + pain;
     const mathModifier =
         successModifier !== 0 ? (successModifier > 0 ? `+${successModifier}` : `${successModifier}`) : '';
@@ -105,7 +107,9 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
         ignoredAccuracyPenalty = baseLowAccuracy - moveLowAccuracy;
     }
 
-    const pain = getPainPenalty(move.acc1, state);
+    let pain = getPainPenalty(move.acc1, state);
+    if (itemBuffs.ignorePain) pain = 0;
+
     const genericSuccessModifier = state.trackers.globalSucc + statuses.confusionPenalty + pain;
     const successModifier = genericSuccessModifier - moveLowAccuracy;
     const mathModifier =
@@ -307,7 +311,9 @@ export async function executeDamageRoll(
             useCharacterStore.getState().updateTracker('firstHitDmg', false);
         }
 
-        const pain = getPainPenalty(normalizedDamageStatistic, state);
+        let pain = getPainPenalty(normalizedDamageStatistic, state);
+        if (itemBuffs.ignorePain) pain = 0;
+
         finalFlatMod += pain;
 
         if (teraBonusTags) tags.push(teraBonusTags);
@@ -400,7 +406,9 @@ export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {
     let dicePool = attributeTotal + skillTotal;
     if (check.attr === 'dex') dicePool += statuses.paralysisDexterityPenalty;
 
-    const pain = getPainPenalty(check.attr, state);
+    let pain = getPainPenalty(check.attr, state);
+    if (itemBuffs.ignorePain) pain = 0;
+
     const tags: string[] = [];
     if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
 
@@ -459,10 +467,15 @@ export async function rollGeneric(
     if (incrementEvade) useCharacterStore.getState().updateTracker('evade', true);
     if (incrementClash) useCharacterStore.getState().updateTracker('clash', true);
 
+    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+
     let finalDicePool = dicePool;
     if (attribute.toLowerCase() === 'dex') finalDicePool += statuses.paralysisDexterityPenalty;
 
-    const pain = getPainPenalty(attribute, state);
+    let pain = getPainPenalty(attribute, state);
+    if (itemBuffs.ignorePain) pain = 0;
+
     const genericSuccessModifier = state.trackers.globalSucc + statuses.confusionPenalty + pain;
     const mathModifier =
         genericSuccessModifier !== 0

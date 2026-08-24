@@ -44,6 +44,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
     // Split Dropdown States
     const [reqGroup, setReqGroup] = useState<'none' | 'type' | 'category' | 'modifier' | 'misc'>('none');
     const [typeOption, setTypeOption] = useState('');
+    const [condition, setCondition] = useState('none');
 
     // Use string | number to allow intermediate values like "-" to exist in state without defaulting to 0
     const [value, setValue] = useState<string | number>(1);
@@ -113,6 +114,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                 'High Crit',
                 'Stacking High Crit',
                 'Ignore Low Acc',
+                'Ignore Pain',
                 'Recoil',
                 'Super Effective',
                 'Powder',
@@ -163,7 +165,8 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
     const showTypeSelect =
         (category === 'combat' &&
             !['Init', 'Chance', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc'].includes(target)) ||
-        (category === 'matchup' && target !== 'Remove Immunities');
+        (category === 'matchup' && target !== 'Remove Immunities') ||
+        (category === 'mechanic' && target === 'Ignore Pain');
 
     const showValueInput =
         category === 'stat' ||
@@ -210,6 +213,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
         } else if (category === 'mechanic') {
             if (target === 'High Crit') tag = `[High Crit]`;
             else if (target === 'Stacking High Crit') tag = `[Stacking High Crit]`;
+            else if (target === 'Ignore Pain') tag = typeOption ? `[Ignore Pain: ${typeOption}]` : `[Ignore Pain]`;
             else if (target === 'Ignore Low Acc') tag = `[Ignore Low Acc ${Math.abs(numValue)}]`;
             else if (target === 'Recoil') tag = `[Recoil]`;
             else if (target === 'Super Effective') tag = `[Super Effective]`;
@@ -241,6 +245,11 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
         }
 
         if (tag) {
+            // Append condition logically inside the bracket
+            if (condition === 'half hp') {
+                tag = tag.replace(']', ' @ Half HP]');
+            }
+
             if (targetType === 'move') {
                 const move = moves.find((m) => m.id === targetId);
                 if (move) updateMove(targetId, 'desc', move.desc ? `${move.desc} ${tag}`.trim() : tag);
@@ -387,8 +396,23 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                         </div>
                     )}
 
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '4px', alignItems: 'center' }}>
+                        <span className="text-label" style={{ whiteSpace: 'nowrap' }}>
+                            Condition:
+                        </span>
+                        <select
+                            className="identity-grid__select tag-builder__select text-label"
+                            style={{ color: 'var(--text-main)', flex: 1, marginTop: 0 }}
+                            value={condition}
+                            onChange={(e) => setCondition(e.target.value)}
+                        >
+                            <option value="none">-- Always Active --</option>
+                            <option value="half hp">At Half HP or Less</option>
+                        </select>
+                    </div>
+
                     {showValueInput && (
-                        <div className="tag-builder__value-row">
+                        <div className="tag-builder__value-row" style={{ marginTop: '8px' }}>
                             <span className="text-label">Value:</span>
                             <input
                                 type="number"
