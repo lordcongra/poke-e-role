@@ -12,7 +12,7 @@ export function useInitiativePopover(isObrReady: boolean) {
         const timeout = setTimeout(() => {
             const unsub = OBR.broadcast.onMessage('pkr-init-pong', () => {
                 unsub();
-                openTracker(true);
+                openTracker();
             });
             OBR.broadcast.sendMessage('pkr-init-ping-check', {}, { destination: 'LOCAL' });
             setTimeout(() => unsub(), 100);
@@ -29,7 +29,7 @@ export function useInitiativePopover(isObrReady: boolean) {
         identityStore.initiativeTrackerMaxHeight
     ]);
 
-    const openTracker = async (isReAnchor = false) => {
+    const openTracker = async () => {
         if (!isObrReady || !OBR.isAvailable) return;
 
         const {
@@ -88,17 +88,21 @@ export function useInitiativePopover(isObrReady: boolean) {
 
         const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
         const themeToPass = document.body.getAttribute('data-theme') || 'dark';
-        const url = `${baseUrl}/initiative-tracker.html?layout=${initiativeTrackerLayout || 'compact'}&theme=${themeToPass}&shape=${initiativeTrackerAvatarShape || 'circle'}&mw=${initiativeTrackerMaxWidth || 400}&mh=${initiativeTrackerMaxHeight || 600}`;
+        const url = `${baseUrl}/initiative-tracker.html?layout=${initiativeTrackerLayout || 'vertical'}&theme=${themeToPass}&shape=${initiativeTrackerAvatarShape || 'circle'}&mw=${initiativeTrackerMaxWidth || 400}&mh=${initiativeTrackerMaxHeight || 600}`;
 
-        const savedW = parseInt(localStorage.getItem('pkr_init_width') || '400');
-        const savedH = parseInt(localStorage.getItem('pkr_init_height') || '150');
+        const isVertical = (initiativeTrackerLayout || 'vertical') === 'vertical';
+        const defaultWidth = isVertical ? 180 : 400;
+        const defaultHeight = isVertical ? 380 : 120;
+
+        const savedW = parseInt(localStorage.getItem('pkr_init_width') || String(defaultWidth), 10);
+        const savedH = parseInt(localStorage.getItem('pkr_init_height') || String(defaultHeight), 10);
 
         OBR.popover
             .open({
                 id: 'pkr-initiative-tracker',
                 url: url,
-                height: isReAnchor ? savedH : 150,
-                width: isReAnchor ? savedW : 400,
+                height: savedH || defaultHeight,
+                width: savedW || defaultWidth,
                 disableClickAway: true,
                 anchorReference: 'POSITION',
                 anchorPosition: anchorPosition,

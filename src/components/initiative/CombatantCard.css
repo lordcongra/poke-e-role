@@ -79,10 +79,12 @@
     background: var(--input-bg);
     border: 1px solid var(--border);
     text-align: center;
-    width: 42px;
-    padding: 1px 2px;
+    width: 52px;
+    min-width: 48px;
+    padding: 1px 4px;
     height: 22px;
     border-radius: 4px;
+    font-size: 0.95rem;
 }
 
 .init-tracker__input:focus {

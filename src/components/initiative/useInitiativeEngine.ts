@@ -4,7 +4,7 @@ import type { Item, Image } from '@owlbear-rodeo/sdk';
 import { isStandaloneMode, storageAdapter } from '../../utils/storageAdapter';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { addRollLogEntry } from '../../utils/diceRoller';
-import { calculateBaseInitFromCharacterData, sortCombatants, extractTokenImage } from '../../utils/initiativeHelpers';
+import { calculateBaseInitFromCharacterData, sortCombatants, extractTokenImage, calculateEncodedInitiative } from '../../utils/initiativeHelpers';
 import type { Combatant } from '../../utils/initiativeHelpers';
 import type { StandaloneCharOption, ObrCharOption } from './AddCombatantModal';
 
@@ -75,7 +75,7 @@ export function useInitiativeEngine() {
 
                     if (newBase !== c.baseInit || newImage !== c.image) {
                         changed = true;
-                        const newTotal = c.d6 > 0 ? c.d6 + newBase + c.tiebreaker : newBase + c.tiebreaker;
+                        const newTotal = c.d6 > 0 ? c.d6 + newBase : newBase;
                         return { ...c, baseInit: newBase, total: newTotal, image: newImage };
                     }
                 }
@@ -84,8 +84,12 @@ export function useInitiativeEngine() {
 
             if (changed) {
                 const sorted = sortCombatants(next);
-                localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
-                window.dispatchEvent(new Event('pkr-standalone-init-update'));
+                try {
+                    localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
+                    window.dispatchEvent(new Event('pkr-standalone-init-update'));
+                } catch (error) {
+                    console.error('[InitiativeEngine] Failed to update active character initiative in localStorage:', error);
+                }
                 return sorted;
             }
             return prev;
@@ -111,9 +115,11 @@ export function useInitiativeEngine() {
             setMaxTrackerHeight(storeIdentity.initiativeTrackerMaxHeight || 0);
         } else {
             const params = new URLSearchParams(window.location.search);
-            setLayout((params.get('layout') as 'vertical' | 'horizontal') || 'vertical');
+            const paramLayout = params.get('layout');
+            setLayout(paramLayout === 'horizontal' ? 'horizontal' : 'vertical');
             setTheme(params.get('theme') || 'light');
-            setShape((params.get('shape') as 'circle' | 'square' | 'none') || 'none');
+            const paramShape = params.get('shape');
+            setShape(paramShape === 'square' || paramShape === 'none' ? paramShape : 'circle');
             setMaxTrackerWidth(parseInt(params.get('mw') || '0', 10));
             setMaxTrackerHeight(parseInt(params.get('mh') || '0', 10));
         }
@@ -168,8 +174,10 @@ export function useInitiativeEngine() {
 
                                 const totalScore =
                                     d6Value > 0
-                                        ? d6Value + baseInitiative + tiebreakerValue
-                                        : baseInitiative + tiebreakerValue;
+                                        ? d6Value + baseInitiative
+                                        : typeof item.total === 'number'
+                                          ? item.total
+                                          : baseInitiative;
 
                                 return {
                                     id: charId || crypto.randomUUID(),
@@ -255,20 +263,34 @@ export function useInitiativeEngine() {
                 setAvailableObrChars(nonInitItems.map((i) => ({ id: i.id, name: i.name, item: i })));
 
                 const parsed: Combatant[] = initItems.map((item) => {
-                    const meta = item.metadata['pokerole-pmd-extension/initiative'] as { value: number };
+                    const meta = item.metadata['pokerole-pmd-extension/initiative'] as
+                        | { value?: number; base?: number; tiebreaker?: number }
+                        | undefined;
                     const imgItem = item as Image;
-                    const val = meta.value || 0;
+                    const val = typeof meta?.value === 'number' ? meta.value : 0;
 
-                    const dynamicBaseInit = calculateBaseInitFromCharacterData(item.metadata, globalState);
+                    const dynamicBaseInit =
+                        typeof meta?.base === 'number'
+                            ? meta.base
+                            : calculateBaseInitFromCharacterData(item.metadata, globalState);
+
+                    let integerTotal = Math.floor(val);
+                    // If legacy token value was 0 or just a decimal fraction (e.g. 0.111), fallback to base
+                    if (integerTotal < dynamicBaseInit && integerTotal === 0) {
+                        integerTotal = dynamicBaseInit;
+                    }
+
+                    const tie = typeof meta?.tiebreaker === 'number' ? meta.tiebreaker : 0;
+                    const rawD6 = integerTotal > dynamicBaseInit ? integerTotal - dynamicBaseInit : 0;
 
                     return {
                         id: item.id,
                         name: item.name,
                         image: imgItem.image?.url || '',
-                        d6: 0,
+                        d6: rawD6,
                         baseInit: dynamicBaseInit,
-                        total: val,
-                        tiebreaker: 0
+                        total: integerTotal,
+                        tiebreaker: tie
                     };
                 });
                 setCombatants(sortCombatants(parsed));
@@ -322,74 +344,207 @@ export function useInitiativeEngine() {
 
     // --- Actions ---
 
-    const updateInit = async (id: string, d6Value: number, baseInitiative: number, forceDecimal: number = 0) => {
-        const total = d6Value + baseInitiative + forceDecimal;
+    const updateInit = async (id: string, d6Value: number, baseInitiative: number, forceTiebreaker: number = 0) => {
+        const total = d6Value + baseInitiative;
 
         if (isStandaloneMode) {
             const updated = combatants.map((c) =>
-                c.id === id ? { ...c, d6: d6Value, baseInit: baseInitiative, total, tiebreaker: forceDecimal } : c
+                c.id === id ? { ...c, d6: d6Value, baseInit: baseInitiative, total, tiebreaker: forceTiebreaker } : c
             );
             const sorted = sortCombatants(updated);
             setCombatants(sorted);
-            localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
-            window.dispatchEvent(new Event('pkr-standalone-init-update'));
+            try {
+                localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
+                window.dispatchEvent(new Event('pkr-standalone-init-update'));
+            } catch (error) {
+                console.error('[InitiativeEngine] Failed to save initiative list to localStorage:', error);
+            }
             return;
         }
 
         if (!OBR.isAvailable) return;
+        const encodedValue = calculateEncodedInitiative(total, baseInitiative, forceTiebreaker);
         await OBR.scene.items
             .updateItems([id], (items) => {
                 for (const item of items) {
-                    item.metadata['pokerole-pmd-extension/initiative'] = { value: total };
+                    item.metadata['pokerole-pmd-extension/initiative'] = {
+                        value: encodedValue,
+                        base: baseInitiative,
+                        tiebreaker: forceTiebreaker
+                    };
                 }
             })
             .catch((error) => console.error('[InitiativeEngine] Failed to update OBR items:', error));
     };
 
     const handleRollAll = async () => {
-        if (!isStandaloneMode) return;
+        try {
+            let logSummary = 'All Combatants Rolled Initiative:\n\n';
 
-        let logSummary = 'All Combatants Rolled Initiative:\n\n';
-        const localChars = await storageAdapter.getLocalCharacters();
+            if (isStandaloneMode) {
+                const localChars = await storageAdapter.getLocalCharacters();
 
-        const updated = combatants.map((c) => {
-            const charObj = localChars.find((lc) => lc.id === c.id);
-            const baseScore = charObj?.metadata
-                ? calculateBaseInitFromCharacterData(charObj.metadata as Record<string, unknown>, globalState)
-                : c.baseInit;
+                // 1. Roll base 1d6 + baseScore for all combatants
+                const rolledCombatants = combatants.map((c) => {
+                    const charObj = localChars.find((lc) => lc.id === c.id);
+                    const baseScore = charObj?.metadata
+                        ? calculateBaseInitFromCharacterData(charObj.metadata as Record<string, unknown>, globalState)
+                        : c.baseInit;
 
-            const rolledD6 = Math.floor(Math.random() * 6) + 1;
-            const tiebreakerDec = (Math.floor(Math.random() * 99) + 1) / 100;
-            const total = rolledD6 + baseScore + tiebreakerDec;
+                    const rolledD6 = Math.floor(Math.random() * 6) + 1;
+                    const total = rolledD6 + baseScore;
 
-            logSummary += `${c.name}: [${rolledD6}] + Base ${baseScore} = ${rolledD6 + baseScore}\n`;
+                    return { ...c, d6: rolledD6, baseInit: baseScore, total, tiebreaker: 0 };
+                });
 
-            return { ...c, d6: rolledD6, baseInit: baseScore, total, tiebreaker: tiebreakerDec };
-        });
+                // 2. Multi-participant stalemate resolution pass (Tier 3)
+                const stalemateGroups: Record<string, typeof rolledCombatants> = {};
+                rolledCombatants.forEach((c) => {
+                    const key = `${c.total}_${c.baseInit}`;
+                    if (!stalemateGroups[key]) stalemateGroups[key] = [];
+                    stalemateGroups[key].push(c);
+                });
 
-        const sorted = sortCombatants(updated);
-        setCombatants(sorted);
-        localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
-        window.dispatchEvent(new Event('pkr-standalone-init-update'));
+                const finalCombatants = rolledCombatants.map((c) => {
+                    const key = `${c.total}_${c.baseInit}`;
+                    const group = stalemateGroups[key];
+                    let tiebreaker = 0;
 
-        addRollLogEntry(
-            'Roll All Initiative',
-            logSummary,
-            `${import.meta.env.BASE_URL || '/'}pokeball.svg`,
-            'Initiative Engine'
-        );
+                    if (group && group.length > 1) {
+                        const existingTies = group
+                            .map((member) => member.tiebreaker)
+                            .filter((t) => t > 0);
+                        let roll = Math.floor(Math.random() * 6) + 1;
+                        while (existingTies.includes(roll)) {
+                            roll = Math.floor(Math.random() * 6) + 1;
+                        }
+                        c.tiebreaker = roll;
+                        tiebreaker = roll;
+                    }
+
+                    const tiebreakerNote = tiebreaker > 0 ? ` (🎲 Tiebreaker: [${tiebreaker}])` : '';
+                    logSummary += `${c.name}: [${c.d6}] + Base ${c.baseInit} = ${c.total}${tiebreakerNote}\n`;
+
+                    return { ...c, tiebreaker };
+                });
+
+                const sorted = sortCombatants(finalCombatants);
+                setCombatants(sorted);
+                localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
+                window.dispatchEvent(new Event('pkr-standalone-init-update'));
+
+                addRollLogEntry(
+                    'Roll All Initiative',
+                    logSummary,
+                    `${import.meta.env.BASE_URL || '/'}pokeball.svg`,
+                    'Initiative Engine'
+                );
+                return;
+            }
+
+            // --- OBR Mode ---
+            if (!OBR.isAvailable) return;
+
+            const items = await OBR.scene.items.getItems();
+            const initItems = items.filter(
+                (item) => item.layer === 'CHARACTER' && item.metadata['pokerole-pmd-extension/initiative'] !== undefined
+            );
+
+            if (initItems.length === 0) return;
+
+            const rolledObrCombatants = initItems.map((item) => {
+                const baseScore = calculateBaseInitFromCharacterData(item.metadata, globalState);
+                const rolledD6 = Math.floor(Math.random() * 6) + 1;
+                const total = rolledD6 + baseScore;
+                return {
+                    id: item.id,
+                    name: item.name,
+                    d6: rolledD6,
+                    baseInit: baseScore,
+                    total,
+                    tiebreaker: 0
+                };
+            });
+
+            // Detect stalemates among OBR combatants
+            const stalemateGroups: Record<string, typeof rolledObrCombatants> = {};
+            rolledObrCombatants.forEach((c) => {
+                const key = `${c.total}_${c.baseInit}`;
+                if (!stalemateGroups[key]) stalemateGroups[key] = [];
+                stalemateGroups[key].push(c);
+            });
+
+            const updatesMap: Record<string, { value: number; base: number; tiebreaker: number }> = {};
+
+            rolledObrCombatants.forEach((c) => {
+                const key = `${c.total}_${c.baseInit}`;
+                const group = stalemateGroups[key];
+                let tiebreaker = 0;
+
+                if (group && group.length > 1) {
+                    const existingTies = group
+                        .map((member) => member.tiebreaker)
+                        .filter((t) => t > 0);
+                    let roll = Math.floor(Math.random() * 6) + 1;
+                    while (existingTies.includes(roll)) {
+                        roll = Math.floor(Math.random() * 6) + 1;
+                    }
+                    c.tiebreaker = roll;
+                    tiebreaker = roll;
+                }
+
+                const encodedValue = calculateEncodedInitiative(c.total, c.baseInit, tiebreaker);
+                updatesMap[c.id] = {
+                    value: encodedValue,
+                    base: c.baseInit,
+                    tiebreaker
+                };
+
+                const tiebreakerNote = tiebreaker > 0 ? ` (🎲 Tiebreaker: [${tiebreaker}])` : '';
+                logSummary += `${c.name}: [${c.d6}] + Base ${c.baseInit} = ${c.total}${tiebreakerNote}\n`;
+            });
+
+            await OBR.scene.items.updateItems(
+                initItems.map((i) => i.id),
+                (itemsToUpdate) => {
+                    for (const item of itemsToUpdate) {
+                        const updateData = updatesMap[item.id];
+                        if (updateData) {
+                            item.metadata['pokerole-pmd-extension/initiative'] = updateData;
+                        }
+                    }
+                }
+            );
+
+            addRollLogEntry(
+                'Roll All Initiative',
+                logSummary,
+                `${import.meta.env.BASE_URL || '/'}pokeball.svg`,
+                'Initiative Engine'
+            );
+        } catch (error) {
+            console.error('[InitiativeEngine] Failed to roll all initiative:', error);
+        }
     };
 
     const removeInit = async (id: string) => {
         if (isStandaloneMode) {
             const updated = combatants.filter((c) => c.id !== id);
             setCombatants(updated);
-            localStorage.setItem('pkr_standalone_init_list', JSON.stringify(updated));
-            window.dispatchEvent(new Event('pkr-standalone-init-update'));
+            try {
+                localStorage.setItem('pkr_standalone_init_list', JSON.stringify(updated));
+                window.dispatchEvent(new Event('pkr-standalone-init-update'));
+            } catch (error) {
+                console.error('[InitiativeEngine] Failed to save updated initiative list after removal:', error);
+            }
 
             if (activeTurnId === id) {
                 setActiveTurnId(null);
-                localStorage.removeItem('pkr_standalone_init_turn');
+                try {
+                    localStorage.removeItem('pkr_standalone_init_turn');
+                } catch (error) {
+                    console.error('[InitiativeEngine] Failed to remove active turn from localStorage:', error);
+                }
             }
             return;
         }
@@ -414,7 +569,6 @@ export function useInitiativeEngine() {
         }, 400);
 
         if (isStandaloneMode) {
-            // Functional state update: completely immune to rapid-fire clicking
             setActiveTurnId((currentId) => {
                 let nextIndex = 0;
                 if (currentId) {
@@ -424,11 +578,14 @@ export function useInitiativeEngine() {
                     }
                 }
                 const nextId = combatants[nextIndex].id;
-                localStorage.setItem('pkr_standalone_init_turn', nextId);
+                try {
+                    localStorage.setItem('pkr_standalone_init_turn', nextId);
+                } catch (error) {
+                    console.error('[InitiativeEngine] Failed to advance turn in localStorage:', error);
+                }
                 return nextId;
             });
         } else if (OBR.isAvailable) {
-            // OBR handles its own request queuing natively
             let nextIndex = 0;
             if (activeTurnId) {
                 const currentIndex = combatants.findIndex((c) => c.id === activeTurnId);
@@ -452,7 +609,6 @@ export function useInitiativeEngine() {
         }, 400);
 
         if (isStandaloneMode) {
-            // Functional state update: completely immune to rapid-fire clicking
             setActiveTurnId((currentId) => {
                 let prevIndex = combatants.length - 1;
                 if (currentId) {
@@ -462,7 +618,11 @@ export function useInitiativeEngine() {
                     }
                 }
                 const prevId = combatants[prevIndex].id;
-                localStorage.setItem('pkr_standalone_init_turn', prevId);
+                try {
+                    localStorage.setItem('pkr_standalone_init_turn', prevId);
+                } catch (error) {
+                    console.error('[InitiativeEngine] Failed to reverse turn in localStorage:', error);
+                }
                 return prevId;
             });
         } else if (OBR.isAvailable) {
@@ -498,17 +658,26 @@ export function useInitiativeEngine() {
         ]);
 
         setCombatants(newList);
-        localStorage.setItem('pkr_standalone_init_list', JSON.stringify(newList));
-        window.dispatchEvent(new Event('pkr-standalone-init-update'));
+        try {
+            localStorage.setItem('pkr_standalone_init_list', JSON.stringify(newList));
+            window.dispatchEvent(new Event('pkr-standalone-init-update'));
+        } catch (error) {
+            console.error('[InitiativeEngine] Failed to add standalone combatant to localStorage:', error);
+        }
     };
 
     const handleAddObrCombatant = async (item: Item) => {
         if (!OBR.isAvailable) return;
         try {
             const dynamicBaseInit = calculateBaseInitFromCharacterData(item.metadata, globalState);
+            const encodedValue = calculateEncodedInitiative(dynamicBaseInit, dynamicBaseInit, 0);
             await OBR.scene.items.updateItems([item.id], (items) => {
                 for (const i of items) {
-                    i.metadata['pokerole-pmd-extension/initiative'] = { value: dynamicBaseInit };
+                    i.metadata['pokerole-pmd-extension/initiative'] = {
+                        value: encodedValue,
+                        base: dynamicBaseInit,
+                        tiebreaker: 0
+                    };
                 }
             });
         } catch (error) {

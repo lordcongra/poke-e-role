@@ -17,6 +17,23 @@ export interface StoredCharacterData extends Partial<CharacterState> {
     'pokerole-extension/stats'?: Record<string, unknown>;
 }
 
+export function formatInitiativeDisplay(total: number, baseInit: number, tiebreaker: number = 0): string {
+    if (total === 0 && baseInit === 0) return '0';
+    if (tiebreaker > 0) {
+        return `${total}.${baseInit}${tiebreaker}`;
+    }
+    if (baseInit > 0) {
+        return `${total}.${baseInit}`;
+    }
+    return String(total);
+}
+
+export function calculateEncodedInitiative(total: number, baseInit: number, tiebreaker: number = 0): number {
+    if (total === 0 && baseInit === 0) return 0;
+    const decimalValue = total + baseInit / 10 + tiebreaker / 100;
+    return parseFloat(decimalValue.toFixed(2));
+}
+
 export function extractTokenImage(meta: Record<string, unknown> | null | undefined): string {
     if (!meta) return '';
     if (typeof meta['token-image-url'] === 'string' && meta['token-image-url']) return meta['token-image-url'];
@@ -60,14 +77,17 @@ export function calculateBaseInitFromCharacterData(
         const skillsObj = charData.skills || charData.state?.skills;
 
         if (statsObj && typeof statsObj === 'object') {
-            const dexBase = Number((statsObj as Record<string, any>).dex?.base) || 1;
-            const dexRank = Number((statsObj as Record<string, any>).dex?.rank) || 0;
-            const dexBuff = Number((statsObj as Record<string, any>).dex?.buff) || 0;
-            const dexDebuff = Number((statsObj as Record<string, any>).dex?.debuff) || 0;
+            const typedStats = statsObj as Record<string, { base?: number; rank?: number; buff?: number; debuff?: number } | undefined>;
+            const typedSkills = skillsObj as Record<string, { base?: number; buff?: number } | undefined> | undefined;
+
+            const dexBase = Number(typedStats.dex?.base) || 1;
+            const dexRank = Number(typedStats.dex?.rank) || 0;
+            const dexBuff = Number(typedStats.dex?.buff) || 0;
+            const dexDebuff = Number(typedStats.dex?.debuff) || 0;
             const dexTotal = Math.max(1, dexBase + dexRank + dexBuff - dexDebuff);
 
-            const alertBase = Number((skillsObj as Record<string, any>)?.alert?.base) || 0;
-            const alertBuff = Number((skillsObj as Record<string, any>)?.alert?.buff) || 0;
+            const alertBase = Number(typedSkills?.alert?.base) || 0;
+            const alertBuff = Number(typedSkills?.alert?.buff) || 0;
             const alertTotal = Math.max(0, alertBase + alertBuff);
 
             let itemDexBuff = 0;
@@ -131,6 +151,8 @@ export function sortCombatants(list: Combatant[]): Combatant[] {
         const bBase = typeof b.baseInit === 'number' ? b.baseInit : 0;
         if (bBase !== aBase) return bBase - aBase;
 
-        return (b.tiebreaker || 0) - (a.tiebreaker || 0);
+        const aTie = typeof a.tiebreaker === 'number' ? a.tiebreaker : 0;
+        const bTie = typeof b.tiebreaker === 'number' ? b.tiebreaker : 0;
+        return bTie - aTie;
     });
 }

@@ -103,18 +103,16 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                         </button>
                     </div>
 
-                    {(isStandaloneMode || (isGM && !isStandaloneMode)) && (
+                    {(isStandaloneMode || isGM) && (
                         <div className="init-tracker__btn-group">
-                            {isStandaloneMode && (
-                                <button
-                                    type="button"
-                                    className="action-button action-button--dark init-tracker__turn-btn"
-                                    onClick={handleRollAll}
-                                    title="Roll Initiative for All Combatants"
-                                >
-                                    <Dices size={16} />
-                                </button>
-                            )}
+                            <button
+                                type="button"
+                                className="action-button action-button--dark init-tracker__turn-btn"
+                                onClick={handleRollAll}
+                                title="Roll Initiative for All Combatants"
+                            >
+                                <Dices size={16} />
+                            </button>
                             <button
                                 type="button"
                                 className="action-button action-button--dark init-tracker__turn-btn"

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { isStandaloneMode } from '../../utils/storageAdapter';
 import { imageManager } from '../../utils/imageManager';
 import { addRollLogEntry } from '../../utils/diceRoller';
-import type { Combatant } from '../../utils/initiativeHelpers';
+import { formatInitiativeDisplay, type Combatant } from '../../utils/initiativeHelpers';
 import { X, Dices } from 'lucide-react';
 import './CombatantCard.css';
 
@@ -10,23 +10,29 @@ interface CombatantCardProps {
     c: Combatant;
     shape: string;
     isActive: boolean;
-    updateInit: (id: string, d6Value: number, baseInitiative: number, forceDecimal: number) => void;
+    updateInit: (id: string, d6Value: number, baseInitiative: number, forceTiebreaker: number) => void;
     removeInit: (id: string) => void;
 }
 
 export function CombatantCard({ c, shape, isActive, updateInit, removeInit }: CombatantCardProps) {
     const totalScore = typeof c.total === 'number' ? c.total : 0;
     const baseInitiativeScore = typeof c.baseInit === 'number' ? c.baseInit : 0;
+    const tiebreakerScore = typeof c.tiebreaker === 'number' ? c.tiebreaker : 0;
 
-    const [value, setValue] = useState<string>(totalScore.toFixed(2));
+    const [value, setValue] = useState<string>(
+        formatInitiativeDisplay(totalScore, baseInitiativeScore, tiebreakerScore)
+    );
     const [baseValue, setBaseValue] = useState<number>(baseInitiativeScore);
     const [resolvedImage, setResolvedImage] = useState<string>('');
 
     useEffect(() => {
         const currentTotal = typeof c.total === 'number' ? c.total : 0;
-        setValue(currentTotal.toFixed(2));
-        setBaseValue(typeof c.baseInit === 'number' ? c.baseInit : 0);
-    }, [c.total, c.baseInit]);
+        const currentBase = typeof c.baseInit === 'number' ? c.baseInit : 0;
+        const currentTie = typeof c.tiebreaker === 'number' ? c.tiebreaker : 0;
+
+        setValue(formatInitiativeDisplay(currentTotal, currentBase, currentTie));
+        setBaseValue(currentBase);
+    }, [c.total, c.baseInit, c.tiebreaker]);
 
     useEffect(() => {
         let isMounted = true;
@@ -41,6 +47,7 @@ export function CombatantCard({ c, shape, isActive, updateInit, removeInit }: Co
                     const url = await imageManager.getImageUrl(c.image);
                     if (isMounted) setResolvedImage(url || '');
                 } catch (error) {
+                    console.error('[CombatantCard] Failed to load local image:', error);
                     if (isMounted) setResolvedImage('');
                 }
             } else {
@@ -56,22 +63,23 @@ export function CombatantCard({ c, shape, isActive, updateInit, removeInit }: Co
 
     const handleSave = () => {
         const parsed = parseFloat(value);
-        const currentRounded = parseFloat(totalScore.toFixed(2));
-        if (!isNaN(parsed) && parsed !== currentRounded) {
-            updateInit(c.id, parsed - baseValue, baseValue, 0);
+        if (!isNaN(parsed)) {
+            const parsedIntegerTotal = Math.floor(parsed);
+            if (parsedIntegerTotal !== totalScore) {
+                updateInit(c.id, parsedIntegerTotal - baseValue, baseValue, 0);
+            }
         }
     };
 
     const handleRollSingle = () => {
         const rolledD6 = Math.floor(Math.random() * 6) + 1;
-        const tiebreakerDec = (Math.floor(Math.random() * 99) + 1) / 100;
         const total = rolledD6 + baseValue;
 
-        updateInit(c.id, rolledD6, baseValue, tiebreakerDec);
+        updateInit(c.id, rolledD6, baseValue, 0);
 
         addRollLogEntry(
             `Initiative Roll for ${c.name}`,
-            `Rolled: ${rolledD6} + Base (${baseValue}) = ${total}\nTiebreaker Dec: +${tiebreakerDec}`,
+            `Rolled: 1d6 [${rolledD6}] + Base (${baseValue}) = ${total}`,
             c.image,
             c.name
         );
@@ -105,14 +113,13 @@ export function CombatantCard({ c, shape, isActive, updateInit, removeInit }: Co
 
                 <div className="init-tracker__controls">
                     <input
-                        type="number"
-                        step="0.01"
+                        type="text"
                         value={value}
                         onChange={(event) => setValue(event.target.value)}
                         onBlur={handleSave}
                         onKeyDown={(event) => event.key === 'Enter' && handleSave()}
                         className="init-tracker__input no-spinners text-value-highlight"
-                        title={`Score (Base Init: ${baseValue})`}
+                        title={`Total Initiative: ${totalScore} (Base: ${baseValue}${tiebreakerScore > 0 ? `, Tiebreaker: 🎲 ${tiebreakerScore}` : ''})`}
                     />
                     <button
                         type="button"

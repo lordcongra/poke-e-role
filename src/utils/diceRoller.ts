@@ -1,6 +1,7 @@
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../store/useCharacterStore';
 import { isStandaloneMode } from './storageAdapter';
+import { calculateEncodedInitiative, calculateBaseInitFromCharacterData, sortCombatants } from './initiativeHelpers';
 
 // Defines the structure exactly as saved in Local Storage
 export interface StandaloneCombatant {
@@ -34,35 +35,81 @@ export function addRollLogEntry(label: string, result: string, icon: string, pla
 }
 
 export async function assignInitiative(tokenId: string, rollTotal: number, baseInit: number) {
-    // Note: The combat roll macro already computes D6 + BaseInit before invoking assignInitiative.
-    // Therefore `rollTotal` is the exact integer score (e.g. 8).
-    const tiebreakerDec = (Math.floor(Math.random() * 99) + 1) / 100;
+    const state = useCharacterStore.getState();
+    const rawD6 = Math.max(1, rollTotal - baseInit);
 
     if (isStandaloneMode) {
         try {
-            const listStr = localStorage.getItem('pkr_standalone_init_list');
-            if (!listStr) return;
-            const list: StandaloneCombatant[] = JSON.parse(listStr);
+            const listString = localStorage.getItem('pkr_standalone_init_list');
+            if (!listString) return;
+            const parsedList: StandaloneCombatant[] = JSON.parse(listString);
+            if (!Array.isArray(parsedList)) return;
 
-            const rawD6 = rollTotal - baseInit;
-            const finalInit = rollTotal + tiebreakerDec;
-
-            const updated = list.map((c) =>
-                c.id === tokenId
-                    ? {
-                          ...c,
-                          d6: rawD6,
-                          baseInit: baseInit,
-                          total: finalInit,
-                          tiebreaker: tiebreakerDec
-                      }
-                    : c
+            // Check for true stalemates (identical Total AND identical Base Initiative)
+            let assignedTiebreaker = 0;
+            const stalemateOpponents = parsedList.filter(
+                (combatant) => combatant.id !== tokenId && combatant.total === rollTotal && combatant.baseInit === baseInit
             );
 
-            localStorage.setItem('pkr_standalone_init_list', JSON.stringify(updated));
+            if (stalemateOpponents.length > 0) {
+                assignedTiebreaker = Math.floor(Math.random() * 6) + 1;
+                const updatedList = parsedList.map((combatant) => {
+                    if (combatant.id === tokenId) {
+                        return {
+                            ...combatant,
+                            d6: rawD6,
+                            baseInit: baseInit,
+                            total: rollTotal,
+                            tiebreaker: assignedTiebreaker
+                        };
+                    }
+                    if (stalemateOpponents.some((opponent) => opponent.id === combatant.id)) {
+                        let opponentTiebreaker = combatant.tiebreaker;
+                        if (!opponentTiebreaker || opponentTiebreaker === 0) {
+                            opponentTiebreaker = Math.floor(Math.random() * 6) + 1;
+                        }
+                        while (opponentTiebreaker === assignedTiebreaker) {
+                            opponentTiebreaker = Math.floor(Math.random() * 6) + 1;
+                        }
+                        return {
+                            ...combatant,
+                            tiebreaker: opponentTiebreaker
+                        };
+                    }
+                    return combatant;
+                });
+
+                const sorted = sortCombatants(updatedList);
+                localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
+                window.dispatchEvent(new Event('pkr-standalone-init-update'));
+
+                const rollerName = state.identity.nickname || state.identity.species || 'Combatant';
+                addRollLogEntry(
+                    '⚡ Initiative Stalemate Re-roll',
+                    `Stalemate detected on Total ${rollTotal} (Base ${baseInit})!\n${rollerName} rolled 1d6 tiebreaker: [${assignedTiebreaker}]`,
+                    state.identity.tokenImageUrl || '',
+                    rollerName
+                );
+                return;
+            }
+
+            const updated = parsedList.map((combatant) =>
+                combatant.id === tokenId
+                    ? {
+                          ...combatant,
+                          d6: rawD6,
+                          baseInit: baseInit,
+                          total: rollTotal,
+                          tiebreaker: 0
+                      }
+                    : combatant
+            );
+
+            const sorted = sortCombatants(updated);
+            localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
             window.dispatchEvent(new Event('pkr-standalone-init-update'));
-        } catch (e) {
-            console.error('[DiceRoller] Standalone Init Error:', e);
+        } catch (error) {
+            console.error('[DiceRoller] Standalone Init Error:', error);
         }
         return;
     }
@@ -70,28 +117,92 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
     if (!OBR.isAvailable) return;
     try {
         const items = await OBR.scene.items.getItems();
-        const existingInits = items.map((i) => {
-            const meta = i.metadata['pokerole-pmd-extension/initiative'] as { value?: number };
-            return meta?.value || -9999;
+        const characterItems = items.filter((item) => item.layer === 'CHARACTER');
+
+        let assignedTiebreaker = 0;
+        const stalemateTokens = characterItems.filter((item) => {
+            if (item.id === tokenId) return false;
+            const initMeta = item.metadata['pokerole-pmd-extension/initiative'] as
+                | { value?: number; base?: number; tiebreaker?: number }
+                | undefined;
+            if (!initMeta || typeof initMeta.value !== 'number') return false;
+
+            const existingTotal = Math.floor(initMeta.value);
+            const existingBase =
+                typeof initMeta.base === 'number'
+                    ? initMeta.base
+                    : calculateBaseInitFromCharacterData(item.metadata, state);
+
+            return existingTotal === rollTotal && existingBase === baseInit;
         });
 
-        let finalInit = rollTotal + tiebreakerDec;
-        let isUnique = !existingInits.includes(finalInit);
+        if (stalemateTokens.length > 0) {
+            assignedTiebreaker = Math.floor(Math.random() * 6) + 1;
 
-        // If the EXACT tiebreaker decimal collides with another token, re-roll the decimal
-        while (!isUnique) {
-            const newTieBreaker = (Math.floor(Math.random() * 99) + 1) / 100;
-            finalInit = rollTotal + newTieBreaker;
-            if (!existingInits.includes(finalInit)) isUnique = true;
+            // Also ensure stalemate opponents have unique non-zero tiebreakers
+            const opponentUpdates: { id: string; tiebreaker: number; value: number; base: number }[] = [];
+            for (const opponent of stalemateTokens) {
+                const opponentMeta = opponent.metadata['pokerole-pmd-extension/initiative'] as
+                    | { value?: number; base?: number; tiebreaker?: number }
+                    | undefined;
+                let opponentTiebreaker = opponentMeta?.tiebreaker || 0;
+                if (opponentTiebreaker === 0 || opponentTiebreaker === assignedTiebreaker) {
+                    opponentTiebreaker = Math.floor(Math.random() * 6) + 1;
+                    while (opponentTiebreaker === assignedTiebreaker) {
+                        opponentTiebreaker = Math.floor(Math.random() * 6) + 1;
+                    }
+                }
+                const opponentBase =
+                    typeof opponentMeta?.base === 'number'
+                        ? opponentMeta.base
+                        : calculateBaseInitFromCharacterData(opponent.metadata, state);
+                const opponentValue = calculateEncodedInitiative(rollTotal, opponentBase, opponentTiebreaker);
+                opponentUpdates.push({
+                    id: opponent.id,
+                    tiebreaker: opponentTiebreaker,
+                    value: opponentValue,
+                    base: opponentBase
+                });
+            }
+
+            if (opponentUpdates.length > 0) {
+                const opponentIds = opponentUpdates.map((u) => u.id);
+                await OBR.scene.items.updateItems(opponentIds, (itemsToUpdate) => {
+                    for (const item of itemsToUpdate) {
+                        const match = opponentUpdates.find((u) => u.id === item.id);
+                        if (match) {
+                            item.metadata['pokerole-pmd-extension/initiative'] = {
+                                value: match.value,
+                                base: match.base,
+                                tiebreaker: match.tiebreaker
+                            };
+                        }
+                    }
+                });
+            }
+
+            const rollerName = state.identity.nickname || state.identity.species || 'Combatant';
+            addRollLogEntry(
+                '⚡ Initiative Stalemate Re-roll',
+                `Stalemate detected on Total ${rollTotal} (Base ${baseInit})!\n${rollerName} rolled 1d6 tiebreaker: [${assignedTiebreaker}]`,
+                state.identity.tokenImageUrl || '',
+                rollerName
+            );
         }
+
+        const encodedValue = calculateEncodedInitiative(rollTotal, baseInit, assignedTiebreaker);
 
         await OBR.scene.items.updateItems([tokenId], (itemsToUpdate) => {
             for (const item of itemsToUpdate) {
-                item.metadata['pokerole-pmd-extension/initiative'] = { value: finalInit };
+                item.metadata['pokerole-pmd-extension/initiative'] = {
+                    value: encodedValue,
+                    base: baseInit,
+                    tiebreaker: assignedTiebreaker
+                };
             }
         });
-    } catch (e) {
-        console.error('[DiceRoller] Failed to assign Initiative to token:', e);
+    } catch (error) {
+        console.error('[DiceRoller] Failed to assign Initiative to token:', error);
     }
 }
 
