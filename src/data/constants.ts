@@ -171,7 +171,7 @@ export const STATUS_RULES: Record<string, string> = {
     '2nd Degree Burn':
         'Deal 2 points of lethal damage** at the end of each Round. Fire-type Pokémon are immune. Recovery: Dexterity + Athletic (6 successes).',
     '3rd Degree Burn':
-        'Deal 3 points of lethal damage** at the end of each Round. Increase Damage by 2 each Round that passes. Fire-type Pokémon are immune. Recovery: Dexterity + Athletic (8 successes).',
+        'Deal 3 points of lethal damage** at the end of each Round. Increase Damage by 1 each Round that passes. Fire-type Pokémon are immune. Recovery: Dexterity + Athletic (8 successes).',
     Poison: 'Deal 2 points of damage at the end of each Round. Poison and Steel-type Pokémon are immune.',
     'Badly Poisoned':
         'Deal 2 points of lethal damage** at the end of the Round. Increase Damage by 2 each Round that passes. Poison and Steel-type Pokémon are immune.',
