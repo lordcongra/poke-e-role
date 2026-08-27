@@ -44,9 +44,29 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                 value={id.diceEngine || 'car'}
                                 onChange={(e) => setIdentity('diceEngine', e.target.value as 'dice-plus' | 'car')}
                             >
-                                <option value="dice-plus">Dice+ (3D Physics Dice)</option>
                                 <option value="car">Custom Action Rolls (3D Dice & Chat Log)</option>
+                                <option value="dice-plus">Dice+ (3D Physics Dice)</option>
                             </select>
+                            {id.diceEngine !== 'dice-plus' && (
+                                <div
+                                    style={{
+                                        marginTop: '6px',
+                                        padding: '8px 10px',
+                                        borderRadius: '4px',
+                                        backgroundColor: 'var(--panel-alt)',
+                                        border: '1px solid var(--primary)',
+                                        fontSize: '0.8rem',
+                                        lineHeight: '1.4'
+                                    }}
+                                >
+                                    <span style={{ color: 'var(--text-main)' }}>
+                                        <strong>CAR Manifest URL:</strong>{' '}
+                                        <code style={{ wordBreak: 'break-all', color: 'var(--primary)' }}>
+                                            https://custom-action-rolls.narcolepticdracu.com/manifest.json
+                                        </code>
+                                    </span>
+                                </div>
+                            )}
                         </div>
                     )}
 

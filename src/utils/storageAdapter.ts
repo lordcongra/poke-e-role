@@ -58,9 +58,11 @@ export const storageAdapter = {
                 try {
                     const metadataStr = localStorage.getItem(key);
                     const metadata = metadataStr ? JSON.parse(metadataStr) : {};
+                    const nickname = metadata.nickname ? String(metadata.nickname).trim() : '';
+                    const species = metadata.species ? String(metadata.species).trim() : '';
                     characters.push({
                         id: key.replace(LOCAL_STORAGE_PREFIX, ''),
-                        name: String(metadata.nickname || metadata.species || 'Unknown Character'),
+                        name: nickname || species || 'Unnamed Character',
                         parentId: metadata.parentId ? String(metadata.parentId) : null,
                         metadata
                     });
@@ -75,7 +77,7 @@ export const storageAdapter = {
     async createLocalCharacter(name: string, parentId: string | null = null): Promise<string> {
         const newId = crypto.randomUUID();
         const initialMetadata = {
-            nickname: name,
+            nickname: name.trim(),
             parentId: parentId,
             'v2-migrated': true
         };
@@ -124,7 +126,7 @@ export const storageAdapter = {
         try {
             const str = localStorage.getItem(FOLDER_STORAGE_KEY);
             return str ? JSON.parse(str) : [];
-        } catch (error) {
+        } catch {
             return [];
         }
     },

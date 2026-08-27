@@ -340,7 +340,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
         const modStr = actualFlatMod > 0 ? `+${actualFlatMod}` : actualFlatMod < 0 ? `-${Math.abs(actualFlatMod)}` : '';
 
         // Safely wipe emojis strictly from the start in case they were appended
-        const cleanLabel = label.replace(/^[🎲💥🩹🍀🎯🛡️❄️]\s*/u, '').trim();
+        const cleanLabel = label.replace(/^(?:🎲|💥|🩹|🍀|🎯|🛡️|❄️|🛡|❄)\s*/u, '').trim();
         const privacyTag = targetVisibility === 'gm_only' ? '[PRIVATE] ' : '';
         const finalLabel = `${privacyTag}${cleanLabel}`;
 
@@ -449,8 +449,16 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
         const mensaje = `${obrPlayerName} | ${finalLabel}`;
 
         let diceTheme: unknown = undefined;
+        let isOutdatedCarDetected = false;
         try {
             const roomMeta = await OBR.room.getMetadata();
+
+            // Detect legacy onrender URL for Custom Action Rolls
+            const metaKeys = Object.keys(roomMeta);
+            if (metaKeys.some((k) => k.includes('action-manager.onrender.com') || k.includes('onrender.com'))) {
+                isOutdatedCarDetected = true;
+            }
+
             const allThemes = roomMeta['com.grupos-acciones.dice/roomDiceThemes'] as
                 | Record<string, unknown>
                 | undefined;
@@ -466,6 +474,13 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
             }
         } catch (e) {
             console.warn('[DiceRoller] Failed to load dice theme', e);
+        }
+
+        if (isOutdatedCarDetected) {
+            OBR.notification.show(
+                '⚠️ Outdated Custom Action Rolls URL detected! Please update your room to: https://custom-action-rolls.narcolepticdracu.com/manifest.json',
+                'WARNING'
+            );
         }
 
         const broadcastPayload = { mensaje, icon, diceData, diceTheme };
@@ -498,7 +513,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                     console.warn('[DiceRoller] Roll log cache corrupted', parseError);
                 }
                 localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData, ...existingLog].slice(0, 50)));
-            } catch (error) {
+            } catch {
                 try {
                     localStorage.removeItem('pkr_roll_log');
                     localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData]));

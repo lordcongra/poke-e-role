@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ReactNode } from 'react';
 
-export const CURRENT_VERSION = '3.1.0';
+export const CURRENT_VERSION = '3.2.0';
 
 export interface ChangelogEntry {
     version: string;
@@ -10,6 +10,108 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
+    {
+        version: '3.2.0',
+        date: 'August 2026',
+        changes: [
+            <strong key="gen-token-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
+                🎲 Auto-Build Pokémon: Owlbear Rodeo Token Spawning
+            </strong>,
+            <ul
+                key="gen-token-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Direct Token Creation on OBR:</strong> You can now spawn brand new Pokémon character tokens
+                    directly onto the Owlbear Rodeo map from the Pokémon Generator! It prompts image selection directly
+                    from your Owlbear asset library, places the token at the center of your screen, and selects it
+                    immediately.
+                </li>
+                <li>
+                    <strong>Destination Selector:</strong> Choose between "Generate New Token" and "Overwrite Selected
+                    Token" (or "Generate New Sheet" in Standalone mode). Overwrite is safely disabled when no token is
+                    selected.
+                </li>
+            </ul>,
+            <strong key="master-champ-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
+                👑 Master & Champion Rank Passive Automation
+            </strong>,
+            <ul
+                key="master-champ-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>+3 Stat & Resource Bonuses:</strong> Master and Champion characters automatically receive +3
+                    Max HP, +3 Max Will, +3 Base Initiative, +3 Defense, and +3 Special Defense across the sheet,
+                    derived panels, and token badges.
+                </li>
+                <li>
+                    <strong>+2 Dice on All Skill Rolls:</strong> Move Accuracy rolls, Action Rolls, Skill Checks,
+                    Evasion, Clash, Maneuvers, and Skill-based Status Recoveries automatically gain +2 dice and are
+                    tagged in the roll log.
+                </li>
+                <li>
+                    <strong>Real-Time Move Accuracy Display:</strong> Move cards and table rows now dynamically display
+                    your full Accuracy dice pool in real time.
+                </li>
+            </ul>,
+            <div
+                key="car-reminder-320"
+                style={{
+                    border: '2px solid var(--primary)',
+                    padding: '12px',
+                    borderRadius: '6px',
+                    backgroundColor: 'color-mix(in srgb, var(--primary) 10%, transparent)',
+                    marginBottom: '16px'
+                }}
+            >
+                <strong className="text-title-primary" style={{ fontSize: '1.1em' }}>
+                    🔗 Custom Action Rolls (CAR) Manifest Helper
+                </strong>
+                <p
+                    className="text-subtext"
+                    style={{
+                        color: 'var(--text-main)',
+                        marginTop: '6px',
+                        marginBottom: '8px',
+                        fontSize: '0.9em',
+                        lineHeight: '1.4'
+                    }}
+                >
+                    Added built-in detection to warn if an outdated/retired hosting link for Custom Action Rolls is
+                    detected. The active manifest URL is also directly available in the Room Rules modal.
+                </p>
+                <p style={{ margin: 0, fontSize: '0.9em', fontWeight: 'bold', color: 'var(--text-main)' }}>
+                    🔗 Current CAR Manifest Link:{' '}
+                    <a
+                        href="https://custom-action-rolls.narcolepticdracu.com/manifest.json"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-value-highlight"
+                        style={{ wordBreak: 'break-all' }}
+                    >
+                        https://custom-action-rolls.narcolepticdracu.com/manifest.json
+                    </a>
+                </p>
+            </div>
+        ]
+    },
     {
         version: '3.1.0',
         date: 'August 2026',

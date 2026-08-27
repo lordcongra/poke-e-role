@@ -1,0 +1,14 @@
+{
+    "name": "Pokerole 3.0 Sheet (Dev)",
+    "version": "3.2.0-dev",
+    "manifest_version": 1,
+    "description": "Local development instance for Pokerole 3.0 character sheet.",
+    "author": "lordcongra",
+    "action": {
+        "title": "Pokerole 3.0 Sheet (Dev)",
+        "icon": "http://localhost:5173/poke-e-role/pokeball.svg",
+        "popover": "http://localhost:5173/poke-e-role/",
+        "width": 850,
+        "height": 700
+    }
+}

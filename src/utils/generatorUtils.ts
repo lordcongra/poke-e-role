@@ -4,7 +4,8 @@ import { getRankPoints, getAgePoints } from '../store/useCharacterStore';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { assignWildStats, assignMinMaxStats, assignAverageStats } from './generatorLogic';
 import { draftInitialMoves, draftSpilloverMoves, sortDraftedMoves } from './moveDraftingLogic';
-import { getLimit, getBase } from './macroHelpers';
+import { getLimit, getBase, extractAbilities } from './macroHelpers';
+import { getRankBonusStats } from './combatMath';
 
 const RANK_HIERARCHY = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion'];
 const ALL_SKILLS = Object.values(Skill) as string[];
@@ -510,4 +511,126 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         pokemonData: pdRecord,
         baseStats: finalBaseStats
     };
+}
+
+export function buildTokenMetadataFromBuild(
+    build: TempBuild,
+    nickname: string,
+    imageUrl: string
+): Record<string, unknown> {
+    const pd = (build.pokemonData || {}) as Record<string, unknown>;
+    const rank = build.rank || 'Starter';
+    const rankBonus = getRankBonusStats(rank);
+
+    const baseVit = Number(getBase(pd, 'Vitality', 2)) || 2;
+    const baseIns = Number(getBase(pd, 'Insight', 1)) || 1;
+    const vitTotal = baseVit + (build.attr['vit'] || 0);
+    const insTotal = baseIns + (build.attr['ins'] || 0);
+
+    const hpBase = Number(pd.BaseHP) || 4;
+    const willBase = Number(pd.BaseWill) || 3;
+    const hpMax = hpBase + vitTotal + rankBonus.hp;
+    const willMax = willBase + insTotal + rankBonus.will;
+
+    const abilities = extractAbilities(pd);
+    const abilityName = String(pd.Ability1 || pd.ability1 || (abilities.length > 0 ? abilities[0] : '') || '');
+
+    const metadata: Record<string, unknown> = {
+        nickname: nickname.trim(),
+        species: build.species,
+        rank: rank,
+        type1: String(pd.Type1 || pd.type1 || 'Normal'),
+        type2: String(pd.Type2 || pd.type2 || 'None'),
+        ability: abilityName,
+        'ability-list': abilities.join(','),
+        nature: '-- Select --',
+        gender: 'Genderless',
+        age: 'Adult',
+        mode: 'Pokémon',
+        'show-trackers': true,
+        ruleset: 'vg-vit-hp',
+        'token-image-url': imageUrl,
+        'v2-migrated': true,
+        'hp-base': hpBase,
+        'hp-curr': hpMax,
+        'hp-max-display': hpMax,
+        'will-base': willBase,
+        'will-curr': willMax,
+        'will-max-display': willMax,
+        'def-buff': 0,
+        'def-debuff': 0,
+        'spd-buff': 0,
+        'spd-debuff': 0,
+        'actions-curr': 0,
+        'evade-used': false,
+        'clash-used': false,
+        'chances-curr': 0,
+        'fate-curr': 0,
+        'global-acc': 0,
+        'global-dmg': 0,
+        'global-succ': 0,
+        'dex-id': String(pd.Number || pd.DexID || pd.dexId || ''),
+        'dex-category': String(pd.Category || pd.Species || ''),
+        height: String(pd.Height || ''),
+        weight: String(pd.Weight || ''),
+        'dex-description': String(pd.Description || pd.dexDescription || '')
+    };
+
+    const STAT_MAP: Record<CombatStat, string> = {
+        [CombatStat.STR]: 'Strength',
+        [CombatStat.DEX]: 'Dexterity',
+        [CombatStat.VIT]: 'Vitality',
+        [CombatStat.SPE]: 'Special',
+        [CombatStat.INS]: 'Insight'
+    };
+
+    Object.values(CombatStat).forEach((stat) => {
+        const fallback = stat === 'ins' ? 1 : 2;
+        const statName = STAT_MAP[stat] || stat;
+        const resolvedBase = build.baseStats?.[stat] ?? (Number(getBase(pd, statName, fallback)) || fallback);
+        metadata[`${stat}-base`] = resolvedBase;
+        metadata[`${stat}-rank`] = build.attr[stat] || 0;
+        metadata[`${stat}-buff`] = 0;
+        metadata[`${stat}-debuff`] = 0;
+        metadata[`${stat}-limit`] = Number(getLimit(pd, statName)) || 5;
+    });
+
+    Object.values(SocialStat).forEach((stat) => {
+        metadata[`${stat}-base`] = 1;
+        metadata[`${stat}-rank`] = build.soc[stat] || 0;
+        metadata[`${stat}-buff`] = 0;
+        metadata[`${stat}-debuff`] = 0;
+        metadata[`${stat}-limit`] = 5;
+    });
+
+    Object.values(Skill).forEach((skill) => {
+        metadata[`${skill}-base`] = build.skills[skill] || 0;
+        metadata[`${skill}-buff`] = 0;
+    });
+
+    const movesData = build.moves.map((move) => {
+        const categoryString = String(move.cat);
+        const properCategory = categoryString.startsWith('Phys')
+            ? 'Physical'
+            : categoryString.startsWith('Spec')
+              ? 'Special'
+              : 'Status';
+
+        return {
+            ...move,
+            id: crypto.randomUUID(),
+            active: false,
+            category: properCategory as 'Physical' | 'Special' | 'Status',
+            accBonus: 0,
+            acc1: move.attr,
+            acc2: move.skill,
+            dmg1: move.dmgStat,
+            marker: move.marker || ''
+        };
+    });
+
+    metadata['moves-data'] = JSON.stringify(movesData);
+    metadata['extra-skills-data'] = '[]';
+
+    return metadata;
 }

@@ -81,6 +81,7 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: Ide
                     <input
                         type="text"
                         className="identity-grid__input text-label"
+                        placeholder="Unnamed..."
                         value={identityStore.nickname || ''}
                         onChange={(event) => setIdentity('nickname', event.target.value)}
                     />

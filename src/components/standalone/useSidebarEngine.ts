@@ -156,7 +156,7 @@ export function useSidebarEngine() {
             try {
                 const data = await fetchPokemonData(String(meta['species']));
                 if (data) store.refreshSpeciesData(data as Record<string, unknown>);
-            } catch (error) {
+            } catch {
                 // Ignore fetch errors
             }
         } else {
@@ -165,12 +165,11 @@ export function useSidebarEngine() {
     };
 
     const handleCreate = async (type: 'folder' | 'character') => {
-        // Fallback to a default name if the input box is empty
-        const finalName = newName.trim() || (type === 'folder' ? 'New Folder' : 'New Character');
+        const finalName = newName.trim();
 
         try {
             if (type === 'folder') {
-                await storageAdapter.createFolder(finalName, null);
+                await storageAdapter.createFolder(finalName || 'New Folder', null);
             } else {
                 const newId = await storageAdapter.createLocalCharacter(finalName, null);
                 handleSelectCharacter(newId, { nickname: finalName, parentId: null });

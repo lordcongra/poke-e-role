@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dices, AlertTriangle, XCircle, Hourglass, FilePlus } from 'lucide-react';
+import { Dices, AlertTriangle, XCircle, Hourglass, FilePlus, ImagePlus } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { generateBuild } from '../../utils/generatorUtils';
 import type { TempBuild, Rank } from '../../store/storeTypes';
@@ -21,7 +21,6 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
     const roomCustomPokemon = useCharacterStore((s) => s.roomCustomPokemon || []);
 
     const [destination, setDestination] = useState<'new' | 'overwrite'>(() => {
-        if (!isStandaloneMode) return 'overwrite';
         return activeTokenId ? 'overwrite' : 'new';
     });
     const [targetSpecies, setTargetSpecies] = useState<string>(state.identity.species || '');
@@ -68,21 +67,15 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
             const mergedConfig = {
                 ...config,
                 targetSpecies: config.randomizeSpecies ? undefined : targetSpecies.trim() || undefined,
-                targetRank: targetRank,
-                destination: isStandaloneMode ? destination : 'overwrite',
-                sheetName: sheetName.trim()
+                targetRank: targetRank
             };
-            const result = await generateBuild(mergedConfig, state);
-            if (result) {
-                setPreviewBuild(result);
-            } else {
-                alert(`Failed to generate build. Check console for details.`);
+
+            const build = await generateBuild(mergedConfig, state);
+            if (build) {
+                setPreviewBuild(build);
             }
         } catch (error) {
-            console.error('[GeneratorModal] Auto-Build Error:', error);
-            alert(
-                `An error occurred while generating the build: ${error instanceof Error ? error.message : 'Unknown Error'}`
-            );
+            console.error('[GeneratorModal] Generation failed:', error);
         } finally {
             setIsGenerating(false);
         }
@@ -92,11 +85,8 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
         return (
             <GeneratorPreviewModal
                 build={previewBuild}
-                destination={isStandaloneMode ? destination : 'overwrite'}
-                sheetName={
-                    sheetName.trim() ||
-                    (config.randomizeSpecies ? previewBuild.species : targetSpecies.trim() || previewBuild.species)
-                }
+                destination={destination}
+                sheetName={sheetName}
                 onClose={() => {
                     setPreviewBuild(null);
                     onClose();
@@ -117,37 +107,49 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                 </p>
 
                 <div className="generator-modal__form-group">
-                    {/* Standalone Destination Toggle */}
-                    {isStandaloneMode && (
-                        <div className="generator-modal__destination-box">
-                            <span className="generator-modal__destination-title text-title-primary">
-                                Destination Sheet
-                            </span>
-                            <div className="generator-modal__destination-buttons">
-                                <button
-                                    type="button"
-                                    className={`action-button generator-modal__dest-btn ${destination === 'new' ? 'action-button--theme' : 'action-button--dark'}`}
-                                    onClick={() => setDestination('new')}
-                                >
-                                    <FilePlus size={15} /> Generate New Sheet
-                                </button>
-                                <button
-                                    type="button"
-                                    disabled={!activeTokenId}
-                                    className={`action-button generator-modal__dest-btn ${destination === 'overwrite' ? 'action-button--red' : 'action-button--dark'}`}
-                                    onClick={() => setDestination('overwrite')}
-                                    title={
-                                        !activeTokenId
+                    {/* Destination Toggle */}
+                    <div className="generator-modal__destination-box">
+                        <span className="generator-modal__destination-title text-title-primary">
+                            {isStandaloneMode ? 'Destination Sheet' : 'Destination Target'}
+                        </span>
+                        <div className="generator-modal__destination-buttons">
+                            <button
+                                type="button"
+                                className={`action-button generator-modal__dest-btn ${destination === 'new' ? 'action-button--theme' : 'action-button--dark'}`}
+                                onClick={() => setDestination('new')}
+                            >
+                                {isStandaloneMode ? (
+                                    <>
+                                        <FilePlus size={15} /> Generate New Sheet
+                                    </>
+                                ) : (
+                                    <>
+                                        <ImagePlus size={15} /> Generate New Token
+                                    </>
+                                )}
+                            </button>
+                            <button
+                                type="button"
+                                disabled={!activeTokenId}
+                                className={`action-button generator-modal__dest-btn ${destination === 'overwrite' ? 'action-button--red' : 'action-button--dark'}`}
+                                onClick={() => setDestination('overwrite')}
+                                title={
+                                    !activeTokenId
+                                        ? isStandaloneMode
                                             ? 'No active sheet open to overwrite'
-                                            : 'Overwrite currently open sheet'
-                                    }
-                                >
-                                    <AlertTriangle size={15} /> Overwrite Current Sheet{' '}
-                                    {!activeTokenId ? '(None Open)' : ''}
-                                </button>
-                            </div>
+                                            : 'No token selected to overwrite'
+                                        : isStandaloneMode
+                                          ? 'Overwrite currently open sheet'
+                                          : 'Overwrite currently selected token'
+                                }
+                            >
+                                <AlertTriangle size={15} />{' '}
+                                {isStandaloneMode
+                                    ? `Overwrite Current Sheet ${!activeTokenId ? '(None Open)' : ''}`
+                                    : `Overwrite Selected Token ${!activeTokenId ? '(None Selected)' : ''}`}
+                            </button>
                         </div>
-                    )}
+                    </div>
 
                     {/* Species & Rank Row */}
                     <div className="generator-modal__row">
@@ -186,21 +188,19 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                         </div>
                     </div>
 
-                    {/* Optional Sheet Nickname when generating a New Sheet */}
-                    {isStandaloneMode && destination === 'new' && (
+                    {/* Optional Sheet / Token Nickname when generating New */}
+                    {destination === 'new' && (
                         <div className="generator-modal__row">
                             <div className="generator-modal__col">
-                                <label className="text-label">Sheet Name / Nickname (Optional):</label>
+                                <label className="text-label">
+                                    {isStandaloneMode
+                                        ? 'Sheet Name / Nickname (Optional):'
+                                        : 'Token Name / Nickname (Optional):'}
+                                </label>
                                 <input
                                     type="text"
                                     className="generator-modal__input text-label"
-                                    placeholder={
-                                        config.randomizeSpecies
-                                            ? 'Defaults to Generated Species'
-                                            : targetSpecies.trim()
-                                              ? `e.g. ${targetSpecies.trim()}`
-                                              : 'Defaults to Species Name'
-                                    }
+                                    placeholder="e.g. Sparky (Leave blank for Unnamed)"
                                     value={sheetName}
                                     onChange={(e) => setSheetName(e.target.value)}
                                 />

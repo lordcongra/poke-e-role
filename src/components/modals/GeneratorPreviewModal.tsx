@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import OBR from '@owlbear-rodeo/sdk';
+import OBR, { buildImage } from '@owlbear-rodeo/sdk';
 import { Search, Dices, CheckCircle, XCircle, ImagePlus, FilePlus } from 'lucide-react';
 import type { TempBuild } from '../../store/storeTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
@@ -8,7 +8,9 @@ import { GeneratorPreviewStatSpinner } from './GeneratorPreviewStatSpinner';
 import { GeneratorPreviewMoveRow } from './GeneratorPreviewMoveRow';
 import { getLimit } from '../../utils/macroHelpers';
 import { isStandaloneMode, storageAdapter } from '../../utils/storageAdapter';
-import { setActiveTokenId } from '../../utils/obr';
+import { setActiveTokenId, METADATA_ID } from '../../utils/obr';
+import { buildTokenMetadataFromBuild } from '../../utils/generatorUtils';
+import { buildGraphicsFromMeta, renderTokenGraphics } from '../../utils/graphicsManager';
 import './GeneratorPreviewModal.css';
 
 interface GeneratorPreviewModalProps {
@@ -59,24 +61,141 @@ export function GeneratorPreviewModal({
     };
 
     const handleApply = async () => {
-        if (isStandaloneMode && destination === 'new') {
+        if (destination === 'new') {
+            if (isStandaloneMode) {
+                try {
+                    const providedNickname = sheetName?.trim() || '';
+                    const newId = await storageAdapter.createLocalCharacter(providedNickname, null);
+                    setActiveTokenId(newId);
+                    const store = useCharacterStore.getState();
+                    store.setTokenData(newId, 'PLAYER');
+                    store.loadFromOwlbear({
+                        nickname: providedNickname,
+                        species: localBuild.species,
+                        rank: localBuild.rank || 'Starter',
+                        parentId: null,
+                        'v2-migrated': true
+                    });
+                    store.applyGeneratedBuild(localBuild);
+                    onClose();
+                } catch (e) {
+                    console.error('[GeneratorPreviewModal] Failed to create new Pokémon sheet:', e);
+                    alert('Failed to create new character sheet.');
+                }
+                return;
+            }
+
+            // Owlbear Rodeo Mode - Generate New Token
             try {
-                const finalName = sheetName?.trim() || localBuild.species || 'New Pokémon';
-                const newId = await storageAdapter.createLocalCharacter(finalName, null);
-                setActiveTokenId(newId);
-                const store = useCharacterStore.getState();
-                store.setTokenData(newId, 'PLAYER');
-                store.loadFromOwlbear({
-                    nickname: finalName,
-                    rank: localBuild.rank || 'Starter',
-                    parentId: null,
-                    'v2-migrated': true
+                const providedNickname = sheetName?.trim() || '';
+                const tokenItemName = providedNickname || localBuild.species || 'Pokémon';
+
+                // Prompt user to pick token image from their OBR asset library
+                const assetsApi = OBR.assets as unknown as { downloadImages?: () => Promise<unknown[]> };
+                let images: unknown[] | null = null;
+                let selectedUrl = '';
+                let selectedWidth = 0;
+                let selectedHeight = 0;
+
+                if (typeof assetsApi?.downloadImages === 'function') {
+                    images = await assetsApi.downloadImages();
+                } else {
+                    const url = window.prompt('Enter an Image URL for the new Token:');
+                    if (url) selectedUrl = url;
+                }
+
+                if (images && images.length > 0) {
+                    const img = images[0] as Record<string, unknown> | string;
+                    if (typeof img === 'string') {
+                        selectedUrl = img;
+                    } else if (img && typeof img === 'object') {
+                        if (typeof img.url === 'string') {
+                            selectedUrl = img.url;
+                        } else if (img.image && typeof (img.image as Record<string, unknown>).url === 'string') {
+                            selectedUrl = (img.image as Record<string, unknown>).url as string;
+                            selectedWidth = ((img.image as Record<string, unknown>).width as number) || 0;
+                            selectedHeight = ((img.image as Record<string, unknown>).height as number) || 0;
+                        } else if (typeof img.src === 'string') {
+                            selectedUrl = img.src;
+                        }
+                    }
+                }
+
+                if (!selectedUrl) {
+                    selectedUrl = `${import.meta.env.BASE_URL || '/'}pokeball.svg`;
+                }
+
+                // Resolve image dimensions to set proper grid dpi and center offset
+                let resolvedWidth = selectedWidth;
+                let resolvedHeight = selectedHeight;
+
+                if (!resolvedWidth || !resolvedHeight) {
+                    const loadedDim = await new Promise<{ width: number; height: number }>((resolve) => {
+                        const img = new window.Image();
+                        img.onload = () =>
+                            resolve({ width: img.naturalWidth || 300, height: img.naturalHeight || 300 });
+                        img.onerror = () => resolve({ width: 300, height: 300 });
+                        img.src = selectedUrl;
+                    });
+                    resolvedWidth = loadedDim.width;
+                    resolvedHeight = loadedDim.height;
+                }
+
+                // Determine viewport center position in world coordinates
+                const vpWidth = await OBR.viewport.getWidth();
+                const vpHeight = await OBR.viewport.getHeight();
+                const centerPos = await OBR.viewport.inverseTransformPoint({
+                    x: vpWidth / 2,
+                    y: vpHeight / 2
                 });
-                store.applyGeneratedBuild(localBuild);
+
+                // Build metadata dictionary
+                const metadata = buildTokenMetadataFromBuild(localBuild, providedNickname, selectedUrl);
+
+                // In Owlbear Rodeo, character tokens use center offset: (width / 2, height / 2)
+                // and grid dpi = resolvedWidth so the token occupies 1 standard grid cell with its origin at the center.
+                const imageContent = {
+                    url: selectedUrl,
+                    mime: 'image/png',
+                    width: resolvedWidth,
+                    height: resolvedHeight
+                };
+                const grid = {
+                    dpi: resolvedWidth,
+                    offset: {
+                        x: resolvedWidth / 2,
+                        y: resolvedHeight / 2
+                    }
+                };
+
+                const tokenItem = buildImage(imageContent, grid)
+                    .name(tokenItemName)
+                    .position(centerPos)
+                    .layer('CHARACTER')
+                    .metadata({
+                        [METADATA_ID]: metadata
+                    })
+                    .build();
+
+                await OBR.scene.items.addItems([tokenItem]);
+                setActiveTokenId(tokenItem.id);
+                const store = useCharacterStore.getState();
+                store.setTokenData(tokenItem.id, store.role || 'PLAYER');
+                store.setIdentity('tokenImageUrl', selectedUrl);
+                store.loadFromOwlbear(metadata);
+                await OBR.player.select([tokenItem.id]);
+
+                // Immediately render tracker graphics on the new token
+                const gData = buildGraphicsFromMeta(metadata);
+                await renderTokenGraphics(tokenItem, gData, store.role || 'PLAYER', true);
+
+                if (OBR.isAvailable) {
+                    OBR.notification.show(`Created ${tokenItemName} token!`, 'SUCCESS');
+                }
                 onClose();
             } catch (e) {
-                console.error('[GeneratorPreviewModal] Failed to create new Pokémon sheet:', e);
-                alert('Failed to create new character sheet.');
+                console.error('[GeneratorPreviewModal] Failed to spawn new token on Owlbear Rodeo:', e);
+                alert('Failed to spawn new token.');
             }
             return;
         }
@@ -368,15 +487,21 @@ export function GeneratorPreviewModal({
                     <button
                         type="button"
                         onClick={handleApply}
-                        className={`action-button ${isStandaloneMode && destination === 'new' ? 'action-button--theme' : 'action-button--red'} generator-preview__btn-apply`}
+                        className={`action-button ${destination === 'new' ? 'action-button--theme' : 'action-button--red'} generator-preview__btn-apply`}
                     >
-                        {isStandaloneMode && destination === 'new' ? (
-                            <>
-                                <FilePlus size={16} /> Create Sheet
-                            </>
+                        {destination === 'new' ? (
+                            isStandaloneMode ? (
+                                <>
+                                    <FilePlus size={16} /> Create Sheet
+                                </>
+                            ) : (
+                                <>
+                                    <ImagePlus size={16} /> Select Image & Create Token
+                                </>
+                            )
                         ) : (
                             <>
-                                <CheckCircle size={16} /> Overwrite Sheet
+                                <CheckCircle size={16} /> Overwrite {isStandaloneMode ? 'Sheet' : 'Token'}
                             </>
                         )}
                     </button>
