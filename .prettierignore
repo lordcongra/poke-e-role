@@ -5,3 +5,4 @@ dist-ssr
 
 # Ignore static, pre-formatted datasets to drastically speed up the formatter
 public/dataset
+data

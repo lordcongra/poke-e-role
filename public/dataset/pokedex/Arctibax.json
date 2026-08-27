@@ -30,8 +30,8 @@
         "Feet": 2.6
     },
     "Weight": {
-        "Kilograms": 30.0,
-        "Pounds": 66.0
+        "Kilograms": 30,
+        "Pounds": 66
     },
     "DexDescription": "Arctibax freezes the air around it, protecting its face with an ice mask and turning its dorsal fin into a blade of ice. Its strong back and legs allow it to flip in the air and swiftly strike with its improvised weapon.",
     "Evolutions": [

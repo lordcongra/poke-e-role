@@ -30,8 +30,8 @@
         "Feet": 3.9
     },
     "Weight": {
-        "Kilograms": 24.0,
-        "Pounds": 52.0
+        "Kilograms": 24,
+        "Pounds": 52
     },
     "DexDescription": "It lives in the deep-sea bottom. It attracts prey by flashing the patterns on its tail fins. In the wild it competes against Lanturn for food. Its main predators are Tentacruel and Sharpedo.",
     "Evolutions": [

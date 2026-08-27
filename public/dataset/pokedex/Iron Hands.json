@@ -30,8 +30,8 @@
         "Feet": 5.9
     },
     "Weight": {
-        "Kilograms": 380.0,
-        "Pounds": 839.0
+        "Kilograms": 380,
+        "Pounds": 839
     },
     "DexDescription": "A sumo wrestler given a second chance at life. Cybernetic enhancements allow for its hands to move independent of its body to send speeding cars into the air.",
     "Evolutions": [],

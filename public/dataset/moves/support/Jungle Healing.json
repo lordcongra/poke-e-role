@@ -12,7 +12,16 @@
     "_id": "jungle-healing",
     "Attributes": {},
     "AddedEffects": {
-        "AilmentHeal": ["Burn1", "Burn2", "Burn3", "Freeze", "Paralysis", "Poison", "BadlyPoison", "Sleep"],
+        "AilmentHeal": [
+            "Burn1",
+            "Burn2",
+            "Burn3",
+            "Freeze",
+            "Paralysis",
+            "Poison",
+            "BadlyPoison",
+            "Sleep"
+        ],
         "Heal": {
             "Type": "Basic",
             "Target": "Targets",

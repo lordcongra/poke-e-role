@@ -30,8 +30,8 @@
         "Feet": 8.2
     },
     "Weight": {
-        "Kilograms": 255.0,
-        "Pounds": 562.0
+        "Kilograms": 255,
+        "Pounds": 562
     },
     "DexDescription": "The power of the Mega Stone is so overwhelming it splits its back open. It becomes overwhelmed by its ferocious instincts and it's unclear if it can even hear its trainer through the pain and rage.",
     "Evolutions": [

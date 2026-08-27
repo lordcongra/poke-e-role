@@ -27,11 +27,11 @@
     "DexCategory": "Two-Sided Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 3.0,
-        "Pounds": 6.0
+        "Kilograms": 3,
+        "Pounds": 6
     },
     "DexDescription": "Its 'Full-Belly' Mode is friendly and playful: it treasures food and treats. But as its hunger increases it goes into 'Hangry' Form and starts getting violent: the electricity in its cheek sacs turns into a Dark-type energy.",
     "Evolutions": [],

@@ -19,7 +19,9 @@
         },
         "StatChanges": [
             {
-                "Stats": ["Strength"],
+                "Stats": [
+                    "Strength"
+                ],
                 "Stages": -1,
                 "Affects": "Targets"
             }

@@ -27,11 +27,11 @@
     "DexCategory": "Tantrum Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 4.0,
-        "Pounds": 8.0
+        "Kilograms": 4,
+        "Pounds": 8
     },
     "DexDescription": "It's very curious and child-like, but it investigates things by try to punch them with its tentacles. Despite this, the tentacles tear off easily, but don't be alarmed for they'll regrow in a few days.",
     "Evolutions": [

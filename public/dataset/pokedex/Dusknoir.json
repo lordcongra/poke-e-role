@@ -30,8 +30,8 @@
         "Feet": 7.3
     },
     "Weight": {
-        "Kilograms": 106.0,
-        "Pounds": 235.0
+        "Kilograms": 106,
+        "Pounds": 235
     },
     "DexDescription": "This feared Pokémon is said to travel to the other world. Some even believe that it takes lost spirits along with it. It uses the antenna on its head to receive messages from the deceased.",
     "Evolutions": [

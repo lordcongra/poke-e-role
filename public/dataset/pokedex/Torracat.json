@@ -30,8 +30,8 @@
         "Feet": 2.3
     },
     "Weight": {
-        "Kilograms": 22.0,
-        "Pounds": 55.0
+        "Kilograms": 22,
+        "Pounds": 55
     },
     "DexDescription": "The bell on its neck glows and chimes when it shoots fire through it. Although it acts spoiled with its trainer, it is a capable and relentless brawler. It will keep battling until its foes lose their fighting spirits.",
     "Evolutions": [

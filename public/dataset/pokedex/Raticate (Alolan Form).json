@@ -30,8 +30,8 @@
         "Feet": 2.3
     },
     "Weight": {
-        "Kilograms": 25.0,
-        "Pounds": 56.0
+        "Kilograms": 25,
+        "Pounds": 56
     },
     "DexDescription": "Alolan Raticate command their Rattata underlings to bring them food every night. Five star restaurants often struggle with these aggressive Pokémon nesting close to their grounds.",
     "Evolutions": [

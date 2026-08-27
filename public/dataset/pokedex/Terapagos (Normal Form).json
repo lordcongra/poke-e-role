@@ -30,8 +30,8 @@
         "Feet": 0.7
     },
     "Weight": {
-        "Kilograms": 6.0,
-        "Pounds": 14.0
+        "Kilograms": 6,
+        "Pounds": 14
     },
     "DexDescription": "Believed to be extinct, it was just recently re-discovered when a specimen was found in a dormant state deep at an excavation for Tera Crystals formed more than 2 million years ago.",
     "Evolutions": [

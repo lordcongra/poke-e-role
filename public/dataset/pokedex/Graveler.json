@@ -26,12 +26,12 @@
     "_id": "graveler",
     "DexCategory": "Rock Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 105.0,
-        "Pounds": 230.0
+        "Kilograms": 105,
+        "Pounds": 230
     },
     "DexDescription": "It walks slowly, but it can get a nice speed by rolling downhill. It is good at climbing. Groups of them have been seen clinging from rock formations and cliffs to eat the tasty rocks covered in moss.",
     "Evolutions": [

@@ -27,11 +27,11 @@
     "DexCategory": "Spark Pokémon",
     "Height": {
         "Meters": 0.9,
-        "Feet": 3.0
+        "Feet": 3
     },
     "Weight": {
-        "Kilograms": 30.0,
-        "Pounds": 67.0
+        "Kilograms": 30,
+        "Pounds": 67
     },
     "DexDescription": "Female Luxio stay with the pride but males roam in marauding groups, trying to become strong enough to make their own pride. Its claws and teeth are charged with electricity; approach with caution.",
     "Evolutions": [

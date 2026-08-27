@@ -26,12 +26,12 @@
     "_id": "pignite",
     "DexCategory": "Fire Pig Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 55.0,
-        "Pounds": 122.0
+        "Kilograms": 55,
+        "Pounds": 122
     },
     "DexDescription": "Whatever it eats becomes fuel for the flame in its stomach. When it is angered, the intensity of the flame increases. It is not common to see them the wild. They are mostly found living in warm places.",
     "Evolutions": [

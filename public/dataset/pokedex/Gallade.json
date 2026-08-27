@@ -30,8 +30,8 @@
         "Feet": 5.3
     },
     "Weight": {
-        "Kilograms": 52.0,
-        "Pounds": 114.0
+        "Kilograms": 52,
+        "Pounds": 114
     },
     "DexDescription": "This Pokémon is male-only. It has an extreme sense of courtesy. In a battle, it uses its arm blades as if they were swords. It is a very loyal Pokémon and will fiercely defend its trainer with its life.",
     "Evolutions": [

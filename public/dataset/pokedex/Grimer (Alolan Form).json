@@ -30,8 +30,8 @@
         "Feet": 2.3
     },
     "Weight": {
-        "Kilograms": 42.0,
-        "Pounds": 92.0
+        "Kilograms": 42,
+        "Pounds": 92
     },
     "DexDescription": "Grimer were brought into Alola to eat garbage in the region. It seemed like a counterintuitive measure but ended up solving the problem. But now Grimer are incredibly noxious, much more toxic than usual.",
     "Evolutions": [

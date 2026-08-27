@@ -27,11 +27,11 @@
     "DexCategory": "Constraint Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 8.0,
-        "Pounds": 18.0
+        "Kilograms": 8,
+        "Pounds": 18
     },
     "DexDescription": "The eye patterns inside its ears emit psychic energy. It keeps them shut tight because the power can be overwhelming. Females are white in color and more aggressive than the mild-mannered males.",
     "Evolutions": [

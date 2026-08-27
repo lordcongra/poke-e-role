@@ -27,11 +27,11 @@
     "DexCategory": "Tera Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 16.0,
-        "Pounds": 35.0
+        "Kilograms": 16,
+        "Pounds": 35
     },
     "DexDescription": "The connection they have to the Terastal phenomenon is still a mystery. It has shown the ability of terastallizing at will by absorbing the energy of attacks coming its way.",
     "Evolutions": [

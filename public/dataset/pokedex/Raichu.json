@@ -30,8 +30,8 @@
         "Feet": 2.6
     },
     "Weight": {
-        "Kilograms": 30.0,
-        "Pounds": 66.0
+        "Kilograms": 30,
+        "Pounds": 66
     },
     "DexDescription": "When electricity builds on its body, it starts to emit a faint glow and it becomes more aggressive than it normally is. They live in forests but are rare to find in the wild.",
     "Evolutions": [

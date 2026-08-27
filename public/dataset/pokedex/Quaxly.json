@@ -30,8 +30,8 @@
         "Feet": 1.7
     },
     "Weight": {
-        "Kilograms": 6.0,
-        "Pounds": 13.0
+        "Kilograms": 6,
+        "Pounds": 13
     },
     "DexDescription": "Quaxley are known for their tidiness; their feathers are neatly combed and it hates when they get ruffled. Despite their small size, they are capable swimmers with strong legs to paddle their way upstream.",
     "Image": "quaxly.png",

@@ -30,8 +30,8 @@
         "Feet": 5.9
     },
     "Weight": {
-        "Kilograms": 152.0,
-        "Pounds": 335.0
+        "Kilograms": 152,
+        "Pounds": 335
     },
     "DexDescription": "Kingdra sleeps on the seafloor where it is otherwise devoid of life. When a storm arrives, it is said to awaken and wander about in search of prey. They are known for creating twisters in the sea.",
     "Evolutions": [

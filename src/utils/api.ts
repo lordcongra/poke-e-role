@@ -88,6 +88,8 @@ export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
 
                 if (data.moves.support) populateMoves(data.moves.support);
                 if (data.moves.variable) populateMoves(data.moves.variable);
+                if (data.moves.zMoves) populateMoves(data.moves.zMoves);
+                if (data.moves.maxMoves) populateMoves(data.moves.maxMoves);
                 if (data.moves.basic) {
                     Object.values(data.moves.basic).forEach(populateMoves);
                 }

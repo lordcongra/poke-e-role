@@ -27,11 +27,11 @@
     "DexCategory": "Dancing Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 3.0,
-        "Pounds": 7.0
+        "Kilograms": 3,
+        "Pounds": 7
     },
     "DexDescription": "What was thought to be different species ended up being a single Pokémon. Oricorio Sensu is calm and indifferent. Its dance is said to attract evil spirits. People from Kanto find it very nostalgic.",
     "Evolutions": [

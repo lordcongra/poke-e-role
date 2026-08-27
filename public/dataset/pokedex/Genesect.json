@@ -27,11 +27,11 @@
     "DexCategory": "Pokédex has no data.",
     "Height": {
         "Meters": 1.5,
-        "Feet": 5.0
+        "Feet": 5
     },
     "Weight": {
-        "Kilograms": 82.0,
-        "Pounds": 181.0
+        "Kilograms": 82,
+        "Pounds": 181
     },
     "DexDescription": "Fossil revival is now possible with our incredible technology. Recently, some researchers sparked a controversial debate by altering the original forms of the revived Pokémon through artificial means.",
     "Evolutions": [],

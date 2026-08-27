@@ -26,12 +26,12 @@
     "_id": "falinks",
     "DexCategory": "Formation Pokémon",
     "Height": {
-        "Meters": 3.0,
+        "Meters": 3,
         "Feet": 9.8
     },
     "Weight": {
-        "Kilograms": 62.0,
-        "Pounds": 136.0
+        "Kilograms": 62,
+        "Pounds": 136
     },
     "DexDescription": "It is formed by six of them: five are troopers, and one is the brass. The brass's orders are absolute to the others. They work as a perfect team and can rearrange their formation to better suit them in battle.",
     "Evolutions": [],

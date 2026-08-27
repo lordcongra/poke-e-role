@@ -30,8 +30,8 @@
         "Feet": 3.6
     },
     "Weight": {
-        "Kilograms": 80.0,
-        "Pounds": 176.0
+        "Kilograms": 80,
+        "Pounds": 176
     },
     "DexDescription": "This Pokémon has been given the nickname 'the gem of the sea.' It swims through water by spinning its star-shaped body as if it were a propeller on a ship. The core at the center glows with different colors.",
     "Evolutions": [

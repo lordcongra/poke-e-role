@@ -26,12 +26,12 @@
     "_id": "golett",
     "DexCategory": "Automaton Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 92.0,
-        "Pounds": 202.0
+        "Kilograms": 92,
+        "Pounds": 202
     },
     "DexDescription": "Very few have been seen in old ruins. These Pokémon are thought to have been created by the science of an ancient and mysterious civilization. The energy inside of them comes from an unknown source.",
     "Evolutions": [

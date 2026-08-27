@@ -30,8 +30,8 @@
         "Feet": 2.3
     },
     "Weight": {
-        "Kilograms": 40.0,
-        "Pounds": 88.0
+        "Kilograms": 40,
+        "Pounds": 88
     },
     "DexDescription": "Sandshrew who became trapped in the merciless cold weather of Alola had to change their types to survive. They now depend on snow to roll around; without it they are unable to curl up into a ball.",
     "Evolutions": [

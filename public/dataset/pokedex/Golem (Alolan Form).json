@@ -30,8 +30,8 @@
         "Feet": 5.6
     },
     "Weight": {
-        "Kilograms": 316.0,
-        "Pounds": 696.0
+        "Kilograms": 316,
+        "Pounds": 696
     },
     "DexDescription": "The Alolan variant of Golem does not roll around like its counterpart; instead it loads rocks into the charger on its head and shoots them around. If the rocks miss, the electric shockwave doesn't.",
     "Evolutions": [

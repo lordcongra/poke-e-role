@@ -26,12 +26,12 @@
     "_id": "flygon",
     "DexCategory": "Mystic Pokémon",
     "Height": {
-        "Meters": 2.0,
+        "Meters": 2,
         "Feet": 6.6
     },
     "Weight": {
-        "Kilograms": 82.0,
-        "Pounds": 180.0
+        "Kilograms": 82,
+        "Pounds": 180
     },
     "DexDescription": "Known as the 'Elemental Spirit of the Desert'. Their wings create a cloud of dust that surrounds this Pokémon while flying, while their flapping produces a sound that resembles a woman singing.",
     "Evolutions": [

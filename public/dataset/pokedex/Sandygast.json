@@ -30,8 +30,8 @@
         "Feet": 1.7
     },
     "Weight": {
-        "Kilograms": 70.0,
-        "Pounds": 154.0
+        "Kilograms": 70,
+        "Pounds": 154
     },
     "DexDescription": "Some departed soul made a child's sand mound its vessel. Anyone who puts their hand inside its mouth will have their vital energy absorbed and their mind possessed to add more sand until they collapse.",
     "Evolutions": [

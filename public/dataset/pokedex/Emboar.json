@@ -30,8 +30,8 @@
         "Feet": 5.3
     },
     "Weight": {
-        "Kilograms": 300.0,
-        "Pounds": 660.0
+        "Kilograms": 300,
+        "Pounds": 660
     },
     "DexDescription": "Despite its scary exterior, it is a very gentle Pokémon that cares deeply for family and friends. It can light its punches and beard on fire; it also shows proficiency on martial arts like Judo.",
     "Evolutions": [

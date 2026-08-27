@@ -27,11 +27,11 @@
     "DexCategory": "Poison Pin Pokémon",
     "Height": {
         "Meters": 0.9,
-        "Feet": 3.0
+        "Feet": 3
     },
     "Weight": {
         "Kilograms": 19.5,
-        "Pounds": 43.0
+        "Pounds": 43
     },
     "DexDescription": "An independent and fierce creature. It roams alone in search for a mate and will compete with other males around. It will violently charge with a venom-drenched horn against intruders.",
     "Evolutions": [

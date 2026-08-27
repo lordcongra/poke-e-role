@@ -27,11 +27,11 @@
     "DexCategory": "Jellyfish Pokémon",
     "Height": {
         "Meters": 0.9,
-        "Feet": 3.0
+        "Feet": 3
     },
     "Weight": {
-        "Kilograms": 45.0,
-        "Pounds": 100.0
+        "Kilograms": 45,
+        "Pounds": 100
     },
     "DexDescription": "It lives in the seas all around the world. They release a toxic ink if startled. It is a surprisingly intelligent Pokémon and can use its tentacles to briefly establish a link between its mind and another creature.",
     "Evolutions": [

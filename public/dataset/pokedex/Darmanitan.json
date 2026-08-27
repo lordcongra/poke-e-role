@@ -30,8 +30,8 @@
         "Feet": 4.3
     },
     "Weight": {
-        "Kilograms": 92.0,
-        "Pounds": 204.0
+        "Kilograms": 92,
+        "Pounds": 204
     },
     "DexDescription": "This Pokémon is shrouded in mystery. Old writings and mural paintings describe it as being blue and using psychic powers, but years of study have not seen these traits in this Pokémon, which relies on brute force.",
     "Evolutions": [

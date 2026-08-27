@@ -30,8 +30,8 @@
         "Feet": 1.7
     },
     "Weight": {
-        "Kilograms": 4.0,
-        "Pounds": 9.0
+        "Kilograms": 4,
+        "Pounds": 9
     },
     "DexDescription": "After a heavy rainfall, they'll appear in great numbers in marshes and ponds. They warn others of danger and predators by vibrating their cheeks to create a high-pitched sound.",
     "Evolutions": [

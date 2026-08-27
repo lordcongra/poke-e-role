@@ -30,8 +30,8 @@
         "Feet": 1.7
     },
     "Weight": {
-        "Kilograms": 10.0,
-        "Pounds": 23.0
+        "Kilograms": 10,
+        "Pounds": 23
     },
     "DexDescription": "Whatever this Pokémon eats is transformed into electricity. People often use them to power up small appliances in their homes. This Pokémon rarely moves since it is preparing to evolve.",
     "Evolutions": [

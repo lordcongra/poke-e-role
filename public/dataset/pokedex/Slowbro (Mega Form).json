@@ -26,12 +26,12 @@
     "_id": "slowbro-mega-form",
     "DexCategory": "Hermit Crab Pokémon",
     "Height": {
-        "Meters": 2.0,
+        "Meters": 2,
         "Feet": 6.6
     },
     "Weight": {
-        "Kilograms": 120.0,
-        "Pounds": 264.0
+        "Kilograms": 120,
+        "Pounds": 264
     },
     "DexDescription": "With the power of the Mega Stone, the Shellder on its tail becomes a bulletproof armor that swallows its host's whole body. Slowbro doesn't seem to mind and looks pretty comfy nesting inside.",
     "Evolutions": [

@@ -30,8 +30,8 @@
         "Feet": 3.9
     },
     "Weight": {
-        "Kilograms": 100.0,
-        "Pounds": 220.0
+        "Kilograms": 100,
+        "Pounds": 220
     },
     "DexDescription": "If a job requires serious strength, this Pokémon will excel at it. Its copper body tarnishes in the rain, turning a vibrant green color. Its trunk is specially designed to dig the ground; in the wild they uproot trees to eat.",
     "Evolutions": [

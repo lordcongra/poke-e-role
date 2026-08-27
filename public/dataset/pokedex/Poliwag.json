@@ -27,11 +27,11 @@
     "DexCategory": "Tadpole Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 12.0,
-        "Pounds": 26.0
+        "Kilograms": 12,
+        "Pounds": 26
     },
     "DexDescription": "They are most common near ponds and lakes during the summer. Its legs take some weeks to develop after it hatches, making it inept at walking. It is, however, a very fast swimmer.",
     "Evolutions": [

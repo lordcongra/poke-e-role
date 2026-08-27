@@ -27,11 +27,11 @@
     "DexCategory": "Aether Foundation Log #162",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 2.0,
-        "Pounds": 4.0
+        "Kilograms": 2,
+        "Pounds": 4
     },
     "DexDescription": "Thanks to the Recon Squad we've managed to secure a location on the other side. UB-06 Adhesive have been a great help; their intelligence and friendliness would make them very popular in our world.",
     "Evolutions": [

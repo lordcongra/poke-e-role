@@ -27,11 +27,11 @@
     "DexCategory": "Restraint Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 3.0,
-        "Pounds": 7.0
+        "Kilograms": 3,
+        "Pounds": 7
     },
     "DexDescription": "The organs that emit its intense psychic power are tucked under its ears to keep energy from escaping. It still does not control its power and could destroy something without realizing it.",
     "Evolutions": [

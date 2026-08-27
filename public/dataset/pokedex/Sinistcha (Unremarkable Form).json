@@ -30,8 +30,8 @@
         "Feet": 0.7
     },
     "Weight": {
-        "Kilograms": 2.0,
-        "Pounds": 4.0
+        "Kilograms": 2,
+        "Pounds": 4
     },
     "DexDescription": "It haunts the back of the tea shelves, as it prefers cool and dry places. It disguises itself as a hot beverage to drain the life force of those who may drink it, but most people spit it out due to its bitter taste.",
     "Evolutions": [

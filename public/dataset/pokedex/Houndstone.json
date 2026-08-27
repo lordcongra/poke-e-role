@@ -26,12 +26,12 @@
     "_id": "houndstone",
     "DexCategory": "Ghost Dog Pokémon",
     "Height": {
-        "Meters": 2.0,
+        "Meters": 2,
         "Feet": 6.6
     },
     "Weight": {
-        "Kilograms": 15.0,
-        "Pounds": 33.0
+        "Kilograms": 15,
+        "Pounds": 33
     },
     "DexDescription": "Houndstone can be found resting in graveyards. It is said they guide and guard the souls of the departed. It is a fiercely loyal Pokémon that not even death could tear apart from its master.",
     "Evolutions": [

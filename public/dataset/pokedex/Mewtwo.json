@@ -26,12 +26,12 @@
     "_id": "mewtwo",
     "DexCategory": "Pokédex has no data.",
     "Height": {
-        "Meters": 2.0,
+        "Meters": 2,
         "Feet": 6.6
     },
     "Weight": {
-        "Kilograms": 122.0,
-        "Pounds": 270.0
+        "Kilograms": 122,
+        "Pounds": 270
     },
     "DexDescription": "An article in a science magazine talked about how much cloning research was progressing, but... could it be?",
     "Evolutions": [

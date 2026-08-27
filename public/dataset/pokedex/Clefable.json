@@ -30,8 +30,8 @@
         "Feet": 4.3
     },
     "Weight": {
-        "Kilograms": 40.0,
-        "Pounds": 88.0
+        "Kilograms": 40,
+        "Pounds": 88
     },
     "DexDescription": "There are not many records about it in the wild. They are timid but playful. Clefable uses its wings to skip lightly as if it was flying. Its bouncy step lets it walk on water. On quiet, moonlit nights, it strolls near quiet lakes.",
     "Evolutions": [

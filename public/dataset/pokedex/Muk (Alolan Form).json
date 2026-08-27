@@ -26,12 +26,12 @@
     "_id": "muk-alolan-form",
     "DexCategory": "Sludge Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 52.0,
-        "Pounds": 114.0
+        "Kilograms": 52,
+        "Pounds": 114
     },
     "DexDescription": "It is as friendly as it is toxic; be careful, for it tries to hug others regularly. A good diet does not help reduce its toxicity levels - it only makes it cranky and prone to destroy furniture. It releases toxic fumes all the time.",
     "Evolutions": [

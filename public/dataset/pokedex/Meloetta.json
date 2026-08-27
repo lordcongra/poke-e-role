@@ -27,11 +27,11 @@
     "DexCategory": "Pokedex has no Data.",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 6.0,
-        "Pounds": 14.0
+        "Kilograms": 6,
+        "Pounds": 14
     },
     "DexDescription": "There are old songs about a beautiful Pokémon that inspired the hearts of artists through its graceful dance and singing.",
     "Evolutions": [

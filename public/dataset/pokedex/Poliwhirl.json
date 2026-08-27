@@ -26,12 +26,12 @@
     "_id": "poliwhirl",
     "DexCategory": "Tadpole Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 20.0,
-        "Pounds": 44.0
+        "Kilograms": 20,
+        "Pounds": 44
     },
     "DexDescription": "Though it is skilled at walking, it prefers to live underwater where there's less danger. It sweats to keep its skin moist. Thanks to this, it can easily slip out of the clutches of any enemy.",
     "Evolutions": [

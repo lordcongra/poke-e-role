@@ -27,11 +27,11 @@
     "DexCategory": "Lamp Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 13.0,
-        "Pounds": 28.0
+        "Kilograms": 13,
+        "Pounds": 28
     },
     "DexDescription": "This ominous Pokémon is very feared. It always arrives at someone's final moments and steals their spirit. It hangs close to hospitals and other places, simply waiting. It is said that if it gets your soul, you will never rest.",
     "Evolutions": [

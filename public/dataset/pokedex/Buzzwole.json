@@ -30,8 +30,8 @@
         "Feet": 7.8
     },
     "Weight": {
-        "Kilograms": 333.0,
-        "Pounds": 735.0
+        "Kilograms": 333,
+        "Pounds": 735
     },
     "DexDescription": "What we thought were harmless displays of strength were just the first warning signs. Today UB-02 destroyed the truck where it was being transported. It escaped and hasn't been located.",
     "Evolutions": [],

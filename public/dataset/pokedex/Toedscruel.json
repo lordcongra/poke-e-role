@@ -30,8 +30,8 @@
         "Feet": 6.3
     },
     "Weight": {
-        "Kilograms": 58.0,
-        "Pounds": 127.0
+        "Kilograms": 58,
+        "Pounds": 127
     },
     "DexDescription": "They form colonies very deep in the forests, sticking into trees for nourishment. However, they are territorial and will engulf any stranger inside their tentacles and sap their nutrients in a very painful way.",
     "Evolutions": [

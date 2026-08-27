@@ -26,12 +26,12 @@
     "_id": "dragonair",
     "DexCategory": "Dragon Pokémon",
     "Height": {
-        "Meters": 4.0,
+        "Meters": 4,
         "Feet": 13.1
     },
     "Weight": {
-        "Kilograms": 16.0,
-        "Pounds": 36.0
+        "Kilograms": 16,
+        "Pounds": 36
     },
     "DexDescription": "It is said to live in seas and lakes. Even though it has no wings, it has been depicted flying. There were legends of this Pokémon controlling the weather and ending the storms to leave a rainbow behind.",
     "Evolutions": [

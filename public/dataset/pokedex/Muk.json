@@ -27,11 +27,11 @@
     "DexCategory": "Sludge Pokémon",
     "Height": {
         "Meters": 1.2,
-        "Feet": 4.0
+        "Feet": 4
     },
     "Weight": {
-        "Kilograms": 60.0,
-        "Pounds": 132.0
+        "Kilograms": 60,
+        "Pounds": 132
     },
     "DexDescription": "It gathers in polluted areas to eat filth. Its body is made of a powerful poison that kills any plant. Touching it can cause a fever that will require bed rest. A good diet may reduce Muk's toxicity.",
     "Evolutions": [

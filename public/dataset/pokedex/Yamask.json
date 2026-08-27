@@ -30,8 +30,8 @@
         "Feet": 1.7
     },
     "Weight": {
-        "Kilograms": 1.0,
-        "Pounds": 3.0
+        "Kilograms": 1,
+        "Pounds": 3
     },
     "DexDescription": "This Pokémon arose from the spirit of a human or a Pokémon that died in the past and was buried with special ceremonies. Each one carries a mask that looks like the face it had in life. A sad Pokémon that weeps often.",
     "Evolutions": [

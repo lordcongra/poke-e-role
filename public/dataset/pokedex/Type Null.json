@@ -30,8 +30,8 @@
         "Feet": 6.3
     },
     "Weight": {
-        "Kilograms": 120.0,
-        "Pounds": 265.0
+        "Kilograms": 120,
+        "Pounds": 265
     },
     "DexDescription": "A synthetic Pokémon made by the Aether Foundation. Currently only three specimens exist in cryogenic stasis, but they are deemed too dangerous even with a limiter helmet on. They must never be reanimated.",
     "Evolutions": [],

@@ -27,11 +27,11 @@
     "DexCategory": "Trash Bag Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 31.0,
-        "Pounds": 68.0
+        "Kilograms": 31,
+        "Pounds": 68
     },
     "DexDescription": "The combination of garbage bags and industrial waste caused the chemical reaction that created this Pokémon. It belches a poison gas; breathing it will leave you sick in bed for a week. It loves filthy places.",
     "Evolutions": [

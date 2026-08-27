@@ -30,8 +30,8 @@
         "Feet": 1.3
     },
     "Weight": {
-        "Kilograms": 3.0,
-        "Pounds": 6.0
+        "Kilograms": 3,
+        "Pounds": 6
     },
     "DexDescription": "There have been sightings of small groups of similar Pokémon but its existence has never been confirmed. Rumor has it that they are Manaphy's prodigal children.",
     "Evolutions": [],

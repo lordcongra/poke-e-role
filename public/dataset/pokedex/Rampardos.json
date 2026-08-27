@@ -30,8 +30,8 @@
         "Feet": 5.3
     },
     "Weight": {
-        "Kilograms": 204.0,
-        "Pounds": 552.0
+        "Kilograms": 204,
+        "Pounds": 552
     },
     "DexDescription": "Its skull withstands any magnitude of impact. As a result, its brain never gets the chance to grow. This may have been the cause of its extinction. It is capable of rolling a truck over with a single strike.",
     "Evolutions": [

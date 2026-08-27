@@ -27,11 +27,11 @@
     "DexCategory": "Fire Child Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 11.0,
-        "Pounds": 23.0
+        "Kilograms": 11,
+        "Pounds": 23
     },
     "DexDescription": "It is said a burnt charcoal came to life after being possesed by a fiery spirit. They are brave little creatures who won't retreat from a battle, attacking with raging flames. They are known to love fatty foods.",
     "Evolutions": [

@@ -27,11 +27,11 @@
     "DexCategory": "Sewing Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 2.0,
-        "Pounds": 5.0
+        "Kilograms": 2,
+        "Pounds": 5
     },
     "DexDescription": "It is a sweet Pokémon that loves its family. It hides its head in the leaf hood while it is sleeping. The silk they produce is highly valued to make expensive clothing; this makes it a popular pet for fashion designers.",
     "Evolutions": [

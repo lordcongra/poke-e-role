@@ -7,7 +7,7 @@
     "Category": "Berry",
     "Description": "Its spicy flavor reinvigorates the muscles and stops the cramping. Heal Paralysis.",
     "OneUse": true,
-    "PMDPrice": 80.0,
+    "PMDPrice": 80,
     "TrainerPrice": "Uncommon",
     "Cures": "Paralysis",
     "Image": "cheri-berry.png"

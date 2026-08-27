@@ -7,7 +7,7 @@
     "Category": "Berry",
     "Description": "A delicious citric berry that numbs pain away.",
     "OneUse": true,
-    "PMDPrice": 50.0,
+    "PMDPrice": 50,
     "TrainerPrice": "Uncommon",
     "HealthRestored": 1,
     "Image": "oran-berry.png"

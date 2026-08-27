@@ -30,8 +30,8 @@
         "Feet": 14.8
     },
     "Weight": {
-        "Kilograms": 700.0,
-        "Pounds": 1543.0
+        "Kilograms": 700,
+        "Pounds": 1543
     },
     "DexDescription": "These Pokémon wander around snowy areas; the thick layer of fat on their bodies protects them from the figid temperatures. They are not particularly aggressive, but are fiercely protective of their young.",
     "Evolutions": [

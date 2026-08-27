@@ -26,12 +26,12 @@
     "_id": "graveler-alolan-form",
     "DexCategory": "Rock Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 110.0,
-        "Pounds": 242.0
+        "Kilograms": 110,
+        "Pounds": 242
     },
     "DexDescription": "These Pokémon charge themselves by rolling around. It is dangerous if two of them collide: a loud noise and a flash of light will be seen and heard at great distance. They feed on golden dravite.",
     "Evolutions": [

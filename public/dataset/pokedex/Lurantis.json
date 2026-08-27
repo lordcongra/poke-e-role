@@ -27,11 +27,11 @@
     "DexCategory": "Bloom Sickle Pokémon",
     "Height": {
         "Meters": 0.9,
-        "Feet": 3.0
+        "Feet": 3
     },
     "Weight": {
-        "Kilograms": 18.0,
-        "Pounds": 40.0
+        "Kilograms": 18,
+        "Pounds": 40
     },
     "DexDescription": "Considered to be one of the most beautiful Grass-Type Pokémon due to its lovely coloration. They require a lot of maintenance and constant grooming, so they'll only trust a Trainer who is up for the job.",
     "Evolutions": [

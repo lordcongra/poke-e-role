@@ -27,11 +27,11 @@
     "DexCategory": "String Ball Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 4.0,
-        "Pounds": 8.0
+        "Kilograms": 4,
+        "Pounds": 8
     },
     "DexDescription": "Scyther are their main predators, so they wrap their body in an elastic silk that bounces off any slash attack. This silk is very elastic but also strong as metal wire, making it a very appreciated material.",
     "Evolutions": [

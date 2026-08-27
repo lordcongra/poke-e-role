@@ -30,8 +30,8 @@
         "Feet": 5.6
     },
     "Weight": {
-        "Kilograms": 120.0,
-        "Pounds": 264.0
+        "Kilograms": 120,
+        "Pounds": 264
     },
     "DexDescription": "The Galarian form of Darmanitan. They walk into towns during blizzards to steal food. Darmanitans may seem mean, but they are gentle and shy creatures who help stranded explorers.",
     "Evolutions": [

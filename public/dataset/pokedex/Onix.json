@@ -26,12 +26,12 @@
     "_id": "onix",
     "DexCategory": "Rock Snake Pokémon",
     "Height": {
-        "Meters": 8.0,
+        "Meters": 8,
         "Feet": 28.8
     },
     "Weight": {
-        "Kilograms": 420.0,
-        "Pounds": 926.0
+        "Kilograms": 420,
+        "Pounds": 926
     },
     "DexDescription": "It is not full-size when it's born. Years of eating boulders make it a real giant. It lives on mountains and dark tunnels. Its frightening roars travel as echoes through the caves. It is very aggressive towards others.",
     "Evolutions": [

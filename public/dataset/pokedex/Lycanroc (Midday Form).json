@@ -30,8 +30,8 @@
         "Feet": 2.6
     },
     "Weight": {
-        "Kilograms": 25.0,
-        "Pounds": 55.0
+        "Kilograms": 25,
+        "Pounds": 55
     },
     "DexDescription": "A well-disciplined Rockruff will evolve at dawn. This Pokémon is very loyal and trustworthy. It can climb mountains fast and is a quick runner. The rocks on its mane are its main weapons.",
     "Evolutions": [

@@ -30,8 +30,8 @@
         "Feet": 5.5
     },
     "Weight": {
-        "Kilograms": 377.0,
-        "Pounds": 833.0
+        "Kilograms": 377,
+        "Pounds": 833
     },
     "DexDescription": "Avalugg have shown great levels of adaptability through the centuries. If temperature lowers to a freezing point, so will they. When the ice caps melt they return to land-dwelling, crushing their way trough solid rocks.",
     "Evolutions": [

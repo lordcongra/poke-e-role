@@ -27,11 +27,11 @@
     "DexCategory": "Iron Armor Pokémon",
     "Height": {
         "Meters": 0.9,
-        "Feet": 3.0
+        "Feet": 3
     },
     "Weight": {
-        "Kilograms": 120.0,
-        "Pounds": 264.0
+        "Kilograms": 120,
+        "Pounds": 264
     },
     "DexDescription": "Their armor gets stronger by eating iron ore and drinking mineral spring water, so they usually nest close to ponds. Lairon often attack human miners. They are territorial creatures, very stubborn and resilient.",
     "Evolutions": [

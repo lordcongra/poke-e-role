@@ -27,11 +27,11 @@
     "DexCategory": "Cottonweed Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 1.0,
-        "Pounds": 2.0
+        "Kilograms": 1,
+        "Pounds": 2
     },
     "DexDescription": "It blooms when the weather is warm. If the weather gets cold, the bloom will close and it will stop flying. This is not an aggressive Pokémon, but it can cause allergies if it floats directly above you.",
     "Evolutions": [

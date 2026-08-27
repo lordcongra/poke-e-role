@@ -30,8 +30,8 @@
         "Feet": 2.6
     },
     "Weight": {
-        "Kilograms": 26.0,
-        "Pounds": 57.0
+        "Kilograms": 26,
+        "Pounds": 57
     },
     "DexDescription": "This Pokémon was restored from a fossil. If something happens that it doesn't like, it throws a tantrum and runs wild. Many of the researchers that brought it back were attacked by its powerful jaws.",
     "Evolutions": [

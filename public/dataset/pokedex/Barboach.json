@@ -30,8 +30,8 @@
         "Feet": 1.3
     },
     "Weight": {
-        "Kilograms": 2.0,
-        "Pounds": 5.0
+        "Kilograms": 2,
+        "Pounds": 5
     },
     "DexDescription": "Their whiskers work as a super sensitive radar. They hide inside the mud, leaving only their whiskers exposed while waiting for prey to come. If the mud dries, they move back into the water.",
     "Evolutions": [

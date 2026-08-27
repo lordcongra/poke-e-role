@@ -26,12 +26,12 @@
     "_id": "loudred",
     "DexCategory": "Big Voice Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 40.0,
-        "Pounds": 89.0
+        "Kilograms": 40,
+        "Pounds": 89
     },
     "DexDescription": "Their ears work as loudspeakers capable of breaking glass or even blowing apart a wooden house. When they finish shouting, even they are deafened for a while. They have noisy competitions in their packs.",
     "Evolutions": [

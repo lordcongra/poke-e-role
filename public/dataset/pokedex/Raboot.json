@@ -27,11 +27,11 @@
     "DexCategory": "Rabbit Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 9.0,
-        "Pounds": 20.0
+        "Kilograms": 9,
+        "Pounds": 20
     },
     "DexDescription": "This Pokémon loves to kick and trains each day to get better at it. Its fur is now very thick; some debate it is to protect it from the cold weather, while others say it is to produce hotter flames.",
     "Evolutions": [

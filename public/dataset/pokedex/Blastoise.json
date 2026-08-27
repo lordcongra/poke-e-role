@@ -30,8 +30,8 @@
         "Feet": 5.3
     },
     "Weight": {
-        "Kilograms": 170.0,
-        "Pounds": 380.0
+        "Kilograms": 170,
+        "Pounds": 380
     },
     "DexDescription": "The jets of water it spouts from the rocket cannons on its shell have been recorded to punch through steel. It is confident in its great defense and water spouts to overcome any obstacle.",
     "Evolutions": [

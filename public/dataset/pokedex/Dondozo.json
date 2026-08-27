@@ -26,12 +26,12 @@
     "_id": "dondozo",
     "DexCategory": "Big Catfish Pokémon",
     "Height": {
-        "Meters": 12.0,
+        "Meters": 12,
         "Feet": 39.3
     },
     "Weight": {
-        "Kilograms": 900.0,
-        "Pounds": 1984.0
+        "Kilograms": 900,
+        "Pounds": 1984
     },
     "DexDescription": "While big and imposing, they are lousy hunters and not very smart, so they have developed a symbiotic relationship with Tatsugiri, whom they treat as bosses. In exchange for protection, Tatsugiri help them get food.",
     "Evolutions": [],

@@ -26,12 +26,12 @@
     "_id": "tyranitar",
     "DexCategory": "Armor Pokémon",
     "Height": {
-        "Meters": 2.0,
+        "Meters": 2,
         "Feet": 6.6
     },
     "Weight": {
-        "Kilograms": 202.0,
-        "Pounds": 445.0
+        "Kilograms": 202,
+        "Pounds": 445
     },
     "DexDescription": "Its body is hardly damaged by any attack, so it's always eager to fight. They are extremely strong; their rage can change landscapes. Tyranitar are insolents, rebels and they care about no-one.",
     "Evolutions": [

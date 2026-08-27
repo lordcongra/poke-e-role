@@ -27,11 +27,11 @@
     "DexCategory": "Muscular Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 12.0,
-        "Pounds": 27.0
+        "Kilograms": 12,
+        "Pounds": 27
     },
     "DexDescription": "They carry a log as a tool and as a weapon. You may see them helping with construction work as they strive to challenge their strength. When they swing the log without trouble, they are close to evolving.",
     "Evolutions": [

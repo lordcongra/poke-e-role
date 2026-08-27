@@ -30,8 +30,8 @@
         "Feet": 4.11
     },
     "Weight": {
-        "Kilograms": 324.0,
-        "Pounds": 715.0
+        "Kilograms": 324,
+        "Pounds": 715
     },
     "DexDescription": "The creature stands still as if it were a vigilance tower. However, if it spots an intruder, it will move at an astounding speed to tackle, trample and destroy everything in its wake.",
     "Evolutions": [],

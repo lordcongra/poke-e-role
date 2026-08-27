@@ -30,8 +30,8 @@
         "Feet": 1.6
     },
     "Weight": {
-        "Kilograms": 2.0,
-        "Pounds": 5.0
+        "Kilograms": 2,
+        "Pounds": 5
     },
     "DexDescription": "They live in ponds and lakes, floating atop the water. The big leaf on their head is known to act as a ferry for smaller Pokémon. The leaf is delicate and needs constant watering or else Lotad will grow sick.",
     "Evolutions": [

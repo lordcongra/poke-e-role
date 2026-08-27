@@ -27,11 +27,11 @@
     "DexCategory": "Soft Tissue Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 3.0,
-        "Pounds": 6.0
+        "Kilograms": 3,
+        "Pounds": 6
     },
     "DexDescription": "The weakest but best tempered Dragon Pokémon known. It lives in damp and shady places so its body doesn't dry out. It's covered in a slimy membrane that makes things slide off of it.",
     "Evolutions": [

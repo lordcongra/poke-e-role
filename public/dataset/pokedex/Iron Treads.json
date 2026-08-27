@@ -27,11 +27,11 @@
     "DexCategory": "Paradox Pokémon",
     "Height": {
         "Meters": 0.9,
-        "Feet": 3.0
+        "Feet": 3
     },
     "Weight": {
-        "Kilograms": 240.0,
-        "Pounds": 529.0
+        "Kilograms": 240,
+        "Pounds": 529
     },
     "DexDescription": "An ancient war weapon fashioned into the form of a Donphan, made with technology that is not of this world. All that remains in its path is the sight of scorched earth.",
     "Evolutions": [],

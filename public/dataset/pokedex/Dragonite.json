@@ -30,8 +30,8 @@
         "Feet": 7.3
     },
     "Weight": {
-        "Kilograms": 210.0,
-        "Pounds": 463.0
+        "Kilograms": 210,
+        "Pounds": 463
     },
     "DexDescription": "Very few people have ever seen this Pokémon. Its intelligence matches that of humans. There are records of a Pokémon with a similar description that helped rescue a ship full of people during a hurricane.",
     "Evolutions": [

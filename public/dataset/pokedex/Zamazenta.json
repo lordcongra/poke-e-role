@@ -30,8 +30,8 @@
         "Feet": 9.5
     },
     "Weight": {
-        "Kilograms": 210.0,
-        "Pounds": 463.0
+        "Kilograms": 210,
+        "Pounds": 463
     },
     "DexDescription": "There is a legend of a hero who through sheer might wielded the shield of heroes to protect the people from the greatest evil.",
     "Evolutions": [

@@ -27,11 +27,11 @@
     "DexCategory": "Delivery Pokémon",
     "Height": {
         "Meters": 0.9,
-        "Feet": 3.0
+        "Feet": 3
     },
     "Weight": {
-        "Kilograms": 16.0,
-        "Pounds": 35.0
+        "Kilograms": 16,
+        "Pounds": 35
     },
     "DexDescription": "Delibird is always carrying food for its chicks and people in need. They are related to the image of Santa Claus since they always carry presents for their good and naughty kids in their bag-looking tail.",
     "Evolutions": [],

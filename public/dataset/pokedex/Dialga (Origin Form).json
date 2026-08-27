@@ -26,12 +26,12 @@
     "_id": "dialga-origin-form",
     "DexCategory": "Pokédex has no data.",
     "Height": {
-        "Meters": 7.0,
-        "Feet": 23.0
+        "Meters": 7,
+        "Feet": 23
     },
     "Weight": {
-        "Kilograms": 850.0,
-        "Pounds": 1874.0
+        "Kilograms": 850,
+        "Pounds": 1874
     },
     "DexDescription": "Religious lore talks about Arceus' secondborn, the ruler of time. The creator made its children in its image, but slightly less powerful so as not to repeat the mistake of its destructive firstborn.",
     "Evolutions": [

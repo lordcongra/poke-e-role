@@ -27,11 +27,11 @@
     "DexCategory": "Fruit Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 3.0,
-        "Pounds": 7.0
+        "Kilograms": 3,
+        "Pounds": 7
     },
     "DexDescription": "This happy-go-lucky Pokémon produces a delicious aroma that unfortunately attracts predators to it. When it escapes, it looks as if it's happily skipping around so it rarely gets the help it needs.",
     "Evolutions": [

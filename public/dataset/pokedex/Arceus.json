@@ -30,8 +30,8 @@
         "Feet": 10.5
     },
     "Weight": {
-        "Kilograms": 320.0,
-        "Pounds": 705.0
+        "Kilograms": 320,
+        "Pounds": 705
     },
     "DexDescription": "Plot Device",
     "Evolutions": [],

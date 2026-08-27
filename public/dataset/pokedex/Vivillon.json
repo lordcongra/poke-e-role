@@ -27,11 +27,11 @@
     "DexCategory": "Scale Pokémon",
     "Height": {
         "Meters": 1.2,
-        "Feet": 4.0
+        "Feet": 4
     },
     "Weight": {
-        "Kilograms": 17.0,
-        "Pounds": 37.0
+        "Kilograms": 17,
+        "Pounds": 37
     },
     "DexDescription": "The patterns on this Pokémon's wings depend on the climate it grows in and the flowers it feeds on. A famous Pokémon breeder made one develop a Poké Ball pattern, it was sold for a million Pokédollars.",
     "Evolutions": [

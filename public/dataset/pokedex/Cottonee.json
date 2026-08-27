@@ -27,11 +27,11 @@
     "DexCategory": "Cotton Puff Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
         "Kilograms": 0.6,
-        "Pounds": 1.0
+        "Pounds": 1
     },
     "DexDescription": "They go wherever the wind takes them. On rainy days they can't float, so they take shelter beneath big trees. To defend from predators, they shed their cotton and leave it as a decoy while they escape.",
     "Evolutions": [

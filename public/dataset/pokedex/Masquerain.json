@@ -30,8 +30,8 @@
         "Feet": 2.6
     },
     "Weight": {
-        "Kilograms": 3.0,
-        "Pounds": 8.0
+        "Kilograms": 3,
+        "Pounds": 8
     },
     "DexDescription": "Their antennas look like terrifying eyes. Masquerain can fly in any direction like a helicopter, but their wings are soft and fragile, so they don't fly when it's raining. They cling to trees at night to sleep.",
     "Evolutions": [

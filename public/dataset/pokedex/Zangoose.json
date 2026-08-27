@@ -30,8 +30,8 @@
         "Feet": 4.3
     },
     "Weight": {
-        "Kilograms": 40.0,
-        "Pounds": 88.0
+        "Kilograms": 40,
+        "Pounds": 88
     },
     "DexDescription": "The sole desire to battle Seviper is embedded in their genes; they have been rivals since forever. Zangoose is a very agile quadruped, standing up on two legs only when it is ready to fight.",
     "Evolutions": [],

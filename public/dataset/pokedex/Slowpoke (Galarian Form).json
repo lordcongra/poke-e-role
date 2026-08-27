@@ -27,11 +27,11 @@
     "DexCategory": "Dopey Pokémon",
     "Height": {
         "Meters": 1.2,
-        "Feet": 4.0
+        "Feet": 4
     },
     "Weight": {
-        "Kilograms": 36.0,
-        "Pounds": 80.0
+        "Kilograms": 36,
+        "Pounds": 80
     },
     "DexDescription": "Slowpoke born in Galar develop a sharper mind than others from their species, even though their expressions still seem a little dopey. Due to their different diets, the sap at the tip of their tails acquires a spicy flavor.",
     "Evolutions": [

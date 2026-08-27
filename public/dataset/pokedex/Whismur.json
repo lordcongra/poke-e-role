@@ -27,11 +27,11 @@
     "DexCategory": "Whisper Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 16.0,
-        "Pounds": 35.0
+        "Kilograms": 16,
+        "Pounds": 35
     },
     "DexDescription": "Their timid voice is barely audible, however, if it senses danger, they start crying loud enough to deafen anyone nearby. Their own noise scares them even more, so they cry harder until their ear covers shut.",
     "Evolutions": [

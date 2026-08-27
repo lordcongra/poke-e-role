@@ -27,11 +27,11 @@
     "DexCategory": "Rock Inn Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 14.0,
-        "Pounds": 32.0
+        "Kilograms": 14,
+        "Pounds": 32
     },
     "DexDescription": "Their saliva is corrosive and they use it to slowly cut pieces of rock. The rock becomes a shelter until it grows too large for it. If the rock breaks, it stays anxious and agitated until it finds a replacement.",
     "Evolutions": [

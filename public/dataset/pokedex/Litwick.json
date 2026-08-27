@@ -27,11 +27,11 @@
     "DexCategory": "Candle Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 3.0,
-        "Pounds": 6.0
+        "Kilograms": 3,
+        "Pounds": 6
     },
     "DexDescription": "Its flame is usually out, but it starts burning whenever it absorbs the life force from others. They trick lost people into thinking they are helping them find their way in the dark, but those who follow them never return.",
     "Evolutions": [

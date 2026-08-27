@@ -30,8 +30,8 @@
         "Feet": 1.3
     },
     "Weight": {
-        "Kilograms": 13.0,
-        "Pounds": 28.0
+        "Kilograms": 13,
+        "Pounds": 28
     },
     "DexDescription": "Eating a sweet apple caused its evolution. A nectarous scent wafts from its body, luring in the bug Pokémon it preys on, but it also attracts other Pokémon who eat the skins atop of its back.",
     "Evolutions": [

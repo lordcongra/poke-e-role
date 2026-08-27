@@ -26,12 +26,12 @@
     "_id": "skuntank",
     "DexCategory": "Skunk Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 38.0,
-        "Pounds": 83.0
+        "Kilograms": 38,
+        "Pounds": 83
     },
     "DexDescription": "It sprays a reeking fluid from its tail. The fluid smells worse the longer it is allowed to fester. It is vulnerable to attacks that come from above due to its exuberant tail. When it's relaxed it doesn't smell bad.",
     "Evolutions": [

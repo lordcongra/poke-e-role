@@ -26,12 +26,12 @@
     "_id": "simisage",
     "DexCategory": "Thorn Monkey Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 30.0,
-        "Pounds": 67.0
+        "Kilograms": 30,
+        "Pounds": 67
     },
     "DexDescription": "It becomes somewhat ill-tempered after it evolves. The leaves on its head can be turned into a bitter but effective medicine; however, it will attack with its thorned tail anyone trying to take them.",
     "Evolutions": [

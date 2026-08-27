@@ -30,8 +30,8 @@
         "Feet": 2.9
     },
     "Weight": {
-        "Kilograms": 19.0,
-        "Pounds": 41.0
+        "Kilograms": 19,
+        "Pounds": 41
     },
     "DexDescription": "It intimidates foes with intense gusts of flames and superheated air. Beware: if a Quilava turns its back on you, it is planing on using a fire move.",
     "Evolutions": [

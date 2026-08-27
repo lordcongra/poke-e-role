@@ -12,7 +12,9 @@ export interface LocalDatasetIndex {
     natures?: Record<string, LocalIndexItem>;
     moves: {
         support: LocalIndexItem[];
-        variable: LocalIndexItem[];
+        variable?: LocalIndexItem[];
+        zMoves?: LocalIndexItem[];
+        maxMoves?: LocalIndexItem[];
         basic: Record<string, LocalIndexItem[]>;
         highPower: Record<string, LocalIndexItem[]>;
     };

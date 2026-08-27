@@ -30,8 +30,8 @@
         "Feet": 8.2
     },
     "Weight": {
-        "Kilograms": 303.0,
-        "Pounds": 669.0
+        "Kilograms": 303,
+        "Pounds": 669
     },
     "DexDescription": "Old fossils suggest that millions of years ago, Cyclizar may have been feathered creatures and larger in size. But as time went on, the need for these features disappeared.",
     "Evolutions": [],

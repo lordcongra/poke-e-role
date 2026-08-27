@@ -26,12 +26,12 @@
     "_id": "centiskorch",
     "DexCategory": "Radiator Pokémon",
     "Height": {
-        "Meters": 3.0,
+        "Meters": 3,
         "Feet": 9.8
     },
     "Weight": {
-        "Kilograms": 120.0,
-        "Pounds": 264.0
+        "Kilograms": 120,
+        "Pounds": 264
     },
     "DexDescription": "It lashes its body like a whip and launches itself at enemies. While its burning body is already dangerous on its own, this excessively hostile Pokémon also has large and very sharp fangs.",
     "Evolutions": [

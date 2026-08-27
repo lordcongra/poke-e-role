@@ -30,8 +30,8 @@
         "Feet": 5.3
     },
     "Weight": {
-        "Kilograms": 48.0,
-        "Pounds": 105.0
+        "Kilograms": 48,
+        "Pounds": 105
     },
     "DexDescription": "Some Pokémon reveal their true forms after recovering power lost to them. Great forces of nature can help them recover their strength such as tornadoes, lightning, and even... the power of love?",
     "Evolutions": [

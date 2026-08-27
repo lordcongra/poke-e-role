@@ -27,11 +27,11 @@
     "DexCategory": "Strong Arm Pokémon",
     "Height": {
         "Meters": 2.1,
-        "Feet": 7.0
+        "Feet": 7
     },
     "Weight": {
-        "Kilograms": 135.0,
-        "Pounds": 297.0
+        "Kilograms": 135,
+        "Pounds": 297
     },
     "DexDescription": "They may look friendly but their brute strength makes them very dangerous. Many Trainers have been severely injured and even snapped in half by the 'hugs' of a Bewear.",
     "Evolutions": [

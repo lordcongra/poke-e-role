@@ -27,11 +27,11 @@
     "DexCategory": "Grass Quill Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 1.0,
-        "Pounds": 3.0
+        "Kilograms": 1,
+        "Pounds": 3
     },
     "DexDescription": "This is a shy Pokémon. It sleeps during the day, absorbing sunlight through its feathers, then at night becomes more active. It likes to keep sight of its trainer at all times, rotating its head 180 degrees to do so.",
     "Evolutions": [

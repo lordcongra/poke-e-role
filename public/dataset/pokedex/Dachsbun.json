@@ -30,8 +30,8 @@
         "Feet": 1.7
     },
     "Weight": {
-        "Kilograms": 15.0,
-        "Pounds": 32.0
+        "Kilograms": 15,
+        "Pounds": 32
     },
     "DexDescription": "Dachsbun is every wheat farmer's best friend, as the delicious aroma it emanates helps the fields grow with golden grains. Their body can harden when exposed to heat, and they are excellent vermin hunters.",
     "Evolutions": [

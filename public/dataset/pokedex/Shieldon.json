@@ -30,8 +30,8 @@
         "Feet": 1.7
     },
     "Weight": {
-        "Kilograms": 57.0,
-        "Pounds": 125.0
+        "Kilograms": 57,
+        "Pounds": 125
     },
     "DexDescription": "It was cloned from a fossil dug out from a layer of clay. It is outstandingly armored. As a result, it can eat grass and berries without having to fight many Pokémon who would dare to prey on it.",
     "Evolutions": [

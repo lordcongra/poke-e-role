@@ -27,11 +27,11 @@
     "DexCategory": "Scorching Pokémon",
     "Height": {
         "Meters": 1.2,
-        "Feet": 4.0
+        "Feet": 4
     },
     "Weight": {
-        "Kilograms": 24.0,
-        "Pounds": 54.0
+        "Kilograms": 24,
+        "Pounds": 54
     },
     "DexDescription": "They soar over desert canyons. If they spot prey, they launch down at full speed to deliver a finishing blow. They are excellent hunters. With every wing flap they take, a trail of fiery dust is left behind.",
     "Evolutions": [

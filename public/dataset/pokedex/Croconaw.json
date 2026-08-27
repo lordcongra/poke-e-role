@@ -30,8 +30,8 @@
         "Feet": 3.6
     },
     "Weight": {
-        "Kilograms": 25.0,
-        "Pounds": 55.0
+        "Kilograms": 25,
+        "Pounds": 55
     },
     "DexDescription": "This Pokémon is really tenacious. Once it bites something it won't let go until it tears it down - even if its trainer is ordering to let go. If it loses any of its fangs, they'll regrow in a few days. It's a very wild Pokémon.",
     "Evolutions": [

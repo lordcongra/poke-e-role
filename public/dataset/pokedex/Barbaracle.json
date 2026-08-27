@@ -30,8 +30,8 @@
         "Feet": 4.25
     },
     "Weight": {
-        "Kilograms": 96.0,
-        "Pounds": 211.0
+        "Kilograms": 96,
+        "Pounds": 211
     },
     "DexDescription": "When they evolve, the two Binacle multiply into seven. They all defend the rock they live in, but each one has a mind of their own and will move independently; they tend to follow the head's orders, though.",
     "Evolutions": [

@@ -30,8 +30,8 @@
         "Feet": 3.6
     },
     "Weight": {
-        "Kilograms": 20.0,
-        "Pounds": 44.0
+        "Kilograms": 20,
+        "Pounds": 44
     },
     "DexDescription": "In old times, Alolan natives revered this Pokémon as a god incarnate. It is usually calm and benevolent, but it can be ruthless when disturbed, leaving its foes as a cold block of ice in the snow.",
     "Evolutions": [

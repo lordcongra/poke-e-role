@@ -30,8 +30,8 @@
         "Feet": 0.7
     },
     "Weight": {
-        "Kilograms": 2.0,
-        "Pounds": 4.0
+        "Kilograms": 2,
+        "Pounds": 4
     },
     "DexDescription": "Feisty little creatures, Rookidee are known for challenging foes much larger than themselves, and even if they are defeated they don't give up and try again later. They use their small size as an advantage.",
     "Evolutions": [

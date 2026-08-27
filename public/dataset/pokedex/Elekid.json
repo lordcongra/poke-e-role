@@ -27,11 +27,11 @@
     "DexCategory": "Electric Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 23.0,
-        "Pounds": 52.0
+        "Kilograms": 23,
+        "Pounds": 52
     },
     "DexDescription": "They follow storms and bad weather. Elekid rotate their arms constantly to charge electricity. Beware, there is an electric current between their horns that may zap you if you touch them.",
     "Evolutions": [

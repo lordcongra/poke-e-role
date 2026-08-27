@@ -27,11 +27,11 @@
     "DexCategory": "Bagworm Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 7.0,
-        "Pounds": 16.0
+        "Kilograms": 7,
+        "Pounds": 16
     },
     "DexDescription": "Pineco looks just like a regular pine cone. It adds layers of tree bark as a shield from harm. It waits for Bug Pokémon to eat while hanging from branches. If anyone shakes its tree, it falls down and explodes. Be very careful.",
     "Evolutions": [

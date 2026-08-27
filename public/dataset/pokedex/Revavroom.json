@@ -27,11 +27,11 @@
     "DexCategory": "Multi-Cyl Pokémon",
     "Height": {
         "Meters": 1.8,
-        "Feet": 6.0
+        "Feet": 6
     },
     "Weight": {
-        "Kilograms": 120.0,
-        "Pounds": 264.0
+        "Kilograms": 120,
+        "Pounds": 264
     },
     "DexDescription": "It wards off threats with the vicious sound of its exhaust. If that is not effective, it can spray toxic fluids and pump out a cloud of poisonous gas. Due to its size it can now attach itself to and power large vehicles.",
     "Evolutions": [

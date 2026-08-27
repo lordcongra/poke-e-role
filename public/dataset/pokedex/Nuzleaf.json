@@ -26,12 +26,12 @@
     "_id": "nuzleaf",
     "DexCategory": "Wily Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 28.0,
-        "Pounds": 61.0
+        "Kilograms": 28,
+        "Pounds": 61
     },
     "DexDescription": "They live inside holes in big trees. Their leaves are played like flutes to strike fear and discomfort in lost people's hearts. They like to go out and startle people. Their noses are really sensitive and frail.",
     "Evolutions": [

@@ -30,8 +30,8 @@
         "Feet": 6.3
     },
     "Weight": {
-        "Kilograms": 240.0,
-        "Pounds": 528.0
+        "Kilograms": 240,
+        "Pounds": 528
     },
     "DexDescription": "It has a horn that serves as a drill for destroying rocks and boulders. Rhydon occasionally goes for a swim in rivers and even magma pools. Its great resistance prevents it from taking any damage.",
     "Evolutions": [

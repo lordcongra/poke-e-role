@@ -30,8 +30,8 @@
         "Feet": 6.3
     },
     "Weight": {
-        "Kilograms": 105.0,
-        "Pounds": 230.0
+        "Kilograms": 105,
+        "Pounds": 230
     },
     "DexDescription": "Hisuian scrolls show a Pokémon who attacked so intensely, its own attacks wounded its flesh: scary tales of a white beast who was the embodiment of death. The identity of this Pokémon remains unknown.",
     "Evolutions": [

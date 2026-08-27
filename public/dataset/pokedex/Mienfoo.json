@@ -27,11 +27,11 @@
     "DexCategory": "Martial Arts Pokémon",
     "Height": {
         "Meters": 0.9,
-        "Feet": 3.0
+        "Feet": 3
     },
     "Weight": {
-        "Kilograms": 20.0,
-        "Pounds": 44.0
+        "Kilograms": 20,
+        "Pounds": 44
     },
     "DexDescription": "They gather in small groups around the mountains to train and master new techniques. They use their sharp claws to damage their foes. Only those Mienfoo that excel at fighting in the group evolve.",
     "Evolutions": [

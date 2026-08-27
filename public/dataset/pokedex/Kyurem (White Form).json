@@ -30,8 +30,8 @@
         "Feet": 11.8
     },
     "Weight": {
-        "Kilograms": 325.0,
-        "Pounds": 716.0
+        "Kilograms": 325,
+        "Pounds": 716
     },
     "DexDescription": "In the icy mountains at the west of Unova, you can hear the wails of a creature suffering as if it missed a part of its very soul. Explosions and blue fires are sure to follow.",
     "Evolutions": [

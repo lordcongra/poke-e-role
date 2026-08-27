@@ -30,8 +30,8 @@
         "Feet": 10.5
     },
     "Weight": {
-        "Kilograms": 92.0,
-        "Pounds": 202.0
+        "Kilograms": 92,
+        "Pounds": 202
     },
     "DexDescription": "Pokédex registers it as #637. It shares striking similarities with Volcarona. However, it behaves as if it were a beast brought back from ancient times, wreaking havoc wherever it goes.",
     "Evolutions": [],

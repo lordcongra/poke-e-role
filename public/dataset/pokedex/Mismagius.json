@@ -27,11 +27,11 @@
     "DexCategory": "Magical Pokémon",
     "Height": {
         "Meters": 0.9,
-        "Feet": 3.0
+        "Feet": 3
     },
     "Weight": {
-        "Kilograms": 4.0,
-        "Pounds": 9.0
+        "Kilograms": 4,
+        "Pounds": 9
     },
     "DexDescription": "Extremely rare. Their cries sound like incantations; hearing them gives you bad headaches and hallucinations. It is said that some Mismagius are benevolent and have granted good fortune to people they like.",
     "Evolutions": [

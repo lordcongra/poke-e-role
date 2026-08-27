@@ -27,11 +27,11 @@
     "DexCategory": "Coral Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
         "Kilograms": 0.5,
-        "Pounds": 1.0
+        "Pounds": 1
     },
     "DexDescription": "Watch your feet when walking through shallow ocean waters,  because this Pokémon looks like a stone and it will curse you if you step on it. Climate change wiped out these Corsola from warmer seas.",
     "Evolutions": [

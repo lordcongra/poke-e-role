@@ -27,11 +27,11 @@
     "DexCategory": "Chimp Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 5.0,
-        "Pounds": 11.0
+        "Kilograms": 5,
+        "Pounds": 11
     },
     "DexDescription": "It spends its early days looking for a stick with a certain sound. It then uses the stick to create rhythmic beats that makes plants glow and grow. Grookey are enthusiastic and kind creatures that love music.",
     "Evolutions": [

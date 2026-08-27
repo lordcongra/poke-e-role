@@ -27,11 +27,11 @@
     "DexCategory": "Mole Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 8.0,
-        "Pounds": 18.0
+        "Kilograms": 8,
+        "Pounds": 18
     },
     "DexDescription": "It lives in caves but loves to wreak havoc on vegetable farms. It makes its way swiftly through the soil by putting both claws together and rotating at high speed. It is friendly and not afraid of humans.",
     "Evolutions": [

@@ -27,11 +27,11 @@
     "DexCategory": "Tiny Robin Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 1.0,
-        "Pounds": 2.0
+        "Kilograms": 1,
+        "Pounds": 2
     },
     "DexDescription": "These cute Pokémon send signals to one another with beautiful chirps and feather movements. But, despite the beauty of its lilting voice, they are relentless in attacking any intruder coming close to their nest.",
     "Evolutions": [

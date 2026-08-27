@@ -27,11 +27,11 @@
     "DexCategory": "Rendezvous Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 8.0,
-        "Pounds": 19.0
+        "Kilograms": 8,
+        "Pounds": 19
     },
     "DexDescription": "Luvdisc is a symbol of romance. It lives in shallow seas, swimming after couples, bringing them closer and promising eternal love. During their spawning season, the waters around them turn pink.",
     "Evolutions": [],

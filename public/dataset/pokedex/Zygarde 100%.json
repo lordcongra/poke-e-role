@@ -30,8 +30,8 @@
         "Feet": 14.8
     },
     "Weight": {
-        "Kilograms": 610.0,
-        "Pounds": 1344.0
+        "Kilograms": 610,
+        "Pounds": 1344
     },
     "DexDescription": "The complete form of Zygarde",
     "Evolutions": [

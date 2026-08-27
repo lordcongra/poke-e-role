@@ -30,8 +30,8 @@
         "Feet": 4.25
     },
     "Weight": {
-        "Kilograms": 30.0,
-        "Pounds": 66.0
+        "Kilograms": 30,
+        "Pounds": 66
     },
     "DexDescription": "This Pokémon has a jaw that's as sharp as a spear and as strong as steel. Apparently Barraskewda's flesh is surprisingly tasty, too. When they hunt, they have a speed burst record of 100 knots.",
     "Evolutions": [

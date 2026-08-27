@@ -30,8 +30,8 @@
         "Feet": 2.9
     },
     "Weight": {
-        "Kilograms": 10.0,
-        "Pounds": 22.0
+        "Kilograms": 10,
+        "Pounds": 22
     },
     "DexDescription": "Magikarp is a pathetic excuse of a Pokémon that is not even good to eat. It's only capable of flopping and splashing. However, it can survive in any body of water no matter how polluted it is.",
     "Evolutions": [

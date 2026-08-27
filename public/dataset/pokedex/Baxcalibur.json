@@ -30,8 +30,8 @@
         "Feet": 6.9
     },
     "Weight": {
-        "Kilograms": 210.0,
-        "Pounds": 463.0
+        "Kilograms": 210,
+        "Pounds": 463
     },
     "DexDescription": "The cryogenic air blasted from Baxcalibur's mouth is so cold it can freeze even lava. It launches itself into battle by flipping upside down to release its frigid breath and finishes off opponents with its dorsal blade.",
     "Evolutions": [

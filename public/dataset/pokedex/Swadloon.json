@@ -30,8 +30,8 @@
         "Feet": 1.7
     },
     "Weight": {
-        "Kilograms": 7.0,
-        "Pounds": 16.0
+        "Kilograms": 7,
+        "Pounds": 16
     },
     "DexDescription": "Preferring dark and damp places, it spends the entire day inside of rotting logs. It protects itself from the cold by wrapping up in leaves. It's kind of moody and it likes to remain undisturbed.",
     "Evolutions": [

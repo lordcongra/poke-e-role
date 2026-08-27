@@ -27,11 +27,11 @@
     "DexCategory": "Meteor Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 40.0,
-        "Pounds": 88.0
+        "Kilograms": 40,
+        "Pounds": 88
     },
     "DexDescription": "Without its shell Minior can move faster. They have playful and colorful personalities. If a Minior wants to regrow their shell they must go to the stratosphere for a few days. Some of them never return, though.",
     "Evolutions": [

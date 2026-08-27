@@ -26,12 +26,12 @@
     "_id": "diggersby",
     "DexCategory": "Digging Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 42.0,
-        "Pounds": 93.0
+        "Kilograms": 42,
+        "Pounds": 93
     },
     "DexDescription": "A powerful excavator, its ears can reduce dense bedrock to rubble. After it has finished digging, it just lounges lazily. Some of them have been trained to work at construction sites with good results.",
     "Evolutions": [

@@ -27,11 +27,11 @@
     "DexCategory": "Thunderbolt Pokémon",
     "Height": {
         "Meters": 1.8,
-        "Feet": 6.0
+        "Feet": 6
     },
     "Weight": {
-        "Kilograms": 138.0,
-        "Pounds": 305.0
+        "Kilograms": 138,
+        "Pounds": 305
     },
     "DexDescription": "This Pokémon is reckless and has a short temper. As its electric charge amplifies, blue sparks begin to crackle between its horns. It has registered charge levels of over 20,000 volts.",
     "Evolutions": [

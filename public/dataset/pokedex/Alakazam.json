@@ -27,11 +27,11 @@
     "DexCategory": "Psi Pokémon",
     "Height": {
         "Meters": 1.5,
-        "Feet": 5.0
+        "Feet": 5
     },
     "Weight": {
-        "Kilograms": 48.0,
-        "Pounds": 105.0
+        "Kilograms": 48,
+        "Pounds": 105
     },
     "DexDescription": "A Pokémon that can memorize anything and never forgets what it learns. Over time it becomes too smart to allow anyone to be its master. Alakazam's psychic powers can be terrifying.",
     "Evolutions": [

@@ -30,8 +30,8 @@
         "Feet": 4.6
     },
     "Weight": {
-        "Kilograms": 30.0,
-        "Pounds": 66.0
+        "Kilograms": 30,
+        "Pounds": 66
     },
     "DexDescription": "The most famous legend in Kitakami tells about how three Pokémon and their master defeated an ogre. One of them was ugly and dull but became bright and beautiful after eating a forbidden magical mochi.",
     "Evolutions": [],

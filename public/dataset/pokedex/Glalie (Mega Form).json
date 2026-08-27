@@ -27,11 +27,11 @@
     "DexCategory": "Face Pokémon",
     "Height": {
         "Meters": 2.1,
-        "Feet": 7.0
+        "Feet": 7
     },
     "Weight": {
-        "Kilograms": 350.0,
-        "Pounds": 772.0
+        "Kilograms": 350,
+        "Pounds": 772
     },
     "DexDescription": "The power of the Mega Stone bent its jaw at an unnatural angle. This helps it spew enormous blizzards, but leaves it unable to eat any prey it catches. This makes it angry and will weaken it if it stays in this form.",
     "Evolutions": [

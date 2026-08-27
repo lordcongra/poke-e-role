@@ -30,8 +30,8 @@
         "Feet": 8.2
     },
     "Weight": {
-        "Kilograms": 405.0,
-        "Pounds": 891.0
+        "Kilograms": 405,
+        "Pounds": 891
     },
     "DexDescription": "Nothing could stop this Pokémon 100 million years ago; it was a prehistoric king. Thanks to its giant jaws, which could shred thick metal plates as if they were paper, this Pokémon takes orders from no one.",
     "Evolutions": [

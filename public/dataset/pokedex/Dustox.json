@@ -30,8 +30,8 @@
         "Feet": 3.9
     },
     "Weight": {
-        "Kilograms": 31.0,
-        "Pounds": 70.0
+        "Kilograms": 31,
+        "Pounds": 70
     },
     "DexDescription": "They travel in big groups during the night, attracted to bright lights and big cities. Their flight releases a poisonous, shining dust that causes mayhem in towns. For this reason, people dislike them.",
     "Evolutions": [

@@ -27,11 +27,11 @@
     "DexCategory": "Virtual Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 32.0,
-        "Pounds": 72.0
+        "Kilograms": 32,
+        "Pounds": 72
     },
     "DexDescription": "This man-made Pokémon is an upgraded version of Porygon. It is used for space exploration and planetary development, boasting the power of science. Its AI software allows it to learn on its own.",
     "Evolutions": [

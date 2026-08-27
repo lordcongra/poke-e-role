@@ -22,7 +22,10 @@
         ],
         "StatChanges": [
             {
-                "Stats": ["Def", "SpDef"],
+                "Stats": [
+                    "Def",
+                    "SpDef"
+                ],
                 "Stages": -1,
                 "Affects": "Targets"
             }

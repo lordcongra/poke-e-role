@@ -27,11 +27,11 @@
     "DexCategory": "Poison Gas Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 1.0,
-        "Pounds": 2.0
+        "Kilograms": 1,
+        "Pounds": 2
     },
     "DexDescription": "It is drawn to the smog and fumes of cities. It fills its body with toxic gases to float like a balloon. When it gets nervous, it releases a sickly green gas. Breathing this gas will give you a bad case of sniffles.",
     "Evolutions": [

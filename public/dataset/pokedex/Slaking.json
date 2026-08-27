@@ -27,11 +27,11 @@
     "DexCategory": "Lazy Pokémon",
     "Height": {
         "Meters": 2.1,
-        "Feet": 7.0
+        "Feet": 7
     },
     "Weight": {
-        "Kilograms": 390.0,
-        "Pounds": 861.0
+        "Kilograms": 390,
+        "Pounds": 861
     },
     "DexDescription": "They spend all day sleeping and eating grass that grows within their reach. Sometimes they live beneath trees, waiting for fruits to fall. They dislike intruders on their territory but rarely do anything about them.",
     "Evolutions": [

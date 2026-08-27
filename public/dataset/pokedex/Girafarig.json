@@ -27,11 +27,11 @@
     "DexCategory": "Long Neck Pokémon",
     "Height": {
         "Meters": 1.5,
-        "Feet": 5.0
+        "Feet": 5
     },
     "Weight": {
-        "Kilograms": 141.0,
-        "Pounds": 313.0
+        "Kilograms": 141,
+        "Pounds": 313
     },
     "DexDescription": "Its tail is a head on its own. It bites if anything comes close and never rests. Some say that the sum of its two heads grant it Psychic powers. Even if that's true, the tail isn't very bright, but it is quite vicious.",
     "Evolutions": [

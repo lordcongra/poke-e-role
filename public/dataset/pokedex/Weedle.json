@@ -27,11 +27,11 @@
     "DexCategory": "Hairy Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 3.0,
-        "Pounds": 6.0
+        "Kilograms": 3,
+        "Pounds": 6
     },
     "DexDescription": "Often found in forests eating leaves. It has a sharp, venomous stinger on its head for defense. It has an acute sense of smell to find food, and its brightly-colored body is intended to warn off predators.",
     "Evolutions": [

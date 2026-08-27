@@ -26,12 +26,12 @@
     "_id": "drednaw",
     "DexCategory": "Bite Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 115.0,
-        "Pounds": 255.0
+        "Kilograms": 115,
+        "Pounds": 255
     },
     "DexDescription": "It stays immobile near rivers and lakes, disguised as a rock until it snaps at an unsuspecting prey. Once something is trapped by its sharp teeth there is no way to take it out as it is incredibly stubborn.",
     "Evolutions": [

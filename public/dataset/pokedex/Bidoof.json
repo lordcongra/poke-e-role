@@ -30,8 +30,8 @@
         "Feet": 1.7
     },
     "Weight": {
-        "Kilograms": 20.0,
-        "Pounds": 44.0
+        "Kilograms": 20,
+        "Pounds": 44
     },
     "DexDescription": "Steady as a mountain, Bidoof has nerves of steel so nothing can disturb its focus. It is agile, active, and a great team worker. They live in huge packs alongside rivers; the dams they build are incredibly sturdy.",
     "Evolutions": [

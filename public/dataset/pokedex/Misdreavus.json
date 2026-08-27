@@ -30,8 +30,8 @@
         "Feet": 2.3
     },
     "Weight": {
-        "Kilograms": 1.0,
-        "Pounds": 2.0
+        "Kilograms": 1,
+        "Pounds": 2
     },
     "DexDescription": "Misdreavus frightens people with a creepy, sobbing cry. It uses the red spheres on its neck to absorb fear as nutrition. It takes a wicked pleasure in startling and scaring people.",
     "Evolutions": [

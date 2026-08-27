@@ -27,11 +27,11 @@
     "DexCategory": "Evolution Pokemon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 6.0,
-        "Pounds": 14.0
+        "Kilograms": 6,
+        "Pounds": 14
     },
     "DexDescription": "This Pokemon is extremely rare to find. Eevee has an unstable genetic makeup that suddenly mutates to fit its environment. Radiation from various stones causes this Pokemon to evolve.",
     "Evolutions": [

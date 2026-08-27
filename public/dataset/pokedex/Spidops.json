@@ -26,12 +26,12 @@
     "_id": "spidops",
     "DexCategory": "Trap Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 16.0,
-        "Pounds": 36.0
+        "Kilograms": 16,
+        "Pounds": 36
     },
     "DexDescription": "They are incredibly stealthy. If you find an area covered with sticky threads, stay away, for it is most certainly a trap, and once it catches any potential prey, the victim will not escape.",
     "Evolutions": [

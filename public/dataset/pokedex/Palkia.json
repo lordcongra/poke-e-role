@@ -30,8 +30,8 @@
         "Feet": 13.8
     },
     "Weight": {
-        "Kilograms": 336.0,
-        "Pounds": 740.0
+        "Kilograms": 336,
+        "Pounds": 740
     },
     "DexDescription": "An old scroll describes a being who is capable of bending and twisting space in impossible ways by a powerful Pokémon god.",
     "Evolutions": [

@@ -30,8 +30,8 @@
         "Feet": 2.6
     },
     "Weight": {
-        "Kilograms": 23.0,
-        "Pounds": 50.0
+        "Kilograms": 23,
+        "Pounds": 50
     },
     "DexDescription": "Prinplup hunt in icy seas. They live solitary lives because they cannot stand company and will never form a group or a team. They believe they are the most important thing in the world; it's almost irritating.",
     "Evolutions": [

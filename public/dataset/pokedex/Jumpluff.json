@@ -30,8 +30,8 @@
         "Feet": 2.6
     },
     "Weight": {
-        "Kilograms": 3.0,
-        "Pounds": 6.0
+        "Kilograms": 3,
+        "Pounds": 6
     },
     "DexDescription": "It flies along the wind and spreads its cotton-like spores all over the world to make more offspring. It is always looking for warm places; if it gets caught by a cold front, it will land to find shelter.",
     "Evolutions": [

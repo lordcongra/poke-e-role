@@ -30,8 +30,8 @@
         "Feet": 1.7
     },
     "Weight": {
-        "Kilograms": 10.0,
-        "Pounds": 22.0
+        "Kilograms": 10,
+        "Pounds": 22
     },
     "DexDescription": "They live near factories and electric generators. It bears an uncanny and unexplained resemblance to a Poké Ball. Since it explodes at the slightest provocation, even veteran trainers treat it with caution.",
     "Evolutions": [

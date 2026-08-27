@@ -30,8 +30,8 @@
         "Feet": 3.6
     },
     "Weight": {
-        "Kilograms": 78.0,
-        "Pounds": 172.0
+        "Kilograms": 78,
+        "Pounds": 172
     },
     "DexDescription": "It rolls its legs: their heavy weight creates parallel trackmarks that allow them to travel faster through caves and tunnels. In old times, people used Carkol's coal as fuel for they can hold fire for a long time.",
     "Evolutions": [

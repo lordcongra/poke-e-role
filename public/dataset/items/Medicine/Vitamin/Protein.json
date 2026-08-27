@@ -7,7 +7,7 @@
     "Category": "Vitamin",
     "Description": "A tasty milkshake that aids in the growth of bigger and stronger muscles.",
     "OneUse": true,
-    "PMDPrice": 4000.0,
+    "PMDPrice": 4000,
     "TrainerPrice": "9800",
     "Boost": "Strength",
     "Value": 1,

@@ -30,8 +30,8 @@
         "Feet": 1.7
     },
     "Weight": {
-        "Kilograms": 5.0,
-        "Pounds": 11.0
+        "Kilograms": 5,
+        "Pounds": 11
     },
     "DexDescription": "They climb trees with their spiked feet. They remain cool under stress, calm under pressure and collected when in danger. They are found protecting the trees ferociously.",
     "Evolutions": [

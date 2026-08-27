@@ -30,8 +30,8 @@
         "Feet": 5.2
     },
     "Weight": {
-        "Kilograms": 156.0,
-        "Pounds": 344.0
+        "Kilograms": 156,
+        "Pounds": 344
     },
     "DexDescription": "The creature is a judge, relentless and cold when imparting justice. It won't account for motives, or show any empathy. If you committed a crime—you will pay.",
     "Evolutions": [],

@@ -26,12 +26,12 @@
     "_id": "eternatus",
     "DexCategory": "Pokédex has no data.",
     "Height": {
-        "Meters": 20.0,
+        "Meters": 20,
         "Feet": 65.6
     },
     "Weight": {
-        "Kilograms": 950.0,
-        "Pounds": 2094.0
+        "Kilograms": 950,
+        "Pounds": 2094
     },
     "DexDescription": "A large meteorite fell on the Galar region 20,000 years ago. Ever since this happened, a power surge has been causing Pokémon to grow gigantic; this phenomenon is happening more in recent years.",
     "Evolutions": [

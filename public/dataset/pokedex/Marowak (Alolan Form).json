@@ -26,12 +26,12 @@
     "_id": "marowak-alolan-form",
     "DexCategory": "Bone Keeper Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 34.0,
-        "Pounds": 75.0
+        "Kilograms": 34,
+        "Pounds": 75
     },
     "DexDescription": "Alola has many predators for an orphaned Cubone, so its mother's spirit lingers close to protect her baby. This otherworldly influence made Marowak fiercer and changed its type completely.",
     "Evolutions": [

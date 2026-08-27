@@ -30,8 +30,8 @@
         "Feet": 7.6
     },
     "Weight": {
-        "Kilograms": 127.0,
-        "Pounds": 280.0
+        "Kilograms": 127,
+        "Pounds": 280
     },
     "DexDescription": "The power of the Mega Stone was absorbed into its muscles. If it grapples you and its Psychic force does not crack, you its strong arms will.",
     "Evolutions": [

@@ -30,8 +30,8 @@
         "Feet": 6.3
     },
     "Weight": {
-        "Kilograms": 178.0,
-        "Pounds": 392.0
+        "Kilograms": 178,
+        "Pounds": 392
     },
     "DexDescription": "Johto legends tell about a Pokémon born from lightning, with a roar like crashing thunder, soaring the lands, sending resounding shockwaves as it walks.",
     "Evolutions": [],

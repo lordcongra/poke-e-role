@@ -27,11 +27,11 @@
     "DexCategory": "Puppy Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 11.0,
-        "Pounds": 24.0
+        "Kilograms": 11,
+        "Pounds": 24
     },
     "DexDescription": "They are smooth and squishy to the touch. Their breath can be used as yeast to bake bread and cakes. Their body is so soft, people can't help but protect them. They love to rest in warm and moist places.",
     "Evolutions": [

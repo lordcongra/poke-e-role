@@ -30,8 +30,8 @@
         "Feet": 3.9
     },
     "Weight": {
-        "Kilograms": 58.0,
-        "Pounds": 128.0
+        "Kilograms": 58,
+        "Pounds": 128
     },
     "DexDescription": "A special ink oozes from its tail to mark its territory. They are skilled artists, known for painting action scenes from great battles. If they study their painting for a long time, they learn those moves.",
     "Evolutions": [],

@@ -14,7 +14,9 @@
         "AccuracyReduction": -1
     },
     "AddedEffects": {
-        "AilmentHeal": ["All"]
+        "AilmentHeal": [
+            "All"
+        ]
     },
     "Category": "Special"
 }

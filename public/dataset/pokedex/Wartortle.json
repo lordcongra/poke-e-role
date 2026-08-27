@@ -26,12 +26,12 @@
     "_id": "wartortle",
     "DexCategory": "Turtle Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 23.0,
-        "Pounds": 50.0
+        "Kilograms": 23,
+        "Pounds": 50
     },
     "DexDescription": "Its large tail is covered with rich, thick fur that deepens in color with age. The scratches on its shell are evidence of this Pokémon's tough attitude in battle. It is a good hunter underwater.",
     "Evolutions": [

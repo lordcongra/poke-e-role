@@ -27,11 +27,11 @@
     "DexCategory": "Bugle Beak Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 14.0,
-        "Pounds": 32.0
+        "Kilograms": 14,
+        "Pounds": 32
     },
     "DexDescription": "This Pokémon bends its beak to produce a variety of sounds, much to the annoyance of the neighbors. It also shoots a burst of berry seeds at its foes, prey, or an unsuspecting passerby.",
     "Evolutions": [

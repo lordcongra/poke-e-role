@@ -27,11 +27,11 @@
     "DexCategory": "Drummer Pokémon",
     "Height": {
         "Meters": 2.1,
-        "Feet": 7.0
+        "Feet": 7
     },
     "Weight": {
-        "Kilograms": 90.0,
-        "Pounds": 200.0
+        "Kilograms": 90,
+        "Pounds": 200
     },
     "DexDescription": "The leader owns the largest drum among its troop and has the best drumming technique which makes roots sprout to attack its foes. But they are peaceful and kind creatures that value harmony in their group.",
     "Evolutions": [

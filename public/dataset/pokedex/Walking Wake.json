@@ -30,8 +30,8 @@
         "Feet": 11.5
     },
     "Weight": {
-        "Kilograms": 280.0,
-        "Pounds": 617.0
+        "Kilograms": 280,
+        "Pounds": 617
     },
     "DexDescription": "Pokédex glitches as it has no data. On a remote island, an experiment gone wrong made it to the news when several wild Pokémon attacked the visitors of what was planned to be an amusement park.",
     "Evolutions": [],

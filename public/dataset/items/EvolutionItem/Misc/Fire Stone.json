@@ -7,7 +7,7 @@
     "Category": "",
     "Description": "This Stone has a flame inside, it's hot to the touch. Usually found at the base of volcanoes.",
     "OneUse": true,
-    "PMDPrice": 1000.0,
+    "PMDPrice": 1000,
     "TrainerPrice": "5000",
     "Image": "fire-stone.png"
 }

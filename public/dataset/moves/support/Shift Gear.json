@@ -14,12 +14,16 @@
     "AddedEffects": {
         "StatChanges": [
             {
-                "Stats": ["Strength"],
+                "Stats": [
+                    "Strength"
+                ],
                 "Stages": 1,
                 "Affects": "Targets"
             },
             {
-                "Stats": ["Dexterity"],
+                "Stats": [
+                    "Dexterity"
+                ],
                 "Stages": 2,
                 "Affects": "Targets"
             }

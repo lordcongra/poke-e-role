@@ -30,8 +30,8 @@
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 40.0,
-        "Pounds": 84.0
+        "Kilograms": 40,
+        "Pounds": 84
     },
     "DexDescription": "Fearow soar around wastelands and fields. Their large wingspan allows them to fly all day. They're easily annoyed and ill-tempered and attack using their sharp beak to peck and pierce the foes.",
     "Evolutions": [

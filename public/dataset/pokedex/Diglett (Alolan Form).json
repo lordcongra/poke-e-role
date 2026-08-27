@@ -30,8 +30,8 @@
         "Feet": 0.7
     },
     "Weight": {
-        "Kilograms": 1.0,
-        "Pounds": 2.0
+        "Kilograms": 1,
+        "Pounds": 2
     },
     "DexDescription": "This variant of Diglett is only found in the Alola region. The small hairs on its head are used to perceive its surroundings while burrowed. Do not cut them or Diglett will become very sick.",
     "Evolutions": [

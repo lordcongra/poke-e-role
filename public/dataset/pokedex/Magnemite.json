@@ -27,11 +27,11 @@
     "DexCategory": "Magnet Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 6.0,
-        "Pounds": 13.0
+        "Kilograms": 6,
+        "Pounds": 13
     },
     "DexDescription": "It lurks near electric facilities and mountains as it is attracted by big magnetic fields. It is not aggressive and usually defends itself with a screech or a weak electric impulse to deter others from attacking.",
     "Evolutions": [

@@ -26,12 +26,12 @@
     "_id": "mawile-mega-form",
     "DexCategory": "Deceiver Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 23.0,
-        "Pounds": 51.0
+        "Kilograms": 23,
+        "Pounds": 51
     },
     "DexDescription": "The power of the Mega Stone makes its back jaws develop a mind of their own; they are vicious and won't release anything they bite until it's crushed into pieces. They growl and howl in a haunting way.",
     "Evolutions": [

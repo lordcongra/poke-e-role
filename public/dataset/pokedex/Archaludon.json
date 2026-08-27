@@ -26,12 +26,12 @@
     "_id": "archaludon",
     "DexCategory": "Alloy Pokémon",
     "Height": {
-        "Meters": 2.0,
+        "Meters": 2,
         "Feet": 6.6
     },
     "Weight": {
-        "Kilograms": 60.0,
-        "Pounds": 132.0
+        "Kilograms": 60,
+        "Pounds": 132
     },
     "DexDescription": "The metal alloy its body is made of is very light but incredibly resistant. It feeds on electricity, its tall size attracting lightning during storms. They can also be found digging in deep caves.",
     "Evolutions": [

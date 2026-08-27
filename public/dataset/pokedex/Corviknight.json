@@ -30,8 +30,8 @@
         "Feet": 7.3
     },
     "Weight": {
-        "Kilograms": 75.0,
-        "Pounds": 165.0
+        "Kilograms": 75,
+        "Pounds": 165
     },
     "DexDescription": "With their great intellect and flying skills, these Pokémon very successfully take the place as the kings of the Galarian sky. When they fly, they cast giant shadows that strike fear upon foes and friends alike.",
     "Evolutions": [

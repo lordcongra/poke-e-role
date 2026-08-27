@@ -30,8 +30,8 @@
         "Feet": 1.7
     },
     "Weight": {
-        "Kilograms": 9.0,
-        "Pounds": 20.0
+        "Kilograms": 9,
+        "Pounds": 20
     },
     "DexDescription": "There is a story of an old demon whose power had to be contained by a spell. The spell was a partial success as the demon could still roam free, but its power and evil was greatly diminished.",
     "Evolutions": [

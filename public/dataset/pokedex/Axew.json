@@ -27,11 +27,11 @@
     "DexCategory": "Tusk Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 18.0,
-        "Pounds": 39.0
+        "Kilograms": 18,
+        "Pounds": 39
     },
     "DexDescription": "They mark their territory by scraping their tusks on a tree. They fight each other to see who's got the sharpest tusks. If a tusk breaks, a new one grows back quickly. Only the strongest ever evolve.",
     "Evolutions": [

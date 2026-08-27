@@ -14,7 +14,9 @@
         "SoundMove": true
     },
     "AddedEffects": {
-        "AilmentHeal": ["All"]
+        "AilmentHeal": [
+            "All"
+        ]
     },
     "Category": "Support"
 }

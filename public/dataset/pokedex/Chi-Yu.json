@@ -30,8 +30,8 @@
         "Feet": 1.3
     },
     "Weight": {
-        "Kilograms": 5.0,
-        "Pounds": 11.0
+        "Kilograms": 5,
+        "Pounds": 11
     },
     "DexDescription": "A pair of precious, coveted jewels that have acquired life from the envy of those who foolishly started wars to claim them. With a body of fire, it melts rocks and sand into a sea of lava, moving as if swimming through water.",
     "Evolutions": [],

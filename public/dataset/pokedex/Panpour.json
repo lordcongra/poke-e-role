@@ -27,11 +27,11 @@
     "DexCategory": "Spray Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 13.0,
-        "Pounds": 29.0
+        "Kilograms": 13,
+        "Pounds": 29
     },
     "DexDescription": "It does not thrive in dry climates. It keeps itself damp by shooting the water stored in its head tuft. Its water is valued by gardeners and Grass Pokémon breeders as it makes plants grow beautiful.",
     "Evolutions": [

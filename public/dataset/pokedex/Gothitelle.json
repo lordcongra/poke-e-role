@@ -30,8 +30,8 @@
         "Feet": 4.9
     },
     "Weight": {
-        "Kilograms": 44.0,
-        "Pounds": 97.0
+        "Kilograms": 44,
+        "Pounds": 97
     },
     "DexDescription": "They can predict the future from the placement and movement of the stars. They get restless if someone they know will be in danger. They are empathic creatures that can understand human emotion.",
     "Evolutions": [

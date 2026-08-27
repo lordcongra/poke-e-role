@@ -13,12 +13,17 @@
     "AddedEffects": {
         "StatChanges": [
             {
-                "Stats": ["SpDef", "Def"],
+                "Stats": [
+                    "SpDef",
+                    "Def"
+                ],
                 "Stages": 1,
                 "Affects": "User"
             },
             {
-                "Stats": ["Accuracy"],
+                "Stats": [
+                    "Accuracy"
+                ],
                 "Stages": -1,
                 "Affects": "Targets"
             }

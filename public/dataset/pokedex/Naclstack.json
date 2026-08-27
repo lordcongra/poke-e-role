@@ -27,10 +27,10 @@
     "DexCategory": "Rock Salt Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 105.0,
+        "Kilograms": 105,
         "Pounds": 231.5
     },
     "DexDescription": "These Pokémon cure their prey in salt, until they resemble salt statues. They compress salt inside their body and then shoot the hardened pellets with enough force to perforate an iron sheet.",

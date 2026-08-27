@@ -26,12 +26,12 @@
     "_id": "purugly",
     "DexCategory": "Tiger Cat Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 43.0,
-        "Pounds": 96.0
+        "Kilograms": 43,
+        "Pounds": 96
     },
     "DexDescription": "It becomes wilder and aggressive after evolving. It is known to claim other Pokémon nests as its own. It will make itself appear bigger and glare with piercing eyes to achieve dominance over someone.",
     "Evolutions": [

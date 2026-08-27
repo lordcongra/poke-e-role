@@ -30,8 +30,8 @@
         "Feet": 1.3
     },
     "Weight": {
-        "Kilograms": 20.0,
-        "Pounds": 44.0
+        "Kilograms": 20,
+        "Pounds": 44
     },
     "DexDescription": "Lives in mountains and caves. It looks indistinguishable from other rocks around. Because of this, many trainers step on them and are attacked. It rolls to move around and eats whatever it finds on the ground.",
     "Evolutions": [

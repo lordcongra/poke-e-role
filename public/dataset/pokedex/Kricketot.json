@@ -27,11 +27,11 @@
     "DexCategory": "Cricket Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 2.0,
-        "Pounds": 4.0
+        "Kilograms": 2,
+        "Pounds": 4
     },
     "DexDescription": "If you hear a xylophone-like sound at night, it means that this Pokémon is roaming close. It communicates by making rhythmic sounds with its antennae. It is not aggressive and feeds on honey and tree sap.",
     "Evolutions": [

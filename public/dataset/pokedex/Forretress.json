@@ -27,11 +27,11 @@
     "DexCategory": "Bagworm Pokémon",
     "Height": {
         "Meters": 1.2,
-        "Feet": 4.0
+        "Feet": 4
     },
     "Weight": {
-        "Kilograms": 252.0,
-        "Pounds": 555.0
+        "Kilograms": 252,
+        "Pounds": 555
     },
     "DexDescription": "It can be found completely rooted to huge tree trunks. It protects itself and its tree by scattering spiked pieces from its shell and turning its home into a fortress that won't go down without a fight.",
     "Evolutions": [

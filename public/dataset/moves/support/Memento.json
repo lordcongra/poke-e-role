@@ -17,7 +17,13 @@
     "AddedEffects": {
         "StatChanges": [
             {
-                "Stats": ["Strength", "Dexterity", "Special", "Def", "SpDef"],
+                "Stats": [
+                    "Strength",
+                    "Dexterity",
+                    "Special",
+                    "Def",
+                    "SpDef"
+                ],
                 "Stages": -2,
                 "Affects": "Targets"
             }

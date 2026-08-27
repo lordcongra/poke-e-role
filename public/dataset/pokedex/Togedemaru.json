@@ -27,11 +27,11 @@
     "DexCategory": "Roly-Poly Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 3.0,
-        "Pounds": 7.0
+        "Kilograms": 3,
+        "Pounds": 7
     },
     "DexDescription": "On stormy days you can see groups of Togedemaru curled up into balls with their spikes out, waiting to be struck by lightning. These spikes also deter other Pokémon from attacking this cute creature.",
     "Evolutions": [],

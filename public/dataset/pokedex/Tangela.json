@@ -26,12 +26,12 @@
     "_id": "tangela",
     "DexCategory": "Vine Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 35.0,
-        "Pounds": 77.0
+        "Kilograms": 35,
+        "Pounds": 77
     },
     "DexDescription": "It blends with foliage in jungle and forest areas. Its vines snap off easily and painlessly if they are grabbed, allowing it to make a quick getaway. The lost vines are replaced by new growth the very next day.",
     "Evolutions": [

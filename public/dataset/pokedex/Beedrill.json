@@ -26,12 +26,12 @@
     "_id": "beedrill",
     "DexCategory": "Poison Bee Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.25
     },
     "Weight": {
-        "Kilograms": 30.0,
-        "Pounds": 65.0
+        "Kilograms": 30,
+        "Pounds": 65
     },
     "DexDescription": "Beedrill are extremely territorial. For safety reasons, no one should ever approach their nest. If disturbed, they will attack in a swarm. It has three stings. The one on its tail secretes a powerful poison.",
     "Evolutions": [

@@ -27,11 +27,11 @@
     "DexCategory": "Dragon Pokémon",
     "Height": {
         "Meters": 1.8,
-        "Feet": 6.0
+        "Feet": 6
     },
     "Weight": {
-        "Kilograms": 112.0,
-        "Pounds": 248.0
+        "Kilograms": 112,
+        "Pounds": 248
     },
     "DexDescription": "The power of the Mega Stone gives it the nickname 'The Blood-Soaked Crescent'. It is violent and very unpredictable, even turning on its own trainer. Many believe it is because its bent wings cause it pain.",
     "Evolutions": [

@@ -27,11 +27,11 @@
     "DexCategory": "Lizard Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 8.0,
-        "Pounds": 18.0
+        "Kilograms": 8,
+        "Pounds": 18
     },
     "DexDescription": "A rare Pokémon. The flame on its tail is an indicator of its feelings and life force. If it is healthy and happy, the flame burns brightly. It needs proper care and discipline or else it may rebel later on.",
     "Evolutions": [

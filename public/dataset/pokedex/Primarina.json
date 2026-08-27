@@ -27,11 +27,11 @@
     "DexCategory": "Soloist Pokémon",
     "Height": {
         "Meters": 1.8,
-        "Feet": 6.0
+        "Feet": 6
     },
     "Weight": {
-        "Kilograms": 44.0,
-        "Pounds": 97.0
+        "Kilograms": 44,
+        "Pounds": 97
     },
     "DexDescription": "All modern Primarina sing a song that has been passed down through generations. Legend says that you can hear their true song when you are in the depths of the sea. Make sure its throat doesn't get sore.",
     "Evolutions": [

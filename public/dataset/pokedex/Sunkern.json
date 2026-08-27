@@ -27,11 +27,11 @@
     "DexCategory": "Seed Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 2.0,
-        "Pounds": 4.0
+        "Kilograms": 2,
+        "Pounds": 4
     },
     "DexDescription": "They suddenly appear after a cold winter. They survive by drinking only dewdrops from under the leaves of plants. It tries not to move a lot since lots of bird Pokémon prey on them.",
     "Evolutions": [

@@ -26,12 +26,12 @@
     "_id": "spectrier",
     "DexCategory": "Pokédex has no Data",
     "Height": {
-        "Meters": 2.0,
+        "Meters": 2,
         "Feet": 6.6
     },
     "Weight": {
-        "Kilograms": 45.0,
-        "Pounds": 98.0
+        "Kilograms": 45,
+        "Pounds": 98
     },
     "DexDescription": "People have reported seeing a black horse, quietly prancing in the dark of the night. As soon as the creature notices them, it vanishes in the shadows. Its cries bring feelings of dread to the listeners.",
     "Evolutions": [],

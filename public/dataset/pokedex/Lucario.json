@@ -30,8 +30,8 @@
         "Feet": 3.9
     },
     "Weight": {
-        "Kilograms": 54.0,
-        "Pounds": 119.0
+        "Kilograms": 54,
+        "Pounds": 119
     },
     "DexDescription": "This Pokémon is completely loyal to its trainer. It has the ability to not only see auras but also to transform them into energy. It is also capable of understanding human speech.",
     "Evolutions": [

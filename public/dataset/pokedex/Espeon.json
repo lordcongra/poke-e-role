@@ -30,8 +30,8 @@
         "Feet": 2.9
     },
     "Weight": {
-        "Kilograms": 26.0,
-        "Pounds": 58.0
+        "Kilograms": 26,
+        "Pounds": 58
     },
     "DexDescription": "Espeon is extremely loyal to the trainer it considers worthy. It is said to have developed precognitive powers to protect its trainer from harm. The orb on its forehead glows whenever it uses psychic energy.",
     "Evolutions": [

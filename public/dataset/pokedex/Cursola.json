@@ -26,12 +26,12 @@
     "_id": "cursola",
     "DexCategory": "Coral Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
         "Kilograms": 0.4,
-        "Pounds": 1.0
+        "Pounds": 1
     },
     "DexDescription": "The ectoplasm serves as protection for its soul; do not touch it or you'll become stiff as stone. This Pokémon longs for the days where coral reefs were full of life. It holds a grudge against those who destroyed them.",
     "Evolutions": [

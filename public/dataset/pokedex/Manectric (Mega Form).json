@@ -27,11 +27,11 @@
     "DexCategory": "Discharge Pokémon",
     "Height": {
         "Meters": 1.8,
-        "Feet": 6.0
+        "Feet": 6
     },
     "Weight": {
-        "Kilograms": 44.0,
-        "Pounds": 97.0
+        "Kilograms": 44,
+        "Pounds": 97
     },
     "DexDescription": "The power of the Mega Stone gives it an insurmountable amount of electricity that gives it an explosive velocity, but it is too much for it to bear. Its mane grows uncomfortably large, making it moody.",
     "Evolutions": [

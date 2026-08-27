@@ -30,8 +30,8 @@
         "Feet": 0.7
     },
     "Weight": {
-        "Kilograms": 1.0,
-        "Pounds": 2.0
+        "Kilograms": 1,
+        "Pounds": 2
     },
     "DexDescription": "It prefers dark places and spends most of its time underground. It has a very thin skin. It's frail and has problems regulating its own temperature. Keep it burrowed or it will get sick.",
     "Evolutions": [

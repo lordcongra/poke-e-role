@@ -30,8 +30,8 @@
         "Feet": 11.6
     },
     "Weight": {
-        "Kilograms": 590.0,
-        "Pounds": 1300.0
+        "Kilograms": 590,
+        "Pounds": 1300
     },
     "DexDescription": "Pokédex glitches as it has no data. An old man tried to bring back prehistoric creatures. Separated by millions of years from man, the creatures were too wild and powerful to be contained.",
     "Evolutions": [],

@@ -30,8 +30,8 @@
         "Feet": 3.6
     },
     "Weight": {
-        "Kilograms": 34.0,
-        "Pounds": 75.0
+        "Kilograms": 34,
+        "Pounds": 75
     },
     "DexDescription": "They live in cold regions, forming groups of four that hunt prey with impressive coordination. They leave claw marks and patterns to indicate their territory. They are devious and love to cause trouble.",
     "Evolutions": [

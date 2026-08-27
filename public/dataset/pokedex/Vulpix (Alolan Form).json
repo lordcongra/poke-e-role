@@ -27,11 +27,11 @@
     "DexCategory": "Fox Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 10.0,
-        "Pounds": 22.0
+        "Kilograms": 10,
+        "Pounds": 22
     },
     "DexDescription": "The Vulpix who became stranded in Alola had to change type in order to survive. Alola's local name for this Pokémon is Keokeo. They use their tails as a fan to cool themselves in hot climates.",
     "Evolutions": [

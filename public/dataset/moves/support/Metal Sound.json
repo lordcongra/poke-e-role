@@ -16,7 +16,9 @@
     "AddedEffects": {
         "StatChanges": [
             {
-                "Stats": ["SpDef"],
+                "Stats": [
+                    "SpDef"
+                ],
                 "Stages": -2,
                 "Affects": "Targets"
             }

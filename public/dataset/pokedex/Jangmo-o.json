@@ -27,11 +27,11 @@
     "DexCategory": "Scaly Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 29.0,
-        "Pounds": 65.0
+        "Kilograms": 29,
+        "Pounds": 65
     },
     "DexDescription": "They live in mountains rarely visited by humans. Although they are valiant and hard-working Pokémon, they retain their independent nature. They use the scale on their heads for both attack and defense.",
     "Evolutions": [

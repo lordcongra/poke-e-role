@@ -30,8 +30,8 @@
         "Feet": 1.66
     },
     "Weight": {
-        "Kilograms": 9.0,
-        "Pounds": 20.0
+        "Kilograms": 9,
+        "Pounds": 20
     },
     "DexDescription": "Revived from a fossil, this Pokémon is thought to be the ancestor of all bird Pokémon. Its flight abilities are poor so it just hops and jumps. They are ill-tempered and will not eat processed Pokémon food.",
     "Evolutions": [

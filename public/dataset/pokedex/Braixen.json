@@ -26,12 +26,12 @@
     "_id": "braixen",
     "DexCategory": "Fox Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 14.0,
-        "Pounds": 32.0
+        "Kilograms": 14,
+        "Pounds": 32
     },
     "DexDescription": "Using friction from its tail's fur, it sets the twig it carries on fire and launches into battle. The flame on the twig is used to send signals and create patterns out of the embers. It is said the twig is a magic wand.",
     "Evolutions": [

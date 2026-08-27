@@ -30,8 +30,8 @@
         "Feet": 1.7
     },
     "Weight": {
-        "Kilograms": 9.0,
-        "Pounds": 20.0
+        "Kilograms": 9,
+        "Pounds": 20
     },
     "DexDescription": "Its body transforms the energy of its own muscles into electricity. When in danger, their whole fur shines in a flash to blind the foes. They live with their parents and siblings in small prides.",
     "Evolutions": [

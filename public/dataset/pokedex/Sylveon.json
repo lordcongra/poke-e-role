@@ -26,12 +26,12 @@
     "_id": "sylveon",
     "DexCategory": "Intertwining Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 23.0,
-        "Pounds": 51.0
+        "Kilograms": 23,
+        "Pounds": 51
     },
     "DexDescription": "This rare and adorable Pokémon emanates a soothing aura to calm disturbances. It is said that only the Trainers who form an unbreakable bond with their Eevee can ever see this Pokémon.",
     "Evolutions": [

@@ -27,11 +27,11 @@
     "DexCategory": "Sheep Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 6.0,
-        "Pounds": 13.0
+        "Kilograms": 6,
+        "Pounds": 13
     },
     "DexDescription": "Wooloo's wool is incredibly resilient. It serves as a cushion when they fall from high mountain cliffs. They need to be sheared or their wool will be too heavy to move. A sweater made with this wool will last for a lifetime.",
     "Evolutions": [

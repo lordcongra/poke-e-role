@@ -30,8 +30,8 @@
         "Feet": 4.9
     },
     "Weight": {
-        "Kilograms": 125.0,
-        "Pounds": 275.0
+        "Kilograms": 125,
+        "Pounds": 275
     },
     "DexDescription": "The creature appears serene and gentle walking over a field of grass, but further inspection reveals it is a sentinel—ever vigilant for intruders who dare to step into its meadow.",
     "Evolutions": [],

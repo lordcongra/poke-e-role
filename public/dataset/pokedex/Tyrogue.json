@@ -30,8 +30,8 @@
         "Feet": 2.3
     },
     "Weight": {
-        "Kilograms": 21.0,
-        "Pounds": 46.0
+        "Kilograms": 21,
+        "Pounds": 46
     },
     "DexDescription": "Tyrogue is an energetic, competitive and fearless Pokémon that's always looking to get stronger, fighting any enemies even if it loses. They attack anyone, any day, anytime, everyday, without warning.",
     "Evolutions": [

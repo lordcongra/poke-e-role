@@ -27,11 +27,11 @@
     "DexCategory": "Marionette Pokémon",
     "Height": {
         "Meters": 1.2,
-        "Feet": 4.0
+        "Feet": 4
     },
     "Weight": {
-        "Kilograms": 13.0,
-        "Pounds": 28.0
+        "Kilograms": 13,
+        "Pounds": 28
     },
     "DexDescription": "The power of the Mega Stone rips the layer keeping all the cursed energy in. Its vindictive nature is so overwhelming that it can't help but to curse its own Trainer.",
     "Evolutions": [

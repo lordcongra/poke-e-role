@@ -27,11 +27,11 @@
     "DexCategory": "Wild Pigeon Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 15.0,
-        "Pounds": 33.0
+        "Kilograms": 15,
+        "Pounds": 33
     },
     "DexDescription": "During war and old times people made use of Tranquill's sense of location to send letters. It will never fail to find its way back home. They like forests and enjoy relaxing in the peace and quiet of their nest.",
     "Evolutions": [

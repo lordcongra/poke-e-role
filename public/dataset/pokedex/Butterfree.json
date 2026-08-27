@@ -30,8 +30,8 @@
         "Feet": 3.6
     },
     "Weight": {
-        "Kilograms": 32.0,
-        "Pounds": 70.0
+        "Kilograms": 32,
+        "Pounds": 70
     },
     "DexDescription": "It can be found in forests and plains. It loves the honey in some flowers even with tiny amounts of pollen. Its wings are covered by dust that allows it to fly even when it's raining.",
     "Evolutions": [

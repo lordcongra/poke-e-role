@@ -27,11 +27,11 @@
     "DexCategory": "Kite Pokémon",
     "Height": {
         "Meters": 2.1,
-        "Feet": 7.0
+        "Feet": 7
     },
     "Weight": {
-        "Kilograms": 220.0,
-        "Pounds": 485.0
+        "Kilograms": 220,
+        "Pounds": 485
     },
     "DexDescription": "Mantine swims under water and over the waves, gliding for 300 ft in the air. They are intelligent and docile, traveling elegantly in groups. Remoraid can be seen hanging from their fins from time to time.",
     "Evolutions": [

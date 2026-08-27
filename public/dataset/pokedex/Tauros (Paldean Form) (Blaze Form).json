@@ -30,8 +30,8 @@
         "Feet": 4.6
     },
     "Weight": {
-        "Kilograms": 170.0,
-        "Pounds": 374.0
+        "Kilograms": 170,
+        "Pounds": 374
     },
     "DexDescription": "This is a male species. These Tauros are specially bred in Paldea for their lighter bodies and speed. They run so fast, they blaze the grass they charge in. The blaze breed is especially hot-headed and stubborn.",
     "Evolutions": [],

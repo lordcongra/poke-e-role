@@ -30,8 +30,8 @@
         "Feet": 17.1
     },
     "Weight": {
-        "Kilograms": 480.0,
-        "Pounds": 1058.0
+        "Kilograms": 480,
+        "Pounds": 1058
     },
     "DexDescription": "Pokédex glitches as it has no data. After the old man's project failed, the creatures were left on their own. But life found a way. Now these creatures are out there, trying to reclaim this world as theirs.",
     "Evolutions": [],

@@ -30,8 +30,8 @@
         "Feet": 3.6
     },
     "Weight": {
-        "Kilograms": 30.0,
-        "Pounds": 66.0
+        "Kilograms": 30,
+        "Pounds": 66
     },
     "DexDescription": "A violent Pokémon. It searches for spots where it can feed on electricity and has been seen absorbing lightning from the sky. It's competitive and aggressive with others.",
     "Evolutions": [

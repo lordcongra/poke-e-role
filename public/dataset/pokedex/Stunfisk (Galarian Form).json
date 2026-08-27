@@ -30,8 +30,8 @@
         "Feet": 2.3
     },
     "Weight": {
-        "Kilograms": 20.0,
-        "Pounds": 45.0
+        "Kilograms": 20,
+        "Pounds": 45
     },
     "DexDescription": "Stunfisk lives in mud with high iron content. Those nutrients turned its body into a Steel Type. Stunfisk's lips are hard to spot in the mud, but if someone steps on it, its jagged steel clamps their prey.",
     "Evolutions": [],

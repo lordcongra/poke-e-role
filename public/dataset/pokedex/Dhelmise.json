@@ -30,8 +30,8 @@
         "Feet": 12.8
     },
     "Weight": {
-        "Kilograms": 210.0,
-        "Pounds": 463.0
+        "Kilograms": 210,
+        "Pounds": 463
     },
     "DexDescription": "A spirit adrift in the sea came back to life through this Pokémon. It rarely leaves the deepest bottom waters. Sailing through the far seas, Wailord carcasses have been found covered in seaweed and gashes.",
     "Evolutions": [],

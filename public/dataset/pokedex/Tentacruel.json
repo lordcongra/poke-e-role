@@ -30,8 +30,8 @@
         "Feet": 5.3
     },
     "Weight": {
-        "Kilograms": 55.0,
-        "Pounds": 120.0
+        "Kilograms": 55,
+        "Pounds": 120
     },
     "DexDescription": "Lives in rock formations at the bottom of the ocean. It can grow tentacles at will and uses them to immobilize prey. Records exist of a giant Tentacruel that sunk a fleet of pirate ships filled with treasure.",
     "Evolutions": [

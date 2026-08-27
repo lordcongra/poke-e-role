@@ -27,11 +27,11 @@
     "DexCategory": "Lion Cub Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 13.0,
-        "Pounds": 29.0
+        "Kilograms": 13,
+        "Pounds": 29
     },
     "DexDescription": "Quick on temper and to take on a fight. They use their mane to scorch their enemies. Some of them set off from their pride to live alone. Only those who develop a full mane get to lead their own pride.",
     "Evolutions": [

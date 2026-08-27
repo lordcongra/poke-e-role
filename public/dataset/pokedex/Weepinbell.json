@@ -26,12 +26,12 @@
     "_id": "weepinbell",
     "DexCategory": "Flycatcher Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 6.0,
-        "Pounds": 14.0
+        "Kilograms": 6,
+        "Pounds": 14
     },
     "DexDescription": "It sprays its stun powder to immobilize a prey coming close to it, then eats it calmly. If the prey is bigger than itself, it uses its sharp leaves to slice it into smaller pieces. Beware of the toxic liquid in its mouth.",
     "Evolutions": [

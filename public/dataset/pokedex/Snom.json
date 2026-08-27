@@ -27,11 +27,11 @@
     "DexCategory": "Worm Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 4.0,
-        "Pounds": 8.0
+        "Kilograms": 4,
+        "Pounds": 8
     },
     "DexDescription": "It spits out thread imbued with a frigid energy and uses it to tie its body to branches, disguising itself as an icicle while it sleeps. It feeds only on snow; if it melts, it will freeze it again to continue eating.",
     "Evolutions": [

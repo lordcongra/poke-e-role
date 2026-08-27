@@ -30,8 +30,8 @@
         "Feet": 1.3
     },
     "Weight": {
-        "Kilograms": 6.0,
-        "Pounds": 13.0
+        "Kilograms": 6,
+        "Pounds": 13
     },
     "DexDescription": "They live in forests, forming small groups but they mostly stay hidden. Pikachu stores electricity inside the sacs on its cheeks and uses its tail to ground the excess charge. They can take on foes bigger than them.",
     "Evolutions": [

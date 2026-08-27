@@ -5,6 +5,8 @@
     "type": "module",
     "scripts": {
         "build:dataset": "node scripts/buildDataset.js",
+        "sync:upstream": "node scripts/syncUpstream.js",
+        "extract:overrides": "node scripts/extractOverrides.js",
         "dev": "npm run build:dataset && vite",
         "build": "npm run build:dataset && tsc -b && vite build",
         "lint": "eslint .",

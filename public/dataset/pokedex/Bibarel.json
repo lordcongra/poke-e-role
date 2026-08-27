@@ -26,12 +26,12 @@
     "_id": "bibarel",
     "DexCategory": "Beaver Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 31.0,
-        "Pounds": 69.0
+        "Kilograms": 31,
+        "Pounds": 69
     },
     "DexDescription": "Bibarels build dams in streams with bark and mud. It is known as an industrious worker. Their constructions are very appreciated by people because a river dammed by Bibarel will never overflow.",
     "Evolutions": [

@@ -26,12 +26,12 @@
     "_id": "mantyke",
     "DexCategory": "Kite Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 65.0,
-        "Pounds": 143.0
+        "Kilograms": 65,
+        "Pounds": 143
     },
     "DexDescription": "When it swims close the ocean's surface people aboard ships are able to observe the pattern on its back as it is different in every region. Mantyke is an intelligent and friendly Pokémon that rarely attacks others.",
     "Evolutions": [

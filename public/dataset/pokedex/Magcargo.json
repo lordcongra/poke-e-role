@@ -30,8 +30,8 @@
         "Feet": 2.6
     },
     "Weight": {
-        "Kilograms": 55.0,
-        "Pounds": 122.0
+        "Kilograms": 55,
+        "Pounds": 122
     },
     "DexDescription": "Their shell is molten body that cooled off and hardened. It may appear solid, but it may burst into flames with a single touch. Water vaporizes on contact and rain turns into a cloud of steam.",
     "Evolutions": [

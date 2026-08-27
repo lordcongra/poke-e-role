@@ -30,8 +30,8 @@
         "Feet": 2.6
     },
     "Weight": {
-        "Kilograms": 36.0,
-        "Pounds": 80.0
+        "Kilograms": 36,
+        "Pounds": 80
     },
     "DexDescription": "The first case of a man-made Pokémon created as computer data. It is capable of reverting itself into a program in order to enter the cyberspace. Its software has a firewall so it cannot be copied.",
     "Evolutions": [

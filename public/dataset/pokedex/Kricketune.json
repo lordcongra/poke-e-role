@@ -26,12 +26,12 @@
     "_id": "kricketune",
     "DexCategory": "Cricket Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 25.0,
-        "Pounds": 56.0
+        "Kilograms": 25,
+        "Pounds": 56
     },
     "DexDescription": "It can make all kind of sounds with its antennae, arms and mouth. It signals emotions with different tunes but scientists still cannot define what they mean. They imitate the songs they hear.",
     "Evolutions": [

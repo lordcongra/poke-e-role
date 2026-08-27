@@ -26,7 +26,7 @@
     "_id": "ekans",
     "DexCategory": "Snake Pokemon",
     "Height": {
-        "Meters": 2.0,
+        "Meters": 2,
         "Feet": 6.6
     },
     "Weight": {

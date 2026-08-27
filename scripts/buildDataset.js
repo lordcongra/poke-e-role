@@ -1,12 +1,17 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { syncUpstream } from './syncUpstream.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const ROOT_DIR = path.resolve(__dirname, '..');
+const DATA_DIR = path.join(ROOT_DIR, 'data');
+const UPSTREAM_DIR = path.join(DATA_DIR, 'upstream');
+const OVERRIDES_DIR = path.join(DATA_DIR, 'overrides');
 const DATASET_DIR = path.join(ROOT_DIR, 'public', 'dataset');
+
 const MOVES_DIR = path.join(DATASET_DIR, 'moves');
 const ITEMS_DIR = path.join(DATASET_DIR, 'items');
 const POKEDEX_DIR = path.join(DATASET_DIR, 'pokedex');
@@ -20,12 +25,93 @@ const datasetIndex = {
     moves: {
         support: [],
         basic: { power_1: [], power_2: [], power_3: [] },
-        highPower: { power_4: [], power_5: [], power_6: [], power_7: [], power_8: [], power_10: [], variable: [] }
+        highPower: { power_4: [], power_5: [], power_6: [], power_7: [], power_8: [], power_10: [], variable: [] },
+        zMoves: [],
+        maxMoves: []
     },
     items: {}
 };
 
-console.log('🚀 Generating Index & Reorganizing Files...');
+// Helper: Recursively get all JSON files in a directory
+function getAllFiles(dirPath, arrayOfFiles = []) {
+    if (!fs.existsSync(dirPath)) return arrayOfFiles;
+    const files = fs.readdirSync(dirPath);
+    files.forEach(function (file) {
+        const fullPath = path.join(dirPath, file);
+        if (fs.statSync(fullPath).isDirectory()) {
+            getAllFiles(fullPath, arrayOfFiles);
+        } else if (file.endsWith('.json') && file !== 'index.json') {
+            arrayOfFiles.push(fullPath);
+        }
+    });
+    return arrayOfFiles;
+}
+
+// Helper: Load ignored files list
+function getIgnoredFiles(category) {
+    const ignoredConfigPath = path.join(OVERRIDES_DIR, 'ignored.json');
+    if (!fs.existsSync(ignoredConfigPath)) return new Set();
+    try {
+        const config = JSON.parse(fs.readFileSync(ignoredConfigPath, 'utf-8'));
+        const list = config[category] || [];
+        return new Set(list.map((f) => f.toLowerCase()));
+    } catch {
+        return new Set();
+    }
+}
+
+// Helper: Load base files and overlay overrides
+function loadMergedDataset(upstreamFolder, overrideFolder) {
+    const upstreamPath = path.join(UPSTREAM_DIR, upstreamFolder);
+    const overridePath = path.join(OVERRIDES_DIR, overrideFolder);
+    const ignoredSet = getIgnoredFiles(overrideFolder);
+
+    const merged = new Map(); // key: filename, value: { data, isOverride }
+
+    // 1. Load upstream base files
+    if (fs.existsSync(upstreamPath)) {
+        const files = getAllFiles(upstreamPath);
+        for (const file of files) {
+            const fileName = path.basename(file);
+            if (ignoredSet.has(fileName.toLowerCase())) {
+                continue; // Skip ignored/deleted upstream files
+            }
+            try {
+                const raw = fs.readFileSync(file, 'utf-8');
+                merged.set(fileName, { data: JSON.parse(raw), isOverride: false });
+            } catch (err) {
+                console.error(`❌ Error reading upstream file ${file}:`, err.message);
+            }
+        }
+    }
+
+    // 2. Overlay custom overrides
+    let overrideCount = 0;
+    if (fs.existsSync(overridePath)) {
+        const files = getAllFiles(overridePath);
+        for (const file of files) {
+            const fileName = path.basename(file);
+            if (fileName === 'ignored.json') continue;
+            if (ignoredSet.has(fileName.toLowerCase())) continue;
+
+            try {
+                const raw = fs.readFileSync(file, 'utf-8');
+                const data = JSON.parse(raw);
+                if (data.deleted === true || data._deleted === true) {
+                    // Explicit deletion via override file
+                    merged.delete(fileName);
+                } else {
+                    merged.set(fileName, { data, isOverride: true });
+                    overrideCount++;
+                }
+            } catch (err) {
+                console.error(`❌ Error reading override file ${file}:`, err.message);
+            }
+        }
+    }
+
+    return { entries: Array.from(merged.entries()), overrideCount };
+}
 
 // --- WEIGHT CALCULATION HELPERS ---
 function getMoveWeight(move, power) {
@@ -60,98 +146,112 @@ function getItemWeight(item, category) {
     return 50; // Default Uncommon
 }
 
-// Helper to recursively get all JSON files
-function getAllFiles(dirPath, arrayOfFiles) {
-    const files = fs.readdirSync(dirPath);
-    arrayOfFiles = arrayOfFiles || [];
-    files.forEach(function (file) {
-        if (fs.statSync(path.join(dirPath, file)).isDirectory()) {
-            arrayOfFiles = getAllFiles(path.join(dirPath, file), arrayOfFiles);
-        } else if (file.endsWith('.json')) {
-            arrayOfFiles.push(path.join(dirPath, file));
-        }
-    });
-    return arrayOfFiles;
-}
+async function build() {
+    console.log('🚀 Building Pokerole Dataset (Base Upstream + Overrides)...');
 
-// --- 1. PROCESS POKEDEX ---
-if (fs.existsSync(POKEDEX_DIR)) {
-    const files = getAllFiles(POKEDEX_DIR);
-    files.forEach((filePath) => {
+    // Ensure upstream data is available
+    if (!fs.existsSync(UPSTREAM_DIR)) {
+        console.log('📦 Upstream directory missing, syncing upstream now...');
+        await syncUpstream();
+    }
+
+    // Clean and ensure target output directories exist
+    [MOVES_DIR, ITEMS_DIR, POKEDEX_DIR, ABILITIES_DIR, NATURES_DIR].forEach((dir) => {
+        if (fs.existsSync(dir)) {
+            fs.rmSync(dir, { recursive: true, force: true });
+        }
+        fs.mkdirSync(dir, { recursive: true });
+    });
+
+    // --- 1. PROCESS POKEDEX ---
+    const pokedex = loadMergedDataset('Pokedex', 'pokedex');
+    pokedex.entries.forEach(([fileName, { data }]) => {
         try {
-            const rawData = fs.readFileSync(filePath, 'utf-8');
-            const data = JSON.parse(rawData);
-            const fileName = path.basename(filePath);
             const cleanName = (data.Name || data.name || fileName.replace('.json', '')).toLowerCase();
+            const destPath = path.join(POKEDEX_DIR, fileName);
+            fs.writeFileSync(destPath, JSON.stringify(data, null, 4));
+
             datasetIndex.pokemon[cleanName] = {
                 name: data.Name || data.name || fileName.replace('.json', ''),
                 path: `/dataset/pokedex/${fileName}`
             };
         } catch (error) {
-            console.error(`❌ Error processing Pokedex file ${filePath}:`, error.message);
+            console.error(`❌ Error processing Pokedex ${fileName}:`, error.message);
         }
     });
-    console.log('✅ Pokedex indexed!');
-}
+    console.log(`✅ Pokedex built (${pokedex.entries.length} pokemon, ${pokedex.overrideCount} overrides applied)`);
 
-// --- 2. PROCESS ABILITIES ---
-if (fs.existsSync(ABILITIES_DIR)) {
-    const files = getAllFiles(ABILITIES_DIR);
-    files.forEach((filePath) => {
+    // --- 2. PROCESS ABILITIES ---
+    const abilities = loadMergedDataset('Abilities', 'abilities');
+    abilities.entries.forEach(([fileName, { data }]) => {
         try {
-            const rawData = fs.readFileSync(filePath, 'utf-8');
-            const data = JSON.parse(rawData);
-            const fileName = path.basename(filePath);
             const cleanName = (data.Name || data.name || fileName.replace('.json', '')).toLowerCase();
+            const destPath = path.join(ABILITIES_DIR, fileName);
+            fs.writeFileSync(destPath, JSON.stringify(data, null, 4));
+
             datasetIndex.abilities[cleanName] = {
                 name: data.Name || data.name || fileName.replace('.json', ''),
                 path: `/dataset/abilities/${fileName}`
             };
         } catch (error) {
-            console.error(`❌ Error processing Ability file ${filePath}:`, error.message);
+            console.error(`❌ Error processing Ability ${fileName}:`, error.message);
         }
     });
-    console.log('✅ Abilities indexed!');
-}
+    console.log(
+        `✅ Abilities built (${abilities.entries.length} abilities, ${abilities.overrideCount} overrides applied)`
+    );
 
-// --- 3. PROCESS NATURES ---
-if (fs.existsSync(NATURES_DIR)) {
-    const files = getAllFiles(NATURES_DIR);
-    files.forEach((filePath) => {
+    // --- 3. PROCESS NATURES ---
+    const natures = loadMergedDataset('Natures', 'natures');
+    natures.entries.forEach(([fileName, { data }]) => {
         try {
-            const rawData = fs.readFileSync(filePath, 'utf-8');
-            const data = JSON.parse(rawData);
-            const fileName = path.basename(filePath);
             const cleanName = (data.Name || data.name || fileName.replace('.json', '')).toLowerCase();
+            const destPath = path.join(NATURES_DIR, fileName);
+            fs.writeFileSync(destPath, JSON.stringify(data, null, 4));
+
             datasetIndex.natures[cleanName] = {
                 name: data.Name || data.name || fileName.replace('.json', ''),
                 path: `/dataset/natures/${fileName}`
             };
         } catch (error) {
-            console.error(`❌ Error processing Nature file ${filePath}:`, error.message);
+            console.error(`❌ Error processing Nature ${fileName}:`, error.message);
         }
     });
-    console.log('✅ Natures indexed!');
-}
+    console.log(`✅ Natures built (${natures.entries.length} natures, ${natures.overrideCount} overrides applied)`);
 
-// --- 4. PROCESS & REORGANIZE MOVES ---
-if (fs.existsSync(MOVES_DIR)) {
-    const moveFiles = getAllFiles(MOVES_DIR);
-    moveFiles.forEach((filePath) => {
+    // --- 4. PROCESS & REORGANIZE MOVES ---
+    const moves = loadMergedDataset('Moves', 'moves');
+    moves.entries.forEach(([fileName, { data: move }]) => {
         try {
-            const rawData = fs.readFileSync(filePath, 'utf-8');
-            const move = JSON.parse(rawData);
-            const fileName = path.basename(filePath);
-
             const powerNum = Number(move.Power || move.power) || 0;
             const rawCategory = String(move.Category || move.category || '').toLowerCase();
             const dmg1 = String(move.Damage1 || move.damage1 || '').toLowerCase();
+            const attrs = move.Attributes || move.attributes || {};
+            const isZMove = Boolean(attrs.ZMove || attrs.zMove);
+            const isMaxMove = Boolean(
+                attrs.MaxMove ||
+                attrs.maxMove ||
+                attrs.Dynamax ||
+                attrs.Gigantamax ||
+                String(move.Name || '').startsWith('Max ') ||
+                String(move.Name || '').startsWith('G-Max ')
+            );
 
             let targetSubfolder = '';
             let indexRef = null;
 
             // STRICT DATA-DRIVEN CATEGORIZATION
-            if (rawCategory.includes('status') || rawCategory.includes('support') || rawCategory.includes('sup')) {
+            if (isZMove) {
+                targetSubfolder = 'zMoves';
+                indexRef = datasetIndex.moves.zMoves;
+            } else if (isMaxMove) {
+                targetSubfolder = 'maxMoves';
+                indexRef = datasetIndex.moves.maxMoves;
+            } else if (
+                rawCategory.includes('status') ||
+                rawCategory.includes('support') ||
+                rawCategory.includes('sup')
+            ) {
                 targetSubfolder = 'support';
                 indexRef = datasetIndex.moves.support;
             } else if (dmg1.includes('varies') || powerNum === 0) {
@@ -170,17 +270,14 @@ if (fs.existsSync(MOVES_DIR)) {
                 indexRef = datasetIndex.moves.highPower[powKey];
             }
 
-            // PHYSICALLY REORGANIZE THE FILE IF IN WRONG FOLDER
+            // Target directory in public/dataset/moves/
             const targetDir = path.join(MOVES_DIR, ...targetSubfolder.split('/'));
             if (!fs.existsSync(targetDir)) {
                 fs.mkdirSync(targetDir, { recursive: true });
             }
 
-            const newFilePath = path.join(targetDir, fileName);
-            if (filePath !== newFilePath) {
-                fs.renameSync(filePath, newFilePath);
-                console.log(`📦 Moved ${fileName} to ${targetSubfolder}`);
-            }
+            const destPath = path.join(targetDir, fileName);
+            fs.writeFileSync(destPath, JSON.stringify(move, null, 4));
 
             // ADD TO INDEX
             if (indexRef) {
@@ -192,34 +289,37 @@ if (fs.existsSync(MOVES_DIR)) {
                 });
             }
         } catch (error) {
-            console.error(`❌ Error processing move ${filePath}:`, error.message);
+            console.error(`❌ Error processing move ${fileName}:`, error.message);
         }
     });
 
-    // OPTIMIZATION: Pre-sort the move arrays so the React client doesn't have to spend CPU cycles doing it!
+    // Sort move arrays
     const sortByName = (a, b) => a.name.localeCompare(b.name);
     datasetIndex.moves.support.sort(sortByName);
+    datasetIndex.moves.zMoves.sort(sortByName);
+    datasetIndex.moves.maxMoves.sort(sortByName);
     Object.keys(datasetIndex.moves.basic).forEach((k) => datasetIndex.moves.basic[k].sort(sortByName));
     Object.keys(datasetIndex.moves.highPower).forEach((k) => datasetIndex.moves.highPower[k].sort(sortByName));
+    console.log(`✅ Moves built (${moves.entries.length} moves, ${moves.overrideCount} overrides applied)`);
 
-    console.log('✅ Moves indexed, reorganized, and pre-sorted!');
-}
-
-// --- 5. PROCESS ITEMS ---
-if (fs.existsSync(ITEMS_DIR)) {
-    const itemFiles = getAllFiles(ITEMS_DIR);
-    itemFiles.forEach((filePath) => {
+    // --- 5. PROCESS ITEMS ---
+    const items = loadMergedDataset('Items', 'items');
+    items.entries.forEach(([fileName, { data: item }]) => {
         try {
-            const rawData = fs.readFileSync(filePath, 'utf-8');
-            const item = JSON.parse(rawData);
-            const fileName = path.basename(filePath);
-
             let pocket = (item.Pocket || item.pocket || 'Uncategorized').replace(/[^a-zA-Z0-9_-]/g, '');
             let category = (item.Category || item.category || 'Misc').replace(/[^a-zA-Z0-9_-]/g, '');
             if (pocket === 'HeldItems' && category === 'Misc') category = 'BattleItem';
 
             if (!datasetIndex.items[pocket]) datasetIndex.items[pocket] = {};
             if (!datasetIndex.items[pocket][category]) datasetIndex.items[pocket][category] = [];
+
+            const targetDir = path.join(ITEMS_DIR, pocket, category);
+            if (!fs.existsSync(targetDir)) {
+                fs.mkdirSync(targetDir, { recursive: true });
+            }
+
+            const destPath = path.join(targetDir, fileName);
+            fs.writeFileSync(destPath, JSON.stringify(item, null, 4));
 
             datasetIndex.items[pocket][category].push({
                 name: item.Name || item.name || fileName.replace('.json', ''),
@@ -228,21 +328,25 @@ if (fs.existsSync(ITEMS_DIR)) {
                 weight: getItemWeight(item, category)
             });
         } catch (error) {
-            console.error(`❌ Error processing item ${filePath}:`, error.message);
+            console.error(`❌ Error processing item ${fileName}:`, error.message);
         }
     });
 
-    // OPTIMIZATION: Pre-sort the item arrays alphabetically.
-    const sortByName = (a, b) => a.name.localeCompare(b.name);
+    // Sort item arrays
     Object.keys(datasetIndex.items).forEach((pocket) => {
         Object.keys(datasetIndex.items[pocket]).forEach((category) => {
             datasetIndex.items[pocket][category].sort(sortByName);
         });
     });
+    console.log(`✅ Items built (${items.entries.length} items, ${items.overrideCount} overrides applied)`);
 
-    console.log('✅ Items indexed and pre-sorted!');
+    // --- 6. WRITE INDEX FILE ---
+    fs.writeFileSync(path.join(DATASET_DIR, 'index.json'), JSON.stringify(datasetIndex, null, 2));
+    console.log('🎉 Dataset build complete! Output written to public/dataset/');
 }
 
-// --- 6. WRITE INDEX FILE ---
-fs.writeFileSync(path.join(DATASET_DIR, 'index.json'), JSON.stringify(datasetIndex, null, 2));
-console.log('🎉 Index Build Complete!');
+// Run directly
+build().catch((err) => {
+    console.error('❌ Dataset build failed:', err);
+    process.exit(1);
+});

@@ -30,8 +30,8 @@
         "Feet": 4.3
     },
     "Weight": {
-        "Kilograms": 60.0,
-        "Pounds": 132.0
+        "Kilograms": 60,
+        "Pounds": 132
     },
     "DexDescription": "In the autumn, Seaking males can be seen doing courtship dances to females. After getting a mate, both will be seen swimming powerfully up rivers and creeks to make their nest.",
     "Evolutions": [

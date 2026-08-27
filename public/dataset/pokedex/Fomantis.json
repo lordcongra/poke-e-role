@@ -27,11 +27,11 @@
     "DexCategory": "Sickle Grass Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 1.0,
-        "Pounds": 3.0
+        "Kilograms": 1,
+        "Pounds": 3
     },
     "DexDescription": "They sleep during the day, absorbing sunlight in a flower meadow; by night they become active and search for another spot to sleep. Their arms are made of sharp grass leaves to defend themselves.",
     "Evolutions": [

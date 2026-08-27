@@ -26,12 +26,12 @@
     "_id": "groudon-primal-form",
     "DexCategory": "Pokédex has no data.",
     "Height": {
-        "Meters": 5.0,
+        "Meters": 5,
         "Feet": 16.4
     },
     "Weight": {
-        "Kilograms": 1500.0,
-        "Pounds": 3306.0
+        "Kilograms": 1500,
+        "Pounds": 3306
     },
     "DexDescription": "Millions of years ago, chaos reigned. Volcanoes erupted without control and unbearable heat made all life dry out. Who was so angry inside the raging fire? Its fury has since ingrained into the earth as red rubies.",
     "Evolutions": [

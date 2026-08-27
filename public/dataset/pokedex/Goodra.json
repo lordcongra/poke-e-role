@@ -26,12 +26,12 @@
     "_id": "goodra",
     "DexCategory": "Dragon Pokémon",
     "Height": {
-        "Meters": 2.0,
+        "Meters": 2,
         "Feet": 6.6
     },
     "Weight": {
-        "Kilograms": 150.0,
-        "Pounds": 331.0
+        "Kilograms": 150,
+        "Pounds": 331
     },
     "DexDescription": "Definitely the friendliest of all Dragons. This Pokémon will hug its beloved Trainer, leaving them covered in sticky slime. In areas with heavy rainfall during the year, one or two may make an appearance.",
     "Evolutions": [

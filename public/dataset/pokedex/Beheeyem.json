@@ -26,12 +26,12 @@
     "_id": "beheeyem",
     "DexCategory": "Cerebral Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.25
     },
     "Weight": {
-        "Kilograms": 34.0,
-        "Pounds": 76.0
+        "Kilograms": 34,
+        "Pounds": 76
     },
     "DexDescription": "Apparently, it communicates by flashing its three fingers, but the patterns haven't been decoded. It uses psychic power to control an opponent's brain and tampers with its memories and personality.",
     "Evolutions": [

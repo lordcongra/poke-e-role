@@ -26,12 +26,12 @@
     "_id": "scizor-mega-form",
     "DexCategory": "Pincer Pokémon",
     "Height": {
-        "Meters": 2.0,
+        "Meters": 2,
         "Feet": 6.6
     },
     "Weight": {
-        "Kilograms": 125.0,
-        "Pounds": 275.0
+        "Kilograms": 125,
+        "Pounds": 275
     },
     "DexDescription": "The power of the Mega Stone puts its body through tremendous stress. If it is inexperienced at wielding it and the battle is too long, its pincers will feel heavy and even melt. They must be fast to rip their foes apart.",
     "Evolutions": [

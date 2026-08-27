@@ -27,11 +27,11 @@
     "DexCategory": "Snapping Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 8.0,
-        "Pounds": 18.0
+        "Kilograms": 8,
+        "Pounds": 18
     },
     "DexDescription": "It uses its horn as its primary weapon, but it has a reputation as a biter. Apparently its gums are itchy and the only way to soothe them is biting and chewing on stuff. It is kinda cranky but relatively harmless.",
     "Evolutions": [

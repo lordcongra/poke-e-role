@@ -27,11 +27,11 @@
     "DexCategory": "Mushroom Pokémon",
     "Height": {
         "Meters": 1.2,
-        "Feet": 4.0
+        "Feet": 4
     },
     "Weight": {
-        "Kilograms": 39.0,
-        "Pounds": 86.0
+        "Kilograms": 39,
+        "Pounds": 86
     },
     "DexDescription": "Their flexible arms and quick footwork can put good fighters to shame. The seeds on their tail and the cap on their head release poison spores. They love humid and hot climates.",
     "Evolutions": [

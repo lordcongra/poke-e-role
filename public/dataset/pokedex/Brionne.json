@@ -27,11 +27,11 @@
     "DexCategory": "Pop Star Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 17.0,
-        "Pounds": 38.0
+        "Kilograms": 17,
+        "Pounds": 38
     },
     "DexDescription": "In the wild, each herd has their own songs and dances; Brionne practice them in the moonlight. It is cheerful and not timid at all. It forms friendships easily through dance movements.",
     "Evolutions": [

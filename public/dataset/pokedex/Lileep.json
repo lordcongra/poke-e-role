@@ -26,12 +26,12 @@
     "_id": "lileep",
     "DexCategory": "Sea Lily Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 23.0,
-        "Pounds": 52.0
+        "Kilograms": 23,
+        "Pounds": 52
     },
     "DexDescription": "Over 100 million years ago, Lileep used to attach themselves to rocks at the bottom of the sea. A disaster led them all to extinction. But their fossils remain, enabling them to be revived by scientists.",
     "Evolutions": [

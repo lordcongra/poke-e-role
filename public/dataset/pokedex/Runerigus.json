@@ -30,8 +30,8 @@
         "Feet": 5.3
     },
     "Weight": {
-        "Kilograms": 66.0,
-        "Pounds": 146.0
+        "Kilograms": 66,
+        "Pounds": 146
     },
     "DexDescription": "A powerful curse was woven into an ancient rune painting. The spirit of Yamask is absorbed by this curse and it evolves into a Runerigus. Do not touch the shadow parts of its body or you'll see terrible visions of the past.",
     "Evolutions": [

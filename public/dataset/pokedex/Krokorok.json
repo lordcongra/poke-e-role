@@ -26,12 +26,12 @@
     "_id": "krokorok",
     "DexCategory": "Desert Croc Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 33.0,
-        "Pounds": 73.0
+        "Kilograms": 33,
+        "Pounds": 73
     },
     "DexDescription": "The protective membranes shield their eyes from sandstorms and allow them to see in the dark. They can be aggressive and territorial and love to destroy things with their fangs.",
     "Evolutions": [

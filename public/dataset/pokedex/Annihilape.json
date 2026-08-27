@@ -27,11 +27,11 @@
     "DexCategory": "Rage Monkey Pokémon",
     "Height": {
         "Meters": 1.2,
-        "Feet": 4.0
+        "Feet": 4
     },
     "Weight": {
-        "Kilograms": 56.0,
-        "Pounds": 123.0
+        "Kilograms": 56,
+        "Pounds": 123
     },
     "DexDescription": "Its immense rage would never let this Pokémon rest in peace. So, even from beyond it keeps its wrath burning as a shadowy flame. Stay away, for its fists are said to crush the very soul of its victims.",
     "Evolutions": [

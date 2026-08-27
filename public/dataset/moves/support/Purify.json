@@ -12,7 +12,9 @@
     "_id": "purify",
     "Attributes": {},
     "AddedEffects": {
-        "AilmentHeal": ["All"]
+        "AilmentHeal": [
+            "All"
+        ]
     },
     "Category": "Support"
 }

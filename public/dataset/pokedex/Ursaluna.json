@@ -30,8 +30,8 @@
         "Feet": 7.8
     },
     "Weight": {
-        "Kilograms": 417.0,
-        "Pounds": 920.0
+        "Kilograms": 417,
+        "Pounds": 920
     },
     "DexDescription": "An ancient Hisui tribe had stories about Ursaring evolving using peat. Peat is mostly useless and does not have any energy properties that could aid in evolution. No Ursaring has been reported to evolve in recent years.",
     "Evolutions": [

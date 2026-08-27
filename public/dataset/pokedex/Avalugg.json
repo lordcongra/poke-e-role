@@ -26,12 +26,12 @@
     "_id": "avalugg",
     "DexCategory": "Iceberg Pokémon",
     "Height": {
-        "Meters": 2.0,
+        "Meters": 2,
         "Feet": 6.6
     },
     "Weight": {
-        "Kilograms": 505.0,
-        "Pounds": 1113.0
+        "Kilograms": 505,
+        "Pounds": 1113
     },
     "DexDescription": "They carry their Bergmite offspring on their backs. Its Ice body is hard as steel and its cumbersome frame crushes anything that stands in its way. They are capable of swimming but they move very slowly.",
     "Evolutions": [

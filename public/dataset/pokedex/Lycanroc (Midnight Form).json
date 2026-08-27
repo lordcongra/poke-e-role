@@ -30,8 +30,8 @@
         "Feet": 3.6
     },
     "Weight": {
-        "Kilograms": 25.0,
-        "Pounds": 55.0
+        "Kilograms": 25,
+        "Pounds": 55
     },
     "DexDescription": "A poorly-behaved Rockruff will evolve at midnight. This Pokémon is savage and has no regard for its own safety. It taunts and provokes foes a lot stronger just to get its own blood boiling.",
     "Evolutions": [

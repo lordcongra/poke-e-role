@@ -30,8 +30,8 @@
         "Feet": 3.9
     },
     "Weight": {
-        "Kilograms": 45.0,
-        "Pounds": 99.0
+        "Kilograms": 45,
+        "Pounds": 99
     },
     "DexDescription": "Recent studies show they are close cousins to Wailmer. Unlike their sea relatives, the Cetoddle line started dwelling on land a long time ago. Frigid regions became the perfect habitat for these playful Pokémon.",
     "Evolutions": [

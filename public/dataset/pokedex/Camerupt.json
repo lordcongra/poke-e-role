@@ -30,8 +30,8 @@
         "Feet": 6.2
     },
     "Weight": {
-        "Kilograms": 220.0,
-        "Pounds": 485.0
+        "Kilograms": 220,
+        "Pounds": 485
     },
     "DexDescription": "Sometimes the humps on their back make an eruption when they get really angry; otherwise they'd only erupt every 10 years. Camerupt live inside the craters of volcanoes. They are indifferent to humans.",
     "Evolutions": [

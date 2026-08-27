@@ -26,12 +26,12 @@
     "_id": "vaporeon",
     "DexCategory": "Bubble Jet Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 29.0,
-        "Pounds": 63.0
+        "Kilograms": 29,
+        "Pounds": 63
     },
     "DexDescription": "Eevee underwent a strange mutation. It grew fins and gills that allow it to live underwater. This Pokémon has the ability to become translucent when it dives underwater.",
     "Evolutions": [

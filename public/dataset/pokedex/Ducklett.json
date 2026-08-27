@@ -30,8 +30,8 @@
         "Feet": 1.7
     },
     "Weight": {
-        "Kilograms": 5.0,
-        "Pounds": 12.0
+        "Kilograms": 5,
+        "Pounds": 12
     },
     "DexDescription": "These bird Pokémon are excellent divers. They swim around in the water eating their favorite food: peat moss. They can shoot a spray of mist with their feathers to protect themselves from any predator that comes.",
     "Evolutions": [

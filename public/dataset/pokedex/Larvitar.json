@@ -27,11 +27,11 @@
     "DexCategory": "Rock Skin Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 72.0,
-        "Pounds": 159.0
+        "Kilograms": 72,
+        "Pounds": 159
     },
     "DexDescription": "Born deep underground, they don't emerge until they've eaten a whole mountain of soil. Only the strongest and most ferocious ever come out to roam about. They hate being disturbed.",
     "Evolutions": [

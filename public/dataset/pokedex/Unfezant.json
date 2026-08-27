@@ -27,11 +27,11 @@
     "DexCategory": "Proud Pokémon",
     "Height": {
         "Meters": 1.2,
-        "Feet": 4.0
+        "Feet": 4
     },
     "Weight": {
-        "Kilograms": 29.0,
-        "Pounds": 63.0
+        "Kilograms": 29,
+        "Pounds": 63
     },
     "DexDescription": "Males swing the beautiful plumage on their heads to threaten others and to court females. Although less visually appealing, females are better at flying. Once they form a pair, they are mated for life.",
     "Evolutions": [

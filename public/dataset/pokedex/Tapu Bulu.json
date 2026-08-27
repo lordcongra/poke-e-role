@@ -30,8 +30,8 @@
         "Feet": 6.3
     },
     "Weight": {
-        "Kilograms": 45.0,
-        "Pounds": 100.0
+        "Kilograms": 45,
+        "Pounds": 100
     },
     "DexDescription": "Through Ula'ula Island runs the legend of a lazy guardian spirit who lives among the trees, which it commands to restrain its foes before beating them.",
     "Evolutions": [],

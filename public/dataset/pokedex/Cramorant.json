@@ -30,8 +30,8 @@
         "Feet": 2.6
     },
     "Weight": {
-        "Kilograms": 18.0,
-        "Pounds": 40.0
+        "Kilograms": 18,
+        "Pounds": 40
     },
     "DexDescription": "Cramorant hunt for fish Pokémon to eat near seashores and lakes. They often try to engulf prey that is too large and it ends up blocking their gullets. They are airheaded and often forget what they were doing.",
     "Evolutions": [],

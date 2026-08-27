@@ -7,7 +7,7 @@
     "Category": "Berry",
     "Description": "This berry's sweet pulp will absorb simple poison out of the bloodstream. Heal Poison.",
     "OneUse": false,
-    "PMDPrice": 60.0,
+    "PMDPrice": 60,
     "TrainerPrice": "Uncommon",
     "Cures": "Poison",
     "Image": "pecha-berry.png"

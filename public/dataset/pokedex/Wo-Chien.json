@@ -27,11 +27,11 @@
     "DexCategory": "Ruinous Pokémon",
     "Height": {
         "Meters": 1.5,
-        "Feet": 5.0
+        "Feet": 5
     },
     "Weight": {
-        "Kilograms": 74.0,
-        "Pounds": 163.0
+        "Kilograms": 74,
+        "Pounds": 163
     },
     "DexDescription": "Possessed by the grudge of an author unfairly punished, these wooden tablets tell the story of an evil king from long ago. Its body of leaves drains the life-energy of all vegetation nearby, leaving barren wastelands behind.",
     "Evolutions": [],

@@ -27,11 +27,11 @@
     "DexCategory": "Manipulate Pokémon",
     "Height": {
         "Meters": 0.9,
-        "Feet": 3.0
+        "Feet": 3
     },
     "Weight": {
-        "Kilograms": 71.0,
-        "Pounds": 157.0
+        "Kilograms": 71,
+        "Pounds": 157
     },
     "DexDescription": "Grumpig control their foes with their Psychic powers amplified by the pearls on their head and a hypnotic dance. However, when they use their powers, they have a difficult time breathing.",
     "Evolutions": [

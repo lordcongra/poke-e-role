@@ -27,11 +27,11 @@
     "DexCategory": "Sea Slug Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 6.0,
-        "Pounds": 12.0
+        "Kilograms": 6,
+        "Pounds": 12
     },
     "DexDescription": "Its shape and coloration change depending on its habitat of salt or fresh water. Their body is very soft and squishy but they can stretch to long lengths. It releases a purple liquid from its body if threatened.",
     "Evolutions": [

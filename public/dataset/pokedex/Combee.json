@@ -27,11 +27,11 @@
     "DexCategory": "Tiny Bee Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 5.0,
-        "Pounds": 12.0
+        "Kilograms": 5,
+        "Pounds": 12
     },
     "DexDescription": "It forms hives around trees. It flies all day sipping the nectar from flowers to make honey. It is usually born a male. If a female is born, it will grow into a Vespiquen and start its own hive.",
     "Evolutions": [

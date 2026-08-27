@@ -30,8 +30,8 @@
         "Feet": 5.9
     },
     "Weight": {
-        "Kilograms": 70.0,
-        "Pounds": 154.0
+        "Kilograms": 70,
+        "Pounds": 154
     },
     "DexDescription": "It is extremely rare, but also incredibly dangerous to find. They are so violent that there are no records of Zarude being successfully trained by anyone. Should you see one, play dead and wait for it to leave.",
     "Evolutions": [],

@@ -30,8 +30,8 @@
         "Feet": 2.9
     },
     "Weight": {
-        "Kilograms": 22.0,
-        "Pounds": 48.0
+        "Kilograms": 22,
+        "Pounds": 48
     },
     "DexDescription": "It bounces off walls and ceilings to launch aerial attacks. They live in packs in distant mountains. The size of their flame and the blue pattern on their faces determine their rank. They are small but very strong.",
     "Evolutions": [

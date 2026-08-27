@@ -26,12 +26,12 @@
     "_id": "magearna",
     "DexCategory": "Pokédex has no data.",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 80.0,
-        "Pounds": 177.0
+        "Kilograms": 80,
+        "Pounds": 177
     },
     "DexDescription": "500 years ago a famous scientist left a manuscript with details on how to create a mechanical Pokémon. His investigation led to the creation of the modern Pokéball.",
     "Evolutions": [],

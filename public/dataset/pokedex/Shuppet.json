@@ -27,11 +27,11 @@
     "DexCategory": "Puppet Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 2.0,
-        "Pounds": 5.0
+        "Kilograms": 2,
+        "Pounds": 5
     },
     "DexDescription": "They feed on dark emotions such as envy, jealousy, and vengefulness. If they sting you, they'll fill you with a vindictive desire. They don't have bodies under their blanket and they are looking for a body to possess.",
     "Evolutions": [

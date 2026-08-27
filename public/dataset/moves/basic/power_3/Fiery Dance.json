@@ -14,7 +14,9 @@
     "AddedEffects": {
         "StatChanges": [
             {
-                "Stats": ["Special"],
+                "Stats": [
+                    "Special"
+                ],
                 "Stages": 1,
                 "ChanceDice": 5,
                 "Affects": "User"

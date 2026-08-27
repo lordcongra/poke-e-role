@@ -26,12 +26,12 @@
     "_id": "munkidori",
     "DexCategory": "Pokedex has no data.",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 12.0,
-        "Pounds": 27.0
+        "Kilograms": 12,
+        "Pounds": 27
     },
     "DexDescription": "The most famous legend in Kitakami tells about how three Pokémon and their master defeated an ogre. One of them was dim-witted but became sharp of mind after eating a forbidden magical mochi.",
     "Evolutions": [],

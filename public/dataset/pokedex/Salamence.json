@@ -27,11 +27,11 @@
     "DexCategory": "Dragon Pokémon",
     "Height": {
         "Meters": 1.5,
-        "Feet": 5.0
+        "Feet": 5
     },
     "Weight": {
-        "Kilograms": 102.0,
-        "Pounds": 226.0
+        "Kilograms": 102,
+        "Pounds": 226
     },
     "DexDescription": "After a lifetime of struggling for a dream, it finally grew its wings. Salamence, however, is extremely dangerous; it scorches entire fields and mountains. It's easily angered and completely uncontrollable.",
     "Evolutions": [

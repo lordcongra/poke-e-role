@@ -30,8 +30,8 @@
         "Feet": 2.6
     },
     "Weight": {
-        "Kilograms": 50.0,
-        "Pounds": 110.0
+        "Kilograms": 50,
+        "Pounds": 110
     },
     "DexDescription": "It lives in arid places where it forms small groups. It closes its nostrils and submerges under the sand to rest. Females have a different coloration, usually a darker and duller color. They are easy-going Pokémon.",
     "Evolutions": [

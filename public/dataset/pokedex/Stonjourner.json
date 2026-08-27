@@ -30,8 +30,8 @@
         "Feet": 8.2
     },
     "Weight": {
-        "Kilograms": 520.0,
-        "Pounds": 1146.0
+        "Kilograms": 520,
+        "Pounds": 1146
     },
     "DexDescription": "They spend almost all their lives immobile, disguised as inconspicuous rocks. Once a year they gather out of nowhere and form up in a circle. They stay in formation for a few days and then disappear overnight.",
     "Evolutions": [],

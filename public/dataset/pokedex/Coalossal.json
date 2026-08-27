@@ -30,8 +30,8 @@
         "Feet": 9.2
     },
     "Weight": {
-        "Kilograms": 310.0,
-        "Pounds": 684.0
+        "Kilograms": 310,
+        "Pounds": 684
     },
     "DexDescription": "They are usually calm creatures. If they see you are kind they'll share their warmth with you, but if you enrage one you risk being burned down to ashes. They spit a tarry substance that is very flammable.",
     "Evolutions": [

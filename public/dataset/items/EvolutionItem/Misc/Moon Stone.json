@@ -7,7 +7,7 @@
     "Category": "",
     "Description": "Looks like a common rock until the moon shines upon it, giving it a aether glow. Commonly found in caves.",
     "OneUse": true,
-    "PMDPrice": 1000.0,
+    "PMDPrice": 1000,
     "TrainerPrice": "3500",
     "Image": "moon-stone.png"
 }

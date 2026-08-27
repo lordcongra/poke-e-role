@@ -30,8 +30,8 @@
         "Feet": 2.6
     },
     "Weight": {
-        "Kilograms": 24.0,
-        "Pounds": 52.0
+        "Kilograms": 24,
+        "Pounds": 52
     },
     "DexDescription": "The old magical forests of Galar made Ponyta adopt a mystic nature. Their miraculous horn can heal most wounds and sense the purity in your heart; if you hold evil, you'll never see this Pokémon in the wild.",
     "Evolutions": [

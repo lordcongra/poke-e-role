@@ -27,11 +27,11 @@
     "DexCategory": "Ore Pokémon",
     "Height": {
         "Meters": 0.9,
-        "Feet": 3.0
+        "Feet": 3
     },
     "Weight": {
-        "Kilograms": 102.0,
-        "Pounds": 224.0
+        "Kilograms": 102,
+        "Pounds": 224
     },
     "DexDescription": "It releases its excess of energy in the form of red crystals. Still blind, it looks for for water sources inside underground caves by using echolocation. It is a pacifistic creature that keeps to itself most of the time.",
     "Evolutions": [

@@ -27,11 +27,11 @@
     "DexCategory": "Cocoon Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 10.0,
-        "Pounds": 22.0
+        "Kilograms": 10,
+        "Pounds": 22
     },
     "DexDescription": "It remains virtually immobile while it clings to a tree. On the inside, it is preparing for evolution by raising the temperature of its shell. Beware of Beedrills that may roam close to it.",
     "Evolutions": [

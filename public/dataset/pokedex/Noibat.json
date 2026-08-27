@@ -30,8 +30,8 @@
         "Feet": 1.6
     },
     "Weight": {
-        "Kilograms": 8.0,
-        "Pounds": 17.0
+        "Kilograms": 8,
+        "Pounds": 17
     },
     "DexDescription": "They live in dark caves and use echolocation to move around. Their enormous ears can emit ultrasonic waves that cause dizziness. Groups of them can even take on prey several times their size.",
     "Evolutions": [

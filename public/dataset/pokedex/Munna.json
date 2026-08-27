@@ -27,11 +27,11 @@
     "DexCategory": "Dream Eater Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 23.0,
-        "Pounds": 56.0
+        "Kilograms": 23,
+        "Pounds": 56
     },
     "DexDescription": "It lurks close to towns and eats the dreams of people and Pokémon. When it eats a pleasant dream, it expels pink-colored mist. If you forgot what you dreamed, a Munna must have eaten your dream.",
     "Evolutions": [

@@ -30,8 +30,8 @@
         "Feet": 3.6
     },
     "Weight": {
-        "Kilograms": 148.0,
-        "Pounds": 326.0
+        "Kilograms": 148,
+        "Pounds": 326
     },
     "DexDescription": "They are hatched from snow clouds. Using chains made of ice crystals, they capture prey. If their temperature goes up, they turns into steam and vanish until they can freeze and become ice again.",
     "Evolutions": [],

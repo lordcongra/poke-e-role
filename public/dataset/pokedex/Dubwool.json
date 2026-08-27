@@ -30,8 +30,8 @@
         "Feet": 4.3
     },
     "Weight": {
-        "Kilograms": 45.0,
-        "Pounds": 95.0
+        "Kilograms": 45,
+        "Pounds": 95
     },
     "DexDescription": "Humble and calm, their wool has springy properties. A king in ancient times ordered a carpet made from 100 Dubwool. When it was done, people started to bounce the moment they set foot on it.",
     "Evolutions": [

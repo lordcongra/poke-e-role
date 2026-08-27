@@ -12,7 +12,16 @@
     "_id": "aromatherapy",
     "Attributes": {},
     "AddedEffects": {
-        "AilmentHeal": ["Burn1", "Burn2", "Burn3", "Freeze", "Paralysis", "Poison", "BadlyPoison", "Sleep"]
+        "AilmentHeal": [
+            "Burn1",
+            "Burn2",
+            "Burn3",
+            "Freeze",
+            "Paralysis",
+            "Poison",
+            "BadlyPoison",
+            "Sleep"
+        ]
     },
     "Category": "Support"
 }

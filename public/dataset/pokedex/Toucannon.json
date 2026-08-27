@@ -30,8 +30,8 @@
         "Feet": 3.6
     },
     "Weight": {
-        "Kilograms": 26.0,
-        "Pounds": 57.0
+        "Kilograms": 26,
+        "Pounds": 57
     },
     "DexDescription": "It can store and expel an extremely hot gas through its beak that ignites easily. The berry seeds it shoots can pierce boulders, leaving perfectly round holes in them. Fortunately, they nest deep in the jungle.",
     "Evolutions": [

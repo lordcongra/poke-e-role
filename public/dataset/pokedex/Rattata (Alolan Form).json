@@ -27,11 +27,11 @@
     "DexCategory": "Mouse Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 3.0,
-        "Pounds": 7.0
+        "Kilograms": 3,
+        "Pounds": 7
     },
     "DexDescription": "Rattata first came to Alola through cargo ships. It thrived and almost destroyed the region's ecosystem. Attempts to exterminate this Pokémon made it more vicious than its regular counterpart.",
     "Evolutions": [

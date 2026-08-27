@@ -26,12 +26,12 @@
     "_id": "snover",
     "DexCategory": "Frosted Tree Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 50.0,
-        "Pounds": 111.0
+        "Kilograms": 50,
+        "Pounds": 111
     },
     "DexDescription": "During cold seasons, it migrates to the mountain's lower reaches and returns to the summit in the spring. They are rarely in contact with humans, but are sought for the frozen berries they grow.",
     "Evolutions": [

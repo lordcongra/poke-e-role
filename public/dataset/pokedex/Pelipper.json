@@ -30,8 +30,8 @@
         "Feet": 3.9
     },
     "Weight": {
-        "Kilograms": 28.0,
-        "Pounds": 62.0
+        "Kilograms": 28,
+        "Pounds": 62
     },
     "DexDescription": "Pelipper has been seen carrying eggs and other Pokémon inside its massive bill, protecting them from predators and storms, transporting the young through the great seas and into new homes.",
     "Evolutions": [

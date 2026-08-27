@@ -26,12 +26,12 @@
     "_id": "kingambit",
     "DexCategory": "Big Blade Pokémon",
     "Height": {
-        "Meters": 2.0,
+        "Meters": 2,
         "Feet": 6.6
     },
     "Weight": {
-        "Kilograms": 120.0,
-        "Pounds": 264.0
+        "Kilograms": 120,
+        "Pounds": 264
     },
     "DexDescription": "Only a Bisharp able to face an army can evolve into Kingambit. While it commands a legion of followers, it's not skilled at devising complex strategies, seeking to win through brute strength alone.",
     "Evolutions": [

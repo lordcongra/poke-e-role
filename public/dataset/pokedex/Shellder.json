@@ -27,11 +27,11 @@
     "DexCategory": "Bivalve Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 4.0,
-        "Pounds": 9.0
+        "Kilograms": 4,
+        "Pounds": 9
     },
     "DexDescription": "It lives at the bottom of the sea and rivers. It feeds on algae but it's attracted to sweet substances. When frightened it will shut its clam and lock it to be almost impossible to open.",
     "Evolutions": [

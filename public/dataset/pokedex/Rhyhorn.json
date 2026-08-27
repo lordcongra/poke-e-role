@@ -26,12 +26,12 @@
     "_id": "rhyhorn",
     "DexCategory": "Spikes Pokémon",
     "Height": {
-        "Meters": 1.0,
+        "Meters": 1,
         "Feet": 3.3
     },
     "Weight": {
-        "Kilograms": 115.0,
-        "Pounds": 253.0
+        "Kilograms": 115,
+        "Pounds": 253
     },
     "DexDescription": "It lives in grasslands and rough terrain. It is covered with a thick hide. It tramples any threat by ramming against them. It is not very smart, and can stay ramming at things for hours just because.",
     "Evolutions": [

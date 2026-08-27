@@ -27,11 +27,11 @@
     "DexCategory": "Water Lizard Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 4.0,
-        "Pounds": 8.0
+        "Kilograms": 4,
+        "Pounds": 8
     },
     "DexDescription": "This shy Pokémon does not like to attract too much attention. It hides in shallow pools of water. When it feels threatened, it cries and its tear packs release a chemical that will make its foes cry too.",
     "Evolutions": [

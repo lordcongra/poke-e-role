@@ -27,11 +27,11 @@
     "DexCategory": "Iron Armor Pokémon",
     "Height": {
         "Meters": 2.1,
-        "Feet": 7.0
+        "Feet": 7
     },
     "Weight": {
-        "Kilograms": 360.0,
-        "Pounds": 793.0
+        "Kilograms": 360,
+        "Pounds": 793
     },
     "DexDescription": "Aggron claim ownership of entire mountains, mercilessly beating up anything that crosses their path. Aggron are violent and patrol their territory at all times, but also plant trees, stop fires, and protect nature.",
     "Evolutions": [

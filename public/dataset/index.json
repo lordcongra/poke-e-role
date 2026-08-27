@@ -8045,6 +8045,12 @@
           "weight": 100
         },
         {
+          "name": "Struggle Bug",
+          "type": "Bug",
+          "path": "/dataset/moves/basic/power_1/Struggle Bug.json",
+          "weight": 100
+        },
+        {
           "name": "Surging Strikes",
           "type": "Water",
           "path": "/dataset/moves/basic/power_1/Surging Strikes.json",
@@ -11251,316 +11257,266 @@
           "weight": 100
         },
         {
+          "name": "Struggle",
+          "type": "Typeless",
+          "path": "/dataset/moves/highPower/variable/Struggle.json",
+          "weight": 100
+        },
+        {
+          "name": "Struggle (Physical)",
+          "type": "Typeless",
+          "path": "/dataset/moves/highPower/variable/Struggle - Physical.json",
+          "weight": 100
+        },
+        {
+          "name": "Struggle (Special)",
+          "type": "Typeless",
+          "path": "/dataset/moves/highPower/variable/Struggle - Special.json",
+          "weight": 100
+        },
+        {
+          "name": "Struggle Throw",
+          "type": "Typeless",
+          "path": "/dataset/moves/highPower/variable/Struggle - Throw.json",
+          "weight": 100
+        },
+        {
           "name": "Super Fang",
           "type": "Normal",
           "path": "/dataset/moves/highPower/variable/Super Fang.json",
           "weight": 100
         }
       ]
-    }
+    },
+    "zMoves": [
+      {
+        "name": "Acid Downpour",
+        "type": "Poison",
+        "path": "/dataset/moves/zMoves/Acid Downpour.json",
+        "weight": 50
+      },
+      {
+        "name": "All-Out Pummeling",
+        "type": "Fighting",
+        "path": "/dataset/moves/zMoves/All-Out Pummeling.json",
+        "weight": 50
+      },
+      {
+        "name": "Black Hole Eclipse",
+        "type": "Dark",
+        "path": "/dataset/moves/zMoves/Black Hole Eclipse.json",
+        "weight": 50
+      },
+      {
+        "name": "Bloom Doom",
+        "type": "Grass",
+        "path": "/dataset/moves/zMoves/Bloom Doom.json",
+        "weight": 50
+      },
+      {
+        "name": "Breakneck Blitz",
+        "type": "Normal",
+        "path": "/dataset/moves/zMoves/Breakneck Blitz.json",
+        "weight": 50
+      },
+      {
+        "name": "Continental Crush",
+        "type": "Rock",
+        "path": "/dataset/moves/zMoves/Continental Crush.json",
+        "weight": 50
+      },
+      {
+        "name": "Corkscrew Crash",
+        "type": "Steel",
+        "path": "/dataset/moves/zMoves/Corkscrew Crash.json",
+        "weight": 50
+      },
+      {
+        "name": "Devastating Drake",
+        "type": "Dragon",
+        "path": "/dataset/moves/zMoves/Devastating Drake.json",
+        "weight": 50
+      },
+      {
+        "name": "Gigavolt Havoc",
+        "type": "Electric",
+        "path": "/dataset/moves/zMoves/Gigavolt Havoc.json",
+        "weight": 50
+      },
+      {
+        "name": "Hydro Vortex",
+        "type": "Water",
+        "path": "/dataset/moves/zMoves/Hydro Vortex.json",
+        "weight": 50
+      },
+      {
+        "name": "Inferno Overdrive",
+        "type": "Fire",
+        "path": "/dataset/moves/zMoves/Inferno Overdrive.json",
+        "weight": 50
+      },
+      {
+        "name": "Never-Ending Nightmare",
+        "type": "Ghost",
+        "path": "/dataset/moves/zMoves/Never-Ending Nightmare.json",
+        "weight": 50
+      },
+      {
+        "name": "Savage Spin-Out",
+        "type": "Bug",
+        "path": "/dataset/moves/zMoves/Savage Spin-Out.json",
+        "weight": 50
+      },
+      {
+        "name": "Shattered Psyche",
+        "type": "Psychic",
+        "path": "/dataset/moves/zMoves/Shattered Psyche.json",
+        "weight": 50
+      },
+      {
+        "name": "Subzero Slammer",
+        "type": "Ice",
+        "path": "/dataset/moves/zMoves/Subzero Slammer.json",
+        "weight": 50
+      },
+      {
+        "name": "Supersonic Skystrike",
+        "type": "Flying",
+        "path": "/dataset/moves/zMoves/Supersonic Skystrike.json",
+        "weight": 50
+      },
+      {
+        "name": "Tectonic Rage",
+        "type": "Ground",
+        "path": "/dataset/moves/zMoves/Tectonic Rage.json",
+        "weight": 50
+      },
+      {
+        "name": "Twinkle Tackle",
+        "type": "Fairy",
+        "path": "/dataset/moves/zMoves/Twinkle Tackle.json",
+        "weight": 50
+      }
+    ],
+    "maxMoves": [
+      {
+        "name": "Max Airstream",
+        "type": "Flying",
+        "path": "/dataset/moves/maxMoves/Max Airstream.json",
+        "weight": 50
+      },
+      {
+        "name": "Max Darkness",
+        "type": "Dark",
+        "path": "/dataset/moves/maxMoves/Max Darkness.json",
+        "weight": 50
+      },
+      {
+        "name": "Max Flare",
+        "type": "Fire",
+        "path": "/dataset/moves/maxMoves/Max Flare.json",
+        "weight": 50
+      },
+      {
+        "name": "Max Flutterby",
+        "type": "Bug",
+        "path": "/dataset/moves/maxMoves/Max Flutterby.json",
+        "weight": 50
+      },
+      {
+        "name": "Max Geyser",
+        "type": "Water",
+        "path": "/dataset/moves/maxMoves/Max Geyser.json",
+        "weight": 50
+      },
+      {
+        "name": "Max Guard",
+        "type": "Normal",
+        "path": "/dataset/moves/maxMoves/Max Guard.json",
+        "weight": 100
+      },
+      {
+        "name": "Max Hailstorm",
+        "type": "Ice",
+        "path": "/dataset/moves/maxMoves/Max Hailstorm.json",
+        "weight": 50
+      },
+      {
+        "name": "Max Knuckle",
+        "type": "Fighting",
+        "path": "/dataset/moves/maxMoves/Max Knuckle.json",
+        "weight": 50
+      },
+      {
+        "name": "Max Lightning",
+        "type": "Electric",
+        "path": "/dataset/moves/maxMoves/Max Lightning.json",
+        "weight": 50
+      },
+      {
+        "name": "Max Mindstorm",
+        "type": "Psychic",
+        "path": "/dataset/moves/maxMoves/Max Mindstorm.json",
+        "weight": 50
+      },
+      {
+        "name": "Max Ooze",
+        "type": "Poison",
+        "path": "/dataset/moves/maxMoves/Max Ooze.json",
+        "weight": 50
+      },
+      {
+        "name": "Max Overgrowth",
+        "type": "Grass",
+        "path": "/dataset/moves/maxMoves/Max Overgrowth.json",
+        "weight": 50
+      },
+      {
+        "name": "Max Phantasm",
+        "type": "Ghost",
+        "path": "/dataset/moves/maxMoves/Max Phantasm.json",
+        "weight": 50
+      },
+      {
+        "name": "Max Quake",
+        "type": "Ground",
+        "path": "/dataset/moves/maxMoves/Max Quake.json",
+        "weight": 50
+      },
+      {
+        "name": "Max Rockfall",
+        "type": "Rock",
+        "path": "/dataset/moves/maxMoves/Max Rockfall.json",
+        "weight": 50
+      },
+      {
+        "name": "Max Starfall",
+        "type": "Fairy",
+        "path": "/dataset/moves/maxMoves/Max Starfall.json",
+        "weight": 50
+      },
+      {
+        "name": "Max Steelspike",
+        "type": "Steel",
+        "path": "/dataset/moves/maxMoves/Max Steelspike.json",
+        "weight": 50
+      },
+      {
+        "name": "Max Strike",
+        "type": "Normal",
+        "path": "/dataset/moves/maxMoves/Max Strike.json",
+        "weight": 50
+      },
+      {
+        "name": "Max Wyrmwind",
+        "type": "Dragon",
+        "path": "/dataset/moves/maxMoves/Max Wyrmwind.json",
+        "weight": 50
+      }
+    ]
   },
   "items": {
-    "EvolutionItem": {
-      "Misc": [
-        {
-          "name": "Dawn Stone",
-          "path": "/dataset/items/EvolutionItem/Misc/Dawn Stone.json",
-          "pmd": false,
-          "weight": 5
-        },
-        {
-          "name": "Dusk Stone",
-          "path": "/dataset/items/EvolutionItem/Misc/Dusk Stone.json",
-          "pmd": false,
-          "weight": 5
-        },
-        {
-          "name": "Fire Stone",
-          "path": "/dataset/items/EvolutionItem/Misc/Fire Stone.json",
-          "pmd": true,
-          "weight": 20
-        },
-        {
-          "name": "Ice Stone",
-          "path": "/dataset/items/EvolutionItem/Misc/Ice Stone.json",
-          "pmd": false,
-          "weight": 5
-        },
-        {
-          "name": "Leaf Stone",
-          "path": "/dataset/items/EvolutionItem/Misc/Leaf Stone.json",
-          "pmd": true,
-          "weight": 10
-        },
-        {
-          "name": "Moon Stone",
-          "path": "/dataset/items/EvolutionItem/Misc/Moon Stone.json",
-          "pmd": true,
-          "weight": 20
-        },
-        {
-          "name": "Shiny Stone",
-          "path": "/dataset/items/EvolutionItem/Misc/Shiny Stone.json",
-          "pmd": true,
-          "weight": 5
-        },
-        {
-          "name": "Sun Stone",
-          "path": "/dataset/items/EvolutionItem/Misc/Sun Stone.json",
-          "pmd": true,
-          "weight": 20
-        },
-        {
-          "name": "Thunder Stone",
-          "path": "/dataset/items/EvolutionItem/Misc/Thunder Stone.json",
-          "pmd": true,
-          "weight": 20
-        },
-        {
-          "name": "Water Stone",
-          "path": "/dataset/items/EvolutionItem/Misc/Water Stone.json",
-          "pmd": true,
-          "weight": 20
-        }
-      ]
-    },
     "HeldItems": {
-      "BattleItem": [
-        {
-          "name": "Air Balloon",
-          "path": "/dataset/items/HeldItems/BattleItem/Air Balloon.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Amulet Coin",
-          "path": "/dataset/items/HeldItems/BattleItem/Amulet Coin.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Bright Powder",
-          "path": "/dataset/items/HeldItems/BattleItem/Bright Powder.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Choice Band",
-          "path": "/dataset/items/HeldItems/BattleItem/Choice Band.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Choice Scarf",
-          "path": "/dataset/items/HeldItems/BattleItem/Choice Scarf.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Choice Specs",
-          "path": "/dataset/items/HeldItems/BattleItem/Choice Specs.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Clear Amulet",
-          "path": "/dataset/items/HeldItems/BattleItem/Clear Amulet.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Destiny Knot",
-          "path": "/dataset/items/HeldItems/BattleItem/Destiny Knot.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Eject Button",
-          "path": "/dataset/items/HeldItems/BattleItem/Eject Button.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Eviolite",
-          "path": "/dataset/items/HeldItems/BattleItem/Eviolite.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Expert Belt",
-          "path": "/dataset/items/HeldItems/BattleItem/Expert Belt.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Flame Orb",
-          "path": "/dataset/items/HeldItems/BattleItem/Flame Orb.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Focus Sash",
-          "path": "/dataset/items/HeldItems/BattleItem/Focus Sash.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Heavy-Duty Boots",
-          "path": "/dataset/items/HeldItems/BattleItem/Heavy-Duty Boots.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Iron Ball",
-          "path": "/dataset/items/HeldItems/BattleItem/Iron Ball.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "King's Rock",
-          "path": "/dataset/items/HeldItems/BattleItem/King's Rock.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Leek",
-          "path": "/dataset/items/HeldItems/BattleItem/Leek.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Leftovers",
-          "path": "/dataset/items/HeldItems/BattleItem/Leftovers.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Life Orb",
-          "path": "/dataset/items/HeldItems/BattleItem/Life Orb.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Loaded Dice",
-          "path": "/dataset/items/HeldItems/BattleItem/Loaded Dice.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Metronome",
-          "path": "/dataset/items/HeldItems/BattleItem/Metronome.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Power Herb",
-          "path": "/dataset/items/HeldItems/BattleItem/Power Herb.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Power Increasers",
-          "path": "/dataset/items/HeldItems/BattleItem/Power Increasers.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Protective Pads",
-          "path": "/dataset/items/HeldItems/BattleItem/Protective Pads.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Quick Claw",
-          "path": "/dataset/items/HeldItems/BattleItem/Quick Claw.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Razor Claw",
-          "path": "/dataset/items/HeldItems/BattleItem/Razor Claw.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Razor Fang",
-          "path": "/dataset/items/HeldItems/BattleItem/Razor Fang.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Red Card",
-          "path": "/dataset/items/HeldItems/BattleItem/Red Card.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Ring Target",
-          "path": "/dataset/items/HeldItems/BattleItem/Ring Target.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Rocky Helmet",
-          "path": "/dataset/items/HeldItems/BattleItem/Rocky Helmet.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Safety Goggles",
-          "path": "/dataset/items/HeldItems/BattleItem/Safety Goggles.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Sticky Barb",
-          "path": "/dataset/items/HeldItems/BattleItem/Sticky Barb.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Throat Spray",
-          "path": "/dataset/items/HeldItems/BattleItem/Throat Spray.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Toxic Orb",
-          "path": "/dataset/items/HeldItems/BattleItem/Toxic Orb.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Umbrella",
-          "path": "/dataset/items/HeldItems/BattleItem/Umbrella.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Weakness Policy",
-          "path": "/dataset/items/HeldItems/BattleItem/Weakness Policy.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "White Herb",
-          "path": "/dataset/items/HeldItems/BattleItem/White Herb.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Wide Lens",
-          "path": "/dataset/items/HeldItems/BattleItem/Wide Lens.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Zoom Lens",
-          "path": "/dataset/items/HeldItems/BattleItem/Zoom Lens.json",
-          "pmd": false,
-          "weight": 10
-        }
-      ],
       "MegaStone": [
         {
           "name": "Abomasite",
@@ -11845,132 +11801,238 @@
           "weight": 5
         }
       ],
-      "MonBoosting": [
+      "BattleItem": [
         {
-          "name": "Light Ball",
-          "path": "/dataset/items/HeldItems/MonBoosting/Light Ball.json",
+          "name": "Air Balloon",
+          "path": "/dataset/items/HeldItems/BattleItem/Air Balloon.json",
           "pmd": false,
           "weight": 10
         },
         {
-          "name": "Lucky Punch",
-          "path": "/dataset/items/HeldItems/MonBoosting/Lucky Punch.json",
+          "name": "Amulet Coin",
+          "path": "/dataset/items/HeldItems/BattleItem/Amulet Coin.json",
           "pmd": false,
           "weight": 10
         },
         {
-          "name": "Thick Club",
-          "path": "/dataset/items/HeldItems/MonBoosting/Thick Club.json",
-          "pmd": false,
-          "weight": 10
-        }
-      ],
-      "TypeBoosting": [
-        {
-          "name": "Black Belt",
-          "path": "/dataset/items/HeldItems/TypeBoosting/Black Belt.json",
+          "name": "Bright Powder",
+          "path": "/dataset/items/HeldItems/BattleItem/Bright Powder.json",
           "pmd": false,
           "weight": 10
         },
         {
-          "name": "Black Glasses",
-          "path": "/dataset/items/HeldItems/TypeBoosting/Black Glasses.json",
+          "name": "Choice Band",
+          "path": "/dataset/items/HeldItems/BattleItem/Choice Band.json",
           "pmd": false,
           "weight": 10
         },
         {
-          "name": "Charcoal",
-          "path": "/dataset/items/HeldItems/TypeBoosting/Charcoal.json",
+          "name": "Choice Scarf",
+          "path": "/dataset/items/HeldItems/BattleItem/Choice Scarf.json",
           "pmd": false,
           "weight": 10
         },
         {
-          "name": "Dragon Fang",
-          "path": "/dataset/items/HeldItems/TypeBoosting/Dragon Fang.json",
+          "name": "Choice Specs",
+          "path": "/dataset/items/HeldItems/BattleItem/Choice Specs.json",
           "pmd": false,
           "weight": 10
         },
         {
-          "name": "Fairy Wings",
-          "path": "/dataset/items/HeldItems/TypeBoosting/Fairy Wings.json",
+          "name": "Clear Amulet",
+          "path": "/dataset/items/HeldItems/BattleItem/Clear Amulet.json",
           "pmd": false,
           "weight": 10
         },
         {
-          "name": "Hard Stone",
-          "path": "/dataset/items/HeldItems/TypeBoosting/Hard Stone.json",
+          "name": "Destiny Knot",
+          "path": "/dataset/items/HeldItems/BattleItem/Destiny Knot.json",
           "pmd": false,
           "weight": 10
         },
         {
-          "name": "Magnet",
-          "path": "/dataset/items/HeldItems/TypeBoosting/Magnet.json",
+          "name": "Eject Button",
+          "path": "/dataset/items/HeldItems/BattleItem/Eject Button.json",
           "pmd": false,
           "weight": 10
         },
         {
-          "name": "Metal Coat",
-          "path": "/dataset/items/HeldItems/TypeBoosting/Metal Coat.json",
+          "name": "Eviolite",
+          "path": "/dataset/items/HeldItems/BattleItem/Eviolite.json",
           "pmd": false,
           "weight": 10
         },
         {
-          "name": "Miracle Seed",
-          "path": "/dataset/items/HeldItems/TypeBoosting/Miracle Seed.json",
+          "name": "Expert Belt",
+          "path": "/dataset/items/HeldItems/BattleItem/Expert Belt.json",
           "pmd": false,
           "weight": 10
         },
         {
-          "name": "Mystic Water",
-          "path": "/dataset/items/HeldItems/TypeBoosting/Mystic Water.json",
+          "name": "Flame Orb",
+          "path": "/dataset/items/HeldItems/BattleItem/Flame Orb.json",
           "pmd": false,
           "weight": 10
         },
         {
-          "name": "Never-Melt Ice",
-          "path": "/dataset/items/HeldItems/TypeBoosting/Never-Melt Ice.json",
+          "name": "Focus Sash",
+          "path": "/dataset/items/HeldItems/BattleItem/Focus Sash.json",
           "pmd": false,
           "weight": 10
         },
         {
-          "name": "Poison Barb",
-          "path": "/dataset/items/HeldItems/TypeBoosting/Poison Barb.json",
+          "name": "Heavy-Duty Boots",
+          "path": "/dataset/items/HeldItems/BattleItem/Heavy-Duty Boots.json",
           "pmd": false,
           "weight": 10
         },
         {
-          "name": "Sharp Beak",
-          "path": "/dataset/items/HeldItems/TypeBoosting/Sharp Beak.json",
+          "name": "Iron Ball",
+          "path": "/dataset/items/HeldItems/BattleItem/Iron Ball.json",
           "pmd": false,
           "weight": 10
         },
         {
-          "name": "Silk Scarf",
-          "path": "/dataset/items/HeldItems/TypeBoosting/Silk Scarf.json",
+          "name": "King's Rock",
+          "path": "/dataset/items/HeldItems/BattleItem/King's Rock.json",
           "pmd": false,
           "weight": 10
         },
         {
-          "name": "Silver Powder",
-          "path": "/dataset/items/HeldItems/TypeBoosting/Silver Powder.json",
+          "name": "Leek",
+          "path": "/dataset/items/HeldItems/BattleItem/Leek.json",
           "pmd": false,
           "weight": 10
         },
         {
-          "name": "Soft Sand",
-          "path": "/dataset/items/HeldItems/TypeBoosting/Soft Sand.json",
+          "name": "Leftovers",
+          "path": "/dataset/items/HeldItems/BattleItem/Leftovers.json",
           "pmd": false,
           "weight": 10
         },
         {
-          "name": "Spell Tag",
-          "path": "/dataset/items/HeldItems/TypeBoosting/Spell Tag.json",
+          "name": "Life Orb",
+          "path": "/dataset/items/HeldItems/BattleItem/Life Orb.json",
           "pmd": false,
           "weight": 10
         },
         {
-          "name": "Twisted Spoon",
-          "path": "/dataset/items/HeldItems/TypeBoosting/Twisted Spoon.json",
+          "name": "Loaded Dice",
+          "path": "/dataset/items/HeldItems/BattleItem/Loaded Dice.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Metronome",
+          "path": "/dataset/items/HeldItems/BattleItem/Metronome.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Power Herb",
+          "path": "/dataset/items/HeldItems/BattleItem/Power Herb.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Power Increasers",
+          "path": "/dataset/items/HeldItems/BattleItem/Power Increasers.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Protective Pads",
+          "path": "/dataset/items/HeldItems/BattleItem/Protective Pads.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Quick Claw",
+          "path": "/dataset/items/HeldItems/BattleItem/Quick Claw.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Razor Claw",
+          "path": "/dataset/items/HeldItems/BattleItem/Razor Claw.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Razor Fang",
+          "path": "/dataset/items/HeldItems/BattleItem/Razor Fang.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Red Card",
+          "path": "/dataset/items/HeldItems/BattleItem/Red Card.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Ring Target",
+          "path": "/dataset/items/HeldItems/BattleItem/Ring Target.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Rocky Helmet",
+          "path": "/dataset/items/HeldItems/BattleItem/Rocky Helmet.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Safety Goggles",
+          "path": "/dataset/items/HeldItems/BattleItem/Safety Goggles.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Sticky Barb",
+          "path": "/dataset/items/HeldItems/BattleItem/Sticky Barb.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Throat Spray",
+          "path": "/dataset/items/HeldItems/BattleItem/Throat Spray.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Toxic Orb",
+          "path": "/dataset/items/HeldItems/BattleItem/Toxic Orb.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Umbrella",
+          "path": "/dataset/items/HeldItems/BattleItem/Umbrella.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Weakness Policy",
+          "path": "/dataset/items/HeldItems/BattleItem/Weakness Policy.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "White Herb",
+          "path": "/dataset/items/HeldItems/BattleItem/White Herb.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Wide Lens",
+          "path": "/dataset/items/HeldItems/BattleItem/Wide Lens.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Zoom Lens",
+          "path": "/dataset/items/HeldItems/BattleItem/Zoom Lens.json",
           "pmd": false,
           "weight": 10
         }
@@ -12186,9 +12248,195 @@
           "pmd": false,
           "weight": 5
         }
+      ],
+      "TypeBoosting": [
+        {
+          "name": "Black Belt",
+          "path": "/dataset/items/HeldItems/TypeBoosting/Black Belt.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Black Glasses",
+          "path": "/dataset/items/HeldItems/TypeBoosting/Black Glasses.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Charcoal",
+          "path": "/dataset/items/HeldItems/TypeBoosting/Charcoal.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Dragon Fang",
+          "path": "/dataset/items/HeldItems/TypeBoosting/Dragon Fang.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Fairy Wings",
+          "path": "/dataset/items/HeldItems/TypeBoosting/Fairy Wings.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Hard Stone",
+          "path": "/dataset/items/HeldItems/TypeBoosting/Hard Stone.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Magnet",
+          "path": "/dataset/items/HeldItems/TypeBoosting/Magnet.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Metal Coat",
+          "path": "/dataset/items/HeldItems/TypeBoosting/Metal Coat.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Miracle Seed",
+          "path": "/dataset/items/HeldItems/TypeBoosting/Miracle Seed.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Mystic Water",
+          "path": "/dataset/items/HeldItems/TypeBoosting/Mystic Water.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Never-Melt Ice",
+          "path": "/dataset/items/HeldItems/TypeBoosting/Never-Melt Ice.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Poison Barb",
+          "path": "/dataset/items/HeldItems/TypeBoosting/Poison Barb.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Sharp Beak",
+          "path": "/dataset/items/HeldItems/TypeBoosting/Sharp Beak.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Silk Scarf",
+          "path": "/dataset/items/HeldItems/TypeBoosting/Silk Scarf.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Silver Powder",
+          "path": "/dataset/items/HeldItems/TypeBoosting/Silver Powder.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Soft Sand",
+          "path": "/dataset/items/HeldItems/TypeBoosting/Soft Sand.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Spell Tag",
+          "path": "/dataset/items/HeldItems/TypeBoosting/Spell Tag.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Twisted Spoon",
+          "path": "/dataset/items/HeldItems/TypeBoosting/Twisted Spoon.json",
+          "pmd": false,
+          "weight": 10
+        }
+      ],
+      "MonBoosting": [
+        {
+          "name": "Light Ball",
+          "path": "/dataset/items/HeldItems/MonBoosting/Light Ball.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Lucky Punch",
+          "path": "/dataset/items/HeldItems/MonBoosting/Lucky Punch.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Thick Club",
+          "path": "/dataset/items/HeldItems/MonBoosting/Thick Club.json",
+          "pmd": false,
+          "weight": 10
+        }
       ]
     },
     "Medicine": {
+      "Status": [
+        {
+          "name": "Antidote",
+          "path": "/dataset/items/Medicine/Status/Antidote.json",
+          "pmd": false,
+          "weight": 100
+        },
+        {
+          "name": "Awakening",
+          "path": "/dataset/items/Medicine/Status/Awakening.json",
+          "pmd": false,
+          "weight": 100
+        },
+        {
+          "name": "Baked Goods",
+          "path": "/dataset/items/Medicine/Status/Baked Goods.json",
+          "pmd": false,
+          "weight": 100
+        },
+        {
+          "name": "Burn Heal",
+          "path": "/dataset/items/Medicine/Status/Burn Heal.json",
+          "pmd": false,
+          "weight": 100
+        },
+        {
+          "name": "Full Heal",
+          "path": "/dataset/items/Medicine/Status/Full Heal.json",
+          "pmd": false,
+          "weight": 50
+        },
+        {
+          "name": "Heal Powder",
+          "path": "/dataset/items/Medicine/Status/Heal Powder.json",
+          "pmd": false,
+          "weight": 100
+        },
+        {
+          "name": "Ice Cream",
+          "path": "/dataset/items/Medicine/Status/Ice Cream.json",
+          "pmd": false,
+          "weight": 100
+        },
+        {
+          "name": "Ice Heal",
+          "path": "/dataset/items/Medicine/Status/Ice Heal.json",
+          "pmd": false,
+          "weight": 100
+        },
+        {
+          "name": "Paralyze Heal",
+          "path": "/dataset/items/Medicine/Status/Paralyze Heal.json",
+          "pmd": false,
+          "weight": 100
+        }
+      ],
       "Berry": [
         {
           "name": "Aspear Berry",
@@ -12249,6 +12497,56 @@
           "path": "/dataset/items/Medicine/Berry/Sitrus Berry.json",
           "pmd": true,
           "weight": 20
+        }
+      ],
+      "Vitamin": [
+        {
+          "name": "Calcium",
+          "path": "/dataset/items/Medicine/Vitamin/Calcium.json",
+          "pmd": true,
+          "weight": 5
+        },
+        {
+          "name": "Carbos",
+          "path": "/dataset/items/Medicine/Vitamin/Carbos.json",
+          "pmd": false,
+          "weight": 5
+        },
+        {
+          "name": "HP Up",
+          "path": "/dataset/items/Medicine/Vitamin/Hp Up.json",
+          "pmd": false,
+          "weight": 5
+        },
+        {
+          "name": "Iron",
+          "path": "/dataset/items/Medicine/Vitamin/Iron.json",
+          "pmd": true,
+          "weight": 5
+        },
+        {
+          "name": "PP Up",
+          "path": "/dataset/items/Medicine/Vitamin/Pp Up.json",
+          "pmd": false,
+          "weight": 5
+        },
+        {
+          "name": "Protein",
+          "path": "/dataset/items/Medicine/Vitamin/Protein.json",
+          "pmd": true,
+          "weight": 5
+        },
+        {
+          "name": "Rare Candy",
+          "path": "/dataset/items/Medicine/Vitamin/Rare Candy.json",
+          "pmd": false,
+          "weight": 1
+        },
+        {
+          "name": "Zinc",
+          "path": "/dataset/items/Medicine/Vitamin/Zinc.json",
+          "pmd": true,
+          "weight": 5
         }
       ],
       "Healing": [
@@ -12353,216 +12651,6 @@
           "path": "/dataset/items/Medicine/Healing/Super Potion.json",
           "pmd": false,
           "weight": 50
-        }
-      ],
-      "Status": [
-        {
-          "name": "Antidote",
-          "path": "/dataset/items/Medicine/Status/Antidote.json",
-          "pmd": false,
-          "weight": 100
-        },
-        {
-          "name": "Awakening",
-          "path": "/dataset/items/Medicine/Status/Awakening.json",
-          "pmd": false,
-          "weight": 100
-        },
-        {
-          "name": "Baked Goods",
-          "path": "/dataset/items/Medicine/Status/Baked Goods.json",
-          "pmd": false,
-          "weight": 100
-        },
-        {
-          "name": "Burn Heal",
-          "path": "/dataset/items/Medicine/Status/Burn Heal.json",
-          "pmd": false,
-          "weight": 100
-        },
-        {
-          "name": "Full Heal",
-          "path": "/dataset/items/Medicine/Status/Full Heal.json",
-          "pmd": false,
-          "weight": 50
-        },
-        {
-          "name": "Heal Powder",
-          "path": "/dataset/items/Medicine/Status/Heal Powder.json",
-          "pmd": false,
-          "weight": 100
-        },
-        {
-          "name": "Ice Cream",
-          "path": "/dataset/items/Medicine/Status/Ice Cream.json",
-          "pmd": false,
-          "weight": 100
-        },
-        {
-          "name": "Ice Heal",
-          "path": "/dataset/items/Medicine/Status/Ice Heal.json",
-          "pmd": false,
-          "weight": 100
-        },
-        {
-          "name": "Paralyze Heal",
-          "path": "/dataset/items/Medicine/Status/Paralyze Heal.json",
-          "pmd": false,
-          "weight": 100
-        }
-      ],
-      "Vitamin": [
-        {
-          "name": "Calcium",
-          "path": "/dataset/items/Medicine/Vitamin/Calcium.json",
-          "pmd": true,
-          "weight": 5
-        },
-        {
-          "name": "Carbos",
-          "path": "/dataset/items/Medicine/Vitamin/Carbos.json",
-          "pmd": false,
-          "weight": 5
-        },
-        {
-          "name": "HP Up",
-          "path": "/dataset/items/Medicine/Vitamin/Hp Up.json",
-          "pmd": false,
-          "weight": 5
-        },
-        {
-          "name": "Iron",
-          "path": "/dataset/items/Medicine/Vitamin/Iron.json",
-          "pmd": true,
-          "weight": 5
-        },
-        {
-          "name": "PP Up",
-          "path": "/dataset/items/Medicine/Vitamin/Pp Up.json",
-          "pmd": false,
-          "weight": 5
-        },
-        {
-          "name": "Protein",
-          "path": "/dataset/items/Medicine/Vitamin/Protein.json",
-          "pmd": true,
-          "weight": 5
-        },
-        {
-          "name": "Rare Candy",
-          "path": "/dataset/items/Medicine/Vitamin/Rare Candy.json",
-          "pmd": false,
-          "weight": 1
-        },
-        {
-          "name": "Zinc",
-          "path": "/dataset/items/Medicine/Vitamin/Zinc.json",
-          "pmd": true,
-          "weight": 5
-        }
-      ]
-    },
-    "Pokeballs": {
-      "Misc": [
-        {
-          "name": "Dusk Ball",
-          "path": "/dataset/items/Pokeballs/Misc/Dusk Ball.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Fast Ball",
-          "path": "/dataset/items/Pokeballs/Misc/Fast Ball.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Greatball",
-          "path": "/dataset/items/Pokeballs/Misc/Greatball.json",
-          "pmd": false,
-          "weight": 50
-        },
-        {
-          "name": "Heavy Ball",
-          "path": "/dataset/items/Pokeballs/Misc/Heavy Ball.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Luxury Ball",
-          "path": "/dataset/items/Pokeballs/Misc/Luxury Ball.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Masterball",
-          "path": "/dataset/items/Pokeballs/Misc/Masterball.json",
-          "pmd": false,
-          "weight": 1
-        },
-        {
-          "name": "Old Pokeball",
-          "path": "/dataset/items/Pokeballs/Misc/Old Pokeball.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Pokeball",
-          "path": "/dataset/items/Pokeballs/Misc/Pokeball.json",
-          "pmd": false,
-          "weight": 100
-        },
-        {
-          "name": "Quick Ball",
-          "path": "/dataset/items/Pokeballs/Misc/Quick Ball.json",
-          "pmd": false,
-          "weight": 10
-        },
-        {
-          "name": "Ultraball",
-          "path": "/dataset/items/Pokeballs/Misc/Ultraball.json",
-          "pmd": false,
-          "weight": 50
-        }
-      ]
-    },
-    "TechnicalMachine": {
-      "Misc": [
-        {
-          "name": "TM - Basic",
-          "path": "/dataset/items/TechnicalMachine/Misc/TM - Basic.json",
-          "pmd": false,
-          "weight": 5
-        },
-        {
-          "name": "TM - High Power",
-          "path": "/dataset/items/TechnicalMachine/Misc/TM - High Power.json",
-          "pmd": false,
-          "weight": 5
-        },
-        {
-          "name": "TM - Support",
-          "path": "/dataset/items/TechnicalMachine/Misc/TM - Support.json",
-          "pmd": false,
-          "weight": 5
-        },
-        {
-          "name": "TR - Basic",
-          "path": "/dataset/items/TechnicalMachine/Misc/TR - Basic.json",
-          "pmd": false,
-          "weight": 5
-        },
-        {
-          "name": "TR - High Power",
-          "path": "/dataset/items/TechnicalMachine/Misc/TR - High Power.json",
-          "pmd": false,
-          "weight": 5
-        },
-        {
-          "name": "TR - Support",
-          "path": "/dataset/items/TechnicalMachine/Misc/TR - Support.json",
-          "pmd": false,
-          "weight": 20
         }
       ]
     },
@@ -12709,6 +12797,174 @@
         {
           "name": "Small Camping Tent",
           "path": "/dataset/items/TrainerItems/Misc/Small Camping Tent.json",
+          "pmd": false,
+          "weight": 20
+        }
+      ]
+    },
+    "EvolutionItem": {
+      "Misc": [
+        {
+          "name": "Dawn Stone",
+          "path": "/dataset/items/EvolutionItem/Misc/Dawn Stone.json",
+          "pmd": false,
+          "weight": 5
+        },
+        {
+          "name": "Dusk Stone",
+          "path": "/dataset/items/EvolutionItem/Misc/Dusk Stone.json",
+          "pmd": false,
+          "weight": 5
+        },
+        {
+          "name": "Fire Stone",
+          "path": "/dataset/items/EvolutionItem/Misc/Fire Stone.json",
+          "pmd": true,
+          "weight": 20
+        },
+        {
+          "name": "Ice Stone",
+          "path": "/dataset/items/EvolutionItem/Misc/Ice Stone.json",
+          "pmd": false,
+          "weight": 5
+        },
+        {
+          "name": "Leaf Stone",
+          "path": "/dataset/items/EvolutionItem/Misc/Leaf Stone.json",
+          "pmd": true,
+          "weight": 10
+        },
+        {
+          "name": "Moon Stone",
+          "path": "/dataset/items/EvolutionItem/Misc/Moon Stone.json",
+          "pmd": true,
+          "weight": 20
+        },
+        {
+          "name": "Shiny Stone",
+          "path": "/dataset/items/EvolutionItem/Misc/Shiny Stone.json",
+          "pmd": true,
+          "weight": 5
+        },
+        {
+          "name": "Sun Stone",
+          "path": "/dataset/items/EvolutionItem/Misc/Sun Stone.json",
+          "pmd": true,
+          "weight": 20
+        },
+        {
+          "name": "Thunder Stone",
+          "path": "/dataset/items/EvolutionItem/Misc/Thunder Stone.json",
+          "pmd": true,
+          "weight": 20
+        },
+        {
+          "name": "Water Stone",
+          "path": "/dataset/items/EvolutionItem/Misc/Water Stone.json",
+          "pmd": true,
+          "weight": 20
+        }
+      ]
+    },
+    "Pokeballs": {
+      "Misc": [
+        {
+          "name": "Dusk Ball",
+          "path": "/dataset/items/Pokeballs/Misc/Dusk Ball.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Fast Ball",
+          "path": "/dataset/items/Pokeballs/Misc/Fast Ball.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Greatball",
+          "path": "/dataset/items/Pokeballs/Misc/Greatball.json",
+          "pmd": false,
+          "weight": 50
+        },
+        {
+          "name": "Heavy Ball",
+          "path": "/dataset/items/Pokeballs/Misc/Heavy Ball.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Luxury Ball",
+          "path": "/dataset/items/Pokeballs/Misc/Luxury Ball.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Masterball",
+          "path": "/dataset/items/Pokeballs/Misc/Masterball.json",
+          "pmd": false,
+          "weight": 1
+        },
+        {
+          "name": "Old Pokeball",
+          "path": "/dataset/items/Pokeballs/Misc/Old Pokeball.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Pokeball",
+          "path": "/dataset/items/Pokeballs/Misc/Pokeball.json",
+          "pmd": false,
+          "weight": 100
+        },
+        {
+          "name": "Quick Ball",
+          "path": "/dataset/items/Pokeballs/Misc/Quick Ball.json",
+          "pmd": false,
+          "weight": 10
+        },
+        {
+          "name": "Ultraball",
+          "path": "/dataset/items/Pokeballs/Misc/Ultraball.json",
+          "pmd": false,
+          "weight": 50
+        }
+      ]
+    },
+    "TechnicalMachine": {
+      "Misc": [
+        {
+          "name": "TM - Basic",
+          "path": "/dataset/items/TechnicalMachine/Misc/TM - Basic.json",
+          "pmd": false,
+          "weight": 5
+        },
+        {
+          "name": "TM - High Power",
+          "path": "/dataset/items/TechnicalMachine/Misc/TM - High Power.json",
+          "pmd": false,
+          "weight": 5
+        },
+        {
+          "name": "TM - Support",
+          "path": "/dataset/items/TechnicalMachine/Misc/TM - Support.json",
+          "pmd": false,
+          "weight": 5
+        },
+        {
+          "name": "TR - Basic",
+          "path": "/dataset/items/TechnicalMachine/Misc/TR - Basic.json",
+          "pmd": false,
+          "weight": 5
+        },
+        {
+          "name": "TR - High Power",
+          "path": "/dataset/items/TechnicalMachine/Misc/TR - High Power.json",
+          "pmd": false,
+          "weight": 5
+        },
+        {
+          "name": "TR - Support",
+          "path": "/dataset/items/TechnicalMachine/Misc/TR - Support.json",
           "pmd": false,
           "weight": 20
         }

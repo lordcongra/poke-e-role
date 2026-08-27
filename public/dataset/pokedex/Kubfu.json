@@ -27,11 +27,11 @@
     "DexCategory": "Wushu Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 12.0,
-        "Pounds": 26.0
+        "Kilograms": 12,
+        "Pounds": 26
     },
     "DexDescription": "This little but fierce Pokémon takes its training very seriously. Every day it trains a little longer than the day before. The Moves it masters during this stage will determine the way it evolves.",
     "Evolutions": [

@@ -30,8 +30,8 @@
         "Feet": 6.3
     },
     "Weight": {
-        "Kilograms": 100.0,
-        "Pounds": 221.0
+        "Kilograms": 100,
+        "Pounds": 221
     },
     "DexDescription": "Some Hisuian documents and scrolls from hundreds of years ago depict Typhlosion as sullen Pokémon, user of sinister and shadowy energies. Modern Typhlosion do not exhibit these properties.",
     "Evolutions": [

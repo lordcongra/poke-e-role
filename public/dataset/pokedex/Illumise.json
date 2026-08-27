@@ -27,11 +27,11 @@
     "DexCategory": "Firefly Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 17.0,
-        "Pounds": 39.0
+        "Kilograms": 17,
+        "Pounds": 39
     },
     "DexDescription": "They attract swarms of Volbeat with their sweet fragrance and organize the swarm into drawing geometric shapes made of light. Illumise gain rank in their group if they make an amazing performance.",
     "Evolutions": [],

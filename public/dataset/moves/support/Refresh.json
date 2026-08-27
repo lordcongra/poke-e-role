@@ -12,7 +12,14 @@
     "_id": "refresh",
     "Attributes": {},
     "AddedEffects": {
-        "AilmentHeal": ["Burn1", "Burn2", "Burn3", "Paralysis", "Freeze", "Poison"]
+        "AilmentHeal": [
+            "Burn1",
+            "Burn2",
+            "Burn3",
+            "Paralysis",
+            "Freeze",
+            "Poison"
+        ]
     },
     "Category": "Support"
 }

@@ -27,11 +27,11 @@
     "DexCategory": "Couple Pokémon",
     "Height": {
         "Meters": 0.3,
-        "Feet": 1.0
+        "Feet": 1
     },
     "Weight": {
-        "Kilograms": 2.0,
-        "Pounds": 4.0
+        "Kilograms": 2,
+        "Pounds": 4
     },
     "DexDescription": "These Pokémon stick together no matter what. Their teamwork is very well-synchronized, acting almost like a single entity. Beware, as they reproduce very fast and can become hundreds in just a few months.",
     "Evolutions": [

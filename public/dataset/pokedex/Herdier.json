@@ -27,11 +27,11 @@
     "DexCategory": "Loyal Dog Pokémon",
     "Height": {
         "Meters": 0.9,
-        "Feet": 3.0
+        "Feet": 3
     },
     "Weight": {
-        "Kilograms": 14.0,
-        "Pounds": 32.0
+        "Kilograms": 14,
+        "Pounds": 32
     },
     "DexDescription": "It loyally follows its trainer's orders. For ages, they have helped trainers to raise well behaved Pokémon. It has black, cape-like fur that is very hard and keeps it protected from the weather.",
     "Evolutions": [

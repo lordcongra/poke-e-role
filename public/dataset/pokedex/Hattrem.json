@@ -27,11 +27,11 @@
     "DexCategory": "Serene Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 5.0,
-        "Pounds": 10.0
+        "Kilograms": 5,
+        "Pounds": 10
     },
     "DexDescription": "It may seem friendly but it is actually quite the loner. No matter who you are, if you bring strong emotions near it, it will silence you violently by hitting you with its braids. It dislikes crowded places.",
     "Evolutions": [

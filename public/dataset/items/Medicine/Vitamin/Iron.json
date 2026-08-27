@@ -7,7 +7,7 @@
     "Category": "Vitamin",
     "Description": "An iron capsule that reduces feebleness and gives you a healthy glow.",
     "OneUse": true,
-    "PMDPrice": 4500.0,
+    "PMDPrice": 4500,
     "TrainerPrice": "9800",
     "Boost": "Defense",
     "Value": 1,

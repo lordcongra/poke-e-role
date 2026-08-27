@@ -30,8 +30,8 @@
         "Feet": 4.3
     },
     "Weight": {
-        "Kilograms": 111.0,
-        "Pounds": 244.0
+        "Kilograms": 111,
+        "Pounds": 244
     },
     "DexDescription": "A machine loaded with an A.I. of Hydreigon's temper and desire for destruction. It doesn't rest, doesn't show mercy, no matter what.",
     "Evolutions": [],

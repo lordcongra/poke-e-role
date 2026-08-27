@@ -30,8 +30,8 @@
         "Feet": 5.6
     },
     "Weight": {
-        "Kilograms": 50.0,
-        "Pounds": 112.0
+        "Kilograms": 50,
+        "Pounds": 112
     },
     "DexDescription": "Galarians talk about a bird whose feathers are made of energy. It is said to be a cruel and indolent creature that freezes people with a strange power and leaves them immobile in the mountains.",
     "Evolutions": [],

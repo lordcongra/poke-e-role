@@ -27,11 +27,11 @@
     "DexCategory": "Big Jaw Pokémon",
     "Height": {
         "Meters": 0.6,
-        "Feet": 2.0
+        "Feet": 2
     },
     "Weight": {
-        "Kilograms": 9.0,
-        "Pounds": 20.0
+        "Kilograms": 9,
+        "Pounds": 20
     },
     "DexDescription": "Despite its small body, Totodile's jaws are very powerful. While it may think it is just playfully nipping, its bite has enough strength to cause a serious injury. It needs proper discipline to control its biting urges.",
     "Evolutions": [

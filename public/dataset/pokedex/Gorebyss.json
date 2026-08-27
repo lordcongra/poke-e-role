@@ -27,11 +27,11 @@
     "DexCategory": "South Sea Pokémon",
     "Height": {
         "Meters": 1.8,
-        "Feet": 6.0
+        "Feet": 6
     },
     "Weight": {
-        "Kilograms": 22.0,
-        "Pounds": 50.0
+        "Kilograms": 22,
+        "Pounds": 50
     },
     "DexDescription": "Found in the depths of the southern seas. Their body is built to withstand the sea pressure. While it appears to be beautiful and harmless, it is a cruel and deceitful creature.",
     "Evolutions": [

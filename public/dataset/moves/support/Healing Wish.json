@@ -14,7 +14,9 @@
         "UserFaints": true
     },
     "AddedEffects": {
-        "AilmentHeal": ["All"],
+        "AilmentHeal": [
+            "All"
+        ],
         "Heal": {
             "Type": "Complete",
             "WillPointCost": 1,

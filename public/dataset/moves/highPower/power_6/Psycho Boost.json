@@ -18,7 +18,9 @@
     "AddedEffects": {
         "StatChanges": [
             {
-                "Stats": ["Special"],
+                "Stats": [
+                    "Special"
+                ],
                 "Stages": -2,
                 "Affects": "User"
             }

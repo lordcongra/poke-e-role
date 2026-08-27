@@ -27,11 +27,11 @@
     "DexCategory": "Moth Pokémon",
     "Height": {
         "Meters": 0.9,
-        "Feet": 3.0
+        "Feet": 3
     },
     "Weight": {
-        "Kilograms": 23.0,
-        "Pounds": 51.0
+        "Kilograms": 23,
+        "Pounds": 51
     },
     "DexDescription": "It flies near the mountains in search of honey. It is an opportunist and won't gather any honey by itself. Instead, Mothim steals from Combee hives and other Pokémon. This Pokémon is male-only.",
     "Evolutions": [

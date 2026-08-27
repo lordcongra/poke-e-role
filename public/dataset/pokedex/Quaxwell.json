@@ -30,8 +30,8 @@
         "Feet": 3.9
     },
     "Weight": {
-        "Kilograms": 21.0,
-        "Pounds": 47.0
+        "Kilograms": 21,
+        "Pounds": 47
     },
     "DexDescription": "They are very observant Pokémon, trying to incorporate the movements they see into their dance. They practice in shallow water, kicking gracefully until they make no splash at all. A serious and diligent Pokémon.",
     "Image": "quaxwell.png",

@@ -30,8 +30,8 @@
         "Feet": 9.5
     },
     "Weight": {
-        "Kilograms": 210.0,
-        "Pounds": 463.0
+        "Kilograms": 210,
+        "Pounds": 463
     },
     "DexDescription": "There is a legend about a mighty shield able to deflect any attack. It became known as the Fighting Master's Shield; not even the largest creatures could go through it.",
     "Evolutions": [

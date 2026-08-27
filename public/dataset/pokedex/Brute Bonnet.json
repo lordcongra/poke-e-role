@@ -27,11 +27,11 @@
     "DexCategory": "Paradox Pokémon",
     "Height": {
         "Meters": 1.2,
-        "Feet": 4.0
+        "Feet": 4
     },
     "Weight": {
-        "Kilograms": 21.0,
-        "Pounds": 46.0
+        "Kilograms": 21,
+        "Pounds": 46
     },
     "DexDescription": "A bizarre creature combining the traits of dinosaurs and Amoongus. They don't move much and don't seem to be very intelligent, but they are fierce and dangerous up close.",
     "Evolutions": [],

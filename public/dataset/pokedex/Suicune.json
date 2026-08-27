@@ -26,12 +26,12 @@
     "_id": "suicune",
     "DexCategory": "Pokédex has no data",
     "Height": {
-        "Meters": 2.0,
+        "Meters": 2,
         "Feet": 6.6
     },
     "Weight": {
-        "Kilograms": 187.0,
-        "Pounds": 412.0
+        "Kilograms": 187,
+        "Pounds": 412
     },
     "DexDescription": "Johto legends tell about a Pokémon that carries the north winds, sailing above the clouds as the aurora, absorbing pollution from water pools and rivers leaving them pristine.",
     "Evolutions": [],

@@ -30,8 +30,8 @@
         "Feet": 6.3
     },
     "Weight": {
-        "Kilograms": 102.0,
-        "Pounds": 224.0
+        "Kilograms": 102,
+        "Pounds": 224
     },
     "DexDescription": "The power of the Mega Stone increases its muscle strength; it would appear to be slower, but its skin is so slippy it allows it to quickly slide over puddles and mud. It also becomes a bit bolder and moody.",
     "Evolutions": [

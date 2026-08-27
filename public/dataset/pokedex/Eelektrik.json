@@ -30,8 +30,8 @@
         "Feet": 3.9
     },
     "Weight": {
-        "Kilograms": 22.0,
-        "Pounds": 48.0
+        "Kilograms": 22,
+        "Pounds": 48
     },
     "DexDescription": "These Pokemon have a really big appetite. When they spot their prey, they coil around it and shock it with their electricity-generating organs, which are the yellow circles on it's skin.",
     "Evolutions": [

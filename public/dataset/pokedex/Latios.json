@@ -26,12 +26,12 @@
     "_id": "latios",
     "DexCategory": "Pokédex has no data.",
     "Height": {
-        "Meters": 2.0,
+        "Meters": 2,
         "Feet": 6.6
     },
     "Weight": {
-        "Kilograms": 60.0,
-        "Pounds": 132.0
+        "Kilograms": 60,
+        "Pounds": 132
     },
     "DexDescription": "The legend tells about two Pokémon that could take human shapes, use psychic powers and become invisible. They were raised by an old couple as their own children. The boy was the oldest and wore a blue shirt.",
     "Evolutions": [

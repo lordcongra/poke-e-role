@@ -27,11 +27,11 @@
     "DexCategory": "Tundra Pokémon",
     "Height": {
         "Meters": 2.7,
-        "Feet": 9.0
+        "Feet": 9
     },
     "Weight": {
-        "Kilograms": 900.0,
-        "Pounds": 1980.0
+        "Kilograms": 900,
+        "Pounds": 1980
     },
     "DexDescription": "It produced a freezing cold mist from the crystals on its sides and relied on size to deter predators. It also created tall walls of ice to block them. The one restored from a fossil is calm and has adapted well.",
     "Evolutions": [

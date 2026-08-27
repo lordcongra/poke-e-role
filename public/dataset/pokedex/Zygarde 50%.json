@@ -26,12 +26,12 @@
     "_id": "zygarde-50",
     "DexCategory": "Pokédex has no data.",
     "Height": {
-        "Meters": 5.0,
+        "Meters": 5,
         "Feet": 16.4
     },
     "Weight": {
-        "Kilograms": 305.0,
-        "Pounds": 672.0
+        "Kilograms": 305,
+        "Pounds": 672
     },
     "DexDescription": "Underground tunnels have been found all over the Kalos Region. There are rumors of a creature that lives in them that attacks people damaging the ecosystem.",
     "Evolutions": [

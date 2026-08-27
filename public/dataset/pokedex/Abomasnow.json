@@ -30,8 +30,8 @@
         "Feet": 7.25
     },
     "Weight": {
-        "Kilograms": 135.0,
-        "Pounds": 298.0
+        "Kilograms": 135,
+        "Pounds": 298
     },
     "DexDescription": "There was an old Hisuian legend that spoke of 'The Ice Monster'. Now we know it is a Pokémon that can cover everything with snow. It is usually shy and likes quiet places. Strong, but only attacks if provoked.",
     "Evolutions": [

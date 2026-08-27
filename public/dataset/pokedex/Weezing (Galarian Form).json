@@ -26,12 +26,12 @@
     "_id": "weezing-galarian-form",
     "DexCategory": "Poison Gas Pokémon",
     "Height": {
-        "Meters": 3.0,
+        "Meters": 3,
         "Feet": 9.8
     },
     "Weight": {
-        "Kilograms": 16.0,
-        "Pounds": 35.0
+        "Kilograms": 16,
+        "Pounds": 35
     },
     "DexDescription": "This Pokémon eats the contamination in the air, and instead of droppings, it expels clean air. Its Galar Form was first spotted long ago when factories polluted the city.",
     "Evolutions": [
