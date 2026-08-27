@@ -1,6 +1,6 @@
 import type { CharacterState, MoveData, StatusItem, CustomType } from '../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
-import { parseCombatTags, getAbilityText, calculateStatTotal } from './combatUtils';
+import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from './combatUtils';
 import { MAX_MOVES_DATA } from '../data/maxMoves';
 
 export const parseLearnset = (movesObj: unknown): Array<{ Learned: string; Name: string }> => {
@@ -75,16 +75,16 @@ export const syncHealthAndWill = (
     const abilityText = getAbilityText(newIdentity.ability, state.roomCustomAbilities);
     const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
 
-    const fakeState = { ...state, stats: newStats, identity: newIdentity } as CharacterState;
-
-    const vitTotal = calculateStatTotal(CombatStat.VIT, fakeState, invMods);
-    const insTotal = calculateStatTotal(CombatStat.INS, fakeState, invMods);
-
-    let hpStat = vitTotal;
-    if (state.identity.ruleset === 'vg-high-hp') hpStat = Math.max(vitTotal, insTotal);
+    const fakeState = {
+        ...state,
+        stats: newStats,
+        identity: newIdentity,
+        health: newHealth,
+        will: newWill
+    } as CharacterState;
 
     const oldHpMax = newHealth.hpMax;
-    newHealth.hpMax = newHealth.hpBase + hpStat;
+    newHealth.hpMax = calculateMaxHp(fakeState, invMods);
 
     if (!preventCurrentGain && newHealth.hpMax > oldHpMax) {
         newHealth.hpCurr += newHealth.hpMax - oldHpMax;
@@ -94,7 +94,7 @@ export const syncHealthAndWill = (
     }
 
     const oldWillMax = newWill.willMax;
-    newWill.willMax = newWill.willBase + insTotal;
+    newWill.willMax = calculateMaxWill(fakeState, invMods);
 
     if (!preventCurrentGain && newWill.willMax > oldWillMax) {
         newWill.willCurr += newWill.willMax - oldWillMax;

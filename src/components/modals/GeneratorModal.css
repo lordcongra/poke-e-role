@@ -61,6 +61,46 @@
     border-radius: 4px;
     background: var(--input-bg);
     color: var(--text-main);
+    box-sizing: border-box;
+}
+
+.generator-modal__input {
+    width: 100%;
+    padding: 5px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--input-bg);
+    color: var(--text-main);
+    box-sizing: border-box;
+}
+
+.generator-modal__destination-box {
+    background: var(--panel-alt);
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.generator-modal__destination-title {
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+.generator-modal__destination-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.generator-modal__dest-btn {
+    flex: 1;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 
 /* 3-Column Box Layout */
@@ -204,6 +244,22 @@
     background: color-mix(in srgb, var(--semantic-danger) 15%, var(--panel-bg));
     color: var(--semantic-danger);
     border: 1px solid var(--semantic-danger);
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.generator-modal__info {
+    margin: 15px 0;
+    padding: 10px;
+    background: color-mix(in srgb, var(--primary) 15%, var(--panel-bg));
+    color: var(--primary);
+    border: 1px solid var(--primary);
     border-radius: 4px;
     font-size: 0.8rem;
     font-weight: bold;

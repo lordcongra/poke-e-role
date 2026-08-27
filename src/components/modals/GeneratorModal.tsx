@@ -1,23 +1,54 @@
-import { useState } from 'react';
-import { Dices, AlertTriangle, XCircle, Hourglass } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Dices, AlertTriangle, XCircle, Hourglass, FilePlus } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { generateBuild } from '../../utils/generatorUtils';
-import type { TempBuild } from '../../store/storeTypes';
+import type { TempBuild, Rank } from '../../store/storeTypes';
 import { CombatStat, SocialStat } from '../../types/enums';
 import { GeneratorPreviewModal } from './GeneratorPreviewModal';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { NumberSpinner } from '../ui/NumberSpinner';
+import { isStandaloneMode } from '../../utils/storageAdapter';
+import { loadLocalDataset, SPECIES_URLS } from '../../utils/api';
+import { RANKS } from '../../data/constants';
 import './GeneratorModal.css';
 
 export function GeneratorModal({ onClose }: { onClose: () => void }) {
     const state = useCharacterStore();
     const config = useCharacterStore((s) => s.generatorConfig);
     const setConfig = useCharacterStore((s) => s.setGeneratorConfig);
-    const speciesName = state.identity.species;
+    const activeTokenId = useCharacterStore((s) => s.tokenId);
+    const role = useCharacterStore((s) => s.role);
+    const roomCustomPokemon = useCharacterStore((s) => s.roomCustomPokemon || []);
+
+    const [destination, setDestination] = useState<'new' | 'overwrite'>(() => {
+        if (!isStandaloneMode) return 'overwrite';
+        return activeTokenId ? 'overwrite' : 'new';
+    });
+    const [targetSpecies, setTargetSpecies] = useState<string>(state.identity.species || '');
+    const [targetRank, setTargetRank] = useState<Rank>(state.identity.rank || 'Starter');
+    const [sheetName, setSheetName] = useState<string>('');
+    const [speciesList, setSpeciesList] = useState<string[]>([]);
 
     const [isGenerating, setIsGenerating] = useState(false);
     const [previewBuild, setPreviewBuild] = useState<TempBuild | null>(null);
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
+
+    useEffect(() => {
+        loadLocalDataset()
+            .then(() => {
+                const formattedSpecies = Object.keys(SPECIES_URLS).map((species) =>
+                    species
+                        .split('-')
+                        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join('-')
+                );
+                setSpeciesList(formattedSpecies.sort());
+            })
+            .catch((error: unknown) => console.error('[GeneratorModal] Failed to load local dataset:', error));
+    }, []);
+
+    const filteredCustomPokemon = roomCustomPokemon.filter((p) => role === 'GM' || !p.gmOnly).map((p) => p.Name);
+    const uniqueSpecies = Array.from(new Set([...speciesList, ...filteredCustomPokemon]));
 
     const hasType2 = state.identity.type2 && state.identity.type2 !== 'None';
     const type1Label = state.identity.type1 || 'Primary';
@@ -34,7 +65,14 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
     const handleGenerate = async () => {
         setIsGenerating(true);
         try {
-            const result = await generateBuild(config, state);
+            const mergedConfig = {
+                ...config,
+                targetSpecies: config.randomizeSpecies ? undefined : targetSpecies.trim() || undefined,
+                targetRank: targetRank,
+                destination: isStandaloneMode ? destination : 'overwrite',
+                sheetName: sheetName.trim()
+            };
+            const result = await generateBuild(mergedConfig, state);
             if (result) {
                 setPreviewBuild(result);
             } else {
@@ -54,6 +92,11 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
         return (
             <GeneratorPreviewModal
                 build={previewBuild}
+                destination={isStandaloneMode ? destination : 'overwrite'}
+                sheetName={
+                    sheetName.trim() ||
+                    (config.randomizeSpecies ? previewBuild.species : targetSpecies.trim() || previewBuild.species)
+                }
                 onClose={() => {
                     setPreviewBuild(null);
                     onClose();
@@ -70,10 +113,102 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                     <Dices size={20} /> Auto-Build Pokémon
                 </h3>
                 <p className="generator-modal__desc text-subtext">
-                    Generate stats, skills, and moves based on current Rank.
+                    Generate stats, skills, and moves based on selected Rank and Tier.
                 </p>
 
                 <div className="generator-modal__form-group">
+                    {/* Standalone Destination Toggle */}
+                    {isStandaloneMode && (
+                        <div className="generator-modal__destination-box">
+                            <span className="generator-modal__destination-title text-title-primary">
+                                Destination Sheet
+                            </span>
+                            <div className="generator-modal__destination-buttons">
+                                <button
+                                    type="button"
+                                    className={`action-button generator-modal__dest-btn ${destination === 'new' ? 'action-button--theme' : 'action-button--dark'}`}
+                                    onClick={() => setDestination('new')}
+                                >
+                                    <FilePlus size={15} /> Generate New Sheet
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={!activeTokenId}
+                                    className={`action-button generator-modal__dest-btn ${destination === 'overwrite' ? 'action-button--red' : 'action-button--dark'}`}
+                                    onClick={() => setDestination('overwrite')}
+                                    title={
+                                        !activeTokenId
+                                            ? 'No active sheet open to overwrite'
+                                            : 'Overwrite currently open sheet'
+                                    }
+                                >
+                                    <AlertTriangle size={15} /> Overwrite Current Sheet{' '}
+                                    {!activeTokenId ? '(None Open)' : ''}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Species & Rank Row */}
+                    <div className="generator-modal__row">
+                        <div className="generator-modal__col">
+                            <label className="text-label">Species:</label>
+                            <input
+                                type="text"
+                                list="generator-species-datalist"
+                                className="generator-modal__input text-label"
+                                placeholder={
+                                    config.randomizeSpecies ? 'Random Species (Enabled Below)' : 'e.g. Lucario'
+                                }
+                                value={config.randomizeSpecies ? '' : targetSpecies}
+                                onChange={(e) => setTargetSpecies(e.target.value)}
+                                disabled={config.randomizeSpecies}
+                            />
+                            <datalist id="generator-species-datalist">
+                                {uniqueSpecies.map((s) => (
+                                    <option key={s} value={s} />
+                                ))}
+                            </datalist>
+                        </div>
+                        <div className="generator-modal__col">
+                            <label className="text-label">Rank:</label>
+                            <select
+                                value={targetRank}
+                                onChange={(e) => setTargetRank(e.target.value as Rank)}
+                                className="generator-modal__select text-label"
+                            >
+                                {RANKS.map((r) => (
+                                    <option key={r} value={r}>
+                                        {r}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Optional Sheet Nickname when generating a New Sheet */}
+                    {isStandaloneMode && destination === 'new' && (
+                        <div className="generator-modal__row">
+                            <div className="generator-modal__col">
+                                <label className="text-label">Sheet Name / Nickname (Optional):</label>
+                                <input
+                                    type="text"
+                                    className="generator-modal__input text-label"
+                                    placeholder={
+                                        config.randomizeSpecies
+                                            ? 'Defaults to Generated Species'
+                                            : targetSpecies.trim()
+                                              ? `e.g. ${targetSpecies.trim()}`
+                                              : 'Defaults to Species Name'
+                                    }
+                                    value={sheetName}
+                                    onChange={(e) => setSheetName(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Build Tier & Combat Bias */}
                     <div className="generator-modal__row">
                         <div className="generator-modal__col">
                             <label className="text-label">Build Tier:</label>
@@ -88,13 +223,24 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                             </select>
                         </div>
                         <div className="generator-modal__col">
-                            <label className="text-label">Combat Bias:</label>
+                            <label className="text-label">
+                                Combat Bias:
+                                {config.autoSelectBias && (
+                                    <span
+                                        className="text-subtext"
+                                        style={{ color: 'var(--primary)', marginLeft: '6px', fontWeight: 'bold' }}
+                                    >
+                                        (Auto-Detected)
+                                    </span>
+                                )}
+                            </label>
                             <select
-                                value={config.combatBias}
+                                value={config.autoSelectBias ? 'auto' : config.combatBias}
                                 onChange={(e) => setConfig({ combatBias: e.target.value })}
                                 className="generator-modal__select text-label"
-                                disabled={config.randomizeSpecies && config.autoSelectBias}
+                                disabled={config.autoSelectBias}
                             >
+                                {config.autoSelectBias && <option value="auto">Auto-Detect (Phys vs Spec)</option>}
                                 <option value="balanced">Balanced</option>
                                 <option value="physical">Physical Attacker</option>
                                 <option value="special">Special Attacker</option>
@@ -390,19 +536,17 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                     onChange={(e) => setConfig({ randomizeSpecies: e.target.checked })}
                                     className="generator-modal__checkbox"
                                 />
-                                Randomize Species (Overwrites Identity)
+                                Randomize Species
                             </label>
-                            {config.randomizeSpecies && (
-                                <label className="generator-modal__checkbox-label generator-modal__checkbox-label--indented text-label">
-                                    <input
-                                        type="checkbox"
-                                        checked={config.autoSelectBias}
-                                        onChange={(e) => setConfig({ autoSelectBias: e.target.checked })}
-                                        className="generator-modal__checkbox"
-                                    />
-                                    <span style={{ fontWeight: 'normal' }}>Auto-Detect Attack Bias (Phys vs Spec)</span>
-                                </label>
-                            )}
+                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--indented text-label">
+                                <input
+                                    type="checkbox"
+                                    checked={config.autoSelectBias}
+                                    onChange={(e) => setConfig({ autoSelectBias: e.target.checked })}
+                                    className="generator-modal__checkbox"
+                                />
+                                <span style={{ fontWeight: 'normal' }}>Auto-Detect Attack Bias (Phys vs Spec)</span>
+                            </label>
                         </div>
 
                         {/* RIGHT COLUMN: Advanced Engine Settings */}
@@ -510,10 +654,17 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                     </div>
                 </div>
 
-                <div className="generator-modal__warning">
-                    <AlertTriangle size={18} /> WARNING: This will completely overwrite this token's current stats,
-                    skills, and moves!
-                </div>
+                {isStandaloneMode && destination === 'new' ? (
+                    <div className="generator-modal__info">
+                        <FilePlus size={18} /> A new Pokémon sheet will be added to your Directory and opened upon
+                        generation.
+                    </div>
+                ) : (
+                    <div className="generator-modal__warning">
+                        <AlertTriangle size={18} /> WARNING: This will completely overwrite this token's current stats,
+                        skills, and moves!
+                    </div>
+                )}
 
                 <div className="generator-modal__actions">
                     <button
@@ -526,8 +677,8 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                     <button
                         type="button"
                         onClick={handleGenerate}
-                        disabled={isGenerating || (!config.randomizeSpecies && !speciesName)}
-                        className="action-button action-button--red generator-modal__btn"
+                        disabled={isGenerating || (!config.randomizeSpecies && !targetSpecies.trim())}
+                        className={`action-button ${isStandaloneMode && destination === 'new' ? 'action-button--theme' : 'action-button--red'} generator-modal__btn`}
                     >
                         {isGenerating ? (
                             <>
@@ -535,7 +686,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                             </>
                         ) : (
                             <>
-                                <Dices size={16} /> Generate
+                                <Dices size={16} /> Generate Build
                             </>
                         )}
                     </button>

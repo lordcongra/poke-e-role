@@ -149,7 +149,7 @@ export function calculateBaseDamage(move: MoveData, state: CharacterState): numb
     const typingString = `${state.identity.type1} / ${state.identity.type2}`;
     const hasTypeMatch = move.type && typingString.includes(move.type);
 
-    let sameTypeAttackBonus = hasTypeMatch || isProtean ? 1 : 0;
+    const sameTypeAttackBonus = hasTypeMatch || isProtean ? 1 : 0;
 
     let teraBonus = 0;
     const isTera = state.identity.activeTransformation === 'Terastallize';
@@ -171,4 +171,86 @@ export function calculateBaseDamage(move: MoveData, state: CharacterState): numb
     }
 
     return move.power + scalingValue + extraDice + sameTypeAttackBonus + teraBonus + customFirstHitTag;
+}
+
+export const isMasterOrChampionRank = (rank: string): boolean => ['Master', 'Champion'].includes(rank);
+
+export const getRankBonusStats = (rank: string) => {
+    if (isMasterOrChampionRank(rank)) {
+        return { hp: 3, will: 3, init: 3, def: 3, sdef: 3, skillDice: 2 };
+    }
+    return { hp: 0, will: 0, init: 0, def: 0, sdef: 0, skillDice: 0 };
+};
+
+export function calculateMaxHp(state: CharacterState, itemBuffs?: CombatBonuses): number {
+    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+    const vitTotal = calculateStatTotal(CombatStat.VIT, state, invMods);
+    const insTotal = calculateStatTotal(CombatStat.INS, state, invMods);
+
+    let hpStat = vitTotal;
+    if (state.identity.ruleset === 'vg-high-hp') hpStat = Math.max(vitTotal, insTotal);
+
+    const rankBonus = getRankBonusStats(state.identity.rank).hp;
+    return state.health.hpBase + hpStat + rankBonus;
+}
+
+export function calculateMaxWill(state: CharacterState, itemBuffs?: CombatBonuses): number {
+    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+    const insTotal = calculateStatTotal(CombatStat.INS, state, invMods);
+
+    const rankBonus = getRankBonusStats(state.identity.rank).will;
+    return state.will.willBase + insTotal + rankBonus;
+}
+
+export function calculateDefTotal(state: CharacterState, itemBuffs?: CombatBonuses): number {
+    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+    const vitTotal = calculateStatTotal(CombatStat.VIT, state, invMods);
+    const rankBonus = getRankBonusStats(state.identity.rank).def;
+
+    return Math.max(1, vitTotal + state.derived.defBuff - state.derived.defDebuff + invMods.def + rankBonus);
+}
+
+export function calculateSDefTotal(state: CharacterState, itemBuffs?: CombatBonuses): number {
+    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+    const vitTotal = calculateStatTotal(CombatStat.VIT, state, invMods);
+    const insTotal = calculateStatTotal(CombatStat.INS, state, invMods);
+
+    let sdefBase = insTotal;
+    if (state.identity.ruleset === 'tabletop') sdefBase = vitTotal;
+    const rankBonus = getRankBonusStats(state.identity.rank).sdef;
+
+    return Math.max(1, sdefBase + state.derived.sdefBuff - state.derived.sdefDebuff + invMods.spd + rankBonus);
+}
+
+export function calculateBaseInitiative(state: CharacterState, itemBuffs?: CombatBonuses): number {
+    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+
+    const dex = calculateStatTotal(CombatStat.DEX, state, invMods);
+    const alertSkill = calculateSkillTotal(Skill.ALERT, state, invMods);
+    const rankBonus = getRankBonusStats(state.identity.rank).init;
+
+    return Math.max(1, dex) + Math.max(0, alertSkill) + invMods.init + rankBonus;
+}
+
+export function calculateBaseAccuracy(move: MoveData, state: CharacterState, itemBuffs?: CombatBonuses): number {
+    const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+    const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, move, abilityText);
+
+    const attributeTotal = calculateStatTotal(move.acc1, state, invMods);
+    const skillTotal = calculateSkillTotal(move.acc2, state, invMods);
+
+    const hasSkill = Boolean(move.acc2 && move.acc2.toLowerCase() !== 'none');
+    const rankSkillBonus = hasSkill ? getRankBonusStats(state.identity.rank).skillDice : 0;
+
+    let customFirstHitAccTag = 0;
+    if (invMods.firstHitAcc !== 0 && state.trackers.firstHitAcc) {
+        customFirstHitAccTag = invMods.firstHitAcc;
+    }
+
+    return attributeTotal + skillTotal + state.trackers.globalAcc + invMods.acc + customFirstHitAccTag + rankSkillBonus;
 }

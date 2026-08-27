@@ -2,7 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { CharacterState, CoreSlice } from '../storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { saveToOwlbear } from '../../utils/obr';
-import { parseCombatTags, getAbilityText, calculateStatTotal } from '../../utils/combatUtils';
+import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../../utils/combatUtils';
 
 export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = (set) => ({
     health: { hpCurr: 5, hpMax: 5, hpBase: 4, temporaryHitPoints: 0, temporaryHitPointsMax: 0 },
@@ -62,17 +62,9 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
             const newHealth = { ...state.health, [field]: safeValue };
 
             if (field === 'hpBase') {
-                const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
-                const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
-
-                const vitTotal = calculateStatTotal(CombatStat.VIT, state, invMods);
-                const insTotal = calculateStatTotal(CombatStat.INS, state, invMods);
-
-                let hpStat = vitTotal;
-                if (state.identity.ruleset === 'vg-high-hp') hpStat = Math.max(vitTotal, insTotal);
-
+                const fakeState = { ...state, health: newHealth };
                 const oldMax = state.health.hpMax;
-                newHealth.hpMax = safeValue + hpStat;
+                newHealth.hpMax = calculateMaxHp(fakeState);
 
                 if (newHealth.hpMax > oldMax) {
                     newHealth.hpCurr += newHealth.hpMax - oldMax;
@@ -106,12 +98,9 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
             const newWill = { ...state.will, [field]: safeValue };
 
             if (field === 'willBase') {
-                const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
-                const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
-
-                const insTotal = calculateStatTotal(CombatStat.INS, state, invMods);
+                const fakeState = { ...state, will: newWill };
                 const oldMax = state.will.willMax;
-                newWill.willMax = safeValue + insTotal;
+                newWill.willMax = calculateMaxWill(fakeState);
 
                 if (newWill.willMax > oldMax) {
                     newWill.willCurr += newWill.willMax - oldMax;
@@ -157,22 +146,15 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
             if (stat === CombatStat.VIT || stat === CombatStat.INS) {
                 const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
                 const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
-
-                const fakeState = { ...state, stats: newStats } as CharacterState;
-
-                const vitTotal = calculateStatTotal(CombatStat.VIT, fakeState, invMods);
-                const insTotal = calculateStatTotal(CombatStat.INS, fakeState, invMods);
-
-                let hpStat = vitTotal;
-                if (state.identity.ruleset === 'vg-high-hp') hpStat = Math.max(vitTotal, insTotal);
+                const fakeState = { ...state, stats: newStats, health: newHealth, will: newWill } as CharacterState;
 
                 const oldHpMax = newHealth.hpMax;
-                newHealth.hpMax = newHealth.hpBase + hpStat;
+                newHealth.hpMax = calculateMaxHp(fakeState, invMods);
                 if (newHealth.hpMax > oldHpMax) newHealth.hpCurr += newHealth.hpMax - oldHpMax;
                 else if (newHealth.hpCurr > newHealth.hpMax) newHealth.hpCurr = newHealth.hpMax;
 
                 const oldWillMax = newWill.willMax;
-                newWill.willMax = newWill.willBase + insTotal;
+                newWill.willMax = calculateMaxWill(fakeState, invMods);
                 if (newWill.willMax > oldWillMax) newWill.willCurr += newWill.willMax - oldWillMax;
                 else if (newWill.willCurr > newWill.willMax) newWill.willCurr = newWill.willMax;
 

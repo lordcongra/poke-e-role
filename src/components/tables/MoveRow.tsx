@@ -7,10 +7,9 @@ import { fetchMoveData } from '../../utils/api';
 import {
     rollAccuracy,
     calculateBaseDamage,
+    calculateBaseAccuracy,
     parseCombatTags,
-    getAbilityText,
-    calculateStatTotal,
-    calculateSkillTotal
+    getAbilityText
 } from '../../utils/combatUtils';
 import { MoveEditModal } from '../modals/MoveEditModal';
 import { POKEMON_TYPES, TYPE_COLORS } from '../../data/constants';
@@ -64,30 +63,23 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
     useCharacterStore((state) => state.will);
     useCharacterStore((state) => state.stats);
     useCharacterStore((state) => state.socials);
+    useCharacterStore((state) => state.identity.rank);
     const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
     const ability = useCharacterStore((state) => state.identity.ability);
 
     useCharacterStore((state) => state.trackers.firstHitDmg);
-    const firstHitAccActive = useCharacterStore((state) => state.trackers.firstHitAcc);
+    useCharacterStore((state) => state.trackers.firstHitAcc);
 
     const abilityText = getAbilityText(ability, customAbilities);
     const itemBuffs = parseCombatTags(inventory, extraCategories, move, abilityText);
     const fullState = useCharacterStore.getState();
-
-    const attributeTotal = calculateStatTotal(move.acc1, fullState, itemBuffs);
-    const skillTotal = calculateSkillTotal(move.acc2, fullState, itemBuffs);
 
     const trackers = useCharacterStore((state) => state.trackers);
     const bankedAccDice = trackers.bankedAccDice || {};
     const bankedDiceForThisMove = bankedAccDice[move.id] || 0;
     const totalBanked = Object.values(bankedAccDice).reduce((a, b) => a + b, 0);
 
-    let customFirstHitAccTag = 0;
-    if (itemBuffs.firstHitAcc !== 0 && firstHitAccActive) {
-        customFirstHitAccTag = itemBuffs.firstHitAcc;
-    }
-
-    const accuracyTotal = attributeTotal + skillTotal + trackers.globalAcc + itemBuffs.acc + customFirstHitAccTag;
+    const accuracyTotal = calculateBaseAccuracy(move, fullState, itemBuffs);
 
     const baseDamage = move.category === 'Status' ? 0 : calculateBaseDamage(move, fullState);
     const damageTotal = move.category === 'Status' ? '-' : baseDamage + bankedDiceForThisMove;

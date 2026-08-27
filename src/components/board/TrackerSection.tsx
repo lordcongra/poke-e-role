@@ -108,7 +108,7 @@ export function TrackerSection() {
         const dexTotal = calculateStatTotal(CombatStat.DEX, state, itemBuffs);
         const evadeTotal = calculateSkillTotal(Skill.EVASION, state, itemBuffs);
 
-        rollGeneric('Evasion', dexTotal + evadeTotal, 'dex', true, false, true);
+        rollGeneric('Evasion', dexTotal + evadeTotal, 'dex', true, false, true, true);
     };
 
     const rollManeuver = () => {
@@ -126,6 +126,7 @@ export function TrackerSection() {
                 'dex',
                 false,
                 false,
+                true,
                 true
             );
         else if (maneuver === 'cover')
@@ -135,7 +136,8 @@ export function TrackerSection() {
                 'will',
                 false,
                 false,
-                true
+                true,
+                false
             );
         else if (maneuver === 'grapple')
             rollGeneric(
@@ -145,6 +147,7 @@ export function TrackerSection() {
                 'str',
                 false,
                 false,
+                true,
                 true
             );
         else if (maneuver === 'run')
@@ -155,6 +158,7 @@ export function TrackerSection() {
                 'dex',
                 false,
                 false,
+                true,
                 true
             );
         else if (maneuver === 'stabilize')
@@ -165,6 +169,7 @@ export function TrackerSection() {
                 'cle',
                 false,
                 false,
+                true,
                 true
             );
         else if (maneuver === 'struggle')
@@ -175,6 +180,7 @@ export function TrackerSection() {
                 'dex',
                 false,
                 false,
+                true,
                 true
             );
     };

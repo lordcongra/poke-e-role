@@ -1,21 +1,31 @@
 import { useState, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
-import { Search, Dices, CheckCircle, XCircle, ImagePlus } from 'lucide-react';
+import { Search, Dices, CheckCircle, XCircle, ImagePlus, FilePlus } from 'lucide-react';
 import type { TempBuild } from '../../store/storeTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { GeneratorPreviewStatSpinner } from './GeneratorPreviewStatSpinner';
 import { GeneratorPreviewMoveRow } from './GeneratorPreviewMoveRow';
 import { getLimit } from '../../utils/macroHelpers';
+import { isStandaloneMode, storageAdapter } from '../../utils/storageAdapter';
+import { setActiveTokenId } from '../../utils/obr';
 import './GeneratorPreviewModal.css';
 
 interface GeneratorPreviewModalProps {
     build: TempBuild;
+    destination?: 'new' | 'overwrite';
+    sheetName?: string;
     onClose: () => void;
     onReroll: () => void;
 }
 
-export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPreviewModalProps) {
+export function GeneratorPreviewModal({
+    build,
+    destination = 'overwrite',
+    sheetName,
+    onClose,
+    onReroll
+}: GeneratorPreviewModalProps) {
     const applyGeneratedBuild = useCharacterStore((state) => state.applyGeneratedBuild);
     const mode = useCharacterStore((state) => state.identity.mode);
     const extraCategories = useCharacterStore((state) => state.extraCategories);
@@ -48,7 +58,29 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
         setLocalBuild((previous) => ({ ...previous, skills: { ...previous.skills, [skillName]: Math.max(0, value) } }));
     };
 
-    const handleApply = () => {
+    const handleApply = async () => {
+        if (isStandaloneMode && destination === 'new') {
+            try {
+                const finalName = sheetName?.trim() || localBuild.species || 'New Pokémon';
+                const newId = await storageAdapter.createLocalCharacter(finalName, null);
+                setActiveTokenId(newId);
+                const store = useCharacterStore.getState();
+                store.setTokenData(newId, 'PLAYER');
+                store.loadFromOwlbear({
+                    nickname: finalName,
+                    rank: localBuild.rank || 'Starter',
+                    parentId: null,
+                    'v2-migrated': true
+                });
+                store.applyGeneratedBuild(localBuild);
+                onClose();
+            } catch (e) {
+                console.error('[GeneratorPreviewModal] Failed to create new Pokémon sheet:', e);
+                alert('Failed to create new character sheet.');
+            }
+            return;
+        }
+
         applyGeneratedBuild(localBuild);
 
         if (config.randomizeSpecies && OBR.isAvailable && tokenId) {
@@ -336,9 +368,17 @@ export function GeneratorPreviewModal({ build, onClose, onReroll }: GeneratorPre
                     <button
                         type="button"
                         onClick={handleApply}
-                        className="action-button action-button--red generator-preview__btn-apply"
+                        className={`action-button ${isStandaloneMode && destination === 'new' ? 'action-button--theme' : 'action-button--red'} generator-preview__btn-apply`}
                     >
-                        <CheckCircle size={16} /> Apply Build
+                        {isStandaloneMode && destination === 'new' ? (
+                            <>
+                                <FilePlus size={16} /> Create Sheet
+                            </>
+                        ) : (
+                            <>
+                                <CheckCircle size={16} /> Overwrite Sheet
+                            </>
+                        )}
                     </button>
                 </div>
             </div>

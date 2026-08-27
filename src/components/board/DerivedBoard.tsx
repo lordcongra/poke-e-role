@@ -9,13 +9,21 @@ import { ResourceBox } from '../ui/ResourceBox';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { StatusBox } from '../board/StatusBox';
 import { TimerBox } from './TimerBox';
-import { parseCombatTags, getAbilityText, calculateStatTotal, calculateSkillTotal } from '../../utils/combatUtils';
+import {
+    parseCombatTags,
+    getAbilityText,
+    calculateStatTotal,
+    calculateSkillTotal,
+    calculateDefTotal,
+    calculateSDefTotal,
+    calculateBaseInitiative,
+    getRankBonusStats
+} from '../../utils/combatUtils';
 import './DerivedBoard.css';
 
 const ICON_SHADOW = 'drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8)) drop-shadow(0 1px 4px rgba(0, 0, 0, 0.6))';
 
 export function DerivedBoard() {
-    const ruleset = useCharacterStore((state) => state.identity.ruleset);
     const mode = useCharacterStore((state) => state.identity.mode);
     const ability = useCharacterStore((state) => state.identity.ability);
     const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
@@ -48,22 +56,17 @@ export function DerivedBoard() {
     const inventoryModifiers = parseCombatTags(inventory, extraCategories, undefined, abilityText);
     const fullState = useCharacterStore.getState();
 
-    const vitTotal = calculateStatTotal(CombatStat.VIT, fullState, inventoryModifiers);
-    const insTotal = calculateStatTotal(CombatStat.INS, fullState, inventoryModifiers);
     const dexTotal = calculateStatTotal(CombatStat.DEX, fullState, inventoryModifiers);
     const strTotal = calculateStatTotal(CombatStat.STR, fullState, inventoryModifiers);
     const speTotal = calculateStatTotal(CombatStat.SPE, fullState, inventoryModifiers);
 
-    const defTotal = Math.max(1, vitTotal + derived.defBuff - derived.defDebuff + inventoryModifiers.def);
-    let sdefBase = insTotal;
-    if (ruleset === 'tabletop') sdefBase = vitTotal;
-    const sdefTotal = Math.max(1, sdefBase + derived.sdefBuff - derived.sdefDebuff + inventoryModifiers.spd);
+    const defTotal = calculateDefTotal(fullState, inventoryModifiers);
+    const sdefTotal = calculateSDefTotal(fullState, inventoryModifiers);
+    const initiative = calculateBaseInitiative(fullState, inventoryModifiers);
 
-    const alertTotal = calculateSkillTotal(Skill.ALERT, fullState, inventoryModifiers);
-    const initiative = dexTotal + alertTotal + inventoryModifiers.init;
-
-    const clashPhysical = strTotal + calculateSkillTotal(Skill.CLASH, fullState, inventoryModifiers);
-    const clashSpecial = speTotal + calculateSkillTotal(Skill.CLASH, fullState, inventoryModifiers);
+    const rankSkillBonus = getRankBonusStats(fullState.identity.rank).skillDice;
+    const clashPhysical = strTotal + calculateSkillTotal(Skill.CLASH, fullState, inventoryModifiers) + rankSkillBonus;
+    const clashSpecial = speTotal + calculateSkillTotal(Skill.CLASH, fullState, inventoryModifiers) + rankSkillBonus;
 
     return (
         <CollapsingSection title="INFO">
@@ -203,7 +206,9 @@ export function DerivedBoard() {
                                 className="derived-board__box-content text-label"
                                 style={{ color: 'var(--text-main)' }}
                             >
-                                {dexTotal + calculateSkillTotal(Skill.EVASION, fullState, inventoryModifiers)}
+                                {dexTotal +
+                                    calculateSkillTotal(Skill.EVASION, fullState, inventoryModifiers) +
+                                    rankSkillBonus}
                             </div>
                         </div>
 

@@ -2,8 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { CharacterState, IdentitySlice } from '../storeTypes';
 import { saveToOwlbear } from '../../utils/obr';
 import OBR from '@owlbear-rodeo/sdk';
-import { CombatStat } from '../../types/enums';
-import { getAbilityText, parseCombatTags, calculateStatTotal } from '../../utils/combatUtils';
+import { syncHealthAndWill } from '../../utils/macroHelpers';
 
 const OBR_KEY_MAP: Record<string, string> = {
     showTrackers: 'show-trackers',
@@ -117,7 +116,7 @@ try {
     const stored = localStorage.getItem('pkr_init_settings');
     if (stored) initialInitSettings = { ...initialInitSettings, ...JSON.parse(stored) };
 } catch (e) {
-    console.warn('[IdentitySlice] Failed to parse init settings from local storage.');
+    console.warn('[IdentitySlice] Failed to parse init settings from local storage.', e);
 }
 
 export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentitySlice> = (set) => ({
@@ -315,30 +314,13 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 }
             }
 
+            const newIdentity = { ...state.identity, [field]: value };
             const updatesToSave: Record<string, unknown> = {};
-            let newHealth = state.health;
+            const newHealth = { ...state.health };
+            const newWill = { ...state.will };
 
-            if (field === 'ruleset') {
-                const newRuleset = String(value);
-                const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
-                const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
-
-                const vitTotal = calculateStatTotal(CombatStat.VIT, state, invMods);
-                const insTotal = calculateStatTotal(CombatStat.INS, state, invMods);
-
-                let hpStat = vitTotal;
-                if (newRuleset === 'vg-high-hp') hpStat = Math.max(vitTotal, insTotal);
-
-                const oldHpMax = state.health.hpMax;
-                const nextHpMax = state.health.hpBase + hpStat;
-
-                newHealth = { ...state.health, hpMax: nextHpMax };
-
-                if (nextHpMax > oldHpMax) newHealth.hpCurr += nextHpMax - oldHpMax;
-                else if (newHealth.hpCurr > nextHpMax) newHealth.hpCurr = nextHpMax;
-
-                updatesToSave['hp-curr'] = newHealth.hpCurr;
-                updatesToSave['hp-max-display'] = newHealth.hpMax;
+            if (field === 'ruleset' || field === 'rank') {
+                syncHealthAndWill(state, state.stats, newIdentity, newHealth, newWill, updatesToSave);
             }
 
             if (
@@ -368,7 +350,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 }
             }
 
-            return { identity: { ...state.identity, [field]: value }, health: newHealth };
+            return { identity: newIdentity, health: newHealth, will: newWill };
         }),
 
     setPrintConfig: (config) =>

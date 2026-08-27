@@ -115,6 +115,7 @@ export interface TempMove {
 
 export interface TempBuild {
     species: string;
+    rank?: Rank;
     attr: Record<string, number>;
     soc: Record<string, number>;
     skills: Record<string, number>;
@@ -146,6 +147,12 @@ export interface GeneratorConfig {
     ensureDefenses: boolean;
     minStats: Record<string, number>;
     minSocials: Record<string, number>;
+
+    // STANDALONE / CUSTOM TARGETS
+    targetSpecies?: string;
+    targetRank?: Rank;
+    destination?: 'new' | 'overwrite';
+    sheetName?: string;
 
     // EVOLUTION & OVERRANK TOGGLES
     includePreEvolutions: boolean;

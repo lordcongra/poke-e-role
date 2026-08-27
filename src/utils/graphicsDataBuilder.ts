@@ -1,6 +1,11 @@
 import type { CharacterState, InventoryItem } from '../store/storeTypes';
-import { CombatStat } from '../types/enums';
-import { parseCombatTags, getAbilityText, calculateStatTotal } from './combatUtils';
+import {
+    parseCombatTags,
+    getAbilityText,
+    calculateDefTotal,
+    calculateSDefTotal,
+    getRankBonusStats
+} from './combatUtils';
 
 export const DEFAULT_COLOR_ACT = '#4890fc';
 export const DEFAULT_COLOR_EVA = '#c387fc';
@@ -59,13 +64,8 @@ export function buildGraphicsFromState(meta: Record<string, unknown>, state: Cha
     const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
     const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
 
-    const vitTotal = calculateStatTotal(CombatStat.VIT, state, invMods);
-    const insTotal = calculateStatTotal(CombatStat.INS, state, invMods);
-
-    const defTotal = Math.max(1, vitTotal + state.derived.defBuff - state.derived.defDebuff + invMods.def);
-    let sdefBase = insTotal;
-    if (state.identity.ruleset === 'tabletop') sdefBase = vitTotal;
-    const sdefTotal = Math.max(1, sdefBase + state.derived.sdefBuff - state.derived.sdefDebuff + invMods.spd);
+    const defTotal = calculateDefTotal(state, invMods);
+    const sdefTotal = calculateSDefTotal(state, invMods);
 
     return {
         showTrackers: state.identity.showTrackers,
@@ -121,7 +121,9 @@ export function buildGraphicsFromMeta(meta: Record<string, unknown>): GraphicsDa
     let inventory: InventoryItem[] = [];
     try {
         inventory = meta['inv-data'] ? JSON.parse(String(meta['inv-data'])) : [];
-    } catch (e) {}
+    } catch (e) {
+        console.warn('[GraphicsDataBuilder] Failed to parse inventory data:', e);
+    }
 
     const invMods = parseCombatTags(inventory, []);
 
@@ -145,10 +147,13 @@ export function buildGraphicsFromMeta(meta: Record<string, unknown>): GraphicsDa
     const sdefDebuff = Number(meta['spd-debuff'] ?? meta['sdefDebuff']) || 0;
 
     const ruleset = String(meta['ruleset'] || 'vg-vit-hp');
-    const defTotal = Math.max(1, vitTotal + defBuff - defDebuff + invMods.def);
+    const charRank = String(meta['rank'] || '');
+    const rankDefBonus = getRankBonusStats(charRank).def;
+
+    const defTotal = Math.max(1, vitTotal + defBuff - defDebuff + invMods.def + rankDefBonus);
     let sdefBase = insTotal;
     if (ruleset === 'tabletop') sdefBase = vitTotal;
-    const sdefTotal = Math.max(1, sdefBase + sdefBuff - sdefDebuff + invMods.spd);
+    const sdefTotal = Math.max(1, sdefBase + sdefBuff - sdefDebuff + invMods.spd + rankDefBonus);
 
     return {
         showTrackers: meta['show-trackers'] !== false && meta['show-trackers'] !== 'false',

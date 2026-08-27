@@ -7,7 +7,8 @@ import {
     getStatusPenalties,
     getAbilityText,
     calculateStatTotal,
-    calculateSkillTotal
+    calculateSkillTotal,
+    getRankBonusStats
 } from './combatMath';
 import { parseCombatTags } from './tagParser';
 import { rollDicePlus } from './diceRoller';
@@ -16,6 +17,7 @@ export async function rollStatus(status: StatusItem, state: CharacterState) {
     const nickname = state.identity.nickname || state.identity.species || 'Someone';
     let dicePool = 0;
     let attribute = 'ins';
+    let usesSkill = false;
 
     const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
     const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
@@ -24,14 +26,19 @@ export async function rollStatus(status: StatusItem, state: CharacterState) {
 
     if (customStatus && customStatus.recoveryAttr && customStatus.recoveryAttr !== 'none') {
         attribute = customStatus.recoveryAttr;
+        if (customStatus.recoverySkill && customStatus.recoverySkill !== 'none') {
+            usesSkill = true;
+        }
         dicePool =
             calculateStatTotal(customStatus.recoveryAttr, state, itemBuffs) +
             calculateSkillTotal(customStatus.recoverySkill || 'none', state, itemBuffs);
     } else if (status.name.includes('Burn')) {
         attribute = 'dex';
+        usesSkill = true;
         dicePool = calculateStatTotal('dex', state, itemBuffs) + calculateSkillTotal('athletic', state, itemBuffs);
     } else if (status.name === 'Paralysis') {
         attribute = 'str';
+        usesSkill = true;
         dicePool = calculateStatTotal('str', state, itemBuffs) + calculateSkillTotal('medicine', state, itemBuffs);
     } else if (status.name === 'Sleep' || status.name === 'Confusion') {
         attribute = 'ins';
@@ -47,6 +54,11 @@ export async function rollStatus(status: StatusItem, state: CharacterState) {
         return;
     }
 
+    const rankSkillBonus = usesSkill ? getRankBonusStats(state.identity.rank).skillDice : 0;
+    if (rankSkillBonus > 0) {
+        dicePool += rankSkillBonus;
+    }
+
     let pain = getPainPenalty(attribute, state);
     if (itemBuffs.ignorePain) pain = 0;
 
@@ -55,6 +67,7 @@ export async function rollStatus(status: StatusItem, state: CharacterState) {
         successModifier !== 0 ? (successModifier > 0 ? `+${successModifier}` : `${successModifier}`) : '';
 
     const tags: string[] = [];
+    if (rankSkillBonus > 0) tags.push('Master/Champion Rank (+2 Dice)');
     if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
     if (state.trackers.globalSucc !== 0)
         tags.push(`Net Mod ${state.trackers.globalSucc > 0 ? '+' : ''}${state.trackers.globalSucc} Succ`);
@@ -118,7 +131,10 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     const attributeTotal = calculateStatTotal(move.acc1, state, itemBuffs);
     const skillTotal = calculateSkillTotal(move.acc2, state, itemBuffs);
 
-    let dicePool = attributeTotal + skillTotal + extraDice;
+    const hasSkill = Boolean(move.acc2 && move.acc2.toLowerCase() !== 'none');
+    const rankSkillBonus = hasSkill ? getRankBonusStats(state.identity.rank).skillDice : 0;
+
+    let dicePool = attributeTotal + skillTotal + extraDice + rankSkillBonus;
     if (move.acc1 === 'dex') dicePool += statuses.paralysisDexterityPenalty;
 
     let customFirstHitAccTag = '';
@@ -143,6 +159,7 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     const chancesUsed = state.trackers.chances;
     const tags: string[] = [];
 
+    if (rankSkillBonus > 0) tags.push('Master/Champion Rank (+2 Dice)');
     if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
     if (ignoredAccuracyPenalty > 0) tags.push(`Ignored ${ignoredAccuracyPenalty} Low Acc`);
     if (moveLowAccuracy > 0) tags.push(`Low Accuracy ${moveLowAccuracy}`);
@@ -250,11 +267,7 @@ export async function executeDamageRoll(
         }
     }
 
-    const isProtean = abilityString.includes('protean') || abilityString.includes('libero');
-    const hasTypeMatch = move.type && typingString.includes(move.type);
     const isSniper = abilityString.includes('sniper');
-    const normalizedDamageStatistic = ATTRIBUTE_MAPPING[move.dmg1] || move.dmg1;
-
     if (isCritical) {
         if (!override.active || override.type !== 'flat') {
             actualDicePool += isSniper ? 3 : 2;
@@ -262,11 +275,44 @@ export async function executeDamageRoll(
         tags.push(isSniper ? `Sniper Crit (+3 Dice)` : `CRITICAL HIT`);
     }
 
-    if (!override.active || override.type !== 'flat') {
-        if (normalizedDamageStatistic === 'dex' && statuses.paralysisDexterityPenalty < 0) {
-            actualDicePool += statuses.paralysisDexterityPenalty;
-        }
+    let pain = getPainPenalty(move.dmg1, state);
+    if (itemBuffs.ignorePain) pain = 0;
+    if (pain < 0) {
+        finalFlatMod += pain;
+        tags.push(`Pain Penalty ${Math.abs(pain)}`);
+    }
 
+    if (state.trackers.globalSucc !== 0) {
+        tags.push(`Net Mod ${state.trackers.globalSucc > 0 ? '+' : ''}${state.trackers.globalSucc} Succ`);
+    }
+
+    if (effectiveness > 0) {
+        tags.push(`SUPER EFFECTIVE (+${effectiveness} Succ)`);
+        if (superEffectiveDamageBonus > 0 && (!override.active || override.type !== 'flat')) {
+            tags.push(`Item Super Effective (+${superEffectiveDamageBonus} Dice)`);
+        }
+    } else if (effectiveness < 0) {
+        tags.push(`NOT VERY EFFECTIVE (${effectiveness} Succ)`);
+    }
+
+    if (itemBuffs.firstHitDmg !== 0 && state.trackers.firstHitDmg) {
+        const sign = itemBuffs.firstHitDmg > 0 ? '+' : '';
+        tags.push(`First Hit (${sign}${itemBuffs.firstHitDmg} Dice)`);
+        useCharacterStore.getState().updateTracker('firstHitDmg', false);
+    }
+
+    const normalizedDamageStatistic = ATTRIBUTE_MAPPING[move.dmg1] || move.dmg1;
+
+    if (
+        itemBuffs.dmgItemNames.some(
+            (itemName: string) =>
+                itemName.toLowerCase().includes('life orb') || itemName.toLowerCase().includes('recoil')
+        )
+    ) {
+        tags.push(`RECOIL: Roll success as user dmg ignoring def`);
+    }
+
+    if (!override.active || override.type !== 'flat') {
         // ✨ PULL FROM THE BANK ✨
         let bankedDiceTag = '';
         const bankedDice = state.trackers.bankedAccDice[move.id] || 0;
@@ -281,6 +327,9 @@ export async function executeDamageRoll(
         }
 
         actualDicePool = Math.max(1, actualDicePool);
+
+        const isProtean = abilityString.includes('protean') || abilityString.includes('libero');
+        const hasTypeMatch = move.type && typingString.includes(move.type);
 
         let stabBonus = 0;
         let stabTag = '';
@@ -304,54 +353,17 @@ export async function executeDamageRoll(
             }
         }
 
-        let customFirstHitTag = '';
-        if (itemBuffs.firstHitDmg !== 0 && state.trackers.firstHitDmg) {
-            const sign = itemBuffs.firstHitDmg > 0 ? '+' : '';
-            customFirstHitTag = `First Hit (${sign}${itemBuffs.firstHitDmg} Dice)`;
-            useCharacterStore.getState().updateTracker('firstHitDmg', false);
-        }
-
-        let pain = getPainPenalty(normalizedDamageStatistic, state);
-        if (itemBuffs.ignorePain) pain = 0;
-
-        finalFlatMod += pain;
-
         if (teraBonusTags) tags.push(teraBonusTags);
         else if (stabBonus > 0) tags.push(stabTag);
-
-        if (customFirstHitTag) tags.push(customFirstHitTag);
-        if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
     }
-
-    // Apply Effectiveness Readouts
-    if (effectiveness === 2) tags.push('4x Super Effective (+2 Extra Dmg)');
-    else if (effectiveness === 1) tags.push('2x Super Effective (+1 Extra Dmg)');
-    else if (effectiveness === -1) tags.push('0.5x Not Very Effective (-1 Extra Dmg)');
-    else if (effectiveness === -2) tags.push('0.25x Not Very Effective (-2 Extra Dmg)');
-
-    if (superEffectiveDamageBonus > 0) tags.push(`Item SE Boost (+${superEffectiveDamageBonus} Dice)`);
 
     if (itemBuffs.gainTempHp > 0) tags.push(`Gains ${itemBuffs.gainTempHp} Temp HP`);
     if (itemBuffs.tempHpOnHit > 0) tags.push(`Gains ${itemBuffs.tempHpOnHit} Temp HP on Hit`);
     if (itemBuffs.tempHpDmgRatio) tags.push(`Gains ${itemBuffs.tempHpDmgRatio} Dmg as Temp HP`);
 
-    if (finalFlatMod !== 0 && (!override.active || override.type !== 'flat')) {
-        tags.push(`Net Mod ${finalFlatMod > 0 ? '+' : ''}${finalFlatMod} Succ/Dmg`);
-    }
-
     const moveDescription = (move.desc || '').toLowerCase();
-
     if (moveDescription.includes('powder') || moveDescription.includes('spore')) {
         tags.push(`POWDER: Grass-types are immune`);
-    }
-    if (
-        moveDescription.includes('recoil') ||
-        itemBuffs.dmgItemNames.some(
-            (itemName: string) =>
-                itemName.toLowerCase().includes('life orb') || itemName.toLowerCase().includes('recoil')
-        )
-    ) {
-        tags.push(`RECOIL: Roll success as user dmg ignoring def`);
     }
 
     if (
@@ -403,13 +415,17 @@ export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {
     const attributeTotal = calculateStatTotal(check.attr, state, itemBuffs);
     const skillTotal = calculateSkillTotal(check.skill, state, itemBuffs);
 
-    let dicePool = attributeTotal + skillTotal;
+    const hasSkill = Boolean(check.skill && check.skill.toLowerCase() !== 'none');
+    const rankSkillBonus = hasSkill ? getRankBonusStats(state.identity.rank).skillDice : 0;
+
+    let dicePool = attributeTotal + skillTotal + rankSkillBonus;
     if (check.attr === 'dex') dicePool += statuses.paralysisDexterityPenalty;
 
     let pain = getPainPenalty(check.attr, state);
     if (itemBuffs.ignorePain) pain = 0;
 
     const tags: string[] = [];
+    if (rankSkillBonus > 0) tags.push('Master/Champion Rank (+2 Dice)');
     if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
 
     const genericSuccessModifier = state.trackers.globalSucc + statuses.confusionPenalty + pain;
@@ -447,7 +463,8 @@ export async function rollGeneric(
     attribute: string,
     incrementEvade = false,
     incrementClash = false,
-    incrementAction = false
+    incrementAction = false,
+    hasSkill = false
 ) {
     const state = useCharacterStore.getState();
     const nickname = state.identity.nickname || state.identity.species || 'Someone';
@@ -470,7 +487,8 @@ export async function rollGeneric(
     const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
     const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
 
-    let finalDicePool = dicePool;
+    const rankSkillBonus = hasSkill ? getRankBonusStats(state.identity.rank).skillDice : 0;
+    let finalDicePool = dicePool + rankSkillBonus;
     if (attribute.toLowerCase() === 'dex') finalDicePool += statuses.paralysisDexterityPenalty;
 
     let pain = getPainPenalty(attribute, state);
@@ -487,6 +505,7 @@ export async function rollGeneric(
     const chancesUsed = state.trackers.chances;
     const tags: string[] = [];
 
+    if (rankSkillBonus > 0) tags.push('Master/Champion Rank (+2 Dice)');
     if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
     if (genericSuccessModifier !== 0)
         tags.push(`Net Mod ${genericSuccessModifier > 0 ? '+' : ''}${genericSuccessModifier} Succ`);

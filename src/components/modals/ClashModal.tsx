@@ -32,6 +32,7 @@ export function ClashModal({ onClose }: ClashModalProps) {
             statistic,
             false,
             true,
+            true,
             true
         );
     };

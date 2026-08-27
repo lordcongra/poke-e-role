@@ -4,7 +4,12 @@ import type { Item, Image } from '@owlbear-rodeo/sdk';
 import { isStandaloneMode, storageAdapter } from '../../utils/storageAdapter';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { addRollLogEntry } from '../../utils/diceRoller';
-import { calculateBaseInitFromCharacterData, sortCombatants, extractTokenImage, calculateEncodedInitiative } from '../../utils/initiativeHelpers';
+import {
+    calculateBaseInitFromCharacterData,
+    sortCombatants,
+    extractTokenImage,
+    calculateEncodedInitiative
+} from '../../utils/initiativeHelpers';
 import type { Combatant } from '../../utils/initiativeHelpers';
 import type { StandaloneCharOption, ObrCharOption } from './AddCombatantModal';
 
@@ -88,7 +93,10 @@ export function useInitiativeEngine() {
                     localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
                     window.dispatchEvent(new Event('pkr-standalone-init-update'));
                 } catch (error) {
-                    console.error('[InitiativeEngine] Failed to update active character initiative in localStorage:', error);
+                    console.error(
+                        '[InitiativeEngine] Failed to update active character initiative in localStorage:',
+                        error
+                    );
                 }
                 return sorted;
             }
@@ -411,9 +419,7 @@ export function useInitiativeEngine() {
                     let tiebreaker = 0;
 
                     if (group && group.length > 1) {
-                        const existingTies = group
-                            .map((member) => member.tiebreaker)
-                            .filter((t) => t > 0);
+                        const existingTies = group.map((member) => member.tiebreaker).filter((t) => t > 0);
                         let roll = Math.floor(Math.random() * 6) + 1;
                         while (existingTies.includes(roll)) {
                             roll = Math.floor(Math.random() * 6) + 1;
@@ -482,9 +488,7 @@ export function useInitiativeEngine() {
                 let tiebreaker = 0;
 
                 if (group && group.length > 1) {
-                    const existingTies = group
-                        .map((member) => member.tiebreaker)
-                        .filter((t) => t > 0);
+                    const existingTies = group.map((member) => member.tiebreaker).filter((t) => t > 0);
                     let roll = Math.floor(Math.random() * 6) + 1;
                     while (existingTies.includes(roll)) {
                         roll = Math.floor(Math.random() * 6) + 1;

@@ -48,7 +48,8 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
             // Check for true stalemates (identical Total AND identical Base Initiative)
             let assignedTiebreaker = 0;
             const stalemateOpponents = parsedList.filter(
-                (combatant) => combatant.id !== tokenId && combatant.total === rollTotal && combatant.baseInit === baseInit
+                (combatant) =>
+                    combatant.id !== tokenId && combatant.total === rollTotal && combatant.baseInit === baseInit
             );
 
             if (stalemateOpponents.length > 0) {

@@ -1,4 +1,4 @@
-import type { TempBuild, TempMove, CharacterState, GeneratorConfig } from '../store/storeTypes';
+import type { TempBuild, TempMove, CharacterState, GeneratorConfig, Rank } from '../store/storeTypes';
 import { fetchPokemonData, fetchMoveData, MOVES_URLS, SPECIES_URLS, loadLocalDataset } from './api';
 import { getRankPoints, getAgePoints } from '../store/useCharacterStore';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
@@ -53,7 +53,7 @@ function normalizeSkill(value: string): string {
 export async function generateBuild(config: GeneratorConfig, state: CharacterState): Promise<TempBuild | null> {
     await loadLocalDataset();
 
-    let speciesName = state.identity.species;
+    let speciesName = config.targetSpecies || state.identity.species;
 
     if (config.randomizeSpecies) {
         const customNames = state.roomCustomPokemon.filter((p) => state.role === 'GM' || !p.gmOnly).map((p) => p.Name);
@@ -72,44 +72,36 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     const pdRecord = pokemonData as Record<string, unknown>;
     const finalSpeciesName = String(pdRecord.Name || speciesName);
 
-    const type1 = config.randomizeSpecies ? String(pdRecord.Type1 || '') : state.identity.type1;
-    const type2 = config.randomizeSpecies ? String(pdRecord.Type2 || '') : state.identity.type2;
+    const type1 =
+        config.randomizeSpecies || !state.identity.type1 ? String(pdRecord.Type1 || '') : state.identity.type1;
+    const type2 =
+        config.randomizeSpecies || !state.identity.type2 ? String(pdRecord.Type2 || '') : state.identity.type2;
     const hasType2 = Boolean(type2 && type2 !== 'None');
 
-    const rank = state.identity.rank;
+    const rank = config.targetRank || state.identity.rank || 'Starter';
     const { core: rankCore, social: rankSocial, skills: rankSkill, skillLimit } = getRankPoints(rank);
-    const { core: ageCore, social: ageSocial } = getAgePoints(state.identity.age);
+
+    // Pokémon do not receive Age attribute or social bonus points (Age is strictly a Trainer mechanic in Pokerole)
+    const isTrainer = state.identity.mode === 'Trainer';
+    const { core: ageCore, social: ageSocial } =
+        isTrainer && state.identity.age ? getAgePoints(state.identity.age) : { core: 0, social: 0 };
 
     const attributePoints = rankCore + ageCore;
     const socialPoints = rankSocial + ageSocial;
     const maxSkillRank = skillLimit;
 
-    // Bulletproof parsing to ensure NaN NEVER breaks the mathematical loops
-    let baseStr = Number(state.stats[CombatStat.STR].base) || 2;
-    let baseDex = Number(state.stats[CombatStat.DEX].base) || 2;
-    let baseVit = Number(state.stats[CombatStat.VIT].base) || 2;
-    let baseSpe = Number(state.stats[CombatStat.SPE].base) || 2;
-    let baseIns = Number(state.stats[CombatStat.INS].base) || 1;
+    // Bulletproof parsing: derive base stats & limits directly from pdRecord with fallback to state
+    const baseStr = Number(getBase(pdRecord, 'Strength', 2)) || Number(state.stats[CombatStat.STR]?.base) || 2;
+    const baseDex = Number(getBase(pdRecord, 'Dexterity', 2)) || Number(state.stats[CombatStat.DEX]?.base) || 2;
+    const baseVit = Number(getBase(pdRecord, 'Vitality', 2)) || Number(state.stats[CombatStat.VIT]?.base) || 2;
+    const baseSpe = Number(getBase(pdRecord, 'Special', 2)) || Number(state.stats[CombatStat.SPE]?.base) || 2;
+    const baseIns = Number(getBase(pdRecord, 'Insight', 1)) || Number(state.stats[CombatStat.INS]?.base) || 1;
 
-    let limitStr = Number(state.stats[CombatStat.STR].limit) || 5;
-    let limitDex = Number(state.stats[CombatStat.DEX].limit) || 5;
-    let limitVit = Number(state.stats[CombatStat.VIT].limit) || 5;
-    let limitSpe = Number(state.stats[CombatStat.SPE].limit) || 5;
-    let limitIns = Number(state.stats[CombatStat.INS].limit) || 5;
-
-    if (config.randomizeSpecies) {
-        baseStr = Number(getBase(pdRecord, 'Strength', 2)) || 2;
-        baseDex = Number(getBase(pdRecord, 'Dexterity', 2)) || 2;
-        baseVit = Number(getBase(pdRecord, 'Vitality', 2)) || 2;
-        baseSpe = Number(getBase(pdRecord, 'Special', 2)) || 2;
-        baseIns = Number(getBase(pdRecord, 'Insight', 1)) || 1;
-
-        limitStr = Number(getLimit(pdRecord, 'Strength')) || 5;
-        limitDex = Number(getLimit(pdRecord, 'Dexterity')) || 5;
-        limitVit = Number(getLimit(pdRecord, 'Vitality')) || 5;
-        limitSpe = Number(getLimit(pdRecord, 'Special')) || 5;
-        limitIns = Number(getLimit(pdRecord, 'Insight')) || 5;
-    }
+    const limitStr = Number(getLimit(pdRecord, 'Strength')) || Number(state.stats[CombatStat.STR]?.limit) || 5;
+    const limitDex = Number(getLimit(pdRecord, 'Dexterity')) || Number(state.stats[CombatStat.DEX]?.limit) || 5;
+    const limitVit = Number(getLimit(pdRecord, 'Vitality')) || Number(state.stats[CombatStat.VIT]?.limit) || 5;
+    const limitSpe = Number(getLimit(pdRecord, 'Special')) || Number(state.stats[CombatStat.SPE]?.limit) || 5;
+    const limitIns = Number(getLimit(pdRecord, 'Insight')) || Number(state.stats[CombatStat.INS]?.limit) || 5;
 
     const attributeLimits: Record<string, number> = {
         str: limitStr,
@@ -121,7 +113,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
 
     let effectiveBias = config.combatBias;
 
-    if (config.randomizeSpecies && config.autoSelectBias) {
+    if (config.autoSelectBias) {
         const strScore = limitStr + baseStr;
         const speScore = limitSpe + baseSpe;
 
@@ -506,6 +498,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
 
     return {
         species: finalSpeciesName,
+        rank: rank as Rank,
         attr: generatedAttributes,
         soc: generatedSocials,
         skills: generatedSkills,

@@ -1,4 +1,4 @@
-import { calculateStatTotal, calculateSkillTotal, getAbilityText, parseCombatTags } from './combatMath';
+import { getAbilityText, parseCombatTags, calculateBaseInitiative, getRankBonusStats } from './combatMath';
 import { hydrateStateFromMetadata } from './stateMapper';
 import type { CharacterState } from '../store/storeTypes';
 
@@ -77,7 +77,10 @@ export function calculateBaseInitFromCharacterData(
         const skillsObj = charData.skills || charData.state?.skills;
 
         if (statsObj && typeof statsObj === 'object') {
-            const typedStats = statsObj as Record<string, { base?: number; rank?: number; buff?: number; debuff?: number } | undefined>;
+            const typedStats = statsObj as Record<
+                string,
+                { base?: number; rank?: number; buff?: number; debuff?: number } | undefined
+            >;
             const typedSkills = skillsObj as Record<string, { base?: number; buff?: number } | undefined> | undefined;
 
             const dexBase = Number(typedStats.dex?.base) || 1;
@@ -92,10 +95,11 @@ export function calculateBaseInitFromCharacterData(
 
             let itemDexBuff = 0;
             let itemAlertBuff = 0;
+            let itemInitBuff = 0;
             const inv = charData.inventory || charData.state?.inventory;
+            const identityObj = (charData.identity || charData.state?.identity || {}) as Record<string, unknown>;
 
             if (Array.isArray(inv)) {
-                const identityObj = (charData.identity || charData.state?.identity || {}) as Record<string, unknown>;
                 const abilityText = getAbilityText(
                     (identityObj.ability as string) || '',
                     (charData.roomCustomAbilities as CharacterState['roomCustomAbilities']) ||
@@ -110,9 +114,18 @@ export function calculateBaseInitFromCharacterData(
                 );
                 itemDexBuff = itemBuffs.stats['dex'] || 0;
                 itemAlertBuff = itemBuffs.skills['alert'] || 0;
+                itemInitBuff = itemBuffs.init || 0;
             }
 
-            return Math.max(1, dexTotal + itemDexBuff) + Math.max(0, alertTotal + itemAlertBuff);
+            const charRank = String(identityObj.rank || '');
+            const rankInitBonus = getRankBonusStats(charRank).init;
+
+            return (
+                Math.max(1, dexTotal + itemDexBuff) +
+                Math.max(0, alertTotal + itemAlertBuff) +
+                itemInitBuff +
+                rankInitBonus
+            );
         }
 
         let flatMeta: Record<string, unknown> = data;
@@ -123,18 +136,7 @@ export function calculateBaseInitFromCharacterData(
         const partialState = hydrateStateFromMetadata(flatMeta, globalState);
         const characterState = { ...globalState, ...partialState } as CharacterState;
 
-        const abilityText = getAbilityText(characterState.identity.ability, characterState.roomCustomAbilities);
-        const itemBuffs = parseCombatTags(
-            characterState.inventory,
-            characterState.extraCategories,
-            undefined,
-            abilityText
-        );
-
-        const dex = calculateStatTotal('dex', characterState, itemBuffs);
-        const alertSkill = calculateSkillTotal('alert', characterState, itemBuffs);
-
-        return Math.max(1, dex) + Math.max(0, alertSkill);
+        return calculateBaseInitiative(characterState);
     } catch (e) {
         console.error('[InitiativeHelper] Error calculating base initiative:', e);
         return 1;

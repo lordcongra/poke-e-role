@@ -41,7 +41,7 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
     setGeneratorConfig: (config) => set((state) => ({ generatorConfig: { ...state.generatorConfig, ...config } })),
 
     applyGeneratedBuild: (build) => {
-        if (build.pokemonData && build.species !== get().identity.species) {
+        if (build.pokemonData) {
             get().applySpeciesData(build.pokemonData, true, true);
         }
 
@@ -70,6 +70,11 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
             if (build.pokemonData && build.species !== state.identity.species) {
                 newIdentity.species = build.species;
                 updatesToSave['species'] = build.species;
+            }
+
+            if (build.rank) {
+                newIdentity.rank = build.rank;
+                updatesToSave['rank'] = build.rank;
             }
 
             Object.values(CombatStat).forEach((statistic) => {
