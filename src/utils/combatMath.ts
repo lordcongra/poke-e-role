@@ -91,7 +91,9 @@ export function getStatusPenalties(state: CharacterState) {
 }
 
 export function calculateStatTotal(statKey: string, state: CharacterState, itemBuffs: CombatBonuses): number {
-    const normalizedStat = ATTRIBUTE_MAPPING[statKey] || statKey;
+    if (!statKey) return 0;
+    const normalizedStat = ATTRIBUTE_MAPPING[statKey] || statKey.toLowerCase().trim();
+    if (!normalizedStat || normalizedStat === 'none') return 0;
     if (normalizedStat === 'will') return state.will.willMax;
 
     if (Object.values(CombatStat).includes(normalizedStat as CombatStat)) {
@@ -110,7 +112,7 @@ export function calculateStatTotal(statKey: string, state: CharacterState, itemB
         );
     }
 
-    return 1;
+    return 0;
 }
 
 export function calculateSkillTotal(skillKey: string, state: CharacterState, itemBuffs: CombatBonuses): number {
@@ -131,16 +133,16 @@ export function calculateSkillTotal(skillKey: string, state: CharacterState, ite
     return 0;
 }
 
-export function calculateBaseDamage(move: MoveData, state: CharacterState): number {
+export function calculateBaseDamage(move: MoveData, state: CharacterState, itemBuffs?: CombatBonuses): number {
     const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
-    const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, move, abilityText);
-    const extraDice = state.trackers.globalDmg + itemBuffs.dmg;
+    const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, move, abilityText);
+    const extraDice = state.trackers.globalDmg + invMods.dmg;
 
     let scalingValue = 0;
     const normalizedDamageStatistic = ATTRIBUTE_MAPPING[move.dmg1] || move.dmg1;
 
     if (normalizedDamageStatistic) {
-        scalingValue = calculateStatTotal(normalizedDamageStatistic, state, itemBuffs);
+        scalingValue = calculateStatTotal(normalizedDamageStatistic, state, invMods);
     }
 
     const abilityString = (state.identity.ability || '').toLowerCase();
@@ -165,8 +167,8 @@ export function calculateBaseDamage(move: MoveData, state: CharacterState): numb
     }
 
     let customFirstHitTag = 0;
-    if (itemBuffs.firstHitDmg !== 0 && state.trackers.firstHitDmg) {
-        customFirstHitTag = itemBuffs.firstHitDmg;
+    if (invMods.firstHitDmg !== 0 && state.trackers.firstHitDmg) {
+        customFirstHitTag = invMods.firstHitDmg;
     }
 
     return move.power + scalingValue + extraDice + sameTypeAttackBonus + teraBonus + customFirstHitTag;

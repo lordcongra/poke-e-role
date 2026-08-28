@@ -81,7 +81,7 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
 
     const accuracyTotal = calculateBaseAccuracy(move, fullState, itemBuffs);
 
-    const baseDamage = move.category === 'Status' ? 0 : calculateBaseDamage(move, fullState);
+    const baseDamage = move.category === 'Status' ? 0 : calculateBaseDamage(move, fullState, itemBuffs);
     const damageTotal = move.category === 'Status' ? '-' : baseDamage + bankedDiceForThisMove;
 
     const handleAccuracyClick = () => {

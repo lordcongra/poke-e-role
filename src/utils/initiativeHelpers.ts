@@ -30,8 +30,8 @@ export function formatInitiativeDisplay(total: number, baseInit: number, tiebrea
 
 export function calculateEncodedInitiative(total: number, baseInit: number, tiebreaker: number = 0): number {
     if (total === 0 && baseInit === 0) return 0;
-    const decimalValue = total + baseInit / 10 + tiebreaker / 100;
-    return parseFloat(decimalValue.toFixed(2));
+    const decimalValue = total + baseInit / 100 + tiebreaker / 10000;
+    return parseFloat(decimalValue.toFixed(4));
 }
 
 export function extractTokenImage(meta: Record<string, unknown> | null | undefined): string {

@@ -56,54 +56,34 @@ export function getMatchupGroups(
 
     // 3. Parse explicit tag modifiers
     stringsToParse.forEach((desc) => {
-        if (desc.includes('[remove immunities]')) removeImmunities = true;
+        if (desc.toLowerCase().includes('[remove immunities]')) removeImmunities = true;
 
-        const remImmuneMatches = desc.match(/\[remove immunity:\s*([a-z]+)\]/g);
-        if (remImmuneMatches) {
-            remImmuneMatches.forEach((m) => {
-                const typeMatch = m.match(/\[remove immunity:\s*([a-z]+)\]/);
-                if (typeMatch) {
-                    const type = typeMatch[1];
-                    const properType = ALL_TYPES.find((t) => t.toLowerCase() === type);
-                    if (properType) removeSpecificImmunities.push(properType);
-                }
-            });
+        const remImmuneMatches = desc.matchAll(/\[remove immunity:\s*([^\]]+)\]/gi);
+        for (const match of remImmuneMatches) {
+            const type = match[1].toLowerCase().trim();
+            const properType = ALL_TYPES.find((t) => t.toLowerCase() === type);
+            if (properType) removeSpecificImmunities.push(properType);
         }
 
-        const immuneMatches = desc.match(/\[immune:\s*([a-z]+)\]/g);
-        if (immuneMatches) {
-            immuneMatches.forEach((m) => {
-                const typeMatch = m.match(/\[immune:\s*([a-z]+)\]/);
-                if (typeMatch) {
-                    const type = typeMatch[1];
-                    const properType = ALL_TYPES.find((t) => t.toLowerCase() === type);
-                    if (properType) extraImmunities.push(properType);
-                }
-            });
+        const immuneMatches = desc.matchAll(/\[immune:\s*([^\]]+)\]/gi);
+        for (const match of immuneMatches) {
+            const type = match[1].toLowerCase().trim();
+            const properType = ALL_TYPES.find((t) => t.toLowerCase() === type);
+            if (properType) extraImmunities.push(properType);
         }
 
-        const resistMatches = desc.match(/\[resist:\s*([a-z]+)\]/g);
-        if (resistMatches) {
-            resistMatches.forEach((m) => {
-                const typeMatch = m.match(/\[resist:\s*([a-z]+)\]/);
-                if (typeMatch) {
-                    const type = typeMatch[1];
-                    const properType = ALL_TYPES.find((t) => t.toLowerCase() === type);
-                    if (properType) extraResistances.push(properType);
-                }
-            });
+        const resistMatches = desc.matchAll(/\[resist:\s*([^\]]+)\]/gi);
+        for (const match of resistMatches) {
+            const type = match[1].toLowerCase().trim();
+            const properType = ALL_TYPES.find((t) => t.toLowerCase() === type);
+            if (properType) extraResistances.push(properType);
         }
 
-        const weakMatches = desc.match(/\[weak:\s*([a-z]+)\]/g);
-        if (weakMatches) {
-            weakMatches.forEach((m) => {
-                const typeMatch = m.match(/\[weak:\s*([a-z]+)\]/);
-                if (typeMatch) {
-                    const type = typeMatch[1];
-                    const properType = ALL_TYPES.find((t) => t.toLowerCase() === type);
-                    if (properType) extraWeaknesses.push(properType);
-                }
-            });
+        const weakMatches = desc.matchAll(/\[weak:\s*([^\]]+)\]/gi);
+        for (const match of weakMatches) {
+            const type = match[1].toLowerCase().trim();
+            const properType = ALL_TYPES.find((t) => t.toLowerCase() === type);
+            if (properType) extraWeaknesses.push(properType);
         }
     });
 

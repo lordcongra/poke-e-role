@@ -251,18 +251,8 @@ export async function executeDamageRoll(
 
     let superEffectiveDamageBonus = 0;
     if (effectiveness > 0) {
-        state.inventory
-            .filter((item) => item.active)
-            .forEach((item) => {
-                const itemDescription = (item.desc || '').toLowerCase();
-                const superEffectiveMatches = itemDescription.matchAll(/\[dmg\s*([+-]?\d+):\s*super effective\]/gi);
-                for (const match of superEffectiveMatches) {
-                    superEffectiveDamageBonus += parseInt(match[1]) || 0;
-                }
-            });
-
-        // Items strictly apply bonus dice to the pool as normal
-        if (!override.active || override.type !== 'flat') {
+        superEffectiveDamageBonus = itemBuffs.seDmg;
+        if (superEffectiveDamageBonus > 0 && (!override.active || override.type !== 'flat')) {
             actualDicePool += superEffectiveDamageBonus;
         }
     }
@@ -289,7 +279,7 @@ export async function executeDamageRoll(
     if (effectiveness > 0) {
         tags.push(`SUPER EFFECTIVE (+${effectiveness} Succ)`);
         if (superEffectiveDamageBonus > 0 && (!override.active || override.type !== 'flat')) {
-            tags.push(`Item Super Effective (+${superEffectiveDamageBonus} Dice)`);
+            tags.push(`Super Effective Bonus (+${superEffectiveDamageBonus} Dice)`);
         }
     } else if (effectiveness < 0) {
         tags.push(`NOT VERY EFFECTIVE (${effectiveness} Succ)`);
@@ -313,6 +303,14 @@ export async function executeDamageRoll(
     }
 
     if (!override.active || override.type !== 'flat') {
+        if (
+            statuses.paralysisDexterityPenalty < 0 &&
+            normalizedDamageStatistic === 'dex'
+        ) {
+            actualDicePool += statuses.paralysisDexterityPenalty;
+            tags.push(`Paralysis minus 2 Dmg Dice`);
+        }
+
         // ✨ PULL FROM THE BANK ✨
         let bankedDiceTag = '';
         const bankedDice = state.trackers.bankedAccDice[move.id] || 0;
@@ -364,14 +362,6 @@ export async function executeDamageRoll(
     const moveDescription = (move.desc || '').toLowerCase();
     if (moveDescription.includes('powder') || moveDescription.includes('spore')) {
         tags.push(`POWDER: Grass-types are immune`);
-    }
-
-    if (
-        statuses.paralysisDexterityPenalty < 0 &&
-        normalizedDamageStatistic === 'dex' &&
-        (!override.active || override.type !== 'flat')
-    ) {
-        tags.push(`Paralysis minus 2 Dmg Dice`);
     }
 
     if (itemBuffs.dmgItemNames.length > 0) tags.push(`Item: ${itemBuffs.dmgItemNames.join(', ')}`);
