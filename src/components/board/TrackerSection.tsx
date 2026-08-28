@@ -132,7 +132,7 @@ export function TrackerSection() {
         else if (maneuver === 'cover')
             rollGeneric(
                 'Cover an Ally',
-                3 + calculateStatTotal(CombatStat.INS, state, itemBuffs),
+                calculateStatTotal('will', state, itemBuffs),
                 'will',
                 false,
                 false,

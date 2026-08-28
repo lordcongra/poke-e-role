@@ -91,9 +91,8 @@ export function getStatusPenalties(state: CharacterState) {
 }
 
 export function calculateStatTotal(statKey: string, state: CharacterState, itemBuffs: CombatBonuses): number {
-    if (statKey === 'will') return state.will.willMax;
-
     const normalizedStat = ATTRIBUTE_MAPPING[statKey] || statKey;
+    if (normalizedStat === 'will') return state.will.willMax;
 
     if (Object.values(CombatStat).includes(normalizedStat as CombatStat)) {
         const statistic = state.stats[normalizedStat as CombatStat];
