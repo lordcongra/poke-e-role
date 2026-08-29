@@ -349,7 +349,9 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                             item.name = targetName;
                         }
                     })
-                    .catch((e: unknown) => console.warn('Failed to update OBR item name on manual species change:', e));
+                    .catch((e: unknown) =>
+                        console.warn('[MacroSlice] Failed to update OBR item name on manual species change:', e)
+                    );
             }, 250);
         }
     },

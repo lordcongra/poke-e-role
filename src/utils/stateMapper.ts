@@ -673,7 +673,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             });
         }
     } catch (error) {
-        console.error('Error mapping Zustand state to OBR Metadata:', error);
+        console.error('[StateMapper] Error mapping Zustand state to OBR Metadata:', error);
     }
 
     return flatMetadata;

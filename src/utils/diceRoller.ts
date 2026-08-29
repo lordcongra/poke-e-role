@@ -448,7 +448,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
         const obrPlayerName = await OBR.player.getName();
         const mensaje = `${obrPlayerName} | ${finalLabel}`;
 
-        let diceTheme: unknown = undefined;
+        let diceTheme: Record<string, unknown> | undefined = undefined;
         let isOutdatedCarDetected = false;
         try {
             const roomMeta = await OBR.room.getMetadata();
@@ -469,7 +469,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 const playerThemeData = playersMap[playerId] || playersMap[connectionId];
 
                 if (playerThemeData && playerThemeData.diceTheme) {
-                    diceTheme = playerThemeData.diceTheme;
+                    diceTheme = playerThemeData.diceTheme as Record<string, unknown>;
                 }
             }
         } catch (e) {

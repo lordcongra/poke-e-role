@@ -73,7 +73,9 @@ function RollLog() {
         try {
             const raw = localStorage.getItem('pkr_active_theme_colors');
             if (raw) applyDynamicColors(JSON.parse(raw));
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[RollLog] Failed to parse active theme colors from localStorage:', e);
+        }
     }, []);
 
     useEffect(() => {
@@ -98,7 +100,9 @@ function RollLog() {
             if (e.key === 'pkr_active_theme_colors') {
                 try {
                     applyDynamicColors(JSON.parse(e.newValue || '{}'));
-                } catch (err) {}
+                } catch (err) {
+                    console.warn('[RollLog] Failed to parse dynamic colors on storage update:', err);
+                }
             }
         };
         window.addEventListener('storage', handleStorage);

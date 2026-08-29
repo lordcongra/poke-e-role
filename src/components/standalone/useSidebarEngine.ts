@@ -14,6 +14,12 @@ export type TreeItem = {
     activeTrans: string;
 };
 
+interface MasterBackupData {
+    type?: string;
+    folders?: Record<string, unknown>[];
+    characters?: Array<{ id: string; metadata: Record<string, unknown> }>;
+}
+
 export function useSidebarEngine() {
     const activeTokenId = useCharacterStore((state) => state.tokenId);
     const [items, setItems] = useState<TreeItem[]>([]);
@@ -28,7 +34,7 @@ export function useSidebarEngine() {
     );
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; item: TreeItem } | null>(null);
 
-    const [pendingRestoreData, setPendingRestoreData] = useState<Record<string, unknown> | null>(null);
+    const [pendingRestoreData, setPendingRestoreData] = useState<MasterBackupData | null>(null);
     const restoreInputRef = useRef<HTMLInputElement>(null);
 
     const loadData = useCallback(async () => {
@@ -128,8 +134,7 @@ export function useSidebarEngine() {
 
         const originalSetItem = localStorage.setItem;
         localStorage.setItem = function (key, value) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            originalSetItem.apply(this, [key, value] as any);
+            originalSetItem.call(this, key, value);
             if (key.startsWith('pkr_char_') || key === 'pkr_folders') {
                 window.dispatchEvent(new Event('pkr-local-data-changed'));
             }
@@ -475,8 +480,7 @@ export function useSidebarEngine() {
 
     const confirmRestoreMerge = () => {
         if (!pendingRestoreData) return;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const data = pendingRestoreData as any;
+        const data = pendingRestoreData;
 
         const existingFoldersStr = localStorage.getItem('pkr_folders') || '[]';
         const existingFolders = JSON.parse(existingFoldersStr) as Record<string, unknown>[];
@@ -504,8 +508,7 @@ export function useSidebarEngine() {
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const data = pendingRestoreData as any;
+        const data = pendingRestoreData;
         localStorage.setItem('pkr_folders', JSON.stringify(data.folders || []));
         for (const char of data.characters || []) {
             localStorage.setItem(`pkr_char_${char.id}`, JSON.stringify(char.metadata));

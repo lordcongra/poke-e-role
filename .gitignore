@@ -27,4 +27,4 @@ dist-ssr
 .agents/
 
 # Local dataset sync & overrides workspace (local only, not tracked in GitHub)
-data/
+/data/

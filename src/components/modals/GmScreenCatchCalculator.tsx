@@ -102,7 +102,7 @@ export function GmScreenCatchCalculator() {
                             value={selectedRankIndex}
                             onChange={(e) => setSelectedRankIndex(Number(e.target.value))}
                         >
-                            {CATCH_RANKS_TABLE.map((r, idx) => (
+                            {CATCH_RANKS_TABLE.map((r: { rank: string; required: string }, idx: number) => (
                                 <option key={r.rank} value={idx}>
                                     {r.rank} ({r.required})
                                 </option>
@@ -122,7 +122,7 @@ export function GmScreenCatchCalculator() {
                             value={selectedRankIndex}
                             onChange={(e) => setSelectedRankIndex(Number(e.target.value))}
                         >
-                            {CATCH_RANKS_TABLE.map((r, idx) => (
+                            {CATCH_RANKS_TABLE.map((r: { rank: string; required: string }, idx: number) => (
                                 <option key={r.rank} value={idx}>
                                     {r.rank} ({r.required})
                                 </option>

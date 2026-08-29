@@ -1,4 +1,4 @@
-import { getAbilityText, parseCombatTags, calculateBaseInitiative, getRankBonusStats } from './combatMath';
+import { calculateBaseInitiative } from './combatMath';
 import { hydrateStateFromMetadata } from './stateMapper';
 import type { CharacterState } from '../store/storeTypes';
 
@@ -73,59 +73,20 @@ export function calculateBaseInitFromCharacterData(
     try {
         const charData = data as StoredCharacterData;
 
+        // If charData contains a structured Zustand state or nested stats/skills, merge directly
         const statsObj = charData.stats || charData.state?.stats;
-        const skillsObj = charData.skills || charData.state?.skills;
-
         if (statsObj && typeof statsObj === 'object') {
-            const typedStats = statsObj as Record<
-                string,
-                { base?: number; rank?: number; buff?: number; debuff?: number } | undefined
-            >;
-            const typedSkills = skillsObj as Record<string, { base?: number; buff?: number } | undefined> | undefined;
-
-            const dexBase = Number(typedStats.dex?.base) || 1;
-            const dexRank = Number(typedStats.dex?.rank) || 0;
-            const dexBuff = Number(typedStats.dex?.buff) || 0;
-            const dexDebuff = Number(typedStats.dex?.debuff) || 0;
-            const dexTotal = Math.max(1, dexBase + dexRank + dexBuff - dexDebuff);
-
-            const alertBase = Number(typedSkills?.alert?.base) || 0;
-            const alertBuff = Number(typedSkills?.alert?.buff) || 0;
-            const alertTotal = Math.max(0, alertBase + alertBuff);
-
-            let itemDexBuff = 0;
-            let itemAlertBuff = 0;
-            let itemInitBuff = 0;
-            const inv = charData.inventory || charData.state?.inventory;
-            const identityObj = (charData.identity || charData.state?.identity || {}) as Record<string, unknown>;
-
-            if (Array.isArray(inv)) {
-                const abilityText = getAbilityText(
-                    (identityObj.ability as string) || '',
-                    (charData.roomCustomAbilities as CharacterState['roomCustomAbilities']) ||
-                        globalState.roomCustomAbilities ||
-                        []
-                );
-                const itemBuffs = parseCombatTags(
-                    inv,
-                    (charData.extraCategories || []) as CharacterState['extraCategories'],
-                    undefined,
-                    abilityText
-                );
-                itemDexBuff = itemBuffs.stats['dex'] || 0;
-                itemAlertBuff = itemBuffs.skills['alert'] || 0;
-                itemInitBuff = itemBuffs.init || 0;
-            }
-
-            const charRank = String(identityObj.rank || '');
-            const rankInitBonus = getRankBonusStats(charRank).init;
-
-            return (
-                Math.max(1, dexTotal + itemDexBuff) +
-                Math.max(0, alertTotal + itemAlertBuff) +
-                itemInitBuff +
-                rankInitBonus
-            );
+            const nestedState = (charData.state || charData) as Partial<CharacterState>;
+            const characterState: CharacterState = {
+                ...globalState,
+                ...nestedState,
+                stats: { ...globalState.stats, ...nestedState.stats },
+                skills: { ...globalState.skills, ...nestedState.skills },
+                inventory: nestedState.inventory || globalState.inventory,
+                identity: { ...globalState.identity, ...nestedState.identity },
+                extraCategories: nestedState.extraCategories || globalState.extraCategories
+            };
+            return calculateBaseInitiative(characterState);
         }
 
         let flatMeta: Record<string, unknown> = data;

@@ -85,7 +85,7 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
 
             if (rawHash) {
                 // If hash matches an item ID, expand it and scroll into view
-                const matchedItem = GM_CHEAT_ITEMS.find((item) => item.id === rawHash);
+                const matchedItem = GM_CHEAT_ITEMS.find((item: GmCheatItem) => item.id === rawHash);
                 if (matchedItem) {
                     setActiveTab(matchedItem.category);
                     setExpandedCards({ [matchedItem.id]: true });
@@ -104,7 +104,7 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
     useEffect(() => {
         if (searchQuery.trim()) {
             const newExpanded: Record<string, boolean> = {};
-            GM_CHEAT_ITEMS.forEach((item) => {
+            GM_CHEAT_ITEMS.forEach((item: GmCheatItem) => {
                 newExpanded[item.id] = true;
             });
             setExpandedCards(newExpanded);
@@ -119,13 +119,13 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
     };
 
     const allExpanded = useMemo(() => {
-        return GM_CHEAT_ITEMS.length > 0 && GM_CHEAT_ITEMS.every((item) => expandedCards[item.id]);
+        return GM_CHEAT_ITEMS.length > 0 && GM_CHEAT_ITEMS.every((item: GmCheatItem) => expandedCards[item.id]);
     }, [expandedCards]);
 
     const toggleAllCards = () => {
         const nextState = !allExpanded;
         const newExpanded: Record<string, boolean> = {};
-        GM_CHEAT_ITEMS.forEach((item) => {
+        GM_CHEAT_ITEMS.forEach((item: GmCheatItem) => {
             newExpanded[item.id] = nextState;
         });
         setExpandedCards(newExpanded);

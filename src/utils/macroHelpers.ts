@@ -357,7 +357,7 @@ export const restoreFormBackup = (
             updatesToSave['moves-data'] = JSON.stringify(draft.moves);
         }
     } catch (e) {
-        console.error('Failed to parse form backup during form reversion', e);
+        console.error('[MacroHelpers] Failed to parse form backup during form reversion:', e);
     }
 };
 
