@@ -5,13 +5,14 @@ import type { CustomPokemon } from '../../store/storeTypes';
 import { ALL_ABILITIES, ALL_MOVES } from '../../utils/api';
 import { HomebrewPokemonCard } from './HomebrewPokemonCard';
 import { POKEMON_TYPES, TYPE_COLORS } from '../../data/constants';
+import { isStandaloneMode } from '../../utils/storageAdapter';
 import { Plus, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 
 export function HomebrewPokemon() {
     const role = useCharacterStore((state) => state.role);
     const access = useCharacterStore((state) => state.identity.homebrewAccess);
-    const canEdit = role === 'GM' || access === 'Full';
+    const canEdit = isStandaloneMode || role === 'GM' || access === 'Full';
 
     const roomCustomPokemon = useCharacterStore((state) => state.roomCustomPokemon);
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);

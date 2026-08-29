@@ -85,7 +85,7 @@ export function GlobalToolbar() {
 
     const showHomebrewButton = isStandaloneMode || canViewHomebrew(localRole, homebrewAccess);
     const showLootGenButton = isStandaloneMode || localRole === 'GM' || gmOnlyLootGen === false;
-    const showPokemonGeneratorButton = isStandaloneMode || !!activeTokenId;
+    const showPokemonGeneratorButton = true;
 
     useEffect(() => {
         if (!isStandaloneMode && OBR.isAvailable) {

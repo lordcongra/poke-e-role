@@ -3,13 +3,14 @@ import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomStatus } from '../../store/storeTypes';
 import { HomebrewStatusCard } from './HomebrewStatusCard';
+import { isStandaloneMode } from '../../utils/storageAdapter';
 import { Plus, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 
 export function HomebrewStatuses() {
     const role = useCharacterStore((state) => state.role);
     const access = useCharacterStore((state) => state.identity.homebrewAccess);
-    const canEdit = role === 'GM' || access === 'Full';
+    const canEdit = isStandaloneMode || role === 'GM' || access === 'Full';
 
     const roomCustomStatuses = useCharacterStore((state) => state.roomCustomStatuses);
     const addCustomStatus = useCharacterStore((state) => state.addCustomStatus);

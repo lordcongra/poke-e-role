@@ -4,6 +4,8 @@ import { saveToOwlbear } from '../../utils/obr';
 import OBR from '@owlbear-rodeo/sdk';
 import { syncHealthAndWill } from '../../utils/macroHelpers';
 
+import { isStandaloneMode } from '../../utils/storageAdapter';
+
 const OBR_KEY_MAP: Record<string, string> = {
     showTrackers: 'show-trackers',
     isNPC: 'is-npc',
@@ -121,7 +123,7 @@ try {
 
 export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentitySlice> = (set) => ({
     tokenId: null,
-    role: 'PLAYER',
+    role: isStandaloneMode ? 'GM' : 'PLAYER',
     identity: {
         nickname: '',
         species: '',

@@ -6,6 +6,7 @@
     padding: 6px 10px;
     border-radius: 4px;
     border: 1px solid var(--border);
+    min-width: 0;
 }
 
 .homebrew-status-card__row--recovery {

@@ -53,6 +53,8 @@ export function useOwlbearSync() {
                 if (!isMounted) return;
 
                 const role = await OBR.player.getRole();
+                const currentStore = useCharacterStore.getState();
+                currentStore.setTokenData(currentStore.tokenId || '', role);
 
                 // 2. Setup Peer-to-Peer Homebrew Handshake
                 const unsubHomebrewRequest = OBR.broadcast.onMessage(`${EXTENSION_ID}/homebrew-request`, () => {
@@ -236,12 +238,16 @@ export function useOwlbearSync() {
                 }
 
                 const unsubPlayer = OBR.player.onChange(async (player) => {
+                    const currentRole = player.role || (await OBR.player.getRole());
                     if (player.selection && player.selection.length > 0) {
                         try {
                             await loadTokenAndLearnset(player.selection[0]);
                         } catch (e) {
                             console.error('[SyncEngine] Engine recovered from token click crash:', e);
                         }
+                    } else {
+                        setActiveTokenId('');
+                        useCharacterStore.getState().setTokenData('', currentRole);
                     }
                 });
                 unsubs.push(unsubPlayer);

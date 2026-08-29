@@ -17,6 +17,7 @@ import type {
     CustomForm,
     CustomStatus
 } from '../../store/storeTypes';
+import { isStandaloneMode } from '../../utils/storageAdapter';
 import { Hammer, X, HardDrive, AlertTriangle, Radio, Save, FolderOpen } from 'lucide-react';
 import './Homebrew.css';
 
@@ -45,7 +46,7 @@ const getStorageUsage = () => {
 export function HomebrewModal({ onClose }: { onClose: () => void }) {
     const role = useCharacterStore((state) => state.role);
     const access = useCharacterStore((state) => state.identity.homebrewAccess);
-    const canEdit = role === 'GM' || access === 'Full';
+    const canEdit = isStandaloneMode || role === 'GM' || access === 'Full';
 
     const [activeTab, setActiveTab] = useState<
         'types' | 'abilities' | 'moves' | 'pokemon' | 'items' | 'forms' | 'statuses'
@@ -304,8 +305,9 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                                     <button
                                         onClick={() => fileRef.current?.click()}
                                         className="action-button action-button--dark homebrew-modal__footer-btn"
+                                        title="Import or Restore Homebrew from JSON backup"
                                     >
-                                        <FolderOpen size={16} /> Restore All
+                                        <FolderOpen size={16} /> Restore / Import All
                                     </button>
                                     <input
                                         type="file"

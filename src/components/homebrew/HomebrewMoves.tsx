@@ -4,13 +4,14 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomMove } from '../../store/storeTypes';
 import { HomebrewMoveCard } from './HomebrewMoveCard';
 import { POKEMON_TYPES, TYPE_COLORS } from '../../data/constants';
+import { isStandaloneMode } from '../../utils/storageAdapter';
 import { Plus, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 
 export function HomebrewMoves() {
     const role = useCharacterStore((state) => state.role);
     const access = useCharacterStore((state) => state.identity.homebrewAccess);
-    const canEdit = role === 'GM' || access === 'Full';
+    const canEdit = isStandaloneMode || role === 'GM' || access === 'Full';
 
     const roomCustomMoves = useCharacterStore((state) => state.roomCustomMoves);
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);

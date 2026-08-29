@@ -4,13 +4,14 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomType } from '../../store/storeTypes';
 import { POKEMON_TYPES } from '../../data/constants';
 import { HomebrewTypeEditor } from './HomebrewTypeEditor';
+import { isStandaloneMode } from '../../utils/storageAdapter';
 import { Pencil, Copy, X, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './HomebrewTypes.css';
 
 export function HomebrewTypes() {
     const role = useCharacterStore((state) => state.role);
     const access = useCharacterStore((state) => state.identity.homebrewAccess);
-    const canEdit = role === 'GM' || access === 'Full';
+    const canEdit = isStandaloneMode || role === 'GM' || access === 'Full';
 
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
     const addCustomType = useCharacterStore((state) => state.addCustomType);

@@ -3,13 +3,14 @@ import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomAbility } from '../../store/storeTypes';
 import { AbilityCard } from './AbilityCard';
+import { isStandaloneMode } from '../../utils/storageAdapter';
 import { Plus, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 
 export function HomebrewAbilities() {
     const role = useCharacterStore((state) => state.role);
     const access = useCharacterStore((state) => state.identity.homebrewAccess);
-    const canEdit = role === 'GM' || access === 'Full';
+    const canEdit = isStandaloneMode || role === 'GM' || access === 'Full';
 
     const roomCustomAbilities = useCharacterStore((state) => state.roomCustomAbilities);
     const addCustomAbility = useCharacterStore((state) => state.addCustomAbility);

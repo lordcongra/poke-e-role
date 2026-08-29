@@ -128,26 +128,23 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                     </>
                                 )}
                             </button>
-                            <button
-                                type="button"
-                                disabled={!activeTokenId}
-                                className={`action-button generator-modal__dest-btn ${destination === 'overwrite' ? 'action-button--red' : 'action-button--dark'}`}
-                                onClick={() => setDestination('overwrite')}
-                                title={
-                                    !activeTokenId
-                                        ? isStandaloneMode
-                                            ? 'No active sheet open to overwrite'
-                                            : 'No token selected to overwrite'
-                                        : isStandaloneMode
-                                          ? 'Overwrite currently open sheet'
-                                          : 'Overwrite currently selected token'
-                                }
-                            >
-                                <AlertTriangle size={15} />{' '}
-                                {isStandaloneMode
-                                    ? `Overwrite Current Sheet ${!activeTokenId ? '(None Open)' : ''}`
-                                    : `Overwrite Selected Token ${!activeTokenId ? '(None Selected)' : ''}`}
-                            </button>
+                            {activeTokenId && (
+                                <button
+                                    type="button"
+                                    className={`action-button generator-modal__dest-btn ${destination === 'overwrite' ? 'action-button--red' : 'action-button--dark'}`}
+                                    onClick={() => setDestination('overwrite')}
+                                    title={
+                                        isStandaloneMode
+                                            ? 'Overwrite currently open sheet'
+                                            : 'Overwrite currently selected token'
+                                    }
+                                >
+                                    <AlertTriangle size={15} />{' '}
+                                    {isStandaloneMode
+                                        ? 'Overwrite Current Sheet'
+                                        : 'Overwrite Selected Token'}
+                                </button>
+                            )}
                         </div>
                     </div>
 

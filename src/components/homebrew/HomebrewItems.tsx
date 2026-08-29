@@ -4,13 +4,14 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { loadLocalDataset } from '../../utils/api';
 import type { CustomItem } from '../../store/storeTypes';
 import { HomebrewItemCard } from './HomebrewItemCard';
+import { isStandaloneMode } from '../../utils/storageAdapter';
 import { Plus, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 
 export function HomebrewItems() {
     const role = useCharacterStore((state) => state.role);
     const access = useCharacterStore((state) => state.identity.homebrewAccess);
-    const canEdit = role === 'GM' || access === 'Full';
+    const canEdit = isStandaloneMode || role === 'GM' || access === 'Full';
 
     const roomCustomItems = useCharacterStore((state) => state.roomCustomItems);
     const addCustomItem = useCharacterStore((state) => state.addCustomItem);

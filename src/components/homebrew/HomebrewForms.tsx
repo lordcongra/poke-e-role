@@ -3,13 +3,14 @@ import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomForm } from '../../store/storeTypes';
 import { HomebrewFormCard } from './HomebrewFormCard';
+import { isStandaloneMode } from '../../utils/storageAdapter';
 import { Plus, Sparkles, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 
 export function HomebrewForms() {
     const role = useCharacterStore((state) => state.role);
     const access = useCharacterStore((state) => state.identity.homebrewAccess);
-    const canEdit = role === 'GM' || access === 'Full';
+    const canEdit = isStandaloneMode || role === 'GM' || access === 'Full';
 
     const roomCustomForms = useCharacterStore((state) => state.roomCustomForms);
     const addCustomForm = useCharacterStore((state) => state.addCustomForm);

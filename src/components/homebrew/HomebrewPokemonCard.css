@@ -11,12 +11,14 @@
 
 .homebrew-pokemon-card__header {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
+    min-width: 0;
 }
 
 .homebrew-pokemon-card__name-input {
-    flex: 1;
+    flex: 1 1 100px;
+    min-width: 0;
     padding: 6px;
     background: var(--input-bg);
     border: 1px solid var(--border);
@@ -28,10 +30,16 @@
     align-items: center;
     gap: 4px;
     color: var(--semantic-danger);
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: 0.8rem;
 }
 
 .homebrew-pokemon-card__delete-btn {
-    padding: 6px 12px;
+    padding: 5px 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: 0.8rem;
 }
 
 .homebrew-pokemon-card__types-row {

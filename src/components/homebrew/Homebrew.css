@@ -15,7 +15,8 @@
 .homebrew-modal__content {
     background: var(--panel-bg);
     border-radius: 8px;
-    width: 550px;
+    width: 600px;
+    max-width: 95vw;
     border: 2px solid var(--primary); /* 🔥 Dynamic Border */
     box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
     max-height: 90vh;
@@ -233,12 +234,14 @@
 
 .homebrew-card__header {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
+    min-width: 0;
 }
 
 .homebrew-card__name-input {
-    flex: 1;
+    flex: 1 1 100px;
+    min-width: 0;
     padding: 6px;
     background: var(--input-bg);
     border: 1px solid var(--border);
@@ -250,10 +253,16 @@
     align-items: center;
     gap: 4px;
     color: var(--semantic-danger);
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: 0.8rem;
 }
 
 .homebrew-card__btn {
-    padding: 6px 12px;
+    padding: 5px 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: 0.8rem;
 }
 
 .homebrew-card__textarea {
