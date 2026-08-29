@@ -5,7 +5,7 @@ import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { assignWildStats, assignMinMaxStats, assignAverageStats } from './generatorLogic';
 import { draftInitialMoves, draftSpilloverMoves, sortDraftedMoves } from './moveDraftingLogic';
 import { getLimit, getBase, extractAbilities } from './macroHelpers';
-import { getRankBonusStats } from './combatMath';
+import { calculateMaxHp, calculateMaxWill } from './combatMath';
 
 const RANK_HIERARCHY = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion'];
 const ALL_SKILLS = Object.values(Skill) as string[];
@@ -212,8 +212,8 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         };
 
         if (Array.isArray(moveObject)) {
-            moveObject.forEach((move: unknown) => {
-                const moveRecord = move as Record<string, unknown>;
+            moveObject.forEach((move) => {
+                const moveRecord = typeof move === 'object' && move !== null ? (move as Record<string, unknown>) : {};
                 const moveName = typeof move === 'string' ? move : String(moveRecord.Name || moveRecord.Move || '');
                 const moveRank =
                     typeof move === 'object'
@@ -226,7 +226,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         } else if (typeof moveObject === 'object' && moveObject !== null) {
             Object.entries(moveObject).forEach(([moveRank, moveList]) => {
                 if (Array.isArray(moveList)) {
-                    moveList.forEach((move: unknown) => {
+                    moveList.forEach((move) => {
                         const moveName =
                             typeof move === 'string'
                                 ? move
@@ -520,17 +520,32 @@ export function buildTokenMetadataFromBuild(
 ): Record<string, unknown> {
     const pd = (build.pokemonData || {}) as Record<string, unknown>;
     const rank = build.rank || 'Starter';
-    const rankBonus = getRankBonusStats(rank);
 
     const baseVit = Number(getBase(pd, 'Vitality', 2)) || 2;
     const baseIns = Number(getBase(pd, 'Insight', 1)) || 1;
-    const vitTotal = baseVit + (build.attr['vit'] || 0);
-    const insTotal = baseIns + (build.attr['ins'] || 0);
 
     const hpBase = Number(pd.BaseHP) || 4;
     const willBase = Number(pd.BaseWill) || 3;
-    const hpMax = hpBase + vitTotal + rankBonus.hp;
-    const willMax = willBase + insTotal + rankBonus.will;
+
+    const fakeState = {
+        identity: { rank: rank, ruleset: 'vg-vit-hp', ability: '' },
+        health: { hpBase: hpBase },
+        will: { willBase: willBase },
+        stats: {
+            [CombatStat.STR]: { base: 2, rank: build.attr['str'] || 0, buff: 0, debuff: 0, limit: 5 },
+            [CombatStat.DEX]: { base: 2, rank: build.attr['dex'] || 0, buff: 0, debuff: 0, limit: 5 },
+            [CombatStat.VIT]: { base: baseVit, rank: build.attr['vit'] || 0, buff: 0, debuff: 0, limit: 5 },
+            [CombatStat.SPE]: { base: 2, rank: build.attr['spe'] || 0, buff: 0, debuff: 0, limit: 5 },
+            [CombatStat.INS]: { base: baseIns, rank: build.attr['ins'] || 0, buff: 0, debuff: 0, limit: 5 }
+        },
+        socials: {},
+        inventory: [],
+        extraCategories: [],
+        roomCustomAbilities: []
+    } as unknown as CharacterState;
+
+    const hpMax = calculateMaxHp(fakeState);
+    const willMax = calculateMaxWill(fakeState);
 
     const abilities = extractAbilities(pd);
     const abilityName = String(pd.Ability1 || pd.ability1 || (abilities.length > 0 ? abilities[0] : '') || '');

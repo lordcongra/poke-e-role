@@ -867,10 +867,10 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                             <ShieldCheck size={22} /> GM Screen & Rules Cheat Sheet
                         </h3>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="gm-screen-modal__header-actions">
                         <button
                             type="button"
-                            className="action-button action-button--dark gm-screen-modal__action-btn"
+                            className="action-button action-button--dark gm-screen-modal__copy-link-btn"
                             onClick={handleCopyGeneralLink}
                             title="Copy shareable link to this GM Screen"
                         >
@@ -1054,7 +1054,7 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <Copy size={13} /> Copy for Discord
+                                                        <Copy size={13} /> Discord
                                                     </>
                                                 )}
                                             </button>
@@ -1086,13 +1086,6 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                         <Heart size={14} color="var(--primary)" />
                         <span>{GM_SCREEN_CREDITS}</span>
                     </div>
-                    <button
-                        type="button"
-                        className="action-button action-button--dark gm-screen-modal__action-btn"
-                        onClick={onClose}
-                    >
-                        <X size={14} /> Close Screen
-                    </button>
                 </div>
             </div>
         </div>

@@ -119,7 +119,7 @@ export function CombatantCard({ c, shape, isActive, updateInit, removeInit }: Co
                         onBlur={handleSave}
                         onKeyDown={(event) => event.key === 'Enter' && handleSave()}
                         className="init-tracker__input no-spinners text-value-highlight"
-                        title={`Total Initiative: ${totalScore} (Base: ${baseValue}${tiebreakerScore > 0 ? `, Tiebreaker: 🎲 ${tiebreakerScore}` : ''})`}
+                        title={`Total Initiative: ${totalScore} (Base: ${baseValue}${tiebreakerScore > 0 ? `, Tiebreaker: [${tiebreakerScore}]` : ''})`}
                     />
                     <button
                         type="button"

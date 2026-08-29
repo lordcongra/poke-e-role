@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import OBR from '@owlbear-rodeo/sdk';
+import OBR, { type ImageDownload } from '@owlbear-rodeo/sdk';
 import { Dna, Image as ImageIcon, Sparkles, Trash2, AlertTriangle, X, XCircle, RotateCcw } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { POKEMON_TYPES } from '../../data/constants';
@@ -161,11 +161,10 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
 
         if (!OBR.isAvailable || !tokenId) return;
         try {
-            const assetsApi = OBR.assets as unknown as { downloadImages?: () => Promise<unknown[]> };
-            let images: unknown[] | null = null;
+            let images: ImageDownload[] | null = null;
 
-            if (typeof assetsApi?.downloadImages === 'function') {
-                images = await assetsApi.downloadImages();
+            if (typeof OBR.assets?.downloadImages === 'function') {
+                images = await OBR.assets.downloadImages();
             } else {
                 const url = window.prompt('Enter an Image URL:');
                 if (url) {
@@ -179,19 +178,8 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
             }
 
             if (images && images.length > 0) {
-                let selectedUrl = '';
-                const img = images[0] as Record<string, unknown> | string;
-
-                if (typeof img === 'string') {
-                    selectedUrl = img;
-                } else if (img && typeof img === 'object') {
-                    if (typeof img.url === 'string') selectedUrl = img.url;
-                    else if (img.image && typeof (img.image as Record<string, unknown>).url === 'string') {
-                        selectedUrl = (img.image as Record<string, unknown>).url as string;
-                    } else if (typeof img.src === 'string') {
-                        selectedUrl = img.src;
-                    }
-                }
+                const img = images[0];
+                const selectedUrl = img.image?.url || '';
 
                 if (selectedUrl) {
                     if (isCustomForm) {

@@ -109,4 +109,12 @@
     .catch-calc__actions {
         flex-direction: column;
     }
+    .catch-calc__btn {
+        width: 100%;
+        justify-content: center;
+    }
+    .catch-calc__result-summary {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
 }

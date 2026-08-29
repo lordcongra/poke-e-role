@@ -588,7 +588,7 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         syncHomebrewToApi(pokemon, moves, abilities, items);
         saveHomebrewLocal(get());
 
-        if (OBR.isAvailable) OBR.notification.show('✅ Homebrew Workshop fully restored!');
+        if (OBR.isAvailable) OBR.notification.show('[ ✓ ] Homebrew Workshop fully restored!', 'SUCCESS');
     },
 
     mergeCustomTypeData: (types) => {
@@ -826,6 +826,6 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         syncHomebrewToApi(mergedPokemon, mergedMoves, mergedAbilities, mergedItems);
         saveHomebrewLocal(get());
 
-        if (!silent && OBR.isAvailable) OBR.notification.show('✅ Homebrew Workshop successfully merged!');
+        if (!silent && OBR.isAvailable) OBR.notification.show('[ ✓ ] Homebrew Workshop successfully merged!', 'SUCCESS');
     }
 });

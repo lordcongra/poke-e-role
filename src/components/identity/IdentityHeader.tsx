@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import type { ReactNode } from 'react';
-import OBR from '@owlbear-rodeo/sdk';
+import OBR, { type ImageDownload } from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { fetchPokemonData, fetchAbilityData, fetchNatureData, fetchMoveData, loadLocalDataset } from '../../utils/api';
 import { CollapsingSection } from '../ui/CollapsingSection';
@@ -118,7 +118,11 @@ export function IdentityHeader() {
             }
 
             setIdentity('tokenImageUrl', url);
-            saveToOwlbear({ 'token-image-url': url });
+            try {
+                saveToOwlbear({ 'token-image-url': url });
+            } catch (e) {
+                console.error('[IdentityHeader] Failed to save token image URL to Owlbear:', e);
+            }
         }
         setShowImagePicker(false);
     };
@@ -163,11 +167,10 @@ export function IdentityHeader() {
         }
 
         try {
-            const assetsApi = OBR.assets as unknown as { downloadImages?: () => Promise<unknown[]> };
-            let images: unknown[] | null = null;
+            let images: ImageDownload[] | null = null;
 
-            if (typeof assetsApi?.downloadImages === 'function') {
-                images = await assetsApi.downloadImages();
+            if (typeof OBR.assets?.downloadImages === 'function') {
+                images = await OBR.assets.downloadImages();
             } else {
                 const url = window.prompt('Enter an Image URL:');
                 if (url) {
@@ -184,25 +187,10 @@ export function IdentityHeader() {
             }
 
             if (images && images.length > 0) {
-                let selectedUrl = '';
-                let selectedWidth = 0;
-                let selectedHeight = 0;
-
-                const img = images[0] as Record<string, unknown> | string;
-
-                if (typeof img === 'string') {
-                    selectedUrl = img;
-                } else if (img && typeof img === 'object') {
-                    if (typeof img.url === 'string') {
-                        selectedUrl = img.url;
-                    } else if (img.image && typeof (img.image as Record<string, unknown>).url === 'string') {
-                        selectedUrl = (img.image as Record<string, unknown>).url as string;
-                        selectedWidth = ((img.image as Record<string, unknown>).width as number) || 0;
-                        selectedHeight = ((img.image as Record<string, unknown>).height as number) || 0;
-                    } else if (typeof img.src === 'string') {
-                        selectedUrl = img.src;
-                    }
-                }
+                const img = images[0];
+                const selectedUrl = img.image?.url || '';
+                const selectedWidth = img.image?.width || 0;
+                const selectedHeight = img.image?.height || 0;
 
                 if (selectedUrl) {
                     setIdentity('tokenImageUrl', selectedUrl);
@@ -223,11 +211,8 @@ export function IdentityHeader() {
 
                                     const physicalWidth = oldWidth * Math.abs(oldScaleX);
                                     const newScale = physicalWidth / selectedWidth;
-
-                                    item.scale = {
-                                        x: newScale * (oldScaleX < 0 ? -1 : 1),
-                                        y: newScale * (oldScaleY < 0 ? -1 : 1)
-                                    };
+                                    item.scale.x = oldScaleX < 0 ? -newScale : newScale;
+                                    item.scale.y = oldScaleY < 0 ? -newScale : newScale;
                                 }
                             }
                         }

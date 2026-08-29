@@ -157,9 +157,23 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                     }
                 }
 
-                if (costHp > 0 && draft.health.hpCurr <= costHp) {
-                    if (OBR.isAvailable) OBR.notification.show('Not enough HP to safely transform!', 'ERROR');
-                    return state;
+                if (costHp > 0) {
+                    const totalEffectiveHp = draft.health.hpCurr + (draft.health.temporaryHitPoints || 0);
+                    if (totalEffectiveHp <= costHp) {
+                        if (OBR.isAvailable) OBR.notification.show('Not enough HP to safely transform!', 'ERROR');
+                        return state;
+                    }
+
+                    let remainingHpCost = costHp;
+                    if (draft.health.temporaryHitPoints > 0) {
+                        const deduct = Math.min(draft.health.temporaryHitPoints, remainingHpCost);
+                        draft.health.temporaryHitPoints -= deduct;
+                        remainingHpCost -= deduct;
+                        updatesToSave['temporary-hit-points'] = draft.health.temporaryHitPoints;
+                    }
+                    if (remainingHpCost > 0) {
+                        draft.health.hpCurr -= remainingHpCost;
+                    }
                 }
 
                 if (costWill > 0) {
@@ -178,8 +192,6 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                         draft.will.willCurr -= remainingWillCost;
                     }
                 }
-
-                draft.health.hpCurr -= costHp;
             }
 
             // 2. Process Core Transformation Logic
@@ -349,7 +361,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                             item.name = targetName;
                         }
                     })
-                    .catch((e: unknown) =>
+                    .catch((e) =>
                         console.warn('[MacroSlice] Failed to update OBR item name on manual species change:', e)
                     );
             }, 250);

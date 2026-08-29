@@ -57,7 +57,7 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: Ide
                 );
                 setSpeciesList(formattedSpecies.sort());
             })
-            .catch((error: unknown) => console.error('Failed to load local dataset:', error));
+            .catch((error) => console.error('[IdentityGrid] Failed to load local dataset:', error));
     }, []);
 
     const uniqueSpecies = Array.from(new Set([...speciesList, ...filteredPokemon.map((pokemon) => pokemon.Name)]));

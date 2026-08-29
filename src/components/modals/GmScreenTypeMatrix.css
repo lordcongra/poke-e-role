@@ -124,4 +124,12 @@
     .type-matrix__actions {
         flex-direction: column;
     }
+    .type-matrix__btn {
+        width: 100%;
+        justify-content: center;
+    }
+    .type-matrix__pill {
+        font-size: 0.72rem;
+        padding: 2px 6px;
+    }
 }

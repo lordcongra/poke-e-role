@@ -24,7 +24,7 @@ export interface GmCheatItem {
 
 export const GM_SCREEN_AUTHOR = 'Willowlark';
 export const GM_SCREEN_CREDITS =
-    'Pokerole 3.0 GM Screen reference compiled by Willowlark. Adapted and enhanced for PokéRole VTT.';
+    "Pokerole 3.0 GM Screen reference compiled by Willowlark. Adapted and enhanced for Congra's Pokérole Autosheet.";
 
 // 1. SKILLS & ATTRIBUTES
 export const SKILLS_DATA = {

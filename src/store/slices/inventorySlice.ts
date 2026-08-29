@@ -1,8 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CharacterState, InventorySlice, InventoryItem, CustomInfo } from '../storeTypes';
 import { saveToOwlbear } from '../../utils/obr';
-import { parseCombatTags, getAbilityText, calculateStatTotal } from '../../utils/combatUtils';
-import { CombatStat } from '../../types/enums';
+import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../../utils/combatUtils';
 
 const syncHealthWill = (
     state: CharacterState,
@@ -11,22 +10,17 @@ const syncHealthWill = (
 ) => {
     const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
     const inventoryModifiers = parseCombatTags(newInventory, state.extraCategories, undefined, abilityText);
-
-    const vitTotal = calculateStatTotal(CombatStat.VIT, state, inventoryModifiers);
-    const insTotal = calculateStatTotal(CombatStat.INS, state, inventoryModifiers);
-
-    let hpStat = vitTotal;
-    if (state.identity.ruleset === 'vg-high-hp') hpStat = Math.max(vitTotal, insTotal);
+    const fakeState = { ...state, inventory: newInventory };
 
     const newHealth = { ...state.health };
     const oldHpMax = newHealth.hpMax;
-    newHealth.hpMax = newHealth.hpBase + hpStat;
+    newHealth.hpMax = calculateMaxHp(fakeState, inventoryModifiers);
     if (newHealth.hpMax > oldHpMax) newHealth.hpCurr += newHealth.hpMax - oldHpMax;
     else if (newHealth.hpCurr > newHealth.hpMax) newHealth.hpCurr = newHealth.hpMax;
 
     const newWill = { ...state.will };
     const oldWillMax = newWill.willMax;
-    newWill.willMax = newWill.willBase + insTotal;
+    newWill.willMax = calculateMaxWill(fakeState, inventoryModifiers);
     if (newWill.willMax > oldWillMax) newWill.willCurr += newWill.willMax - oldWillMax;
     else if (newWill.willCurr > newWill.willMax) newWill.willCurr = newWill.willMax;
 

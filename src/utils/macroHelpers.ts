@@ -6,7 +6,7 @@ import { MAX_MOVES_DATA } from '../data/maxMoves';
 export const parseLearnset = (movesObj: unknown): Array<{ Learned: string; Name: string }> => {
     const result: Array<{ Learned: string; Name: string }> = [];
     if (Array.isArray(movesObj)) {
-        movesObj.forEach((m: unknown) => {
+        movesObj.forEach((m) => {
             if (typeof m === 'string') result.push({ Learned: 'Other', Name: m });
             else if (typeof m === 'object' && m !== null) {
                 const mRec = m as Record<string, unknown>;
@@ -18,7 +18,7 @@ export const parseLearnset = (movesObj: unknown): Array<{ Learned: string; Name:
     } else if (typeof movesObj === 'object' && movesObj !== null) {
         Object.entries(movesObj).forEach(([rank, mList]) => {
             if (Array.isArray(mList)) {
-                mList.forEach((m: unknown) => {
+                mList.forEach((m) => {
                     let name = '';
                     if (typeof m === 'string') name = m;
                     else if (typeof m === 'object' && m !== null) {
@@ -54,7 +54,7 @@ export const extractAbilities = (data: Record<string, unknown>): string[] => {
     if (data.EventAbilities) abilities.push(String(data.EventAbilities));
 
     if (abilities.length === 0 && Array.isArray(data.Abilities)) {
-        data.Abilities.forEach((a: unknown) => {
+        data.Abilities.forEach((a) => {
             if (typeof a === 'string') abilities.push(a);
             else if (a && typeof a === 'object' && (a as Record<string, unknown>).Name)
                 abilities.push(String((a as Record<string, unknown>).Name));

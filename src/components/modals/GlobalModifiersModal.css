@@ -15,8 +15,13 @@
     background: var(--panel-bg);
     padding: 20px;
     border-radius: 6px;
-    max-width: 300px;
+    max-width: 320px;
     width: 90%;
+    max-height: 90vh;
+    max-height: 90dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
     border: 2px solid var(--primary);
     box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
 }

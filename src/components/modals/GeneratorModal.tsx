@@ -43,7 +43,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                 );
                 setSpeciesList(formattedSpecies.sort());
             })
-            .catch((error: unknown) => console.error('[GeneratorModal] Failed to load local dataset:', error));
+            .catch((error) => console.error('[GeneratorModal] Failed to load local dataset:', error));
     }, []);
 
     const filteredCustomPokemon = roomCustomPokemon.filter((p) => role === 'GM' || !p.gmOnly).map((p) => p.Name);

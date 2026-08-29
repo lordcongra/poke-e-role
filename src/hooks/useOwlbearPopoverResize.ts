@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 
 interface UseOwlbearPopoverResizeProps {
@@ -9,7 +9,7 @@ interface UseOwlbearPopoverResizeProps {
     maxTrackerHeight: number;
     viewportMaxWidth: number;
     // We pass dependencies like 'combatants' or 'showAddMenu' so the observer knows when to recalculate
-    dependencies: unknown[];
+    dependencies: React.DependencyList;
 }
 
 export function useOwlbearPopoverResize({

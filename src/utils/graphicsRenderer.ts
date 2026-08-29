@@ -20,7 +20,7 @@ export async function updateTokenGraphics(tokenId: string, state: CharacterState
         const data = buildGraphicsFromState(metadata, state);
         await renderTokenGraphics(token, data, role, false);
     } catch (error) {
-        console.error('Token Graphics Sync Error:', error);
+        console.error('[GraphicsRenderer] Token Graphics Sync Error:', error);
     }
 }
 
@@ -70,7 +70,7 @@ export async function renderTokenGraphics(
             const graphicDefinitions = buildGraphicDefinitions(data, role, isTokenVisible, scale);
             await applyGraphicsToOwlbear(token, graphicDefinitions, localAttached);
         } catch (error) {
-            console.error('Token Graphics Sync Error:', error);
+            console.error('[GraphicsRenderer] Token Graphics Sync Error:', error);
         }
     });
 

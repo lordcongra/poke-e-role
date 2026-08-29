@@ -115,7 +115,7 @@ export async function fetchWithCache<T>(url: string, cacheKey: string, itemName:
             console.error(`[Cache] Failed to parse offline fallback for ${itemName}`, fallbackError);
         }
 
-        console.error(`Failed to load ${itemName}. No offline cache found.`);
+        console.error(`[ApiClient] Failed to load ${itemName}. No offline cache found.`);
         return null;
     } finally {
         activeRequests.delete(cacheKey);

@@ -32,7 +32,7 @@ export const safeUpdateItems = async (
         await waitForObr();
         await OBR.scene.items.updateItems(filter, updateFn);
     } catch (error) {
-        console.error('Failed to securely update OBR items:', error);
+        console.error('[ObrHelpers] Failed to securely update OBR items:', error);
     }
 };
 
@@ -45,6 +45,6 @@ export const safeSetRoomMetadata = async (metadata: Record<string, unknown>): Pr
         await waitForObr();
         await OBR.room.setMetadata(metadata);
     } catch (error) {
-        console.error('Failed to securely update OBR room metadata:', error);
+        console.error('[ObrHelpers] Failed to securely update OBR room metadata:', error);
     }
 };

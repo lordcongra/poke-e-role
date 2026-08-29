@@ -107,10 +107,9 @@ function RollLog() {
         };
         window.addEventListener('storage', handleStorage);
 
+        const unsubs: Array<() => void> = [];
         if (OBR.isAvailable) {
             OBR.onReady(() => {
-                const unsubs: Array<() => void> = [];
-
                 unsubs.push(
                     OBR.broadcast.onMessage('pokerole-pmd-extension/roll-log-update', () => {
                         loadRolls();
@@ -128,12 +127,13 @@ function RollLog() {
                         applyDynamicColors(event.data as { enabled: boolean; primary?: string; secondary?: string });
                     })
                 );
-
-                return () => unsubs.forEach((unsub) => unsub());
             });
         }
 
-        return () => window.removeEventListener('storage', handleStorage);
+        return () => {
+            window.removeEventListener('storage', handleStorage);
+            unsubs.forEach((unsub) => unsub());
+        };
     }, []);
 
     const dismiss = (id: string) => {

@@ -450,7 +450,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             try {
                 const parsed = JSON.parse(backupString);
                 if (parsed.identity || parsed.health || parsed.backupFormData) {
-                    console.warn(`Blocked bloated legacy data for ${key} during import to protect token.`);
+                    console.warn(`[StateMapper] Blocked bloated legacy data for ${key} during import to protect token.`);
                 } else {
                     flatMetadata[key] = backupString;
                 }

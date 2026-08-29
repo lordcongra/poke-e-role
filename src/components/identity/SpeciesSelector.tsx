@@ -39,7 +39,7 @@ export function SpeciesSelector({ uniqueSpecies, onOpenPokedex }: SpeciesSelecto
                 }
             }
         } catch (error) {
-            console.error('Fetch failed:', error);
+            console.error('[SpeciesSelector] Fetch failed:', error);
         } finally {
             setIsFetching(false);
         }

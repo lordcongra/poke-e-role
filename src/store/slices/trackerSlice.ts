@@ -141,7 +141,15 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
             const newWill = { ...state.will };
 
             if (invMods.roundDamage > 0) {
-                newHealth.hpCurr = Math.max(0, newHealth.hpCurr - invMods.roundDamage);
+                let remaining = invMods.roundDamage;
+                if (newHealth.temporaryHitPoints > 0) {
+                    const deduct = Math.min(newHealth.temporaryHitPoints, remaining);
+                    newHealth.temporaryHitPoints -= deduct;
+                    remaining -= deduct;
+                }
+                if (remaining > 0) {
+                    newHealth.hpCurr = Math.max(0, newHealth.hpCurr - remaining);
+                }
             }
             if (invMods.roundHeal > 0 && newHealth.hpCurr > 0) {
                 newHealth.hpCurr = Math.min(newHealth.hpMax, newHealth.hpCurr + invMods.roundHeal);
@@ -177,6 +185,7 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
                     'chances-used': 0,
                     'fate-used': 0,
                     'hp-curr': newHealth.hpCurr,
+                    'temporary-hit-points': newHealth.temporaryHitPoints,
                     'will-curr': newWill.willCurr,
                     'temporary-will': newWill.temporaryWill,
                     'effects-data': JSON.stringify(newEffects),

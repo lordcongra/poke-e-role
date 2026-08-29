@@ -208,7 +208,7 @@ export function GlobalToolbar() {
                 store.loadFromOwlbear(importData);
                 saveToOwlbear(importData);
             } else {
-                useCharacterStore.setState(importData as unknown as CharacterState);
+                useCharacterStore.setState(importData as Partial<CharacterState>);
                 const fullState = useCharacterStore.getState();
                 const metaToSave = flattenStateToMetadata(fullState);
                 saveToOwlbear(metaToSave);

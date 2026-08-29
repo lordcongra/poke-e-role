@@ -75,7 +75,7 @@ const OBR_KEY_MAP: Record<string, string> = {
 const parseLearnset = (movesObj: unknown): Array<{ Learned: string; Name: string }> => {
     const result: Array<{ Learned: string; Name: string }> = [];
     if (Array.isArray(movesObj)) {
-        movesObj.forEach((m: unknown) => {
+        movesObj.forEach((m) => {
             if (typeof m === 'string') result.push({ Learned: 'Other', Name: m });
             else if (typeof m === 'object' && m !== null) {
                 const mRec = m as Record<string, unknown>;
@@ -87,7 +87,7 @@ const parseLearnset = (movesObj: unknown): Array<{ Learned: string; Name: string
     } else if (typeof movesObj === 'object' && movesObj !== null) {
         Object.entries(movesObj).forEach(([rank, mList]) => {
             if (Array.isArray(mList)) {
-                mList.forEach((m: unknown) => {
+                mList.forEach((m) => {
                     let name = '';
                     if (typeof m === 'string') name = m;
                     else if (typeof m === 'object' && m !== null) {

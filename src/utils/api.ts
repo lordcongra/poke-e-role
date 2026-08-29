@@ -149,7 +149,7 @@ export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
             isDatasetLoaded = true;
             return localDatasetIndex;
         } catch (error) {
-            console.error('Failed to load local dataset:', error);
+            console.error('[Api] Failed to load local dataset:', error);
             return null;
         } finally {
             datasetPromise = null;

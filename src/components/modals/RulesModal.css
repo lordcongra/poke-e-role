@@ -9,14 +9,23 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 12px;
+    box-sizing: border-box;
 }
 
 .rules-modal__content {
     background: var(--panel-bg);
     padding: 15px;
     border-radius: 8px;
-    max-width: 350px;
-    width: 90%;
+    max-width: 400px;
+    width: 100%;
+    max-height: 90vh;
+    max-height: 90dvh;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
     border: 2px solid var(--primary);
     box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
 }
@@ -117,6 +126,11 @@
     border-radius: 6px;
     max-width: 400px;
     width: 90%;
+    max-height: 85vh;
+    max-height: 85dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
     border: 2px solid var(--primary);
     box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
 }

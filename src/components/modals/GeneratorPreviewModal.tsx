@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import OBR, { buildImage } from '@owlbear-rodeo/sdk';
+import OBR, { buildImage, type ImageDownload } from '@owlbear-rodeo/sdk';
 import { Search, Dices, CheckCircle, XCircle, ImagePlus, FilePlus } from 'lucide-react';
 import type { TempBuild } from '../../store/storeTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
@@ -91,34 +91,23 @@ export function GeneratorPreviewModal({
                 const tokenItemName = providedNickname || localBuild.species || 'Pokémon';
 
                 // Prompt user to pick token image from their OBR asset library
-                const assetsApi = OBR.assets as unknown as { downloadImages?: () => Promise<unknown[]> };
-                let images: unknown[] | null = null;
+                let images: ImageDownload[] | null = null;
                 let selectedUrl = '';
                 let selectedWidth = 0;
                 let selectedHeight = 0;
 
-                if (typeof assetsApi?.downloadImages === 'function') {
-                    images = await assetsApi.downloadImages();
+                if (typeof OBR.assets?.downloadImages === 'function') {
+                    images = await OBR.assets.downloadImages();
                 } else {
                     const url = window.prompt('Enter an Image URL for the new Token:');
                     if (url) selectedUrl = url;
                 }
 
                 if (images && images.length > 0) {
-                    const img = images[0] as Record<string, unknown> | string;
-                    if (typeof img === 'string') {
-                        selectedUrl = img;
-                    } else if (img && typeof img === 'object') {
-                        if (typeof img.url === 'string') {
-                            selectedUrl = img.url;
-                        } else if (img.image && typeof (img.image as Record<string, unknown>).url === 'string') {
-                            selectedUrl = (img.image as Record<string, unknown>).url as string;
-                            selectedWidth = ((img.image as Record<string, unknown>).width as number) || 0;
-                            selectedHeight = ((img.image as Record<string, unknown>).height as number) || 0;
-                        } else if (typeof img.src === 'string') {
-                            selectedUrl = img.src;
-                        }
-                    }
+                    const img = images[0];
+                    selectedUrl = img.image?.url || '';
+                    selectedWidth = img.image?.width || 0;
+                    selectedHeight = img.image?.height || 0;
                 }
 
                 if (!selectedUrl) {
@@ -212,12 +201,10 @@ export function GeneratorPreviewModal({
     const handleImageConfirm = async (wantsNewImage: boolean) => {
         if (wantsNewImage) {
             try {
-                // Strictly type the undocumented assets API to avoid 'any'
-                const assetsApi = OBR.assets as unknown as { downloadImages?: () => Promise<unknown[]> };
-                let images: unknown[] | null = null;
+                let images: ImageDownload[] | null = null;
 
-                if (typeof assetsApi?.downloadImages === 'function') {
-                    images = await assetsApi.downloadImages();
+                if (typeof OBR.assets?.downloadImages === 'function') {
+                    images = await OBR.assets.downloadImages();
                 } else {
                     const url = window.prompt('Enter an Image URL:');
                     if (url) {
@@ -232,20 +219,8 @@ export function GeneratorPreviewModal({
                 }
 
                 if (images && images.length > 0) {
-                    let selectedUrl = '';
-                    const img = images[0] as Record<string, unknown> | string;
-
-                    if (typeof img === 'string') {
-                        selectedUrl = img;
-                    } else if (img && typeof img === 'object') {
-                        if (typeof img.url === 'string') selectedUrl = img.url;
-                        else if (img.image && typeof (img.image as Record<string, unknown>).url === 'string') {
-                            selectedUrl = (img.image as Record<string, unknown>).url as string;
-                        } else if (typeof img.src === 'string') {
-                            selectedUrl = img.src;
-                        }
-                    }
-
+                    const img = images[0];
+                    const selectedUrl = img.image?.url || '';
                     if (selectedUrl) {
                         setIdentity('tokenImageUrl', selectedUrl);
                         await OBR.scene.items.updateItems([tokenId!], (items) => {

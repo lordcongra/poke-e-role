@@ -67,7 +67,7 @@ export function useOwlbearSync() {
 
                 const unsubHomebrewPayload = OBR.broadcast.onMessage(`${EXTENSION_ID}/homebrew-payload`, (event) => {
                     if (role !== 'GM') {
-                        const payload = event.data as unknown as HomebrewPayload;
+                        const payload = event.data as HomebrewPayload;
                         useCharacterStore.getState().mergeAllHomebrewData(
                             payload.customTypes || [],
                             payload.customAbilities || [],
@@ -84,7 +84,7 @@ export function useOwlbearSync() {
                 unsubs.push(unsubHomebrewPayload);
 
                 const unsubHomebrewShare = OBR.broadcast.onMessage(`${EXTENSION_ID}/homebrew-share`, (event) => {
-                    const payload = event.data as unknown as HomebrewPayload;
+                    const payload = event.data as HomebrewPayload;
                     useCharacterStore.getState().mergeAllHomebrewData(
                         payload.customTypes || [],
                         payload.customAbilities || [],
@@ -397,7 +397,7 @@ export function useOwlbearSync() {
 
                 // Receive the Roll Sync broadcast from REMOTE players
                 const unsubRollLogSync = OBR.broadcast.onMessage(`${EXTENSION_ID}/roll-log-sync`, async (event) => {
-                    const rollData = event.data as unknown as RollSyncData;
+                    const rollData = event.data as RollSyncData;
 
                     // GM PRIVACY FILTER
                     const myId = await OBR.player.getId();

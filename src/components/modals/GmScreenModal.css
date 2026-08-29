@@ -56,6 +56,24 @@
     color: var(--primary);
 }
 
+.gm-screen-modal__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.gm-screen-modal__copy-link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    border-radius: 6px;
+}
+
 .gm-screen-modal__close-btn {
     background: transparent;
     border: none;
@@ -405,13 +423,13 @@
 
 /* Footer / Credits */
 .gm-screen-modal__footer {
-    padding: 10px 16px;
+    padding: 8px 16px;
     border-top: 1px solid var(--border);
     background-color: var(--panel-alt);
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    justify-content: center;
+    gap: 8px;
     flex-shrink: 0;
 }
 
@@ -420,7 +438,9 @@
     color: var(--text-muted);
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
+    text-align: center;
 }
 
 /* Encounter Difficulty Pills */
@@ -482,30 +502,97 @@
 
 @media (max-width: 768px) {
     .gm-screen-modal__overlay {
-        padding: 6px;
+        padding: 4px;
     }
 
     .gm-screen-modal__content {
         width: 100%;
         height: 98vh;
+        height: 98dvh;
         max-height: 98vh;
+        max-height: 98dvh;
         border-radius: 6px;
+    }
+
+    .gm-screen-modal__header {
+        padding: 8px 10px;
+        gap: 6px;
+    }
+
+    .gm-screen-modal__title {
+        font-size: 0.88rem;
+        line-height: 1.25;
+        gap: 6px;
+    }
+
+    .gm-screen-modal__copy-link-btn {
+        padding: 4px 6px;
+        font-size: 0.72rem;
+        gap: 4px;
+    }
+
+    .gm-screen-modal__controls {
+        padding: 6px 8px;
+        gap: 6px;
     }
 
     .gm-screen-modal__search-row {
         flex-direction: column;
         align-items: stretch;
+        gap: 6px;
+    }
+
+    .gm-screen-modal__toggle-all-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 6px;
+        font-size: 0.76rem;
+    }
+
+    .gm-screen-modal__body {
+        padding: 8px 6px;
+        gap: 8px;
     }
 
     .gm-screen-modal__card-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 6px;
+        padding: 8px 8px;
+    }
+
+    .gm-screen-modal__card-title-group {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 6px;
     }
 
     .gm-screen-modal__card-actions {
         width: 100%;
-        justify-content: flex-end;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        margin-top: 2px;
+    }
+
+    .gm-screen-modal__action-btn {
+        font-size: 0.72rem;
+        padding: 5px 4px;
+        justify-content: center;
+        white-space: nowrap;
+        text-align: center;
+    }
+
+    .gm-screen-modal__card-body {
+        padding: 10px 8px;
+        gap: 8px;
+    }
+
+    .gm-table th,
+    .gm-table td {
+        padding: 6px 6px;
+        font-size: 0.76rem;
     }
 
     .status-grid,
@@ -514,7 +601,6 @@
     }
 
     .gm-screen-modal__footer {
-        flex-direction: column;
-        align-items: flex-start;
+        display: none !important;
     }
 }

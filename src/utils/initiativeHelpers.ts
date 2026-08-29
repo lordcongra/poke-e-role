@@ -13,6 +13,7 @@ export interface Combatant {
 }
 
 export interface StoredCharacterData extends Partial<CharacterState> {
+    [key: string]: unknown;
     state?: Partial<CharacterState>;
     'pokerole-extension/stats'?: Record<string, unknown>;
 }
@@ -65,7 +66,7 @@ export function extractTokenImage(meta: Record<string, unknown> | null | undefin
 }
 
 export function calculateBaseInitFromCharacterData(
-    data: Record<string, unknown> | null | undefined,
+    data: CharacterState | StoredCharacterData | Record<string, unknown> | null | undefined,
     globalState: CharacterState
 ): number {
     if (!data) return 1;
@@ -89,7 +90,7 @@ export function calculateBaseInitFromCharacterData(
             return calculateBaseInitiative(characterState);
         }
 
-        let flatMeta: Record<string, unknown> = data;
+        let flatMeta: Record<string, unknown> = (data || {}) as Record<string, unknown>;
         if (charData['pokerole-extension/stats'] && typeof charData['pokerole-extension/stats'] === 'object') {
             flatMeta = charData['pokerole-extension/stats'] as Record<string, unknown>;
         }

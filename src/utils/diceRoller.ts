@@ -478,7 +478,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
 
         if (isOutdatedCarDetected) {
             OBR.notification.show(
-                '⚠️ Outdated Custom Action Rolls URL detected! Please update your room to: https://custom-action-rolls.narcolepticdracu.com/manifest.json',
+                '[WARNING] Outdated Custom Action Rolls URL detected! Please update your room to: https://custom-action-rolls.narcolepticdracu.com/manifest.json',
                 'WARNING'
             );
         }

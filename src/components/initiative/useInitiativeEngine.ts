@@ -73,7 +73,7 @@ export function useInitiativeEngine() {
             const next = prev.map((c) => {
                 if (c.id === activeTokenId) {
                     const newBase = calculateBaseInitFromCharacterData(
-                        globalState as unknown as Record<string, unknown>,
+                        globalState,
                         globalState
                     );
                     const newImage = tokenImageUrl || '';
@@ -275,6 +275,7 @@ export function useInitiativeEngine() {
         }
 
         // --- OBR Mode ---
+        const unsubs: Array<() => void> = [];
         OBR.onReady(async () => {
             if (!isMounted) return;
             setIsReady(true);
@@ -303,6 +304,7 @@ export function useInitiativeEngine() {
                 if (turnMeta !== undefined) setActiveTurnId(turnMeta);
             };
             const unsubMeta = OBR.scene.onMetadataChange(handleMetadataChange);
+            unsubs.push(unsubMeta);
 
             const mapItemsToCombatants = (items: Item[]) => {
                 const initItems = items.filter(
@@ -361,13 +363,17 @@ export function useInitiativeEngine() {
 
             initializeCombatants();
             const unsubItems = OBR.scene.items.onChange(mapItemsToCombatants);
+            unsubs.push(unsubItems);
 
             const unsubPingToggle = OBR.broadcast.onMessage('pkr-init-ping-toggle', () => {
                 OBR.broadcast.sendMessage('pkr-init-pong', {}, { destination: 'LOCAL' });
             });
+            unsubs.push(unsubPingToggle);
+
             const unsubPingCheck = OBR.broadcast.onMessage('pkr-init-ping-check', () => {
                 OBR.broadcast.sendMessage('pkr-init-pong', {}, { destination: 'LOCAL' });
             });
+            unsubs.push(unsubPingCheck);
 
             const unsubSettings = OBR.broadcast.onMessage('pkr-init-settings-update', (event) => {
                 const settings = event.data as Record<string, string>;
@@ -376,28 +382,22 @@ export function useInitiativeEngine() {
                 if (settings.mw !== undefined) setMaxTrackerWidth(parseInt(settings.mw, 10));
                 if (settings.mh !== undefined) setMaxTrackerHeight(parseInt(settings.mh, 10));
             });
+            unsubs.push(unsubSettings);
 
             const unsubTheme = OBR.broadcast.onMessage('pkr-theme-update', (event) => {
                 setTheme(event.data as string);
             });
+            unsubs.push(unsubTheme);
 
             const unsubPopoverTheme = OBR.broadcast.onMessage('pokerole-pmd-extension/popover-theme-sync', (event) => {
                 applyDynamicColors(event.data as { enabled: boolean; primary?: string; secondary?: string });
             });
-
-            return () => {
-                unsubItems();
-                unsubMeta();
-                unsubPingToggle();
-                unsubPingCheck();
-                unsubSettings();
-                unsubTheme();
-                unsubPopoverTheme();
-            };
+            unsubs.push(unsubPopoverTheme);
         });
 
         return () => {
             isMounted = false;
+            unsubs.forEach((unsub) => unsub());
         };
     }, [isStandaloneMode, fetchAvailableCharacters, globalState, applyDynamicColors]);
 
