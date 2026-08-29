@@ -137,9 +137,10 @@ export function calculateBaseDamage(move: MoveData, state: CharacterState, itemB
     const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
     const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, move, abilityText);
     const extraDice = state.trackers.globalDmg + invMods.dmg;
+    const statuses = getStatusPenalties(state);
 
     let scalingValue = 0;
-    const normalizedDamageStatistic = ATTRIBUTE_MAPPING[move.dmg1] || move.dmg1;
+    const normalizedDamageStatistic = (ATTRIBUTE_MAPPING[move.dmg1] || move.dmg1 || '').toLowerCase().trim();
 
     if (normalizedDamageStatistic) {
         scalingValue = calculateStatTotal(normalizedDamageStatistic, state, invMods);
@@ -171,7 +172,12 @@ export function calculateBaseDamage(move: MoveData, state: CharacterState, itemB
         customFirstHitTag = invMods.firstHitDmg;
     }
 
-    return move.power + scalingValue + extraDice + sameTypeAttackBonus + teraBonus + customFirstHitTag;
+    const paralysisPenalty = normalizedDamageStatistic === 'dex' ? statuses.paralysisDexterityPenalty : 0;
+
+    return Math.max(
+        1,
+        move.power + scalingValue + extraDice + sameTypeAttackBonus + teraBonus + customFirstHitTag + paralysisPenalty
+    );
 }
 
 export const isMasterOrChampionRank = (rank: string): boolean => ['Master', 'Champion'].includes(rank);
@@ -241,6 +247,7 @@ export function calculateBaseInitiative(state: CharacterState, itemBuffs?: Comba
 export function calculateBaseAccuracy(move: MoveData, state: CharacterState, itemBuffs?: CombatBonuses): number {
     const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
     const invMods = itemBuffs || parseCombatTags(state.inventory, state.extraCategories, move, abilityText);
+    const statuses = getStatusPenalties(state);
 
     const attributeTotal = calculateStatTotal(move.acc1, state, invMods);
     const skillTotal = calculateSkillTotal(move.acc2, state, invMods);
@@ -253,5 +260,11 @@ export function calculateBaseAccuracy(move: MoveData, state: CharacterState, ite
         customFirstHitAccTag = invMods.firstHitAcc;
     }
 
-    return attributeTotal + skillTotal + state.trackers.globalAcc + invMods.acc + customFirstHitAccTag + rankSkillBonus;
+    const normalizedAcc1 = (ATTRIBUTE_MAPPING[move.acc1] || move.acc1 || '').toLowerCase().trim();
+    const paralysisPenalty = normalizedAcc1 === 'dex' ? statuses.paralysisDexterityPenalty : 0;
+
+    return Math.max(
+        1,
+        attributeTotal + skillTotal + state.trackers.globalAcc + invMods.acc + customFirstHitAccTag + rankSkillBonus + paralysisPenalty
+    );
 }

@@ -134,8 +134,9 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     const hasSkill = Boolean(move.acc2 && move.acc2.toLowerCase() !== 'none');
     const rankSkillBonus = hasSkill ? getRankBonusStats(state.identity.rank).skillDice : 0;
 
+    const normalizedAcc1 = (ATTRIBUTE_MAPPING[move.acc1] || move.acc1 || '').toLowerCase().trim();
     let dicePool = attributeTotal + skillTotal + extraDice + rankSkillBonus;
-    if (move.acc1 === 'dex') dicePool += statuses.paralysisDexterityPenalty;
+    if (normalizedAcc1 === 'dex') dicePool += statuses.paralysisDexterityPenalty;
 
     let customFirstHitAccTag = '';
     if (itemBuffs.firstHitAcc !== 0 && state.trackers.firstHitAcc) {
@@ -165,7 +166,7 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     if (moveLowAccuracy > 0) tags.push(`Low Accuracy ${moveLowAccuracy}`);
     if (genericSuccessModifier !== 0)
         tags.push(`Net Mod ${genericSuccessModifier > 0 ? '+' : ''}${genericSuccessModifier} Succ`);
-    if (statuses.paralysisDexterityPenalty < 0 && move.acc1 === 'dex') tags.push(`Paralysis: -2 Dice`);
+    if (statuses.paralysisDexterityPenalty < 0 && normalizedAcc1 === 'dex') tags.push(`Paralysis: -2 Dice`);
 
     if (customFirstHitAccTag) tags.push(customFirstHitAccTag);
     if (chancesUsed > 0) tags.push(`Chances: Max ${chancesUsed} Rerolls`);
@@ -291,7 +292,7 @@ export async function executeDamageRoll(
         useCharacterStore.getState().updateTracker('firstHitDmg', false);
     }
 
-    const normalizedDamageStatistic = ATTRIBUTE_MAPPING[move.dmg1] || move.dmg1;
+    const normalizedDamageStatistic = (ATTRIBUTE_MAPPING[move.dmg1] || move.dmg1 || '').toLowerCase().trim();
 
     if (
         itemBuffs.dmgItemNames.some(
@@ -307,7 +308,6 @@ export async function executeDamageRoll(
             statuses.paralysisDexterityPenalty < 0 &&
             normalizedDamageStatistic === 'dex'
         ) {
-            actualDicePool += statuses.paralysisDexterityPenalty;
             tags.push(`Paralysis minus 2 Dmg Dice`);
         }
 
@@ -390,9 +390,8 @@ export async function executeDamageRoll(
 
 export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {
     const nickname = state.identity.nickname || state.identity.species || 'Someone';
-    const abilityString = state.identity.ability || '';
     const statuses = getStatusPenalties(state);
-    const hasComatose = abilityString.toLowerCase().includes('comatose');
+    const hasComatose = (state.identity.ability || '').toLowerCase().includes('comatose');
 
     if (statuses.isAsleep && !hasComatose) {
         if (OBR.isAvailable) OBR.notification.show('[WARNING] You are Asleep and cannot perform actions!', 'WARNING');
@@ -408,8 +407,9 @@ export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {
     const hasSkill = Boolean(check.skill && check.skill.toLowerCase() !== 'none');
     const rankSkillBonus = hasSkill ? getRankBonusStats(state.identity.rank).skillDice : 0;
 
+    const normalizedAttr = (ATTRIBUTE_MAPPING[check.attr] || check.attr || '').toLowerCase().trim();
     let dicePool = attributeTotal + skillTotal + rankSkillBonus;
-    if (check.attr === 'dex') dicePool += statuses.paralysisDexterityPenalty;
+    if (normalizedAttr === 'dex') dicePool += statuses.paralysisDexterityPenalty;
 
     let pain = getPainPenalty(check.attr, state);
     if (itemBuffs.ignorePain) pain = 0;
@@ -431,7 +431,7 @@ export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {
     const chancesUsed = state.trackers.chances;
 
     if (chancesUsed > 0) tags.push(`Chances: Max ${chancesUsed} Rerolls`);
-    if (statuses.paralysisDexterityPenalty < 0 && check.attr === 'dex') tags.push(`Paralysis: -2 Dice`);
+    if (statuses.paralysisDexterityPenalty < 0 && normalizedAttr === 'dex') tags.push(`Paralysis: -2 Dice`);
 
     if (statuses.isAsleep) {
         if (hasComatose) tags.push(`ASLEEP (Comatose)`);
