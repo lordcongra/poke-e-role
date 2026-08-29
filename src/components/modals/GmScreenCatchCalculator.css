@@ -1,0 +1,112 @@
+.catch-calc {
+    background-color: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.catch-calc__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+}
+
+.catch-calc__title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    color: var(--primary);
+    font-size: 0.95rem;
+    font-weight: bold;
+}
+
+.catch-calc__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.catch-calc__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.catch-calc__select,
+.catch-calc__input {
+    width: 100%;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background-color: var(--bg);
+    color: var(--text-main);
+    font-size: 0.85rem;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.catch-calc__select:focus,
+.catch-calc__input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.catch-calc__result-box {
+    background-color: var(--row-odd);
+    border: 1px solid var(--primary);
+    border-radius: 6px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.catch-calc__result-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: bold;
+}
+
+.catch-calc__formula {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.catch-calc__actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.catch-calc__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .catch-calc__grid {
+        grid-template-columns: 1fr;
+    }
+    .catch-calc__actions {
+        flex-direction: column;
+    }
+}

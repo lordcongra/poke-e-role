@@ -304,10 +304,7 @@ export async function executeDamageRoll(
     }
 
     if (!override.active || override.type !== 'flat') {
-        if (
-            statuses.paralysisDexterityPenalty < 0 &&
-            normalizedDamageStatistic === 'dex'
-        ) {
+        if (statuses.paralysisDexterityPenalty < 0 && normalizedDamageStatistic === 'dex') {
             tags.push(`Paralysis minus 2 Dmg Dice`);
         }
 

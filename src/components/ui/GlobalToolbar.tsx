@@ -22,6 +22,7 @@ import { GeneratorModal } from '../modals/GeneratorModal';
 import { PrintSettingsModal } from '../modals/PrintSettingsModal';
 import { ThemeSettingsModal } from '../modals/ThemeSettingsModal';
 import { AccessibilityModal } from '../modals/AccessibilityModal';
+import { GmScreenModal } from '../modals/GmScreenModal';
 
 // Icons
 import {
@@ -42,7 +43,8 @@ import {
     Palette,
     AlertTriangle,
     XCircle,
-    Eye
+    Eye,
+    ShieldCheck
 } from 'lucide-react';
 import './GlobalToolbar.css';
 
@@ -58,6 +60,7 @@ type ActiveModal =
     | 'print'
     | 'theme'
     | 'accessibility'
+    | 'gm-screen'
     | null;
 
 export function GlobalToolbar() {
@@ -116,6 +119,11 @@ export function GlobalToolbar() {
             const seenVersion = localStorage.getItem('pkr_changelog_seen');
             if (seenVersion !== CURRENT_VERSION) {
                 setActiveModal('changelog');
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('modal') === 'gm-screen' || window.location.hash.startsWith('#gm-screen')) {
+                setActiveModal('gm-screen');
             }
 
             const savedExpanded = localStorage.getItem('pkr_global_toolbar_expanded');
@@ -314,25 +322,25 @@ export function GlobalToolbar() {
                         <div className="global-toolbar__side-grid">
                             <button
                                 type="button"
-                                className="global-toolbar__btn action-button--neutral-hover"
+                                className="global-toolbar__btn action-button--primary-hover"
                                 onClick={() => setActiveModal('theme')}
                                 title="Override Theme Colors"
                             >
-                                <Palette size={16} color="var(--text-main)" /> Theme
+                                <Palette size={16} color="var(--primary)" /> Theme
                             </button>
 
                             <button
                                 type="button"
-                                className="global-toolbar__btn action-button--neutral-hover"
+                                className="global-toolbar__btn action-button--primary-hover"
                                 onClick={() => setActiveModal('changelog')}
                                 title="View System Updates"
                             >
-                                <Bell size={16} color="var(--text-main)" /> What's New
+                                <Bell size={16} color="var(--primary)" /> What's New
                             </button>
 
                             <button
                                 type="button"
-                                className="global-toolbar__btn action-button--neutral-hover"
+                                className="global-toolbar__btn action-button--primary-hover"
                                 onClick={() => setActiveModal('accessibility')}
                                 title="Accessibility Options (Contrast & Fonts)"
                             >
@@ -360,35 +368,46 @@ export function GlobalToolbar() {
                         <div className="global-toolbar__icon-row">
                             <button
                                 type="button"
-                                onClick={() => exportCharacterData(store, isStandaloneMode, isObrReady)}
-                                className="action-button action-button--dark"
-                                title="Export Character (Download JSON)"
+                                className="global-toolbar__btn global-toolbar__btn--gm-screen action-button--primary-hover"
+                                onClick={() => setActiveModal('gm-screen')}
+                                title="Open GM Screen & Rules Cheat Sheet"
                             >
-                                <Save size={14} style={{ filter: ICON_SHADOW }} />
+                                <ShieldCheck size={14} color="var(--primary)" /> GM Screen
                             </button>
-                            <button
-                                type="button"
-                                onClick={() => fileInputReference.current?.click()}
-                                className="action-button action-button--dark"
-                                title="Import Character (Upload JSON)"
-                            >
-                                <Upload size={14} style={{ filter: ICON_SHADOW }} />
-                            </button>
-                            <input
-                                type="file"
-                                ref={fileInputReference}
-                                onChange={handleImportChange}
-                                accept=".json"
-                                style={{ display: 'none' }}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setActiveModal('print')}
-                                className="action-button action-button--dark"
-                                title="Print Sheet"
-                            >
-                                <Printer size={14} style={{ filter: ICON_SHADOW }} />
-                            </button>
+
+                            <div className="global-toolbar__icon-actions">
+                                <button
+                                    type="button"
+                                    onClick={() => exportCharacterData(store, isStandaloneMode, isObrReady)}
+                                    className="action-button action-button--dark"
+                                    title="Export Character (Download JSON)"
+                                >
+                                    <Save size={14} style={{ filter: ICON_SHADOW }} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputReference.current?.click()}
+                                    className="action-button action-button--dark"
+                                    title="Import Character (Upload JSON)"
+                                >
+                                    <Upload size={14} style={{ filter: ICON_SHADOW }} />
+                                </button>
+                                <input
+                                    type="file"
+                                    ref={fileInputReference}
+                                    onChange={handleImportChange}
+                                    accept=".json"
+                                    style={{ display: 'none' }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveModal('print')}
+                                    className="action-button action-button--dark"
+                                    title="Print Sheet"
+                                >
+                                    <Printer size={14} style={{ filter: ICON_SHADOW }} />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -434,6 +453,7 @@ export function GlobalToolbar() {
             {activeModal === 'print' && <PrintSettingsModal onClose={() => setActiveModal(null)} />}
             {activeModal === 'theme' && <ThemeSettingsModal onClose={() => setActiveModal(null)} />}
             {activeModal === 'accessibility' && <AccessibilityModal onClose={() => setActiveModal(null)} />}
+            {activeModal === 'gm-screen' && <GmScreenModal onClose={() => setActiveModal(null)} />}
         </div>
     );
 }

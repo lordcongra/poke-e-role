@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ReactNode } from 'react';
 
-export const CURRENT_VERSION = '3.2.0';
+export const CURRENT_VERSION = '3.3.0';
 
 export interface ChangelogEntry {
     version: string;
@@ -10,6 +10,65 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
+    {
+        version: '3.3.0',
+        date: 'August 2026',
+        changes: [
+            <strong key="gm-screen-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
+                🛡️ GM Screen & Rules Cheat Sheet Modal
+            </strong>,
+            <ul
+                key="gm-screen-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Comprehensive In-App GM Screen:</strong> Added a dedicated GM Screen & Rules Cheat Sheet accessible directly from the Global Toolbar. Features instant real-time search across 16 core mechanic cards, category filters, and collapsible accordion sections.
+                </li>
+                <li>
+                    <strong>1-Click Discord Markdown & Table Broadcasts:</strong> Every rule, table, status condition, and calculator features dedicated buttons to copy clean Discord-formatted Markdown to your clipboard or broadcast directly to the Owlbear Rodeo table / Standalone Roll History widget.
+                </li>
+                <li>
+                    <strong>Deep Linking & Shareable URLs:</strong> Easily grab quick links to the GM Screen or specific sections (e.g. status conditions, weather, catching) to share quick-access rules with players in Discord.
+                </li>
+                <li>
+                    <strong>Interactive Catching Calculator:</strong> Calculate catching probabilities in real time with Pokéball, Greatball, Ultraball, and customizable Seal Power fill-in dice support along with condition and rank multipliers.
+                </li>
+                <li>
+                    <strong>Encounter Balancing Difficulty Matrix:</strong> Full 5-column challenge evaluation matrix with color-coded badges matching the official cheat sheet.
+                </li>
+                <li>
+                    <strong>Special Thanks & Credit:</strong> Huge thanks and credit to Willowlark for putting together and compiling the reference information for this cheat sheet!
+                </li>
+            </ul>,
+            <strong key="toolbar-theme-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
+                🎨 Global Toolbar Theme & UI Polish
+            </strong>,
+            <ul
+                key="toolbar-theme-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Themed Toolbar Icons:</strong> The Theme, What's New, and Accessibility buttons now dynamically inherit the sheet's active primary theme color and hover tint.
+                </li>
+            </ul>
+        ]
+    },
     {
         version: '3.2.0',
         date: 'August 2026',

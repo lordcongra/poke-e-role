@@ -265,6 +265,12 @@ export function calculateBaseAccuracy(move: MoveData, state: CharacterState, ite
 
     return Math.max(
         1,
-        attributeTotal + skillTotal + state.trackers.globalAcc + invMods.acc + customFirstHitAccTag + rankSkillBonus + paralysisPenalty
+        attributeTotal +
+            skillTotal +
+            state.trackers.globalAcc +
+            invMods.acc +
+            customFirstHitAccTag +
+            rankSkillBonus +
+            paralysisPenalty
     );
 }

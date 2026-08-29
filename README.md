@@ -1,4 +1,4 @@
-# Pokerole 3.0 Sheet v3.0.0 (Standalone PWA & Owlbear Rodeo Extension)
+# Pokerole 3.0 Sheet v3.3.0 (Standalone PWA & Owlbear Rodeo Extension)
 
 A highly automated, modular character sheet and GM Toolkit for playing **Pokerole 3.0** campaigns (including **Pokémon Mystery Dungeon / PMD** settings).
 
@@ -151,6 +151,16 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 - Never stop combat to check a type chart again. The sheet automatically calculates and displays a defensive weaknesses and resistances (4x, 2x, 0.5x, 0.25x, 0x) based on their current typing or dual-typing.
 - Fully supports items like the _Ring Target_ or _Iron Ball_ to dynamically rewrite the type chart on the fly!
 
+### 🛡️ GM Screen & Rules Cheat Sheet
+
+- **Instant In-App Reference:** Open the full Pokerole 3.0 GM Cheat Sheet directly from the global toolbar with real-time keyword search, tabbed categories, and collapsible accordion cards.
+- **1-Click Discord Markdown:** Copy clean Discord-formatted tables, status ailment summaries, combat flow steps, and weather charts directly to your clipboard for quick sharing in Discord chat.
+- **Table & Roll Log Broadcasts:** Broadcast any rule, table, or calculator directly to the Owlbear Rodeo table chat or standalone Roll History widget.
+- **Deep Linking for Players:** Generate shareable deep links to specific rules, status conditions, or tables so players can open straight to that section.
+- **Interactive Catching Calculator:** Real-time formula calculator supporting standard Pokéballs, Greatballs, Ultraballs, and custom Seal Power fill-in dice with wild rank and condition multipliers.
+- **Encounter Balancing Difficulty Matrix:** Full 5-column challenge evaluation matrix with color-coded difficulty badges (from _Effortless_ to _Punishing_).
+- **Credits & Thanks:** Special thanks and credit to Willowlark for putting together and compiling the reference information for this cheat sheet!
+
 ### 🔒 Room Rules & GM Tools
 
 - **Global Room Rules:** GMs can click the "📜 Rules" button to globally configure the active Dice Engine, dictate how HP/Spec Def is calculated for the room, and completely disable/enable Pain Penalties for all players!
@@ -163,6 +173,6 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 To install this extension into your Owlbear Rodeo room, copy the Manifest URL below and paste it into your Owlbear Rodeo extension manager:
 
-`https://lordcongra.github.io/poke-e-role/manifest.json?v=3.0.0`
+`https://lordcongra.github.io/poke-e-role/manifest.json?v=3.3.0`
 
 _(Note: If the sheet updates, you can force Owlbear to fetch the newest version by bumping the version tag at the end of the URL!)_

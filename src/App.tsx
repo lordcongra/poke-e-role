@@ -223,8 +223,8 @@ function App() {
             const isSyncPopovers = localStorage.getItem('pkr_sync_popover_theme') === 'true';
             const themePayload = {
                 enabled: isSyncPopovers,
-                primary: isSyncPopovers ? (accessiblePrimary || finalPrimary) : '',
-                secondary: isSyncPopovers ? (accessibleSecondary || finalSecondary) : ''
+                primary: isSyncPopovers ? accessiblePrimary || finalPrimary : '',
+                secondary: isSyncPopovers ? accessibleSecondary || finalSecondary : ''
             };
             localStorage.setItem('pkr_active_theme_colors', JSON.stringify(themePayload));
 

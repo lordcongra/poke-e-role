@@ -190,7 +190,8 @@ export function ThemeSettingsModal({ onClose }: ThemeSettingsModalProps) {
                     />
                     <div className="text-subtext" style={{ color: 'var(--text-main)' }}>
                         <span className="theme-modal__checkbox-title text-label">Match Popovers to Sheet Theme</span>
-                        Allows the Roll Log and Initiative Tracker popovers on Owlbear Rodeo to match the theme color of the active character sheet.
+                        Allows the Roll Log and Initiative Tracker popovers on Owlbear Rodeo to match the theme color of
+                        the active character sheet.
                     </div>
                 </label>
 

@@ -1,6 +1,6 @@
 {
     "name": "Pokerole 3.0 Sheet (Dev)",
-    "version": "3.2.0-dev",
+    "version": "3.3.0-dev",
     "manifest_version": 1,
     "description": "Local development instance for Pokerole 3.0 character sheet.",
     "author": "lordcongra",
