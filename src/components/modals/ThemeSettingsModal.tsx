@@ -18,6 +18,7 @@ export function ThemeSettingsModal({ onClose }: ThemeSettingsModalProps) {
     const [primaryHex, setPrimaryHex] = useState(initialPrimaryOverride || '#b92518');
     const [secondaryHex, setSecondaryHex] = useState(initialSecondaryOverride || '');
     const [applyGlobally, setApplyGlobally] = useState(false);
+    const [syncPopoverTheme, setSyncPopoverTheme] = useState(false);
 
     useEffect(() => {
         try {
@@ -29,12 +30,18 @@ export function ThemeSettingsModal({ onClose }: ThemeSettingsModalProps) {
                 setApplyGlobally(true);
                 setEnableCustomColors(true);
             }
+            const syncPopovers = localStorage.getItem('pkr_sync_popover_theme') === 'true';
+            setSyncPopoverTheme(syncPopovers);
         } catch (e) {
             console.warn('[ThemeSettingsModal] Could not read preferences from storage.', e);
         }
     }, []);
 
     const handleSave = () => {
+        try {
+            localStorage.setItem('pkr_sync_popover_theme', String(syncPopoverTheme));
+        } catch (e) {}
+
         if (enableCustomColors) {
             if (applyGlobally) {
                 try {
@@ -68,6 +75,7 @@ export function ThemeSettingsModal({ onClose }: ThemeSettingsModalProps) {
                 window.dispatchEvent(new Event('theme-override-updated'));
             } catch (e) {}
         }
+        window.dispatchEvent(new Event('theme-override-updated'));
         onClose();
     };
 
@@ -79,6 +87,8 @@ export function ThemeSettingsModal({ onClose }: ThemeSettingsModalProps) {
         try {
             localStorage.removeItem('pkr_global_theme_primary');
             localStorage.removeItem('pkr_global_theme_secondary');
+            localStorage.removeItem('pkr_sync_popover_theme');
+            setSyncPopoverTheme(false);
             window.dispatchEvent(new Event('theme-override-updated'));
         } catch (e) {}
         onClose();
@@ -167,6 +177,22 @@ export function ThemeSettingsModal({ onClose }: ThemeSettingsModalProps) {
                         </div>
                     </label>
                 </div>
+
+                <label
+                    className="theme-modal__checkbox-container theme-modal__checkbox-container--alt"
+                    style={{ marginTop: '5px', marginBottom: '15px' }}
+                >
+                    <input
+                        type="checkbox"
+                        className="theme-modal__checkbox"
+                        checked={syncPopoverTheme}
+                        onChange={(e) => setSyncPopoverTheme(e.target.checked)}
+                    />
+                    <div className="text-subtext" style={{ color: 'var(--text-main)' }}>
+                        <span className="theme-modal__checkbox-title text-label">Match Popovers to Sheet Theme</span>
+                        Allows the Roll Log and Initiative Tracker popovers on Owlbear Rodeo to match the theme color of the active character sheet.
+                    </div>
+                </label>
 
                 <div className="theme-modal__actions">
                     <button

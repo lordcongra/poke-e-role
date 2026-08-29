@@ -20,6 +20,7 @@ import { InitiativeTracker } from './components/initiative/InitiativeTracker';
 import { RollLogWidget } from './components/standalone/RollLogWidget';
 import { isStandaloneMode } from './utils/storageAdapter';
 import { getContrastColor } from './utils/colorUtils';
+import OBR from '@owlbear-rodeo/sdk';
 import { Lock, ArrowLeft } from 'lucide-react';
 import './App.css';
 import './style.css';
@@ -140,6 +141,8 @@ function App() {
         };
     }, []);
 
+    const [themeUpdateCount, setThemeUpdateCount] = useState(0);
+
     useEffect(() => {
         const checkGlobalTheme = () => {
             try {
@@ -150,6 +153,7 @@ function App() {
             } catch (e) {
                 console.warn('[App] Failed to access local storage for global theme.', e);
             }
+            setThemeUpdateCount((prev) => prev + 1);
         };
 
         checkGlobalTheme();
@@ -183,10 +187,13 @@ function App() {
         }
 
         // Apply final resolved theme to DOM
+        let accessiblePrimary = '';
+        let accessibleSecondary = '';
+
         if (finalPrimary) {
             const isForceDarkened = contrastForceAll || (type1 ? contrastSpecificTypes.includes(type1) : false);
 
-            const accessiblePrimary = isHighContrast
+            accessiblePrimary = isHighContrast
                 ? getContrastColor(finalPrimary, 0.65, contrastPrimary, isForceDarkened)
                 : finalPrimary;
 
@@ -200,7 +207,7 @@ function App() {
         if (finalSecondary) {
             const isForceDarkened = contrastForceAll || (type1 ? contrastSpecificTypes.includes(type1) : false);
 
-            const accessibleSecondary = isHighContrast
+            accessibleSecondary = isHighContrast
                 ? getContrastColor(finalSecondary, 0.65, contrastSecondary, isForceDarkened)
                 : finalSecondary;
 
@@ -210,12 +217,32 @@ function App() {
             document.body.style.removeProperty('--dynamic-secondary-color');
             document.documentElement.style.removeProperty('--dynamic-secondary-color');
         }
+
+        // Broadcast / persist popover theme colors if sync is enabled
+        try {
+            const isSyncPopovers = localStorage.getItem('pkr_sync_popover_theme') === 'true';
+            const themePayload = {
+                enabled: isSyncPopovers,
+                primary: isSyncPopovers ? (accessiblePrimary || finalPrimary) : '',
+                secondary: isSyncPopovers ? (accessibleSecondary || finalSecondary) : ''
+            };
+            localStorage.setItem('pkr_active_theme_colors', JSON.stringify(themePayload));
+
+            if (OBR.isAvailable) {
+                OBR.broadcast.sendMessage('pokerole-pmd-extension/popover-theme-sync', themePayload, {
+                    destination: 'LOCAL'
+                });
+            }
+        } catch (err) {
+            console.warn('[App] Failed to sync popover theme colors', err);
+        }
     }, [
         type1,
         roomCustomTypes,
         themePrimaryOverride,
         themeSecondaryOverride,
         globalOverride,
+        themeUpdateCount,
         isHighContrast,
         contrastPrimary,
         contrastSecondary,

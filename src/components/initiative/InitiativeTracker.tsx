@@ -45,19 +45,39 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
         }
     }, [showAddMenu, fetchAvailableCharacters]);
 
-    // Handle auto-scrolling to the active combatant
+    // Handle auto-scrolling to the active combatant within the list container only
     useEffect(() => {
         if (activeTurnId && isReady) {
             // Using requestAnimationFrame instead of a timer so we don't accidentally
             // "debounce" and drop intermediate visual scrolls when you click rapidly!
             requestAnimationFrame(() => {
-                const activeCards = document.querySelectorAll(`#combatant-${activeTurnId}`);
+                const activeCards = document.querySelectorAll<HTMLElement>(`#combatant-${activeTurnId}`);
                 activeCards.forEach((card) => {
-                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    const listEl = card.closest<HTMLElement>('.init-tracker__list');
+                    if (listEl) {
+                        if (layout === 'horizontal') {
+                            const cardRect = card.getBoundingClientRect();
+                            const listRect = listEl.getBoundingClientRect();
+                            const relativeLeft = cardRect.left - listRect.left + listEl.scrollLeft;
+                            const targetLeft = relativeLeft - listEl.clientWidth / 2 + card.offsetWidth / 2;
+                            listEl.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
+                        } else {
+                            const cardRect = card.getBoundingClientRect();
+                            const listRect = listEl.getBoundingClientRect();
+                            const relativeTop = cardRect.top - listRect.top + listEl.scrollTop;
+                            const targetTop = relativeTop - listEl.clientHeight / 2 + card.offsetHeight / 2;
+                            listEl.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+                        }
+                    }
                 });
+
+                // Guarantee the popover iframe window never scrolls out of position
+                if (window.scrollY !== 0 || window.scrollX !== 0) {
+                    window.scrollTo(0, 0);
+                }
             });
         }
-    }, [activeTurnId, isReady]);
+    }, [activeTurnId, isReady, layout]);
 
     // Bind our custom Resize hook to the DOM
     const ghostRef = useOwlbearPopoverResize({

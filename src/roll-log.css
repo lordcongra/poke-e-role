@@ -1,9 +1,37 @@
+html,
+body,
+#root {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: transparent !important;
+}
+
+.roll-log-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 4px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
 .roll-log__container {
     padding: 10px;
     background: var(--panel-bg);
     border: 2px solid var(--primary);
     border-radius: 8px;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--dark) 40%, transparent);
     height: 100%;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -36,11 +64,23 @@
 
 .roll-log__list {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
     gap: 10px;
     padding-right: 4px;
+    scrollbar-width: thin;
+}
+
+.roll-log__list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.roll-log__list::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 4px;
 }
 
 .roll-log__entry {
@@ -49,6 +89,7 @@
     border-radius: 6px;
     border: 1px solid var(--border);
     position: relative;
+    flex-shrink: 0;
 }
 
 .roll-log__entry-header {

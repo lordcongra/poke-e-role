@@ -50,6 +50,32 @@ function RollLog() {
         }
     };
 
+    const applyDynamicColors = (data?: { enabled: boolean; primary?: string; secondary?: string }) => {
+        if (data?.enabled && data?.primary) {
+            document.body.style.setProperty('--dynamic-type-color', data.primary);
+            document.documentElement.style.setProperty('--dynamic-type-color', data.primary);
+            if (data.secondary) {
+                document.body.style.setProperty('--dynamic-secondary-color', data.secondary);
+                document.documentElement.style.setProperty('--dynamic-secondary-color', data.secondary);
+            } else {
+                document.body.style.removeProperty('--dynamic-secondary-color');
+                document.documentElement.style.removeProperty('--dynamic-secondary-color');
+            }
+        } else {
+            document.body.style.removeProperty('--dynamic-type-color');
+            document.documentElement.style.removeProperty('--dynamic-type-color');
+            document.body.style.removeProperty('--dynamic-secondary-color');
+            document.documentElement.style.removeProperty('--dynamic-secondary-color');
+        }
+    };
+
+    useEffect(() => {
+        try {
+            const raw = localStorage.getItem('pkr_active_theme_colors');
+            if (raw) applyDynamicColors(JSON.parse(raw));
+        } catch (e) {}
+    }, []);
+
     useEffect(() => {
         if (theme === 'light') {
             document.body.classList.remove('dark-mode');
@@ -69,6 +95,11 @@ function RollLog() {
             if (e.key === 'pkr_roll_log') {
                 loadRolls();
             }
+            if (e.key === 'pkr_active_theme_colors') {
+                try {
+                    applyDynamicColors(JSON.parse(e.newValue || '{}'));
+                } catch (err) {}
+            }
         };
         window.addEventListener('storage', handleStorage);
 
@@ -85,6 +116,12 @@ function RollLog() {
                 unsubs.push(
                     OBR.broadcast.onMessage('pokerole-pmd-extension/theme-sync', (event) => {
                         setTheme(event.data as string);
+                    })
+                );
+
+                unsubs.push(
+                    OBR.broadcast.onMessage('pokerole-pmd-extension/popover-theme-sync', (event) => {
+                        applyDynamicColors(event.data as { enabled: boolean; primary?: string; secondary?: string });
                     })
                 );
 
@@ -119,44 +156,46 @@ function RollLog() {
     if (rolls.length === 0) return null;
 
     return (
-        <div className="roll-log__container">
-            <div className="roll-log__header">
-                <h3 className="roll-log__title text-title-primary">
-                    <Dices size={20} /> Roll Log
-                </h3>
-                <button
-                    type="button"
-                    onClick={clearAll}
-                    className="action-button action-button--red roll-log__clear-btn text-theme-header"
-                >
-                    <Trash2 size={14} /> Clear All
-                </button>
-            </div>
-            <div className="roll-log__list">
-                {rolls.map((r) => (
-                    <div key={r.id} className="roll-log__entry">
-                        <div className="roll-log__entry-header">
-                            <img src={resolvedIcons[r.id] || r.icon} alt="Token" className="roll-log__entry-icon" />
-                            <strong className="text-title-primary" style={{ fontSize: '0.9rem' }}>
-                                {r.player}
-                            </strong>
-                            <button
-                                type="button"
-                                onClick={() => dismiss(r.id)}
-                                className="roll-log__entry-dismiss text-subtext"
-                                title="Dismiss"
-                            >
-                                <X size={16} />
-                            </button>
+        <div className="roll-log-wrapper">
+            <div className="roll-log__container">
+                <div className="roll-log__header">
+                    <h3 className="roll-log__title text-title-primary">
+                        <Dices size={20} /> Roll Log
+                    </h3>
+                    <button
+                        type="button"
+                        onClick={clearAll}
+                        className="action-button action-button--red roll-log__clear-btn text-theme-header"
+                    >
+                        <Trash2 size={14} /> Clear All
+                    </button>
+                </div>
+                <div className="roll-log__list">
+                    {rolls.map((r) => (
+                        <div key={r.id} className="roll-log__entry">
+                            <div className="roll-log__entry-header">
+                                <img src={resolvedIcons[r.id] || r.icon} alt="Token" className="roll-log__entry-icon" />
+                                <strong className="text-title-primary" style={{ fontSize: '0.9rem' }}>
+                                    {r.player}
+                                </strong>
+                                <button
+                                    type="button"
+                                    onClick={() => dismiss(r.id)}
+                                    className="roll-log__entry-dismiss text-subtext"
+                                    title="Dismiss"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+                            <div className="roll-log__entry-label text-label" style={{ color: 'var(--primary)' }}>
+                                {r.label}
+                            </div>
+                            <div className="roll-log__entry-result text-subtext" style={{ color: 'var(--text-main)' }}>
+                                {r.result}
+                            </div>
                         </div>
-                        <div className="roll-log__entry-label text-label" style={{ color: 'var(--primary)' }}>
-                            {r.label}
-                        </div>
-                        <div className="roll-log__entry-result text-subtext" style={{ color: 'var(--text-main)' }}>
-                            {r.result}
-                        </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
         </div>
     );

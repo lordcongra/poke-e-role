@@ -165,6 +165,7 @@ export function GlobalToolbar() {
 
         if (OBR.isAvailable) {
             OBR.broadcast.sendMessage('pokerole-pmd-extension/theme-sync', themeValue, { destination: 'LOCAL' });
+            OBR.broadcast.sendMessage('pkr-theme-update', themeValue, { destination: 'LOCAL' });
         }
     };
 

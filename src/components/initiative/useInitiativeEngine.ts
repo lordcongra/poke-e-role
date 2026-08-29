@@ -133,7 +133,49 @@ export function useInitiativeEngine() {
         }
     }, [storeIdentity, isStandaloneMode]);
 
-    // 3. Theme Injection
+    const applyDynamicColors = useCallback(
+        (data?: { enabled: boolean; primary?: string; secondary?: string }) => {
+            if (isStandaloneMode) return;
+            if (data?.enabled && data?.primary) {
+                document.body.style.setProperty('--dynamic-type-color', data.primary);
+                document.documentElement.style.setProperty('--dynamic-type-color', data.primary);
+                if (data.secondary) {
+                    document.body.style.setProperty('--dynamic-secondary-color', data.secondary);
+                    document.documentElement.style.setProperty('--dynamic-secondary-color', data.secondary);
+                } else {
+                    document.body.style.removeProperty('--dynamic-secondary-color');
+                    document.documentElement.style.removeProperty('--dynamic-secondary-color');
+                }
+            } else {
+                document.body.style.removeProperty('--dynamic-type-color');
+                document.documentElement.style.removeProperty('--dynamic-type-color');
+                document.body.style.removeProperty('--dynamic-secondary-color');
+                document.documentElement.style.removeProperty('--dynamic-secondary-color');
+            }
+        },
+        [isStandaloneMode]
+    );
+
+    // 3. Theme Injection & Dynamic Popover Color Sync
+    useEffect(() => {
+        if (isStandaloneMode) return;
+
+        try {
+            const raw = localStorage.getItem('pkr_active_theme_colors');
+            if (raw) applyDynamicColors(JSON.parse(raw));
+        } catch (e) {}
+
+        const handleStorage = (e: StorageEvent) => {
+            if (e.key === 'pkr_active_theme_colors') {
+                try {
+                    applyDynamicColors(JSON.parse(e.newValue || '{}'));
+                } catch (err) {}
+            }
+        };
+        window.addEventListener('storage', handleStorage);
+        return () => window.removeEventListener('storage', handleStorage);
+    }, [isStandaloneMode, applyDynamicColors]);
+
     useEffect(() => {
         if (isStandaloneMode) return;
 
@@ -335,6 +377,10 @@ export function useInitiativeEngine() {
                 setTheme(event.data as string);
             });
 
+            const unsubPopoverTheme = OBR.broadcast.onMessage('pokerole-pmd-extension/popover-theme-sync', (event) => {
+                applyDynamicColors(event.data as { enabled: boolean; primary?: string; secondary?: string });
+            });
+
             return () => {
                 unsubItems();
                 unsubMeta();
@@ -342,13 +388,14 @@ export function useInitiativeEngine() {
                 unsubPingCheck();
                 unsubSettings();
                 unsubTheme();
+                unsubPopoverTheme();
             };
         });
 
         return () => {
             isMounted = false;
         };
-    }, [isStandaloneMode, fetchAvailableCharacters, globalState]);
+    }, [isStandaloneMode, fetchAvailableCharacters, globalState, applyDynamicColors]);
 
     // --- Actions ---
 
