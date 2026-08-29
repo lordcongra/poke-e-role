@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { syncUpstream } from './syncUpstream.js';
+import { extractOverrides } from './extractOverrides.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,6 +32,23 @@ const datasetIndex = {
     },
     items: {}
 };
+
+// Helper: Safely write JSON only if content has changed (avoids unnecessary disk I/O)
+function safeWriteJson(destPath, data) {
+    const content = JSON.stringify(data, null, 4);
+    if (fs.existsSync(destPath)) {
+        try {
+            const existing = fs.readFileSync(destPath, 'utf-8');
+            if (existing === content) {
+                return false;
+            }
+        } catch {
+            // Read failure, proceed to overwrite
+        }
+    }
+    fs.writeFileSync(destPath, content);
+    return true;
+}
 
 // Helper: Recursively get all JSON files in a directory
 function getAllFiles(dirPath, arrayOfFiles = []) {
@@ -149,18 +167,29 @@ function getItemWeight(item, category) {
 async function build() {
     console.log('🚀 Building Pokerole Dataset (Base Upstream + Overrides)...');
 
-    // Ensure upstream data is available
+    const args = process.argv.slice(2);
+    const isClean = args.includes('--clean') || args.includes('--force');
+    const skipExtract = args.includes('--no-extract');
+
+    // 1. Ensure upstream data is available
     if (!fs.existsSync(UPSTREAM_DIR)) {
         console.log('📦 Upstream directory missing, syncing upstream now...');
         await syncUpstream();
     }
 
-    // Clean and ensure target output directories exist
+    // 2. Automatically extract and preserve any manual changes in public/dataset/ before rebuilding
+    if (!skipExtract && fs.existsSync(DATASET_DIR)) {
+        extractOverrides();
+    }
+
+    // 3. Ensure target output directories exist (or clean if --clean is explicitly passed)
     [MOVES_DIR, ITEMS_DIR, POKEDEX_DIR, ABILITIES_DIR, NATURES_DIR].forEach((dir) => {
-        if (fs.existsSync(dir)) {
+        if (isClean && fs.existsSync(dir)) {
             fs.rmSync(dir, { recursive: true, force: true });
         }
-        fs.mkdirSync(dir, { recursive: true });
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
     });
 
     // --- 1. PROCESS POKEDEX ---
@@ -169,7 +198,7 @@ async function build() {
         try {
             const cleanName = (data.Name || data.name || fileName.replace('.json', '')).toLowerCase();
             const destPath = path.join(POKEDEX_DIR, fileName);
-            fs.writeFileSync(destPath, JSON.stringify(data, null, 4));
+            safeWriteJson(destPath, data);
 
             datasetIndex.pokemon[cleanName] = {
                 name: data.Name || data.name || fileName.replace('.json', ''),
@@ -187,7 +216,7 @@ async function build() {
         try {
             const cleanName = (data.Name || data.name || fileName.replace('.json', '')).toLowerCase();
             const destPath = path.join(ABILITIES_DIR, fileName);
-            fs.writeFileSync(destPath, JSON.stringify(data, null, 4));
+            safeWriteJson(destPath, data);
 
             datasetIndex.abilities[cleanName] = {
                 name: data.Name || data.name || fileName.replace('.json', ''),
@@ -207,7 +236,7 @@ async function build() {
         try {
             const cleanName = (data.Name || data.name || fileName.replace('.json', '')).toLowerCase();
             const destPath = path.join(NATURES_DIR, fileName);
-            fs.writeFileSync(destPath, JSON.stringify(data, null, 4));
+            safeWriteJson(destPath, data);
 
             datasetIndex.natures[cleanName] = {
                 name: data.Name || data.name || fileName.replace('.json', ''),
@@ -277,7 +306,7 @@ async function build() {
             }
 
             const destPath = path.join(targetDir, fileName);
-            fs.writeFileSync(destPath, JSON.stringify(move, null, 4));
+            safeWriteJson(destPath, move);
 
             // ADD TO INDEX
             if (indexRef) {
@@ -319,7 +348,7 @@ async function build() {
             }
 
             const destPath = path.join(targetDir, fileName);
-            fs.writeFileSync(destPath, JSON.stringify(item, null, 4));
+            safeWriteJson(destPath, item);
 
             datasetIndex.items[pocket][category].push({
                 name: item.Name || item.name || fileName.replace('.json', ''),
@@ -341,7 +370,7 @@ async function build() {
     console.log(`✅ Items built (${items.entries.length} items, ${items.overrideCount} overrides applied)`);
 
     // --- 6. WRITE INDEX FILE ---
-    fs.writeFileSync(path.join(DATASET_DIR, 'index.json'), JSON.stringify(datasetIndex, null, 2));
+    safeWriteJson(path.join(DATASET_DIR, 'index.json'), datasetIndex);
     console.log('🎉 Dataset build complete! Output written to public/dataset/');
 }
 

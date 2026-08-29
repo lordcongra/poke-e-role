@@ -44,6 +44,11 @@ function isDeepEqual(obj1, obj2) {
 export function extractOverrides() {
     console.log('🔍 Scanning local dataset for custom errata & overrides...');
 
+    if (!fs.existsSync(UPSTREAM_DIR)) {
+        console.warn('⚠️ Upstream directory missing. Cannot extract overrides without base upstream data.');
+        return [];
+    }
+
     if (!fs.existsSync(OVERRIDES_DIR)) {
         fs.mkdirSync(OVERRIDES_DIR, { recursive: true });
     }
@@ -68,7 +73,8 @@ export function extractOverrides() {
         }
     ];
 
-    let extractedCount = 0;
+    let totalOverrideCount = 0;
+    let newlyExtractedCount = 0;
     const extractedList = [];
 
     for (const cat of categories) {
@@ -81,13 +87,14 @@ export function extractOverrides() {
 
             let isCustom = false;
             let reason = '';
+            let localData = null;
 
             if (!fs.existsSync(upstreamFilePath)) {
                 isCustom = true;
                 reason = 'New custom file (not in upstream)';
             } else {
                 try {
-                    const localData = JSON.parse(fs.readFileSync(localFilePath, 'utf-8'));
+                    localData = JSON.parse(fs.readFileSync(localFilePath, 'utf-8'));
                     const upstreamData = JSON.parse(fs.readFileSync(upstreamFilePath, 'utf-8'));
 
                     if (!isDeepEqual(localData, upstreamData)) {
@@ -104,15 +111,40 @@ export function extractOverrides() {
                     fs.mkdirSync(catOverrideDir, { recursive: true });
                 }
                 const destPath = path.join(catOverrideDir, fileName);
-                fs.copyFileSync(localFilePath, destPath);
-                extractedCount++;
-                extractedList.push({ category: cat.name, file: fileName, reason });
-                console.log(`  ✨ Extracted override [${cat.name}]: ${fileName} (${reason})`);
+                let isNewOrChanged = true;
+
+                if (fs.existsSync(destPath)) {
+                    try {
+                        if (!localData) {
+                            localData = JSON.parse(fs.readFileSync(localFilePath, 'utf-8'));
+                        }
+                        const existingOverrideData = JSON.parse(fs.readFileSync(destPath, 'utf-8'));
+                        if (isDeepEqual(localData, existingOverrideData)) {
+                            isNewOrChanged = false;
+                        }
+                    } catch {
+                        isNewOrChanged = true;
+                    }
+                }
+
+                if (isNewOrChanged) {
+                    fs.copyFileSync(localFilePath, destPath);
+                    newlyExtractedCount++;
+                    console.log(`  ✨ Extracted new/updated override [${cat.name}]: ${fileName} (${reason})`);
+                }
+
+                totalOverrideCount++;
+                extractedList.push({ category: cat.name, file: fileName, reason, updated: isNewOrChanged });
             }
         }
     }
 
-    console.log(`\n🎉 Extraction Complete! Found and preserved ${extractedCount} override(s) in "data/overrides/".`);
+    if (newlyExtractedCount > 0) {
+        console.log(`\n🎉 Extraction Complete! Preserved ${newlyExtractedCount} new/updated override(s) (Total active overrides: ${totalOverrideCount}).`);
+    } else {
+        console.log(`\n✅ Extraction Complete! All ${totalOverrideCount} existing override(s) are up-to-date.`);
+    }
+
     return extractedList;
 }
 
