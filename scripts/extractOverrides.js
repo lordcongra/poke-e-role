@@ -140,7 +140,9 @@ export function extractOverrides() {
     }
 
     if (newlyExtractedCount > 0) {
-        console.log(`\n🎉 Extraction Complete! Preserved ${newlyExtractedCount} new/updated override(s) (Total active overrides: ${totalOverrideCount}).`);
+        console.log(
+            `\n🎉 Extraction Complete! Preserved ${newlyExtractedCount} new/updated override(s) (Total active overrides: ${totalOverrideCount}).`
+        );
     } else {
         console.log(`\n✅ Extraction Complete! All ${totalOverrideCount} existing override(s) are up-to-date.`);
     }

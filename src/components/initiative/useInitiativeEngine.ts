@@ -72,10 +72,7 @@ export function useInitiativeEngine() {
             let changed = false;
             const next = prev.map((c) => {
                 if (c.id === activeTokenId) {
-                    const newBase = calculateBaseInitFromCharacterData(
-                        globalState,
-                        globalState
-                    );
+                    const newBase = calculateBaseInitFromCharacterData(globalState, globalState);
                     const newImage = tokenImageUrl || '';
 
                     if (newBase !== c.baseInit || newImage !== c.image) {

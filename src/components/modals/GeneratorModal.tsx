@@ -140,9 +140,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                     }
                                 >
                                     <AlertTriangle size={15} />{' '}
-                                    {isStandaloneMode
-                                        ? 'Overwrite Current Sheet'
-                                        : 'Overwrite Selected Token'}
+                                    {isStandaloneMode ? 'Overwrite Current Sheet' : 'Overwrite Selected Token'}
                                 </button>
                             )}
                         </div>

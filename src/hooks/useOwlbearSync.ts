@@ -144,13 +144,16 @@ export function useOwlbearSync() {
 
                 const loadTokenAndLearnset = async (targetTokenId: string) => {
                     try {
-                        const store = useCharacterStore.getState();
-                        setActiveTokenId(targetTokenId);
-                        store.setTokenData(targetTokenId, role);
-
                         const items = await OBR.scene.items.getItems([targetTokenId]);
                         if (items.length > 0) {
                             const tokenItem = items[0];
+                            if (tokenItem.layer !== 'CHARACTER' && !tokenItem.metadata[METADATA_ID]) {
+                                return;
+                            }
+
+                            const store = useCharacterStore.getState();
+                            setActiveTokenId(targetTokenId);
+                            store.setTokenData(targetTokenId, role);
                             const meta = tokenItem.metadata[METADATA_ID] as Record<string, unknown> | undefined;
 
                             const imgItem = tokenItem as Image;
@@ -246,8 +249,10 @@ export function useOwlbearSync() {
                             console.error('[SyncEngine] Engine recovered from token click crash:', e);
                         }
                     } else {
-                        setActiveTokenId('');
-                        useCharacterStore.getState().setTokenData('', currentRole);
+                        const store = useCharacterStore.getState();
+                        if (store.role !== currentRole) {
+                            store.setTokenData(store.tokenId || '', currentRole);
+                        }
                     }
                 });
                 unsubs.push(unsubPlayer);
