@@ -19,7 +19,8 @@ import {
     Heart,
     Info,
     ChevronsUpDown,
-    Link2
+    Link2,
+    Sparkles
 } from 'lucide-react';
 import {
     GM_CHEAT_ITEMS,
@@ -34,11 +35,26 @@ import {
     type ENVIRONMENTAL_HAZARDS_DATA,
     type TRAINER_ACTIONS_TABLE,
     type COVER_TABLE,
-    type HEALING_TABLE
+    type HEALING_TABLE,
+    type PMD_CHARACTER_RULES,
+    type PmdBagCapacity,
+    type PmdItemWeight,
+    type PmdFoodItem,
+    type PmdWeaponModel,
+    type PmdSwitcherModel,
+    type RangerDispositionRank,
+    type RangerStyler,
+    type RangerStyle,
+    type RangerManeuver,
+    type RangerFieldAssist,
+    type RangerPartnerBondLevel,
+    type RangerDangerousBuff
 } from '../../data/gmScreenData';
 import { GmCombatCards } from './gmCards/GmCombatCards';
 import { GmStatusCards } from './gmCards/GmStatusCards';
 import { GmReferenceCards } from './gmCards/GmReferenceCards';
+import { GmHomebrewCards } from './gmCards/GmHomebrewCards';
+import { GmRangersCards } from './gmCards/GmRangersCards';
 import { GmScreenCatchCalculator } from './GmScreenCatchCalculator';
 import { GmScreenTypeMatrix } from './GmScreenTypeMatrix';
 import { broadcastInfo } from '../../utils/diceRoller';
@@ -49,7 +65,7 @@ interface GmScreenModalProps {
     initialTab?: string;
 }
 
-type TabCategory = 'all' | 'rules' | 'status' | 'weather' | 'catching' | 'training' | 'balance' | 'types';
+type TabCategory = 'all' | 'rules' | 'status' | 'weather' | 'catching' | 'training' | 'balance' | 'types' | 'homebrew';
 
 export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
     const [searchQuery, setSearchQuery] = useState<string>('');
@@ -74,7 +90,8 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                     'catching',
                     'training',
                     'balance',
-                    'types'
+                    'types',
+                    'homebrew'
                 ];
                 if (validTabs.includes(sectionParam as TabCategory)) {
                     setActiveTab(sectionParam as TabCategory);
@@ -97,17 +114,6 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
             console.warn('[GmScreenModal] Could not parse URL deep link:', e);
         }
     }, []);
-
-    // Auto-expand cards when search query is typed
-    useEffect(() => {
-        if (searchQuery.trim()) {
-            const newExpanded: Record<string, boolean> = {};
-            GM_CHEAT_ITEMS.forEach((item: GmCheatItem) => {
-                newExpanded[item.id] = true;
-            });
-            setExpandedCards(newExpanded);
-        }
-    }, [searchQuery]);
 
     const toggleCard = (id: string) => {
         setExpandedCards((prev) => ({
@@ -238,21 +244,180 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
         broadcastInfo(`Reaction Rules & Timing`, text);
     };
 
+    const handleBroadcastCharacterRule = (r: (typeof PMD_CHARACTER_RULES)[0]) => {
+        const text = `PMD Rule: ${r.title} [${r.badge}]\n• Summary: ${r.summary}\n• Detail: ${r.detail}\n• App Tip: ${r.appTip}`;
+        broadcastInfo(`PMD Rule: ${r.title}`, text);
+    };
+
+    const handleBroadcastTreasureBagCapacity = (c: PmdBagCapacity) => {
+        const text = `Treasure Bag Capacity (${c.rank} Rank): ${c.capacity} Weight\n• Notes: ${c.notes}`;
+        broadcastInfo(`Treasure Bag: ${c.rank} Rank`, text);
+    };
+
+    const handleBroadcastItemWeight = (w: PmdItemWeight) => {
+        const text = `Item Weight: ${w.category} (${w.weight} Wt | ${w.stackRate})\n• Examples: ${w.examples}\n• Usage: ${w.description}`;
+        broadcastInfo(`Item Weight: ${w.category}`, text);
+    };
+
+    const handleBroadcastFoodItem = (f: PmdFoodItem) => {
+        const text = `PMD Food: ${f.name} [${f.category} | ${f.rarity}]\n• Will Restored: ${f.willRestore}\n• Effects: ${f.effect}`;
+        broadcastInfo(`PMD Food: ${f.name}`, text);
+    };
+
+    const handleBroadcastWeaponModel = (w: PmdWeaponModel) => {
+        const text = `PMD Weapon Model: ${w.name} (${w.creator})\n• Type: ${w.type} (${w.weight} Wt)\n• Rules: ${w.description}\n• Example: ${w.example}`;
+        broadcastInfo(`PMD Weapon: ${w.name}`, text);
+    };
+
+    const handleBroadcastSwitcherModel = (s: PmdSwitcherModel) => {
+        const text = `PMD Switcher Model: ${s.name} (${s.creator})\n• Style: ${s.style}\n• Rules: ${s.description}\n• Example: ${s.example}`;
+        broadcastInfo(`PMD Switcher: ${s.name}`, text);
+    };
+
+    const handleBroadcastDispositionRank = (r: RangerDispositionRank) => {
+        const text = `Ranger Rank: ${r.rank}\n• Disposition Bonus: +${r.bonus} (DM = Will + ${r.bonus})\n• Maneuver Slots: ${r.maneuversCount}\n• Max Wild Assists: ${r.assistsCount}`;
+        broadcastInfo(`Ranger Rank: ${r.rank}`, text);
+    };
+
+    const handleBroadcastRangerStyle = (s: RangerStyle) => {
+        const text = `Ranger Style: ${s.name} [Associated Stat: ${s.stat}]\n• Description: ${s.description}`;
+        broadcastInfo(`Ranger Style: ${s.name}`, text);
+    };
+
+    const handleBroadcastStyler = (st: RangerStyler) => {
+        const text = `Capture Styler: ${st.name} [Charge: ${st.charge} HP | Cost: ${st.cost === '—' ? 'Issued' : `${st.cost} P$`}]\n• Effect: ${st.effect}\n• Note: ${st.flavor}`;
+        broadcastInfo(`Capture Styler: ${st.name}`, text);
+    };
+
+    const handleBroadcastDangerousBuff = (b: RangerDangerousBuff) => {
+        const text = `Dangerous Encounter Buff: ${b.name}\n• Effect: ${b.effect}`;
+        broadcastInfo(`Boss Buff: ${b.name}`, text);
+    };
+
+    const handleBroadcastManeuver = (m: RangerManeuver) => {
+        const text = `Ranger Maneuver: ${m.name} [Category: ${m.category}]\n• Accuracy: ${m.accuracy} | Power: ${m.power}\n• Description: ${m.description}${m.flavor ? `\n• Flavor: ${m.flavor}` : ''}`;
+        broadcastInfo(`Maneuver: ${m.name}`, text);
+    };
+
+    const handleBroadcastFieldAssist = (a: RangerFieldAssist) => {
+        const text = `Field Assist: ${a.name}\n• Effect: ${a.effect}`;
+        broadcastInfo(`Field Assist: ${a.name}`, text);
+    };
+
+    const handleBroadcastPartnerBond = (b: RangerPartnerBondLevel) => {
+        const text = `Partner Bond Level ${b.level} [Requirement: ${b.requirement}]\n• Ability (1x per Scene): ${b.ability}`;
+        broadcastInfo(`Partner Bond Lv ${b.level}`, text);
+    };
+
     const filteredItems = useMemo(() => {
-        const query = searchQuery.toLowerCase().trim();
-        return GM_CHEAT_ITEMS.filter((item) => {
-            const matchesTab = activeTab === 'all' || item.category === activeTab;
-            if (!matchesTab) return false;
-            if (!query) return true;
+        const rawQuery = searchQuery.toLowerCase().trim();
+        const tabFiltered = GM_CHEAT_ITEMS.filter((item) => activeTab === 'all' || item.category === activeTab);
 
-            const inTitle = item.title.toLowerCase().includes(query);
-            const inSummary = item.summary.toLowerCase().includes(query);
-            const inBadge = item.badge?.toLowerCase().includes(query);
-            const inKeywords = item.keywords.some((k) => k.toLowerCase().includes(query));
-            const inDiscord = item.discordMarkdown.toLowerCase().includes(query);
+        if (!rawQuery) {
+            return tabFiltered;
+        }
 
-            return inTitle || inSummary || inBadge || inKeywords || inDiscord;
+        const queryTerms = rawQuery.split(/\s+/).filter(Boolean);
+
+        const scoredItems = tabFiltered
+            .map((item, originalIndex) => {
+                const titleLower = item.title.toLowerCase();
+                const summaryLower = item.summary.toLowerCase();
+                const badgeLower = item.badge?.toLowerCase() || '';
+                const categoryLower = item.category.toLowerCase();
+                const categoryLabelLower = item.categoryLabel.toLowerCase();
+                const keywordsLower = item.keywords.map((k) => k.toLowerCase());
+                const discordLower = item.discordMarkdown.toLowerCase();
+
+                let score = 0;
+
+                // 1. Title matches (highest priority)
+                if (titleLower === rawQuery) {
+                    score += 2000;
+                } else if (titleLower.startsWith(rawQuery)) {
+                    score += 1000;
+                } else if (new RegExp(`\\b${rawQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(titleLower)) {
+                    score += 700;
+                } else if (titleLower.includes(rawQuery)) {
+                    score += 400;
+                }
+
+                // 2. Badge matches
+                if (badgeLower === rawQuery) {
+                    score += 500;
+                } else if (badgeLower.includes(rawQuery)) {
+                    score += 250;
+                }
+
+                // 3. Category matches
+                if (categoryLower === rawQuery || categoryLabelLower === rawQuery) {
+                    score += 400;
+                } else if (categoryLower.includes(rawQuery) || categoryLabelLower.includes(rawQuery)) {
+                    score += 200;
+                }
+
+                // 4. Keyword matches
+                if (keywordsLower.includes(rawQuery)) {
+                    score += 350;
+                } else if (keywordsLower.some((k) => k.includes(rawQuery))) {
+                    score += 150;
+                }
+
+                // 5. Summary matches
+                if (summaryLower.includes(rawQuery)) {
+                    score += 80;
+                }
+
+                // 6. Discord text matches
+                if (discordLower.includes(rawQuery)) {
+                    score += 20;
+                }
+
+                // 7. Multi-word individual term scoring
+                if (queryTerms.length > 1) {
+                    let termHits = 0;
+                    for (const term of queryTerms) {
+                        let termHit = false;
+                        if (titleLower.includes(term)) {
+                            score += 150;
+                            termHit = true;
+                        }
+                        if (badgeLower.includes(term) || categoryLower.includes(term)) {
+                            score += 80;
+                            termHit = true;
+                        }
+                        if (keywordsLower.some((k) => k.includes(term))) {
+                            score += 60;
+                            termHit = true;
+                        }
+                        if (summaryLower.includes(term)) {
+                            score += 30;
+                            termHit = true;
+                        }
+                        if (discordLower.includes(term)) {
+                            score += 10;
+                            termHit = true;
+                        }
+                        if (termHit) termHits++;
+                    }
+                    if (termHits === queryTerms.length) {
+                        score += 300;
+                    }
+                }
+
+                return { item, score, originalIndex };
+            })
+            .filter(({ score }) => score > 0);
+
+        // Sort by score descending; preserve original array index on ties
+        scoredItems.sort((a, b) => {
+            if (b.score !== a.score) {
+                return b.score - a.score;
+            }
+            return a.originalIndex - b.originalIndex;
         });
+
+        return scoredItems.map(({ item }) => item);
     }, [searchQuery, activeTab]);
 
     const tabCounts = useMemo(() => {
@@ -264,7 +429,8 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
             catching: 0,
             training: 0,
             balance: 0,
-            types: 0
+            types: 0,
+            homebrew: 0
         };
         GM_CHEAT_ITEMS.forEach((item) => {
             if (counts[item.category] !== undefined) {
@@ -385,6 +551,48 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
             );
         }
 
+        const homebrewIds = [
+            'pmd-character-creation',
+            'pmd-treasure-bag-weight',
+            'pmd-dungeon-economy-food',
+            'pmd-weapons-equipment',
+            'pmd-switcher-moves'
+        ];
+        if (homebrewIds.includes(itemId)) {
+            return (
+                <GmHomebrewCards
+                    itemId={itemId}
+                    onBroadcastCharacterRule={handleBroadcastCharacterRule}
+                    onBroadcastTreasureBagCapacity={handleBroadcastTreasureBagCapacity}
+                    onBroadcastItemWeight={handleBroadcastItemWeight}
+                    onBroadcastFoodItem={handleBroadcastFoodItem}
+                    onBroadcastWeaponModel={handleBroadcastWeaponModel}
+                    onBroadcastSwitcherModel={handleBroadcastSwitcherModel}
+                />
+            );
+        }
+
+        const rangersIds = [
+            'rangers-core-mechanics',
+            'rangers-stylers-gear',
+            'rangers-maneuvers-list',
+            'rangers-assists-bonds'
+        ];
+        if (rangersIds.includes(itemId)) {
+            return (
+                <GmRangersCards
+                    itemId={itemId}
+                    onBroadcastDispositionRank={handleBroadcastDispositionRank}
+                    onBroadcastRangerStyle={handleBroadcastRangerStyle}
+                    onBroadcastStyler={handleBroadcastStyler}
+                    onBroadcastDangerousBuff={handleBroadcastDangerousBuff}
+                    onBroadcastManeuver={handleBroadcastManeuver}
+                    onBroadcastFieldAssist={handleBroadcastFieldAssist}
+                    onBroadcastPartnerBond={handleBroadcastPartnerBond}
+                />
+            );
+        }
+
         return null;
     };
 
@@ -432,7 +640,7 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                             <input
                                 type="text"
                                 className="gm-screen-modal__search-input text-subtext"
-                                placeholder="Search rules, statuses, weather, tables, actions, catching..."
+                                placeholder="Search rules, statuses, weather, tables, actions, catching, PMD, Rangers..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
@@ -514,6 +722,13 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                             onClick={() => setActiveTab('types')}
                         >
                             <Shield size={14} /> Type Matchups ({tabCounts.types})
+                        </button>
+                        <button
+                            type="button"
+                            className={`gm-screen-modal__tab-btn ${activeTab === 'homebrew' ? 'gm-screen-modal__tab-btn--active' : ''}`}
+                            onClick={() => setActiveTab('homebrew')}
+                        >
+                            <Sparkles size={14} /> Homebrew ({tabCounts.homebrew})
                         </button>
                     </div>
                 </div>

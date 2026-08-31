@@ -605,6 +605,241 @@
     border: 1px solid #424242;
 }
 
+/* PMD Homebrew Components */
+.pmd-callout-box {
+    background-color: color-mix(in srgb, var(--primary) 8%, var(--panel-alt));
+    border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border));
+    border-radius: 6px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pmd-rules-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pmd-rule-card {
+    background-color: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pmd-rule-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+}
+
+.pmd-rule-badge {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background-color: color-mix(in srgb, var(--primary) 35%, var(--panel-bg));
+    color: var(--primary);
+    border: 1px solid color-mix(in srgb, var(--primary) 60%, transparent);
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.pmd-app-tip-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    background-color: color-mix(in srgb, var(--primary) 6%, var(--panel-bg));
+    border: 1px dashed color-mix(in srgb, var(--primary) 35%, var(--border));
+    border-radius: 4px;
+    padding: 6px 10px;
+    margin-top: 2px;
+}
+
+.pmd-weight-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.78rem;
+    font-weight: bold;
+    background-color: color-mix(in srgb, var(--primary) 15%, var(--panel-bg));
+    border: 1px solid color-mix(in srgb, var(--primary) 40%, transparent);
+    color: var(--primary);
+    white-space: nowrap;
+}
+
+.pmd-food-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+.pmd-food-pill--apple {
+    background-color: color-mix(in srgb, #e53935 20%, var(--panel-bg));
+    color: #ef5350;
+    border: 1px solid #ef5350;
+}
+
+.pmd-food-pill--gummi {
+    background-color: color-mix(in srgb, #8e24aa 20%, var(--panel-bg));
+    color: #ab47bc;
+    border: 1px solid #ab47bc;
+}
+
+.pmd-food-pill--belly-snack {
+    background-color: color-mix(in srgb, #fb8c00 20%, var(--panel-bg));
+    color: #ffa726;
+    border: 1px solid #ffa726;
+}
+
+.pmd-food-pill--basic {
+    background-color: color-mix(in srgb, #546e7a 25%, var(--panel-bg));
+    color: #90a4ae;
+    border: 1px solid #90a4ae;
+}
+
+.pmd-food-pill--advanced {
+    background-color: color-mix(in srgb, #1e88e5 25%, var(--panel-bg));
+    color: #64b5f6;
+    border: 1px solid #64b5f6;
+}
+
+.pmd-food-pill--agile {
+    background-color: color-mix(in srgb, #00897b 25%, var(--panel-bg));
+    color: #4db6ac;
+    border: 1px solid #4db6ac;
+}
+
+.pmd-food-pill--brute {
+    background-color: color-mix(in srgb, #d32f2f 25%, var(--panel-bg));
+    color: #e57373;
+    border: 1px solid #e57373;
+}
+
+.pmd-food-pill--tricky {
+    background-color: color-mix(in srgb, #8e24aa 25%, var(--panel-bg));
+    color: #ba68c8;
+    border: 1px solid #ba68c8;
+}
+
+.pmd-food-pill--master {
+    background-color: color-mix(in srgb, #f57f17 25%, var(--panel-bg));
+    color: #ffd54f;
+    border: 1px solid #ffd54f;
+}
+
+.pmd-rarity-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.pmd-rarity-badge--common {
+    background-color: #546e7a;
+    color: #ffffff;
+}
+
+.pmd-rarity-badge--uncommon {
+    background-color: #43a047;
+    color: #ffffff;
+}
+
+.pmd-rarity-badge--rare {
+    background-color: #1e88e5;
+    color: #ffffff;
+}
+
+.pmd-rarity-badge--very-rare {
+    background-color: #8e24aa;
+    color: #ffffff;
+}
+
+.pmd-rarity-badge--legendary {
+    background-color: #f57f17;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.pmd-weapons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+}
+
+.pmd-weapon-card {
+    background-color: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pmd-weapon-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+}
+
+.pmd-weapon-example-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    background-color: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 10px;
+    margin-top: 2px;
+}
+
+.pmd-disclaimer-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background-color: color-mix(in srgb, var(--panel-alt) 80%, var(--bg));
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-top: 4px;
+}
+
+.pmd-link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    border-radius: 4px;
+    text-decoration: none;
+    margin-top: 4px;
+    align-self: flex-start;
+    transition: filter 0.15s ease;
+}
+
+.pmd-link-btn:hover {
+    filter: brightness(1.1);
+}
+
 @media (max-width: 768px) {
     .gm-screen-modal__overlay {
         padding: 4px;
@@ -701,8 +936,16 @@
     }
 
     .status-grid,
-    .weather-grid {
+    .weather-grid,
+    .pmd-weapons-grid {
         grid-template-columns: 1fr;
+    }
+
+    .pmd-rule-card__header,
+    .pmd-weapon-card__header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
     }
 
     .gm-screen-modal__footer {

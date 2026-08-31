@@ -25,11 +25,18 @@ import {
     ENCOUNTER_BALANCE_TABLE,
     formatDiscordTable
 } from './gmReferenceData';
+import {
+    PMD_BAG_CAPACITY_TABLE,
+    PMD_ITEM_WEIGHT_TABLE
+} from './gmHomebrewData';
+import {
+    RANGER_STYLERS
+} from './gmRangersData';
 
 export interface GmCheatItem {
     id: string;
     title: string;
-    category: 'rules' | 'status' | 'weather' | 'catching' | 'training' | 'balance' | 'types';
+    category: 'rules' | 'status' | 'weather' | 'catching' | 'training' | 'balance' | 'types' | 'homebrew';
     categoryLabel: string;
     badge?: string;
     summary: string;
@@ -797,5 +804,422 @@ ${formatDiscordTable(
 • **Dark:** Resists Ghost, Dark. Immune to Psychic. Weak to Fighting, Bug, Fairy.
 • **Steel:** Resists Normal, Grass, Ice, Flying, Psychic, Bug, Rock, Dragon, Steel, Fairy. Immune to Poison. Weak to Fire, Fighting, Ground.
 • **Fairy:** Resists Fighting, Bug, Dark. Immune to Dragon. Weak to Poison, Steel.`
+    },
+    {
+        id: 'pmd-character-creation',
+        title: 'PMD Character Rules & Stat Adjustments',
+        category: 'homebrew',
+        categoryLabel: 'PMD & Community Homebrew',
+        badge: 'Optional Rules',
+        summary:
+            'Trainer/Teen stats (+2 Core/+2 Social), 2x Base HP, Knowledge Skills (Science to Magic), narrative Guild rank-ups, and Prof. Drake’s held items.',
+        keywords: [
+            'pmd',
+            'homebrew',
+            'pokemon mystery dungeon',
+            'teen',
+            'trainer stats',
+            'double hp',
+            'base hp',
+            'magic',
+            'knowledge',
+            'crafts',
+            'lore',
+            'medicine',
+            'narrative rank up',
+            'promotion',
+            'rank up',
+            'held items',
+            'equipment',
+            'congra',
+            'prof drake',
+            'drake'
+        ],
+        broadcastText:
+            'PMD Character Rules:\n• Teen Stats: Pokémon receive +2 Core Attributes & +2 Social Attributes (set Age to "Teen" in app).\n• Base HP: Base HP is doubled to endure multi-encounter dungeon crawls.\n• Knowledge Group: Pokémon gain Crafts, Medicine, Lore, and Magic (swapped from Science).\n• Narrative Rank-Ups: Promotions are awarded by the Guild for completing major expeditions (saving TP for skills & moves).\n• Multiple Held Items: Allows equipping 2-3 held items or looplets. See Prof. Drake’s Held Item Homebrew doc for extensive reference.\n\nNote: These are optional suggestions for PMD, not requirements.',
+        discordMarkdown: `## 🏰 **PMD Character Rules & Stat Adjustments**
+> *Common Pokémon Mystery Dungeon homebrew rules for character creation and progression.*
+
+• **Trainer / Teen Stats:** Pokémon receive Trainer stat bonuses (usually the **Teen** profile: **+2 Core Attributes & +2 Social Attributes**). *Tip: Setting Age to "Teen" in this app auto-applies these points!*
+• **Increased Base HP:** Base HP is doubled to help player Pokémon withstand the gauntlet of consecutive dungeon encounters.
+• **Knowledge Skills & Magic:** Pokémon gain access to the Knowledge skill group (**Crafts, Medicine, Lore, and Magic** — Science is swapped to Magic by default in this sheet).
+• **Narrative Rank-Ups:** Promotions (Rookie → Standard → Advanced → Expert → Ace → Master) are awarded narratively by the Guild upon completing major expedition missions rather than spending Training Points (TP), preserving TP for skills and moves.
+• **Multiple Held Items:** Pokémon can equip 2–3 held items, scarves, or looplets to simulate dungeon preparation loadouts.
+• **Prof. Drake's Held Item Compendium:** Check out [Prof. Drake's Held Item Homebrew List (Google Doc)](https://docs.google.com/document/d/1TndU1bcozMWATwB2xxEjbLVITE78Qs6D4fNkV1u0yPc/edit?usp=sharing) for a vast library of custom held items and inspiration!
+
+> 💡 *Note: These rules are optional suggestions for PMD campaigns, not official requirements.*`
+    },
+    {
+        id: 'pmd-treasure-bag-weight',
+        title: 'PMD Treasure Bag & Weight System',
+        category: 'homebrew',
+        categoryLabel: 'PMD & Community Homebrew',
+        badge: 'Dungeon Prep',
+        summary:
+            'Treasure Bag weight capacity scaling by Guild Rank (+5 wt/rank) and item weight reference table.',
+        keywords: [
+            'pmd',
+            'treasure bag',
+            'bag',
+            'weight',
+            'capacity',
+            'inventory',
+            'spikes',
+            'orbs',
+            'seeds',
+            'berries',
+            'wands',
+            'congra',
+            'homebrew'
+        ],
+        broadcastText:
+            'PMD Treasure Bag Capacity: Starter/Rookie 5 Wt, Standard 10 Wt, Advanced 15 Wt, Expert 20 Wt, Ace 25 Wt, Master 30 Wt (+5 Wt per rank).\nItem Weights: Berries/Apples/Gummis/Orbs (1.0 Wt), Seeds (0.2 Wt / 5 per 1 Wt), Spikes/Throwables (0.1 Wt / 10 per 1 Wt), Weapons/Wands (1.0 Wt), Scarves (0.5-1.0 Wt).\n\nNote: Treasure bag capacity and item weights are optional suggestions for PMD inventory management.',
+        discordMarkdown: `## 🎒 **PMD Treasure Bag & Weight System**
+> *Congra's Treasure Bag system for inventory management and expedition preparation.*
+
+**Bag Capacity by Rank (+5 Wt per Rank):**
+${formatDiscordTable(
+    ['Rank', 'Bag Capacity', 'Notes'],
+    PMD_BAG_CAPACITY_TABLE.map((b) => [b.rank, `${b.capacity} Wt`, b.notes])
+)}
+
+**Item Weight Reference:**
+${formatDiscordTable(
+    ['Category', 'Weight', 'Stack / Count', 'Examples'],
+    PMD_ITEM_WEIGHT_TABLE.map((i) => [i.category, `${i.weight} Wt`, i.stackRate, i.examples])
+)}
+
+> 💡 *Note: Treasure Bag capacity and item weights are optional suggestions. Adjust weight limits and item categories as desired for your table.*`
+    },
+    {
+        id: 'pmd-dungeon-economy-food',
+        title: 'PMD Dungeon Drops, Food & Gummis',
+        category: 'homebrew',
+        categoryLabel: 'PMD & Community Homebrew',
+        badge: 'Will & Recovery',
+        summary:
+            'Frequent Oran/Sitrus Berry drops, Apples & Belly snacks for Will recovery, and Gummis for Will / stat boosts.',
+        keywords: [
+            'pmd',
+            'food',
+            'will',
+            'will points',
+            'apple',
+            'small apple',
+            'big apple',
+            'perfect apple',
+            'gummi',
+            'gummis',
+            'four-leaf cookie',
+            'chocolate',
+            'mega donut',
+            'oran berry',
+            'sitrus berry',
+            'belly',
+            'drops',
+            'homebrew'
+        ],
+        broadcastText:
+            'PMD Recovery & Food (Will Restoration):\n• Post-Battle Drops: Frequent Oran & Sitrus Berries.\n• Apples: Small Apple (+1 Will), Apple (+2 Will), Big Apple (+3 Will), Perfect Apple (Full Max Will).\n• Gummis: Standard (+1-2 Will), Empowering (+2 Will & +1 Temp Stat buff), Miracle (Permanent +1 Stat upgrade).\n• Belly Treats: Four-Leaf Cookie (+1 Will & Lucky roll), Chocolate (+1 Will & +2 Init), Mega Donut (+2 Will & +2 Temp HP/Def).\n\nNote: Food and berry mechanics are optional suggestions for PMD campaigns.',
+        discordMarkdown: `## 🍎 **PMD Dungeon Drops, Food & Gummis**
+> *Health restoration drops and food items repurposed for Pokerole Will Points & dungeon buffs.*
+
+• **Post-Battle Health Drops:** Frequent **Oran Berry** (healing) and **Sitrus Berry** (healing / temp HP) drops after dungeon battles to sustain multi-room exploration.
+• **Apples (Will Restoration):**
+  - **Small Apple:** 1 Will Point (Emergency snack)
+  - **Apple (Standard):** 2 Will Points (Standard meal)
+  - **Big Apple:** 3 Will Points (Hearty feast)
+  - **Perfect Apple:** Fully restores all Will to maximum!
+• **Gummis (Will & Stat Enhancements):**
+  - **Type Gummi (Standard):** 1–2 Will Points (Flavor/Type matched)
+  - **Empowering Gummi:** 2 Will Points + **+1 to matching Stat** for the current floor
+  - **Miracle Gummi (Legendary):** Fully restores Will + **Permanent +1 to matching Attribute**
+• **Special Belly Treats:**
+  - **Four-Leaf Cookie:** 1 Will Point + **Lucky** (+1 bonus success on next roll)
+  - **Dungeon Chocolate:** 1 Will Point + **+2 Initiative** for the next fight
+  - **Mega Donut:** 2 Will Points + **+2 Temp HP or +1 Defense** for 3 rounds
+
+> 💡 *Note: Food effects, Will restoration numbers, and berry drop rates are optional suggestions to adapt PMD mechanics to Pokerole.*`
+    },
+    {
+        id: 'pmd-weapons-equipment',
+        title: 'PMD Weapons & Combat Gear',
+        category: 'homebrew',
+        categoryLabel: 'PMD & Community Homebrew',
+        badge: 'Combat Gear',
+        summary:
+            'Prof. Drake’s upgradeable Struggle weapons vs Congra’s spellcasting Move-Slot wands/weapons and bag weight rules.',
+        keywords: [
+            'pmd',
+            'weapons',
+            'wands',
+            'equipment',
+            'struggle',
+            'prof drake',
+            'drake',
+            'congra',
+            'move slot',
+            'staves',
+            'hypnosis wand',
+            'shadow blade',
+            'night slash',
+            'homebrew'
+        ],
+        broadcastText:
+            'PMD Weapons Homebrew Models (1.0 Wt in Bag):\n• Prof. Drake Model: Weapons act as an upgradeable system based on the Struggle maneuver that makes the weapon better over time. See the Pokerole Discord for his complete homebrew rules!\n• Congra Model: Weapons (Wands, Swords, Staves, Bows) act as an extra equipped Move slot without consuming a move slot (e.g. Hypnosis Wand, Shadow Blade with Night Slash). GM determines if it uses move stats or unique weapon stats.\n\nNote: Weapon systems are optional suggestions for PMD campaigns.',
+        discordMarkdown: `## ⚔️ **PMD Weapons & Combat Gear**
+> *Community weapon models allowing player Pokémon to equip physical arms or spellcasting focuses.*
+
+• **Option A — Upgradeable Struggle Weapons (Prof. Drake's Model):**
+  Weapons act as an upgradeable system based on the *Struggle* maneuver that makes the weapon better over time (e.g. improving damage, accuracy, or weapon capabilities). Check out Prof. Drake's homebrew documents and threads in the Pokerole Discord to see his complete upgrade rules and progression system!
+
+• **Option B — Move-Focus Weapons & Wands (Congra's Model):**
+  Weapons (such as Wands, Staves, Swords, or Bows) serve as an extra equipped slot to cast or perform a specific Move without consuming one of the Pokémon’s move slots. Allows players to carry tactical utility, status moves, or coverage into dungeons.
+  *Resolution Stats:* The GM can determine whether the weapon uses the same stats as the move itself (e.g. Clever + Channel for *Hypnosis*) or its own unique stats (such as Special + Channel / Special + Magic for a wand, or Strength + Brawl / Strength + Weapons for a blade).
+  *Examples: Hypnosis Wand (1 Wt), Shadow Blade granting Night Slash (1 Wt).*
+
+• **Inventory Weight:** Both weapon models typically weigh **1.0 Wt** in the Treasure Bag.
+
+> 💡 *Note: Weapon rules are optional homebrew. GMs should adjust weapon power and availability to suit their campaign.*`
+    },
+    {
+        id: 'pmd-switcher-moves',
+        title: 'PMD Switcher Moves & Tactical Repositioning',
+        category: 'homebrew',
+        categoryLabel: 'PMD & Community Homebrew',
+        badge: 'Switcher Moves',
+        summary:
+            'Community adaptations for Switcher Moves in PMD: Free Cover repositioning (Congra), Ally Switch reactions & Shed Tail decoys (NorthLight), and 1v1 Evasion debuffs (Cylland).',
+        keywords: [
+            'pmd',
+            'switcher',
+            'switch',
+            'switcher moves',
+            'u-turn',
+            'volt switch',
+            'flip turn',
+            'ally switch',
+            'shed tail',
+            'baton pass',
+            'teleport',
+            'parting shot',
+            'cover',
+            'reposition',
+            'reaction',
+            'congra',
+            'northlight',
+            'cylland',
+            'homebrew'
+        ],
+        broadcastText:
+            'PMD Switcher Moves Community Models:\n• Congra Model: Using a Switcher Move allows the user to Take Cover behind nearby terrain as a Free Action (refer to Cover Mechanics & Defense Bonuses section for +1 to +3 Def bonuses, at GM discretion based on the environment).\n• NorthLight Model: Ally Switch (Reaction 1, can only be used when attacked; redirects attack to a willing ally who gains a free reaction); Shed Tail (Target One Ally, make a substitute decoy for the target).\n• Cylland Model: In 1v1 duels, Switcher moves act as an evasive disengage giving the target -1 Accuracy on their next move.\n\nNote: Optional community suggestions for PMD campaigns.',
+        discordMarkdown: `## 🔄 **PMD Switcher Moves & Tactical Repositioning**
+> *Community house rules adapting trainer Pokéball Switcher Moves (U-turn, Volt Switch, Ally Switch, Shed Tail) for PMD dungeon exploration.*
+
+• **Option A — Free Tactical Cover & Reposition (Congra's Model):**
+  Since PMD lacks Pokéballs, Switcher Moves (e.g. *U-turn, Volt Switch, Flip Turn, Teleport, Baton Pass, Parting Shot*) allow the Pokémon to execute the move's normal effects and immediately duck behind nearby environmental terrain to **Take Cover as a Free Action** (saving the action normally required to find cover).
+  *Cover Types:* Refer to the **Cover Mechanics & Defense Bonuses** section in this GM Screen for defense values (+1 to +3 Def), determined at GM discretion based on whatever cover is available in the dungeon environment.
+
+• **Option B — Reaction Swaps & Ally Redirects (NorthLight's Model):**
+  Tailors specific tactical pivot moves for team coordination:
+  - **Ally Switch:** *Reaction 1*. Can only be used if you’re being attacked. The attack no longer targets you and instead targets one of your allies in range (if they are willing); the chosen ally gains a free action to react to the attack if it has any.
+  - **Shed Tail:** *Target One Ally*. Make a substitute decoy for the target (user takes 2 damage and creates a 2 HP Substitute decoy onto an ally in range to shield them).
+
+• **Option C — Tactical Disengage & Evasion Debuff (Cylland's Model):**
+  In 1v1 duels or boss encounters where switching is impossible, Switcher moves act as an evasive hit-and-run feint that inflicts **-1 Accuracy on the target's next attack** (or grants temporary evasion).
+
+> 💡 *Note: Switcher adaptations are optional community suggestions for PMD campaigns.*`
+    },
+    {
+        id: 'rangers-core-mechanics',
+        title: 'Pokémon Rangers: Core Mechanics & Disposition Meter',
+        category: 'homebrew',
+        categoryLabel: 'Pokémon Rangers Supplement',
+        badge: 'Rangers Core',
+        summary:
+            'Disposition Meter (Will + Rank bonus) replaces HP damage, Styler Charge rules, and 3 Ranger Styles (Agile/Dex, Brute/Str-Vit, Tricky/Ins).',
+        keywords: [
+            'rangers',
+            'pokemon rangers',
+            'ranger',
+            'disposition',
+            'disposition meter',
+            'dm',
+            'styler',
+            'capture styler',
+            'agile style',
+            'brute style',
+            'tricky style',
+            'prof drake',
+            'drake',
+            'homebrew'
+        ],
+        broadcastText:
+            'Rangers Core Mechanics:\n• Disposition Meter (DM): Will + Rank Bonus (Starter +2, Rookie +3, Standard +4, Adv +5, Expert +6, Ace +7, Master +8, Champ +10). Target DM instead of HP to befriend/calm Pokémon.\n• Capture Styler: Uses Charge as Styler HP. Critical Failure on a maneuver deals 1 damage to Styler.\n• Ranger Styles: Agile (Dexterity), Brute (Strength/Vitality), Tricky (Insight). Replace "Style" in maneuvers with your associated stat.\n• Maneuvers per Rank: Starter 2, Rookie 3, Standard 4, Adv 5, Expert 6+1 Master, Ace 7+1, Master 8+1, Champ 10+1.\n\nNote: From Prof. Drake’s optional Pokémon Rangers supplement for Pokerole.',
+        discordMarkdown: `## 🌀 **Pokémon Rangers: Core Mechanics & Disposition Meter**
+> *Prof. Drake's Pokémon Rangers supplement replacing HP damage with empathy, aura, and the Capture Styler.*
+
+• **Disposition Meter (DM = Will + Rank Bonus):** Rangers do not lower a Pokémon’s HP. Instead, they target the Pokémon's Disposition Meter to calm raw emotions and befriend them.
+${formatDiscordTable(
+    ['Rank', 'Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion'],
+    [['DM Bonus', '+2', '+3', '+4', '+5', '+6', '+7', '+8', '+10']]
+)}
+
+• **The Capture Styler & Charge:**
+  - **Charge = Styler HP:** When a Styler reaches 0 Charge, it must be recharged before it can be used again.
+  - **Critical Failure:** Rolling a Critical Failure on a Ranger Maneuver deals **1 point of damage** to the Styler.
+
+• **Ranger Styles:**
+  - **Agile Style (Dexterity):** Fast reactive movements, quick loops, and rapid evasion.
+  - **Brute Style (Strength or Vitality):** Tough and sturdy, absorbing attacks and powering through barriers.
+  - **Tricky Style (Insight):** Timed traps, tactical misdirection, and environmental manipulation.
+  *(Whenever a maneuver states "Style" for Accuracy/Damage, use your Style’s associated stat.)*
+
+• **Supplement Link:** [Prof. Drake's Pokémon Rangers Supplement (Google Doc)](https://docs.google.com/document/d/1GSn8Ms94vxTi86Lfh6rGXMVQ4huZ4W3Ik_F5v-FJJfw/edit?tab=t.0#heading=h.2d4gnxfspgm4)
+
+> 💡 *Note: These mechanics are from Prof. Drake’s optional Pokémon Rangers supplement for Pokerole, not official corebook requirements.*`
+    },
+    {
+        id: 'rangers-stylers-gear',
+        title: 'Pokémon Rangers: Capture Stylers & Dangerous Encounters',
+        category: 'homebrew',
+        categoryLabel: 'Pokémon Rangers Supplement',
+        badge: 'Rangers Gear',
+        summary:
+            'Capture Styler models (Charge HP, effects, costs) and Dangerous Encounter boss buffs & extra disposition.',
+        keywords: [
+            'rangers',
+            'styler',
+            'capture styler',
+            'school styler',
+            'basic styler',
+            'specialty styler',
+            'fine styler',
+            'tempo styler',
+            'durable styler',
+            'wily styler',
+            'lasso styler',
+            'dangerous encounter',
+            'boss',
+            'prof drake',
+            'drake',
+            'homebrew'
+        ],
+        broadcastText:
+            'Ranger Stylers & Boss Encounters:\n• Stylers: School (10 Chg), Basic (15 Chg), Specialty (20 Chg, +1 Style Stat), Fine (25 Chg, +1 Acc/Dmg), Tempo (25 Chg, Agile Dex stack), Durable (30 Chg, Brute -1 Dmg taken), Wily (20 Chg, Tricky free Basic Loop), Lasso (20 Chg, Athletic +1 die).\n• Dangerous Encounters: Low (+10 DM, 1 Buff), Med (+20 DM, 2 Buffs), High (+30 DM, 3 Buffs). Buffs include Strength Enhancement (+1 all stats), Super Damage (all super effective), Enhanced Movement (free action at Init 0).\n\nNote: From Prof. Drake’s optional Pokémon Rangers supplement for Pokerole.',
+        discordMarkdown: `## ⚙️ **Pokémon Rangers: Capture Stylers & Dangerous Encounters**
+> *Styler catalog and boss encounter scaling from Prof. Drake's Pokémon Rangers supplement.*
+
+**Capture Styler Catalog:**
+${formatDiscordTable(
+    ['Styler', 'Charge', 'Cost', 'Effect'],
+    RANGER_STYLERS.map((s) => [s.name, `${s.charge} HP`, s.cost === '—' ? 'Default' : `${s.cost} P$`, s.effect])
+)}
+
+**Dangerous Encounters (Boss / Enraged Pokémon):**
+• **Encounter Scaling:** Low (+10 Extra DM, 1 Buff), Medium (+20 Extra DM, 2 Buffs), High (+30 Extra DM, 3 Buffs).
+• **Boss Buff Options:**
+  - **Strength Enhancement:** +1 to all Attributes and Traits.
+  - **Super Damage:** All damage inflicted by this Pokémon is considered Super Effective.
+  - **Enhanced Movement:** At Initiative 0, this Pokémon can perform 1 additional Action (ignoring action value / move restrictions).
+
+> 💡 *Note: Styler gear and encounter buffs are optional guidelines from Prof. Drake’s Pokémon Rangers supplement.*`
+    },
+    {
+        id: 'rangers-maneuvers-list',
+        title: 'Pokémon Rangers: Maneuvers Reference Guide',
+        category: 'homebrew',
+        categoryLabel: 'Pokémon Rangers Supplement',
+        badge: 'Rangers Techniques',
+        summary:
+            'Basic Loops (free for all), Advanced techniques, Style-specific maneuvers (Agile, Brute, Tricky), and Master techniques.',
+        keywords: [
+            'rangers',
+            'maneuvers',
+            'basic loop',
+            'capture on',
+            'large loop',
+            'aura wheel',
+            'swift movement',
+            'get down',
+            'bait and switch',
+            'power charge',
+            'master maneuver',
+            'prof drake',
+            'drake',
+            'homebrew'
+        ],
+        broadcastText:
+            'Ranger Maneuvers Summary:\n• Basic (Free for all): Basic Loop (Style+Empathy vs Social), Capture On! (+2 Acc/Dmg next attack), Large Loop (All Foes).\n• Advanced (Any Style): Emotional Shock (Paralyze), Fancy Technique (Dmg stacking), Aura Wheel (Never Miss), Spirit Burst (+5 Social Dmg Recoil), Recall (Shield Move -2 Dmg), Hold On (Remain at 1 HP), etc.\n• Agile: Swift Movement (5 Evasions), Shift Up (+Dex), Hasty Coil, Fast Loop, Rapid Aura.\n• Brute: Get Down! (Shield Ally -3 Dmg), Boost! (+Str on hit), Aura Counterattack, Mighty Blow, Durable Loop (+Def).\n• Tricky: Bait and Switch (Redirect attack), Sneaky Aura, Dizzy Loop (Confuse), Aura Shield (Force Field), Calculate (+2 Acc/Dmg dice).\n• Master: Power Charge! (+3 Dmg), Aura Expulsion, Guardian Assist.\n\nNote: From Prof. Drake’s optional Pokémon Rangers supplement for Pokerole.',
+        discordMarkdown: `## 🌀 **Pokémon Rangers: Maneuvers Reference Guide**
+> *Ranger techniques and loop maneuvers from Prof. Drake's Pokémon Rangers supplement.*
+
+• **Basic Maneuvers (All Rangers know these for free, do not count toward limit):**
+  - **Basic Loop:** *Style + Empathy vs Social* — Single Target. A standard loop connecting around target.
+  - **Capture On!:** *Style + Perform vs —* — Target Self. +2 Accuracy and +2 Damage to next attack.
+  - **Large Loop:** *Style + Empathy vs Social* — Target All Foes. Low Accuracy 1.
+
+• **Style-Specific Maneuver Highlights:**
+  - **Agile:** *Swift Movement* (Up to 5 evasions this round), *Shift Up* (+1 Dex stack), *Fast Loop* (Reaction 2).
+  - **Brute:** *Get Down!* (Cover ally and reduce damage by 3), *Boost!* (+1 Str when hit), *Durable Loop* (+1 Def stack).
+  - **Tricky:** *Bait and Switch* (Redirect incoming attack to another target), *Aura Shield* (4-round Force Field), *Calculate* (+2 Acc/Dmg dice to user and allies).
+
+• **Master Maneuvers (Expert+ Rank, 1 day training with Top Ranger):**
+  - **Power Charge!:** *Will + Empathy* — All attacks deal +3 Damage for the round.
+  - **Aura Expulsion:** *Style + Empathy vs Social + 3* — Target All Foes in Range (+3 Power if target ≤ half DM).
+  - **Guardian Assist:** *Will + Weapon* — Call forth the legendary aura of a powerful guardian ally.
+
+> 💡 *Note: Maneuvers and technique rules are from Prof. Drake’s optional Pokémon Rangers supplement for Pokerole.*`
+    },
+    {
+        id: 'rangers-assists-bonds',
+        title: 'Pokémon Rangers: Field Assists, Combat & Partner Bonds',
+        category: 'homebrew',
+        categoryLabel: 'Pokémon Rangers Supplement',
+        badge: 'Rangers Assists',
+        summary:
+            'Field assist commands (Recharge, Crush, Cut, etc.), Combat assists (Type/Ability/Move), and Partner Loyalty bond levels (1-5).',
+        keywords: [
+            'rangers',
+            'assists',
+            'pokemon assist',
+            'partner assist',
+            'partner pokemon',
+            'recharge',
+            'crush',
+            'cut',
+            'soak',
+            'bond',
+            'loyalty',
+            'friendship',
+            'clash',
+            'prof drake',
+            'drake',
+            'homebrew'
+        ],
+        broadcastText:
+            'Ranger Assists & Partner Bonds:\n• Wild Assists Capacity: Starter 2, Rookie 3, Standard 4, Adv 5, Expert 6, Ace 7, Master 8, Champ 10.\n• Field Assists: Crush, Cut, Burn, Soak, Electrify, Tackle, Psy-Power, Recharge (+3 Styler Charge), Fly, Surf.\n• Combat Assists (1/turn before maneuver): Apply Type (Free), Use Ability (Free), Use Move (Full Action).\n• Partner Bonds (Levels 1-5): Lv1 (Apply Partner Type), Lv2 (+Happiness/Loyalty to 1 roll), Lv3 (Partner move alongside Ranger action vs DM), Lv4 (Additional Clash vs Styler attack), Lv5 (Auto-succeed skill check once per session).\n\nNote: From Prof. Drake’s optional Pokémon Rangers supplement for Pokerole.',
+        discordMarkdown: `## 🤝 **Pokémon Rangers: Field Assists & Partner Bonds**
+> *Calling wild Pokémon assists and unlocking partner bond powers from Prof. Drake's Pokémon Rangers supplement.*
+
+• **Max Wild Assists by Rank:** Starter: 2 | Rookie: 3 | Standard: 4 | Advanced: 5 | Expert: 6 | Ace: 7 | Master: 8 | Champion: 10 *(Partner Pokémon does not count toward this limit).*
+
+• **Field Assists:**
+  - **Recharge:** Restores **+3 Charge** directly to your Styler.
+  - **Crush, Cut, Burn, Soak, Electrify, Tackle, Psy-Power, Fly, Surf:** Overcome environmental hazards, clear roadblocks, and manipulate puzzles.
+
+• **Combat Assists (1 Assist per turn, directly before a maneuver):**
+  - **Apply Type:** Infuse the wild Pokémon's typing into your maneuver *(Free Action)*.
+  - **Use Ability:** Trigger the wild Pokémon's ability *(Free Action)*.
+  - **Use a Move:** Command the wild Pokémon to use one of its moves *(Full Action)*.
+
+• **Partner Bond Levels (1 to 5 Loyalty / Happiness Progression):**
+  - **Level 1 (3/3):** Apply Partner Pokémon's typing to every move for 1 round.
+  - **Level 2 (4/3 or 3/4):** Add Happiness or Loyalty dice to any 1 skill check.
+  - **Level 3 (4/4):** Partner performs a move at the same time as the Ranger acts (decreases DM instead of damage).
+  - **Level 4 (5/4 or 4/5):** Partner attempts an additional Clash when Stylus is targeted, rolling full damage pool.
+  - **Level 5 (5/5):** Automatic success on any 1 crucial skill check (GM permission, once per session).
+
+> 💡 *Note: Assist and partner rules are from Prof. Drake’s optional Pokémon Rangers supplement for Pokerole.*`
     }
 ];

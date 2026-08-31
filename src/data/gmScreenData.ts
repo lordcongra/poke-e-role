@@ -12,4 +12,6 @@
 export * from './gm/gmCombatData';
 export * from './gm/gmStatusData';
 export * from './gm/gmReferenceData';
+export * from './gm/gmHomebrewData';
+export * from './gm/gmRangersData';
 export * from './gm/gmCheatItems';
