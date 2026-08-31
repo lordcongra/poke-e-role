@@ -19,39 +19,26 @@ import {
     Heart,
     Info,
     ChevronsUpDown,
-    Link2,
-    Sparkles,
-    Layers,
-    Pill
+    Link2
 } from 'lucide-react';
 import {
     GM_CHEAT_ITEMS,
     GM_SCREEN_CREDITS,
-    DIFFICULTY_TABLE,
-    WILL_SPENDING,
-    COMBAT_FLOW_STEPS,
-    MOVE_RESOLUTION_STEPS,
-    HOLDING_BACK_OPTIONS,
-    REACTION_RULES_EXAMPLES,
-    REACTION_CORE_RULES,
-    STATUS_CATEGORIES_DATA,
-    STATUS_RULES_INFO,
-    TRAINER_ACTIONS_TABLE,
-    COVER_TABLE,
-    HEALING_TABLE,
-    RANK_SUMMARY_TABLE,
-    STATUS_EFFECTS_DATA,
-    WEATHER_CONDITIONS_DATA,
-    ENVIRONMENTAL_HAZARDS_DATA,
-    BATTLE_TP_TABLE,
-    RANK_UP_TP_TABLE,
-    LEARN_MOVES_TP_TABLE,
-    ENCOUNTER_BALANCE_TABLE,
     type GmCheatItem,
     type StatusEffectData,
     type HoldingBackOption,
-    type ReactionRuleExample
+    type ReactionRuleExample,
+    type WILL_SPENDING,
+    type COMBAT_FLOW_STEPS,
+    type WEATHER_CONDITIONS_DATA,
+    type ENVIRONMENTAL_HAZARDS_DATA,
+    type TRAINER_ACTIONS_TABLE,
+    type COVER_TABLE,
+    type HEALING_TABLE
 } from '../../data/gmScreenData';
+import { GmCombatCards } from './gmCards/GmCombatCards';
+import { GmStatusCards } from './gmCards/GmStatusCards';
+import { GmReferenceCards } from './gmCards/GmReferenceCards';
 import { GmScreenCatchCalculator } from './GmScreenCatchCalculator';
 import { GmScreenTypeMatrix } from './GmScreenTypeMatrix';
 import { broadcastInfo } from '../../utils/diceRoller';
@@ -247,7 +234,7 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
     };
 
     const handleBroadcastReactionCoreRules = () => {
-        const text = `Reactions & Late Reactions Core Rules:\n${REACTION_CORE_RULES.map((r) => `• ${r.title}: ${r.desc}`).join('\n')}`;
+        const text = `Reactions & Late Reactions Core Rules:\n• Action Economy Cost: Rolling any Reaction or Late Reaction consumes 1 of your character’s Actions for the Round, bound to the Multiple Action Difficulty chart.\n• 1 Reaction Per Turn Limit: You can only use ONE reaction per turn.\n• Preemption & Lockout: If a higher reaction number is declared (e.g. ⬆️2 Extreme Speed), you cannot respond with a lower reaction number.\n• Cannot React to a Late Reaction: Standard Reactions (⬆️) CANNOT be used against a Late Reaction (⬇️).\n• Can Late React to a Reaction: You CAN use a Late Reaction (⬇️) to answer a standard Reaction (⬆️).\n• No Reaction Without a Reason: You cannot react unless you are being directly targeted by an incoming action (Defensive support moves like Wide Guard / Cover an Ally can protect teammates).`;
         broadcastInfo(`Reaction Rules & Timing`, text);
     };
 
@@ -288,1178 +275,117 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
     }, []);
 
     const renderCardContent = (itemId: string) => {
-        switch (itemId) {
-            case 'skills-and-attributes':
-                return (
-                    <div className="gm-table-wrapper">
-                        <table className="gm-table">
-                            <thead>
-                                <tr>
-                                    <th>Attributes</th>
-                                    <th>Fight</th>
-                                    <th>Survival</th>
-                                    <th>Social</th>
-                                    <th>Knowledge</th>
-                                    <th>Social Attributes</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>
-                                        <strong>Strength</strong>
-                                    </td>
-                                    <td>Brawl</td>
-                                    <td>Alert</td>
-                                    <td>Charm</td>
-                                    <td>Crafts</td>
-                                    <td>Tough</td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <strong>Dexterity</strong>
-                                    </td>
-                                    <td>Throw (Human*)</td>
-                                    <td>Athletic</td>
-                                    <td>Empathy</td>
-                                    <td>Lore</td>
-                                    <td>Cool</td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <strong>Vitality</strong>
-                                    </td>
-                                    <td>Weapons (Human*)</td>
-                                    <td>Nature</td>
-                                    <td>Etiquette</td>
-                                    <td>Medicine</td>
-                                    <td>Clever</td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <strong>Special</strong>
-                                    </td>
-                                    <td>Evasion</td>
-                                    <td>Stealth</td>
-                                    <td>Intimidate</td>
-                                    <td>Science</td>
-                                    <td>Beauty</td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <strong>Insight</strong>
-                                    </td>
-                                    <td>Clash (Pokémon^)</td>
-                                    <td>—</td>
-                                    <td>Perform</td>
-                                    <td>—</td>
-                                    <td>Cute</td>
-                                </tr>
-                                <tr>
-                                    <td>—</td>
-                                    <td>Channel (Pokémon^)</td>
-                                    <td>—</td>
-                                    <td>—</td>
-                                    <td>—</td>
-                                    <td>—</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <p className="text-subtext" style={{ marginTop: '6px', marginBottom: 0 }}>
-                            * Typically a human skill &nbsp;|&nbsp; ^ Typically a Pokémon skill
-                        </p>
-                    </div>
-                );
-
-            case 'successes-required':
-                return (
-                    <div className="gm-table-wrapper">
-                        <table className="gm-table">
-                            <thead>
-                                <tr>
-                                    <th>Action This Round</th>
-                                    <th>Required Successes</th>
-                                    <th>Difficulty Level</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {DIFFICULTY_TABLE.map((d) => (
-                                    <tr key={d.action}>
-                                        <td>
-                                            <strong>{d.action}</strong>
-                                        </td>
-                                        <td className="text-value-highlight" style={{ color: 'var(--primary)' }}>
-                                            {d.successes}
-                                        </td>
-                                        <td>{d.difficulty}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                );
-
-            case 'will-points':
-                return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <div className="gm-table-wrapper">
-                            <table className="gm-table">
-                                <thead>
-                                    <tr>
-                                        <th>Spending Option</th>
-                                        <th>Cost</th>
-                                        <th>Mechanical Effect</th>
-                                        <th style={{ width: '90px', textAlign: 'center' }}>Send</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {WILL_SPENDING.map((w) => (
-                                        <tr key={w.name}>
-                                            <td>
-                                                <strong>{w.name}</strong>
-                                            </td>
-                                            <td>{w.cost}</td>
-                                            <td>{w.effect}</td>
-                                            <td style={{ textAlign: 'center' }}>
-                                                <button
-                                                    type="button"
-                                                    className="action-button action-button--dark gm-card-item-broadcast-btn"
-                                                    onClick={() => handleBroadcastWill(w)}
-                                                    title={`Broadcast ${w.name} to chat/roll log`}
-                                                    aria-label={`Broadcast ${w.name}`}
-                                                >
-                                                    <Megaphone size={12} /> Broadcast
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div
-                            style={{
-                                padding: '8px 12px',
-                                borderRadius: '4px',
-                                backgroundColor: 'var(--panel-alt)',
-                                border: '1px solid var(--primary)',
-                                fontSize: '0.8rem',
-                                lineHeight: '1.4'
-                            }}
-                        >
-                            <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Important Rules:</span>
-                            <ul style={{ margin: '4px 0 0 0', paddingLeft: '20px' }}>
-                                <li>
-                                    In a single round, you may only use <em>Take Your Chances</em> OR{' '}
-                                    <em>Pushing Fate</em>—not both!
-                                </li>
-                                <li>
-                                    Spending all your Will Points in a scene causes the character to faint at the end of
-                                    the scene.
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                );
-
-            case 'combat-flow':
-                return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {COMBAT_FLOW_STEPS.map((s) => (
-                            <div
-                                key={s.step}
-                                style={{
-                                    fontSize: '0.85rem',
-                                    padding: '8px 10px',
-                                    backgroundColor: 'var(--panel-alt)',
-                                    borderRadius: '6px',
-                                    border: '1px solid var(--border)'
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        gap: '8px',
-                                        marginBottom: '4px'
-                                    }}
-                                >
-                                    <strong style={{ color: 'var(--primary)' }}>
-                                        {s.step}. {s.title}
-                                    </strong>
-                                    <button
-                                        type="button"
-                                        className="action-button action-button--dark gm-card-item-broadcast-btn"
-                                        onClick={() => handleBroadcastCombatFlowStep(s)}
-                                        title={`Broadcast Step ${s.step} to chat/roll log`}
-                                        aria-label={`Broadcast Step ${s.step}`}
-                                    >
-                                        <Megaphone size={12} /> Broadcast
-                                    </button>
-                                </div>
-                                <ul style={{ margin: '4px 0 0 0', paddingLeft: '20px', color: 'var(--text-main)' }}>
-                                    {s.items.map((it, idx) => (
-                                        <li key={idx}>{it}</li>
-                                    ))}
-                                </ul>
-                            </div>
-                        ))}
-                    </div>
-                );
-
-            case 'using-a-move':
-                return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        {MOVE_RESOLUTION_STEPS.map((s) => (
-                            <div
-                                key={s.step}
-                                style={{
-                                    fontSize: '0.85rem',
-                                    padding: '8px 10px',
-                                    backgroundColor: 'var(--panel-alt)',
-                                    borderRadius: '6px',
-                                    border: '1px solid var(--border)'
-                                }}
-                            >
-                                <strong style={{ color: 'var(--primary)', display: 'block', marginBottom: '4px' }}>
-                                    Step {s.step}: {s.title}
-                                </strong>
-                                <p
-                                    style={{
-                                        margin: '0',
-                                        color: 'var(--text-main)',
-                                        lineHeight: '1.45',
-                                        whiteSpace: 'pre-line'
-                                    }}
-                                >
-                                    {s.desc}
-                                </p>
-                            </div>
-                        ))}
-
-                        <div
-                            style={{
-                                padding: '10px 12px',
-                                borderRadius: '6px',
-                                backgroundColor: 'var(--panel-alt)',
-                                border: '1px solid var(--primary)',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '6px',
-                                fontSize: '0.82rem',
-                                lineHeight: '1.4'
-                            }}
-                        >
-                            <span
-                                style={{
-                                    color: 'var(--primary)',
-                                    fontWeight: 'bold',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px'
-                                }}
-                            >
-                                <Sparkles size={15} /> Key Move & Damage Resolution Reminders
-                            </span>
-                            <ul style={{ margin: '0', paddingLeft: '18px', color: 'var(--text-main)' }}>
-                                <li>
-                                    <strong>0 Successes Minimum Damage:</strong> Even if you roll <strong>0 successes</strong> on your damage dice pool, a successful hit still deals <strong>1 base damage</strong> (unless the foe has Resistance or Immunity).
-                                </li>
-                                <li>
-                                    <strong>1+ Success Requirement:</strong> You <strong>must</strong> score at least <strong>1 success</strong> on the damage roll for any <strong>Added Effects</strong> on the target to trigger, or for <strong>Super Effective (+1) / Extremely Effective (+2)</strong> weakness damage bonuses to apply.
-                                </li>
-                                <li>
-                                    <strong>Resistance:</strong> Each Resistance subtracts 1 flat damage (reducing 1 base damage down to 0).
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                );
-
-            case 'holding-back-attack':
-                return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.85rem' }}>
-                        <div
-                            style={{
-                                padding: '10px 12px',
-                                borderRadius: '6px',
-                                backgroundColor: 'var(--panel-alt)',
-                                border: '1px solid var(--border)',
-                                lineHeight: '1.45'
-                            }}
-                        >
-                            <p style={{ margin: '0 0 6px 0', color: 'var(--text-main)', fontStyle: 'italic' }}>
-                                “Sometimes it will be more convenient to contain the full force of your Pokémon attacks.”
-                            </p>
-                            <p style={{ margin: '0', color: 'var(--text-muted)' }}>
-                                Give the command to <strong>“Hold Back!”</strong>, <strong>“Restrain yourself!”</strong>, or <strong>“Don’t use full force!”</strong> in order to choose one or a combination of the options below:
-                            </p>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {HOLDING_BACK_OPTIONS.map((opt) => (
-                                <div
-                                    key={opt.id}
-                                    style={{
-                                        padding: '10px 12px',
-                                        borderRadius: '6px',
-                                        backgroundColor: 'var(--panel-alt)',
-                                        border: '1px solid var(--border)',
-                                        display: 'flex',
-                                        alignItems: 'flex-start',
-                                        justifyContent: 'space-between',
-                                        gap: '10px'
-                                    }}
-                                >
-                                    <div style={{ flex: 1 }}>
-                                        <strong style={{ color: 'var(--primary)', display: 'block', marginBottom: '3px' }}>
-                                            • {opt.title}
-                                        </strong>
-                                        <span style={{ color: 'var(--text-main)', lineHeight: '1.4' }}>
-                                            {opt.desc}
-                                        </span>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        className="action-button action-button--dark gm-card-item-broadcast-btn"
-                                        onClick={() => handleBroadcastHoldingBack(opt)}
-                                        title={`Broadcast ${opt.title} to chat/roll log`}
-                                        aria-label={`Broadcast ${opt.title}`}
-                                        style={{ flexShrink: 0, marginTop: '2px' }}
-                                    >
-                                        <Megaphone size={12} /> Broadcast
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div
-                            style={{
-                                padding: '8px 12px',
-                                borderRadius: '6px',
-                                backgroundColor: 'color-mix(in srgb, #F48FB1 12%, var(--panel-bg))',
-                                border: '1px dashed #F48FB1',
-                                fontSize: '0.78rem',
-                                color: 'var(--text-main)',
-                                lineHeight: '1.35'
-                            }}
-                        >
-                            <strong style={{ color: '#E91E63' }}>💕 In Love Status Condition (Storyteller Discretion):</strong> When a Pokémon is <strong>In Love</strong>, they are trying to earn their crush’s favor. At the Storyteller’s discretion, this can mean dealing <strong>Half Damage</strong> or enforcing <strong>all Holding Back restrictions</strong> (forfeiting crits & added effects—poisoning your crush or landing crits is a massive red flag!). Pokémon can bypass this by succeeding on a Loyalty or Insight roll (3+ successes) when attacking.
-                        </div>
-                    </div>
-                );
-
-            case 'reactions-late-reactions':
-                return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.85rem' }}>
-                        {/* Comparison Overview Banner */}
-                        <div
-                            style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                                gap: '10px'
-                            }}
-                        >
-                            {/* Reactions Box */}
-                            <div
-                                style={{
-                                    padding: '12px',
-                                    borderRadius: '6px',
-                                    backgroundColor: 'var(--panel-alt)',
-                                    border: '1px solid #00ACC1',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '6px'
-                                }}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span
-                                        style={{
-                                            backgroundColor: '#00ACC1',
-                                            color: '#FFFFFF',
-                                            fontWeight: 'bold',
-                                            padding: '2px 8px',
-                                            borderRadius: '4px',
-                                            fontSize: '0.78rem',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '4px'
-                                        }}
-                                    >
-                                        ⬆️ Reaction [1..N]
-                                    </span>
-                                    <strong style={{ color: '#00ACC1' }}>Resolves BEFORE Action</strong>
-                                </div>
-                                <p style={{ margin: '0', color: 'var(--text-main)', lineHeight: '1.4', fontSize: '0.82rem' }}>
-                                    Almost instantaneous movements used when it is not your turn yet. Higher Reaction numbers resolve <strong>FIRST</strong>.
-                                </p>
-                                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
-                                    <em>Examples: Quick Attack (⬆️1), Extreme Speed (⬆️2), Sucker Punch (⬆️1).</em>
-                                </div>
-                            </div>
-
-                            {/* Late Reactions Box */}
-                            <div
-                                style={{
-                                    padding: '12px',
-                                    borderRadius: '6px',
-                                    backgroundColor: 'var(--panel-alt)',
-                                    border: '1px solid #7E57C2',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '6px'
-                                }}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span
-                                        style={{
-                                            backgroundColor: '#7E57C2',
-                                            color: '#FFFFFF',
-                                            fontWeight: 'bold',
-                                            padding: '2px 8px',
-                                            borderRadius: '4px',
-                                            fontSize: '0.78rem',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '4px'
-                                        }}
-                                    >
-                                        ⬇️ Late Reaction [1..N]
-                                    </span>
-                                    <strong style={{ color: '#7E57C2' }}>Resolves AFTER Action</strong>
-                                </div>
-                                <p style={{ margin: '0', color: 'var(--text-main)', lineHeight: '1.4', fontSize: '0.82rem' }}>
-                                    Delayed counter-attacks & traps that trigger after taking the hit. Higher Late Reaction numbers resolve <strong>LATER</strong> (Lower numbers resolve first!).
-                                </p>
-                                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
-                                    <em>Examples: Avalanche (⬇️4), Dragon Tail (⬇️6), Counter (⬇️5), Revenge (⬇️4).</em>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Interactive Timing Rules & Examples */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            <strong style={{ color: 'var(--primary)', fontSize: '0.9rem' }}>
-                                Resolution Chains & Battle Scenarios:
-                            </strong>
-
-                            {REACTION_RULES_EXAMPLES.map((ex) => (
-                                <div
-                                    key={ex.id}
-                                    style={{
-                                        padding: '10px 12px',
-                                        borderRadius: '6px',
-                                        backgroundColor: 'var(--panel-alt)',
-                                        border: '1px solid var(--border)',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '8px'
-                                    }}
-                                >
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                                        <strong style={{ color: 'var(--primary)', fontSize: '0.85rem' }}>
-                                            {ex.title}
-                                        </strong>
-                                        <button
-                                            type="button"
-                                            className="action-button action-button--dark gm-card-item-broadcast-btn"
-                                            onClick={() => handleBroadcastReactionExample(ex)}
-                                            title="Broadcast scenario to chat/roll log"
-                                            aria-label={`Broadcast ${ex.title}`}
-                                        >
-                                            <Megaphone size={12} /> Broadcast
-                                        </button>
-                                    </div>
-
-                                    <div style={{ color: 'var(--text-main)', fontSize: '0.8rem', fontStyle: 'italic', lineHeight: '1.35' }}>
-                                        “{ex.scenario}”
-                                    </div>
-
-                                    {/* Resolution Flow Badges */}
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '6px',
-                                            flexWrap: 'wrap',
-                                            padding: '6px 10px',
-                                            backgroundColor: 'var(--panel-bg)',
-                                            borderRadius: '4px',
-                                            border: '1px solid var(--border)'
-                                        }}
-                                    >
-                                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>
-                                            Order:
-                                        </span>
-                                        {ex.orderSteps.map((step, idx) => (
-                                            <span
-                                                key={idx}
-                                                style={{
-                                                    fontSize: '0.76rem',
-                                                    padding: '2px 8px',
-                                                    borderRadius: '4px',
-                                                    backgroundColor:
-                                                        idx === 0
-                                                            ? 'color-mix(in srgb, var(--primary) 20%, var(--panel-alt))'
-                                                            : 'var(--panel-alt)',
-                                                    border: idx === 0 ? '1px solid var(--primary)' : '1px solid var(--border)',
-                                                    color: idx === 0 ? 'var(--primary)' : 'var(--text-main)',
-                                                    fontWeight: idx === 0 ? 'bold' : 'normal'
-                                                }}
-                                            >
-                                                {step}
-                                            </span>
-                                        ))}
-                                    </div>
-
-                                    <p style={{ margin: '0', fontSize: '0.78rem', color: 'var(--text-main)', lineHeight: '1.35' }}>
-                                        {ex.explanation}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Core Rules Checklist */}
-                        <div
-                            style={{
-                                padding: '12px',
-                                borderRadius: '6px',
-                                backgroundColor: 'var(--panel-alt)',
-                                border: '1px solid var(--border)',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '8px'
-                            }}
-                        >
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', borderBottom: '1px solid var(--border)', paddingBottom: '6px' }}>
-                                <strong style={{ color: 'var(--primary)', fontSize: '0.85rem' }}>
-                                    Key Tactical Rules & Limitations
-                                </strong>
-                                <button
-                                    type="button"
-                                    className="action-button action-button--dark gm-card-item-broadcast-btn"
-                                    onClick={handleBroadcastReactionCoreRules}
-                                    title="Broadcast Core Reaction Rules to chat/roll log"
-                                    aria-label="Broadcast Core Reaction Rules"
-                                >
-                                    <Megaphone size={12} /> Broadcast Rules
-                                </button>
-                            </div>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '8px' }}>
-                                {REACTION_CORE_RULES.map((r, idx) => (
-                                    <div
-                                        key={idx}
-                                        style={{
-                                            padding: '8px 10px',
-                                            backgroundColor: 'var(--panel-bg)',
-                                            borderRadius: '4px',
-                                            border: '1px solid var(--border)',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '3px'
-                                        }}
-                                    >
-                                        <strong style={{ color: 'var(--primary)', fontSize: '0.8rem' }}>
-                                            • {r.title}
-                                        </strong>
-                                        <span style={{ fontSize: '0.76rem', color: 'var(--text-main)', lineHeight: '1.35' }}>
-                                            {r.desc}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                );
-
-            case 'pain-penalties':
-                return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem' }}>
-                        <div>
-                            <strong style={{ color: 'var(--primary)' }}>Pain Penalty Thresholds:</strong>
-                            <ul style={{ margin: '4px 0 0 0', paddingLeft: '20px' }}>
-                                <li>
-                                    <strong>&le; Half Total HP:</strong> Suffer 1st Pain Penalty (-1 success on all
-                                    Action Rolls).
-                                </li>
-                                <li>
-                                    <strong>1 HP:</strong> Suffer 2nd Pain Penalty (-1 additional success on all Action
-                                    Rolls, total -2).
-                                </li>
-                                <li>
-                                    <strong>Power Through the Pain:</strong> Pay <strong>1 Will Point</strong> to ignore
-                                    one Pain Penalty for the rest of the scene.
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                );
-
-            case 'lethal-damage':
-                return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.85rem' }}>
-                        <div
-                            style={{
-                                padding: '10px 12px',
-                                borderRadius: '4px',
-                                backgroundColor: 'var(--panel-alt)',
-                                border: '1px solid var(--semantic-danger)',
-                                lineHeight: '1.45'
-                            }}
-                        >
-                            <span
-                                style={{
-                                    color: 'var(--semantic-danger)',
-                                    fontWeight: 'bold',
-                                    display: 'block',
-                                    marginBottom: '4px'
-                                }}
-                            >
-                                Lethal Damage Rules (Optional):
-                            </span>
-                            <ul style={{ margin: '0', paddingLeft: '20px' }}>
-                                <li>
-                                    <strong>Trigger:</strong> If you or a Pokémon fall unconscious and keep receiving
-                                    damage, that damage becomes <strong>Lethal Damage</strong>. Some Pokémon can also
-                                    learn devastating moves that deal Lethal Damage directly when used with lethal
-                                    intent.
-                                </li>
-                                <li>
-                                    <strong>Risk of Death:</strong> If you suffer Lethal Damage equal to your{' '}
-                                    <strong>Total HP</strong>, your character is at risk of dying.{' '}
-                                    <strong>1 more Damage and the character dies.</strong>
-                                </li>
-                                <li>
-                                    <strong>Unattended Worsening:</strong> If a character suffers 1+ lethal damage and
-                                    is left unattended, they will suffer{' '}
-                                    <strong>another lethal damage every hour</strong> until their body can’t hold any
-                                    longer.
-                                </li>
-                                <li>
-                                    <strong>Twice as Costly to Heal:</strong>
-                                    <ul style={{ margin: '2px 0 0 0', paddingLeft: '16px' }}>
-                                        <li>
-                                             <strong>Potions:</strong> Requires <strong>2 Potion Units</strong> to heal 1
-                                            point of Lethal Damage (instead of 1).
-                                        </li>
-                                        <li>
-                                            <strong>Natural Recovery:</strong> If stabilized or with medical care, heals{' '}
-                                            <strong>1 lethal damage every 16 hours</strong> (instead of 8 hours).
-                                        </li>
-                                    </ul>
-                                </li>
-                                <li>
-                                    <strong>Setting Note:</strong> Lethal Damage is <strong>banned</strong> from
-                                    official League matches. However, ruthless Trainers or wild Pokémon will give no
-                                    mercy.
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                );
-
-            case 'trainer-actions':
-                return (
-                    <div className="gm-table-wrapper">
-                        <table className="gm-table">
-                            <thead>
-                                <tr>
-                                    <th>Trainer Action</th>
-                                    <th>In a Trainer Area</th>
-                                    <th>In the Fray</th>
-                                    <th style={{ width: '90px', textAlign: 'center' }}>Send</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {TRAINER_ACTIONS_TABLE.map((t) => (
-                                    <tr key={t.action}>
-                                        <td>
-                                            <strong>{t.action}</strong>
-                                        </td>
-                                        <td>{t.trainerArea}</td>
-                                        <td>{t.inFray}</td>
-                                        <td style={{ textAlign: 'center' }}>
-                                            <button
-                                                type="button"
-                                                className="action-button action-button--dark gm-card-item-broadcast-btn"
-                                                onClick={() => handleBroadcastTrainerAction(t)}
-                                                title={`Broadcast ${t.action} to chat/roll log`}
-                                                aria-label={`Broadcast ${t.action}`}
-                                            >
-                                                <Megaphone size={12} /> Broadcast
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                );
-
-            case 'cover-mechanics':
-                return (
-                    <div className="gm-table-wrapper">
-                        <table className="gm-table">
-                            <thead>
-                                <tr>
-                                    <th>Body Coverage</th>
-                                    <th>Bonus Def / Sp.Def vs Attacks</th>
-                                    <th>Takes Added Effects</th>
-                                    <th style={{ width: '90px', textAlign: 'center' }}>Send</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {COVER_TABLE.map((c) => (
-                                    <tr key={c.coverage}>
-                                        <td>
-                                            <strong>{c.coverage}</strong>
-                                        </td>
-                                        <td className="text-value-highlight" style={{ color: 'var(--primary)' }}>
-                                            {c.defBonus}
-                                        </td>
-                                        <td>{c.addedEffects}</td>
-                                        <td style={{ textAlign: 'center' }}>
-                                            <button
-                                                type="button"
-                                                className="action-button action-button--dark gm-card-item-broadcast-btn"
-                                                onClick={() => handleBroadcastCover(c)}
-                                                title={`Broadcast ${c.coverage} to chat/roll log`}
-                                                aria-label={`Broadcast ${c.coverage}`}
-                                            >
-                                                <Megaphone size={12} /> Broadcast
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                );
-
-            case 'healing-rates':
-                return (
-                    <div className="gm-table-wrapper">
-                        <table className="gm-table">
-                            <thead>
-                                <tr>
-                                    <th>Damage Type</th>
-                                    <th>Natural Healing Over Time</th>
-                                    <th>Potion Units Required</th>
-                                    <th style={{ width: '90px', textAlign: 'center' }}>Send</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {HEALING_TABLE.map((h) => (
-                                    <tr key={h.damageType}>
-                                        <td>
-                                            <strong>{h.damageType}</strong>
-                                        </td>
-                                        <td>{h.natural}</td>
-                                        <td>{h.potion}</td>
-                                        <td style={{ textAlign: 'center' }}>
-                                            <button
-                                                type="button"
-                                                className="action-button action-button--dark gm-card-item-broadcast-btn"
-                                                onClick={() => handleBroadcastHealing(h)}
-                                                title={`Broadcast ${h.damageType} to chat/roll log`}
-                                                aria-label={`Broadcast ${h.damageType}`}
-                                            >
-                                                <Megaphone size={12} /> Broadcast
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                );
-
-            case 'status-effects-all':
-                return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        {/* Status Categories & Rules Banner */}
-                        <div className="status-rules-box">
-                            <div className="status-rules-box__header">
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    <Layers size={16} color="var(--primary)" />
-                                    <strong style={{ color: 'var(--primary)', fontSize: '0.9rem' }}>
-                                        Status Ailments & Conditions Categories
-                                    </strong>
-                                </div>
-                                <button
-                                    type="button"
-                                    className="action-button action-button--dark gm-card-item-broadcast-btn"
-                                    onClick={handleBroadcastStatusRules}
-                                    title="Broadcast Status Categories & Rules to chat/roll log"
-                                    aria-label="Broadcast Status Categories & Rules"
-                                >
-                                    <Megaphone size={12} /> Broadcast Rules
-                                </button>
-                            </div>
-
-                            <div className="status-categories-grid">
-                                {STATUS_CATEGORIES_DATA.map((cat) => (
-                                    <div key={cat.category} className="status-category-card">
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                                            <span
-                                                className={`status-category-pill status-category-pill--${cat.category.toLowerCase()}`}
-                                                style={{ color: cat.color }}
-                                            >
-                                                {cat.title}
-                                            </span>
-                                        </div>
-                                        <p className="text-subtext" style={{ margin: '0 0 4px 0', fontSize: '0.78rem', color: 'var(--text-main)', lineHeight: '1.35' }}>
-                                            {cat.desc}
-                                        </p>
-                                        <span className="text-subtext" style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                                            <em>Examples: {cat.examples}</em>
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="status-rules-box__notes">
-                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', fontSize: '0.8rem', color: 'var(--text-main)', lineHeight: '1.4' }}>
-                                    <Sparkles size={14} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                                    <span>
-                                        <strong>Status Stacking:</strong> {STATUS_RULES_INFO.stacking}
-                                    </span>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', fontSize: '0.8rem', color: 'var(--text-main)', lineHeight: '1.4' }}>
-                                    <Pill size={14} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                                    <span>
-                                        <strong>Curing Multiple Conditions:</strong> {STATUS_RULES_INFO.curing}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Individual Status Grid */}
-                        <div className="status-grid">
-                            {STATUS_EFFECTS_DATA.map((s) => (
-                                <div key={s.id} className="status-card">
-                                    <div className="status-card__header">
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
-                                            <span
-                                                className="status-card__badge"
-                                                style={{ backgroundColor: s.color, color: s.textColor }}
-                                            >
-                                                {s.name}
-                                            </span>
-                                            <span
-                                                className={`status-category-pill status-category-pill--${s.categoryType.toLowerCase()}`}
-                                                style={{ fontSize: '0.68rem', padding: '1px 6px' }}
-                                                title={`Category: ${s.categoryType}`}
-                                            >
-                                                {s.categoryType}
-                                            </span>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            className="action-button action-button--dark gm-card-item-broadcast-btn"
-                                            onClick={() => handleBroadcastStatus(s)}
-                                            title={`Broadcast ${s.name} to chat/roll log`}
-                                            aria-label={`Broadcast ${s.name}`}
-                                        >
-                                            <Megaphone size={12} /> Broadcast
-                                        </button>
-                                    </div>
-                                    <div className="status-card__text">
-                                        <strong>Effect:</strong> {s.effect}
-                                    </div>
-                                    {s.id === 'status-in-love' && (
-                                        <div
-                                            style={{
-                                                padding: '6px 8px',
-                                                borderRadius: '4px',
-                                                backgroundColor: 'color-mix(in srgb, #F48FB1 15%, var(--panel-bg))',
-                                                border: '1px dashed #F48FB1',
-                                                fontSize: '0.74rem',
-                                                color: 'var(--text-main)',
-                                                lineHeight: '1.35',
-                                                marginTop: '2px'
-                                            }}
-                                        >
-                                            <strong>💕 Storyteller Note:</strong> Being <em>In Love</em> means trying to earn their crush’s favor. At the GM’s discretion, they deal <strong>Half Damage</strong> or apply <strong>all Holding Back options</strong> (no crits, no poison/added effects—poisoning your crush is a massive red flag!). Refer to the <strong>“Holding Back an Attack”</strong> section for details.
-                                        </div>
-                                    )}
-                                    <div className="status-card__text">
-                                        <strong>Resist:</strong> {s.resist}
-                                    </div>
-                                    <div className="status-card__text" style={{ color: 'var(--text-muted)' }}>
-                                        <strong>Duration:</strong> {s.duration}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                );
-
-            case 'weather-conditions-all':
-                return (
-                    <div className="weather-grid">
-                        {WEATHER_CONDITIONS_DATA.map((w) => (
-                            <div key={w.id} className="weather-card">
-                                <div className="weather-card__header">
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
-                                        <span className="weather-card__title" style={{ color: w.color }}>
-                                            {w.name}
-                                        </span>
-                                        <span className="gm-screen-modal__card-badge">{w.badge}</span>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        className="action-button action-button--dark gm-card-item-broadcast-btn"
-                                        onClick={() => handleBroadcastWeather(w)}
-                                        title={`Broadcast ${w.name} Weather to chat/roll log`}
-                                        aria-label={`Broadcast ${w.name}`}
-                                    >
-                                        <Megaphone size={12} /> Broadcast
-                                    </button>
-                                </div>
-                                <ul className="weather-card__list">
-                                    {w.effects.map((e, idx) => (
-                                        <li key={idx}>{e}</li>
-                                    ))}
-                                </ul>
-                            </div>
-                        ))}
-                    </div>
-                );
-
-            case 'environmental-hazards-all':
-                return (
-                    <div className="gm-table-wrapper">
-                        <table className="gm-table">
-                            <thead>
-                                <tr>
-                                    <th>Hazard / Condition</th>
-                                    <th>Battlefield Effect</th>
-                                    <th style={{ width: '90px', textAlign: 'center' }}>Send</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {ENVIRONMENTAL_HAZARDS_DATA.map((h) => (
-                                    <tr key={h.id}>
-                                        <td>
-                                            <strong>{h.name}</strong>
-                                        </td>
-                                        <td>{h.effect}</td>
-                                        <td style={{ textAlign: 'center' }}>
-                                            <button
-                                                type="button"
-                                                className="action-button action-button--dark gm-card-item-broadcast-btn"
-                                                onClick={() => handleBroadcastHazard(h)}
-                                                title={`Broadcast ${h.name} to chat/roll log`}
-                                                aria-label={`Broadcast ${h.name}`}
-                                            >
-                                                <Megaphone size={12} /> Broadcast
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                );
-
-            case 'catching-mechanics':
-                return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <GmScreenCatchCalculator />
-                        <div className="gm-table-wrapper">
-                            <table className="gm-table">
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Seal Potency</th>
-                                        <th>Wild Condition</th>
-                                        <th>Bonus Successes</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Pokéball</td>
-                                        <td>4 dice</td>
-                                        <td>Half HP or lower</td>
-                                        <td>+1 Success</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Greatball</td>
-                                        <td>6 dice</td>
-                                        <td>At 1 HP</td>
-                                        <td>+2 Successes</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Ultraball</td>
-                                        <td>8 dice</td>
-                                        <td>Status Ailment</td>
-                                        <td>+1 Success / ailment</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Other / Custom Ball</td>
-                                        <td>Custom Seal Power</td>
-                                        <td>—</td>
-                                        <td>—</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                );
-
-            case 'training-points-guide':
-                return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <div className="gm-table-wrapper">
-                            <table className="gm-table">
-                                <thead>
-                                    <tr>
-                                        <th>Circumstance After Battle</th>
-                                        <th>TP Earned</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {BATTLE_TP_TABLE.map((b) => (
-                                        <tr key={b.circumstance}>
-                                            <td>{b.circumstance}</td>
-                                            <td className="text-value-highlight" style={{ color: 'var(--primary)' }}>
-                                                {b.tp}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div className="gm-table-wrapper">
-                            <table className="gm-table">
-                                <thead>
-                                    <tr>
-                                        <th>Rank</th>
-                                        <th>TP to Next Rank</th>
-                                        <th>Retraining Cost</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {RANK_UP_TP_TABLE.map((r) => (
-                                        <tr key={r.rank}>
-                                            <td>
-                                                <strong>{r.rank}</strong>
-                                            </td>
-                                            <td>{r.tpNextRank}</td>
-                                            <td>{r.retraining}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div className="gm-table-wrapper">
-                            <table className="gm-table">
-                                <thead>
-                                    <tr>
-                                        <th>Pokémon Stage</th>
-                                        <th>Current Rank Move</th>
-                                        <th>Prior Rank Move</th>
-                                        <th>Pre-Evo Move</th>
-                                        <th>TM</th>
-                                        <th>Overrank Move</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {LEARN_MOVES_TP_TABLE.map((l) => (
-                                        <tr key={l.stage}>
-                                            <td>
-                                                <strong>{l.stage}</strong>
-                                            </td>
-                                            <td>{l.currentRank}</td>
-                                            <td>{l.priorRank}</td>
-                                            <td>{l.preEvo}</td>
-                                            <td>{l.tm}</td>
-                                            <td>{l.overrank}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                );
-
-            case 'rank-summary-table':
-                return (
-                    <div className="gm-table-wrapper">
-                        <table className="gm-table">
-                            <thead>
-                                <tr>
-                                    <th>Rank</th>
-                                    <th>Max Targets</th>
-                                    <th>Skill Max</th>
-                                    <th>Attribute Points</th>
-                                    <th>Skill Points</th>
-                                    <th>All Foes Target Max</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {RANK_SUMMARY_TABLE.map((r) => (
-                                    <tr key={r.rank}>
-                                        <td>
-                                            <strong>{r.rank}</strong>
-                                        </td>
-                                        <td>{r.maxTargets}</td>
-                                        <td>{r.skillMax}</td>
-                                        <td>{r.attrPoints}</td>
-                                        <td>{r.skillPoints}</td>
-                                        <td>{r.allFoesMax}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                );
-
-            case 'encounter-balancing-chart':
-                return (
-                    <div className="gm-table-wrapper">
-                        <table className="gm-table">
-                            <thead>
-                                <tr>
-                                    <th>Foe Receives Damage</th>
-                                    <th>Lower Rank</th>
-                                    <th>Same Rank</th>
-                                    <th>One Rank Higher</th>
-                                    <th>Two + Ranks Higher</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {ENCOUNTER_BALANCE_TABLE.map((e) => {
-                                    const renderDiff = (diff: string) => {
-                                        const slug = diff.toLowerCase().replace(/\+/g, '').replace(/\s+/g, '-');
-                                        return <span className={`diff-pill diff-pill--${slug}`}>{diff}</span>;
-                                    };
-                                    return (
-                                        <tr key={e.effectiveness}>
-                                            <td>
-                                                <strong>{e.effectiveness}</strong>
-                                            </td>
-                                            <td>{renderDiff(e.lower)}</td>
-                                            <td>{renderDiff(e.same)}</td>
-                                            <td>{renderDiff(e.oneHigher)}</td>
-                                            <td>{renderDiff(e.twoHigher)}</td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                );
-
-            case 'type-matchup-chart':
-                return <GmScreenTypeMatrix />;
-
-            default:
-                return null;
+        if (itemId === 'type-matchup-chart') {
+            return <GmScreenTypeMatrix />;
         }
+
+        if (itemId === 'catching-mechanics') {
+            return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <GmScreenCatchCalculator />
+                    <div className="gm-table-wrapper">
+                        <table className="gm-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Seal Potency</th>
+                                    <th>Wild Condition</th>
+                                    <th>Bonus Successes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Pokéball</td>
+                                    <td>4 dice</td>
+                                    <td>Half HP or lower</td>
+                                    <td>+1 Success</td>
+                                </tr>
+                                <tr>
+                                    <td>Greatball</td>
+                                    <td>6 dice</td>
+                                    <td>At 1 HP</td>
+                                    <td>+2 Successes</td>
+                                </tr>
+                                <tr>
+                                    <td>Ultraball</td>
+                                    <td>8 dice</td>
+                                    <td>Status Ailment</td>
+                                    <td>+1 Success / ailment</td>
+                                </tr>
+                                <tr>
+                                    <td>Other / Custom Ball</td>
+                                    <td>Custom Seal Power</td>
+                                    <td>—</td>
+                                    <td>—</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        }
+
+        const combatIds = [
+            'skills-and-attributes',
+            'successes-required',
+            'will-points',
+            'combat-flow',
+            'using-a-move',
+            'holding-back-attack',
+            'reactions-late-reactions',
+            'pain-penalties',
+            'lethal-damage'
+        ];
+        if (combatIds.includes(itemId)) {
+            return (
+                <GmCombatCards
+                    itemId={itemId}
+                    onBroadcastWill={handleBroadcastWill}
+                    onBroadcastCombatFlowStep={handleBroadcastCombatFlowStep}
+                    onBroadcastHoldingBack={handleBroadcastHoldingBack}
+                    onBroadcastReactionExample={handleBroadcastReactionExample}
+                    onBroadcastReactionCoreRules={handleBroadcastReactionCoreRules}
+                />
+            );
+        }
+
+        const statusIds = [
+            'status-effects-all',
+            'weather-conditions-all',
+            'environmental-hazards-all'
+        ];
+        if (statusIds.includes(itemId)) {
+            return (
+                <GmStatusCards
+                    itemId={itemId}
+                    onBroadcastStatusRules={handleBroadcastStatusRules}
+                    onBroadcastStatus={handleBroadcastStatus}
+                    onBroadcastWeather={handleBroadcastWeather}
+                    onBroadcastHazard={handleBroadcastHazard}
+                />
+            );
+        }
+
+        const referenceIds = [
+            'trainer-actions',
+            'cover-mechanics',
+            'healing-rates',
+            'training-points-guide',
+            'rank-summary-table',
+            'encounter-balancing-chart'
+        ];
+        if (referenceIds.includes(itemId)) {
+            return (
+                <GmReferenceCards
+                    itemId={itemId}
+                    onBroadcastTrainerAction={handleBroadcastTrainerAction}
+                    onBroadcastCover={handleBroadcastCover}
+                    onBroadcastHealing={handleBroadcastHealing}
+                />
+            );
+        }
+
+        return null;
     };
 
     return (
