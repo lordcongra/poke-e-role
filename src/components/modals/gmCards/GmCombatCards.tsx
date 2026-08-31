@@ -37,11 +37,11 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                         <thead>
                             <tr>
                                 <th>Attributes</th>
+                                <th>Social Attributes</th>
                                 <th>Fight</th>
                                 <th>Survival</th>
                                 <th>Social</th>
                                 <th>Knowledge</th>
-                                <th>Social Attributes</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -49,56 +49,56 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                                 <td>
                                     <strong>Strength</strong>
                                 </td>
+                                <td>Tough</td>
                                 <td>Brawl</td>
                                 <td>Alert</td>
                                 <td>Charm</td>
                                 <td>Crafts</td>
-                                <td>Tough</td>
                             </tr>
                             <tr>
                                 <td>
                                     <strong>Dexterity</strong>
                                 </td>
-                                <td>Throw (Human*)</td>
+                                <td>Cool</td>
+                                <td>Throw*</td>
                                 <td>Athletic</td>
                                 <td>Empathy</td>
                                 <td>Lore</td>
-                                <td>Cool</td>
                             </tr>
                             <tr>
                                 <td>
                                     <strong>Vitality</strong>
                                 </td>
-                                <td>Weapons (Human*)</td>
+                                <td>Clever</td>
+                                <td>Weapons*</td>
                                 <td>Nature</td>
                                 <td>Etiquette</td>
                                 <td>Medicine</td>
-                                <td>Clever</td>
                             </tr>
                             <tr>
                                 <td>
                                     <strong>Special</strong>
                                 </td>
+                                <td>Beauty</td>
                                 <td>Evasion</td>
                                 <td>Stealth</td>
                                 <td>Intimidate</td>
                                 <td>Science</td>
-                                <td>Beauty</td>
                             </tr>
                             <tr>
                                 <td>
                                     <strong>Insight</strong>
                                 </td>
-                                <td>Clash (Pokémon^)</td>
+                                <td>Cute</td>
+                                <td>Clash^</td>
                                 <td>—</td>
                                 <td>Perform</td>
                                 <td>—</td>
-                                <td>Cute</td>
                             </tr>
                             <tr>
                                 <td>—</td>
-                                <td>Channel (Pokémon^)</td>
                                 <td>—</td>
+                                <td>Channel^</td>
                                 <td>—</td>
                                 <td>—</td>
                                 <td>—</td>

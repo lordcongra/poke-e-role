@@ -85,9 +85,9 @@ export const GM_CHEAT_ITEMS: GmCheatItem[] = [
             'cute'
         ],
         broadcastText:
-            'Attributes: Strength, Dexterity, Vitality, Special, Insight\nFight: Brawl, Throw*, Weapons*, Evasion, Clash^, Channel^\nSurvival: Alert, Athletic, Nature, Stealth\nSocial: Charm, Empathy, Etiquette, Intimidate, Perform\nKnowledge: Crafts, Lore, Medicine, Science\nSocial Attributes: Tough, Cool, Clever, Beauty, Cute (*Human, ^Pokemon)',
+            'Attributes: Strength, Dexterity, Vitality, Special, Insight\nSocial Attributes: Tough, Cool, Clever, Beauty, Cute\nFight: Brawl, Throw*, Weapons*, Evasion, Clash^, Channel^\nSurvival: Alert, Athletic, Nature, Stealth\nSocial: Charm, Empathy, Etiquette, Intimidate, Perform\nKnowledge: Crafts, Lore, Medicine, Science (*Human, ^Pokemon)',
         discordMarkdown: `## 📜 **Pokerole 3.0: Skills & Attributes**
-> *Reference list of Core Attributes, Combat Skills, and Non-Combat Competencies.*
+> *Reference list of Core Attributes, Social Attributes, Combat Skills, and Non-Combat Competencies.*
 
 **Core Attributes:**
 • **Strength:** Physical power, lifting, melee force
@@ -96,18 +96,26 @@ export const GM_CHEAT_ITEMS: GmCheatItem[] = [
 • **Special:** Elemental mastery, aura, energy output
 • **Insight:** Mental acuity, perception, tactical wit
 
+**Social Attributes:**
+• **Tough:** Grit, determination, withstanding stress
+• **Cool:** Style, composure, charismatic confidence
+• **Clever:** Wit, fast thinking, cunning
+• **Beauty:** Grace, visual aesthetic, magnetic presence
+• **Cute:** Innocence, endearing charm
+
 **Fight Skills:**
 • **Brawl:** Unarmed melee combat
-• **Throw (Human*):** Throwing Pokéballs & projectiles
-• **Weapons (Human*):** Wielding weapons
+• **Throw*:** Throwing Pokéballs & projectiles
+• **Weapons*:** Wielding weapons
 • **Evasion:** Dodging, ducking, diving for cover
-• **Clash (Pokémon^):** Contesting enemy attacks
-• **Channel (Pokémon^):** Projecting special energy
+• **Clash^:** Contesting enemy attacks
+• **Channel^:** Projecting special energy
 
 **Survival Skills:** \`Alert\`, \`Athletic\`, \`Nature\`, \`Stealth\`
 **Social Skills:** \`Charm\`, \`Empathy\`, \`Etiquette\`, \`Intimidate\`, \`Perform\`
 **Knowledge Skills:** \`Crafts\`, \`Lore\`, \`Medicine\`, \`Science\`
-**Social Attributes:** \`Tough\`, \`Cool\`, \`Clever\`, \`Beauty\`, \`Cute\``
+
+*(* Typically a human skill | ^ Typically a Pokémon skill)*`
     },
     {
         id: 'successes-required',
