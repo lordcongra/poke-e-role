@@ -181,7 +181,7 @@ export const STATUS_RULES: Record<string, string> = {
         'The subject cannot perform any action as is inside a block of ice. The block has 5 HP with a Def & Sp. Def Score of 2. Ice-type Pokémon are immune.',
     Sleep: 'The subject falls into a deep slumber and cannot perform any action until they wake up. Roll Insight at the start of their turn; wake up after adding up 5 successes. Doing this counts as an action.',
     'In Love':
-        'Hold Back against the beloved foe and allies. Roll Loyalty/Insight and score at least 3 successes to attack the beloved foe and allies at full power.',
+        'Holds Back against beloved foe and allies (deals half damage; Storyteller may enforce all Holding Back options including forfeiting added effects & crits to win favor). Roll Loyalty or Insight (3+ successes) to attack at full power.',
     Confusion:
         'Removes successes from action rolls based on Rank (Starter to Standard: 1, Advanced to Ace: 2, Master or higher: 3). If action fails, subject is dealt 1 damage. Roll Insight (2 successes) to act normally.',
     Disable: 'Cannot perform a disabled Move. Only one Move can be disabled per subject at a time.',

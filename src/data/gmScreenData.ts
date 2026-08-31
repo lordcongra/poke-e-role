@@ -194,6 +194,76 @@ export const HOLDING_BACK_OPTIONS: HoldingBackOption[] = [
     }
 ];
 
+export interface ReactionRuleExample {
+    id: string;
+    title: string;
+    scenario: string;
+    orderSteps: string[];
+    explanation: string;
+}
+
+export const REACTION_RULES_EXAMPLES: ReactionRuleExample[] = [
+    {
+        id: 'reaction-vs-reaction',
+        title: 'Reaction vs. Reaction (Higher Number Resolves First)',
+        scenario: 'Togekiss uses Air Slash on its turn. Cyndaquil reacts with Quick Attack (⬆️1). Togekiss responds with Extreme Speed (⬆️2).',
+        orderSteps: [
+            '1. Extreme Speed (⬆️2) [Togekiss]',
+            '2. Quick Attack (⬆️1) [Cyndaquil]',
+            '3. Air Slash (Main Action) [Togekiss]'
+        ],
+        explanation: 'Extreme Speed (⬆️2) resolves first. Quick Attack (⬆️1) resolves second. Togekiss’s initial Air Slash resolves last. Note: Once Extreme Speed (⬆️2) is used, Cyndaquil cannot respond with a lower Reaction (like Reaction 1).'
+    },
+    {
+        id: 'late-reaction-vs-late-reaction',
+        title: 'Late Reaction vs. Late Reaction (Lower Number Resolves First)',
+        scenario: 'Charizard uses Slash on its turn. Blastoise sets a trap with Avalanche (⬇️4). Charizard answers with Dragon Tail (⬇️6).',
+        orderSteps: [
+            '1. Slash (Main Action) [Charizard]',
+            '2. Avalanche (⬇️4) [Blastoise]',
+            '3. Dragon Tail (⬇️6) [Charizard]'
+        ],
+        explanation: 'Charizard’s Slash hits first. Then Blastoise’s Avalanche (⬇️4) triggers. Finally, Charizard’s Dragon Tail (⬇️6) knocks Blastoise back.'
+    },
+    {
+        id: 'reaction-vs-late-reaction',
+        title: 'Reaction vs. Late Reaction (Reaction ➔ Main Action ➔ Late Reaction)',
+        scenario: 'Blastoise uses Water Gun on its turn. Charizard reacts with Quick Attack (⬆️1). Blastoise answers with Avalanche (⬇️4).',
+        orderSteps: [
+            '1. Quick Attack (⬆️1) [Charizard]',
+            '2. Water Gun (Main Action) [Blastoise]',
+            '3. Avalanche (⬇️4) [Blastoise]'
+        ],
+        explanation: 'Quick Attack (⬆️1) resolves before the main action. Then Water Gun resolves. Finally, Avalanche (⬇️4) triggers after the main hit resolves. (Note: You cannot use a regular Reaction ⬆️ against a Late Reaction ⬇️).'
+    }
+];
+
+export const REACTION_CORE_RULES = [
+    {
+        title: 'Action Economy Cost',
+        desc: 'Rolling any Reaction or Late Reaction consumes 1 of your character’s Actions for the Round, bound to the Multiple Action Difficulty chart.'
+    },
+    {
+        title: '1 Reaction Per Turn Limit',
+        desc: 'You can only use ONE reaction per turn (including during an opponent’s turn or on your own turn when answering an incoming reaction).'
+    },
+    {
+        title: 'Preemption & Lockout',
+        desc: 'If a higher reaction number is declared (e.g. ⬆️2 Extreme Speed), you cannot respond to it with a lower reaction number (e.g. ⬆️1 Quick Attack).'
+    },
+    {
+        title: 'Cannot React to a Late Reaction',
+        desc: 'Standard Reactions (⬆️) CANNOT be used against a Late Reaction (⬇️). Late Reactions can only be answered by another Late Reaction (⬇️).'
+    },
+    {
+        title: 'Can Late React to a Reaction',
+        desc: 'You CAN use a Late Reaction (⬇️) to answer an opponent’s standard Reaction (⬆️).'
+    },
+    {
+        title: 'No Reaction Without a Reason',
+        desc: 'You cannot react unless you are being directly targeted by an incoming action or answering a reaction. (Exception: Support moves like Wide Guard or maneuvers like Cover an Ally can protect teammates).'
+    }
+];
 
 // 6. TRAINER ACTIONS & COVER
 export const TRAINER_ACTIONS_TABLE = [
@@ -414,8 +484,8 @@ export const STATUS_EFFECTS_DATA: StatusEffectData[] = [
         categoryType: 'Volatile',
         color: '#F48FB1',
         textColor: '#000000',
-        effect: 'Deal 1/2 Damage against beloved foe and their allies.',
-        resist: 'Loyalty or Insight roll when attacking (3+ successes deals full damage).',
+        effect: 'Holds Back against beloved foe & allies (deals 1/2 damage, or up to Storyteller: forfeits crits & added effects to earn favor—poisoning your crush is a red flag!).',
+        resist: 'Loyalty or Insight roll when attacking (3+ successes attacks at full power without holding back).',
         duration: '24 Hours'
     },
     {
@@ -903,10 +973,11 @@ ${formatDiscordTable(
             'critical hit',
             'shinies',
             'catching',
-            'mercy'
+            'mercy',
+            'in love'
         ],
         broadcastText:
-            'Holding Back an Attack:\nCommand your Pokémon to hold back ("Hold Back!", "Restrain yourself!", "Don’t use full force!") and choose one or more:\n• Deal Half Damage: Inflict half damage rounded down.\n• Forfeit Added Effects on Target: Target ignores added effects (User self-effects still apply).\n• Forfeit Critical Bonus Dice: Skip the +2 bonus damage dice (still counts as a Crit landed).',
+            'Holding Back an Attack:\nCommand your Pokémon to hold back ("Hold Back!", "Restrain yourself!", "Don’t use full force!") and choose one or more:\n• Deal Half Damage: Inflict half damage rounded down.\n• Forfeit Added Effects on Target: Target ignores added effects (User self-effects still apply).\n• Forfeit Critical Bonus Dice: Skip the +2 bonus damage dice (still counts as a Crit landed).\n\n(Storyteller Note: When "In Love", Pokémon try to earn their beloved’s favor. At Storyteller discretion, this can mean Half Damage or applying all Holding Back options—landing crits or poisoning your crush is a massive red flag!)',
         discordMarkdown: `## ✋ **Holding Back an Attack**
 > *Sometimes it will be more convenient to contain the full force of your Pokémon attacks (e.g. avoiding fainting wild shinies or sparring).*
 > 
@@ -914,7 +985,57 @@ ${formatDiscordTable(
 
 • **Deal Half Damage:** You make your damage roll normally but only inflict **half of the damage rounded down** to those affected by your Move.
 • **Forfeit Added Effects on the Target:** Your Move hits but you don’t want it to have lasting effects on those affected, so any **Added effect that would apply to the target is forfeited**. Added Effects that affect the User still apply.
-• **Forfeit Critical Hit Bonus Dice:** Your Accuracy roll may have been impeccable, but you **do not add the extra damage dice (+2 dice)** on your roll. Even so, the Move still counts as a Critical Hit landed, but we are not gonna be fainting shinies here!`
+• **Forfeit Critical Hit Bonus Dice:** Your Accuracy roll may have been impeccable, but you **do not add the extra damage dice (+2 dice)** on your roll. Even so, the Move still counts as a Critical Hit landed, but we are not gonna be fainting shinies here!
+
+> 💕 **In Love Status Condition (Storyteller Discretion):**
+> When a Pokémon is **In Love**, they are trying to earn their beloved's favor. At the Storyteller's discretion, this can mean dealing **Half Damage**, or applying **all Holding Back options** (forfeiting poison/added effects and critical hits)—because landing a critical hit or poisoning your crush is definitely not going to win you any dates (huge red flag!).
+> *Can attack at full power by succeeding on a Loyalty or Insight roll (3+ successes).*`
+    },
+    {
+        id: 'reactions-late-reactions',
+        title: 'Reactions & Late Reactions',
+        category: 'rules',
+        categoryLabel: 'Combat & Rules',
+        badge: 'Priority & Timing',
+        summary: 'Reactions (⬆️) resolve BEFORE incoming actions (highest speed first). Late Reactions (⬇️) resolve AFTER incoming actions (lowest speed first).',
+        keywords: [
+            'reactions',
+            'reaction',
+            'late reactions',
+            'late reaction',
+            'priority',
+            'speed',
+            'order',
+            'resolution',
+            'quick attack',
+            'extreme speed',
+            'avalanche',
+            'dragon tail',
+            'timing',
+            'interrupt'
+        ],
+        broadcastText:
+            'Reactions & Late Reactions:\n• Reactions (⬆️): Instant movements used when it’s not your turn. Resolve BEFORE the incoming action hits. Higher numbers resolve FIRST (e.g. Extreme Speed ⬆️2 resolves before Quick Attack ⬆️1).\n• Late Reactions (⬇️): Retaliations/traps that resolve AFTER the incoming action hits. Higher numbers resolve LATER (Lower numbers resolve first: Main Action ➔ Avalanche ⬇️4 ➔ Dragon Tail ⬇️6).\n• Interactivity: You CANNOT react (⬆️) to a Late Reaction (⬇️), but you CAN Late React (⬇️) to a Reaction (⬆️).\n• Action Cost: Rolling any Reaction or Late Reaction consumes 1 Action for the Round (bound to Multi-Action chart). Max 1 reaction per turn.\n• Trigger Rule: Cannot use a reaction without an incoming trigger/target (support moves like Wide Guard / Cover an Ally can protect allies).',
+        discordMarkdown: `## ⚡ **Reactions & Late Reactions**
+> *Reactions are fast, tactical maneuvers and moves used when it is not your turn yet.*
+
+### ⬆️ **Reactions (Fast - Resolve Before Main Action)**
+• **Timing:** Resolve **BEFORE** the incoming main action hits.
+• **Speed Order:** **Higher numbers resolve FIRST** *(e.g. Reaction 2 Extreme Speed resolves before Reaction 1 Quick Attack, which resolves before the base Air Slash)*.
+• **Preemption:** You **cannot** answer a higher reaction number with a lower reaction number.
+
+### ⬇️ **Late Reactions (Delayed - Resolve After Main Action)**
+• **Timing:** Resolve **AFTER** the incoming main action hits *(like enduring a blow to trigger an Avalanche)*.
+• **Speed Order (Reverse):** **Higher numbers resolve LATER** *(e.g. Main Slash ➔ Late Reaction 4 Avalanche ➔ Late Reaction 6 Dragon Tail)*.
+• **Interaction Rule:** You **CANNOT** use a standard Reaction (⬆️) against a Late Reaction (⬇️). Late Reactions can only be answered by another Late Reaction.
+• **Late Reacting to a Reaction:** You **CAN** use a Late Reaction against a Reaction *(e.g. ⬆️1 Quick Attack ➔ Main Action ➔ ⬇️4 Avalanche)*.
+
+---
+### ⚠️ **Key Rules & Limitations**
+1. **Action Cost:** Every Reaction or Late Reaction consumes **1 Action** from your pool for the Round (bound to the Multiple Action difficulty chart).
+2. **1 Reaction per Turn:** You can use at most **one reaction per turn** (including enemy turns or your own turn when answering a reaction).
+3. **No Reaction Without a Reason:** You cannot react without an incoming trigger/target attacking you *(e.g. in multi-battles, you cannot Quick Attack an enemy attacking an ally)*.
+4. **Support Moves Exception:** Defensive support moves *(e.g. Wide Guard)* and intercept maneuvers *(e.g. Cover an Ally)* CAN be used to defend teammates.`
     },
     {
         id: 'pain-penalties',

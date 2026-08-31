@@ -32,6 +32,8 @@ import {
     COMBAT_FLOW_STEPS,
     MOVE_RESOLUTION_STEPS,
     HOLDING_BACK_OPTIONS,
+    REACTION_RULES_EXAMPLES,
+    REACTION_CORE_RULES,
     STATUS_CATEGORIES_DATA,
     STATUS_RULES_INFO,
     TRAINER_ACTIONS_TABLE,
@@ -47,7 +49,8 @@ import {
     ENCOUNTER_BALANCE_TABLE,
     type GmCheatItem,
     type StatusEffectData,
-    type HoldingBackOption
+    type HoldingBackOption,
+    type ReactionRuleExample
 } from '../../data/gmScreenData';
 import { GmScreenCatchCalculator } from './GmScreenCatchCalculator';
 import { GmScreenTypeMatrix } from './GmScreenTypeMatrix';
@@ -236,6 +239,16 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
     const handleBroadcastCombatFlowStep = (s: (typeof COMBAT_FLOW_STEPS)[0]) => {
         const text = `Combat Flow Step ${s.step}: ${s.title}\n${s.items.map((it) => `• ${it}`).join('\n')}`;
         broadcastInfo(`Combat Step ${s.step}: ${s.title}`, text);
+    };
+
+    const handleBroadcastReactionExample = (ex: ReactionRuleExample) => {
+        const text = `Reaction Resolution (${ex.title}):\n• Scenario: ${ex.scenario}\n• Resolution Order:\n${ex.orderSteps.map((s) => `  ${s}`).join('\n')}\n• Note: ${ex.explanation}`;
+        broadcastInfo(`Reactions: ${ex.title}`, text);
+    };
+
+    const handleBroadcastReactionCoreRules = () => {
+        const text = `Reactions & Late Reactions Core Rules:\n${REACTION_CORE_RULES.map((r) => `• ${r.title}: ${r.desc}`).join('\n')}`;
+        broadcastInfo(`Reaction Rules & Timing`, text);
     };
 
     const filteredItems = useMemo(() => {
@@ -618,6 +631,244 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                                 </div>
                             ))}
                         </div>
+
+                        <div
+                            style={{
+                                padding: '8px 12px',
+                                borderRadius: '6px',
+                                backgroundColor: 'color-mix(in srgb, #F48FB1 12%, var(--panel-bg))',
+                                border: '1px dashed #F48FB1',
+                                fontSize: '0.78rem',
+                                color: 'var(--text-main)',
+                                lineHeight: '1.35'
+                            }}
+                        >
+                            <strong style={{ color: '#E91E63' }}>💕 In Love Status Condition (Storyteller Discretion):</strong> When a Pokémon is <strong>In Love</strong>, they are trying to earn their crush’s favor. At the Storyteller’s discretion, this can mean dealing <strong>Half Damage</strong> or enforcing <strong>all Holding Back restrictions</strong> (forfeiting crits & added effects—poisoning your crush or landing crits is a massive red flag!). Pokémon can bypass this by succeeding on a Loyalty or Insight roll (3+ successes) when attacking.
+                        </div>
+                    </div>
+                );
+
+            case 'reactions-late-reactions':
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.85rem' }}>
+                        {/* Comparison Overview Banner */}
+                        <div
+                            style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                                gap: '10px'
+                            }}
+                        >
+                            {/* Reactions Box */}
+                            <div
+                                style={{
+                                    padding: '12px',
+                                    borderRadius: '6px',
+                                    backgroundColor: 'var(--panel-alt)',
+                                    border: '1px solid #00ACC1',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '6px'
+                                }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span
+                                        style={{
+                                            backgroundColor: '#00ACC1',
+                                            color: '#FFFFFF',
+                                            fontWeight: 'bold',
+                                            padding: '2px 8px',
+                                            borderRadius: '4px',
+                                            fontSize: '0.78rem',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '4px'
+                                        }}
+                                    >
+                                        ⬆️ Reaction [1..N]
+                                    </span>
+                                    <strong style={{ color: '#00ACC1' }}>Resolves BEFORE Action</strong>
+                                </div>
+                                <p style={{ margin: '0', color: 'var(--text-main)', lineHeight: '1.4', fontSize: '0.82rem' }}>
+                                    Almost instantaneous movements used when it is not your turn yet. Higher Reaction numbers resolve <strong>FIRST</strong>.
+                                </p>
+                                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                                    <em>Examples: Quick Attack (⬆️1), Extreme Speed (⬆️2), Sucker Punch (⬆️1).</em>
+                                </div>
+                            </div>
+
+                            {/* Late Reactions Box */}
+                            <div
+                                style={{
+                                    padding: '12px',
+                                    borderRadius: '6px',
+                                    backgroundColor: 'var(--panel-alt)',
+                                    border: '1px solid #7E57C2',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '6px'
+                                }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span
+                                        style={{
+                                            backgroundColor: '#7E57C2',
+                                            color: '#FFFFFF',
+                                            fontWeight: 'bold',
+                                            padding: '2px 8px',
+                                            borderRadius: '4px',
+                                            fontSize: '0.78rem',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '4px'
+                                        }}
+                                    >
+                                        ⬇️ Late Reaction [1..N]
+                                    </span>
+                                    <strong style={{ color: '#7E57C2' }}>Resolves AFTER Action</strong>
+                                </div>
+                                <p style={{ margin: '0', color: 'var(--text-main)', lineHeight: '1.4', fontSize: '0.82rem' }}>
+                                    Delayed counter-attacks & traps that trigger after taking the hit. Higher Late Reaction numbers resolve <strong>LATER</strong> (Lower numbers resolve first!).
+                                </p>
+                                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                                    <em>Examples: Avalanche (⬇️4), Dragon Tail (⬇️6), Counter (⬇️5), Revenge (⬇️4).</em>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Interactive Timing Rules & Examples */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <strong style={{ color: 'var(--primary)', fontSize: '0.9rem' }}>
+                                Resolution Chains & Battle Scenarios:
+                            </strong>
+
+                            {REACTION_RULES_EXAMPLES.map((ex) => (
+                                <div
+                                    key={ex.id}
+                                    style={{
+                                        padding: '10px 12px',
+                                        borderRadius: '6px',
+                                        backgroundColor: 'var(--panel-alt)',
+                                        border: '1px solid var(--border)',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '8px'
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                                        <strong style={{ color: 'var(--primary)', fontSize: '0.85rem' }}>
+                                            {ex.title}
+                                        </strong>
+                                        <button
+                                            type="button"
+                                            className="action-button action-button--dark gm-card-item-broadcast-btn"
+                                            onClick={() => handleBroadcastReactionExample(ex)}
+                                            title="Broadcast scenario to chat/roll log"
+                                            aria-label={`Broadcast ${ex.title}`}
+                                        >
+                                            <Megaphone size={12} /> Broadcast
+                                        </button>
+                                    </div>
+
+                                    <div style={{ color: 'var(--text-main)', fontSize: '0.8rem', fontStyle: 'italic', lineHeight: '1.35' }}>
+                                        “{ex.scenario}”
+                                    </div>
+
+                                    {/* Resolution Flow Badges */}
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            flexWrap: 'wrap',
+                                            padding: '6px 10px',
+                                            backgroundColor: 'var(--panel-bg)',
+                                            borderRadius: '4px',
+                                            border: '1px solid var(--border)'
+                                        }}
+                                    >
+                                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>
+                                            Order:
+                                        </span>
+                                        {ex.orderSteps.map((step, idx) => (
+                                            <span
+                                                key={idx}
+                                                style={{
+                                                    fontSize: '0.76rem',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '4px',
+                                                    backgroundColor:
+                                                        idx === 0
+                                                            ? 'color-mix(in srgb, var(--primary) 20%, var(--panel-alt))'
+                                                            : 'var(--panel-alt)',
+                                                    border: idx === 0 ? '1px solid var(--primary)' : '1px solid var(--border)',
+                                                    color: idx === 0 ? 'var(--primary)' : 'var(--text-main)',
+                                                    fontWeight: idx === 0 ? 'bold' : 'normal'
+                                                }}
+                                            >
+                                                {step}
+                                            </span>
+                                        ))}
+                                    </div>
+
+                                    <p style={{ margin: '0', fontSize: '0.78rem', color: 'var(--text-main)', lineHeight: '1.35' }}>
+                                        {ex.explanation}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Core Rules Checklist */}
+                        <div
+                            style={{
+                                padding: '12px',
+                                borderRadius: '6px',
+                                backgroundColor: 'var(--panel-alt)',
+                                border: '1px solid var(--border)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '8px'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', borderBottom: '1px solid var(--border)', paddingBottom: '6px' }}>
+                                <strong style={{ color: 'var(--primary)', fontSize: '0.85rem' }}>
+                                    Key Tactical Rules & Limitations
+                                </strong>
+                                <button
+                                    type="button"
+                                    className="action-button action-button--dark gm-card-item-broadcast-btn"
+                                    onClick={handleBroadcastReactionCoreRules}
+                                    title="Broadcast Core Reaction Rules to chat/roll log"
+                                    aria-label="Broadcast Core Reaction Rules"
+                                >
+                                    <Megaphone size={12} /> Broadcast Rules
+                                </button>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '8px' }}>
+                                {REACTION_CORE_RULES.map((r, idx) => (
+                                    <div
+                                        key={idx}
+                                        style={{
+                                            padding: '8px 10px',
+                                            backgroundColor: 'var(--panel-bg)',
+                                            borderRadius: '4px',
+                                            border: '1px solid var(--border)',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '3px'
+                                        }}
+                                    >
+                                        <strong style={{ color: 'var(--primary)', fontSize: '0.8rem' }}>
+                                            • {r.title}
+                                        </strong>
+                                        <span style={{ fontSize: '0.76rem', color: 'var(--text-main)', lineHeight: '1.35' }}>
+                                            {r.desc}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 );
 
@@ -916,6 +1167,22 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                                     <div className="status-card__text">
                                         <strong>Effect:</strong> {s.effect}
                                     </div>
+                                    {s.id === 'status-in-love' && (
+                                        <div
+                                            style={{
+                                                padding: '6px 8px',
+                                                borderRadius: '4px',
+                                                backgroundColor: 'color-mix(in srgb, #F48FB1 15%, var(--panel-bg))',
+                                                border: '1px dashed #F48FB1',
+                                                fontSize: '0.74rem',
+                                                color: 'var(--text-main)',
+                                                lineHeight: '1.35',
+                                                marginTop: '2px'
+                                            }}
+                                        >
+                                            <strong>💕 Storyteller Note:</strong> Being <em>In Love</em> means trying to earn their crush’s favor. At the GM’s discretion, they deal <strong>Half Damage</strong> or apply <strong>all Holding Back options</strong> (no crits, no poison/added effects—poisoning your crush is a massive red flag!). Refer to the <strong>“Holding Back an Attack”</strong> section for details.
+                                        </div>
+                                    )}
                                     <div className="status-card__text">
                                         <strong>Resist:</strong> {s.resist}
                                     </div>
