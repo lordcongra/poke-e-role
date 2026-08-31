@@ -318,14 +318,16 @@ ${formatDiscordTable(
         discordMarkdown: `## ⚡ **Reactions & Late Reactions**
 > *Reactions are fast, tactical maneuvers and moves used when it is not your turn yet.*
 
-### ⬆️ **Reactions (Fast - Resolve Before Main Action)**
-• **Timing:** Resolve **BEFORE** the incoming main action hits.
-• **Speed Order:** **Higher numbers resolve FIRST** *(e.g. Reaction 2 Extreme Speed resolves before Reaction 1 Quick Attack, which resolves before the base Air Slash)*.
+### ⬆️ **Reactions [1..6] (Fast - Resolve Before Main Action)**
+• **Timing:** Resolve **BEFORE** the incoming main action hits (speeds range from 1 to 6).
+• **Speed Order:** **Higher numbers resolve FIRST** *(e.g. Protect ⬆️5 resolves before Upper Hand ⬆️3, which resolves before Quick Attack ⬆️1)*.
+• **Examples by Speed:** Quick Attack / Water Shuriken (⬆️1), Extreme Speed (⬆️2), Upper Hand (⬆️3), King’s Shield (⬆️4), Protect (⬆️5), Evade / Clash maneuvers (⬆️6).
 • **Preemption:** You **cannot** answer a higher reaction number with a lower reaction number.
 
-### ⬇️ **Late Reactions (Delayed - Resolve After Main Action)**
-• **Timing:** Resolve **AFTER** the incoming main action hits *(like enduring a blow to trigger an Avalanche)*.
-• **Speed Order (Reverse):** **Higher numbers resolve LATER** *(e.g. Main Slash ➔ Late Reaction 4 Avalanche ➔ Late Reaction 6 Dragon Tail)*.
+### ⬇️ **Late Reactions [1..6] (Delayed - Resolve After Main Action)**
+• **Timing:** Resolve **AFTER** the incoming main action hits (speeds range from 1 to 6, like enduring a blow to trigger a counter or trap).
+• **Speed Order (Reverse):** **Higher numbers resolve LATER** *(e.g. Main Slash ➔ Late Reaction 1 Circle Throw ➔ Late Reaction 3 Shell Trap ➔ Late Reaction 4 Avalanche ➔ Late Reaction 5 Counter ➔ Late Reaction 6 Dragon Tail)*.
+• **Examples by Speed:** Circle Throw / Feint (⬇️1), Shell Trap (⬇️3), Avalanche (⬇️4), Counter / Mirror Coat / Metal Burst (⬇️5), Dragon Tail / Roar / Whirlwind (⬇️6).
 • **Interaction Rule:** You **CANNOT** use a standard Reaction (⬆️) against a Late Reaction (⬇️). Late Reactions can only be answered by another Late Reaction.
 • **Late Reacting to a Reaction:** You **CAN** use a Late Reaction against a Reaction *(e.g. ⬆️1 Quick Attack ➔ Main Action ➔ ⬇️4 Avalanche)*.
 

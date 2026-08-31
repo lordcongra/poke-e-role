@@ -426,15 +426,15 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                                         gap: '4px'
                                     }}
                                 >
-                                    ⬆️ Reaction [1..N]
+                                    ⬆️ Reaction [1..6]
                                 </span>
                                 <strong style={{ color: '#00ACC1' }}>Resolves BEFORE Action</strong>
                             </div>
                             <p style={{ margin: '0', color: 'var(--text-main)', lineHeight: '1.4', fontSize: '0.82rem' }}>
-                                Almost instantaneous movements used when it is not your turn yet. Higher Reaction numbers resolve <strong>FIRST</strong>.
+                                Almost instantaneous movements used when it is not your turn yet (range from 1 to 6). Higher Reaction numbers resolve <strong>FIRST</strong>.
                             </p>
-                            <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
-                                <em>Examples: Quick Attack (⬆️1), Extreme Speed (⬆️2), Sucker Punch (⬆️1).</em>
+                            <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', lineHeight: '1.35' }}>
+                                <em>Examples: Quick Attack / Water Shuriken (⬆️1), Extreme Speed (⬆️2), Upper Hand (⬆️3), King’s Shield (⬆️4), Protect (⬆️5), Evade / Clash maneuvers (⬆️6).</em>
                             </div>
                         </div>
 
@@ -464,15 +464,15 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                                         gap: '4px'
                                     }}
                                 >
-                                    ⬇️ Late Reaction [1..N]
+                                    ⬇️ Late Reaction [1..6]
                                 </span>
                                 <strong style={{ color: '#7E57C2' }}>Resolves AFTER Action</strong>
                             </div>
                             <p style={{ margin: '0', color: 'var(--text-main)', lineHeight: '1.4', fontSize: '0.82rem' }}>
-                                Delayed counter-attacks & traps that trigger after taking the hit. Higher Late Reaction numbers resolve <strong>LATER</strong> (Lower numbers resolve first!).
+                                Delayed counter-attacks & traps that trigger after taking the hit (range from 1 to 6). Higher Late Reaction numbers resolve <strong>LATER</strong> (Lower numbers resolve first!).
                             </p>
                             <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
-                                <em>Examples: Avalanche (⬇️4), Dragon Tail (⬇️6), Counter (⬇️5), Revenge (⬇️4).</em>
+                                <em>Examples: Circle Throw / Feint (⬇️1), Shell Trap (⬇️3), Avalanche (⬇️4), Counter / Mirror Coat (⬇️5), Dragon Tail / Roar (⬇️6).</em>
                             </div>
                         </div>
                     </div>
