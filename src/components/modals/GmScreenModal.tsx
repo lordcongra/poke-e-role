@@ -548,7 +548,7 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                                                 {item.title}
                                             </strong>
                                             {item.badge && (
-                                                <span className="gm-screen-modal__card-badge">{item.badge}</span>
+                                                <span className="gm-screen-modal__card-badge text-theme-header">{item.badge}</span>
                                             )}
                                         </div>
 

@@ -156,7 +156,7 @@ export const GmStatusCards: React.FC<GmStatusCardsProps> = ({
                                     <span className="weather-card__title" style={{ color: w.color }}>
                                         {w.name}
                                     </span>
-                                    <span className="gm-screen-modal__card-badge">{w.badge}</span>
+                                    <span className="gm-screen-modal__card-badge text-theme-header">{w.badge}</span>
                                 </div>
                                 <button
                                     type="button"

@@ -259,14 +259,19 @@
 }
 
 .gm-screen-modal__card-badge {
-    font-size: 0.7rem;
-    padding: 2px 6px;
-    border-radius: 10px;
-    background-color: color-mix(in srgb, var(--primary) 20%, transparent);
-    color: var(--primary);
-    border: 1px solid var(--primary);
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background-color: color-mix(in srgb, var(--primary) 45%, var(--panel-bg));
+    color: #ffffff !important;
+    border: 1px solid color-mix(in srgb, var(--primary) 70%, #ffffff);
     font-weight: bold;
     white-space: nowrap;
+    letter-spacing: 0.2px;
+    text-shadow:
+        1px 1px 2px rgba(0, 0, 0, 0.8),
+        0 1px 4px rgba(0, 0, 0, 0.6) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .gm-screen-modal__card-actions {
@@ -413,24 +418,25 @@
     text-transform: uppercase;
     letter-spacing: 0.3px;
     border: 1px solid currentColor;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .status-category-pill--aggravating {
-    background-color: color-mix(in srgb, #D32F2F 15%, transparent);
-    color: #E53935;
-    border-color: #E53935;
+    background-color: color-mix(in srgb, #D32F2F 25%, var(--panel-bg));
+    color: #FF5252;
+    border-color: #FF5252;
 }
 
 .status-category-pill--fixed {
-    background-color: color-mix(in srgb, #E65100 15%, transparent);
-    color: #FB8C00;
-    border-color: #FB8C00;
+    background-color: color-mix(in srgb, #E65100 25%, var(--panel-bg));
+    color: #FFA726;
+    border-color: #FFA726;
 }
 
 .status-category-pill--volatile {
-    background-color: color-mix(in srgb, #00897B 15%, transparent);
-    color: #26A69A;
-    border-color: #26A69A;
+    background-color: color-mix(in srgb, #00897B 25%, var(--panel-bg));
+    color: #4DB6AC;
+    border-color: #4DB6AC;
 }
 
 .status-rules-box__notes {
