@@ -156,12 +156,12 @@ export const MOVE_RESOLUTION_STEPS = [
     {
         step: 3,
         title: 'Damage Roll & Critical Hits',
-        desc: 'Attacker determines Damage Dice pool (Move Power + Strength/Special - Defender’s Defense/Sp.Def). If Accuracy scored 3+ successes HIGHER than required, it is a Critical Hit (+2 extra Damage Dice to the pool)!'
+        desc: 'Attacker determines Damage Dice pool (Move Power + Strength/Special - Defender’s Defense/Sp.Def). If Accuracy scored 3+ successes HIGHER than required, it is a Critical Hit (+2 extra Damage Dice to the pool)!\n\n💡 Minimum 1 Base Damage: Even if you roll 0 successes on the damage dice pool, a successful hit still deals 1 base damage (unless the foe has Resistance or Immunity).'
     },
     {
         step: 4,
-        title: 'Weakness & Resistance Modifiers',
-        desc: 'Before dealing damage: Each Weakness adds +1 flat damage (only if at least 1 success rolled on damage dice). Each Resistance subtracts 1 flat damage.'
+        title: 'Weakness, Resistance & Added Effects',
+        desc: '⚡ 1+ Success Requirement: You DO need at least 1 successful dice roll on the damage roll for Added Effects to activate and for Super Effective bonuses to apply!\n\n• Added Effects: Any secondary effect (burn, flinch, stat reduction on target, etc.) ONLY activates if at least 1 success was rolled on the damage dice.\n• Weakness Bonus (+1 / +2): Requires at least 1 success on the damage roll. Each Weakness adds +1 flat damage (+1 for 2x Super Effective, +2 for 4x Extremely Effective).\n• Resistance (-1): Each Resistance subtracts 1 flat damage (reducing 1 base damage down to 0).\n• Immunity: Target takes 0 damage and ignores all effects.'
     },
     {
         step: 5,
@@ -169,6 +169,31 @@ export const MOVE_RESOLUTION_STEPS = [
         desc: 'Apply final damage to HP/Shields, then execute any declared Late Reactions.'
     }
 ];
+
+export interface HoldingBackOption {
+    id: string;
+    title: string;
+    desc: string;
+}
+
+export const HOLDING_BACK_OPTIONS: HoldingBackOption[] = [
+    {
+        id: 'half-damage',
+        title: 'Deal Half Damage',
+        desc: 'You make your damage roll normally but only inflict half of the damage rounded down to those affected by your Move.'
+    },
+    {
+        id: 'forfeit-added-effects',
+        title: 'Forfeit Added Effects on the Target',
+        desc: 'Your Move hits but you don’t want it to have lasting effects on those affected, so any Added effect that would apply to the target is forfeited. Added Effects that affect the User still apply.'
+    },
+    {
+        id: 'forfeit-critical-hit',
+        title: 'Forfeit Critical Hit Bonus Dice',
+        desc: 'Your Accuracy roll may have been impeccable, but you do not add the extra damage dice (+2 dice) on your roll. Even so, the Move still counts as a Critical Hit landed, but we are not gonna be fainting shinies here!'
+    }
+];
+
 
 // 6. TRAINER ACTIONS & COVER
 export const TRAINER_ACTIONS_TABLE = [
@@ -209,12 +234,74 @@ export const RANK_SUMMARY_TABLE = [
     { rank: 'Champion', maxTargets: 10, skillMax: 5, attrPoints: 14, skillPoints: 25, allFoesMax: 10 }
 ];
 
-// 8. STATUS EFFECTS
-export const STATUS_EFFECTS_DATA = [
+// 8. STATUS EFFECTS & CATEGORIES
+export interface StatusCategoryInfo {
+    category: 'Aggravating' | 'Fixed' | 'Volatile';
+    title: string;
+    color: string;
+    badgeColor: string;
+    desc: string;
+    examples: string;
+}
+
+export const STATUS_CATEGORIES_DATA: StatusCategoryInfo[] = [
+    {
+        category: 'Aggravating',
+        title: 'Aggravating',
+        color: '#D32F2F',
+        badgeColor: 'color-mix(in srgb, #D32F2F 15%, transparent)',
+        desc: 'The condition will worsen, dealing more damage overtime if left untreated.',
+        examples: '3rd Degree Burn, Badly Poisoned'
+    },
+    {
+        category: 'Fixed',
+        title: 'Fixed',
+        color: '#E65100',
+        badgeColor: 'color-mix(in srgb, #E65100 15%, transparent)',
+        desc: 'The condition remains as is; it does not worsen over time, but it does not heal on its own.',
+        examples: '1st & 2nd Degree Burn, Poison, Paralysis'
+    },
+    {
+        category: 'Volatile',
+        title: 'Volatile',
+        color: '#00897B',
+        badgeColor: 'color-mix(in srgb, #00897B 15%, transparent)',
+        desc: 'The condition is temporary and can heal on its own after a few minutes or by switching out the affected subject.',
+        examples: 'Confused, Disabled, Paralysis (Partial), Flinched, Frozen, In Love, Sleep'
+    }
+];
+
+export const STATUS_RULES_INFO = {
+    overview:
+        'Status Ailments & Conditions impair the normal state of Pokémon and trainers. They range from painful physical burns to mental distractions like confusion.',
+    stacking:
+        'Status Ailments & Conditions can stack into each other! A Pokémon can be asleep, poisoned, and confused simultaneously. Inflicting Burn or Poison more than once bumps it to the next degree.',
+    curing:
+        'Only a Full Heal, Full Restore, or Lum Berry can cure more than one condition at once. Otherwise, conditions must be treated one by one or allowed to heal naturally.',
+    league:
+        'Official Pokémon League matches may restrict stacking conditions (such as the Sleep/Status Clause).',
+    lethal:
+        'Severe conditions (2nd/3rd Degree Burn, Badly Poisoned) deal Lethal Damage under the Optional Lethal Damage rule.'
+};
+
+export interface StatusEffectData {
+    id: string;
+    name: string;
+    badge: string;
+    categoryType: 'Aggravating' | 'Fixed' | 'Volatile';
+    color: string;
+    textColor: string;
+    effect: string;
+    resist: string;
+    duration: string;
+}
+
+export const STATUS_EFFECTS_DATA: StatusEffectData[] = [
     {
         id: 'status-burn-1',
         name: '1st Degree Burn',
         badge: 'Regular',
+        categoryType: 'Fixed',
         color: '#FFCC80',
         textColor: '#000000',
         effect: '1 Damage at end of each round. Fire-type Pokémon are immune.',
@@ -225,6 +312,7 @@ export const STATUS_EFFECTS_DATA = [
         id: 'status-burn-2',
         name: '2nd Degree Burn',
         badge: 'Lethal',
+        categoryType: 'Fixed',
         color: '#FF8A65',
         textColor: '#000000',
         effect: '2 Lethal Damage at end of each round. Fire-type Pokémon are immune.',
@@ -235,6 +323,7 @@ export const STATUS_EFFECTS_DATA = [
         id: 'status-burn-3',
         name: '3rd Degree Burn',
         badge: 'Lethal Escalating',
+        categoryType: 'Aggravating',
         color: '#D32F2F',
         textColor: '#FFFFFF',
         effect: '3 Lethal Damage at end of round. Increases by +1 each round. Fire-type Pokémon are immune.',
@@ -245,6 +334,7 @@ export const STATUS_EFFECTS_DATA = [
         id: 'status-confused',
         name: 'Confused',
         badge: 'Mental',
+        categoryType: 'Volatile',
         color: '#80CBC4',
         textColor: '#000000',
         effect: 'If an action fails, suffer 1 damage. Action Roll Penalty: Standard Rank & Lower (-1 Success), Advanced to Ace (-2 Successes), Master+ (-3 Successes for the round).',
@@ -255,6 +345,7 @@ export const STATUS_EFFECTS_DATA = [
         id: 'status-disabled',
         name: 'Disabled',
         badge: 'Move Lock',
+        categoryType: 'Volatile',
         color: '#E0E0E0',
         textColor: '#000000',
         effect: 'Cannot use the Disabled Move. Max 1 Disabled Move per Pokémon at a time.',
@@ -265,6 +356,7 @@ export const STATUS_EFFECTS_DATA = [
         id: 'status-paralysis',
         name: 'Paralysis',
         badge: 'Impairment',
+        categoryType: 'Fixed',
         color: '#FFF59D',
         textColor: '#000000',
         effect: '-2 Dexterity, moves at 1/2 speed. Electric-type Pokémon are immune.',
@@ -275,6 +367,7 @@ export const STATUS_EFFECTS_DATA = [
         id: 'status-flinched',
         name: 'Flinched',
         badge: 'Interruption',
+        categoryType: 'Volatile',
         color: '#B0BEC5',
         textColor: '#000000',
         effect: 'Next turn takes NO Action. Cannot use Reactions until end of next turn. Can only be flinched once per round.',
@@ -285,6 +378,7 @@ export const STATUS_EFFECTS_DATA = [
         id: 'status-poison',
         name: 'Poison',
         badge: 'Regular Toxic',
+        categoryType: 'Fixed',
         color: '#CE93D8',
         textColor: '#000000',
         effect: '2 Damage at end of each round. Poison and Steel types are immune.',
@@ -295,6 +389,7 @@ export const STATUS_EFFECTS_DATA = [
         id: 'status-frozen',
         name: 'Frozen',
         badge: 'Immobilized & Full Cover',
+        categoryType: 'Volatile',
         color: '#81D4FA',
         textColor: '#000000',
         effect: 'No Actions. Ice types immune. Trapped in an Ice Block (HP 5, Def 2) which acts as Full Cover. Must be broken out before the Pokémon can be damaged again (GM fiat on whether excess damage transfers over).',
@@ -305,6 +400,7 @@ export const STATUS_EFFECTS_DATA = [
         id: 'status-badly-poisoned',
         name: 'Badly Poisoned',
         badge: 'Lethal Escalating',
+        categoryType: 'Aggravating',
         color: '#8E24AA',
         textColor: '#FFFFFF',
         effect: '2 Lethal Damage at end of round. Increases by +2 each round. Poison & Steel immune.',
@@ -315,6 +411,7 @@ export const STATUS_EFFECTS_DATA = [
         id: 'status-in-love',
         name: 'In Love',
         badge: 'Mental',
+        categoryType: 'Volatile',
         color: '#F48FB1',
         textColor: '#000000',
         effect: 'Deal 1/2 Damage against beloved foe and their allies.',
@@ -325,6 +422,7 @@ export const STATUS_EFFECTS_DATA = [
         id: 'status-sleep',
         name: 'Sleep',
         badge: 'Immobilized',
+        categoryType: 'Volatile',
         color: '#9FA8DA',
         textColor: '#000000',
         effect: 'Cannot take actions while asleep.',
@@ -753,7 +851,7 @@ ${formatDiscordTable(
         category: 'rules',
         categoryLabel: 'Combat & Rules',
         badge: 'Attack Flow',
-        summary: 'Accuracy rolls, Reactions, Late Reactions, Damage, Critical Hits (+2 dice), and Type Modifiers.',
+        summary: 'Accuracy rolls, Reactions, Late Reactions, Damage, 0-success minimum damage, Critical Hits (+2 dice), Added Effects activation, and Type Modifiers.',
         keywords: [
             'move',
             'accuracy',
@@ -765,10 +863,14 @@ ${formatDiscordTable(
             'resistance',
             'lethal damage',
             'evade',
-            'clash'
+            'clash',
+            'minimum damage',
+            '0 successes',
+            'added effects',
+            'super effective'
         ],
         broadcastText:
-            'Attack Resolution:\n1. Accuracy: Roll Move Acc (Check Action Difficulty). Subtract Pain Penalties.\n2. Reactions: Defender may declare Reaction (Evade/Clash) or Late Reaction.\n3. Damage: Roll (Power + Str/Sp - Def/Sp.Def). Crit: 3+ extra Acc successes = +2 Damage Dice!\n4. Modifiers: Weakness (+1 dmg if >=1 dmg success), Resistance (-1 dmg).\n5. Apply Damage & resolve Late Reactions.',
+            'Attack Resolution:\n1. Accuracy: Roll Move Acc (Check Action Difficulty). Subtract Pain Penalties.\n2. Reactions: Defender may declare Reaction (Evade/Clash) or Late Reaction.\n3. Damage: Roll (Power + Str/Sp - Def/Sp.Def). Crit: 3+ extra Acc successes = +2 Damage Dice! (0 successes still deals 1 base damage unless Resisted).\n4. Modifiers & Effects: Weakness (+1 for 2x, +2 for 4x) & Added Effects ONLY apply if >=1 damage success is rolled! Resistance: -1 dmg.\n5. Apply Damage & resolve Late Reactions.',
         discordMarkdown: `## 💥 **Using a Move & Combat Resolution**
 1. **Accuracy Roll:** Attacker rolls Move Accuracy (Attribute + Fight/Skill). Target successes based on Action Difficulty. Subtract Pain Penalties. If successes < required, move misses.
 2. **Defender Reactions:**
@@ -776,10 +878,43 @@ ${formatDiscordTable(
    • **Late Reaction:** Executes *after* damage resolves. Attacker can Late React (lowest number first). Standard Reactions cannot be used against Late Reactions.
 3. **Damage Roll:** Damage Dice = Move Power + Str/Special - Defender's Def/Sp.Def.
    • **Critical Hit:** If Accuracy scored **3+ successes higher** than required, add **+2 dice** to the damage pool!
-4. **Final Modifiers:**
-   • **Weakness:** Each Weakness adds **+1 Damage** (only if at least 1 success rolled on damage dice).
-   • **Resistance:** Each Resistance subtracts **-1 Damage**.
+   • **Minimum 1 Damage (0 Successes):** Even if you roll **0 successes** on the damage roll, a successful attack still inflicts **1 base damage** (unless the target has **Resistance** or **Immunity** to the move's type).
+4. **Weakness, Resistance & Added Effects:**
+   • **Added Effects:** Require **at least 1 success** on the damage dice to activate and apply to the target.
+   • **Weakness Bonus:** Requires **at least 1 success** on the damage dice to activate. Adds **+1 flat damage** for Super Effective (2x) or **+2 flat damage** for Extremely Effective (4x).
+   • **Resistance:** Each Resistance subtracts **-1 flat damage** (reducing 1 base damage down to 0).
+   • **Immunity:** The target takes 0 damage and ignores all effects.
 5. **Resolve:** Apply damage, then resolve any declared Late Reactions.`
+    },
+    {
+        id: 'holding-back-attack',
+        title: 'Holding Back an Attack',
+        category: 'rules',
+        categoryLabel: 'Combat & Rules',
+        badge: 'Tactical Option',
+        summary: 'Command your Pokémon to contain their strength: deal half damage, forfeit target added effects, or forfeit critical hit bonus dice.',
+        keywords: [
+            'holding back',
+            'hold back',
+            'restrain',
+            'half damage',
+            'forfeit added effects',
+            'forfeit crit',
+            'critical hit',
+            'shinies',
+            'catching',
+            'mercy'
+        ],
+        broadcastText:
+            'Holding Back an Attack:\nCommand your Pokémon to hold back ("Hold Back!", "Restrain yourself!", "Don’t use full force!") and choose one or more:\n• Deal Half Damage: Inflict half damage rounded down.\n• Forfeit Added Effects on Target: Target ignores added effects (User self-effects still apply).\n• Forfeit Critical Bonus Dice: Skip the +2 bonus damage dice (still counts as a Crit landed).',
+        discordMarkdown: `## ✋ **Holding Back an Attack**
+> *Sometimes it will be more convenient to contain the full force of your Pokémon attacks (e.g. avoiding fainting wild shinies or sparring).*
+> 
+> Give the command to *"Hold Back"*, *"Restrain yourself!"*, *"Don’t use full force!"* or similar to choose **one or a combination** of the following options:
+
+• **Deal Half Damage:** You make your damage roll normally but only inflict **half of the damage rounded down** to those affected by your Move.
+• **Forfeit Added Effects on the Target:** Your Move hits but you don’t want it to have lasting effects on those affected, so any **Added effect that would apply to the target is forfeited**. Added Effects that affect the User still apply.
+• **Forfeit Critical Hit Bonus Dice:** Your Accuracy roll may have been impeccable, but you **do not add the extra damage dice (+2 dice)** on your roll. Even so, the Move still counts as a Critical Hit landed, but we are not gonna be fainting shinies here!`
     },
     {
         id: 'pain-penalties',
@@ -901,14 +1036,22 @@ ${formatDiscordTable(
     },
     {
         id: 'status-effects-all',
-        title: 'Status Effects Quick Reference',
+        title: 'Status Effects & Conditions Guide',
         category: 'status',
         categoryLabel: 'Status Effects',
         badge: 'All Statuses',
-        summary: 'Complete guide to Burn (1st/2nd/3rd degree), Confusion, Disable, Flinch, Freeze, Poison, Badly Poisoned, Love, Paralysis, Sleep.',
+        summary: 'Comprehensive guide to Aggravating, Fixed, and Volatile status categories, stacking rules, cure items, and all individual status conditions.',
         keywords: [
             'status',
             'status effects',
+            'status conditions',
+            'ailments',
+            'aggravating',
+            'fixed',
+            'volatile',
+            'stacking',
+            'full heal',
+            'lum berry',
             'burn',
             '1st degree burn',
             '2nd degree burn',
@@ -929,10 +1072,24 @@ ${formatDiscordTable(
             'sleep'
         ],
         broadcastText:
-            'Status Effects: 1st/2nd/3rd Burn (1dmg/2lethal/3+1lethal per round), Confusion (-successes, 1dmg on fail), Disabled (no move), Paralysis (-2 Dex, 1/2 speed), Flinch (lose turn), Poison (2dmg), Badly Poison (2+2lethal), Frozen (Full Cover ice block 5HP/2Def, GM fiat on excess dmg), In Love (1/2 dmg), Sleep (wake with 5 Insight successes).',
-        discordMarkdown: `## 🧪 **Pokerole Status Effects Reference**
+            'Status Categories & Rules:\n• Aggravating: Worsens over time if untreated (3rd Burn, Badly Poisoned).\n• Fixed: Constant effect; needs items/care to heal (1st/2nd Burn, Poison, Paralysis).\n• Volatile: Temporary; heals after time/switching out (Confused, Disabled, Flinch, Frozen, In Love, Sleep).\n• Stacking: Statuses stack! Inflicting burn/poison again bumps to next degree. Only Full Heal/Restore & Lum Berry cure multiple conditions at once.',
+        discordMarkdown: `## 🧪 **Pokerole Status Ailments & Conditions**
+> *Status conditions impair Pokémon and humans. They fall into three primary categories:*
+
+### 📊 **Status Categories**
+• **Aggravating:** The condition will worsen, dealing more damage over time if left untreated *(3rd Degree Burn, Badly Poisoned)*.
+• **Fixed:** The condition remains as is; it does not worsen over time, but it does not heal on its own *(1st & 2nd Degree Burn, Poison, Paralysis)*.
+• **Volatile:** The condition is temporary and can heal on its own after a few minutes or by switching out *(Confused, Sleep, Flinched, Disabled, In Love, Frozen)*.
+
+> ⚠️ **Status Stacking & Curing:**
+> • Statuses **can stack** (e.g. Asleep + Poisoned + Confused at once). Re-inflicting Burn or Poison bumps it to the next degree!
+> • **Only Full Heal, Full Restore, and Lum Berry** cure more than one condition at a time.
+> • Official League matches may enforce single-condition or sleep clauses.
+
+---
+### 📋 **Individual Status Reference**
 ${STATUS_EFFECTS_DATA.map(
-    (s) => `### **${s.name}** [${s.badge}]
+    (s) => `#### **${s.name}** [${s.badge} | ${s.categoryType}]
 • **Effect:** ${s.effect}
 • **Resist / Cure:** ${s.resist}
 • **Duration:** ${s.duration}`

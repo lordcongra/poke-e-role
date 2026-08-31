@@ -321,6 +321,10 @@ export async function executeDamageRoll(
             tags.push(bankedDiceTag);
         }
 
+        if (reduction > 0 && baseDamage - reduction <= 0 && actualDicePool <= 1) {
+            tags.push('Min 1 Die vs Def');
+        }
+
         actualDicePool = Math.max(1, actualDicePool);
 
         const isProtean = abilityString.includes('protean') || abilityString.includes('libero');

@@ -356,7 +356,11 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 const sign = actualFlatMod > 0 ? '+' : '-';
                 popupMessage = `[${asteriskResults.join(', ')}] -> ${rawSuccesses} Succ ${sign} ${Math.abs(actualFlatMod)} Extra Dmg = ${finalSuccesses} Total Damage`;
             } else if (rollType === 'damage') {
-                popupMessage = `[${asteriskResults.join(', ')}] -> ${finalSuccesses} Total Damage`;
+                if (rawSuccesses === 0) {
+                    popupMessage = `[${asteriskResults.join(', ')}] -> 0 Dice Successes (Deals 1 Base Damage)`;
+                } else {
+                    popupMessage = `[${asteriskResults.join(', ')}] -> ${finalSuccesses} Total Damage`;
+                }
             } else {
                 popupMessage = `[${asteriskResults.join(', ')}]${modStr} -> ${finalSuccesses} Successes`;
             }
@@ -364,8 +368,11 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
             popupMessage = `[${diceData.map((d) => d.result).join(', ')}]${modStr} -> ${finalSum}`;
         }
 
-        if (seNegated) {
-            popupMessage += `\n( 0 base successes: Super Effective bonus negated )`;
+        if (rollType === 'damage' && numDice > 0 && rawSuccesses === 0) {
+            if (seNegated) {
+                popupMessage += `\n( 0 base successes: Super Effective bonus negated )`;
+            }
+            popupMessage += `\n💡 0 Successes: Still deals 1 Base Damage (unless target has Resistance / Protect). Added effects & Chance Dice do not trigger.`;
         }
 
         const executeStateIntercepts = async (messageAppendix: string) => {
@@ -375,7 +382,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 const baseInit = parseInt(payload) || 0;
                 const rollValue = isSuccessRoll ? finalSuccesses : finalSum;
                 await assignInitiative(state.tokenId, rollValue, baseInit);
-            } else if (rollType === 'damage' && payload && finalSuccesses > 0) {
+            } else if (rollType === 'damage' && payload && finalSuccesses > 0 && rawSuccesses > 0) {
                 const [flatStr, ratioStr] = payload.split('_');
                 const flatGained = parseInt(flatStr) || 0;
 

@@ -342,6 +342,105 @@
     background-color: var(--panel-bg);
 }
 
+/* Item Broadcast Button */
+.gm-card-item-broadcast-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 3px 8px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    line-height: 1.2;
+    white-space: nowrap;
+    flex-shrink: 0;
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    background-color: var(--panel-bg);
+    transition: all 0.15s ease;
+}
+
+.gm-card-item-broadcast-btn:hover {
+    color: #ffffff;
+    border-color: var(--primary);
+    background-color: var(--primary);
+}
+
+/* Status Rules Box & Categories */
+.status-rules-box {
+    background-color: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.status-rules-box__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+}
+
+.status-categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 8px;
+}
+
+.status-category-card {
+    background-color: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.status-category-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border: 1px solid currentColor;
+}
+
+.status-category-pill--aggravating {
+    background-color: color-mix(in srgb, #D32F2F 15%, transparent);
+    color: #E53935;
+    border-color: #E53935;
+}
+
+.status-category-pill--fixed {
+    background-color: color-mix(in srgb, #E65100 15%, transparent);
+    color: #FB8C00;
+    border-color: #FB8C00;
+}
+
+.status-category-pill--volatile {
+    background-color: color-mix(in srgb, #00897B 15%, transparent);
+    color: #26A69A;
+    border-color: #26A69A;
+}
+
+.status-rules-box__notes {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--border);
+}
+
 /* Status Cards Grid */
 .status-grid {
     display: grid;

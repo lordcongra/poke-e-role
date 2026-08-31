@@ -19,7 +19,10 @@ import {
     Heart,
     Info,
     ChevronsUpDown,
-    Link2
+    Link2,
+    Sparkles,
+    Layers,
+    Pill
 } from 'lucide-react';
 import {
     GM_CHEAT_ITEMS,
@@ -28,6 +31,9 @@ import {
     WILL_SPENDING,
     COMBAT_FLOW_STEPS,
     MOVE_RESOLUTION_STEPS,
+    HOLDING_BACK_OPTIONS,
+    STATUS_CATEGORIES_DATA,
+    STATUS_RULES_INFO,
     TRAINER_ACTIONS_TABLE,
     COVER_TABLE,
     HEALING_TABLE,
@@ -39,7 +45,9 @@ import {
     RANK_UP_TP_TABLE,
     LEARN_MOVES_TP_TABLE,
     ENCOUNTER_BALANCE_TABLE,
-    type GmCheatItem
+    type GmCheatItem,
+    type StatusEffectData,
+    type HoldingBackOption
 } from '../../data/gmScreenData';
 import { GmScreenCatchCalculator } from './GmScreenCatchCalculator';
 import { GmScreenTypeMatrix } from './GmScreenTypeMatrix';
@@ -178,6 +186,56 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
 
     const handleBroadcast = (item: GmCheatItem) => {
         broadcastInfo(`GM Screen: ${item.title}`, item.broadcastText);
+    };
+
+    const handleBroadcastStatus = (s: StatusEffectData) => {
+        const text = `Status: ${s.name} [${s.badge} | Category: ${s.categoryType}]\n• Effect: ${s.effect}\n• Resist / Cure: ${s.resist}\n• Duration: ${s.duration}`;
+        broadcastInfo(`Status: ${s.name}`, text);
+    };
+
+    const handleBroadcastWeather = (w: (typeof WEATHER_CONDITIONS_DATA)[0]) => {
+        const text = `Weather: ${w.name} [${w.badge}]\n${w.effects.map((e) => `• ${e}`).join('\n')}`;
+        broadcastInfo(`Weather: ${w.name}`, text);
+    };
+
+    const handleBroadcastHazard = (h: (typeof ENVIRONMENTAL_HAZARDS_DATA)[0]) => {
+        const text = `Hazard: ${h.name}\n• Effect: ${h.effect}`;
+        broadcastInfo(`Hazard: ${h.name}`, text);
+    };
+
+    const handleBroadcastHoldingBack = (opt: HoldingBackOption) => {
+        const text = `Holding Back an Attack: ${opt.title}\n• ${opt.desc}`;
+        broadcastInfo(`Holding Back: ${opt.title}`, text);
+    };
+
+    const handleBroadcastStatusRules = () => {
+        const text = `Status Ailments & Conditions Categories:\n• Aggravating: Worsens over time if untreated.\n• Fixed: Constant effect; needs treatment/items to heal.\n• Volatile: Temporary; heals naturally or on switch.\n• Stacking: Conditions can stack! Re-inflicting burn/poison bumps degree. Only Full Heal/Restore & Lum Berry cure multiple conditions at once.`;
+        broadcastInfo(`Status Rules & Categories`, text);
+    };
+
+    const handleBroadcastWill = (w: (typeof WILL_SPENDING)[0]) => {
+        const text = `Will Spending: ${w.name} (${w.cost})\n• ${w.effect}`;
+        broadcastInfo(`Will: ${w.name}`, text);
+    };
+
+    const handleBroadcastTrainerAction = (t: (typeof TRAINER_ACTIONS_TABLE)[0]) => {
+        const text = `Trainer Action: ${t.action}\n• In Trainer Area: ${t.trainerArea}\n• In the Fray: ${t.inFray}`;
+        broadcastInfo(`Trainer Action: ${t.action}`, text);
+    };
+
+    const handleBroadcastCover = (c: (typeof COVER_TABLE)[0]) => {
+        const text = `Cover: ${c.coverage}\n• Bonus Def/Sp.Def: ${c.defBonus}\n• Takes Added Effects: ${c.addedEffects}`;
+        broadcastInfo(`Cover: ${c.coverage}`, text);
+    };
+
+    const handleBroadcastHealing = (h: (typeof HEALING_TABLE)[0]) => {
+        const text = `Damage Healing: ${h.damageType}\n• Natural (Rest): ${h.natural}\n• Potion Units: ${h.potion}`;
+        broadcastInfo(`Healing: ${h.damageType}`, text);
+    };
+
+    const handleBroadcastCombatFlowStep = (s: (typeof COMBAT_FLOW_STEPS)[0]) => {
+        const text = `Combat Flow Step ${s.step}: ${s.title}\n${s.items.map((it) => `• ${it}`).join('\n')}`;
+        broadcastInfo(`Combat Step ${s.step}: ${s.title}`, text);
     };
 
     const filteredItems = useMemo(() => {
@@ -337,6 +395,7 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                                         <th>Spending Option</th>
                                         <th>Cost</th>
                                         <th>Mechanical Effect</th>
+                                        <th style={{ width: '90px', textAlign: 'center' }}>Send</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -347,6 +406,17 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                                             </td>
                                             <td>{w.cost}</td>
                                             <td>{w.effect}</td>
+                                            <td style={{ textAlign: 'center' }}>
+                                                <button
+                                                    type="button"
+                                                    className="action-button action-button--dark gm-card-item-broadcast-btn"
+                                                    onClick={() => handleBroadcastWill(w)}
+                                                    title={`Broadcast ${w.name} to chat/roll log`}
+                                                    aria-label={`Broadcast ${w.name}`}
+                                                >
+                                                    <Megaphone size={12} /> Broadcast
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -381,10 +451,38 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                 return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {COMBAT_FLOW_STEPS.map((s) => (
-                            <div key={s.step} style={{ fontSize: '0.85rem' }}>
-                                <strong style={{ color: 'var(--primary)' }}>
-                                    {s.step}. {s.title}
-                                </strong>
+                            <div
+                                key={s.step}
+                                style={{
+                                    fontSize: '0.85rem',
+                                    padding: '8px 10px',
+                                    backgroundColor: 'var(--panel-alt)',
+                                    borderRadius: '6px',
+                                    border: '1px solid var(--border)'
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        gap: '8px',
+                                        marginBottom: '4px'
+                                    }}
+                                >
+                                    <strong style={{ color: 'var(--primary)' }}>
+                                        {s.step}. {s.title}
+                                    </strong>
+                                    <button
+                                        type="button"
+                                        className="action-button action-button--dark gm-card-item-broadcast-btn"
+                                        onClick={() => handleBroadcastCombatFlowStep(s)}
+                                        title={`Broadcast Step ${s.step} to chat/roll log`}
+                                        aria-label={`Broadcast Step ${s.step}`}
+                                    >
+                                        <Megaphone size={12} /> Broadcast
+                                    </button>
+                                </div>
                                 <ul style={{ margin: '4px 0 0 0', paddingLeft: '20px', color: 'var(--text-main)' }}>
                                     {s.items.map((it, idx) => (
                                         <li key={idx}>{it}</li>
@@ -397,17 +495,26 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
 
             case 'using-a-move':
                 return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         {MOVE_RESOLUTION_STEPS.map((s) => (
-                            <div key={s.step} style={{ fontSize: '0.85rem' }}>
-                                <strong style={{ color: 'var(--primary)' }}>
+                            <div
+                                key={s.step}
+                                style={{
+                                    fontSize: '0.85rem',
+                                    padding: '8px 10px',
+                                    backgroundColor: 'var(--panel-alt)',
+                                    borderRadius: '6px',
+                                    border: '1px solid var(--border)'
+                                }}
+                            >
+                                <strong style={{ color: 'var(--primary)', display: 'block', marginBottom: '4px' }}>
                                     Step {s.step}: {s.title}
                                 </strong>
                                 <p
                                     style={{
-                                        margin: '2px 0 0 0',
+                                        margin: '0',
                                         color: 'var(--text-main)',
-                                        lineHeight: '1.4',
+                                        lineHeight: '1.45',
                                         whiteSpace: 'pre-line'
                                     }}
                                 >
@@ -415,6 +522,102 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                                 </p>
                             </div>
                         ))}
+
+                        <div
+                            style={{
+                                padding: '10px 12px',
+                                borderRadius: '6px',
+                                backgroundColor: 'var(--panel-alt)',
+                                border: '1px solid var(--primary)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '6px',
+                                fontSize: '0.82rem',
+                                lineHeight: '1.4'
+                            }}
+                        >
+                            <span
+                                style={{
+                                    color: 'var(--primary)',
+                                    fontWeight: 'bold',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px'
+                                }}
+                            >
+                                <Sparkles size={15} /> Key Move & Damage Resolution Reminders
+                            </span>
+                            <ul style={{ margin: '0', paddingLeft: '18px', color: 'var(--text-main)' }}>
+                                <li>
+                                    <strong>0 Successes Minimum Damage:</strong> Even if you roll <strong>0 successes</strong> on your damage dice pool, a successful hit still deals <strong>1 base damage</strong> (unless the foe has Resistance or Immunity).
+                                </li>
+                                <li>
+                                    <strong>1+ Success Requirement:</strong> You <strong>must</strong> score at least <strong>1 success</strong> on the damage roll for any <strong>Added Effects</strong> on the target to trigger, or for <strong>Super Effective (+1) / Extremely Effective (+2)</strong> weakness damage bonuses to apply.
+                                </li>
+                                <li>
+                                    <strong>Resistance:</strong> Each Resistance subtracts 1 flat damage (reducing 1 base damage down to 0).
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                );
+
+            case 'holding-back-attack':
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.85rem' }}>
+                        <div
+                            style={{
+                                padding: '10px 12px',
+                                borderRadius: '6px',
+                                backgroundColor: 'var(--panel-alt)',
+                                border: '1px solid var(--border)',
+                                lineHeight: '1.45'
+                            }}
+                        >
+                            <p style={{ margin: '0 0 6px 0', color: 'var(--text-main)', fontStyle: 'italic' }}>
+                                “Sometimes it will be more convenient to contain the full force of your Pokémon attacks.”
+                            </p>
+                            <p style={{ margin: '0', color: 'var(--text-muted)' }}>
+                                Give the command to <strong>“Hold Back!”</strong>, <strong>“Restrain yourself!”</strong>, or <strong>“Don’t use full force!”</strong> in order to choose one or a combination of the options below:
+                            </p>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {HOLDING_BACK_OPTIONS.map((opt) => (
+                                <div
+                                    key={opt.id}
+                                    style={{
+                                        padding: '10px 12px',
+                                        borderRadius: '6px',
+                                        backgroundColor: 'var(--panel-alt)',
+                                        border: '1px solid var(--border)',
+                                        display: 'flex',
+                                        alignItems: 'flex-start',
+                                        justifyContent: 'space-between',
+                                        gap: '10px'
+                                    }}
+                                >
+                                    <div style={{ flex: 1 }}>
+                                        <strong style={{ color: 'var(--primary)', display: 'block', marginBottom: '3px' }}>
+                                            • {opt.title}
+                                        </strong>
+                                        <span style={{ color: 'var(--text-main)', lineHeight: '1.4' }}>
+                                            {opt.desc}
+                                        </span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="action-button action-button--dark gm-card-item-broadcast-btn"
+                                        onClick={() => handleBroadcastHoldingBack(opt)}
+                                        title={`Broadcast ${opt.title} to chat/roll log`}
+                                        aria-label={`Broadcast ${opt.title}`}
+                                        style={{ flexShrink: 0, marginTop: '2px' }}
+                                    >
+                                        <Megaphone size={12} /> Broadcast
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 );
 
@@ -485,7 +688,7 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                                     <strong>Twice as Costly to Heal:</strong>
                                     <ul style={{ margin: '2px 0 0 0', paddingLeft: '16px' }}>
                                         <li>
-                                            <strong>Potions:</strong> Requires <strong>2 Potion Units</strong> to heal 1
+                                             <strong>Potions:</strong> Requires <strong>2 Potion Units</strong> to heal 1
                                             point of Lethal Damage (instead of 1).
                                         </li>
                                         <li>
@@ -513,6 +716,7 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                                     <th>Trainer Action</th>
                                     <th>In a Trainer Area</th>
                                     <th>In the Fray</th>
+                                    <th style={{ width: '90px', textAlign: 'center' }}>Send</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -523,6 +727,17 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                                         </td>
                                         <td>{t.trainerArea}</td>
                                         <td>{t.inFray}</td>
+                                        <td style={{ textAlign: 'center' }}>
+                                            <button
+                                                type="button"
+                                                className="action-button action-button--dark gm-card-item-broadcast-btn"
+                                                onClick={() => handleBroadcastTrainerAction(t)}
+                                                title={`Broadcast ${t.action} to chat/roll log`}
+                                                aria-label={`Broadcast ${t.action}`}
+                                            >
+                                                <Megaphone size={12} /> Broadcast
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -539,6 +754,7 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                                     <th>Body Coverage</th>
                                     <th>Bonus Def / Sp.Def vs Attacks</th>
                                     <th>Takes Added Effects</th>
+                                    <th style={{ width: '90px', textAlign: 'center' }}>Send</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -551,6 +767,17 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                                             {c.defBonus}
                                         </td>
                                         <td>{c.addedEffects}</td>
+                                        <td style={{ textAlign: 'center' }}>
+                                            <button
+                                                type="button"
+                                                className="action-button action-button--dark gm-card-item-broadcast-btn"
+                                                onClick={() => handleBroadcastCover(c)}
+                                                title={`Broadcast ${c.coverage} to chat/roll log`}
+                                                aria-label={`Broadcast ${c.coverage}`}
+                                            >
+                                                <Megaphone size={12} /> Broadcast
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -567,6 +794,7 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                                     <th>Damage Type</th>
                                     <th>Natural Healing Over Time</th>
                                     <th>Potion Units Required</th>
+                                    <th style={{ width: '90px', textAlign: 'center' }}>Send</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -577,6 +805,17 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                                         </td>
                                         <td>{h.natural}</td>
                                         <td>{h.potion}</td>
+                                        <td style={{ textAlign: 'center' }}>
+                                            <button
+                                                type="button"
+                                                className="action-button action-button--dark gm-card-item-broadcast-btn"
+                                                onClick={() => handleBroadcastHealing(h)}
+                                                title={`Broadcast ${h.damageType} to chat/roll log`}
+                                                aria-label={`Broadcast ${h.damageType}`}
+                                            >
+                                                <Megaphone size={12} /> Broadcast
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -586,31 +825,106 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
 
             case 'status-effects-all':
                 return (
-                    <div className="status-grid">
-                        {STATUS_EFFECTS_DATA.map((s) => (
-                            <div key={s.id} className="status-card">
-                                <div className="status-card__header">
-                                    <span
-                                        className="status-card__badge"
-                                        style={{ backgroundColor: s.color, color: s.textColor }}
-                                    >
-                                        {s.name}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {/* Status Categories & Rules Banner */}
+                        <div className="status-rules-box">
+                            <div className="status-rules-box__header">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <Layers size={16} color="var(--primary)" />
+                                    <strong style={{ color: 'var(--primary)', fontSize: '0.9rem' }}>
+                                        Status Ailments & Conditions Categories
+                                    </strong>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="action-button action-button--dark gm-card-item-broadcast-btn"
+                                    onClick={handleBroadcastStatusRules}
+                                    title="Broadcast Status Categories & Rules to chat/roll log"
+                                    aria-label="Broadcast Status Categories & Rules"
+                                >
+                                    <Megaphone size={12} /> Broadcast Rules
+                                </button>
+                            </div>
+
+                            <div className="status-categories-grid">
+                                {STATUS_CATEGORIES_DATA.map((cat) => (
+                                    <div key={cat.category} className="status-category-card">
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                            <span
+                                                className={`status-category-pill status-category-pill--${cat.category.toLowerCase()}`}
+                                                style={{ color: cat.color }}
+                                            >
+                                                {cat.title}
+                                            </span>
+                                        </div>
+                                        <p className="text-subtext" style={{ margin: '0 0 4px 0', fontSize: '0.78rem', color: 'var(--text-main)', lineHeight: '1.35' }}>
+                                            {cat.desc}
+                                        </p>
+                                        <span className="text-subtext" style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                                            <em>Examples: {cat.examples}</em>
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="status-rules-box__notes">
+                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', fontSize: '0.8rem', color: 'var(--text-main)', lineHeight: '1.4' }}>
+                                    <Sparkles size={14} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                                    <span>
+                                        <strong>Status Stacking:</strong> {STATUS_RULES_INFO.stacking}
                                     </span>
-                                    <span className="text-subtext" style={{ fontSize: '0.7rem' }}>
-                                        {s.badge}
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', fontSize: '0.8rem', color: 'var(--text-main)', lineHeight: '1.4' }}>
+                                    <Pill size={14} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                                    <span>
+                                        <strong>Curing Multiple Conditions:</strong> {STATUS_RULES_INFO.curing}
                                     </span>
-                                </div>
-                                <div className="status-card__text">
-                                    <strong>Effect:</strong> {s.effect}
-                                </div>
-                                <div className="status-card__text">
-                                    <strong>Resist:</strong> {s.resist}
-                                </div>
-                                <div className="status-card__text" style={{ color: 'var(--text-muted)' }}>
-                                    <strong>Duration:</strong> {s.duration}
                                 </div>
                             </div>
-                        ))}
+                        </div>
+
+                        {/* Individual Status Grid */}
+                        <div className="status-grid">
+                            {STATUS_EFFECTS_DATA.map((s) => (
+                                <div key={s.id} className="status-card">
+                                    <div className="status-card__header">
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+                                            <span
+                                                className="status-card__badge"
+                                                style={{ backgroundColor: s.color, color: s.textColor }}
+                                            >
+                                                {s.name}
+                                            </span>
+                                            <span
+                                                className={`status-category-pill status-category-pill--${s.categoryType.toLowerCase()}`}
+                                                style={{ fontSize: '0.68rem', padding: '1px 6px' }}
+                                                title={`Category: ${s.categoryType}`}
+                                            >
+                                                {s.categoryType}
+                                            </span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="action-button action-button--dark gm-card-item-broadcast-btn"
+                                            onClick={() => handleBroadcastStatus(s)}
+                                            title={`Broadcast ${s.name} to chat/roll log`}
+                                            aria-label={`Broadcast ${s.name}`}
+                                        >
+                                            <Megaphone size={12} /> Broadcast
+                                        </button>
+                                    </div>
+                                    <div className="status-card__text">
+                                        <strong>Effect:</strong> {s.effect}
+                                    </div>
+                                    <div className="status-card__text">
+                                        <strong>Resist:</strong> {s.resist}
+                                    </div>
+                                    <div className="status-card__text" style={{ color: 'var(--text-muted)' }}>
+                                        <strong>Duration:</strong> {s.duration}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 );
 
@@ -620,10 +934,21 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                         {WEATHER_CONDITIONS_DATA.map((w) => (
                             <div key={w.id} className="weather-card">
                                 <div className="weather-card__header">
-                                    <span className="weather-card__title" style={{ color: w.color }}>
-                                        {w.name}
-                                    </span>
-                                    <span className="gm-screen-modal__card-badge">{w.badge}</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+                                        <span className="weather-card__title" style={{ color: w.color }}>
+                                            {w.name}
+                                        </span>
+                                        <span className="gm-screen-modal__card-badge">{w.badge}</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="action-button action-button--dark gm-card-item-broadcast-btn"
+                                        onClick={() => handleBroadcastWeather(w)}
+                                        title={`Broadcast ${w.name} Weather to chat/roll log`}
+                                        aria-label={`Broadcast ${w.name}`}
+                                    >
+                                        <Megaphone size={12} /> Broadcast
+                                    </button>
                                 </div>
                                 <ul className="weather-card__list">
                                     {w.effects.map((e, idx) => (
@@ -643,6 +968,7 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                                 <tr>
                                     <th>Hazard / Condition</th>
                                     <th>Battlefield Effect</th>
+                                    <th style={{ width: '90px', textAlign: 'center' }}>Send</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -652,6 +978,17 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                                             <strong>{h.name}</strong>
                                         </td>
                                         <td>{h.effect}</td>
+                                        <td style={{ textAlign: 'center' }}>
+                                            <button
+                                                type="button"
+                                                className="action-button action-button--dark gm-card-item-broadcast-btn"
+                                                onClick={() => handleBroadcastHazard(h)}
+                                                title={`Broadcast ${h.name} to chat/roll log`}
+                                                aria-label={`Broadcast ${h.name}`}
+                                            >
+                                                <Megaphone size={12} /> Broadcast
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
