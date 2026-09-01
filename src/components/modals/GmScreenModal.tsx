@@ -265,7 +265,8 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
     };
 
     const handleBroadcastWeaponModel = (w: PmdWeaponModel) => {
-        const text = `PMD Weapon Model: ${w.name} (${w.creator})\n• Type: ${w.type} (${w.weight} Wt)\n• Rules: ${w.description}\n• Example: ${w.example}`;
+        const linkText = w.link ? `\n• Reference Doc: ${w.link}` : '';
+        const text = `PMD Weapon Model: ${w.name} (${w.creator})\n• Type: ${w.type} (${w.weight} Wt)\n• Rules: ${w.description}\n• Example: ${w.example}${linkText}`;
         broadcastInfo(`PMD Weapon: ${w.name}`, text);
     };
 

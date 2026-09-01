@@ -6,6 +6,9 @@
 export const DRAKE_HELD_ITEMS_DOC_URL =
     'https://docs.google.com/document/d/1TndU1bcozMWATwB2xxEjbLVITE78Qs6D4fNkV1u0yPc/edit?usp=sharing';
 
+export const DRAKE_WEAPONS_DOC_URL =
+    'https://docs.google.com/document/d/1WZvW3wLdlfJ4ECADhm2jFVdKdmtB2pI5jVHOoZzi5N8/edit?usp=sharing';
+
 export const PMD_HOMEBREW_DISCLAIMER =
     'Note: These rules, weight charts, and mechanics are optional community suggestions for PMD campaigns, not official requirements. GMs and tables are encouraged to modify, pick and choose, or adapt them to best fit their adventure!';
 
@@ -38,6 +41,8 @@ export interface PmdWeaponModel {
     weight: number;
     description: string;
     example: string;
+    link?: string;
+    linkLabel?: string;
 }
 
 export interface PmdSwitcherModel {
@@ -254,8 +259,11 @@ export const PMD_WEAPONS_MODELS: PmdWeaponModel[] = [
         type: 'Progressive Struggle Upgrade',
         weight: 1.0,
         description:
-            'Weapons act as an upgradeable system based on the Struggle maneuver that can make the weapon better over time (improving damage, accuracy, or weapon capabilities). See Prof. Drake’s homebrew threads/docs in the Pokerole Discord for his complete upgrade progression system!',
-        example: 'Custom Weapon (1 Wt): Improves upon the base Struggle maneuver over time as the adventurer invests in upgrades and mastery.'
+            'Weapons act as an upgradeable system based on the Struggle maneuver that can make the weapon better over time (improving damage, accuracy, or weapon capabilities). While this was made for trainers, it can easily be adapted for Pokémon in a mystery dungeon setting. See Prof. Drake’s document below for his complete upgrade progression system!',
+        example:
+            'Custom Weapon (1 Wt): Improves upon the base Struggle maneuver over time as the trainer/pokemon invests in upgrades and mastery.',
+        link: DRAKE_WEAPONS_DOC_URL,
+        linkLabel: "Prof. Drake's Weapon Progression Doc"
     },
     {
         name: 'Move Focus Weapons & Wands',

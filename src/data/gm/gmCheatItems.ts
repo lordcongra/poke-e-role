@@ -966,12 +966,13 @@ ${formatDiscordTable(
             'homebrew'
         ],
         broadcastText:
-            'PMD Weapons Homebrew Models (1.0 Wt in Bag):\n• Prof. Drake Model: Weapons act as an upgradeable system based on the Struggle maneuver that makes the weapon better over time. See the Pokerole Discord for his complete homebrew rules!\n• Congra Model: Weapons (Wands, Swords, Staves, Bows) act as an extra equipped Move slot without consuming a move slot (e.g. Hypnosis Wand, Shadow Blade with Night Slash). GM determines if it uses move stats or unique weapon stats.\n\nNote: Weapon systems are optional suggestions for PMD campaigns.',
+            'PMD Weapons Homebrew Models (1.0 Wt in Bag):\n• Prof. Drake Model: Weapons act as an upgradeable system based on the Struggle maneuver that makes the weapon better over time. While made for trainers, it can easily be adapted for Pokémon in PMD. See doc: https://docs.google.com/document/d/1WZvW3wLdlfJ4ECADhm2jFVdKdmtB2pI5jVHOoZzi5N8/edit?usp=sharing\n• Congra Model: Weapons (Wands, Swords, Staves, Bows) act as an extra equipped Move slot without consuming a move slot (e.g. Hypnosis Wand, Shadow Blade with Night Slash). GM determines if it uses move stats or unique weapon stats.\n\nNote: Weapon systems are optional suggestions for PMD campaigns.',
         discordMarkdown: `## ⚔️ **PMD Weapons & Combat Gear**
 > *Community weapon models allowing player Pokémon to equip physical arms or spellcasting focuses.*
 
 • **Option A — Upgradeable Struggle Weapons (Prof. Drake's Model):**
-  Weapons act as an upgradeable system based on the *Struggle* maneuver that makes the weapon better over time (e.g. improving damage, accuracy, or weapon capabilities). Check out Prof. Drake's homebrew documents and threads in the Pokerole Discord to see his complete upgrade rules and progression system!
+  Weapons act as an upgradeable system based on the *Struggle* maneuver that makes the weapon better over time (e.g. improving damage, accuracy, or weapon capabilities). While this was made for trainers, it can easily be adapted for Pokémon in a Mystery Dungeon setting. Check out [Prof. Drake's Weapon Progression Document](https://docs.google.com/document/d/1WZvW3wLdlfJ4ECADhm2jFVdKdmtB2pI5jVHOoZzi5N8/edit?usp=sharing) to see his complete upgrade rules and progression system!
+  *Example:* Custom Weapon (1 Wt): Improves upon the base Struggle maneuver over time as the trainer/pokemon invests in upgrades and mastery.
 
 • **Option B — Move-Focus Weapons & Wands (Congra's Model):**
   Weapons (such as Wands, Staves, Swords, or Bows) serve as an extra equipped slot to cast or perform a specific Move without consuming one of the Pokémon’s move slots. Allows players to carry tactical utility, status moves, or coverage into dungeons.

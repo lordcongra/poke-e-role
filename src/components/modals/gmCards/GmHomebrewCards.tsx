@@ -395,6 +395,19 @@ export const GmHomebrewCards: React.FC<GmHomebrewCardsProps> = ({
                                     {model.description}
                                 </p>
 
+                                {model.link && (
+                                    <a
+                                        href={model.link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="action-button action-button--theme pmd-link-btn"
+                                        title={`Open ${model.linkLabel || 'Google Doc'} in new tab`}
+                                    >
+                                        <ExternalLink size={12} />
+                                        <span>{model.linkLabel || "Prof. Drake's Weapon Progression Doc"}</span>
+                                    </a>
+                                )}
+
                                 <div className="pmd-weapon-example-box">
                                     <Flame size={14} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
                                     <div style={{ fontSize: '0.78rem', color: 'var(--text-main)', lineHeight: '1.35' }}>
