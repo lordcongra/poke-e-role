@@ -36,6 +36,7 @@ export async function rollStatus(status: StatusItem, state: CharacterState) {
         attribute = 'dex';
         usesSkill = true;
         dicePool = calculateStatTotal('dex', state, itemBuffs) + calculateSkillTotal('athletic', state, itemBuffs);
+        useCharacterStore.getState().incrementAction();
     } else if (status.name === 'Paralysis') {
         attribute = 'str';
         usesSkill = true;
