@@ -8,7 +8,7 @@ import { CustomInfoRow } from '../ui/CustomInfoRow';
 import { SpeciesSelector } from './SpeciesSelector';
 import { StandaloneAvatar } from '../standalone/StandaloneAvatar';
 import { isStandaloneMode } from '../../utils/storageAdapter';
-import { Plus, AlertTriangle } from 'lucide-react';
+import { Plus, AlertTriangle, XCircle } from 'lucide-react';
 
 interface IdentityGridProps {
     onOpenAbility: () => void;
@@ -44,6 +44,7 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: Ide
     const [allAbilitiesList, setAllAbilitiesList] = useState<string[]>([]);
     const [speciesList, setSpeciesList] = useState<string[]>([]);
     const [deleteCustomInfoId, setDeleteCustomInfoId] = useState<string | null>(null);
+    const [slotTooltipInfo, setSlotTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
 
     useEffect(() => {
         loadLocalDataset()
@@ -208,30 +209,63 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: Ide
                 </div>
 
                 <div className="identity-grid__row">
-                    <span className="identity-grid__label text-label">Combat</span>
+                    <span className="identity-grid__label text-label">
+                        Combat{' '}
+                        <TooltipIcon
+                            onClick={() =>
+                                setSlotTooltipInfo({
+                                    title: 'Combat Held Items',
+                                    desc: 'Section for combat-related held items, battle equipment, and battle items (e.g. Leftovers, Choice Band, Focus Sash, Berry).'
+                                })
+                            }
+                        />
+                    </span>
                     <input
                         type="text"
                         className="identity-grid__input text-label"
                         value={identityStore.combat || ''}
                         onChange={(event) => setIdentity('combat', event.target.value)}
+                        placeholder="Combat held item..."
                     />
                 </div>
                 <div className="identity-grid__row">
-                    <span className="identity-grid__label text-label">Social</span>
+                    <span className="identity-grid__label text-label">
+                        Social{' '}
+                        <TooltipIcon
+                            onClick={() =>
+                                setSlotTooltipInfo({
+                                    title: 'Social Held Items',
+                                    desc: 'Section for social-related held items, contest accessories, charisma charms, or badges (e.g. Soothe Bell, Amulet Coin, Ribbons).'
+                                })
+                            }
+                        />
+                    </span>
                     <input
                         type="text"
                         className="identity-grid__input text-label"
                         value={identityStore.social || ''}
                         onChange={(event) => setIdentity('social', event.target.value)}
+                        placeholder="Social held item..."
                     />
                 </div>
                 <div className="identity-grid__row">
-                    <span className="identity-grid__label text-label">Hand</span>
+                    <span className="identity-grid__label text-label">
+                        Hand{' '}
+                        <TooltipIcon
+                            onClick={() =>
+                                setSlotTooltipInfo({
+                                    title: 'Hand / Weapons',
+                                    desc: 'Section for handheld weapons, tools, stylers, and gear actively carried or wielded in hands (e.g. Sword, Bow, Wand, Capture Styler).'
+                                })
+                            }
+                        />
+                    </span>
                     <input
                         type="text"
                         className="identity-grid__input text-label"
                         value={identityStore.hand || ''}
                         onChange={(event) => setIdentity('hand', event.target.value)}
+                        placeholder="Handheld weapon or gear..."
                     />
                 </div>
                 <div className="identity-grid__row">
@@ -264,6 +298,24 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: Ide
                     </button>
                 </div>
             </div>
+
+            {slotTooltipInfo && (
+                <div className="identity-header__modal-overlay">
+                    <div className="identity-header__modal-content" style={{ color: 'var(--text-main)' }}>
+                        <h3 className="identity-header__modal-title text-title-primary">{slotTooltipInfo.title}</h3>
+                        <p className="identity-header__modal-text text-subtext">{slotTooltipInfo.desc}</p>
+                        <div className="identity-header__modal-actions">
+                            <button
+                                type="button"
+                                className="action-button action-button--dark identity-header__modal-btn"
+                                onClick={() => setSlotTooltipInfo(null)}
+                            >
+                                <XCircle size={16} /> Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {deleteCustomInfoId && (
                 <div className="identity-header__modal-overlay">

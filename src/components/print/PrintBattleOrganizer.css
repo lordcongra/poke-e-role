@@ -1,0 +1,452 @@
+/* ========================================= */
+/* PRINT BATTLE ORGANIZER STYLES (PDF & PAPER)*/
+/* ========================================= */
+
+@media screen {
+    .print-bo-wrapper {
+        display: none !important;
+    }
+}
+
+@media print {
+    @page {
+        margin: 10mm 8mm;
+        size: landscape;
+    }
+
+    html,
+    html[data-theme='dark'],
+    [data-theme='dark'],
+    body {
+        color-scheme: light !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Hide screen UI */
+    .sidebar,
+    .global-toolbar,
+    [class*='global-toolbar'],
+    [class*='GlobalToolbar'],
+    .standalone-right-sidebar,
+    .standalone-layout-wrapper,
+    .standalone-empty-state,
+    .sheet-container,
+    .bo-modal__overlay,
+    .gm-screen-modal__overlay {
+        display: none !important;
+    }
+
+    #root,
+    .app-layout,
+    .app-main-content {
+        display: contents !important;
+    }
+
+    .print-bo-wrapper {
+        display: block !important;
+        position: static !important;
+        width: 100% !important;
+        height: auto !important;
+        color: #000000 !important;
+        background: #ffffff !important;
+        padding: 0 !important;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    }
+
+    .print-bo-card {
+        border: 1.5pt solid #222222 !important;
+        border-radius: 8pt !important;
+        padding: 8pt 12pt 8pt 12pt !important;
+        margin-top: 10pt !important;
+        margin-bottom: 12pt !important;
+        page-break-inside: avoid !important;
+        position: relative !important;
+        background: #ffffff !important;
+        box-sizing: border-box !important;
+    }
+
+    .print-bo-card-header-bar {
+        display: flex !important;
+        justify-content: center !important;
+        margin-top: 0 !important;
+        margin-bottom: 6pt !important;
+    }
+
+    .print-bo-pill-header {
+        background: #222222 !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        font-size: 9pt !important;
+        height: 18pt !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 16pt !important;
+        border-radius: 10pt !important;
+        border: 1pt solid #000000 !important;
+        text-transform: uppercase !important;
+        box-sizing: border-box !important;
+    }
+
+    .print-bo-pill-header--round {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6pt !important;
+        padding: 0 10pt !important;
+    }
+
+    .print-bo-round-box {
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 1pt 6pt !important;
+        border-radius: 3pt !important;
+        font-weight: 800 !important;
+        font-size: 8.5pt !important;
+        line-height: 1 !important;
+    }
+
+    .print-bo-location-row {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8pt !important;
+        margin-top: 2pt !important;
+        margin-bottom: 6pt !important;
+        font-size: 9.5pt !important;
+    }
+
+    .print-bo-label {
+        font-size: 8pt !important;
+        font-weight: 700 !important;
+    }
+
+    .print-bo-sublabel {
+        font-size: 6.5pt !important;
+        color: #555555 !important;
+    }
+
+    .print-bo-underline-text {
+        font-weight: 700 !important;
+        border-bottom: 1pt solid #000000 !important;
+        padding: 0 4pt !important;
+    }
+
+    .print-bo-global-row {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr 1fr !important;
+        gap: 8pt !important;
+        margin-bottom: 6pt !important;
+    }
+
+    .print-bo-effect-block {
+        border: 1pt solid #444444 !important;
+        border-radius: 4pt !important;
+        padding: 3pt 5pt !important;
+    }
+
+    .print-bo-effect-header {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        border-bottom: 0.5pt solid #cccccc !important;
+        padding-bottom: 1.5pt !important;
+        margin-bottom: 2pt !important;
+    }
+
+    .print-bo-effect-body {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+    }
+
+    .print-bo-effect-name {
+        font-size: 8pt !important;
+        font-weight: 600 !important;
+    }
+
+    .print-bo-boxes {
+        display: flex !important;
+        gap: 2pt !important;
+    }
+
+    .print-bo-box {
+        width: 10pt !important;
+        height: 10pt !important;
+        border: 1pt solid #333333 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 7pt !important;
+        font-weight: 700 !important;
+    }
+
+    .print-bo-box--filled {
+        background: #2e7d32 !important;
+        color: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Stadium Pitch Split Grid */
+    .print-bo-stadium-split {
+        display: grid !important;
+        grid-template-columns: 1fr 125pt 1fr !important;
+        gap: 8pt !important;
+        align-items: start !important;
+    }
+
+    .print-bo-side {
+        border: 1pt solid #444444 !important;
+        border-radius: 5pt !important;
+        padding: 4pt 6pt !important;
+    }
+
+    .print-bo-side--player {
+        border-left: 3pt solid #2e7d32 !important;
+    }
+
+    .print-bo-side--foe {
+        border-right: 3pt solid #c62828 !important;
+    }
+
+    .print-bo-side-title {
+        font-size: 8.5pt !important;
+        font-weight: 800 !important;
+        text-align: center !important;
+        border-bottom: 1pt solid #000000 !important;
+        padding-bottom: 1.5pt !important;
+        margin-bottom: 3pt !important;
+    }
+
+    .print-bo-field-line {
+        margin-bottom: 3pt !important;
+    }
+
+    .print-bo-field-header {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        font-size: 7.5pt !important;
+        font-weight: 700 !important;
+        margin-bottom: 1pt !important;
+    }
+
+    .print-bo-line-body {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 4pt !important;
+        margin-bottom: 2pt !important;
+        font-size: 7.5pt !important;
+    }
+
+    .print-bo-subgrid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 4pt !important;
+        margin-top: 2pt !important;
+    }
+
+    .print-bo-subitem {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        font-size: 7.5pt !important;
+    }
+
+    .print-bo-pitch-center {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 2pt !important;
+    }
+
+    .print-bo-pitch-svg {
+        width: 115pt !important;
+        height: 75pt !important;
+    }
+
+    .print-bo-targets {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 1.5pt !important;
+    }
+
+    .print-bo-targets-label {
+        font-size: 7.5pt !important;
+        font-weight: 700 !important;
+    }
+
+    .print-bo-targets-boxes {
+        display: flex !important;
+        gap: 5pt !important;
+    }
+
+    .print-bo-target-box {
+        width: 26pt !important;
+        height: 15pt !important;
+        border: 1pt solid #222222 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-weight: 700 !important;
+        font-size: 8pt !important;
+    }
+
+    /* Table */
+    .print-bo-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin-top: 8pt !important;
+    }
+
+    .print-bo-table th {
+        font-size: 8pt !important;
+        font-weight: 700 !important;
+        text-align: left !important;
+        padding: 3pt 4pt !important;
+        border-bottom: 1.5pt solid #000000 !important;
+    }
+
+    .print-bo-table td {
+        padding: 3pt 4pt !important;
+        font-size: 8pt !important;
+        vertical-align: middle !important;
+        border-bottom: 0.5pt solid #cccccc !important;
+    }
+
+    .print-bo-cell-underline {
+        border-bottom: 1pt solid #444444 !important;
+    }
+
+    .print-bo-cell-init {
+        text-align: center !important;
+        font-weight: 700 !important;
+        font-size: 8.5pt !important;
+        padding: 3pt 2pt !important;
+    }
+
+    .print-bo-cell-combatant {
+        padding: 3pt 4pt !important;
+    }
+
+    .print-bo-combatant-box {
+        display: flex !important;
+        align-items: center !important;
+        gap: 4pt !important;
+    }
+
+    .print-bo-combatant-img {
+        width: 16pt !important;
+        height: 16pt !important;
+        border-radius: 50% !important;
+        object-fit: cover !important;
+        border: 1pt solid #555555 !important;
+        flex-shrink: 0 !important;
+    }
+
+    .print-bo-combatant-details {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1pt !important;
+    }
+
+    .print-bo-combatant-name {
+        font-size: 8pt !important;
+        font-weight: 700 !important;
+    }
+
+    .print-bo-fainted-tag {
+        font-size: 6pt !important;
+        font-weight: 800 !important;
+        color: #c62828 !important;
+    }
+
+    .print-bo-cell-item {
+        max-width: 80pt !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        white-space: normal !important;
+        line-height: 1.1 !important;
+        font-size: 7.5pt !important;
+    }
+
+    .print-bo-cell-status {
+        max-width: 50pt !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        white-space: normal !important;
+        line-height: 1.1 !important;
+        font-size: 7.5pt !important;
+    }
+
+    .print-bo-status-list {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1.5pt !important;
+    }
+
+    .print-bo-status-item {
+        font-size: 7.5pt !important;
+        line-height: 1.1 !important;
+        word-break: break-word !important;
+    }
+
+    .print-bo-actions-row {
+        display: grid !important;
+        grid-template-columns: repeat(5, 1fr) !important;
+        gap: 3pt !important;
+    }
+
+    .print-bo-action-col {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 1pt !important;
+    }
+
+    .print-bo-action-box {
+        width: 100% !important;
+        height: 18pt !important;
+        border: 1pt solid #444444 !important;
+        border-radius: 2pt !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 1pt 2pt !important;
+        box-sizing: border-box !important;
+        background: #ffffff !important;
+    }
+
+    .print-bo-action-text {
+        font-size: 7.5pt !important;
+        text-align: center !important;
+        word-break: break-word !important;
+        line-height: 1 !important;
+        font-weight: 500 !important;
+    }
+
+    .print-bo-action-indicator {
+        font-size: 6.5pt !important;
+        color: #444444 !important;
+        line-height: 1 !important;
+    }
+
+    .print-bo-end-row {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6pt !important;
+        margin-top: 6pt !important;
+        font-size: 8.5pt !important;
+    }
+}

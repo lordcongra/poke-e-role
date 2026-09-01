@@ -78,65 +78,57 @@
 }
 
 .global-toolbar__content {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
     align-items: stretch;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 12px;
+    padding: 8px 10px;
 }
 
 .global-toolbar__main-tools {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    flex: 1;
-    max-width: 600px;
-}
-
-.global-toolbar__split-group {
-    display: flex;
-    gap: 4px;
+    gap: 5px;
     width: 100%;
 }
 
 .global-toolbar__side-tools {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    flex-shrink: 0;
-    width: max-content;
-}
-
-.global-toolbar__side-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 4px;
-}
-
-.global-toolbar__icon-row {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    justify-content: space-between;
+    gap: 5px;
     width: 100%;
-}
-
-.global-toolbar__btn--gm-screen {
-    padding: 6px 8px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    flex: 1;
-    min-width: 0;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
 }
 
 .global-toolbar__icon-actions {
     display: flex;
-    gap: 4px;
+    gap: 3px;
+    width: 100%;
+    height: 100%;
+    align-items: stretch;
+}
+
+.global-toolbar__action-mini-btn {
+    flex: 1;
+    display: inline-flex;
     align-items: center;
-    flex-shrink: 0;
+    justify-content: center;
+    padding: 0;
+    min-height: 28px;
+    height: 100%;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    box-sizing: border-box;
+    transition:
+        filter 0.15s ease,
+        border-color 0.15s ease,
+        transform 0.1s ease;
+}
+
+.global-toolbar__action-mini-btn:hover {
+    filter: brightness(1.2);
+    border-color: var(--primary);
+    transform: translateY(-1px);
 }
 
 /* =========================================
@@ -146,9 +138,9 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 8px 12px;
-    font-size: 0.85rem;
+    gap: 5px;
+    padding: 6px 8px;
+    font-size: 0.8rem;
     font-weight: 600;
     border-radius: 4px;
     border: 1px solid var(--border);
@@ -185,7 +177,7 @@
 
 .global-toolbar__btn--init-cog {
     border-radius: 0 4px 4px 0;
-    padding: 8px 10px;
+    padding: 6px 8px;
     width: auto;
     flex-shrink: 0;
     border-left: 1px solid var(--border);
@@ -267,33 +259,15 @@
     gap: 6px;
 }
 
-/* 🔥 MOBILE RESPONSIVE FIXES 🔥 */
-@media (max-width: 768px) {
+/* 🔥 MOBILE ONLY RESPONSIVE FIXES (Phone screens < 420px) 🔥 */
+@media (max-width: 420px) {
     .global-toolbar__content {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .global-toolbar__main-tools {
-        max-width: 100%;
         grid-template-columns: 1fr;
+        gap: 6px;
     }
 
-    .global-toolbar__split-group {
-        flex-direction: column; /* Safely stacks the Generators on narrow OBR screens */
-    }
-
+    .global-toolbar__main-tools,
     .global-toolbar__side-tools {
-        flex-direction: column;
-        width: 100%;
-    }
-
-    .global-toolbar__side-grid {
-        grid-template-columns: repeat(2, 1fr);
-        width: 100%;
-    }
-
-    .global-toolbar__icon-row {
-        justify-content: space-between;
+        grid-template-columns: 1fr;
     }
 }

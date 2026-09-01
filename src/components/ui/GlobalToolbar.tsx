@@ -23,6 +23,8 @@ import { PrintSettingsModal } from '../modals/PrintSettingsModal';
 import { ThemeSettingsModal } from '../modals/ThemeSettingsModal';
 import { AccessibilityModal } from '../modals/AccessibilityModal';
 import { GmScreenModal } from '../modals/GmScreenModal';
+import { BattleOrganizerModal } from '../modals/battleOrganizer/BattleOrganizerModal';
+import { PrintBattleOrganizer } from '../print/PrintBattleOrganizer';
 
 // Icons
 import {
@@ -44,7 +46,8 @@ import {
     AlertTriangle,
     XCircle,
     Eye,
-    ShieldCheck
+    ShieldCheck,
+    Layers
 } from 'lucide-react';
 import './GlobalToolbar.css';
 
@@ -61,6 +64,7 @@ type ActiveModal =
     | 'theme'
     | 'accessibility'
     | 'gm-screen'
+    | 'battle-organizer'
     | null;
 
 export function GlobalToolbar() {
@@ -80,6 +84,7 @@ export function GlobalToolbar() {
     // Consolidated State
     const [activeModal, setActiveModal] = useState<ActiveModal>(null);
     const [importData, setImportData] = useState<Record<string, unknown> | null>(null);
+    const [isPrintingBattleOrganizer, setIsPrintingBattleOrganizer] = useState(false);
 
     const fileInputReference = useRef<HTMLInputElement>(null);
 
@@ -272,6 +277,15 @@ export function GlobalToolbar() {
                             </button>
                         </div>
 
+                        <button
+                            type="button"
+                            className="global-toolbar__btn action-button--primary-hover"
+                            onClick={() => setActiveModal('battle-organizer')}
+                            title="Open Battle Organizer Sheet"
+                        >
+                            <Layers size={16} color="var(--primary)" /> Battle Organizer
+                        </button>
+
                         {showHomebrewButton && (
                             <button
                                 type="button"
@@ -292,122 +306,118 @@ export function GlobalToolbar() {
                             <BookOpen size={16} color="var(--primary)" /> Room Rules
                         </button>
 
-                        {(showPokemonGeneratorButton || showLootGenButton) && (
-                            <div className="global-toolbar__split-group">
-                                {showPokemonGeneratorButton && (
-                                    <button
-                                        type="button"
-                                        className="global-toolbar__btn action-button--secondary-hover"
-                                        onClick={() => setActiveModal('generator')}
-                                        title="Open Pokémon Generator"
-                                    >
-                                        <Wand2 size={16} color="var(--secondary)" /> PKMN Generator
-                                    </button>
-                                )}
-                                {showLootGenButton && (
-                                    <button
-                                        type="button"
-                                        className="global-toolbar__btn action-button--secondary-hover"
-                                        onClick={() => setActiveModal('loot')}
-                                        title="Generate Items & TMs"
-                                    >
-                                        <Package size={16} color="var(--secondary)" /> Loot Generator
-                                    </button>
-                                )}
-                            </div>
+                        {showPokemonGeneratorButton && (
+                            <button
+                                type="button"
+                                className="global-toolbar__btn action-button--secondary-hover"
+                                onClick={() => setActiveModal('generator')}
+                                title="Open Pokémon Generator"
+                            >
+                                <Wand2 size={16} color="var(--secondary)" /> PKMN Generator
+                            </button>
+                        )}
+
+                        {showLootGenButton && (
+                            <button
+                                type="button"
+                                className="global-toolbar__btn action-button--secondary-hover"
+                                onClick={() => setActiveModal('loot')}
+                                title="Generate Items & TMs"
+                            >
+                                <Package size={16} color="var(--secondary)" /> Loot Generator
+                            </button>
                         )}
                     </div>
 
                     <div className="global-toolbar__side-tools">
-                        <div className="global-toolbar__side-grid">
+                        <button
+                            type="button"
+                            className="global-toolbar__btn action-button--primary-hover"
+                            onClick={() => setActiveModal('theme')}
+                            title="Override Theme Colors"
+                        >
+                            <Palette size={16} color="var(--primary)" /> Theme
+                        </button>
+
+                        <button
+                            type="button"
+                            className="global-toolbar__btn action-button--primary-hover"
+                            onClick={() => setActiveModal('changelog')}
+                            title="View System Updates"
+                        >
+                            <Bell size={16} color="var(--primary)" /> What's New
+                        </button>
+
+                        <button
+                            type="button"
+                            className="global-toolbar__btn action-button--primary-hover"
+                            onClick={() => setActiveModal('accessibility')}
+                            title="Accessibility Options (Contrast & Fonts)"
+                        >
+                            <Eye size={16} color="var(--primary)" /> Accessibility
+                        </button>
+
+                        <button
+                            type="button"
+                            className="global-toolbar__btn action-button--neutral-hover"
+                            onClick={toggleTheme}
+                            title="Toggle Dark/Light Mode"
+                        >
+                            {isDark ? (
+                                <>
+                                    <Sun size={16} color="#F8D030" /> Light
+                                </>
+                            ) : (
+                                <>
+                                    <Moon size={16} color="#A890F0" /> Dark
+                                </>
+                            )}
+                        </button>
+
+                        <button
+                            type="button"
+                            className="global-toolbar__btn global-toolbar__btn--gm-screen action-button--primary-hover"
+                            onClick={() => setActiveModal('gm-screen')}
+                            title="Open GM Screen & Rules Cheat Sheet"
+                        >
+                            <ShieldCheck size={16} color="var(--primary)" /> GM Screen
+                        </button>
+
+                        <div className="global-toolbar__icon-actions">
                             <button
                                 type="button"
-                                className="global-toolbar__btn action-button--primary-hover"
-                                onClick={() => setActiveModal('theme')}
-                                title="Override Theme Colors"
+                                onClick={() => exportCharacterData(store, isStandaloneMode, isObrReady)}
+                                className="action-button action-button--dark global-toolbar__action-mini-btn"
+                                title="Export Character (Download JSON)"
+                                aria-label="Export Character JSON"
                             >
-                                <Palette size={16} color="var(--primary)" /> Theme
+                                <Save size={16} style={{ filter: ICON_SHADOW }} />
                             </button>
-
                             <button
                                 type="button"
-                                className="global-toolbar__btn action-button--primary-hover"
-                                onClick={() => setActiveModal('changelog')}
-                                title="View System Updates"
+                                onClick={() => fileInputReference.current?.click()}
+                                className="action-button action-button--dark global-toolbar__action-mini-btn"
+                                title="Import Character (Upload JSON)"
+                                aria-label="Import Character JSON"
                             >
-                                <Bell size={16} color="var(--primary)" /> What's New
+                                <Upload size={16} style={{ filter: ICON_SHADOW }} />
                             </button>
-
+                            <input
+                                type="file"
+                                ref={fileInputReference}
+                                onChange={handleImportChange}
+                                accept=".json"
+                                style={{ display: 'none' }}
+                            />
                             <button
                                 type="button"
-                                className="global-toolbar__btn action-button--primary-hover"
-                                onClick={() => setActiveModal('accessibility')}
-                                title="Accessibility Options (Contrast & Fonts)"
+                                onClick={() => setActiveModal('print')}
+                                className="action-button action-button--dark global-toolbar__action-mini-btn"
+                                title="Print Sheet"
+                                aria-label="Print Sheet"
                             >
-                                <Eye size={16} color="var(--primary)" /> Accessibility
+                                <Printer size={16} style={{ filter: ICON_SHADOW }} />
                             </button>
-
-                            <button
-                                type="button"
-                                className="global-toolbar__btn action-button--neutral-hover"
-                                onClick={toggleTheme}
-                                title="Toggle Dark/Light Mode"
-                            >
-                                {isDark ? (
-                                    <>
-                                        <Sun size={16} color="#F8D030" /> Light
-                                    </>
-                                ) : (
-                                    <>
-                                        <Moon size={16} color="#A890F0" /> Dark
-                                    </>
-                                )}
-                            </button>
-                        </div>
-
-                        <div className="global-toolbar__icon-row">
-                            <button
-                                type="button"
-                                className="global-toolbar__btn global-toolbar__btn--gm-screen action-button--primary-hover"
-                                onClick={() => setActiveModal('gm-screen')}
-                                title="Open GM Screen & Rules Cheat Sheet"
-                            >
-                                <ShieldCheck size={14} color="var(--primary)" /> GM Screen
-                            </button>
-
-                            <div className="global-toolbar__icon-actions">
-                                <button
-                                    type="button"
-                                    onClick={() => exportCharacterData(store, isStandaloneMode, isObrReady)}
-                                    className="action-button action-button--dark"
-                                    title="Export Character (Download JSON)"
-                                >
-                                    <Save size={14} style={{ filter: ICON_SHADOW }} />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => fileInputReference.current?.click()}
-                                    className="action-button action-button--dark"
-                                    title="Import Character (Upload JSON)"
-                                >
-                                    <Upload size={14} style={{ filter: ICON_SHADOW }} />
-                                </button>
-                                <input
-                                    type="file"
-                                    ref={fileInputReference}
-                                    onChange={handleImportChange}
-                                    accept=".json"
-                                    style={{ display: 'none' }}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveModal('print')}
-                                    className="action-button action-button--dark"
-                                    title="Print Sheet"
-                                >
-                                    <Printer size={14} style={{ filter: ICON_SHADOW }} />
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -454,6 +464,16 @@ export function GlobalToolbar() {
             {activeModal === 'theme' && <ThemeSettingsModal onClose={() => setActiveModal(null)} />}
             {activeModal === 'accessibility' && <AccessibilityModal onClose={() => setActiveModal(null)} />}
             {activeModal === 'gm-screen' && <GmScreenModal onClose={() => setActiveModal(null)} />}
+            {activeModal === 'battle-organizer' && (
+                <BattleOrganizerModal
+                    onClose={() => setActiveModal(null)}
+                    onPrint={() => setIsPrintingBattleOrganizer(true)}
+                />
+            )}
+
+            {isPrintingBattleOrganizer && (
+                <PrintBattleOrganizer onDone={() => setIsPrintingBattleOrganizer(false)} />
+            )}
         </div>
     );
 }
