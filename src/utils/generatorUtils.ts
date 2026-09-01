@@ -57,11 +57,6 @@ export function parseStatOptions(value: string): string[] {
     return results;
 }
 
-function normalizeStatistic(value: string): string {
-    const opts = parseStatOptions(value);
-    return opts.length > 0 ? opts[0] : '';
-}
-
 function normalizeSingleSkill(token: string): string {
     const s = token.toLowerCase().trim();
     if (!s || s === 'none') return 'none';
@@ -82,11 +77,6 @@ export function parseSkillOptions(value: string): string[] {
         }
     }
     return results;
-}
-
-function normalizeSkill(value: string): string {
-    const opts = parseSkillOptions(value);
-    return opts.length > 0 ? opts[0] : 'none';
 }
 
 export async function generateBuild(config: GeneratorConfig, state: CharacterState): Promise<TempBuild | null> {
