@@ -110,6 +110,9 @@ export interface TempMove {
     rawAcc1?: string;
     rawAcc2?: string;
     rawDmg1?: string;
+    candidateAttrs?: string[];
+    candidateDmgStats?: string[];
+    candidateSkills?: string[];
     marker?: string;
 }
 
@@ -131,6 +134,7 @@ export interface TempBuild {
 export interface GeneratorConfig {
     buildType: string;
     combatBias: string;
+    defensePreference: string;
     targetAtkCount: number;
     targetSupCount: number;
     includePmd: boolean;

@@ -26,29 +26,67 @@ const ATTRIBUTE_MAPPING: Record<string, string> = {
     Will: 'will'
 };
 
-function normalizeStatistic(value: string): string {
-    const stringValue = value.toLowerCase();
-    if (stringValue.includes('str')) return 'str';
-    if (stringValue.includes('dex')) return 'dex';
-    if (stringValue.includes('vit')) return 'vit';
-    if (stringValue.includes('spe')) return 'spe';
-    if (stringValue.includes('ins')) return 'ins';
-    if (stringValue.includes('tou')) return 'tou';
-    if (stringValue.includes('coo')) return 'coo';
-    if (stringValue.includes('bea')) return 'bea';
-    if (stringValue.includes('cut')) return 'cut';
-    if (stringValue.includes('cle')) return 'cle';
-    if (stringValue.includes('will')) return 'will';
+function normalizeSingleStatistic(token: string): string {
+    const s = token.toLowerCase().trim();
+    if (!s || s === 'none') return '';
+    if (s.includes('str')) return 'str';
+    if (s.includes('dex')) return 'dex';
+    if (s.includes('vit')) return 'vit';
+    if (s.includes('spe')) return 'spe';
+    if (s.includes('ins')) return 'ins';
+    if (s.includes('tou')) return 'tou';
+    if (s.includes('coo')) return 'coo';
+    if (s.includes('bea')) return 'bea';
+    if (s.includes('cut')) return 'cut';
+    if (s.includes('cle')) return 'cle';
+    if (s.includes('will')) return 'will';
     return '';
 }
 
-function normalizeSkill(value: string): string {
-    const stringValue = value.toLowerCase().trim();
-    if (!stringValue || stringValue === 'none') return 'none';
+export function parseStatOptions(value: string): string[] {
+    if (!value) return [];
+    const parts = value.split(/[/,]/).map((p) => p.trim()).filter(Boolean);
+    const results: string[] = [];
+    for (const part of parts) {
+        const mapped = ATTRIBUTE_MAPPING[part] || part;
+        const normalized = normalizeSingleStatistic(mapped);
+        if (normalized && !results.includes(normalized)) {
+            results.push(normalized);
+        }
+    }
+    return results;
+}
+
+function normalizeStatistic(value: string): string {
+    const opts = parseStatOptions(value);
+    return opts.length > 0 ? opts[0] : '';
+}
+
+function normalizeSingleSkill(token: string): string {
+    const s = token.toLowerCase().trim();
+    if (!s || s === 'none') return 'none';
     for (const skill of ALL_SKILLS) {
-        if (stringValue.includes(skill)) return skill;
+        if (s.includes(skill)) return skill;
     }
     return 'none';
+}
+
+export function parseSkillOptions(value: string): string[] {
+    if (!value) return [];
+    const parts = value.split(/[/,]/).map((p) => p.trim()).filter(Boolean);
+    const results: string[] = [];
+    for (const part of parts) {
+        const normalized = normalizeSingleSkill(part);
+        if (normalized && normalized !== 'none' && !results.includes(normalized)) {
+            results.push(normalized);
+        }
+    }
+    return results;
+}
+
+function normalizeSkill(value: string): string {
+    const opts = parseSkillOptions(value);
+    return opts.length > 0 ? opts[0] : 'none';
 }
 
 export async function generateBuild(config: GeneratorConfig, state: CharacterState): Promise<TempBuild | null> {
@@ -308,6 +346,10 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         const finalDesc =
             `${cleanDesc}\n\n${accString}${dmgString ? '\n' + dmgString : ''}${retainedTags ? '\n\n' + retainedTags : ''}`.trim();
 
+        const candidateDmgStats = parseStatOptions(rawDmg1);
+        const candidateAttrs = parseStatOptions(rawAcc1);
+        const candidateSkills = parseSkillOptions(rawAcc2);
+
         return {
             id: crypto.randomUUID(),
             name: moveName,
@@ -315,9 +357,12 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             cat: cat,
             power: Number(data.Power) || 0,
             desc: finalDesc,
-            dmgStat: normalizeStatistic(ATTRIBUTE_MAPPING[String(data.Damage1 || '')] || String(data.Damage1 || '')),
-            attr: normalizeStatistic(ATTRIBUTE_MAPPING[String(data.Accuracy1 || '')] || String(data.Accuracy1 || '')),
-            skill: normalizeSkill(String(data.Accuracy2 || '')),
+            dmgStat: candidateDmgStats[0] || '',
+            attr: candidateAttrs[0] || '',
+            skill: candidateSkills[0] || 'none',
+            candidateAttrs,
+            candidateDmgStats,
+            candidateSkills,
             rawAcc1: rawAcc1,
             rawAcc2: rawAcc2,
             rawDmg1: rawDmg1,
@@ -421,10 +466,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         bStats: Record<string, number>
     ) => {
         if (!rawAttr || rawAttr.toLowerCase() === 'none') return '';
-        const options = rawAttr
-            .split('/')
-            .map((s) => normalizeStatistic(ATTRIBUTE_MAPPING[s.trim()] || s.trim()))
-            .filter(Boolean);
+        const options = parseStatOptions(rawAttr);
         if (options.length === 0) return 'str';
         if (options.length === 1) return options[0];
 
@@ -449,10 +491,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
 
     const getBestSkill = (rawSkill: string, genSkills: Record<string, number>) => {
         if (!rawSkill || rawSkill.toLowerCase().includes('none')) return 'none';
-        const options = rawSkill
-            .split('/')
-            .map((s) => normalizeSkill(s))
-            .filter((s) => s !== 'none');
+        const options = parseSkillOptions(rawSkill);
         if (options.length === 0) return 'none';
         if (options.length === 1) return options[0];
 

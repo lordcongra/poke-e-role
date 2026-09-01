@@ -122,6 +122,54 @@ export function assignWildStats(
     }
 }
 
+export function determineDefensiveStyle(
+    state: CharacterState,
+    generatedAttributes: Record<string, number>,
+    remainingSkillPoints: number,
+    maxSkillRank: number,
+    config: GeneratorConfig
+): 'evasion' | 'clash' | 'balanced' {
+    const preference = config.defensePreference || 'auto';
+    if (preference === 'evasion' || preference === 'clash' || preference === 'balanced') {
+        return preference;
+    }
+
+    // Auto (Smart Detect with weighted viability evaluation)
+    const totalDex = (state.stats[CombatStat.DEX]?.base || 0) + (generatedAttributes['dex'] || 0);
+    const totalStr = (state.stats[CombatStat.STR]?.base || 0) + (generatedAttributes['str'] || 0);
+    const totalSpe = (state.stats[CombatStat.SPE]?.base || 0) + (generatedAttributes['spe'] || 0);
+    const maxAtkStat = Math.max(totalStr, totalSpe);
+
+    const maxSkillAdd = Math.min(remainingSkillPoints, maxSkillRank);
+    const potentialEvade = totalDex + maxSkillAdd;
+    const potentialClash = maxAtkStat + maxSkillAdd;
+
+    // 1. Slow / bulky Pokémon with poor agility (potential Evade pool < 4, or Clash far exceeds Evade by >= 3 with low Dex)
+    if (potentialEvade < 4 || (potentialClash >= potentialEvade + 3 && totalDex <= 2)) {
+        // ~85% Clash, 15% Evasion for rare agile variation
+        return Math.random() < 0.85 ? 'clash' : 'evasion';
+    }
+
+    // 2. Special Attackers & Agile Pokémon: Special attackers and high-dex species rely heavily on Evasion
+    const isSpecialAttacker = config.combatBias === 'special';
+    const isNaturallyAgile = totalDex >= 3;
+    if ((isSpecialAttacker && potentialEvade >= 4) || (isNaturallyAgile && potentialEvade >= 5)) {
+        // ~85% Evasion, 15% Clash
+        return Math.random() < 0.85 ? 'evasion' : 'clash';
+    }
+
+    // 3. Competitive / Close Range: If Evade is within 1 die of Clash, favor Evade (superior damage mitigation)
+    if (potentialEvade >= potentialClash - 1) {
+        return Math.random() < 0.80 ? 'evasion' : 'clash';
+    }
+
+    // 4. Default weighted roll between Evade and Clash
+    const evadeWeight = Math.max(1, potentialEvade + 1);
+    const clashWeight = Math.max(1, potentialClash);
+    const roll = Math.random() * (evadeWeight + clashWeight);
+    return roll < evadeWeight ? 'evasion' : 'clash';
+}
+
 export function assignMinMaxStats(
     generatedAttributes: Record<string, number>,
     generatedSocials: Record<string, number>,
@@ -148,17 +196,39 @@ export function assignMinMaxStats(
     const requiredSkills: Record<string, number> = {};
 
     draftedMoves.forEach((move) => {
-        if (move.attr) {
-            if (requiredAttributes[move.attr] !== undefined) requiredAttributes[move.attr] += 2;
-            else if (requiredSocials[move.attr] !== undefined) requiredSocials[move.attr] += 2;
-        }
-        if (move.dmgStat) {
-            if (requiredAttributes[move.dmgStat] !== undefined) requiredAttributes[move.dmgStat] += 2;
-            else if (requiredSocials[move.dmgStat] !== undefined) requiredSocials[move.dmgStat] += 2;
-        }
-        if (move.skill && move.skill !== 'none') {
-            requiredSkills[move.skill] = (requiredSkills[move.skill] || 0) + 2;
-        }
+        const attrs =
+            move.candidateAttrs && move.candidateAttrs.length > 0
+                ? move.candidateAttrs
+                : move.attr
+                  ? [move.attr]
+                  : [];
+        attrs.forEach((attr) => {
+            if (requiredAttributes[attr] !== undefined) requiredAttributes[attr] += 2;
+            else if (requiredSocials[attr] !== undefined) requiredSocials[attr] += 2;
+        });
+
+        const dmgStats =
+            move.candidateDmgStats && move.candidateDmgStats.length > 0
+                ? move.candidateDmgStats
+                : move.dmgStat
+                  ? [move.dmgStat]
+                  : [];
+        dmgStats.forEach((dmgStat) => {
+            if (requiredAttributes[dmgStat] !== undefined) requiredAttributes[dmgStat] += 2;
+            else if (requiredSocials[dmgStat] !== undefined) requiredSocials[dmgStat] += 2;
+        });
+
+        const skills =
+            move.candidateSkills && move.candidateSkills.length > 0
+                ? move.candidateSkills
+                : move.skill && move.skill !== 'none'
+                  ? [move.skill]
+                  : [];
+        skills.forEach((skill) => {
+            if (skill && skill !== 'none') {
+                requiredSkills[skill] = (requiredSkills[skill] || 0) + 2;
+            }
+        });
     });
 
     // Overwhelming Combat Bias to ensure Primary Damage stat is aggressively capped first
@@ -250,28 +320,38 @@ export function assignMinMaxStats(
         if (!assignedInLoop) availableSkills = availableSkills.filter((skill) => !topTierSkills.includes(skill));
     }
 
-    // Stage 2: Smart Defensive Dumps based on leftover points
-    const totalDexterity = state.stats[CombatStat.DEX].base + generatedAttributes['dex'];
-    const totalStrength = state.stats[CombatStat.STR].base + generatedAttributes['str'];
-    const totalSpecial = state.stats[CombatStat.SPE].base + generatedAttributes['spe'];
+    // Stage 2: Smart Defensive Dumps based on leftover points and defense preference
+    const defensiveStyle = determineDefensiveStyle(
+        state,
+        generatedAttributes,
+        remainingSkillPoints,
+        maxSkillRank,
+        config
+    );
 
-    const primaryDefense = totalDexterity >= Math.max(totalStrength, totalSpecial) ? 'evasion' : 'clash';
-    const secondaryDefense = primaryDefense === 'evasion' ? 'clash' : 'evasion';
-
-    // Fund Primary Defense to Max First
-    if (validSkills.includes(primaryDefense)) {
-        while (remainingSkillPoints > 0 && generatedSkills[primaryDefense] < maxSkillRank) {
-            generatedSkills[primaryDefense]++;
-            remainingSkillPoints--;
+    if (defensiveStyle === 'balanced') {
+        const targetPerDef = Math.min(maxSkillRank, Math.max(1, Math.floor(remainingSkillPoints / 2)));
+        if (validSkills.includes('evasion')) {
+            while (remainingSkillPoints > 0 && generatedSkills['evasion'] < targetPerDef) {
+                generatedSkills['evasion']++;
+                remainingSkillPoints--;
+            }
         }
-    }
-
-    // If we have plenty of points left, solidly fund the secondary defense.
-    // Otherwise, sprinkle the sparse points into Alert.
-    if (remainingSkillPoints >= maxSkillRank) {
-        if (validSkills.includes(secondaryDefense)) {
-            while (remainingSkillPoints > 0 && generatedSkills[secondaryDefense] < maxSkillRank) {
-                generatedSkills[secondaryDefense]++;
+        if (validSkills.includes('clash')) {
+            while (remainingSkillPoints > 0 && generatedSkills['clash'] < targetPerDef) {
+                generatedSkills['clash']++;
+                remainingSkillPoints--;
+            }
+        }
+        if (validSkills.includes('evasion')) {
+            while (remainingSkillPoints > 0 && generatedSkills['evasion'] < maxSkillRank) {
+                generatedSkills['evasion']++;
+                remainingSkillPoints--;
+            }
+        }
+        if (validSkills.includes('clash')) {
+            while (remainingSkillPoints > 0 && generatedSkills['clash'] < maxSkillRank) {
+                generatedSkills['clash']++;
                 remainingSkillPoints--;
             }
         }
@@ -282,16 +362,44 @@ export function assignMinMaxStats(
             }
         }
     } else {
-        if (validSkills.includes('alert')) {
-            while (remainingSkillPoints > 0 && generatedSkills['alert'] < maxSkillRank) {
-                generatedSkills['alert']++;
+        const primaryDefense = defensiveStyle;
+        const secondaryDefense = primaryDefense === 'evasion' ? 'clash' : 'evasion';
+
+        // Fund Primary Defense to Max First
+        if (validSkills.includes(primaryDefense)) {
+            while (remainingSkillPoints > 0 && generatedSkills[primaryDefense] < maxSkillRank) {
+                generatedSkills[primaryDefense]++;
                 remainingSkillPoints--;
             }
         }
-        if (validSkills.includes(secondaryDefense)) {
-            while (remainingSkillPoints > 0 && generatedSkills[secondaryDefense] < maxSkillRank) {
-                generatedSkills[secondaryDefense]++;
-                remainingSkillPoints--;
+
+        // If we have plenty of points left, solidly fund the secondary defense.
+        // Otherwise, sprinkle the sparse points into Alert.
+        if (remainingSkillPoints >= maxSkillRank) {
+            if (validSkills.includes(secondaryDefense)) {
+                while (remainingSkillPoints > 0 && generatedSkills[secondaryDefense] < maxSkillRank) {
+                    generatedSkills[secondaryDefense]++;
+                    remainingSkillPoints--;
+                }
+            }
+            if (validSkills.includes('alert')) {
+                while (remainingSkillPoints > 0 && generatedSkills['alert'] < maxSkillRank) {
+                    generatedSkills['alert']++;
+                    remainingSkillPoints--;
+                }
+            }
+        } else {
+            if (validSkills.includes('alert')) {
+                while (remainingSkillPoints > 0 && generatedSkills['alert'] < maxSkillRank) {
+                    generatedSkills['alert']++;
+                    remainingSkillPoints--;
+                }
+            }
+            if (validSkills.includes(secondaryDefense)) {
+                while (remainingSkillPoints > 0 && generatedSkills[secondaryDefense] < maxSkillRank) {
+                    generatedSkills[secondaryDefense]++;
+                    remainingSkillPoints--;
+                }
             }
         }
     }
@@ -349,15 +457,37 @@ export function assignAverageStats(
     const coreSkills = new Set<string>();
 
     draftedMoves.forEach((move) => {
-        if (move.attr) {
-            if (COMBAT_STATS.includes(move.attr)) coreAttributes.add(move.attr);
-            else if (SOCIAL_STATS.includes(move.attr)) coreSocials.add(move.attr);
-        }
-        if (move.dmgStat) {
-            if (COMBAT_STATS.includes(move.dmgStat)) coreAttributes.add(move.dmgStat);
-            else if (SOCIAL_STATS.includes(move.dmgStat)) coreSocials.add(move.dmgStat);
-        }
-        if (move.skill && move.skill !== 'none') coreSkills.add(move.skill);
+        const attrs =
+            move.candidateAttrs && move.candidateAttrs.length > 0
+                ? move.candidateAttrs
+                : move.attr
+                  ? [move.attr]
+                  : [];
+        attrs.forEach((a) => {
+            if (COMBAT_STATS.includes(a)) coreAttributes.add(a);
+            else if (SOCIAL_STATS.includes(a)) coreSocials.add(a);
+        });
+
+        const dmgStats =
+            move.candidateDmgStats && move.candidateDmgStats.length > 0
+                ? move.candidateDmgStats
+                : move.dmgStat
+                  ? [move.dmgStat]
+                  : [];
+        dmgStats.forEach((d) => {
+            if (COMBAT_STATS.includes(d)) coreAttributes.add(d);
+            else if (SOCIAL_STATS.includes(d)) coreSocials.add(d);
+        });
+
+        const skills =
+            move.candidateSkills && move.candidateSkills.length > 0
+                ? move.candidateSkills
+                : move.skill && move.skill !== 'none'
+                  ? [move.skill]
+                  : [];
+        skills.forEach((s) => {
+            if (s && s !== 'none') coreSkills.add(s);
+        });
     });
 
     if (config.combatBias === 'tank') {
@@ -365,12 +495,19 @@ export function assignAverageStats(
         coreAttributes.add('ins');
     }
 
-    const totalDexterity = state.stats[CombatStat.DEX].base + generatedAttributes['dex'];
-    const totalStrength = state.stats[CombatStat.STR].base + generatedAttributes['str'];
-    const totalSpecial = state.stats[CombatStat.SPE].base + generatedAttributes['spe'];
-    const primaryDefense = totalDexterity >= Math.max(totalStrength, totalSpecial) ? 'evasion' : 'clash';
-
-    coreSkills.add(primaryDefense);
+    const defensiveStyle = determineDefensiveStyle(
+        state,
+        generatedAttributes,
+        remainingSkillPoints,
+        maxSkillRank,
+        config
+    );
+    if (defensiveStyle === 'balanced') {
+        coreSkills.add('evasion');
+        coreSkills.add('clash');
+    } else {
+        coreSkills.add(defensiveStyle);
+    }
     coreSkills.add('alert');
 
     for (const attr of coreAttributes) {

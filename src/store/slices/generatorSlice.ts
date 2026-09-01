@@ -9,6 +9,7 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
     generatorConfig: {
         buildType: 'minmax',
         combatBias: 'balanced',
+        defensePreference: 'auto',
         targetAtkCount: 4,
         targetSupCount: 1,
         includePmd: false,

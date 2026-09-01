@@ -43,22 +43,42 @@ export function getMoveScore(move: TempMove, context: DraftingContext): number {
     const { effectiveBias, myTypes, config, draftedAccAttrs, draftedSkills } = context;
     let score = 0;
 
-    const isFunctionallyPhysical = move.cat === 'Phys' || move.dmgStat === 'str';
-    const isFunctionallySpecial = move.cat === 'Spec' || move.dmgStat === 'spe';
+    const dmgOptions =
+        move.candidateDmgStats && move.candidateDmgStats.length > 0
+            ? move.candidateDmgStats
+            : move.dmgStat
+              ? [move.dmgStat]
+              : [];
+    const accAttrOptions =
+        move.candidateAttrs && move.candidateAttrs.length > 0
+            ? move.candidateAttrs
+            : move.attr
+              ? [move.attr]
+              : [];
+    const accSkillOptions =
+        move.candidateSkills && move.candidateSkills.length > 0
+            ? move.candidateSkills
+            : move.skill && move.skill !== 'none'
+              ? [move.skill]
+              : [];
+
+    const isFunctionallyPhysical =
+        move.cat === 'Phys' || dmgOptions.includes('str') || dmgOptions.includes('dex');
+    const isFunctionallySpecial = move.cat === 'Spec' || dmgOptions.includes('spe');
 
     // STAB Match vs Bias Mismatch
     if (effectiveBias === 'physical') {
         if (isFunctionallyPhysical) score += 60;
         else if (move.cat === 'Spec' && !isFunctionallyPhysical) score -= 80;
-        // Pre-seed accuracy preference (Including VIT for bruisers)
-        if (move.attr === 'str' || move.attr === 'dex' || move.attr === 'vit') score += 20;
+        // Pre-seed accuracy preference (Including VIT for bruisers, DEX for fast physicals)
+        if (accAttrOptions.some((a) => a === 'str' || a === 'dex' || a === 'vit')) score += 20;
     } else if (effectiveBias === 'special') {
         if (isFunctionallySpecial) score += 60;
         else if (move.cat === 'Phys' && !isFunctionallySpecial) score -= 80;
         // Pre-seed accuracy preference
-        if (move.attr === 'spe' || move.attr === 'ins' || move.attr === 'will' || move.attr === 'dex') score += 20;
+        if (accAttrOptions.some((a) => a === 'spe' || a === 'ins' || a === 'will' || a === 'dex')) score += 20;
     } else if (effectiveBias === 'tank') {
-        if (move.attr === 'vit' || move.attr === 'ins' || move.attr === 'will') score += 20;
+        if (accAttrOptions.some((a) => a === 'vit' || a === 'ins' || a === 'will')) score += 20;
         if (move.cat === 'Status') score += 20;
         score += getDefensiveScore(move) * 10;
     } else if (effectiveBias === 'support') {
@@ -75,12 +95,11 @@ export function getMoveScore(move: TempMove, context: DraftingContext): number {
     }
 
     // Dynamic Synergy Adjustments
-    if (draftedAccAttrs.has(move.attr)) score += 15;
-    if (move.attr === 'will' && draftedAccAttrs.has('ins')) score += 15;
-    if (move.attr === 'ins' && draftedAccAttrs.has('will')) score += 15;
+    if (accAttrOptions.some((a) => draftedAccAttrs.has(a))) score += 15;
+    if (accAttrOptions.includes('will') && draftedAccAttrs.has('ins')) score += 15;
+    if (accAttrOptions.includes('ins') && draftedAccAttrs.has('will')) score += 15;
 
-    // For early drafting, evaluating synergy based on the first skill parsed is acceptable
-    if (move.skill && draftedSkills.has(move.skill)) score += 10;
+    if (accSkillOptions.some((s) => draftedSkills.has(s))) score += 10;
 
     let effectivePower = move.power;
     if (move.cat === 'Status') {
@@ -91,6 +110,28 @@ export function getMoveScore(move: TempMove, context: DraftingContext): number {
     score += effectivePower * 2;
 
     return score;
+}
+
+function registerMoveSignatures(
+    move: TempMove,
+    draftedAccAttrs: Set<string>,
+    draftedSkills: Set<string>
+) {
+    const attrs =
+        move.candidateAttrs && move.candidateAttrs.length > 0
+            ? move.candidateAttrs
+            : move.attr
+              ? [move.attr]
+              : [];
+    attrs.forEach((a) => draftedAccAttrs.add(a));
+
+    const skills =
+        move.candidateSkills && move.candidateSkills.length > 0
+            ? move.candidateSkills
+            : move.skill && move.skill !== 'none'
+              ? [move.skill]
+              : [];
+    skills.forEach((s) => draftedSkills.add(s));
 }
 
 export function draftInitialMoves(
@@ -142,7 +183,10 @@ export function draftInitialMoves(
         leftoverPool = [...fetchedMoves].sort(() => 0.5 - Math.random());
         while (draftedMoves.length < draftedMax && leftoverPool.length > 0) {
             const move = leftoverPool.shift();
-            if (move) draftedMoves.push(move);
+            if (move) {
+                draftedMoves.push(move);
+                registerMoveSignatures(move, draftedAccAttrs, draftedSkills);
+            }
         }
     } else {
         let supportPool = fetchedMoves.filter((move) => move.cat === 'Status');
@@ -163,8 +207,7 @@ export function draftInitialMoves(
             if (overrankMoveObj) {
                 draftedMoves.push(overrankMoveObj);
                 typeCounts.set(overrankMoveObj.type, 1);
-                if (overrankMoveObj.attr) draftedAccAttrs.add(overrankMoveObj.attr);
-                if (overrankMoveObj.skill) draftedSkills.add(overrankMoveObj.skill);
+                registerMoveSignatures(overrankMoveObj, draftedAccAttrs, draftedSkills);
 
                 if (overrankMoveObj.cat === 'Status') {
                     if (remainingSupportSlots > 0) remainingSupportSlots--;
@@ -228,8 +271,7 @@ export function draftInitialMoves(
                 if (canDraft) {
                     draftedMoves.push(move);
                     typeCounts.set(move.type, currentCount + 1);
-                    if (move.attr) draftedAccAttrs.add(move.attr);
-                    if (move.skill) draftedSkills.add(move.skill);
+                    registerMoveSignatures(move, draftedAccAttrs, draftedSkills);
 
                     draftedIndex = i;
                     remainingAttackSlots--;
@@ -255,8 +297,7 @@ export function draftInitialMoves(
             const move = supportPool.shift();
             if (move) {
                 draftedMoves.push(move);
-                if (move.attr) draftedAccAttrs.add(move.attr);
-                if (move.skill) draftedSkills.add(move.skill);
+                registerMoveSignatures(move, draftedAccAttrs, draftedSkills);
             }
         }
 

@@ -203,7 +203,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                         </div>
                     )}
 
-                    {/* Build Tier & Combat Bias */}
+                    {/* Build Tier, Combat Bias & Defensive Preference */}
                     <div className="generator-modal__row">
                         <div className="generator-modal__col">
                             <label className="text-label">Build Tier:</label>
@@ -241,6 +241,30 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                 <option value="special">Special Attacker</option>
                                 <option value="tank">Tank / Defender</option>
                                 <option value="support">Status / Support</option>
+                            </select>
+                        </div>
+                        <div className="generator-modal__col">
+                            <label className="text-label" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                Defense Style:
+                                <TooltipIcon
+                                    onClick={() =>
+                                        setTooltipInfo({
+                                            title: 'Defensive Style',
+                                            desc: 'Determines how defensive skill points (Evasion vs Clash) are prioritized. "Auto" evaluates potential dice pools with an inherent preference for Evasion (dodging).'
+                                        })
+                                    }
+                                />
+                            </label>
+                            <select
+                                value={config.defensePreference || 'auto'}
+                                onChange={(e) => setConfig({ defensePreference: e.target.value })}
+                                className="generator-modal__select text-label"
+                                disabled={config.buildType === 'wild'}
+                            >
+                                <option value="auto">Auto (Smart Choice)</option>
+                                <option value="evasion">Evasion Focus (Dodge)</option>
+                                <option value="clash">Clash Focus (Counter/Block)</option>
+                                <option value="balanced">Balanced (Split 50/50)</option>
                             </select>
                         </div>
                     </div>
