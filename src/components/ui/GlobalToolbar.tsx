@@ -309,22 +309,22 @@ export function GlobalToolbar() {
                         {showPokemonGeneratorButton && (
                             <button
                                 type="button"
-                                className="global-toolbar__btn action-button--secondary-hover"
+                                className="global-toolbar__btn action-button--primary-hover"
                                 onClick={() => setActiveModal('generator')}
                                 title="Open Pokémon Generator"
                             >
-                                <Wand2 size={16} color="var(--secondary)" /> PKMN Generator
+                                <Wand2 size={16} color="var(--primary)" /> PKMN Generator
                             </button>
                         )}
 
                         {showLootGenButton && (
                             <button
                                 type="button"
-                                className="global-toolbar__btn action-button--secondary-hover"
+                                className="global-toolbar__btn action-button--primary-hover"
                                 onClick={() => setActiveModal('loot')}
                                 title="Generate Items & TMs"
                             >
-                                <Package size={16} color="var(--secondary)" /> Loot Generator
+                                <Package size={16} color="var(--primary)" /> Loot Generator
                             </button>
                         )}
                     </div>
