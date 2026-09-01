@@ -189,12 +189,12 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                         <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Important Rules:</span>
                         <ul style={{ margin: '4px 0 0 0', paddingLeft: '20px' }}>
                             <li>
-                                In a single round, you may only use <em>Take Your Chances</em> OR{' '}
-                                <em>Pushing Fate</em>—not both!
+                                In a single round, you may only use <em>Take Your Chances</em> OR <em>Pushing Fate</em>
+                                —not both!
                             </li>
                             <li>
-                                Spending all your Will Points in a scene causes the character to faint at the end of
-                                the scene.
+                                Spending all your Will Points in a scene causes the character to faint at the end of the
+                                scene.
                             </li>
                         </ul>
                     </div>
@@ -303,13 +303,20 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                         </span>
                         <ul style={{ margin: '0', paddingLeft: '18px', color: 'var(--text-main)' }}>
                             <li>
-                                <strong>0 Successes Minimum Damage:</strong> Even if you roll <strong>0 successes</strong> on your damage dice pool, a successful hit still deals <strong>1 base damage</strong> (unless the foe has Resistance or Immunity).
+                                <strong>0 Successes Minimum Damage:</strong> Even if you roll{' '}
+                                <strong>0 successes</strong> on your damage dice pool, a successful hit still deals{' '}
+                                <strong>1 base damage</strong> (unless the foe has Resistance or Immunity).
                             </li>
                             <li>
-                                <strong>1+ Success Requirement:</strong> You <strong>must</strong> score at least <strong>1 success</strong> on the damage roll for any <strong>Added Effects</strong> on the target to trigger, or for <strong>Super Effective (+1) / Extremely Effective (+2)</strong> weakness damage bonuses to apply.
+                                <strong>1+ Success Requirement:</strong> You <strong>must</strong> score at least{' '}
+                                <strong>1 success</strong> on the damage roll for any <strong>Added Effects</strong> on
+                                the target to trigger, or for{' '}
+                                <strong>Super Effective (+1) / Extremely Effective (+2)</strong> weakness damage bonuses
+                                to apply.
                             </li>
                             <li>
-                                <strong>Resistance:</strong> Each Resistance subtracts 1 flat damage (reducing 1 base damage down to 0).
+                                <strong>Resistance:</strong> Each Resistance subtracts 1 flat damage (reducing 1 base
+                                damage down to 0).
                             </li>
                         </ul>
                     </div>
@@ -332,7 +339,9 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                             “Sometimes it will be more convenient to contain the full force of your Pokémon attacks.”
                         </p>
                         <p style={{ margin: '0', color: 'var(--text-muted)' }}>
-                            Give the command to <strong>“Hold Back!”</strong>, <strong>“Restrain yourself!”</strong>, or <strong>“Don’t use full force!”</strong> in order to choose one or a combination of the options below:
+                            Give the command to <strong>“Hold Back!”</strong>, <strong>“Restrain yourself!”</strong>, or{' '}
+                            <strong>“Don’t use full force!”</strong> in order to choose one or a combination of the
+                            options below:
                         </p>
                     </div>
 
@@ -355,9 +364,7 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                                     <strong style={{ color: 'var(--primary)', display: 'block', marginBottom: '3px' }}>
                                         • {opt.title}
                                     </strong>
-                                    <span style={{ color: 'var(--text-main)', lineHeight: '1.4' }}>
-                                        {opt.desc}
-                                    </span>
+                                    <span style={{ color: 'var(--text-main)', lineHeight: '1.4' }}>{opt.desc}</span>
                                 </div>
                                 <button
                                     type="button"
@@ -384,7 +391,14 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                             lineHeight: '1.35'
                         }}
                     >
-                        <strong style={{ color: '#E91E63' }}>💕 In Love Status Condition (Storyteller Discretion):</strong> When a Pokémon is <strong>In Love</strong>, they are trying to earn their crush’s favor. At the Storyteller’s discretion, this can mean dealing <strong>Half Damage</strong> or enforcing <strong>all Holding Back restrictions</strong> (forfeiting crits & added effects—poisoning your crush or landing crits is a massive red flag!). Pokémon can bypass this by succeeding on a Loyalty or Insight roll (3+ successes) when attacking.
+                        <strong style={{ color: '#E91E63' }}>
+                            💕 In Love Status Condition (Storyteller Discretion):
+                        </strong>{' '}
+                        When a Pokémon is <strong>In Love</strong>, they are trying to earn their crush’s favor. At the
+                        Storyteller’s discretion, this can mean dealing <strong>Half Damage</strong> or enforcing{' '}
+                        <strong>all Holding Back restrictions</strong> (forfeiting crits & added effects—poisoning your
+                        crush or landing crits is a massive red flag!). Pokémon can bypass this by succeeding on a
+                        Loyalty or Insight roll (3+ successes) when attacking.
                     </div>
                 </div>
             );
@@ -430,11 +444,22 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                                 </span>
                                 <strong style={{ color: '#00ACC1' }}>Resolves BEFORE Action</strong>
                             </div>
-                            <p style={{ margin: '0', color: 'var(--text-main)', lineHeight: '1.4', fontSize: '0.82rem' }}>
-                                Almost instantaneous movements used when it is not your turn yet (range from 1 to 6). Higher Reaction numbers resolve <strong>FIRST</strong>.
+                            <p
+                                style={{
+                                    margin: '0',
+                                    color: 'var(--text-main)',
+                                    lineHeight: '1.4',
+                                    fontSize: '0.82rem'
+                                }}
+                            >
+                                Almost instantaneous movements used when it is not your turn yet (range from 1 to 6).
+                                Higher Reaction numbers resolve <strong>FIRST</strong>.
                             </p>
                             <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', lineHeight: '1.35' }}>
-                                <em>Examples: Quick Attack / Water Shuriken (⬆️1), Extreme Speed (⬆️2), Upper Hand (⬆️3), King’s Shield (⬆️4), Protect (⬆️5), Evade / Clash maneuvers (⬆️6).</em>
+                                <em>
+                                    Examples: Quick Attack / Water Shuriken (⬆️1), Extreme Speed (⬆️2), Upper Hand
+                                    (⬆️3), King’s Shield (⬆️4), Protect (⬆️5), Evade / Clash maneuvers (⬆️6).
+                                </em>
                             </div>
                         </div>
 
@@ -468,11 +493,23 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                                 </span>
                                 <strong style={{ color: '#7E57C2' }}>Resolves AFTER Action</strong>
                             </div>
-                            <p style={{ margin: '0', color: 'var(--text-main)', lineHeight: '1.4', fontSize: '0.82rem' }}>
-                                Delayed counter-attacks & traps that trigger after taking the hit (range from 1 to 6). Higher Late Reaction numbers resolve <strong>LATER</strong> (Lower numbers resolve first!).
+                            <p
+                                style={{
+                                    margin: '0',
+                                    color: 'var(--text-main)',
+                                    lineHeight: '1.4',
+                                    fontSize: '0.82rem'
+                                }}
+                            >
+                                Delayed counter-attacks & traps that trigger after taking the hit (range from 1 to 6).
+                                Higher Late Reaction numbers resolve <strong>LATER</strong> (Lower numbers resolve
+                                first!).
                             </p>
                             <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
-                                <em>Examples: Circle Throw / Feint (⬇️1), Shell Trap (⬇️3), Avalanche (⬇️4), Counter / Mirror Coat (⬇️5), Dragon Tail / Roar (⬇️6).</em>
+                                <em>
+                                    Examples: Circle Throw / Feint (⬇️1), Shell Trap (⬇️3), Avalanche (⬇️4), Counter /
+                                    Mirror Coat (⬇️5), Dragon Tail / Roar (⬇️6).
+                                </em>
                             </div>
                         </div>
                     </div>
@@ -496,10 +533,15 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                                     gap: '8px'
                                 }}
                             >
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                                    <strong style={{ color: 'var(--primary)', fontSize: '0.85rem' }}>
-                                        {ex.title}
-                                    </strong>
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        gap: '8px'
+                                    }}
+                                >
+                                    <strong style={{ color: 'var(--primary)', fontSize: '0.85rem' }}>{ex.title}</strong>
                                     <button
                                         type="button"
                                         className="action-button action-button--dark gm-card-item-broadcast-btn"
@@ -511,7 +553,14 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                                     </button>
                                 </div>
 
-                                <div style={{ color: 'var(--text-main)', fontSize: '0.8rem', fontStyle: 'italic', lineHeight: '1.35' }}>
+                                <div
+                                    style={{
+                                        color: 'var(--text-main)',
+                                        fontSize: '0.8rem',
+                                        fontStyle: 'italic',
+                                        lineHeight: '1.35'
+                                    }}
+                                >
                                     “{ex.scenario}”
                                 </div>
 
@@ -528,7 +577,9 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                                         border: '1px solid var(--border)'
                                     }}
                                 >
-                                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>
+                                    <span
+                                        style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)' }}
+                                    >
                                         Order:
                                     </span>
                                     {ex.orderSteps.map((step, idx) => (
@@ -542,7 +593,8 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                                                     idx === 0
                                                         ? 'color-mix(in srgb, var(--primary) 20%, var(--panel-alt))'
                                                         : 'var(--panel-alt)',
-                                                border: idx === 0 ? '1px solid var(--primary)' : '1px solid var(--border)',
+                                                border:
+                                                    idx === 0 ? '1px solid var(--primary)' : '1px solid var(--border)',
                                                 color: idx === 0 ? 'var(--primary)' : 'var(--text-main)',
                                                 fontWeight: idx === 0 ? 'bold' : 'normal'
                                             }}
@@ -552,7 +604,14 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                                     ))}
                                 </div>
 
-                                <p style={{ margin: '0', fontSize: '0.78rem', color: 'var(--text-main)', lineHeight: '1.35' }}>
+                                <p
+                                    style={{
+                                        margin: '0',
+                                        fontSize: '0.78rem',
+                                        color: 'var(--text-main)',
+                                        lineHeight: '1.35'
+                                    }}
+                                >
                                     {ex.explanation}
                                 </p>
                             </div>
@@ -571,7 +630,16 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                             gap: '8px'
                         }}
                     >
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', borderBottom: '1px solid var(--border)', paddingBottom: '6px' }}>
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '8px',
+                                borderBottom: '1px solid var(--border)',
+                                paddingBottom: '6px'
+                            }}
+                        >
                             <strong style={{ color: 'var(--primary)', fontSize: '0.85rem' }}>
                                 Key Tactical Rules & Limitations
                             </strong>
@@ -586,7 +654,13 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                             </button>
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '8px' }}>
+                        <div
+                            style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                                gap: '8px'
+                            }}
+                        >
                             {REACTION_CORE_RULES.map((r, idx) => (
                                 <div
                                     key={idx}
@@ -600,10 +674,10 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                                         gap: '3px'
                                     }}
                                 >
-                                    <strong style={{ color: 'var(--primary)', fontSize: '0.8rem' }}>
-                                        • {r.title}
-                                    </strong>
-                                    <span style={{ fontSize: '0.76rem', color: 'var(--text-main)', lineHeight: '1.35' }}>
+                                    <strong style={{ color: 'var(--primary)', fontSize: '0.8rem' }}>• {r.title}</strong>
+                                    <span
+                                        style={{ fontSize: '0.76rem', color: 'var(--text-main)', lineHeight: '1.35' }}
+                                    >
                                         {r.desc}
                                     </span>
                                 </div>
@@ -620,16 +694,16 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                         <strong style={{ color: 'var(--primary)' }}>Pain Penalty Thresholds:</strong>
                         <ul style={{ margin: '4px 0 0 0', paddingLeft: '20px' }}>
                             <li>
-                                <strong>&le; Half Total HP:</strong> Suffer 1st Pain Penalty (-1 success on all
-                                Action Rolls).
+                                <strong>&le; Half Total HP:</strong> Suffer 1st Pain Penalty (-1 success on all Action
+                                Rolls).
                             </li>
                             <li>
                                 <strong>1 HP:</strong> Suffer 2nd Pain Penalty (-1 additional success on all Action
                                 Rolls, total -2).
                             </li>
                             <li>
-                                <strong>Power Through the Pain:</strong> Pay <strong>1 Will Point</strong> to ignore
-                                one Pain Penalty for the rest of the scene.
+                                <strong>Power Through the Pain:</strong> Pay <strong>1 Will Point</strong> to ignore one
+                                Pain Penalty for the rest of the scene.
                             </li>
                         </ul>
                     </div>
@@ -661,9 +735,8 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                         <ul style={{ margin: '0', paddingLeft: '20px' }}>
                             <li>
                                 <strong>Trigger:</strong> If you or a Pokémon fall unconscious and keep receiving
-                                damage, that damage becomes <strong>Lethal Damage</strong>. Some Pokémon can also
-                                learn devastating moves that deal Lethal Damage directly when used with lethal
-                                intent.
+                                damage, that damage becomes <strong>Lethal Damage</strong>. Some Pokémon can also learn
+                                devastating moves that deal Lethal Damage directly when used with lethal intent.
                             </li>
                             <li>
                                 <strong>Risk of Death:</strong> If you suffer Lethal Damage equal to your{' '}
@@ -671,10 +744,9 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                                 <strong>1 more Damage and the character dies.</strong>
                             </li>
                             <li>
-                                <strong>Unattended Worsening:</strong> If a character suffers 1+ lethal damage and
-                                is left unattended, they will suffer{' '}
-                                <strong>another lethal damage every hour</strong> until their body can’t hold any
-                                longer.
+                                <strong>Unattended Worsening:</strong> If a character suffers 1+ lethal damage and is
+                                left unattended, they will suffer <strong>another lethal damage every hour</strong>{' '}
+                                until their body can’t hold any longer.
                             </li>
                             <li>
                                 <strong>Twice as Costly to Heal:</strong>
@@ -690,9 +762,8 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                                 </ul>
                             </li>
                             <li>
-                                <strong>Setting Note:</strong> Lethal Damage is <strong>banned</strong> from
-                                official League matches. However, ruthless Trainers or wild Pokémon will give no
-                                mercy.
+                                <strong>Setting Note:</strong> Lethal Damage is <strong>banned</strong> from official
+                                League matches. However, ruthless Trainers or wild Pokémon will give no mercy.
                             </li>
                         </ul>
                     </div>

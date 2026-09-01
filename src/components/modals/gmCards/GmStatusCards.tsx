@@ -51,7 +51,14 @@ export const GmStatusCards: React.FC<GmStatusCardsProps> = ({
                         <div className="status-categories-grid">
                             {STATUS_CATEGORIES_DATA.map((cat) => (
                                 <div key={cat.category} className="status-category-card">
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            marginBottom: '4px'
+                                        }}
+                                    >
                                         <span
                                             className={`status-category-pill status-category-pill--${cat.category.toLowerCase()}`}
                                             style={{ color: cat.color }}
@@ -59,10 +66,21 @@ export const GmStatusCards: React.FC<GmStatusCardsProps> = ({
                                             {cat.title}
                                         </span>
                                     </div>
-                                    <p className="text-subtext" style={{ margin: '0 0 4px 0', fontSize: '0.78rem', color: 'var(--text-main)', lineHeight: '1.35' }}>
+                                    <p
+                                        className="text-subtext"
+                                        style={{
+                                            margin: '0 0 4px 0',
+                                            fontSize: '0.78rem',
+                                            color: 'var(--text-main)',
+                                            lineHeight: '1.35'
+                                        }}
+                                    >
                                         {cat.desc}
                                     </p>
-                                    <span className="text-subtext" style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                                    <span
+                                        className="text-subtext"
+                                        style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}
+                                    >
                                         <em>Examples: {cat.examples}</em>
                                     </span>
                                 </div>
@@ -70,13 +88,35 @@ export const GmStatusCards: React.FC<GmStatusCardsProps> = ({
                         </div>
 
                         <div className="status-rules-box__notes">
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', fontSize: '0.8rem', color: 'var(--text-main)', lineHeight: '1.4' }}>
-                                <Sparkles size={14} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'flex-start',
+                                    gap: '6px',
+                                    fontSize: '0.8rem',
+                                    color: 'var(--text-main)',
+                                    lineHeight: '1.4'
+                                }}
+                            >
+                                <Sparkles
+                                    size={14}
+                                    color="var(--primary)"
+                                    style={{ flexShrink: 0, marginTop: '2px' }}
+                                />
                                 <span>
                                     <strong>Status Stacking:</strong> {STATUS_RULES_INFO.stacking}
                                 </span>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', fontSize: '0.8rem', color: 'var(--text-main)', lineHeight: '1.4' }}>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'flex-start',
+                                    gap: '6px',
+                                    fontSize: '0.8rem',
+                                    color: 'var(--text-main)',
+                                    lineHeight: '1.4'
+                                }}
+                            >
                                 <Pill size={14} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
                                 <span>
                                     <strong>Curing Multiple Conditions:</strong> {STATUS_RULES_INFO.curing}
@@ -90,7 +130,16 @@ export const GmStatusCards: React.FC<GmStatusCardsProps> = ({
                         {STATUS_EFFECTS_DATA.map((s) => (
                             <div key={s.id} className="status-card">
                                 <div className="status-card__header">
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            flexWrap: 'wrap',
+                                            flex: 1,
+                                            minWidth: 0
+                                        }}
+                                    >
                                         <span
                                             className="status-card__badge"
                                             style={{ backgroundColor: s.color, color: s.textColor }}
@@ -131,7 +180,11 @@ export const GmStatusCards: React.FC<GmStatusCardsProps> = ({
                                             marginTop: '2px'
                                         }}
                                     >
-                                        <strong>💕 Storyteller Note:</strong> Being <em>In Love</em> means trying to earn their crush’s favor. At the GM’s discretion, they deal <strong>Half Damage</strong> or apply <strong>all Holding Back options</strong> (no crits, no poison/added effects—poisoning your crush is a massive red flag!). Refer to the <strong>“Holding Back an Attack”</strong> section for details.
+                                        <strong>💕 Storyteller Note:</strong> Being <em>In Love</em> means trying to
+                                        earn their crush’s favor. At the GM’s discretion, they deal{' '}
+                                        <strong>Half Damage</strong> or apply <strong>all Holding Back options</strong>{' '}
+                                        (no crits, no poison/added effects—poisoning your crush is a massive red flag!).
+                                        Refer to the <strong>“Holding Back an Attack”</strong> section for details.
                                     </div>
                                 )}
                                 <div className="status-card__text">
@@ -152,7 +205,16 @@ export const GmStatusCards: React.FC<GmStatusCardsProps> = ({
                     {WEATHER_CONDITIONS_DATA.map((w) => (
                         <div key={w.id} className="weather-card">
                             <div className="weather-card__header">
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        flexWrap: 'wrap',
+                                        flex: 1,
+                                        minWidth: 0
+                                    }}
+                                >
                                     <span className="weather-card__title" style={{ color: w.color }}>
                                         {w.name}
                                     </span>

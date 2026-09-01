@@ -54,7 +54,11 @@ export function PrintBattleOrganizer({ onDone, stateOverride }: PrintBattleOrgan
                                 const url = await imageManager.getImageUrl(c.image);
                                 if (url) imgMap[c.id] = url;
                             } catch {}
-                        } else if (c.image.startsWith('http') || c.image.startsWith('data:') || c.image.startsWith('blob:')) {
+                        } else if (
+                            c.image.startsWith('http') ||
+                            c.image.startsWith('data:') ||
+                            c.image.startsWith('blob:')
+                        ) {
                             imgMap[c.id] = c.image;
                         }
                     }
@@ -99,10 +103,7 @@ export function PrintBattleOrganizer({ onDone, stateOverride }: PrintBattleOrgan
         return (
             <div className="print-bo-boxes">
                 {Array.from({ length: max }, (_, idx) => (
-                    <div
-                        key={idx}
-                        className={`print-bo-box ${idx < count ? 'print-bo-box--filled' : ''}`}
-                    >
+                    <div key={idx} className={`print-bo-box ${idx < count ? 'print-bo-box--filled' : ''}`}>
                         {idx < count ? '✓' : ''}
                     </div>
                 ))}
@@ -122,7 +123,9 @@ export function PrintBattleOrganizer({ onDone, stateOverride }: PrintBattleOrgan
 
                 <div className="print-bo-location-row">
                     <span className="print-bo-label">Battlefield Location:</span>
-                    <span className="print-bo-underline-text">{battlefield.location || '________________________'}</span>
+                    <span className="print-bo-underline-text">
+                        {battlefield.location || '________________________'}
+                    </span>
                 </div>
 
                 {/* Global Row */}
@@ -133,7 +136,9 @@ export function PrintBattleOrganizer({ onDone, stateOverride }: PrintBattleOrgan
                             <span className="print-bo-sublabel">Remaining Rounds</span>
                         </div>
                         <div className="print-bo-effect-body">
-                            <span className="print-bo-underline-text">{battlefield.weather.name || '________________'}</span>
+                            <span className="print-bo-underline-text">
+                                {battlefield.weather.name || '________________'}
+                            </span>
                             {renderBoxes(battlefield.weather.remainingRounds)}
                         </div>
                     </div>
@@ -144,7 +149,9 @@ export function PrintBattleOrganizer({ onDone, stateOverride }: PrintBattleOrgan
                             <span className="print-bo-sublabel">Remaining Rounds</span>
                         </div>
                         <div className="print-bo-effect-body">
-                            <span className="print-bo-underline-text">{battlefield.terrain.name || '________________'}</span>
+                            <span className="print-bo-underline-text">
+                                {battlefield.terrain.name || '________________'}
+                            </span>
                             {renderBoxes(battlefield.terrain.remainingRounds)}
                         </div>
                     </div>
@@ -155,7 +162,9 @@ export function PrintBattleOrganizer({ onDone, stateOverride }: PrintBattleOrgan
                             <span className="print-bo-sublabel">Remaining Rounds</span>
                         </div>
                         <div className="print-bo-effect-body">
-                            <span className="print-bo-underline-text">{battlefield.other.name || '________________'}</span>
+                            <span className="print-bo-underline-text">
+                                {battlefield.other.name || '________________'}
+                            </span>
                             {renderBoxes(battlefield.other.remainingRounds)}
                         </div>
                     </div>
@@ -173,11 +182,15 @@ export function PrintBattleOrganizer({ onDone, stateOverride }: PrintBattleOrgan
                                 <span className="print-bo-sublabel">Remaining Rounds</span>
                             </div>
                             <div className="print-bo-line-body">
-                                <span className="print-bo-underline-text">{battlefield.playerSide.forceFields[0].name || '____________________'}</span>
+                                <span className="print-bo-underline-text">
+                                    {battlefield.playerSide.forceFields[0].name || '____________________'}
+                                </span>
                                 {renderBoxes(battlefield.playerSide.forceFields[0].remainingRounds)}
                             </div>
                             <div className="print-bo-line-body">
-                                <span className="print-bo-underline-text">{battlefield.playerSide.forceFields[1].name || '____________________'}</span>
+                                <span className="print-bo-underline-text">
+                                    {battlefield.playerSide.forceFields[1].name || '____________________'}
+                                </span>
                                 {renderBoxes(battlefield.playerSide.forceFields[1].remainingRounds)}
                             </div>
                         </div>
@@ -185,24 +198,40 @@ export function PrintBattleOrganizer({ onDone, stateOverride }: PrintBattleOrgan
                         <div className="print-bo-subgrid">
                             <div className="print-bo-subitem">
                                 <span className="print-bo-label">Entry Hazard</span>
-                                <span className="print-bo-underline-text">{battlefield.playerSide.entryHazard || '________________'}</span>
+                                <span className="print-bo-underline-text">
+                                    {battlefield.playerSide.entryHazard || '________________'}
+                                </span>
                             </div>
                             <div className="print-bo-subitem">
                                 <span className="print-bo-label">Cover</span>
-                                <span className="print-bo-underline-text">{battlefield.playerSide.cover || '________________'}</span>
+                                <span className="print-bo-underline-text">
+                                    {battlefield.playerSide.cover || '________________'}
+                                </span>
                             </div>
                         </div>
 
                         <div className="print-bo-subitem" style={{ marginTop: '4px' }}>
                             <span className="print-bo-label">Other</span>
-                            <span className="print-bo-underline-text">{battlefield.playerSide.other || '________________'}</span>
+                            <span className="print-bo-underline-text">
+                                {battlefield.playerSide.other || '________________'}
+                            </span>
                         </div>
                     </div>
 
                     {/* Center Pitch Graphic */}
                     <div className="print-bo-pitch-center">
                         <svg viewBox="0 0 160 110" className="print-bo-pitch-svg">
-                            <rect x="5" y="5" width="150" height="100" rx="14" ry="14" fill="#f0f0f0" stroke="#000" strokeWidth="2" />
+                            <rect
+                                x="5"
+                                y="5"
+                                width="150"
+                                height="100"
+                                rx="14"
+                                ry="14"
+                                fill="#f0f0f0"
+                                stroke="#000"
+                                strokeWidth="2"
+                            />
                             <rect x="5" y="5" width="75" height="100" fill="#e8f5e9" stroke="#000" strokeWidth="1" />
                             <rect x="80" y="5" width="75" height="100" fill="#ffebee" stroke="#000" strokeWidth="1" />
                             <rect x="5" y="35" width="20" height="40" fill="none" stroke="#000" strokeWidth="1.5" />
@@ -233,11 +262,15 @@ export function PrintBattleOrganizer({ onDone, stateOverride }: PrintBattleOrgan
                                 <span className="print-bo-sublabel">Remaining Rounds</span>
                             </div>
                             <div className="print-bo-line-body">
-                                <span className="print-bo-underline-text">{battlefield.foeSide.forceFields[0].name || '____________________'}</span>
+                                <span className="print-bo-underline-text">
+                                    {battlefield.foeSide.forceFields[0].name || '____________________'}
+                                </span>
                                 {renderBoxes(battlefield.foeSide.forceFields[0].remainingRounds)}
                             </div>
                             <div className="print-bo-line-body">
-                                <span className="print-bo-underline-text">{battlefield.foeSide.forceFields[1].name || '____________________'}</span>
+                                <span className="print-bo-underline-text">
+                                    {battlefield.foeSide.forceFields[1].name || '____________________'}
+                                </span>
                                 {renderBoxes(battlefield.foeSide.forceFields[1].remainingRounds)}
                             </div>
                         </div>
@@ -245,17 +278,23 @@ export function PrintBattleOrganizer({ onDone, stateOverride }: PrintBattleOrgan
                         <div className="print-bo-subgrid">
                             <div className="print-bo-subitem">
                                 <span className="print-bo-label">Entry Hazard</span>
-                                <span className="print-bo-underline-text">{battlefield.foeSide.entryHazard || '________________'}</span>
+                                <span className="print-bo-underline-text">
+                                    {battlefield.foeSide.entryHazard || '________________'}
+                                </span>
                             </div>
                             <div className="print-bo-subitem">
                                 <span className="print-bo-label">Cover</span>
-                                <span className="print-bo-underline-text">{battlefield.foeSide.cover || '________________'}</span>
+                                <span className="print-bo-underline-text">
+                                    {battlefield.foeSide.cover || '________________'}
+                                </span>
                             </div>
                         </div>
 
                         <div className="print-bo-subitem" style={{ marginTop: '4px' }}>
                             <span className="print-bo-label">Other</span>
-                            <span className="print-bo-underline-text">{battlefield.foeSide.other || '________________'}</span>
+                            <span className="print-bo-underline-text">
+                                {battlefield.foeSide.other || '________________'}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -283,7 +322,14 @@ export function PrintBattleOrganizer({ onDone, stateOverride }: PrintBattleOrgan
                         </thead>
                         <tbody>
                             {round.combatants.map((c) => {
-                                const imgSrc = resolvedImages[c.id] || (c.image && (c.image.startsWith('http') || c.image.startsWith('data:') || c.image.startsWith('blob:')) ? c.image : '');
+                                const imgSrc =
+                                    resolvedImages[c.id] ||
+                                    (c.image &&
+                                    (c.image.startsWith('http') ||
+                                        c.image.startsWith('data:') ||
+                                        c.image.startsWith('blob:'))
+                                        ? c.image
+                                        : '');
                                 const statusItems = (c.status || '')
                                     .split(',')
                                     .map((s) => s.trim())
@@ -291,23 +337,25 @@ export function PrintBattleOrganizer({ onDone, stateOverride }: PrintBattleOrgan
 
                                 return (
                                     <tr key={c.id}>
-                                        <td className="print-bo-cell-underline print-bo-cell-init">{c.initiative || ' '}</td>
+                                        <td className="print-bo-cell-underline print-bo-cell-init">
+                                            {c.initiative || ' '}
+                                        </td>
                                         <td className="print-bo-cell-underline print-bo-cell-combatant">
                                             <div className="print-bo-combatant-box">
                                                 {imgSrc ? (
-                                                    <img
-                                                        src={imgSrc}
-                                                        alt=""
-                                                        className="print-bo-combatant-img"
-                                                    />
+                                                    <img src={imgSrc} alt="" className="print-bo-combatant-img" />
                                                 ) : null}
                                                 <div className="print-bo-combatant-details">
                                                     <strong className="print-bo-combatant-name">{c.name || ' '}</strong>
-                                                    {c.isFainted && <span className="print-bo-fainted-tag">[FAINTED]</span>}
+                                                    {c.isFainted && (
+                                                        <span className="print-bo-fainted-tag">[FAINTED]</span>
+                                                    )}
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="print-bo-cell-underline print-bo-cell-item">{c.heldItem || ' '}</td>
+                                        <td className="print-bo-cell-underline print-bo-cell-item">
+                                            {c.heldItem || ' '}
+                                        </td>
                                         <td className="print-bo-cell-underline print-bo-cell-status">
                                             <div className="print-bo-status-list">
                                                 {statusItems.length > 0 ? (
@@ -329,8 +377,21 @@ export function PrintBattleOrganizer({ onDone, stateOverride }: PrintBattleOrgan
                                                             <span className="print-bo-action-text">{act.text}</span>
                                                         </div>
                                                         <span className="print-bo-action-indicator">
-                                                            <strong style={{ color: act.status === 'success' ? '#2e7d32' : act.status === 'failed' ? '#c62828' : '#888' }}>
-                                                                {act.status === 'success' ? '✓' : act.status === 'failed' ? '✗' : '—'}
+                                                            <strong
+                                                                style={{
+                                                                    color:
+                                                                        act.status === 'success'
+                                                                            ? '#2e7d32'
+                                                                            : act.status === 'failed'
+                                                                              ? '#c62828'
+                                                                              : '#888'
+                                                                }}
+                                                            >
+                                                                {act.status === 'success'
+                                                                    ? '✓'
+                                                                    : act.status === 'failed'
+                                                                      ? '✗'
+                                                                      : '—'}
                                                             </strong>
                                                         </span>
                                                     </div>
@@ -345,7 +406,9 @@ export function PrintBattleOrganizer({ onDone, stateOverride }: PrintBattleOrgan
 
                     <div className="print-bo-end-row">
                         <span className="print-bo-label">End of the Round Effects:</span>
-                        <span className="print-bo-underline-text">{round.endOfRoundEffects || '________________________________________________'}</span>
+                        <span className="print-bo-underline-text">
+                            {round.endOfRoundEffects || '________________________________________________'}
+                        </span>
                     </div>
                 </div>
             ))}

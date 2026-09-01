@@ -14,13 +14,7 @@ interface CombatantRowProps {
     onRollInitiative?: (id: string) => void;
 }
 
-export function CombatantRow({
-    combatant,
-    index,
-    onUpdate,
-    onDelete,
-    onRollInitiative
-}: CombatantRowProps) {
+export function CombatantRow({ combatant, index, onUpdate, onDelete, onRollInitiative }: CombatantRowProps) {
     const [resolvedImage, setResolvedImage] = useState<string>('');
     const customStatuses = useCharacterStore((state) => state.roomCustomStatuses || []);
 
@@ -161,7 +155,10 @@ export function CombatantRow({
                 newStatus = `${newStatus}, Fainted`;
             }
         } else {
-            newStatus = newStatus.replace(/,?\s*Fainted\s*,?/gi, '').replace(/^,\s*|,\s*$/g, '').trim();
+            newStatus = newStatus
+                .replace(/,?\s*Fainted\s*,?/gi, '')
+                .replace(/^,\s*|,\s*$/g, '')
+                .trim();
             if (!newStatus) newStatus = 'Healthy';
         }
         onUpdate({
@@ -172,7 +169,9 @@ export function CombatantRow({
     };
 
     return (
-        <tr className={`bo-combatant-row ${combatant.isPlayerSide ? 'bo-combatant-row--player' : 'bo-combatant-row--foe'} ${combatant.isFainted ? 'bo-combatant-row--fainted' : ''}`}>
+        <tr
+            className={`bo-combatant-row ${combatant.isPlayerSide ? 'bo-combatant-row--player' : 'bo-combatant-row--foe'} ${combatant.isFainted ? 'bo-combatant-row--fainted' : ''}`}
+        >
             {/* Initiative Order */}
             <td className="bo-cell bo-cell--init">
                 <div className="bo-init-group">
@@ -307,7 +306,10 @@ export function CombatantRow({
                         const isFailed = act.status === 'failed';
 
                         return (
-                            <div key={actIdx} className={`bo-action-box ${isSuccess ? 'bo-action-box--success' : ''} ${isFailed ? 'bo-action-box--failed' : ''}`}>
+                            <div
+                                key={actIdx}
+                                className={`bo-action-box ${isSuccess ? 'bo-action-box--success' : ''} ${isFailed ? 'bo-action-box--failed' : ''}`}
+                            >
                                 <input
                                     type="text"
                                     className="bo-action-text-input text-subtext"

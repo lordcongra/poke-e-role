@@ -3,7 +3,11 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { imageManager } from '../../utils/imageManager';
 import './StandaloneAvatar.css';
 
-export function StandaloneAvatar() {
+interface StandaloneAvatarProps {
+    onClick?: () => void;
+}
+
+export function StandaloneAvatar({ onClick }: StandaloneAvatarProps) {
     const tokenImageUrl = useCharacterStore((state) => state.identity.tokenImageUrl);
     const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
 
@@ -35,7 +39,19 @@ export function StandaloneAvatar() {
     }, [tokenImageUrl]);
 
     return (
-        <div className="standalone-avatar">
+        <div
+            className={`standalone-avatar ${onClick ? 'standalone-avatar--interactive' : ''}`}
+            onClick={onClick}
+            role={onClick ? 'button' : undefined}
+            tabIndex={onClick ? 0 : undefined}
+            title={onClick ? 'Click to update or delete character artwork' : undefined}
+            onKeyDown={(e) => {
+                if (onClick && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    onClick();
+                }
+            }}
+        >
             {resolvedUrl ? (
                 <img src={resolvedUrl} alt="Character Portrait" className="standalone-avatar__img" />
             ) : (

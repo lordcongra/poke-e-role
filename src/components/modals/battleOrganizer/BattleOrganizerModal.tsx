@@ -20,16 +20,18 @@ import {
     Mountain,
     HelpCircle,
     ArrowUpDown,
-    ChevronDown
+    ChevronDown,
+    ExternalLink
 } from 'lucide-react';
 import './BattleOrganizerModal.css';
 
 interface BattleOrganizerModalProps {
     onClose: () => void;
     onPrint?: () => void;
+    isPopout?: boolean;
 }
 
-export function BattleOrganizerModal({ onClose, onPrint }: BattleOrganizerModalProps) {
+export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrganizerModalProps) {
     const {
         battlefield,
         rounds,
@@ -99,7 +101,10 @@ export function BattleOrganizerModal({ onClose, onPrint }: BattleOrganizerModalP
     };
 
     const handlePlayerForceFieldChange = (idx: 0 | 1, text: string) => {
-        const fields = [...battlefield.playerSide.forceFields] as [typeof battlefield.playerSide.forceFields[0], typeof battlefield.playerSide.forceFields[1]];
+        const fields = [...battlefield.playerSide.forceFields] as [
+            (typeof battlefield.playerSide.forceFields)[0],
+            (typeof battlefield.playerSide.forceFields)[1]
+        ];
         const prevRounds = fields[idx].remainingRounds;
         let newRounds = prevRounds;
         if (text.trim() && prevRounds === 0) newRounds = 4;
@@ -109,7 +114,10 @@ export function BattleOrganizerModal({ onClose, onPrint }: BattleOrganizerModalP
     };
 
     const handleFoeForceFieldChange = (idx: 0 | 1, text: string) => {
-        const fields = [...battlefield.foeSide.forceFields] as [typeof battlefield.foeSide.forceFields[0], typeof battlefield.foeSide.forceFields[1]];
+        const fields = [...battlefield.foeSide.forceFields] as [
+            (typeof battlefield.foeSide.forceFields)[0],
+            (typeof battlefield.foeSide.forceFields)[1]
+        ];
         const prevRounds = fields[idx].remainingRounds;
         let newRounds = prevRounds;
         if (text.trim() && prevRounds === 0) newRounds = 4;
@@ -118,8 +126,16 @@ export function BattleOrganizerModal({ onClose, onPrint }: BattleOrganizerModalP
         updateFoeSide('forceFields', fields);
     };
 
+    const handlePopoutWindow = () => {
+        const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+        const themeToPass = document.body.getAttribute('data-theme') || 'dark';
+        const url = `${baseUrl}/battle-organizer.html?theme=${themeToPass}`;
+        window.open(url, 'PokeroleBattleOrganizer', 'width=1320,height=860,resizable=yes,scrollbars=yes');
+        onClose();
+    };
+
     return (
-        <div className="bo-modal__overlay">
+        <div className={`bo-modal__overlay ${isPopout ? 'bo-modal__overlay--popout' : ''}`}>
             <div className="bo-modal__content">
                 {/* Modal Top Header */}
                 <div className="bo-modal__header">
@@ -127,12 +143,23 @@ export function BattleOrganizerModal({ onClose, onPrint }: BattleOrganizerModalP
                         <span className="bo-modal__icon">
                             <Layers size={22} color="var(--primary)" />
                         </span>
-                        <h2 className="bo-modal__title text-title-primary">
-                            Battle Organizer Sheet
-                        </h2>
+                        <h2 className="bo-modal__title text-title-primary">Battle Organizer Sheet</h2>
                     </div>
 
                     <div className="bo-modal__header-right">
+                        {!isPopout && (
+                            <button
+                                type="button"
+                                className="action-button action-button--dark bo-header-collapse-btn"
+                                onClick={handlePopoutWindow}
+                                title="Open Battle Organizer in a Separate Window"
+                                aria-label="Open Battle Organizer in a Separate Window"
+                            >
+                                <ExternalLink size={14} color="var(--primary)" />
+                                <span className="bo-header-collapse-label">Pop Out</span>
+                            </button>
+                        )}
+
                         <button
                             type="button"
                             className="action-button action-button--dark bo-header-collapse-btn"
@@ -211,10 +238,23 @@ export function BattleOrganizerModal({ onClose, onPrint }: BattleOrganizerModalP
                         <div className="bo-help-banner__content text-subtext">
                             <strong>Battle Organizer Tips:</strong>
                             <ul>
-                                <li>Click <strong>Pull from Initiative</strong> to automatically populate all combatants, active held items, statuses, and rolled initiatives.</li>
-                                <li>Use the <strong>Remaining Rounds</strong> boxes (1-4) on Weathers, Terrains, and Force Fields. When you click <strong>Advance / End Round</strong>, all active timers automatically decrement by 1.</li>
-                                <li>Click <strong>✓</strong> on an action slot to mark it completed/used, or <strong>✗</strong> for clash/evade/failed.</li>
-                                <li>You can replicate rounds any number of times with <strong>Add Round</strong> or <strong>Duplicate Round</strong>.</li>
+                                <li>
+                                    Click <strong>Pull from Initiative</strong> to automatically populate all
+                                    combatants, active held items, statuses, and rolled initiatives.
+                                </li>
+                                <li>
+                                    Use the <strong>Remaining Rounds</strong> boxes (1-4) on Weathers, Terrains, and
+                                    Force Fields. When you click <strong>Advance / End Round</strong>, all active timers
+                                    automatically decrement by 1.
+                                </li>
+                                <li>
+                                    Click <strong>✓</strong> on an action slot to mark it completed/used, or{' '}
+                                    <strong>✗</strong> for clash/evade/failed.
+                                </li>
+                                <li>
+                                    You can replicate rounds any number of times with <strong>Add Round</strong> or{' '}
+                                    <strong>Duplicate Round</strong>.
+                                </li>
                             </ul>
                         </div>
                         <button
@@ -232,7 +272,9 @@ export function BattleOrganizerModal({ onClose, onPrint }: BattleOrganizerModalP
                     {/* ========================================= */}
                     {/* CARD 1: BATTLEFIELD                       */}
                     {/* ========================================= */}
-                    <div className={`bo-section-card bo-section-card--battlefield ${!isBattlefieldOpen ? 'bo-section-card--collapsed' : ''}`}>
+                    <div
+                        className={`bo-section-card bo-section-card--battlefield ${!isBattlefieldOpen ? 'bo-section-card--collapsed' : ''}`}
+                    >
                         {/* Header Pill */}
                         <div
                             className="bo-pill-header bo-pill-header--center bo-pill-header--toggle"
@@ -374,7 +416,10 @@ export function BattleOrganizerModal({ onClose, onPrint }: BattleOrganizerModalP
                                                 <RemainingRoundsBoxes
                                                     value={battlefield.playerSide.forceFields[0].remainingRounds}
                                                     onChange={(val) => {
-                                                        const fields = [...battlefield.playerSide.forceFields] as [typeof battlefield.playerSide.forceFields[0], typeof battlefield.playerSide.forceFields[1]];
+                                                        const fields = [...battlefield.playerSide.forceFields] as [
+                                                            (typeof battlefield.playerSide.forceFields)[0],
+                                                            (typeof battlefield.playerSide.forceFields)[1]
+                                                        ];
                                                         fields[0] = { ...fields[0], remainingRounds: val };
                                                         updatePlayerSide('forceFields', fields);
                                                     }}
@@ -392,7 +437,10 @@ export function BattleOrganizerModal({ onClose, onPrint }: BattleOrganizerModalP
                                                 <RemainingRoundsBoxes
                                                     value={battlefield.playerSide.forceFields[1].remainingRounds}
                                                     onChange={(val) => {
-                                                        const fields = [...battlefield.playerSide.forceFields] as [typeof battlefield.playerSide.forceFields[0], typeof battlefield.playerSide.forceFields[1]];
+                                                        const fields = [...battlefield.playerSide.forceFields] as [
+                                                            (typeof battlefield.playerSide.forceFields)[0],
+                                                            (typeof battlefield.playerSide.forceFields)[1]
+                                                        ];
                                                         fields[1] = { ...fields[1], remainingRounds: val };
                                                         updatePlayerSide('forceFields', fields);
                                                     }}
@@ -474,7 +522,10 @@ export function BattleOrganizerModal({ onClose, onPrint }: BattleOrganizerModalP
                                                 <RemainingRoundsBoxes
                                                     value={battlefield.foeSide.forceFields[0].remainingRounds}
                                                     onChange={(val) => {
-                                                        const fields = [...battlefield.foeSide.forceFields] as [typeof battlefield.foeSide.forceFields[0], typeof battlefield.foeSide.forceFields[1]];
+                                                        const fields = [...battlefield.foeSide.forceFields] as [
+                                                            (typeof battlefield.foeSide.forceFields)[0],
+                                                            (typeof battlefield.foeSide.forceFields)[1]
+                                                        ];
                                                         fields[0] = { ...fields[0], remainingRounds: val };
                                                         updateFoeSide('forceFields', fields);
                                                     }}
@@ -492,7 +543,10 @@ export function BattleOrganizerModal({ onClose, onPrint }: BattleOrganizerModalP
                                                 <RemainingRoundsBoxes
                                                     value={battlefield.foeSide.forceFields[1].remainingRounds}
                                                     onChange={(val) => {
-                                                        const fields = [...battlefield.foeSide.forceFields] as [typeof battlefield.foeSide.forceFields[0], typeof battlefield.foeSide.forceFields[1]];
+                                                        const fields = [...battlefield.foeSide.forceFields] as [
+                                                            (typeof battlefield.foeSide.forceFields)[0],
+                                                            (typeof battlefield.foeSide.forceFields)[1]
+                                                        ];
                                                         fields[1] = { ...fields[1], remainingRounds: val };
                                                         updateFoeSide('forceFields', fields);
                                                     }}
@@ -597,8 +651,8 @@ export function BattleOrganizerModal({ onClose, onPrint }: BattleOrganizerModalP
                                     <ArrowUpDown size={14} /> Sort Init
                                 </button>
 
-                                {rounds.length > 1 && (
-                                    confirmDeleteRoundIdx === activeRoundIndex ? (
+                                {rounds.length > 1 &&
+                                    (confirmDeleteRoundIdx === activeRoundIndex ? (
                                         <div className="bo-confirm-delete-round-inline">
                                             <span className="bo-confirm-delete-text text-subtext">Delete?</span>
                                             <button
@@ -628,16 +682,13 @@ export function BattleOrganizerModal({ onClose, onPrint }: BattleOrganizerModalP
                                         >
                                             <Trash2 size={14} />
                                         </button>
-                                    )
-                                )}
+                                    ))}
                             </div>
                         </div>
 
                         {/* Round Header Pill */}
                         <div className="bo-pill-header bo-pill-header--round">
-                            <span className="bo-pill-header__text text-theme-header">
-                                Round
-                            </span>
+                            <span className="bo-pill-header__text text-theme-header">Round</span>
                             <input
                                 type="number"
                                 className="bo-round-number-input text-value-highlight"
@@ -691,9 +742,7 @@ export function BattleOrganizerModal({ onClose, onPrint }: BattleOrganizerModalP
 
                         {/* End of the Round Effects */}
                         <div className="bo-end-effects-row">
-                            <label className="bo-field-label text-label">
-                                End of the Round Effects:
-                            </label>
+                            <label className="bo-field-label text-label">End of the Round Effects:</label>
                             <input
                                 type="text"
                                 className="bo-input bo-input--underline text-label"

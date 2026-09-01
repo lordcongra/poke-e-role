@@ -141,7 +141,12 @@ export function useBattleOrganizer() {
     useEffect(() => {
         if (!OBR.isAvailable || isStandaloneMode) return;
 
-        const loadObrState = async () => {
+        let isMounted = true;
+        const unsubs: Array<() => void> = [];
+
+        OBR.onReady(async () => {
+            if (!isMounted) return;
+
             try {
                 const metadata = await OBR.scene.getMetadata();
                 const rawSceneData = metadata[OBR_SCENE_META_KEY];
@@ -155,27 +160,27 @@ export function useBattleOrganizer() {
             } catch (e) {
                 console.error('[BattleOrganizer] Failed to load initial OBR scene metadata:', e);
             }
-        };
 
-        loadObrState();
-
-        const unsub = OBR.scene.onMetadataChange((meta) => {
-            try {
-                const raw = meta[OBR_SCENE_META_KEY];
-                if (typeof raw === 'string' && raw.trim()) {
-                    const parsed = JSON.parse(raw);
-                    if (parsed && Array.isArray(parsed.rounds)) {
-                        setState(parsed);
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+            const unsub = OBR.scene.onMetadataChange((meta) => {
+                try {
+                    const raw = meta[OBR_SCENE_META_KEY];
+                    if (typeof raw === 'string' && raw.trim()) {
+                        const parsed = JSON.parse(raw);
+                        if (parsed && Array.isArray(parsed.rounds)) {
+                            setState(parsed);
+                            localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+                        }
                     }
+                } catch (e) {
+                    console.error('[BattleOrganizer] Error syncing remote scene state:', e);
                 }
-            } catch (e) {
-                console.error('[BattleOrganizer] Error syncing remote scene state:', e);
-            }
+            });
+            unsubs.push(unsub);
         });
 
         return () => {
-            unsub();
+            isMounted = false;
+            unsubs.forEach((u) => u());
         };
     }, []);
 
@@ -251,7 +256,8 @@ export function useBattleOrganizer() {
                                 const nonHealthy = rawStatuses
                                     .filter((s: Record<string, unknown>) => s.name && s.name !== 'Healthy')
                                     .map((s: Record<string, unknown>) => {
-                                        const n = s.name === 'Custom...' ? String(s.customName || 'Custom') : String(s.name);
+                                        const n =
+                                            s.name === 'Custom...' ? String(s.customName || 'Custom') : String(s.name);
                                         const r = Number(s.rounds || 0);
                                         return r > 0 ? `${n} (${r})` : n;
                                     });
@@ -268,7 +274,10 @@ export function useBattleOrganizer() {
                             actions[i] = { text: actions[i].text, status: 'success' };
                         }
 
-                        const baseInitVal = calculateBaseInitFromCharacterData(matchingChar?.metadata || initItem, globalState);
+                        const baseInitVal = calculateBaseInitFromCharacterData(
+                            matchingChar?.metadata || initItem,
+                            globalState
+                        );
                         let initScore = String(baseInitVal);
                         if (typeof initItem.total === 'number' && typeof initItem.d6 === 'number' && initItem.d6 > 0) {
                             initScore = String(initItem.total);
@@ -280,11 +289,15 @@ export function useBattleOrganizer() {
                         const charNickname =
                             typeof meta['nickname'] === 'string' && meta['nickname'].trim()
                                 ? meta['nickname'].trim()
-                                : matchingChar && typeof (matchingChar.metadata as Record<string, unknown> | undefined)?.nickname === 'string'
+                                : matchingChar &&
+                                    typeof (matchingChar.metadata as Record<string, unknown> | undefined)?.nickname ===
+                                        'string'
                                   ? String((matchingChar.metadata as Record<string, unknown>).nickname).trim()
                                   : '';
 
-                        const displayName = charNickname || String(initItem.name || matchingChar?.name || meta['species'] || `Combatant ${idx + 1}`);
+                        const displayName =
+                            charNickname ||
+                            String(initItem.name || matchingChar?.name || meta['species'] || `Combatant ${idx + 1}`);
 
                         combatantRows.push({
                             id: crypto.randomUUID(),
@@ -306,7 +319,8 @@ export function useBattleOrganizer() {
             } else if (OBR.isAvailable) {
                 const items = await OBR.scene.items.getItems();
                 const initItems = items.filter(
-                    (item) => item.layer === 'CHARACTER' && item.metadata['pokerole-pmd-extension/initiative'] !== undefined
+                    (item) =>
+                        item.layer === 'CHARACTER' && item.metadata['pokerole-pmd-extension/initiative'] !== undefined
                 );
 
                 const sortedItems = [...initItems].sort((a, b) => {
@@ -318,7 +332,9 @@ export function useBattleOrganizer() {
                 sortedItems.forEach((item) => {
                     const imgItem = item as Image;
                     const meta = item.metadata;
-                    const initMeta = meta['pokerole-pmd-extension/initiative'] as { value?: number; base?: number } | undefined;
+                    const initMeta = meta['pokerole-pmd-extension/initiative'] as
+                        | { value?: number; base?: number }
+                        | undefined;
 
                     const baseInitVal = calculateBaseInitFromCharacterData(meta, globalState);
                     let initDisplay = String(baseInitVal);
@@ -361,7 +377,8 @@ export function useBattleOrganizer() {
                             const nonHealthy = rawStatuses
                                 .filter((s: Record<string, unknown>) => s.name && s.name !== 'Healthy')
                                 .map((s: Record<string, unknown>) => {
-                                    const n = s.name === 'Custom...' ? String(s.customName || 'Custom') : String(s.name);
+                                    const n =
+                                        s.name === 'Custom...' ? String(s.customName || 'Custom') : String(s.name);
                                     const r = Number(s.rounds || 0);
                                     return r > 0 ? `${n} (${r})` : n;
                                 });
@@ -383,9 +400,12 @@ export function useBattleOrganizer() {
                     const obrNickname =
                         typeof meta['nickname'] === 'string' && meta['nickname'].trim()
                             ? meta['nickname'].trim()
-                            : typeof (meta['pokerole-pmd-extension/stats'] as Record<string, unknown> | undefined)?.nickname === 'string' &&
+                            : typeof (meta['pokerole-pmd-extension/stats'] as Record<string, unknown> | undefined)
+                                    ?.nickname === 'string' &&
                                 (meta['pokerole-pmd-extension/stats'] as Record<string, unknown>).nickname
-                              ? String((meta['pokerole-pmd-extension/stats'] as Record<string, unknown>).nickname).trim()
+                              ? String(
+                                    (meta['pokerole-pmd-extension/stats'] as Record<string, unknown>).nickname
+                                ).trim()
                               : typeof meta['name'] === 'string' && meta['name'].trim()
                                 ? meta['name'].trim()
                                 : '';
@@ -735,7 +755,12 @@ export function useBattleOrganizer() {
                 const updatedCombatants = currentRound.combatants.map((c) => {
                     if (c.id === combatantId) {
                         const roll = Math.floor(Math.random() * 6) + 1;
-                        let base = tokenBaseInit !== null ? tokenBaseInit : (c.baseInit !== undefined && c.baseInit > 0 ? c.baseInit : 0);
+                        let base =
+                            tokenBaseInit !== null
+                                ? tokenBaseInit
+                                : c.baseInit !== undefined && c.baseInit > 0
+                                  ? c.baseInit
+                                  : 0;
                         if (base === 0) {
                             const parsed = parseInt(c.initiative, 10);
                             if (!isNaN(parsed) && parsed > 0 && parsed <= 12) {

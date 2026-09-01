@@ -227,6 +227,35 @@ export function GlobalToolbar() {
         }
     };
 
+    const handleBattleOrganizerClick = async () => {
+        if (isStandaloneMode || !OBR.isAvailable || !isObrReady) {
+            setActiveModal('battle-organizer');
+            return;
+        }
+
+        try {
+            const viewportWidth = (await OBR.viewport.getWidth()) ?? 1200;
+            const viewportHeight = (await OBR.viewport.getHeight()) ?? 800;
+
+            const targetWidth = Math.min(Math.round(viewportWidth * 0.95), 1360);
+            const targetHeight = Math.min(Math.round(viewportHeight * 0.95), 900);
+
+            const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+            const themeToPass = document.body.getAttribute('data-theme') || 'dark';
+            const url = `${baseUrl}/battle-organizer.html?theme=${themeToPass}`;
+
+            await OBR.modal.open({
+                id: 'pkr-battle-organizer',
+                url: url,
+                width: targetWidth,
+                height: targetHeight
+            });
+        } catch (e) {
+            console.warn('[GlobalToolbar] Failed to open OBR Battle Organizer modal, falling back to local modal:', e);
+            setActiveModal('battle-organizer');
+        }
+    };
+
     return (
         <div className="global-toolbar-wrapper">
             <div
@@ -280,7 +309,7 @@ export function GlobalToolbar() {
                         <button
                             type="button"
                             className="global-toolbar__btn action-button--primary-hover"
-                            onClick={() => setActiveModal('battle-organizer')}
+                            onClick={handleBattleOrganizerClick}
                             title="Open Battle Organizer Sheet"
                         >
                             <Layers size={16} color="var(--primary)" /> Battle Organizer
@@ -471,9 +500,7 @@ export function GlobalToolbar() {
                 />
             )}
 
-            {isPrintingBattleOrganizer && (
-                <PrintBattleOrganizer onDone={() => setIsPrintingBattleOrganizer(false)} />
-            )}
+            {isPrintingBattleOrganizer && <PrintBattleOrganizer onDone={() => setIsPrintingBattleOrganizer(false)} />}
         </div>
     );
 }

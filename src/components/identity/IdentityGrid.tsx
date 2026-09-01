@@ -14,9 +14,10 @@ interface IdentityGridProps {
     onOpenAbility: () => void;
     onOpenNature: () => void;
     onOpenPokedex: () => void;
+    onOpenImagePicker?: () => void;
 }
 
-export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: IdentityGridProps) {
+export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex, onOpenImagePicker }: IdentityGridProps) {
     const identityStore = useCharacterStore((state) => state.identity) || {};
     const setIdentity = useCharacterStore((state) => state.setIdentity);
     const setMode = useCharacterStore((state) => state.setMode);
@@ -75,7 +76,7 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex }: Ide
             <div
                 className={`identity-grid identity-header__grid ${isStandaloneMode ? 'identity-grid--standalone' : ''}`}
             >
-                {isStandaloneMode && <StandaloneAvatar />}
+                {isStandaloneMode && <StandaloneAvatar onClick={onOpenImagePicker} />}
 
                 <div className="identity-grid__row">
                     <span className="identity-grid__label text-label">Nickname</span>

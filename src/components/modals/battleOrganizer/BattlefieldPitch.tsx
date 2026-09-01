@@ -155,15 +155,7 @@ export function BattlefieldPitch({
                             onClick={() => onHighlightChange('all')}
                             style={{ cursor: 'pointer' }}
                         />
-                        <line
-                            x1="62"
-                            y1="55"
-                            x2="98"
-                            y2="55"
-                            stroke="#333333"
-                            strokeWidth="1.5"
-                            pointerEvents="none"
-                        />
+                        <line x1="62" y1="55" x2="98" y2="55" stroke="#333333" strokeWidth="1.5" pointerEvents="none" />
                     </g>
 
                     {/* Outer Border */}

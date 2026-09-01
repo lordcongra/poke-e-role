@@ -422,21 +422,21 @@
 }
 
 .status-category-pill--aggravating {
-    background-color: color-mix(in srgb, #D32F2F 25%, var(--panel-bg));
-    color: #FF5252;
-    border-color: #FF5252;
+    background-color: color-mix(in srgb, #d32f2f 25%, var(--panel-bg));
+    color: #ff5252;
+    border-color: #ff5252;
 }
 
 .status-category-pill--fixed {
-    background-color: color-mix(in srgb, #E65100 25%, var(--panel-bg));
-    color: #FFA726;
-    border-color: #FFA726;
+    background-color: color-mix(in srgb, #e65100 25%, var(--panel-bg));
+    color: #ffa726;
+    border-color: #ffa726;
 }
 
 .status-category-pill--volatile {
-    background-color: color-mix(in srgb, #00897B 25%, var(--panel-bg));
-    color: #4DB6AC;
-    border-color: #4DB6AC;
+    background-color: color-mix(in srgb, #00897b 25%, var(--panel-bg));
+    color: #4db6ac;
+    border-color: #4db6ac;
 }
 
 .status-rules-box__notes {

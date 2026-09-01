@@ -272,7 +272,9 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                     />
                     {reduction > 0 && baseDamage - reduction <= 0 && overrideType === 'none' && (
                         <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                            <em>Defenses reduce pool to 0 — <strong>Minimum 1 Die</strong> will still be rolled.</em>
+                            <em>
+                                Defenses reduce pool to 0 — <strong>Minimum 1 Die</strong> will still be rolled.
+                            </em>
                         </div>
                     )}
                 </div>

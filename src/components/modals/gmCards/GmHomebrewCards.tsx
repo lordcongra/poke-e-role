@@ -58,9 +58,9 @@ export const GmHomebrewCards: React.FC<GmHomebrewCardsProps> = ({
                             </strong>
                         </div>
                         <p className="text-subtext" style={{ margin: 0, color: 'var(--text-main)' }}>
-                            In Pokémon Mystery Dungeon (PMD) campaigns, Pokémon act as autonomous explorers without human
-                            trainers. These popular community rules adapt character creation, durability, knowledge skills,
-                            and rank advancement for dungeon crawling.
+                            In Pokémon Mystery Dungeon (PMD) campaigns, Pokémon act as autonomous explorers without
+                            human trainers. These popular community rules adapt character creation, durability,
+                            knowledge skills, and rank advancement for dungeon crawling.
                         </p>
                     </div>
 
@@ -68,8 +68,19 @@ export const GmHomebrewCards: React.FC<GmHomebrewCardsProps> = ({
                         {PMD_CHARACTER_RULES.map((rule) => (
                             <div key={rule.id} className="pmd-rule-card">
                                 <div className="pmd-rule-card__header">
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', flex: 1 }}>
-                                        <strong className="text-label" style={{ color: 'var(--text-main)', fontSize: '0.88rem' }}>
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            flexWrap: 'wrap',
+                                            flex: 1
+                                        }}
+                                    >
+                                        <strong
+                                            className="text-label"
+                                            style={{ color: 'var(--text-main)', fontSize: '0.88rem' }}
+                                        >
                                             {rule.title}
                                         </strong>
                                         <span className="pmd-rule-badge text-theme-header">{rule.badge}</span>
@@ -85,10 +96,21 @@ export const GmHomebrewCards: React.FC<GmHomebrewCardsProps> = ({
                                     </button>
                                 </div>
 
-                                <p className="text-subtext" style={{ margin: 0, color: 'var(--text-main)', lineHeight: '1.4' }}>
+                                <p
+                                    className="text-subtext"
+                                    style={{ margin: 0, color: 'var(--text-main)', lineHeight: '1.4' }}
+                                >
                                     {rule.summary}
                                 </p>
-                                <p className="text-subtext" style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.78rem', lineHeight: '1.35' }}>
+                                <p
+                                    className="text-subtext"
+                                    style={{
+                                        margin: 0,
+                                        color: 'var(--text-muted)',
+                                        fontSize: '0.78rem',
+                                        lineHeight: '1.35'
+                                    }}
+                                >
                                     {rule.detail}
                                 </p>
 
@@ -106,8 +128,15 @@ export const GmHomebrewCards: React.FC<GmHomebrewCardsProps> = ({
                                 )}
 
                                 <div className="pmd-app-tip-box">
-                                    <CheckCircle2 size={13} color="var(--primary)" style={{ flexShrink: 0, marginTop: '1px' }} />
-                                    <span className="text-subtext" style={{ fontSize: '0.76rem', color: 'var(--text-main)' }}>
+                                    <CheckCircle2
+                                        size={13}
+                                        color="var(--primary)"
+                                        style={{ flexShrink: 0, marginTop: '1px' }}
+                                    />
+                                    <span
+                                        className="text-subtext"
+                                        style={{ fontSize: '0.76rem', color: 'var(--text-main)' }}
+                                    >
                                         <strong>App Integration:</strong> {rule.appTip}
                                     </span>
                                 </div>
@@ -118,7 +147,9 @@ export const GmHomebrewCards: React.FC<GmHomebrewCardsProps> = ({
                     <div className="pmd-disclaimer-box">
                         <Info size={14} color="var(--text-muted)" style={{ flexShrink: 0, marginTop: '1px' }} />
                         <span className="text-subtext" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            <strong>GM Note:</strong> These character adjustments and progression options are optional community suggestions for PMD campaigns, not official requirements. Feel free to adapt or modify them for your table!
+                            <strong>GM Note:</strong> These character adjustments and progression options are optional
+                            community suggestions for PMD campaigns, not official requirements. Feel free to adapt or
+                            modify them for your table!
                         </span>
                     </div>
                 </div>
@@ -135,9 +166,10 @@ export const GmHomebrewCards: React.FC<GmHomebrewCardsProps> = ({
                             </strong>
                         </div>
                         <p className="text-subtext" style={{ margin: 0, color: 'var(--text-main)' }}>
-                            Created by <strong>Congra</strong> (<em>@congra</em> in the Pokérole Discord), this system introduces
-                            tactical inventory management for PMD expeditions. Players manage limited weight capacity in their
-                            Treasure Bag, which scales by <strong>+5 Weight per Guild Rank achieved</strong>.
+                            Created by <strong>Congra</strong> (<em>@congra</em> in the Pokérole Discord), this system
+                            introduces tactical inventory management for PMD expeditions. Players manage limited weight
+                            capacity in their Treasure Bag, which scales by{' '}
+                            <strong>+5 Weight per Guild Rank achieved</strong>.
                         </p>
                     </div>
 
@@ -248,7 +280,8 @@ export const GmHomebrewCards: React.FC<GmHomebrewCardsProps> = ({
                     <div className="pmd-disclaimer-box">
                         <Info size={14} color="var(--text-muted)" style={{ flexShrink: 0, marginTop: '1px' }} />
                         <span className="text-subtext" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            <strong>GM Note:</strong> Treasure Bag capacities and item weights are optional guidelines to support dungeon prep. Adjust weight limits and categories as desired for your table!
+                            <strong>GM Note:</strong> Treasure Bag capacities and item weights are optional guidelines
+                            to support dungeon prep. Adjust weight limits and categories as desired for your table!
                         </span>
                     </div>
                 </div>
@@ -266,10 +299,10 @@ export const GmHomebrewCards: React.FC<GmHomebrewCardsProps> = ({
                             </strong>
                         </div>
                         <p className="text-subtext" style={{ margin: 0, color: 'var(--text-main)' }}>
-                            Because mystery dungeons contain many consecutive battles without access to human Pokémon Centers,
-                            health-restoring berries like <strong>Oran Berries</strong> (restores HP) and{' '}
-                            <strong>Sitrus Berries</strong> (restores HP / grants Temp HP) should drop frequently from defeated
-                            wild Pokémon and treasure rooms to sustain exploration.
+                            Because mystery dungeons contain many consecutive battles without access to human Pokémon
+                            Centers, health-restoring berries like <strong>Oran Berries</strong> (restores HP) and{' '}
+                            <strong>Sitrus Berries</strong> (restores HP / grants Temp HP) should drop frequently from
+                            defeated wild Pokémon and treasure rooms to sustain exploration.
                         </p>
                     </div>
 
@@ -281,9 +314,13 @@ export const GmHomebrewCards: React.FC<GmHomebrewCardsProps> = ({
                                 Mystery Dungeon Food: Will Restoration, Gummis & Belly Treats
                             </strong>
                         </div>
-                        <p className="text-subtext" style={{ margin: '0 0 8px 0', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
-                            Food items from the Mystery Dungeon franchise replace the traditional hunger/belly mechanic by replenishing
-                            Will Points and granting temporary dungeon buffs or permanent attribute rewards.
+                        <p
+                            className="text-subtext"
+                            style={{ margin: '0 0 8px 0', color: 'var(--text-muted)', fontSize: '0.78rem' }}
+                        >
+                            Food items from the Mystery Dungeon franchise replace the traditional hunger/belly mechanic
+                            by replenishing Will Points and granting temporary dungeon buffs or permanent attribute
+                            rewards.
                         </p>
 
                         <div className="gm-table-wrapper">
@@ -314,13 +351,18 @@ export const GmHomebrewCards: React.FC<GmHomebrewCardsProps> = ({
                                                 </span>
                                             </td>
                                             <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
-                                                <strong className="text-value-highlight" style={{ color: 'var(--primary)' }}>
+                                                <strong
+                                                    className="text-value-highlight"
+                                                    style={{ color: 'var(--primary)' }}
+                                                >
                                                     {food.willRestore}
                                                 </strong>
                                             </td>
                                             <td>{food.effect}</td>
                                             <td style={{ textAlign: 'center' }}>
-                                                <span className={`pmd-rarity-badge pmd-rarity-badge--${food.rarity.toLowerCase().replace(/\s+/g, '-')}`}>
+                                                <span
+                                                    className={`pmd-rarity-badge pmd-rarity-badge--${food.rarity.toLowerCase().replace(/\s+/g, '-')}`}
+                                                >
                                                     {food.rarity}
                                                 </span>
                                             </td>
@@ -345,7 +387,8 @@ export const GmHomebrewCards: React.FC<GmHomebrewCardsProps> = ({
                     <div className="pmd-disclaimer-box">
                         <Info size={14} color="var(--text-muted)" style={{ flexShrink: 0, marginTop: '1px' }} />
                         <span className="text-subtext" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            <strong>GM Note:</strong> Food effects, Will restoration amounts, and berry drop rates are optional suggestions to adapt PMD dungeon mechanics to Pokerole.
+                            <strong>GM Note:</strong> Food effects, Will restoration amounts, and berry drop rates are
+                            optional suggestions to adapt PMD dungeon mechanics to Pokerole.
                         </span>
                     </div>
                 </div>
@@ -362,9 +405,9 @@ export const GmHomebrewCards: React.FC<GmHomebrewCardsProps> = ({
                             </strong>
                         </div>
                         <p className="text-subtext" style={{ margin: 0, color: 'var(--text-main)' }}>
-                            Some campaigns allow player Pokémon to wield weapons or spell wands found in mystery dungeons.
-                            Below are the two most prominent community implementations from the Pokérole Discord. Both models
-                            typically occupy <strong>1.0 Weight</strong> in the Treasure Bag.
+                            Some campaigns allow player Pokémon to wield weapons or spell wands found in mystery
+                            dungeons. Below are the two most prominent community implementations from the Pokérole
+                            Discord. Both models typically occupy <strong>1.0 Weight</strong> in the Treasure Bag.
                         </p>
                     </div>
 
@@ -373,10 +416,16 @@ export const GmHomebrewCards: React.FC<GmHomebrewCardsProps> = ({
                             <div key={model.name} className="pmd-weapon-card">
                                 <div className="pmd-weapon-card__header">
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                        <strong className="text-label" style={{ color: 'var(--primary)', fontSize: '0.92rem' }}>
+                                        <strong
+                                            className="text-label"
+                                            style={{ color: 'var(--primary)', fontSize: '0.92rem' }}
+                                        >
                                             {model.name}
                                         </strong>
-                                        <span className="text-subtext" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                        <span
+                                            className="text-subtext"
+                                            style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}
+                                        >
                                             Model by <strong>{model.creator}</strong> • Type: <em>{model.type}</em>
                                         </span>
                                     </div>
@@ -391,7 +440,10 @@ export const GmHomebrewCards: React.FC<GmHomebrewCardsProps> = ({
                                     </button>
                                 </div>
 
-                                <p className="text-subtext" style={{ margin: 0, color: 'var(--text-main)', lineHeight: '1.4' }}>
+                                <p
+                                    className="text-subtext"
+                                    style={{ margin: 0, color: 'var(--text-main)', lineHeight: '1.4' }}
+                                >
                                     {model.description}
                                 </p>
 
@@ -409,7 +461,11 @@ export const GmHomebrewCards: React.FC<GmHomebrewCardsProps> = ({
                                 )}
 
                                 <div className="pmd-weapon-example-box">
-                                    <Flame size={14} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                                    <Flame
+                                        size={14}
+                                        color="var(--primary)"
+                                        style={{ flexShrink: 0, marginTop: '2px' }}
+                                    />
                                     <div style={{ fontSize: '0.78rem', color: 'var(--text-main)', lineHeight: '1.35' }}>
                                         <strong>Example:</strong> {model.example}
                                     </div>
@@ -421,7 +477,8 @@ export const GmHomebrewCards: React.FC<GmHomebrewCardsProps> = ({
                     <div className="pmd-disclaimer-box">
                         <Info size={14} color="var(--text-muted)" style={{ flexShrink: 0, marginTop: '1px' }} />
                         <span className="text-subtext" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            <strong>GM Note:</strong> Weapon systems are optional homebrew. GMs should adjust weapon power, stats, and availability to suit their campaign style!
+                            <strong>GM Note:</strong> Weapon systems are optional homebrew. GMs should adjust weapon
+                            power, stats, and availability to suit their campaign style!
                         </span>
                     </div>
                 </div>
@@ -438,9 +495,14 @@ export const GmHomebrewCards: React.FC<GmHomebrewCardsProps> = ({
                             </strong>
                         </div>
                         <p className="text-subtext" style={{ margin: 0, color: 'var(--text-main)', lineHeight: '1.4' }}>
-                            In standard trainer battles, Switcher Moves (like <em>U-turn, Volt Switch, Flip Turn, Teleport, Baton Pass, Parting Shot, Ally Switch, Shed Tail</em>)
-                            return the Pokémon to its Pokéball. Because PMD features autonomous rescue teams navigating tactical dungeon grids together
-                            without human trainers on the sidelines, the community uses these popular alternatives for repositioning, cover, and ally redirection.
+                            In standard trainer battles, Switcher Moves (like{' '}
+                            <em>
+                                U-turn, Volt Switch, Flip Turn, Teleport, Baton Pass, Parting Shot, Ally Switch, Shed
+                                Tail
+                            </em>
+                            ) return the Pokémon to its Pokéball. Because PMD features autonomous rescue teams
+                            navigating tactical dungeon grids together without human trainers on the sidelines, the
+                            community uses these popular alternatives for repositioning, cover, and ally redirection.
                         </p>
                     </div>
 
@@ -449,10 +511,16 @@ export const GmHomebrewCards: React.FC<GmHomebrewCardsProps> = ({
                             <div key={model.name} className="pmd-weapon-card">
                                 <div className="pmd-weapon-card__header">
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                        <strong className="text-label" style={{ color: 'var(--primary)', fontSize: '0.92rem' }}>
+                                        <strong
+                                            className="text-label"
+                                            style={{ color: 'var(--primary)', fontSize: '0.92rem' }}
+                                        >
                                             {model.name}
                                         </strong>
-                                        <span className="text-subtext" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                        <span
+                                            className="text-subtext"
+                                            style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}
+                                        >
                                             Model by <strong>{model.creator}</strong> • Style: <em>{model.style}</em>
                                         </span>
                                     </div>
@@ -467,12 +535,24 @@ export const GmHomebrewCards: React.FC<GmHomebrewCardsProps> = ({
                                     </button>
                                 </div>
 
-                                <p className="text-subtext" style={{ margin: 0, color: 'var(--text-main)', lineHeight: '1.4', whiteSpace: 'pre-line' }}>
+                                <p
+                                    className="text-subtext"
+                                    style={{
+                                        margin: 0,
+                                        color: 'var(--text-main)',
+                                        lineHeight: '1.4',
+                                        whiteSpace: 'pre-line'
+                                    }}
+                                >
                                     {model.description}
                                 </p>
 
                                 <div className="pmd-weapon-example-box">
-                                    <Sparkles size={14} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                                    <Sparkles
+                                        size={14}
+                                        color="var(--primary)"
+                                        style={{ flexShrink: 0, marginTop: '2px' }}
+                                    />
                                     <div style={{ fontSize: '0.78rem', color: 'var(--text-main)', lineHeight: '1.35' }}>
                                         <strong>Example:</strong> {model.example}
                                     </div>
@@ -484,7 +564,8 @@ export const GmHomebrewCards: React.FC<GmHomebrewCardsProps> = ({
                     <div className="pmd-disclaimer-box">
                         <Info size={14} color="var(--text-muted)" style={{ flexShrink: 0, marginTop: '1px' }} />
                         <span className="text-subtext" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            <strong>GM Note:</strong> Switcher move mechanics are optional community suggestions for PMD campaigns. GMs can choose whichever model fits their dungeon tactical style best!
+                            <strong>GM Note:</strong> Switcher move mechanics are optional community suggestions for PMD
+                            campaigns. GMs can choose whichever model fits their dungeon tactical style best!
                         </span>
                     </div>
                 </div>

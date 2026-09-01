@@ -58,7 +58,15 @@ export const GmRangersCards: React.FC<GmRangersCardsProps> = ({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                     {/* Header Banner */}
                     <div className="pmd-callout-box">
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                flexWrap: 'wrap',
+                                gap: '8px'
+                            }}
+                        >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Sparkles size={16} color="var(--primary)" />
                                 <strong className="text-title-primary" style={{ fontSize: '0.9rem' }}>
@@ -118,7 +126,10 @@ export const GmRangersCards: React.FC<GmRangersCardsProps> = ({
                                             </td>
                                             <td style={{ textAlign: 'center' }}>
                                                 <strong>{r.maneuversCount}</strong>
-                                                {r.rank === 'Expert' || r.rank === 'Ace' || r.rank === 'Master' || r.rank === 'Champion'
+                                                {r.rank === 'Expert' ||
+                                                r.rank === 'Ace' ||
+                                                r.rank === 'Master' ||
+                                                r.rank === 'Champion'
                                                     ? ' (+1 Master)'
                                                     : ''}
                                             </td>
@@ -149,16 +160,23 @@ export const GmRangersCards: React.FC<GmRangersCardsProps> = ({
                                 The Three Ranger Styles
                             </strong>
                         </div>
-                        <p className="text-subtext" style={{ margin: '0 0 8px 0', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
-                            Whenever a Ranger Maneuver states <strong>"Style"</strong> for Accuracy or Damage, replace it with
-                            your Style's associated Stat. If a maneuver states <strong>"Social"</strong>, the Ranger chooses any Social Attribute.
+                        <p
+                            className="text-subtext"
+                            style={{ margin: '0 0 8px 0', color: 'var(--text-muted)', fontSize: '0.78rem' }}
+                        >
+                            Whenever a Ranger Maneuver states <strong>"Style"</strong> for Accuracy or Damage, replace
+                            it with your Style's associated Stat. If a maneuver states <strong>"Social"</strong>, the
+                            Ranger chooses any Social Attribute.
                         </p>
                         <div className="pmd-rules-grid">
                             {RANGER_STYLES.map((style) => (
                                 <div key={style.name} className="pmd-rule-card">
                                     <div className="pmd-rule-card__header">
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                            <strong className="text-label" style={{ color: 'var(--primary)', fontSize: '0.88rem' }}>
+                                            <strong
+                                                className="text-label"
+                                                style={{ color: 'var(--primary)', fontSize: '0.88rem' }}
+                                            >
                                                 {style.name}
                                             </strong>
                                             <span className="pmd-rule-badge text-theme-header">Stat: {style.stat}</span>
@@ -173,7 +191,10 @@ export const GmRangersCards: React.FC<GmRangersCardsProps> = ({
                                             <Megaphone size={12} /> Broadcast
                                         </button>
                                     </div>
-                                    <p className="text-subtext" style={{ margin: 0, color: 'var(--text-main)', lineHeight: '1.4' }}>
+                                    <p
+                                        className="text-subtext"
+                                        style={{ margin: 0, color: 'var(--text-main)', lineHeight: '1.4' }}
+                                    >
                                         {style.description}
                                     </p>
                                 </div>
@@ -185,15 +206,17 @@ export const GmRangersCards: React.FC<GmRangersCardsProps> = ({
                     <div className="pmd-app-tip-box">
                         <CheckCircle2 size={14} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
                         <span className="text-subtext" style={{ fontSize: '0.78rem', color: 'var(--text-main)' }}>
-                            <strong>Styler Damage & Critical Failures:</strong> A Styler’s Charge represents its HP. If a Ranger rolls a
-                            <strong> Critical Failure</strong> on a Ranger Maneuver, the Styler immediately suffers <strong>1 point of damage</strong>.
+                            <strong>Styler Damage & Critical Failures:</strong> A Styler’s Charge represents its HP. If
+                            a Ranger rolls a<strong> Critical Failure</strong> on a Ranger Maneuver, the Styler
+                            immediately suffers <strong>1 point of damage</strong>.
                         </span>
                     </div>
 
                     <div className="pmd-disclaimer-box">
                         <Info size={14} color="var(--text-muted)" style={{ flexShrink: 0, marginTop: '1px' }} />
                         <span className="text-subtext" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            <strong>GM Note:</strong> These mechanics are from Prof. Drake’s optional Pokémon Rangers supplement for Pokerole, not official corebook requirements.
+                            <strong>GM Note:</strong> These mechanics are from Prof. Drake’s optional Pokémon Rangers
+                            supplement for Pokerole, not official corebook requirements.
                         </span>
                     </div>
                 </div>
@@ -226,15 +249,28 @@ export const GmRangersCards: React.FC<GmRangersCardsProps> = ({
                                         <tr key={s.name}>
                                             <td>
                                                 <strong>{s.name}</strong>
-                                                <div className="text-subtext" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                                <div
+                                                    className="text-subtext"
+                                                    style={{
+                                                        fontSize: '0.72rem',
+                                                        color: 'var(--text-muted)',
+                                                        marginTop: '2px'
+                                                    }}
+                                                >
                                                     <em>{s.flavor}</em>
                                                 </div>
                                             </td>
                                             <td style={{ textAlign: 'center' }}>
-                                                <span className="pmd-weight-pill text-value-highlight">{s.charge} HP</span>
+                                                <span className="pmd-weight-pill text-value-highlight">
+                                                    {s.charge} HP
+                                                </span>
                                             </td>
                                             <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
-                                                {s.cost === '—' ? <span className="text-subtext">Issued</span> : `${s.cost} P$`}
+                                                {s.cost === '—' ? (
+                                                    <span className="text-subtext">Issued</span>
+                                                ) : (
+                                                    `${s.cost} P$`
+                                                )}
                                             </td>
                                             <td>{s.effect}</td>
                                             <td style={{ textAlign: 'center' }}>
@@ -265,13 +301,20 @@ export const GmRangersCards: React.FC<GmRangersCardsProps> = ({
                         </div>
                         <div className="pmd-callout-box" style={{ marginBottom: '10px' }}>
                             <p className="text-subtext" style={{ margin: 0, color: 'var(--text-main)' }}>
-                                Enraged or enhanced Pokémon have intensely turbulent auras that resist standard capture loops.
-                                Attempts to tame these wild Pokémon usually fail until their enhanced aura is calmed.
+                                Enraged or enhanced Pokémon have intensely turbulent auras that resist standard capture
+                                loops. Attempts to tame these wild Pokémon usually fail until their enhanced aura is
+                                calmed.
                             </p>
                             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '4px' }}>
-                                <span className="pmd-weight-pill"><strong>Low:</strong> +10 DM & 1 Buff</span>
-                                <span className="pmd-weight-pill"><strong>Medium:</strong> +20 DM & 2 Buffs</span>
-                                <span className="pmd-weight-pill"><strong>High:</strong> +30 DM & 3 Buffs</span>
+                                <span className="pmd-weight-pill">
+                                    <strong>Low:</strong> +10 DM & 1 Buff
+                                </span>
+                                <span className="pmd-weight-pill">
+                                    <strong>Medium:</strong> +20 DM & 2 Buffs
+                                </span>
+                                <span className="pmd-weight-pill">
+                                    <strong>High:</strong> +30 DM & 3 Buffs
+                                </span>
                             </div>
                         </div>
 
@@ -312,7 +355,8 @@ export const GmRangersCards: React.FC<GmRangersCardsProps> = ({
                     <div className="pmd-disclaimer-box">
                         <Info size={14} color="var(--text-muted)" style={{ flexShrink: 0, marginTop: '1px' }} />
                         <span className="text-subtext" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            <strong>GM Note:</strong> Styler gear and encounter buffs are optional guidelines from Prof. Drake’s Pokémon Rangers supplement.
+                            <strong>GM Note:</strong> Styler gear and encounter buffs are optional guidelines from Prof.
+                            Drake’s Pokémon Rangers supplement.
                         </span>
                     </div>
                 </div>
@@ -335,9 +379,10 @@ export const GmRangersCards: React.FC<GmRangersCardsProps> = ({
                             </strong>
                         </div>
                         <p className="text-subtext" style={{ margin: 0, color: 'var(--text-main)' }}>
-                            Rangers wield unique loop maneuvers depending on their style. <strong>Basic Maneuvers</strong> are
-                            free to all Rangers and do not count against learned maneuver limits. <strong>Master Maneuvers</strong> require
-                            Expert rank and 1 day of mentorship with a Top Ranger.
+                            Rangers wield unique loop maneuvers depending on their style.{' '}
+                            <strong>Basic Maneuvers</strong> are free to all Rangers and do not count against learned
+                            maneuver limits. <strong>Master Maneuvers</strong> require Expert rank and 1 day of
+                            mentorship with a Top Ranger.
                         </p>
                     </div>
 
@@ -351,7 +396,11 @@ export const GmRangersCards: React.FC<GmRangersCardsProps> = ({
                                 style={{ fontSize: '0.75rem', padding: '4px 10px', borderRadius: '12px' }}
                                 onClick={() => setManeuverCategory(cat)}
                             >
-                                {cat} ({cat === 'All' ? RANGER_MANEUVERS.length : RANGER_MANEUVERS.filter((m) => m.category === cat).length})
+                                {cat} (
+                                {cat === 'All'
+                                    ? RANGER_MANEUVERS.length
+                                    : RANGER_MANEUVERS.filter((m) => m.category === cat).length}
+                                )
                             </button>
                         ))}
                     </div>
@@ -374,13 +423,22 @@ export const GmRangersCards: React.FC<GmRangersCardsProps> = ({
                                         <td>
                                             <strong>{m.name}</strong>
                                             {m.flavor && (
-                                                <div className="text-subtext" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                                <div
+                                                    className="text-subtext"
+                                                    style={{
+                                                        fontSize: '0.72rem',
+                                                        color: 'var(--text-muted)',
+                                                        marginTop: '2px'
+                                                    }}
+                                                >
                                                     <em>{m.flavor}</em>
                                                 </div>
                                             )}
                                         </td>
                                         <td>
-                                            <span className={`pmd-food-pill pmd-food-pill--${m.category.toLowerCase()}`}>
+                                            <span
+                                                className={`pmd-food-pill pmd-food-pill--${m.category.toLowerCase()}`}
+                                            >
                                                 {m.category}
                                             </span>
                                         </td>
@@ -388,7 +446,10 @@ export const GmRangersCards: React.FC<GmRangersCardsProps> = ({
                                             <code>{m.accuracy}</code>
                                         </td>
                                         <td style={{ whiteSpace: 'nowrap' }}>
-                                            <strong className="text-value-highlight" style={{ color: 'var(--primary)' }}>
+                                            <strong
+                                                className="text-value-highlight"
+                                                style={{ color: 'var(--primary)' }}
+                                            >
                                                 {m.power}
                                             </strong>
                                         </td>
@@ -413,7 +474,8 @@ export const GmRangersCards: React.FC<GmRangersCardsProps> = ({
                     <div className="pmd-disclaimer-box">
                         <Info size={14} color="var(--text-muted)" style={{ flexShrink: 0, marginTop: '1px' }} />
                         <span className="text-subtext" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            <strong>GM Note:</strong> Maneuvers and technique rules are from Prof. Drake’s optional Pokémon Rangers supplement for Pokerole.
+                            <strong>GM Note:</strong> Maneuvers and technique rules are from Prof. Drake’s optional
+                            Pokémon Rangers supplement for Pokerole.
                         </span>
                     </div>
                 </div>
@@ -432,9 +494,10 @@ export const GmRangersCards: React.FC<GmRangersCardsProps> = ({
                             </strong>
                         </div>
                         <p className="text-subtext" style={{ margin: 0, color: 'var(--text-main)' }}>
-                            Rangers gain assistance from wild Pokémon roaming the region and deep bonds forged with their
-                            Partner Pokémon. <strong>1 Combat Assist</strong> can be used per turn right before a maneuver
-                            (Applying a Type or Using an Ability is free; using a Move costs a full action). Wild Pokémon depart after the encounter.
+                            Rangers gain assistance from wild Pokémon roaming the region and deep bonds forged with
+                            their Partner Pokémon. <strong>1 Combat Assist</strong> can be used per turn right before a
+                            maneuver (Applying a Type or Using an Ability is free; using a Move costs a full action).
+                            Wild Pokémon depart after the encounter.
                         </p>
                     </div>
 
@@ -488,9 +551,13 @@ export const GmRangersCards: React.FC<GmRangersCardsProps> = ({
                                 Partner Pokémon Bond Progression (Loyalty & Happiness Levels 1–5)
                             </strong>
                         </div>
-                        <p className="text-subtext" style={{ margin: '0 0 8px 0', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
-                            Partner Pokémon can Clash once per round to protect your Styler (reducing DM instead of dealing damage).
-                            As Happiness and Loyalty grow, they unlock unique scene-level bond abilities:
+                        <p
+                            className="text-subtext"
+                            style={{ margin: '0 0 8px 0', color: 'var(--text-muted)', fontSize: '0.78rem' }}
+                        >
+                            Partner Pokémon can Clash once per round to protect your Styler (reducing DM instead of
+                            dealing damage). As Happiness and Loyalty grow, they unlock unique scene-level bond
+                            abilities:
                         </p>
                         <div className="gm-table-wrapper">
                             <table className="gm-table">
@@ -506,7 +573,9 @@ export const GmRangersCards: React.FC<GmRangersCardsProps> = ({
                                     {RANGER_PARTNER_BOND_LEVELS.map((b) => (
                                         <tr key={b.level}>
                                             <td style={{ textAlign: 'center' }}>
-                                                <span className="pmd-weight-pill text-value-highlight">Level {b.level}</span>
+                                                <span className="pmd-weight-pill text-value-highlight">
+                                                    Level {b.level}
+                                                </span>
                                             </td>
                                             <td style={{ whiteSpace: 'nowrap' }}>
                                                 <strong>{b.requirement}</strong>
@@ -533,7 +602,8 @@ export const GmRangersCards: React.FC<GmRangersCardsProps> = ({
                     <div className="pmd-disclaimer-box">
                         <Info size={14} color="var(--text-muted)" style={{ flexShrink: 0, marginTop: '1px' }} />
                         <span className="text-subtext" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            <strong>GM Note:</strong> Assist and partner rules are from Prof. Drake’s optional Pokémon Rangers supplement for Pokerole.
+                            <strong>GM Note:</strong> Assist and partner rules are from Prof. Drake’s optional Pokémon
+                            Rangers supplement for Pokerole.
                         </span>
                     </div>
                 </div>

@@ -337,7 +337,9 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                     score += 2000;
                 } else if (titleLower.startsWith(rawQuery)) {
                     score += 1000;
-                } else if (new RegExp(`\\b${rawQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(titleLower)) {
+                } else if (
+                    new RegExp(`\\b${rawQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(titleLower)
+                ) {
                     score += 700;
                 } else if (titleLower.includes(rawQuery)) {
                     score += 400;
@@ -516,11 +518,7 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
             );
         }
 
-        const statusIds = [
-            'status-effects-all',
-            'weather-conditions-all',
-            'environmental-hazards-all'
-        ];
+        const statusIds = ['status-effects-all', 'weather-conditions-all', 'environmental-hazards-all'];
         if (statusIds.includes(itemId)) {
             return (
                 <GmStatusCards
@@ -764,7 +762,9 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                                                 {item.title}
                                             </strong>
                                             {item.badge && (
-                                                <span className="gm-screen-modal__card-badge text-theme-header">{item.badge}</span>
+                                                <span className="gm-screen-modal__card-badge text-theme-header">
+                                                    {item.badge}
+                                                </span>
                                             )}
                                         </div>
 

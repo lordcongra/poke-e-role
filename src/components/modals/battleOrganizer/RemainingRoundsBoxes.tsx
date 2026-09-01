@@ -66,7 +66,9 @@ export function RemainingRoundsBoxes({
                 >
                     <Minus size={10} />
                 </button>
-                <span className={`bo-rounds-boxes__count ${value > 0 ? 'bo-rounds-boxes__count--active' : 'bo-rounds-boxes__count--zero'}`}>
+                <span
+                    className={`bo-rounds-boxes__count ${value > 0 ? 'bo-rounds-boxes__count--active' : 'bo-rounds-boxes__count--zero'}`}
+                >
                     {value}
                 </span>
                 <button

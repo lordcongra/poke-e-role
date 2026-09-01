@@ -13,7 +13,7 @@ import { broadcastInfo } from '../../utils/diceRoller';
 import { isStandaloneMode } from '../../utils/storageAdapter';
 import { imageManager, autoCropTransparency } from '../../utils/imageManager';
 import { saveToOwlbear } from '../../utils/obr';
-import { Image as ImageIcon, Radio, Upload, Globe, RefreshCw, Dna } from 'lucide-react';
+import { Image as ImageIcon, Radio, Upload, Globe, RefreshCw, Dna, Trash2, AlertTriangle } from 'lucide-react';
 import './IdentityHeader.css';
 
 const ICON_SHADOW = 'drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8)) drop-shadow(0 1px 4px rgba(0, 0, 0, 0.6))';
@@ -30,6 +30,7 @@ export function IdentityHeader() {
     const [showTransformationModal, setShowTransformationModal] = useState<boolean>(false);
 
     const [showImagePicker, setShowImagePicker] = useState<boolean>(false);
+    const [confirmDeleteImage, setConfirmDeleteImage] = useState<boolean>(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -149,11 +150,34 @@ export function IdentityHeader() {
         }
 
         setShowImagePicker(false);
+        setConfirmDeleteImage(false);
         if (imageInputRef.current) imageInputRef.current.value = '';
+    };
+
+    const handleDeleteAvatar = async () => {
+        if (identityStore.tokenImageUrl && identityStore.tokenImageUrl.startsWith('local-img:')) {
+            try {
+                await imageManager.deleteImage(identityStore.tokenImageUrl);
+            } catch (error) {
+                console.error('[IdentityHeader] Failed to delete image from IndexedDB:', error);
+            }
+        }
+
+        setIdentity('tokenImageUrl', '');
+        try {
+            saveToOwlbear({ 'token-image-url': '' });
+            window.dispatchEvent(new Event('pkr-character-list-update'));
+        } catch (error) {
+            console.error('[IdentityHeader] Failed to clear token image URL in storage:', error);
+        }
+
+        setShowImagePicker(false);
+        setConfirmDeleteImage(false);
     };
 
     const handleUpdateTokenImage = async () => {
         if (isStandaloneMode) {
+            setConfirmDeleteImage(false);
             setShowImagePicker(true);
             return;
         }
@@ -273,6 +297,10 @@ export function IdentityHeader() {
                 onOpenAbility={openAbilityModal}
                 onOpenNature={openNatureModal}
                 onOpenPokedex={() => setShowPokedexModal(true)}
+                onOpenImagePicker={() => {
+                    setConfirmDeleteImage(false);
+                    setShowImagePicker(true);
+                }}
             />
 
             <IdentityControls onOpenTrackerSettings={() => setShowTrackerSettings(true)} />
@@ -324,11 +352,12 @@ export function IdentityHeader() {
                             <ImageIcon size={20} /> Update Artwork
                         </h3>
                         <p className="identity-header__modal-text identity-header__picker-desc text-subtext">
-                            Choose how you'd like to supply the image for this character.
+                            Choose how you'd like to supply or manage the image for this character.
                         </p>
 
                         <div className="identity-header__picker-options">
                             <button
+                                type="button"
                                 className="action-button action-button--dark identity-header__picker-btn"
                                 onClick={() => imageInputRef.current?.click()}
                             >
@@ -344,6 +373,7 @@ export function IdentityHeader() {
                             </button>
 
                             <button
+                                type="button"
                                 className="action-button identity-header__picker-btn identity-header__picker-btn--web"
                                 onClick={handleStandaloneUrl}
                             >
@@ -357,13 +387,77 @@ export function IdentityHeader() {
                                     (Lightweight - Image breaks if the web link dies)
                                 </span>
                             </button>
+
+                            {Boolean(identityStore.tokenImageUrl) && (
+                                <>
+                                    {confirmDeleteImage ? (
+                                        <div className="identity-header__picker-confirm-box">
+                                            <p
+                                                className="text-subtext"
+                                                style={{
+                                                    color: 'var(--semantic-danger)',
+                                                    fontWeight: 600,
+                                                    margin: '4px 0 8px 0',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: '6px'
+                                                }}
+                                            >
+                                                <AlertTriangle size={16} /> Delete image permanently?
+                                            </p>
+                                            <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                                                <button
+                                                    type="button"
+                                                    className="action-button action-button--red"
+                                                    style={{ flex: 1, padding: '8px 12px' }}
+                                                    onClick={handleDeleteAvatar}
+                                                >
+                                                    <Trash2 size={14} /> Yes, Delete
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="action-button action-button--dark"
+                                                    style={{ flex: 1, padding: '8px 12px' }}
+                                                    onClick={() => setConfirmDeleteImage(false)}
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            className="action-button action-button--red identity-header__picker-btn"
+                                            onClick={() => setConfirmDeleteImage(true)}
+                                        >
+                                            <span
+                                                className="identity-header__picker-btn-title"
+                                                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                                            >
+                                                <Trash2 size={16} /> Delete Display Image
+                                            </span>
+                                            <span
+                                                className="identity-header__picker-btn-sub text-subtext"
+                                                style={{ color: 'white' }}
+                                            >
+                                                (Remove portrait & clear from storage)
+                                            </span>
+                                        </button>
+                                    )}
+                                </>
+                            )}
                         </div>
 
                         <hr className="identity-header__modal-divider identity-header__picker-divider" />
 
                         <button
+                            type="button"
                             className="action-button action-button--dark identity-header__modal-close-btn"
-                            onClick={() => setShowImagePicker(false)}
+                            onClick={() => {
+                                setShowImagePicker(false);
+                                setConfirmDeleteImage(false);
+                            }}
                         >
                             Cancel
                         </button>

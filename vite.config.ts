@@ -42,7 +42,8 @@ export default defineConfig({
             input: {
                 main: 'index.html',
                 rollLog: 'roll-log.html',
-                initTracker: 'initiative-tracker.html'
+                initTracker: 'initiative-tracker.html',
+                battleOrganizer: 'battle-organizer.html'
             }
         }
     },
