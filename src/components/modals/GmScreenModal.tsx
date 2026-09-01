@@ -600,8 +600,25 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
             <div className="gm-screen-modal__content">
                 <div className="gm-screen-modal__header">
                     <div className="gm-screen-modal__header-left">
-                        <h3 className="gm-screen-modal__title text-title-primary">
-                            <ShieldCheck size={22} /> GM Screen & Rules Cheat Sheet
+                        <h3
+                            className="gm-screen-modal__title text-title-primary"
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                        >
+                            <ShieldCheck size={22} color="var(--primary)" /> GM Screen & Rules Cheat Sheet
+                            <span
+                                className="text-theme-header"
+                                style={{
+                                    fontSize: '0.75rem',
+                                    padding: '2px 8px',
+                                    borderRadius: '12px',
+                                    backgroundColor: 'var(--primary)',
+                                    color: '#fff',
+                                    fontWeight: 600,
+                                    letterSpacing: '0.5px'
+                                }}
+                            >
+                                v3.4.0
+                            </span>
                         </h3>
                     </div>
                     <div className="gm-screen-modal__header-actions">
@@ -831,6 +848,12 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                     <div className="gm-screen-modal__credit">
                         <Heart size={14} color="var(--primary)" />
                         <span>{GM_SCREEN_CREDITS}</span>
+                    </div>
+                    <div
+                        className="gm-screen-modal__contact text-subtext"
+                        style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}
+                    >
+                        Questions or suggestions? Contact <strong>@congra</strong> on the Pokérole Discord!
                     </div>
                 </div>
             </div>

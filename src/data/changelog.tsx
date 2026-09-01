@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ReactNode } from 'react';
 
-export const CURRENT_VERSION = '3.3.0';
+export const CURRENT_VERSION = '3.4.0';
 
 export interface ChangelogEntry {
     version: string;
@@ -10,6 +10,93 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
+    {
+        version: '3.4.0',
+        date: 'September 2026',
+        changes: [
+            <strong key="battle-organizer-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
+                ⚔️ Battle Organizer Sheet & Encounter Manager
+            </strong>,
+            <ul
+                key="battle-organizer-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Interactive Battlefield & Arena Conditions:</strong> Track stadium pitch layout, active weather conditions, terrain types, environmental hazards, and Player/Foe Force Fields (Reflect/Light Screen/Safeguard/Mist) with automatic 1–4 round duration boxes that decrement seamlessly when advancing rounds.
+                </li>
+                <li>
+                    <strong>Multi-Round Combat Tracking:</strong> Organize combat round-by-round with multi-round planning. Add, duplicate, reorder, or delete rounds, and easily advance combat rounds with one click.
+                </li>
+                <li>
+                    <strong>Combatant Action Management:</strong> Track individual action slots per combatant with completion marks (✓), clash/fail indicators (✗), active held items, and persistent status condition tags.
+                </li>
+                <li>
+                    <strong>1-Click Initiative Sync:</strong> Pull combatants, nicknames, held items, statuses, and rolled initiatives straight from the Initiative Order into your active battle round.
+                </li>
+                <li>
+                    <strong>Owlbear Rodeo Popout Modal & Standalone Multi-Window Support:</strong> Open the Battle Organizer as a dedicated full-size modal iframe in Owlbear Rodeo (up to 95% of viewport width) or pop it out into an independent browser window in Standalone mode for multi-monitor setups with live two-way synchronization.
+                </li>
+                <li>
+                    <strong>Print-to-PDF Battle Sheet:</strong> Export comprehensive, print-ready battle sheets with full stadium graphics, combatant stat lines, and action tracking grids.
+                </li>
+            </ul>,
+            <strong key="gm-screen-update-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
+                🛡️ GM Screen & Reference Guide
+            </strong>,
+            <ul
+                key="gm-screen-update-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Core Rules & Reference Tables:</strong> Includes all essential information from the corebook for quick reference—combat flow, difficulty, will points, trainer actions, cover, healing, status stacking, rank balance, and the interactive Catching Calculator.
+                </li>
+                <li>
+                    <strong>Homebrew & Expansion Mechanics:</strong> Includes reference guides for PMD (dungeon items, food, weapons, switchers) and Pokémon Rangers (Styler, styles, maneuvers, partner bonds).
+                </li>
+                <li>
+                    <strong>Community Requests & Feedback:</strong> Have suggestions or want specific reference rules added? Reach out to <strong>@congra</strong> on the Pokérole Discord!
+                </li>
+            </ul>,
+            <strong key="avatar-delete-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
+                🖼️ Artwork & Display Image Management
+            </strong>,
+            <ul
+                key="avatar-delete-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Double-Confirmed Image Deletion:</strong> Easily remove character portrait artwork with a safe double-confirmation prompt, instantly clearing the image from browser storage and IndexedDB.
+                </li>
+                <li>
+                    <strong>Interactive Portrait Click:</strong> Click directly on the character portrait on the sheet to manage or update character artwork.
+                </li>
+            </ul>
+        ]
+    },
     {
         version: '3.3.0',
         date: 'August 2026',

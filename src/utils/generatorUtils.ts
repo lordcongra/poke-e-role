@@ -45,7 +45,10 @@ function normalizeSingleStatistic(token: string): string {
 
 export function parseStatOptions(value: string): string[] {
     if (!value) return [];
-    const parts = value.split(/[/,]/).map((p) => p.trim()).filter(Boolean);
+    const parts = value
+        .split(/[/,]/)
+        .map((p) => p.trim())
+        .filter(Boolean);
     const results: string[] = [];
     for (const part of parts) {
         const mapped = ATTRIBUTE_MAPPING[part] || part;
@@ -68,7 +71,10 @@ function normalizeSingleSkill(token: string): string {
 
 export function parseSkillOptions(value: string): string[] {
     if (!value) return [];
-    const parts = value.split(/[/,]/).map((p) => p.trim()).filter(Boolean);
+    const parts = value
+        .split(/[/,]/)
+        .map((p) => p.trim())
+        .filter(Boolean);
     const results: string[] = [];
     for (const part of parts) {
         const normalized = normalizeSingleSkill(part);

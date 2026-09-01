@@ -1,4 +1,4 @@
-# Pokerole 3.0 Sheet v3.3.0 (Standalone PWA & Owlbear Rodeo Extension)
+# Pokerole 3.0 Sheet v3.4.0 (Standalone PWA & Owlbear Rodeo Extension)
 
 A highly automated, modular character sheet and GM Toolkit for playing **Pokerole 3.0** campaigns (including **Pokémon Mystery Dungeon / PMD** settings).
 
@@ -66,6 +66,16 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 - **Native Integration:** A completely overhauled, lightning-fast initiative tracking HUD built directly into the sheet!
 - **Fully Customizable:** Your tracker layout saves instantly to your personal browser memory. Do you want a horizontal tracker on the bottom of your screen, while your GM wants a vertical list on the right? You can both have it!
 - **Auto-Scrolling:** Set strict maximum dimension limits so the tracker never dominates your screen. If the turn passes to a Pokémon that is hidden off-screen, the tracker will elegantly smooth-scroll them right into the center of your view.
+
+### ⚔️ The Battle Organizer (Encounter & Combat Manager)
+
+- **Interactive Arena & Battlefield Tracking:** Manage stadium pitch layouts, active weather conditions (Rain, Sun, Sandstorm, Snow, Fog, etc.), terrains (Electric, Grassy, Psychic, Misty), and environmental hazards (Stealth Rock, Spikes, Toxic Spikes, Sticky Web).
+- **Auto-Decrementing Force Fields & Timers:** Track Player and Foe Force Fields (Reflect, Light Screen, Safeguard, Mist) with interactive 1–4 round duration boxes that automatically tick down as combat rounds advance.
+- **Round-by-Round Planning:** Full multi-round workflow allowing GMs to add new rounds, duplicate previous setups, reorder rounds, or delete rounds, with seamless 1-click round advancing.
+- **Combatant Action Slots:** Track individual action slots per Pokémon/combatant with quick toggles for completed/used actions (`✓`), clash/evade/failed actions (`✗`), active held items, and persistent status condition badges.
+- **1-Click Initiative Sync:** Seamlessly pull combatants, nicknames, held items, statuses, and rolled initiatives directly from the active Initiative Order into the combat round.
+- **Owlbear Popout Modal & Multi-Window Standalone:** Open the Battle Organizer as a dedicated full-size modal iframe in Owlbear Rodeo (maximizing tabletop screen real estate) or pop it out into an independent browser window in Standalone mode for multi-monitor setups with live two-way synchronization.
+- **Print-to-PDF Battle Sheet:** Generate comprehensive, toner-saving printable battle sheets with stadium graphics and combatant action matrices.
 
 ### 🧬 Form Shifts & Transformations
 
@@ -154,11 +164,14 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 ### 🛡️ GM Screen & Rules Cheat Sheet
 
 - **Instant In-App Reference:** Open the full Pokerole 3.0 GM Cheat Sheet directly from the global toolbar with real-time keyword search, tabbed categories, and collapsible accordion cards.
+- **Corebook Quick Reference:** Quick access to essential corebook mechanics—combat flow, difficulty modifiers, Will Point spending, trainer actions, cover, healing, status condition stacking, rank balance benchmarks, and interactive Catching Calculator.
+- **Homebrew & Expansion Mechanics:** Dedicated reference guides for PMD (dungeon item capacities, item weights, food mechanics, weapons, and switcher models) and Pokémon Rangers systems (Styler stats, styles, field assists, maneuvers, and partner bond levels).
 - **1-Click Discord Markdown:** Copy clean Discord-formatted tables, status ailment summaries, combat flow steps, and weather charts directly to your clipboard for quick sharing in Discord chat.
 - **Table & Roll Log Broadcasts:** Broadcast any rule, table, or calculator directly to the Owlbear Rodeo table chat or standalone Roll History widget.
 - **Deep Linking for Players:** Generate shareable deep links to specific rules, status conditions, or tables so players can open straight to that section.
 - **Interactive Catching Calculator:** Real-time formula calculator supporting standard Pokéballs, Greatballs, Ultraballs, and custom Seal Power fill-in dice with wild rank and condition multipliers.
 - **Encounter Balancing Difficulty Matrix:** Full 5-column challenge evaluation matrix with color-coded difficulty badges (from _Effortless_ to _Punishing_).
+- **Community Requests & Feedback:** Have suggestions or want specific reference rules added? Reach out to **`@congra`** on the Pokérole Discord!
 - **Credits & Thanks:** Special thanks and credit to Willowlark for putting together and compiling the reference information for this cheat sheet!
 
 ### 🔒 Room Rules & GM Tools
@@ -173,6 +186,6 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 To install this extension into your Owlbear Rodeo room, copy the Manifest URL below and paste it into your Owlbear Rodeo extension manager:
 
-`https://lordcongra.github.io/poke-e-role/manifest.json?v=3.3.0`
+`https://lordcongra.github.io/poke-e-role/manifest.json?v=3.4.0`
 
 _(Note: If the sheet updates, you can force Owlbear to fetch the newest version by bumping the version tag at the end of the URL!)_

@@ -50,11 +50,7 @@ export function getMoveScore(move: TempMove, context: DraftingContext): number {
               ? [move.dmgStat]
               : [];
     const accAttrOptions =
-        move.candidateAttrs && move.candidateAttrs.length > 0
-            ? move.candidateAttrs
-            : move.attr
-              ? [move.attr]
-              : [];
+        move.candidateAttrs && move.candidateAttrs.length > 0 ? move.candidateAttrs : move.attr ? [move.attr] : [];
     const accSkillOptions =
         move.candidateSkills && move.candidateSkills.length > 0
             ? move.candidateSkills
@@ -62,8 +58,7 @@ export function getMoveScore(move: TempMove, context: DraftingContext): number {
               ? [move.skill]
               : [];
 
-    const isFunctionallyPhysical =
-        move.cat === 'Phys' || dmgOptions.includes('str') || dmgOptions.includes('dex');
+    const isFunctionallyPhysical = move.cat === 'Phys' || dmgOptions.includes('str') || dmgOptions.includes('dex');
     const isFunctionallySpecial = move.cat === 'Spec' || dmgOptions.includes('spe');
 
     // STAB Match vs Bias Mismatch
@@ -112,17 +107,9 @@ export function getMoveScore(move: TempMove, context: DraftingContext): number {
     return score;
 }
 
-function registerMoveSignatures(
-    move: TempMove,
-    draftedAccAttrs: Set<string>,
-    draftedSkills: Set<string>
-) {
+function registerMoveSignatures(move: TempMove, draftedAccAttrs: Set<string>, draftedSkills: Set<string>) {
     const attrs =
-        move.candidateAttrs && move.candidateAttrs.length > 0
-            ? move.candidateAttrs
-            : move.attr
-              ? [move.attr]
-              : [];
+        move.candidateAttrs && move.candidateAttrs.length > 0 ? move.candidateAttrs : move.attr ? [move.attr] : [];
     attrs.forEach((a) => draftedAccAttrs.add(a));
 
     const skills =

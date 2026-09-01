@@ -160,7 +160,7 @@ export function determineDefensiveStyle(
 
     // 3. Competitive / Close Range: If Evade is within 1 die of Clash, favor Evade (superior damage mitigation)
     if (potentialEvade >= potentialClash - 1) {
-        return Math.random() < 0.80 ? 'evasion' : 'clash';
+        return Math.random() < 0.8 ? 'evasion' : 'clash';
     }
 
     // 4. Default weighted roll between Evade and Clash
@@ -197,11 +197,7 @@ export function assignMinMaxStats(
 
     draftedMoves.forEach((move) => {
         const attrs =
-            move.candidateAttrs && move.candidateAttrs.length > 0
-                ? move.candidateAttrs
-                : move.attr
-                  ? [move.attr]
-                  : [];
+            move.candidateAttrs && move.candidateAttrs.length > 0 ? move.candidateAttrs : move.attr ? [move.attr] : [];
         attrs.forEach((attr) => {
             if (requiredAttributes[attr] !== undefined) requiredAttributes[attr] += 2;
             else if (requiredSocials[attr] !== undefined) requiredSocials[attr] += 2;
@@ -458,11 +454,7 @@ export function assignAverageStats(
 
     draftedMoves.forEach((move) => {
         const attrs =
-            move.candidateAttrs && move.candidateAttrs.length > 0
-                ? move.candidateAttrs
-                : move.attr
-                  ? [move.attr]
-                  : [];
+            move.candidateAttrs && move.candidateAttrs.length > 0 ? move.candidateAttrs : move.attr ? [move.attr] : [];
         attrs.forEach((a) => {
             if (COMBAT_STATS.includes(a)) coreAttributes.add(a);
             else if (SOCIAL_STATS.includes(a)) coreSocials.add(a);
