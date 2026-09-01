@@ -8,6 +8,7 @@ import {
     calculateBaseInitFromCharacterData,
     sortCombatants,
     extractTokenImage,
+    extractCharacterName,
     calculateEncodedInitiative
 } from '../../utils/initiativeHelpers';
 import type { Combatant } from '../../utils/initiativeHelpers';
@@ -50,9 +51,10 @@ export function useInitiativeEngine() {
                 const chars = await storageAdapter.getLocalCharacters();
                 const options = chars.map((c) => {
                     const meta = (c.metadata || {}) as Record<string, unknown>;
+                    const resolvedName = extractCharacterName(meta, c.name);
                     return {
                         id: c.id,
-                        name: c.name,
+                        name: resolvedName,
                         image: extractTokenImage(meta),
                         rawMetadata: meta
                     };
@@ -64,7 +66,7 @@ export function useInitiativeEngine() {
         }
     }, []);
 
-    // 1. Reactive Sync for the Active Character's base stats changing
+    // 1. Reactive Sync for the Active Character's base stats / nickname changing
     useEffect(() => {
         if (!isStandaloneMode || !activeTokenId || combatants.length === 0) return;
 
@@ -74,11 +76,12 @@ export function useInitiativeEngine() {
                 if (c.id === activeTokenId) {
                     const newBase = calculateBaseInitFromCharacterData(globalState, globalState);
                     const newImage = tokenImageUrl || '';
+                    const newName = storeIdentity?.nickname?.trim() || storeIdentity?.species?.trim() || c.name;
 
-                    if (newBase !== c.baseInit || newImage !== c.image) {
+                    if (newBase !== c.baseInit || newImage !== c.image || newName !== c.name) {
                         changed = true;
                         const newTotal = c.d6 > 0 ? c.d6 + newBase : newBase;
-                        return { ...c, baseInit: newBase, total: newTotal, image: newImage };
+                        return { ...c, name: newName, baseInit: newBase, total: newTotal, image: newImage };
                     }
                 }
                 return c;
@@ -108,6 +111,8 @@ export function useInitiativeEngine() {
         ability,
         extraCategories,
         tokenImageUrl,
+        storeIdentity?.nickname,
+        storeIdentity?.species,
         globalState
     ]);
 
@@ -213,11 +218,13 @@ export function useInitiativeEngine() {
 
                                 let baseInitiative = typeof item.baseInit === 'number' ? item.baseInit : 0;
                                 let resolvedImage = String(item.image || '');
+                                let resolvedName = String(item.name || 'Unknown');
 
                                 if (matchingChar && matchingChar.metadata) {
                                     const meta = matchingChar.metadata as Record<string, unknown>;
                                     baseInitiative = calculateBaseInitFromCharacterData(meta, globalState);
                                     resolvedImage = extractTokenImage(meta);
+                                    resolvedName = extractCharacterName(meta, matchingChar.name || resolvedName);
                                 }
 
                                 const d6Value = typeof item.d6 === 'number' ? item.d6 : 0;
@@ -232,7 +239,7 @@ export function useInitiativeEngine() {
 
                                 return {
                                     id: charId || crypto.randomUUID(),
-                                    name: String(item.name || 'Unknown'),
+                                    name: resolvedName,
                                     image: resolvedImage,
                                     d6: d6Value,
                                     baseInit: baseInitiative,
@@ -313,7 +320,13 @@ export function useInitiativeEngine() {
                     (item) =>
                         item.layer === 'CHARACTER' && item.metadata['pokerole-pmd-extension/initiative'] === undefined
                 );
-                setAvailableObrChars(nonInitItems.map((i) => ({ id: i.id, name: i.name, item: i })));
+                setAvailableObrChars(
+                    nonInitItems.map((i) => ({
+                        id: i.id,
+                        name: extractCharacterName(i.metadata as Record<string, unknown>, i.name),
+                        item: i
+                    }))
+                );
 
                 const parsed: Combatant[] = initItems.map((item) => {
                     const meta = item.metadata['pokerole-pmd-extension/initiative'] as
@@ -335,10 +348,11 @@ export function useInitiativeEngine() {
 
                     const tie = typeof meta?.tiebreaker === 'number' ? meta.tiebreaker : 0;
                     const rawD6 = integerTotal > dynamicBaseInit ? integerTotal - dynamicBaseInit : 0;
+                    const resolvedName = extractCharacterName(item.metadata as Record<string, unknown>, item.name);
 
                     return {
                         id: item.id,
-                        name: item.name,
+                        name: resolvedName,
                         image: imgItem.image?.url || '',
                         d6: rawD6,
                         baseInit: dynamicBaseInit,
@@ -696,11 +710,12 @@ export function useInitiativeEngine() {
         if (combatants.find((c) => c.id === char.id)) return;
 
         const baseInit = calculateBaseInitFromCharacterData(char.rawMetadata, globalState);
+        const resolvedName = extractCharacterName(char.rawMetadata, char.name);
         const newList = sortCombatants([
             ...combatants,
             {
                 id: char.id,
-                name: char.name,
+                name: resolvedName,
                 image: char.image,
                 d6: 0,
                 baseInit: baseInit,
@@ -747,11 +762,12 @@ export function useInitiativeEngine() {
                 const chars = await storageAdapter.getLocalCharacters();
                 const target = chars.find((c) => c.id === itemId);
                 if (target) {
+                    const meta = (target.metadata || {}) as Record<string, unknown>;
                     handleAddStandaloneCombatant({
                         id: target.id,
-                        name: target.name,
-                        image: extractTokenImage(target.metadata as Record<string, unknown>),
-                        rawMetadata: target.metadata as Record<string, unknown>
+                        name: extractCharacterName(meta, target.name),
+                        image: extractTokenImage(meta),
+                        rawMetadata: meta
                     });
                 }
             } catch (error) {

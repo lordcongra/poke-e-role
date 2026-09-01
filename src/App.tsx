@@ -323,35 +323,37 @@ function App() {
             <div className="app-main-content">
                 <GlobalToolbar />
 
-                {!activeTokenId ? (
-                    <div className="standalone-empty-state text-subtext">
-                        <p style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <ArrowLeft size={20} /> Select or create a file in the directory to begin
-                        </p>
-                    </div>
-                ) : (
-                    <div className="standalone-layout-wrapper">
-                        <div className="standalone-main-col">
-                            {showStandaloneTracker && initLayout === 'horizontal' && (
-                                <div className="standalone-layout-tracker--horizontal">
-                                    <InitiativeTracker isStandaloneWidget={true} />
+                <div className="standalone-layout-wrapper">
+                    <div className="standalone-main-col">
+                        {showStandaloneTracker && initLayout === 'horizontal' && (
+                            <div className="standalone-layout-tracker--horizontal">
+                                <InitiativeTracker isStandaloneWidget={true} />
+                            </div>
+                        )}
+
+                        <div className="standalone-layout-sheet">
+                            {!activeTokenId ? (
+                                <div className="standalone-empty-state text-subtext">
+                                    <p style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <ArrowLeft size={20} /> Select or create a file in the directory to begin
+                                    </p>
                                 </div>
+                            ) : (
+                                renderSheetContent()
                             )}
-
-                            <div className="standalone-layout-sheet">{renderSheetContent()}</div>
-                        </div>
-
-                        <div className="standalone-right-sidebar">
-                            {showStandaloneTracker && initLayout === 'vertical' && (
-                                <div className="standalone-tracker-dock">
-                                    <InitiativeTracker isStandaloneWidget={true} />
-                                </div>
-                            )}
-
-                            <RollLogWidget isDocked={true} />
                         </div>
                     </div>
-                )}
+
+                    <div className="standalone-right-sidebar">
+                        {showStandaloneTracker && initLayout === 'vertical' && (
+                            <div className="standalone-tracker-dock">
+                                <InitiativeTracker isStandaloneWidget={true} />
+                            </div>
+                        )}
+
+                        <RollLogWidget isDocked={true} />
+                    </div>
+                </div>
 
                 <DemoRollModal />
                 {isPrinting && <PrintSheet />}

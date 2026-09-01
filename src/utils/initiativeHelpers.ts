@@ -65,6 +65,53 @@ export function extractTokenImage(meta: Record<string, unknown> | null | undefin
     return '';
 }
 
+export function extractCharacterName(
+    meta: Record<string, unknown> | null | undefined,
+    fallbackName: string = 'Unknown'
+): string {
+    if (!meta) return fallbackName;
+
+    // 1. Direct nickname in flat metadata
+    if (typeof meta['nickname'] === 'string' && meta['nickname'].trim()) {
+        return meta['nickname'].trim();
+    }
+
+    // 2. Nickname in nested 'pokerole-pmd-extension/stats' or 'state'
+    const nestedStats = meta['pokerole-pmd-extension/stats'] as Record<string, unknown> | undefined;
+    if (nestedStats && typeof nestedStats['nickname'] === 'string' && nestedStats['nickname'].trim()) {
+        return nestedStats['nickname'].trim();
+    }
+
+    const stateObj = (meta.state || meta) as Record<string, unknown>;
+    if (stateObj) {
+        const identity = stateObj.identity as Record<string, unknown> | undefined;
+        if (identity && typeof identity.nickname === 'string' && identity.nickname.trim()) {
+            return identity.nickname.trim();
+        }
+        if (typeof stateObj['nickname'] === 'string' && stateObj['nickname'].trim()) {
+            return stateObj['nickname'].trim();
+        }
+        if (identity && typeof identity.name === 'string' && identity.name.trim()) {
+            return identity.name.trim();
+        }
+    }
+
+    // 3. Flat 'name' in metadata
+    if (typeof meta['name'] === 'string' && meta['name'].trim()) {
+        return meta['name'].trim();
+    }
+
+    // 4. Sledgehammer fallback for deeply nested JSON
+    try {
+        const str = JSON.stringify(meta);
+        const matchNick = str.match(/"nickname":"([^"]+)"/);
+        if (matchNick && matchNick[1]?.trim()) return matchNick[1].trim();
+    } catch {}
+
+    // 5. Fallback name (e.g. token / item name)
+    return fallbackName;
+}
+
 export function calculateBaseInitFromCharacterData(
     data: CharacterState | StoredCharacterData | Record<string, unknown> | null | undefined,
     globalState: CharacterState
