@@ -244,7 +244,7 @@ export function GeneratorPreviewModal({
         onClose();
     };
 
-    const isTrainer = mode === 'Trainer';
+    const isTrainer = mode !== 'Pokémon';
 
     const getSkillLabel = (skillName: string) => {
         if (localBuild.customSkillMap[skillName]) return localBuild.customSkillMap[skillName] || 'Unnamed';

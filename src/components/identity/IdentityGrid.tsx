@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import type { Rank } from '../../store/storeTypes';
+import type { Rank, SheetMode } from '../../store/storeTypes';
 import { loadLocalDataset, ALL_ABILITIES, SPECIES_URLS } from '../../utils/api';
 import { POKEMON_TYPES, TYPE_COLORS, NATURES, AGES, RANKS } from '../../data/constants';
 import { TooltipIcon } from '../ui/TooltipIcon';
@@ -179,10 +179,11 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex, onOpe
                     <select
                         className="identity-grid__select text-label"
                         value={identityStore.mode || 'Pokémon'}
-                        onChange={(event) => setMode(event.target.value as 'Pokémon' | 'Trainer')}
+                        onChange={(event) => setMode(event.target.value as SheetMode)}
                     >
                         <option value="Pokémon">Pokémon</option>
                         <option value="Trainer">Trainer</option>
+                        <option value="Trainer (Special)">Trainer (Special)</option>
                     </select>
                 </div>
 

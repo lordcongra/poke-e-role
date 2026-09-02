@@ -117,10 +117,10 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     const rank = config.targetRank || state.identity.rank || 'Starter';
     const { core: rankCore, social: rankSocial, skills: rankSkill, skillLimit } = getRankPoints(rank);
 
-    // Pokémon do not receive Age attribute or social bonus points (Age is strictly a Trainer mechanic in Pokerole)
-    const isTrainer = state.identity.mode === 'Trainer';
-    const { core: ageCore, social: ageSocial } =
-        isTrainer && state.identity.age ? getAgePoints(state.identity.age) : { core: 0, social: 0 };
+    // In Pokerole PMD homebrews and Trainer campaigns, characters benefit from Age attribute and social bonus points
+    const { core: ageCore, social: ageSocial } = state.identity.age
+        ? getAgePoints(state.identity.age)
+        : { core: 0, social: 0 };
 
     const attributePoints = rankCore + ageCore;
     const socialPoints = rankSocial + ageSocial;

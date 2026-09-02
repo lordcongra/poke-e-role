@@ -42,7 +42,21 @@ const parseWeight = (dataWeight: unknown): string => {
 export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> = (set, get) => ({
     setMode: (newMode) =>
         set((state) => {
-            const isTrainer = newMode === 'Trainer';
+            const wasTrainer = state.identity.mode !== 'Pokémon';
+            const isTrainer = newMode !== 'Pokémon';
+
+            // If switching between 'Trainer' and 'Trainer (Special)', simply update mode without wiping or restoring backups
+            if (wasTrainer && isTrainer) {
+                const updatesToSave: Record<string, unknown> = { mode: newMode };
+                const newIdentity = { ...state.identity, mode: newMode };
+                try {
+                    saveToOwlbear(updatesToSave);
+                } catch (e) {
+                    console.error('[MacroSlice] Failed to save mode switch metadata to Owlbear.', e);
+                }
+                return { identity: newIdentity };
+            }
+
             const currentBackupKey = isTrainer ? 'pokemonBackup' : 'trainerBackup';
             const targetBackupKey = isTrainer ? 'trainerBackup' : 'pokemonBackup';
             const obrSaveKey = isTrainer ? 'pokemon-backup' : 'trainer-backup';
@@ -314,7 +328,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
 
             syncHealthAndWill(state, newStats, newIdentity, newHealth, newWill, updatesToSave);
 
-            let newSkills = { ...state.skills };
+            const newSkills = { ...state.skills };
             let newMoves = [...state.moves];
             let newChecks = [...state.skillChecks];
 

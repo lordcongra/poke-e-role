@@ -460,8 +460,10 @@ export interface IdentitySlice {
     setPendingDemoRoll: (rollData: PendingDemoRoll | null) => void;
 }
 
+export type SheetMode = 'Pokémon' | 'Trainer' | 'Trainer (Special)';
+
 export interface MacroSlice {
-    setMode: (mode: 'Pokémon' | 'Trainer') => void;
+    setMode: (mode: SheetMode) => void;
     toggleTransformation: (
         targetTransformation: TransformationType,
         affinity?: string,

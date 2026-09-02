@@ -19,7 +19,7 @@ export function SpeciesSelector({ uniqueSpecies, onOpenPokedex }: SpeciesSelecto
     const [pendingSpeciesData, setPendingSpeciesData] = useState<Record<string, unknown> | null>(null);
 
     const handleFetch = async () => {
-        if (identityStore.mode === 'Trainer') return;
+        if (identityStore.mode !== 'Pokémon') return;
 
         const speciesName = identityStore.species || '';
 
@@ -49,14 +49,14 @@ export function SpeciesSelector({ uniqueSpecies, onOpenPokedex }: SpeciesSelecto
         <>
             <div className="identity-grid__row">
                 <span className="identity-grid__label text-label">
-                    {identityStore.mode === 'Trainer' ? 'Concept' : 'Species'}
+                    {identityStore.mode === 'Pokémon' ? 'Species' : 'Concept'}
                 </span>
                 <div className="identity-header__species-container">
                     <input
                         type="text"
                         list="species-datalist"
                         className="identity-grid__input identity-header__flex-input text-label"
-                        placeholder={identityStore.mode === 'Trainer' ? 'e.g. Bug Catcher' : 'e.g. Aron'}
+                        placeholder={identityStore.mode === 'Pokémon' ? 'e.g. Aron' : 'e.g. Bug Catcher'}
                         value={identityStore.species || ''}
                         onChange={(event) => setIdentity('species', event.target.value)}
                         onBlur={handleFetch}

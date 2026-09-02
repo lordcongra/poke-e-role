@@ -289,7 +289,7 @@ function App() {
                         {mode === 'Pokémon' && <TypeMatchups />}
                         <CoreTable />
                         <SocialTable />
-                        {mode === 'Trainer' && <TrainerBadges />}
+                        {mode !== 'Pokémon' && <TrainerBadges />}
                     </div>
 
                     <div className="sheet-container__column">

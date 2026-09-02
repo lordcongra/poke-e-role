@@ -69,7 +69,7 @@ export function buildGraphicsFromState(meta: Record<string, unknown>, state: Cha
 
     return {
         showTrackers: state.identity.showTrackers,
-        hasSpeciesOrTrainer: state.identity.species.trim() !== '' || state.identity.mode === 'Trainer',
+        hasSpeciesOrTrainer: state.identity.species.trim() !== '' || state.identity.mode !== 'Pokémon',
         hpCurr: state.health.hpCurr,
         hpMax: state.health.hpMax,
         temporaryHitPoints: state.health.temporaryHitPoints || 0,
@@ -158,7 +158,7 @@ export function buildGraphicsFromMeta(meta: Record<string, unknown>): GraphicsDa
     return {
         showTrackers: meta['show-trackers'] !== false && meta['show-trackers'] !== 'false',
         hasSpeciesOrTrainer:
-            String(meta['species'] || '').trim() !== '' || String(meta['mode'] || 'Pokémon') === 'Trainer',
+            String(meta['species'] || '').trim() !== '' || String(meta['mode'] || 'Pokémon') !== 'Pokémon',
         hpCurr: Number(meta['hp-curr']) || 0,
         hpMax: Number(meta['hp-max-display']) || 1,
         temporaryHitPoints: Number(meta['temporary-hit-points']) || 0,

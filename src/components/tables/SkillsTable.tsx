@@ -37,7 +37,7 @@ export function SkillsTable() {
     extraCategories.forEach((category) => category.skills.forEach((extraSkill) => (spentSkill += extraSkill.base)));
     const remainingPoints = rankData.skills + extras.skill - spentSkill;
 
-    const isTrainer = mode === 'Trainer';
+    const isTrainer = mode !== 'Pokémon';
 
     const abilityText = getAbilityText(ability, customAbilities);
     const inventoryModifiers = parseCombatTags(inventory, extraCategories, undefined, abilityText);
