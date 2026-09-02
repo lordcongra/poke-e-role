@@ -57,6 +57,17 @@
     padding: 2px 4px;
 }
 
+.identity-header__custom-info-container {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.identity-header__custom-info-item {
+    min-width: 0;
+}
+
 .identity-header__custom-info-row {
     display: flex;
     gap: 6px;
@@ -71,6 +82,9 @@
     border: none;
     background: transparent;
     outline: none;
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 0.85rem;
 }
 
 .identity-header__custom-info-value {
@@ -79,6 +93,9 @@
     background: transparent;
     outline: none;
     min-width: 0;
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 0.85rem;
 }
 
 .identity-header__custom-info-delete {
@@ -316,5 +333,8 @@
     .identity-header__actions-wrapper {
         flex-wrap: wrap; /* Allows cutoff buttons to drop to next line */
         height: auto; /* Removes strict height constraint to accommodate wrap */
+    }
+    .identity-header__custom-info-container {
+        grid-template-columns: 1fr;
     }
 }

@@ -6,6 +6,7 @@ import { assignWildStats, assignMinMaxStats, assignAverageStats } from './genera
 import { draftInitialMoves, draftSpilloverMoves, sortDraftedMoves } from './moveDraftingLogic';
 import { getLimit, getBase, extractAbilities } from './macroHelpers';
 import { calculateMaxHp, calculateMaxWill } from './combatMath';
+import { NATURES } from '../data/constants';
 
 const RANK_HIERARCHY = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion'];
 const ALL_SKILLS = Object.values(Skill) as string[];
@@ -532,9 +533,22 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
 
     sortDraftedMoves(draftedMoves, type1, hasType2, type2);
 
+    let generatedGender: string | undefined;
+    if (config.randomizeGender) {
+        generatedGender = Math.random() < 0.5 ? 'Male' : 'Female';
+    }
+
+    let generatedNature: string | undefined;
+    if (config.randomizeNature) {
+        const validNatures = NATURES.filter(Boolean);
+        generatedNature = validNatures[Math.floor(Math.random() * validNatures.length)];
+    }
+
     return {
         species: finalSpeciesName,
         rank: rank as Rank,
+        gender: generatedGender,
+        nature: generatedNature,
         attr: generatedAttributes,
         soc: generatedSocials,
         skills: generatedSkills,
@@ -593,8 +607,8 @@ export function buildTokenMetadataFromBuild(
         type2: String(pd.Type2 || pd.type2 || 'None'),
         ability: abilityName,
         'ability-list': abilities.join(','),
-        nature: '-- Select --',
-        gender: 'Genderless',
+        nature: build.nature || '-- Select --',
+        gender: build.gender !== undefined ? build.gender : 'Genderless',
         age: 'Adult',
         mode: 'Pokémon',
         'show-trackers': true,

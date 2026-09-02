@@ -73,6 +73,8 @@ export function GeneratorPreviewModal({
                         nickname: providedNickname,
                         species: localBuild.species,
                         rank: localBuild.rank || 'Starter',
+                        gender: localBuild.gender || '',
+                        nature: localBuild.nature || '-- Select --',
                         parentId: null,
                         'v2-migrated': true
                     });
@@ -326,6 +328,11 @@ export function GeneratorPreviewModal({
             <div className="generator-preview__content" style={{ display: showImagePrompt ? 'none' : 'flex' }}>
                 <h3 className="generator-preview__title modal-title-with-icon text-title-primary">
                     <Search size={20} /> Build Preview: {localBuild.species}
+                    {(localBuild.gender || localBuild.nature) && (
+                        <span style={{ fontSize: '0.85em', color: 'var(--text-muted)', fontWeight: 'normal' }}>
+                            ({[localBuild.gender, localBuild.nature].filter(Boolean).join(', ')})
+                        </span>
+                    )}
                 </h3>
 
                 <div className="generator-preview__scroll-container">

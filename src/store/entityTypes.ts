@@ -119,6 +119,8 @@ export interface TempMove {
 export interface TempBuild {
     species: string;
     rank?: Rank;
+    gender?: string;
+    nature?: string;
     attr: Record<string, number>;
     soc: Record<string, number>;
     skills: Record<string, number>;
@@ -147,6 +149,8 @@ export interface GeneratorConfig {
     secondaryStabCount: number;
     coverageCount: number;
     randomizeSpecies: boolean;
+    randomizeGender: boolean;
+    randomizeNature: boolean;
     autoSelectBias: boolean;
     ensureDefenses: boolean;
     minStats: Record<string, number>;

@@ -534,9 +534,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                     onChange={(e) => setConfig({ includePmd: e.target.checked })}
                                     className="generator-modal__checkbox"
                                 />
-                                <span style={{ fontWeight: 'normal' }}>
-                                    Include Knowledge Skills (Lore, Medicine, etc.)
-                                </span>
+                                Include Knowledge Skills (Lore, Medicine, etc.)
                             </label>
                             <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced text-label">
                                 <input
@@ -545,7 +543,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                     onChange={(e) => setConfig({ includeCustom: e.target.checked })}
                                     className="generator-modal__checkbox"
                                 />
-                                <span style={{ fontWeight: 'normal' }}>Include Custom Homebrew Skills</span>
+                                Include Custom Homebrew Skills
                             </label>
 
                             <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced text-label">
@@ -568,9 +566,45 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                             </label>
                         </div>
 
-                        {/* RIGHT COLUMN: Advanced Engine Settings */}
+                        {/* RIGHT COLUMN: Identity & Move Settings */}
                         <div className="generator-modal__checkbox-col">
                             <label className="generator-modal__checkbox-label text-label">
+                                <input
+                                    type="checkbox"
+                                    checked={config.randomizeGender}
+                                    onChange={(e) => setConfig({ randomizeGender: e.target.checked })}
+                                    className="generator-modal__checkbox"
+                                />
+                                Randomize Gender (50/50 M/F)
+                                <TooltipIcon
+                                    onClick={() =>
+                                        setTooltipInfo({
+                                            title: 'Randomize Gender',
+                                            desc: 'Randomly assigns the Pokémon a 50/50 chance of being Male or Female upon generation.'
+                                        })
+                                    }
+                                />
+                            </label>
+
+                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced text-label">
+                                <input
+                                    type="checkbox"
+                                    checked={config.randomizeNature}
+                                    onChange={(e) => setConfig({ randomizeNature: e.target.checked })}
+                                    className="generator-modal__checkbox"
+                                />
+                                Randomize Nature
+                                <TooltipIcon
+                                    onClick={() =>
+                                        setTooltipInfo({
+                                            title: 'Randomize Nature',
+                                            desc: 'Randomly assigns a nature from the standard list of 25 Pokémon natures upon generation.'
+                                        })
+                                    }
+                                />
+                            </label>
+
+                            <label className="generator-modal__checkbox-label generator-modal__checkbox-label--spaced text-label">
                                 <input
                                     type="checkbox"
                                     checked={config.includePreEvolutions}

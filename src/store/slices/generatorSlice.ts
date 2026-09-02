@@ -22,6 +22,8 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
         secondaryStabCount: 1,
         coverageCount: 1,
         randomizeSpecies: false,
+        randomizeGender: false,
+        randomizeNature: false,
         autoSelectBias: false,
         ensureDefenses: false,
         minStats: { str: 0, dex: 0, vit: 0, spe: 0, ins: 0 },
@@ -76,6 +78,16 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
             if (build.rank) {
                 newIdentity.rank = build.rank;
                 updatesToSave['rank'] = build.rank;
+            }
+
+            if (build.gender !== undefined) {
+                newIdentity.gender = build.gender;
+                updatesToSave['gender'] = build.gender;
+            }
+
+            if (build.nature !== undefined) {
+                newIdentity.nature = build.nature;
+                updatesToSave['nature'] = build.nature;
             }
 
             Object.values(CombatStat).forEach((statistic) => {

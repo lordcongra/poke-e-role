@@ -187,7 +187,17 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex, onOpe
                 </div>
 
                 <div className="identity-grid__row identity-header__age-gender-row">
-                    <span className="identity-grid__label text-label">Age</span>
+                    <span className="identity-grid__label text-label">
+                        Age{' '}
+                        <TooltipIcon
+                            onClick={() =>
+                                setSlotTooltipInfo({
+                                    title: 'Age Attribute Buffs',
+                                    desc: 'Setting an age grants bonus attribute points to Core and Social pools:\n• Teen: +2 Core / +2 Social Attributes\n• Adult: +4 Core / +4 Social Attributes\n• Senior: +3 Core / +6 Social Attributes'
+                                })
+                            }
+                        />
+                    </span>
                     <select
                         className="identity-grid__select identity-header__age-select text-label"
                         value={identityStore.age || '--'}
@@ -270,7 +280,17 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex, onOpe
                     />
                 </div>
                 <div className="identity-grid__row">
-                    <span className="identity-grid__label text-label">Rolls</span>
+                    <span className="identity-grid__label text-label">
+                        Rolls{' '}
+                        <TooltipIcon
+                            onClick={() =>
+                                setSlotTooltipInfo({
+                                    title: 'Rolls Visibility',
+                                    desc: 'This function only works on the Owlbear Rodeo version of the sheet to toggle Public vs. GM-only dice rolls. It is left in the standalone app version because the sheet would look unbalanced with one less slot there.'
+                                })
+                            }
+                        />
+                    </span>
                     <select
                         className="identity-grid__select text-label"
                         value={identityStore.rolls || 'Public (Everyone)'}
@@ -281,11 +301,22 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex, onOpe
                     </select>
                 </div>
 
-                {customInfo.map((info) => (
-                    <div style={{ gridColumn: '1 / -1' }} key={info.id}>
-                        <CustomInfoRow info={info} onDelete={() => setDeleteCustomInfoId(info.id)} />
+                {customInfo.length > 0 && (
+                    <div className="identity-header__custom-info-container">
+                        {customInfo.map((info, index) => {
+                            const isOddLast = customInfo.length % 2 !== 0 && index === customInfo.length - 1;
+                            return (
+                                <div
+                                    key={info.id}
+                                    className="identity-header__custom-info-item"
+                                    style={isOddLast ? { gridColumn: '1 / -1' } : undefined}
+                                >
+                                    <CustomInfoRow info={info} onDelete={() => setDeleteCustomInfoId(info.id)} />
+                                </div>
+                            );
+                        })}
                     </div>
-                ))}
+                )}
 
                 <div style={{ gridColumn: '1 / -1', marginTop: '4px' }}>
                     <button
@@ -304,7 +335,9 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex, onOpe
                 <div className="identity-header__modal-overlay">
                     <div className="identity-header__modal-content" style={{ color: 'var(--text-main)' }}>
                         <h3 className="identity-header__modal-title text-title-primary">{slotTooltipInfo.title}</h3>
-                        <p className="identity-header__modal-text text-subtext">{slotTooltipInfo.desc}</p>
+                        <p className="identity-header__modal-text identity-header__modal-text--pre-wrap text-subtext">
+                            {slotTooltipInfo.desc}
+                        </p>
                         <div className="identity-header__modal-actions">
                             <button
                                 type="button"
