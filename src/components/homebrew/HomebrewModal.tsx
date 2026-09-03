@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { HomebrewTypes } from './HomebrewTypes';
@@ -38,6 +38,7 @@ const getStorageUsage = () => {
 
         return { mb: Number(megabytes.toFixed(2)), percent };
     } catch (e) {
+        console.warn('[HomebrewModal] Failed to calculate storage usage:', e);
         return { mb: 0, percent: 0 };
     }
 };
@@ -69,12 +70,7 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
     } | null>(null);
 
     // Dynamic Storage State
-    const [storageUsage, setStorageUsage] = useState({ mb: 0, percent: 0 });
-
-    // Update storage whenever needsBackup changes (which means they just edited something!)
-    useEffect(() => {
-        setStorageUsage(getStorageUsage());
-    }, [needsBackup]);
+    const storageUsage = getStorageUsage();
 
     const handleBroadcastSync = () => {
         if (!OBR.isAvailable) return;
@@ -84,8 +80,10 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
             OBR.broadcast.sendMessage('pokerole-pmd-extension/homebrew-payload', payload, { destination: 'REMOTE' });
             OBR.notification.show('Homebrew data pushed to all players!', 'SUCCESS');
         } else {
-            OBR.broadcast.sendMessage('pokerole-pmd-extension/homebrew-share', payload, { destination: 'REMOTE' });
-            OBR.notification.show('Homebrew shared with table!', 'SUCCESS');
+            OBR.broadcast.sendMessage('pokerole-pmd-extension/player-homebrew-request', payload, {
+                destination: 'REMOTE'
+            });
+            OBR.notification.show('Homebrew contribution sent to GM!', 'INFO');
         }
     };
 
@@ -145,6 +143,7 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                     if (OBR.isAvailable) OBR.notification.show('Invalid Homebrew Backup file.', 'ERROR');
                 }
             } catch (err) {
+                console.error('[HomebrewModal] Failed to parse homebrew backup JSON:', err);
                 if (OBR.isAvailable) OBR.notification.show('Failed to parse JSON.', 'ERROR');
             }
             if (fileRef.current) fileRef.current.value = '';

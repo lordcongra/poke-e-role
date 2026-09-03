@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { fetchItemData } from '../../utils/api';
 import type { InventoryItem } from '../../store/storeTypes';
@@ -31,9 +31,11 @@ export function InventoryItemRow({
 
     const [localName, setLocalName] = useState(item.name);
 
-    useEffect(() => {
+    const [prevName, setPrevName] = useState(item.name);
+    if (prevName !== item.name) {
+        setPrevName(item.name);
         setLocalName(item.name);
-    }, [item.name]);
+    }
 
     const handleNameBlur = async () => {
         const value = localName.trim();

@@ -25,14 +25,16 @@ export function CombatantCard({ c, shape, isActive, updateInit, removeInit }: Co
     const [baseValue, setBaseValue] = useState<number>(baseInitiativeScore);
     const [resolvedImage, setResolvedImage] = useState<string>('');
 
-    useEffect(() => {
+    const [prevValues, setPrevValues] = useState({ total: c.total, baseInit: c.baseInit, tiebreaker: c.tiebreaker });
+    if (prevValues.total !== c.total || prevValues.baseInit !== c.baseInit || prevValues.tiebreaker !== c.tiebreaker) {
+        setPrevValues({ total: c.total, baseInit: c.baseInit, tiebreaker: c.tiebreaker });
         const currentTotal = typeof c.total === 'number' ? c.total : 0;
         const currentBase = typeof c.baseInit === 'number' ? c.baseInit : 0;
         const currentTie = typeof c.tiebreaker === 'number' ? c.tiebreaker : 0;
 
         setValue(formatInitiativeDisplay(currentTotal, currentBase, currentTie));
         setBaseValue(currentBase);
-    }, [c.total, c.baseInit, c.tiebreaker]);
+    }
 
     useEffect(() => {
         let isMounted = true;

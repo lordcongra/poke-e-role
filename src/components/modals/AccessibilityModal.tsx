@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { Eye, Type, Save, Trash2, XCircle, X } from 'lucide-react';
 import './AccessibilityModal.css';
@@ -34,44 +34,73 @@ export function AccessibilityModal({ onClose }: AccessibilityModalProps) {
     const allAvailableTypes = [...STANDARD_TYPES, ...roomCustomTypes.map((t) => t.name)].sort();
 
     // Master Toggle
-    const [isHighContrast, setIsHighContrast] = useState<boolean>(true);
-
-    // Contrast Specifics
-    const [primaryIntensity, setPrimaryIntensity] = useState(20);
-    const [secondaryIntensity, setSecondaryIntensity] = useState(20);
-    const [forceAll, setForceAll] = useState(false);
-    const [specificTypes, setSpecificTypes] = useState<string[]>([]);
-
-    // Typography
-    const [fontScale, setFontScale] = useState(100);
-    const [dyslexiaFont, setDyslexiaFont] = useState(false);
-
-    useEffect(() => {
+    const [isHighContrast, setIsHighContrast] = useState<boolean>(() => {
         try {
             const contrastEnabled = localStorage.getItem('pkr_high_contrast');
-            setIsHighContrast(contrastEnabled === null ? true : contrastEnabled === 'true');
-
-            const savedP = localStorage.getItem('pkr_contrast_primary');
-            if (savedP) setPrimaryIntensity(parseFloat(savedP) * 100);
-
-            const savedS = localStorage.getItem('pkr_contrast_secondary');
-            if (savedS) setSecondaryIntensity(parseFloat(savedS) * 100);
-
-            const savedForce = localStorage.getItem('pkr_contrast_force');
-            if (savedForce) setForceAll(savedForce === 'true');
-
-            const savedTypes = localStorage.getItem('pkr_contrast_types');
-            if (savedTypes) setSpecificTypes(JSON.parse(savedTypes));
-
-            const savedScale = localStorage.getItem('pkr_font_scale');
-            if (savedScale) setFontScale(parseInt(savedScale));
-
-            const savedDys = localStorage.getItem('pkr_dyslexia');
-            if (savedDys) setDyslexiaFont(savedDys === 'true');
+            return contrastEnabled === null ? true : contrastEnabled === 'true';
         } catch (e) {
-            console.warn('[AccessibilityModal] Could not read preferences from storage.', e);
+            console.warn('[AccessibilityModal] Failed to read high contrast preference:', e);
+            return true;
         }
-    }, []);
+    });
+
+    // Contrast Specifics
+    const [primaryIntensity, setPrimaryIntensity] = useState<number>(() => {
+        try {
+            const savedP = localStorage.getItem('pkr_contrast_primary');
+            return savedP ? parseFloat(savedP) * 100 : 20;
+        } catch (e) {
+            console.warn('[AccessibilityModal] Failed to read contrast primary preference:', e);
+            return 20;
+        }
+    });
+    const [secondaryIntensity, setSecondaryIntensity] = useState<number>(() => {
+        try {
+            const savedS = localStorage.getItem('pkr_contrast_secondary');
+            return savedS ? parseFloat(savedS) * 100 : 20;
+        } catch (e) {
+            console.warn('[AccessibilityModal] Failed to read contrast secondary preference:', e);
+            return 20;
+        }
+    });
+    const [forceAll, setForceAll] = useState<boolean>(() => {
+        try {
+            const savedForce = localStorage.getItem('pkr_contrast_force');
+            return savedForce ? savedForce === 'true' : false;
+        } catch (e) {
+            console.warn('[AccessibilityModal] Failed to read contrast force preference:', e);
+            return false;
+        }
+    });
+    const [specificTypes, setSpecificTypes] = useState<string[]>(() => {
+        try {
+            const savedTypes = localStorage.getItem('pkr_contrast_types');
+            return savedTypes ? JSON.parse(savedTypes) : [];
+        } catch (e) {
+            console.warn('[AccessibilityModal] Failed to read contrast types preference:', e);
+            return [];
+        }
+    });
+
+    // Typography
+    const [fontScale, setFontScale] = useState<number>(() => {
+        try {
+            const savedScale = localStorage.getItem('pkr_font_scale');
+            return savedScale ? parseInt(savedScale, 10) : 100;
+        } catch (e) {
+            console.warn('[AccessibilityModal] Failed to read font scale preference:', e);
+            return 100;
+        }
+    });
+    const [dyslexiaFont, setDyslexiaFont] = useState<boolean>(() => {
+        try {
+            const savedDys = localStorage.getItem('pkr_dyslexia');
+            return savedDys ? savedDys === 'true' : false;
+        } catch (e) {
+            console.warn('[AccessibilityModal] Failed to read dyslexia font preference:', e);
+            return false;
+        }
+    });
 
     const handleAddType = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const val = e.target.value;
@@ -117,7 +146,9 @@ export function AccessibilityModal({ onClose }: AccessibilityModalProps) {
 
             document.body.setAttribute('data-high-contrast', 'true');
             window.dispatchEvent(new Event('accessibility-settings-updated'));
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[AccessibilityModal] Could not reset accessibility settings in localStorage:', e);
+        }
         onClose();
     };
 

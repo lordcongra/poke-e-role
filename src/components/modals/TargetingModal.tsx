@@ -4,6 +4,7 @@ import { Target, XCircle, Swords } from 'lucide-react';
 import type { MoveData } from '../../store/storeTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { STATS_META_ID } from '../../utils/graphicsManager';
+import { calculateTargetDefensesFromMeta } from '../../utils/combatUtils';
 import { isStandaloneMode, storageAdapter } from '../../utils/storageAdapter';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import './TargetingModal.css';
@@ -42,9 +43,11 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
     const ruleset = useCharacterStore((state) => state.identity.ruleset);
     const activeTransformation = useCharacterStore((state) => state.identity.activeTransformation);
     const gmOnlyDamageOverride = useCharacterStore((state) => state.identity.gmOnlyDamageOverride);
+    const bankedAccDice = useCharacterStore((state) => state.trackers.bankedAccDice);
     const role = useCharacterStore((state) => state.role);
     const isPhysicalMove = String(move.category).startsWith('Phys');
 
+    const bankedDice = (move.id && bankedAccDice[move.id]) || 0;
     const canOverride = role === 'GM' || !gmOnlyDamageOverride;
 
     useEffect(() => {
@@ -67,56 +70,14 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                                 const matchingChar = localChars.find((lc) => lc.id === charId);
 
                                 let name = String(c.name || 'Unknown');
-                                let vit = 2;
-                                let ins = 1;
-                                let defBuff = 0;
-                                let defDebuff = 0;
-                                let sdefBuff = 0;
-                                let sdefDebuff = 0;
                                 let isTera = false;
+                                let targetDef = 1;
 
                                 if (matchingChar && matchingChar.metadata) {
                                     const meta = matchingChar.metadata as Record<string, unknown>;
                                     name = String(meta.nickname || meta.species || c.name || 'Unknown');
 
                                     const stateObj = (meta.state || meta) as Record<string, unknown>;
-                                    const statsObj = (meta.stats || stateObj?.stats) as
-                                        | Record<string, Record<string, number>>
-                                        | undefined;
-
-                                    if (statsObj && typeof statsObj === 'object') {
-                                        vit = Math.max(
-                                            1,
-                                            (Number(statsObj.vit?.base) || 2) +
-                                                (Number(statsObj.vit?.rank) || 0) +
-                                                (Number(statsObj.vit?.buff) || 0) -
-                                                (Number(statsObj.vit?.debuff) || 0)
-                                        );
-                                        ins = Math.max(
-                                            1,
-                                            (Number(statsObj.ins?.base) || 1) +
-                                                (Number(statsObj.ins?.rank) || 0) +
-                                                (Number(statsObj.ins?.buff) || 0) -
-                                                (Number(statsObj.ins?.debuff) || 0)
-                                        );
-                                    } else {
-                                        vit =
-                                            (Number(meta['vit-base']) || 2) +
-                                            (Number(meta['vit-rank']) || 0) +
-                                            (Number(meta['vit-buff']) || 0) -
-                                            (Number(meta['vit-debuff']) || 0);
-                                        ins =
-                                            (Number(meta['ins-base']) || 1) +
-                                            (Number(meta['ins-rank']) || 0) +
-                                            (Number(meta['ins-buff']) || 0) -
-                                            (Number(meta['ins-debuff']) || 0);
-                                    }
-
-                                    defBuff = Number(meta['defBuff'] ?? meta['def-buff']) || 0;
-                                    defDebuff = Number(meta['defDebuff'] ?? meta['def-debuff']) || 0;
-                                    sdefBuff = Number(meta['sdefBuff'] ?? meta['spd-buff']) || 0;
-                                    sdefDebuff = Number(meta['sdefDebuff'] ?? meta['spd-debuff']) || 0;
-
                                     const identityObj = (stateObj?.identity || meta.identity || {}) as Record<
                                         string,
                                         unknown
@@ -124,17 +85,15 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                                     isTera =
                                         meta['active-transformation'] === 'Terastallize' ||
                                         identityObj.activeTransformation === 'Terastallize';
+
+                                    const { def, spd } = calculateTargetDefensesFromMeta(meta);
+                                    targetDef = isPhysicalMove ? def : spd;
                                 }
 
-                                const def = vit + defBuff - defDebuff;
-                                let spd = ins + sdefBuff - sdefDebuff;
-                                if (ruleset === 'tabletop') spd = vit + sdefBuff - sdefDebuff;
-
-                                const targetDef = isPhysicalMove ? def : spd;
                                 availableTargets.push({
                                     id: charId,
                                     name,
-                                    def: Math.max(1, targetDef),
+                                    def: targetDef,
                                     isTera
                                 });
                             });
@@ -152,32 +111,12 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                         if (item.metadata['pokerole-pmd-extension/initiative'] !== undefined) {
                             const meta = (item.metadata[STATS_META_ID] || item.metadata) as Record<string, unknown>;
                             const name = String(meta.nickname || meta.species || item.name);
-
-                            const vit =
-                                (Number(meta['vit-base']) || 2) +
-                                (Number(meta['vit-rank']) || 0) +
-                                (Number(meta['vit-buff']) || 0) -
-                                (Number(meta['vit-debuff']) || 0);
-                            const ins =
-                                (Number(meta['ins-base']) || 1) +
-                                (Number(meta['ins-rank']) || 0) +
-                                (Number(meta['ins-buff']) || 0) -
-                                (Number(meta['ins-debuff']) || 0);
-
-                            const defBuff = Number(meta['defBuff'] ?? meta['def-buff']) || 0;
-                            const defDebuff = Number(meta['defDebuff'] ?? meta['def-debuff']) || 0;
-                            const sdefBuff = Number(meta['sdefBuff'] ?? meta['spd-buff']) || 0;
-                            const sdefDebuff = Number(meta['sdefDebuff'] ?? meta['spd-debuff']) || 0;
-
-                            const def = vit + defBuff - defDebuff;
-                            let spd = ins + sdefBuff - sdefDebuff;
-
-                            if (ruleset === 'tabletop') spd = vit + sdefBuff - sdefDebuff;
-
-                            const targetDef = isPhysicalMove ? def : spd;
                             const isTera = meta['active-transformation'] === 'Terastallize';
 
-                            availableTargets.push({ id: item.id, name, def: Math.max(1, targetDef), isTera });
+                            const { def, spd } = calculateTargetDefensesFromMeta(meta);
+                            const targetDef = isPhysicalMove ? def : spd;
+
+                            availableTargets.push({ id: item.id, name, def: targetDef, isTera });
                         }
                     });
                 } catch (error) {
@@ -242,6 +181,30 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                     <Target size={20} /> Roll Damage
                 </h3>
 
+                <div
+                    className="targeting-modal__sub-header text-subtext"
+                    style={{
+                        marginBottom: '14px',
+                        display: 'flex',
+                        gap: '8px',
+                        alignItems: 'center',
+                        flexWrap: 'wrap'
+                    }}
+                >
+                    <span>
+                        Move: <strong>{move.name || 'Move'}</strong>
+                    </span>
+                    <span>•</span>
+                    <span>
+                        Base Dmg: <strong>{baseDamage}</strong>
+                    </span>
+                    {bankedDice > 0 && (
+                        <span className="text-value-highlight" style={{ color: 'var(--primary)', fontWeight: 600 }}>
+                            (+{bankedDice} Banked)
+                        </span>
+                    )}
+                </div>
+
                 <div className="targeting-modal__form-group">
                     <label className="targeting-modal__label text-label">Enemy Token:</label>
                     <select
@@ -270,7 +233,7 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                         min="0"
                         className="targeting-modal__input text-value-highlight"
                     />
-                    {reduction > 0 && baseDamage - reduction <= 0 && overrideType === 'none' && (
+                    {reduction > 0 && baseDamage + bankedDice - reduction <= 0 && overrideType === 'none' && (
                         <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '4px' }}>
                             <em>
                                 Defenses reduce pool to 0 — <strong>Minimum 1 Die</strong> will still be rolled.

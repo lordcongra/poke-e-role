@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { X } from 'lucide-react';
 import './HomebrewPokemonCard.css';
@@ -15,9 +15,11 @@ export function LearnsetMoveRow({ pokemonId, moveIndex, move, currentMoves, canE
     const updateCustomPokemon = useCharacterStore((state) => state.updateCustomPokemon);
     const [localName, setLocalName] = useState(move.Name);
 
-    useEffect(() => {
+    const [prevName, setPrevName] = useState(move.Name);
+    if (prevName !== move.Name) {
+        setPrevName(move.Name);
         setLocalName(move.Name);
-    }, [move.Name]);
+    }
 
     const handleRemove = () => {
         const newMoves = [...currentMoves];

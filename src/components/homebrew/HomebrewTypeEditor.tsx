@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { CustomType } from '../../store/storeTypes';
 import { HomebrewTypeMatchupPills } from './HomebrewTypeMatchupPills';
 import { Plus, Save } from 'lucide-react';
@@ -33,7 +33,9 @@ export function HomebrewTypeEditor({
 
     const [selectedDropdown, setSelectedDropdown] = useState(allOptions[0] || 'Normal');
 
-    useEffect(() => {
+    const [prevEditingType, setPrevEditingType] = useState(editingType);
+    if (prevEditingType !== editingType) {
+        setPrevEditingType(editingType);
         if (editingType) {
             setName(editingType.name);
             setColor(editingType.color);
@@ -55,7 +57,7 @@ export function HomebrewTypeEditor({
             setNVEAgainst([]);
             setNoEffectAgainst([]);
         }
-    }, [editingType]);
+    }
 
     const handleSave = () => {
         if (!name.trim()) return;

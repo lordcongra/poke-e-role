@@ -8,7 +8,7 @@ import type { Item } from '@owlbear-rodeo/sdk';
  */
 export const waitForObr = (): Promise<void> => {
     return new Promise((resolve) => {
-        if (OBR.isReady) {
+        if (!OBR.isAvailable || OBR.isReady) {
             resolve();
         } else {
             OBR.onReady(() => {
@@ -21,13 +21,15 @@ export const waitForObr = (): Promise<void> => {
 /**
  * A highly defensive wrapper for updating Owlbear Rodeo token metadata.
  * Ensures the SDK is ready and wraps the network call in a try/catch.
- * * @param filter - Function to determine which items to update.
+ *
+ * @param filter - Function to determine which items to update.
  * @param updateFn - Function to mutate the targeted items.
  */
 export const safeUpdateItems = async (
     filter: (item: Item) => boolean,
     updateFn: (items: Item[]) => void
 ): Promise<void> => {
+    if (!OBR.isAvailable) return;
     try {
         await waitForObr();
         await OBR.scene.items.updateItems(filter, updateFn);
@@ -38,9 +40,11 @@ export const safeUpdateItems = async (
 
 /**
  * A highly defensive wrapper for updating Owlbear Rodeo room metadata.
- * * @param metadata - The flattened room settings object.
+ *
+ * @param metadata - The flattened room settings object.
  */
 export const safeSetRoomMetadata = async (metadata: Record<string, unknown>): Promise<void> => {
+    if (!OBR.isAvailable) return;
     try {
         await waitForObr();
         await OBR.room.setMetadata(metadata);

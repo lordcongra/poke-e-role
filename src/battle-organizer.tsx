@@ -10,9 +10,9 @@ interface WindowWithReactRoot extends Window {
     __REACT_ROOT__?: Root;
 }
 
-function BattleOrganizerApp() {
+export function BattleOrganizerApp() {
     const [isPrinting, setIsPrinting] = useState(false);
-    const [isReady, setIsReady] = useState(!OBR.isAvailable);
+    const [isReady, setIsReady] = useState(() => !OBR.isAvailable || Boolean(OBR.isReady));
     const [theme, setTheme] = useState(() => {
         const params = new URLSearchParams(window.location.search);
         return params.get('theme') || localStorage.getItem('pokerole-theme') || 'dark';
@@ -33,10 +33,7 @@ function BattleOrganizerApp() {
 
     // OBR ready & theme sync
     useEffect(() => {
-        if (!OBR.isAvailable) {
-            setIsReady(true);
-            return;
-        }
+        if (!OBR.isAvailable) return;
 
         const unsubs: Array<() => void> = [];
         OBR.onReady(() => {
@@ -56,7 +53,9 @@ function BattleOrganizerApp() {
                         }
                     }
                 }
-            } catch {}
+            } catch (e) {
+                console.warn('[BattleOrganizerApp] Failed to parse saved theme colors:', e);
+            }
 
             const unsubTheme = OBR.broadcast.onMessage('pkr-theme-update', (event) => {
                 setTheme(event.data as string);

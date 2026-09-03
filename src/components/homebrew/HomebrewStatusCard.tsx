@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomStatus } from '../../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
@@ -36,7 +36,9 @@ export function HomebrewStatusCard({ status, role, canEdit, onRemove, onDuplicat
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(status.name !== 'New Status');
 
-    useEffect(() => {
+    const [prevStatus, setPrevStatus] = useState(status);
+    if (prevStatus !== status) {
+        setPrevStatus(status);
         setLocalName(status.name);
         setLocalShorthand(status.shorthand || '');
         setLocalDescription(status.description);
@@ -46,7 +48,7 @@ export function HomebrewStatusCard({ status, role, canEdit, onRemove, onDuplicat
         setLocalRecoveryAttr(status.recoveryAttr || 'none');
         setLocalRecoverySkill(status.recoverySkill || 'none');
         setLocalGameMasterOnly(status.gmOnly || false);
-    }, [status]);
+    }
 
     return (
         <div className="homebrew-card">

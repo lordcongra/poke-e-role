@@ -96,6 +96,7 @@ function parseExtraCategories(meta: Record<string, unknown>): ExtraCategory[] {
         const data = meta['extra-skills-data'];
         return data ? JSON.parse(String(data)) : [];
     } catch (e) {
+        console.warn('[StateMapper] Failed to parse extra categories from metadata:', e);
         return [];
     }
 }
@@ -124,6 +125,7 @@ function parseMoves(meta: Record<string, unknown>, parsedExtraCats: ExtraCategor
             };
         });
     } catch (e) {
+        console.warn('[StateMapper] Failed to parse moves from metadata:', e);
         return [];
     }
 }
@@ -140,6 +142,7 @@ function parseSkillChecks(meta: Record<string, unknown>, parsedExtraCats: ExtraC
             skill: mapSkill(String(c.skill || c.Skill || 'none'), parsedExtraCats)
         }));
     } catch (e) {
+        console.warn('[StateMapper] Failed to parse skill checks from metadata:', e);
         return [];
     }
 }
@@ -157,6 +160,7 @@ function parseInventory(meta: Record<string, unknown>): InventoryItem[] {
             active: i.active === true || i.active === 'true'
         }));
     } catch (e) {
+        console.warn('[StateMapper] Failed to parse inventory from metadata:', e);
         return [];
     }
 }
@@ -172,7 +176,9 @@ function parseStatuses(meta: Record<string, unknown>): StatusItem[] {
                 rounds: Number(s.rounds || 0)
             }));
         }
-    } catch (e) {}
+    } catch (e) {
+        console.warn('[StateMapper] Failed to parse statuses from metadata:', e);
+    }
     return [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }];
 }
 
@@ -187,6 +193,7 @@ function parseEffects(meta: Record<string, unknown>): EffectItem[] {
             rounds: Number(e.rounds || 0)
         }));
     } catch (e) {
+        console.warn('[StateMapper] Failed to parse effects from metadata:', e);
         return [];
     }
 }
@@ -202,6 +209,7 @@ function parseCustomInfo(meta: Record<string, unknown>): CustomInfo[] {
             value: String(c.value || c.Value || '')
         }));
     } catch (e) {
+        console.warn('[StateMapper] Failed to parse custom info from metadata:', e);
         return [];
     }
 }
@@ -218,6 +226,7 @@ function parseBadges(meta: Record<string, unknown>): Badge[] {
             imageUrl: b.imageUrl ? String(b.imageUrl) : undefined
         }));
     } catch (e) {
+        console.warn('[StateMapper] Failed to parse badges from metadata:', e);
         return [];
     }
 }
@@ -268,6 +277,7 @@ function parseTrackers(meta: Record<string, unknown>) {
         const bankedStr = String(meta['banked-acc-dice'] || '{}');
         parsedBankedAccDice = JSON.parse(bankedStr);
     } catch (e) {
+        console.warn('[StateMapper] Failed to parse banked accuracy dice from metadata:', e);
         parsedBankedAccDice = {};
     }
 
@@ -315,12 +325,11 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
         pokemonBackup: String(meta['pokemon-backup'] || ''),
         trainerBackup: String(meta['trainer-backup'] || ''),
 
-        tokenImageUrl:
-            meta['token-image-url'] !== undefined
-                ? String(meta['token-image-url'])
-                : meta['tokenImageUrl'] !== undefined
-                  ? String(meta['tokenImageUrl'])
-                  : '',
+        tokenImageUrl: meta['token-image-url']
+            ? String(meta['token-image-url'])
+            : meta['tokenImageUrl']
+              ? String(meta['tokenImageUrl'])
+              : state?.identity?.tokenImageUrl || '',
 
         activeTransformation: (meta['active-transformation'] as TransformationType) || 'None',
         activeFormId: String(meta['active-form-id'] || ''),
@@ -458,6 +467,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
                     flatMetadata[key] = backupString;
                 }
             } catch (e) {
+                console.warn(`[StateMapper] Failed to parse backup string for ${key}:`, e);
                 flatMetadata[key] = backupString;
             }
         };

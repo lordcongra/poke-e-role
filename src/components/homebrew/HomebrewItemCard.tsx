@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomItem } from '../../store/storeTypes';
 import { TagBuilderModal } from '../modals/TagBuilderModal';
@@ -28,14 +28,16 @@ export function HomebrewItemCard({ item, role, canEdit, onRemove, onDuplicate }:
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(item.name !== 'New Item');
 
-    useEffect(() => {
+    const [prevItem, setPrevItem] = useState(item);
+    if (prevItem !== item) {
+        setPrevItem(item);
         setLocalName(item.name);
         setLocalDescription(item.description);
         setLocalPocket(item.pocket || 'Misc');
         setLocalCategory(item.category || 'Misc');
         setLocalRarity(item.rarity || 'Uncommon');
         setLocalGameMasterOnly(item.gmOnly || false);
-    }, [item]);
+    }
 
     return (
         <div className="homebrew-card">

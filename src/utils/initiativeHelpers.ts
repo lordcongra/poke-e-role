@@ -106,7 +106,9 @@ export function extractCharacterName(
         const str = JSON.stringify(meta);
         const matchNick = str.match(/"nickname":"([^"]+)"/);
         if (matchNick && matchNick[1]?.trim()) return matchNick[1].trim();
-    } catch {}
+    } catch (e) {
+        console.warn('[InitiativeHelper] Failed to parse nickname fallback from meta JSON:', e);
+    }
 
     // 5. Fallback name (e.g. token / item name)
     return fallbackName;

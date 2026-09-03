@@ -66,6 +66,7 @@ export function HomebrewItems() {
                     OBR.notification.show('Invalid Custom Items file.', 'ERROR');
                 }
             } catch (error) {
+                console.error('[HomebrewItems] Failed to parse items JSON:', error);
                 if (OBR.isAvailable) OBR.notification.show('Failed to parse JSON.', 'ERROR');
             }
             if (fileReference.current) fileReference.current.value = '';

@@ -69,9 +69,47 @@ type TabCategory = 'all' | 'rules' | 'status' | 'weather' | 'catching' | 'traini
 
 export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
     const [searchQuery, setSearchQuery] = useState<string>('');
-    const [activeTab, setActiveTab] = useState<TabCategory>((initialTab as TabCategory) || 'all');
-    // Default collapsed: all cards start closed
-    const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
+    const [activeTab, setActiveTab] = useState<TabCategory>(() => {
+        if (initialTab) return initialTab as TabCategory;
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sectionParam = urlParams.get('section');
+            const validTabs: TabCategory[] = [
+                'rules',
+                'status',
+                'weather',
+                'catching',
+                'training',
+                'balance',
+                'types',
+                'homebrew'
+            ];
+            if (sectionParam && validTabs.includes(sectionParam as TabCategory)) {
+                return sectionParam as TabCategory;
+            }
+            const rawHash = window.location.hash.replace(/^#/, '');
+            if (rawHash) {
+                const matchedItem = GM_CHEAT_ITEMS.find((item: GmCheatItem) => item.id === rawHash);
+                if (matchedItem) return matchedItem.category;
+            }
+        } catch (e) {
+            console.warn('[GmScreenModal] Could not parse initial URL tab:', e);
+        }
+        return 'all';
+    });
+    // Default collapsed: all cards start closed, except if URL hash targets a card
+    const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>(() => {
+        try {
+            const rawHash = window.location.hash.replace(/^#/, '');
+            if (rawHash) {
+                const matchedItem = GM_CHEAT_ITEMS.find((item: GmCheatItem) => item.id === rawHash);
+                if (matchedItem) return { [matchedItem.id]: true };
+            }
+        } catch (e) {
+            console.warn('[GmScreenModal] Could not parse URL deep link for initial expansion:', e);
+        }
+        return {};
+    });
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
     const [copiedGeneralLink, setCopiedGeneralLink] = useState<boolean>(false);
@@ -79,31 +117,10 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
     useEffect(() => {
         try {
             const rawHash = window.location.hash.replace(/^#/, '');
-            const urlParams = new URLSearchParams(window.location.search);
-            const sectionParam = urlParams.get('section');
-
-            if (sectionParam) {
-                const validTabs: TabCategory[] = [
-                    'rules',
-                    'status',
-                    'weather',
-                    'catching',
-                    'training',
-                    'balance',
-                    'types',
-                    'homebrew'
-                ];
-                if (validTabs.includes(sectionParam as TabCategory)) {
-                    setActiveTab(sectionParam as TabCategory);
-                }
-            }
-
             if (rawHash) {
-                // If hash matches an item ID, expand it and scroll into view
+                // If hash matches an item ID, scroll into view
                 const matchedItem = GM_CHEAT_ITEMS.find((item: GmCheatItem) => item.id === rawHash);
                 if (matchedItem) {
-                    setActiveTab(matchedItem.category);
-                    setExpandedCards({ [matchedItem.id]: true });
                     setTimeout(() => {
                         const el = document.getElementById(`gm-card-${matchedItem.id}`);
                         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });

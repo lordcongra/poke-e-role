@@ -176,8 +176,8 @@ export function draftInitialMoves(
             }
         }
     } else {
-        let supportPool = fetchedMoves.filter((move) => move.cat === 'Status');
-        let attackPool = fetchedMoves.filter((move) => move.cat === 'Phys' || move.cat === 'Spec');
+        const supportPool = fetchedMoves.filter((move) => move.cat === 'Status');
+        const attackPool = fetchedMoves.filter((move) => move.cat === 'Phys' || move.cat === 'Spec');
 
         const getTotalCoverage = () =>
             Array.from(typeCounts.entries())
@@ -226,8 +226,7 @@ export function draftInitialMoves(
 
                 const isPrimary = type1 && move.type === type1;
                 const isSecondary = hasType2 && move.type === type2;
-
-                let totalStabDrafted = Array.from(typeCounts.entries())
+                const totalStabDrafted = Array.from(typeCounts.entries())
                     .filter(([t]) => t === type1 || t === type2)
                     .reduce((sum, [, count]) => sum + count, 0);
 
@@ -275,8 +274,8 @@ export function draftInitialMoves(
 
         // 2. DRAFT SUPPORT POOL SECOND (Now that we have a footprint, they will draft synergistically)
         supportPool.sort((a, b) => {
-            let aScore = getMoveScore(a, context) + Math.random() * 5;
-            let bScore = getMoveScore(b, context) + Math.random() * 5;
+            const aScore = getMoveScore(a, context) + Math.random() * 5;
+            const bScore = getMoveScore(b, context) + Math.random() * 5;
             return bScore - aScore;
         });
 

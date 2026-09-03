@@ -56,6 +56,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
         updatePlayerSide,
         updateFoeSide,
         updateEndOfRoundEffects,
+        updateRoundNumber,
         clearAll
     } = useBattleOrganizer();
 
@@ -695,7 +696,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                                 value={currentRound?.roundNumber || activeRoundIndex + 1}
                                 onChange={(e) => {
                                     const num = parseInt(e.target.value, 10) || 1;
-                                    currentRound.roundNumber = num;
+                                    updateRoundNumber(activeRoundIndex, num);
                                 }}
                                 min={1}
                             />

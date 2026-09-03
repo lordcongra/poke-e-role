@@ -1,37 +1,15 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../store/useCharacterStore';
 import { isStandaloneMode } from '../utils/storageAdapter';
 
 export function useInitiativePopover(isObrReady: boolean) {
-    const identityStore = useCharacterStore((state) => state.identity) || {};
+    const identity = useCharacterStore((state) => state.identity);
 
-    useEffect(() => {
-        if (!isObrReady || !OBR.isAvailable || isStandaloneMode) return;
-
-        const timeout = setTimeout(() => {
-            const unsub = OBR.broadcast.onMessage('pkr-init-pong', () => {
-                unsub();
-                openTracker();
-            });
-            OBR.broadcast.sendMessage('pkr-init-ping-check', {}, { destination: 'LOCAL' });
-            setTimeout(() => unsub(), 100);
-        }, 300);
-        return () => clearTimeout(timeout);
-    }, [
-        isObrReady,
-        identityStore.initiativeTrackerPreset,
-        identityStore.initiativeTrackerOffsetX,
-        identityStore.initiativeTrackerOffsetY,
-        identityStore.initiativeTrackerLayout,
-        identityStore.initiativeTrackerAvatarShape,
-        identityStore.initiativeTrackerMaxWidth,
-        identityStore.initiativeTrackerMaxHeight
-    ]);
-
-    const openTracker = async () => {
+    const openTracker = useCallback(async () => {
         if (!isObrReady || !OBR.isAvailable) return;
 
+        const identityStore = identity || {};
         const {
             initiativeTrackerPreset,
             initiativeTrackerOffsetX,
@@ -106,13 +84,27 @@ export function useInitiativePopover(isObrReady: boolean) {
                 disableClickAway: true,
                 anchorReference: 'POSITION',
                 anchorPosition: anchorPosition,
-                // @ts-ignore
+                // @ts-expect-error OBR SDK types expect exact enum for transformOrigin
                 transformOrigin: transformOrigin
             })
             .catch((e) => {
-                console.warn('[useInitiativePopover] Failed to open OBR popover', e);
+                console.warn('[useInitiativePopover] Failed to open OBR popover:', e);
             });
-    };
+    }, [isObrReady, identity]);
+
+    useEffect(() => {
+        if (!isObrReady || !OBR.isAvailable || isStandaloneMode) return;
+
+        const timeout = setTimeout(() => {
+            const unsub = OBR.broadcast.onMessage('pkr-init-pong', () => {
+                unsub();
+                openTracker();
+            });
+            OBR.broadcast.sendMessage('pkr-init-ping-check', {}, { destination: 'LOCAL' });
+            setTimeout(() => unsub(), 100);
+        }, 300);
+        return () => clearTimeout(timeout);
+    }, [isObrReady, openTracker]);
 
     const handleInitiativeToggle = async () => {
         if (isStandaloneMode) {
@@ -126,7 +118,9 @@ export function useInitiativePopover(isObrReady: boolean) {
         const unsub = OBR.broadcast.onMessage('pkr-init-pong', () => {
             handled = true;
             unsub();
-            OBR.popover.close('pkr-initiative-tracker').catch(() => {});
+            OBR.popover.close('pkr-initiative-tracker').catch((e) => {
+                console.warn('[useInitiativePopover] Failed to close OBR popover:', e);
+            });
         });
 
         OBR.broadcast.sendMessage('pkr-init-ping-toggle', {}, { destination: 'LOCAL' });

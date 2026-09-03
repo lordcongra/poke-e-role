@@ -62,6 +62,7 @@ export function HomebrewTypes() {
                 if (Array.isArray(imported)) setImportData(imported);
                 else if (OBR.isAvailable) OBR.notification.show('Invalid Custom Types file.', 'ERROR');
             } catch (error) {
+                console.error('[HomebrewTypes] Failed to parse types JSON:', error);
                 if (OBR.isAvailable) OBR.notification.show('Failed to parse JSON.', 'ERROR');
             }
             if (fileReference.current) fileReference.current.value = '';

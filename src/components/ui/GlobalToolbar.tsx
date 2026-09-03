@@ -185,7 +185,9 @@ export function GlobalToolbar() {
     const handleCloseChangelog = () => {
         try {
             localStorage.setItem('pkr_changelog_seen', CURRENT_VERSION);
-        } catch (error) {}
+        } catch (error) {
+            console.warn('[GlobalToolbar] Failed to store changelog seen version in localStorage:', error);
+        }
         setActiveModal(null);
     };
 
@@ -196,6 +198,7 @@ export function GlobalToolbar() {
             const data = await parseImportedFile(file);
             setImportData(data);
         } catch (error) {
+            console.error('[GlobalToolbar] Failed to parse imported character JSON:', error);
             if (OBR.isAvailable && isObrReady) OBR.notification.show('Invalid JSON file.', 'ERROR');
             else alert('Invalid JSON file.');
         }

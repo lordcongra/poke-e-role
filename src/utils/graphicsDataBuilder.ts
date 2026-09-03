@@ -1,10 +1,10 @@
-import type { CharacterState, InventoryItem } from '../store/storeTypes';
+import type { CharacterState } from '../store/storeTypes';
 import {
     parseCombatTags,
     getAbilityText,
     calculateDefTotal,
     calculateSDefTotal,
-    getRankBonusStats
+    calculateTargetDefensesFromMeta
 } from './combatUtils';
 
 export const DEFAULT_COLOR_ACT = '#4890fc';
@@ -118,42 +118,7 @@ export function buildGraphicsFromState(meta: Record<string, unknown>, state: Cha
 }
 
 export function buildGraphicsFromMeta(meta: Record<string, unknown>): GraphicsData {
-    let inventory: InventoryItem[] = [];
-    try {
-        inventory = meta['inv-data'] ? JSON.parse(String(meta['inv-data'])) : [];
-    } catch (e) {
-        console.warn('[GraphicsDataBuilder] Failed to parse inventory data:', e);
-    }
-
-    const invMods = parseCombatTags(inventory, []);
-
-    const getStatBase = (s: string) => Number(meta[`${s}-base`]) || (s === 'ins' ? 1 : 2);
-    const getStatRank = (s: string) => Number(meta[`${s}-rank`]) || 0;
-    const getStatBuff = (s: string) => Number(meta[`${s}-buff`]) || 0;
-    const getStatDebuff = (s: string) => Number(meta[`${s}-debuff`]) || 0;
-
-    const vitTotal = Math.max(
-        1,
-        getStatBase('vit') + getStatRank('vit') + getStatBuff('vit') - getStatDebuff('vit') + (invMods.stats.vit || 0)
-    );
-    const insTotal = Math.max(
-        1,
-        getStatBase('ins') + getStatRank('ins') + getStatBuff('ins') - getStatDebuff('ins') + (invMods.stats.ins || 0)
-    );
-
-    const defBuff = Number(meta['def-buff'] ?? meta['defBuff']) || 0;
-    const defDebuff = Number(meta['def-debuff'] ?? meta['defDebuff']) || 0;
-    const sdefBuff = Number(meta['spd-buff'] ?? meta['sdefBuff']) || 0;
-    const sdefDebuff = Number(meta['spd-debuff'] ?? meta['sdefDebuff']) || 0;
-
-    const ruleset = String(meta['ruleset'] || 'vg-vit-hp');
-    const charRank = String(meta['rank'] || '');
-    const rankDefBonus = getRankBonusStats(charRank).def;
-
-    const defTotal = Math.max(1, vitTotal + defBuff - defDebuff + invMods.def + rankDefBonus);
-    let sdefBase = insTotal;
-    if (ruleset === 'tabletop') sdefBase = vitTotal;
-    const sdefTotal = Math.max(1, sdefBase + sdefBuff - sdefDebuff + invMods.spd + rankDefBonus);
+    const { def: defTotal, spd: sdefTotal } = calculateTargetDefensesFromMeta(meta);
 
     return {
         showTrackers: meta['show-trackers'] !== false && meta['show-trackers'] !== 'false',

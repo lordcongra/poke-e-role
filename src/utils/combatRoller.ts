@@ -8,7 +8,8 @@ import {
     getAbilityText,
     calculateStatTotal,
     calculateSkillTotal,
-    getRankBonusStats
+    getRankBonusStats,
+    calculateBaseAccuracy
 } from './combatMath';
 import { parseCombatTags } from './tagParser';
 import { rollDicePlus } from './diceRoller';
@@ -104,7 +105,6 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
 
     const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
     const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, move, abilityText);
-    const extraDice = state.trackers.globalAcc + itemBuffs.acc;
 
     let moveLowAccuracy = 0;
     let ignoredAccuracyPenalty = 0;
@@ -129,19 +129,16 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     const mathModifier =
         successModifier !== 0 ? (successModifier > 0 ? `+${successModifier}` : `${successModifier}`) : '';
 
-    const attributeTotal = calculateStatTotal(move.acc1, state, itemBuffs);
-    const skillTotal = calculateSkillTotal(move.acc2, state, itemBuffs);
-
     const hasSkill = Boolean(move.acc2 && move.acc2.toLowerCase() !== 'none');
     const rankSkillBonus = hasSkill ? getRankBonusStats(state.identity.rank).skillDice : 0;
+    const normalizedAcc1 = String(move.acc1 || '')
+        .trim()
+        .toLowerCase();
 
-    const normalizedAcc1 = (ATTRIBUTE_MAPPING[move.acc1] || move.acc1 || '').toLowerCase().trim();
-    let dicePool = attributeTotal + skillTotal + extraDice + rankSkillBonus;
-    if (normalizedAcc1 === 'dex') dicePool += statuses.paralysisDexterityPenalty;
+    const dicePool = calculateBaseAccuracy(move, state, itemBuffs);
 
     let customFirstHitAccTag = '';
     if (itemBuffs.firstHitAcc !== 0 && state.trackers.firstHitAcc) {
-        dicePool += itemBuffs.firstHitAcc;
         const sign = itemBuffs.firstHitAcc > 0 ? '+' : '';
         customFirstHitAccTag = `First Hit (${sign}${itemBuffs.firstHitAcc} Dice)`;
         useCharacterStore.getState().updateTracker('firstHitAcc', false);
@@ -382,8 +379,10 @@ export async function executeDamageRoll(
     const flatPayload = itemBuffs.tempHpOnHit || 0;
     const payload = `${flatPayload}_${ratioPayload}_${seFlatMod}`;
 
+    const diceToRoll = override.active && override.type === 'flat' ? 0 : Math.max(1, actualDicePool);
+
     await rollDicePlus(
-        `${actualDicePool}d6>3${mathModifier}`,
+        `${diceToRoll}d6>3${mathModifier}`,
         `${nickname} rolled ${move.name || 'Damage'} (Dmg)!${finalTags}`,
         'damage',
         payload

@@ -22,21 +22,41 @@ export function useInitiativeEngine() {
     const dexStat = globalState.stats?.dex;
     const alertSkill = globalState.skills?.alert;
     const inventory = globalState.inventory;
-    const ability = globalState.identity?.ability;
     const extraCategories = globalState.extraCategories;
     const tokenImageUrl = globalState.identity?.tokenImageUrl;
 
     const [combatants, setCombatants] = useState<Combatant[]>([]);
-    const [layout, setLayout] = useState<'vertical' | 'horizontal'>('vertical');
-    const [theme, setTheme] = useState('light');
-    const [shape, setShape] = useState<'circle' | 'square' | 'none'>('circle');
-    const [isReady, setIsReady] = useState(false);
+    const [layout, setLayout] = useState<'vertical' | 'horizontal'>(() => {
+        if (isStandaloneMode) return storeIdentity?.initiativeTrackerLayout || 'vertical';
+        const params = new URLSearchParams(window.location.search);
+        return params.get('layout') === 'horizontal' ? 'horizontal' : 'vertical';
+    });
+    const [theme, setTheme] = useState(() => {
+        if (isStandaloneMode) return 'light';
+        const params = new URLSearchParams(window.location.search);
+        return params.get('theme') || 'light';
+    });
+    const [shape, setShape] = useState<'circle' | 'square' | 'none'>(() => {
+        if (isStandaloneMode) return storeIdentity?.initiativeTrackerAvatarShape || 'circle';
+        const params = new URLSearchParams(window.location.search);
+        const paramShape = params.get('shape');
+        return paramShape === 'square' || paramShape === 'none' ? paramShape : 'circle';
+    });
+    const [isReady, setIsReady] = useState(() => isStandaloneMode);
     const [isGM, setIsGM] = useState(false);
 
     const [activeTurnId, setActiveTurnId] = useState<string | null>(null);
 
-    const [maxTrackerWidth, setMaxTrackerWidth] = useState(0);
-    const [maxTrackerHeight, setMaxTrackerHeight] = useState(0);
+    const [maxTrackerWidth, setMaxTrackerWidth] = useState(() => {
+        if (isStandaloneMode) return storeIdentity?.initiativeTrackerMaxWidth || 0;
+        const params = new URLSearchParams(window.location.search);
+        return parseInt(params.get('mw') || '0', 10);
+    });
+    const [maxTrackerHeight, setMaxTrackerHeight] = useState(() => {
+        if (isStandaloneMode) return storeIdentity?.initiativeTrackerMaxHeight || 0;
+        const params = new URLSearchParams(window.location.search);
+        return parseInt(params.get('mh') || '0', 10);
+    });
     const [viewportMaxWidth, setViewportMaxWidth] = useState(800);
 
     const [availableChars, setAvailableChars] = useState<StandaloneCharOption[]>([]);
@@ -44,6 +64,70 @@ export function useInitiativeEngine() {
 
     // Lock to prevent rapid-fire clicking from breaking the smooth scroll animation
     const scrollLock = useRef(false);
+
+    // Adjust standalone settings during render if storeIdentity changes
+    const [prevIdentity, setPrevIdentity] = useState(storeIdentity);
+    if (isStandaloneMode && prevIdentity !== storeIdentity) {
+        setPrevIdentity(storeIdentity);
+        if (storeIdentity?.initiativeTrackerLayout && storeIdentity.initiativeTrackerLayout !== layout) {
+            setLayout(storeIdentity.initiativeTrackerLayout);
+        }
+        if (storeIdentity?.initiativeTrackerAvatarShape && storeIdentity.initiativeTrackerAvatarShape !== shape) {
+            setShape(storeIdentity.initiativeTrackerAvatarShape);
+        }
+        if (
+            storeIdentity?.initiativeTrackerMaxWidth !== undefined &&
+            storeIdentity.initiativeTrackerMaxWidth !== maxTrackerWidth
+        ) {
+            setMaxTrackerWidth(storeIdentity.initiativeTrackerMaxWidth);
+        }
+        if (
+            storeIdentity?.initiativeTrackerMaxHeight !== undefined &&
+            storeIdentity.initiativeTrackerMaxHeight !== maxTrackerHeight
+        ) {
+            setMaxTrackerHeight(storeIdentity.initiativeTrackerMaxHeight);
+        }
+    }
+
+    // Adjust active character initiative during render if stats change in standalone
+    const activeCharSyncKey =
+        isStandaloneMode && activeTokenId && combatants.length > 0
+            ? `${activeTokenId}|${dexStat}|${alertSkill}|${tokenImageUrl}|${storeIdentity?.nickname}|${storeIdentity?.species}|${inventory?.length}|${extraCategories?.length}`
+            : '';
+    const [prevSyncKey, setPrevSyncKey] = useState(activeCharSyncKey);
+    if (activeCharSyncKey && prevSyncKey !== activeCharSyncKey) {
+        setPrevSyncKey(activeCharSyncKey);
+        const activeCombatant = combatants.find((c) => c.id === activeTokenId);
+        if (activeCombatant) {
+            const newBase = calculateBaseInitFromCharacterData(globalState, globalState);
+            const newImage = tokenImageUrl || '';
+            const newName = storeIdentity?.nickname?.trim() || storeIdentity?.species?.trim() || activeCombatant.name;
+
+            if (
+                newBase !== activeCombatant.baseInit ||
+                newImage !== activeCombatant.image ||
+                newName !== activeCombatant.name
+            ) {
+                const newTotal = activeCombatant.d6 > 0 ? activeCombatant.d6 + newBase : newBase;
+                const next = combatants.map((c) =>
+                    c.id === activeTokenId
+                        ? { ...c, name: newName, baseInit: newBase, total: newTotal, image: newImage }
+                        : c
+                );
+                const sorted = sortCombatants(next);
+                setCombatants(sorted);
+                try {
+                    localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
+                    window.dispatchEvent(new Event('pkr-standalone-init-update'));
+                } catch (error) {
+                    console.error(
+                        '[InitiativeEngine] Failed to update active character initiative in localStorage:',
+                        error
+                    );
+                }
+            }
+        }
+    }
 
     const fetchAvailableCharacters = useCallback(async () => {
         if (isStandaloneMode) {
@@ -66,107 +150,35 @@ export function useInitiativeEngine() {
         }
     }, []);
 
-    // 1. Reactive Sync for the Active Character's base stats / nickname changing
-    useEffect(() => {
-        if (!isStandaloneMode || !activeTokenId || combatants.length === 0) return;
-
-        setCombatants((prev) => {
-            let changed = false;
-            const next = prev.map((c) => {
-                if (c.id === activeTokenId) {
-                    const newBase = calculateBaseInitFromCharacterData(globalState, globalState);
-                    const newImage = tokenImageUrl || '';
-                    const newName = storeIdentity?.nickname?.trim() || storeIdentity?.species?.trim() || c.name;
-
-                    if (newBase !== c.baseInit || newImage !== c.image || newName !== c.name) {
-                        changed = true;
-                        const newTotal = c.d6 > 0 ? c.d6 + newBase : newBase;
-                        return { ...c, name: newName, baseInit: newBase, total: newTotal, image: newImage };
-                    }
-                }
-                return c;
-            });
-
-            if (changed) {
-                const sorted = sortCombatants(next);
-                try {
-                    localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
-                    window.dispatchEvent(new Event('pkr-standalone-init-update'));
-                } catch (error) {
-                    console.error(
-                        '[InitiativeEngine] Failed to update active character initiative in localStorage:',
-                        error
-                    );
-                }
-                return sorted;
-            }
-            return prev;
-        });
-    }, [
-        isStandaloneMode,
-        activeTokenId,
-        dexStat,
-        alertSkill,
-        inventory,
-        ability,
-        extraCategories,
-        tokenImageUrl,
-        storeIdentity?.nickname,
-        storeIdentity?.species,
-        globalState
-    ]);
-
-    // 2. Settings Sync (from Zustand or URL Params)
-    useEffect(() => {
-        if (isStandaloneMode) {
-            setLayout(storeIdentity.initiativeTrackerLayout || 'vertical');
-            setShape(storeIdentity.initiativeTrackerAvatarShape || 'circle');
-            setMaxTrackerWidth(storeIdentity.initiativeTrackerMaxWidth || 0);
-            setMaxTrackerHeight(storeIdentity.initiativeTrackerMaxHeight || 0);
-        } else {
-            const params = new URLSearchParams(window.location.search);
-            const paramLayout = params.get('layout');
-            setLayout(paramLayout === 'horizontal' ? 'horizontal' : 'vertical');
-            setTheme(params.get('theme') || 'light');
-            const paramShape = params.get('shape');
-            setShape(paramShape === 'square' || paramShape === 'none' ? paramShape : 'circle');
-            setMaxTrackerWidth(parseInt(params.get('mw') || '0', 10));
-            setMaxTrackerHeight(parseInt(params.get('mh') || '0', 10));
-        }
-    }, [storeIdentity, isStandaloneMode]);
-
-    const applyDynamicColors = useCallback(
-        (data?: { enabled: boolean; primary?: string; secondary?: string }) => {
-            if (isStandaloneMode) return;
-            if (data?.enabled && data?.primary) {
-                document.body.style.setProperty('--dynamic-type-color', data.primary);
-                document.documentElement.style.setProperty('--dynamic-type-color', data.primary);
-                if (data.secondary) {
-                    document.body.style.setProperty('--dynamic-secondary-color', data.secondary);
-                    document.documentElement.style.setProperty('--dynamic-secondary-color', data.secondary);
-                } else {
-                    document.body.style.removeProperty('--dynamic-secondary-color');
-                    document.documentElement.style.removeProperty('--dynamic-secondary-color');
-                }
+    const applyDynamicColors = useCallback((data?: { enabled: boolean; primary?: string; secondary?: string }) => {
+        if (isStandaloneMode) return;
+        if (data?.enabled && data?.primary) {
+            document.body.style.setProperty('--dynamic-type-color', data.primary);
+            document.documentElement.style.setProperty('--dynamic-type-color', data.primary);
+            if (data.secondary) {
+                document.body.style.setProperty('--dynamic-secondary-color', data.secondary);
+                document.documentElement.style.setProperty('--dynamic-secondary-color', data.secondary);
             } else {
-                document.body.style.removeProperty('--dynamic-type-color');
-                document.documentElement.style.removeProperty('--dynamic-type-color');
                 document.body.style.removeProperty('--dynamic-secondary-color');
                 document.documentElement.style.removeProperty('--dynamic-secondary-color');
             }
-        },
-        [isStandaloneMode]
-    );
+        } else {
+            document.body.style.removeProperty('--dynamic-type-color');
+            document.documentElement.style.removeProperty('--dynamic-type-color');
+            document.body.style.removeProperty('--dynamic-secondary-color');
+            document.documentElement.style.removeProperty('--dynamic-secondary-color');
+        }
+    }, []);
 
     // 3. Theme Injection & Dynamic Popover Color Sync
     useEffect(() => {
         if (isStandaloneMode) return;
 
         try {
-            const raw = localStorage.getItem('pkr_active_theme_colors');
-            if (raw) applyDynamicColors(JSON.parse(raw));
-        } catch (e) {
-            console.warn('[InitiativeEngine] Failed to parse active theme colors from localStorage:', e);
+            const rawColors = localStorage.getItem('pkr_active_theme_colors');
+            if (rawColors) applyDynamicColors(JSON.parse(rawColors));
+        } catch (err) {
+            console.warn('[InitiativeEngine] Failed to parse dynamic colors from localStorage:', err);
         }
 
         const handleStorage = (e: StorageEvent) => {
@@ -180,7 +192,7 @@ export function useInitiativeEngine() {
         };
         window.addEventListener('storage', handleStorage);
         return () => window.removeEventListener('storage', handleStorage);
-    }, [isStandaloneMode, applyDynamicColors]);
+    }, [applyDynamicColors]);
 
     useEffect(() => {
         if (isStandaloneMode) return;
@@ -194,15 +206,13 @@ export function useInitiativeEngine() {
             document.body.setAttribute('data-theme', 'light');
             document.documentElement.setAttribute('data-theme', 'light');
         }
-    }, [theme, isStandaloneMode]);
+    }, [theme]);
 
     // 4. Primary Network/Local Connection Sync
     useEffect(() => {
         let isMounted = true;
 
         if (isStandaloneMode) {
-            setIsReady(true);
-
             const loadLocalEncounter = async () => {
                 try {
                     const savedList = localStorage.getItem('pkr_standalone_init_list');
@@ -256,23 +266,42 @@ export function useInitiativeEngine() {
                 }
             };
 
+            const loadLocalChars = async () => {
+                try {
+                    const chars = await storageAdapter.getLocalCharacters();
+                    const options = chars.map((c) => {
+                        const meta = (c.metadata || {}) as Record<string, unknown>;
+                        const resolvedName = extractCharacterName(meta, c.name);
+                        return {
+                            id: c.id,
+                            name: resolvedName,
+                            image: extractTokenImage(meta),
+                            rawMetadata: meta
+                        };
+                    });
+                    if (isMounted) setAvailableChars(options);
+                } catch (error) {
+                    console.error('[InitiativeEngine] Failed to fetch local characters:', error);
+                }
+            };
+
             const handleLocalDataChange = () => {
-                fetchAvailableCharacters();
+                loadLocalChars();
                 loadLocalEncounter();
             };
 
             loadLocalEncounter();
-            fetchAvailableCharacters();
+            loadLocalChars();
 
             window.addEventListener('pkr-standalone-init-update', loadLocalEncounter);
-            window.addEventListener('pkr-character-list-update', fetchAvailableCharacters);
+            window.addEventListener('pkr-character-list-update', loadLocalChars);
             window.addEventListener('pkr-local-data-changed', handleLocalDataChange);
             window.addEventListener('storage', handleLocalDataChange);
 
             return () => {
                 isMounted = false;
                 window.removeEventListener('pkr-standalone-init-update', loadLocalEncounter);
-                window.removeEventListener('pkr-character-list-update', fetchAvailableCharacters);
+                window.removeEventListener('pkr-character-list-update', loadLocalChars);
                 window.removeEventListener('pkr-local-data-changed', handleLocalDataChange);
                 window.removeEventListener('storage', handleLocalDataChange);
             };
@@ -410,7 +439,7 @@ export function useInitiativeEngine() {
             isMounted = false;
             unsubs.forEach((unsub) => unsub());
         };
-    }, [isStandaloneMode, fetchAvailableCharacters, globalState, applyDynamicColors]);
+    }, [globalState, applyDynamicColors]);
 
     // --- Actions ---
 

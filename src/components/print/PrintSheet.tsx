@@ -29,6 +29,7 @@ export function PrintSheet() {
                         const blobUrl = await imageManager.getImageUrl(identity.tokenImageUrl);
                         if (isMounted) setResolvedTokenUrl(blobUrl || '');
                     } catch (e) {
+                        console.warn('[PrintSheet] Failed to resolve local image:', e);
                         if (isMounted) setResolvedTokenUrl('');
                     }
                 } else if (isMounted) {
@@ -378,8 +379,8 @@ export function PrintSheet() {
                                       </tr>
                                   ))
                                 : moves.map((move, i) => {
-                                      const dualAccMatch = move.desc?.match(/Accuracy:\s*([^\n\[]+)/i);
-                                      const dualDmgMatch = move.desc?.match(/Damage:\s*([^\n\[]+)/i);
+                                      const dualAccMatch = move.desc?.match(/Accuracy:\s*([^\n[]+)/i);
+                                      const dualDmgMatch = move.desc?.match(/Damage:\s*([^\n[]+)/i);
 
                                       const accString = dualAccMatch
                                           ? dualAccMatch[1].trim()

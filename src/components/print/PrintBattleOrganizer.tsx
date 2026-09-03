@@ -18,42 +18,40 @@ export function PrintBattleOrganizer({ onDone, stateOverride }: PrintBattleOrgan
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
             if (raw) return JSON.parse(raw);
-        } catch {}
+        } catch (e) {
+            console.warn('[PrintBattleOrganizer] Failed to read initial state from localStorage:', e);
+        }
         return null;
     });
 
     const [resolvedImages, setResolvedImages] = useState<Record<string, string>>({});
     const [isReady, setIsReady] = useState(false);
 
+    const [prevOverride, setPrevOverride] = useState(stateOverride);
+    if (prevOverride !== stateOverride) {
+        setPrevOverride(stateOverride);
+        if (stateOverride) setBattleState(stateOverride);
+    }
+
     useEffect(() => {
         let isMounted = true;
-        let loadedState = stateOverride;
-        if (!loadedState) {
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                if (raw) {
-                    loadedState = JSON.parse(raw);
-                }
-            } catch {}
-        }
-        if (loadedState) {
-            setBattleState(loadedState);
-        }
 
         const resolveAllImages = async () => {
-            if (!loadedState) {
+            if (!battleState) {
                 if (isMounted) setIsReady(true);
                 return;
             }
             const imgMap: Record<string, string> = {};
-            for (const round of loadedState.rounds) {
+            for (const round of battleState.rounds) {
                 for (const c of round.combatants) {
                     if (c.image && !imgMap[c.id]) {
                         if (isStandaloneMode && c.image.startsWith('local-img:')) {
                             try {
                                 const url = await imageManager.getImageUrl(c.image);
                                 if (url) imgMap[c.id] = url;
-                            } catch {}
+                            } catch (e) {
+                                console.warn('[PrintBattleOrganizer] Failed to resolve local image:', e);
+                            }
                         } else if (
                             c.image.startsWith('http') ||
                             c.image.startsWith('data:') ||
@@ -75,7 +73,7 @@ export function PrintBattleOrganizer({ onDone, stateOverride }: PrintBattleOrgan
         return () => {
             isMounted = false;
         };
-    }, [stateOverride]);
+    }, [battleState]);
 
     useEffect(() => {
         if (isReady) {

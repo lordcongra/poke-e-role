@@ -244,7 +244,9 @@ export function useBattleOrganizer() {
                                         }
                                     });
                             }
-                        } catch {}
+                        } catch (e) {
+                            console.warn('[useBattleOrganizer] Failed to parse inventory items:', e);
+                        }
 
                         const heldItemText = heldItems.join(', ');
 
@@ -263,7 +265,9 @@ export function useBattleOrganizer() {
                                     });
                                 if (nonHealthy.length > 0) statusText = nonHealthy.join(', ');
                             }
-                        } catch {}
+                        } catch (e) {
+                            console.warn('[useBattleOrganizer] Failed to parse status list:', e);
+                        }
 
                         const actionsUsed = Number(meta['actions-used'] || 0);
                         const evadeUsed = meta['evasions-used'] === true || meta['evasions-used'] === 'true';
@@ -365,7 +369,9 @@ export function useBattleOrganizer() {
                                     }
                                 });
                         }
-                    } catch {}
+                    } catch (e) {
+                        console.warn('[useBattleOrganizer] Failed to parse inventory items:', e);
+                    }
 
                     const heldItemText = heldItems.join(', ');
 
@@ -384,7 +390,9 @@ export function useBattleOrganizer() {
                                 });
                             if (nonHealthy.length > 0) statusText = nonHealthy.join(', ');
                         }
-                    } catch {}
+                    } catch (e) {
+                        console.warn('[useBattleOrganizer] Failed to parse status list:', e);
+                    }
 
                     const actionsUsed = Number(meta['actions-used'] || 0);
                     const evadeUsed = meta['evasions-used'] === true || meta['evasions-used'] === 'true';
@@ -453,7 +461,7 @@ export function useBattleOrganizer() {
         } catch (e) {
             console.error('[BattleOrganizer] Error pulling from initiative:', e);
         }
-    }, [updateState]);
+    }, [updateState, globalState]);
 
     // --- Sync Back to Character Sheets ---
     const syncToSheets = useCallback(async () => {
@@ -639,8 +647,8 @@ export function useBattleOrganizer() {
 
             // 2. Check if we need to spawn the next round
             const isLastRound = prev.activeRoundIndex === prev.rounds.length - 1;
-            let newRounds = [...prev.rounds];
-            let nextIndex = prev.activeRoundIndex + 1;
+            const newRounds = [...prev.rounds];
+            const nextIndex = prev.activeRoundIndex + 1;
 
             if (isLastRound) {
                 const currentRound = prev.rounds[prev.activeRoundIndex];
@@ -929,6 +937,19 @@ export function useBattleOrganizer() {
         [updateState]
     );
 
+    const updateRoundNumber = useCallback(
+        (roundIndex: number, newRoundNumber: number) => {
+            updateState((prev) => {
+                if (!prev.rounds[roundIndex]) return prev;
+                const newRounds = prev.rounds.map((r, idx) =>
+                    idx === roundIndex ? { ...r, roundNumber: Math.max(1, newRoundNumber) } : r
+                );
+                return { ...prev, rounds: newRounds };
+            });
+        },
+        [updateState]
+    );
+
     const clearAll = useCallback(() => {
         const fresh = createDefaultState();
         setState(fresh);
@@ -960,6 +981,7 @@ export function useBattleOrganizer() {
         updatePlayerSide,
         updateFoeSide,
         updateEndOfRoundEffects,
+        updateRoundNumber,
         clearAll
     };
 }

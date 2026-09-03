@@ -54,6 +54,7 @@ export function HomebrewAbilities() {
                     OBR.notification.show('Invalid Custom Abilities file.', 'ERROR');
                 }
             } catch (error) {
+                console.error('[HomebrewAbilities] Failed to parse abilities JSON:', error);
                 if (OBR.isAvailable) OBR.notification.show('Failed to parse JSON.', 'ERROR');
             }
             if (fileReference.current) fileReference.current.value = '';

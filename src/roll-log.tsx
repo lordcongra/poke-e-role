@@ -19,36 +19,20 @@ interface WindowWithReactRoot extends Window {
     __REACT_ROOT__?: Root;
 }
 
-function RollLog() {
-    const [rolls, setRolls] = useState<RollData[]>([]);
+export function RollLog() {
+    const [rolls, setRolls] = useState<RollData[]>(() => {
+        try {
+            const data = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+            return Array.isArray(data) ? data : [];
+        } catch (error) {
+            console.error('[RollLog] Failed to parse roll log from local storage. Resetting log.', error);
+            return [];
+        }
+    });
     const [resolvedIcons, setResolvedIcons] = useState<Record<string, string>>({});
 
     // 🔥 Default to dark instead of light
     const [theme, setTheme] = useState(localStorage.getItem('pokerole-theme') || 'dark');
-
-    const loadRolls = async () => {
-        try {
-            const data = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
-            const rawRolls: RollData[] = Array.isArray(data) ? data : [];
-            setRolls(rawRolls);
-
-            const newIcons: Record<string, string> = {};
-            for (const r of rawRolls) {
-                if (r.icon && r.icon.startsWith('local-img:')) {
-                    try {
-                        const url = await imageManager.getImageUrl(r.icon);
-                        if (url) newIcons[r.id] = url;
-                    } catch (e) {
-                        console.warn('[RollLog] Failed to resolve local image for roll log.', e);
-                    }
-                }
-            }
-            setResolvedIcons((prev) => ({ ...prev, ...newIcons }));
-        } catch (error) {
-            console.error('[RollLog] Failed to parse roll log from local storage. Resetting log.', error);
-            setRolls([]);
-        }
-    };
 
     const applyDynamicColors = (data?: { enabled: boolean; primary?: string; secondary?: string }) => {
         if (data?.enabled && data?.primary) {
@@ -91,11 +75,41 @@ function RollLog() {
     }, [theme]);
 
     useEffect(() => {
-        loadRolls();
+        let isMounted = true;
+
+        const resolveIcons = async () => {
+            const newIcons: Record<string, string> = {};
+            for (const r of rolls) {
+                if (r.icon && r.icon.startsWith('local-img:')) {
+                    try {
+                        const url = await imageManager.getImageUrl(r.icon);
+                        if (url) newIcons[r.id] = url;
+                    } catch (e) {
+                        console.warn('[RollLog] Failed to resolve local image for roll log.', e);
+                    }
+                }
+            }
+            if (isMounted) {
+                setResolvedIcons((prev) => ({ ...prev, ...newIcons }));
+            }
+        };
+
+        resolveIcons();
+
+        const handleReload = () => {
+            try {
+                const data = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
+                const rawRolls: RollData[] = Array.isArray(data) ? data : [];
+                if (isMounted) setRolls(rawRolls);
+            } catch (error) {
+                console.error('[RollLog] Failed to parse roll log from local storage. Resetting log.', error);
+                if (isMounted) setRolls([]);
+            }
+        };
 
         const handleStorage = (e: StorageEvent) => {
             if (e.key === 'pkr_roll_log') {
-                loadRolls();
+                handleReload();
             }
             if (e.key === 'pkr_active_theme_colors') {
                 try {
@@ -112,7 +126,7 @@ function RollLog() {
             OBR.onReady(() => {
                 unsubs.push(
                     OBR.broadcast.onMessage('pokerole-pmd-extension/roll-log-update', () => {
-                        loadRolls();
+                        handleReload();
                     })
                 );
 
@@ -131,10 +145,11 @@ function RollLog() {
         }
 
         return () => {
+            isMounted = false;
             window.removeEventListener('storage', handleStorage);
             unsubs.forEach((unsub) => unsub());
         };
-    }, []);
+    }, [rolls]);
 
     const dismiss = (id: string) => {
         const next = rolls.filter((r) => r.id !== id);
@@ -178,7 +193,14 @@ function RollLog() {
                     {rolls.map((r) => (
                         <div key={r.id} className="roll-log__entry">
                             <div className="roll-log__entry-header">
-                                <img src={resolvedIcons[r.id] || r.icon} alt="Token" className="roll-log__entry-icon" />
+                                <img
+                                    src={resolvedIcons[r.id] || r.icon}
+                                    alt="Token"
+                                    className="roll-log__entry-icon"
+                                    onError={(e) => {
+                                        e.currentTarget.src = `${import.meta.env.BASE_URL || '/'}pokeball.svg`;
+                                    }}
+                                />
                                 <strong className="text-title-primary" style={{ fontSize: '0.9rem' }}>
                                     {r.player}
                                 </strong>

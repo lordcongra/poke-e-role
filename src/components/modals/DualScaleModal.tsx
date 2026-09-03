@@ -1,27 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Scale, CheckCircle } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
+import type { PendingDualScale } from '../../store/storeTypes';
 import './DualScaleModal.css';
 
-export function DualScaleModal() {
-    const pendingDualScale = useCharacterStore((state) => state.pendingDualScale);
-    const resolveDualScale = useCharacterStore((state) => state.resolveDualScale);
+interface DualScaleDialogProps {
+    pendingDualScale: PendingDualScale;
+    resolveDualScale: (
+        moveId: string,
+        acc1?: string,
+        acc2?: string,
+        dmg1?: string,
+        category?: 'Physical' | 'Special' | 'Status'
+    ) => void;
+}
 
-    const [selectedAcc1, setSelectedAcc1] = useState<string | undefined>();
-    const [selectedAcc2, setSelectedAcc2] = useState<string | undefined>();
-    const [selectedDmg1, setSelectedDmg1] = useState<string | undefined>();
-    const [selectedCategory, setSelectedCategory] = useState<'Physical' | 'Special' | 'Status' | undefined>();
-
-    useEffect(() => {
-        if (pendingDualScale) {
-            setSelectedAcc1(pendingDualScale.acc1Options ? pendingDualScale.acc1Options[0] : undefined);
-            setSelectedAcc2(pendingDualScale.acc2Options ? pendingDualScale.acc2Options[0] : undefined);
-            setSelectedDmg1(pendingDualScale.dmg1Options ? pendingDualScale.dmg1Options[0] : undefined);
-            setSelectedCategory(pendingDualScale.categoryOptions ? pendingDualScale.categoryOptions[0] : undefined);
-        }
-    }, [pendingDualScale]);
-
-    if (!pendingDualScale) return null;
+function DualScaleDialog({ pendingDualScale, resolveDualScale }: DualScaleDialogProps) {
+    const [selectedAcc1, setSelectedAcc1] = useState<string | undefined>(pendingDualScale.acc1Options?.[0]);
+    const [selectedAcc2, setSelectedAcc2] = useState<string | undefined>(pendingDualScale.acc2Options?.[0]);
+    const [selectedDmg1, setSelectedDmg1] = useState<string | undefined>(pendingDualScale.dmg1Options?.[0]);
+    const [selectedCategory, setSelectedCategory] = useState<'Physical' | 'Special' | 'Status' | undefined>(
+        pendingDualScale.categoryOptions?.[0]
+    );
 
     const handleConfirm = () => {
         resolveDualScale(pendingDualScale.moveId, selectedAcc1, selectedAcc2, selectedDmg1, selectedCategory);
@@ -122,5 +122,20 @@ export function DualScaleModal() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export function DualScaleModal() {
+    const pendingDualScale = useCharacterStore((state) => state.pendingDualScale);
+    const resolveDualScale = useCharacterStore((state) => state.resolveDualScale);
+
+    if (!pendingDualScale) return null;
+
+    return (
+        <DualScaleDialog
+            key={pendingDualScale.moveId}
+            pendingDualScale={pendingDualScale}
+            resolveDualScale={resolveDualScale}
+        />
     );
 }

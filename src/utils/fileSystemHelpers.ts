@@ -59,6 +59,7 @@ export const parseImportedFile = (file: File): Promise<Record<string, unknown>> 
                 const imported = JSON.parse(fileEvent.target?.result as string);
                 resolve(imported);
             } catch (error) {
+                console.error('[fileSystemHelpers] Failed to parse JSON file:', error);
                 reject(new Error('Invalid JSON structure'));
             }
         };

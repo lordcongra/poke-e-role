@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { Palette, Trash2, Save, XCircle } from 'lucide-react';
 import './ThemeSettingsModal.css';
@@ -14,33 +14,59 @@ export function ThemeSettingsModal({ onClose }: ThemeSettingsModalProps) {
     const initialPrimaryOverride = useCharacterStore((state) => state.identity.themePrimaryOverride);
     const initialSecondaryOverride = useCharacterStore((state) => state.identity.themeSecondaryOverride);
 
-    const [enableCustomColors, setEnableCustomColors] = useState(!!initialPrimaryOverride);
-    const [primaryHex, setPrimaryHex] = useState(initialPrimaryOverride || '#b92518');
-    const [secondaryHex, setSecondaryHex] = useState(initialSecondaryOverride || '');
-    const [applyGlobally, setApplyGlobally] = useState(false);
-    const [syncPopoverTheme, setSyncPopoverTheme] = useState(false);
-
-    useEffect(() => {
+    const [enableCustomColors, setEnableCustomColors] = useState(() => {
         try {
             const globalP = localStorage.getItem('pkr_global_theme_primary');
-            const globalS = localStorage.getItem('pkr_global_theme_secondary');
-            if (globalP) {
-                setPrimaryHex(globalP);
-                setSecondaryHex(globalS || '');
-                setApplyGlobally(true);
-                setEnableCustomColors(true);
-            }
-            const syncPopovers = localStorage.getItem('pkr_sync_popover_theme') === 'true';
-            setSyncPopoverTheme(syncPopovers);
+            return !!(globalP || initialPrimaryOverride);
         } catch (e) {
             console.warn('[ThemeSettingsModal] Could not read preferences from storage.', e);
+            return !!initialPrimaryOverride;
         }
-    }, []);
+    });
+    const [primaryHex, setPrimaryHex] = useState(() => {
+        try {
+            const globalP = localStorage.getItem('pkr_global_theme_primary');
+            return globalP || initialPrimaryOverride || '#b92518';
+        } catch (e) {
+            console.warn('[ThemeSettingsModal] Could not read preferences from storage.', e);
+            return initialPrimaryOverride || '#b92518';
+        }
+    });
+    const [secondaryHex, setSecondaryHex] = useState(() => {
+        try {
+            const globalP = localStorage.getItem('pkr_global_theme_primary');
+            if (globalP) {
+                return localStorage.getItem('pkr_global_theme_secondary') || '';
+            }
+            return initialSecondaryOverride || '';
+        } catch (e) {
+            console.warn('[ThemeSettingsModal] Could not read preferences from storage.', e);
+            return initialSecondaryOverride || '';
+        }
+    });
+    const [applyGlobally, setApplyGlobally] = useState(() => {
+        try {
+            return !!localStorage.getItem('pkr_global_theme_primary');
+        } catch (e) {
+            console.warn('[ThemeSettingsModal] Could not read preferences from storage.', e);
+            return false;
+        }
+    });
+    const [syncPopoverTheme, setSyncPopoverTheme] = useState(() => {
+        try {
+            return localStorage.getItem('pkr_sync_popover_theme') === 'true';
+        } catch (e) {
+            console.warn('[ThemeSettingsModal] Could not read preferences from storage.', e);
+            return false;
+        }
+    });
 
     const handleSave = () => {
         try {
             localStorage.setItem('pkr_sync_popover_theme', String(syncPopoverTheme));
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[ThemeSettingsModal] Could not save sync popover theme setting:', e);
+        }
 
         if (enableCustomColors) {
             if (applyGlobally) {
@@ -48,7 +74,9 @@ export function ThemeSettingsModal({ onClose }: ThemeSettingsModalProps) {
                     localStorage.setItem('pkr_global_theme_primary', primaryHex);
                     localStorage.setItem('pkr_global_theme_secondary', secondaryHex);
                     window.dispatchEvent(new Event('theme-override-updated'));
-                } catch (e) {}
+                } catch (e) {
+                    console.warn('[ThemeSettingsModal] Could not save global theme colors:', e);
+                }
                 if (activeTokenId) {
                     setIdentity('themePrimaryOverride', '');
                     setIdentity('themeSecondaryOverride', '');
@@ -62,7 +90,9 @@ export function ThemeSettingsModal({ onClose }: ThemeSettingsModalProps) {
                     localStorage.removeItem('pkr_global_theme_primary');
                     localStorage.removeItem('pkr_global_theme_secondary');
                     window.dispatchEvent(new Event('theme-override-updated'));
-                } catch (e) {}
+                } catch (e) {
+                    console.warn('[ThemeSettingsModal] Could not clear global theme overrides:', e);
+                }
             }
         } else {
             if (activeTokenId) {
@@ -73,7 +103,9 @@ export function ThemeSettingsModal({ onClose }: ThemeSettingsModalProps) {
                 localStorage.removeItem('pkr_global_theme_primary');
                 localStorage.removeItem('pkr_global_theme_secondary');
                 window.dispatchEvent(new Event('theme-override-updated'));
-            } catch (e) {}
+            } catch (e) {
+                console.warn('[ThemeSettingsModal] Could not clear theme colors:', e);
+            }
         }
         window.dispatchEvent(new Event('theme-override-updated'));
         onClose();
@@ -90,7 +122,9 @@ export function ThemeSettingsModal({ onClose }: ThemeSettingsModalProps) {
             localStorage.removeItem('pkr_sync_popover_theme');
             setSyncPopoverTheme(false);
             window.dispatchEvent(new Event('theme-override-updated'));
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[ThemeSettingsModal] Could not clear theme preferences:', e);
+        }
         onClose();
     };
 

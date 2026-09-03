@@ -104,6 +104,11 @@ export function getMatchupGroups(
         if (extraResistances.includes(attackerType)) finalMult *= 0.5;
         if (extraWeaknesses.includes(attackerType)) finalMult *= 2;
 
+        if (finalMult > 0) {
+            if (finalMult >= 4) finalMult = 4;
+            else if (finalMult <= 0.25) finalMult = 0.25;
+        }
+
         if (finalMult !== 1) multipliers[attackerType] = finalMult;
     });
 

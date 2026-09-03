@@ -37,7 +37,7 @@ interface RollSyncData {
 
 export function useOwlbearSync() {
     useEffect(() => {
-        let unsubs: Array<() => void> = [];
+        const unsubs: Array<() => void> = [];
         let isMounted = true;
 
         // 1. Load Local Homebrew for this specific room immediately
@@ -156,13 +156,6 @@ export function useOwlbearSync() {
                             store.setTokenData(targetTokenId, role);
                             const meta = tokenItem.metadata[METADATA_ID] as Record<string, unknown> | undefined;
 
-                            const imgItem = tokenItem as Image;
-                            if (imgItem.image?.url) {
-                                store.setIdentity('tokenImageUrl', imgItem.image.url);
-                            } else {
-                                store.setIdentity('tokenImageUrl', null);
-                            }
-
                             if (meta) {
                                 try {
                                     store.loadFromOwlbear(meta);
@@ -173,12 +166,20 @@ export function useOwlbearSync() {
                                     );
                                     if (OBR.isAvailable)
                                         OBR.notification.show(
-                                            '[ ! ] Token data corrupted. Sheet reset to prevent crash.',
+                                            'Corrupted character data on token! Please re-import.',
                                             'ERROR'
                                         );
-                                    store.loadFromOwlbear({});
                                 }
+                            }
 
+                            const imgItem = tokenItem as Image;
+                            if (imgItem.image?.url) {
+                                store.setIdentity('tokenImageUrl', imgItem.image.url);
+                            } else if (!meta || (!meta['token-image-url'] && !meta['tokenImageUrl'])) {
+                                store.setIdentity('tokenImageUrl', null);
+                            }
+
+                            if (meta) {
                                 try {
                                     const isOldToken = meta['v2-migrated'] !== true;
                                     if (isOldToken) {

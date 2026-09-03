@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomAbility } from '../../store/storeTypes';
 import { TagBuilderModal } from '../modals/TagBuilderModal';
@@ -25,12 +25,14 @@ export function AbilityCard({ ability, role, canEdit, onRemove, onDuplicate }: A
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(ability.name !== 'New Ability');
 
-    useEffect(() => {
+    const [prevAbility, setPrevAbility] = useState(ability);
+    if (prevAbility !== ability) {
+        setPrevAbility(ability);
         setLocalName(ability.name);
         setLocalDescription(ability.description);
         setLocalEffect(ability.effect);
         setLocalGameMasterOnly(ability.gmOnly || false);
-    }, [ability]);
+    }
 
     return (
         <div className="homebrew-card">

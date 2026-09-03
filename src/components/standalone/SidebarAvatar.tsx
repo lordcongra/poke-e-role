@@ -27,6 +27,7 @@ export function SidebarAvatar({ meta }: SidebarAvatarProps) {
                     const url = await imageManager.getImageUrl(imageString);
                     if (isMounted) setResolvedImage(url || '');
                 } catch (error) {
+                    console.warn('[SidebarAvatar] Failed to resolve local image:', error);
                     if (isMounted) setResolvedImage('');
                 }
             } else {

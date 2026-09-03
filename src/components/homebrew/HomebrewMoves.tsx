@@ -61,6 +61,7 @@ export function HomebrewMoves() {
                     OBR.notification.show('Invalid Custom Moves file.', 'ERROR');
                 }
             } catch (error) {
+                console.error('[HomebrewMoves] Failed to parse moves JSON:', error);
                 if (OBR.isAvailable) OBR.notification.show('Failed to parse JSON.', 'ERROR');
             }
             if (fileReference.current) fileReference.current.value = '';

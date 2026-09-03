@@ -57,7 +57,10 @@ function safeSetItem(dataKey: string, dataValue: string, timeKey: string, timeVa
                 localStorage.setItem(dataKey, dataValue);
                 localStorage.setItem(timeKey, timeValue);
             } catch (retryError) {
-                console.error('[Cache] Still exceeding quota after pruning. Discarding cache for this item.');
+                console.error(
+                    '[Cache] Still exceeding quota after pruning. Discarding cache for this item.',
+                    retryError
+                );
             }
         } else {
             console.error('[Cache] Failed to set localStorage item.', error);

@@ -7,13 +7,10 @@ import OBR from '@owlbear-rodeo/sdk';
  * until OBR is fully connected.
  */
 export const useObrReady = (): boolean => {
-    const [isObrReady, setIsObrReady] = useState<boolean>(false);
+    const [isObrReady, setIsObrReady] = useState<boolean>(() => Boolean(OBR.isAvailable && OBR.isReady));
 
     useEffect(() => {
-        if (OBR.isReady) {
-            setIsObrReady(true);
-            return;
-        }
+        if (!OBR.isAvailable || OBR.isReady) return;
 
         OBR.onReady(() => {
             setIsObrReady(true);

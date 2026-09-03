@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomMove } from '../../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
@@ -37,11 +37,13 @@ export function HomebrewMoveCard({
     const [showTagBuilder, setShowTagBuilder] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-    useEffect(() => {
+    const [prevMove, setPrevMove] = useState(move);
+    if (prevMove !== move) {
+        setPrevMove(move);
         setLocalName(move.name);
         setLocalDescription(move.desc);
         setLocalGameMasterOnly(move.gmOnly || false);
-    }, [move]);
+    }
 
     return (
         <div className="homebrew-card">
