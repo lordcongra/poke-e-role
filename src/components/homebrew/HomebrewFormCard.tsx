@@ -533,7 +533,9 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                     </div>
 
                     <div className="homebrew-form-card__moves-section homebrew-form-card__moves-section--spaced">
-                        <span className="homebrew-form-card__settings-header text-label">Linked Pokédex Species / Form</span>
+                        <span className="homebrew-form-card__settings-header text-label">
+                            Linked Pokédex Species / Form
+                        </span>
                         <div className="homebrew-form-card__inputs-row">
                             <input
                                 type="text"

@@ -312,9 +312,21 @@ export function processTransformation(
                                         updates[`${statKey}-limit`] = dataMax;
                                     }
                                 };
-                                applyStat(CombatStat.STR, getBase(dataRec, 'Strength', 2), getLimit(dataRec, 'Strength'));
-                                applyStat(CombatStat.DEX, getBase(dataRec, 'Dexterity', 2), getLimit(dataRec, 'Dexterity'));
-                                applyStat(CombatStat.VIT, getBase(dataRec, 'Vitality', 2), getLimit(dataRec, 'Vitality'));
+                                applyStat(
+                                    CombatStat.STR,
+                                    getBase(dataRec, 'Strength', 2),
+                                    getLimit(dataRec, 'Strength')
+                                );
+                                applyStat(
+                                    CombatStat.DEX,
+                                    getBase(dataRec, 'Dexterity', 2),
+                                    getLimit(dataRec, 'Dexterity')
+                                );
+                                applyStat(
+                                    CombatStat.VIT,
+                                    getBase(dataRec, 'Vitality', 2),
+                                    getLimit(dataRec, 'Vitality')
+                                );
                                 applyStat(CombatStat.SPE, getBase(dataRec, 'Special', 2), getLimit(dataRec, 'Special'));
                                 applyStat(CombatStat.INS, getBase(dataRec, 'Insight', 1), getLimit(dataRec, 'Insight'));
                             }

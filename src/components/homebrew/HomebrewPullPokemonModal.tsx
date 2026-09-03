@@ -83,15 +83,11 @@ export function HomebrewPullPokemonModal({ isOpen, onClose }: HomebrewPullPokemo
 
     if (!isOpen) return null;
 
-    const filteredSpecies = speciesList.filter((name) =>
-        name.toLowerCase().includes(searchQuery.trim().toLowerCase())
-    );
+    const filteredSpecies = speciesList.filter((name) => name.toLowerCase().includes(searchQuery.trim().toLowerCase()));
 
     // Exact duplicate match checking
     const existingEntry = customPreview
-        ? roomCustomPokemon.find(
-              (p) => p.Name.trim().toLowerCase() === customPreview.Name.trim().toLowerCase()
-          )
+        ? roomCustomPokemon.find((p) => p.Name.trim().toLowerCase() === customPreview.Name.trim().toLowerCase())
         : undefined;
 
     const handlePullNew = () => {
@@ -108,9 +104,7 @@ export function HomebrewPullPokemonModal({ isOpen, onClose }: HomebrewPullPokemo
         if (!customPreview) return;
         let copyName = `${customPreview.Name} (Copy)`;
         let counter = 2;
-        while (
-            roomCustomPokemon.some((p) => p.Name.trim().toLowerCase() === copyName.trim().toLowerCase())
-        ) {
+        while (roomCustomPokemon.some((p) => p.Name.trim().toLowerCase() === copyName.trim().toLowerCase())) {
             copyName = `${customPreview.Name} (Copy ${counter})`;
             counter++;
         }
@@ -140,7 +134,9 @@ export function HomebrewPullPokemonModal({ isOpen, onClose }: HomebrewPullPokemo
         const movesList = Array.isArray(previewData.Moves)
             ? previewData.Moves
             : Object.entries(previewData.Moves).flatMap(([rank, mList]) =>
-                  Array.isArray(mList) ? mList.map((m) => ({ Learned: rank, Name: typeof m === 'string' ? m : m.Name })) : []
+                  Array.isArray(mList)
+                      ? mList.map((m) => ({ Learned: rank, Name: typeof m === 'string' ? m : m.Name }))
+                      : []
               );
 
         movesList.forEach((m) => {
@@ -352,16 +348,18 @@ export function HomebrewPullPokemonModal({ isOpen, onClose }: HomebrewPullPokemo
                                                 <b>Ability 2:</b> {previewData.Ability2}
                                             </span>
                                         )}
-                                        {previewData.HiddenAbility && previewData.HiddenAbility.toLowerCase() !== 'none' && (
-                                            <span className="homebrew-pull-modal__ability-tag">
-                                                <b>Hidden:</b> {previewData.HiddenAbility}
-                                            </span>
-                                        )}
-                                        {previewData.EventAbilities && previewData.EventAbilities.toLowerCase() !== 'none' && (
-                                            <span className="homebrew-pull-modal__ability-tag">
-                                                <b>Event:</b> {previewData.EventAbilities}
-                                            </span>
-                                        )}
+                                        {previewData.HiddenAbility &&
+                                            previewData.HiddenAbility.toLowerCase() !== 'none' && (
+                                                <span className="homebrew-pull-modal__ability-tag">
+                                                    <b>Hidden:</b> {previewData.HiddenAbility}
+                                                </span>
+                                            )}
+                                        {previewData.EventAbilities &&
+                                            previewData.EventAbilities.toLowerCase() !== 'none' && (
+                                                <span className="homebrew-pull-modal__ability-tag">
+                                                    <b>Event:</b> {previewData.EventAbilities}
+                                                </span>
+                                            )}
                                     </div>
                                 </div>
 
@@ -393,11 +391,7 @@ export function HomebrewPullPokemonModal({ isOpen, onClose }: HomebrewPullPokemo
 
                 {/* Modal Footer Actions */}
                 <div className="homebrew-pull-modal__footer">
-                    <button
-                        type="button"
-                        onClick={() => onClose()}
-                        className="action-button action-button--dark"
-                    >
+                    <button type="button" onClick={() => onClose()} className="action-button action-button--dark">
                         Cancel
                     </button>
 
