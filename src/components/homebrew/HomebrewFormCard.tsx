@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomForm } from '../../store/storeTypes';
-import { ALL_MOVES } from '../../utils/api';
+import { ALL_MOVES, ALL_SPECIES } from '../../utils/api';
 import { TagBuilderModal } from '../modals/TagBuilderModal';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { ChevronDown, Copy, X, Tag, AlertTriangle } from 'lucide-react';
@@ -23,6 +23,7 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
     const [localName, setLocalName] = useState(form.name);
     const [localDescription, setLocalDescription] = useState(form.description);
     const [localTags, setLocalTags] = useState(form.tags || '');
+    const [localTargetSpecies, setLocalTargetSpecies] = useState(form.targetSpecies || '');
     const [localGmOnly, setLocalGmOnly] = useState(form.gmOnly || false);
 
     const [newMoveInput, setNewMoveInput] = useState('');
@@ -33,11 +34,14 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
     const moveOptions = Array.from(new Set([...ALL_MOVES, ...roomCustomMoves.map((m) => m.name)])).sort();
 
     useEffect(() => {
-        setLocalName(form.name);
-        setLocalDescription(form.description);
-        setLocalTags(form.tags || '');
-        setLocalGmOnly(form.gmOnly || false);
-    }, [form]);
+        Promise.resolve().then(() => {
+            setLocalName(form.name);
+            setLocalDescription(form.description);
+            setLocalTags(form.tags || '');
+            setLocalTargetSpecies(form.targetSpecies || '');
+            setLocalGmOnly(form.gmOnly || false);
+        });
+    }, [form.name, form.description, form.tags, form.targetSpecies, form.gmOnly]);
 
     const toggleSetting = (field: keyof CustomForm, currentValue: boolean) => {
         if (!canEdit) return;
@@ -81,6 +85,20 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
         if (field === 'wipeStatuses' && newValue) {
             updateCustomForm(form.id, 'swapStatuses', false as never);
             updateCustomForm(form.id, 'freshStatuses', false as never);
+        }
+
+        if (field === 'restoreHp' && newValue) {
+            updateCustomForm(form.id, 'shareHighestHp', false as never);
+        }
+        if (field === 'shareHighestHp' && newValue) {
+            updateCustomForm(form.id, 'restoreHp', false as never);
+        }
+
+        if (field === 'restoreWill' && newValue) {
+            updateCustomForm(form.id, 'shareHighestWill', false as never);
+        }
+        if (field === 'shareHighestWill' && newValue) {
+            updateCustomForm(form.id, 'restoreWill', false as never);
         }
     };
 
@@ -394,6 +412,18 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                             </label>
                             <label
                                 className={`homebrew-form-card__checkbox-label ${cursorClass} text-subtext`}
+                                title="Shares HP pool between forms and dynamically locks Max HP to whichever form has higher Max HP (e.g. Aegislash Stance Change)."
+                            >
+                                <input
+                                    type="checkbox"
+                                    disabled={!canEdit}
+                                    checked={form.shareHighestHp || false}
+                                    onChange={() => toggleSetting('shareHighestHp', form.shareHighestHp || false)}
+                                />
+                                Share Highest Max HP
+                            </label>
+                            <label
+                                className={`homebrew-form-card__checkbox-label ${cursorClass} text-subtext`}
                                 title="Stores a distinct Will pool. Reverting will load whatever Will you had prior to transforming."
                             >
                                 <input
@@ -403,6 +433,18 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                                     onChange={() => toggleSetting('restoreWill', form.restoreWill)}
                                 />
                                 Maintain Distinct Will Pool
+                            </label>
+                            <label
+                                className={`homebrew-form-card__checkbox-label ${cursorClass} text-subtext`}
+                                title="Shares Will pool between forms and dynamically locks Max Will to whichever form has higher Max Will (e.g. Aegislash Stance Change)."
+                            >
+                                <input
+                                    type="checkbox"
+                                    disabled={!canEdit}
+                                    checked={form.shareHighestWill || false}
+                                    onChange={() => toggleSetting('shareHighestWill', form.shareHighestWill || false)}
+                                />
+                                Share Highest Max Will
                             </label>
 
                             <hr className="homebrew-form-card__divider" />
@@ -487,6 +529,31 @@ export function HomebrewFormCard({ form, role, canEdit, onRemove, onDuplicate }:
                                     )}
                                 </span>
                             ))}
+                        </div>
+                    </div>
+
+                    <div className="homebrew-form-card__moves-section homebrew-form-card__moves-section--spaced">
+                        <span className="homebrew-form-card__settings-header text-label">Linked Pokédex Species / Form</span>
+                        <div className="homebrew-form-card__inputs-row">
+                            <input
+                                type="text"
+                                list={`species-list-${form.id}`}
+                                value={localTargetSpecies}
+                                onChange={(event) => canEdit && setLocalTargetSpecies(event.target.value)}
+                                onBlur={() =>
+                                    canEdit &&
+                                    localTargetSpecies !== form.targetSpecies &&
+                                    updateCustomForm(form.id, 'targetSpecies', localTargetSpecies)
+                                }
+                                placeholder="e.g. Aegislash (Blade Form) - Pre-fills base stats on first transform"
+                                disabled={!canEdit}
+                                className="homebrew-card__name-input text-label"
+                            />
+                            <datalist id={`species-list-${form.id}`}>
+                                {ALL_SPECIES.map((s) => (
+                                    <option key={s} value={s} />
+                                ))}
+                            </datalist>
                         </div>
                     </div>
 

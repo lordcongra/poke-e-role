@@ -58,6 +58,8 @@ export interface CustomForm {
 
     restoreHp: boolean;
     restoreWill: boolean;
+    shareHighestHp?: boolean;
+    shareHighestWill?: boolean;
     healHp: boolean;
     healWill: boolean;
 
@@ -66,6 +68,7 @@ export interface CustomForm {
 
     grantedMoves: string[];
     tags: string;
+    targetSpecies?: string;
     tempHp: number;
     tempWill: number;
 
@@ -261,7 +264,7 @@ export interface HomebrewSlice {
     removeCustomMove: (id: string) => void;
     duplicateCustomMove: (id: string) => void;
 
-    addCustomPokemon: () => void;
+    addCustomPokemon: (initialData?: Partial<CustomPokemon>) => void;
     updateCustomPokemon: <K extends keyof CustomPokemon>(id: string, field: K, value: CustomPokemon[K]) => void;
     removeCustomPokemon: (id: string) => void;
     duplicateCustomPokemon: (id: string) => void;
@@ -271,7 +274,7 @@ export interface HomebrewSlice {
     removeCustomItem: (id: string) => void;
     duplicateCustomItem: (id: string) => void;
 
-    addCustomForm: (isMegaTemplate?: boolean) => void;
+    addCustomForm: (template?: boolean | 'mega' | 'aegislash' | 'stance') => void;
     updateCustomForm: <K extends keyof CustomForm>(id: string, field: K, value: CustomForm[K]) => void;
     removeCustomForm: (id: string) => void;
     duplicateCustomForm: (id: string) => void;

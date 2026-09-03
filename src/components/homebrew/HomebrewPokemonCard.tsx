@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomPokemon } from '../../store/storeTypes';
 import { HomebrewPokemonStats } from './HomebrewPokemonStats';
@@ -27,6 +28,7 @@ export function HomebrewPokemonCard({
     onDuplicate
 }: HomebrewPokemonCardProps) {
     const updateCustomPokemon = useCharacterStore((state) => state.updateCustomPokemon);
+    const roomCustomPokemon = useCharacterStore((state) => state.roomCustomPokemon);
 
     const [localName, setLocalName] = useState(pokemon.Name);
     const [localGameMasterOnly, setLocalGameMasterOnly] = useState(pokemon.gmOnly || false);
@@ -34,9 +36,15 @@ export function HomebrewPokemonCard({
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     useEffect(() => {
-        setLocalName(pokemon.Name);
-        setLocalGameMasterOnly(pokemon.gmOnly || false);
-    }, [pokemon]);
+        Promise.resolve().then(() => {
+            setLocalName(pokemon.Name);
+            setLocalGameMasterOnly(pokemon.gmOnly || false);
+        });
+    }, [pokemon.Name, pokemon.gmOnly]);
+
+    const isDuplicateName = roomCustomPokemon.some(
+        (p) => p.id !== pokemon.id && p.Name.trim().toLowerCase() === localName.trim().toLowerCase()
+    );
 
     return (
         <div className="homebrew-pokemon-card">
@@ -52,13 +60,40 @@ export function HomebrewPokemonCard({
                     type="text"
                     value={localName}
                     onChange={(event) => canEdit && setLocalName(event.target.value)}
-                    onBlur={() =>
-                        canEdit && localName !== pokemon.Name && updateCustomPokemon(pokemon.id, 'Name', localName)
-                    }
+                    onBlur={() => {
+                        if (!canEdit) return;
+                        if (isDuplicateName && OBR.isAvailable) {
+                            OBR.notification.show(
+                                `Warning: A custom Pokémon named "${localName}" already exists! Consider using a distinct name.`,
+                                'WARNING'
+                            );
+                        }
+                        if (localName !== pokemon.Name) {
+                            updateCustomPokemon(pokemon.id, 'Name', localName);
+                        }
+                    }}
                     placeholder="Pokémon Species Name"
                     disabled={!canEdit}
                     className="homebrew-pokemon-card__name-input text-label"
                 />
+                {isDuplicateName && (
+                    <span
+                        className="text-subtext flex-layout--row-center"
+                        style={{
+                            color: 'var(--semantic-danger)',
+                            fontSize: '0.75rem',
+                            gap: '4px',
+                            background: 'rgba(220, 53, 69, 0.12)',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            border: '1px solid var(--semantic-danger)',
+                            whiteSpace: 'nowrap'
+                        }}
+                        title="Warning: Another Pokémon in Homebrew already has this exact name."
+                    >
+                        <AlertTriangle size={13} /> Duplicate Name
+                    </span>
+                )}
                 {role === 'GM' && (
                     <label className="homebrew-pokemon-card__gm-label text-subtext">
                         <input

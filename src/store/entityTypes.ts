@@ -233,6 +233,7 @@ export interface CustomPokemon {
     Ability2: string;
     HiddenAbility: string;
     EventAbilities: string;
+    ExtraAbilities?: string[];
     Moves: Array<{ Learned: string; Name: string }>;
     DexID?: string;
     DexCategory?: string;

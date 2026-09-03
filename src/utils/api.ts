@@ -37,6 +37,7 @@ export const MOVES_URLS: Record<string, string> = {};
 export const ITEMS_URLS: Record<string, string> = {};
 export const NATURES_URLS: Record<string, string> = {};
 
+export const ALL_SPECIES: string[] = [];
 export const ALL_ABILITIES: string[] = [];
 export const ALL_MOVES: string[] = [];
 export const CATEGORIZED_ITEMS: Record<string, string[]> = {};
@@ -124,7 +125,9 @@ export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
                 Object.values(data.pokemon).forEach((p) => {
                     if (!p || !p.name) return; // Safeguard against null names
                     SPECIES_URLS[p.name.toLowerCase()] = formatLocalPath(p.path);
+                    if (!ALL_SPECIES.includes(p.name)) ALL_SPECIES.push(p.name);
                 });
+                ALL_SPECIES.sort();
             }
 
             // Populate Abilities
@@ -157,6 +160,22 @@ export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
     })();
 
     return datasetPromise;
+}
+
+export async function fetchBasePokemonData(speciesName: string): Promise<PokemonApiResponse | null> {
+    if (!speciesName) return null;
+    const cleanName = speciesName.trim().toLowerCase();
+
+    await loadLocalDataset();
+    const selectedUrl = SPECIES_URLS[cleanName];
+
+    if (!selectedUrl) {
+        console.warn(`[Local Fetch] Failed to find base species ${speciesName} in local dataset.`);
+        return null;
+    }
+
+    const cacheKey = `local_species_${cleanName}`;
+    return await fetchWithCache<PokemonApiResponse>(selectedUrl, cacheKey, speciesName);
 }
 
 export async function fetchPokemonData(speciesName: string): Promise<PokemonApiResponse | CustomPokemon | null> {

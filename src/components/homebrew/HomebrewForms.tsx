@@ -4,7 +4,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomForm } from '../../store/storeTypes';
 import { HomebrewFormCard } from './HomebrewFormCard';
 import { isStandaloneMode } from '../../utils/storageAdapter';
-import { Plus, Sparkles, Save, FolderOpen, AlertTriangle } from 'lucide-react';
+import { Plus, Sparkles, Shield, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 
 export function HomebrewForms() {
@@ -51,7 +51,7 @@ export function HomebrewForms() {
                 } else if (OBR.isAvailable) {
                     OBR.notification.show('Invalid Custom Forms file.', 'ERROR');
                 }
-            } catch (error) {
+            } catch {
                 if (OBR.isAvailable) OBR.notification.show('Failed to parse JSON.', 'ERROR');
             }
             if (fileReference.current) fileReference.current.value = '';
@@ -93,6 +93,16 @@ export function HomebrewForms() {
                             className="action-button action-button--theme homebrew-list__create-btn"
                         >
                             <Sparkles size={16} /> Add Mega
+                        </button>
+                        <button
+                            onClick={() => {
+                                setSearchQuery('');
+                                addCustomForm('aegislash');
+                            }}
+                            className="action-button action-button--secondary homebrew-list__create-btn"
+                            title="Create Aegislash Stance Change template"
+                        >
+                            <Shield size={16} /> Add Stance Change
                         </button>
                     </>
                 )}

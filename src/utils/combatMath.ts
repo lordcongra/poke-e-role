@@ -199,7 +199,41 @@ export function calculateMaxHp(state: CharacterState, itemBuffs?: CombatBonuses)
     if (state.identity.ruleset === 'vg-high-hp') hpStat = Math.max(vitTotal, insTotal);
 
     const rankBonus = getRankBonusStats(state.identity.rank).hp;
-    return state.health.hpBase + hpStat + rankBonus;
+    const currentHp = state.health.hpBase + hpStat + rankBonus;
+
+    // Stance Change / Shared Highest HP logic:
+    // 1. If currently in a Custom Form with shareHighestHp enabled, compare with baseFormData
+    if (state.identity.activeTransformation === 'Custom' && state.identity.activeFormId) {
+        const activeForm = state.roomCustomForms?.find((f) => f.id === state.identity.activeFormId);
+        if (activeForm?.shareHighestHp && state.identity.baseFormData) {
+            try {
+                const baseData = JSON.parse(state.identity.baseFormData) as { hpMax?: number; health?: { hpMax?: number } };
+                const baseHpMax = Number(baseData.hpMax ?? baseData.health?.hpMax) || 0;
+                if (baseHpMax > 0) return Math.max(currentHp, baseHpMax);
+            } catch {
+                // Ignore parse errors safely
+            }
+        }
+    }
+
+    // 2. If currently in Base Form, check if any saved form with shareHighestHp had a higher Max HP
+    if (state.identity.activeTransformation === 'None' && state.identity.formSaves) {
+        let highestSavedHp = 0;
+        state.roomCustomForms?.forEach((f) => {
+            if (f.shareHighestHp && state.identity.formSaves?.[f.id]) {
+                try {
+                    const savedData = JSON.parse(state.identity.formSaves[f.id]) as { hpMax?: number; health?: { hpMax?: number } };
+                    const savedHpMax = Number(savedData.hpMax ?? savedData.health?.hpMax) || 0;
+                    if (savedHpMax > highestSavedHp) highestSavedHp = savedHpMax;
+                } catch {
+                    // Ignore parse errors safely
+                }
+            }
+        });
+        if (highestSavedHp > 0) return Math.max(currentHp, highestSavedHp);
+    }
+
+    return currentHp;
 }
 
 export function calculateMaxWill(state: CharacterState, itemBuffs?: CombatBonuses): number {
@@ -208,7 +242,41 @@ export function calculateMaxWill(state: CharacterState, itemBuffs?: CombatBonuse
     const insTotal = calculateStatTotal(CombatStat.INS, state, invMods);
 
     const rankBonus = getRankBonusStats(state.identity.rank).will;
-    return state.will.willBase + insTotal + rankBonus;
+    const currentWill = state.will.willBase + insTotal + rankBonus;
+
+    // Stance Change / Shared Highest Will logic:
+    // 1. If currently in a Custom Form with shareHighestWill enabled, compare with baseFormData
+    if (state.identity.activeTransformation === 'Custom' && state.identity.activeFormId) {
+        const activeForm = state.roomCustomForms?.find((f) => f.id === state.identity.activeFormId);
+        if (activeForm?.shareHighestWill && state.identity.baseFormData) {
+            try {
+                const baseData = JSON.parse(state.identity.baseFormData) as { willMax?: number; will?: { willMax?: number } };
+                const baseWillMax = Number(baseData.willMax ?? baseData.will?.willMax) || 0;
+                if (baseWillMax > 0) return Math.max(currentWill, baseWillMax);
+            } catch {
+                // Ignore parse errors safely
+            }
+        }
+    }
+
+    // 2. If currently in Base Form, check if any saved form with shareHighestWill had a higher Max Will
+    if (state.identity.activeTransformation === 'None' && state.identity.formSaves) {
+        let highestSavedWill = 0;
+        state.roomCustomForms?.forEach((f) => {
+            if (f.shareHighestWill && state.identity.formSaves?.[f.id]) {
+                try {
+                    const savedData = JSON.parse(state.identity.formSaves[f.id]) as { willMax?: number; will?: { willMax?: number } };
+                    const savedWillMax = Number(savedData.willMax ?? savedData.will?.willMax) || 0;
+                    if (savedWillMax > highestSavedWill) highestSavedWill = savedWillMax;
+                } catch {
+                    // Ignore parse errors safely
+                }
+            }
+        });
+        if (highestSavedWill > 0) return Math.max(currentWill, highestSavedWill);
+    }
+
+    return currentWill;
 }
 
 export function calculateDefTotal(state: CharacterState, itemBuffs?: CombatBonuses): number {

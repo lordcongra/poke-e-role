@@ -3,8 +3,16 @@ import type { Image } from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../store/useCharacterStore';
 import type { CharacterState, TransformationType, TeraBlastConfig, MoveData } from '../store/storeTypes';
 import { CombatStat, SocialStat } from '../types/enums';
-import { createFormBackup, restoreFormBackup, convertMovesToMax, type RestoreConfig } from './macroHelpers';
-import { fetchMoveData } from './api';
+import {
+    createFormBackup,
+    restoreFormBackup,
+    convertMovesToMax,
+    type RestoreConfig,
+    getBase,
+    getLimit
+} from './macroHelpers';
+import { fetchMoveData, fetchPokemonData } from './api';
+import { saveToOwlbear } from './obr';
 
 export interface TransformationDraft {
     identity: CharacterState['identity'];
@@ -177,14 +185,9 @@ export function processReversion(
     draft.identity.activeFormId = '';
     draft.identity.customFormConfig = {};
 
-    draft.trackers.firstHitAcc = false;
-    draft.trackers.firstHitDmg = false;
-
     updatesToSave['active-transformation'] = 'None';
     updatesToSave['active-form-id'] = '';
     updatesToSave['custom-form-config'] = '{}';
-    updatesToSave['first-hit-acc-active'] = false;
-    updatesToSave['first-hit-dmg-active'] = false;
 
     return revertConfig;
 }
@@ -248,10 +251,11 @@ export function processTransformation(
     } else if (targetTransformation === 'Custom' && customFormId) {
         const targetForm = state.roomCustomForms.find((f) => f.id === customFormId);
         if (targetForm) {
-            draft.trackers.firstHitAcc = true;
-            draft.trackers.firstHitDmg = true;
-            updatesToSave['first-hit-acc-active'] = true;
-            updatesToSave['first-hit-dmg-active'] = true;
+            const formSpecies = targetForm.targetSpecies || targetForm.name;
+            if (formSpecies) {
+                draft.identity.species = formSpecies;
+                updatesToSave['species'] = formSpecies;
+            }
 
             const activateConfig: RestoreConfig = {
                 restoreBaseStats: targetForm.swapBaseStats,
@@ -288,6 +292,54 @@ export function processTransformation(
 
             if (draft.identity.formSaves[customFormId]) {
                 restoreFormBackup(draft.identity.formSaves[customFormId], draft, updatesToSave, activateConfig);
+            } else if (targetForm.targetSpecies) {
+                fetchPokemonData(targetForm.targetSpecies)
+                    .then((speciesData) => {
+                        if (speciesData) {
+                            const dataRec = speciesData as Record<string, unknown>;
+                            const updates: Record<string, unknown> = {};
+                            const storeState = useCharacterStore.getState();
+                            const currentStats = { ...storeState.stats };
+
+                            if (targetForm.swapBaseStats || targetForm.swapStatLimits) {
+                                const applyStat = (statKey: CombatStat, dataBase: number, dataMax: number) => {
+                                    if (targetForm.swapBaseStats) {
+                                        currentStats[statKey] = { ...currentStats[statKey], base: dataBase };
+                                        updates[`${statKey}-base`] = dataBase;
+                                    }
+                                    if (targetForm.swapStatLimits) {
+                                        currentStats[statKey] = { ...currentStats[statKey], limit: dataMax };
+                                        updates[`${statKey}-limit`] = dataMax;
+                                    }
+                                };
+                                applyStat(CombatStat.STR, getBase(dataRec, 'Strength', 2), getLimit(dataRec, 'Strength'));
+                                applyStat(CombatStat.DEX, getBase(dataRec, 'Dexterity', 2), getLimit(dataRec, 'Dexterity'));
+                                applyStat(CombatStat.VIT, getBase(dataRec, 'Vitality', 2), getLimit(dataRec, 'Vitality'));
+                                applyStat(CombatStat.SPE, getBase(dataRec, 'Special', 2), getLimit(dataRec, 'Special'));
+                                applyStat(CombatStat.INS, getBase(dataRec, 'Insight', 1), getLimit(dataRec, 'Insight'));
+                            }
+
+                            if (targetForm.swapTyping) {
+                                if (speciesData.Type1) updates['type1'] = speciesData.Type1;
+                                if (speciesData.Type2 !== undefined) updates['type2'] = speciesData.Type2;
+                            }
+
+                            useCharacterStore.setState((s) => ({
+                                stats: currentStats,
+                                identity: {
+                                    ...s.identity,
+                                    type1: (updates['type1'] as string) ?? s.identity.type1,
+                                    type2: (updates['type2'] as string) ?? s.identity.type2
+                                }
+                            }));
+                            try {
+                                saveToOwlbear(updates);
+                            } catch (e) {
+                                console.warn('[TransformationLogic] Failed to save targetSpecies stats:', e);
+                            }
+                        }
+                    })
+                    .catch((e) => console.warn('[TransformationLogic] Failed to fetch targetSpecies:', e));
             }
 
             if (targetForm.tempHp > 0) {

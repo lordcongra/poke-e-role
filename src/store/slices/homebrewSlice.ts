@@ -274,37 +274,49 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         saveHomebrewLocal(get());
     },
 
-    addCustomPokemon: () => {
-        const newPokemon: CustomPokemon[] = [
-            ...get().roomCustomPokemon,
-            {
-                id: crypto.randomUUID(),
-                Name: 'New Pokemon',
-                Type1: 'Normal',
-                Type2: '',
-                BaseHP: 4,
-                Strength: 2,
-                MaxStrength: 5,
-                Dexterity: 2,
-                MaxDexterity: 5,
-                Vitality: 2,
-                MaxVitality: 5,
-                Special: 2,
-                MaxSpecial: 5,
-                Insight: 1,
-                MaxInsight: 5,
-                Ability1: '',
-                Ability2: '',
-                HiddenAbility: '',
-                EventAbilities: '',
-                Moves: [],
-                DexID: '',
-                DexCategory: '',
-                Height: '',
-                Weight: '',
-                DexDescription: ''
+    addCustomPokemon: (initialData?: Partial<CustomPokemon>) => {
+        let baseName = initialData?.Name || 'New Pokemon';
+        if (!initialData?.Name) {
+            const currentNames = get().roomCustomPokemon.map((p) => p.Name.trim().toLowerCase());
+            if (currentNames.includes(baseName.toLowerCase())) {
+                let counter = 2;
+                while (currentNames.includes(`new pokemon ${counter}`)) {
+                    counter++;
+                }
+                baseName = `New Pokemon ${counter}`;
             }
-        ];
+        }
+
+        const newPokemonItem: CustomPokemon = {
+            id: crypto.randomUUID(),
+            Name: baseName,
+            Type1: initialData?.Type1 || 'Normal',
+            Type2: initialData?.Type2 || '',
+            BaseHP: initialData?.BaseHP ?? 4,
+            Strength: initialData?.Strength ?? 2,
+            MaxStrength: initialData?.MaxStrength ?? 5,
+            Dexterity: initialData?.Dexterity ?? 2,
+            MaxDexterity: initialData?.MaxDexterity ?? 5,
+            Vitality: initialData?.Vitality ?? 2,
+            MaxVitality: initialData?.MaxVitality ?? 5,
+            Special: initialData?.Special ?? 2,
+            MaxSpecial: initialData?.MaxSpecial ?? 5,
+            Insight: initialData?.Insight ?? 1,
+            MaxInsight: initialData?.MaxInsight ?? 5,
+            Ability1: initialData?.Ability1 || '',
+            Ability2: initialData?.Ability2 || '',
+            HiddenAbility: initialData?.HiddenAbility || '',
+            EventAbilities: initialData?.EventAbilities || '',
+            ExtraAbilities: initialData?.ExtraAbilities || [],
+            Moves: initialData?.Moves || [],
+            DexID: initialData?.DexID || '',
+            DexCategory: initialData?.DexCategory || '',
+            Height: initialData?.Height || '',
+            Weight: initialData?.Weight || '',
+            DexDescription: initialData?.DexDescription || '',
+            gmOnly: initialData?.gmOnly ?? false
+        };
+        const newPokemon = [...get().roomCustomPokemon, newPokemonItem];
         set({ roomCustomPokemon: newPokemon, needsBackup: true });
         syncHomebrewToApi(newPokemon, get().roomCustomMoves, get().roomCustomAbilities, get().roomCustomItems);
         saveHomebrewLocal(get());
@@ -329,10 +341,10 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         if (!target) return;
 
         let copyName = `${target.Name} (Copy)`;
-        let counter = 1;
-        while (currentPokemon.some((p) => p.Name === copyName)) {
-            counter++;
+        let counter = 2;
+        while (currentPokemon.some((p) => p.Name.trim().toLowerCase() === copyName.trim().toLowerCase())) {
             copyName = `${target.Name} (Copy ${counter})`;
+            counter++;
         }
 
         const newPokemon = [...currentPokemon, { ...target, id: crypto.randomUUID(), Name: copyName }];
@@ -387,20 +399,34 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         saveHomebrewLocal(get());
     },
 
-    addCustomForm: (isMegaTemplate = false) => {
+    addCustomForm: (template: boolean | 'mega' | 'aegislash' | 'stance' = false) => {
+        const isMega = template === true || template === 'mega';
+        const isStance = template === 'aegislash' || template === 'stance';
+
+        let name = 'New Form';
+        let description = '';
+        if (isMega) {
+            name = 'New Mega Evolution';
+            description = 'Backs up current stats, restores HP/Will, and clears statuses.';
+        } else if (isStance) {
+            name = 'Aegislash (Blade Form)';
+            description =
+                'Stance Change: choose Form at start of round. Sword Stance can only use Damaging Moves; Shield Stance can only use Support Moves. Keeps highest HP shared across forms.';
+        }
+
         const newForms: CustomForm[] = [
             ...get().roomCustomForms,
             {
                 id: crypto.randomUUID(),
-                name: isMegaTemplate ? 'New Mega Evolution' : 'New Form',
-                description: isMegaTemplate ? 'Backs up current stats, restores HP/Will, and clears statuses.' : '',
-                swapBaseStats: isMegaTemplate,
-                swapStatLimits: isMegaTemplate,
-                swapStatRanks: isMegaTemplate,
-                swapSkills: isMegaTemplate,
-                swapMoves: isMegaTemplate,
-                swapTyping: isMegaTemplate,
-                swapAbilities: isMegaTemplate,
+                name,
+                description,
+                swapBaseStats: isMega || isStance,
+                swapStatLimits: isMega || isStance,
+                swapStatRanks: isMega || isStance,
+                swapSkills: isMega,
+                swapMoves: isMega,
+                swapTyping: isMega,
+                swapAbilities: isMega,
                 swapBuffs: false,
                 swapDebuffs: false,
                 freshBuffs: false,
@@ -408,16 +434,19 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
                 wipeBuffs: false,
                 wipeDebuffs: false,
                 swapStatuses: false,
-                freshStatuses: isMegaTemplate,
+                freshStatuses: isMega,
                 wipeStatuses: false,
-                restoreHp: isMegaTemplate,
-                restoreWill: isMegaTemplate,
-                healHp: isMegaTemplate,
-                healWill: isMegaTemplate,
+                restoreHp: isMega,
+                restoreWill: isMega,
+                shareHighestHp: isStance,
+                shareHighestWill: isStance,
+                healHp: isMega,
+                healWill: isMega,
                 activationCostHp: 0,
-                activationCostWill: isMegaTemplate ? 1 : 0,
+                activationCostWill: isMega ? 1 : 0,
                 grantedMoves: [],
                 tags: '',
+                targetSpecies: isStance ? 'Aegislash (Blade Form)' : '',
                 tempHp: 0,
                 tempWill: 0,
                 gmOnly: false
@@ -537,12 +566,15 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             wipeDebuffs: f.wipeDebuffs ?? false,
             restoreHp: f.restoreHp ?? false,
             restoreWill: f.restoreWill ?? false,
+            shareHighestHp: f.shareHighestHp ?? false,
+            shareHighestWill: f.shareHighestWill ?? false,
             healHp: f.healHp ?? false,
             healWill: f.healWill ?? false,
             activationCostHp: f.activationCostHp ?? 0,
             activationCostWill: f.activationCostWill ?? 0,
             tempHp: f.tempHp ?? 0,
             tempWill: f.tempWill ?? 0,
+            targetSpecies: f.targetSpecies ?? '',
             grantedMoves: Array.isArray(f.grantedMoves) ? f.grantedMoves : []
         }));
         set({ roomCustomForms: safeForms, needsBackup: true });
@@ -566,12 +598,15 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             wipeDebuffs: f.wipeDebuffs ?? false,
             restoreHp: f.restoreHp ?? false,
             restoreWill: f.restoreWill ?? false,
+            shareHighestHp: f.shareHighestHp ?? false,
+            shareHighestWill: f.shareHighestWill ?? false,
             healHp: f.healHp ?? false,
             healWill: f.healWill ?? false,
             activationCostHp: f.activationCostHp ?? 0,
             activationCostWill: f.activationCostWill ?? 0,
             tempHp: f.tempHp ?? 0,
             tempWill: f.tempWill ?? 0,
+            targetSpecies: f.targetSpecies ?? '',
             grantedMoves: Array.isArray(f.grantedMoves) ? f.grantedMoves : []
         }));
 
@@ -687,12 +722,15 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
                 wipeDebuffs: form.wipeDebuffs ?? false,
                 restoreHp: form.restoreHp ?? false,
                 restoreWill: form.restoreWill ?? false,
+                shareHighestHp: form.shareHighestHp ?? false,
+                shareHighestWill: form.shareHighestWill ?? false,
                 healHp: form.healHp ?? false,
                 healWill: form.healWill ?? false,
                 activationCostHp: form.activationCostHp ?? 0,
                 activationCostWill: form.activationCostWill ?? 0,
                 tempHp: form.tempHp ?? 0,
                 tempWill: form.tempWill ?? 0,
+                targetSpecies: form.targetSpecies ?? '',
                 grantedMoves: Array.isArray(form.grantedMoves) ? form.grantedMoves : []
             };
 
@@ -791,12 +829,15 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
                 wipeDebuffs: form.wipeDebuffs ?? false,
                 restoreHp: form.restoreHp ?? false,
                 restoreWill: form.restoreWill ?? false,
+                shareHighestHp: form.shareHighestHp ?? false,
+                shareHighestWill: form.shareHighestWill ?? false,
                 healHp: form.healHp ?? false,
                 healWill: form.healWill ?? false,
                 activationCostHp: form.activationCostHp ?? 0,
                 activationCostWill: form.activationCostWill ?? 0,
                 tempHp: form.tempHp ?? 0,
                 tempWill: form.tempWill ?? 0,
+                targetSpecies: form.targetSpecies ?? '',
                 grantedMoves: Array.isArray(form.grantedMoves) ? form.grantedMoves : []
             };
 

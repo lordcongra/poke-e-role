@@ -6,7 +6,8 @@ import { ALL_ABILITIES, ALL_MOVES } from '../../utils/api';
 import { HomebrewPokemonCard } from './HomebrewPokemonCard';
 import { POKEMON_TYPES, TYPE_COLORS } from '../../data/constants';
 import { isStandaloneMode } from '../../utils/storageAdapter';
-import { Plus, Save, FolderOpen, AlertTriangle } from 'lucide-react';
+import { Plus, BookOpen, Save, FolderOpen, AlertTriangle } from 'lucide-react';
+import { HomebrewPullPokemonModal } from './HomebrewPullPokemonModal';
 import './Homebrew.css';
 
 export function HomebrewPokemon() {
@@ -47,6 +48,7 @@ export function HomebrewPokemon() {
     const fileReference = useRef<HTMLInputElement>(null);
     const [importData, setImportData] = useState<CustomPokemon[] | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [showPullModal, setShowPullModal] = useState(false);
 
     const visiblePokemon = roomCustomPokemon.filter((pokemon) => role === 'GM' || !pokemon.gmOnly);
     const filteredPokemonList = visiblePokemon.filter((pokemon) =>
@@ -78,7 +80,7 @@ export function HomebrewPokemon() {
                 } else if (OBR.isAvailable) {
                     OBR.notification.show('Invalid Custom Pokémon file.', 'ERROR');
                 }
-            } catch (error) {
+            } catch {
                 if (OBR.isAvailable) OBR.notification.show('Failed to parse JSON.', 'ERROR');
             }
             if (fileReference.current) fileReference.current.value = '';
@@ -102,15 +104,24 @@ export function HomebrewPokemon() {
                     className="homebrew-list__search-input"
                 />
                 {canEdit && (
-                    <button
-                        onClick={() => {
-                            setSearchQuery('');
-                            addCustomPokemon();
-                        }}
-                        className="action-button action-button--dark homebrew-list__create-btn"
-                    >
-                        <Plus size={16} /> Create New
-                    </button>
+                    <>
+                        <button
+                            onClick={() => setShowPullModal(true)}
+                            className="action-button action-button--theme homebrew-list__create-btn"
+                            title="Pull an existing Pokémon from the Pokédex to customize its Learnset, Abilities, or Stats"
+                        >
+                            <BookOpen size={16} /> Pull from Pokédex
+                        </button>
+                        <button
+                            onClick={() => {
+                                setSearchQuery('');
+                                addCustomPokemon();
+                            }}
+                            className="action-button action-button--dark homebrew-list__create-btn"
+                        >
+                            <Plus size={16} /> Create New
+                        </button>
+                    </>
                 )}
             </div>
 
@@ -217,6 +228,13 @@ export function HomebrewPokemon() {
                     </div>
                 </div>
             )}
+
+            <HomebrewPullPokemonModal
+                isOpen={showPullModal}
+                onClose={() => {
+                    setShowPullModal(false);
+                }}
+            />
         </div>
     );
 }

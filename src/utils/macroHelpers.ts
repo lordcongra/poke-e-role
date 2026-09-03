@@ -1,7 +1,26 @@
-import type { CharacterState, MoveData, StatusItem, CustomType } from '../store/storeTypes';
+import type { CharacterState, MoveData, StatusItem, CustomType, CustomPokemon } from '../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from './combatUtils';
 import { MAX_MOVES_DATA } from '../data/maxMoves';
+import type { PokemonApiResponse } from './apiTypes';
+
+export const parseHeight = (dataHeight: unknown): string => {
+    if (typeof dataHeight === 'object' && dataHeight !== null) {
+        const h = dataHeight as { Meters?: number; Feet?: number };
+        return `${h.Meters || 0}m / ${h.Feet || 0}ft`;
+    }
+    if (typeof dataHeight === 'string') return dataHeight;
+    return '';
+};
+
+export const parseWeight = (dataWeight: unknown): string => {
+    if (typeof dataWeight === 'object' && dataWeight !== null) {
+        const w = dataWeight as { Kilograms?: number; Pounds?: number };
+        return `${w.Kilograms || 0}kg / ${w.Pounds || 0}lbs`;
+    }
+    if (typeof dataWeight === 'string') return dataWeight;
+    return '';
+};
 
 export const parseLearnset = (movesObj: unknown): Array<{ Learned: string; Name: string }> => {
     const result: Array<{ Learned: string; Name: string }> = [];
@@ -51,7 +70,23 @@ export const extractAbilities = (data: Record<string, unknown>): string[] => {
     if (data.Ability1) abilities.push(String(data.Ability1));
     if (data.Ability2 && data.Ability2 !== 'None') abilities.push(String(data.Ability2));
     if (data.HiddenAbility && data.HiddenAbility !== 'None') abilities.push(String(data.HiddenAbility) + ' (HA)');
-    if (data.EventAbilities) abilities.push(String(data.EventAbilities));
+    if (data.EventAbilities) {
+        String(data.EventAbilities)
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .forEach((e) => {
+                if (e !== 'None') abilities.push(e);
+            });
+    }
+
+    if (Array.isArray(data.ExtraAbilities)) {
+        data.ExtraAbilities.forEach((a) => {
+            if (typeof a === 'string' && a.trim() && a.trim() !== 'None') {
+                abilities.push(a.trim());
+            }
+        });
+    }
 
     if (abilities.length === 0 && Array.isArray(data.Abilities)) {
         data.Abilities.forEach((a) => {
@@ -61,6 +96,57 @@ export const extractAbilities = (data: Record<string, unknown>): string[] => {
         });
     }
     return abilities;
+};
+
+export const convertApiPokemonToCustom = (data: PokemonApiResponse): Omit<CustomPokemon, 'id'> => {
+    const dataRecord = data as Record<string, unknown>;
+    const baseStats = data.BaseStats as Record<string, unknown> | undefined;
+
+    let ability1 = String(data.Ability1 || '');
+    let ability2 = String(data.Ability2 || '');
+    let hiddenAbility = String(data.HiddenAbility || '');
+    let eventAbilities = String(data.EventAbilities || '');
+
+    if (ability2.toLowerCase() === 'none') ability2 = '';
+    if (hiddenAbility.toLowerCase() === 'none') hiddenAbility = '';
+    if (eventAbilities.toLowerCase() === 'none') eventAbilities = '';
+
+    if (!ability1 && Array.isArray(data.Abilities)) {
+        const list = data.Abilities.map((a) => (typeof a === 'string' ? a : a.Name)).filter(Boolean);
+        ability1 = list[0] ? String(list[0]) : '';
+        ability2 = list[1] ? String(list[1]) : '';
+        hiddenAbility = list[2] ? String(list[2]) : '';
+        eventAbilities = list[3] ? String(list[3]) : '';
+    }
+
+    return {
+        Name: data.Name || 'New Pokemon',
+        Type1: data.Type1 || 'Normal',
+        Type2: data.Type2 && data.Type2.toLowerCase() !== 'none' ? data.Type2 : '',
+        BaseHP: Number(data.BaseHP ?? (baseStats && baseStats.HP)) || 4,
+        Strength: getBase(dataRecord, 'Strength', 2),
+        MaxStrength: getLimit(dataRecord, 'Strength'),
+        Dexterity: getBase(dataRecord, 'Dexterity', 2),
+        MaxDexterity: getLimit(dataRecord, 'Dexterity'),
+        Vitality: getBase(dataRecord, 'Vitality', 2),
+        MaxVitality: getLimit(dataRecord, 'Vitality'),
+        Special: getBase(dataRecord, 'Special', 2),
+        MaxSpecial: getLimit(dataRecord, 'Special'),
+        Insight: getBase(dataRecord, 'Insight', 1),
+        MaxInsight: getLimit(dataRecord, 'Insight'),
+        Ability1: ability1,
+        Ability2: ability2,
+        HiddenAbility: hiddenAbility,
+        EventAbilities: eventAbilities,
+        ExtraAbilities: [],
+        Moves: parseLearnset(data.Moves),
+        DexID: data.DexID ? String(data.DexID) : '',
+        DexCategory: data.DexCategory ? String(data.DexCategory) : '',
+        Height: parseHeight(data.Height),
+        Weight: parseWeight(data.Weight),
+        DexDescription: data.DexDescription ? String(data.DexDescription) : '',
+        gmOnly: false
+    };
 };
 
 export const syncHealthAndWill = (
@@ -123,9 +209,11 @@ export const createFormBackup = (
         availableAbilities: state.identity.availableAbilities,
         hpBase: state.health.hpBase,
         hpCurr: healthDraft ? healthDraft.hpCurr : state.health.hpCurr,
+        hpMax: healthDraft ? healthDraft.hpMax : state.health.hpMax,
         tempHp: healthDraft ? healthDraft.temporaryHitPoints : state.health.temporaryHitPoints,
         tempHpMax: healthDraft ? healthDraft.temporaryHitPointsMax : state.health.temporaryHitPointsMax,
         willCurr: willDraft ? willDraft.willCurr : state.will.willCurr,
+        willMax: willDraft ? willDraft.willMax : state.will.willMax,
         tempWill: willDraft ? willDraft.temporaryWill : state.will.temporaryWill,
         tempWillMax: willDraft ? willDraft.temporaryWillMax : state.will.temporaryWillMax,
         statuses: statusesDraft ? statusesDraft : state.statuses,
@@ -211,12 +299,15 @@ export const restoreFormBackup = (
             updatesToSave['token-image-url'] = draft.identity.tokenImageUrl;
         }
 
+        if (loadedData.species !== undefined) {
+            identity.species = String(loadedData.species);
+            updatesToSave['species'] = identity.species;
+        }
+
         if (config.restoreTyping) {
-            identity.species = String(loadedData.species ?? identity.species);
             identity.type1 = String(loadedData.type1 ?? identity.type1);
             identity.type2 = String(loadedData.type2 ?? identity.type2);
 
-            updatesToSave['species'] = identity.species;
             updatesToSave['type1'] = identity.type1;
             updatesToSave['type2'] = identity.type2;
         }

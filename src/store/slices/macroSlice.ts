@@ -10,7 +10,9 @@ import {
     getLimit,
     getBase,
     extractAbilities,
-    parseLearnset
+    parseLearnset,
+    parseHeight,
+    parseWeight
 } from '../../utils/macroHelpers';
 import {
     processReversion,
@@ -18,26 +20,6 @@ import {
     handleTokenImageSwap,
     type TransformationDraft
 } from '../../utils/transformationLogic';
-
-// --- LOCAL HELPERS FOR DRY PARSING ---
-const parseHeight = (dataHeight: unknown): string => {
-    if (typeof dataHeight === 'object' && dataHeight !== null) {
-        const h = dataHeight as { Meters?: number; Feet?: number };
-        return `${h.Meters || 0}m / ${h.Feet || 0}ft`;
-    }
-    if (typeof dataHeight === 'string') return dataHeight;
-    return '';
-};
-
-const parseWeight = (dataWeight: unknown): string => {
-    if (typeof dataWeight === 'object' && dataWeight !== null) {
-        const w = dataWeight as { Kilograms?: number; Pounds?: number };
-        return `${w.Kilograms || 0}kg / ${w.Pounds || 0}lbs`;
-    }
-    if (typeof dataWeight === 'string') return dataWeight;
-    return '';
-};
-// -------------------------------------
 
 export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> = (set, get) => ({
     setMode: (newMode) =>

@@ -17,11 +17,14 @@ export function HomebrewPokemonLearnset({ pokemon, canEdit }: HomebrewPokemonLea
         updateCustomPokemon(pokemon.id, 'Moves', [...pokemon.Moves, { Learned: rank, Name: '' }]);
     };
 
+    const existingRanksInMoves = Array.from(new Set(pokemon.Moves.map((m) => m.Learned || 'Other')));
+    const allDisplayRanks = Array.from(new Set([...RANKS, ...existingRanksInMoves, 'Other']));
+
     return (
         <div className="homebrew-pokemon-card__learnset-section">
             <span className="homebrew-pokemon-card__learnset-title text-title-primary">Learnset Categories</span>
             <div className="homebrew-pokemon-card__learnset-list">
-                {[...RANKS, 'Other'].map((rankOption) => {
+                {allDisplayRanks.map((rankOption) => {
                     const movesInRank = pokemon.Moves.map((move, index) => ({ move, index })).filter(
                         (item) => item.move.Learned === rankOption
                     );
