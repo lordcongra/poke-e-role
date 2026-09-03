@@ -214,7 +214,8 @@ function parseBadges(meta: Record<string, unknown>): Badge[] {
         return rawBadges.map((b: Record<string, unknown>) => ({
             id: String(b.id || crypto.randomUUID()),
             name: String(b.name || ''),
-            emoji: String(b.emoji || '🏅')
+            emoji: String(b.emoji || '🏅'),
+            imageUrl: b.imageUrl ? String(b.imageUrl) : undefined
         }));
     } catch (e) {
         return [];

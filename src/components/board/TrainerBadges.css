@@ -33,8 +33,9 @@
 }
 
 .trainer-badge-row__emoji-input {
-    width: 36px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
+    aspect-ratio: 1 / 1;
     font-size: 1.2rem;
     text-align: center;
     background: var(--panel-bg);
@@ -45,6 +46,8 @@
     padding: 0;
     cursor: text;
     transition: border-color 0.2s ease;
+    box-sizing: border-box;
+    flex-shrink: 0;
 }
 
 .trainer-badge-row__emoji-input:focus {
@@ -53,20 +56,69 @@
 
 .trainer-badge-row__input {
     flex: 1;
+    height: 34px;
     padding: 6px;
     border: 1px solid var(--border);
     border-radius: 4px;
     background: var(--input-bg);
     color: var(--text-main);
     min-width: 0;
+    box-sizing: border-box;
 }
 
 .trainer-badge-row__del-btn {
     padding: 0 8px;
-    height: 32px;
+    height: 34px;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.trainer-badge-row__compact-btn {
+    width: 26px;
+    height: 34px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.trainer-badge-row__thumb-btn {
+    width: 34px;
+    height: 34px;
+    aspect-ratio: 1 / 1;
+    padding: 2px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    overflow: hidden;
+    box-sizing: border-box;
+    transition:
+        border-color 0.2s ease,
+        transform 0.15s ease;
+}
+
+.trainer-badge-row__thumb-btn:hover {
+    border-color: var(--primary);
+    transform: scale(1.05);
+}
+
+.trainer-badge-row__thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    display: block;
+    aspect-ratio: 1 / 1;
 }
 
 /* Modals */
@@ -93,7 +145,6 @@
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     text-align: center;
 }
-
 /* Typography pruned: relies on .text-title-primary OR utility classes */
 .trainer-badges__modal-title {
     display: flex;

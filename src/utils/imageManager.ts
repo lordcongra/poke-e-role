@@ -25,7 +25,7 @@ function getDB(): Promise<IDBDatabase> {
  * Reads an image file, detects the bounding box of non-transparent pixels,
  * and returns a cropped Blob.
  */
-export async function autoCropTransparency(file: File): Promise<Blob> {
+export async function autoCropTransparency(file: File, square = false): Promise<Blob> {
     return new Promise((resolve) => {
         const img = new Image();
         img.src = URL.createObjectURL(file);
@@ -68,8 +68,24 @@ export async function autoCropTransparency(file: File): Promise<Blob> {
             const width = right - left + 1;
             const height = bottom - top + 1;
             const padding = 10; // Safety margin around the sprite
-            const cropWidth = width + padding * 2;
-            const cropHeight = height + padding * 2;
+
+            let cropWidth: number;
+            let cropHeight: number;
+            let destX: number;
+            let destY: number;
+
+            if (square) {
+                const maxDim = Math.max(width, height);
+                cropWidth = maxDim + padding * 2;
+                cropHeight = maxDim + padding * 2;
+                destX = padding + (maxDim - width) / 2;
+                destY = padding + (maxDim - height) / 2;
+            } else {
+                cropWidth = width + padding * 2;
+                cropHeight = height + padding * 2;
+                destX = padding;
+                destY = padding;
+            }
 
             const cropCanvas = document.createElement('canvas');
             cropCanvas.width = cropWidth;
@@ -78,7 +94,7 @@ export async function autoCropTransparency(file: File): Promise<Blob> {
 
             if (!cropCtx) return resolve(file);
 
-            cropCtx.drawImage(canvas, left, top, width, height, padding, padding, width, height);
+            cropCtx.drawImage(canvas, left, top, width, height, destX, destY, width, height);
 
             cropCanvas.toBlob((blob) => {
                 if (blob) resolve(blob);

@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { TrainerBadgeRow } from './TrainerBadgeRow';
+import { BadgeImageModal } from '../modals/BadgeImageModal';
+import { imageManager } from '../../utils/imageManager';
+import type { Badge } from '../../store/entityTypes';
 import { Plus, Trash2, XCircle, AlertTriangle } from 'lucide-react';
 import './TrainerBadges.css';
 
@@ -10,22 +13,53 @@ export function TrainerBadges() {
     const setIdentity = useCharacterStore((state) => state.setIdentity);
 
     const [deleteBadgeId, setDeleteBadgeId] = useState<string | null>(null);
+    const [activeImageBadge, setActiveImageBadge] = useState<Badge | null>(null);
 
     const addBadge = () => {
         setIdentity('badges', [...badges, { id: crypto.randomUUID(), name: '', emoji: '🏅' }]);
     };
 
-    const removeBadge = (id: string) => {
+    const removeBadge = async (id: string) => {
+        const badgeToDelete = badges.find((b) => b.id === id);
+        if (badgeToDelete?.imageUrl && badgeToDelete.imageUrl.startsWith('local-img:')) {
+            try {
+                await imageManager.deleteImage(badgeToDelete.imageUrl);
+            } catch (e) {
+                console.error('[TrainerBadges] Failed to delete image from IndexedDB:', e);
+            }
+        }
+
         setIdentity(
             'badges',
             badges.filter((b) => b.id !== id)
         );
     };
 
-    const updateBadge = (id: string, field: 'name' | 'emoji', value: string) => {
+    const updateBadge = (id: string, field: 'name' | 'emoji' | 'imageUrl', value: string) => {
         setIdentity(
             'badges',
             badges.map((b) => (b.id === id ? { ...b, [field]: value } : b))
+        );
+    };
+
+    const revertBadgeImage = async (id: string) => {
+        const targetBadge = badges.find((b) => b.id === id);
+        if (targetBadge?.imageUrl && targetBadge.imageUrl.startsWith('local-img:')) {
+            try {
+                await imageManager.deleteImage(targetBadge.imageUrl);
+            } catch (e) {
+                console.error('[TrainerBadges] Failed to delete image from IndexedDB:', e);
+            }
+        }
+
+        setIdentity(
+            'badges',
+            badges.map((b) => {
+                if (b.id !== id) return b;
+                const updated = { ...b };
+                delete updated.imageUrl;
+                return updated;
+            })
         );
     };
 
@@ -42,6 +76,8 @@ export function TrainerBadges() {
                             key={badge.id}
                             badge={badge}
                             onUpdate={(field, value) => updateBadge(badge.id, field, value)}
+                            onOpenImageModal={() => setActiveImageBadge(badge)}
+                            onRevertImage={() => revertBadgeImage(badge.id)}
                             onRemove={() => setDeleteBadgeId(badge.id)}
                         />
                     ))
@@ -88,6 +124,22 @@ export function TrainerBadges() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {activeImageBadge && (
+                <BadgeImageModal
+                    badge={activeImageBadge}
+                    isOpen={Boolean(activeImageBadge)}
+                    onClose={() => setActiveImageBadge(null)}
+                    onSelectImage={(url) => {
+                        updateBadge(activeImageBadge.id, 'imageUrl', url);
+                        setActiveImageBadge(null);
+                    }}
+                    onClearImage={() => {
+                        revertBadgeImage(activeImageBadge.id);
+                        setActiveImageBadge(null);
+                    }}
+                />
             )}
         </CollapsingSection>
     );

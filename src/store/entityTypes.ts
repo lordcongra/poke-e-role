@@ -66,6 +66,7 @@ export interface Badge {
     id: string;
     name: string;
     emoji: string;
+    imageUrl?: string;
 }
 
 export interface Trackers {
