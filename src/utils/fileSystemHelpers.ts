@@ -1,49 +1,83 @@
 import OBR from '@owlbear-rodeo/sdk';
 import { flattenStateToMetadata } from './stateMapper';
-import { STATS_META_ID } from './graphicsManager';
 import type { CharacterState } from '../store/storeTypes';
+
+/**
+ * Safely downloads a Blob by creating an object URL, triggering the download,
+ * and delaying revocation and DOM cleanup.
+ *
+ * NOTE: In Chromium-based browsers (Microsoft Edge, Chrome), downloads are initiated
+ * asynchronously. Calling URL.revokeObjectURL immediately after click() will revoke the
+ * blob URL before the browser's download manager can read it, silently dropping the download.
+ * Delaying revocation ensures all browsers have time to process the request.
+ */
+export const downloadBlob = (blob: Blob, filename: string): void => {
+    const url = URL.createObjectURL(blob);
+    const linkElement = document.createElement('a');
+    linkElement.href = url;
+    linkElement.download = filename;
+    linkElement.target = '_self';
+    linkElement.style.display = 'none';
+
+    document.body.appendChild(linkElement);
+    linkElement.click();
+
+    setTimeout(() => {
+        try {
+            if (linkElement.parentNode) {
+                linkElement.parentNode.removeChild(linkElement);
+            }
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.warn('[fileSystemHelpers] Failed to clean up blob URL:', error);
+        }
+    }, 2000);
+};
+
+/**
+ * Serializes and triggers a formatted JSON file download.
+ */
+export const downloadJson = (data: unknown, filename: string): void => {
+    const dataString = JSON.stringify(data, null, 2);
+    const blob = new Blob([dataString], { type: 'application/json' });
+    downloadBlob(blob, filename);
+};
 
 /**
  * Handles generating and downloading a complete JSON representation
  * of the character token metadata or standalone state.
  */
-export const exportCharacterData = async (
-    state: CharacterState,
-    isStandaloneMode: boolean,
-    isObrReady: boolean
-): Promise<void> => {
+export const exportCharacterData = (state: CharacterState, isStandaloneMode: boolean, isObrReady: boolean): void => {
     try {
-        let exportData: Record<string, unknown> = {};
-
-        if (isStandaloneMode) {
-            exportData = flattenStateToMetadata(state);
-        } else {
+        if (!isStandaloneMode) {
             if (!state.tokenId || !OBR.isAvailable || !isObrReady) {
-                if (OBR.isAvailable && isObrReady) OBR.notification.show('Please select a token to export.', 'WARNING');
+                if (OBR.isAvailable && isObrReady) {
+                    OBR.notification.show('Please select a token to export.', 'WARNING');
+                }
                 return;
             }
-            const items = await OBR.scene.items.getItems([state.tokenId]);
-            if (items.length === 0) return;
-            exportData = (items[0].metadata[STATS_META_ID] as Record<string, unknown>) || {};
+        } else {
+            if (!state.tokenId) {
+                alert('Please select a character to export.');
+                return;
+            }
         }
 
-        const dataString = JSON.stringify(exportData, null, 2);
-        const blob = new Blob([dataString], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const linkElement = document.createElement('a');
-
+        const exportData = flattenStateToMetadata(state);
         const name = state.identity.nickname || state.identity.species || 'character';
-        linkElement.href = url;
-        linkElement.download = `${name.replace(/\s+/g, '_')}_pokerole.json`;
+        const filename = `${name.replace(/\s+/g, '_')}_pokerole.json`;
 
-        document.body.appendChild(linkElement);
-        linkElement.click();
-        document.body.removeChild(linkElement);
-        URL.revokeObjectURL(url);
+        downloadJson(exportData, filename);
+
+        if (!isStandaloneMode && OBR.isAvailable && isObrReady) {
+            OBR.notification.show(`Exported ${name} successfully.`, 'SUCCESS');
+        }
     } catch (error) {
         console.error('[fileSystemHelpers] Export failed:', error);
-        if (OBR.isAvailable && isObrReady) {
+        if (!isStandaloneMode && OBR.isAvailable && isObrReady) {
             OBR.notification.show('Failed to export data.', 'ERROR');
+        } else {
+            alert('Failed to export character data.');
         }
     }
 };

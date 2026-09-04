@@ -4,6 +4,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomStatus } from '../../store/storeTypes';
 import { HomebrewStatusCard } from './HomebrewStatusCard';
 import { isStandaloneMode } from '../../utils/storageAdapter';
+import { downloadJson } from '../../utils/fileSystemHelpers';
 import { Plus, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 
@@ -29,16 +30,7 @@ export function HomebrewStatuses() {
     );
 
     const handleExport = () => {
-        const dataString = JSON.stringify(visibleStatuses, null, 2);
-        const blob = new Blob([dataString], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const linkElement = document.createElement('a');
-        linkElement.href = url;
-        linkElement.download = 'pokerole_custom_statuses.json';
-        document.body.appendChild(linkElement);
-        linkElement.click();
-        document.body.removeChild(linkElement);
-        URL.revokeObjectURL(url);
+        downloadJson(visibleStatuses, 'pokerole_custom_statuses.json');
     };
 
     const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {

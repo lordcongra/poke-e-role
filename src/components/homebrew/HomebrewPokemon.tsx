@@ -6,6 +6,7 @@ import { ALL_ABILITIES, ALL_MOVES } from '../../utils/api';
 import { HomebrewPokemonCard } from './HomebrewPokemonCard';
 import { POKEMON_TYPES, TYPE_COLORS } from '../../data/constants';
 import { isStandaloneMode } from '../../utils/storageAdapter';
+import { downloadJson } from '../../utils/fileSystemHelpers';
 import { Plus, BookOpen, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import { HomebrewPullPokemonModal } from './HomebrewPullPokemonModal';
 import './Homebrew.css';
@@ -56,16 +57,7 @@ export function HomebrewPokemon() {
     );
 
     const handleExport = () => {
-        const dataString = JSON.stringify(visiblePokemon, null, 2);
-        const blob = new Blob([dataString], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const linkElement = document.createElement('a');
-        linkElement.href = url;
-        linkElement.download = 'pokerole_custom_pokemon.json';
-        document.body.appendChild(linkElement);
-        linkElement.click();
-        document.body.removeChild(linkElement);
-        URL.revokeObjectURL(url);
+        downloadJson(visiblePokemon, 'pokerole_custom_pokemon.json');
     };
 
     const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {

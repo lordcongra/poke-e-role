@@ -4,6 +4,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomForm } from '../../store/storeTypes';
 import { HomebrewFormCard } from './HomebrewFormCard';
 import { isStandaloneMode } from '../../utils/storageAdapter';
+import { downloadJson } from '../../utils/fileSystemHelpers';
 import { Plus, Sparkles, Shield, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 
@@ -27,16 +28,7 @@ export function HomebrewForms() {
     const filteredForms = visibleForms.filter((form) => form.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const handleExport = () => {
-        const dataString = JSON.stringify(visibleForms, null, 2);
-        const blob = new Blob([dataString], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const linkElement = document.createElement('a');
-        linkElement.href = url;
-        linkElement.download = 'pokerole_custom_forms.json';
-        document.body.appendChild(linkElement);
-        linkElement.click();
-        document.body.removeChild(linkElement);
-        URL.revokeObjectURL(url);
+        downloadJson(visibleForms, 'pokerole_custom_forms.json');
     };
 
     const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {

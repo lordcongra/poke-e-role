@@ -5,6 +5,7 @@ import type { CustomMove } from '../../store/storeTypes';
 import { HomebrewMoveCard } from './HomebrewMoveCard';
 import { POKEMON_TYPES, TYPE_COLORS } from '../../data/constants';
 import { isStandaloneMode } from '../../utils/storageAdapter';
+import { downloadJson } from '../../utils/fileSystemHelpers';
 import { Plus, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 
@@ -36,16 +37,7 @@ export function HomebrewMoves() {
     const filteredMoves = visibleMoves.filter((move) => move.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const handleExport = () => {
-        const dataString = JSON.stringify(visibleMoves, null, 2);
-        const blob = new Blob([dataString], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const linkElement = document.createElement('a');
-        linkElement.href = url;
-        linkElement.download = 'pokerole_custom_moves.json';
-        document.body.appendChild(linkElement);
-        linkElement.click();
-        document.body.removeChild(linkElement);
-        URL.revokeObjectURL(url);
+        downloadJson(visibleMoves, 'pokerole_custom_moves.json');
     };
 
     const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {

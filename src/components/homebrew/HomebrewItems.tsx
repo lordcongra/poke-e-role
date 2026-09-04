@@ -5,6 +5,7 @@ import { loadLocalDataset } from '../../utils/api';
 import type { CustomItem } from '../../store/storeTypes';
 import { HomebrewItemCard } from './HomebrewItemCard';
 import { isStandaloneMode } from '../../utils/storageAdapter';
+import { downloadJson } from '../../utils/fileSystemHelpers';
 import { Plus, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 
@@ -41,16 +42,7 @@ export function HomebrewItems() {
     const filteredItems = visibleItems.filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const handleExport = () => {
-        const dataString = JSON.stringify(visibleItems, null, 2);
-        const blob = new Blob([dataString], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const linkElement = document.createElement('a');
-        linkElement.href = url;
-        linkElement.download = 'pokerole_custom_items.json';
-        document.body.appendChild(linkElement);
-        linkElement.click();
-        document.body.removeChild(linkElement);
-        URL.revokeObjectURL(url);
+        downloadJson(visibleItems, 'pokerole_custom_items.json');
     };
 
     const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {

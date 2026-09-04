@@ -18,6 +18,7 @@ import type {
     CustomStatus
 } from '../../store/storeTypes';
 import { isStandaloneMode } from '../../utils/storageAdapter';
+import { downloadJson } from '../../utils/fileSystemHelpers';
 import { Hammer, X, HardDrive, AlertTriangle, Radio, Save, FolderOpen } from 'lucide-react';
 import './Homebrew.css';
 
@@ -98,16 +99,7 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
             customForms: state.roomCustomForms,
             customStatuses: state.roomCustomStatuses
         };
-        const dataStr = JSON.stringify(exportData, null, 2);
-        const blob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'pokerole_homebrew_backup.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        downloadJson(exportData, 'pokerole_homebrew_backup.json');
 
         markHomebrewBackedUp();
     };

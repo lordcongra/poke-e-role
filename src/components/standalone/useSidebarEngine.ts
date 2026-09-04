@@ -4,6 +4,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { setActiveTokenId } from '../../utils/obr';
 import { fetchPokemonData } from '../../utils/api';
 import { imageManager } from '../../utils/imageManager';
+import { downloadJson } from '../../utils/fileSystemHelpers';
 
 export type TreeItem = {
     id: string;
@@ -468,15 +469,7 @@ export function useSidebarEngine() {
             const flds = await storageAdapter.getFolders();
             const backup = { type: 'pokerole-master-backup', version: 1, characters: chars, folders: flds };
 
-            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `PokeRole_Master_Backup_${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            downloadJson(backup, `PokeRole_Master_Backup_${new Date().toISOString().split('T')[0]}.json`);
         } catch (error) {
             console.error('[SidebarEngine] Failed to create master backup', error);
             alert('Failed to generate Master Backup.');

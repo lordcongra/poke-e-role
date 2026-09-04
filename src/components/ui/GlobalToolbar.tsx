@@ -456,7 +456,9 @@ export function GlobalToolbar() {
                         <div className="global-toolbar__icon-actions">
                             <button
                                 type="button"
-                                onClick={() => exportCharacterData(store, isStandaloneMode, isObrReady)}
+                                onClick={() =>
+                                    exportCharacterData(useCharacterStore.getState(), isStandaloneMode, isObrReady)
+                                }
                                 className="action-button action-button--dark global-toolbar__action-mini-btn"
                                 title="Export Character (Download JSON)"
                                 aria-label="Export Character JSON"
