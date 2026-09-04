@@ -15,10 +15,20 @@ export interface StandaloneCombatant {
 }
 
 // Helper to push roll entries to local storage for the Standalone Roll Log widget
-export function addRollLogEntry(label: string, result: string, icon: string, player: string) {
+export function addRollLogEntry(
+    label: string,
+    result: string,
+    icon: string,
+    player: string,
+    characterName?: string,
+    tokenId?: string
+) {
+    const activeTokenId = tokenId || useCharacterStore.getState().tokenId || undefined;
     const rollLogData = {
         id: crypto.randomUUID(),
         player,
+        characterName: characterName || player,
+        tokenId: activeTokenId,
         label,
         result,
         icon: icon || `${import.meta.env.BASE_URL || '/'}pokeball.svg`
@@ -27,6 +37,7 @@ export function addRollLogEntry(label: string, result: string, icon: string, pla
         const stored = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
         const existing = Array.isArray(stored) ? stored : [];
         localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData, ...existing].slice(0, 50)));
+        window.dispatchEvent(new CustomEvent('pkr-roll-log-event', { detail: rollLogData }));
         window.dispatchEvent(new Event('pkr-roll-log-update'));
         window.dispatchEvent(new Event('storage'));
     } catch (e) {
@@ -225,6 +236,8 @@ export async function broadcastInfo(title: string, description: string) {
         const rollLogData = {
             id: crypto.randomUUID(),
             player: obrPlayerName,
+            characterName: playerName,
+            tokenId: state.tokenId || undefined,
             playerId: playerId,
             label: `📢 ${title}`,
             result: description,
@@ -241,7 +254,8 @@ export async function broadcastInfo(title: string, description: string) {
         }
         localStorage.setItem('pkr_roll_log', JSON.stringify([rollLogData, ...existingLog].slice(0, 50)));
 
-        await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-sync', rollLogData, { destination: 'REMOTE' });
+        window.dispatchEvent(new CustomEvent('pkr-roll-log-event', { detail: rollLogData }));
+        await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-sync', rollLogData, { destination: 'ALL' });
         await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-update', {}, { destination: 'LOCAL' });
 
         const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
@@ -446,7 +460,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
         // --- STANDALONE OVERRIDE: Log directly to Roll Log widget ---
         if (isStandaloneMode || !OBR.isAvailable) {
             const compiledMessage = await executeStateIntercepts('');
-            addRollLogEntry(finalLabel, compiledMessage, icon, playerName);
+            addRollLogEntry(finalLabel, compiledMessage, icon, playerName, playerName);
             return;
         }
 
@@ -504,6 +518,8 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
             const rollLogData = {
                 id: crypto.randomUUID(),
                 player: obrPlayerName,
+                characterName: playerName,
+                tokenId: state.tokenId || undefined,
                 playerId: playerId,
                 label: finalLabel,
                 result: finalCompiledMsg,
@@ -529,8 +545,9 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 }
             }
 
+            window.dispatchEvent(new CustomEvent('pkr-roll-log-event', { detail: rollLogData }));
             await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-sync', rollLogData, {
-                destination: 'REMOTE'
+                destination: 'ALL'
             });
             await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-update', {}, { destination: 'LOCAL' });
 

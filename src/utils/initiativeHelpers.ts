@@ -40,6 +40,24 @@ export function extractTokenImage(meta: Record<string, unknown> | null | undefin
     if (typeof meta['token-image-url'] === 'string' && meta['token-image-url']) return meta['token-image-url'];
     if (typeof meta['tokenImageUrl'] === 'string' && meta['tokenImageUrl']) return meta['tokenImageUrl'];
 
+    // Check OBR Image object directly
+    const itemImage = meta['image'] as { url?: string } | undefined;
+    if (itemImage && typeof itemImage.url === 'string' && itemImage.url) {
+        return itemImage.url;
+    }
+
+    const nestedStats = (meta['pokerole-extension/stats'] || meta['pokerole-pmd-extension/stats']) as
+        | Record<string, unknown>
+        | undefined;
+    if (nestedStats) {
+        if (typeof nestedStats['token-image-url'] === 'string' && nestedStats['token-image-url']) {
+            return nestedStats['token-image-url'];
+        }
+        if (typeof nestedStats['tokenImageUrl'] === 'string' && nestedStats['tokenImageUrl']) {
+            return nestedStats['tokenImageUrl'];
+        }
+    }
+
     const stateObj = (meta.state || meta) as Record<string, unknown>;
     if (stateObj) {
         const identity = stateObj.identity as Record<string, unknown> | undefined;
@@ -71,34 +89,49 @@ export function extractCharacterName(
 ): string {
     if (!meta) return fallbackName;
 
-    // 1. Direct nickname in flat metadata
+    const nestedStats = (meta['pokerole-extension/stats'] || meta['pokerole-pmd-extension/stats']) as
+        | Record<string, unknown>
+        | undefined;
+    const stateObj = (meta.state || meta) as Record<string, unknown>;
+    const identity = stateObj?.identity as Record<string, unknown> | undefined;
+
+    // 1. Priority: Nickname
     if (typeof meta['nickname'] === 'string' && meta['nickname'].trim()) {
         return meta['nickname'].trim();
     }
-
-    // 2. Nickname in nested 'pokerole-pmd-extension/stats' or 'state'
-    const nestedStats = meta['pokerole-pmd-extension/stats'] as Record<string, unknown> | undefined;
     if (nestedStats && typeof nestedStats['nickname'] === 'string' && nestedStats['nickname'].trim()) {
         return nestedStats['nickname'].trim();
     }
-
-    const stateObj = (meta.state || meta) as Record<string, unknown>;
-    if (stateObj) {
-        const identity = stateObj.identity as Record<string, unknown> | undefined;
-        if (identity && typeof identity.nickname === 'string' && identity.nickname.trim()) {
-            return identity.nickname.trim();
-        }
-        if (typeof stateObj['nickname'] === 'string' && stateObj['nickname'].trim()) {
-            return stateObj['nickname'].trim();
-        }
-        if (identity && typeof identity.name === 'string' && identity.name.trim()) {
-            return identity.name.trim();
-        }
+    if (identity && typeof identity.nickname === 'string' && identity.nickname.trim()) {
+        return identity.nickname.trim();
+    }
+    if (typeof stateObj['nickname'] === 'string' && stateObj['nickname'].trim()) {
+        return stateObj['nickname'].trim();
     }
 
-    // 3. Flat 'name' in metadata
+    // 2. Secondary Priority: Species (Pokémon default display name when no nickname is assigned)
+    if (typeof meta['species'] === 'string' && meta['species'].trim()) {
+        return meta['species'].trim();
+    }
+    if (nestedStats && typeof nestedStats['species'] === 'string' && nestedStats['species'].trim()) {
+        return nestedStats['species'].trim();
+    }
+    if (identity && typeof identity.species === 'string' && identity.species.trim()) {
+        return identity.species.trim();
+    }
+    if (typeof stateObj['species'] === 'string' && stateObj['species'].trim()) {
+        return stateObj['species'].trim();
+    }
+
+    // 3. Tertiary: Generic character name in identity or flat metadata
+    if (identity && typeof identity.name === 'string' && identity.name.trim()) {
+        return identity.name.trim();
+    }
     if (typeof meta['name'] === 'string' && meta['name'].trim()) {
         return meta['name'].trim();
+    }
+    if (nestedStats && typeof nestedStats['name'] === 'string' && nestedStats['name'].trim()) {
+        return nestedStats['name'].trim();
     }
 
     // 4. Sledgehammer fallback for deeply nested JSON
@@ -106,11 +139,14 @@ export function extractCharacterName(
         const str = JSON.stringify(meta);
         const matchNick = str.match(/"nickname":"([^"]+)"/);
         if (matchNick && matchNick[1]?.trim()) return matchNick[1].trim();
+
+        const matchSpecies = str.match(/"species":"([^"]+)"/);
+        if (matchSpecies && matchSpecies[1]?.trim()) return matchSpecies[1].trim();
     } catch (e) {
-        console.warn('[InitiativeHelper] Failed to parse nickname fallback from meta JSON:', e);
+        console.warn('[InitiativeHelper] Failed to parse nickname/species fallback from meta JSON:', e);
     }
 
-    // 5. Fallback name (e.g. token / item name)
+    // 5. Fallback name (e.g. token / item image name)
     return fallbackName;
 }
 

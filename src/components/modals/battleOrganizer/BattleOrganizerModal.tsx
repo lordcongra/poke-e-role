@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useBattleOrganizer } from './useBattleOrganizer';
 import { BattlefieldPitch } from './BattlefieldPitch';
 import { RemainingRoundsBoxes } from './RemainingRoundsBoxes';
@@ -21,8 +21,18 @@ import {
     HelpCircle,
     ArrowUpDown,
     ChevronDown,
-    ExternalLink
+    Settings,
+    Swords
 } from 'lucide-react';
+import { BattleOrganizerSettingsModal } from './BattleOrganizerSettingsModal';
+import { CombatantSheetModal } from './CombatantSheetModal';
+import { InModalRollLog } from './InModalRollLog';
+import {
+    getBattleOrganizerSettings,
+    saveBattleOrganizerSettings,
+    subscribeBattleOrganizerSettings
+} from './battleOrganizerSettingsHelper';
+import type { BattleOrganizerSettings, CombatantRowData } from '../../../types/battleOrganizerTypes';
 import './BattleOrganizerModal.css';
 
 interface BattleOrganizerModalProps {
@@ -39,6 +49,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
         activeRoundIndex,
         pullFromInitiative,
         syncToSheets,
+        openSheet,
         addRound,
         duplicateRound,
         deleteRound,
@@ -59,6 +70,96 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
         updateRoundNumber,
         clearAll
     } = useBattleOrganizer();
+
+    const [boSettings, setBoSettings] = useState<BattleOrganizerSettings>(() => getBattleOrganizerSettings());
+    const [showSettingsModal, setShowSettingsModal] = useState(false);
+    const [activeSheetCombatant, setActiveSheetCombatant] = useState<CombatantRowData | null>(null);
+    const bodyRef = useRef<HTMLDivElement>(null);
+
+    // Lock background scrolling on document body while modal is open
+    useEffect(() => {
+        const prevBodyOverflow = document.body.style.overflow;
+        const prevHtmlOverflow = document.documentElement.style.overflow;
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = prevBodyOverflow;
+            document.documentElement.style.overflow = prevHtmlOverflow;
+        };
+    }, []);
+
+    // Forward wheel scrolls on static bars (header/toolbar/footer) directly to the scrollable body
+    const handleStaticWheel = (e: React.WheelEvent) => {
+        if (bodyRef.current) {
+            bodyRef.current.scrollTop += e.deltaY;
+        }
+    };
+
+    const [showObrAdvisory, setShowObrAdvisory] = useState(() => {
+        try {
+            return localStorage.getItem('pkr_bo_advisory_dismissed') !== 'true';
+        } catch {
+            return true;
+        }
+    });
+
+    const handleDismissAdvisory = () => {
+        setShowObrAdvisory(false);
+        try {
+            localStorage.setItem('pkr_bo_advisory_dismissed', 'true');
+        } catch (e) {
+            console.warn('[BattleOrganizerModal] Failed to persist advisory dismissal:', e);
+        }
+    };
+
+    const handleOpenCombatantSheet = (combatant: CombatantRowData) => {
+        setActiveSheetCombatant(combatant);
+        openSheet(combatant).catch((e) => {
+            console.warn('[BattleOrganizerModal] Background token select error:', e);
+        });
+    };
+
+    const handleMarkActionFromRoll = (combatantId: string, moveName: string, status: 'success' | 'failed') => {
+        const currentCombatants = currentRound?.combatants || [];
+        const combatant = currentCombatants.find((c) => c.id === combatantId);
+        if (!combatant) return;
+
+        let targetIdx = combatant.actions.findIndex(
+            (a) => a.text.trim().toLowerCase() === moveName.trim().toLowerCase()
+        );
+        if (targetIdx === -1) {
+            targetIdx = combatant.actions.findIndex((a) => !a.text.trim());
+        }
+        if (targetIdx === -1) targetIdx = 0;
+
+        const newActions = [...combatant.actions] as CombatantRowData['actions'];
+        newActions[targetIdx] = {
+            text: newActions[targetIdx].text.trim() || moveName,
+            status: status
+        };
+
+        updateCombatant({
+            ...combatant,
+            actions: newActions
+        });
+    };
+
+    useEffect(() => {
+        const unsub = subscribeBattleOrganizerSettings(setBoSettings);
+        return () => unsub();
+    }, []);
+
+    const handleQuickToggleBattlefield = () => {
+        if (boSettings.showBattlefield && !boSettings.showRoundTracker) return;
+        const next = saveBattleOrganizerSettings({ showBattlefield: !boSettings.showBattlefield });
+        setBoSettings(next);
+    };
+
+    const handleQuickToggleRoundTracker = () => {
+        if (boSettings.showRoundTracker && !boSettings.showBattlefield) return;
+        const next = saveBattleOrganizerSettings({ showRoundTracker: !boSettings.showRoundTracker });
+        setBoSettings(next);
+    };
 
     const [showHelp, setShowHelp] = useState(false);
     const [confirmClear, setConfirmClear] = useState(false);
@@ -127,19 +228,18 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
         updateFoeSide('forceFields', fields);
     };
 
-    const handlePopoutWindow = () => {
-        const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-        const themeToPass = document.body.getAttribute('data-theme') || 'dark';
-        const url = `${baseUrl}/battle-organizer.html?theme=${themeToPass}`;
-        window.open(url, 'PokeroleBattleOrganizer', 'width=1320,height=860,resizable=yes,scrollbars=yes');
-        onClose();
-    };
+    const contentModeClass =
+        boSettings.showBattlefield && !boSettings.showRoundTracker
+            ? 'bo-modal__content--battlefield-only'
+            : !boSettings.showBattlefield && boSettings.showRoundTracker
+              ? 'bo-modal__content--rounds-only'
+              : '';
 
     return (
         <div className={`bo-modal__overlay ${isPopout ? 'bo-modal__overlay--popout' : ''}`}>
-            <div className="bo-modal__content">
+            <div className={`bo-modal__content ${contentModeClass}`}>
                 {/* Modal Top Header */}
-                <div className="bo-modal__header">
+                <div className="bo-modal__header" onWheel={handleStaticWheel}>
                     <div className="bo-modal__header-left">
                         <span className="bo-modal__icon">
                             <Layers size={22} color="var(--primary)" />
@@ -148,18 +248,17 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                     </div>
 
                     <div className="bo-modal__header-right">
-                        {!isPopout && (
-                            <button
-                                type="button"
-                                className="action-button action-button--dark bo-header-collapse-btn"
-                                onClick={handlePopoutWindow}
-                                title="Open Battle Organizer in a Separate Window"
-                                aria-label="Open Battle Organizer in a Separate Window"
-                            >
-                                <ExternalLink size={14} color="var(--primary)" />
-                                <span className="bo-header-collapse-label">Pop Out</span>
-                            </button>
-                        )}
+
+                        <button
+                            type="button"
+                            className="action-button action-button--dark bo-header-collapse-btn"
+                            onClick={() => setShowSettingsModal(true)}
+                            title="Battle Organizer Settings"
+                            aria-label="Battle Organizer Settings"
+                        >
+                            <Settings size={14} color="var(--primary)" />
+                            <span className="bo-header-collapse-label">Settings</span>
+                        </button>
 
                         <button
                             type="button"
@@ -194,7 +293,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
 
                 {/* Collapsible Header Action Bar */}
                 {isHeaderToolsOpen && (
-                    <div className="bo-modal__header-toolbar">
+                    <div className="bo-modal__header-toolbar" onWheel={handleStaticWheel}>
                         <button
                             type="button"
                             className="action-button action-button--primary bo-header-btn"
@@ -230,12 +329,63 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                         >
                             <HelpCircle size={14} />
                         </button>
+
+                        {/* Quick View Toggles */}
+                        <div className="bo-header-toggle-group">
+                            <button
+                                type="button"
+                                className={`action-button bo-header-view-toggle ${boSettings.showBattlefield ? 'action-button--primary' : 'action-button--dark'}`}
+                                onClick={handleQuickToggleBattlefield}
+                                title={
+                                    boSettings.showBattlefield
+                                        ? 'Hide Battlefield section'
+                                        : 'Show Battlefield section'
+                                }
+                                disabled={boSettings.showBattlefield && !boSettings.showRoundTracker}
+                            >
+                                <Mountain size={13} /> Battlefield
+                            </button>
+                            <button
+                                type="button"
+                                className={`action-button bo-header-view-toggle ${boSettings.showRoundTracker ? 'action-button--primary' : 'action-button--dark'}`}
+                                onClick={handleQuickToggleRoundTracker}
+                                title={
+                                    boSettings.showRoundTracker
+                                        ? 'Hide Round Tracker section'
+                                        : 'Show Round Tracker section'
+                                }
+                                disabled={boSettings.showRoundTracker && !boSettings.showBattlefield}
+                            >
+                                <Swords size={13} /> Rounds
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Owlbear Rodeo Dual-Tab Advisory Banner */}
+                {showObrAdvisory && (
+                    <div className="bo-advisory-banner" onWheel={handleStaticWheel}>
+                        <div className="bo-advisory-banner__content text-subtext">
+                            <span className="bo-advisory-banner__icon">💡</span>
+                            <span>
+                                <strong>Owlbear Rodeo Pro Tip:</strong> 3D dice and the canvas roll log render behind modal dialogs. For live rolling, we recommend keeping this room open in a <strong>second browser tab</strong>, or use the floating <strong>Roll Log widget</strong> below to check rolls and mark hits/misses in real time!
+                            </span>
+                        </div>
+                        <button
+                            type="button"
+                            className="bo-advisory-banner__close"
+                            onClick={handleDismissAdvisory}
+                            title="Dismiss tip"
+                            aria-label="Dismiss tip"
+                        >
+                            <X size={14} />
+                        </button>
                     </div>
                 )}
 
                 {/* Optional Help Banner */}
                 {showHelp && (
-                    <div className="bo-help-banner">
+                    <div className="bo-help-banner" onWheel={handleStaticWheel}>
                         <div className="bo-help-banner__content text-subtext">
                             <strong>Battle Organizer Tips:</strong>
                             <ul>
@@ -251,6 +401,9 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                                 <li>
                                     Click <strong>✓</strong> on an action slot to mark it completed/used, or{' '}
                                     <strong>✗</strong> for clash/evade/failed.
+                                </li>
+                                <li>
+                                    <strong>Owlbear Rodeo Multi-Tab:</strong> In Owlbear Rodeo, open this room in a second browser tab to view 3D dice rolls and the live battle map side-by-side with this organizer!
                                 </li>
                                 <li>
                                     You can replicate rounds any number of times with <strong>Add Round</strong> or{' '}
@@ -269,13 +422,14 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                 )}
 
                 {/* Modal Scrollable Body */}
-                <div className="bo-modal__body">
+                <div className="bo-modal__body" ref={bodyRef}>
                     {/* ========================================= */}
                     {/* CARD 1: BATTLEFIELD                       */}
                     {/* ========================================= */}
-                    <div
-                        className={`bo-section-card bo-section-card--battlefield ${!isBattlefieldOpen ? 'bo-section-card--collapsed' : ''}`}
-                    >
+                    {boSettings.showBattlefield && (
+                        <div
+                            className={`bo-section-card bo-section-card--battlefield ${!isBattlefieldOpen ? 'bo-section-card--collapsed' : ''}`}
+                        >
                         {/* Header Pill */}
                         <div
                             className="bo-pill-header bo-pill-header--center bo-pill-header--toggle"
@@ -595,11 +749,13 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                             </>
                         )}
                     </div>
+                    )}
 
                     {/* ========================================= */}
                     {/* CARD 2: REPLICABLE ROUND SECTIONS         */}
                     {/* ========================================= */}
-                    <div className="bo-section-card bo-section-card--round">
+                    {boSettings.showRoundTracker && (
+                        <div className="bo-section-card bo-section-card--round">
                         {/* Round Navigation Bar */}
                         <div className="bo-round-nav-bar">
                             <div className="bo-round-tabs">
@@ -724,6 +880,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                                             onUpdate={updateCombatant}
                                             onDelete={deleteCombatant}
                                             onRollInitiative={rollCombatantInitiative}
+                                            onOpenSheet={handleOpenCombatantSheet}
                                         />
                                     ))}
                                 </tbody>
@@ -753,10 +910,11 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                             />
                         </div>
                     </div>
+                    )}
                 </div>
 
                 {/* Modal Footer */}
-                <div className="bo-modal__footer">
+                <div className="bo-modal__footer" onWheel={handleStaticWheel}>
                     <div className="bo-modal__footer-left">
                         {confirmClear ? (
                             <div className="bo-confirm-clear">
@@ -801,6 +959,26 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                         </button>
                     </div>
                 </div>
+
+                {showSettingsModal && (
+                    <BattleOrganizerSettingsModal onClose={() => setShowSettingsModal(false)} />
+                )}
+
+                {activeSheetCombatant && (
+                    <CombatantSheetModal
+                        combatant={activeSheetCombatant}
+                        allCombatants={currentRound?.combatants || []}
+                        onSelectCombatant={(c) => setActiveSheetCombatant(c)}
+                        onClose={() => setActiveSheetCombatant(null)}
+                        onMarkAction={handleMarkActionFromRoll}
+                    />
+                )}
+
+                {/* Built-in live Roll Log display with quick action marking */}
+                <InModalRollLog
+                    combatants={currentRound?.combatants || []}
+                    onMarkAction={handleMarkActionFromRoll}
+                />
             </div>
         </div>
     );

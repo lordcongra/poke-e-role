@@ -59,3 +59,12 @@ export interface BattleOrganizerState {
     rounds: BattleRoundData[];
     activeRoundIndex: number;
 }
+
+export type BattleOrganizerWindowMode = 'popover' | 'modal' | 'popout';
+
+export interface BattleOrganizerSettings {
+    showBattlefield: boolean;
+    showRoundTracker: boolean;
+    windowMode?: BattleOrganizerWindowMode;
+    autoSyncActions: boolean;
+}

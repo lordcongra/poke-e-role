@@ -4,7 +4,7 @@ import { isStandaloneMode } from '../../../utils/storageAdapter';
 import { imageManager } from '../../../utils/imageManager';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { STATUS_OPTIONS } from '../../../data/constants';
-import { Trash2, Dices, Shield, Swords, User, Skull, X } from 'lucide-react';
+import { Trash2, Dices, Shield, Swords, User, Skull, X, FileText } from 'lucide-react';
 
 interface CombatantRowProps {
     combatant: CombatantRowData;
@@ -12,9 +12,17 @@ interface CombatantRowProps {
     onUpdate: (updated: CombatantRowData) => void;
     onDelete: (id: string) => void;
     onRollInitiative?: (id: string) => void;
+    onOpenSheet?: (combatant: CombatantRowData) => void;
 }
 
-export function CombatantRow({ combatant, index, onUpdate, onDelete, onRollInitiative }: CombatantRowProps) {
+export function CombatantRow({
+    combatant,
+    index,
+    onUpdate,
+    onDelete,
+    onRollInitiative,
+    onOpenSheet
+}: CombatantRowProps) {
     const [resolvedImage, setResolvedImage] = useState<string>('');
     const customStatuses = useCharacterStore((state) => state.roomCustomStatuses || []);
 
@@ -211,7 +219,18 @@ export function CombatantRow({ combatant, index, onUpdate, onDelete, onRollIniti
                         {combatant.isPlayerSide ? 'P' : 'F'}
                     </button>
 
-                    <div className="bo-avatar-thumb">
+                    <div
+                        className={`bo-avatar-thumb ${onOpenSheet ? 'bo-avatar-thumb--clickable' : ''}`}
+                        onClick={() => onOpenSheet?.(combatant)}
+                        title={onOpenSheet ? `Open sheet for ${combatant.name || 'combatant'}` : undefined}
+                        role={onOpenSheet ? 'button' : undefined}
+                        tabIndex={onOpenSheet ? 0 : undefined}
+                        onKeyDown={(e) => {
+                            if (onOpenSheet && (e.key === 'Enter' || e.key === ' ')) {
+                                onOpenSheet(combatant);
+                            }
+                        }}
+                    >
                         {resolvedImage ? (
                             <img src={resolvedImage} alt={combatant.name} className="bo-avatar-img" />
                         ) : (
@@ -375,6 +394,17 @@ export function CombatantRow({ combatant, index, onUpdate, onDelete, onRollIniti
                     >
                         <Swords size={12} />
                     </button>
+                    {onOpenSheet && (
+                        <button
+                            type="button"
+                            className="bo-reaction-toggle bo-sheet-toggle"
+                            onClick={() => onOpenSheet(combatant)}
+                            title={`Open Character Sheet for ${combatant.name || 'combatant'}`}
+                            aria-label={`Open Character Sheet for ${combatant.name || 'combatant'}`}
+                        >
+                            <FileText size={12} />
+                        </button>
+                    )}
                     <button
                         type="button"
                         className="bo-delete-row-btn"

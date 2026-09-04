@@ -2,7 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import OBR, { type Image } from '@owlbear-rodeo/sdk';
 import { isStandaloneMode, storageAdapter } from '../../../utils/storageAdapter';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { extractTokenImage, calculateBaseInitFromCharacterData } from '../../../utils/initiativeHelpers';
+import { setActiveTokenId } from '../../../utils/obr';
+import {
+    extractTokenImage,
+    extractCharacterName,
+    calculateBaseInitFromCharacterData
+} from '../../../utils/initiativeHelpers';
+import { getBattleOrganizerSettings } from './battleOrganizerSettingsHelper';
 import type {
     BattleOrganizerState,
     BattlefieldData,
@@ -205,6 +211,348 @@ export function useBattleOrganizer() {
         };
     }, []);
 
+    // 4. Real-time token metadata sync & Roll Log integration
+    useEffect(() => {
+        const unsubs: Array<() => void> = [];
+
+        // Helper to apply incoming roll to the active round
+        const applyRollToCombatants = (logData: Record<string, unknown>) => {
+            const settings = getBattleOrganizerSettings();
+            if (!settings.autoSyncActions || !logData) return;
+
+            const label = String(logData.label || logData.title || '');
+            const fallbackCharName = String(logData.characterName || logData.player || '');
+            const rollTokenId = String(logData.tokenId || '');
+
+            const clean = label.replace(/^\[PRIVATE\]\s*/i, '').replace(/^[📢🎲💥🩹🍀🎯🛡️❄️]\s*/u, '').trim();
+
+            let charName = fallbackCharName;
+            let moveName = '';
+
+            // Format 1: "{Char} rolled {Move} (Acc)..." or "(Damage)" or "(Attack)"
+            const matchAccDmg = clean.match(/^(.+?)\s+rolled\s+(.+?)\s*\((?:Acc|Damage|Attack)\)/i);
+            if (matchAccDmg) {
+                charName = matchAccDmg[1].trim();
+                moveName = matchAccDmg[2].trim();
+            } else {
+                // Format 2: "{Char} rolled {Move}!"
+                const matchRolled = clean.match(/^(.+?)\s+(?:rolled|used)\s+(.+?)(?:!|\s*\[|$)/i);
+                if (matchRolled) {
+                    charName = matchRolled[1].trim();
+                    moveName = matchRolled[2].trim();
+                } else {
+                    // Format 3: "{Move} (Acc)"
+                    const matchSimple = clean.match(/^(.+?)\s*(?:\(Acc\)|\(Damage\)|\(Attack\))/i);
+                    if (matchSimple) {
+                        moveName = matchSimple[1].trim();
+                    } else if (clean && !clean.includes('!')) {
+                        moveName = clean.split('[')[0].trim();
+                    }
+                }
+            }
+
+            if (!moveName || moveName.match(/^(?:custom dice|a General|Recovery|Check)/i)) {
+                return;
+            }
+
+            updateState((prev) => {
+                const currentRound = prev.rounds[prev.activeRoundIndex];
+                if (!currentRound) return prev;
+
+                let changed = false;
+                const newCombatants = currentRound.combatants.map((c) => {
+                    const isMatch =
+                        (rollTokenId && c.tokenId && rollTokenId === c.tokenId) ||
+                        (charName && c.name.toLowerCase().trim() === charName.toLowerCase().trim()) ||
+                        (c.name.trim() && label.toLowerCase().includes(c.name.toLowerCase().trim()));
+
+                    if (!isMatch) return c;
+
+                    const newActions = [...c.actions] as CombatantRowData['actions'];
+
+                    // Don't duplicate move name if it is already in an action slot (e.g. rolling damage right after accuracy)
+                    const alreadyPresent = newActions.some(
+                        (a) => a.text.trim().toLowerCase() === moveName.toLowerCase().trim()
+                    );
+                    if (alreadyPresent) return c;
+
+                    const targetIdx = newActions.findIndex((a) => !a.text.trim());
+                    if (targetIdx !== -1) {
+                        // Populate the move name, but preserve status (leave up to user to mark hit/miss)
+                        newActions[targetIdx] = {
+                            ...newActions[targetIdx],
+                            text: moveName
+                        };
+                        changed = true;
+                        return {
+                            ...c,
+                            actions: newActions
+                        };
+                    }
+
+                    return c;
+                });
+
+                if (!changed) return prev;
+
+                const updatedRound: BattleRoundData = {
+                    ...currentRound,
+                    combatants: newCombatants
+                };
+                return {
+                    ...prev,
+                    rounds: prev.rounds.map((r, idx) =>
+                        idx === prev.activeRoundIndex ? updatedRound : r
+                    )
+                };
+            });
+        };
+
+        // OBR scene items change listener
+        if (OBR.isAvailable) {
+            OBR.onReady(() => {
+                const unsubItems = OBR.scene.items.onChange((items) => {
+                    const settings = getBattleOrganizerSettings();
+                    if (!settings.autoSyncActions) return;
+
+                    updateState((prev) => {
+                        const currentRound = prev.rounds[prev.activeRoundIndex];
+                        if (!currentRound) return prev;
+
+                        let hasChanges = false;
+                        const newCombatants = currentRound.combatants.map((combatant) => {
+                            const matchingItem = items.find((item) => {
+                                if (combatant.tokenId && item.id === combatant.tokenId) return true;
+                                if (!combatant.tokenId && combatant.name.trim()) {
+                                    const meta = (item.metadata['pokerole-extension/stats'] || item.metadata) as Record<
+                                        string,
+                                        unknown
+                                    >;
+                                    const resolvedName = extractCharacterName(meta, item.name);
+                                    if (resolvedName.toLowerCase().trim() === combatant.name.toLowerCase().trim()) {
+                                        return true;
+                                    }
+                                    if (item.name.toLowerCase().trim() === combatant.name.toLowerCase().trim()) {
+                                        return true;
+                                    }
+                                }
+                                return false;
+                            });
+
+                            if (!matchingItem) return combatant;
+
+                            const meta = (matchingItem.metadata['pokerole-extension/stats'] ||
+                                matchingItem.metadata) as Record<string, unknown>;
+                            if (!meta) return combatant;
+
+                            const resolvedName = extractCharacterName(meta, matchingItem.name);
+                            const imgItem = matchingItem as Image;
+                            const resolvedImg = imgItem.image?.url || extractTokenImage(meta) || combatant.image;
+
+                            let updated = false;
+
+                            let nextName = combatant.name;
+                            if (resolvedName && resolvedName !== combatant.name && resolvedName !== matchingItem.name) {
+                                nextName = resolvedName;
+                                updated = true;
+                            } else if (!combatant.name.trim() && resolvedName) {
+                                nextName = resolvedName;
+                                updated = true;
+                            }
+
+                            let nextImage = combatant.image;
+                            if (resolvedImg && resolvedImg !== combatant.image) {
+                                nextImage = resolvedImg;
+                                updated = true;
+                            }
+
+                            const actionsUsed = Number(meta['actions-used'] || 0);
+                            const evadeUsed =
+                                meta['evasions-used'] === true || meta['evasions-used'] === 'true';
+                            const clashUsed =
+                                meta['clashes-used'] === true || meta['clashes-used'] === 'true';
+
+                            const nextActions = [...combatant.actions] as CombatantRowData['actions'];
+
+                            // Sync reactions and clear statuses only if tracker was reset to 0
+                            if (actionsUsed === 0) {
+                                for (let i = 0; i < 5; i++) {
+                                    if (nextActions[i].status !== 'none') {
+                                        nextActions[i] = { ...nextActions[i], status: 'none' };
+                                        updated = true;
+                                    }
+                                }
+                            }
+
+                            if (combatant.evadeUsed !== evadeUsed || combatant.clashUsed !== clashUsed) {
+                                updated = true;
+                            }
+
+                            if (updated || (!combatant.tokenId && matchingItem.id)) {
+                                hasChanges = true;
+                                return {
+                                    ...combatant,
+                                    name: nextName,
+                                    image: nextImage,
+                                    tokenId: matchingItem.id,
+                                    actions: nextActions,
+                                    evadeUsed,
+                                    clashUsed
+                                };
+                            }
+
+                            return combatant;
+                        });
+
+                        if (!hasChanges) return prev;
+
+                        const updatedRound: BattleRoundData = {
+                            ...currentRound,
+                            combatants: newCombatants
+                        };
+                        return {
+                            ...prev,
+                            rounds: prev.rounds.map((r, idx) =>
+                                idx === prev.activeRoundIndex ? updatedRound : r
+                            )
+                        };
+                    });
+                });
+                unsubs.push(unsubItems);
+
+                // Listen to OBR roll-log-sync broadcast (remote and local)
+                const unsubRollLog = OBR.broadcast.onMessage(
+                    'pokerole-pmd-extension/roll-log-sync',
+                    (event) => applyRollToCombatants(event.data as Record<string, unknown>)
+                );
+                unsubs.push(unsubRollLog);
+            });
+        }
+
+        // Listen to local window roll event (both OBR and Standalone)
+        const handleLocalRollEvent = (e: Event) => {
+            const customEvent = e as CustomEvent<Record<string, unknown>>;
+            if (customEvent.detail) {
+                applyRollToCombatants(customEvent.detail);
+            }
+        };
+        window.addEventListener('pkr-roll-log-event', handleLocalRollEvent);
+        unsubs.push(() => window.removeEventListener('pkr-roll-log-event', handleLocalRollEvent));
+
+        if (isStandaloneMode) {
+            const handleStandaloneChange = async () => {
+                const settings = getBattleOrganizerSettings();
+                if (!settings.autoSyncActions) return;
+
+                const localChars = await storageAdapter.getLocalCharacters();
+
+                updateState((prev) => {
+                    const currentRound = prev.rounds[prev.activeRoundIndex];
+                    if (!currentRound) return prev;
+
+                    let hasChanges = false;
+                    const newCombatants = currentRound.combatants.map((combatant) => {
+                        const matchingChar = localChars.find((c) => {
+                            if (combatant.tokenId && c.id === combatant.tokenId) return true;
+                            if (!combatant.tokenId && combatant.name.trim()) {
+                                const meta = (c.metadata || {}) as Record<string, unknown>;
+                                const resolvedName = extractCharacterName(meta, c.name);
+                                if (resolvedName.toLowerCase().trim() === combatant.name.toLowerCase().trim()) {
+                                    return true;
+                                }
+                                if (c.name.toLowerCase().trim() === combatant.name.toLowerCase().trim()) {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        });
+
+                        if (!matchingChar) return combatant;
+                        const meta = (matchingChar.metadata || {}) as Record<string, unknown>;
+
+                        const resolvedName = extractCharacterName(meta, matchingChar.name);
+                        const resolvedImg = extractTokenImage(meta) || combatant.image;
+
+                        let updated = false;
+
+                        let nextName = combatant.name;
+                        if (resolvedName && resolvedName !== combatant.name) {
+                            nextName = resolvedName;
+                            updated = true;
+                        }
+
+                        let nextImage = combatant.image;
+                        if (resolvedImg && resolvedImg !== combatant.image) {
+                            nextImage = resolvedImg;
+                            updated = true;
+                        }
+
+                        const actionsUsed = Number(meta['actions-used'] || 0);
+                        const evadeUsed =
+                            meta['evasions-used'] === true || meta['evasions-used'] === 'true';
+                        const clashUsed =
+                            meta['clashes-used'] === true || meta['clashes-used'] === 'true';
+
+                        const nextActions = [...combatant.actions] as CombatantRowData['actions'];
+
+                        // Sync reactions and clear statuses only if tracker was reset to 0
+                        if (actionsUsed === 0) {
+                            for (let i = 0; i < 5; i++) {
+                                if (nextActions[i].status !== 'none') {
+                                    nextActions[i] = { ...nextActions[i], status: 'none' };
+                                    updated = true;
+                                }
+                            }
+                        }
+
+                        if (combatant.evadeUsed !== evadeUsed || combatant.clashUsed !== clashUsed) {
+                            updated = true;
+                        }
+
+                        if (updated || (!combatant.tokenId && matchingChar.id)) {
+                            hasChanges = true;
+                            return {
+                                ...combatant,
+                                name: nextName,
+                                image: nextImage,
+                                tokenId: matchingChar.id,
+                                actions: nextActions,
+                                evadeUsed,
+                                clashUsed
+                            };
+                        }
+
+                        return combatant;
+                    });
+
+                    if (!hasChanges) return prev;
+
+                    const updatedRound: BattleRoundData = {
+                        ...currentRound,
+                        combatants: newCombatants
+                    };
+                    return {
+                        ...prev,
+                        rounds: prev.rounds.map((r, idx) =>
+                            idx === prev.activeRoundIndex ? updatedRound : r
+                        )
+                    };
+                });
+            };
+
+            window.addEventListener('pkr-local-data-changed', handleStandaloneChange);
+            window.addEventListener('storage', handleStandaloneChange);
+            unsubs.push(() => {
+                window.removeEventListener('pkr-local-data-changed', handleStandaloneChange);
+                window.removeEventListener('storage', handleStandaloneChange);
+            });
+        }
+
+        return () => {
+            unsubs.forEach((u) => u());
+        };
+    }, [updateState]);
+
     // --- Pull from Initiative / Character Sheets ---
     const pullFromInitiative = useCallback(async () => {
         try {
@@ -275,7 +623,7 @@ export function useBattleOrganizer() {
 
                         const actions = createDefaultActions();
                         for (let i = 0; i < Math.min(5, actionsUsed); i++) {
-                            actions[i] = { text: actions[i].text, status: 'success' };
+                            actions[i] = { text: actions[i].text, status: 'none' };
                         }
 
                         const baseInitVal = calculateBaseInitFromCharacterData(
@@ -290,18 +638,10 @@ export function useBattleOrganizer() {
                         }
                         const isFainted = statusText.toLowerCase().includes('faint');
 
-                        const charNickname =
-                            typeof meta['nickname'] === 'string' && meta['nickname'].trim()
-                                ? meta['nickname'].trim()
-                                : matchingChar &&
-                                    typeof (matchingChar.metadata as Record<string, unknown> | undefined)?.nickname ===
-                                        'string'
-                                  ? String((matchingChar.metadata as Record<string, unknown>).nickname).trim()
-                                  : '';
-
-                        const displayName =
-                            charNickname ||
-                            String(initItem.name || matchingChar?.name || meta['species'] || `Combatant ${idx + 1}`);
+                        const displayName = extractCharacterName(
+                            (matchingChar?.metadata || initItem) as Record<string, unknown>,
+                            String(matchingChar?.name || initItem.name || `Combatant ${idx + 1}`)
+                        );
 
                         combatantRows.push({
                             id: crypto.randomUUID(),
@@ -400,25 +740,15 @@ export function useBattleOrganizer() {
 
                     const actions = createDefaultActions();
                     for (let i = 0; i < Math.min(5, actionsUsed); i++) {
-                        actions[i] = { text: actions[i].text, status: 'success' };
+                        actions[i] = { text: actions[i].text, status: 'none' };
                     }
 
                     const isFainted = statusText.toLowerCase().includes('faint');
 
-                    const obrNickname =
-                        typeof meta['nickname'] === 'string' && meta['nickname'].trim()
-                            ? meta['nickname'].trim()
-                            : typeof (meta['pokerole-pmd-extension/stats'] as Record<string, unknown> | undefined)
-                                    ?.nickname === 'string' &&
-                                (meta['pokerole-pmd-extension/stats'] as Record<string, unknown>).nickname
-                              ? String(
-                                    (meta['pokerole-pmd-extension/stats'] as Record<string, unknown>).nickname
-                                ).trim()
-                              : typeof meta['name'] === 'string' && meta['name'].trim()
-                                ? meta['name'].trim()
-                                : '';
-
-                    const displayName = obrNickname || item.name;
+                    const statsMeta = (meta['pokerole-extension/stats'] || meta) as Record<string, unknown>;
+                    const displayName = extractCharacterName(statsMeta, item.name);
+                    const tokenImg =
+                        imgItem.image?.url || extractTokenImage(statsMeta) || extractTokenImage(meta);
 
                     combatantRows.push({
                         id: crypto.randomUUID(),
@@ -426,7 +756,7 @@ export function useBattleOrganizer() {
                         initiative: initDisplay,
                         baseInit: baseInitVal,
                         name: displayName,
-                        image: imgItem.image?.url || extractTokenImage(meta),
+                        image: tokenImg,
                         heldItem: heldItemText,
                         status: statusText,
                         isFainted,
@@ -950,6 +1280,76 @@ export function useBattleOrganizer() {
         [updateState]
     );
 
+    const openSheet = useCallback(
+        async (combatant: CombatantRowData) => {
+            try {
+                if (isStandaloneMode) {
+                    const localChars = await storageAdapter.getLocalCharacters();
+                    let match = localChars.find((c) => c.id === combatant.tokenId);
+                    if (!match && combatant.name.trim()) {
+                        match = localChars.find((c) => {
+                            const meta = (c.metadata || {}) as Record<string, unknown>;
+                            const resolvedName = extractCharacterName(meta, c.name);
+                            return (
+                                resolvedName.toLowerCase().trim() === combatant.name.toLowerCase().trim() ||
+                                c.name.toLowerCase().trim() === combatant.name.toLowerCase().trim()
+                            );
+                        });
+                    }
+
+                    if (match) {
+                        localStorage.setItem('pkr_active_character_id', match.id);
+                        window.dispatchEvent(
+                            new CustomEvent('pkr-select-character', { detail: { id: match.id } })
+                        );
+                        const store = useCharacterStore.getState();
+                        setActiveTokenId(match.id);
+                        store.setTokenData(match.id, 'PLAYER');
+                        store.loadFromOwlbear((match.metadata || {}) as Record<string, unknown>);
+                        const tokenImgUrl = combatant.image || extractTokenImage(match.metadata as Record<string, unknown>);
+                        if (tokenImgUrl) store.setIdentity('tokenImageUrl', tokenImgUrl);
+                    }
+                    return;
+                }
+
+                if (OBR.isAvailable) {
+                    let targetTokenId = combatant.tokenId;
+                    if (!targetTokenId && combatant.name.trim()) {
+                        const items = await OBR.scene.items.getItems((item) => {
+                            if (item.layer !== 'CHARACTER') return false;
+                            const meta = (item.metadata['pokerole-extension/stats'] || item.metadata) as Record<
+                                string,
+                                unknown
+                            >;
+                            const resolvedName = extractCharacterName(meta, item.name);
+                            return (
+                                resolvedName.toLowerCase().trim() === combatant.name.toLowerCase().trim() ||
+                                item.name.toLowerCase().trim() === combatant.name.toLowerCase().trim()
+                            );
+                        });
+                        if (items.length > 0) {
+                            targetTokenId = items[0].id;
+                            updateCombatant({ ...combatant, tokenId: items[0].id });
+                        }
+                    }
+
+                    if (targetTokenId) {
+                        await OBR.player.select([targetTokenId]);
+                    }
+
+                    try {
+                        await OBR.action.open();
+                    } catch (actionErr) {
+                        console.warn('[BattleOrganizer] OBR.action.open failed or not available:', actionErr);
+                    }
+                }
+            } catch (e) {
+                console.error('[BattleOrganizer] Failed to open sheet for combatant:', e);
+            }
+        },
+        [updateCombatant]
+    );
+
     const clearAll = useCallback(() => {
         const fresh = createDefaultState();
         setState(fresh);
@@ -965,6 +1365,7 @@ export function useBattleOrganizer() {
         setActiveRoundIndex,
         pullFromInitiative,
         syncToSheets,
+        openSheet,
         addRound,
         duplicateRound,
         deleteRound,

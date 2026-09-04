@@ -24,6 +24,8 @@ import { ThemeSettingsModal } from '../modals/ThemeSettingsModal';
 import { AccessibilityModal } from '../modals/AccessibilityModal';
 import { GmScreenModal } from '../modals/GmScreenModal';
 import { BattleOrganizerModal } from '../modals/battleOrganizer/BattleOrganizerModal';
+import { BattleOrganizerSettingsModal } from '../modals/battleOrganizer/BattleOrganizerSettingsModal';
+import { getBattleOrganizerSettings } from '../modals/battleOrganizer/battleOrganizerSettingsHelper';
 import { PrintBattleOrganizer } from '../print/PrintBattleOrganizer';
 
 // Icons
@@ -65,6 +67,7 @@ type ActiveModal =
     | 'accessibility'
     | 'gm-screen'
     | 'battle-organizer'
+    | 'battle-organizer-settings'
     | null;
 
 export function GlobalToolbar() {
@@ -240,8 +243,20 @@ export function GlobalToolbar() {
             const viewportWidth = (await OBR.viewport.getWidth()) ?? 1200;
             const viewportHeight = (await OBR.viewport.getHeight()) ?? 800;
 
-            const targetWidth = Math.min(Math.round(viewportWidth * 0.95), 1360);
-            const targetHeight = Math.min(Math.round(viewportHeight * 0.95), 900);
+            const settings = getBattleOrganizerSettings();
+            let targetWidth = 1360;
+            let targetHeight = 900;
+
+            if (settings.showBattlefield && !settings.showRoundTracker) {
+                targetWidth = 1040;
+                targetHeight = 600;
+            } else if (!settings.showBattlefield && settings.showRoundTracker) {
+                targetWidth = 1200;
+                targetHeight = 740;
+            }
+
+            targetWidth = Math.min(Math.round(viewportWidth * 0.95), targetWidth);
+            targetHeight = Math.min(Math.round(viewportHeight * 0.95), targetHeight);
 
             const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
             const themeToPass = document.body.getAttribute('data-theme') || 'dark';
@@ -309,14 +324,25 @@ export function GlobalToolbar() {
                             </button>
                         </div>
 
-                        <button
-                            type="button"
-                            className="global-toolbar__btn action-button--primary-hover"
-                            onClick={handleBattleOrganizerClick}
-                            title="Open Battle Organizer Sheet"
-                        >
-                            <Layers size={16} color="var(--primary)" /> Battle Organizer
-                        </button>
+                        <div className="global-toolbar__bo-group">
+                            <button
+                                type="button"
+                                className="global-toolbar__btn global-toolbar__btn--bo-main action-button--primary-hover"
+                                onClick={handleBattleOrganizerClick}
+                                title="Toggle Battle Organizer Sheet"
+                            >
+                                <Layers size={16} color="var(--primary)" /> Battle Organizer
+                            </button>
+                            <button
+                                type="button"
+                                className="global-toolbar__btn global-toolbar__btn--bo-cog action-button--primary-hover"
+                                onClick={() => setActiveModal('battle-organizer-settings')}
+                                title="Battle Organizer Settings"
+                                aria-label="Battle Organizer Settings"
+                            >
+                                <Settings size={16} color="var(--text-muted)" />
+                            </button>
+                        </div>
 
                         {showHomebrewButton && (
                             <button
@@ -496,6 +522,9 @@ export function GlobalToolbar() {
             {activeModal === 'theme' && <ThemeSettingsModal onClose={() => setActiveModal(null)} />}
             {activeModal === 'accessibility' && <AccessibilityModal onClose={() => setActiveModal(null)} />}
             {activeModal === 'gm-screen' && <GmScreenModal onClose={() => setActiveModal(null)} />}
+            {activeModal === 'battle-organizer-settings' && (
+                <BattleOrganizerSettingsModal onClose={() => setActiveModal(null)} />
+            )}
             {activeModal === 'battle-organizer' && (
                 <BattleOrganizerModal
                     onClose={() => setActiveModal(null)}

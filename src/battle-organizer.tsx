@@ -3,6 +3,11 @@ import { createRoot, type Root } from 'react-dom/client';
 import OBR from '@owlbear-rodeo/sdk';
 import { BattleOrganizerModal } from './components/modals/battleOrganizer/BattleOrganizerModal';
 import { PrintBattleOrganizer } from './components/print/PrintBattleOrganizer';
+import {
+    getBattleOrganizerSettings,
+    subscribeBattleOrganizerSettings
+} from './components/modals/battleOrganizer/battleOrganizerSettingsHelper';
+import type { BattleOrganizerSettings } from './types/battleOrganizerTypes';
 import './style.css';
 
 // Strictly type the custom Window property for HMR to avoid 'any'
@@ -30,6 +35,60 @@ export function BattleOrganizerApp() {
             document.documentElement.setAttribute('data-theme', 'light');
         }
     }, [theme]);
+
+    // Dynamic modal resizing when settings change (e.g. toggling battlefield or round tracker)
+    useEffect(() => {
+        if (!OBR.isAvailable || !isReady) return;
+
+        let prevDimensions = '';
+
+        const resizeModal = async (settings: BattleOrganizerSettings) => {
+            try {
+                const viewportWidth = (await OBR.viewport.getWidth()) ?? 1200;
+                const viewportHeight = (await OBR.viewport.getHeight()) ?? 800;
+
+                let targetWidth = 1360;
+                let targetHeight = 900;
+
+                if (settings.showBattlefield && !settings.showRoundTracker) {
+                    targetWidth = 1040;
+                    targetHeight = 600;
+                } else if (!settings.showBattlefield && settings.showRoundTracker) {
+                    targetWidth = 1200;
+                    targetHeight = 740;
+                }
+
+                targetWidth = Math.min(Math.round(viewportWidth * 0.95), targetWidth);
+                targetHeight = Math.min(Math.round(viewportHeight * 0.95), targetHeight);
+
+                const dimKey = `${targetWidth}x${targetHeight}`;
+                if (dimKey === prevDimensions) return;
+                prevDimensions = dimKey;
+
+                const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+                const themeToPass = document.body.getAttribute('data-theme') || 'dark';
+                const url = `${baseUrl}/battle-organizer.html?theme=${themeToPass}`;
+
+                await OBR.modal.open({
+                    id: 'pkr-battle-organizer',
+                    url: url,
+                    width: targetWidth,
+                    height: targetHeight
+                });
+            } catch (e) {
+                console.warn('[BattleOrganizerApp] Failed to dynamically resize OBR modal:', e);
+            }
+        };
+
+        // Resize on mount with current settings
+        resizeModal(getBattleOrganizerSettings());
+
+        const unsub = subscribeBattleOrganizerSettings((newSettings) => {
+            resizeModal(newSettings);
+        });
+
+        return () => unsub();
+    }, [isReady]);
 
     // OBR ready & theme sync
     useEffect(() => {
@@ -82,6 +141,7 @@ export function BattleOrganizerApp() {
     const handleClose = () => {
         if (OBR.isAvailable) {
             OBR.modal.close('pkr-battle-organizer').catch(() => {});
+            OBR.popover.close('pkr-battle-organizer').catch(() => {});
         } else {
             window.close();
         }

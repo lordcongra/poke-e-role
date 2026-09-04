@@ -189,6 +189,26 @@
     border-left: 1px solid var(--border);
 }
 
+/* Battle Organizer Split Button specific logic */
+.global-toolbar__bo-group {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+}
+
+.global-toolbar__btn--bo-main {
+    border-radius: 4px 0 0 4px;
+    border-right: none;
+}
+
+.global-toolbar__btn--bo-cog {
+    border-radius: 0 4px 4px 0;
+    padding: 6px 8px;
+    width: auto;
+    flex-shrink: 0;
+    border-left: 1px solid var(--border);
+}
+
 /* Specific Hover Tints based on Dynamic Theme */
 .global-toolbar__btn.action-button--primary-hover:hover {
     background-color: color-mix(in srgb, var(--primary) 10%, var(--panel-alt));
