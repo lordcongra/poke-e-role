@@ -80,3 +80,112 @@ export const getContrastColor = (
 
     return `#${hex}`;
 };
+
+import { TYPE_COLORS } from '../data/constants';
+
+export interface ThemeIdentity {
+    type1?: string;
+    type2?: string;
+    themePrimaryOverride?: string;
+    themeSecondaryOverride?: string;
+}
+
+export const applyDynamicThemeColors = (primary?: string | null, secondary?: string | null) => {
+    if (primary && primary.trim()) {
+        const p = primary.trim();
+        document.body.style.setProperty('--dynamic-type-color', p);
+        document.documentElement.style.setProperty('--dynamic-type-color', p);
+    } else {
+        document.body.style.removeProperty('--dynamic-type-color');
+        document.documentElement.style.removeProperty('--dynamic-type-color');
+    }
+
+    if (secondary && secondary.trim()) {
+        const s = secondary.trim();
+        document.body.style.setProperty('--dynamic-secondary-color', s);
+        document.documentElement.style.setProperty('--dynamic-secondary-color', s);
+    } else {
+        document.body.style.removeProperty('--dynamic-secondary-color');
+        document.documentElement.style.removeProperty('--dynamic-secondary-color');
+    }
+};
+
+export const resolveCharacterThemeColors = (
+    identity: ThemeIdentity,
+    roomCustomTypes?: Array<{ name: string; color: string }>
+): { primary: string; secondary: string } => {
+    let finalPrimary = '';
+    let finalSecondary = '';
+
+    if (identity.themePrimaryOverride && identity.themePrimaryOverride.trim()) {
+        finalPrimary = identity.themePrimaryOverride.trim();
+        finalSecondary = identity.themeSecondaryOverride ? identity.themeSecondaryOverride.trim() : '';
+    } else {
+        try {
+            const globalP = localStorage.getItem('pkr_global_theme_primary');
+            const globalS = localStorage.getItem('pkr_global_theme_secondary');
+            if (globalP && globalP.trim()) {
+                finalPrimary = globalP.trim();
+                finalSecondary = globalS ? globalS.trim() : '';
+            }
+        } catch {
+            // ignore
+        }
+
+        if (!finalPrimary && identity.type1 && identity.type1.trim()) {
+            const rawType = identity.type1.trim();
+            const titleType = rawType.charAt(0).toUpperCase() + rawType.slice(1).toLowerCase();
+
+            let typeColor = TYPE_COLORS[rawType] || TYPE_COLORS[titleType] || '';
+            if (!typeColor && roomCustomTypes) {
+                const customType = roomCustomTypes.find(
+                    (t) => t.name.toLowerCase().trim() === rawType.toLowerCase()
+                );
+                if (customType && customType.color) typeColor = customType.color;
+            }
+
+            if (typeColor) {
+                finalPrimary = typeColor;
+                finalSecondary = '';
+            }
+        }
+    }
+
+    if (!finalPrimary) {
+        return { primary: '', secondary: '' };
+    }
+
+    try {
+        const isHighContrast =
+            document.body.hasAttribute('data-high-contrast') ||
+            localStorage.getItem('pkr_high_contrast') === 'true';
+        const contrastPrimary = parseFloat(localStorage.getItem('pkr_contrast_primary') || '0.20');
+        const contrastSecondary = parseFloat(localStorage.getItem('pkr_contrast_secondary') || '0.20');
+        const contrastForceAll = localStorage.getItem('pkr_contrast_force') === 'true';
+        const typesStr = localStorage.getItem('pkr_contrast_types');
+        const contrastSpecificTypes: string[] = typesStr ? JSON.parse(typesStr) : [];
+
+        const isForceDarkened =
+            contrastForceAll || (identity.type1 ? contrastSpecificTypes.includes(identity.type1) : false);
+
+        const accessiblePrimary = isHighContrast
+            ? getContrastColor(finalPrimary, 0.65, contrastPrimary, isForceDarkened)
+            : finalPrimary;
+
+        const accessibleSecondary = finalSecondary
+            ? isHighContrast
+                ? getContrastColor(finalSecondary, 0.65, contrastSecondary, isForceDarkened)
+                : finalSecondary
+            : '';
+
+        return {
+            primary: accessiblePrimary,
+            secondary: accessibleSecondary
+        };
+    } catch {
+        return {
+            primary: finalPrimary,
+            secondary: finalSecondary
+        };
+    }
+};

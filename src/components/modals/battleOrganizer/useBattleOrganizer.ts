@@ -439,6 +439,22 @@ export function useBattleOrganizer() {
         window.addEventListener('pkr-roll-log-event', handleLocalRollEvent);
         unsubs.push(() => window.removeEventListener('pkr-roll-log-event', handleLocalRollEvent));
 
+        // Listen to cross-window roll log events in Standalone mode
+        const handleCrossWindowRoll = (e: StorageEvent) => {
+            if (e.key === 'pkr_roll_log' && e.newValue) {
+                try {
+                    const parsed = JSON.parse(e.newValue);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        applyRollToCombatants(parsed[0]);
+                    }
+                } catch (err) {
+                    console.error('[BattleOrganizer] Failed to parse cross-window roll:', err);
+                }
+            }
+        };
+        window.addEventListener('storage', handleCrossWindowRoll);
+        unsubs.push(() => window.removeEventListener('storage', handleCrossWindowRoll));
+
         if (isStandaloneMode) {
             const handleStandaloneChange = async () => {
                 const settings = getBattleOrganizerSettings();

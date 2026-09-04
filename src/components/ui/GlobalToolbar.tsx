@@ -260,7 +260,19 @@ export function GlobalToolbar() {
 
             const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
             const themeToPass = document.body.getAttribute('data-theme') || 'dark';
-            const url = `${baseUrl}/battle-organizer.html?theme=${themeToPass}`;
+            const currentPrimary =
+                document.documentElement.style.getPropertyValue('--dynamic-type-color') ||
+                document.body.style.getPropertyValue('--dynamic-type-color') ||
+                '';
+            const currentSecondary =
+                document.documentElement.style.getPropertyValue('--dynamic-secondary-color') ||
+                document.body.style.getPropertyValue('--dynamic-secondary-color') ||
+                '';
+            const urlParams = new URLSearchParams();
+            urlParams.set('theme', themeToPass);
+            if (currentPrimary.trim()) urlParams.set('primary', currentPrimary.trim());
+            if (currentSecondary.trim()) urlParams.set('secondary', currentSecondary.trim());
+            const url = `${baseUrl}/battle-organizer.html?${urlParams.toString()}`;
 
             await OBR.modal.open({
                 id: 'pkr-battle-organizer',

@@ -218,6 +218,19 @@ function App() {
             document.documentElement.style.removeProperty('--dynamic-secondary-color');
         }
 
+        // Always persist the active sheet's theme colors for pop-out windows and cross-tab sync
+        try {
+            localStorage.setItem(
+                'pkr_sheet_theme_colors',
+                JSON.stringify({
+                    primary: accessiblePrimary || finalPrimary || '',
+                    secondary: accessibleSecondary || finalSecondary || ''
+                })
+            );
+        } catch (e) {
+            console.warn('[App] Failed to cache sheet theme colors:', e);
+        }
+
         // Broadcast / persist popover theme colors if sync is enabled
         try {
             const isSyncPopovers = localStorage.getItem('pkr_sync_popover_theme') === 'true';

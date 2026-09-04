@@ -22,8 +22,10 @@ import {
     ArrowUpDown,
     ChevronDown,
     Settings,
-    Swords
+    Swords,
+    ExternalLink
 } from 'lucide-react';
+import { isStandaloneMode } from '../../../utils/storageAdapter';
 import { BattleOrganizerSettingsModal } from './BattleOrganizerSettingsModal';
 import { CombatantSheetModal } from './CombatantSheetModal';
 import { InModalRollLog } from './InModalRollLog';
@@ -96,12 +98,101 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
     };
 
     const [showObrAdvisory, setShowObrAdvisory] = useState(() => {
+        if (isStandaloneMode) return false;
         try {
             return localStorage.getItem('pkr_bo_advisory_dismissed') !== 'true';
         } catch {
             return true;
         }
     });
+
+    const handlePopOut = () => {
+        const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+        const themeToPass = document.body.getAttribute('data-theme') || 'dark';
+
+        const computedStyle = getComputedStyle(document.documentElement);
+        let primaryColor =
+            document.documentElement.style.getPropertyValue('--dynamic-type-color') ||
+            document.body.style.getPropertyValue('--dynamic-type-color') ||
+            computedStyle.getPropertyValue('--dynamic-type-color') ||
+            '';
+        let secondaryColor =
+            document.documentElement.style.getPropertyValue('--dynamic-secondary-color') ||
+            document.body.style.getPropertyValue('--dynamic-secondary-color') ||
+            computedStyle.getPropertyValue('--dynamic-secondary-color') ||
+            '';
+
+        if (!primaryColor.trim()) {
+            try {
+                const sheetColors = localStorage.getItem('pkr_sheet_theme_colors');
+                if (sheetColors) {
+                    const parsed = JSON.parse(sheetColors);
+                    if (parsed?.primary) primaryColor = parsed.primary;
+                    if (parsed?.secondary) secondaryColor = parsed.secondary || '';
+                }
+            } catch {
+                // ignore
+            }
+        }
+        if (!primaryColor.trim()) {
+            try {
+                const activeColors = localStorage.getItem('pkr_active_theme_colors');
+                if (activeColors) {
+                    const parsed = JSON.parse(activeColors);
+                    if (parsed?.primary) primaryColor = parsed.primary;
+                    if (parsed?.secondary) secondaryColor = parsed.secondary || '';
+                }
+            } catch {
+                // ignore
+            }
+        }
+
+        const urlParams = new URLSearchParams();
+        urlParams.set('theme', themeToPass);
+        if (primaryColor.trim()) urlParams.set('primary', primaryColor.trim());
+        if (secondaryColor.trim()) urlParams.set('secondary', secondaryColor.trim());
+
+        if (primaryColor.trim()) {
+            try {
+                localStorage.setItem(
+                    'pkr_sheet_theme_colors',
+                    JSON.stringify({
+                        primary: primaryColor.trim(),
+                        secondary: secondaryColor.trim() || undefined
+                    })
+                );
+                localStorage.setItem(
+                    'pkr_active_theme_colors',
+                    JSON.stringify({
+                        enabled: true,
+                        primary: primaryColor.trim(),
+                        secondary: secondaryColor.trim() || undefined
+                    })
+                );
+            } catch {
+                // ignore
+            }
+        }
+
+        const url = `${baseUrl}/battle-organizer.html?${urlParams.toString()}`;
+
+        let width = 1360;
+        let height = 880;
+        if (boSettings.showBattlefield && !boSettings.showRoundTracker) {
+            width = 1040;
+            height = 620;
+        } else if (!boSettings.showBattlefield && boSettings.showRoundTracker) {
+            width = 1200;
+            height = 760;
+        }
+
+        window.open(
+            url,
+            'pkr-battle-organizer-window',
+            `width=${width},height=${height},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes`
+        );
+        onClose();
+    };
 
     const handleDismissAdvisory = () => {
         setShowObrAdvisory(false);
@@ -248,6 +339,18 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                     </div>
 
                     <div className="bo-modal__header-right">
+                        {isStandaloneMode && !isPopout && (
+                            <button
+                                type="button"
+                                className="action-button action-button--dark bo-header-collapse-btn"
+                                onClick={handlePopOut}
+                                title="Pop Out to Separate Window"
+                                aria-label="Pop Out to Separate Window"
+                            >
+                                <ExternalLink size={14} color="var(--primary)" />
+                                <span className="bo-header-collapse-label">Pop Out</span>
+                            </button>
+                        )}
 
                         <button
                             type="button"
@@ -363,7 +466,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                 )}
 
                 {/* Owlbear Rodeo Dual-Tab Advisory Banner */}
-                {showObrAdvisory && (
+                {!isStandaloneMode && showObrAdvisory && (
                     <div className="bo-advisory-banner" onWheel={handleStaticWheel}>
                         <div className="bo-advisory-banner__content text-subtext">
                             <span className="bo-advisory-banner__icon">💡</span>
@@ -402,9 +505,11 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                                     Click <strong>✓</strong> on an action slot to mark it completed/used, or{' '}
                                     <strong>✗</strong> for clash/evade/failed.
                                 </li>
-                                <li>
-                                    <strong>Owlbear Rodeo Multi-Tab:</strong> In Owlbear Rodeo, open this room in a second browser tab to view 3D dice rolls and the live battle map side-by-side with this organizer!
-                                </li>
+                                {!isStandaloneMode && (
+                                    <li>
+                                        <strong>Owlbear Rodeo Multi-Tab:</strong> In Owlbear Rodeo, open this room in a second browser tab to view 3D dice rolls and the live battle map side-by-side with this organizer!
+                                    </li>
+                                )}
                                 <li>
                                     You can replicate rounds any number of times with <strong>Add Round</strong> or{' '}
                                     <strong>Duplicate Round</strong>.

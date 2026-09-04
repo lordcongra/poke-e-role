@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { CombatantRowData } from '../../../types/battleOrganizerTypes';
 import { isStandaloneMode, storageAdapter } from '../../../utils/storageAdapter';
 import { useCharacterStore } from '../../../store/useCharacterStore';
@@ -6,6 +6,7 @@ import { setActiveTokenId } from '../../../utils/obr';
 import { imageManager } from '../../../utils/imageManager';
 import OBR, { type Image } from '@owlbear-rodeo/sdk';
 import { extractCharacterName, extractTokenImage } from '../../../utils/initiativeHelpers';
+import { resolveCharacterThemeColors, applyDynamicThemeColors } from '../../../utils/colorUtils';
 import { IdentityHeader } from '../../identity/IdentityHeader';
 import { DerivedBoard } from '../../board/DerivedBoard';
 import { CoreTable } from '../../tables/CoreTable';
@@ -40,6 +41,53 @@ export function CombatantSheetModal({
     const [loading, setLoading] = useState(true);
     const [resolvedImage, setResolvedImage] = useState<string>('');
     const mode = useCharacterStore((state) => state.identity.mode);
+    const type1 = useCharacterStore((state) => state.identity.type1);
+    const type2 = useCharacterStore((state) => state.identity.type2);
+    const themePrimaryOverride = useCharacterStore((state) => state.identity.themePrimaryOverride);
+    const themeSecondaryOverride = useCharacterStore((state) => state.identity.themeSecondaryOverride);
+    const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
+
+    // Save previous window theme colors to restore when CombatantSheetModal is closed
+    const initialThemeRef = useRef<{ primary: string; secondary: string } | null>(null);
+
+    useEffect(() => {
+        initialThemeRef.current = {
+            primary:
+                document.documentElement.style.getPropertyValue('--dynamic-type-color') ||
+                document.body.style.getPropertyValue('--dynamic-type-color') ||
+                '',
+            secondary:
+                document.documentElement.style.getPropertyValue('--dynamic-secondary-color') ||
+                document.body.style.getPropertyValue('--dynamic-secondary-color') ||
+                ''
+        };
+
+        return () => {
+            if (initialThemeRef.current) {
+                applyDynamicThemeColors(
+                    initialThemeRef.current.primary,
+                    initialThemeRef.current.secondary
+                );
+            }
+        };
+    }, []);
+
+    // Dynamically apply combatant theme colors when loaded or when identity updates
+    useEffect(() => {
+        if (loading) return;
+
+        const resolved = resolveCharacterThemeColors(
+            {
+                type1,
+                type2,
+                themePrimaryOverride,
+                themeSecondaryOverride
+            },
+            roomCustomTypes
+        );
+
+        applyDynamicThemeColors(resolved.primary, resolved.secondary);
+    }, [loading, type1, type2, themePrimaryOverride, themeSecondaryOverride, roomCustomTypes]);
 
     // Resolve combatant thumbnail
     useEffect(() => {
@@ -96,6 +144,18 @@ export function CombatantSheetModal({
                         if (tokenImgUrl) {
                             store.setIdentity('tokenImageUrl', tokenImgUrl);
                         }
+
+                        // Immediately calculate and apply this combatant's theme colors
+                        const resolved = resolveCharacterThemeColors(
+                            {
+                                type1: store.identity.type1,
+                                type2: store.identity.type2,
+                                themePrimaryOverride: store.identity.themePrimaryOverride,
+                                themeSecondaryOverride: store.identity.themeSecondaryOverride
+                            },
+                            store.roomCustomTypes
+                        );
+                        applyDynamicThemeColors(resolved.primary, resolved.secondary);
                     } else if (isMounted) {
                         const store = useCharacterStore.getState();
                         store.setIdentity('nickname', combatant.name);
@@ -136,6 +196,18 @@ export function CombatantSheetModal({
                             if (tokenImgUrl) {
                                 store.setIdentity('tokenImageUrl', tokenImgUrl);
                             }
+
+                            // Immediately calculate and apply this combatant's theme colors
+                            const resolved = resolveCharacterThemeColors(
+                                {
+                                    type1: store.identity.type1,
+                                    type2: store.identity.type2,
+                                    themePrimaryOverride: store.identity.themePrimaryOverride,
+                                    themeSecondaryOverride: store.identity.themeSecondaryOverride
+                                },
+                                store.roomCustomTypes
+                            );
+                            applyDynamicThemeColors(resolved.primary, resolved.secondary);
                         }
                     } else if (isMounted) {
                         const store = useCharacterStore.getState();

@@ -124,34 +124,7 @@ export function useSidebarEngine() {
         }
     }, []);
 
-    useEffect(() => {
-        loadData();
-        updateInitTags();
-
-        const handleDataChange = () => loadData();
-        window.addEventListener('pkr-local-data-changed', handleDataChange);
-        window.addEventListener('pkr-standalone-init-update', updateInitTags);
-
-        const originalSetItem = localStorage.setItem;
-        localStorage.setItem = function (key, value) {
-            originalSetItem.call(this, key, value);
-            if (key.startsWith('pkr_char_') || key === 'pkr_folders') {
-                window.dispatchEvent(new Event('pkr-local-data-changed'));
-            }
-        };
-
-        const closeContextMenu = () => setContextMenu(null);
-        document.addEventListener('click', closeContextMenu);
-
-        return () => {
-            window.removeEventListener('pkr-local-data-changed', handleDataChange);
-            window.removeEventListener('pkr-standalone-init-update', updateInitTags);
-            localStorage.setItem = originalSetItem;
-            document.removeEventListener('click', closeContextMenu);
-        };
-    }, [loadData, updateInitTags]);
-
-    const handleSelectCharacter = async (id: string, meta: Record<string, unknown>) => {
+    const handleSelectCharacter = useCallback(async (id: string, meta: Record<string, unknown>) => {
         setActiveTokenId(id);
         const store = useCharacterStore.getState();
         store.setTokenData(id, 'PLAYER');
@@ -167,7 +140,60 @@ export function useSidebarEngine() {
         } else {
             store.applyLearnset({ Moves: [] });
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        loadData();
+        updateInitTags();
+
+        const handleDataChange = () => loadData();
+        window.addEventListener('pkr-local-data-changed', handleDataChange);
+        window.addEventListener('pkr-standalone-init-update', updateInitTags);
+
+        const handleActiveCharStorage = async (e: StorageEvent) => {
+            if (e.key === 'pkr_active_character_id' && e.newValue) {
+                const chars = await storageAdapter.getLocalCharacters();
+                const match = chars.find((c) => c.id === e.newValue);
+                if (match) {
+                    handleSelectCharacter(match.id, (match.metadata || {}) as Record<string, unknown>);
+                }
+            }
+        };
+
+        const handleActiveCharCustomEvent = async (e: Event) => {
+            const detail = (e as CustomEvent<{ id: string }>).detail;
+            if (detail?.id) {
+                const chars = await storageAdapter.getLocalCharacters();
+                const match = chars.find((c) => c.id === detail.id);
+                if (match) {
+                    handleSelectCharacter(match.id, (match.metadata || {}) as Record<string, unknown>);
+                }
+            }
+        };
+
+        window.addEventListener('storage', handleActiveCharStorage);
+        window.addEventListener('pkr-select-character', handleActiveCharCustomEvent);
+
+        const originalSetItem = localStorage.setItem;
+        localStorage.setItem = function (key, value) {
+            originalSetItem.call(this, key, value);
+            if (key.startsWith('pkr_char_') || key === 'pkr_folders') {
+                window.dispatchEvent(new Event('pkr-local-data-changed'));
+            }
+        };
+
+        const closeContextMenu = () => setContextMenu(null);
+        document.addEventListener('click', closeContextMenu);
+
+        return () => {
+            window.removeEventListener('pkr-local-data-changed', handleDataChange);
+            window.removeEventListener('pkr-standalone-init-update', updateInitTags);
+            window.removeEventListener('storage', handleActiveCharStorage);
+            window.removeEventListener('pkr-select-character', handleActiveCharCustomEvent);
+            localStorage.setItem = originalSetItem;
+            document.removeEventListener('click', closeContextMenu);
+        };
+    }, [loadData, updateInitTags, handleSelectCharacter]);
 
     const handleCreate = async (type: 'folder' | 'character') => {
         const finalName = newName.trim();

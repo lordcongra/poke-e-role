@@ -6,6 +6,7 @@ import {
     saveBattleOrganizerSettings,
     subscribeBattleOrganizerSettings
 } from './battleOrganizerSettingsHelper';
+import { isStandaloneMode } from '../../../utils/storageAdapter';
 import './BattleOrganizerSettingsModal.css';
 
 interface BattleOrganizerSettingsModalProps {
@@ -126,19 +127,38 @@ export function BattleOrganizerSettingsModal({ onClose }: BattleOrganizerSetting
                         </div>
                     </label>
 
-                    {/* Section 3: Owlbear Rodeo Multi-Tab Workflow */}
-                    <div className="bo-settings__group-title text-label" style={{ marginTop: '6px' }}>
-                        <Info size={14} color="var(--primary)" /> Owlbear Dual-Tab Tip
-                    </div>
+                    {/* Section 3: Owlbear Rodeo Multi-Tab Workflow vs Standalone Popout Tip */}
+                    {!isStandaloneMode ? (
+                        <>
+                            <div className="bo-settings__group-title text-label" style={{ marginTop: '6px' }}>
+                                <Info size={14} color="var(--primary)" /> Owlbear Dual-Tab Tip
+                            </div>
 
-                    <div className="bo-settings__tip-card">
-                        <span className="bo-settings__tip-icon">
-                            <Lightbulb size={16} color="var(--primary)" />
-                        </span>
-                        <div className="bo-settings__tip-text text-subtext">
-                            <strong>Recommended Workflow:</strong> Because 3D dice and the canvas roll log render behind full-screen modals, opening your room in a <strong>second browser tab</strong> lets you manage the Battle Organizer on one screen while rolling on the main map!
-                        </div>
-                    </div>
+                            <div className="bo-settings__tip-card">
+                                <span className="bo-settings__tip-icon">
+                                    <Lightbulb size={16} color="var(--primary)" />
+                                </span>
+                                <div className="bo-settings__tip-text text-subtext">
+                                    <strong>Recommended Workflow:</strong> Because 3D dice and the canvas roll log render behind full-screen modals, opening your room in a <strong>second browser tab</strong> lets you manage the Battle Organizer on one screen while rolling on the main map!
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="bo-settings__group-title text-label" style={{ marginTop: '6px' }}>
+                                <Info size={14} color="var(--primary)" /> Standalone Pop-Out Window
+                            </div>
+
+                            <div className="bo-settings__tip-card">
+                                <span className="bo-settings__tip-icon">
+                                    <Lightbulb size={16} color="var(--primary)" />
+                                </span>
+                                <div className="bo-settings__tip-text text-subtext">
+                                    <strong>Multi-Window Sync:</strong> Use the <strong>Pop Out</strong> button in the organizer header to detach this sheet into a separate browser window. Actions, battlefield effects, and rolls maintain continuous live two-way sync with your character sheets!
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Footer */}
