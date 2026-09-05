@@ -23,7 +23,8 @@ export function getBattleOrganizerSettings(): BattleOrganizerSettings {
         const rawAutoSync = localStorage.getItem(BO_AUTO_SYNC_ACTIONS_KEY);
 
         let showBattlefield = rawBattlefield !== null ? rawBattlefield === 'true' : DEFAULT_BO_SETTINGS.showBattlefield;
-        let showRoundTracker = rawRoundTracker !== null ? rawRoundTracker === 'true' : DEFAULT_BO_SETTINGS.showRoundTracker;
+        let showRoundTracker =
+            rawRoundTracker !== null ? rawRoundTracker === 'true' : DEFAULT_BO_SETTINGS.showRoundTracker;
 
         // Safety: At least one section must be visible. If both are false, restore both to true.
         if (!showBattlefield && !showRoundTracker) {

@@ -116,7 +116,10 @@ export function InModalRollLog({ combatants = [], onMarkAction }: InModalRollLog
 
     // Extract character and move names from label
     const parseRollMeta = (label: string, fallbackChar?: string) => {
-        const clean = label.replace(/^\[PRIVATE\]\s*/i, '').replace(/^[📢🎲💥🩹🍀🎯🛡️❄️]\s*/u, '').trim();
+        const clean = label
+            .replace(/^\[PRIVATE\]\s*/i, '')
+            .replace(/^[📢🎲💥🩹🍀🎯🛡️❄️]\s*/u, '')
+            .trim();
 
         let charName = fallbackChar || '';
         let moveName = '';
@@ -164,9 +167,7 @@ export function InModalRollLog({ combatants = [], onMarkAction }: InModalRollLog
             <div className="in-modal-roll-log__header" onClick={() => setIsCollapsed(!isCollapsed)}>
                 <div className="in-modal-roll-log__header-left">
                     <Dices size={15} color="var(--primary)" />
-                    <span className="in-modal-roll-log__title text-label">
-                        Roll Log ({rolls.length})
-                    </span>
+                    <span className="in-modal-roll-log__title text-label">Roll Log ({rolls.length})</span>
                 </div>
 
                 <div className="in-modal-roll-log__header-right" onClick={(e) => e.stopPropagation()}>
@@ -218,12 +219,8 @@ export function InModalRollLog({ combatants = [], onMarkAction }: InModalRollLog
                                         <img src={iconSrc} alt={displayChar} />
                                     </div>
                                     <div className="in-modal-roll-log__meta">
-                                        <span className="in-modal-roll-log__char text-label">
-                                            {displayChar}
-                                        </span>
-                                        <span className="in-modal-roll-log__label text-subtext">
-                                            {r.label}
-                                        </span>
+                                        <span className="in-modal-roll-log__char text-label">{displayChar}</span>
+                                        <span className="in-modal-roll-log__label text-subtext">{r.label}</span>
                                     </div>
                                     <button
                                         type="button"
@@ -236,9 +233,7 @@ export function InModalRollLog({ combatants = [], onMarkAction }: InModalRollLog
                                     </button>
                                 </div>
 
-                                <div className="in-modal-roll-log__result text-label">
-                                    {r.result}
-                                </div>
+                                <div className="in-modal-roll-log__result text-label">{r.result}</div>
 
                                 {/* Quick Mark Action Buttons */}
                                 {matchedCombatant && moveName && onMarkAction && (

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import OBR, { type Image } from '@owlbear-rodeo/sdk';
 import { isStandaloneMode, storageAdapter } from '../../../utils/storageAdapter';
 import { useCharacterStore } from '../../../store/useCharacterStore';
@@ -19,7 +19,10 @@ import type {
 } from '../../../types/battleOrganizerTypes';
 
 const STORAGE_KEY = 'pkr_battle_organizer_data';
-const OBR_SCENE_META_KEY = 'pokerole-pmd-extension/battle-organizer';
+const LEGACY_OBR_SCENE_META_KEY = 'pokerole-pmd-extension/battle-organizer';
+const OBR_BROADCAST_SYNC_CHANNEL = 'pokerole-pmd-extension/battle-organizer-sync';
+const OBR_BROADCAST_REQUEST_CHANNEL = 'pokerole-pmd-extension/battle-organizer-request';
+const OBR_BROADCAST_RESPONSE_CHANNEL = 'pokerole-pmd-extension/battle-organizer-response';
 
 const createDefaultActionSlot = (): ActionSlotData => ({
     text: '',
@@ -111,39 +114,92 @@ export function useBattleOrganizer() {
         return createDefaultState();
     });
 
-    const globalState = useCharacterStore();
-
-    // 1. Save State to localStorage / OBR
-    const persistState = useCallback((newState: BattleOrganizerState) => {
+    const lastSavedJsonRef = useRef<string>('');
+    if (!lastSavedJsonRef.current) {
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
+            lastSavedJsonRef.current = JSON.stringify(state);
+        } catch {
+            lastSavedJsonRef.current = '';
+        }
+    }
+
+    const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // 1. Debounced persistence to localStorage & OBR peer broadcast (0 bytes scene metadata quota!)
+    const persistState = useCallback((newState: BattleOrganizerState, immediate = false) => {
+        let json = '';
+        try {
+            json = JSON.stringify(newState);
         } catch (e) {
-            console.error('[BattleOrganizer] Failed to save state to localStorage:', e);
+            console.error('[BattleOrganizer] Failed to serialize state for persistence:', e);
+            return;
         }
 
-        if (OBR.isAvailable && !isStandaloneMode) {
+        // Loop & echo guard: Do not persist or broadcast if data is identical to current state
+        if (json === lastSavedJsonRef.current) {
+            return;
+        }
+
+        if (saveTimerRef.current) {
+            clearTimeout(saveTimerRef.current);
+            saveTimerRef.current = null;
+        }
+
+        const executeSave = () => {
+            lastSavedJsonRef.current = json;
+
+            // 1. Save to local storage (offline-first, zero OBR scene quota used)
             try {
-                OBR.scene.setMetadata({
-                    [OBR_SCENE_META_KEY]: JSON.stringify(newState)
-                });
+                localStorage.setItem(STORAGE_KEY, json);
             } catch (e) {
-                console.error('[BattleOrganizer] Failed to save state to OBR scene:', e);
+                console.error('[BattleOrganizer] Failed to save state to localStorage:', e);
             }
+
+            // 2. Broadcast live state to peer players who have Battle Organizer open
+            if (OBR.isAvailable && !isStandaloneMode) {
+                try {
+                    OBR.broadcast.sendMessage(
+                        OBR_BROADCAST_SYNC_CHANNEL,
+                        { state: newState, timestamp: Date.now() },
+                        { destination: 'REMOTE' }
+                    );
+                } catch (e) {
+                    console.error('[BattleOrganizer] Failed to broadcast state to peers:', e);
+                }
+            }
+        };
+
+        if (immediate) {
+            executeSave();
+        } else {
+            saveTimerRef.current = setTimeout(executeSave, 300);
         }
     }, []);
 
     const updateState = useCallback(
-        (updater: (prev: BattleOrganizerState) => BattleOrganizerState) => {
+        (updater: (prev: BattleOrganizerState) => BattleOrganizerState, immediate = false) => {
             setState((prev) => {
                 const updated = updater(prev);
-                persistState(updated);
+                if (updated === prev) {
+                    return prev;
+                }
+                persistState(updated, immediate);
                 return updated;
             });
         },
         [persistState]
     );
 
-    // 2. Load from OBR Scene on Mount / Room Load
+    // Unmount cleanup for any pending debounce timer
+    useEffect(() => {
+        return () => {
+            if (saveTimerRef.current) {
+                clearTimeout(saveTimerRef.current);
+            }
+        };
+    }, []);
+
+    // 2. Legacy Scene Metadata Cleanup & Peer-to-Peer Live Sync Handshake
     useEffect(() => {
         if (!OBR.isAvailable || isStandaloneMode) return;
 
@@ -153,35 +209,127 @@ export function useBattleOrganizer() {
         OBR.onReady(async () => {
             if (!isMounted) return;
 
+            // Step A: Check and clean up legacy OBR scene metadata to protect the 16KB scene limit
             try {
-                const metadata = await OBR.scene.getMetadata();
-                const rawSceneData = metadata[OBR_SCENE_META_KEY];
-                if (typeof rawSceneData === 'string' && rawSceneData.trim()) {
-                    const parsed = JSON.parse(rawSceneData);
-                    if (parsed && Array.isArray(parsed.rounds) && parsed.rounds.length > 0) {
-                        setState(parsed);
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+                const isReady = await OBR.scene.isReady();
+                if (isReady) {
+                    const metadata = await OBR.scene.getMetadata();
+                    const rawLegacySceneData = metadata[LEGACY_OBR_SCENE_META_KEY];
+                    if (typeof rawLegacySceneData === 'string' && rawLegacySceneData.trim()) {
+                        // If localStorage currently has no battle, migrate legacy scene battle first
+                        const currentLocal = localStorage.getItem(STORAGE_KEY);
+                        if (!currentLocal) {
+                            try {
+                                const parsed = JSON.parse(rawLegacySceneData);
+                                if (parsed && Array.isArray(parsed.rounds) && parsed.rounds.length > 0) {
+                                    localStorage.setItem(STORAGE_KEY, rawLegacySceneData);
+                                    lastSavedJsonRef.current = rawLegacySceneData;
+                                    setState(parsed);
+                                }
+                            } catch (migErr) {
+                                console.warn('[BattleOrganizer] Failed to migrate legacy scene data:', migErr);
+                            }
+                        }
+
+                        // Permanently remove the legacy key from scene metadata to free the 16KB quota!
+                        try {
+                            await OBR.scene.setMetadata({
+                                [LEGACY_OBR_SCENE_META_KEY]: undefined
+                            });
+                            console.log('[BattleOrganizer] Cleaned up legacy scene metadata key to free 16KB quota.');
+                        } catch (cleanErr) {
+                            console.warn('[BattleOrganizer] Failed to remove legacy scene metadata key:', cleanErr);
+                        }
                     }
                 }
             } catch (e) {
-                console.error('[BattleOrganizer] Failed to load initial OBR scene metadata:', e);
+                console.error('[BattleOrganizer] Failed during legacy scene metadata cleanup:', e);
             }
 
-            const unsub = OBR.scene.onMetadataChange((meta) => {
+            // Step B: Peer-to-Peer Sync Handshake
+            // 1. Listen for incoming live sync updates from peers
+            const unsubSync = OBR.broadcast.onMessage(OBR_BROADCAST_SYNC_CHANNEL, (event) => {
                 try {
-                    const raw = meta[OBR_SCENE_META_KEY];
-                    if (typeof raw === 'string' && raw.trim()) {
-                        const parsed = JSON.parse(raw);
-                        if (parsed && Array.isArray(parsed.rounds)) {
-                            setState(parsed);
-                            localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+                    const payload = event.data as {
+                        state?: BattleOrganizerState;
+                        action?: string;
+                        timestamp?: number;
+                    };
+                    if (!payload || !payload.state || !Array.isArray(payload.state.rounds)) return;
+
+                    const incomingJson = JSON.stringify(payload.state);
+                    if (incomingJson === lastSavedJsonRef.current) {
+                        return;
+                    }
+
+                    // Cancel pending local save timers so stale edits do not overwrite incoming sync
+                    if (saveTimerRef.current) {
+                        clearTimeout(saveTimerRef.current);
+                        saveTimerRef.current = null;
+                    }
+
+                    lastSavedJsonRef.current = incomingJson;
+                    try {
+                        localStorage.setItem(STORAGE_KEY, incomingJson);
+                    } catch (e) {
+                        console.error('[BattleOrganizer] Failed to update localStorage from broadcast sync:', e);
+                    }
+
+                    setState(payload.state);
+                } catch (e) {
+                    console.error('[BattleOrganizer] Error processing incoming peer sync:', e);
+                }
+            });
+            unsubs.push(unsubSync);
+
+            // 2. Respond to new peers requesting current battle state
+            const unsubRequest = OBR.broadcast.onMessage(OBR_BROADCAST_REQUEST_CHANNEL, () => {
+                try {
+                    const saved = localStorage.getItem(STORAGE_KEY);
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        if (parsed && Array.isArray(parsed.rounds) && parsed.rounds.length > 0) {
+                            OBR.broadcast.sendMessage(
+                                OBR_BROADCAST_RESPONSE_CHANNEL,
+                                { state: parsed, timestamp: Date.now() },
+                                { destination: 'REMOTE' }
+                            );
                         }
                     }
                 } catch (e) {
-                    console.error('[BattleOrganizer] Error syncing remote scene state:', e);
+                    console.error('[BattleOrganizer] Failed to respond to peer request:', e);
                 }
             });
-            unsubs.push(unsub);
+            unsubs.push(unsubRequest);
+
+            // 3. Receive initial response from existing peers
+            const unsubResponse = OBR.broadcast.onMessage(OBR_BROADCAST_RESPONSE_CHANNEL, (event) => {
+                try {
+                    const payload = event.data as { state?: BattleOrganizerState; timestamp?: number };
+                    if (!payload || !payload.state || !Array.isArray(payload.state.rounds)) return;
+
+                    const incomingJson = JSON.stringify(payload.state);
+                    if (incomingJson === lastSavedJsonRef.current) return;
+
+                    // If local is default or empty, adopt peer's active battle
+                    const localSaved = localStorage.getItem(STORAGE_KEY);
+                    if (!localSaved) {
+                        lastSavedJsonRef.current = incomingJson;
+                        localStorage.setItem(STORAGE_KEY, incomingJson);
+                        setState(payload.state);
+                    }
+                } catch (e) {
+                    console.error('[BattleOrganizer] Failed to handle peer response:', e);
+                }
+            });
+            unsubs.push(unsubResponse);
+
+            // 4. Request initial state from active peers in case the table has an ongoing battle
+            try {
+                OBR.broadcast.sendMessage(OBR_BROADCAST_REQUEST_CHANNEL, {}, { destination: 'REMOTE' });
+            } catch (e) {
+                console.warn('[BattleOrganizer] Failed to broadcast initial request to peers:', e);
+            }
         });
 
         return () => {
@@ -190,13 +338,21 @@ export function useBattleOrganizer() {
         };
     }, []);
 
-    // 3. Listen to local storage changes
+    // 3. Listen to local storage changes (multi-tab / popout windows on same computer)
     useEffect(() => {
         const handleStorage = (e: StorageEvent) => {
             if (e.key === STORAGE_KEY && e.newValue) {
                 try {
+                    if (e.newValue === lastSavedJsonRef.current) {
+                        return;
+                    }
                     const parsed = JSON.parse(e.newValue);
                     if (parsed && Array.isArray(parsed.rounds)) {
+                        if (saveTimerRef.current) {
+                            clearTimeout(saveTimerRef.current);
+                            saveTimerRef.current = null;
+                        }
+                        lastSavedJsonRef.current = e.newValue;
                         setState(parsed);
                     }
                 } catch (err) {
@@ -224,7 +380,10 @@ export function useBattleOrganizer() {
             const fallbackCharName = String(logData.characterName || logData.player || '');
             const rollTokenId = String(logData.tokenId || '');
 
-            const clean = label.replace(/^\[PRIVATE\]\s*/i, '').replace(/^[📢🎲💥🩹🍀🎯🛡️❄️]\s*/u, '').trim();
+            const clean = label
+                .replace(/^\[PRIVATE\]\s*/i, '')
+                .replace(/^[📢🎲💥🩹🍀🎯🛡️❄️]\s*/u, '')
+                .trim();
 
             let charName = fallbackCharName;
             let moveName = '';
@@ -301,9 +460,7 @@ export function useBattleOrganizer() {
                 };
                 return {
                     ...prev,
-                    rounds: prev.rounds.map((r, idx) =>
-                        idx === prev.activeRoundIndex ? updatedRound : r
-                    )
+                    rounds: prev.rounds.map((r, idx) => (idx === prev.activeRoundIndex ? updatedRound : r))
                 };
             });
         };
@@ -367,10 +524,8 @@ export function useBattleOrganizer() {
                             }
 
                             const actionsUsed = Number(meta['actions-used'] || 0);
-                            const evadeUsed =
-                                meta['evasions-used'] === true || meta['evasions-used'] === 'true';
-                            const clashUsed =
-                                meta['clashes-used'] === true || meta['clashes-used'] === 'true';
+                            const evadeUsed = meta['evasions-used'] === true || meta['evasions-used'] === 'true';
+                            const clashUsed = meta['clashes-used'] === true || meta['clashes-used'] === 'true';
 
                             const nextActions = [...combatant.actions] as CombatantRowData['actions'];
 
@@ -412,18 +567,15 @@ export function useBattleOrganizer() {
                         };
                         return {
                             ...prev,
-                            rounds: prev.rounds.map((r, idx) =>
-                                idx === prev.activeRoundIndex ? updatedRound : r
-                            )
+                            rounds: prev.rounds.map((r, idx) => (idx === prev.activeRoundIndex ? updatedRound : r))
                         };
                     });
                 });
                 unsubs.push(unsubItems);
 
                 // Listen to OBR roll-log-sync broadcast (remote and local)
-                const unsubRollLog = OBR.broadcast.onMessage(
-                    'pokerole-pmd-extension/roll-log-sync',
-                    (event) => applyRollToCombatants(event.data as Record<string, unknown>)
+                const unsubRollLog = OBR.broadcast.onMessage('pokerole-pmd-extension/roll-log-sync', (event) =>
+                    applyRollToCombatants(event.data as Record<string, unknown>)
                 );
                 unsubs.push(unsubRollLog);
             });
@@ -504,10 +656,8 @@ export function useBattleOrganizer() {
                         }
 
                         const actionsUsed = Number(meta['actions-used'] || 0);
-                        const evadeUsed =
-                            meta['evasions-used'] === true || meta['evasions-used'] === 'true';
-                        const clashUsed =
-                            meta['clashes-used'] === true || meta['clashes-used'] === 'true';
+                        const evadeUsed = meta['evasions-used'] === true || meta['evasions-used'] === 'true';
+                        const clashUsed = meta['clashes-used'] === true || meta['clashes-used'] === 'true';
 
                         const nextActions = [...combatant.actions] as CombatantRowData['actions'];
 
@@ -549,9 +699,7 @@ export function useBattleOrganizer() {
                     };
                     return {
                         ...prev,
-                        rounds: prev.rounds.map((r, idx) =>
-                            idx === prev.activeRoundIndex ? updatedRound : r
-                        )
+                        rounds: prev.rounds.map((r, idx) => (idx === prev.activeRoundIndex ? updatedRound : r))
                     };
                 });
             };
@@ -642,9 +790,10 @@ export function useBattleOrganizer() {
                             actions[i] = { text: actions[i].text, status: 'none' };
                         }
 
+                        const globalStore = useCharacterStore.getState();
                         const baseInitVal = calculateBaseInitFromCharacterData(
                             matchingChar?.metadata || initItem,
-                            globalState
+                            globalStore
                         );
                         let initScore = String(baseInitVal);
                         if (typeof initItem.total === 'number' && typeof initItem.d6 === 'number' && initItem.d6 > 0) {
@@ -696,7 +845,8 @@ export function useBattleOrganizer() {
                         | { value?: number; base?: number }
                         | undefined;
 
-                    const baseInitVal = calculateBaseInitFromCharacterData(meta, globalState);
+                    const globalStore = useCharacterStore.getState();
+                    const baseInitVal = calculateBaseInitFromCharacterData(meta, globalStore);
                     let initDisplay = String(baseInitVal);
                     if (initMeta?.value !== undefined && typeof initMeta.base === 'number' && initMeta.base > 0) {
                         initDisplay = String(Math.floor(initMeta.value));
@@ -763,8 +913,7 @@ export function useBattleOrganizer() {
 
                     const statsMeta = (meta['pokerole-extension/stats'] || meta) as Record<string, unknown>;
                     const displayName = extractCharacterName(statsMeta, item.name);
-                    const tokenImg =
-                        imgItem.image?.url || extractTokenImage(statsMeta) || extractTokenImage(meta);
+                    const tokenImg = imgItem.image?.url || extractTokenImage(statsMeta) || extractTokenImage(meta);
 
                     combatantRows.push({
                         id: crypto.randomUUID(),
@@ -807,7 +956,7 @@ export function useBattleOrganizer() {
         } catch (e) {
             console.error('[BattleOrganizer] Error pulling from initiative:', e);
         }
-    }, [updateState, globalState]);
+    }, [updateState]);
 
     // --- Sync Back to Character Sheets ---
     const syncToSheets = useCallback(async () => {
@@ -854,13 +1003,14 @@ export function useBattleOrganizer() {
                     }
                 }
 
-                if (globalState.tokenId) {
-                    const activeCombatant = currentRound.combatants.find((c) => c.tokenId === globalState.tokenId);
+                const globalStore = useCharacterStore.getState();
+                if (globalStore.tokenId) {
+                    const activeCombatant = currentRound.combatants.find((c) => c.tokenId === globalStore.tokenId);
                     if (activeCombatant) {
                         const usedActionsCount = activeCombatant.actions.filter((a) => a.status === 'success').length;
-                        globalState.updateTracker('actions', usedActionsCount);
-                        globalState.updateTracker('evade', activeCombatant.evadeUsed);
-                        globalState.updateTracker('clash', activeCombatant.clashUsed);
+                        globalStore.updateTracker('actions', usedActionsCount);
+                        globalStore.updateTracker('evade', activeCombatant.evadeUsed);
+                        globalStore.updateTracker('clash', activeCombatant.clashUsed);
                     }
                 }
             }
@@ -871,7 +1021,7 @@ export function useBattleOrganizer() {
         } catch (e) {
             console.error('[BattleOrganizer] Error syncing to sheets:', e);
         }
-    }, [state.rounds, state.activeRoundIndex, globalState]);
+    }, [state.rounds, state.activeRoundIndex]);
 
     // --- Round Management ---
     const addRound = useCallback(() => {
@@ -1080,12 +1230,13 @@ export function useBattleOrganizer() {
             const target = currentRound?.combatants.find((c) => c.id === combatantId);
 
             if (target?.tokenId) {
+                const globalStore = useCharacterStore.getState();
                 if (isStandaloneMode) {
                     try {
                         const localChars = await storageAdapter.getLocalCharacters();
                         const match = localChars.find((c) => c.id === target.tokenId);
                         if (match?.metadata) {
-                            tokenBaseInit = calculateBaseInitFromCharacterData(match.metadata, globalState);
+                            tokenBaseInit = calculateBaseInitFromCharacterData(match.metadata, globalStore);
                         }
                     } catch (e) {
                         console.warn('[BattleOrganizer] Failed to load local character for init roll:', e);
@@ -1094,7 +1245,7 @@ export function useBattleOrganizer() {
                     try {
                         const items = await OBR.scene.items.getItems([target.tokenId]);
                         if (items.length > 0 && items[0].metadata) {
-                            tokenBaseInit = calculateBaseInitFromCharacterData(items[0].metadata, globalState);
+                            tokenBaseInit = calculateBaseInitFromCharacterData(items[0].metadata, globalStore);
                         }
                     } catch (e) {
                         console.warn('[BattleOrganizer] Failed to load OBR item for init roll:', e);
@@ -1149,7 +1300,7 @@ export function useBattleOrganizer() {
                 return { ...prev, rounds: newRounds };
             });
         },
-        [state.rounds, state.activeRoundIndex, globalState, updateState]
+        [state.rounds, state.activeRoundIndex, updateState]
     );
 
     const sortCombatantsByInitiative = useCallback(() => {
@@ -1315,14 +1466,13 @@ export function useBattleOrganizer() {
 
                     if (match) {
                         localStorage.setItem('pkr_active_character_id', match.id);
-                        window.dispatchEvent(
-                            new CustomEvent('pkr-select-character', { detail: { id: match.id } })
-                        );
+                        window.dispatchEvent(new CustomEvent('pkr-select-character', { detail: { id: match.id } }));
                         const store = useCharacterStore.getState();
                         setActiveTokenId(match.id);
                         store.setTokenData(match.id, 'PLAYER');
                         store.loadFromOwlbear((match.metadata || {}) as Record<string, unknown>);
-                        const tokenImgUrl = combatant.image || extractTokenImage(match.metadata as Record<string, unknown>);
+                        const tokenImgUrl =
+                            combatant.image || extractTokenImage(match.metadata as Record<string, unknown>);
                         if (tokenImgUrl) store.setIdentity('tokenImageUrl', tokenImgUrl);
                     }
                     return;
@@ -1367,10 +1517,41 @@ export function useBattleOrganizer() {
     );
 
     const clearAll = useCallback(() => {
+        if (saveTimerRef.current) {
+            clearTimeout(saveTimerRef.current);
+            saveTimerRef.current = null;
+        }
+
         const fresh = createDefaultState();
+        let freshJson = '';
+        try {
+            freshJson = JSON.stringify(fresh);
+        } catch (e) {
+            console.error('[BattleOrganizer] Failed to serialize fresh reset state:', e);
+        }
+
+        lastSavedJsonRef.current = freshJson;
+
+        try {
+            localStorage.setItem(STORAGE_KEY, freshJson);
+        } catch (e) {
+            console.error('[BattleOrganizer] Failed to reset localStorage:', e);
+        }
+
+        if (OBR.isAvailable && !isStandaloneMode) {
+            try {
+                OBR.broadcast.sendMessage(
+                    OBR_BROADCAST_SYNC_CHANNEL,
+                    { state: fresh, action: 'reset', timestamp: Date.now() },
+                    { destination: 'REMOTE' }
+                );
+            } catch (e) {
+                console.error('[BattleOrganizer] Failed to broadcast reset to peers:', e);
+            }
+        }
+
         setState(fresh);
-        persistState(fresh);
-    }, [persistState]);
+    }, []);
 
     return {
         state,

@@ -139,7 +139,10 @@ export function BattleOrganizerSettingsModal({ onClose }: BattleOrganizerSetting
                                     <Lightbulb size={16} color="var(--primary)" />
                                 </span>
                                 <div className="bo-settings__tip-text text-subtext">
-                                    <strong>Recommended Workflow:</strong> Because 3D dice and the canvas roll log render behind full-screen modals, opening your room in a <strong>second browser tab</strong> lets you manage the Battle Organizer on one screen while rolling on the main map!
+                                    <strong>Recommended Workflow:</strong> Because 3D dice and the canvas roll log
+                                    render behind full-screen modals, opening your room in a{' '}
+                                    <strong>second browser tab</strong> lets you manage the Battle Organizer on one
+                                    screen while rolling on the main map!
                                 </div>
                             </div>
                         </>
@@ -154,7 +157,10 @@ export function BattleOrganizerSettingsModal({ onClose }: BattleOrganizerSetting
                                     <Lightbulb size={16} color="var(--primary)" />
                                 </span>
                                 <div className="bo-settings__tip-text text-subtext">
-                                    <strong>Multi-Window Sync:</strong> Use the <strong>Pop Out</strong> button in the organizer header to detach this sheet into a separate browser window. Actions, battlefield effects, and rolls maintain continuous live two-way sync with your character sheets!
+                                    <strong>Multi-Window Sync:</strong> Use the <strong>Pop Out</strong> button in the
+                                    organizer header to detach this sheet into a separate browser window. Actions,
+                                    battlefield effects, and rolls maintain continuous live two-way sync with your
+                                    character sheets!
                                 </div>
                             </div>
                         </>

@@ -64,10 +64,7 @@ export function CombatantSheetModal({
 
         return () => {
             if (initialThemeRef.current) {
-                applyDynamicThemeColors(
-                    initialThemeRef.current.primary,
-                    initialThemeRef.current.secondary
-                );
+                applyDynamicThemeColors(initialThemeRef.current.primary, initialThemeRef.current.secondary);
             }
         };
     }, []);

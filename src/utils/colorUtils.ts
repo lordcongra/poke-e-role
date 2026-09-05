@@ -138,9 +138,7 @@ export const resolveCharacterThemeColors = (
 
             let typeColor = TYPE_COLORS[rawType] || TYPE_COLORS[titleType] || '';
             if (!typeColor && roomCustomTypes) {
-                const customType = roomCustomTypes.find(
-                    (t) => t.name.toLowerCase().trim() === rawType.toLowerCase()
-                );
+                const customType = roomCustomTypes.find((t) => t.name.toLowerCase().trim() === rawType.toLowerCase());
                 if (customType && customType.color) typeColor = customType.color;
             }
 
@@ -157,8 +155,7 @@ export const resolveCharacterThemeColors = (
 
     try {
         const isHighContrast =
-            document.body.hasAttribute('data-high-contrast') ||
-            localStorage.getItem('pkr_high_contrast') === 'true';
+            document.body.hasAttribute('data-high-contrast') || localStorage.getItem('pkr_high_contrast') === 'true';
         const contrastPrimary = parseFloat(localStorage.getItem('pkr_contrast_primary') || '0.20');
         const contrastSecondary = parseFloat(localStorage.getItem('pkr_contrast_secondary') || '0.20');
         const contrastForceAll = localStorage.getItem('pkr_contrast_force') === 'true';
