@@ -29,6 +29,7 @@
 }
 
 .sidebar__toggle-btn {
+    position: relative;
     background: transparent;
     border: none;
     color: var(--text-main);
@@ -37,6 +38,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.sidebar__collapsed-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--semantic-danger);
+    box-shadow: 0 0 6px var(--semantic-danger);
 }
 
 .sidebar__create-panel {
@@ -65,9 +77,85 @@
     padding: 6px;
 }
 
+.sidebar__btn--unbacked {
+    position: relative;
+    border: 1px solid var(--semantic-danger) !important;
+}
+
+.sidebar__backup-badge {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--semantic-danger);
+    box-shadow: 0 0 6px var(--semantic-danger);
+}
+
 .sidebar__backup-row {
     margin-top: 8px;
     gap: 4px;
+}
+
+.sidebar__backup-prompt {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--semantic-danger) 15%, var(--panel-alt));
+    border: 1px solid color-mix(in srgb, var(--semantic-danger) 60%, var(--border));
+    color: var(--text-main);
+    font-size: 0.72rem;
+    line-height: 1.2;
+    width: 100%;
+    box-sizing: border-box;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.sidebar__backup-prompt:hover {
+    background: color-mix(in srgb, var(--semantic-danger) 22%, var(--panel-alt));
+    border-color: var(--semantic-danger);
+}
+
+.sidebar__backup-prompt-main {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+}
+
+.sidebar__backup-prompt-icon {
+    color: var(--semantic-danger);
+    flex-shrink: 0;
+}
+
+.sidebar__backup-prompt-dismiss {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition:
+        color 0.15s ease,
+        background 0.15s ease;
+}
+
+.sidebar__backup-prompt-dismiss:hover {
+    color: var(--text-main);
+    background: color-mix(in srgb, var(--dark) 30%, transparent);
 }
 
 .sidebar__hidden-input {

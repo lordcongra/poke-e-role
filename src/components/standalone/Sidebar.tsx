@@ -1,16 +1,22 @@
+import { useState, useEffect } from 'react';
 import { useSidebarEngine } from './useSidebarEngine';
 import { SidebarContextMenu } from './SidebarContextMenu';
 import { SidebarTreeNode } from './SidebarTreeNode';
 import { RestoreBackupModal } from './RestoreBackupModal';
-import { Menu, ChevronLeft, FolderPlus, FilePlus, Save, ArchiveRestore } from 'lucide-react';
+import { BackupModal } from './BackupModal';
+import { Menu, ChevronLeft, FolderPlus, FilePlus, Save, ArchiveRestore, AlertTriangle, X } from 'lucide-react';
 import './Sidebar.css';
 
 const ICON_SHADOW = 'drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8)) drop-shadow(0 1px 4px rgba(0, 0, 0, 0.6))';
 
 export function Sidebar() {
+    const [isPromptDismissed, setIsPromptDismissed] = useState(false);
+
     const {
         activeTokenId,
         items,
+        characterCount,
+        folderCount,
         isCollapsed,
         setIsCollapsed,
         newName,
@@ -18,10 +24,14 @@ export function Sidebar() {
         expandedNodes,
         initTags,
         contextMenu,
+        isBackupModalOpen,
+        setIsBackupModalOpen,
+        hasUnbackedChanges,
         restoreInputRef,
         pendingRestoreData,
         handleCreate,
         handleExportMasterBackup,
+        confirmExportMasterBackup,
         handleRestoreMasterBackup,
         confirmRestoreMerge,
         confirmRestoreOverwrite,
@@ -41,15 +51,20 @@ export function Sidebar() {
         setDragOverInfo
     } = useSidebarEngine();
 
+    useEffect(() => {
+        setIsPromptDismissed(false);
+    }, [hasUnbackedChanges]);
+
     if (isCollapsed) {
         return (
             <div className="sidebar sidebar--collapsed">
                 <button
                     className="sidebar__toggle-btn text-label"
                     onClick={() => setIsCollapsed(false)}
-                    title="Open Directory"
+                    title={hasUnbackedChanges ? 'Open Directory (Unbacked Changes)' : 'Open Directory'}
                 >
                     <Menu size={20} />
+                    {hasUnbackedChanges && <span className="sidebar__collapsed-badge" title="Unbacked changes" />}
                 </button>
             </div>
         );
@@ -98,11 +113,18 @@ export function Sidebar() {
                 </div>
                 <div className="sidebar__create-row sidebar__backup-row">
                     <button
-                        className="action-button action-button--dark sidebar__btn text-theme-header"
+                        className={`action-button action-button--dark sidebar__btn text-theme-header ${
+                            hasUnbackedChanges ? 'sidebar__btn--unbacked' : ''
+                        }`}
                         onClick={handleExportMasterBackup}
-                        title="Export all folders and characters"
+                        title={
+                            hasUnbackedChanges
+                                ? 'Unbacked changes! Click to backup directory.'
+                                : 'Export all folders and characters'
+                        }
                     >
                         <Save size={14} style={{ filter: ICON_SHADOW }} /> Backup
+                        {hasUnbackedChanges && <span className="sidebar__backup-badge" title="Unbacked changes" />}
                     </button>
                     <button
                         className="action-button action-button--secondary sidebar__btn text-theme-header"
@@ -119,6 +141,39 @@ export function Sidebar() {
                         className="sidebar__hidden-input"
                     />
                 </div>
+
+                {hasUnbackedChanges && !isPromptDismissed && (
+                    <div className="sidebar__backup-prompt text-subtext">
+                        <div
+                            className="sidebar__backup-prompt-main"
+                            onClick={handleExportMasterBackup}
+                            title="Click to backup your data"
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    handleExportMasterBackup();
+                                }
+                            }}
+                        >
+                            <AlertTriangle size={13} className="sidebar__backup-prompt-icon" />
+                            <span>Unsaved changes! Backup recommended.</span>
+                        </div>
+                        <button
+                            type="button"
+                            className="sidebar__backup-prompt-dismiss"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsPromptDismissed(true);
+                            }}
+                            aria-label="Dismiss backup warning"
+                            title="Dismiss warning"
+                        >
+                            <X size={12} />
+                        </button>
+                    </div>
+                )}
             </div>
 
             <div
@@ -158,6 +213,16 @@ export function Sidebar() {
                     onMove={executeMove}
                     onDuplicate={executeDuplicate}
                     onDelete={executeDelete}
+                />
+            )}
+
+            {/* Custom Backup Modal */}
+            {isBackupModalOpen && (
+                <BackupModal
+                    characterCount={characterCount}
+                    folderCount={folderCount}
+                    onConfirm={confirmExportMasterBackup}
+                    onClose={() => setIsBackupModalOpen(false)}
                 />
             )}
 

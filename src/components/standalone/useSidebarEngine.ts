@@ -1,5 +1,11 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { storageAdapter } from '../../utils/storageAdapter';
+import {
+    storageAdapter,
+    markBackupComplete,
+    markDataChanged,
+    hasUnbackedData,
+    BACKUP_STATUS_EVENT
+} from '../../utils/storageAdapter';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { setActiveTokenId } from '../../utils/obr';
 import { fetchPokemonData } from '../../utils/api';
@@ -34,6 +40,9 @@ export function useSidebarEngine() {
         null
     );
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; item: TreeItem } | null>(null);
+
+    const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+    const [hasUnbackedChanges, setHasUnbackedChanges] = useState(false);
 
     const [pendingRestoreData, setPendingRestoreData] = useState<MasterBackupData | null>(null);
     const restoreInputRef = useRef<HTMLInputElement>(null);
@@ -84,6 +93,7 @@ export function useSidebarEngine() {
             });
 
             setItems(combined);
+            setHasUnbackedChanges(hasUnbackedData(chars.length, flds.length));
         } catch (error) {
             console.error('[SidebarEngine] Failed to load data:', error);
         }
@@ -134,7 +144,7 @@ export function useSidebarEngine() {
         if (meta['species']) {
             try {
                 const data = await fetchPokemonData(String(meta['species']));
-                if (data) store.refreshSpeciesData(data as Record<string, unknown>);
+                if (data) store.refreshSpeciesData(data as Record<string, unknown>, false);
             } catch {
                 // Ignore fetch errors
             }
@@ -183,12 +193,24 @@ export function useSidebarEngine() {
             }
         };
 
+        const handleBackupStatus = async () => {
+            try {
+                const chars = await storageAdapter.getLocalCharacters();
+                const flds = await storageAdapter.getFolders();
+                setHasUnbackedChanges(hasUnbackedData(chars.length, flds.length));
+            } catch (err) {
+                console.error('[SidebarEngine] Failed to check backup status:', err);
+            }
+        };
+        window.addEventListener(BACKUP_STATUS_EVENT, handleBackupStatus);
+
         const closeContextMenu = () => setContextMenu(null);
         document.addEventListener('click', closeContextMenu);
 
         return () => {
             window.removeEventListener('pkr-local-data-changed', handleDataChange);
             window.removeEventListener('pkr-standalone-init-update', updateInitTags);
+            window.removeEventListener(BACKUP_STATUS_EVENT, handleBackupStatus);
             window.removeEventListener('storage', handleActiveCharStorage);
             window.removeEventListener('pkr-select-character', handleActiveCharCustomEvent);
             localStorage.setItem = originalSetItem;
@@ -234,6 +256,7 @@ export function useSidebarEngine() {
             const flds = await storageAdapter.getFolders();
             const updated = flds.map((f) => (f.id === item.id ? { ...f, name: newSafeName } : f));
             localStorage.setItem('pkr_folders', JSON.stringify(updated));
+            markDataChanged();
             window.dispatchEvent(new Event('pkr-local-data-changed'));
         } else {
             const charData = localStorage.getItem(`pkr_char_${item.id}`);
@@ -241,6 +264,7 @@ export function useSidebarEngine() {
                 const meta = JSON.parse(charData);
                 meta.nickname = newSafeName;
                 localStorage.setItem(`pkr_char_${item.id}`, JSON.stringify(meta));
+                markDataChanged();
                 window.dispatchEvent(new Event('pkr-local-data-changed'));
 
                 if (activeTokenId === item.id) {
@@ -283,6 +307,7 @@ export function useSidebarEngine() {
             currentOrder[indexA] = currentOrder[indexB];
             currentOrder[indexB] = temp;
             localStorage.setItem('pkr_sidebar_order', JSON.stringify(currentOrder));
+            markDataChanged();
             loadData();
         } else if (direction === 'down' && currentIndex < siblings.length - 1) {
             const currentOrder = items.map((i) => i.id);
@@ -292,6 +317,7 @@ export function useSidebarEngine() {
             currentOrder[indexA] = currentOrder[indexB];
             currentOrder[indexB] = temp;
             localStorage.setItem('pkr_sidebar_order', JSON.stringify(currentOrder));
+            markDataChanged();
             loadData();
         } else if (direction === 'in') {
             if (currentIndex > 0) {
@@ -440,6 +466,7 @@ export function useSidebarEngine() {
         }
 
         localStorage.setItem('pkr_sidebar_order', JSON.stringify(filteredOrder));
+        markDataChanged();
 
         if (position === 'inside' || newParentId) {
             setExpandedNodes((prev) => ({ ...prev, [newParentId!]: true }));
@@ -455,21 +482,19 @@ export function useSidebarEngine() {
         return 'sidebar__item--drag-inside';
     };
 
-    const handleExportMasterBackup = async () => {
-        const confirmed = window.confirm(
-            'MASTER BACKUP NOTICE:\n\n' +
-                'This will export all folders and character sheets to a JSON file.\n' +
-                'Please note: Locally uploaded custom images are stored in browser storage and CANNOT be embedded into file backups. Only external image URLs will be fully preserved.\n\n' +
-                'Proceed with export?'
-        );
-        if (!confirmed) return;
+    const handleExportMasterBackup = () => {
+        setIsBackupModalOpen(true);
+    };
 
+    const confirmExportMasterBackup = async () => {
         try {
             const chars = await storageAdapter.getLocalCharacters();
             const flds = await storageAdapter.getFolders();
             const backup = { type: 'pokerole-master-backup', version: 1, characters: chars, folders: flds };
 
             downloadJson(backup, `PokeRole_Master_Backup_${new Date().toISOString().split('T')[0]}.json`);
+            markBackupComplete();
+            setIsBackupModalOpen(false);
         } catch (error) {
             console.error('[SidebarEngine] Failed to create master backup', error);
             alert('Failed to generate Master Backup.');
@@ -512,6 +537,7 @@ export function useSidebarEngine() {
         for (const char of data.characters || []) {
             localStorage.setItem(`pkr_char_${char.id}`, JSON.stringify(char.metadata));
         }
+        markBackupComplete();
         window.dispatchEvent(new Event('pkr-local-data-changed'));
         setPendingRestoreData(null);
         alert('Master Backup Merged Successfully!');
@@ -532,6 +558,7 @@ export function useSidebarEngine() {
         for (const char of data.characters || []) {
             localStorage.setItem(`pkr_char_${char.id}`, JSON.stringify(char.metadata));
         }
+        markBackupComplete();
         window.dispatchEvent(new Event('pkr-local-data-changed'));
         setPendingRestoreData(null);
         alert('Master Backup Restored (Overwritten) Successfully!');
@@ -541,9 +568,14 @@ export function useSidebarEngine() {
         setPendingRestoreData(null);
     };
 
+    const characterCount = items.filter((i) => i.type === 'character').length;
+    const folderCount = items.filter((i) => i.type === 'folder').length;
+
     return {
         activeTokenId,
         items,
+        characterCount,
+        folderCount,
         isCollapsed,
         setIsCollapsed,
         newName,
@@ -551,10 +583,14 @@ export function useSidebarEngine() {
         expandedNodes,
         initTags,
         contextMenu,
+        isBackupModalOpen,
+        setIsBackupModalOpen,
+        hasUnbackedChanges,
         restoreInputRef,
         pendingRestoreData,
         handleCreate,
         handleExportMasterBackup,
+        confirmExportMasterBackup,
         handleRestoreMasterBackup,
         confirmRestoreMerge,
         confirmRestoreOverwrite,

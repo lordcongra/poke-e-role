@@ -488,7 +488,7 @@ export interface MacroSlice {
         customFormId?: string
     ) => void;
     applySpeciesData: (data: Record<string, unknown>, wipeData?: boolean, updateStats?: boolean) => void;
-    refreshSpeciesData: (data: Record<string, unknown>) => void;
+    refreshSpeciesData: (data: Record<string, unknown>, shouldSave?: boolean) => void;
 }
 
 export interface SyncSlice {

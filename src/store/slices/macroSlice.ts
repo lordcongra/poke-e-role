@@ -364,7 +364,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
         }
     },
 
-    refreshSpeciesData: (data) =>
+    refreshSpeciesData: (data, shouldSave = true) =>
         set((state) => {
             if (!data || (!data.Name && !data.Moves)) return state;
 
@@ -433,10 +433,12 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             // Always run the sync engine to ensure Max HP and Max Will match the latest stat limits
             syncHealthAndWill(state, newStats, newIdentity, newHealth, newWill, updatesToSave);
 
-            try {
-                saveToOwlbear(updatesToSave);
-            } catch (e) {
-                console.error('[MacroSlice] Failed to save refreshed species data to Owlbear.', e);
+            if (shouldSave) {
+                try {
+                    saveToOwlbear(updatesToSave);
+                } catch (e) {
+                    console.error('[MacroSlice] Failed to save refreshed species data to Owlbear.', e);
+                }
             }
 
             return {

@@ -250,7 +250,7 @@ export function useOwlbearSync() {
                                                 if (data)
                                                     useCharacterStore
                                                         .getState()
-                                                        .refreshSpeciesData(data as Record<string, unknown>);
+                                                        .refreshSpeciesData(data as Record<string, unknown>, false);
                                             })
                                             .catch((e) =>
                                                 console.warn(
@@ -411,12 +411,25 @@ export function useOwlbearSync() {
 
                         const mapRoomSettings = (sData: Record<string, unknown>) => ({
                             ruleset: sData.ruleset !== undefined ? String(sData.ruleset) : undefined,
-                            pain: sData.painEnabled !== undefined ? (sData.painEnabled ? 'Enabled' : 'Disabled') : undefined,
-                            diceEngine: sData.diceEngine !== undefined ? (String(sData.diceEngine) as 'dice-plus' | 'car') : undefined,
-                            homebrewAccess: sData.homebrewAccess !== undefined ? String(sData.homebrewAccess) : undefined,
+                            pain:
+                                sData.painEnabled !== undefined
+                                    ? sData.painEnabled
+                                        ? 'Enabled'
+                                        : 'Disabled'
+                                    : undefined,
+                            diceEngine:
+                                sData.diceEngine !== undefined
+                                    ? (String(sData.diceEngine) as 'dice-plus' | 'car')
+                                    : undefined,
+                            homebrewAccess:
+                                sData.homebrewAccess !== undefined ? String(sData.homebrewAccess) : undefined,
                             gmOnlyLootGen: sData.gmOnlyLootGen !== undefined ? Boolean(sData.gmOnlyLootGen) : undefined,
-                            gmOnlyMatchups: sData.gmOnlyMatchups !== undefined ? Boolean(sData.gmOnlyMatchups) : undefined,
-                            gmOnlyDamageOverride: sData.gmOnlyDamageOverride !== undefined ? Boolean(sData.gmOnlyDamageOverride) : undefined,
+                            gmOnlyMatchups:
+                                sData.gmOnlyMatchups !== undefined ? Boolean(sData.gmOnlyMatchups) : undefined,
+                            gmOnlyDamageOverride:
+                                sData.gmOnlyDamageOverride !== undefined
+                                    ? Boolean(sData.gmOnlyDamageOverride)
+                                    : undefined,
                             gmDemoMode: sData.gmDemoMode !== undefined ? Boolean(sData.gmDemoMode) : undefined
                         });
 
@@ -434,12 +447,26 @@ export function useOwlbearSync() {
 
                             const mapRoomSettings = (sData: Record<string, unknown>) => ({
                                 ruleset: sData.ruleset !== undefined ? String(sData.ruleset) : undefined,
-                                pain: sData.painEnabled !== undefined ? (sData.painEnabled ? 'Enabled' : 'Disabled') : undefined,
-                                diceEngine: sData.diceEngine !== undefined ? (String(sData.diceEngine) as 'dice-plus' | 'car') : undefined,
-                                homebrewAccess: sData.homebrewAccess !== undefined ? String(sData.homebrewAccess) : undefined,
-                                gmOnlyLootGen: sData.gmOnlyLootGen !== undefined ? Boolean(sData.gmOnlyLootGen) : undefined,
-                                gmOnlyMatchups: sData.gmOnlyMatchups !== undefined ? Boolean(sData.gmOnlyMatchups) : undefined,
-                                gmOnlyDamageOverride: sData.gmOnlyDamageOverride !== undefined ? Boolean(sData.gmOnlyDamageOverride) : undefined,
+                                pain:
+                                    sData.painEnabled !== undefined
+                                        ? sData.painEnabled
+                                            ? 'Enabled'
+                                            : 'Disabled'
+                                        : undefined,
+                                diceEngine:
+                                    sData.diceEngine !== undefined
+                                        ? (String(sData.diceEngine) as 'dice-plus' | 'car')
+                                        : undefined,
+                                homebrewAccess:
+                                    sData.homebrewAccess !== undefined ? String(sData.homebrewAccess) : undefined,
+                                gmOnlyLootGen:
+                                    sData.gmOnlyLootGen !== undefined ? Boolean(sData.gmOnlyLootGen) : undefined,
+                                gmOnlyMatchups:
+                                    sData.gmOnlyMatchups !== undefined ? Boolean(sData.gmOnlyMatchups) : undefined,
+                                gmOnlyDamageOverride:
+                                    sData.gmOnlyDamageOverride !== undefined
+                                        ? Boolean(sData.gmOnlyDamageOverride)
+                                        : undefined,
                                 gmDemoMode: sData.gmDemoMode !== undefined ? Boolean(sData.gmDemoMode) : undefined
                             });
 
