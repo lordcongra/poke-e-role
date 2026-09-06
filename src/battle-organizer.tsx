@@ -3,11 +3,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import OBR from '@owlbear-rodeo/sdk';
 import { BattleOrganizerModal } from './components/modals/battleOrganizer/BattleOrganizerModal';
 import { PrintBattleOrganizer } from './components/print/PrintBattleOrganizer';
-import {
-    getBattleOrganizerSettings,
-    subscribeBattleOrganizerSettings
-} from './components/modals/battleOrganizer/battleOrganizerSettingsHelper';
-import type { BattleOrganizerSettings } from './types/battleOrganizerTypes';
+import { subscribeBattleOrganizerSettings } from './components/modals/battleOrganizer/battleOrganizerSettingsHelper';
 import { isStandaloneMode } from './utils/storageAdapter';
 import './style.css';
 
@@ -147,93 +143,28 @@ export function BattleOrganizerApp() {
         return () => window.removeEventListener('storage', handleStorage);
     }, []);
 
-    // Dynamic modal resizing when settings change (e.g. toggling battlefield or round tracker)
+    // Dynamic window resizing in standalone PWA mode when settings change
     useEffect(() => {
-        if (isStandaloneMode) {
-            const unsub = subscribeBattleOrganizerSettings((settings) => {
-                try {
-                    let targetWidth = 1360;
-                    let targetHeight = 880;
-                    if (settings.showBattlefield && !settings.showRoundTracker) {
-                        targetWidth = 1040;
-                        targetHeight = 620;
-                    } else if (!settings.showBattlefield && settings.showRoundTracker) {
-                        targetWidth = 1200;
-                        targetHeight = 760;
-                    }
-                    window.resizeTo(targetWidth, targetHeight);
-                } catch {
-                    // resizeTo may be blocked by browser security
-                }
-            });
-            return () => unsub();
-        }
+        if (!isStandaloneMode) return;
 
-        if (!OBR.isAvailable || !isReady) return;
-
-        let prevDimensions = '';
-
-        const resizeModal = async (settings: BattleOrganizerSettings) => {
+        const unsub = subscribeBattleOrganizerSettings((settings) => {
             try {
-                const viewportWidth = (await OBR.viewport.getWidth()) ?? 1200;
-                const viewportHeight = (await OBR.viewport.getHeight()) ?? 800;
-
                 let targetWidth = 1360;
-                let targetHeight = 900;
-
+                let targetHeight = 880;
                 if (settings.showBattlefield && !settings.showRoundTracker) {
                     targetWidth = 1040;
-                    targetHeight = 600;
+                    targetHeight = 620;
                 } else if (!settings.showBattlefield && settings.showRoundTracker) {
                     targetWidth = 1200;
-                    targetHeight = 740;
+                    targetHeight = 760;
                 }
-
-                targetWidth = Math.min(Math.round(viewportWidth * 0.95), targetWidth);
-                targetHeight = Math.min(Math.round(viewportHeight * 0.95), targetHeight);
-
-                const isFullScreen = settings.fullScreen ?? false;
-                const dimKey = `${targetWidth}x${targetHeight}x${isFullScreen}`;
-                if (dimKey === prevDimensions) return;
-                prevDimensions = dimKey;
-
-                const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-                const themeToPass = document.body.getAttribute('data-theme') || 'dark';
-                const currentPrimary =
-                    document.documentElement.style.getPropertyValue('--dynamic-type-color') ||
-                    document.body.style.getPropertyValue('--dynamic-type-color') ||
-                    '';
-                const currentSecondary =
-                    document.documentElement.style.getPropertyValue('--dynamic-secondary-color') ||
-                    document.body.style.getPropertyValue('--dynamic-secondary-color') ||
-                    '';
-                const params = new URLSearchParams();
-                params.set('theme', themeToPass);
-                if (currentPrimary.trim()) params.set('primary', currentPrimary.trim());
-                if (currentSecondary.trim()) params.set('secondary', currentSecondary.trim());
-                const url = `${baseUrl}/battle-organizer.html?${params.toString()}`;
-
-                await OBR.modal.open({
-                    id: 'pkr-battle-organizer',
-                    url: url,
-                    width: targetWidth,
-                    height: targetHeight,
-                    fullScreen: isFullScreen
-                });
-            } catch (e) {
-                console.warn('[BattleOrganizerApp] Failed to dynamically resize OBR modal:', e);
+                window.resizeTo(targetWidth, targetHeight);
+            } catch {
+                // resizeTo may be blocked by browser security
             }
-        };
-
-        // Resize on mount with current settings
-        resizeModal(getBattleOrganizerSettings());
-
-        const unsub = subscribeBattleOrganizerSettings((newSettings) => {
-            resizeModal(newSettings);
         });
-
         return () => unsub();
-    }, [isReady]);
+    }, []);
 
     // OBR ready & broadcast sync
     useEffect(() => {

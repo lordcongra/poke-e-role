@@ -207,6 +207,24 @@ export function CombatantRow({
         });
     };
 
+    const hpMax = combatant.hpMax || 0;
+    const hpCurr = combatant.hpCurr ?? 0;
+    const hpRatio = hpMax > 0 ? hpCurr / hpMax : 1;
+
+    let hpThemeClass = 'bo-stat-stepper--hp-green';
+    if (combatant.tempHp && combatant.tempHp > 0) {
+        hpThemeClass = 'bo-stat-stepper--hp-temp';
+    } else if (hpRatio <= 0.2) {
+        hpThemeClass = 'bo-stat-stepper--hp-red';
+    } else if (hpRatio <= 0.5) {
+        hpThemeClass = 'bo-stat-stepper--hp-yellow';
+    }
+
+    const hpTitle =
+        combatant.tempHp && combatant.tempHp > 0
+            ? `HP: ${hpCurr} / ${hpMax} (+${combatant.tempHp} Temp)`
+            : `HP: ${hpCurr}${hpMax ? ` / ${hpMax}` : ''}`;
+
     return (
         <tr
             className={`bo-combatant-row ${combatant.isPlayerSide ? 'bo-combatant-row--player' : 'bo-combatant-row--foe'} ${combatant.isFainted ? 'bo-combatant-row--fainted' : ''}`}
@@ -254,8 +272,8 @@ export function CombatantRow({
                     <div className="bo-avatar-stat-stack">
                         {/* Top: HP Stepper */}
                         <div
-                            className="bo-stat-stepper bo-stat-stepper--hp"
-                            title={`HP: ${combatant.hpCurr ?? 0}${combatant.hpMax ? ` / ${combatant.hpMax}` : ''}`}
+                            className={`bo-stat-stepper bo-stat-stepper--hp ${hpThemeClass}`}
+                            title={hpTitle}
                         >
                             <button
                                 type="button"

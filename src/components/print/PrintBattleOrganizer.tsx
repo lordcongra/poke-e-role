@@ -311,9 +311,9 @@ export function PrintBattleOrganizer({ onDone, stateOverride }: PrintBattleOrgan
                     <table className="print-bo-table">
                         <thead>
                             <tr>
-                                <th style={{ width: '6%', textAlign: 'center' }}>Init</th>
-                                <th style={{ width: '16%' }}>Combatant</th>
-                                <th style={{ width: '14%' }}>Held Item</th>
+                                <th style={{ width: '5%', textAlign: 'center' }}>Init</th>
+                                <th style={{ width: '18%' }}>Combatant</th>
+                                <th style={{ width: '13%' }}>Held Item</th>
                                 <th style={{ width: '10%' }}>Status</th>
                                 <th style={{ width: '54%', textAlign: 'center' }}>Action Counter (1 - 5)</th>
                             </tr>
@@ -333,6 +333,21 @@ export function PrintBattleOrganizer({ onDone, stateOverride }: PrintBattleOrgan
                                     .map((s) => s.trim())
                                     .filter(Boolean);
 
+                                const hpMax = c.hpMax || 0;
+                                const hpCurr = c.hpCurr ?? 0;
+                                const hpRatio = hpMax > 0 ? hpCurr / hpMax : 1;
+
+                                let hpPrintClass = 'print-bo-stat-mini--hp-green';
+                                if (c.tempHp && c.tempHp > 0) {
+                                    hpPrintClass = 'print-bo-stat-mini--hp-temp';
+                                } else if (hpRatio <= 0.2) {
+                                    hpPrintClass = 'print-bo-stat-mini--hp-red';
+                                } else if (hpRatio <= 0.5) {
+                                    hpPrintClass = 'print-bo-stat-mini--hp-yellow';
+                                }
+
+                                const willCurr = c.willCurr ?? 0;
+
                                 return (
                                     <tr key={c.id}>
                                         <td className="print-bo-cell-underline print-bo-cell-init">
@@ -340,9 +355,25 @@ export function PrintBattleOrganizer({ onDone, stateOverride }: PrintBattleOrgan
                                         </td>
                                         <td className="print-bo-cell-underline print-bo-cell-combatant">
                                             <div className="print-bo-combatant-box">
-                                                {imgSrc ? (
-                                                    <img src={imgSrc} alt="" className="print-bo-combatant-img" />
-                                                ) : null}
+                                                <div className="print-bo-combatant-token-stack">
+                                                    <span
+                                                        className={`print-bo-stat-mini ${hpPrintClass}`}
+                                                        title={`HP: ${hpCurr}${hpMax ? `/${hpMax}` : ''}`}
+                                                    >
+                                                        {hpCurr}
+                                                    </span>
+                                                    {imgSrc ? (
+                                                        <img src={imgSrc} alt="" className="print-bo-combatant-img" />
+                                                    ) : (
+                                                        <div className="print-bo-combatant-img-placeholder" />
+                                                    )}
+                                                    <span
+                                                        className="print-bo-stat-mini print-bo-stat-mini--will"
+                                                        title={`Will: ${willCurr}${c.willMax ? `/${c.willMax}` : ''}`}
+                                                    >
+                                                        {willCurr}
+                                                    </span>
+                                                </div>
                                                 <div className="print-bo-combatant-details">
                                                     <strong className="print-bo-combatant-name">{c.name || ' '}</strong>
                                                     {c.isFainted && (

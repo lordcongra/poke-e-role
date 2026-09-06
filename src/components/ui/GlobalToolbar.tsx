@@ -244,6 +244,8 @@ export function GlobalToolbar() {
             const viewportHeight = (await OBR.viewport.getHeight()) ?? 800;
 
             const settings = getBattleOrganizerSettings();
+            const isFullScreen = settings.fullScreen ?? false;
+
             let targetWidth = 1360;
             let targetHeight = 900;
 
@@ -255,8 +257,12 @@ export function GlobalToolbar() {
                 targetHeight = 740;
             }
 
-            targetWidth = Math.min(Math.round(viewportWidth * 0.95), targetWidth);
-            targetHeight = Math.min(Math.round(viewportHeight * 0.95), targetHeight);
+            if (viewportWidth > 800) {
+                targetWidth = Math.max(1000, Math.min(Math.round(viewportWidth * 0.95), targetWidth));
+            }
+            if (viewportHeight > 600) {
+                targetHeight = Math.max(650, Math.min(Math.round(viewportHeight * 0.95), targetHeight));
+            }
 
             const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
             const themeToPass = document.body.getAttribute('data-theme') || 'dark';
@@ -274,13 +280,21 @@ export function GlobalToolbar() {
             if (currentSecondary.trim()) urlParams.set('secondary', currentSecondary.trim());
             const url = `${baseUrl}/battle-organizer.html?${urlParams.toString()}`;
 
-            await OBR.modal.open({
-                id: 'pkr-battle-organizer',
-                url: url,
-                width: targetWidth,
-                height: targetHeight,
-                fullScreen: settings.fullScreen ?? false
-            });
+            if (isFullScreen) {
+                await OBR.modal.open({
+                    id: 'pkr-battle-organizer',
+                    url: url,
+                    fullScreen: true
+                });
+            } else {
+                await OBR.modal.open({
+                    id: 'pkr-battle-organizer',
+                    url: url,
+                    width: targetWidth,
+                    height: targetHeight,
+                    fullScreen: false
+                });
+            }
         } catch (e) {
             console.warn('[GlobalToolbar] Failed to open OBR Battle Organizer modal, falling back to local modal:', e);
             setActiveModal('battle-organizer');

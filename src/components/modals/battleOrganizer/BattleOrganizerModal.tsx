@@ -24,11 +24,10 @@ import {
     ChevronDown,
     Settings,
     Swords,
-    ExternalLink,
-    Maximize2,
-    Minimize2
+    ExternalLink
 } from 'lucide-react';
 import { isStandaloneMode } from '../../../utils/storageAdapter';
+import { TooltipIcon } from '../../ui/TooltipIcon';
 import { BattleOrganizerSettingsModal } from './BattleOrganizerSettingsModal';
 import { CombatantSheetModal } from './CombatantSheetModal';
 import { InModalRollLog } from './InModalRollLog';
@@ -54,6 +53,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
         activeRoundIndex,
         pullFromInitiative,
         syncToSheets,
+        refreshTokenStats,
         openSheet,
         addRound,
         duplicateRound,
@@ -80,8 +80,21 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
 
     const [boSettings, setBoSettings] = useState<BattleOrganizerSettings>(() => getBattleOrganizerSettings());
     const [showSettingsModal, setShowSettingsModal] = useState(false);
+    const [showPullConfirmModal, setShowPullConfirmModal] = useState(false);
     const [activeSheetCombatant, setActiveSheetCombatant] = useState<CombatantRowData | null>(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
     const bodyRef = useRef<HTMLDivElement>(null);
+
+    const handleManualRefresh = async () => {
+        if (isRefreshing) return;
+        setIsRefreshing(true);
+        try {
+            await refreshTokenStats(false);
+        } finally {
+            setTimeout(() => setIsRefreshing(false), 600);
+        }
+    };
 
     // Lock background scrolling on document body while modal is open
     useEffect(() => {
@@ -209,58 +222,18 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
         onClose();
     };
 
-    const handleToggleFullScreen = async () => {
-        const nextVal = !boSettings.fullScreen;
-        const updated = saveBattleOrganizerSettings({ fullScreen: nextVal });
-        setBoSettings(updated);
-
-        if (OBR.isAvailable && !isStandaloneMode) {
-            try {
-                const viewportWidth = (await OBR.viewport.getWidth()) ?? 1200;
-                const viewportHeight = (await OBR.viewport.getHeight()) ?? 800;
-                let targetWidth = 1360;
-                let targetHeight = 900;
-                if (updated.showBattlefield && !updated.showRoundTracker) {
-                    targetWidth = 1040;
-                    targetHeight = 600;
-                } else if (!updated.showBattlefield && updated.showRoundTracker) {
-                    targetWidth = 1200;
-                    targetHeight = 740;
-                }
-                targetWidth = Math.min(Math.round(viewportWidth * 0.95), targetWidth);
-                targetHeight = Math.min(Math.round(viewportHeight * 0.95), targetHeight);
-
-                const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-                const themeToPass = document.body.getAttribute('data-theme') || 'dark';
-                const params = new URLSearchParams();
-                params.set('theme', themeToPass);
-                const url = `${baseUrl}/battle-organizer.html?${params.toString()}`;
-
-                await OBR.modal.open({
-                    id: 'pkr-battle-organizer',
-                    url,
-                    width: targetWidth,
-                    height: targetHeight,
-                    fullScreen: nextVal
-                });
-            } catch (e) {
-                console.warn('[BattleOrganizerModal] Failed to toggle OBR modal fullScreen:', e);
-            }
-        } else {
-            try {
-                if (nextVal) {
-                    if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-                        await document.documentElement.requestFullscreen();
-                    }
-                } else {
-                    if (document.fullscreenElement && document.exitFullscreen) {
-                        await document.exitFullscreen();
-                    }
-                }
-            } catch {
-                // ignore
-            }
+    const handlePullFromInitiative = () => {
+        const hasExistingCombatants = currentRound && currentRound.combatants && currentRound.combatants.length > 0;
+        if (hasExistingCombatants) {
+            setShowPullConfirmModal(true);
+            return;
         }
+        pullFromInitiative();
+    };
+
+    const handleConfirmPullFromInitiative = () => {
+        pullFromInitiative();
+        setShowPullConfirmModal(false);
     };
 
     const handleDismissAdvisory = () => {
@@ -421,22 +394,6 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                             </button>
                         )}
 
-                        <button
-                            type="button"
-                            className={`action-button action-button--dark bo-header-collapse-btn ${boSettings.fullScreen ? 'bo-header-btn--active' : ''}`}
-                            onClick={handleToggleFullScreen}
-                            title={boSettings.fullScreen ? 'Exit Full Screen' : 'Full Screen Mode'}
-                            aria-label={boSettings.fullScreen ? 'Exit Full Screen' : 'Full Screen Mode'}
-                        >
-                            {boSettings.fullScreen ? (
-                                <Minimize2 size={14} color="var(--primary)" />
-                            ) : (
-                                <Maximize2 size={14} color="var(--primary)" />
-                            )}
-                            <span className="bo-header-collapse-label">
-                                {boSettings.fullScreen ? 'Windowed' : 'Full Screen'}
-                            </span>
-                        </button>
 
                         <button
                             type="button"
@@ -486,11 +443,31 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                         <button
                             type="button"
                             className="action-button action-button--primary bo-header-btn"
-                            onClick={pullFromInitiative}
+                            onClick={handlePullFromInitiative}
                             title="Pull combatants, items, and statuses from Initiative Order"
                         >
                             <Sparkles size={14} /> Pull from Initiative
                         </button>
+
+                        <div className="bo-header-refresh-container">
+                            <button
+                                type="button"
+                                className="action-button action-button--dark bo-header-btn"
+                                onClick={handleManualRefresh}
+                                disabled={isRefreshing}
+                                title="Refresh combatant HP, Will, and statuses from scene tokens"
+                            >
+                                <RefreshCw size={14} className={isRefreshing ? 'bo-spin' : ''} /> Refresh Stats
+                            </button>
+                            <TooltipIcon
+                                onClick={() =>
+                                    setTooltipInfo({
+                                        title: 'Token Sync & Live Updates',
+                                        desc: 'If you or players adjust HP, Will, or statuses directly on character sheets or canvas tokens outside this organizer, click "Refresh Stats" to immediately pull their newest stats into this lineup.\n\nWhy manual & soft-sync? Owlbear Rodeo limits how many network messages can be sent per second. To prevent room lag and connection drops when multiple players have the battle organizer open, stats automatically sync whenever dice are rolled or numbers are clicked, and a gentle background check runs once every 30 seconds.'
+                                    })
+                                }
+                            />
+                        </div>
 
                         <button
                             type="button"
@@ -498,7 +475,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                             onClick={syncToSheets}
                             title="Sync action counters and reactions back to token sheets"
                         >
-                            <RefreshCw size={14} /> Sync to Sheets
+                            <RotateCcw size={14} /> Sync to Sheets
                         </button>
 
                         <button
@@ -1173,6 +1150,126 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                 </div>
 
                 {showSettingsModal && <BattleOrganizerSettingsModal onClose={() => setShowSettingsModal(false)} />}
+
+                {showPullConfirmModal && (
+                    <div
+                        className="bo-settings__overlay"
+                        onClick={() => setShowPullConfirmModal(false)}
+                        role="dialog"
+                        aria-modal="true"
+                    >
+                        <div
+                            className="bo-settings__content"
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ maxWidth: '420px' }}
+                        >
+                            <div className="bo-settings__header-row">
+                                <h3 className="bo-settings__title text-title-primary">
+                                    <Layers size={20} color="var(--primary)" /> Pull From Initiative
+                                </h3>
+                                <button
+                                    type="button"
+                                    className="bo-settings__close-x"
+                                    onClick={() => setShowPullConfirmModal(false)}
+                                    title="Close dialog"
+                                    aria-label="Close dialog"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+                            <div
+                                style={{
+                                    padding: '8px 0',
+                                    fontSize: '0.88rem',
+                                    lineHeight: '1.4',
+                                    color: 'var(--text-main)'
+                                }}
+                            >
+                                This will replace the current combatant lineup and initiative in the Battle Organizer with the active tokens from the initiative tracker. Do you want to proceed?
+                            </div>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'flex-end',
+                                    gap: '8px',
+                                    marginTop: '8px'
+                                }}
+                            >
+                                <button
+                                    type="button"
+                                    className="action-button action-button--dark"
+                                    onClick={() => setShowPullConfirmModal(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    className="action-button action-button--primary"
+                                    onClick={handleConfirmPullFromInitiative}
+                                >
+                                    Overwrite Lineup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {tooltipInfo && (
+                    <div
+                        className="bo-settings__overlay"
+                        onClick={() => setTooltipInfo(null)}
+                        role="dialog"
+                        aria-modal="true"
+                    >
+                        <div
+                            className="bo-settings__content"
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ maxWidth: '460px' }}
+                        >
+                            <div className="bo-settings__header-row">
+                                <h3 className="bo-settings__title text-title-primary">
+                                    <HelpCircle size={18} color="var(--primary)" /> {tooltipInfo.title}
+                                </h3>
+                                <button
+                                    type="button"
+                                    className="bo-settings__close-x"
+                                    onClick={() => setTooltipInfo(null)}
+                                    title="Close info"
+                                    aria-label="Close info"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+                            <div
+                                style={{
+                                    padding: '10px 0',
+                                    fontSize: '0.88rem',
+                                    lineHeight: '1.5',
+                                    color: 'var(--text-main)',
+                                    whiteSpace: 'pre-line'
+                                }}
+                            >
+                                {tooltipInfo.desc}
+                            </div>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'flex-end',
+                                    gap: '8px',
+                                    marginTop: '10px'
+                                }}
+                            >
+                                <button
+                                    type="button"
+                                    className="action-button action-button--primary"
+                                    onClick={() => setTooltipInfo(null)}
+                                >
+                                    Got It
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {activeSheetCombatant && (
                     <CombatantSheetModal

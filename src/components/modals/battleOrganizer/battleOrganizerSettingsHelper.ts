@@ -1,4 +1,3 @@
-import OBR from '@owlbear-rodeo/sdk';
 import type { BattleOrganizerSettings, BattleOrganizerWindowMode } from '../../../types/battleOrganizerTypes';
 
 export const BO_SHOW_BATTLEFIELD_KEY = 'pkr_bo_show_battlefield';
@@ -7,7 +6,6 @@ export const BO_WINDOW_MODE_KEY = 'pkr_bo_window_mode';
 export const BO_AUTO_SYNC_ACTIONS_KEY = 'pkr_bo_auto_sync_actions';
 export const BO_FULLSCREEN_KEY = 'pkr_bo_fullscreen';
 export const BO_SETTINGS_UPDATE_EVENT = 'pkr-bo-settings-update';
-export const BO_BROADCAST_SETTINGS_CHANNEL = 'pkr-bo-settings-broadcast';
 
 export const DEFAULT_BO_SETTINGS: BattleOrganizerSettings = {
     showBattlefield: true,
@@ -84,17 +82,8 @@ export function saveBattleOrganizerSettings(partial: Partial<BattleOrganizerSett
             localStorage.setItem(BO_FULLSCREEN_KEY, String(next.fullScreen));
         }
 
-        // Dispatch local event
+        // Dispatch local event for same-window components
         window.dispatchEvent(new CustomEvent(BO_SETTINGS_UPDATE_EVENT, { detail: next }));
-
-        // Broadcast to other OBR frames / popovers if available
-        if (OBR.isAvailable) {
-            try {
-                OBR.broadcast.sendMessage(BO_BROADCAST_SETTINGS_CHANNEL, next, { destination: 'LOCAL' });
-            } catch (broadcastErr) {
-                console.warn('[BattleOrganizerSettings] Failed to broadcast settings update:', broadcastErr);
-            }
-        }
 
         return next;
     } catch (e) {
@@ -118,7 +107,8 @@ export function subscribeBattleOrganizerSettings(callback: (settings: BattleOrga
             e.key === BO_SHOW_BATTLEFIELD_KEY ||
             e.key === BO_SHOW_ROUND_TRACKER_KEY ||
             e.key === BO_WINDOW_MODE_KEY ||
-            e.key === BO_AUTO_SYNC_ACTIONS_KEY
+            e.key === BO_AUTO_SYNC_ACTIONS_KEY ||
+            e.key === BO_FULLSCREEN_KEY
         ) {
             callback(getBattleOrganizerSettings());
         }
@@ -127,22 +117,8 @@ export function subscribeBattleOrganizerSettings(callback: (settings: BattleOrga
     window.addEventListener(BO_SETTINGS_UPDATE_EVENT, handleCustomEvent);
     window.addEventListener('storage', handleStorageEvent);
 
-    let unsubBroadcast: (() => void) | undefined;
-    if (OBR.isAvailable) {
-        try {
-            unsubBroadcast = OBR.broadcast.onMessage(BO_BROADCAST_SETTINGS_CHANNEL, (event) => {
-                if (event.data) {
-                    callback(event.data as BattleOrganizerSettings);
-                }
-            });
-        } catch {
-            // Ignore OBR not ready
-        }
-    }
-
     return () => {
         window.removeEventListener(BO_SETTINGS_UPDATE_EVENT, handleCustomEvent);
         window.removeEventListener('storage', handleStorageEvent);
-        if (unsubBroadcast) unsubBroadcast();
     };
 }
