@@ -375,15 +375,6 @@ export function CombatantRow({
                     </div>
 
                     <div className="bo-name-field-wrap">
-                        <input
-                            type="text"
-                            className="bo-input bo-input--name text-label"
-                            value={combatant.name}
-                            onChange={(e) => handleFieldChange('name', e.target.value)}
-                            placeholder="Combatant Name"
-                            title="Combatant Name"
-                            aria-label="Combatant Name"
-                        />
                         {combatant.activeTransformation && combatant.activeTransformation !== 'None' && (
                             <span
                                 className={`bo-form-badge bo-form-badge--${combatant.activeTransformation.toLowerCase()}`}
@@ -398,6 +389,15 @@ export function CombatantRow({
                                         : combatant.activeTransformation.toUpperCase()}
                             </span>
                         )}
+                        <input
+                            type="text"
+                            className="bo-input bo-input--name text-label"
+                            value={combatant.name}
+                            onChange={(e) => handleFieldChange('name', e.target.value)}
+                            placeholder="Combatant Name"
+                            title="Combatant Name"
+                            aria-label="Combatant Name"
+                        />
                     </div>
                 </div>
             </td>
