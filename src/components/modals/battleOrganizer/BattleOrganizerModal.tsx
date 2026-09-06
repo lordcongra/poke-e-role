@@ -29,7 +29,9 @@ import {
     Monitor,
     AlertTriangle,
     Zap,
-    Lightbulb
+    Lightbulb,
+    Upload,
+    Check
 } from 'lucide-react';
 import { isStandaloneMode } from '../../../utils/storageAdapter';
 import { TooltipIcon } from '../../ui/TooltipIcon';
@@ -88,10 +90,13 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
     const [boSettings, setBoSettings] = useState<BattleOrganizerSettings>(() => getBattleOrganizerSettings());
     const [showSettingsModal, setShowSettingsModal] = useState(false);
     const [showPullConfirmModal, setShowPullConfirmModal] = useState(false);
+    const [resetPullTrackers, setResetPullTrackers] = useState(true);
     const [activeSheetCombatant, setActiveSheetCombatant] = useState<CombatantRowData | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
     const bodyRef = useRef<HTMLDivElement>(null);
+
+    const [isPushingActions, setIsPushingActions] = useState(false);
 
     const handleManualRefresh = async () => {
         if (isRefreshing) return;
@@ -100,6 +105,16 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
             await refreshTokenStats(false);
         } finally {
             setTimeout(() => setIsRefreshing(false), 600);
+        }
+    };
+
+    const handlePushActionsToSheets = async () => {
+        if (isPushingActions) return;
+        setIsPushingActions(true);
+        try {
+            await syncToSheets();
+        } finally {
+            setTimeout(() => setIsPushingActions(false), 900);
         }
     };
 
@@ -238,16 +253,12 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
     };
 
     const handlePullFromInitiative = () => {
-        const hasExistingCombatants = currentRound && currentRound.combatants && currentRound.combatants.length > 0;
-        if (hasExistingCombatants) {
-            setShowPullConfirmModal(true);
-            return;
-        }
-        pullFromInitiative();
+        setResetPullTrackers(true);
+        setShowPullConfirmModal(true);
     };
 
     const handleConfirmPullFromInitiative = () => {
-        pullFromInitiative();
+        pullFromInitiative({ resetTrackers: resetPullTrackers });
         setShowPullConfirmModal(false);
     };
 
@@ -494,14 +505,30 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                             />
                         </div>
 
-                        <button
-                            type="button"
-                            className="action-button action-button--dark bo-header-btn"
-                            onClick={syncToSheets}
-                            title="Sync action counters and reactions back to token sheets"
-                        >
-                            <RotateCcw size={14} /> Sync to Sheets
-                        </button>
+                        <div className="bo-header-action-container">
+                            <button
+                                type="button"
+                                className="action-button action-button--dark bo-header-btn"
+                                onClick={handlePushActionsToSheets}
+                                disabled={isPushingActions}
+                                title="Push round action counters and reaction states (Evade/Clash) back to character sheets"
+                            >
+                                {isPushingActions ? (
+                                    <Check size={14} color="var(--semantic-success, #4caf50)" />
+                                ) : (
+                                    <Upload size={14} />
+                                )}{' '}
+                                {isPushingActions ? 'Actions Pushed!' : 'Push Actions to Sheets'}
+                            </button>
+                            <TooltipIcon
+                                onClick={() =>
+                                    setTooltipInfo({
+                                        title: 'Push Actions to Character Sheets',
+                                        desc: "Transfers the action counters and reaction states (Evade and Clash used) from this round of the Battle Organizer back into each combatant's character sheet and token trackers.\n\nUseful when you run or plan turns inside the Battle Organizer and want to resume manual play on the main canvas with everyone's action counters up to date."
+                                    })
+                                }
+                            />
+                        </div>
 
                         <button
                             type="button"
@@ -633,6 +660,9 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                                         </li>
                                         <li>
                                             <strong>Pull from Initiative:</strong> Automatically imports all active scene characters, held items, statuses, and rolled initiatives in descending order.
+                                        </li>
+                                        <li>
+                                            <strong>Push Actions to Sheets:</strong> Transfers actions used and reaction states (Evade/Clash) from this organizer to character sheets and tokens, allowing you to seamlessly resume tabletop play.
                                         </li>
                                     </ul>
                                 </div>
@@ -1214,7 +1244,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                         >
                             <div className="bo-settings__header-row">
                                 <h3 className="bo-settings__title text-title-primary">
-                                    <Layers size={20} color="var(--primary)" /> Pull From Initiative
+                                    <Sparkles size={20} color="var(--primary)" /> Pull From Initiative
                                 </h3>
                                 <button
                                     type="button"
@@ -1234,8 +1264,57 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                                     color: 'var(--text-main)'
                                 }}
                             >
-                                This will replace the current combatant lineup and initiative in the Battle Organizer with the active tokens from the initiative tracker. Do you want to proceed?
+                                {currentRound && currentRound.combatants && currentRound.combatants.length > 0
+                                    ? 'This will replace the current combatant lineup and initiative in the Battle Organizer with active tokens from the initiative tracker.'
+                                    : 'Import active tokens and rolled initiatives from the initiative tracker into this round.'}
                             </div>
+
+                            <div
+                                style={{
+                                    margin: '10px 0 14px',
+                                    padding: '10px 12px',
+                                    backgroundColor: 'var(--panel-alt, #282828)',
+                                    borderRadius: '6px',
+                                    border: '1px solid var(--border, #333)'
+                                }}
+                            >
+                                <label
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '10px',
+                                        cursor: 'pointer',
+                                        userSelect: 'none'
+                                    }}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={resetPullTrackers}
+                                        onChange={(e) => setResetPullTrackers(e.target.checked)}
+                                        style={{
+                                            width: '16px',
+                                            height: '16px',
+                                            cursor: 'pointer',
+                                            accentColor: 'var(--primary)'
+                                        }}
+                                    />
+                                    <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                                        Reset tokens actions + clash/evade?
+                                    </span>
+                                </label>
+                                <div
+                                    style={{
+                                        fontSize: '0.78rem',
+                                        color: 'var(--text-muted, #aaa)',
+                                        marginLeft: '26px',
+                                        marginTop: '4px',
+                                        lineHeight: '1.3'
+                                    }}
+                                >
+                                    Clears action counts and unchecks Evade / Clash on both the organizer and token sheets.
+                                </div>
+                            </div>
+
                             <div
                                 style={{
                                     display: 'flex',
@@ -1256,7 +1335,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                                     className="action-button action-button--primary"
                                     onClick={handleConfirmPullFromInitiative}
                                 >
-                                    Overwrite Lineup
+                                    Pull Combatants
                                 </button>
                             </div>
                         </div>

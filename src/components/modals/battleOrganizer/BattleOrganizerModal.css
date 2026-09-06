@@ -1614,7 +1614,8 @@
     }
 }
 
-.bo-header-refresh-container {
+.bo-header-refresh-container,
+.bo-header-action-container {
     display: inline-flex;
     align-items: center;
     gap: 6px;
