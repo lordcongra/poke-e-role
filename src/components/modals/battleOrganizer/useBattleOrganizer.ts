@@ -331,7 +331,7 @@ export function useBattleOrganizer() {
     const lastMoveRollTimestampRef = useRef<Map<string, number>>(new Map());
     const tokenSyncTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
     const pendingTokenSyncRef = useRef<
-        Map<string, { statusText: string; hpCurr?: number; willCurr?: number }>
+        Map<string, { statusText: string; hpCurr?: number; willCurr?: number; until: number }>
     >(new Map());
 
     // 1. Debounced persistence to localStorage & OBR peer broadcast (0 bytes scene metadata quota!)
@@ -751,14 +751,10 @@ export function useBattleOrganizer() {
                         if (!matchingChar) return combatant;
                         const pending = pendingTokenSyncRef.current.get(matchingChar.id);
                         if (pending) {
-                            const { statusText: currentMetaStatus } = parseStatusesFromMetadata(
-                                (matchingChar.metadata || {}) as Record<string, unknown>
-                            );
-                            if (pending.statusText === currentMetaStatus) {
-                                pendingTokenSyncRef.current.delete(matchingChar.id);
-                            } else {
+                            if (Date.now() < pending.until) {
                                 return combatant;
                             }
+                            pendingTokenSyncRef.current.delete(matchingChar.id);
                         }
                         const meta = (matchingChar.metadata || {}) as Record<string, unknown>;
 
@@ -821,30 +817,13 @@ export function useBattleOrganizer() {
                             updated = true;
                         }
 
-                        let nextActions = combatant.actions;
                         let nextEvade = combatant.evadeUsed;
                         let nextClash = combatant.clashUsed;
 
-                        // Action counter sync (only if autoSyncActions is enabled)
+                        // Reaction sync (only if autoSyncActions is enabled)
                         if (settings.autoSyncActions) {
-                            const actionsUsed = Number(meta['actions-used'] || 0);
                             const evadeUsed = meta['evasions-used'] === true || meta['evasions-used'] === 'true';
                             const clashUsed = meta['clashes-used'] === true || meta['clashes-used'] === 'true';
-
-                            if (actionsUsed === 0) {
-                                const clonedActions = [...combatant.actions] as CombatantRowData['actions'];
-                                let slotCleared = false;
-                                for (let i = 0; i < 5; i++) {
-                                    if (clonedActions[i].status !== 'none') {
-                                        clonedActions[i] = { ...clonedActions[i], status: 'none' };
-                                        slotCleared = true;
-                                    }
-                                }
-                                if (slotCleared) {
-                                    nextActions = clonedActions;
-                                    updated = true;
-                                }
-                            }
 
                             if (combatant.evadeUsed !== evadeUsed || combatant.clashUsed !== clashUsed) {
                                 nextEvade = evadeUsed;
@@ -869,7 +848,6 @@ export function useBattleOrganizer() {
                                 tempWill,
                                 activeTransformation: nextTrans,
                                 tokenId: matchingChar.id,
-                                actions: nextActions,
                                 evadeUsed: nextEvade,
                                 clashUsed: nextClash
                             };
@@ -956,14 +934,10 @@ export function useBattleOrganizer() {
                             if (!matchingItem) return combatant;
                             const pending = pendingTokenSyncRef.current.get(matchingItem.id);
                             if (pending) {
-                                const meta = (matchingItem.metadata['pokerole-extension/stats'] ||
-                                    matchingItem.metadata) as Record<string, unknown>;
-                                const { statusText: currentMetaStatus } = parseStatusesFromMetadata(meta || {});
-                                if (pending.statusText === currentMetaStatus) {
-                                    pendingTokenSyncRef.current.delete(matchingItem.id);
-                                } else {
+                                if (Date.now() < pending.until) {
                                     return combatant;
                                 }
+                                pendingTokenSyncRef.current.delete(matchingItem.id);
                             }
 
                             const meta = (matchingItem.metadata['pokerole-extension/stats'] ||
@@ -1056,29 +1030,12 @@ export function useBattleOrganizer() {
                                 updated = true;
                             }
 
-                            let nextActions = combatant.actions;
                             let nextEvade = combatant.evadeUsed;
                             let nextClash = combatant.clashUsed;
 
                             if (settings.autoSyncActions) {
-                                const actionsUsed = Number(meta['actions-used'] || 0);
                                 const evadeUsed = meta['evasions-used'] === true || meta['evasions-used'] === 'true';
                                 const clashUsed = meta['clashes-used'] === true || meta['clashes-used'] === 'true';
-
-                                if (actionsUsed === 0) {
-                                    const clonedActions = [...combatant.actions] as CombatantRowData['actions'];
-                                    let slotCleared = false;
-                                    for (let i = 0; i < 5; i++) {
-                                        if (clonedActions[i].status !== 'none') {
-                                            clonedActions[i] = { ...clonedActions[i], status: 'none' };
-                                            slotCleared = true;
-                                        }
-                                    }
-                                    if (slotCleared) {
-                                        nextActions = clonedActions;
-                                        updated = true;
-                                    }
-                                }
 
                                 if (combatant.evadeUsed !== evadeUsed || combatant.clashUsed !== clashUsed) {
                                     nextEvade = evadeUsed;
@@ -1109,7 +1066,6 @@ export function useBattleOrganizer() {
                                     tempWill,
                                     activeTransformation: nextTrans,
                                     tokenId: matchingItem.id,
-                                    actions: nextActions,
                                     evadeUsed: nextEvade,
                                     clashUsed: nextClash,
                                     isNPC: nextIsNPC
@@ -1963,7 +1919,8 @@ export function useBattleOrganizer() {
                 pendingTokenSyncRef.current.set(targetTokenId, {
                     statusText: combatant.status,
                     hpCurr: combatant.hpCurr,
-                    willCurr: combatant.willCurr
+                    willCurr: combatant.willCurr,
+                    until: Date.now() + 2500
                 });
 
                 // Debounce save to storageAdapter / Owlbear Rodeo (300ms)
@@ -1980,11 +1937,12 @@ export function useBattleOrganizer() {
                     } catch (err) {
                         console.warn('[useBattleOrganizer] Failed to save token updates:', err);
                     } finally {
-                        setTimeout(() => {
-                            if (targetTokenId) {
-                                pendingTokenSyncRef.current.delete(targetTokenId);
+                        if (targetTokenId) {
+                            const entry = pendingTokenSyncRef.current.get(targetTokenId);
+                            if (entry) {
+                                entry.until = Date.now() + 1500;
                             }
-                        }, 1200);
+                        }
                     }
                 }, 300);
 
