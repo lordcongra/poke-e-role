@@ -24,7 +24,9 @@ import {
     ChevronDown,
     Settings,
     Swords,
-    ExternalLink
+    ExternalLink,
+    Maximize2,
+    Minimize2
 } from 'lucide-react';
 import { isStandaloneMode } from '../../../utils/storageAdapter';
 import { BattleOrganizerSettingsModal } from './BattleOrganizerSettingsModal';
@@ -60,6 +62,8 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
         advanceRound,
         addCombatant,
         updateCombatant,
+        updateCombatantHp,
+        updateCombatantWill,
         deleteCombatant,
         rollCombatantInitiative,
         sortCombatantsByInitiative,
@@ -203,6 +207,60 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
             `width=${width},height=${height},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes`
         );
         onClose();
+    };
+
+    const handleToggleFullScreen = async () => {
+        const nextVal = !boSettings.fullScreen;
+        const updated = saveBattleOrganizerSettings({ fullScreen: nextVal });
+        setBoSettings(updated);
+
+        if (OBR.isAvailable && !isStandaloneMode) {
+            try {
+                const viewportWidth = (await OBR.viewport.getWidth()) ?? 1200;
+                const viewportHeight = (await OBR.viewport.getHeight()) ?? 800;
+                let targetWidth = 1360;
+                let targetHeight = 900;
+                if (updated.showBattlefield && !updated.showRoundTracker) {
+                    targetWidth = 1040;
+                    targetHeight = 600;
+                } else if (!updated.showBattlefield && updated.showRoundTracker) {
+                    targetWidth = 1200;
+                    targetHeight = 740;
+                }
+                targetWidth = Math.min(Math.round(viewportWidth * 0.95), targetWidth);
+                targetHeight = Math.min(Math.round(viewportHeight * 0.95), targetHeight);
+
+                const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+                const themeToPass = document.body.getAttribute('data-theme') || 'dark';
+                const params = new URLSearchParams();
+                params.set('theme', themeToPass);
+                const url = `${baseUrl}/battle-organizer.html?${params.toString()}`;
+
+                await OBR.modal.open({
+                    id: 'pkr-battle-organizer',
+                    url,
+                    width: targetWidth,
+                    height: targetHeight,
+                    fullScreen: nextVal
+                });
+            } catch (e) {
+                console.warn('[BattleOrganizerModal] Failed to toggle OBR modal fullScreen:', e);
+            }
+        } else {
+            try {
+                if (nextVal) {
+                    if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                        await document.documentElement.requestFullscreen();
+                    }
+                } else {
+                    if (document.fullscreenElement && document.exitFullscreen) {
+                        await document.exitFullscreen();
+                    }
+                }
+            } catch {
+                // ignore
+            }
+        }
     };
 
     const handleDismissAdvisory = () => {
@@ -362,6 +420,23 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                                 <span className="bo-header-collapse-label">Pop Out</span>
                             </button>
                         )}
+
+                        <button
+                            type="button"
+                            className={`action-button action-button--dark bo-header-collapse-btn ${boSettings.fullScreen ? 'bo-header-btn--active' : ''}`}
+                            onClick={handleToggleFullScreen}
+                            title={boSettings.fullScreen ? 'Exit Full Screen' : 'Full Screen Mode'}
+                            aria-label={boSettings.fullScreen ? 'Exit Full Screen' : 'Full Screen Mode'}
+                        >
+                            {boSettings.fullScreen ? (
+                                <Minimize2 size={14} color="var(--primary)" />
+                            ) : (
+                                <Maximize2 size={14} color="var(--primary)" />
+                            )}
+                            <span className="bo-header-collapse-label">
+                                {boSettings.fullScreen ? 'Windowed' : 'Full Screen'}
+                            </span>
+                        </button>
 
                         <button
                             type="button"
@@ -1012,6 +1087,8 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                                                 onDelete={deleteCombatant}
                                                 onRollInitiative={rollCombatantInitiative}
                                                 onOpenSheet={handleOpenCombatantSheet}
+                                                onAdjustHp={updateCombatantHp}
+                                                onAdjustWill={updateCombatantWill}
                                             />
                                         ))}
                                     </tbody>

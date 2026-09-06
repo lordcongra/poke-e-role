@@ -278,7 +278,8 @@ export function GlobalToolbar() {
                 id: 'pkr-battle-organizer',
                 url: url,
                 width: targetWidth,
-                height: targetHeight
+                height: targetHeight,
+                fullScreen: settings.fullScreen ?? false
             });
         } catch (e) {
             console.warn('[GlobalToolbar] Failed to open OBR Battle Organizer modal, falling back to local modal:', e);

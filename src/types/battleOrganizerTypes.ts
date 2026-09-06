@@ -45,6 +45,13 @@ export interface CombatantRowData {
     evadeUsed: boolean;
     clashUsed: boolean;
     isPlayerSide?: boolean;
+    hpCurr?: number;
+    hpMax?: number;
+    willCurr?: number;
+    willMax?: number;
+    tempHp?: number;
+    tempWill?: number;
+    activeTransformation?: string;
 }
 
 export interface BattleRoundData {
@@ -67,4 +74,5 @@ export interface BattleOrganizerSettings {
     showRoundTracker: boolean;
     windowMode?: BattleOrganizerWindowMode;
     autoSyncActions: boolean;
+    fullScreen?: boolean;
 }

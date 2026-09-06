@@ -192,7 +192,8 @@ export function BattleOrganizerApp() {
                 targetWidth = Math.min(Math.round(viewportWidth * 0.95), targetWidth);
                 targetHeight = Math.min(Math.round(viewportHeight * 0.95), targetHeight);
 
-                const dimKey = `${targetWidth}x${targetHeight}`;
+                const isFullScreen = settings.fullScreen ?? false;
+                const dimKey = `${targetWidth}x${targetHeight}x${isFullScreen}`;
                 if (dimKey === prevDimensions) return;
                 prevDimensions = dimKey;
 
@@ -216,7 +217,8 @@ export function BattleOrganizerApp() {
                     id: 'pkr-battle-organizer',
                     url: url,
                     width: targetWidth,
-                    height: targetHeight
+                    height: targetHeight,
+                    fullScreen: isFullScreen
                 });
             } catch (e) {
                 console.warn('[BattleOrganizerApp] Failed to dynamically resize OBR modal:', e);

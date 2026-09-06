@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings, X, Layers, Sparkles, Info, Lightbulb } from 'lucide-react';
+import { Settings, X, Layers, Sparkles, Info, Lightbulb, Maximize2 } from 'lucide-react';
 import type { BattleOrganizerSettings } from '../../../types/battleOrganizerTypes';
 import {
     getBattleOrganizerSettings,
@@ -43,6 +43,11 @@ export function BattleOrganizerSettingsModal({ onClose }: BattleOrganizerSetting
 
     const handleToggleAutoSync = () => {
         const updated = saveBattleOrganizerSettings({ autoSyncActions: !settings.autoSyncActions });
+        setSettings(updated);
+    };
+
+    const handleToggleFullScreen = () => {
+        const updated = saveBattleOrganizerSettings({ fullScreen: !settings.fullScreen });
         setSettings(updated);
     };
 
@@ -126,6 +131,28 @@ export function BattleOrganizerSettingsModal({ onClose }: BattleOrganizerSetting
                             </span>
                         </div>
                     </label>
+
+                    {!isStandaloneMode && (
+                        <label
+                            className={`bo-settings__checkbox-card ${settings.fullScreen ? 'bo-settings__checkbox-card--active' : ''}`}
+                        >
+                            <input
+                                type="checkbox"
+                                checked={settings.fullScreen ?? false}
+                                onChange={handleToggleFullScreen}
+                            />
+                            <div className="bo-settings__card-info">
+                                <span className="bo-settings__card-title text-label">
+                                    <Maximize2 size={13} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                                    Default to Full Screen View
+                                </span>
+                                <span className="bo-settings__card-desc text-subtext">
+                                    Open the Battle Organizer covering the entire viewport in Owlbear Rodeo. Ideal for
+                                    keeping in a dedicated second browser tab or large display.
+                                </span>
+                            </div>
+                        </label>
+                    )}
 
                     {/* Section 3: Owlbear Rodeo Multi-Tab Workflow vs Standalone Popout Tip */}
                     {!isStandaloneMode ? (

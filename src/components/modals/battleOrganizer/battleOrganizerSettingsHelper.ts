@@ -5,6 +5,7 @@ export const BO_SHOW_BATTLEFIELD_KEY = 'pkr_bo_show_battlefield';
 export const BO_SHOW_ROUND_TRACKER_KEY = 'pkr_bo_show_round_tracker';
 export const BO_WINDOW_MODE_KEY = 'pkr_bo_window_mode';
 export const BO_AUTO_SYNC_ACTIONS_KEY = 'pkr_bo_auto_sync_actions';
+export const BO_FULLSCREEN_KEY = 'pkr_bo_fullscreen';
 export const BO_SETTINGS_UPDATE_EVENT = 'pkr-bo-settings-update';
 export const BO_BROADCAST_SETTINGS_CHANNEL = 'pkr-bo-settings-broadcast';
 
@@ -12,7 +13,8 @@ export const DEFAULT_BO_SETTINGS: BattleOrganizerSettings = {
     showBattlefield: true,
     showRoundTracker: true,
     windowMode: 'modal',
-    autoSyncActions: true
+    autoSyncActions: true,
+    fullScreen: false
 };
 
 export function getBattleOrganizerSettings(): BattleOrganizerSettings {
@@ -21,6 +23,7 @@ export function getBattleOrganizerSettings(): BattleOrganizerSettings {
         const rawRoundTracker = localStorage.getItem(BO_SHOW_ROUND_TRACKER_KEY);
         const rawWindowMode = localStorage.getItem(BO_WINDOW_MODE_KEY) as BattleOrganizerWindowMode | null;
         const rawAutoSync = localStorage.getItem(BO_AUTO_SYNC_ACTIONS_KEY);
+        const rawFullScreen = localStorage.getItem(BO_FULLSCREEN_KEY);
 
         let showBattlefield = rawBattlefield !== null ? rawBattlefield === 'true' : DEFAULT_BO_SETTINGS.showBattlefield;
         let showRoundTracker =
@@ -38,12 +41,14 @@ export function getBattleOrganizerSettings(): BattleOrganizerSettings {
                 : 'modal';
 
         const autoSyncActions = rawAutoSync !== null ? rawAutoSync === 'true' : DEFAULT_BO_SETTINGS.autoSyncActions;
+        const fullScreen = rawFullScreen !== null ? rawFullScreen === 'true' : (DEFAULT_BO_SETTINGS.fullScreen ?? false);
 
         return {
             showBattlefield,
             showRoundTracker,
             windowMode,
-            autoSyncActions
+            autoSyncActions,
+            fullScreen
         };
     } catch (e) {
         console.error('[BattleOrganizerSettings] Failed to load settings from localStorage:', e);
@@ -75,6 +80,9 @@ export function saveBattleOrganizerSettings(partial: Partial<BattleOrganizerSett
         localStorage.setItem(BO_SHOW_ROUND_TRACKER_KEY, String(next.showRoundTracker));
         localStorage.setItem(BO_WINDOW_MODE_KEY, next.windowMode || 'modal');
         localStorage.setItem(BO_AUTO_SYNC_ACTIONS_KEY, String(next.autoSyncActions));
+        if (next.fullScreen !== undefined) {
+            localStorage.setItem(BO_FULLSCREEN_KEY, String(next.fullScreen));
+        }
 
         // Dispatch local event
         window.dispatchEvent(new CustomEvent(BO_SETTINGS_UPDATE_EVENT, { detail: next }));

@@ -4,7 +4,7 @@ import { isStandaloneMode } from '../../../utils/storageAdapter';
 import { imageManager } from '../../../utils/imageManager';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { STATUS_OPTIONS } from '../../../data/constants';
-import { Trash2, Dices, Shield, Swords, User, Skull, X, FileText } from 'lucide-react';
+import { Trash2, Dices, Shield, Swords, User, Skull, X, FileText, Minus, Plus } from 'lucide-react';
 
 interface CombatantRowProps {
     combatant: CombatantRowData;
@@ -13,6 +13,8 @@ interface CombatantRowProps {
     onDelete: (id: string) => void;
     onRollInitiative?: (id: string) => void;
     onOpenSheet?: (combatant: CombatantRowData) => void;
+    onAdjustHp?: (id: string, delta: number) => void;
+    onAdjustWill?: (id: string, delta: number) => void;
 }
 
 export function CombatantRow({
@@ -21,7 +23,9 @@ export function CombatantRow({
     onUpdate,
     onDelete,
     onRollInitiative,
-    onOpenSheet
+    onOpenSheet,
+    onAdjustHp,
+    onAdjustWill
 }: CombatantRowProps) {
     const [resolvedImage, setResolvedImage] = useState<string>('');
     const customStatuses = useCharacterStore((state) => state.roomCustomStatuses || []);
@@ -176,6 +180,33 @@ export function CombatantRow({
         });
     };
 
+    const handleAdjustHp = (delta: number) => {
+        const curr = combatant.hpCurr ?? 0;
+        const max = combatant.hpMax && combatant.hpMax > 0 ? combatant.hpMax : 999;
+        const nextHp = Math.max(0, Math.min(max, curr + delta));
+        const nextFainted = nextHp <= 0 ? true : combatant.isFainted;
+        let nextStatus = combatant.status || 'Healthy';
+        if (nextHp <= 0 && !nextStatus.toLowerCase().includes('faint')) {
+            nextStatus = nextStatus === 'Healthy' ? 'Fainted' : `${nextStatus}, Fainted`;
+        }
+        onUpdate({
+            ...combatant,
+            hpCurr: nextHp,
+            isFainted: nextFainted,
+            status: nextStatus
+        });
+    };
+
+    const handleAdjustWill = (delta: number) => {
+        const curr = combatant.willCurr ?? 0;
+        const max = combatant.willMax && combatant.willMax > 0 ? combatant.willMax : 999;
+        const nextWill = Math.max(0, Math.min(max, curr + delta));
+        onUpdate({
+            ...combatant,
+            willCurr: nextWill
+        });
+    };
+
     return (
         <tr
             className={`bo-combatant-row ${combatant.isPlayerSide ? 'bo-combatant-row--player' : 'bo-combatant-row--foe'} ${combatant.isFainted ? 'bo-combatant-row--fainted' : ''}`}
@@ -206,7 +237,7 @@ export function CombatantRow({
                 </div>
             </td>
 
-            {/* Combatant Name & Avatar */}
+            {/* Combatant Name & Avatar with HP/Will Bars */}
             <td className="bo-cell bo-cell--combatant">
                 <div className="bo-combatant-info">
                     <button
@@ -214,39 +245,131 @@ export function CombatantRow({
                         className={`bo-side-toggle-btn ${combatant.isPlayerSide ? 'bo-side-toggle-btn--player' : 'bo-side-toggle-btn--foe'}`}
                         onClick={handleToggleSide}
                         title={`Click to switch side (Current: ${combatant.isPlayerSide ? 'Player' : 'Foe'})`}
-                        aria-label={`Switch combatant side`}
+                        aria-label="Switch combatant side"
                     >
                         {combatant.isPlayerSide ? 'P' : 'F'}
                     </button>
 
-                    <div
-                        className={`bo-avatar-thumb ${onOpenSheet ? 'bo-avatar-thumb--clickable' : ''}`}
-                        onClick={() => onOpenSheet?.(combatant)}
-                        title={onOpenSheet ? `Open sheet for ${combatant.name || 'combatant'}` : undefined}
-                        role={onOpenSheet ? 'button' : undefined}
-                        tabIndex={onOpenSheet ? 0 : undefined}
-                        onKeyDown={(e) => {
-                            if (onOpenSheet && (e.key === 'Enter' || e.key === ' ')) {
-                                onOpenSheet(combatant);
-                            }
-                        }}
-                    >
-                        {resolvedImage ? (
-                            <img src={resolvedImage} alt={combatant.name} className="bo-avatar-img" />
-                        ) : (
-                            <User size={14} color="var(--text-muted)" />
-                        )}
+                    {/* Compact Vertical Stack: HP Mini-Bar -> Avatar -> Will Mini-Bar */}
+                    <div className="bo-avatar-stat-stack">
+                        {/* Top: HP Stepper */}
+                        <div
+                            className="bo-stat-stepper bo-stat-stepper--hp"
+                            title={`HP: ${combatant.hpCurr ?? 0}${combatant.hpMax ? ` / ${combatant.hpMax}` : ''}`}
+                        >
+                            <button
+                                type="button"
+                                className="bo-stat-step-btn"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onAdjustHp) onAdjustHp(combatant.id, -1);
+                                    else handleAdjustHp(-1);
+                                }}
+                                title="Decrease HP"
+                                aria-label="Decrease HP"
+                            >
+                                <Minus size={8} />
+                            </button>
+                            <span className="bo-stat-stepper-val">
+                                {combatant.hpCurr ?? 0}
+                            </span>
+                            <button
+                                type="button"
+                                className="bo-stat-step-btn"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onAdjustHp) onAdjustHp(combatant.id, 1);
+                                    else handleAdjustHp(1);
+                                }}
+                                title="Increase HP"
+                                aria-label="Increase HP"
+                            >
+                                <Plus size={8} />
+                            </button>
+                        </div>
+
+                        {/* Center: Avatar Thumbnail */}
+                        <div
+                            className={`bo-avatar-thumb ${onOpenSheet ? 'bo-avatar-thumb--clickable' : ''}`}
+                            onClick={() => onOpenSheet?.(combatant)}
+                            title={onOpenSheet ? `Open sheet for ${combatant.name || 'combatant'}` : undefined}
+                            role={onOpenSheet ? 'button' : undefined}
+                            tabIndex={onOpenSheet ? 0 : undefined}
+                            onKeyDown={(e) => {
+                                if (onOpenSheet && (e.key === 'Enter' || e.key === ' ')) {
+                                    onOpenSheet(combatant);
+                                }
+                            }}
+                        >
+                            {resolvedImage ? (
+                                <img src={resolvedImage} alt={combatant.name} className="bo-avatar-img" />
+                            ) : (
+                                <User size={14} color="var(--text-muted)" />
+                            )}
+                        </div>
+
+                        {/* Bottom: Will Stepper */}
+                        <div
+                            className="bo-stat-stepper bo-stat-stepper--will"
+                            title={`Will: ${combatant.willCurr ?? 0}${combatant.willMax ? ` / ${combatant.willMax}` : ''}`}
+                        >
+                            <button
+                                type="button"
+                                className="bo-stat-step-btn"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onAdjustWill) onAdjustWill(combatant.id, -1);
+                                    else handleAdjustWill(-1);
+                                }}
+                                title="Decrease Will"
+                                aria-label="Decrease Will"
+                            >
+                                <Minus size={8} />
+                            </button>
+                            <span className="bo-stat-stepper-val">
+                                {combatant.willCurr ?? 0}
+                            </span>
+                            <button
+                                type="button"
+                                className="bo-stat-step-btn"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onAdjustWill) onAdjustWill(combatant.id, 1);
+                                    else handleAdjustWill(1);
+                                }}
+                                title="Increase Will"
+                                aria-label="Increase Will"
+                            >
+                                <Plus size={8} />
+                            </button>
+                        </div>
                     </div>
 
-                    <input
-                        type="text"
-                        className="bo-input bo-input--name text-label"
-                        value={combatant.name}
-                        onChange={(e) => handleFieldChange('name', e.target.value)}
-                        placeholder="Combatant Name"
-                        title="Combatant Name"
-                        aria-label="Combatant Name"
-                    />
+                    <div className="bo-name-field-wrap">
+                        <input
+                            type="text"
+                            className="bo-input bo-input--name text-label"
+                            value={combatant.name}
+                            onChange={(e) => handleFieldChange('name', e.target.value)}
+                            placeholder="Combatant Name"
+                            title="Combatant Name"
+                            aria-label="Combatant Name"
+                        />
+                        {combatant.activeTransformation && combatant.activeTransformation !== 'None' && (
+                            <span
+                                className={`bo-form-badge bo-form-badge--${combatant.activeTransformation.toLowerCase()}`}
+                                title={`Form: ${combatant.activeTransformation}`}
+                            >
+                                {combatant.activeTransformation === 'Terastallize'
+                                    ? 'TERA'
+                                    : combatant.activeTransformation === 'Gigantamax'
+                                      ? 'G-MAX'
+                                      : combatant.activeTransformation === 'Dynamax'
+                                        ? 'D-MAX'
+                                        : combatant.activeTransformation.toUpperCase()}
+                            </span>
+                        )}
+                    </div>
                 </div>
             </td>
 

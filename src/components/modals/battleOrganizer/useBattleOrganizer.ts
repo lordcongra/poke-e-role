@@ -24,6 +24,65 @@ const OBR_BROADCAST_SYNC_CHANNEL = 'pokerole-pmd-extension/battle-organizer-sync
 const OBR_BROADCAST_REQUEST_CHANNEL = 'pokerole-pmd-extension/battle-organizer-request';
 const OBR_BROADCAST_RESPONSE_CHANNEL = 'pokerole-pmd-extension/battle-organizer-response';
 
+export function parseStatusesFromMetadata(meta: Record<string, unknown>): { statusText: string; isFainted: boolean } {
+    let statusText = 'Healthy';
+    try {
+        const rawStatuses = meta['status-list'] ? JSON.parse(String(meta['status-list'])) : [];
+        if (Array.isArray(rawStatuses)) {
+            const nonHealthy = rawStatuses
+                .filter((s: Record<string, unknown>) => s.name && s.name !== 'Healthy')
+                .map((s: Record<string, unknown>) => {
+                    const n = s.name === 'Custom...' ? String(s.customName || 'Custom') : String(s.name);
+                    const r = Number(s.rounds || 0);
+                    return r > 0 ? `${n} (${r})` : n;
+                });
+            if (nonHealthy.length > 0) statusText = nonHealthy.join(', ');
+        }
+    } catch (e) {
+        console.warn('[useBattleOrganizer] Failed to parse status list:', e);
+    }
+    const isFainted = statusText.toLowerCase().includes('faint');
+    return { statusText, isFainted };
+}
+
+export function parseHealthAndWillFromMetadata(meta: Record<string, unknown>): {
+    hpCurr: number;
+    hpMax: number;
+    willCurr: number;
+    willMax: number;
+    tempHp: number;
+    tempWill: number;
+    activeTransformation: string;
+} {
+    const hpCurr = meta['hp-curr'] !== undefined ? Number(meta['hp-curr']) : 0;
+    const hpMax =
+        meta['hp-max-display'] !== undefined
+            ? Number(meta['hp-max-display'])
+            : meta['hp-max'] !== undefined
+              ? Number(meta['hp-max'])
+              : 0;
+    const willCurr = meta['will-curr'] !== undefined ? Number(meta['will-curr']) : 0;
+    const willMax =
+        meta['will-max-display'] !== undefined
+            ? Number(meta['will-max-display'])
+            : meta['will-max'] !== undefined
+              ? Number(meta['will-max'])
+              : 0;
+    const tempHp = meta['temporary-hit-points'] !== undefined ? Number(meta['temporary-hit-points']) : 0;
+    const tempWill = meta['temporary-will'] !== undefined ? Number(meta['temporary-will']) : 0;
+    const activeTransformation = String(meta['active-transformation'] || meta['activeTransformation'] || 'None');
+
+    return {
+        hpCurr,
+        hpMax,
+        willCurr,
+        willMax,
+        tempHp,
+        tempWill,
+        activeTransformation
+    };
+}
+
 const createDefaultActionSlot = (): ActionSlotData => ({
     text: '',
     status: 'none'
@@ -49,7 +108,14 @@ const createDefaultCombatant = (name = '', image = '', isPlayer = true): Combata
     actions: createDefaultActions(),
     evadeUsed: false,
     clashUsed: false,
-    isPlayerSide: isPlayer
+    isPlayerSide: isPlayer,
+    hpCurr: 0,
+    hpMax: 0,
+    willCurr: 0,
+    willMax: 0,
+    tempHp: 0,
+    tempWill: 0,
+    activeTransformation: 'None'
 });
 
 const createDefaultBattlefield = (): BattlefieldData => ({
@@ -414,18 +480,45 @@ export function useBattleOrganizer() {
                 return;
             }
 
+            const isEvade = moveName.toLowerCase() === 'evade';
+            const isClash = moveName.toLowerCase() === 'clash';
+
             updateState((prev) => {
                 const currentRound = prev.rounds[prev.activeRoundIndex];
                 if (!currentRound) return prev;
 
+                // Ensure the Battle Organizer has been utilized (has at least one real combatant in current round)
+                const hasActiveCombatants = currentRound.combatants.some((c) => c.tokenId || c.name.trim());
+                if (!hasActiveCombatants) return prev;
+
                 let changed = false;
                 const newCombatants = currentRound.combatants.map((c) => {
+                    if (!c.tokenId && !c.name.trim()) return c;
+
+                    const safeName = c.name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                     const isMatch =
                         (rollTokenId && c.tokenId && rollTokenId === c.tokenId) ||
-                        (charName && c.name.toLowerCase().trim() === charName.toLowerCase().trim()) ||
-                        (c.name.trim() && label.toLowerCase().includes(c.name.toLowerCase().trim()));
+                        (charName && c.name.trim() && charName.trim().toLowerCase() === c.name.trim().toLowerCase()) ||
+                        (c.name.trim() && new RegExp(`\\b${safeName}\\b`, 'i').test(clean));
 
                     if (!isMatch) return c;
+
+                    // Handle reaction rolls (Evade / Clash) directly on checkboxes without consuming an action slot
+                    if (isEvade) {
+                        if (!c.evadeUsed) {
+                            changed = true;
+                            return { ...c, evadeUsed: true };
+                        }
+                        return c;
+                    }
+
+                    if (isClash) {
+                        if (!c.clashUsed) {
+                            changed = true;
+                            return { ...c, clashUsed: true };
+                        }
+                        return c;
+                    }
 
                     const newActions = [...c.actions] as CombatantRowData['actions'];
 
@@ -470,7 +563,6 @@ export function useBattleOrganizer() {
             OBR.onReady(() => {
                 const unsubItems = OBR.scene.items.onChange((items) => {
                     const settings = getBattleOrganizerSettings();
-                    if (!settings.autoSyncActions) return;
 
                     updateState((prev) => {
                         const currentRound = prev.rounds[prev.activeRoundIndex];
@@ -505,6 +597,9 @@ export function useBattleOrganizer() {
                             const resolvedName = extractCharacterName(meta, matchingItem.name);
                             const imgItem = matchingItem as Image;
                             const resolvedImg = imgItem.image?.url || extractTokenImage(meta) || combatant.image;
+                            const { statusText, isFainted: statusFainted } = parseStatusesFromMetadata(meta);
+                            const { hpCurr, hpMax, willCurr, willMax, tempHp, tempWill, activeTransformation } =
+                                parseHealthAndWillFromMetadata(meta);
 
                             let updated = false;
 
@@ -523,24 +618,75 @@ export function useBattleOrganizer() {
                                 updated = true;
                             }
 
-                            const actionsUsed = Number(meta['actions-used'] || 0);
-                            const evadeUsed = meta['evasions-used'] === true || meta['evasions-used'] === 'true';
-                            const clashUsed = meta['clashes-used'] === true || meta['clashes-used'] === 'true';
+                            let nextStatus = combatant.status;
+                            if (statusText && statusText !== combatant.status) {
+                                nextStatus = statusText;
+                                updated = true;
+                            }
 
-                            const nextActions = [...combatant.actions] as CombatantRowData['actions'];
+                            let nextIsFainted = combatant.isFainted;
+                            if (statusFainted || (hpCurr <= 0 && hpMax > 0)) {
+                                if (!nextIsFainted) {
+                                    nextIsFainted = true;
+                                    updated = true;
+                                }
+                            } else if (hpCurr > 0 && !statusFainted && nextIsFainted) {
+                                nextIsFainted = false;
+                                updated = true;
+                            }
 
-                            // Sync reactions and clear statuses only if tracker was reset to 0
-                            if (actionsUsed === 0) {
-                                for (let i = 0; i < 5; i++) {
-                                    if (nextActions[i].status !== 'none') {
-                                        nextActions[i] = { ...nextActions[i], status: 'none' };
+                            let nextHpCurr = combatant.hpCurr;
+                            let nextHpMax = combatant.hpMax;
+                            if (hpCurr !== combatant.hpCurr || hpMax !== combatant.hpMax) {
+                                nextHpCurr = hpCurr;
+                                nextHpMax = hpMax;
+                                updated = true;
+                            }
+
+                            let nextWillCurr = combatant.willCurr;
+                            let nextWillMax = combatant.willMax;
+                            if (willCurr !== combatant.willCurr || willMax !== combatant.willMax) {
+                                nextWillCurr = willCurr;
+                                nextWillMax = willMax;
+                                updated = true;
+                            }
+
+                            let nextTrans = combatant.activeTransformation;
+                            if (activeTransformation !== combatant.activeTransformation) {
+                                nextTrans = activeTransformation;
+                                updated = true;
+                            }
+
+                            let nextActions = combatant.actions;
+                            let nextEvade = combatant.evadeUsed;
+                            let nextClash = combatant.clashUsed;
+
+                            // Action counter sync (only if autoSyncActions is enabled)
+                            if (settings.autoSyncActions) {
+                                const actionsUsed = Number(meta['actions-used'] || 0);
+                                const evadeUsed = meta['evasions-used'] === true || meta['evasions-used'] === 'true';
+                                const clashUsed = meta['clashes-used'] === true || meta['clashes-used'] === 'true';
+
+                                if (actionsUsed === 0) {
+                                    const clonedActions = [...combatant.actions] as CombatantRowData['actions'];
+                                    let slotCleared = false;
+                                    for (let i = 0; i < 5; i++) {
+                                        if (clonedActions[i].status !== 'none') {
+                                            clonedActions[i] = { ...clonedActions[i], status: 'none' };
+                                            slotCleared = true;
+                                        }
+                                    }
+                                    if (slotCleared) {
+                                        nextActions = clonedActions;
                                         updated = true;
                                     }
                                 }
-                            }
 
-                            if (combatant.evadeUsed !== evadeUsed || combatant.clashUsed !== clashUsed) {
-                                updated = true;
+                                if (combatant.evadeUsed !== evadeUsed || combatant.clashUsed !== clashUsed) {
+                                    nextEvade = evadeUsed;
+                                    nextClash = clashUsed;
+                                    updated = true;
+                                }
                             }
 
                             if (updated || (!combatant.tokenId && matchingItem.id)) {
@@ -549,10 +695,19 @@ export function useBattleOrganizer() {
                                     ...combatant,
                                     name: nextName,
                                     image: nextImage,
+                                    status: nextStatus,
+                                    isFainted: nextIsFainted,
+                                    hpCurr: nextHpCurr,
+                                    hpMax: nextHpMax,
+                                    willCurr: nextWillCurr,
+                                    willMax: nextWillMax,
+                                    tempHp,
+                                    tempWill,
+                                    activeTransformation: nextTrans,
                                     tokenId: matchingItem.id,
                                     actions: nextActions,
-                                    evadeUsed,
-                                    clashUsed
+                                    evadeUsed: nextEvade,
+                                    clashUsed: nextClash
                                 };
                             }
 
@@ -610,8 +765,6 @@ export function useBattleOrganizer() {
         if (isStandaloneMode) {
             const handleStandaloneChange = async () => {
                 const settings = getBattleOrganizerSettings();
-                if (!settings.autoSyncActions) return;
-
                 const localChars = await storageAdapter.getLocalCharacters();
 
                 updateState((prev) => {
@@ -640,6 +793,9 @@ export function useBattleOrganizer() {
 
                         const resolvedName = extractCharacterName(meta, matchingChar.name);
                         const resolvedImg = extractTokenImage(meta) || combatant.image;
+                        const { statusText, isFainted: statusFainted } = parseStatusesFromMetadata(meta);
+                        const { hpCurr, hpMax, willCurr, willMax, tempHp, tempWill, activeTransformation } =
+                            parseHealthAndWillFromMetadata(meta);
 
                         let updated = false;
 
@@ -655,24 +811,75 @@ export function useBattleOrganizer() {
                             updated = true;
                         }
 
-                        const actionsUsed = Number(meta['actions-used'] || 0);
-                        const evadeUsed = meta['evasions-used'] === true || meta['evasions-used'] === 'true';
-                        const clashUsed = meta['clashes-used'] === true || meta['clashes-used'] === 'true';
+                        let nextStatus = combatant.status;
+                        if (statusText && statusText !== combatant.status) {
+                            nextStatus = statusText;
+                            updated = true;
+                        }
 
-                        const nextActions = [...combatant.actions] as CombatantRowData['actions'];
+                        let nextIsFainted = combatant.isFainted;
+                        if (statusFainted || (hpCurr <= 0 && hpMax > 0)) {
+                            if (!nextIsFainted) {
+                                nextIsFainted = true;
+                                updated = true;
+                            }
+                        } else if (hpCurr > 0 && !statusFainted && nextIsFainted) {
+                            nextIsFainted = false;
+                            updated = true;
+                        }
 
-                        // Sync reactions and clear statuses only if tracker was reset to 0
-                        if (actionsUsed === 0) {
-                            for (let i = 0; i < 5; i++) {
-                                if (nextActions[i].status !== 'none') {
-                                    nextActions[i] = { ...nextActions[i], status: 'none' };
+                        let nextHpCurr = combatant.hpCurr;
+                        let nextHpMax = combatant.hpMax;
+                        if (hpCurr !== combatant.hpCurr || hpMax !== combatant.hpMax) {
+                            nextHpCurr = hpCurr;
+                            nextHpMax = hpMax;
+                            updated = true;
+                        }
+
+                        let nextWillCurr = combatant.willCurr;
+                        let nextWillMax = combatant.willMax;
+                        if (willCurr !== combatant.willCurr || willMax !== combatant.willMax) {
+                            nextWillCurr = willCurr;
+                            nextWillMax = willMax;
+                            updated = true;
+                        }
+
+                        let nextTrans = combatant.activeTransformation;
+                        if (activeTransformation !== combatant.activeTransformation) {
+                            nextTrans = activeTransformation;
+                            updated = true;
+                        }
+
+                        let nextActions = combatant.actions;
+                        let nextEvade = combatant.evadeUsed;
+                        let nextClash = combatant.clashUsed;
+
+                        // Action counter sync (only if autoSyncActions is enabled)
+                        if (settings.autoSyncActions) {
+                            const actionsUsed = Number(meta['actions-used'] || 0);
+                            const evadeUsed = meta['evasions-used'] === true || meta['evasions-used'] === 'true';
+                            const clashUsed = meta['clashes-used'] === true || meta['clashes-used'] === 'true';
+
+                            if (actionsUsed === 0) {
+                                const clonedActions = [...combatant.actions] as CombatantRowData['actions'];
+                                let slotCleared = false;
+                                for (let i = 0; i < 5; i++) {
+                                    if (clonedActions[i].status !== 'none') {
+                                        clonedActions[i] = { ...clonedActions[i], status: 'none' };
+                                        slotCleared = true;
+                                    }
+                                }
+                                if (slotCleared) {
+                                    nextActions = clonedActions;
                                     updated = true;
                                 }
                             }
-                        }
 
-                        if (combatant.evadeUsed !== evadeUsed || combatant.clashUsed !== clashUsed) {
-                            updated = true;
+                            if (combatant.evadeUsed !== evadeUsed || combatant.clashUsed !== clashUsed) {
+                                nextEvade = evadeUsed;
+                                nextClash = clashUsed;
+                                updated = true;
+                            }
                         }
 
                         if (updated || (!combatant.tokenId && matchingChar.id)) {
@@ -681,10 +888,19 @@ export function useBattleOrganizer() {
                                 ...combatant,
                                 name: nextName,
                                 image: nextImage,
+                                status: nextStatus,
+                                isFainted: nextIsFainted,
+                                hpCurr: nextHpCurr,
+                                hpMax: nextHpMax,
+                                willCurr: nextWillCurr,
+                                willMax: nextWillMax,
+                                tempHp,
+                                tempWill,
+                                activeTransformation: nextTrans,
                                 tokenId: matchingChar.id,
                                 actions: nextActions,
-                                evadeUsed,
-                                clashUsed
+                                evadeUsed: nextEvade,
+                                clashUsed: nextClash
                             };
                         }
 
@@ -762,24 +978,10 @@ export function useBattleOrganizer() {
 
                         const heldItemText = heldItems.join(', ');
 
-                        // Parse statuses
-                        let statusText = 'Healthy';
-                        try {
-                            const rawStatuses = meta['status-list'] ? JSON.parse(String(meta['status-list'])) : [];
-                            if (Array.isArray(rawStatuses)) {
-                                const nonHealthy = rawStatuses
-                                    .filter((s: Record<string, unknown>) => s.name && s.name !== 'Healthy')
-                                    .map((s: Record<string, unknown>) => {
-                                        const n =
-                                            s.name === 'Custom...' ? String(s.customName || 'Custom') : String(s.name);
-                                        const r = Number(s.rounds || 0);
-                                        return r > 0 ? `${n} (${r})` : n;
-                                    });
-                                if (nonHealthy.length > 0) statusText = nonHealthy.join(', ');
-                            }
-                        } catch (e) {
-                            console.warn('[useBattleOrganizer] Failed to parse status list:', e);
-                        }
+                        // Parse statuses & health/will
+                        const { statusText, isFainted } = parseStatusesFromMetadata(meta);
+                        const { hpCurr, hpMax, willCurr, willMax, tempHp, tempWill, activeTransformation } =
+                            parseHealthAndWillFromMetadata(meta);
 
                         const actionsUsed = Number(meta['actions-used'] || 0);
                         const evadeUsed = meta['evasions-used'] === true || meta['evasions-used'] === 'true';
@@ -801,7 +1003,6 @@ export function useBattleOrganizer() {
                         } else if (typeof initItem.total === 'number' && initItem.total > 0) {
                             initScore = String(initItem.total);
                         }
-                        const isFainted = statusText.toLowerCase().includes('faint');
 
                         const displayName = extractCharacterName(
                             (matchingChar?.metadata || initItem) as Record<string, unknown>,
@@ -821,7 +1022,14 @@ export function useBattleOrganizer() {
                             actions,
                             evadeUsed,
                             clashUsed,
-                            isPlayerSide: true
+                            isPlayerSide: true,
+                            hpCurr,
+                            hpMax,
+                            willCurr,
+                            willMax,
+                            tempHp,
+                            tempWill,
+                            activeTransformation
                         });
                     });
                 }
@@ -881,24 +1089,10 @@ export function useBattleOrganizer() {
 
                     const heldItemText = heldItems.join(', ');
 
-                    // Parse statuses
-                    let statusText = 'Healthy';
-                    try {
-                        const rawStatuses = meta['status-list'] ? JSON.parse(String(meta['status-list'])) : [];
-                        if (Array.isArray(rawStatuses)) {
-                            const nonHealthy = rawStatuses
-                                .filter((s: Record<string, unknown>) => s.name && s.name !== 'Healthy')
-                                .map((s: Record<string, unknown>) => {
-                                    const n =
-                                        s.name === 'Custom...' ? String(s.customName || 'Custom') : String(s.name);
-                                    const r = Number(s.rounds || 0);
-                                    return r > 0 ? `${n} (${r})` : n;
-                                });
-                            if (nonHealthy.length > 0) statusText = nonHealthy.join(', ');
-                        }
-                    } catch (e) {
-                        console.warn('[useBattleOrganizer] Failed to parse status list:', e);
-                    }
+                    // Parse statuses & health/will
+                    const { statusText, isFainted } = parseStatusesFromMetadata(meta);
+                    const { hpCurr, hpMax, willCurr, willMax, tempHp, tempWill, activeTransformation } =
+                        parseHealthAndWillFromMetadata(meta);
 
                     const actionsUsed = Number(meta['actions-used'] || 0);
                     const evadeUsed = meta['evasions-used'] === true || meta['evasions-used'] === 'true';
@@ -908,8 +1102,6 @@ export function useBattleOrganizer() {
                     for (let i = 0; i < Math.min(5, actionsUsed); i++) {
                         actions[i] = { text: actions[i].text, status: 'none' };
                     }
-
-                    const isFainted = statusText.toLowerCase().includes('faint');
 
                     const statsMeta = (meta['pokerole-extension/stats'] || meta) as Record<string, unknown>;
                     const displayName = extractCharacterName(statsMeta, item.name);
@@ -928,7 +1120,14 @@ export function useBattleOrganizer() {
                         actions,
                         evadeUsed,
                         clashUsed,
-                        isPlayerSide: true
+                        isPlayerSide: true,
+                        hpCurr,
+                        hpMax,
+                        willCurr,
+                        willMax,
+                        tempHp,
+                        tempWill,
+                        activeTransformation
                     });
                 });
             }
@@ -1553,6 +1752,122 @@ export function useBattleOrganizer() {
         setState(fresh);
     }, []);
 
+    const updateCombatantHp = useCallback(
+        (combatantId: string, delta: number) => {
+            updateState((prev) => {
+                const currentRound = prev.rounds[prev.activeRoundIndex];
+                if (!currentRound) return prev;
+
+                let updatedCombatant: CombatantRowData | null = null;
+                const newCombatants = currentRound.combatants.map((c) => {
+                    if (c.id !== combatantId) return c;
+
+                    const curr = c.hpCurr ?? 0;
+                    const max = c.hpMax && c.hpMax > 0 ? c.hpMax : 999;
+                    const nextHp = Math.max(0, Math.min(max, curr + delta));
+
+                    const nextFainted = nextHp <= 0 ? true : c.isFainted;
+                    let nextStatus = c.status || 'Healthy';
+                    if (nextHp <= 0 && !nextStatus.toLowerCase().includes('faint')) {
+                        nextStatus = nextStatus === 'Healthy' ? 'Fainted' : `${nextStatus}, Fainted`;
+                    }
+
+                    const updated: CombatantRowData = {
+                        ...c,
+                        hpCurr: nextHp,
+                        isFainted: nextFainted,
+                        status: nextStatus
+                    };
+                    updatedCombatant = updated;
+                    return updated;
+                });
+
+                if (!updatedCombatant) return prev;
+
+                // Sync to OBR or Standalone character
+                const combatantToSync: CombatantRowData = updatedCombatant;
+                if (combatantToSync.tokenId) {
+                    const tokenId = combatantToSync.tokenId;
+                    const nextHp = combatantToSync.hpCurr;
+                    if (isStandaloneMode) {
+                        storageAdapter
+                            .saveCharacter(tokenId, { 'hp-curr': nextHp }, 'pokerole-extension/stats')
+                            .catch((e) => console.warn('[useBattleOrganizer] Standalone HP sync failed:', e));
+                    } else if (OBR.isAvailable) {
+                        OBR.scene.items
+                            .updateItems([tokenId], (items) => {
+                                for (const item of items) {
+                                    item.metadata['hp-curr'] = nextHp;
+                                }
+                            })
+                            .catch((e) => console.warn('[useBattleOrganizer] OBR HP sync failed:', e));
+                    }
+                }
+
+                const updatedRound: BattleRoundData = { ...currentRound, combatants: newCombatants };
+                return {
+                    ...prev,
+                    rounds: prev.rounds.map((r, idx) => (idx === prev.activeRoundIndex ? updatedRound : r))
+                };
+            });
+        },
+        [updateState]
+    );
+
+    const updateCombatantWill = useCallback(
+        (combatantId: string, delta: number) => {
+            updateState((prev) => {
+                const currentRound = prev.rounds[prev.activeRoundIndex];
+                if (!currentRound) return prev;
+
+                let updatedCombatant: CombatantRowData | null = null;
+                const newCombatants = currentRound.combatants.map((c) => {
+                    if (c.id !== combatantId) return c;
+
+                    const curr = c.willCurr ?? 0;
+                    const max = c.willMax && c.willMax > 0 ? c.willMax : 999;
+                    const nextWill = Math.max(0, Math.min(max, curr + delta));
+
+                    const updated: CombatantRowData = {
+                        ...c,
+                        willCurr: nextWill
+                    };
+                    updatedCombatant = updated;
+                    return updated;
+                });
+
+                if (!updatedCombatant) return prev;
+
+                // Sync to OBR or Standalone character
+                const combatantToSync: CombatantRowData = updatedCombatant;
+                if (combatantToSync.tokenId) {
+                    const tokenId = combatantToSync.tokenId;
+                    const nextWill = combatantToSync.willCurr;
+                    if (isStandaloneMode) {
+                        storageAdapter
+                            .saveCharacter(tokenId, { 'will-curr': nextWill }, 'pokerole-extension/stats')
+                            .catch((e) => console.warn('[useBattleOrganizer] Standalone Will sync failed:', e));
+                    } else if (OBR.isAvailable) {
+                        OBR.scene.items
+                            .updateItems([tokenId], (items) => {
+                                for (const item of items) {
+                                    item.metadata['will-curr'] = nextWill;
+                                }
+                            })
+                            .catch((e) => console.warn('[useBattleOrganizer] OBR Will sync failed:', e));
+                    }
+                }
+
+                const updatedRound: BattleRoundData = { ...currentRound, combatants: newCombatants };
+                return {
+                    ...prev,
+                    rounds: prev.rounds.map((r, idx) => (idx === prev.activeRoundIndex ? updatedRound : r))
+                };
+            });
+        },
+        [updateState]
+    );
+
     return {
         state,
         battlefield: state.battlefield,
@@ -1569,6 +1884,8 @@ export function useBattleOrganizer() {
         advanceRound,
         addCombatant,
         updateCombatant,
+        updateCombatantHp,
+        updateCombatantWill,
         deleteCombatant,
         rollCombatantInitiative,
         sortCombatantsByInitiative,
