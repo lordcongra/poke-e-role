@@ -7,7 +7,7 @@ import './RulesModal.css';
 
 export function RulesModal({ onClose }: { onClose: () => void }) {
     const id = useCharacterStore((state) => state.identity);
-    const setIdentity = useCharacterStore((state) => state.setIdentity);
+    const updateRoomSetting = useCharacterStore((state) => state.updateRoomSetting);
     const role = useCharacterStore((state) => state.role);
     const [modalConfig, setModalConfig] = useState<{ title: string; content: string } | null>(null);
 
@@ -42,7 +42,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                 className="identity-grid__select rules-modal__select text-subtext"
                                 style={{ color: 'var(--text-main)' }}
                                 value={id.diceEngine || 'car'}
-                                onChange={(e) => setIdentity('diceEngine', e.target.value as 'dice-plus' | 'car')}
+                                onChange={(e) => updateRoomSetting('diceEngine', e.target.value as 'dice-plus' | 'car')}
                             >
                                 <option value="car">Custom Action Rolls (3D Dice & Chat Log)</option>
                                 <option value="dice-plus">Dice+ (3D Physics Dice)</option>
@@ -86,7 +86,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                             className="identity-grid__select rules-modal__select text-subtext"
                             style={{ color: 'var(--text-main)' }}
                             value={id.ruleset || 'vg-vit-hp'}
-                            onChange={(e) => setIdentity('ruleset', e.target.value)}
+                            onChange={(e) => updateRoomSetting('ruleset', e.target.value)}
                         >
                             <option value="vg-vit-hp">VIT = DEF/HP, INS = SPD</option>
                             <option value="tabletop">VIT = DEF/SPD/HP</option>
@@ -111,7 +111,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                             className="identity-grid__select rules-modal__select text-subtext"
                             style={{ color: 'var(--text-main)' }}
                             value={id.pain || 'Enabled'}
-                            onChange={(e) => setIdentity('pain', e.target.value)}
+                            onChange={(e) => updateRoomSetting('pain', e.target.value)}
                         >
                             <option>Enabled</option>
                             <option>Disabled</option>
@@ -137,7 +137,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                     className="identity-grid__select rules-modal__select text-subtext"
                                     style={{ color: 'var(--text-main)' }}
                                     value={id.homebrewAccess || 'Full'}
-                                    onChange={(e) => setIdentity('homebrewAccess', e.target.value)}
+                                    onChange={(e) => updateRoomSetting('homebrewAccess', e.target.value)}
                                 >
                                     <option value="Full">Full Access</option>
                                     <option value="View Only">View Only</option>
@@ -162,7 +162,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                     className="identity-grid__select rules-modal__select text-subtext"
                                     style={{ color: 'var(--text-main)' }}
                                     value={id.gmOnlyLootGen === false ? 'Everyone' : 'GM Only'}
-                                    onChange={(e) => setIdentity('gmOnlyLootGen', e.target.value === 'GM Only')}
+                                    onChange={(e) => updateRoomSetting('gmOnlyLootGen', e.target.value === 'GM Only')}
                                 >
                                     <option value="GM Only">GM Only</option>
                                     <option value="Everyone">Everyone</option>
@@ -186,7 +186,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                     className="identity-grid__select rules-modal__select text-subtext"
                                     style={{ color: 'var(--text-main)' }}
                                     value={id.gmOnlyDamageOverride ? 'GM Only' : 'Everyone'}
-                                    onChange={(e) => setIdentity('gmOnlyDamageOverride', e.target.value === 'GM Only')}
+                                    onChange={(e) => updateRoomSetting('gmOnlyDamageOverride', e.target.value === 'GM Only')}
                                 >
                                     <option value="Everyone">Everyone</option>
                                     <option value="GM Only">GM Only</option>
@@ -210,7 +210,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                     className="identity-grid__select rules-modal__select text-subtext"
                                     style={{ color: 'var(--text-main)' }}
                                     value={id.gmOnlyMatchups ? 'GM Only' : 'Everyone'}
-                                    onChange={(e) => setIdentity('gmOnlyMatchups', e.target.value === 'GM Only')}
+                                    onChange={(e) => updateRoomSetting('gmOnlyMatchups', e.target.value === 'GM Only')}
                                 >
                                     <option value="Everyone">Everyone</option>
                                     <option value="GM Only">GM Only</option>
@@ -238,7 +238,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                         className="identity-grid__select rules-modal__select text-subtext"
                                         style={{ color: 'var(--text-main)' }}
                                         value={id.gmDemoMode ? 'Enabled' : 'Disabled'}
-                                        onChange={(e) => setIdentity('gmDemoMode', e.target.value === 'Enabled')}
+                                        onChange={(e) => updateRoomSetting('gmDemoMode', e.target.value === 'Enabled')}
                                     >
                                         <option value="Disabled">Disabled</option>
                                         <option value="Enabled">Enabled</option>

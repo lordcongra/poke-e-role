@@ -251,22 +251,98 @@
 /* --- Help Banner --- */
 .bo-help-banner {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    background-color: color-mix(in srgb, var(--primary, #3b82f6) 12%, var(--panel-bg, #1e1e1e));
+    flex-direction: column;
+    background-color: color-mix(in srgb, var(--primary, #3b82f6) 10%, var(--panel-bg, #1e1e1e));
     border-bottom: 1px solid var(--primary, #3b82f6);
-    padding: 10px 18px;
-    gap: 12px;
+    padding: 12px 18px;
+    gap: 10px;
     flex-shrink: 0;
     position: relative;
     z-index: 9;
+    max-height: 440px;
+    overflow-y: auto;
 }
 
-.bo-help-banner__content ul {
-    margin: 4px 0 0 16px;
-    padding: 0;
+.bo-help-banner__content {
+    width: 100%;
+}
+
+.bo-help-banner__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.bo-help-banner__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-main, #fff);
+}
+
+.bo-help-banner__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+@media (max-width: 860px) {
+    .bo-help-banner__grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.bo-help-banner__section {
+    background: var(--panel-alt, #242424);
+    border: 1px solid var(--panel-border, #333);
+    border-radius: 6px;
+    padding: 12px 14px;
     font-size: 0.8rem;
-    line-height: 1.4;
+    line-height: 1.45;
+}
+
+.bo-help-section-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 8px 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary, #3b82f6);
+}
+
+.bo-help-banner__section ol,
+.bo-help-banner__section ul {
+    margin: 6px 0 6px 18px;
+    padding: 0;
+}
+
+.bo-help-banner__section li {
+    margin-bottom: 5px;
+}
+
+.bo-help-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 8px 10px;
+    border-radius: 5px;
+    background-color: color-mix(in srgb, var(--semantic-danger, #ef5350) 12%, var(--panel-bg, #1e1e1e));
+    border: 1px solid color-mix(in srgb, var(--semantic-danger, #ef5350) 40%, transparent);
+    font-size: 0.76rem;
+    line-height: 1.35;
+    color: var(--text-main, #eee);
+}
+
+.bo-help-alert code {
+    background: rgba(0, 0, 0, 0.35);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 0.72rem;
 }
 
 .bo-help-close {
@@ -1393,6 +1469,19 @@
     color: var(--primary, #3b82f6);
     border-color: var(--primary, #3b82f6);
     background-color: color-mix(in srgb, var(--primary, #3b82f6) 12%, transparent);
+}
+
+.bo-sheet-toggle--locked {
+    opacity: 0.45;
+    cursor: not-allowed;
+    border-color: var(--semantic-danger, #ef5350);
+    color: var(--text-muted, #888);
+}
+
+.bo-sheet-toggle--locked:hover {
+    color: var(--semantic-danger, #ef5350);
+    border-color: var(--semantic-danger, #ef5350);
+    background-color: transparent;
 }
 
 .bo-reaction-toggle--active-faint {

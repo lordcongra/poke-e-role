@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings, X, Layers, Sparkles, Info, Lightbulb, Maximize2 } from 'lucide-react';
+import { Settings, X, Layers, Sparkles, Info, Lightbulb, Maximize2, Monitor } from 'lucide-react';
 import type { BattleOrganizerSettings } from '../../../types/battleOrganizerTypes';
 import {
     getBattleOrganizerSettings,
@@ -181,13 +181,10 @@ export function BattleOrganizerSettingsModal({ onClose }: BattleOrganizerSetting
 
                             <div className="bo-settings__tip-card">
                                 <span className="bo-settings__tip-icon">
-                                    <Lightbulb size={16} color="var(--primary)" />
+                                    <Monitor size={16} color="var(--primary)" />
                                 </span>
                                 <div className="bo-settings__tip-text text-subtext">
-                                    <strong>Multi-Window Sync:</strong> Use the <strong>Pop Out</strong> button in the
-                                    organizer header to detach this sheet into a separate browser window. Actions,
-                                    battlefield effects, and rolls maintain continuous live two-way sync with your
-                                    character sheets!
+                                    <strong>Optimal Dual-Screen GM Setup:</strong> Open your Owlbear Rodeo room link in a <strong>Private / Incognito window</strong> as a guest, grant that guest GM permissions, and manage the organizer from there. <em>Avoid duplicating your logged-in tab on the same account to prevent Owlbear Rodeo rate-limit crashes.</em>
                                 </div>
                             </div>
                         </>

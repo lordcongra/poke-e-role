@@ -3,8 +3,12 @@ import { createRoot, type Root } from 'react-dom/client';
 import OBR from '@owlbear-rodeo/sdk';
 import { BattleOrganizerModal } from './components/modals/battleOrganizer/BattleOrganizerModal';
 import { PrintBattleOrganizer } from './components/print/PrintBattleOrganizer';
-import { subscribeBattleOrganizerSettings } from './components/modals/battleOrganizer/battleOrganizerSettingsHelper';
+import {
+    subscribeBattleOrganizerSettings,
+    setBattleOrganizerOpen
+} from './components/modals/battleOrganizer/battleOrganizerSettingsHelper';
 import { isStandaloneMode } from './utils/storageAdapter';
+import { useCharacterStore } from './store/useCharacterStore';
 import './style.css';
 
 // Strictly type the custom Window property for HMR to avoid 'any'
@@ -83,6 +87,10 @@ export function resolveThemeColors(): { primary: string; secondary: string } {
 // Immediately apply theme and dynamic colors on script load to prevent any flash of default red
 try {
     const params = new URLSearchParams(window.location.search);
+    const roleParam = params.get('role') as 'GM' | 'PLAYER' | null;
+    if (roleParam) {
+        useCharacterStore.setState({ role: roleParam });
+    }
     const initialTheme = params.get('theme') || localStorage.getItem('pokerole-theme') || 'dark';
     if (initialTheme === 'dark') {
         document.body.classList.add('dark-mode');
@@ -121,10 +129,19 @@ export function BattleOrganizerApp() {
         }
     }, [theme]);
 
-    // Apply colors on mount
+    // Apply colors on mount & track BO open status
     useEffect(() => {
+        setBattleOrganizerOpen(true);
+        if (OBR.isAvailable) {
+            OBR.popover.close('pkr-roll-log').catch(() => {});
+        }
+
         const colors = resolveThemeColors();
         applyDynamicColors(colors.primary, colors.secondary);
+
+        return () => {
+            setBattleOrganizerOpen(false);
+        };
     }, []);
 
     // Live storage sync for standalone PWA & cross-tab theme changes
@@ -178,6 +195,10 @@ export function BattleOrganizerApp() {
             const colors = resolveThemeColors();
             applyDynamicColors(colors.primary, colors.secondary);
 
+            OBR.player.getRole().then((role) => {
+                if (role) useCharacterStore.setState({ role });
+            }).catch(() => {});
+
             const unsubTheme = OBR.broadcast.onMessage('pkr-theme-update', (event) => {
                 setTheme(event.data as string);
             });
@@ -199,6 +220,7 @@ export function BattleOrganizerApp() {
     }, []);
 
     const handleClose = () => {
+        setBattleOrganizerOpen(false);
         if (isStandaloneMode) {
             window.close();
         } else if (OBR.isAvailable) {

@@ -276,6 +276,7 @@ export function GlobalToolbar() {
                 '';
             const urlParams = new URLSearchParams();
             urlParams.set('theme', themeToPass);
+            if (storeRole) urlParams.set('role', storeRole);
             if (currentPrimary.trim()) urlParams.set('primary', currentPrimary.trim());
             if (currentSecondary.trim()) urlParams.set('secondary', currentSecondary.trim());
             const url = `${baseUrl}/battle-organizer.html?${urlParams.toString()}`;

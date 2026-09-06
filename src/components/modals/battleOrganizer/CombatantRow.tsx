@@ -4,7 +4,7 @@ import { isStandaloneMode } from '../../../utils/storageAdapter';
 import { imageManager } from '../../../utils/imageManager';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { STATUS_OPTIONS } from '../../../data/constants';
-import { Trash2, Dices, Shield, Swords, User, Skull, X, FileText, Minus, Plus } from 'lucide-react';
+import { Trash2, Dices, Shield, Swords, User, Skull, X, FileText, Minus, Plus, Lock } from 'lucide-react';
 
 interface CombatantRowProps {
     combatant: CombatantRowData;
@@ -28,6 +28,8 @@ export function CombatantRow({
     onAdjustWill
 }: CombatantRowProps) {
     const [resolvedImage, setResolvedImage] = useState<string>('');
+    const role = useCharacterStore((state) => state.role);
+    const isLocked = role === 'PLAYER' && !!combatant.isNPC;
     const customStatuses = useCharacterStore((state) => state.roomCustomStatuses || []);
 
     const combinedStatusOptions = Array.from(
@@ -308,13 +310,22 @@ export function CombatantRow({
 
                         {/* Center: Avatar Thumbnail */}
                         <div
-                            className={`bo-avatar-thumb ${onOpenSheet ? 'bo-avatar-thumb--clickable' : ''}`}
-                            onClick={() => onOpenSheet?.(combatant)}
-                            title={onOpenSheet ? `Open sheet for ${combatant.name || 'combatant'}` : undefined}
-                            role={onOpenSheet ? 'button' : undefined}
-                            tabIndex={onOpenSheet ? 0 : undefined}
+                            className={`bo-avatar-thumb ${onOpenSheet && !isLocked ? 'bo-avatar-thumb--clickable' : ''}`}
+                            onClick={() => {
+                                if (isLocked) return;
+                                onOpenSheet?.(combatant);
+                            }}
+                            title={
+                                isLocked
+                                    ? 'This sheet is hidden by the GM'
+                                    : onOpenSheet
+                                      ? `Open sheet for ${combatant.name || 'combatant'}`
+                                      : undefined
+                            }
+                            role={onOpenSheet && !isLocked ? 'button' : undefined}
+                            tabIndex={onOpenSheet && !isLocked ? 0 : undefined}
                             onKeyDown={(e) => {
-                                if (onOpenSheet && (e.key === 'Enter' || e.key === ' ')) {
+                                if (onOpenSheet && !isLocked && (e.key === 'Enter' || e.key === ' ')) {
                                     onOpenSheet(combatant);
                                 }
                             }}
@@ -535,16 +546,28 @@ export function CombatantRow({
                     >
                         <Swords size={12} />
                     </button>
-                    {onOpenSheet && (
+                    {isLocked ? (
                         <button
                             type="button"
-                            className="bo-reaction-toggle bo-sheet-toggle"
-                            onClick={() => onOpenSheet(combatant)}
-                            title={`Open Character Sheet for ${combatant.name || 'combatant'}`}
-                            aria-label={`Open Character Sheet for ${combatant.name || 'combatant'}`}
+                            className="bo-reaction-toggle bo-sheet-toggle bo-sheet-toggle--locked"
+                            disabled
+                            title="This sheet is hidden by the GM"
+                            aria-label="Sheet locked by GM"
                         >
-                            <FileText size={12} />
+                            <Lock size={12} />
                         </button>
+                    ) : (
+                        onOpenSheet && (
+                            <button
+                                type="button"
+                                className="bo-reaction-toggle bo-sheet-toggle"
+                                onClick={() => onOpenSheet(combatant)}
+                                title={`Open Character Sheet for ${combatant.name || 'combatant'}`}
+                                aria-label={`Open Character Sheet for ${combatant.name || 'combatant'}`}
+                            >
+                                <FileText size={12} />
+                            </button>
+                        )
                     )}
                     <button
                         type="button"

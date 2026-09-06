@@ -457,10 +457,23 @@ export interface IdentitySlice {
     };
 
     setIdentity: <K extends keyof IdentitySlice['identity']>(field: K, value: IdentitySlice['identity'][K]) => void;
+    applyRoomSettings: (settings: Partial<RoomSettings>) => void;
+    updateRoomSetting: <K extends keyof RoomSettings>(field: K, value: RoomSettings[K]) => void;
     setPrintConfig: (config: Partial<PrintConfig>) => void;
     setTokenData: (tokenId: string, role: 'GM' | 'PLAYER') => void;
     applyLearnset: (data: Record<string, unknown>) => void;
     setPendingDemoRoll: (rollData: PendingDemoRoll | null) => void;
+}
+
+export interface RoomSettings {
+    ruleset: string;
+    pain: string;
+    diceEngine: 'dice-plus' | 'car';
+    homebrewAccess: string;
+    gmOnlyLootGen: boolean;
+    gmOnlyMatchups: boolean;
+    gmOnlyDamageOverride: boolean;
+    gmDemoMode: boolean;
 }
 
 export type SheetMode = 'Pokémon' | 'Trainer' | 'Trainer (Special)';

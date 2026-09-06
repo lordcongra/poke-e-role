@@ -188,6 +188,8 @@ export function useBattleOrganizer() {
 
     const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastTokenFingerprintsRef = useRef<Map<string, string>>(new Map());
+    const processedRollIdsRef = useRef<Set<string>>(new Set());
+    const lastMoveRollTimestampRef = useRef<Map<string, number>>(new Map());
 
     // 1. Debounced persistence to localStorage & OBR peer broadcast (0 bytes scene metadata quota!)
     const persistState = useCallback(
@@ -219,6 +221,17 @@ export function useBattleOrganizer() {
                 } catch (e) {
                     console.error('[BattleOrganizer] Failed to save state to localStorage:', e);
                 }
+
+                // 2. Broadcast to peers in room (remote clients, guest players, etc.)
+                if (!_skipBroadcast && OBR.isAvailable && !isStandaloneMode) {
+                    try {
+                        OBR.broadcast.sendMessage('pokerole-pmd-extension/battle-organizer-sync', newState, {
+                            destination: 'REMOTE'
+                        });
+                    } catch (broadcastErr) {
+                        console.warn('[BattleOrganizer] Failed to broadcast battle organizer state:', broadcastErr);
+                    }
+                }
             };
 
             if (immediate) {
@@ -237,7 +250,7 @@ export function useBattleOrganizer() {
                 if (updated === prev) {
                     return prev;
                 }
-                persistState(updated, immediate);
+                persistState(updated, immediate, _skipBroadcast);
                 return updated;
             });
         },
@@ -323,6 +336,59 @@ export function useBattleOrganizer() {
         };
     }, []);
 
+    // 4. Peer-to-peer sync via OBR broadcast (syncs across private windows, guest accounts, & remote players)
+    useEffect(() => {
+        if (!OBR.isAvailable || isStandaloneMode) return;
+
+        let isMounted = true;
+
+        const unsubSync = OBR.broadcast.onMessage('pokerole-pmd-extension/battle-organizer-sync', (event) => {
+            if (!isMounted) return;
+            const incoming = event.data as BattleOrganizerState;
+            if (incoming && Array.isArray(incoming.rounds) && incoming.rounds.length > 0) {
+                try {
+                    const incomingJson = JSON.stringify(incoming);
+                    if (incomingJson === lastSavedJsonRef.current) {
+                        return; // Echo guard
+                    }
+
+                    if (saveTimerRef.current) {
+                        clearTimeout(saveTimerRef.current);
+                        saveTimerRef.current = null;
+                    }
+
+                    lastSavedJsonRef.current = incomingJson;
+                    try {
+                        localStorage.setItem(STORAGE_KEY, incomingJson);
+                    } catch (e) {
+                        console.warn('[BattleOrganizer] Failed to cache synced state in localStorage:', e);
+                    }
+
+                    setState(incoming);
+                } catch (err) {
+                    console.error('[BattleOrganizer] Failed to apply broadcast sync:', err);
+                }
+            }
+        });
+
+        // Sync role from OBR if available
+        OBR.player.getRole().then((r) => {
+            if (r && useCharacterStore.getState().role !== r) {
+                useCharacterStore.setState({ role: r });
+            }
+        }).catch(() => {});
+
+        // Request initial state from peers/GM on mount
+        OBR.broadcast.sendMessage('pokerole-pmd-extension/battle-organizer-request', {}, {
+            destination: 'REMOTE'
+        });
+
+        return () => {
+            isMounted = false;
+            unsubSync();
+        };
+    }, []);
+
     // 4. Real-time token metadata sync & Roll Log integration
     useEffect(() => {
         const unsubs: Array<() => void> = [];
@@ -331,6 +397,18 @@ export function useBattleOrganizer() {
         const applyRollToCombatants = (logData: Record<string, unknown>) => {
             const settings = getBattleOrganizerSettings();
             if (!settings.autoSyncActions || !logData) return;
+
+            const rollId = String(logData.id || '');
+            if (rollId) {
+                if (processedRollIdsRef.current.has(rollId)) {
+                    return; // Ignore duplicate local / broadcast event
+                }
+                processedRollIdsRef.current.add(rollId);
+                if (processedRollIdsRef.current.size > 200) {
+                    const first = processedRollIdsRef.current.values().next().value;
+                    if (first) processedRollIdsRef.current.delete(first);
+                }
+            }
 
             const label = String(logData.label || logData.title || '');
             const fallbackCharName = String(logData.characterName || logData.player || '');
@@ -344,8 +422,8 @@ export function useBattleOrganizer() {
             let charName = fallbackCharName;
             let moveName = '';
 
-            // Format 1: "{Char} rolled {Move} (Acc)..." or "(Damage)" or "(Attack)"
-            const matchAccDmg = clean.match(/^(.+?)\s+rolled\s+(.+?)\s*\((?:Acc|Damage|Attack)\)/i);
+            // Format 1: "{Char} rolled {Move} (Acc)..." or "(Damage)" or "(Attack)" or "(Dmg)"
+            const matchAccDmg = clean.match(/^(.+?)\s+rolled\s+(.+?)\s*\((?:Acc|Damage|Attack|Dmg)\)/i);
             if (matchAccDmg) {
                 charName = matchAccDmg[1].trim();
                 moveName = matchAccDmg[2].trim();
@@ -357,7 +435,7 @@ export function useBattleOrganizer() {
                     moveName = matchRolled[2].trim();
                 } else {
                     // Format 3: "{Move} (Acc)"
-                    const matchSimple = clean.match(/^(.+?)\s*(?:\(Acc\)|\(Damage\)|\(Attack\))/i);
+                    const matchSimple = clean.match(/^(.+?)\s*(?:\(Acc\)|\(Damage\)|\(Attack\)|\(Dmg\))/i);
                     if (matchSimple) {
                         moveName = matchSimple[1].trim();
                     } else if (clean && !clean.includes('!')) {
@@ -372,6 +450,17 @@ export function useBattleOrganizer() {
 
             const isEvade = moveName.toLowerCase() === 'evade';
             const isClash = moveName.toLowerCase() === 'clash';
+            const isDamageRoll =
+                /\((?:Dmg|Damage)\)/i.test(clean) || String(logData.rollType || '') === 'damage';
+
+            // Throttle rapid duplicate rolls of the exact same move for the same combatant within 1.2s
+            const throttleKey = `${rollTokenId || charName}|${moveName.toLowerCase().trim()}|${isDamageRoll ? 'dmg' : 'acc'}`;
+            const lastTime = lastMoveRollTimestampRef.current.get(throttleKey);
+            const now = Date.now();
+            if (lastTime && now - lastTime < 1200) {
+                return;
+            }
+            lastMoveRollTimestampRef.current.set(throttleKey, now);
 
             updateState((prev) => {
                 const currentRound = prev.rounds[prev.activeRoundIndex];
@@ -412,11 +501,15 @@ export function useBattleOrganizer() {
 
                     const newActions = [...c.actions] as CombatantRowData['actions'];
 
-                    // Don't duplicate move name if it is already in an action slot (e.g. rolling damage right after accuracy)
-                    const alreadyPresent = newActions.some(
-                        (a) => a.text.trim().toLowerCase() === moveName.toLowerCase().trim()
-                    );
-                    if (alreadyPresent) return c;
+                    // If this is a damage roll and the move name already exists in an action slot,
+                    // do not allocate a new action slot because damage resolves the preceding accuracy roll.
+                    // For accuracy rolls and new attacks, populate into the next available empty slot.
+                    if (isDamageRoll) {
+                        const alreadyPresent = newActions.some(
+                            (a) => a.text.trim().toLowerCase() === moveName.toLowerCase().trim()
+                        );
+                        if (alreadyPresent) return c;
+                    }
 
                     const targetIdx = newActions.findIndex((a) => !a.text.trim());
                     if (targetIdx !== -1) {
@@ -716,8 +809,13 @@ export function useBattleOrganizer() {
                             const { statusText, isFainted: statusFainted } = parseStatusesFromMetadata(meta);
                             const { hpCurr, hpMax, willCurr, willMax, tempHp, tempWill, activeTransformation } =
                                 parseHealthAndWillFromMetadata(meta);
+                            const isNPC =
+                                meta['is-npc'] === true ||
+                                meta['is-npc'] === 'true' ||
+                                matchingItem.metadata['is-npc'] === true ||
+                                matchingItem.metadata['is-npc'] === 'true';
 
-                            const fingerprint = `${matchingItem.id}|${hpCurr}|${hpMax}|${willCurr}|${willMax}|${tempHp}|${tempWill}|${statusText}|${statusFainted}|${activeTransformation}|${resolvedName}|${resolvedImg}`;
+                            const fingerprint = `${matchingItem.id}|${hpCurr}|${hpMax}|${willCurr}|${willMax}|${tempHp}|${tempWill}|${statusText}|${statusFainted}|${activeTransformation}|${resolvedName}|${resolvedImg}|${isNPC}`;
                             const lastFingerprint = lastTokenFingerprintsRef.current.get(matchingItem.id);
                             if (
                                 lastFingerprint === fingerprint &&
@@ -728,7 +826,8 @@ export function useBattleOrganizer() {
                                 combatant.status === statusText &&
                                 combatant.name === (resolvedName || combatant.name) &&
                                 combatant.activeTransformation === activeTransformation &&
-                                combatant.image === (resolvedImg || combatant.image)
+                                combatant.image === (resolvedImg || combatant.image) &&
+                                combatant.isNPC === isNPC
                             ) {
                                 return combatant;
                             }
@@ -821,6 +920,12 @@ export function useBattleOrganizer() {
                                 }
                             }
 
+                            let nextIsNPC = combatant.isNPC;
+                            if (isNPC !== combatant.isNPC) {
+                                nextIsNPC = isNPC;
+                                updated = true;
+                            }
+
                             if (updated || (!combatant.tokenId && matchingItem.id)) {
                                 hasChanges = true;
                                 return {
@@ -839,7 +944,8 @@ export function useBattleOrganizer() {
                                     tokenId: matchingItem.id,
                                     actions: nextActions,
                                     evadeUsed: nextEvade,
-                                    clashUsed: nextClash
+                                    clashUsed: nextClash,
+                                    isNPC: nextIsNPC
                                 };
                             }
 
@@ -970,6 +1076,8 @@ export function useBattleOrganizer() {
                             String(matchingChar?.name || initItem.name || `Combatant ${idx + 1}`)
                         );
 
+                        const isNPC = meta['is-npc'] === true || meta['is-npc'] === 'true';
+
                         combatantRows.push({
                             id: crypto.randomUUID(),
                             tokenId: charId,
@@ -990,7 +1098,8 @@ export function useBattleOrganizer() {
                             willMax,
                             tempHp,
                             tempWill,
-                            activeTransformation
+                            activeTransformation,
+                            isNPC
                         });
                     });
                 }
@@ -1068,6 +1177,12 @@ export function useBattleOrganizer() {
                     const displayName = extractCharacterName(statsMeta, item.name);
                     const tokenImg = imgItem.image?.url || extractTokenImage(statsMeta) || extractTokenImage(meta);
 
+                    const isNPC =
+                        statsMeta['is-npc'] === true ||
+                        statsMeta['is-npc'] === 'true' ||
+                        meta['is-npc'] === true ||
+                        meta['is-npc'] === 'true';
+
                     combatantRows.push({
                         id: crypto.randomUUID(),
                         tokenId: item.id,
@@ -1088,7 +1203,8 @@ export function useBattleOrganizer() {
                         willMax,
                         tempHp,
                         tempWill,
-                        activeTransformation
+                        activeTransformation,
+                        isNPC
                     });
                 });
             }
@@ -1610,6 +1726,11 @@ export function useBattleOrganizer() {
     const openSheet = useCallback(
         async (combatant: CombatantRowData) => {
             try {
+                const role = useCharacterStore.getState().role;
+                if (role === 'PLAYER' && combatant.isNPC) {
+                    return;
+                }
+
                 if (isStandaloneMode) {
                     const localChars = await storageAdapter.getLocalCharacters();
                     let match = localChars.find((c) => c.id === combatant.tokenId);

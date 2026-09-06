@@ -17,6 +17,7 @@ import { buildGraphicsFromMeta, renderTokenGraphics, STATS_META_ID } from '../ut
 import { saveToOwlbear, setActiveTokenId, hasPendingUpdates } from '../utils/obr';
 import { assignInitiative } from '../utils/diceRoller';
 import { isStandaloneMode } from '../utils/storageAdapter';
+import { isBattleOrganizerOpen } from '../components/modals/battleOrganizer/battleOrganizerSettingsHelper';
 
 const METADATA_ID = STATS_META_ID;
 const ROOM_META_ID = 'pokerole-pmd-extension/room-settings';
@@ -101,7 +102,30 @@ export function useOwlbearSync() {
                 });
                 unsubs.push(unsubHomebrewShare);
 
-                // 3. Fire the request if we are a player
+                // 3. Setup Peer-to-Peer Battle Organizer Responder
+                const unsubBattleOrganizerRequest = OBR.broadcast.onMessage(
+                    `${EXTENSION_ID}/battle-organizer-request`,
+                    () => {
+                        if (role === 'GM') {
+                            const saved = localStorage.getItem('pkr_battle_organizer_data');
+                            if (saved) {
+                                try {
+                                    const parsed = JSON.parse(saved);
+                                    if (parsed && Array.isArray(parsed.rounds) && parsed.rounds.length > 0) {
+                                        OBR.broadcast.sendMessage(`${EXTENSION_ID}/battle-organizer-sync`, parsed, {
+                                            destination: 'REMOTE'
+                                        });
+                                    }
+                                } catch (e) {
+                                    console.warn('[SyncEngine] Failed to broadcast battle organizer data:', e);
+                                }
+                            }
+                        }
+                    }
+                );
+                unsubs.push(unsubBattleOrganizerRequest);
+
+                // 4. Fire the homebrew request if we are a player
                 if (role !== 'GM') {
                     OBR.broadcast.sendMessage(`${EXTENSION_ID}/homebrew-request`, {}, { destination: 'REMOTE' });
                 }
@@ -128,16 +152,34 @@ export function useOwlbearSync() {
                     }
                 };
 
-                const isReady = await OBR.scene.isReady();
-                if (isReady) {
+                let initialRenderDone = false;
+                const triggerInitialRender = async () => {
+                    if (initialRenderDone) return;
+                    initialRenderDone = true;
+                    if (role === 'GM') {
+                        try {
+                            const legacyItems = await OBR.scene.items.getItems(
+                                (i) => i.metadata['pokerole-extension/graphics'] !== undefined
+                            );
+                            if (legacyItems.length > 0) {
+                                await OBR.scene.items.deleteItems(legacyItems.map((i) => i.id));
+                            }
+                        } catch (e) {
+                            console.warn('[SyncEngine] Failed to clean legacy network graphics:', e);
+                        }
+                    }
                     await renderAllTokens();
                     setTimeout(() => renderAllTokens(true), 1500);
+                };
+
+                const isReady = await OBR.scene.isReady();
+                if (isReady) {
+                    await triggerInitialRender();
                 }
 
                 const unsubReady = OBR.scene.onReadyChange(async (ready) => {
                     if (ready) {
-                        await renderAllTokens();
-                        setTimeout(() => renderAllTokens(true), 1500);
+                        await triggerInitialRender();
                     }
                 });
                 unsubs.push(unsubReady);
@@ -182,7 +224,7 @@ export function useOwlbearSync() {
                             if (meta) {
                                 try {
                                     const isOldToken = meta['v2-migrated'] !== true;
-                                    if (isOldToken) {
+                                    if (isOldToken && role === 'GM') {
                                         const currentStore = useCharacterStore.getState();
                                         for (const move of currentStore.moves) {
                                             if (move.name) {
@@ -367,17 +409,18 @@ export function useOwlbearSync() {
                             }
                         }
 
-                        if (data.ruleset !== undefined) store.setIdentity('ruleset', String(data.ruleset));
-                        if (data.painEnabled !== undefined)
-                            store.setIdentity('pain', data.painEnabled ? 'Enabled' : 'Disabled');
-                        if (data.diceEngine !== undefined)
-                            store.setIdentity('diceEngine', String(data.diceEngine) as 'dice-plus' | 'car');
-                        if (data.homebrewAccess !== undefined)
-                            store.setIdentity('homebrewAccess', String(data.homebrewAccess));
-                        if (data.gmOnlyLootGen !== undefined)
-                            store.setIdentity('gmOnlyLootGen', Boolean(data.gmOnlyLootGen));
-                        if (data.gmOnlyMatchups !== undefined)
-                            store.setIdentity('gmOnlyMatchups', Boolean(data.gmOnlyMatchups));
+                        const mapRoomSettings = (sData: Record<string, unknown>) => ({
+                            ruleset: sData.ruleset !== undefined ? String(sData.ruleset) : undefined,
+                            pain: sData.painEnabled !== undefined ? (sData.painEnabled ? 'Enabled' : 'Disabled') : undefined,
+                            diceEngine: sData.diceEngine !== undefined ? (String(sData.diceEngine) as 'dice-plus' | 'car') : undefined,
+                            homebrewAccess: sData.homebrewAccess !== undefined ? String(sData.homebrewAccess) : undefined,
+                            gmOnlyLootGen: sData.gmOnlyLootGen !== undefined ? Boolean(sData.gmOnlyLootGen) : undefined,
+                            gmOnlyMatchups: sData.gmOnlyMatchups !== undefined ? Boolean(sData.gmOnlyMatchups) : undefined,
+                            gmOnlyDamageOverride: sData.gmOnlyDamageOverride !== undefined ? Boolean(sData.gmOnlyDamageOverride) : undefined,
+                            gmDemoMode: sData.gmDemoMode !== undefined ? Boolean(sData.gmDemoMode) : undefined
+                        });
+
+                        store.applyRoomSettings(mapRoomSettings(data));
                     }
                 } catch (e) {
                     console.error('[SyncEngine] Engine recovered from room metadata crash:', e);
@@ -389,17 +432,18 @@ export function useOwlbearSync() {
                             const data = meta[ROOM_META_ID] as Record<string, unknown>;
                             const store = useCharacterStore.getState();
 
-                            if (data.ruleset !== undefined) store.setIdentity('ruleset', String(data.ruleset));
-                            if (data.painEnabled !== undefined)
-                                store.setIdentity('pain', data.painEnabled ? 'Enabled' : 'Disabled');
-                            if (data.diceEngine !== undefined)
-                                store.setIdentity('diceEngine', String(data.diceEngine) as 'dice-plus' | 'car');
-                            if (data.homebrewAccess !== undefined)
-                                store.setIdentity('homebrewAccess', String(data.homebrewAccess));
-                            if (data.gmOnlyLootGen !== undefined)
-                                store.setIdentity('gmOnlyLootGen', Boolean(data.gmOnlyLootGen));
-                            if (data.gmOnlyMatchups !== undefined)
-                                store.setIdentity('gmOnlyMatchups', Boolean(data.gmOnlyMatchups));
+                            const mapRoomSettings = (sData: Record<string, unknown>) => ({
+                                ruleset: sData.ruleset !== undefined ? String(sData.ruleset) : undefined,
+                                pain: sData.painEnabled !== undefined ? (sData.painEnabled ? 'Enabled' : 'Disabled') : undefined,
+                                diceEngine: sData.diceEngine !== undefined ? (String(sData.diceEngine) as 'dice-plus' | 'car') : undefined,
+                                homebrewAccess: sData.homebrewAccess !== undefined ? String(sData.homebrewAccess) : undefined,
+                                gmOnlyLootGen: sData.gmOnlyLootGen !== undefined ? Boolean(sData.gmOnlyLootGen) : undefined,
+                                gmOnlyMatchups: sData.gmOnlyMatchups !== undefined ? Boolean(sData.gmOnlyMatchups) : undefined,
+                                gmOnlyDamageOverride: sData.gmOnlyDamageOverride !== undefined ? Boolean(sData.gmOnlyDamageOverride) : undefined,
+                                gmDemoMode: sData.gmDemoMode !== undefined ? Boolean(sData.gmDemoMode) : undefined
+                            });
+
+                            store.applyRoomSettings(mapRoomSettings(data));
                         }
                     } catch (e) {
                         console.error('[SyncEngine] Engine recovered from room metadata sync crash:', e);
@@ -438,19 +482,21 @@ export function useOwlbearSync() {
 
                     OBR.broadcast.sendMessage(`${EXTENSION_ID}/roll-log-update`, {}, { destination: 'LOCAL' });
 
-                    const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-                    await OBR.popover
-                        .open({
-                            id: 'pkr-roll-log',
-                            url: `${baseUrl}/roll-log.html`,
-                            height: 380,
-                            width: 320,
-                            disableClickAway: true,
-                            anchorReference: 'POSITION',
-                            anchorPosition: { top: 99999, left: 99999 },
-                            transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
-                        })
-                        .catch(() => {});
+                    if (!isBattleOrganizerOpen()) {
+                        const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+                        await OBR.popover
+                            .open({
+                                id: 'pkr-roll-log',
+                                url: `${baseUrl}/roll-log.html`,
+                                height: 380,
+                                width: 320,
+                                disableClickAway: true,
+                                anchorReference: 'POSITION',
+                                anchorPosition: { top: 99999, left: 99999 },
+                                transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
+                            })
+                            .catch(() => {});
+                    }
                 });
                 unsubs.push(unsubRollLogSync);
 

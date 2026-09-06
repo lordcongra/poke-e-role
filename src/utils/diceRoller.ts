@@ -2,6 +2,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../store/useCharacterStore';
 import { isStandaloneMode } from './storageAdapter';
 import { calculateEncodedInitiative, calculateBaseInitFromCharacterData, sortCombatants } from './initiativeHelpers';
+import { isBattleOrganizerOpen } from '../components/modals/battleOrganizer/battleOrganizerSettingsHelper';
 
 // Defines the structure exactly as saved in Local Storage
 export interface StandaloneCombatant {
@@ -258,19 +259,21 @@ export async function broadcastInfo(title: string, description: string) {
         await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-sync', rollLogData, { destination: 'ALL' });
         await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-update', {}, { destination: 'LOCAL' });
 
-        const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-        await OBR.popover
-            .open({
-                id: 'pkr-roll-log',
-                url: `${baseUrl}/roll-log.html`,
-                height: 380,
-                width: 320,
-                disableClickAway: true,
-                anchorReference: 'POSITION',
-                anchorPosition: { top: 99999, left: 99999 },
-                transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
-            })
-            .catch((e) => console.warn('[DiceRoller] Failed to open roll log popover', e));
+        if (!isBattleOrganizerOpen()) {
+            const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+            await OBR.popover
+                .open({
+                    id: 'pkr-roll-log',
+                    url: `${baseUrl}/roll-log.html`,
+                    height: 380,
+                    width: 320,
+                    disableClickAway: true,
+                    anchorReference: 'POSITION',
+                    anchorPosition: { top: 99999, left: 99999 },
+                    transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
+                })
+                .catch((e) => console.warn('[DiceRoller] Failed to open roll log popover', e));
+        }
     } catch (error) {
         console.error('[DiceRoller] Broadcast Info Error:', error);
     }
@@ -551,19 +554,21 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
             });
             await OBR.broadcast.sendMessage('pokerole-pmd-extension/roll-log-update', {}, { destination: 'LOCAL' });
 
-            const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-            await OBR.popover
-                .open({
-                    id: 'pkr-roll-log',
-                    url: `${baseUrl}/roll-log.html`,
-                    height: 380,
-                    width: 320,
-                    disableClickAway: true,
-                    anchorReference: 'POSITION',
-                    anchorPosition: { top: 99999, left: 99999 },
-                    transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
-                })
-                .catch((e) => console.warn('[DiceRoller] Roll log popover failed', e));
+            if (!isBattleOrganizerOpen()) {
+                const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+                await OBR.popover
+                    .open({
+                        id: 'pkr-roll-log',
+                        url: `${baseUrl}/roll-log.html`,
+                        height: 380,
+                        width: 320,
+                        disableClickAway: true,
+                        anchorReference: 'POSITION',
+                        anchorPosition: { top: 99999, left: 99999 },
+                        transformOrigin: { vertical: 'BOTTOM', horizontal: 'RIGHT' }
+                    })
+                    .catch((e) => console.warn('[DiceRoller] Roll log popover failed', e));
+            }
         }, delayMs);
     }
 }

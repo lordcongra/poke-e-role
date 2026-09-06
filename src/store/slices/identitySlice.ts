@@ -1,10 +1,25 @@
 import type { StateCreator } from 'zustand';
 import type { CharacterState, IdentitySlice } from '../storeTypes';
-import { saveToOwlbear } from '../../utils/obr';
+import { saveToOwlbear, saveRoomSettingsToOwlbear } from '../../utils/obr';
 import OBR from '@owlbear-rodeo/sdk';
 import { syncHealthAndWill } from '../../utils/macroHelpers';
 
 import { isStandaloneMode } from '../../utils/storageAdapter';
+
+const EXCLUDED_FROM_TOKEN_SAVE = new Set([
+    'printConfig',
+    'tokenImageUrl',
+    'isPrinting',
+    'pendingDemoRoll',
+    'ruleset',
+    'pain',
+    'diceEngine',
+    'homebrewAccess',
+    'gmOnlyLootGen',
+    'gmOnlyMatchups',
+    'gmOnlyDamageOverride',
+    'gmDemoMode'
+]);
 
 const OBR_KEY_MAP: Record<string, string> = {
     showTrackers: 'show-trackers',
@@ -121,7 +136,7 @@ try {
     console.warn('[IdentitySlice] Failed to parse init settings from local storage.', e);
 }
 
-export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentitySlice> = (set) => ({
+export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentitySlice> = (set, get) => ({
     tokenId: null,
     role: isStandaloneMode ? 'GM' : 'PLAYER',
     identity: {
@@ -260,6 +275,30 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
             identity: { ...state.identity, pendingDemoRoll: rollData }
         })),
 
+    applyRoomSettings: (settings) =>
+        set((state) => ({
+            identity: {
+                ...state.identity,
+                ...settings
+            }
+        })),
+
+    updateRoomSetting: (field, value) => {
+        set((state) => ({
+            identity: {
+                ...state.identity,
+                [field]: value
+            }
+        }));
+
+        if (OBR.isAvailable && !isStandaloneMode) {
+            const currentRole = get().role;
+            if (currentRole === 'GM') {
+                saveRoomSettingsToOwlbear({ [field]: value });
+            }
+        }
+    },
+
     setIdentity: (field, value) =>
         set((state) => {
             const obrKey = OBR_KEY_MAP[field as string] || (field as string);
@@ -288,34 +327,6 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 return { identity: newIdentity };
             }
 
-            // Global Room Settings syncing
-            if (
-                field === 'ruleset' ||
-                field === 'pain' ||
-                field === 'diceEngine' ||
-                field === 'homebrewAccess' ||
-                field === 'gmOnlyLootGen' ||
-                field === 'gmOnlyMatchups' ||
-                field === 'gmOnlyDamageOverride' ||
-                field === 'gmDemoMode'
-            ) {
-                if (OBR.isAvailable) {
-                    OBR.room.getMetadata().then((meta: Record<string, unknown>) => {
-                        const roomMeta =
-                            (meta['pokerole-pmd-extension/room-settings'] as Record<string, unknown>) || {};
-                        if (field === 'ruleset') roomMeta.ruleset = value;
-                        if (field === 'pain') roomMeta.painEnabled = value === 'Enabled';
-                        if (field === 'diceEngine') roomMeta.diceEngine = value;
-                        if (field === 'homebrewAccess') roomMeta.homebrewAccess = value;
-                        if (field === 'gmOnlyLootGen') roomMeta.gmOnlyLootGen = value;
-                        if (field === 'gmOnlyMatchups') roomMeta.gmOnlyMatchups = value;
-                        if (field === 'gmOnlyDamageOverride') roomMeta.gmOnlyDamageOverride = value;
-                        if (field === 'gmDemoMode') roomMeta.gmDemoMode = value;
-                        OBR.room.setMetadata({ 'pokerole-pmd-extension/room-settings': roomMeta });
-                    });
-                }
-            }
-
             const newIdentity = { ...state.identity, [field]: value };
             const updatesToSave: Record<string, unknown> = {};
             const newHealth = { ...state.health };
@@ -325,12 +336,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 syncHealthAndWill(state, state.stats, newIdentity, newHealth, newWill, updatesToSave);
             }
 
-            if (
-                field !== 'printConfig' &&
-                field !== 'tokenImageUrl' &&
-                field !== 'isPrinting' &&
-                field !== 'pendingDemoRoll'
-            ) {
+            if (!EXCLUDED_FROM_TOKEN_SAVE.has(field as string)) {
                 if (typeof value === 'string' || typeof value === 'boolean' || typeof value === 'number') {
                     if (field === 'maxFormData') updatesToSave['max-form-data'] = value;
                     else if (field === 'activeFormId') updatesToSave['active-form-id'] = value;

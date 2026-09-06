@@ -40,14 +40,6 @@ export async function renderTokenGraphics(
         try {
             const tokenId = token.id;
 
-            const networkAttached = (await OBR.scene.items.getItems()).filter(
-                (item) => item.attachedTo === tokenId && item.metadata[GRAPHICS_META_ID] !== undefined
-            );
-
-            if (networkAttached.length > 0) {
-                await OBR.scene.items.deleteItems(networkAttached.map((item) => item.id));
-            }
-
             let localAttached = (await OBR.scene.local.getItems()).filter(
                 (item) => item.attachedTo === tokenId && item.metadata[GRAPHICS_META_ID] !== undefined
             );

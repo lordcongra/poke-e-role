@@ -20,7 +20,7 @@ import { TrackerSection } from '../../board/TrackerSection';
 import { TrainerBadges } from '../../board/TrainerBadges';
 import { DemoRollModal } from '../DemoRollModal';
 import { InModalRollLog } from './InModalRollLog';
-import { X, ChevronLeft, ChevronRight, User, Loader2 } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, User, Loader2, Lock } from 'lucide-react';
 import './CombatantSheetModal.css';
 
 interface CombatantSheetModalProps {
@@ -46,6 +46,10 @@ export function CombatantSheetModal({
     const themePrimaryOverride = useCharacterStore((state) => state.identity.themePrimaryOverride);
     const themeSecondaryOverride = useCharacterStore((state) => state.identity.themeSecondaryOverride);
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
+    const role = useCharacterStore((state) => state.role);
+    const isNPC = useCharacterStore((state) => state.identity.isNPC);
+    const gmOnlyMatchups = useCharacterStore((state) => state.identity.gmOnlyMatchups);
+    const isLocked = role === 'PLAYER' && (Boolean(combatant.isNPC) || Boolean(isNPC));
 
     // Save previous window theme colors to restore when CombatantSheetModal is closed
     const initialThemeRef = useRef<{ primary: string; secondary: string } | null>(null);
@@ -224,23 +228,24 @@ export function CombatantSheetModal({
         };
     }, [combatant]);
 
-    const currentIndex = allCombatants.findIndex((c) => c.id === combatant.id);
-    const hasMultiple = allCombatants.length > 1;
+    const selectableCombatants = allCombatants.filter((c) => !(role === 'PLAYER' && c.isNPC));
+    const currentIndex = selectableCombatants.findIndex((c) => c.id === combatant.id);
+    const hasMultiple = selectableCombatants.length > 1;
 
     const handlePrev = () => {
         if (!hasMultiple) return;
-        const prevIdx = (currentIndex - 1 + allCombatants.length) % allCombatants.length;
-        onSelectCombatant(allCombatants[prevIdx]);
+        const prevIdx = (currentIndex - 1 + selectableCombatants.length) % selectableCombatants.length;
+        onSelectCombatant(selectableCombatants[prevIdx]);
     };
 
     const handleNext = () => {
         if (!hasMultiple) return;
-        const nextIdx = (currentIndex + 1) % allCombatants.length;
-        onSelectCombatant(allCombatants[nextIdx]);
+        const nextIdx = (currentIndex + 1) % selectableCombatants.length;
+        onSelectCombatant(selectableCombatants[nextIdx]);
     };
 
     const handleSelectChange = (id: string) => {
-        const found = allCombatants.find((c) => c.id === id);
+        const found = selectableCombatants.find((c) => c.id === id);
         if (found) onSelectCombatant(found);
     };
 
@@ -287,7 +292,7 @@ export function CombatantSheetModal({
                                     onChange={(e) => handleSelectChange(e.target.value)}
                                     aria-label="Switch Combatant"
                                 >
-                                    {allCombatants.map((c, i) => (
+                                    {selectableCombatants.map((c, i) => (
                                         <option key={c.id} value={c.id}>
                                             {c.name || `Combatant ${i + 1}`} ({c.isPlayerSide ? 'P' : 'F'})
                                         </option>
@@ -325,6 +330,20 @@ export function CombatantSheetModal({
                         <div className="bo-sheet-modal__loading text-subtext">
                             <Loader2 size={24} className="bo-spin-anim" color="var(--primary)" />
                             <span>Loading Pokémon sheet data...</span>
+                        </div>
+                    ) : isLocked ? (
+                        <div id="gm-lock-screen" className="app-gm-lock" style={{ padding: '60px 20px', textAlign: 'center' }}>
+                            <h2 className="app-gm-lock__icon text-title-primary">
+                                <Lock size={40} />
+                            </h2>
+                            <h3 className="text-label" style={{ color: 'var(--text-main)', marginTop: '12px' }}>
+                                This sheet is hidden by the GM.
+                            </h3>
+                            {!gmOnlyMatchups && (
+                                <div className="app-gm-lock__content" style={{ marginTop: '20px' }}>
+                                    <TypeMatchups />
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="sheet-container app-container" style={{ maxWidth: '100%', margin: '0' }}>

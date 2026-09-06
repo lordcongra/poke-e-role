@@ -52,6 +52,7 @@ export interface CombatantRowData {
     tempHp?: number;
     tempWill?: number;
     activeTransformation?: string;
+    isNPC?: boolean;
 }
 
 export interface BattleRoundData {

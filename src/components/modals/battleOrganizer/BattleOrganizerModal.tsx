@@ -24,7 +24,12 @@ import {
     ChevronDown,
     Settings,
     Swords,
-    ExternalLink
+    ExternalLink,
+    BookOpen,
+    Monitor,
+    AlertTriangle,
+    Zap,
+    Lightbulb
 } from 'lucide-react';
 import { isStandaloneMode } from '../../../utils/storageAdapter';
 import { TooltipIcon } from '../../ui/TooltipIcon';
@@ -34,8 +39,10 @@ import { InModalRollLog } from './InModalRollLog';
 import {
     getBattleOrganizerSettings,
     saveBattleOrganizerSettings,
-    subscribeBattleOrganizerSettings
+    subscribeBattleOrganizerSettings,
+    setBattleOrganizerOpen
 } from './battleOrganizerSettingsHelper';
+import { useCharacterStore } from '../../../store/useCharacterStore';
 import type { BattleOrganizerSettings, CombatantRowData } from '../../../types/battleOrganizerTypes';
 import './BattleOrganizerModal.css';
 
@@ -96,13 +103,19 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
         }
     };
 
-    // Lock background scrolling on document body while modal is open
+    // Lock background scrolling on document body while modal is open & track BO open status
     useEffect(() => {
+        setBattleOrganizerOpen(true);
+        if (OBR.isAvailable) {
+            OBR.popover.close('pkr-roll-log').catch(() => {});
+        }
+
         const prevBodyOverflow = document.body.style.overflow;
         const prevHtmlOverflow = document.documentElement.style.overflow;
         document.body.style.overflow = 'hidden';
         document.documentElement.style.overflow = 'hidden';
         return () => {
+            setBattleOrganizerOpen(false);
             document.body.style.overflow = prevBodyOverflow;
             document.documentElement.style.overflow = prevHtmlOverflow;
         };
@@ -175,8 +188,10 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
             }
         }
 
+        const currentRole = useCharacterStore.getState().role;
         const urlParams = new URLSearchParams();
         urlParams.set('theme', themeToPass);
+        if (currentRole) urlParams.set('role', currentRole);
         if (primaryColor.trim()) urlParams.set('primary', primaryColor.trim());
         if (secondaryColor.trim()) urlParams.set('secondary', secondaryColor.trim());
 
@@ -246,6 +261,10 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
     };
 
     const handleOpenCombatantSheet = (combatant: CombatantRowData) => {
+        const role = useCharacterStore.getState().role;
+        if (role === 'PLAYER' && combatant.isNPC) {
+            return;
+        }
         setActiveSheetCombatant(combatant);
         openSheet(combatant).catch((e) => {
             console.warn('[BattleOrganizerModal] Background token select error:', e);
@@ -257,9 +276,15 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
         const combatant = currentCombatants.find((c) => c.id === combatantId);
         if (!combatant) return;
 
+        // Prioritize the first action slot matching moveName that has not yet been marked ('none')
         let targetIdx = combatant.actions.findIndex(
-            (a) => a.text.trim().toLowerCase() === moveName.trim().toLowerCase()
+            (a) => a.text.trim().toLowerCase() === moveName.trim().toLowerCase() && a.status === 'none'
         );
+        if (targetIdx === -1) {
+            targetIdx = combatant.actions.findIndex(
+                (a) => a.text.trim().toLowerCase() === moveName.trim().toLowerCase()
+            );
+        }
         if (targetIdx === -1) {
             targetIdx = combatant.actions.findIndex((a) => !a.text.trim());
         }
@@ -491,9 +516,9 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                             type="button"
                             className={`action-button ${showHelp ? 'action-button--primary' : 'action-button--dark'} bo-header-btn`}
                             onClick={() => setShowHelp(!showHelp)}
-                            title="Help & Info"
+                            title="Help & Instructions Guide"
                         >
-                            <HelpCircle size={14} />
+                            <HelpCircle size={14} /> Instructions
                         </button>
 
                         {/* Quick View Toggles */}
@@ -526,16 +551,15 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                     </div>
                 )}
 
-                {/* Owlbear Rodeo Dual-Tab Advisory Banner */}
+                {/* Owlbear Rodeo Dual-Screen / Dual-Window Advisory Banner */}
                 {!isStandaloneMode && showObrAdvisory && (
                     <div className="bo-advisory-banner" onWheel={handleStaticWheel}>
                         <div className="bo-advisory-banner__content text-subtext">
-                            <span className="bo-advisory-banner__icon">💡</span>
+                            <span className="bo-advisory-banner__icon">
+                                <Lightbulb size={16} color="#f59e0b" />
+                            </span>
                             <span>
-                                <strong>Owlbear Rodeo Pro Tip:</strong> 3D dice and the canvas roll log render behind
-                                modal dialogs. For live rolling, we recommend keeping this room open in a{' '}
-                                <strong>second browser tab</strong>, or use the floating{' '}
-                                <strong>Roll Log widget</strong> below to check rolls and mark hits/misses in real time!
+                                <strong>Optimal Dual-Screen GM Setup:</strong> For the best experience without modal occlusion on your battle map or 3D dice, open your Owlbear Rodeo room link in a <strong>Private / Incognito window</strong> as a guest, grant that guest <strong>GM permissions</strong>, and manage the Battle Organizer there. <em>(Do not duplicate your tab on the same logged-in account, as Owlbear Rodeo rate-limits duplicate sessions and will crash).</em>
                             </span>
                         </div>
                         <button
@@ -550,45 +574,70 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                     </div>
                 )}
 
-                {/* Optional Help Banner */}
+                {/* Comprehensive Help & Setup Guide */}
                 {showHelp && (
                     <div className="bo-help-banner" onWheel={handleStaticWheel}>
                         <div className="bo-help-banner__content text-subtext">
-                            <strong>Battle Organizer Tips:</strong>
-                            <ul>
-                                <li>
-                                    Click <strong>Pull from Initiative</strong> to automatically populate all
-                                    combatants, active held items, statuses, and rolled initiatives.
-                                </li>
-                                <li>
-                                    Use the <strong>Remaining Rounds</strong> boxes (1-4) on Weathers, Terrains, and
-                                    Force Fields. When you click <strong>Advance / End Round</strong>, all active timers
-                                    automatically decrement by 1.
-                                </li>
-                                <li>
-                                    Click <strong>✓</strong> on an action slot to mark it completed/used, or{' '}
-                                    <strong>✗</strong> for clash/evade/failed.
-                                </li>
-                                {!isStandaloneMode && (
-                                    <li>
-                                        <strong>Owlbear Rodeo Multi-Tab:</strong> In Owlbear Rodeo, open this room in a
-                                        second browser tab to view 3D dice rolls and the live battle map side-by-side
-                                        with this organizer!
-                                    </li>
-                                )}
-                                <li>
-                                    You can replicate rounds any number of times with <strong>Add Round</strong> or{' '}
-                                    <strong>Duplicate Round</strong>.
-                                </li>
-                            </ul>
+                            <div className="bo-help-banner__header">
+                                <span className="bo-help-banner__title text-title-primary">
+                                    <BookOpen size={16} color="var(--primary)" /> Battle Organizer Guide & Optimal Setup
+                                </span>
+                                <button
+                                    type="button"
+                                    className="action-button action-button--ghost bo-help-close"
+                                    onClick={() => setShowHelp(false)}
+                                    title="Close Guide"
+                                    aria-label="Close Guide"
+                                >
+                                    <X size={14} />
+                                </button>
+                            </div>
+
+                            <div className="bo-help-banner__grid">
+                                <div className="bo-help-banner__section">
+                                    <h4 className="bo-help-section-title">
+                                        <Monitor size={14} color="var(--primary)" /> Optimal Dual-Screen Setup (Private Window)
+                                    </h4>
+                                    <p>
+                                        Want to keep your battle map and 3D dice rolls visible while running the Battle Organizer on a second screen or side-by-side window?
+                                    </p>
+                                    <ol>
+                                        <li>Open your room link in a <strong>Private / Incognito browser window</strong> (or separate browser profile) and join as a guest.</li>
+                                        <li>On your primary GM screen, click the guest user in the player list and grant them <strong>GM permissions</strong>.</li>
+                                        <li>Open and run the Battle Organizer on that screen! Live state synchronizes across both windows in real time.</li>
+                                    </ol>
+                                    <div className="bo-help-alert">
+                                        <AlertTriangle size={14} color="var(--semantic-danger, #ef5350)" style={{ flexShrink: 0, marginTop: 2 }} />
+                                        <span>
+                                            <strong>Why avoid duplicating your logged-in tab?</strong> Owlbear Rodeo enforces strict per-account connection limits. Opening multiple tabs under the exact same logged-in account triggers concurrent real-time room sessions that lead to <code>Realtime error: 4003 Rate limited</code> disconnections. A private guest session has an independent connection that avoids this completely.
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="bo-help-banner__section">
+                                    <h4 className="bo-help-section-title">
+                                        <Zap size={14} color="var(--primary)" /> Round Tracker & Moves
+                                    </h4>
+                                    <ul>
+                                        <li>
+                                            <strong>Auto-Sync Moves:</strong> Rolling move accuracy checks automatically populates that combatant's next open action slot. Damage rolls resolve the move without using extra slots.
+                                        </li>
+                                        <li>
+                                            <strong>Multi-Action Moves:</strong> Moves used multiple times in a round (such as Successive Actions, Double Actions, or homebrew refreshes) automatically allocate into subsequent action slots with each new accuracy roll.
+                                        </li>
+                                        <li>
+                                            <strong>Hit / Miss Marking:</strong> Use the <strong>✓</strong> (success) and <strong>✗</strong> (fail) buttons on any slot or directly from the in-modal Roll Log to resolve actions.
+                                        </li>
+                                        <li>
+                                            <strong>Environmental Timers:</strong> Remaining Rounds boxes (1–4) on Weathers, Terrains, and Force Fields automatically decrement when you click <strong>Advance / End Round</strong>.
+                                        </li>
+                                        <li>
+                                            <strong>Pull from Initiative:</strong> Automatically imports all active scene characters, held items, statuses, and rolled initiatives in descending order.
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
-                        <button
-                            type="button"
-                            className="action-button action-button--ghost bo-help-close"
-                            onClick={() => setShowHelp(false)}
-                        >
-                            <X size={14} />
-                        </button>
                     </div>
                 )}
 
@@ -1275,7 +1324,11 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                     <CombatantSheetModal
                         combatant={activeSheetCombatant}
                         allCombatants={currentRound?.combatants || []}
-                        onSelectCombatant={(c) => setActiveSheetCombatant(c)}
+                        onSelectCombatant={(c) => {
+                            const role = useCharacterStore.getState().role;
+                            if (role === 'PLAYER' && c.isNPC) return;
+                            setActiveSheetCombatant(c);
+                        }}
                         onClose={() => setActiveSheetCombatant(null)}
                         onMarkAction={handleMarkActionFromRoll}
                     />

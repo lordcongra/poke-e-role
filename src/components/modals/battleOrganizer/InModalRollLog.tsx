@@ -124,7 +124,7 @@ export function InModalRollLog({ combatants = [], onMarkAction }: InModalRollLog
         let charName = fallbackChar || '';
         let moveName = '';
 
-        const matchAccDmg = clean.match(/^(.+?)\s+rolled\s+(.+?)\s*\((?:Acc|Damage|Attack)\)/i);
+        const matchAccDmg = clean.match(/^(.+?)\s+rolled\s+(.+?)\s*\((?:Acc|Damage|Attack|Dmg)\)/i);
         if (matchAccDmg) {
             charName = matchAccDmg[1].trim();
             moveName = matchAccDmg[2].trim();
@@ -134,7 +134,7 @@ export function InModalRollLog({ combatants = [], onMarkAction }: InModalRollLog
                 charName = matchRolled[1].trim();
                 moveName = matchRolled[2].trim();
             } else {
-                const matchSimple = clean.match(/^(.+?)\s*(?:\(Acc\)|\(Damage\)|\(Attack\))/i);
+                const matchSimple = clean.match(/^(.+?)\s*(?:\(Acc\)|\(Damage\)|\(Attack\)|\(Dmg\))/i);
                 if (matchSimple) {
                     moveName = matchSimple[1].trim();
                 } else if (clean && !clean.includes('!')) {

@@ -5,7 +5,31 @@ export const BO_SHOW_ROUND_TRACKER_KEY = 'pkr_bo_show_round_tracker';
 export const BO_WINDOW_MODE_KEY = 'pkr_bo_window_mode';
 export const BO_AUTO_SYNC_ACTIONS_KEY = 'pkr_bo_auto_sync_actions';
 export const BO_FULLSCREEN_KEY = 'pkr_bo_fullscreen';
+export const BO_IS_OPEN_KEY = 'pkr_battle_organizer_open';
 export const BO_SETTINGS_UPDATE_EVENT = 'pkr-bo-settings-update';
+
+export function isBattleOrganizerOpen(): boolean {
+    if (typeof window !== 'undefined' && window.location.pathname.includes('battle-organizer')) {
+        return true;
+    }
+    try {
+        return localStorage.getItem(BO_IS_OPEN_KEY) === 'true';
+    } catch {
+        return false;
+    }
+}
+
+export function setBattleOrganizerOpen(isOpen: boolean): void {
+    try {
+        if (isOpen) {
+            localStorage.setItem(BO_IS_OPEN_KEY, 'true');
+        } else {
+            localStorage.removeItem(BO_IS_OPEN_KEY);
+        }
+    } catch (e) {
+        console.warn('[BattleOrganizerSettings] Failed to set BO open state:', e);
+    }
+}
 
 export const DEFAULT_BO_SETTINGS: BattleOrganizerSettings = {
     showBattlefield: true,
