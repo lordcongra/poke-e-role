@@ -378,7 +378,7 @@ export function useSidebarEngine() {
 
                 if (tokenImageUrl && tokenImageUrl.startsWith('local-img:')) {
                     try {
-                        await imageManager.deleteImage(tokenImageUrl);
+                        await imageManager.deleteImage(tokenImageUrl, item.id);
                     } catch (err) {
                         console.warn('[SidebarEngine] Failed to delete orphaned image:', err);
                     }
@@ -390,6 +390,7 @@ export function useSidebarEngine() {
             if (activeTokenId === item.id) {
                 useCharacterStore.setState({ tokenId: null });
                 setActiveTokenId(null);
+                useCharacterStore.getState().loadFromOwlbear({});
             }
         }
     };

@@ -115,7 +115,7 @@ export function IdentityHeader() {
         const url = window.prompt('Enter an Image URL:');
         if (url) {
             if (identityStore.tokenImageUrl && identityStore.tokenImageUrl.startsWith('local-img:')) {
-                await imageManager.deleteImage(identityStore.tokenImageUrl);
+                await imageManager.deleteImage(identityStore.tokenImageUrl, tokenId || undefined);
             }
 
             setIdentity('tokenImageUrl', url);
@@ -139,7 +139,7 @@ export function IdentityHeader() {
             const imgId = await imageManager.saveImage(croppedFile);
 
             if (identityStore.tokenImageUrl && identityStore.tokenImageUrl.startsWith('local-img:')) {
-                await imageManager.deleteImage(identityStore.tokenImageUrl);
+                await imageManager.deleteImage(identityStore.tokenImageUrl, tokenId || undefined);
             }
 
             setIdentity('tokenImageUrl', imgId);
@@ -157,7 +157,7 @@ export function IdentityHeader() {
     const handleDeleteAvatar = async () => {
         if (identityStore.tokenImageUrl && identityStore.tokenImageUrl.startsWith('local-img:')) {
             try {
-                await imageManager.deleteImage(identityStore.tokenImageUrl);
+                await imageManager.deleteImage(identityStore.tokenImageUrl, tokenId || undefined);
             } catch (error) {
                 console.error('[IdentityHeader] Failed to delete image from IndexedDB:', error);
             }

@@ -329,7 +329,7 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
             ? String(meta['token-image-url'])
             : meta['tokenImageUrl']
               ? String(meta['tokenImageUrl'])
-              : state?.identity?.tokenImageUrl || '',
+              : '',
 
         activeTransformation: (meta['active-transformation'] as TransformationType) || 'None',
         activeFormId: String(meta['active-form-id'] || ''),

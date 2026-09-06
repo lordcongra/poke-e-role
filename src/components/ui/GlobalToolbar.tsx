@@ -156,6 +156,7 @@ export function GlobalToolbar() {
     const handleReturnToMenu = () => {
         useCharacterStore.setState({ tokenId: null });
         setActiveTokenId(null);
+        useCharacterStore.getState().loadFromOwlbear({});
     };
 
     const toggleTheme = () => {
@@ -253,13 +254,9 @@ export function GlobalToolbar() {
                 OBR.viewport.getHeight()
             ]);
             const viewportWidth =
-                vpWidthRes.status === 'fulfilled' && typeof vpWidthRes.value === 'number'
-                    ? vpWidthRes.value
-                    : 1200;
+                vpWidthRes.status === 'fulfilled' && typeof vpWidthRes.value === 'number' ? vpWidthRes.value : 1200;
             const viewportHeight =
-                vpHeightRes.status === 'fulfilled' && typeof vpHeightRes.value === 'number'
-                    ? vpHeightRes.value
-                    : 800;
+                vpHeightRes.status === 'fulfilled' && typeof vpHeightRes.value === 'number' ? vpHeightRes.value : 800;
 
             const settings = getBattleOrganizerSettings();
             const isFullScreen = settings.fullScreen ?? false;

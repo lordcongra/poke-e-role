@@ -1,3 +1,5 @@
+import { LOCAL_STORAGE_PREFIX } from './storageAdapter';
+
 const DB_NAME = 'pkr_local_images';
 const STORE_NAME = 'images';
 const DB_VERSION = 1;
@@ -155,9 +157,29 @@ export const imageManager = {
 
     /**
      * Deletes an image record from IndexedDB.
+     * Safely verifies if any other character in localStorage still references this image
+     * before deleting it, preventing accidental deletions across duplicated or shared characters.
      */
-    async deleteImage(formattedId: string): Promise<void> {
+    async deleteImage(formattedId: string, excludeCharacterId?: string): Promise<void> {
         if (!formattedId.startsWith('local-img:')) return;
+
+        try {
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith(LOCAL_STORAGE_PREFIX)) {
+                    if (excludeCharacterId && key === `${LOCAL_STORAGE_PREFIX}${excludeCharacterId}`) {
+                        continue;
+                    }
+                    const raw = localStorage.getItem(key);
+                    if (raw && raw.includes(formattedId)) {
+                        // Image is still in use by another character in localStorage!
+                        return;
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('[imageManager] Failed to check image references in storage:', e);
+        }
 
         const id = formattedId.replace('local-img:', '');
         const db = await getDB();
