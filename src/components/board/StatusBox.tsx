@@ -59,6 +59,11 @@ export function StatusBox() {
                                         {option}
                                     </option>
                                 ))}
+                                {!STATUS_OPTIONS_COMBINED.includes(status.name) && (
+                                    <option key={status.name} value={status.name}>
+                                        {status.name}
+                                    </option>
+                                )}
                             </select>
 
                             <TooltipIcon

@@ -9,6 +9,8 @@ import {
     calculateBaseInitFromCharacterData
 } from '../../../utils/initiativeHelpers';
 import { getBattleOrganizerSettings } from './battleOrganizerSettingsHelper';
+import { STATUS_OPTIONS } from '../../../data/constants';
+import type { StatusItem } from '../../../store/storeTypes';
 import type {
     BattleOrganizerState,
     BattlefieldData,
@@ -40,6 +42,143 @@ export function parseStatusesFromMetadata(meta: Record<string, unknown>): { stat
     }
     const isFainted = statusText.toLowerCase().includes('faint');
     return { statusText, isFainted };
+}
+
+export function mapStatusTextToStatusItems(
+    statusText: string,
+    isFainted?: boolean,
+    existingStatuses?: StatusItem[]
+): StatusItem[] {
+    const rawParts = (statusText || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0 && s.toLowerCase() !== 'healthy');
+
+    if (isFainted && !rawParts.some((p) => p.toLowerCase().includes('faint'))) {
+        rawParts.push('Fainted');
+    }
+
+    if (rawParts.length === 0) {
+        return [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }];
+    }
+
+    const roomCustoms = useCharacterStore.getState().roomCustomStatuses || [];
+
+    return rawParts.map((part) => {
+        // Extract optional rounds: e.g. "Paralysis (2)" -> baseName "Paralysis", rounds 2
+        const roundMatch = part.match(/^(.*?)(?:\s*\((\d+)\))?$/);
+        const baseName = (roundMatch ? roundMatch[1] : part).trim();
+        const extractedRounds = roundMatch && roundMatch[2] ? parseInt(roundMatch[2], 10) : 0;
+
+        // Look for existing status to preserve id and rounds if not in string
+        const existing = existingStatuses?.find(
+            (s) =>
+                s.name.toLowerCase() === baseName.toLowerCase() ||
+                (s.customName && s.customName.toLowerCase() === baseName.toLowerCase())
+        );
+
+        const finalRounds = extractedRounds > 0 ? extractedRounds : existing?.rounds || 0;
+
+        // 1. Exact or case-insensitive match against STATUS_OPTIONS
+        const matchedOption = STATUS_OPTIONS.find((opt) => opt.toLowerCase() === baseName.toLowerCase());
+        if (matchedOption) {
+            return {
+                id: existing?.id || crypto.randomUUID(),
+                name: matchedOption,
+                customName: '',
+                rounds: finalRounds
+            };
+        }
+
+        // 2. Convenience aliases for common nicknames
+        const lower = baseName.toLowerCase();
+        if (lower === 'burn') {
+            return {
+                id: existing?.id || crypto.randomUUID(),
+                name: '1st Degree Burn',
+                customName: '',
+                rounds: finalRounds
+            };
+        }
+        if (lower === 'bad poison' || lower === 'toxic') {
+            return {
+                id: existing?.id || crypto.randomUUID(),
+                name: 'Badly Poisoned',
+                customName: '',
+                rounds: finalRounds
+            };
+        }
+        if (lower === 'freeze') {
+            return {
+                id: existing?.id || crypto.randomUUID(),
+                name: 'Frozen Solid',
+                customName: '',
+                rounds: finalRounds
+            };
+        }
+
+        // 3. Match against custom room statuses
+        const matchedCustom = roomCustoms.find((cs) => cs.name.toLowerCase() === lower);
+        if (matchedCustom) {
+            return {
+                id: existing?.id || crypto.randomUUID(),
+                name: matchedCustom.name,
+                customName: '',
+                rounds: finalRounds
+            };
+        }
+
+        // 4. Custom status / Fainted
+        return {
+            id: existing?.id || crypto.randomUUID(),
+            name: baseName,
+            customName: baseName,
+            rounds: finalRounds
+        };
+    });
+}
+
+export async function resolveCombatantTokenId(combatant: CombatantRowData): Promise<string | null> {
+    if (combatant.tokenId) return combatant.tokenId;
+    if (!combatant.name.trim()) return null;
+
+    if (isStandaloneMode) {
+        try {
+            const localChars = await storageAdapter.getLocalCharacters();
+            const match = localChars.find((c) => {
+                const meta = (c.metadata || {}) as Record<string, unknown>;
+                const resolvedName = extractCharacterName(meta, c.name);
+                return (
+                    resolvedName.toLowerCase().trim() === combatant.name.toLowerCase().trim() ||
+                    c.name.toLowerCase().trim() === combatant.name.toLowerCase().trim()
+                );
+            });
+            return match ? match.id : null;
+        } catch (e) {
+            console.warn('[useBattleOrganizer] Failed to resolve standalone token ID:', e);
+            return null;
+        }
+    }
+
+    if (OBR.isAvailable) {
+        try {
+            const items = await OBR.scene.items.getItems((item) => {
+                if (item.layer !== 'CHARACTER') return false;
+                const meta = (item.metadata['pokerole-extension/stats'] || item.metadata) as Record<string, unknown>;
+                const resolvedName = extractCharacterName(meta, item.name);
+                return (
+                    resolvedName.toLowerCase().trim() === combatant.name.toLowerCase().trim() ||
+                    item.name.toLowerCase().trim() === combatant.name.toLowerCase().trim()
+                );
+            });
+            return items.length > 0 ? items[0].id : null;
+        } catch (e) {
+            console.warn('[useBattleOrganizer] Failed to resolve OBR token ID:', e);
+            return null;
+        }
+    }
+
+    return null;
 }
 
 export function parseHealthAndWillFromMetadata(meta: Record<string, unknown>): {
@@ -190,6 +329,10 @@ export function useBattleOrganizer() {
     const lastTokenFingerprintsRef = useRef<Map<string, string>>(new Map());
     const processedRollIdsRef = useRef<Set<string>>(new Set());
     const lastMoveRollTimestampRef = useRef<Map<string, number>>(new Map());
+    const tokenSyncTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+    const pendingTokenSyncRef = useRef<
+        Map<string, { statusText: string; hpCurr?: number; willCurr?: number }>
+    >(new Map());
 
     // 1. Debounced persistence to localStorage & OBR peer broadcast (0 bytes scene metadata quota!)
     const persistState = useCallback(
@@ -263,6 +406,8 @@ export function useBattleOrganizer() {
             if (saveTimerRef.current) {
                 clearTimeout(saveTimerRef.current);
             }
+            tokenSyncTimersRef.current.forEach((t) => clearTimeout(t));
+            tokenSyncTimersRef.current.clear();
         };
     }, []);
 
@@ -604,6 +749,17 @@ export function useBattleOrganizer() {
                         });
 
                         if (!matchingChar) return combatant;
+                        const pending = pendingTokenSyncRef.current.get(matchingChar.id);
+                        if (pending) {
+                            const { statusText: currentMetaStatus } = parseStatusesFromMetadata(
+                                (matchingChar.metadata || {}) as Record<string, unknown>
+                            );
+                            if (pending.statusText === currentMetaStatus) {
+                                pendingTokenSyncRef.current.delete(matchingChar.id);
+                            } else {
+                                return combatant;
+                            }
+                        }
                         const meta = (matchingChar.metadata || {}) as Record<string, unknown>;
 
                         const resolvedName = extractCharacterName(meta, matchingChar.name);
@@ -798,6 +954,17 @@ export function useBattleOrganizer() {
                             });
 
                             if (!matchingItem) return combatant;
+                            const pending = pendingTokenSyncRef.current.get(matchingItem.id);
+                            if (pending) {
+                                const meta = (matchingItem.metadata['pokerole-extension/stats'] ||
+                                    matchingItem.metadata) as Record<string, unknown>;
+                                const { statusText: currentMetaStatus } = parseStatusesFromMetadata(meta || {});
+                                if (pending.statusText === currentMetaStatus) {
+                                    pendingTokenSyncRef.current.delete(matchingItem.id);
+                                } else {
+                                    return combatant;
+                                }
+                            }
 
                             const meta = (matchingItem.metadata['pokerole-extension/stats'] ||
                                 matchingItem.metadata) as Record<string, unknown>;
@@ -1467,20 +1634,138 @@ export function useBattleOrganizer() {
         });
     }, [updateState]);
 
+    const syncCombatantToToken = useCallback(
+        async (
+            combatant: CombatantRowData,
+            syncOptions: { syncStatus?: boolean; syncHp?: boolean; syncWill?: boolean }
+        ) => {
+            try {
+                let targetTokenId = combatant.tokenId;
+                if (!targetTokenId && combatant.name.trim()) {
+                    targetTokenId = (await resolveCombatantTokenId(combatant)) || undefined;
+                    if (targetTokenId) {
+                        updateState((prev) => {
+                            const round = prev.rounds[prev.activeRoundIndex];
+                            if (!round) return prev;
+                            const updatedRound: BattleRoundData = {
+                                ...round,
+                                combatants: round.combatants.map((c) =>
+                                    c.id === combatant.id ? { ...c, tokenId: targetTokenId } : c
+                                )
+                            };
+                            return {
+                                ...prev,
+                                rounds: prev.rounds.map((r, idx) => (idx === prev.activeRoundIndex ? updatedRound : r))
+                            };
+                        });
+                    }
+                }
+                if (!targetTokenId) return;
+
+                const updates: Record<string, unknown> = {};
+                let statusItems: StatusItem[] | undefined = undefined;
+
+                if (syncOptions.syncStatus) {
+                    statusItems = mapStatusTextToStatusItems(combatant.status, combatant.isFainted);
+                    updates['status-list'] = JSON.stringify(statusItems);
+                }
+
+                if (syncOptions.syncHp && typeof combatant.hpCurr === 'number') {
+                    updates['hp-curr'] = combatant.hpCurr;
+                }
+
+                if (syncOptions.syncWill && typeof combatant.willCurr === 'number') {
+                    updates['will-curr'] = combatant.willCurr;
+                }
+
+                if (Object.keys(updates).length === 0) return;
+
+                // Live in-memory update for current window's active character store if it matches
+                const globalStore = useCharacterStore.getState();
+                if (globalStore.tokenId === targetTokenId) {
+                    if (statusItems) {
+                        useCharacterStore.setState({ statuses: statusItems });
+                    }
+                    if (typeof updates['hp-curr'] === 'number') {
+                        globalStore.updateHealth('hpCurr', updates['hp-curr']);
+                    }
+                    if (typeof updates['will-curr'] === 'number') {
+                        globalStore.updateWill('willCurr', updates['will-curr']);
+                    }
+                }
+
+                // Register pending sync lock so soft-sync does not revert it before OBR syncs
+                pendingTokenSyncRef.current.set(targetTokenId, {
+                    statusText: combatant.status,
+                    hpCurr: combatant.hpCurr,
+                    willCurr: combatant.willCurr
+                });
+
+                // Debounce save to storageAdapter / Owlbear Rodeo (300ms)
+                const existingTimer = tokenSyncTimersRef.current.get(targetTokenId);
+                if (existingTimer) {
+                    clearTimeout(existingTimer);
+                }
+
+                const timer = setTimeout(async () => {
+                    tokenSyncTimersRef.current.delete(targetTokenId!);
+                    try {
+                        await storageAdapter.saveCharacter(targetTokenId!, updates, 'pokerole-extension/stats');
+                        console.log(`[useBattleOrganizer] Synced updates for "${combatant.name}" to token:`, updates);
+                    } catch (err) {
+                        console.warn('[useBattleOrganizer] Failed to save token updates:', err);
+                    } finally {
+                        setTimeout(() => {
+                            if (targetTokenId) {
+                                pendingTokenSyncRef.current.delete(targetTokenId);
+                            }
+                        }, 1200);
+                    }
+                }, 300);
+
+                tokenSyncTimersRef.current.set(targetTokenId, timer);
+            } catch (e) {
+                console.error('[useBattleOrganizer] Failed to sync combatant to token:', e);
+            }
+        },
+        [updateState]
+    );
+
     const updateCombatant = useCallback(
         (updated: CombatantRowData) => {
+            const currentRound = state.rounds[state.activeRoundIndex];
+            const prevCombatant = currentRound?.combatants.find((c) => c.id === updated.id);
+
             updateState((prev) => {
-                const currentRound = prev.rounds[prev.activeRoundIndex];
-                if (!currentRound) return prev;
+                const round = prev.rounds[prev.activeRoundIndex];
+                if (!round) return prev;
                 const updatedRound: BattleRoundData = {
-                    ...currentRound,
-                    combatants: currentRound.combatants.map((c) => (c.id === updated.id ? updated : c))
+                    ...round,
+                    combatants: round.combatants.map((c) => (c.id === updated.id ? updated : c))
                 };
                 const newRounds = prev.rounds.map((r, idx) => (idx === prev.activeRoundIndex ? updatedRound : r));
                 return { ...prev, rounds: newRounds };
             });
+
+            if (prevCombatant) {
+                const statusChanged =
+                    prevCombatant.status !== updated.status ||
+                    prevCombatant.isFainted !== updated.isFainted;
+                const hpChanged =
+                    prevCombatant.hpCurr !== updated.hpCurr && typeof updated.hpCurr === 'number';
+                const willChanged =
+                    prevCombatant.willCurr !== updated.willCurr && typeof updated.willCurr === 'number';
+
+                if (statusChanged || hpChanged || willChanged) {
+                    syncCombatantToToken(updated, {
+                        syncStatus: statusChanged,
+                        syncHp: hpChanged,
+                        syncWill: willChanged
+                    });
+                }
+            }
         },
-        [updateState]
+        [state.rounds, state.activeRoundIndex, updateState, syncCombatantToToken]
     );
 
     const deleteCombatant = useCallback(
@@ -1856,13 +2141,15 @@ export function useBattleOrganizer() {
 
                 // Sync to OBR or Standalone character
                 const combatantToSync: CombatantRowData = updatedCombatant;
-                if (combatantToSync.tokenId) {
-                    const tokenId = combatantToSync.tokenId;
-                    const nextHp = combatantToSync.hpCurr;
-                    storageAdapter
-                        .saveCharacter(tokenId, { 'hp-curr': nextHp }, 'pokerole-extension/stats')
-                        .catch((e) => console.warn('[useBattleOrganizer] HP sync failed:', e));
-                }
+                const originalCombatant = currentRound.combatants.find((c) => c.id === combatantId);
+                const statusChanged =
+                    originalCombatant?.status !== combatantToSync.status ||
+                    originalCombatant?.isFainted !== combatantToSync.isFainted;
+
+                syncCombatantToToken(combatantToSync, {
+                    syncHp: true,
+                    syncStatus: statusChanged
+                });
 
                 const updatedRound: BattleRoundData = { ...currentRound, combatants: newCombatants };
                 return {
@@ -1871,7 +2158,7 @@ export function useBattleOrganizer() {
                 };
             });
         },
-        [updateState]
+        [updateState, syncCombatantToToken]
     );
 
     const updateCombatantWill = useCallback(
@@ -1900,13 +2187,9 @@ export function useBattleOrganizer() {
 
                 // Sync to OBR or Standalone character
                 const combatantToSync: CombatantRowData = updatedCombatant;
-                if (combatantToSync.tokenId) {
-                    const tokenId = combatantToSync.tokenId;
-                    const nextWill = combatantToSync.willCurr;
-                    storageAdapter
-                        .saveCharacter(tokenId, { 'will-curr': nextWill }, 'pokerole-extension/stats')
-                        .catch((e) => console.warn('[useBattleOrganizer] Will sync failed:', e));
-                }
+                syncCombatantToToken(combatantToSync, {
+                    syncWill: true
+                });
 
                 const updatedRound: BattleRoundData = { ...currentRound, combatants: newCombatants };
                 return {
@@ -1915,7 +2198,7 @@ export function useBattleOrganizer() {
                 };
             });
         },
-        [updateState]
+        [updateState, syncCombatantToToken]
     );
 
     return {
