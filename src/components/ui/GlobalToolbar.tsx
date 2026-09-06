@@ -234,14 +234,32 @@ export function GlobalToolbar() {
     };
 
     const handleBattleOrganizerClick = async () => {
-        if (isStandaloneMode || !OBR.isAvailable || !isObrReady) {
+        const isReady = isObrReady || Boolean(OBR.isAvailable && OBR.isReady);
+        if (isStandaloneMode || !OBR.isAvailable || !isReady) {
+            console.warn('[GlobalToolbar] Bypassing OBR modal, falling back to local modal:', {
+                isStandaloneMode,
+                isAvailable: OBR.isAvailable,
+                isReady: OBR.isReady,
+                isObrReady
+            });
             setActiveModal('battle-organizer');
             return;
         }
 
         try {
-            const viewportWidth = (await OBR.viewport.getWidth()) ?? 1200;
-            const viewportHeight = (await OBR.viewport.getHeight()) ?? 800;
+            // Measure viewport safely in parallel with defaults to avoid stalling or unhandled rejection
+            const [vpWidthRes, vpHeightRes] = await Promise.allSettled([
+                OBR.viewport.getWidth(),
+                OBR.viewport.getHeight()
+            ]);
+            const viewportWidth =
+                vpWidthRes.status === 'fulfilled' && typeof vpWidthRes.value === 'number'
+                    ? vpWidthRes.value
+                    : 1200;
+            const viewportHeight =
+                vpHeightRes.status === 'fulfilled' && typeof vpHeightRes.value === 'number'
+                    ? vpHeightRes.value
+                    : 800;
 
             const settings = getBattleOrganizerSettings();
             const isFullScreen = settings.fullScreen ?? false;
@@ -281,20 +299,29 @@ export function GlobalToolbar() {
             if (currentSecondary.trim()) urlParams.set('secondary', currentSecondary.trim());
             const url = `${baseUrl}/battle-organizer.html?${urlParams.toString()}`;
 
-            if (isFullScreen) {
-                await OBR.modal.open({
-                    id: 'pkr-battle-organizer',
-                    url: url,
-                    fullScreen: true
-                });
-            } else {
+            // Try opening in requested mode (always passing width & height)
+            try {
                 await OBR.modal.open({
                     id: 'pkr-battle-organizer',
                     url: url,
                     width: targetWidth,
                     height: targetHeight,
-                    fullScreen: false
+                    fullScreen: isFullScreen
                 });
+            } catch (firstErr) {
+                // If opening in fullscreen failed, gracefully retry with standard modal view
+                if (isFullScreen) {
+                    console.warn('[GlobalToolbar] Fullscreen modal failed, retrying in standard modal view:', firstErr);
+                    await OBR.modal.open({
+                        id: 'pkr-battle-organizer',
+                        url: url,
+                        width: targetWidth,
+                        height: targetHeight,
+                        fullScreen: false
+                    });
+                } else {
+                    throw firstErr;
+                }
             }
         } catch (e) {
             console.warn('[GlobalToolbar] Failed to open OBR Battle Organizer modal, falling back to local modal:', e);

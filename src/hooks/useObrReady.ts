@@ -10,12 +10,17 @@ export const useObrReady = (): boolean => {
     const [isObrReady, setIsObrReady] = useState<boolean>(() => Boolean(OBR.isAvailable && OBR.isReady));
 
     useEffect(() => {
-        if (!OBR.isAvailable || OBR.isReady) return;
+        if (!OBR.isAvailable) return;
+
+        if (OBR.isReady) {
+            setIsObrReady(true);
+            return;
+        }
 
         OBR.onReady(() => {
             setIsObrReady(true);
         });
     }, []);
 
-    return isObrReady;
+    return isObrReady || Boolean(OBR.isAvailable && OBR.isReady);
 };
