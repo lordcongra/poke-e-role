@@ -1,6 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Settings, X, Layers, Sparkles, Info, Lightbulb, Maximize2, Monitor } from 'lucide-react';
-import type { BattleOrganizerSettings } from '../../../types/battleOrganizerTypes';
+import {
+    Settings,
+    X,
+    Layers,
+    Sparkles,
+    Info,
+    Lightbulb,
+    Maximize2,
+    Monitor,
+    Dices,
+    Move,
+    Columns2,
+    LayoutGrid,
+    Swords
+} from 'lucide-react';
+import type { BattleOrganizerSettings, RollLogLayoutMode } from '../../../types/battleOrganizerTypes';
 import {
     getBattleOrganizerSettings,
     saveBattleOrganizerSettings,
@@ -48,6 +62,11 @@ export function BattleOrganizerSettingsModal({ onClose }: BattleOrganizerSetting
 
     const handleToggleFullScreen = () => {
         const updated = saveBattleOrganizerSettings({ fullScreen: !settings.fullScreen });
+        setSettings(updated);
+    };
+
+    const handleSetRollLogMode = (mode: RollLogLayoutMode) => {
+        const updated = saveBattleOrganizerSettings({ rollLogMode: mode });
         setSettings(updated);
     };
 
@@ -154,7 +173,95 @@ export function BattleOrganizerSettingsModal({ onClose }: BattleOrganizerSetting
                         </label>
                     )}
 
-                    {/* Section 3: Owlbear Rodeo Multi-Tab Workflow vs Standalone Popout Tip */}
+                    {/* Section 3: Roll Log Layout */}
+                    <div className="bo-settings__group-title text-label" style={{ marginTop: '6px' }}>
+                        <Dices size={14} color="var(--primary)" /> Roll Log Layout
+                    </div>
+
+                    <label
+                        className={`bo-settings__checkbox-card ${!settings.rollLogMode || settings.rollLogMode === 'floating' ? 'bo-settings__checkbox-card--active' : ''}`}
+                    >
+                        <input
+                            type="radio"
+                            name="bo-roll-log-layout"
+                            checked={!settings.rollLogMode || settings.rollLogMode === 'floating'}
+                            onChange={() => handleSetRollLogMode('floating')}
+                        />
+                        <div className="bo-settings__card-info">
+                            <span className="bo-settings__card-title text-label">
+                                <Move size={13} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                                Floating Overlay
+                            </span>
+                            <span className="bo-settings__card-desc text-subtext">
+                                Roll log floats in the bottom-right corner over the battle organizer.
+                            </span>
+                        </div>
+                    </label>
+
+                    <label
+                        className={`bo-settings__checkbox-card ${settings.rollLogMode === 'full-sidebar' ? 'bo-settings__checkbox-card--active' : ''}`}
+                    >
+                        <input
+                            type="radio"
+                            name="bo-roll-log-layout"
+                            checked={settings.rollLogMode === 'full-sidebar'}
+                            onChange={() => handleSetRollLogMode('full-sidebar')}
+                        />
+                        <div className="bo-settings__card-info">
+                            <span className="bo-settings__card-title text-label">
+                                <Columns2 size={13} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                                Side-by-Side (Full Length)
+                            </span>
+                            <span className="bo-settings__card-desc text-subtext">
+                                Full-height sidebar on the right side next to both Battlefield and Round Tracker boxes.
+                                Ideal for full-screen view.
+                            </span>
+                        </div>
+                    </label>
+
+                    <label
+                        className={`bo-settings__checkbox-card ${settings.rollLogMode === 'battlefield-nested' ? 'bo-settings__checkbox-card--active' : ''}`}
+                    >
+                        <input
+                            type="radio"
+                            name="bo-roll-log-layout"
+                            checked={settings.rollLogMode === 'battlefield-nested'}
+                            onChange={() => handleSetRollLogMode('battlefield-nested')}
+                        />
+                        <div className="bo-settings__card-info">
+                            <span className="bo-settings__card-title text-label">
+                                <LayoutGrid size={13} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                                Side-by-Side (Battlefield Only)
+                            </span>
+                            <span className="bo-settings__card-desc text-subtext">
+                                Nests next to just the Battlefield box at the top, leaving the Round Tracker table full
+                                width below.
+                            </span>
+                        </div>
+                    </label>
+
+                    <label
+                        className={`bo-settings__checkbox-card ${settings.rollLogMode === 'rounds-nested' ? 'bo-settings__checkbox-card--active' : ''}`}
+                    >
+                        <input
+                            type="radio"
+                            name="bo-roll-log-layout"
+                            checked={settings.rollLogMode === 'rounds-nested'}
+                            onChange={() => handleSetRollLogMode('rounds-nested')}
+                        />
+                        <div className="bo-settings__card-info">
+                            <span className="bo-settings__card-title text-label">
+                                <Swords size={13} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                                Side-by-Side (Round Tracker Only)
+                            </span>
+                            <span className="bo-settings__card-desc text-subtext">
+                                Battlefield is full width at the top; roll log nests next to just the Round Tracker
+                                table below.
+                            </span>
+                        </div>
+                    </label>
+
+                    {/* Section 4: Owlbear Rodeo Multi-Tab Workflow vs Standalone Popout Tip */}
                     {!isStandaloneMode ? (
                         <>
                             <div className="bo-settings__group-title text-label" style={{ marginTop: '6px' }}>
@@ -184,7 +291,13 @@ export function BattleOrganizerSettingsModal({ onClose }: BattleOrganizerSetting
                                     <Monitor size={16} color="var(--primary)" />
                                 </span>
                                 <div className="bo-settings__tip-text text-subtext">
-                                    <strong>Optimal Dual-Screen GM Setup:</strong> Open your Owlbear Rodeo room link in a <strong>Private / Incognito window</strong> as a guest, grant that guest GM permissions, and manage the organizer from there. <em>Avoid duplicating your logged-in tab on the same account to prevent Owlbear Rodeo rate-limit crashes.</em>
+                                    <strong>Optimal Dual-Screen GM Setup:</strong> Open your Owlbear Rodeo room link in
+                                    a <strong>Private / Incognito window</strong> as a guest, grant that guest GM
+                                    permissions, and manage the organizer from there.{' '}
+                                    <em>
+                                        Avoid duplicating your logged-in tab on the same account to prevent Owlbear
+                                        Rodeo rate-limit crashes.
+                                    </em>
                                 </div>
                             </div>
                         </>

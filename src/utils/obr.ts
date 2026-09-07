@@ -57,8 +57,7 @@ export async function saveRoomSettingsToOwlbear(updates: Record<string, unknown>
 
             try {
                 const meta = await OBR.room.getMetadata();
-                const roomMeta =
-                    (meta[ROOM_SETTINGS_META_ID] as Record<string, unknown>) || {};
+                const roomMeta = (meta[ROOM_SETTINGS_META_ID] as Record<string, unknown>) || {};
 
                 for (const [k, v] of Object.entries(updatesToPush)) {
                     if (k === 'ruleset') roomMeta.ruleset = v;
@@ -81,4 +80,3 @@ export async function saveRoomSettingsToOwlbear(updates: Record<string, unknown>
         console.error('[OBR Engine] Failed to import OBR SDK for room settings save:', err);
     }
 }
-

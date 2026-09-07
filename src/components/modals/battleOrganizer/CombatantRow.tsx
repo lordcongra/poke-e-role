@@ -273,10 +273,7 @@ export function CombatantRow({
                     {/* Compact Vertical Stack: HP Mini-Bar -> Avatar -> Will Mini-Bar */}
                     <div className="bo-avatar-stat-stack">
                         {/* Top: HP Stepper */}
-                        <div
-                            className={`bo-stat-stepper bo-stat-stepper--hp ${hpThemeClass}`}
-                            title={hpTitle}
-                        >
+                        <div className={`bo-stat-stepper bo-stat-stepper--hp ${hpThemeClass}`} title={hpTitle}>
                             <button
                                 type="button"
                                 className="bo-stat-step-btn"
@@ -290,9 +287,7 @@ export function CombatantRow({
                             >
                                 <Minus size={8} />
                             </button>
-                            <span className="bo-stat-stepper-val">
-                                {combatant.hpCurr ?? 0}
-                            </span>
+                            <span className="bo-stat-stepper-val">{combatant.hpCurr ?? 0}</span>
                             <button
                                 type="button"
                                 className="bo-stat-step-btn"
@@ -355,9 +350,7 @@ export function CombatantRow({
                             >
                                 <Minus size={8} />
                             </button>
-                            <span className="bo-stat-stepper-val">
-                                {combatant.willCurr ?? 0}
-                            </span>
+                            <span className="bo-stat-stepper-val">{combatant.willCurr ?? 0}</span>
                             <button
                                 type="button"
                                 className="bo-stat-step-btn"

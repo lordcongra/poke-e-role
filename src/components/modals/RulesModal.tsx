@@ -186,7 +186,9 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                     className="identity-grid__select rules-modal__select text-subtext"
                                     style={{ color: 'var(--text-main)' }}
                                     value={id.gmOnlyDamageOverride ? 'GM Only' : 'Everyone'}
-                                    onChange={(e) => updateRoomSetting('gmOnlyDamageOverride', e.target.value === 'GM Only')}
+                                    onChange={(e) =>
+                                        updateRoomSetting('gmOnlyDamageOverride', e.target.value === 'GM Only')
+                                    }
                                 >
                                     <option value="Everyone">Everyone</option>
                                     <option value="GM Only">GM Only</option>

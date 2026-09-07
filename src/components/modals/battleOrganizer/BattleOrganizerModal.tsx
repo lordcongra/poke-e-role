@@ -31,7 +31,8 @@ import {
     Zap,
     Lightbulb,
     Upload,
-    Check
+    Check,
+    Dices
 } from 'lucide-react';
 import { isStandaloneMode } from '../../../utils/storageAdapter';
 import { TooltipIcon } from '../../ui/TooltipIcon';
@@ -45,7 +46,7 @@ import {
     setBattleOrganizerOpen
 } from './battleOrganizerSettingsHelper';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import type { BattleOrganizerSettings, CombatantRowData } from '../../../types/battleOrganizerTypes';
+import type { BattleOrganizerSettings, CombatantRowData, RollLogLayoutMode } from '../../../types/battleOrganizerTypes';
 import './BattleOrganizerModal.css';
 
 interface BattleOrganizerModalProps {
@@ -330,6 +331,57 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
         setBoSettings(next);
     };
 
+    const handleCycleRollLogMode = () => {
+        const currentMode = boSettings.rollLogMode || 'floating';
+        let nextMode: RollLogLayoutMode;
+        switch (currentMode) {
+            case 'floating':
+                nextMode = 'full-sidebar';
+                break;
+            case 'full-sidebar':
+                nextMode = 'battlefield-nested';
+                break;
+            case 'battlefield-nested':
+                nextMode = 'rounds-nested';
+                break;
+            case 'rounds-nested':
+                nextMode = 'floating';
+                break;
+            default:
+                nextMode = 'floating';
+        }
+        const next = saveBattleOrganizerSettings({ rollLogMode: nextMode });
+        setBoSettings(next);
+    };
+
+    const getRollLogModeLabel = (mode?: RollLogLayoutMode) => {
+        switch (mode) {
+            case 'full-sidebar':
+                return 'Side-by-Side (Full Length)';
+            case 'battlefield-nested':
+                return 'Side-by-Side (Battlefield Only)';
+            case 'rounds-nested':
+                return 'Side-by-Side (Round Tracker Only)';
+            case 'floating':
+            default:
+                return 'Floating Overlay';
+        }
+    };
+
+    const getRollLogModeShortLabel = (mode?: RollLogLayoutMode) => {
+        switch (mode) {
+            case 'full-sidebar':
+                return 'Full Side';
+            case 'battlefield-nested':
+                return 'Field Only';
+            case 'rounds-nested':
+                return 'Rounds Only';
+            case 'floating':
+            default:
+                return 'Float';
+        }
+    };
+
     const [showHelp, setShowHelp] = useState(false);
     const [confirmClear, setConfirmClear] = useState(false);
     const [confirmDeleteRoundIdx, setConfirmDeleteRoundIdx] = useState<number | null>(null);
@@ -404,9 +456,21 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
               ? 'bo-modal__content--rounds-only'
               : '';
 
+    const layoutModeClass = boSettings.rollLogMode === 'full-sidebar' ? 'bo-modal__content--with-sidebar' : '';
+    const rollLogMode = boSettings.rollLogMode || 'floating';
+
+    const renderRollLog = (mode: RollLogLayoutMode) => (
+        <InModalRollLog
+            combatants={currentRound?.combatants || []}
+            onMarkAction={handleMarkActionFromRoll}
+            layoutMode={mode}
+            onCycleLayoutMode={handleCycleRollLogMode}
+        />
+    );
+
     return (
         <div className={`bo-modal__overlay ${isPopout ? 'bo-modal__overlay--popout' : ''}`}>
-            <div className={`bo-modal__content ${contentModeClass}`}>
+            <div className={`bo-modal__content ${contentModeClass} ${layoutModeClass}`}>
                 {/* Modal Top Header */}
                 <div className="bo-modal__header" onWheel={handleStaticWheel}>
                     <div className="bo-modal__header-left">
@@ -429,7 +493,6 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                                 <span className="bo-header-collapse-label">Pop Out</span>
                             </button>
                         )}
-
 
                         <button
                             type="button"
@@ -574,6 +637,15 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                             >
                                 <Swords size={13} /> Rounds
                             </button>
+                            <button
+                                type="button"
+                                className={`action-button bo-header-view-toggle ${boSettings.rollLogMode && boSettings.rollLogMode !== 'floating' ? 'action-button--primary' : 'action-button--dark'}`}
+                                onClick={handleCycleRollLogMode}
+                                title={`Roll Log: ${getRollLogModeLabel(boSettings.rollLogMode)} (Click to switch layout)`}
+                                aria-label={`Roll Log: ${getRollLogModeLabel(boSettings.rollLogMode)}`}
+                            >
+                                <Dices size={13} /> Log: {getRollLogModeShortLabel(boSettings.rollLogMode)}
+                            </button>
                         </div>
                     </div>
                 )}
@@ -586,7 +658,14 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                                 <Lightbulb size={16} color="#f59e0b" />
                             </span>
                             <span>
-                                <strong>Optimal Dual-Screen GM Setup:</strong> For the best experience without modal occlusion on your battle map or 3D dice, open your Owlbear Rodeo room link in a <strong>Private / Incognito window</strong> as a guest, grant that guest <strong>GM permissions</strong>, and manage the Battle Organizer there. <em>(Do not duplicate your tab on the same logged-in account, as Owlbear Rodeo rate-limits duplicate sessions and will crash).</em>
+                                <strong>Optimal Dual-Screen GM Setup:</strong> For the best experience without modal
+                                occlusion on your battle map or 3D dice, open your Owlbear Rodeo room link in a{' '}
+                                <strong>Private / Incognito window</strong> as a guest, grant that guest{' '}
+                                <strong>GM permissions</strong>, and manage the Battle Organizer there.{' '}
+                                <em>
+                                    (Do not duplicate your tab on the same logged-in account, as Owlbear Rodeo
+                                    rate-limits duplicate sessions and will crash).
+                                </em>
                             </span>
                         </div>
                         <button
@@ -623,20 +702,40 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                             <div className="bo-help-banner__grid">
                                 <div className="bo-help-banner__section">
                                     <h4 className="bo-help-section-title">
-                                        <Monitor size={14} color="var(--primary)" /> Optimal Dual-Screen Setup (Private Window)
+                                        <Monitor size={14} color="var(--primary)" /> Optimal Dual-Screen Setup (Private
+                                        Window)
                                     </h4>
                                     <p>
-                                        Want to keep your battle map and 3D dice rolls visible while running the Battle Organizer on a second screen or side-by-side window?
+                                        Want to keep your battle map and 3D dice rolls visible while running the Battle
+                                        Organizer on a second screen or side-by-side window?
                                     </p>
                                     <ol>
-                                        <li>Open your room link in a <strong>Private / Incognito browser window</strong> (or separate browser profile) and join as a guest.</li>
-                                        <li>On your primary GM screen, click the guest user in the player list and grant them <strong>GM permissions</strong>.</li>
-                                        <li>Open and run the Battle Organizer on that screen! Live state synchronizes across both windows in real time.</li>
+                                        <li>
+                                            Open your room link in a <strong>Private / Incognito browser window</strong>{' '}
+                                            (or separate browser profile) and join as a guest.
+                                        </li>
+                                        <li>
+                                            On your primary GM screen, click the guest user in the player list and grant
+                                            them <strong>GM permissions</strong>.
+                                        </li>
+                                        <li>
+                                            Open and run the Battle Organizer on that screen! Live state synchronizes
+                                            across both windows in real time.
+                                        </li>
                                     </ol>
                                     <div className="bo-help-alert">
-                                        <AlertTriangle size={14} color="var(--semantic-danger, #ef5350)" style={{ flexShrink: 0, marginTop: 2 }} />
+                                        <AlertTriangle
+                                            size={14}
+                                            color="var(--semantic-danger, #ef5350)"
+                                            style={{ flexShrink: 0, marginTop: 2 }}
+                                        />
                                         <span>
-                                            <strong>Why avoid duplicating your logged-in tab?</strong> Owlbear Rodeo enforces strict per-account connection limits. Opening multiple tabs under the exact same logged-in account triggers concurrent real-time room sessions that lead to <code>Realtime error: 4003 Rate limited</code> disconnections. A private guest session has an independent connection that avoids this completely.
+                                            <strong>Why avoid duplicating your logged-in tab?</strong> Owlbear Rodeo
+                                            enforces strict per-account connection limits. Opening multiple tabs under
+                                            the exact same logged-in account triggers concurrent real-time room sessions
+                                            that lead to <code>Realtime error: 4003 Rate limited</code> disconnections.
+                                            A private guest session has an independent connection that avoids this
+                                            completely.
                                         </span>
                                     </div>
                                 </div>
@@ -647,22 +746,35 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                                     </h4>
                                     <ul>
                                         <li>
-                                            <strong>Auto-Sync Moves:</strong> Rolling move accuracy checks automatically populates that combatant's next open action slot. Damage rolls resolve the move without using extra slots.
+                                            <strong>Auto-Sync Moves:</strong> Rolling move accuracy checks automatically
+                                            populates that combatant's next open action slot. Damage rolls resolve the
+                                            move without using extra slots.
                                         </li>
                                         <li>
-                                            <strong>Multi-Action Moves:</strong> Moves used multiple times in a round (such as Successive Actions, Double Actions, or homebrew refreshes) automatically allocate into subsequent action slots with each new accuracy roll.
+                                            <strong>Multi-Action Moves:</strong> Moves used multiple times in a round
+                                            (such as Successive Actions, Double Actions, or homebrew refreshes)
+                                            automatically allocate into subsequent action slots with each new accuracy
+                                            roll.
                                         </li>
                                         <li>
-                                            <strong>Hit / Miss Marking:</strong> Use the <strong>✓</strong> (success) and <strong>✗</strong> (fail) buttons on any slot or directly from the in-modal Roll Log to resolve actions.
+                                            <strong>Hit / Miss Marking:</strong> Use the <strong>✓</strong> (success)
+                                            and <strong>✗</strong> (fail) buttons on any slot or directly from the
+                                            in-modal Roll Log to resolve actions.
                                         </li>
                                         <li>
-                                            <strong>Environmental Timers:</strong> Remaining Rounds boxes (1–4) on Weathers, Terrains, and Force Fields automatically decrement when you click <strong>Advance / End Round</strong>.
+                                            <strong>Environmental Timers:</strong> Remaining Rounds boxes (1–4) on
+                                            Weathers, Terrains, and Force Fields automatically decrement when you click{' '}
+                                            <strong>Advance / End Round</strong>.
                                         </li>
                                         <li>
-                                            <strong>Pull from Initiative:</strong> Automatically imports all active scene characters, held items, statuses, and rolled initiatives in descending order.
+                                            <strong>Pull from Initiative:</strong> Automatically imports all active
+                                            scene characters, held items, statuses, and rolled initiatives in descending
+                                            order.
                                         </li>
                                         <li>
-                                            <strong>Push Actions to Sheets:</strong> Transfers actions used and reaction states (Evade/Clash) from this organizer to character sheets and tokens, allowing you to seamlessly resume tabletop play.
+                                            <strong>Push Actions to Sheets:</strong> Transfers actions used and reaction
+                                            states (Evade/Clash) from this organizer to character sheets and tokens,
+                                            allowing you to seamlessly resume tabletop play.
                                         </li>
                                     </ul>
                                 </div>
@@ -672,508 +784,628 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                 )}
 
                 {/* Modal Scrollable Body */}
-                <div className="bo-modal__body" ref={bodyRef}>
-                    {/* ========================================= */}
-                    {/* CARD 1: BATTLEFIELD                       */}
-                    {/* ========================================= */}
-                    {boSettings.showBattlefield && (
-                        <div
-                            className={`bo-section-card bo-section-card--battlefield ${!isBattlefieldOpen ? 'bo-section-card--collapsed' : ''}`}
-                        >
-                            {/* Header Pill */}
+                <div
+                    className={rollLogMode === 'full-sidebar' ? 'bo-modal__body-with-sidebar' : 'bo-modal__body'}
+                    ref={rollLogMode !== 'full-sidebar' ? bodyRef : undefined}
+                >
+                    <div
+                        className={rollLogMode === 'full-sidebar' ? 'bo-modal__main-col' : 'bo-modal__body-inner'}
+                        ref={rollLogMode === 'full-sidebar' ? bodyRef : undefined}
+                    >
+                        {/* ========================================= */}
+                        {/* CARD 1: BATTLEFIELD                       */}
+                        {/* ========================================= */}
+                        {boSettings.showBattlefield && (
                             <div
-                                className="bo-pill-header bo-pill-header--center bo-pill-header--toggle"
-                                onClick={() => setIsBattlefieldOpen(!isBattlefieldOpen)}
-                                title={
-                                    isBattlefieldOpen ? 'Click to Collapse Battlefield' : 'Click to Expand Battlefield'
+                                className={
+                                    rollLogMode === 'battlefield-nested'
+                                        ? 'bo-battlefield-nest-row'
+                                        : 'bo-battlefield-wrap'
                                 }
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' || e.key === ' ') {
-                                        setIsBattlefieldOpen(!isBattlefieldOpen);
-                                    }
-                                }}
                             >
-                                <span className="bo-pill-header__text text-theme-header">Battlefield</span>
-                                <ChevronDown
-                                    size={14}
-                                    style={{
-                                        transform: isBattlefieldOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                                        transition: 'transform 0.2s ease'
-                                    }}
-                                />
-                            </div>
-
-                            {isBattlefieldOpen && (
-                                <>
-                                    {/* Battlefield Location */}
-                                    <div className="bo-location-row">
-                                        <label className="bo-field-label text-label">
-                                            <MapPin size={14} /> Battlefield Location
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className="bo-input bo-input--underline text-label"
-                                            value={battlefield.location}
-                                            onChange={(e) => updateBattlefield('location', e.target.value)}
-                                            placeholder="e.g. Viridian Forest Clearing / Distortion World"
-                                        />
-                                    </div>
-
-                                    {/* Global Battlefield Row: Weather, Terrain, Other */}
-                                    <div className="bo-global-effects-grid">
-                                        {/* Active Weather */}
-                                        <div className="bo-effect-card">
-                                            <div className="bo-effect-card__header">
-                                                <span className="bo-field-label text-label">
-                                                    <CloudSun size={14} /> Active Weather
-                                                </span>
-                                                <span className="bo-rounds-label text-subtext">Remaining Rounds</span>
-                                            </div>
-                                            <div className="bo-effect-card__body">
-                                                <input
-                                                    type="text"
-                                                    className="bo-input bo-input--underline text-label"
-                                                    value={battlefield.weather.name}
-                                                    onChange={(e) => handleWeatherChange(e.target.value)}
-                                                    placeholder="e.g. Rain, Harsh Sun, Sandstorm"
-                                                />
-                                                <RemainingRoundsBoxes
-                                                    value={battlefield.weather.remainingRounds}
-                                                    onChange={(val) => updateBattlefieldWeather('remainingRounds', val)}
-                                                    title="Weather Remaining Rounds"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Active Terrain */}
-                                        <div className="bo-effect-card">
-                                            <div className="bo-effect-card__header">
-                                                <span className="bo-field-label text-label">
-                                                    <Mountain size={14} /> Active Terrain
-                                                </span>
-                                                <span className="bo-rounds-label text-subtext">Remaining Rounds</span>
-                                            </div>
-                                            <div className="bo-effect-card__body">
-                                                <input
-                                                    type="text"
-                                                    className="bo-input bo-input--underline text-label"
-                                                    value={battlefield.terrain.name}
-                                                    onChange={(e) => handleTerrainChange(e.target.value)}
-                                                    placeholder="e.g. Electric Terrain, Grassy Terrain"
-                                                />
-                                                <RemainingRoundsBoxes
-                                                    value={battlefield.terrain.remainingRounds}
-                                                    onChange={(val) => updateBattlefieldTerrain('remainingRounds', val)}
-                                                    title="Terrain Remaining Rounds"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Other Global Battlefield Effect */}
-                                        <div className="bo-effect-card">
-                                            <div className="bo-effect-card__header">
-                                                <span className="bo-field-label text-label">
-                                                    <Sparkles size={14} /> Other
-                                                </span>
-                                                <span className="bo-rounds-label text-subtext">Remaining Rounds</span>
-                                            </div>
-                                            <div className="bo-effect-card__body">
-                                                <input
-                                                    type="text"
-                                                    className="bo-input bo-input--underline text-label"
-                                                    value={battlefield.other.name}
-                                                    onChange={(e) => handleOtherChange(e.target.value)}
-                                                    placeholder="e.g. Gravity, Trick Room, Ion Deluge"
-                                                />
-                                                <RemainingRoundsBoxes
-                                                    value={battlefield.other.remainingRounds}
-                                                    onChange={(val) => updateBattlefieldOther('remainingRounds', val)}
-                                                    title="Other Global Remaining Rounds"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Split Stadium Pitch Grid: Player's Side | Pitch | Foe's Side */}
-                                    <div className="bo-stadium-split-grid">
-                                        {/* Player's Side */}
-                                        <div className="bo-side-panel bo-side-panel--player">
-                                            <h3 className="bo-side-title bo-side-title--player text-title-primary">
-                                                Player's Side
-                                            </h3>
-
-                                            {/* Force Fields */}
-                                            <div className="bo-field-group">
-                                                <div className="bo-field-group__header">
-                                                    <span className="bo-field-label text-label">
-                                                        <Shield size={14} /> Force Field
-                                                    </span>
-                                                    <span className="bo-rounds-label text-subtext">
-                                                        Remaining Rounds
-                                                    </span>
-                                                </div>
-                                                <div className="bo-field-group__row">
-                                                    <input
-                                                        type="text"
-                                                        className="bo-input bo-input--underline text-label"
-                                                        value={battlefield.playerSide.forceFields[0].name}
-                                                        onChange={(e) =>
-                                                            handlePlayerForceFieldChange(0, e.target.value)
-                                                        }
-                                                        placeholder="e.g. Reflect, Light Screen"
-                                                    />
-                                                    <RemainingRoundsBoxes
-                                                        value={battlefield.playerSide.forceFields[0].remainingRounds}
-                                                        onChange={(val) => {
-                                                            const fields = [...battlefield.playerSide.forceFields] as [
-                                                                (typeof battlefield.playerSide.forceFields)[0],
-                                                                (typeof battlefield.playerSide.forceFields)[1]
-                                                            ];
-                                                            fields[0] = { ...fields[0], remainingRounds: val };
-                                                            updatePlayerSide('forceFields', fields);
-                                                        }}
-                                                        title="Player Force Field 1 Rounds"
-                                                    />
-                                                </div>
-                                                <div className="bo-field-group__row">
-                                                    <input
-                                                        type="text"
-                                                        className="bo-input bo-input--underline text-label"
-                                                        value={battlefield.playerSide.forceFields[1].name}
-                                                        onChange={(e) =>
-                                                            handlePlayerForceFieldChange(1, e.target.value)
-                                                        }
-                                                        placeholder="e.g. Safeguard, Tailwind"
-                                                    />
-                                                    <RemainingRoundsBoxes
-                                                        value={battlefield.playerSide.forceFields[1].remainingRounds}
-                                                        onChange={(val) => {
-                                                            const fields = [...battlefield.playerSide.forceFields] as [
-                                                                (typeof battlefield.playerSide.forceFields)[0],
-                                                                (typeof battlefield.playerSide.forceFields)[1]
-                                                            ];
-                                                            fields[1] = { ...fields[1], remainingRounds: val };
-                                                            updatePlayerSide('forceFields', fields);
-                                                        }}
-                                                        title="Player Force Field 2 Rounds"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            {/* Hazard & Cover subgrid */}
-                                            <div className="bo-side-subgrid">
-                                                <div className="bo-subfield">
-                                                    <label className="bo-field-label text-label">Entry Hazard</label>
-                                                    <input
-                                                        type="text"
-                                                        className="bo-input bo-input--underline text-label"
-                                                        value={battlefield.playerSide.entryHazard}
-                                                        onChange={(e) =>
-                                                            updatePlayerSide('entryHazard', e.target.value)
-                                                        }
-                                                        placeholder="e.g. Stealth Rock, Spikes"
-                                                    />
-                                                </div>
-                                                <div className="bo-subfield">
-                                                    <label className="bo-field-label text-label">Cover</label>
-                                                    <input
-                                                        type="text"
-                                                        className="bo-input bo-input--underline text-label"
-                                                        value={battlefield.playerSide.cover}
-                                                        onChange={(e) => updatePlayerSide('cover', e.target.value)}
-                                                        placeholder="e.g. Half Cover (+1 Def)"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="bo-subfield">
-                                                <label className="bo-field-label text-label">Other</label>
-                                                <input
-                                                    type="text"
-                                                    className="bo-input bo-input--underline text-label"
-                                                    value={battlefield.playerSide.other}
-                                                    onChange={(e) => updatePlayerSide('other', e.target.value)}
-                                                    placeholder="e.g. Cheer, Safeguard"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Center Stadium Graphic */}
-                                        <div className="bo-center-pitch-panel">
-                                            <BattlefieldPitch
-                                                highlightedSide={battlefield.highlightedSide}
-                                                onHighlightChange={(side) => updateBattlefield('highlightedSide', side)}
-                                                playerTargets={battlefield.playerTargets}
-                                                foeTargets={battlefield.foeTargets}
-                                                onPlayerTargetsChange={(val) => updateBattlefield('playerTargets', val)}
-                                                onFoeTargetsChange={(val) => updateBattlefield('foeTargets', val)}
+                                <div
+                                    className={
+                                        rollLogMode === 'battlefield-nested'
+                                            ? 'bo-battlefield-nest-main'
+                                            : 'bo-battlefield-main-wrap'
+                                    }
+                                >
+                                    <div
+                                        className={`bo-section-card bo-section-card--battlefield ${!isBattlefieldOpen ? 'bo-section-card--collapsed' : ''}`}
+                                    >
+                                        {/* Header Pill */}
+                                        <div
+                                            className="bo-pill-header bo-pill-header--center bo-pill-header--toggle"
+                                            onClick={() => setIsBattlefieldOpen(!isBattlefieldOpen)}
+                                            title={
+                                                isBattlefieldOpen
+                                                    ? 'Click to Collapse Battlefield'
+                                                    : 'Click to Expand Battlefield'
+                                            }
+                                            role="button"
+                                            tabIndex={0}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                    setIsBattlefieldOpen(!isBattlefieldOpen);
+                                                }
+                                            }}
+                                        >
+                                            <span className="bo-pill-header__text text-theme-header">Battlefield</span>
+                                            <ChevronDown
+                                                size={14}
+                                                style={{
+                                                    transform: isBattlefieldOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                                                    transition: 'transform 0.2s ease'
+                                                }}
                                             />
                                         </div>
 
-                                        {/* Foe's Side */}
-                                        <div className="bo-side-panel bo-side-panel--foe">
-                                            <h3 className="bo-side-title bo-side-title--foe text-title-primary">
-                                                Foe's Side
-                                            </h3>
+                                        {isBattlefieldOpen && (
+                                            <>
+                                                {/* Battlefield Location */}
+                                                <div className="bo-location-row">
+                                                    <label className="bo-field-label text-label">
+                                                        <MapPin size={14} /> Battlefield Location
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        className="bo-input bo-input--underline text-label"
+                                                        value={battlefield.location}
+                                                        onChange={(e) => updateBattlefield('location', e.target.value)}
+                                                        placeholder="e.g. Viridian Forest Clearing / Distortion World"
+                                                    />
+                                                </div>
 
-                                            {/* Force Fields */}
-                                            <div className="bo-field-group">
-                                                <div className="bo-field-group__header">
-                                                    <span className="bo-field-label text-label">
-                                                        <Shield size={14} /> Force Field
-                                                    </span>
-                                                    <span className="bo-rounds-label text-subtext">
-                                                        Remaining Rounds
-                                                    </span>
+                                                {/* Global Battlefield Row: Weather, Terrain, Other */}
+                                                <div className="bo-global-effects-grid">
+                                                    {/* Active Weather */}
+                                                    <div className="bo-effect-card">
+                                                        <div className="bo-effect-card__header">
+                                                            <span className="bo-field-label text-label">
+                                                                <CloudSun size={14} /> Active Weather
+                                                            </span>
+                                                            <span className="bo-rounds-label text-subtext">
+                                                                Remaining Rounds
+                                                            </span>
+                                                        </div>
+                                                        <div className="bo-effect-card__body">
+                                                            <input
+                                                                type="text"
+                                                                className="bo-input bo-input--underline text-label"
+                                                                value={battlefield.weather.name}
+                                                                onChange={(e) => handleWeatherChange(e.target.value)}
+                                                                placeholder="e.g. Rain, Harsh Sun, Sandstorm"
+                                                            />
+                                                            <RemainingRoundsBoxes
+                                                                value={battlefield.weather.remainingRounds}
+                                                                onChange={(val) =>
+                                                                    updateBattlefieldWeather('remainingRounds', val)
+                                                                }
+                                                                title="Weather Remaining Rounds"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Active Terrain */}
+                                                    <div className="bo-effect-card">
+                                                        <div className="bo-effect-card__header">
+                                                            <span className="bo-field-label text-label">
+                                                                <Mountain size={14} /> Active Terrain
+                                                            </span>
+                                                            <span className="bo-rounds-label text-subtext">
+                                                                Remaining Rounds
+                                                            </span>
+                                                        </div>
+                                                        <div className="bo-effect-card__body">
+                                                            <input
+                                                                type="text"
+                                                                className="bo-input bo-input--underline text-label"
+                                                                value={battlefield.terrain.name}
+                                                                onChange={(e) => handleTerrainChange(e.target.value)}
+                                                                placeholder="e.g. Electric Terrain, Grassy Terrain"
+                                                            />
+                                                            <RemainingRoundsBoxes
+                                                                value={battlefield.terrain.remainingRounds}
+                                                                onChange={(val) =>
+                                                                    updateBattlefieldTerrain('remainingRounds', val)
+                                                                }
+                                                                title="Terrain Remaining Rounds"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Other Global Battlefield Effect */}
+                                                    <div className="bo-effect-card">
+                                                        <div className="bo-effect-card__header">
+                                                            <span className="bo-field-label text-label">
+                                                                <Sparkles size={14} /> Other
+                                                            </span>
+                                                            <span className="bo-rounds-label text-subtext">
+                                                                Remaining Rounds
+                                                            </span>
+                                                        </div>
+                                                        <div className="bo-effect-card__body">
+                                                            <input
+                                                                type="text"
+                                                                className="bo-input bo-input--underline text-label"
+                                                                value={battlefield.other.name}
+                                                                onChange={(e) => handleOtherChange(e.target.value)}
+                                                                placeholder="e.g. Gravity, Trick Room, Ion Deluge"
+                                                            />
+                                                            <RemainingRoundsBoxes
+                                                                value={battlefield.other.remainingRounds}
+                                                                onChange={(val) =>
+                                                                    updateBattlefieldOther('remainingRounds', val)
+                                                                }
+                                                                title="Other Global Remaining Rounds"
+                                                            />
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div className="bo-field-group__row">
-                                                    <input
-                                                        type="text"
-                                                        className="bo-input bo-input--underline text-label"
-                                                        value={battlefield.foeSide.forceFields[0].name}
-                                                        onChange={(e) => handleFoeForceFieldChange(0, e.target.value)}
-                                                        placeholder="e.g. Light Screen, Protect"
-                                                    />
-                                                    <RemainingRoundsBoxes
-                                                        value={battlefield.foeSide.forceFields[0].remainingRounds}
-                                                        onChange={(val) => {
-                                                            const fields = [...battlefield.foeSide.forceFields] as [
-                                                                (typeof battlefield.foeSide.forceFields)[0],
-                                                                (typeof battlefield.foeSide.forceFields)[1]
-                                                            ];
-                                                            fields[0] = { ...fields[0], remainingRounds: val };
-                                                            updateFoeSide('forceFields', fields);
-                                                        }}
-                                                        title="Foe Force Field 1 Rounds"
-                                                    />
+
+                                                {/* Split Stadium Pitch Grid: Player's Side | Pitch | Foe's Side */}
+                                                <div className="bo-stadium-split-grid">
+                                                    {/* Player's Side */}
+                                                    <div className="bo-side-panel bo-side-panel--player">
+                                                        <h3 className="bo-side-title bo-side-title--player text-title-primary">
+                                                            Player's Side
+                                                        </h3>
+
+                                                        {/* Force Fields */}
+                                                        <div className="bo-field-group">
+                                                            <div className="bo-field-group__header">
+                                                                <span className="bo-field-label text-label">
+                                                                    <Shield size={14} /> Force Field
+                                                                </span>
+                                                                <span className="bo-rounds-label text-subtext">
+                                                                    Remaining Rounds
+                                                                </span>
+                                                            </div>
+                                                            <div className="bo-field-group__row">
+                                                                <input
+                                                                    type="text"
+                                                                    className="bo-input bo-input--underline text-label"
+                                                                    value={battlefield.playerSide.forceFields[0].name}
+                                                                    onChange={(e) =>
+                                                                        handlePlayerForceFieldChange(0, e.target.value)
+                                                                    }
+                                                                    placeholder="e.g. Reflect, Light Screen"
+                                                                />
+                                                                <RemainingRoundsBoxes
+                                                                    value={
+                                                                        battlefield.playerSide.forceFields[0]
+                                                                            .remainingRounds
+                                                                    }
+                                                                    onChange={(val) => {
+                                                                        const fields = [
+                                                                            ...battlefield.playerSide.forceFields
+                                                                        ] as [
+                                                                            (typeof battlefield.playerSide.forceFields)[0],
+                                                                            (typeof battlefield.playerSide.forceFields)[1]
+                                                                        ];
+                                                                        fields[0] = {
+                                                                            ...fields[0],
+                                                                            remainingRounds: val
+                                                                        };
+                                                                        updatePlayerSide('forceFields', fields);
+                                                                    }}
+                                                                    title="Player Force Field 1 Rounds"
+                                                                />
+                                                            </div>
+                                                            <div className="bo-field-group__row">
+                                                                <input
+                                                                    type="text"
+                                                                    className="bo-input bo-input--underline text-label"
+                                                                    value={battlefield.playerSide.forceFields[1].name}
+                                                                    onChange={(e) =>
+                                                                        handlePlayerForceFieldChange(1, e.target.value)
+                                                                    }
+                                                                    placeholder="e.g. Safeguard, Tailwind"
+                                                                />
+                                                                <RemainingRoundsBoxes
+                                                                    value={
+                                                                        battlefield.playerSide.forceFields[1]
+                                                                            .remainingRounds
+                                                                    }
+                                                                    onChange={(val) => {
+                                                                        const fields = [
+                                                                            ...battlefield.playerSide.forceFields
+                                                                        ] as [
+                                                                            (typeof battlefield.playerSide.forceFields)[0],
+                                                                            (typeof battlefield.playerSide.forceFields)[1]
+                                                                        ];
+                                                                        fields[1] = {
+                                                                            ...fields[1],
+                                                                            remainingRounds: val
+                                                                        };
+                                                                        updatePlayerSide('forceFields', fields);
+                                                                    }}
+                                                                    title="Player Force Field 2 Rounds"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Hazard & Cover subgrid */}
+                                                        <div className="bo-side-subgrid">
+                                                            <div className="bo-subfield">
+                                                                <label className="bo-field-label text-label">
+                                                                    Entry Hazard
+                                                                </label>
+                                                                <input
+                                                                    type="text"
+                                                                    className="bo-input bo-input--underline text-label"
+                                                                    value={battlefield.playerSide.entryHazard}
+                                                                    onChange={(e) =>
+                                                                        updatePlayerSide('entryHazard', e.target.value)
+                                                                    }
+                                                                    placeholder="e.g. Stealth Rock, Spikes"
+                                                                />
+                                                            </div>
+                                                            <div className="bo-subfield">
+                                                                <label className="bo-field-label text-label">
+                                                                    Cover
+                                                                </label>
+                                                                <input
+                                                                    type="text"
+                                                                    className="bo-input bo-input--underline text-label"
+                                                                    value={battlefield.playerSide.cover}
+                                                                    onChange={(e) =>
+                                                                        updatePlayerSide('cover', e.target.value)
+                                                                    }
+                                                                    placeholder="e.g. Half Cover (+1 Def)"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="bo-subfield">
+                                                            <label className="bo-field-label text-label">Other</label>
+                                                            <input
+                                                                type="text"
+                                                                className="bo-input bo-input--underline text-label"
+                                                                value={battlefield.playerSide.other}
+                                                                onChange={(e) =>
+                                                                    updatePlayerSide('other', e.target.value)
+                                                                }
+                                                                placeholder="e.g. Cheer, Safeguard"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Center Stadium Graphic */}
+                                                    <div className="bo-center-pitch-panel">
+                                                        <BattlefieldPitch
+                                                            highlightedSide={battlefield.highlightedSide}
+                                                            onHighlightChange={(side) =>
+                                                                updateBattlefield('highlightedSide', side)
+                                                            }
+                                                            playerTargets={battlefield.playerTargets}
+                                                            foeTargets={battlefield.foeTargets}
+                                                            onPlayerTargetsChange={(val) =>
+                                                                updateBattlefield('playerTargets', val)
+                                                            }
+                                                            onFoeTargetsChange={(val) =>
+                                                                updateBattlefield('foeTargets', val)
+                                                            }
+                                                        />
+                                                    </div>
+
+                                                    {/* Foe's Side */}
+                                                    <div className="bo-side-panel bo-side-panel--foe">
+                                                        <h3 className="bo-side-title bo-side-title--foe text-title-primary">
+                                                            Foe's Side
+                                                        </h3>
+
+                                                        {/* Force Fields */}
+                                                        <div className="bo-field-group">
+                                                            <div className="bo-field-group__header">
+                                                                <span className="bo-field-label text-label">
+                                                                    <Shield size={14} /> Force Field
+                                                                </span>
+                                                                <span className="bo-rounds-label text-subtext">
+                                                                    Remaining Rounds
+                                                                </span>
+                                                            </div>
+                                                            <div className="bo-field-group__row">
+                                                                <input
+                                                                    type="text"
+                                                                    className="bo-input bo-input--underline text-label"
+                                                                    value={battlefield.foeSide.forceFields[0].name}
+                                                                    onChange={(e) =>
+                                                                        handleFoeForceFieldChange(0, e.target.value)
+                                                                    }
+                                                                    placeholder="e.g. Light Screen, Protect"
+                                                                />
+                                                                <RemainingRoundsBoxes
+                                                                    value={
+                                                                        battlefield.foeSide.forceFields[0]
+                                                                            .remainingRounds
+                                                                    }
+                                                                    onChange={(val) => {
+                                                                        const fields = [
+                                                                            ...battlefield.foeSide.forceFields
+                                                                        ] as [
+                                                                            (typeof battlefield.foeSide.forceFields)[0],
+                                                                            (typeof battlefield.foeSide.forceFields)[1]
+                                                                        ];
+                                                                        fields[0] = {
+                                                                            ...fields[0],
+                                                                            remainingRounds: val
+                                                                        };
+                                                                        updateFoeSide('forceFields', fields);
+                                                                    }}
+                                                                    title="Foe Force Field 1 Rounds"
+                                                                />
+                                                            </div>
+                                                            <div className="bo-field-group__row">
+                                                                <input
+                                                                    type="text"
+                                                                    className="bo-input bo-input--underline text-label"
+                                                                    value={battlefield.foeSide.forceFields[1].name}
+                                                                    onChange={(e) =>
+                                                                        handleFoeForceFieldChange(1, e.target.value)
+                                                                    }
+                                                                    placeholder="e.g. Aurora Veil, Tailwind"
+                                                                />
+                                                                <RemainingRoundsBoxes
+                                                                    value={
+                                                                        battlefield.foeSide.forceFields[1]
+                                                                            .remainingRounds
+                                                                    }
+                                                                    onChange={(val) => {
+                                                                        const fields = [
+                                                                            ...battlefield.foeSide.forceFields
+                                                                        ] as [
+                                                                            (typeof battlefield.foeSide.forceFields)[0],
+                                                                            (typeof battlefield.foeSide.forceFields)[1]
+                                                                        ];
+                                                                        fields[1] = {
+                                                                            ...fields[1],
+                                                                            remainingRounds: val
+                                                                        };
+                                                                        updateFoeSide('forceFields', fields);
+                                                                    }}
+                                                                    title="Foe Force Field 2 Rounds"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Hazard & Cover subgrid */}
+                                                        <div className="bo-side-subgrid">
+                                                            <div className="bo-subfield">
+                                                                <label className="bo-field-label text-label">
+                                                                    Entry Hazard
+                                                                </label>
+                                                                <input
+                                                                    type="text"
+                                                                    className="bo-input bo-input--underline text-label"
+                                                                    value={battlefield.foeSide.entryHazard}
+                                                                    onChange={(e) =>
+                                                                        updateFoeSide('entryHazard', e.target.value)
+                                                                    }
+                                                                    placeholder="e.g. Toxic Spikes, Sticky Web"
+                                                                />
+                                                            </div>
+                                                            <div className="bo-subfield">
+                                                                <label className="bo-field-label text-label">
+                                                                    Cover
+                                                                </label>
+                                                                <input
+                                                                    type="text"
+                                                                    className="bo-input bo-input--underline text-label"
+                                                                    value={battlefield.foeSide.cover}
+                                                                    onChange={(e) =>
+                                                                        updateFoeSide('cover', e.target.value)
+                                                                    }
+                                                                    placeholder="e.g. Full Cover (+2 Def)"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="bo-subfield">
+                                                            <label className="bo-field-label text-label">Other</label>
+                                                            <input
+                                                                type="text"
+                                                                className="bo-input bo-input--underline text-label"
+                                                                value={battlefield.foeSide.other}
+                                                                onChange={(e) => updateFoeSide('other', e.target.value)}
+                                                                placeholder="e.g. Safeguard, Mist"
+                                                            />
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div className="bo-field-group__row">
-                                                    <input
-                                                        type="text"
-                                                        className="bo-input bo-input--underline text-label"
-                                                        value={battlefield.foeSide.forceFields[1].name}
-                                                        onChange={(e) => handleFoeForceFieldChange(1, e.target.value)}
-                                                        placeholder="e.g. Aurora Veil, Tailwind"
-                                                    />
-                                                    <RemainingRoundsBoxes
-                                                        value={battlefield.foeSide.forceFields[1].remainingRounds}
-                                                        onChange={(val) => {
-                                                            const fields = [...battlefield.foeSide.forceFields] as [
-                                                                (typeof battlefield.foeSide.forceFields)[0],
-                                                                (typeof battlefield.foeSide.forceFields)[1]
-                                                            ];
-                                                            fields[1] = { ...fields[1], remainingRounds: val };
-                                                            updateFoeSide('forceFields', fields);
-                                                        }}
-                                                        title="Foe Force Field 2 Rounds"
-                                                    />
-                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                                {rollLogMode === 'battlefield-nested' && (
+                                    <div className="bo-battlefield-nest-sidebar">
+                                        {renderRollLog('battlefield-nested')}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* ========================================= */}
+                        {/* CARD 2: REPLICABLE ROUND SECTIONS         */}
+                        {/* ========================================= */}
+                        {boSettings.showRoundTracker && (
+                            <div className={rollLogMode === 'rounds-nested' ? 'bo-rounds-nest-row' : 'bo-rounds-wrap'}>
+                                <div
+                                    className={
+                                        rollLogMode === 'rounds-nested' ? 'bo-rounds-nest-main' : 'bo-rounds-main-wrap'
+                                    }
+                                >
+                                    <div className="bo-section-card bo-section-card--round">
+                                        {/* Round Navigation Bar */}
+                                        <div className="bo-round-nav-bar">
+                                            <div className="bo-round-tabs">
+                                                {rounds.map((r, idx) => (
+                                                    <button
+                                                        key={r.id}
+                                                        type="button"
+                                                        className={`bo-round-tab ${idx === activeRoundIndex ? 'bo-round-tab--active' : ''}`}
+                                                        onClick={() => setActiveRoundIndex(idx)}
+                                                    >
+                                                        Round {r.roundNumber || idx + 1}
+                                                    </button>
+                                                ))}
                                             </div>
 
-                                            {/* Hazard & Cover subgrid */}
-                                            <div className="bo-side-subgrid">
-                                                <div className="bo-subfield">
-                                                    <label className="bo-field-label text-label">Entry Hazard</label>
-                                                    <input
-                                                        type="text"
-                                                        className="bo-input bo-input--underline text-label"
-                                                        value={battlefield.foeSide.entryHazard}
-                                                        onChange={(e) => updateFoeSide('entryHazard', e.target.value)}
-                                                        placeholder="e.g. Toxic Spikes, Sticky Web"
-                                                    />
-                                                </div>
-                                                <div className="bo-subfield">
-                                                    <label className="bo-field-label text-label">Cover</label>
-                                                    <input
-                                                        type="text"
-                                                        className="bo-input bo-input--underline text-label"
-                                                        value={battlefield.foeSide.cover}
-                                                        onChange={(e) => updateFoeSide('cover', e.target.value)}
-                                                        placeholder="e.g. Full Cover (+2 Def)"
-                                                    />
-                                                </div>
-                                            </div>
+                                            <div className="bo-round-actions">
+                                                <button
+                                                    type="button"
+                                                    className="action-button action-button--primary bo-round-btn"
+                                                    onClick={advanceRound}
+                                                    title="End current round, decrement battlefield timers, and advance to next round"
+                                                >
+                                                    <FastForward size={14} /> End Round & Advance
+                                                </button>
 
-                                            <div className="bo-subfield">
-                                                <label className="bo-field-label text-label">Other</label>
-                                                <input
-                                                    type="text"
-                                                    className="bo-input bo-input--underline text-label"
-                                                    value={battlefield.foeSide.other}
-                                                    onChange={(e) => updateFoeSide('other', e.target.value)}
-                                                    placeholder="e.g. Safeguard, Mist"
-                                                />
+                                                <button
+                                                    type="button"
+                                                    className="action-button action-button--dark bo-round-btn"
+                                                    onClick={addRound}
+                                                    title="Add a new blank round"
+                                                >
+                                                    <Plus size={14} /> New Round
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    className="action-button action-button--dark bo-round-btn"
+                                                    onClick={() => duplicateRound(activeRoundIndex)}
+                                                    title="Duplicate current round and all its combatants"
+                                                >
+                                                    <Copy size={14} /> Replicate Round
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    className="action-button action-button--dark bo-round-btn"
+                                                    onClick={sortCombatantsByInitiative}
+                                                    title="Sort combatants descending by initiative score"
+                                                >
+                                                    <ArrowUpDown size={14} /> Sort Init
+                                                </button>
+
+                                                {rounds.length > 1 &&
+                                                    (confirmDeleteRoundIdx === activeRoundIndex ? (
+                                                        <div className="bo-confirm-delete-round-inline">
+                                                            <span className="bo-confirm-delete-text text-subtext">
+                                                                Delete?
+                                                            </span>
+                                                            <button
+                                                                type="button"
+                                                                className="action-button action-button--dark bo-round-btn-mini"
+                                                                onClick={() => setConfirmDeleteRoundIdx(null)}
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className="action-button action-button--red bo-round-btn-mini"
+                                                                onClick={() => {
+                                                                    deleteRound(activeRoundIndex);
+                                                                    setConfirmDeleteRoundIdx(null);
+                                                                }}
+                                                            >
+                                                                Confirm
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            className="action-button action-button--dark bo-round-btn bo-round-btn--danger"
+                                                            onClick={() => setConfirmDeleteRoundIdx(activeRoundIndex)}
+                                                            title="Delete this round"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    ))}
                                             </div>
                                         </div>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    )}
 
-                    {/* ========================================= */}
-                    {/* CARD 2: REPLICABLE ROUND SECTIONS         */}
-                    {/* ========================================= */}
-                    {boSettings.showRoundTracker && (
-                        <div className="bo-section-card bo-section-card--round">
-                            {/* Round Navigation Bar */}
-                            <div className="bo-round-nav-bar">
-                                <div className="bo-round-tabs">
-                                    {rounds.map((r, idx) => (
-                                        <button
-                                            key={r.id}
-                                            type="button"
-                                            className={`bo-round-tab ${idx === activeRoundIndex ? 'bo-round-tab--active' : ''}`}
-                                            onClick={() => setActiveRoundIndex(idx)}
-                                        >
-                                            Round {r.roundNumber || idx + 1}
-                                        </button>
-                                    ))}
-                                </div>
+                                        {/* Round Header Pill */}
+                                        <div className="bo-pill-header bo-pill-header--round">
+                                            <span className="bo-pill-header__text text-theme-header">Round</span>
+                                            <input
+                                                type="number"
+                                                className="bo-round-number-input text-value-highlight"
+                                                value={currentRound?.roundNumber || activeRoundIndex + 1}
+                                                onChange={(e) => {
+                                                    const num = parseInt(e.target.value, 10) || 1;
+                                                    updateRoundNumber(activeRoundIndex, num);
+                                                }}
+                                                min={1}
+                                            />
+                                        </div>
 
-                                <div className="bo-round-actions">
-                                    <button
-                                        type="button"
-                                        className="action-button action-button--primary bo-round-btn"
-                                        onClick={advanceRound}
-                                        title="End current round, decrement battlefield timers, and advance to next round"
-                                    >
-                                        <FastForward size={14} /> End Round & Advance
-                                    </button>
+                                        {/* Combatants Table */}
+                                        <div className="bo-table-wrapper">
+                                            <table className="bo-table">
+                                                <thead>
+                                                    <tr className="bo-table-header text-theme-header">
+                                                        <th className="bo-th bo-th--init">Initiative Order</th>
+                                                        <th className="bo-th bo-th--combatant">Combatant</th>
+                                                        <th className="bo-th bo-th--item">Held Item</th>
+                                                        <th className="bo-th bo-th--status">Status</th>
+                                                        <th className="bo-th bo-th--actions">Action Counter (1 - 5)</th>
+                                                        <th className="bo-th bo-th--tools">Tools</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {currentRound?.combatants.map((combatant, cIdx) => (
+                                                        <CombatantRow
+                                                            key={combatant.id}
+                                                            combatant={combatant}
+                                                            index={cIdx}
+                                                            onUpdate={updateCombatant}
+                                                            onDelete={deleteCombatant}
+                                                            onRollInitiative={rollCombatantInitiative}
+                                                            onOpenSheet={handleOpenCombatantSheet}
+                                                            onAdjustHp={updateCombatantHp}
+                                                            onAdjustWill={updateCombatantWill}
+                                                        />
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
 
-                                    <button
-                                        type="button"
-                                        className="action-button action-button--dark bo-round-btn"
-                                        onClick={addRound}
-                                        title="Add a new blank round"
-                                    >
-                                        <Plus size={14} /> New Round
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        className="action-button action-button--dark bo-round-btn"
-                                        onClick={() => duplicateRound(activeRoundIndex)}
-                                        title="Duplicate current round and all its combatants"
-                                    >
-                                        <Copy size={14} /> Replicate Round
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        className="action-button action-button--dark bo-round-btn"
-                                        onClick={sortCombatantsByInitiative}
-                                        title="Sort combatants descending by initiative score"
-                                    >
-                                        <ArrowUpDown size={14} /> Sort Init
-                                    </button>
-
-                                    {rounds.length > 1 &&
-                                        (confirmDeleteRoundIdx === activeRoundIndex ? (
-                                            <div className="bo-confirm-delete-round-inline">
-                                                <span className="bo-confirm-delete-text text-subtext">Delete?</span>
-                                                <button
-                                                    type="button"
-                                                    className="action-button action-button--dark bo-round-btn-mini"
-                                                    onClick={() => setConfirmDeleteRoundIdx(null)}
-                                                >
-                                                    Cancel
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className="action-button action-button--red bo-round-btn-mini"
-                                                    onClick={() => {
-                                                        deleteRound(activeRoundIndex);
-                                                        setConfirmDeleteRoundIdx(null);
-                                                    }}
-                                                >
-                                                    Confirm
-                                                </button>
-                                            </div>
-                                        ) : (
+                                        {/* Add Combatant Button */}
+                                        <div className="bo-add-combatant-row">
                                             <button
                                                 type="button"
-                                                className="action-button action-button--dark bo-round-btn bo-round-btn--danger"
-                                                onClick={() => setConfirmDeleteRoundIdx(activeRoundIndex)}
-                                                title="Delete this round"
+                                                className="action-button action-button--secondary bo-add-combatant-btn"
+                                                onClick={addCombatant}
                                             >
-                                                <Trash2 size={14} />
+                                                <Plus size={16} /> Add Combatant Row
                                             </button>
-                                        ))}
-                                </div>
-                            </div>
+                                        </div>
 
-                            {/* Round Header Pill */}
-                            <div className="bo-pill-header bo-pill-header--round">
-                                <span className="bo-pill-header__text text-theme-header">Round</span>
-                                <input
-                                    type="number"
-                                    className="bo-round-number-input text-value-highlight"
-                                    value={currentRound?.roundNumber || activeRoundIndex + 1}
-                                    onChange={(e) => {
-                                        const num = parseInt(e.target.value, 10) || 1;
-                                        updateRoundNumber(activeRoundIndex, num);
-                                    }}
-                                    min={1}
-                                />
-                            </div>
-
-                            {/* Combatants Table */}
-                            <div className="bo-table-wrapper">
-                                <table className="bo-table">
-                                    <thead>
-                                        <tr className="bo-table-header text-theme-header">
-                                            <th className="bo-th bo-th--init">Initiative Order</th>
-                                            <th className="bo-th bo-th--combatant">Combatant</th>
-                                            <th className="bo-th bo-th--item">Held Item</th>
-                                            <th className="bo-th bo-th--status">Status</th>
-                                            <th className="bo-th bo-th--actions">Action Counter (1 - 5)</th>
-                                            <th className="bo-th bo-th--tools">Tools</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {currentRound?.combatants.map((combatant, cIdx) => (
-                                            <CombatantRow
-                                                key={combatant.id}
-                                                combatant={combatant}
-                                                index={cIdx}
-                                                onUpdate={updateCombatant}
-                                                onDelete={deleteCombatant}
-                                                onRollInitiative={rollCombatantInitiative}
-                                                onOpenSheet={handleOpenCombatantSheet}
-                                                onAdjustHp={updateCombatantHp}
-                                                onAdjustWill={updateCombatantWill}
+                                        {/* End of the Round Effects */}
+                                        <div className="bo-end-effects-row">
+                                            <label className="bo-field-label text-label">
+                                                End of the Round Effects:
+                                            </label>
+                                            <input
+                                                type="text"
+                                                className="bo-input bo-input--underline text-label"
+                                                value={currentRound?.endOfRoundEffects || ''}
+                                                onChange={(e) => updateEndOfRoundEffects(e.target.value)}
+                                                placeholder="e.g. Sandstorm damage, Leftovers recovery, Burn ticks, Speed Boost activation"
                                             />
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                {rollLogMode === 'rounds-nested' && (
+                                    <div className="bo-rounds-nest-sidebar">{renderRollLog('rounds-nested')}</div>
+                                )}
                             </div>
+                        )}
+                    </div>
 
-                            {/* Add Combatant Button */}
-                            <div className="bo-add-combatant-row">
-                                <button
-                                    type="button"
-                                    className="action-button action-button--secondary bo-add-combatant-btn"
-                                    onClick={addCombatant}
-                                >
-                                    <Plus size={16} /> Add Combatant Row
-                                </button>
-                            </div>
-
-                            {/* End of the Round Effects */}
-                            <div className="bo-end-effects-row">
-                                <label className="bo-field-label text-label">End of the Round Effects:</label>
-                                <input
-                                    type="text"
-                                    className="bo-input bo-input--underline text-label"
-                                    value={currentRound?.endOfRoundEffects || ''}
-                                    onChange={(e) => updateEndOfRoundEffects(e.target.value)}
-                                    placeholder="e.g. Sandstorm damage, Leftovers recovery, Burn ticks, Speed Boost activation"
-                                />
-                            </div>
-                        </div>
+                    {rollLogMode === 'full-sidebar' && (
+                        <div className="bo-modal__sidebar-col">{renderRollLog('full-sidebar')}</div>
                     )}
                 </div>
 
@@ -1311,7 +1543,8 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                                         lineHeight: '1.3'
                                     }}
                                 >
-                                    Clears action counts and unchecks Evade / Clash on both the organizer and token sheets.
+                                    Clears action counts and unchecks Evade / Clash on both the organizer and token
+                                    sheets.
                                 </div>
                             </div>
 
@@ -1413,8 +1646,11 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                     />
                 )}
 
-                {/* Built-in live Roll Log display with quick action marking */}
-                <InModalRollLog combatants={currentRound?.combatants || []} onMarkAction={handleMarkActionFromRoll} />
+                {/* Built-in live Roll Log display with quick action marking (Floating or Fallback) */}
+                {(rollLogMode === 'floating' ||
+                    (rollLogMode === 'battlefield-nested' && !boSettings.showBattlefield) ||
+                    (rollLogMode === 'rounds-nested' && !boSettings.showRoundTracker)) &&
+                    renderRollLog('floating')}
             </div>
         </div>
     );

@@ -403,6 +403,7 @@
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     padding: 16px;
+    padding-top: 20px;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -418,6 +419,10 @@
     flex-direction: column;
     gap: 16px;
     position: relative;
+}
+
+.bo-section-card--battlefield {
+    margin-top: 14px;
 }
 
 .bo-pill-header {
@@ -1145,7 +1150,9 @@
     background: transparent;
     color: var(--text-muted, #888);
     cursor: pointer;
-    transition: background-color 0.12s ease, color 0.12s ease;
+    transition:
+        background-color 0.12s ease,
+        color 0.12s ease;
 }
 
 .bo-stat-step-btn:hover {
@@ -1634,3 +1641,163 @@
     animation: bo-spin 0.8s linear infinite;
 }
 
+.bo-modal__body-inner,
+.bo-battlefield-wrap,
+.bo-battlefield-main-wrap,
+.bo-rounds-wrap,
+.bo-rounds-main-wrap {
+    display: contents;
+}
+
+/* --- Full Sidebar Layout (Mode 2) --- */
+.bo-modal__body-with-sidebar {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    padding: 16px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.bo-modal__main-col {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-right: 4px;
+    padding-top: 18px;
+    box-sizing: border-box;
+}
+
+.bo-modal__sidebar-col {
+    width: 330px;
+    flex-shrink: 0;
+    height: 100%;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding-top: 14px;
+    box-sizing: border-box;
+}
+
+.bo-modal__content--with-sidebar:not(.bo-modal__overlay--popout *) {
+    max-width: 1640px;
+    width: 98%;
+}
+
+/* --- Battlefield Nested Layout (Mode 3) --- */
+.bo-battlefield-nest-row {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    align-items: stretch;
+    width: 100%;
+    min-width: 0;
+    padding-top: 14px;
+    box-sizing: border-box;
+}
+
+.bo-battlefield-nest-main {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.bo-battlefield-nest-main .bo-section-card--battlefield {
+    height: 100%;
+    margin-top: 14px;
+    box-sizing: border-box;
+}
+
+.bo-battlefield-nest-sidebar {
+    width: 330px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    margin-top: 2px;
+    box-sizing: border-box;
+}
+
+/* --- Round Tracker Nested Layout (Mode 4) --- */
+.bo-rounds-nest-row {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    align-items: stretch;
+    width: 100%;
+    min-width: 0;
+}
+
+.bo-rounds-nest-main {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.bo-rounds-nest-main .bo-section-card--round {
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.bo-rounds-nest-sidebar {
+    width: 330px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Responsive breakdowns for nested/sidebar rows */
+@media (max-width: 1024px) {
+    .bo-modal__body-with-sidebar {
+        flex-direction: column;
+        overflow-y: auto;
+    }
+
+    .bo-modal__main-col {
+        overflow-y: visible;
+        height: auto;
+        max-height: none;
+        padding-top: 0;
+    }
+
+    .bo-modal__sidebar-col {
+        width: 100%;
+        height: auto;
+        max-height: 420px;
+        padding-top: 0;
+    }
+
+    .bo-battlefield-nest-row {
+        flex-direction: column;
+        padding-top: 0;
+    }
+
+    .bo-battlefield-nest-sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 420px;
+        margin-top: 0;
+    }
+
+    .bo-rounds-nest-row {
+        flex-direction: column;
+    }
+
+    .bo-rounds-nest-sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 420px;
+    }
+}

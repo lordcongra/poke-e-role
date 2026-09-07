@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import type { CombatantRowData } from '../../../types/battleOrganizerTypes';
+import type { CombatantRowData, RollLogLayoutMode } from '../../../types/battleOrganizerTypes';
 import { imageManager } from '../../../utils/imageManager';
-import { Dices, Trash2, ChevronDown, ChevronUp, X, Check, Swords } from 'lucide-react';
+import { Dices, Trash2, ChevronDown, ChevronUp, X, Check, Swords, Move, Columns2, LayoutGrid } from 'lucide-react';
 import './InModalRollLog.css';
 
 export interface RollLogEntry {
@@ -17,9 +17,16 @@ export interface RollLogEntry {
 interface InModalRollLogProps {
     combatants?: CombatantRowData[];
     onMarkAction?: (combatantId: string, moveName: string, status: 'success' | 'failed') => void;
+    layoutMode?: RollLogLayoutMode;
+    onCycleLayoutMode?: () => void;
 }
 
-export function InModalRollLog({ combatants = [], onMarkAction }: InModalRollLogProps) {
+export function InModalRollLog({
+    combatants = [],
+    onMarkAction,
+    layoutMode = 'floating',
+    onCycleLayoutMode
+}: InModalRollLogProps) {
     const [rolls, setRolls] = useState<RollLogEntry[]>(() => {
         try {
             const data = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
@@ -91,7 +98,7 @@ export function InModalRollLog({ combatants = [], onMarkAction }: InModalRollLog
             window.removeEventListener('pkr-roll-log-update', handleReload);
             window.removeEventListener('storage', handleReload);
         };
-    }, [rolls]);
+    }, [rolls, combatants]);
 
     const handleDismiss = (id: string) => {
         try {
@@ -118,7 +125,7 @@ export function InModalRollLog({ combatants = [], onMarkAction }: InModalRollLog
     const parseRollMeta = (label: string, fallbackChar?: string) => {
         const clean = label
             .replace(/^\[PRIVATE\]\s*/i, '')
-            .replace(/^[📢🎲💥🩹🍀🎯🛡️❄️]\s*/u, '')
+            .replace(/^(?:📢|🎲|💥|🩹|🍀|🎯|🛡️|❄️)\s*/u, '')
             .trim();
 
         let charName = fallbackChar || '';
@@ -157,12 +164,29 @@ export function InModalRollLog({ combatants = [], onMarkAction }: InModalRollLog
         }
     };
 
-    if (rolls.length === 0) {
+    const getLayoutToggleTitle = (mode: RollLogLayoutMode) => {
+        switch (mode) {
+            case 'floating':
+                return 'Roll Log Layout: Floating Overlay (Click to switch to Side-by-Side Full Length)';
+            case 'full-sidebar':
+                return 'Roll Log Layout: Side-by-Side Full Length (Click to switch to Side-by-Side Battlefield Only)';
+            case 'battlefield-nested':
+                return 'Roll Log Layout: Side-by-Side Battlefield Only (Click to switch to Side-by-Side Round Tracker Only)';
+            case 'rounds-nested':
+                return 'Roll Log Layout: Side-by-Side Round Tracker Only (Click to switch to Floating Overlay)';
+        }
+    };
+
+    if (rolls.length === 0 && layoutMode === 'floating') {
         return null;
     }
 
+    const maxRolls = layoutMode === 'full-sidebar' ? 50 : layoutMode === 'floating' ? 12 : 25;
+
     return (
-        <div className={`in-modal-roll-log ${isCollapsed ? 'in-modal-roll-log--collapsed' : ''}`}>
+        <div
+            className={`in-modal-roll-log in-modal-roll-log--${layoutMode} ${isCollapsed ? 'in-modal-roll-log--collapsed' : ''}`}
+        >
             {/* Header */}
             <div className="in-modal-roll-log__header" onClick={() => setIsCollapsed(!isCollapsed)}>
                 <div className="in-modal-roll-log__header-left">
@@ -171,6 +195,20 @@ export function InModalRollLog({ combatants = [], onMarkAction }: InModalRollLog
                 </div>
 
                 <div className="in-modal-roll-log__header-right" onClick={(e) => e.stopPropagation()}>
+                    {onCycleLayoutMode && (
+                        <button
+                            type="button"
+                            className="in-modal-roll-log__btn-icon"
+                            onClick={onCycleLayoutMode}
+                            title={getLayoutToggleTitle(layoutMode)}
+                            aria-label={getLayoutToggleTitle(layoutMode)}
+                        >
+                            {layoutMode === 'floating' && <Move size={13} />}
+                            {layoutMode === 'full-sidebar' && <Columns2 size={13} />}
+                            {layoutMode === 'battlefield-nested' && <LayoutGrid size={13} />}
+                            {layoutMode === 'rounds-nested' && <Swords size={13} />}
+                        </button>
+                    )}
                     <button
                         type="button"
                         className="in-modal-roll-log__btn-icon"
@@ -195,73 +233,87 @@ export function InModalRollLog({ combatants = [], onMarkAction }: InModalRollLog
             {/* Content List */}
             {!isCollapsed && (
                 <div className="in-modal-roll-log__list">
-                    {rolls.slice(0, 10).map((r) => {
-                        const { charName, moveName } = parseRollMeta(r.label, r.characterName || r.player);
-                        const matchedCombatant = combatants.find(
-                            (c) =>
-                                (r.tokenId && c.tokenId && r.tokenId === c.tokenId) ||
-                                (charName && c.name.toLowerCase().trim() === charName.toLowerCase().trim()) ||
-                                (c.name.trim() && r.label.toLowerCase().includes(c.name.toLowerCase().trim()))
-                        );
+                    {rolls.length === 0 ? (
+                        <div className="in-modal-roll-log__empty text-subtext">
+                            <Dices size={28} color="var(--primary)" style={{ opacity: 0.4 }} />
+                            <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>No rolls recorded yet</span>
+                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                                Rolls from sheets & tokens will appear here
+                            </span>
+                        </div>
+                    ) : (
+                        rolls.slice(0, maxRolls).map((r) => {
+                            const { charName, moveName } = parseRollMeta(r.label, r.characterName || r.player);
+                            const matchedCombatant = combatants.find(
+                                (c) =>
+                                    (r.tokenId && c.tokenId && r.tokenId === c.tokenId) ||
+                                    (charName && c.name.toLowerCase().trim() === charName.toLowerCase().trim()) ||
+                                    (c.name.trim() && r.label.toLowerCase().includes(c.name.toLowerCase().trim()))
+                            );
 
-                        const currentStatus = markedStatus[r.id];
-                        let effectiveIcon = resolvedIcons[r.id] || r.icon;
-                        if ((!effectiveIcon || effectiveIcon.includes('pokeball.svg')) && matchedCombatant?.image) {
-                            effectiveIcon = resolvedIcons[matchedCombatant.id] || matchedCombatant.image;
-                        }
-                        const iconSrc = effectiveIcon || `${import.meta.env.BASE_URL || '/'}pokeball.svg`;
-                        const displayChar = matchedCombatant?.name || charName || r.characterName || r.player;
+                            const currentStatus = markedStatus[r.id];
+                            let effectiveIcon = resolvedIcons[r.id] || r.icon;
+                            if ((!effectiveIcon || effectiveIcon.includes('pokeball.svg')) && matchedCombatant?.image) {
+                                effectiveIcon = resolvedIcons[matchedCombatant.id] || matchedCombatant.image;
+                            }
+                            const iconSrc = effectiveIcon || `${import.meta.env.BASE_URL || '/'}pokeball.svg`;
+                            const displayChar = matchedCombatant?.name || charName || r.characterName || r.player;
 
-                        return (
-                            <div key={r.id} className="in-modal-roll-log__entry">
-                                <div className="in-modal-roll-log__entry-top">
-                                    <div className="in-modal-roll-log__avatar">
-                                        <img src={iconSrc} alt={displayChar} />
+                            return (
+                                <div key={r.id} className="in-modal-roll-log__entry">
+                                    <div className="in-modal-roll-log__entry-top">
+                                        <div className="in-modal-roll-log__avatar">
+                                            <img src={iconSrc} alt={displayChar} />
+                                        </div>
+                                        <div className="in-modal-roll-log__meta">
+                                            <span className="in-modal-roll-log__char text-label">{displayChar}</span>
+                                            <span className="in-modal-roll-log__label text-subtext">{r.label}</span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="in-modal-roll-log__btn-dismiss"
+                                            onClick={() => handleDismiss(r.id)}
+                                            title="Dismiss roll"
+                                            aria-label="Dismiss roll"
+                                        >
+                                            <X size={13} />
+                                        </button>
                                     </div>
-                                    <div className="in-modal-roll-log__meta">
-                                        <span className="in-modal-roll-log__char text-label">{displayChar}</span>
-                                        <span className="in-modal-roll-log__label text-subtext">{r.label}</span>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        className="in-modal-roll-log__btn-dismiss"
-                                        onClick={() => handleDismiss(r.id)}
-                                        title="Dismiss roll"
-                                        aria-label="Dismiss roll"
-                                    >
-                                        <X size={13} />
-                                    </button>
+
+                                    <div className="in-modal-roll-log__result text-label">{r.result}</div>
+
+                                    {/* Quick Mark Action Buttons */}
+                                    {matchedCombatant && moveName && onMarkAction && (
+                                        <div className="in-modal-roll-log__actions-bar">
+                                            <span className="in-modal-roll-log__action-label text-subtext">
+                                                <Swords size={11} /> Mark {moveName}:
+                                            </span>
+                                            <button
+                                                type="button"
+                                                className={`in-modal-roll-log__mark-btn in-modal-roll-log__mark-btn--hit ${currentStatus === 'success' ? 'in-modal-roll-log__mark-btn--active-hit' : ''}`}
+                                                onClick={() =>
+                                                    handleMark(r.id, matchedCombatant.id, moveName, 'success')
+                                                }
+                                                title="Mark as Hit / Success (✓)"
+                                            >
+                                                <Check size={11} /> Hit
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={`in-modal-roll-log__mark-btn in-modal-roll-log__mark-btn--miss ${currentStatus === 'failed' ? 'in-modal-roll-log__mark-btn--active-miss' : ''}`}
+                                                onClick={() =>
+                                                    handleMark(r.id, matchedCombatant.id, moveName, 'failed')
+                                                }
+                                                title="Mark as Miss / Fail / Cancel (✗)"
+                                            >
+                                                <X size={11} /> Miss
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
-
-                                <div className="in-modal-roll-log__result text-label">{r.result}</div>
-
-                                {/* Quick Mark Action Buttons */}
-                                {matchedCombatant && moveName && onMarkAction && (
-                                    <div className="in-modal-roll-log__actions-bar">
-                                        <span className="in-modal-roll-log__action-label text-subtext">
-                                            <Swords size={11} /> Mark {moveName}:
-                                        </span>
-                                        <button
-                                            type="button"
-                                            className={`in-modal-roll-log__mark-btn in-modal-roll-log__mark-btn--hit ${currentStatus === 'success' ? 'in-modal-roll-log__mark-btn--active-hit' : ''}`}
-                                            onClick={() => handleMark(r.id, matchedCombatant.id, moveName, 'success')}
-                                            title="Mark as Hit / Success (✓)"
-                                        >
-                                            <Check size={11} /> Hit
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className={`in-modal-roll-log__mark-btn in-modal-roll-log__mark-btn--miss ${currentStatus === 'failed' ? 'in-modal-roll-log__mark-btn--active-miss' : ''}`}
-                                            onClick={() => handleMark(r.id, matchedCombatant.id, moveName, 'failed')}
-                                            title="Mark as Miss / Fail / Cancel (✗)"
-                                        >
-                                            <X size={11} /> Miss
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
+                            );
+                        })
+                    )}
                 </div>
             )}
         </div>

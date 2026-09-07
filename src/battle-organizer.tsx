@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, useState } from 'react';
+import { StrictMode, useEffect, useRef, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import OBR from '@owlbear-rodeo/sdk';
 import { BattleOrganizerModal } from './components/modals/battleOrganizer/BattleOrganizerModal';
@@ -160,12 +160,42 @@ export function BattleOrganizerApp() {
         return () => window.removeEventListener('storage', handleStorage);
     }, []);
 
+    // Track previous visibility of Battlefield and Round Tracker to avoid resizing on unrelated settings changes (e.g. rollLogMode)
+    const prevVisibilityRef = useRef<{
+        showBattlefield?: boolean;
+        showRoundTracker?: boolean;
+    }>({});
+
     // Dynamic window resizing in standalone PWA mode when settings change
     useEffect(() => {
         if (!isStandaloneMode) return;
 
         const unsub = subscribeBattleOrganizerSettings((settings) => {
             try {
+                const prev = prevVisibilityRef.current;
+                const isInitial = prev.showBattlefield === undefined;
+                const hasChanged =
+                    !isInitial &&
+                    (prev.showBattlefield !== settings.showBattlefield ||
+                        prev.showRoundTracker !== settings.showRoundTracker);
+
+                prevVisibilityRef.current = {
+                    showBattlefield: settings.showBattlefield,
+                    showRoundTracker: settings.showRoundTracker
+                };
+
+                // Do not resize on initial mount or when unrelated settings (like rollLogMode) change
+                if (!hasChanged) return;
+
+                // If user has maximized the window or gone fullscreen, preserve user's window state
+                const isMaximized =
+                    Boolean(document.fullscreenElement) ||
+                    (typeof window.screen !== 'undefined' &&
+                        window.outerWidth >= (window.screen.availWidth || 0) - 24 &&
+                        window.outerHeight >= (window.screen.availHeight || 0) - 24);
+
+                if (isMaximized) return;
+
                 let targetWidth = 1360;
                 let targetHeight = 880;
                 if (settings.showBattlefield && !settings.showRoundTracker) {
@@ -195,9 +225,12 @@ export function BattleOrganizerApp() {
             const colors = resolveThemeColors();
             applyDynamicColors(colors.primary, colors.secondary);
 
-            OBR.player.getRole().then((role) => {
-                if (role) useCharacterStore.setState({ role });
-            }).catch(() => {});
+            OBR.player
+                .getRole()
+                .then((role) => {
+                    if (role) useCharacterStore.setState({ role });
+                })
+                .catch(() => {});
 
             const unsubTheme = OBR.broadcast.onMessage('pkr-theme-update', (event) => {
                 setTheme(event.data as string);

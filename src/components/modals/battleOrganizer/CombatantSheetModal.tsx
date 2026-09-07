@@ -332,7 +332,11 @@ export function CombatantSheetModal({
                             <span>Loading Pokémon sheet data...</span>
                         </div>
                     ) : isLocked ? (
-                        <div id="gm-lock-screen" className="app-gm-lock" style={{ padding: '60px 20px', textAlign: 'center' }}>
+                        <div
+                            id="gm-lock-screen"
+                            className="app-gm-lock"
+                            style={{ padding: '60px 20px', textAlign: 'center' }}
+                        >
                             <h2 className="app-gm-lock__icon text-title-primary">
                                 <Lock size={40} />
                             </h2>

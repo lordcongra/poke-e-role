@@ -33,10 +33,7 @@ export function useInitiativePopover(isObrReady: boolean) {
             let width = 1200;
             let height = 800;
             try {
-                const [wRes, hRes] = await Promise.allSettled([
-                    OBR.viewport.getWidth(),
-                    OBR.viewport.getHeight()
-                ]);
+                const [wRes, hRes] = await Promise.allSettled([OBR.viewport.getWidth(), OBR.viewport.getHeight()]);
                 if (wRes.status === 'fulfilled' && typeof wRes.value === 'number') {
                     width = wRes.value;
                 }

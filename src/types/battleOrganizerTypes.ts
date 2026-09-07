@@ -70,10 +70,13 @@ export interface BattleOrganizerState {
 
 export type BattleOrganizerWindowMode = 'popover' | 'modal' | 'popout';
 
+export type RollLogLayoutMode = 'floating' | 'full-sidebar' | 'battlefield-nested' | 'rounds-nested';
+
 export interface BattleOrganizerSettings {
     showBattlefield: boolean;
     showRoundTracker: boolean;
     windowMode?: BattleOrganizerWindowMode;
     autoSyncActions: boolean;
     fullScreen?: boolean;
+    rollLogMode?: RollLogLayoutMode;
 }

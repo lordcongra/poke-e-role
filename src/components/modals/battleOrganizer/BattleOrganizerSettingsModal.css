@@ -116,7 +116,8 @@
     background: color-mix(in srgb, var(--primary, #3b82f6) 8%, var(--panel-alt, #282828));
 }
 
-.bo-settings__checkbox-card input[type='checkbox'] {
+.bo-settings__checkbox-card input[type='checkbox'],
+.bo-settings__checkbox-card input[type='radio'] {
     margin-top: 3px;
     accent-color: var(--primary, #3b82f6);
     cursor: pointer;

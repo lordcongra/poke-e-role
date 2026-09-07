@@ -1,10 +1,15 @@
-import type { BattleOrganizerSettings, BattleOrganizerWindowMode } from '../../../types/battleOrganizerTypes';
+import type {
+    BattleOrganizerSettings,
+    BattleOrganizerWindowMode,
+    RollLogLayoutMode
+} from '../../../types/battleOrganizerTypes';
 
 export const BO_SHOW_BATTLEFIELD_KEY = 'pkr_bo_show_battlefield';
 export const BO_SHOW_ROUND_TRACKER_KEY = 'pkr_bo_show_round_tracker';
 export const BO_WINDOW_MODE_KEY = 'pkr_bo_window_mode';
 export const BO_AUTO_SYNC_ACTIONS_KEY = 'pkr_bo_auto_sync_actions';
 export const BO_FULLSCREEN_KEY = 'pkr_bo_fullscreen';
+export const BO_ROLL_LOG_MODE_KEY = 'pkr_bo_roll_log_mode';
 export const BO_IS_OPEN_KEY = 'pkr_battle_organizer_open';
 export const BO_SETTINGS_UPDATE_EVENT = 'pkr-bo-settings-update';
 
@@ -36,7 +41,8 @@ export const DEFAULT_BO_SETTINGS: BattleOrganizerSettings = {
     showRoundTracker: true,
     windowMode: 'modal',
     autoSyncActions: true,
-    fullScreen: false
+    fullScreen: false,
+    rollLogMode: 'floating'
 };
 
 export function getBattleOrganizerSettings(): BattleOrganizerSettings {
@@ -46,6 +52,7 @@ export function getBattleOrganizerSettings(): BattleOrganizerSettings {
         const rawWindowMode = localStorage.getItem(BO_WINDOW_MODE_KEY) as BattleOrganizerWindowMode | null;
         const rawAutoSync = localStorage.getItem(BO_AUTO_SYNC_ACTIONS_KEY);
         const rawFullScreen = localStorage.getItem(BO_FULLSCREEN_KEY);
+        const rawRollLogMode = localStorage.getItem(BO_ROLL_LOG_MODE_KEY) as RollLogLayoutMode | null;
 
         let showBattlefield = rawBattlefield !== null ? rawBattlefield === 'true' : DEFAULT_BO_SETTINGS.showBattlefield;
         let showRoundTracker =
@@ -63,14 +70,23 @@ export function getBattleOrganizerSettings(): BattleOrganizerSettings {
                 : 'modal';
 
         const autoSyncActions = rawAutoSync !== null ? rawAutoSync === 'true' : DEFAULT_BO_SETTINGS.autoSyncActions;
-        const fullScreen = rawFullScreen !== null ? rawFullScreen === 'true' : (DEFAULT_BO_SETTINGS.fullScreen ?? false);
+        const fullScreen =
+            rawFullScreen !== null ? rawFullScreen === 'true' : (DEFAULT_BO_SETTINGS.fullScreen ?? false);
+        const rollLogMode: RollLogLayoutMode =
+            rawRollLogMode === 'floating' ||
+            rawRollLogMode === 'full-sidebar' ||
+            rawRollLogMode === 'battlefield-nested' ||
+            rawRollLogMode === 'rounds-nested'
+                ? rawRollLogMode
+                : (DEFAULT_BO_SETTINGS.rollLogMode ?? 'floating');
 
         return {
             showBattlefield,
             showRoundTracker,
             windowMode,
             autoSyncActions,
-            fullScreen
+            fullScreen,
+            rollLogMode
         };
     } catch (e) {
         console.error('[BattleOrganizerSettings] Failed to load settings from localStorage:', e);
@@ -81,7 +97,7 @@ export function getBattleOrganizerSettings(): BattleOrganizerSettings {
 export function saveBattleOrganizerSettings(partial: Partial<BattleOrganizerSettings>): BattleOrganizerSettings {
     try {
         const current = getBattleOrganizerSettings();
-        let next: BattleOrganizerSettings = {
+        const next: BattleOrganizerSettings = {
             ...current,
             ...partial
         };
@@ -104,6 +120,9 @@ export function saveBattleOrganizerSettings(partial: Partial<BattleOrganizerSett
         localStorage.setItem(BO_AUTO_SYNC_ACTIONS_KEY, String(next.autoSyncActions));
         if (next.fullScreen !== undefined) {
             localStorage.setItem(BO_FULLSCREEN_KEY, String(next.fullScreen));
+        }
+        if (next.rollLogMode !== undefined) {
+            localStorage.setItem(BO_ROLL_LOG_MODE_KEY, next.rollLogMode);
         }
 
         // Dispatch local event for same-window components
@@ -132,7 +151,8 @@ export function subscribeBattleOrganizerSettings(callback: (settings: BattleOrga
             e.key === BO_SHOW_ROUND_TRACKER_KEY ||
             e.key === BO_WINDOW_MODE_KEY ||
             e.key === BO_AUTO_SYNC_ACTIONS_KEY ||
-            e.key === BO_FULLSCREEN_KEY
+            e.key === BO_FULLSCREEN_KEY ||
+            e.key === BO_ROLL_LOG_MODE_KEY
         ) {
             callback(getBattleOrganizerSettings());
         }
