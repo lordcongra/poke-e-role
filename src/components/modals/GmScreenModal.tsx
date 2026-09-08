@@ -635,20 +635,6 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                             style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                         >
                             <ShieldCheck size={22} color="var(--primary)" /> GM Screen & Rules Cheat Sheet
-                            <span
-                                className="text-theme-header"
-                                style={{
-                                    fontSize: '0.75rem',
-                                    padding: '2px 8px',
-                                    borderRadius: '12px',
-                                    backgroundColor: 'var(--primary)',
-                                    color: '#fff',
-                                    fontWeight: 600,
-                                    letterSpacing: '0.5px'
-                                }}
-                            >
-                                v3.4.0
-                            </span>
                         </h3>
                     </div>
                     <div className="gm-screen-modal__header-actions">
