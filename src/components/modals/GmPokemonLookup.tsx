@@ -662,7 +662,7 @@ ${movesText || '• None'}`;
                                 value={type1}
                                 onChange={(e) => setType1(e.target.value)}
                             >
-                                <option value="">Primary Type: Any</option>
+                                <option value="">Primary Type</option>
                                 {POKEMON_TYPES.filter(Boolean).map((t) => (
                                     <option key={`type1-${t}`} value={t}>
                                         {t}
@@ -675,7 +675,7 @@ ${movesText || '• None'}`;
                                 value={type2}
                                 onChange={(e) => setType2(e.target.value)}
                             >
-                                <option value="">Secondary Type: Any</option>
+                                <option value="">Secondary Type</option>
                                 {POKEMON_TYPES.filter(Boolean).map((t) => (
                                     <option key={`type2-${t}`} value={t}>
                                         {t}
@@ -705,10 +705,66 @@ ${movesText || '• None'}`;
                         )}
                     </div>
 
-                    {/* 3. Ability Filtering */}
+                    {/* 3. Move & Learn Rank Filtering */}
+                    <div className="gm-pokemon-lookup__field">
+                        <label className="gm-pokemon-lookup__field-label text-label">
+                            <Zap size={14} /> Move & Rank Learned
+                        </label>
+                        <div className="gm-pokemon-lookup__dual-inputs">
+                            <div className="gm-pokemon-lookup__input-wrapper">
+                                <input
+                                    type="text"
+                                    list="gm-lookup-moves-list"
+                                    className="gm-pokemon-lookup__input text-subtext"
+                                    placeholder="Move (e.g. Quick Attack)..."
+                                    value={moveInput}
+                                    onChange={(e) => setMoveInput(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleApplySearch();
+                                    }}
+                                    onBlur={handleApplySearch}
+                                />
+                                <div className="gm-pokemon-lookup__input-actions">
+                                    {moveInput && (
+                                        <button
+                                            type="button"
+                                            className="gm-pokemon-lookup__icon-btn"
+                                            onClick={handleClearMove}
+                                            title="Clear move filter"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    )}
+                                    <button
+                                        type="button"
+                                        className="gm-pokemon-lookup__icon-btn gm-pokemon-lookup__search-trigger-btn"
+                                        onClick={handleApplySearch}
+                                        title="Search move"
+                                    >
+                                        <Search size={14} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <select
+                                className="gm-pokemon-lookup__select text-subtext"
+                                value={moveRank}
+                                onChange={(e) => setMoveRank(e.target.value)}
+                            >
+                                <option value="">Rank: Any Rank</option>
+                                {LEARN_RANKS.map((r) => (
+                                    <option key={`rank-${r}`} value={r}>
+                                        {r}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* 4. Ability Filtering */}
                     <div className="gm-pokemon-lookup__field">
                         <div className="gm-pokemon-lookup__field-label text-label">
-                            <Sparkles size={14} /> Ability & Slot
+                            <Sparkles size={14} /> Ability
                             <TooltipIcon
                                 onClick={() =>
                                     setTooltipInfo({
@@ -776,62 +832,6 @@ ${movesText || '• None'}`;
                             >
                                 Hidden (HA)
                             </button>
-                        </div>
-                    </div>
-
-                    {/* 4. Move & Learn Rank Filtering */}
-                    <div className="gm-pokemon-lookup__field">
-                        <label className="gm-pokemon-lookup__field-label text-label">
-                            <Zap size={14} /> Move & Rank Learned
-                        </label>
-                        <div className="gm-pokemon-lookup__dual-inputs">
-                            <div className="gm-pokemon-lookup__input-wrapper">
-                                <input
-                                    type="text"
-                                    list="gm-lookup-moves-list"
-                                    className="gm-pokemon-lookup__input text-subtext"
-                                    placeholder="Move (e.g. Quick Attack)..."
-                                    value={moveInput}
-                                    onChange={(e) => setMoveInput(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') handleApplySearch();
-                                    }}
-                                    onBlur={handleApplySearch}
-                                />
-                                <div className="gm-pokemon-lookup__input-actions">
-                                    {moveInput && (
-                                        <button
-                                            type="button"
-                                            className="gm-pokemon-lookup__icon-btn"
-                                            onClick={handleClearMove}
-                                            title="Clear move filter"
-                                        >
-                                            <X size={14} />
-                                        </button>
-                                    )}
-                                    <button
-                                        type="button"
-                                        className="gm-pokemon-lookup__icon-btn gm-pokemon-lookup__search-trigger-btn"
-                                        onClick={handleApplySearch}
-                                        title="Search move"
-                                    >
-                                        <Search size={14} />
-                                    </button>
-                                </div>
-                            </div>
-
-                            <select
-                                className="gm-pokemon-lookup__select text-subtext"
-                                value={moveRank}
-                                onChange={(e) => setMoveRank(e.target.value)}
-                            >
-                                <option value="">Rank: Any Rank</option>
-                                {LEARN_RANKS.map((r) => (
-                                    <option key={`rank-${r}`} value={r}>
-                                        {r}
-                                    </option>
-                                ))}
-                            </select>
                         </div>
                     </div>
                 </div>

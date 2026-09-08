@@ -61,10 +61,10 @@
     border-color: var(--primary);
 }
 
-/* Grid Layout for Inputs */
+/* Grid Layout for Inputs (2x2 on desktop/tablet, 1 column on mobile) */
 .gm-pokemon-lookup__filter-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
 }
 
