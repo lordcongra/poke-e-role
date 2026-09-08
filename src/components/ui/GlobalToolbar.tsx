@@ -130,7 +130,18 @@ export function GlobalToolbar() {
             }
 
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('modal') === 'gm-screen' || window.location.hash.startsWith('#gm-screen')) {
+            const modalParam = urlParams.get('modal');
+            const sectionParam = urlParams.get('section');
+            const hash = window.location.hash;
+            if (
+                modalParam === 'gm-screen' ||
+                modalParam === 'lookup' ||
+                modalParam === 'pokemon-lookup' ||
+                sectionParam === 'lookup' ||
+                hash.startsWith('#gm-screen') ||
+                hash.startsWith('#pokemon-lookup') ||
+                hash.startsWith('#lookup')
+            ) {
                 setActiveModal('gm-screen');
             }
 

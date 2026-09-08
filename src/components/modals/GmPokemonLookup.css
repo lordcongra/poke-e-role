@@ -35,6 +35,13 @@
     color: var(--text-main);
 }
 
+.gm-pokemon-lookup__filters-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 .gm-pokemon-lookup__reset-btn {
     display: inline-flex;
     align-items: center;

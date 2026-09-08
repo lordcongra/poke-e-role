@@ -14,7 +14,8 @@ import {
     Zap,
     RotateCcw,
     AlertCircle,
-    XCircle
+    XCircle,
+    Link2
 } from 'lucide-react';
 import type { PokemonLookupEntry, AbilitySlotFilter, TypeMatchMode, PokemonApiResponse } from '../../utils/apiTypes';
 import type { CustomPokemon } from '../../store/storeTypes';
@@ -23,6 +24,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { POKEMON_TYPES, TYPE_COLORS } from '../../data/constants';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { broadcastInfo } from '../../utils/diceRoller';
+import { getBaseShareUrl } from '../../utils/helper';
 import './GmPokemonLookup.css';
 
 const LEARN_RANKS = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master'];
@@ -92,8 +94,10 @@ export function GmPokemonLookup() {
     const [fullDataCache, setFullDataCache] = useState<Record<string, PokemonApiResponse | CustomPokemon>>({});
     const [loadingDetails, setLoadingDetails] = useState<string | null>(null);
     const [copiedName, setCopiedName] = useState<string | null>(null);
+    const [copiedLookupLink, setCopiedLookupLink] = useState<boolean>(false);
+    const [copiedCardLink, setCopiedCardLink] = useState<string | null>(null);
 
-    // Fetch Search Index on Mount
+    // Fetch Search Index on Mount & Read URL Deep Link Params
     useEffect(() => {
         let isMounted = true;
         setIsLoading(true);
@@ -111,6 +115,82 @@ export function GmPokemonLookup() {
                     setIsLoading(false);
                 }
             });
+
+        // Parse URL parameters for direct linking
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const rawHash = decodeURIComponent(window.location.hash.replace(/^#/, ''));
+            const pokemonParam =
+                urlParams.get('pokemon') ||
+                urlParams.get('name') ||
+                (rawHash && rawHash !== 'lookup' && rawHash !== 'pokemon-lookup' && !rawHash.startsWith('gm-')
+                    ? rawHash
+                    : null);
+
+            const type1Param = urlParams.get('type1') || urlParams.get('type');
+            const type2Param = urlParams.get('type2');
+            const typeMatchModeParam = urlParams.get('mode') as TypeMatchMode | null;
+            const abilityParam = urlParams.get('ability');
+            const slotParam = urlParams.get('slot') as AbilitySlotFilter | null;
+            const moveParam = urlParams.get('move');
+            const rankParam = urlParams.get('rank');
+            const starterParam = urlParams.get('starter');
+            const legendaryParam = urlParams.get('legendary');
+
+            if (pokemonParam) {
+                setNameInput(pokemonParam);
+                setAppliedName(pokemonParam);
+                setExpandedPokemon(pokemonParam);
+                fetchPokemonData(pokemonParam)
+                    .then((full) => {
+                        if (full && isMounted) {
+                            setFullDataCache((prev) => ({ ...prev, [pokemonParam]: full }));
+                        }
+                    })
+                    .catch(() => {});
+            }
+            if (type1Param) {
+                setType1(type1Param);
+            }
+            if (type2Param) {
+                setType2(type2Param);
+            }
+            if (typeMatchModeParam === 'exact' || typeMatchModeParam === 'any') {
+                setTypeMatchMode(typeMatchModeParam);
+            }
+            if (abilityParam) {
+                setAbilityInput(abilityParam);
+                setAppliedAbility(abilityParam);
+            }
+            if (slotParam && (slotParam === 'standard' || slotParam === 'hidden')) {
+                setAbilitySlot(slotParam);
+            }
+            if (moveParam) {
+                setMoveInput(moveParam);
+                setAppliedMove(moveParam);
+            }
+            if (rankParam) {
+                setMoveRank(rankParam);
+            }
+            if (starterParam === '1' || starterParam === 'true') {
+                setOnlyStarters(true);
+            }
+            if (legendaryParam === '1' || legendaryParam === 'true') {
+                setOnlyLegendary(true);
+            }
+
+            if (pokemonParam) {
+                setTimeout(() => {
+                    const el = document.getElementById(
+                        `pokemon-card-${pokemonParam.toLowerCase().replace(/[^a-z0-9]/g, '-')}`
+                    );
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 400);
+            }
+        } catch (e) {
+            console.warn('[GmPokemonLookup] Could not parse URL parameters:', e);
+        }
+
         return () => {
             isMounted = false;
         };
@@ -402,6 +482,51 @@ ${movesText || '• None'}`;
         broadcastInfo(`Pokédex Lookup: ${pokemon.name}`, broadcastText);
     };
 
+    // Copy Direct Shareable Link for Pokemon Lookup (includes active filters)
+    const handleCopyLookupLink = async () => {
+        try {
+            const baseUrl = getBaseShareUrl();
+            const params = new URLSearchParams();
+            params.set('modal', 'gm-screen');
+            params.set('section', 'lookup');
+
+            const activeName = appliedName || nameInput.trim();
+            const activeAbility = appliedAbility || abilityInput.trim();
+            const activeMove = appliedMove || moveInput.trim();
+
+            if (activeName) params.set('pokemon', activeName);
+            if (type1) params.set('type1', type1);
+            if (type2) params.set('type2', type2);
+            if (type1 && type2 && typeMatchMode !== 'any') params.set('mode', typeMatchMode);
+            if (activeAbility) params.set('ability', activeAbility);
+            if (abilitySlot !== 'all') params.set('slot', abilitySlot);
+            if (activeMove) params.set('move', activeMove);
+            if (moveRank) params.set('rank', moveRank);
+            if (onlyStarters) params.set('starter', '1');
+            if (onlyLegendary) params.set('legendary', '1');
+
+            const fullUrl = `${baseUrl}?${params.toString()}`;
+            await navigator.clipboard.writeText(fullUrl);
+            setCopiedLookupLink(true);
+            setTimeout(() => setCopiedLookupLink(false), 2000);
+        } catch (err) {
+            console.error('[GmPokemonLookup] Failed to copy lookup link:', err);
+        }
+    };
+
+    // Copy Direct Link to a specific Pokémon
+    const handleCopyCardLink = async (pokemonName: string) => {
+        try {
+            const baseUrl = getBaseShareUrl();
+            const fullUrl = `${baseUrl}?modal=gm-screen&section=lookup&pokemon=${encodeURIComponent(pokemonName)}`;
+            await navigator.clipboard.writeText(fullUrl);
+            setCopiedCardLink(pokemonName);
+            setTimeout(() => setCopiedCardLink(null), 2000);
+        } catch (err) {
+            console.error('[GmPokemonLookup] Failed to copy pokemon card link:', err);
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="gm-pokemon-lookup__loading">
@@ -455,6 +580,22 @@ ${movesText || '• None'}`;
                             title="Apply all search parameters"
                         >
                             <Search size={14} /> Search
+                        </button>
+                        <button
+                            type="button"
+                            className="action-button action-button--dark"
+                            onClick={handleCopyLookupLink}
+                            title="Copy direct shareable link to Pokémon Lookup"
+                        >
+                            {copiedLookupLink ? (
+                                <>
+                                    <Check size={13} color="var(--primary)" /> Link Copied!
+                                </>
+                            ) : (
+                                <>
+                                    <Link2 size={13} /> Copy Link
+                                </>
+                            )}
                         </button>
                         {hasActiveFilters && (
                             <button
@@ -765,7 +906,11 @@ ${movesText || '• None'}`;
                                 : [];
 
                         return (
-                            <div key={`lookup-poke-${p.name}`} className="gm-pokemon-lookup__card">
+                            <div
+                                key={`lookup-poke-${p.name}`}
+                                id={`pokemon-card-${p.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                                className="gm-pokemon-lookup__card"
+                            >
                                 <div className="gm-pokemon-lookup__card-header">
                                     <div className="gm-pokemon-lookup__card-identity">
                                         <span className="gm-pokemon-lookup__card-dex-id">#{p.dexId}</span>
@@ -803,6 +948,23 @@ ${movesText || '• None'}`;
                                             ) : (
                                                 <>
                                                     <Copy size={14} /> Discord
+                                                </>
+                                            )}
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            className="action-button action-button--dark"
+                                            onClick={() => handleCopyCardLink(p.name)}
+                                            title={`Copy direct link to ${p.name}`}
+                                        >
+                                            {copiedCardLink === p.name ? (
+                                                <>
+                                                    <Check size={14} color="#4caf50" /> Link Copied!
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Link2 size={14} /> Link
                                                 </>
                                             )}
                                         </button>

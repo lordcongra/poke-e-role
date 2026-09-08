@@ -59,6 +59,7 @@ import { GmScreenCatchCalculator } from './GmScreenCatchCalculator';
 import { GmScreenTypeMatrix } from './GmScreenTypeMatrix';
 import { GmPokemonLookup } from './GmPokemonLookup';
 import { broadcastInfo } from '../../utils/diceRoller';
+import { getBaseShareUrl } from '../../utils/helper';
 import './GmScreenModal.css';
 
 interface GmScreenModalProps {
@@ -84,7 +85,11 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
         if (initialTab) return initialTab as TabCategory;
         try {
             const urlParams = new URLSearchParams(window.location.search);
+            const modalParam = urlParams.get('modal');
             const sectionParam = urlParams.get('section');
+            if (modalParam === 'lookup' || modalParam === 'pokemon-lookup') {
+                return 'lookup';
+            }
             const validTabs: TabCategory[] = [
                 'rules',
                 'status',
@@ -100,6 +105,9 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                 return sectionParam as TabCategory;
             }
             const rawHash = window.location.hash.replace(/^#/, '');
+            if (rawHash === 'lookup' || rawHash === 'pokemon-lookup') {
+                return 'lookup';
+            }
             if (rawHash) {
                 const matchedItem = GM_CHEAT_ITEMS.find((item: GmCheatItem) => item.id === rawHash);
                 if (matchedItem) return matchedItem.category;
@@ -174,17 +182,6 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
         }
     };
 
-    const getBaseShareUrl = (): string => {
-        const origin = window.location.origin;
-        let pathname = window.location.pathname;
-        // Strip specific html file endings if present (e.g. index.html or initiative-tracker.html)
-        pathname = pathname.replace(/\/[^/]+\.html$/, '/');
-        if (!pathname.endsWith('/')) {
-            pathname += '/';
-        }
-        return `${origin}${pathname}`;
-    };
-
     const handleCopyLink = async (item: GmCheatItem) => {
         try {
             const baseUrl = getBaseShareUrl();
@@ -200,7 +197,8 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
     const handleCopyGeneralLink = async () => {
         try {
             const baseUrl = getBaseShareUrl();
-            const generalLink = `${baseUrl}?modal=gm-screen`;
+            const generalLink =
+                activeTab !== 'all' ? `${baseUrl}?modal=gm-screen&section=${activeTab}` : `${baseUrl}?modal=gm-screen`;
             await navigator.clipboard.writeText(generalLink);
             setCopiedGeneralLink(true);
             setTimeout(() => setCopiedGeneralLink(false), 2000);
