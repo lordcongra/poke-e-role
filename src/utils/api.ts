@@ -7,7 +7,11 @@ import type {
     MoveApiResponse,
     AbilityApiResponse,
     ItemApiResponse,
-    NatureApiResponse
+    NatureApiResponse,
+    PokemonLookupEntry,
+    PokemonLookupFilters,
+    AbilitySlotFilter,
+    TypeMatchMode
 } from './apiTypes';
 
 // Re-export the types so we don't break existing imports in the UI components!
@@ -18,7 +22,11 @@ export type {
     MoveApiResponse,
     AbilityApiResponse,
     ItemApiResponse,
-    NatureApiResponse
+    NatureApiResponse,
+    PokemonLookupEntry,
+    PokemonLookupFilters,
+    AbilitySlotFilter,
+    TypeMatchMode
 };
 
 // VITE MAGIC: Automatically detects your domain sub-folder!
@@ -325,4 +333,63 @@ export async function fetchNatureData(natureName: string): Promise<NatureApiResp
 
     const cacheKey = `local_nature_${cleanName}`;
     return await fetchWithCache<NatureApiResponse>(selectedUrl, cacheKey, natureName);
+}
+
+let cachedLookupIndex: PokemonLookupEntry[] | null = null;
+let lookupIndexPromise: Promise<PokemonLookupEntry[]> | null = null;
+
+export async function fetchPokemonLookupIndex(): Promise<PokemonLookupEntry[]> {
+    if (cachedLookupIndex) {
+        return mergeCustomPokemonWithLookup(cachedLookupIndex);
+    }
+    if (lookupIndexPromise) {
+        const baseEntries = await lookupIndexPromise;
+        return mergeCustomPokemonWithLookup(baseEntries);
+    }
+
+    lookupIndexPromise = (async () => {
+        try {
+            const url = `${BASE_URL}dataset/pokedex-lookup.json`;
+            const data = await fetchWithCache<PokemonLookupEntry[]>(url, 'pokedex_lookup_index', 'Pokedex Lookup');
+            if (Array.isArray(data)) {
+                cachedLookupIndex = data;
+                return data;
+            }
+            return [];
+        } catch (error) {
+            console.error('[Api] Failed to fetch pokedex lookup index:', error);
+            return [];
+        } finally {
+            lookupIndexPromise = null;
+        }
+    })();
+
+    const baseEntries = await lookupIndexPromise;
+    return mergeCustomPokemonWithLookup(baseEntries);
+}
+
+function mergeCustomPokemonWithLookup(baseEntries: PokemonLookupEntry[]): PokemonLookupEntry[] {
+    if (!homebrewPokemon || homebrewPokemon.length === 0) {
+        return baseEntries;
+    }
+
+    const customEntries: PokemonLookupEntry[] = homebrewPokemon.map((cp) => {
+        const moves: [string, string][] = (cp.Moves || []).map((m) => [m.Name, m.Learned]);
+        return {
+            name: cp.Name,
+            dexId: cp.DexID || 'HB',
+            type1: cp.Type1 || 'Normal',
+            type2: cp.Type2 || '',
+            ability1: cp.Ability1 || '',
+            ability2: cp.Ability2 || '',
+            hiddenAbility: cp.HiddenAbility || '',
+            eventAbilities: cp.EventAbilities || '',
+            legendary: false,
+            starter: false,
+            moves,
+            isCustom: true
+        };
+    });
+
+    return [...baseEntries, ...customEntries];
 }

@@ -1,0 +1,628 @@
+/* GmPokemonLookup.css */
+
+.gm-pokemon-lookup {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+/* --- Filter Container --- */
+.gm-pokemon-lookup__filters {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.gm-pokemon-lookup__filters-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.gm-pokemon-lookup__filters-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.gm-pokemon-lookup__reset-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    background: var(--panel-alt);
+    color: var(--text-muted);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.gm-pokemon-lookup__reset-btn:hover {
+    color: var(--text-main);
+    border-color: var(--primary);
+}
+
+/* Grid Layout for Inputs */
+.gm-pokemon-lookup__filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+}
+
+.gm-pokemon-lookup__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.gm-pokemon-lookup__field-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.gm-pokemon-lookup__input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.gm-pokemon-lookup__input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+    border-radius: 6px;
+    padding: 8px 54px 8px 10px;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    transition: border-color 0.2s ease;
+}
+
+.gm-pokemon-lookup__input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.gm-pokemon-lookup__input-actions {
+    position: absolute;
+    right: 6px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.gm-pokemon-lookup__icon-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+}
+
+.gm-pokemon-lookup__icon-btn:hover {
+    color: var(--text-main);
+    background: var(--panel-alt);
+}
+
+.gm-pokemon-lookup__search-trigger-btn {
+    color: var(--primary);
+}
+
+.gm-pokemon-lookup__search-trigger-btn:hover {
+    color: #fff;
+    background: var(--primary);
+}
+
+.gm-pokemon-lookup__filters-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.gm-pokemon-lookup__select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    cursor: pointer;
+}
+
+.gm-pokemon-lookup__select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* Dual Column inputs within field */
+.gm-pokemon-lookup__dual-inputs {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+}
+
+.gm-pokemon-lookup__dual-inputs > * {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Radio / Button Group for Slots & Modes */
+.gm-pokemon-lookup__button-group {
+    display: flex;
+    background: var(--bg);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+    border-radius: 6px;
+    overflow: hidden;
+    padding: 2px;
+    gap: 2px;
+}
+
+.gm-pokemon-lookup__button-group-item {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 5px 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+}
+
+.gm-pokemon-lookup__button-group-item:hover {
+    color: var(--text-main);
+    background: var(--panel-alt);
+}
+
+.gm-pokemon-lookup__button-group-item--active {
+    background: var(--primary) !important;
+    color: #fff !important;
+    font-weight: 600;
+}
+
+/* Tooltip info icon */
+.gm-pokemon-lookup__info-icon {
+    display: inline-flex;
+    align-items: center;
+    color: var(--primary);
+    cursor: help;
+}
+
+/* Checkbox row */
+.gm-pokemon-lookup__checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding-top: 4px;
+    border-top: 1px dashed var(--border-color, rgba(255, 255, 255, 0.08));
+}
+
+.gm-pokemon-lookup__checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--text-main);
+    cursor: pointer;
+    user-select: none;
+}
+
+.gm-pokemon-lookup__checkbox {
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+/* --- Results Header --- */
+.gm-pokemon-lookup__results-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* --- Results List --- */
+.gm-pokemon-lookup__results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Empty State */
+.gm-pokemon-lookup__empty {
+    text-align: center;
+    padding: 48px 16px;
+    background: var(--panel-bg);
+    border: 1px dashed var(--border-color, rgba(255, 255, 255, 0.15));
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-muted);
+}
+
+.gm-pokemon-lookup__loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 40px;
+    color: var(--text-muted);
+}
+
+/* Result Card */
+.gm-pokemon-lookup__card {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.gm-pokemon-lookup__card:hover {
+    border-color: var(--border-color, rgba(255, 255, 255, 0.2));
+    background: var(--panel-alt);
+}
+
+.gm-pokemon-lookup__card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.gm-pokemon-lookup__card-identity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.gm-pokemon-lookup__card-dex-id {
+    font-family: monospace;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: var(--text-muted);
+    background: var(--bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.gm-pokemon-lookup__card-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.gm-pokemon-lookup__custom-tag {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #ffb74d;
+    background: rgba(255, 183, 77, 0.15);
+    border: 1px solid rgba(255, 183, 77, 0.4);
+    border-radius: 4px;
+    padding: 1px 5px;
+    text-transform: uppercase;
+}
+
+.gm-pokemon-lookup__card-types {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.gm-pokemon-lookup__type-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 12px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.gm-pokemon-lookup__card-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Card Body with Abilities & Matches */
+.gm-pokemon-lookup__card-details {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.8rem;
+    padding-top: 4px;
+    border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.05));
+}
+
+.gm-pokemon-lookup__abilities-list {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.gm-pokemon-lookup__ability-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--text-main);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+}
+
+.gm-pokemon-lookup__ability-badge--highlight {
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb, 59, 130, 246), 0.15);
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.gm-pokemon-lookup__ability-badge--hidden {
+    border-color: #ba68c8;
+    background: rgba(186, 104, 200, 0.15);
+    color: #e1bee7;
+}
+
+.gm-pokemon-lookup__ha-tag {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #ce93d8;
+    background: rgba(186, 104, 200, 0.25);
+    padding: 0 4px;
+    border-radius: 3px;
+}
+
+/* Match pill for Move & Learn Rank */
+.gm-pokemon-lookup__match-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #4fc3f7;
+    background: rgba(79, 195, 247, 0.12);
+    border: 1px solid rgba(79, 195, 247, 0.35);
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+/* --- Expandable Detail Drawer --- */
+.gm-pokemon-lookup__drawer {
+    background: var(--bg);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 6px;
+    padding: 14px;
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.gm-pokemon-lookup__drawer-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 8px;
+}
+
+.gm-pokemon-lookup__stat-box {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+    border-radius: 4px;
+    padding: 6px 8px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.gm-pokemon-lookup__stat-name {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.gm-pokemon-lookup__stat-val {
+    font-size: 0.95rem;
+    font-weight: bold;
+    color: var(--text-main);
+}
+
+.gm-pokemon-lookup__drawer-moves {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.gm-pokemon-lookup__drawer-moves-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+}
+
+.gm-pokemon-lookup__rank-groups-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gm-pokemon-lookup__rank-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+
+.gm-pokemon-lookup__rank-group-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.gm-pokemon-lookup__rank-moves-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.gm-pokemon-lookup__move-pill {
+    display: inline-flex;
+    align-items: center;
+    background: var(--bg);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 0.75rem;
+    color: var(--text-main);
+    transition: all 0.15s ease;
+}
+
+.gm-pokemon-lookup__move-pill--highlight {
+    border-color: #4fc3f7;
+    background: rgba(79, 195, 247, 0.18);
+    color: #e1f5fe;
+    font-weight: 600;
+}
+
+.gm-pokemon-lookup__drawer-desc {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--text-muted);
+    font-style: italic;
+    background: var(--panel-bg);
+    padding: 8px 10px;
+    border-radius: 4px;
+    border-left: 3px solid var(--primary);
+}
+
+@media (max-width: 768px) {
+    .gm-pokemon-lookup__filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .gm-pokemon-lookup__card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .gm-pokemon-lookup__card-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+/* Modal Overlay for TooltipIcon */
+.gm-pokemon-lookup__modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.65);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    backdrop-filter: blur(2px);
+}
+
+.gm-pokemon-lookup__modal-content {
+    background: var(--panel-bg);
+    padding: 18px;
+    border-radius: 8px;
+    width: 320px;
+    max-width: 90vw;
+    border: 2px solid var(--primary);
+    color: var(--text-main);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.gm-pokemon-lookup__modal-title {
+    margin: 0;
+    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    padding-bottom: 6px;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.gm-pokemon-lookup__modal-desc {
+    margin: 0;
+    line-height: 1.45;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-main);
+}
+
+.gm-pokemon-lookup__modal-btn-container {
+    display: flex;
+    justify-content: center;
+}
+
+.gm-pokemon-lookup__modal-btn {
+    width: 100%;
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}

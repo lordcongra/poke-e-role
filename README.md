@@ -1,4 +1,4 @@
-# Pokerole 3.0 Sheet v3.4.0 (Standalone PWA & Owlbear Rodeo Extension)
+# Pokerole 3.0 Sheet v3.5.0 (Standalone PWA & Owlbear Rodeo Extension)
 
 A highly automated, modular character sheet and GM Toolkit for playing **Pokerole 3.0** campaigns (including **Pokémon Mystery Dungeon / PMD** settings).
 
@@ -73,6 +73,10 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 - **Auto-Decrementing Force Fields & Timers:** Track Player and Foe Force Fields (Reflect, Light Screen, Safeguard, Mist) with interactive 1–4 round duration boxes that automatically tick down as combat rounds advance.
 - **Round-by-Round Planning:** Full multi-round workflow allowing GMs to add new rounds, duplicate previous setups, reorder rounds, or delete rounds, with seamless 1-click round advancing.
 - **Combatant Action Slots:** Track individual action slots per Pokémon/combatant with quick toggles for completed/used actions (`✓`), clash/evade/failed actions (`✗`), active held items, and persistent status condition badges.
+- **Full Round Reset & Token/Sheet Action Sync:** The Battle Organizer acts as a complete round reset engine! Live-sync action economy states directly to map tokens in Owlbear Rodeo or to individual sheets in Standalone mode.
+- **Action Auto-Ticking & Hit/Miss Tracking:** Automatically ticks off actions rolled within the Organizer itself by accessing the Pokémon's sheet, or lets users mark hits and misses with automatic application back to the Organizer.
+- **"Push Actions to Sheet" & "Refresh Stats":** Click "Push Actions to Sheet" to sync action states to all applicable sheets/tokens, and use the "Refresh Stats" button to instantly resolve any stat desynchronization across combatants.
+- **Live HP & Will Resource Display:** Compact in-line HP and Will trackers for each combatant directly in the Organizer view to keep tabs on vital resources during combat.
 - **1-Click Initiative Sync:** Seamlessly pull combatants, nicknames, held items, statuses, and rolled initiatives directly from the active Initiative Order into the combat round.
 - **Owlbear Popout Modal & Multi-Window Standalone:** Open the Battle Organizer as a dedicated full-size modal iframe in Owlbear Rodeo (maximizing tabletop screen real estate) or pop it out into an independent browser window in Standalone mode for multi-monitor setups with live two-way synchronization.
 - **Print-to-PDF Battle Sheet:** Generate comprehensive, toner-saving printable battle sheets with stadium graphics and combatant action matrices.
@@ -164,6 +168,8 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 ### 🛡️ GM Screen & Rules Cheat Sheet
 
 - **Instant In-App Reference:** Open the full Pokerole 3.0 GM Cheat Sheet directly from the global toolbar with real-time keyword search, tabbed categories, and collapsible accordion cards.
+- **Pokédex Lookup Tool:** Built-in multi-factor Pokémon search engine powered by a pre-compiled search index. Filter across all 1,200+ Pokémon by primary and secondary typing (with "Either Type" or "Exact Dual Match"), abilities and slot (standard vs homebrew Hidden Abilities with clear homebrew disclaimers), move learnsets with rank learned (Starter through Master), Good Starters, and Legendary/Mythical status.
+- **Rank-Categorized Learnsets & Discord Export:** View clean, chronologically grouped move learnsets by Rank (Starter to Master) in the Details drawer, and export full Pokémon profiles (Types, Abilities, Base Stats, and full Move Learnsets) to Discord with a single click.
 - **Corebook Quick Reference:** Quick access to essential corebook mechanics—combat flow, difficulty modifiers, Will Point spending, trainer actions, cover, healing, status condition stacking, rank balance benchmarks, and interactive Catching Calculator.
 - **Homebrew & Expansion Mechanics:** Dedicated reference guides for PMD (dungeon item capacities, item weights, food mechanics, weapons, and switcher models) and Pokémon Rangers systems (Styler stats, styles, field assists, maneuvers, and partner bond levels).
 - **1-Click Discord Markdown:** Copy clean Discord-formatted tables, status ailment summaries, combat flow steps, and weather charts directly to your clipboard for quick sharing in Discord chat.
@@ -186,6 +192,6 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 To install this extension into your Owlbear Rodeo room, copy the Manifest URL below and paste it into your Owlbear Rodeo extension manager:
 
-`https://lordcongra.github.io/poke-e-role/manifest.json?v=3.4.0`
+`https://lordcongra.github.io/poke-e-role/manifest.json?v=3.5.0`
 
 _(Note: If the sheet updates, you can force Owlbear to fetch the newest version by bumping the version tag at the end of the URL!)_

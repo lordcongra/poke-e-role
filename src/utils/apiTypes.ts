@@ -103,3 +103,34 @@ export interface NatureApiResponse {
     Keywords?: string;
     Description?: string;
 }
+
+export interface PokemonLookupEntry {
+    name: string;
+    dexId: string;
+    type1: string;
+    type2: string;
+    ability1: string;
+    ability2: string;
+    hiddenAbility: string;
+    eventAbilities: string;
+    legendary: boolean;
+    starter: boolean;
+    moves: [string, string][]; // [MoveName, LearnedRank]
+    isCustom?: boolean;
+}
+
+export type AbilitySlotFilter = 'all' | 'standard' | 'hidden';
+export type TypeMatchMode = 'any' | 'exact';
+
+export interface PokemonLookupFilters {
+    query: string;
+    type1: string;
+    type2: string;
+    typeMatchMode: TypeMatchMode;
+    ability: string;
+    abilitySlot: AbilitySlotFilter;
+    move: string;
+    moveRank: string;
+    onlyStarters: boolean;
+    onlyLegendary: boolean;
+}

@@ -34,8 +34,8 @@ const datasetIndex = {
 };
 
 // Helper: Safely write JSON only if content has changed (avoids unnecessary disk I/O)
-function safeWriteJson(destPath, data) {
-    const content = JSON.stringify(data, null, 4);
+function safeWriteJson(destPath, data, space = 4) {
+    const content = space ? JSON.stringify(data, null, space) : JSON.stringify(data);
     if (fs.existsSync(destPath)) {
         try {
             const existing = fs.readFileSync(destPath, 'utf-8');
@@ -194,21 +194,49 @@ async function build() {
 
     // --- 1. PROCESS POKEDEX ---
     const pokedex = loadMergedDataset('Pokedex', 'pokedex');
+    const pokemonLookup = [];
+
     pokedex.entries.forEach(([fileName, { data }]) => {
         try {
-            const cleanName = (data.Name || data.name || fileName.replace('.json', '')).toLowerCase();
+            const rawName = data.Name || data.name || fileName.replace('.json', '');
+            const cleanName = rawName.toLowerCase();
             const destPath = path.join(POKEDEX_DIR, fileName);
             safeWriteJson(destPath, data);
 
             datasetIndex.pokemon[cleanName] = {
-                name: data.Name || data.name || fileName.replace('.json', ''),
+                name: rawName,
                 path: `/dataset/pokedex/${fileName}`
             };
+
+            const movesList = Array.isArray(data.Moves)
+                ? data.Moves.map((m) => [m.Name || m.name || '', m.Learned || m.learned || 'Starter']).filter(
+                      ([mName]) => Boolean(mName)
+                  )
+                : [];
+
+            pokemonLookup.push({
+                name: rawName,
+                dexId: String(data.DexID || data.dexId || data.Number || '').padStart(4, '0'),
+                type1: data.Type1 || data.type1 || 'Normal',
+                type2: data.Type2 || data.type2 || '',
+                ability1: data.Ability1 || data.ability1 || '',
+                ability2: data.Ability2 || data.ability2 || '',
+                hiddenAbility: data.HiddenAbility || data.hiddenAbility || '',
+                eventAbilities: data.EventAbilities || data.eventAbilities || '',
+                legendary: Boolean(data.Legendary || data.legendary),
+                starter: Boolean(data.GoodStarter || data.goodStarter),
+                moves: movesList
+            });
         } catch (error) {
             console.error(`❌ Error processing Pokedex ${fileName}:`, error.message);
         }
     });
-    console.log(`✅ Pokedex built (${pokedex.entries.length} pokemon, ${pokedex.overrideCount} overrides applied)`);
+
+    pokemonLookup.sort((a, b) => a.name.localeCompare(b.name));
+    safeWriteJson(path.join(DATASET_DIR, 'pokedex-lookup.json'), pokemonLookup, 0);
+    console.log(
+        `✅ Pokedex built (${pokedex.entries.length} pokemon, lookup index generated, ${pokedex.overrideCount} overrides applied)`
+    );
 
     // --- 2. PROCESS ABILITIES ---
     const abilities = loadMergedDataset('Abilities', 'abilities');

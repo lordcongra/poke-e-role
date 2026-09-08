@@ -57,6 +57,7 @@ import { GmHomebrewCards } from './gmCards/GmHomebrewCards';
 import { GmRangersCards } from './gmCards/GmRangersCards';
 import { GmScreenCatchCalculator } from './GmScreenCatchCalculator';
 import { GmScreenTypeMatrix } from './GmScreenTypeMatrix';
+import { GmPokemonLookup } from './GmPokemonLookup';
 import { broadcastInfo } from '../../utils/diceRoller';
 import './GmScreenModal.css';
 
@@ -65,7 +66,17 @@ interface GmScreenModalProps {
     initialTab?: string;
 }
 
-type TabCategory = 'all' | 'rules' | 'status' | 'weather' | 'catching' | 'training' | 'balance' | 'types' | 'homebrew';
+type TabCategory =
+    | 'all'
+    | 'rules'
+    | 'status'
+    | 'weather'
+    | 'catching'
+    | 'training'
+    | 'balance'
+    | 'types'
+    | 'lookup'
+    | 'homebrew';
 
 export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
     const [searchQuery, setSearchQuery] = useState<string>('');
@@ -82,6 +93,7 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                 'training',
                 'balance',
                 'types',
+                'lookup',
                 'homebrew'
             ];
             if (sectionParam && validTabs.includes(sectionParam as TabCategory)) {
@@ -450,6 +462,7 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
             training: 0,
             balance: 0,
             types: 0,
+            lookup: 0,
             homebrew: 0
         };
         GM_CHEAT_ITEMS.forEach((item) => {
@@ -667,39 +680,48 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                 </div>
 
                 <div className="gm-screen-modal__controls">
-                    <div className="gm-screen-modal__search-row">
-                        <div className="gm-screen-modal__search-wrapper">
-                            <Search size={16} className="gm-screen-modal__search-icon" />
-                            <input
-                                type="text"
-                                className="gm-screen-modal__search-input text-subtext"
-                                placeholder="Search rules, statuses, weather, tables, actions, catching, PMD, Rangers..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                            {searchQuery && (
-                                <button
-                                    type="button"
-                                    className="gm-screen-modal__search-clear"
-                                    onClick={() => setSearchQuery('')}
-                                    title="Clear Search"
-                                >
-                                    <XCircle size={16} />
-                                </button>
-                            )}
-                        </div>
+                    {activeTab !== 'lookup' && (
+                        <div className="gm-screen-modal__search-row">
+                            <div className="gm-screen-modal__search-wrapper">
+                                <Search size={16} className="gm-screen-modal__search-icon" />
+                                <input
+                                    type="text"
+                                    className="gm-screen-modal__search-input text-subtext"
+                                    placeholder="Search rules, statuses, weather, tables, actions, catching, PMD, Rangers..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                                {searchQuery && (
+                                    <button
+                                        type="button"
+                                        className="gm-screen-modal__search-clear"
+                                        onClick={() => setSearchQuery('')}
+                                        title="Clear Search"
+                                    >
+                                        <XCircle size={16} />
+                                    </button>
+                                )}
+                            </div>
 
-                        <button
-                            type="button"
-                            className="action-button action-button--dark gm-screen-modal__toggle-all-btn"
-                            onClick={toggleAllCards}
-                            title={allExpanded ? 'Collapse All Sections' : 'Expand All Sections'}
-                        >
-                            <ChevronsUpDown size={14} /> {allExpanded ? 'Collapse All' : 'Expand All'}
-                        </button>
-                    </div>
+                            <button
+                                type="button"
+                                className="action-button action-button--dark gm-screen-modal__toggle-all-btn"
+                                onClick={toggleAllCards}
+                                title={allExpanded ? 'Collapse All Sections' : 'Expand All Sections'}
+                            >
+                                <ChevronsUpDown size={14} /> {allExpanded ? 'Collapse All' : 'Expand All'}
+                            </button>
+                        </div>
+                    )}
 
                     <div className="gm-screen-modal__tabs">
+                        <button
+                            type="button"
+                            className={`gm-screen-modal__tab-btn ${activeTab === 'lookup' ? 'gm-screen-modal__tab-btn--active' : ''}`}
+                            onClick={() => setActiveTab('lookup')}
+                        >
+                            <Search size={14} /> Pokémon Lookup
+                        </button>
                         <button
                             type="button"
                             className={`gm-screen-modal__tab-btn ${activeTab === 'all' ? 'gm-screen-modal__tab-btn--active' : ''}`}
@@ -767,7 +789,9 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                 </div>
 
                 <div className="gm-screen-modal__body">
-                    {filteredItems.length === 0 ? (
+                    {activeTab === 'lookup' ? (
+                        <GmPokemonLookup />
+                    ) : filteredItems.length === 0 ? (
                         <div
                             style={{
                                 textAlign: 'center',

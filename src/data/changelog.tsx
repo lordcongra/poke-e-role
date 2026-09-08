@@ -1,7 +1,7 @@
 import React from 'react';
 import type { ReactNode } from 'react';
 
-export const CURRENT_VERSION = '3.4.0';
+export const CURRENT_VERSION = '3.5.0';
 
 export interface ChangelogEntry {
     version: string;
@@ -10,6 +10,77 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
+    {
+        version: '3.5.0',
+        date: 'September 2026',
+        changes: [
+            <strong key="pokedex-lookup-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
+                🔍 GM Screen: Pokédex Lookup Tool
+            </strong>,
+            <ul
+                key="pokedex-lookup-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Multi-Factor Pokédex Search:</strong> A lightning-fast, offline-ready search tool built directly into the GM Screen to look up Pokémon across the entire 1,200+ database with zero network lag via a pre-compiled search index.
+                </li>
+                <li>
+                    <strong>Comprehensive Filtering:</strong> Filter by Type and Dual-Typing (with "Either Type" vs "Exact Dual Match" modes), Ability name and slot (Standard 1/2 vs Hidden Ability), Move name and Learned Rank (Starter through Master), Good Starter status, and Legendary/Mythical status.
+                </li>
+                <li>
+                    <strong>Rank-Categorized Move Learnsets:</strong> The expandable Details drawer breaks down the Pokémon's entire move learnset chronologically by Rank (Starter, Rookie, Standard, Advanced, Expert, Ace, Master) with search-matched moves clearly highlighted.
+                </li>
+                <li>
+                    <strong>Homebrew Hidden Ability Tooltip:</strong> Standardized with the app's native TooltipIcon, clearly noting that Hidden Abilities are community homebrew additions and not official canon Pokerole rules (GM discretion advised).
+                </li>
+                <li>
+                    <strong>Expanded Discord Quick-Reference:</strong> One-click "Discord" button formats a complete GM quick-reference sheet including Types, Abilities, Base Stats (HP, Str, Dex, Vit, Spe, Ins), and full rank-grouped move learnsets.
+                </li>
+                <li>
+                    <strong>Homebrew Workshop Integration:</strong> Automatically includes custom Pokémon created in your Homebrew Workshop alongside canon Pokémon in all searches.
+                </li>
+            </ul>,
+            <strong key="battle-organizer-sync-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
+                ⚔️ Battle Organizer: Full Round Reset & Action Sync
+            </strong>,
+            <ul
+                key="battle-organizer-sync-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Full Round Reset & Live Action Sync:</strong> The Battle Organizer now acts as a complete round reset engine! Syncs all actions directly to map tokens in Owlbear Rodeo, or to each character sheet in Standalone mode.
+                </li>
+                <li>
+                    <strong>Automatic Action & Hit/Miss Tracking:</strong> Automatically ticks off actions rolled within the Organizer itself by accessing the Pokémon's sheet, and allows users to mark hit or miss with automatic application to the Organizer.
+                </li>
+                <li>
+                    <strong>"Push Actions to Sheet":</strong> Click the "Push Actions to Sheet" button to instantly sync all action economy states from the Organizer directly to applicable tokens and character sheets.
+                </li>
+                <li>
+                    <strong>"Refresh Stats" Button:</strong> Easily resolve any stat desynchronization across combatants with a single click.
+                </li>
+                <li>
+                    <strong>Live HP & Will Resource Display:</strong> Added compact HP and Will indicators for each combatant directly in the Organizer view so GMs and players can monitor vital resources at a glance during combat.
+                </li>
+            </ul>
+        ]
+    },
     {
         version: '3.4.0',
         date: 'September 2026',
