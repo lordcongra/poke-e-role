@@ -28,3 +28,6 @@ dist-ssr
 
 # Local dataset sync & overrides workspace (local only, not tracked in GitHub)
 /data/
+
+# Local maintenance scripts
+scripts/checkFileSizes.js
