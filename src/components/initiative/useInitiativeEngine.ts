@@ -9,9 +9,11 @@ import {
     sortCombatants,
     extractTokenImage,
     extractCharacterName,
-    calculateEncodedInitiative
+    calculateEncodedInitiative,
+    resolveInitiativeRolls
 } from '../../utils/initiativeHelpers';
 import type { Combatant } from '../../utils/initiativeHelpers';
+import { useInitiativeThemeSync } from './useInitiativeThemeSync';
 import type { StandaloneCharOption, ObrCharOption } from './AddCombatantModal';
 
 export function useInitiativeEngine() {
@@ -150,63 +152,8 @@ export function useInitiativeEngine() {
         }
     }, []);
 
-    const applyDynamicColors = useCallback((data?: { enabled: boolean; primary?: string; secondary?: string }) => {
-        if (isStandaloneMode) return;
-        if (data?.enabled && data?.primary) {
-            document.body.style.setProperty('--dynamic-type-color', data.primary);
-            document.documentElement.style.setProperty('--dynamic-type-color', data.primary);
-            if (data.secondary) {
-                document.body.style.setProperty('--dynamic-secondary-color', data.secondary);
-                document.documentElement.style.setProperty('--dynamic-secondary-color', data.secondary);
-            } else {
-                document.body.style.removeProperty('--dynamic-secondary-color');
-                document.documentElement.style.removeProperty('--dynamic-secondary-color');
-            }
-        } else {
-            document.body.style.removeProperty('--dynamic-type-color');
-            document.documentElement.style.removeProperty('--dynamic-type-color');
-            document.body.style.removeProperty('--dynamic-secondary-color');
-            document.documentElement.style.removeProperty('--dynamic-secondary-color');
-        }
-    }, []);
-
     // 3. Theme Injection & Dynamic Popover Color Sync
-    useEffect(() => {
-        if (isStandaloneMode) return;
-
-        try {
-            const rawColors = localStorage.getItem('pkr_active_theme_colors');
-            if (rawColors) applyDynamicColors(JSON.parse(rawColors));
-        } catch (err) {
-            console.warn('[InitiativeEngine] Failed to parse dynamic colors from localStorage:', err);
-        }
-
-        const handleStorage = (e: StorageEvent) => {
-            if (e.key === 'pkr_active_theme_colors') {
-                try {
-                    applyDynamicColors(JSON.parse(e.newValue || '{}'));
-                } catch (err) {
-                    console.warn('[InitiativeEngine] Failed to parse dynamic colors on storage update:', err);
-                }
-            }
-        };
-        window.addEventListener('storage', handleStorage);
-        return () => window.removeEventListener('storage', handleStorage);
-    }, [applyDynamicColors]);
-
-    useEffect(() => {
-        if (isStandaloneMode) return;
-
-        if (theme === 'dark') {
-            document.body.classList.add('dark-mode');
-            document.body.setAttribute('data-theme', 'dark');
-            document.documentElement.setAttribute('data-theme', 'dark');
-        } else {
-            document.body.classList.remove('dark-mode');
-            document.body.setAttribute('data-theme', 'light');
-            document.documentElement.setAttribute('data-theme', 'light');
-        }
-    }, [theme]);
+    const { applyDynamicColors } = useInitiativeThemeSync({ theme, isStandalone: isStandaloneMode });
 
     // 4. Primary Network/Local Connection Sync
     useEffect(() => {
@@ -478,54 +425,25 @@ export function useInitiativeEngine() {
 
     const handleRollAll = async () => {
         try {
-            let logSummary = 'All Combatants Rolled Initiative:\n\n';
-
             if (isStandaloneMode) {
                 const localChars = await storageAdapter.getLocalCharacters();
 
-                // 1. Roll base 1d6 + baseScore for all combatants
-                const rolledCombatants = combatants.map((c) => {
+                const participants = combatants.map((c) => {
                     const charObj = localChars.find((lc) => lc.id === c.id);
                     const baseScore = charObj?.metadata
                         ? calculateBaseInitFromCharacterData(charObj.metadata as Record<string, unknown>, globalState)
                         : c.baseInit;
-
-                    const rolledD6 = Math.floor(Math.random() * 6) + 1;
-                    const total = rolledD6 + baseScore;
-
-                    return { ...c, d6: rolledD6, baseInit: baseScore, total, tiebreaker: 0 };
+                    return {
+                        id: c.id,
+                        name: c.name,
+                        image: c.image,
+                        baseInit: baseScore
+                    };
                 });
 
-                // 2. Multi-participant stalemate resolution pass (Tier 3)
-                const stalemateGroups: Record<string, typeof rolledCombatants> = {};
-                rolledCombatants.forEach((c) => {
-                    const key = `${c.total}_${c.baseInit}`;
-                    if (!stalemateGroups[key]) stalemateGroups[key] = [];
-                    stalemateGroups[key].push(c);
-                });
+                const { rolledCombatants, logSummary } = resolveInitiativeRolls(participants);
 
-                const finalCombatants = rolledCombatants.map((c) => {
-                    const key = `${c.total}_${c.baseInit}`;
-                    const group = stalemateGroups[key];
-                    let tiebreaker = 0;
-
-                    if (group && group.length > 1) {
-                        const existingTies = group.map((member) => member.tiebreaker).filter((t) => t > 0);
-                        let roll = Math.floor(Math.random() * 6) + 1;
-                        while (existingTies.includes(roll)) {
-                            roll = Math.floor(Math.random() * 6) + 1;
-                        }
-                        c.tiebreaker = roll;
-                        tiebreaker = roll;
-                    }
-
-                    const tiebreakerNote = tiebreaker > 0 ? ` (🎲 Tiebreaker: [${tiebreaker}])` : '';
-                    logSummary += `${c.name}: [${c.d6}] + Base ${c.baseInit} = ${c.total}${tiebreakerNote}\n`;
-
-                    return { ...c, tiebreaker };
-                });
-
-                const sorted = sortCombatants(finalCombatants);
+                const sorted = sortCombatants(rolledCombatants);
                 setCombatants(sorted);
                 localStorage.setItem('pkr_standalone_init_list', JSON.stringify(sorted));
                 window.dispatchEvent(new Event('pkr-standalone-init-update'));
@@ -549,54 +467,22 @@ export function useInitiativeEngine() {
 
             if (initItems.length === 0) return;
 
-            const rolledObrCombatants = initItems.map((item) => {
-                const baseScore = calculateBaseInitFromCharacterData(item.metadata, globalState);
-                const rolledD6 = Math.floor(Math.random() * 6) + 1;
-                const total = rolledD6 + baseScore;
-                return {
-                    id: item.id,
-                    name: item.name,
-                    d6: rolledD6,
-                    baseInit: baseScore,
-                    total,
-                    tiebreaker: 0
-                };
-            });
+            const participants = initItems.map((item) => ({
+                id: item.id,
+                name: item.name,
+                baseInit: calculateBaseInitFromCharacterData(item.metadata, globalState)
+            }));
 
-            // Detect stalemates among OBR combatants
-            const stalemateGroups: Record<string, typeof rolledObrCombatants> = {};
-            rolledObrCombatants.forEach((c) => {
-                const key = `${c.total}_${c.baseInit}`;
-                if (!stalemateGroups[key]) stalemateGroups[key] = [];
-                stalemateGroups[key].push(c);
-            });
+            const { rolledCombatants, logSummary } = resolveInitiativeRolls(participants);
 
             const updatesMap: Record<string, { value: number; base: number; tiebreaker: number }> = {};
-
-            rolledObrCombatants.forEach((c) => {
-                const key = `${c.total}_${c.baseInit}`;
-                const group = stalemateGroups[key];
-                let tiebreaker = 0;
-
-                if (group && group.length > 1) {
-                    const existingTies = group.map((member) => member.tiebreaker).filter((t) => t > 0);
-                    let roll = Math.floor(Math.random() * 6) + 1;
-                    while (existingTies.includes(roll)) {
-                        roll = Math.floor(Math.random() * 6) + 1;
-                    }
-                    c.tiebreaker = roll;
-                    tiebreaker = roll;
-                }
-
-                const encodedValue = calculateEncodedInitiative(c.total, c.baseInit, tiebreaker);
+            rolledCombatants.forEach((c) => {
+                const encodedValue = calculateEncodedInitiative(c.total, c.baseInit, c.tiebreaker);
                 updatesMap[c.id] = {
                     value: encodedValue,
                     base: c.baseInit,
-                    tiebreaker
+                    tiebreaker: c.tiebreaker
                 };
-
-                const tiebreakerNote = tiebreaker > 0 ? ` (🎲 Tiebreaker: [${tiebreaker}])` : '';
-                logSummary += `${c.name}: [${c.d6}] + Base ${c.baseInit} = ${c.total}${tiebreakerNote}\n`;
             });
 
             await OBR.scene.items.updateItems(

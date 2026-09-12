@@ -1,56 +1,16 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-    Search,
-    Filter,
-    Sparkles,
-    X,
-    ChevronDown,
-    ChevronUp,
-    Copy,
-    Megaphone,
-    Check,
-    Loader2,
-    Shield,
-    Zap,
-    RotateCcw,
-    AlertCircle,
-    XCircle,
-    Link2
-} from 'lucide-react';
+import { Search, Loader2, AlertCircle, XCircle } from 'lucide-react';
 import type { PokemonLookupEntry, AbilitySlotFilter, TypeMatchMode, PokemonApiResponse } from '../../utils/apiTypes';
 import type { CustomPokemon } from '../../store/storeTypes';
 import { fetchPokemonLookupIndex, fetchPokemonData } from '../../utils/api';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { POKEMON_TYPES, TYPE_COLORS } from '../../data/constants';
-import { TooltipIcon } from '../ui/TooltipIcon';
+import { TYPE_COLORS } from '../../data/constants';
 import { broadcastInfo } from '../../utils/diceRoller';
 import { getBaseShareUrl } from '../../utils/helper';
+import { groupMovesByRank } from './pokemonLookup/pokemonLookupUtils';
+import { PokemonLookupFilterPanel } from './pokemonLookup/PokemonLookupFilterPanel';
+import { PokemonLookupCard } from './pokemonLookup/PokemonLookupCard';
 import './GmPokemonLookup.css';
-
-const LEARN_RANKS = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master'];
-const RANK_ORDER = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion', 'Other'];
-
-function groupMovesByRank(moves: [string, string][]): { rank: string; moves: string[] }[] {
-    const grouped: Record<string, string[]> = {};
-    moves.forEach(([name, rank]) => {
-        const r = rank || 'Other';
-        if (!grouped[r]) grouped[r] = [];
-        grouped[r].push(name);
-    });
-
-    const sortedRanks = Object.keys(grouped).sort((a, b) => {
-        let indexA = RANK_ORDER.indexOf(a);
-        let indexB = RANK_ORDER.indexOf(b);
-        if (indexA === -1) indexA = 99;
-        if (indexB === -1) indexB = 99;
-        return indexA - indexB;
-    });
-
-    return sortedRanks.map((rank) => ({
-        rank,
-        moves: grouped[rank]
-    }));
-}
 
 export function GmPokemonLookup() {
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
@@ -527,6 +487,10 @@ ${movesText || '• None'}`;
         }
     };
 
+    const handleOpenTooltip = (title: string, desc: string) => {
+        setTooltipInfo({ title, desc });
+    };
+
     if (isLoading) {
         return (
             <div className="gm-pokemon-lookup__loading">
@@ -554,311 +518,39 @@ ${movesText || '• None'}`;
 
     return (
         <div className="gm-pokemon-lookup">
-            {/* HTML5 Datalists for Autocomplete */}
-            <datalist id="gm-lookup-abilities-list">
-                {availableAbilities.map((ab) => (
-                    <option key={ab} value={ab} />
-                ))}
-            </datalist>
-            <datalist id="gm-lookup-moves-list">
-                {availableMoves.map((mv) => (
-                    <option key={mv} value={mv} />
-                ))}
-            </datalist>
-
-            {/* --- Filter Controls --- */}
-            <div className="gm-pokemon-lookup__filters">
-                <div className="gm-pokemon-lookup__filters-header">
-                    <div className="gm-pokemon-lookup__filters-title text-title-primary">
-                        <Filter size={18} /> Pokédex Search & Filter
-                    </div>
-                    <div className="gm-pokemon-lookup__filters-actions">
-                        <button
-                            type="button"
-                            className="action-button action-button--theme"
-                            onClick={handleApplySearch}
-                            title="Apply all search parameters"
-                        >
-                            <Search size={14} /> Search
-                        </button>
-                        <button
-                            type="button"
-                            className="action-button action-button--dark"
-                            onClick={handleCopyLookupLink}
-                            title="Copy direct shareable link to Pokémon Lookup"
-                        >
-                            {copiedLookupLink ? (
-                                <>
-                                    <Check size={13} color="var(--primary)" /> Link Copied!
-                                </>
-                            ) : (
-                                <>
-                                    <Link2 size={13} /> Copy Link
-                                </>
-                            )}
-                        </button>
-                        {hasActiveFilters && (
-                            <button
-                                type="button"
-                                className="gm-pokemon-lookup__reset-btn"
-                                onClick={handleResetFilters}
-                                title="Reset all filters"
-                            >
-                                <RotateCcw size={13} /> Reset Filters
-                            </button>
-                        )}
-                    </div>
-                </div>
-
-                <div className="gm-pokemon-lookup__filter-grid">
-                    {/* 1. Name Search */}
-                    <div className="gm-pokemon-lookup__field">
-                        <label className="gm-pokemon-lookup__field-label text-label">
-                            <Search size={14} /> Pokémon Name / Dex #
-                        </label>
-                        <div className="gm-pokemon-lookup__input-wrapper">
-                            <input
-                                type="text"
-                                className="gm-pokemon-lookup__input text-subtext"
-                                placeholder="Search name or number (e.g. Abra, 0063)..."
-                                value={nameInput}
-                                onChange={(e) => setNameInput(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') handleApplySearch();
-                                }}
-                                onBlur={handleApplySearch}
-                            />
-                            <div className="gm-pokemon-lookup__input-actions">
-                                {nameInput && (
-                                    <button
-                                        type="button"
-                                        className="gm-pokemon-lookup__icon-btn"
-                                        onClick={handleClearName}
-                                        title="Clear name search"
-                                    >
-                                        <X size={14} />
-                                    </button>
-                                )}
-                                <button
-                                    type="button"
-                                    className="gm-pokemon-lookup__icon-btn gm-pokemon-lookup__search-trigger-btn"
-                                    onClick={handleApplySearch}
-                                    title="Search"
-                                >
-                                    <Search size={14} />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 2. Type Filtering */}
-                    <div className="gm-pokemon-lookup__field">
-                        <div className="gm-pokemon-lookup__field-label text-label">
-                            <Shield size={14} /> Type & Dual Type Mode
-                        </div>
-                        <div className="gm-pokemon-lookup__dual-inputs">
-                            <select
-                                className="gm-pokemon-lookup__select text-subtext"
-                                value={type1}
-                                onChange={(e) => setType1(e.target.value)}
-                            >
-                                <option value="">Primary Type</option>
-                                {POKEMON_TYPES.filter(Boolean).map((t) => (
-                                    <option key={`type1-${t}`} value={t}>
-                                        {t}
-                                    </option>
-                                ))}
-                            </select>
-
-                            <select
-                                className="gm-pokemon-lookup__select text-subtext"
-                                value={type2}
-                                onChange={(e) => setType2(e.target.value)}
-                            >
-                                <option value="">Secondary Type</option>
-                                {POKEMON_TYPES.filter(Boolean).map((t) => (
-                                    <option key={`type2-${t}`} value={t}>
-                                        {t}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        {(type1 || type2) && (
-                            <div className="gm-pokemon-lookup__button-group">
-                                <button
-                                    type="button"
-                                    className={`gm-pokemon-lookup__button-group-item ${typeMatchMode === 'any' ? 'gm-pokemon-lookup__button-group-item--active' : ''}`}
-                                    onClick={() => setTypeMatchMode('any')}
-                                    title="Match Pokémon with either of the selected types"
-                                >
-                                    Either Type
-                                </button>
-                                <button
-                                    type="button"
-                                    className={`gm-pokemon-lookup__button-group-item ${typeMatchMode === 'exact' ? 'gm-pokemon-lookup__button-group-item--active' : ''}`}
-                                    onClick={() => setTypeMatchMode('exact')}
-                                    title="Must match both types exactly"
-                                >
-                                    Exact Dual Match
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* 3. Move & Learn Rank Filtering */}
-                    <div className="gm-pokemon-lookup__field">
-                        <label className="gm-pokemon-lookup__field-label text-label">
-                            <Zap size={14} /> Move & Rank Learned
-                        </label>
-                        <div className="gm-pokemon-lookup__dual-inputs">
-                            <div className="gm-pokemon-lookup__input-wrapper">
-                                <input
-                                    type="text"
-                                    list="gm-lookup-moves-list"
-                                    className="gm-pokemon-lookup__input text-subtext"
-                                    placeholder="Move (e.g. Quick Attack)..."
-                                    value={moveInput}
-                                    onChange={(e) => setMoveInput(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') handleApplySearch();
-                                    }}
-                                    onBlur={handleApplySearch}
-                                />
-                                <div className="gm-pokemon-lookup__input-actions">
-                                    {moveInput && (
-                                        <button
-                                            type="button"
-                                            className="gm-pokemon-lookup__icon-btn"
-                                            onClick={handleClearMove}
-                                            title="Clear move filter"
-                                        >
-                                            <X size={14} />
-                                        </button>
-                                    )}
-                                    <button
-                                        type="button"
-                                        className="gm-pokemon-lookup__icon-btn gm-pokemon-lookup__search-trigger-btn"
-                                        onClick={handleApplySearch}
-                                        title="Search move"
-                                    >
-                                        <Search size={14} />
-                                    </button>
-                                </div>
-                            </div>
-
-                            <select
-                                className="gm-pokemon-lookup__select text-subtext"
-                                value={moveRank}
-                                onChange={(e) => setMoveRank(e.target.value)}
-                            >
-                                <option value="">Rank: Any Rank</option>
-                                {LEARN_RANKS.map((r) => (
-                                    <option key={`rank-${r}`} value={r}>
-                                        {r}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* 4. Ability Filtering */}
-                    <div className="gm-pokemon-lookup__field">
-                        <div className="gm-pokemon-lookup__field-label text-label">
-                            <Sparkles size={14} /> Ability
-                            <TooltipIcon
-                                onClick={() =>
-                                    setTooltipInfo({
-                                        title: 'Hidden Abilities (Homebrew)',
-                                        desc: 'Hidden Abilities are community homebrew additions in this dataset and are not canon to official Pokerole rules. GM discretion is advised when using them.'
-                                    })
-                                }
-                            />
-                        </div>
-                        <div className="gm-pokemon-lookup__input-wrapper">
-                            <input
-                                type="text"
-                                list="gm-lookup-abilities-list"
-                                className="gm-pokemon-lookup__input text-subtext"
-                                placeholder="Filter ability (e.g. Flash Fire)..."
-                                value={abilityInput}
-                                onChange={(e) => setAbilityInput(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') handleApplySearch();
-                                }}
-                                onBlur={handleApplySearch}
-                            />
-                            <div className="gm-pokemon-lookup__input-actions">
-                                {abilityInput && (
-                                    <button
-                                        type="button"
-                                        className="gm-pokemon-lookup__icon-btn"
-                                        onClick={handleClearAbility}
-                                        title="Clear ability filter"
-                                    >
-                                        <X size={14} />
-                                    </button>
-                                )}
-                                <button
-                                    type="button"
-                                    className="gm-pokemon-lookup__icon-btn gm-pokemon-lookup__search-trigger-btn"
-                                    onClick={handleApplySearch}
-                                    title="Search ability"
-                                >
-                                    <Search size={14} />
-                                </button>
-                            </div>
-                        </div>
-                        <div className="gm-pokemon-lookup__button-group">
-                            <button
-                                type="button"
-                                className={`gm-pokemon-lookup__button-group-item ${abilitySlot === 'all' ? 'gm-pokemon-lookup__button-group-item--active' : ''}`}
-                                onClick={() => setAbilitySlot('all')}
-                            >
-                                Any Slot
-                            </button>
-                            <button
-                                type="button"
-                                className={`gm-pokemon-lookup__button-group-item ${abilitySlot === 'standard' ? 'gm-pokemon-lookup__button-group-item--active' : ''}`}
-                                onClick={() => setAbilitySlot('standard')}
-                                title="Standard canon abilities (Ability 1 or 2)"
-                            >
-                                Standard (1/2)
-                            </button>
-                            <button
-                                type="button"
-                                className={`gm-pokemon-lookup__button-group-item ${abilitySlot === 'hidden' ? 'gm-pokemon-lookup__button-group-item--active' : ''}`}
-                                onClick={() => setAbilitySlot('hidden')}
-                                title="Hidden Ability (Homebrew community addition - non-canon)"
-                            >
-                                Hidden (HA)
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* 5. Special Checkboxes */}
-                <div className="gm-pokemon-lookup__checkbox-row">
-                    <label className="gm-pokemon-lookup__checkbox-label">
-                        <input
-                            type="checkbox"
-                            className="gm-pokemon-lookup__checkbox"
-                            checked={onlyStarters}
-                            onChange={(e) => setOnlyStarters(e.target.checked)}
-                        />
-                        <span>Good Starters Only</span>
-                    </label>
-
-                    <label className="gm-pokemon-lookup__checkbox-label">
-                        <input
-                            type="checkbox"
-                            className="gm-pokemon-lookup__checkbox"
-                            checked={onlyLegendary}
-                            onChange={(e) => setOnlyLegendary(e.target.checked)}
-                        />
-                        <span>Legendary / Mythical Only</span>
-                    </label>
-                </div>
-            </div>
+            <PokemonLookupFilterPanel
+                nameInput={nameInput}
+                setNameInput={setNameInput}
+                abilityInput={abilityInput}
+                setAbilityInput={setAbilityInput}
+                moveInput={moveInput}
+                setMoveInput={setMoveInput}
+                type1={type1}
+                setType1={setType1}
+                type2={type2}
+                setType2={setType2}
+                typeMatchMode={typeMatchMode}
+                setTypeMatchMode={setTypeMatchMode}
+                abilitySlot={abilitySlot}
+                setAbilitySlot={setAbilitySlot}
+                moveRank={moveRank}
+                setMoveRank={setMoveRank}
+                onlyStarters={onlyStarters}
+                setOnlyStarters={setOnlyStarters}
+                onlyLegendary={onlyLegendary}
+                setOnlyLegendary={setOnlyLegendary}
+                hasActiveFilters={hasActiveFilters}
+                availableAbilities={availableAbilities}
+                availableMoves={availableMoves}
+                copiedLookupLink={copiedLookupLink}
+                onApplySearch={handleApplySearch}
+                onResetFilters={handleResetFilters}
+                onClearName={handleClearName}
+                onClearAbility={handleClearAbility}
+                onClearMove={handleClearMove}
+                onCopyLookupLink={handleCopyLookupLink}
+                onOpenTooltip={handleOpenTooltip}
+            />
 
             {/* --- Results Header Meta --- */}
             {hasActiveFilters && (
@@ -889,292 +581,26 @@ ${movesText || '• None'}`;
                 </div>
             ) : (
                 <div className="gm-pokemon-lookup__results-list">
-                    {filteredPokemon.slice(0, displayLimit).map((p) => {
-                        const isExpanded = expandedPokemon === p.name;
-                        const fullData = fullDataCache[p.name];
-                        const isLoadingFull = loadingDetails === p.name;
-
-                        // Check if move matches filter
-                        const matchedMoves =
-                            appliedMove || moveRank
-                                ? p.moves.filter(([mName, mRank]) => {
-                                      const nameMatches =
-                                          !appliedMove || mName.toLowerCase().includes(appliedMove.toLowerCase());
-                                      const rankMatches = !moveRank || mRank.toLowerCase() === moveRank.toLowerCase();
-                                      return nameMatches && rankMatches;
-                                  })
-                                : [];
-
-                        return (
-                            <div
-                                key={`lookup-poke-${p.name}`}
-                                id={`pokemon-card-${p.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
-                                className="gm-pokemon-lookup__card"
-                            >
-                                <div className="gm-pokemon-lookup__card-header">
-                                    <div className="gm-pokemon-lookup__card-identity">
-                                        <span className="gm-pokemon-lookup__card-dex-id">#{p.dexId}</span>
-                                        <span className="gm-pokemon-lookup__card-name">{p.name}</span>
-                                        {p.isCustom && <span className="gm-pokemon-lookup__custom-tag">Homebrew</span>}
-                                        <div className="gm-pokemon-lookup__card-types">
-                                            <span
-                                                className="gm-pokemon-lookup__type-badge"
-                                                style={{ backgroundColor: allTypeColors[p.type1] || '#888' }}
-                                            >
-                                                {p.type1}
-                                            </span>
-                                            {p.type2 && (
-                                                <span
-                                                    className="gm-pokemon-lookup__type-badge"
-                                                    style={{ backgroundColor: allTypeColors[p.type2] || '#888' }}
-                                                >
-                                                    {p.type2}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="gm-pokemon-lookup__card-actions">
-                                        <button
-                                            type="button"
-                                            className="action-button action-button--dark"
-                                            onClick={() => handleCopyDiscord(p)}
-                                            title="Copy Discord Markdown summary"
-                                        >
-                                            {copiedName === p.name ? (
-                                                <>
-                                                    <Check size={14} color="#4caf50" /> Copied!
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Copy size={14} /> Discord
-                                                </>
-                                            )}
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            className="action-button action-button--dark"
-                                            onClick={() => handleCopyCardLink(p.name)}
-                                            title={`Copy direct link to ${p.name}`}
-                                        >
-                                            {copiedCardLink === p.name ? (
-                                                <>
-                                                    <Check size={14} color="#4caf50" /> Link Copied!
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Link2 size={14} /> Link
-                                                </>
-                                            )}
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            className="action-button action-button--secondary"
-                                            onClick={() => handleBroadcast(p)}
-                                            title="Broadcast Pokémon summary to Owlbear Rodeo chat"
-                                        >
-                                            <Megaphone size={14} /> Broadcast
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            className="action-button action-button--dark"
-                                            onClick={() => handleToggleExpand(p.name)}
-                                            title={
-                                                isExpanded ? 'Collapse learnset & stats' : 'View full learnset & stats'
-                                            }
-                                        >
-                                            {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                                            {isExpanded ? 'Hide' : 'Details'}
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="gm-pokemon-lookup__card-details">
-                                    <div className="gm-pokemon-lookup__abilities-list">
-                                        <span className="text-label" style={{ marginRight: '4px' }}>
-                                            Abilities:
-                                        </span>
-                                        {p.ability1 && (
-                                            <span
-                                                className={`gm-pokemon-lookup__ability-badge ${
-                                                    appliedAbility &&
-                                                    p.ability1.toLowerCase().includes(appliedAbility.toLowerCase())
-                                                        ? 'gm-pokemon-lookup__ability-badge--highlight'
-                                                        : ''
-                                                }`}
-                                            >
-                                                {p.ability1}
-                                            </span>
-                                        )}
-                                        {p.ability2 && (
-                                            <span
-                                                className={`gm-pokemon-lookup__ability-badge ${
-                                                    appliedAbility &&
-                                                    p.ability2.toLowerCase().includes(appliedAbility.toLowerCase())
-                                                        ? 'gm-pokemon-lookup__ability-badge--highlight'
-                                                        : ''
-                                                }`}
-                                            >
-                                                {p.ability2}
-                                            </span>
-                                        )}
-                                        {p.hiddenAbility && (
-                                            <span
-                                                className={`gm-pokemon-lookup__ability-badge gm-pokemon-lookup__ability-badge--hidden ${
-                                                    appliedAbility &&
-                                                    p.hiddenAbility.toLowerCase().includes(appliedAbility.toLowerCase())
-                                                        ? 'gm-pokemon-lookup__ability-badge--highlight'
-                                                        : ''
-                                                }`}
-                                                style={{ cursor: 'pointer' }}
-                                                onClick={() =>
-                                                    setTooltipInfo({
-                                                        title: `${p.hiddenAbility} (Hidden Ability - Homebrew)`,
-                                                        desc: 'Hidden Abilities are community homebrew additions in this dataset and are not canon to official Pokerole rules. GM discretion is advised when using them.'
-                                                    })
-                                                }
-                                            >
-                                                <Sparkles size={11} /> {p.hiddenAbility}{' '}
-                                                <span className="gm-pokemon-lookup__ha-tag">HA</span>
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    {matchedMoves.length > 0 && (
-                                        <div className="gm-pokemon-lookup__match-pill">
-                                            <Zap size={13} />
-                                            {matchedMoves.map(([mName, mRank]) => `${mName} (${mRank})`).join(', ')}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Expandable Detail Drawer */}
-                                {isExpanded && (
-                                    <div className="gm-pokemon-lookup__drawer">
-                                        {isLoadingFull ? (
-                                            <div
-                                                style={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '8px',
-                                                    padding: '8px 0'
-                                                }}
-                                            >
-                                                <Loader2 size={16} className="animate-spin" />
-                                                <span className="text-subtext">Loading full Pokédex entry...</span>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                {/* Stats Box if fullData available */}
-                                                {fullData && (
-                                                    <div className="gm-pokemon-lookup__drawer-stats-grid">
-                                                        <div className="gm-pokemon-lookup__stat-box">
-                                                            <span className="gm-pokemon-lookup__stat-name">
-                                                                Base HP
-                                                            </span>
-                                                            <span className="gm-pokemon-lookup__stat-val">
-                                                                {fullData.BaseHP || 0}
-                                                            </span>
-                                                        </div>
-                                                        <div className="gm-pokemon-lookup__stat-box">
-                                                            <span className="gm-pokemon-lookup__stat-name">
-                                                                Strength
-                                                            </span>
-                                                            <span className="gm-pokemon-lookup__stat-val">
-                                                                {fullData.Strength || 0}
-                                                            </span>
-                                                        </div>
-                                                        <div className="gm-pokemon-lookup__stat-box">
-                                                            <span className="gm-pokemon-lookup__stat-name">
-                                                                Dexterity
-                                                            </span>
-                                                            <span className="gm-pokemon-lookup__stat-val">
-                                                                {fullData.Dexterity || 0}
-                                                            </span>
-                                                        </div>
-                                                        <div className="gm-pokemon-lookup__stat-box">
-                                                            <span className="gm-pokemon-lookup__stat-name">
-                                                                Vitality
-                                                            </span>
-                                                            <span className="gm-pokemon-lookup__stat-val">
-                                                                {fullData.Vitality || 0}
-                                                            </span>
-                                                        </div>
-                                                        <div className="gm-pokemon-lookup__stat-box">
-                                                            <span className="gm-pokemon-lookup__stat-name">
-                                                                Special
-                                                            </span>
-                                                            <span className="gm-pokemon-lookup__stat-val">
-                                                                {fullData.Special || 0}
-                                                            </span>
-                                                        </div>
-                                                        <div className="gm-pokemon-lookup__stat-box">
-                                                            <span className="gm-pokemon-lookup__stat-name">
-                                                                Insight
-                                                            </span>
-                                                            <span className="gm-pokemon-lookup__stat-val">
-                                                                {fullData.Insight || 0}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Full Move Learnset Grouped by Rank */}
-                                                <div className="gm-pokemon-lookup__drawer-moves">
-                                                    <div className="gm-pokemon-lookup__drawer-moves-title">
-                                                        Move Learnset ({p.moves.length} Moves)
-                                                    </div>
-                                                    <div className="gm-pokemon-lookup__rank-groups-container">
-                                                        {groupMovesByRank(p.moves).map(({ rank, moves }) => (
-                                                            <div
-                                                                key={`rank-group-${p.name}-${rank}`}
-                                                                className="gm-pokemon-lookup__rank-group"
-                                                            >
-                                                                <div className="gm-pokemon-lookup__rank-group-title text-label">
-                                                                    {rank} ({moves.length})
-                                                                </div>
-                                                                <div className="gm-pokemon-lookup__rank-moves-list">
-                                                                    {moves.map((mName, idx) => {
-                                                                        const isMoveMatch =
-                                                                            appliedMove &&
-                                                                            mName
-                                                                                .toLowerCase()
-                                                                                .includes(appliedMove.toLowerCase());
-                                                                        return (
-                                                                            <span
-                                                                                key={`move-${p.name}-${mName}-${idx}`}
-                                                                                className={`gm-pokemon-lookup__move-pill ${
-                                                                                    isMoveMatch
-                                                                                        ? 'gm-pokemon-lookup__move-pill--highlight'
-                                                                                        : ''
-                                                                                }`}
-                                                                            >
-                                                                                {mName}
-                                                                            </span>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                {/* Dex Description if available */}
-                                                {fullData && fullData.DexDescription && (
-                                                    <div className="gm-pokemon-lookup__drawer-desc">
-                                                        "{fullData.DexDescription}"
-                                                    </div>
-                                                )}
-                                            </>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
+                    {filteredPokemon.slice(0, displayLimit).map((p) => (
+                        <PokemonLookupCard
+                            key={`lookup-poke-${p.name}`}
+                            pokemon={p}
+                            isExpanded={expandedPokemon === p.name}
+                            fullData={fullDataCache[p.name]}
+                            isLoadingFull={loadingDetails === p.name}
+                            copiedName={copiedName}
+                            copiedCardLink={copiedCardLink}
+                            allTypeColors={allTypeColors}
+                            appliedAbility={appliedAbility}
+                            appliedMove={appliedMove}
+                            moveRank={moveRank}
+                            onToggleExpand={handleToggleExpand}
+                            onCopyDiscord={handleCopyDiscord}
+                            onCopyCardLink={handleCopyCardLink}
+                            onBroadcast={handleBroadcast}
+                            onOpenTooltip={handleOpenTooltip}
+                        />
+                    ))}
 
                     {/* Pagination / Show More */}
                     {filteredPokemon.length > displayLimit && (

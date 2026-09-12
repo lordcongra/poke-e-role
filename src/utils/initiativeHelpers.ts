@@ -205,3 +205,66 @@ export function sortCombatants(list: Combatant[]): Combatant[] {
         return bTie - aTie;
     });
 }
+
+export interface InitiativeParticipant {
+    id: string;
+    name: string;
+    baseInit: number;
+    image?: string;
+}
+
+export interface ResolvedInitiativeResult {
+    rolledCombatants: Combatant[];
+    logSummary: string;
+}
+
+export function resolveInitiativeRolls(participants: InitiativeParticipant[]): ResolvedInitiativeResult {
+    let logSummary = 'All Combatants Rolled Initiative:\n\n';
+
+    const preliminaryCombatants = participants.map((p) => {
+        const rolledD6 = Math.floor(Math.random() * 6) + 1;
+        const total = rolledD6 + p.baseInit;
+        return {
+            id: p.id,
+            name: p.name,
+            image: p.image || '',
+            d6: rolledD6,
+            baseInit: p.baseInit,
+            total,
+            tiebreaker: 0
+        };
+    });
+
+    const stalemateGroups: Record<string, Combatant[]> = {};
+    preliminaryCombatants.forEach((c) => {
+        const key = `${c.total}_${c.baseInit}`;
+        if (!stalemateGroups[key]) stalemateGroups[key] = [];
+        stalemateGroups[key].push(c);
+    });
+
+    const finalCombatants: Combatant[] = preliminaryCombatants.map((c) => {
+        const key = `${c.total}_${c.baseInit}`;
+        const group = stalemateGroups[key];
+        let tiebreaker = 0;
+
+        if (group && group.length > 1) {
+            const existingTies = group.map((member) => member.tiebreaker).filter((t) => t > 0);
+            let roll = Math.floor(Math.random() * 6) + 1;
+            while (existingTies.includes(roll)) {
+                roll = Math.floor(Math.random() * 6) + 1;
+            }
+            c.tiebreaker = roll;
+            tiebreaker = roll;
+        }
+
+        const tiebreakerNote = tiebreaker > 0 ? ` (🎲 Tiebreaker: [${tiebreaker}])` : '';
+        logSummary += `${c.name}: [${c.d6}] + Base ${c.baseInit} = ${c.total}${tiebreakerNote}\n`;
+
+        return { ...c, tiebreaker };
+    });
+
+    return {
+        rolledCombatants: finalCombatants,
+        logSummary
+    };
+}
