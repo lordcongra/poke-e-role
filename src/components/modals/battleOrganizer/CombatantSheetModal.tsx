@@ -20,7 +20,7 @@ import { TrackerSection } from '../../board/TrackerSection';
 import { TrainerBadges } from '../../board/TrainerBadges';
 import { DemoRollModal } from '../DemoRollModal';
 import { InModalRollLog } from './InModalRollLog';
-import { X, ChevronLeft, ChevronRight, User, Loader2, Lock } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, User, Loader2, Lock, AlertCircle } from 'lucide-react';
 import './CombatantSheetModal.css';
 
 interface CombatantSheetModalProps {
@@ -39,6 +39,7 @@ export function CombatantSheetModal({
     onMarkAction
 }: CombatantSheetModalProps) {
     const [loading, setLoading] = useState(true);
+    const [noTokenLinked, setNoTokenLinked] = useState(false);
     const [resolvedImage, setResolvedImage] = useState<string>('');
     const mode = useCharacterStore((state) => state.identity.mode);
     const type1 = useCharacterStore((state) => state.identity.type1);
@@ -75,7 +76,7 @@ export function CombatantSheetModal({
 
     // Dynamically apply combatant theme colors when loaded or when identity updates
     useEffect(() => {
-        if (loading) return;
+        if (loading || noTokenLinked) return;
 
         const resolved = resolveCharacterThemeColors(
             {
@@ -88,7 +89,7 @@ export function CombatantSheetModal({
         );
 
         applyDynamicThemeColors(resolved.primary, resolved.secondary);
-    }, [loading, type1, type2, themePrimaryOverride, themeSecondaryOverride, roomCustomTypes]);
+    }, [loading, noTokenLinked, type1, type2, themePrimaryOverride, themeSecondaryOverride, roomCustomTypes]);
 
     // Resolve combatant thumbnail
     useEffect(() => {
@@ -120,6 +121,7 @@ export function CombatantSheetModal({
         let isMounted = true;
         const loadCharacter = async () => {
             setLoading(true);
+            setNoTokenLinked(false);
             try {
                 if (isStandaloneMode) {
                     const localChars = await storageAdapter.getLocalCharacters();
@@ -157,9 +159,9 @@ export function CombatantSheetModal({
                             store.roomCustomTypes
                         );
                         applyDynamicThemeColors(resolved.primary, resolved.secondary);
+                        setNoTokenLinked(false);
                     } else if (isMounted) {
-                        const store = useCharacterStore.getState();
-                        store.setIdentity('nickname', combatant.name);
+                        setNoTokenLinked(true);
                     }
                 } else if (OBR.isAvailable) {
                     let targetId = combatant.tokenId;
@@ -209,14 +211,17 @@ export function CombatantSheetModal({
                                 store.roomCustomTypes
                             );
                             applyDynamicThemeColors(resolved.primary, resolved.secondary);
+                            setNoTokenLinked(false);
+                        } else if (isMounted) {
+                            setNoTokenLinked(true);
                         }
                     } else if (isMounted) {
-                        const store = useCharacterStore.getState();
-                        store.setIdentity('nickname', combatant.name);
+                        setNoTokenLinked(true);
                     }
                 }
             } catch (err) {
                 console.error('[CombatantSheetModal] Error loading character data:', err);
+                if (isMounted) setNoTokenLinked(true);
             } finally {
                 if (isMounted) setLoading(false);
             }
@@ -330,6 +335,44 @@ export function CombatantSheetModal({
                         <div className="bo-sheet-modal__loading text-subtext">
                             <Loader2 size={24} className="bo-spin-anim" color="var(--primary)" />
                             <span>Loading Pokémon sheet data...</span>
+                        </div>
+                    ) : noTokenLinked ? (
+                        <div className="bo-sheet-modal__no-token">
+                            <div className="bo-sheet-modal__no-token-icon">
+                                <AlertCircle size={36} color="var(--primary)" />
+                            </div>
+                            <h3 className="bo-sheet-modal__no-token-title text-title-primary">
+                                No Token Linked for &ldquo;{combatant.name || 'Combatant'}&rdquo;
+                            </h3>
+                            <p className="bo-sheet-modal__no-token-desc text-subtext">
+                                In Owlbear Rodeo, character sheets are attached directly to tokens on the map. There is
+                                currently no active token linked to this combatant.
+                            </p>
+                            <div className="bo-sheet-modal__no-token-card">
+                                <span className="bo-sheet-modal__card-heading text-label">
+                                    How to connect a character sheet:
+                                </span>
+                                <div className="bo-sheet-modal__step">
+                                    <span className="bo-sheet-modal__step-num">1</span>
+                                    <span className="text-subtext">
+                                        Drag and drop a token image onto the Owlbear Rodeo map.
+                                    </span>
+                                </div>
+                                <div className="bo-sheet-modal__step">
+                                    <span className="bo-sheet-modal__step-num">2</span>
+                                    <span className="text-subtext">
+                                        Rename that token to match <strong>&ldquo;{combatant.name || 'Combatant'}&rdquo;</strong>, or click{' '}
+                                        <em>Pull from Initiative</em> in the Battle Organizer.
+                                    </span>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                className="action-button action-button--primary bo-sheet-modal__no-token-btn"
+                                onClick={onClose}
+                            >
+                                Got It
+                            </button>
                         </div>
                     ) : isLocked ? (
                         <div

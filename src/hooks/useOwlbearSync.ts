@@ -224,13 +224,14 @@ export function useOwlbearSync() {
                             if (meta) {
                                 try {
                                     const isOldToken = meta['v2-migrated'] !== true;
+                                    const migrationTokenId = targetTokenId;
                                     if (isOldToken && role === 'GM') {
                                         const currentStore = useCharacterStore.getState();
                                         for (const move of currentStore.moves) {
                                             if (move.name) {
                                                 fetchMoveData(move.name)
                                                     .then((data) => {
-                                                        if (data)
+                                                        if (data && useCharacterStore.getState().tokenId === migrationTokenId)
                                                             useCharacterStore
                                                                 .getState()
                                                                 .applyMoveData(
@@ -241,13 +242,15 @@ export function useOwlbearSync() {
                                                     .catch(() => {});
                                             }
                                         }
-                                        saveToOwlbear({ 'v2-migrated': true });
+                                        if (useCharacterStore.getState().tokenId === migrationTokenId) {
+                                            saveToOwlbear({ 'v2-migrated': true });
+                                        }
                                     }
 
                                     if (meta['species']) {
                                         fetchPokemonData(String(meta['species']))
                                             .then((data) => {
-                                                if (data)
+                                                if (data && useCharacterStore.getState().tokenId === migrationTokenId)
                                                     useCharacterStore
                                                         .getState()
                                                         .refreshSpeciesData(data as Record<string, unknown>, false);

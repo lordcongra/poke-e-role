@@ -227,6 +227,8 @@ export function CombatantRow({
             ? `HP: ${hpCurr} / ${hpMax} (+${combatant.tempHp} Temp)`
             : `HP: ${hpCurr}${hpMax ? ` / ${hpMax}` : ''}`;
 
+    const hasToken = Boolean(combatant.tokenId);
+
     return (
         <tr
             className={`bo-combatant-row ${combatant.isPlayerSide ? 'bo-combatant-row--player' : 'bo-combatant-row--foe'} ${combatant.isFainted ? 'bo-combatant-row--fainted' : ''}`}
@@ -314,7 +316,9 @@ export function CombatantRow({
                                 isLocked
                                     ? 'This sheet is hidden by the GM'
                                     : onOpenSheet
-                                      ? `Open sheet for ${combatant.name || 'combatant'}`
+                                      ? hasToken
+                                          ? `Open sheet for ${combatant.name || 'combatant'}`
+                                          : `No token linked for ${combatant.name || 'combatant'} - click to view instructions`
                                       : undefined
                             }
                             role={onOpenSheet && !isLocked ? 'button' : undefined}
@@ -553,10 +557,18 @@ export function CombatantRow({
                         onOpenSheet && (
                             <button
                                 type="button"
-                                className="bo-reaction-toggle bo-sheet-toggle"
+                                className={`bo-reaction-toggle bo-sheet-toggle ${!hasToken ? 'bo-sheet-toggle--unlinked' : ''}`}
                                 onClick={() => onOpenSheet(combatant)}
-                                title={`Open Character Sheet for ${combatant.name || 'combatant'}`}
-                                aria-label={`Open Character Sheet for ${combatant.name || 'combatant'}`}
+                                title={
+                                    hasToken
+                                        ? `Open Character Sheet for ${combatant.name || 'combatant'}`
+                                        : `No token linked for ${combatant.name || 'combatant'} - click to view instructions`
+                                }
+                                aria-label={
+                                    hasToken
+                                        ? `Open Character Sheet for ${combatant.name || 'combatant'}`
+                                        : `No token linked for ${combatant.name || 'combatant'}`
+                                }
                             >
                                 <FileText size={12} />
                             </button>

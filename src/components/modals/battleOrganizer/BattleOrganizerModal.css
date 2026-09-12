@@ -1503,6 +1503,18 @@
     background-color: transparent;
 }
 
+.bo-sheet-toggle--unlinked {
+    opacity: 0.55;
+    border-style: dashed;
+}
+
+.bo-sheet-toggle--unlinked:hover {
+    opacity: 0.95;
+    border-color: var(--primary, #3b82f6);
+    color: var(--primary, #3b82f6);
+    background-color: color-mix(in srgb, var(--primary, #3b82f6) 12%, transparent);
+}
+
 .bo-reaction-toggle--active-faint {
     background-color: #c62828;
     border-color: #ef5350;

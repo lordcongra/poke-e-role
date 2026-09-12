@@ -4,10 +4,27 @@ export const METADATA_ID = 'pokerole-extension/stats';
 
 let saveTimeout: ReturnType<typeof setTimeout>;
 let pendingUpdates: Record<string, unknown> = {};
+let pendingTokenId: string | null = null;
 
 let activeTokenId: string | null = null;
 
 export function setActiveTokenId(id: string | null) {
+    if (activeTokenId !== id) {
+        if (activeTokenId && Object.keys(pendingUpdates).length > 0) {
+            const tokenToFlush = pendingTokenId || activeTokenId;
+            const updatesToPush = { ...pendingUpdates };
+            clearTimeout(saveTimeout);
+            pendingUpdates = {};
+            pendingTokenId = null;
+            storageAdapter.saveCharacter(tokenToFlush, updatesToPush, METADATA_ID).catch((error) => {
+                console.error('[OBR Engine] Failed to flush pending updates before token switch:', error);
+            });
+        } else {
+            clearTimeout(saveTimeout);
+            pendingUpdates = {};
+            pendingTokenId = null;
+        }
+    }
     activeTokenId = id;
 }
 
@@ -19,20 +36,36 @@ export async function saveToOwlbear(updates: Record<string, unknown>) {
     const currentToken = activeTokenId;
     if (!currentToken) return;
 
+    // If there were pending updates from a different token, flush them first
+    if (pendingTokenId && pendingTokenId !== currentToken && Object.keys(pendingUpdates).length > 0) {
+        const oldToken = pendingTokenId;
+        const oldUpdates = { ...pendingUpdates };
+        clearTimeout(saveTimeout);
+        pendingUpdates = {};
+        pendingTokenId = null;
+        storageAdapter.saveCharacter(oldToken, oldUpdates, METADATA_ID).catch((error) => {
+            console.error('[OBR Engine] Failed to flush old token updates before saving new token:', error);
+        });
+    }
+
+    pendingTokenId = currentToken;
     Object.assign(pendingUpdates, updates);
     clearTimeout(saveTimeout);
 
     saveTimeout = setTimeout(async () => {
         const updatesToPush = { ...pendingUpdates };
+        const tokenToSave = pendingTokenId || currentToken;
         pendingUpdates = {};
+        pendingTokenId = null;
 
         console.log('🚀 PUSHING DATA VIA ADAPTER:', updatesToPush);
 
         try {
-            await storageAdapter.saveCharacter(currentToken, updatesToPush, METADATA_ID);
+            await storageAdapter.saveCharacter(tokenToSave, updatesToPush, METADATA_ID);
         } catch (error) {
             console.error('[OBR Engine] Failed to securely save data. Queuing for retry...', error);
             Object.assign(pendingUpdates, { ...updatesToPush, ...pendingUpdates });
+            pendingTokenId = tokenToSave;
         }
     }, 150);
 }
