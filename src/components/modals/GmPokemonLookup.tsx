@@ -156,7 +156,15 @@ export function GmPokemonLookup() {
         };
     }, []);
 
-    // Autocomplete datasets for Abilities and Moves
+    // Autocomplete datasets for Pokémon Names, Abilities and Moves
+    const availablePokemonNames = useMemo(() => {
+        const set = new Set<string>();
+        lookupData.forEach((p) => {
+            if (p.name) set.add(p.name);
+        });
+        return Array.from(set).sort((a, b) => a.localeCompare(b));
+    }, [lookupData]);
+
     const availableAbilities = useMemo(() => {
         const set = new Set<string>();
         lookupData.forEach((p) => {
@@ -178,12 +186,15 @@ export function GmPokemonLookup() {
     }, [lookupData]);
 
     // Apply / Commit Search
-    const handleApplySearch = useCallback(() => {
-        setAppliedName(nameInput.trim());
-        setAppliedAbility(abilityInput.trim());
-        setAppliedMove(moveInput.trim());
-        setDisplayLimit(50);
-    }, [nameInput, abilityInput, moveInput]);
+    const handleApplySearch = useCallback(
+        (overrideName?: string, overrideAbility?: string, overrideMove?: string) => {
+            setAppliedName((overrideName !== undefined ? overrideName : nameInput).trim());
+            setAppliedAbility((overrideAbility !== undefined ? overrideAbility : abilityInput).trim());
+            setAppliedMove((overrideMove !== undefined ? overrideMove : moveInput).trim());
+            setDisplayLimit(50);
+        },
+        [nameInput, abilityInput, moveInput]
+    );
 
     // Check if any filter is actively applied
     const hasActiveFilters = useMemo(() => {
@@ -540,6 +551,7 @@ ${movesText || '• None'}`;
                 onlyLegendary={onlyLegendary}
                 setOnlyLegendary={setOnlyLegendary}
                 hasActiveFilters={hasActiveFilters}
+                availablePokemonNames={availablePokemonNames}
                 availableAbilities={availableAbilities}
                 availableMoves={availableMoves}
                 copiedLookupLink={copiedLookupLink}

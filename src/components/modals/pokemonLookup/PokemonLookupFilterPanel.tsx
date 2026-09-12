@@ -26,10 +26,11 @@ export interface PokemonLookupFilterPanelProps {
     onlyLegendary: boolean;
     setOnlyLegendary: (val: boolean) => void;
     hasActiveFilters: boolean;
+    availablePokemonNames: string[];
     availableAbilities: string[];
     availableMoves: string[];
     copiedLookupLink: boolean;
-    onApplySearch: () => void;
+    onApplySearch: (overrideName?: string, overrideAbility?: string, overrideMove?: string) => void;
     onResetFilters: () => void;
     onClearName: () => void;
     onClearAbility: () => void;
@@ -60,6 +61,7 @@ export function PokemonLookupFilterPanel({
     onlyLegendary,
     setOnlyLegendary,
     hasActiveFilters,
+    availablePokemonNames,
     availableAbilities,
     availableMoves,
     copiedLookupLink,
@@ -74,6 +76,11 @@ export function PokemonLookupFilterPanel({
     return (
         <>
             {/* HTML5 Datalists for Autocomplete */}
+            <datalist id="gm-lookup-pokemon-names-list">
+                {availablePokemonNames.map((name) => (
+                    <option key={name} value={name} />
+                ))}
+            </datalist>
             <datalist id="gm-lookup-abilities-list">
                 {availableAbilities.map((ab) => (
                     <option key={ab} value={ab} />
@@ -95,7 +102,7 @@ export function PokemonLookupFilterPanel({
                         <button
                             type="button"
                             className="action-button action-button--theme"
-                            onClick={onApplySearch}
+                            onClick={() => onApplySearch()}
                             title="Apply all search parameters"
                         >
                             <Search size={14} /> Search
@@ -138,14 +145,23 @@ export function PokemonLookupFilterPanel({
                         <div className="gm-pokemon-lookup__input-wrapper">
                             <input
                                 type="text"
+                                list="gm-lookup-pokemon-names-list"
                                 className="gm-pokemon-lookup__input text-subtext"
                                 placeholder="Search name or number (e.g. Abra, 0063)..."
                                 value={nameInput}
-                                onChange={(e) => setNameInput(e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setNameInput(val);
+                                    if (
+                                        availablePokemonNames.some((n) => n.toLowerCase() === val.trim().toLowerCase())
+                                    ) {
+                                        onApplySearch(val);
+                                    }
+                                }}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') onApplySearch();
                                 }}
-                                onBlur={onApplySearch}
+                                onBlur={() => onApplySearch()}
                             />
                             <div className="gm-pokemon-lookup__input-actions">
                                 {nameInput && (
@@ -161,7 +177,7 @@ export function PokemonLookupFilterPanel({
                                 <button
                                     type="button"
                                     className="gm-pokemon-lookup__icon-btn gm-pokemon-lookup__search-trigger-btn"
-                                    onClick={onApplySearch}
+                                    onClick={() => onApplySearch()}
                                     title="Search"
                                 >
                                     <Search size={14} />
@@ -237,11 +253,17 @@ export function PokemonLookupFilterPanel({
                                     className="gm-pokemon-lookup__input text-subtext"
                                     placeholder="Move (e.g. Quick Attack)..."
                                     value={moveInput}
-                                    onChange={(e) => setMoveInput(e.target.value)}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setMoveInput(val);
+                                        if (availableMoves.some((m) => m.toLowerCase() === val.trim().toLowerCase())) {
+                                            onApplySearch(undefined, undefined, val);
+                                        }
+                                    }}
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') onApplySearch();
                                     }}
-                                    onBlur={onApplySearch}
+                                    onBlur={() => onApplySearch()}
                                 />
                                 <div className="gm-pokemon-lookup__input-actions">
                                     {moveInput && (
@@ -257,7 +279,7 @@ export function PokemonLookupFilterPanel({
                                     <button
                                         type="button"
                                         className="gm-pokemon-lookup__icon-btn gm-pokemon-lookup__search-trigger-btn"
-                                        onClick={onApplySearch}
+                                        onClick={() => onApplySearch()}
                                         title="Search move"
                                     >
                                         <Search size={14} />
@@ -300,11 +322,17 @@ export function PokemonLookupFilterPanel({
                                 className="gm-pokemon-lookup__input text-subtext"
                                 placeholder="Filter ability (e.g. Flash Fire)..."
                                 value={abilityInput}
-                                onChange={(e) => setAbilityInput(e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setAbilityInput(val);
+                                    if (availableAbilities.some((a) => a.toLowerCase() === val.trim().toLowerCase())) {
+                                        onApplySearch(undefined, val);
+                                    }
+                                }}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') onApplySearch();
                                 }}
-                                onBlur={onApplySearch}
+                                onBlur={() => onApplySearch()}
                             />
                             <div className="gm-pokemon-lookup__input-actions">
                                 {abilityInput && (
@@ -320,7 +348,7 @@ export function PokemonLookupFilterPanel({
                                 <button
                                     type="button"
                                     className="gm-pokemon-lookup__icon-btn gm-pokemon-lookup__search-trigger-btn"
-                                    onClick={onApplySearch}
+                                    onClick={() => onApplySearch()}
                                     title="Search ability"
                                 >
                                     <Search size={14} />
