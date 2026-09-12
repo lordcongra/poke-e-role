@@ -361,7 +361,8 @@ export function CombatantSheetModal({
                                 <div className="bo-sheet-modal__step">
                                     <span className="bo-sheet-modal__step-num">2</span>
                                     <span className="text-subtext">
-                                        Rename that token to match <strong>&ldquo;{combatant.name || 'Combatant'}&rdquo;</strong>, or click{' '}
+                                        Rename that token to match{' '}
+                                        <strong>&ldquo;{combatant.name || 'Combatant'}&rdquo;</strong>, or click{' '}
                                         <em>Pull from Initiative</em> in the Battle Organizer.
                                     </span>
                                 </div>

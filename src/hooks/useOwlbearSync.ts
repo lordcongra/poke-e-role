@@ -231,7 +231,10 @@ export function useOwlbearSync() {
                                             if (move.name) {
                                                 fetchMoveData(move.name)
                                                     .then((data) => {
-                                                        if (data && useCharacterStore.getState().tokenId === migrationTokenId)
+                                                        if (
+                                                            data &&
+                                                            useCharacterStore.getState().tokenId === migrationTokenId
+                                                        )
                                                             useCharacterStore
                                                                 .getState()
                                                                 .applyMoveData(
