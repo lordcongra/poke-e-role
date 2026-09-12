@@ -13,7 +13,7 @@ import { RANKS } from '../../data/constants';
 import './GeneratorModal.css';
 
 export function GeneratorModal({ onClose }: { onClose: () => void }) {
-    const state = useCharacterStore();
+    const identity = useCharacterStore((s) => s.identity);
     const config = useCharacterStore((s) => s.generatorConfig);
     const setConfig = useCharacterStore((s) => s.setGeneratorConfig);
     const activeTokenId = useCharacterStore((s) => s.tokenId);
@@ -23,8 +23,8 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
     const [destination, setDestination] = useState<'new' | 'overwrite'>(() => {
         return activeTokenId ? 'overwrite' : 'new';
     });
-    const [targetSpecies, setTargetSpecies] = useState<string>(state.identity.species || '');
-    const [targetRank, setTargetRank] = useState<Rank>(state.identity.rank || 'Starter');
+    const [targetSpecies, setTargetSpecies] = useState<string>(identity.species || '');
+    const [targetRank, setTargetRank] = useState<Rank>(identity.rank || 'Starter');
     const [sheetName, setSheetName] = useState<string>('');
     const [speciesList, setSpeciesList] = useState<string[]>([]);
 
@@ -49,9 +49,9 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
     const filteredCustomPokemon = roomCustomPokemon.filter((p) => role === 'GM' || !p.gmOnly).map((p) => p.Name);
     const uniqueSpecies = Array.from(new Set([...speciesList, ...filteredCustomPokemon]));
 
-    const hasType2 = state.identity.type2 && state.identity.type2 !== 'None';
-    const type1Label = state.identity.type1 || 'Primary';
-    const type2Label = hasType2 ? state.identity.type2 : 'Secondary';
+    const hasType2 = identity.type2 && identity.type2 !== 'None';
+    const type1Label = identity.type1 || 'Primary';
+    const type2Label = hasType2 ? identity.type2 : 'Secondary';
 
     const setMinStat = (stat: string, val: number) => {
         setConfig({ minStats: { ...(config.minStats || {}), [stat]: val } });
@@ -70,7 +70,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                 targetRank: targetRank
             };
 
-            const build = await generateBuild(mergedConfig, state);
+            const build = await generateBuild(mergedConfig, useCharacterStore.getState());
             if (build) {
                 setPreviewBuild(build);
             }

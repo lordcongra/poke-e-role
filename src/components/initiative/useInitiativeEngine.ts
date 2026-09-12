@@ -18,14 +18,12 @@ import type { StandaloneCharOption, ObrCharOption } from './AddCombatantModal';
 
 export function useInitiativeEngine() {
     const storeIdentity = useCharacterStore((state) => state.identity);
-    const globalState = useCharacterStore();
-
-    const activeTokenId = globalState.tokenId;
-    const dexStat = globalState.stats?.dex;
-    const alertSkill = globalState.skills?.alert;
-    const inventory = globalState.inventory;
-    const extraCategories = globalState.extraCategories;
-    const tokenImageUrl = globalState.identity?.tokenImageUrl;
+    const activeTokenId = useCharacterStore((state) => state.tokenId);
+    const dexStat = useCharacterStore((state) => state.stats?.dex);
+    const alertSkill = useCharacterStore((state) => state.skills?.alert);
+    const inventory = useCharacterStore((state) => state.inventory);
+    const extraCategories = useCharacterStore((state) => state.extraCategories);
+    const tokenImageUrl = storeIdentity?.tokenImageUrl;
 
     const [combatants, setCombatants] = useState<Combatant[]>([]);
     const [layout, setLayout] = useState<'vertical' | 'horizontal'>(() => {
@@ -101,7 +99,8 @@ export function useInitiativeEngine() {
         setPrevSyncKey(activeCharSyncKey);
         const activeCombatant = combatants.find((c) => c.id === activeTokenId);
         if (activeCombatant) {
-            const newBase = calculateBaseInitFromCharacterData(globalState, globalState);
+            const store = useCharacterStore.getState();
+            const newBase = calculateBaseInitFromCharacterData(store, store);
             const newImage = tokenImageUrl || '';
             const newName = storeIdentity?.nickname?.trim() || storeIdentity?.species?.trim() || activeCombatant.name;
 
@@ -179,7 +178,10 @@ export function useInitiativeEngine() {
 
                                 if (matchingChar && matchingChar.metadata) {
                                     const meta = matchingChar.metadata as Record<string, unknown>;
-                                    baseInitiative = calculateBaseInitFromCharacterData(meta, globalState);
+                                    baseInitiative = calculateBaseInitFromCharacterData(
+                                        meta,
+                                        useCharacterStore.getState()
+                                    );
                                     resolvedImage = extractTokenImage(meta);
                                     resolvedName = extractCharacterName(meta, matchingChar.name || resolvedName);
                                 }
@@ -314,7 +316,7 @@ export function useInitiativeEngine() {
                     const dynamicBaseInit =
                         typeof meta?.base === 'number'
                             ? meta.base
-                            : calculateBaseInitFromCharacterData(item.metadata, globalState);
+                            : calculateBaseInitFromCharacterData(item.metadata, useCharacterStore.getState());
 
                     let integerTotal = Math.floor(val);
                     // If legacy token value was 0 or just a decimal fraction (e.g. 0.111), fallback to base
@@ -386,7 +388,7 @@ export function useInitiativeEngine() {
             isMounted = false;
             unsubs.forEach((unsub) => unsub());
         };
-    }, [globalState, applyDynamicColors]);
+    }, [applyDynamicColors]);
 
     // --- Actions ---
 
@@ -431,7 +433,10 @@ export function useInitiativeEngine() {
                 const participants = combatants.map((c) => {
                     const charObj = localChars.find((lc) => lc.id === c.id);
                     const baseScore = charObj?.metadata
-                        ? calculateBaseInitFromCharacterData(charObj.metadata as Record<string, unknown>, globalState)
+                        ? calculateBaseInitFromCharacterData(
+                              charObj.metadata as Record<string, unknown>,
+                              useCharacterStore.getState()
+                          )
                         : c.baseInit;
                     return {
                         id: c.id,
@@ -470,7 +475,7 @@ export function useInitiativeEngine() {
             const participants = initItems.map((item) => ({
                 id: item.id,
                 name: item.name,
-                baseInit: calculateBaseInitFromCharacterData(item.metadata, globalState)
+                baseInit: calculateBaseInitFromCharacterData(item.metadata, useCharacterStore.getState())
             }));
 
             const { rolledCombatants, logSummary } = resolveInitiativeRolls(participants);
@@ -624,7 +629,7 @@ export function useInitiativeEngine() {
     const handleAddStandaloneCombatant = (char: StandaloneCharOption) => {
         if (combatants.find((c) => c.id === char.id)) return;
 
-        const baseInit = calculateBaseInitFromCharacterData(char.rawMetadata, globalState);
+        const baseInit = calculateBaseInitFromCharacterData(char.rawMetadata, useCharacterStore.getState());
         const resolvedName = extractCharacterName(char.rawMetadata, char.name);
         const newList = sortCombatants([
             ...combatants,
@@ -651,7 +656,7 @@ export function useInitiativeEngine() {
     const handleAddObrCombatant = async (item: Item) => {
         if (!OBR.isAvailable) return;
         try {
-            const dynamicBaseInit = calculateBaseInitFromCharacterData(item.metadata, globalState);
+            const dynamicBaseInit = calculateBaseInitFromCharacterData(item.metadata, useCharacterStore.getState());
             const encodedValue = calculateEncodedInitiative(dynamicBaseInit, dynamicBaseInit, 0);
             await OBR.scene.items.updateItems([item.id], (items) => {
                 for (const i of items) {

@@ -73,7 +73,7 @@ type ActiveModal =
 export function GlobalToolbar() {
     const isObrReady = useObrReady();
     const { handleInitiativeToggle } = useInitiativePopover(isObrReady);
-    const store = useCharacterStore();
+    const loadFromOwlbear = useCharacterStore((state) => state.loadFromOwlbear);
 
     const storeRole = useCharacterStore((state) => state.role);
     const activeTokenId = useCharacterStore((state) => state.tokenId);
@@ -228,7 +228,7 @@ export function GlobalToolbar() {
                 importData['hp-curr'] !== undefined ||
                 importData['v2-migrated']
             ) {
-                store.loadFromOwlbear(importData);
+                loadFromOwlbear(importData);
                 saveToOwlbear(importData);
             } else {
                 useCharacterStore.setState(importData as Partial<CharacterState>);
