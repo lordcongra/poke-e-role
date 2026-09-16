@@ -704,7 +704,7 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                             className={`gm-screen-modal__tab-btn ${activeTab === 'lookup' ? 'gm-screen-modal__tab-btn--active' : ''}`}
                             onClick={() => setActiveTab('lookup')}
                         >
-                            <Search size={14} /> Pokémon Lookup
+                            <Search size={14} /> Lookup Tool
                         </button>
                         <button
                             type="button"

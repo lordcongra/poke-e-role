@@ -633,3 +633,266 @@
     justify-content: center;
     gap: 6px;
 }
+
+/* ==========================================================================
+   Lookup Tool Orchestrator - Segmented Pill Switcher
+   ========================================================================== */
+.gm-lookup-orchestrator__switcher-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 4px;
+}
+
+.gm-lookup-orchestrator__switcher {
+    display: inline-flex;
+    background: var(--bg);
+    padding: 4px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+    gap: 4px;
+}
+
+.gm-lookup-orchestrator__switch-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 18px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.gm-lookup-orchestrator__switch-btn:hover {
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.gm-lookup-orchestrator__switch-btn--active {
+    background: var(--primary) !important;
+    color: #fff !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Clickable move pill in Pokémon learnset */
+.gm-pokemon-lookup__move-pill--clickable {
+    cursor: pointer;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
+    transition: all 0.2s ease;
+}
+
+.gm-pokemon-lookup__move-pill--clickable:hover {
+    border-color: var(--primary);
+    background: var(--panel-alt);
+    color: var(--primary);
+    transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Move Lookup Filter Specifics
+   ========================================================================== */
+.gm-move-lookup__power-presets {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.gm-move-lookup__power-select {
+    width: auto;
+    min-width: 160px;
+    padding: 5px 8px;
+}
+
+.gm-move-lookup__pills-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.gm-move-lookup__power-pill {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2));
+    background: var(--panel-alt);
+    transition: all 0.15s ease;
+}
+
+.gm-move-lookup__power-pill:hover {
+    border-color: var(--semantic-danger, #f44336);
+    color: var(--semantic-danger, #f44336);
+}
+
+/* ==========================================================================
+   Move Lookup Card Specifics
+   ========================================================================== */
+.gm-move-lookup__card {
+    border-left: 3px solid var(--primary);
+}
+
+.gm-move-lookup__category-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--bg);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
+    color: var(--text-muted);
+}
+
+.gm-move-lookup__power-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: rgba(255, 152, 0, 0.15);
+    color: #ffb74d;
+    border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.gm-move-lookup__stats-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    background: var(--bg);
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+}
+
+.gm-move-lookup__stat-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+}
+
+.gm-move-lookup__stat-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.gm-move-lookup__stat-value {
+    font-weight: 600;
+}
+
+.gm-move-lookup__attributes-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.gm-move-lookup__attr-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.gm-move-lookup__attribute-pill {
+    font-size: 0.75rem;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: var(--panel-alt);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+    color: var(--text-main);
+}
+
+.gm-move-lookup__effect-box {
+    background: var(--panel-alt);
+    padding: 10px 12px;
+    border-radius: 6px;
+    border-left: 3px solid var(--primary);
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: var(--text-main);
+}
+
+.gm-move-lookup__desc-box {
+    font-size: 0.8rem;
+    font-style: italic;
+    color: var(--text-muted);
+    line-height: 1.4;
+    padding: 0 4px;
+}
+
+/* Drawer / Learned By Section */
+.gm-move-lookup__drawer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border-color, rgba(255, 255, 255, 0.12));
+}
+
+.gm-move-lookup__learned-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 4px;
+    background: var(--bg);
+    transition: background 0.15s ease;
+}
+
+.gm-move-lookup__learned-header:hover {
+    background: var(--panel-alt);
+}
+
+.gm-move-lookup__learned-content {
+    padding: 6px 0;
+}
+
+.gm-move-lookup__learned-pills-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.gm-move-lookup__poke-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    font-size: 0.78rem;
+    border-radius: 4px;
+    background: var(--bg);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.gm-move-lookup__poke-pill:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.gm-move-lookup__poke-pill-name {
+    font-weight: 600;
+}
+
+.gm-move-lookup__poke-pill-rank {
+    font-size: 0.72rem;
+    opacity: 0.8;
+}

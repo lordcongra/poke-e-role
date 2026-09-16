@@ -65,8 +65,12 @@ export interface MoveApiResponse {
     Accuracy1?: string;
     Accuracy2?: string;
     Damage1?: string;
+    Damage2?: string;
+    Target?: string;
     Effect?: string;
     Description?: string;
+    Attributes?: Record<string, boolean | number | string>;
+    AddedEffects?: Record<string, unknown>;
 }
 
 export interface AbilityApiResponse {
@@ -133,4 +137,21 @@ export interface PokemonLookupFilters {
     moveRank: string;
     onlyStarters: boolean;
     onlyLegendary: boolean;
+}
+
+export interface MoveLookupEntry {
+    name: string;
+    type: string;
+    category: 'Physical' | 'Special' | 'Status' | string;
+    power: number | string;
+    accuracy1: string;
+    accuracy2: string;
+    damage1: string;
+    damage2?: string;
+    target: string;
+    effect: string;
+    description: string;
+    attributes?: Record<string, boolean | number | string>;
+    path?: string;
+    isCustom?: boolean;
 }

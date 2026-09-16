@@ -19,6 +19,7 @@ export interface PokemonLookupCardProps {
     onCopyCardLink: (name: string) => void;
     onBroadcast: (pokemon: PokemonLookupEntry) => void;
     onOpenTooltip: (title: string, desc: string) => void;
+    onSelectMove?: (moveName: string) => void;
 }
 
 export function PokemonLookupCard({
@@ -36,7 +37,8 @@ export function PokemonLookupCard({
     onCopyDiscord,
     onCopyCardLink,
     onBroadcast,
-    onOpenTooltip
+    onOpenTooltip,
+    onSelectMove
 }: PokemonLookupCardProps) {
     // Check if move matches filter
     const matchedMoves =
@@ -252,16 +254,23 @@ export function PokemonLookupCard({
                                                         appliedMove &&
                                                         mName.toLowerCase().includes(appliedMove.toLowerCase());
                                                     return (
-                                                        <span
+                                                        <button
                                                             key={`move-${p.name}-${mName}-${idx}`}
+                                                            type="button"
                                                             className={`gm-pokemon-lookup__move-pill ${
                                                                 isMoveMatch
                                                                     ? 'gm-pokemon-lookup__move-pill--highlight'
                                                                     : ''
-                                                            }`}
+                                                            } ${onSelectMove ? 'gm-pokemon-lookup__move-pill--clickable' : ''}`}
+                                                            onClick={() => onSelectMove && onSelectMove(mName)}
+                                                            title={
+                                                                onSelectMove
+                                                                    ? `Look up ${mName} in Move Lookup`
+                                                                    : undefined
+                                                            }
                                                         >
                                                             {mName}
-                                                        </span>
+                                                        </button>
                                                     );
                                                 })}
                                             </div>

@@ -11,7 +11,8 @@ import type {
     PokemonLookupEntry,
     PokemonLookupFilters,
     AbilitySlotFilter,
-    TypeMatchMode
+    TypeMatchMode,
+    MoveLookupEntry
 } from './apiTypes';
 
 // Re-export the types so we don't break existing imports in the UI components!
@@ -26,7 +27,8 @@ export type {
     PokemonLookupEntry,
     PokemonLookupFilters,
     AbilitySlotFilter,
-    TypeMatchMode
+    TypeMatchMode,
+    MoveLookupEntry
 };
 
 // VITE MAGIC: Automatically detects your domain sub-folder!
@@ -387,6 +389,65 @@ function mergeCustomPokemonWithLookup(baseEntries: PokemonLookupEntry[]): Pokemo
             legendary: false,
             starter: false,
             moves,
+            isCustom: true
+        };
+    });
+
+    return [...baseEntries, ...customEntries];
+}
+
+let cachedMoveLookupIndex: MoveLookupEntry[] | null = null;
+let moveLookupIndexPromise: Promise<MoveLookupEntry[]> | null = null;
+
+export async function fetchMoveLookupIndex(): Promise<MoveLookupEntry[]> {
+    if (cachedMoveLookupIndex) {
+        return mergeCustomMovesWithLookup(cachedMoveLookupIndex);
+    }
+    if (moveLookupIndexPromise) {
+        const baseEntries = await moveLookupIndexPromise;
+        return mergeCustomMovesWithLookup(baseEntries);
+    }
+
+    moveLookupIndexPromise = (async () => {
+        try {
+            const url = `${BASE_URL}dataset/moves-lookup.json`;
+            const data = await fetchWithCache<MoveLookupEntry[]>(url, 'moves_lookup_index', 'Moves Lookup');
+            if (Array.isArray(data)) {
+                cachedMoveLookupIndex = data;
+                return data;
+            }
+            return [];
+        } catch (error) {
+            console.error('[Api] Failed to fetch moves lookup index:', error);
+            return [];
+        } finally {
+            moveLookupIndexPromise = null;
+        }
+    })();
+
+    const baseEntries = await moveLookupIndexPromise;
+    return mergeCustomMovesWithLookup(baseEntries);
+}
+
+function mergeCustomMovesWithLookup(baseEntries: MoveLookupEntry[]): MoveLookupEntry[] {
+    if (!homebrewMoves || homebrewMoves.length === 0) {
+        return baseEntries;
+    }
+
+    const customEntries: MoveLookupEntry[] = homebrewMoves.map((cm) => {
+        return {
+            name: cm.name,
+            type: cm.type || 'Normal',
+            category: cm.category || 'Physical',
+            power: cm.power ?? 0,
+            accuracy1: cm.acc1 || '',
+            accuracy2: cm.acc2 || '',
+            damage1: cm.dmg1 || '',
+            damage2: '',
+            target: '',
+            effect: cm.desc || '',
+            description: cm.desc || '',
+            attributes: {},
             isCustom: true
         };
     });

@@ -278,6 +278,8 @@ async function build() {
 
     // --- 4. PROCESS & REORGANIZE MOVES ---
     const moves = loadMergedDataset('Moves', 'moves');
+    const movesLookup = [];
+
     moves.entries.forEach(([fileName, { data: move }]) => {
         try {
             const powerNum = Number(move.Power || move.power) || 0;
@@ -336,15 +338,54 @@ async function build() {
             const destPath = path.join(targetDir, fileName);
             safeWriteJson(destPath, move);
 
+            const moveName = move.Name || move.name || fileName.replace('.json', '');
+            const moveType = move.Type || move.type || 'Normal';
+            const movePath = `/dataset/moves/${targetSubfolder}/${fileName}`;
+
             // ADD TO INDEX
             if (indexRef) {
                 indexRef.push({
-                    name: move.Name || move.name || fileName.replace('.json', ''),
-                    type: move.Type || move.type,
-                    path: `/dataset/moves/${targetSubfolder}/${fileName}`,
+                    name: moveName,
+                    type: moveType,
+                    path: movePath,
                     weight: getMoveWeight(move, powerNum)
                 });
             }
+
+            // ADD TO MOVES LOOKUP INDEX
+            let normalizedCategory = move.Category || move.category || '';
+            if (
+                normalizedCategory.toLowerCase().includes('support') ||
+                normalizedCategory.toLowerCase().includes('status') ||
+                targetSubfolder === 'support'
+            ) {
+                normalizedCategory = 'Status';
+            } else if (!normalizedCategory) {
+                normalizedCategory = powerNum === 0 ? 'Status' : 'Physical';
+            }
+
+            movesLookup.push({
+                name: moveName,
+                type: moveType,
+                category: normalizedCategory,
+                power:
+                    move.Power !== undefined
+                        ? move.Power
+                        : move.power !== undefined
+                          ? move.power
+                          : targetSubfolder === 'support'
+                            ? 0
+                            : powerNum,
+                accuracy1: move.Accuracy1 || move.accuracy1 || '',
+                accuracy2: move.Accuracy2 || move.accuracy2 || '',
+                damage1: move.Damage1 || move.damage1 || '',
+                damage2: move.Damage2 || move.damage2 || '',
+                target: move.Target || move.target || '',
+                effect: move.Effect || move.effect || '',
+                description: move.Description || move.description || '',
+                attributes: attrs,
+                path: movePath
+            });
         } catch (error) {
             console.error(`❌ Error processing move ${fileName}:`, error.message);
         }
@@ -357,7 +398,12 @@ async function build() {
     datasetIndex.moves.maxMoves.sort(sortByName);
     Object.keys(datasetIndex.moves.basic).forEach((k) => datasetIndex.moves.basic[k].sort(sortByName));
     Object.keys(datasetIndex.moves.highPower).forEach((k) => datasetIndex.moves.highPower[k].sort(sortByName));
-    console.log(`✅ Moves built (${moves.entries.length} moves, ${moves.overrideCount} overrides applied)`);
+
+    movesLookup.sort(sortByName);
+    safeWriteJson(path.join(DATASET_DIR, 'moves-lookup.json'), movesLookup, 0);
+    console.log(
+        `✅ Moves built (${moves.entries.length} moves, lookup index generated, ${moves.overrideCount} overrides applied)`
+    );
 
     // --- 5. PROCESS ITEMS ---
     const items = loadMergedDataset('Items', 'items');
