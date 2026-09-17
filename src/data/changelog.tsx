@@ -32,6 +32,9 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     <strong>Complete Trainer & Team Generation:</strong> Instantly generate standalone NPC Trainers or complete battle-ready teams of 0–6 Pokémon with Pokerole-accurate ranks, attributes, skills, and suggested gym badges.
                 </li>
                 <li>
+                    <strong>Streamlined Team Size Selector:</strong> Dedicated quick-toggle buttons for 0 through 6 Pokémon (<em>None</em>, <em>Solo</em>, <em>Duo</em>, <em>Trio</em>, <em>Squad</em>, <em>Team</em>, <em>Full</em>) replacing sliders for instant party configuration.
+                </li>
+                <li>
                     <strong>50+ Curated Trainer Classes:</strong> Select or randomize from over 50 thematic trainer concepts across 7 categories (Wild & Nature, Martial & Combat, Urban & Specialist, Scholar & Tech, Social & Show, Villains & Grunts, Elite & Universal) with tailored type preferences, Supernatural tags, and suggested stat archetypes.
                 </li>
                 <li>
@@ -51,6 +54,40 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 </li>
                 <li>
                     <strong>Token Image Centering & Fallback Fixes:</strong> Fixed token pivot offsets when updating images from the OBR library so HUD graphics remain centered, and ensured fallback Pokéball icons resolve absolute URLs to eliminate broken image icons.
+                </li>
+            </ul>,
+            <strong key="biome-ecosystems-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
+                🗺️ 25-Biome Ecosystems & Habitat Filtering
+            </strong>,
+            <ul
+                key="biome-ecosystems-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Official 25-Biome Ecology System:</strong> Integrated 25 canonical Pokémon habitats—including Cities, Temperate Forests, Caves, Glaciers, Oceans, Deserts, Volcanoes, Swamps, Mountains, and more—mapping natural type affinities and encounter pools.
+                </li>
+                <li>
+                    <strong>Location Filtering in Pokémon Generator:</strong> Filter single or batch Pokémon generation by any of the 25 biomes, constraining candidate species to their ecological type pools.
+                </li>
+                <li>
+                    <strong>Trainer Origin Biomes & Thematic Classes:</strong> Select or roll an environmental origin in the Trainer Generator with quick-pick chips and a <em>"Random from Biome Match"</em> option to generate iconic local classes (e.g. Bug Catcher in a Forest, Hiker in a Cave, Diver in an Ocean).
+                </li>
+                <li>
+                    <strong>Decoupled Team Habitats:</strong> Pokémon team ecosystems are decoupled from the trainer origin by default (allowing trainers to carry Pokémon from outside their native biome), with a <em>"Match Trainer Biome"</em> option available whenever you want a 100% local roster.
+                </li>
+                <li>
+                    <strong>Concept-Type Protection:</strong> Specialist trainers (like Bug Catchers or Swimmers) always retain their signature typing even when encountered in atypical habitats.
+                </li>
+                <li>
+                    <strong>Categorized Skills & Previews:</strong> Grouped Pokémon and Trainer skills under canonical categories (Fight, Survive, Social, Knowledge) in Title Case, with interactive preview modals to tinker stats, reroll individual members, and verify rosters before spawning.
                 </li>
             </ul>,
             <strong key="room-rules-permissions-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>

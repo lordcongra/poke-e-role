@@ -3,7 +3,7 @@ import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { getRankPoints, getAgePoints } from '../store/useCharacterStore';
 import { TRAINER_CLASSES, type TrainerClass, type TrainerProfileType } from '../data/trainerClasses';
 import { NATURES } from '../data/constants';
-import { BIOME_MAP } from '../data/biomeData';
+import { getTrainerClassesForBiome } from '../data/biomeData';
 import { generateBuild, buildTokenMetadataFromBuild } from './generatorUtils';
 import type { GeneratorConfig, TempBuild } from '../store/storeTypes';
 
@@ -35,7 +35,9 @@ export interface TrainerGeneratorConfig {
     includeMythicals: boolean;
     includeMegas: boolean;
     scaleLoyaltyHappiness: boolean;
-    biomeId?: string;
+    biomeId?: string; // Fallback / legacy
+    trainerBiomeId?: string; // Biome for trainer origin & concepts
+    teamBiomeId?: string; // Biome for Pokémon team ecosystem
 }
 
 export const ALL_POKEMON_TYPES = [
@@ -59,14 +61,21 @@ export const ALL_POKEMON_TYPES = [
     'Fairy'
 ];
 
-export {
+import {
     MYTHICAL_POKEMON_NAMES,
     type PokedexLookupItem,
     type PokemonLookupFilterOptions,
     calculateScalarLoyaltyHappiness,
     filterPokemonLookupPool
 } from './pokemonFilterUtils';
-import { type PokedexLookupItem, calculateScalarLoyaltyHappiness, filterPokemonLookupPool } from './pokemonFilterUtils';
+
+export {
+    MYTHICAL_POKEMON_NAMES,
+    type PokedexLookupItem,
+    type PokemonLookupFilterOptions,
+    calculateScalarLoyaltyHappiness,
+    filterPokemonLookupPool
+};
 
 const KANTO_BADGE_PRESETS: { name: string; emoji: string }[] = [
     { name: 'Boulder Badge', emoji: '🪨' },
@@ -353,6 +362,66 @@ export function buildTrainerTokenMetadata(
     return metadata;
 }
 
+export function getEligibleTeamPool(
+    config: TrainerGeneratorConfig,
+    lookupList: PokedexLookupItem[],
+    concept: TrainerClass | null
+): PokedexLookupItem[] {
+    // Resolve Target Types
+    let teamTypes: string[] = [];
+    if (config.typeSpecialtyMode === 'concept' && concept) {
+        teamTypes = concept.typePreferences;
+    } else if (config.typeSpecialtyMode === 'monotype') {
+        teamTypes = [ALL_POKEMON_TYPES[Math.floor(Math.random() * ALL_POKEMON_TYPES.length)]];
+    } else if (config.typeSpecialtyMode === 'dual') {
+        const t1 = ALL_POKEMON_TYPES[Math.floor(Math.random() * ALL_POKEMON_TYPES.length)];
+        const rest = ALL_POKEMON_TYPES.filter((t) => t !== t1);
+        const t2 = rest[Math.floor(Math.random() * rest.length)];
+        teamTypes = [t1, t2];
+    } else if (config.typeSpecialtyMode === 'manual' && config.manualTypes.length > 0) {
+        teamTypes = config.manualTypes;
+    } else {
+        teamTypes = ['Any'];
+    }
+
+    const teamBiome =
+        config.teamBiomeId !== undefined
+            ? config.teamBiomeId === 'none'
+                ? undefined
+                : config.teamBiomeId
+            : config.biomeId;
+
+    const filterOpts: PokemonLookupFilterOptions = {
+        ...config,
+        biomeId: teamBiome
+    };
+
+    let eligiblePool = filterPokemonLookupPool(lookupList, teamTypes, filterOpts);
+    if (eligiblePool.length === 0) {
+        // Fallback 1: relax stage filters if pool is empty
+        eligiblePool = filterPokemonLookupPool(lookupList, teamTypes, {
+            ...filterOpts,
+            allowedLineLengths: [1, 2, 3],
+            allowedStageIndices: [1, 2, 3]
+        });
+    }
+    // Fallback 2: If biome restricted out the concept's specialty types (e.g. Swimmer with Water in a Desert biome),
+    // relax the biome constraint FIRST so the trainer still gets their concept types (Bug for Bug Catcher, Water for Swimmer)
+    if (eligiblePool.length === 0 && teamTypes.length > 0 && !teamTypes.includes('Any')) {
+        eligiblePool = filterPokemonLookupPool(lookupList, teamTypes, {
+            ...config,
+            biomeId: undefined,
+            allowedLineLengths: [1, 2, 3],
+            allowedStageIndices: [1, 2, 3]
+        });
+    }
+    if (eligiblePool.length === 0) {
+        // Ultimate fallback to full lookup
+        eligiblePool = lookupList.filter((m) => !m.legendary);
+    }
+    return eligiblePool;
+}
+
 export async function generateFullTrainerTeam(
     config: TrainerGeneratorConfig,
     state: CharacterState,
@@ -360,19 +429,19 @@ export async function generateFullTrainerTeam(
 ): Promise<GeneratedTrainerResult> {
     // 1. Resolve Trainer Identity
     let concept: TrainerClass | null = null;
-    if (config.conceptId === 'random') {
-        if (config.biomeId && config.biomeId !== 'none' && config.biomeId !== 'any') {
-            const biome = BIOME_MAP[config.biomeId];
-            if (biome && biome.associatedClasses && biome.associatedClasses.length > 0) {
-                const eligible = TRAINER_CLASSES.filter((c) => biome.associatedClasses.includes(c.id));
-                if (eligible.length > 0) {
-                    concept = eligible[Math.floor(Math.random() * eligible.length)];
-                }
+    const trainerBiome = config.trainerBiomeId || config.biomeId;
+    if (config.conceptId === 'biome_match') {
+        if (trainerBiome && trainerBiome !== 'none' && trainerBiome !== 'any') {
+            const eligible = getTrainerClassesForBiome(trainerBiome);
+            if (eligible.length > 0) {
+                concept = eligible[Math.floor(Math.random() * eligible.length)];
             }
         }
         if (!concept) {
             concept = TRAINER_CLASSES[Math.floor(Math.random() * TRAINER_CLASSES.length)];
         }
+    } else if (config.conceptId === 'random') {
+        concept = TRAINER_CLASSES[Math.floor(Math.random() * TRAINER_CLASSES.length)];
     } else if (config.conceptId && config.conceptId !== 'none') {
         concept = TRAINER_CLASSES.find((c) => c.id === config.conceptId) || null;
     }
@@ -428,38 +497,7 @@ export async function generateFullTrainerTeam(
     }> = [];
 
     if (config.generateTeam && config.teamSize > 0) {
-        // Resolve Target Types
-        let teamTypes: string[] = [];
-        if (config.typeSpecialtyMode === 'concept' && concept) {
-            teamTypes = concept.typePreferences;
-        } else if (config.typeSpecialtyMode === 'monotype') {
-            teamTypes = [ALL_POKEMON_TYPES[Math.floor(Math.random() * ALL_POKEMON_TYPES.length)]];
-        } else if (config.typeSpecialtyMode === 'dual') {
-            const t1 = ALL_POKEMON_TYPES[Math.floor(Math.random() * ALL_POKEMON_TYPES.length)];
-            const rest = ALL_POKEMON_TYPES.filter((t) => t !== t1);
-            const t2 = rest[Math.floor(Math.random() * rest.length)];
-            teamTypes = [t1, t2];
-        } else if (config.typeSpecialtyMode === 'manual' && config.manualTypes.length > 0) {
-            teamTypes = config.manualTypes;
-        } else {
-            teamTypes = ['Any'];
-        }
-
-        // Filter Species Pool
-        let eligiblePool = filterPokemonLookupPool(lookupList, teamTypes, config);
-        if (eligiblePool.length === 0) {
-            // Fallback: relax stage filters if pool is empty
-            eligiblePool = filterPokemonLookupPool(lookupList, teamTypes, {
-                ...config,
-                allowedLineLengths: [1, 2, 3],
-                allowedStageIndices: [1, 2, 3]
-            });
-        }
-        if (eligiblePool.length === 0) {
-            // Ultimate fallback to full lookup
-            eligiblePool = lookupList.filter((m) => !m.legendary);
-        }
-
+        const eligiblePool = getEligibleTeamPool(config, lookupList, concept);
         const usedSpecies = new Set<string>();
 
         for (let i = 0; i < config.teamSize; i++) {

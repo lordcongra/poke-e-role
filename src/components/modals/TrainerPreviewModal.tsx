@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { User, Shield, Sparkles, Dices, XCircle, CheckCircle, Award } from 'lucide-react';
 import type { Rank } from '../../store/storeTypes';
 import { CombatStat, SocialStat, Skill, SKILL_CATEGORIES } from '../../types/enums';
@@ -8,7 +8,8 @@ import {
     type TrainerGeneratorConfig,
     type PokedexLookupItem,
     pickAndGenerateTeamMember,
-    allocateTrainerStats
+    allocateTrainerStats,
+    getEligibleTeamPool
 } from '../../utils/trainerGeneratorLogic';
 import { spawnTrainerAndTeam, type TrainerSpawnImageOptions } from '../../utils/trainerTokenSpawner';
 import { buildTokenMetadataFromBuild } from '../../utils/generatorUtils';
@@ -111,6 +112,10 @@ export function TrainerPreviewModal({
     };
 
     // --- Reroll Team Member Logic ---
+    const eligiblePool = useMemo(() => {
+        return getEligibleTeamPool(config, pokedexLookup, result.concept);
+    }, [config, pokedexLookup, result.concept]);
+
     const handleRerollMember = async (slotIdx: number) => {
         const usedSpecies = new Set(
             teamMembers.filter((_, idx) => idx !== slotIdx).map((m) => m.species.toLowerCase())
@@ -120,7 +125,7 @@ export function TrainerPreviewModal({
             config,
             trainerRank,
             store,
-            pokedexLookup,
+            eligiblePool,
             usedSpecies
         );
         if (newMember) {
@@ -137,7 +142,7 @@ export function TrainerPreviewModal({
         const usedSpecies = new Set<string>();
         const nextMembers = [];
         for (let i = 0; i < teamMembers.length; i++) {
-            const member = await pickAndGenerateTeamMember(i, config, trainerRank, store, pokedexLookup, usedSpecies);
+            const member = await pickAndGenerateTeamMember(i, config, trainerRank, store, eligiblePool, usedSpecies);
             if (member) {
                 usedSpecies.add(member.species.toLowerCase());
                 nextMembers.push(member);
