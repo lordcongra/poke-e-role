@@ -405,6 +405,7 @@ export interface IdentitySlice {
         gmEcoBadge: boolean;
 
         gmOnlyLootGen: boolean;
+        gmOnlyGenerators: boolean;
         gmOnlyMatchups: boolean;
         gmOnlyDamageOverride: boolean;
         gmDemoMode: boolean;
@@ -471,6 +472,7 @@ export interface RoomSettings {
     diceEngine: 'dice-plus' | 'car';
     homebrewAccess: string;
     gmOnlyLootGen: boolean;
+    gmOnlyGenerators: boolean;
     gmOnlyMatchups: boolean;
     gmOnlyDamageOverride: boolean;
     gmDemoMode: boolean;

@@ -82,6 +82,7 @@ export function GlobalToolbar() {
     const activeTokenId = useCharacterStore((state) => state.tokenId);
     const homebrewAccess = useCharacterStore((state) => state.identity.homebrewAccess) || 'Full';
     const gmOnlyLootGen = useCharacterStore((state) => state.identity.gmOnlyLootGen);
+    const gmOnlyGenerators = useCharacterStore((state) => state.identity.gmOnlyGenerators);
 
     const [localRole, setLocalRole] = useState<string>(isStandaloneMode ? 'GM' : storeRole);
     const [isExpanded, setIsExpanded] = useState<boolean>(true);
@@ -94,9 +95,10 @@ export function GlobalToolbar() {
 
     const fileInputReference = useRef<HTMLInputElement>(null);
 
+    const isGm = isStandaloneMode || localRole === 'GM';
     const showHomebrewButton = isStandaloneMode || canViewHomebrew(localRole, homebrewAccess);
-    const showLootGenButton = isStandaloneMode || localRole === 'GM' || gmOnlyLootGen === false;
-    const showPokemonGeneratorButton = true;
+    const showLootGenButton = isGm || gmOnlyLootGen === false;
+    const showPokemonGeneratorButton = isGm || gmOnlyGenerators === false;
 
     useEffect(() => {
         if (!isStandaloneMode && OBR.isAvailable) {
@@ -421,14 +423,16 @@ export function GlobalToolbar() {
                             </button>
                         )}
 
-                        <button
-                            type="button"
-                            className="global-toolbar__btn action-button--primary-hover"
-                            onClick={() => setActiveModal('rules')}
-                            title="Configure Room Rules & Dice Engine"
-                        >
-                            <BookOpen size={16} color="var(--primary)" /> Room Rules
-                        </button>
+                        {isGm && (
+                            <button
+                                type="button"
+                                className="global-toolbar__btn action-button--primary-hover"
+                                onClick={() => setActiveModal('rules')}
+                                title="Configure Room Rules & Dice Engine"
+                            >
+                                <BookOpen size={16} color="var(--primary)" /> Room Rules
+                            </button>
+                        )}
 
                         {showPokemonGeneratorButton && (
                             <div className="global-toolbar__gen-group">

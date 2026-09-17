@@ -171,6 +171,32 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
 
                             <div>
                                 <label className="rules-modal__label text-label" style={{ color: 'var(--text-main)' }}>
+                                    Pokémon & Trainer Generators{' '}
+                                    <TooltipIcon
+                                        onClick={() =>
+                                            setModalConfig({
+                                                title: 'Character & Team Generators Access',
+                                                content:
+                                                    'Controls whether players can see and use the PKMN Gen and TRNR Gen tools on their toolbar. (Global Room Setting)'
+                                            })
+                                        }
+                                    />
+                                </label>
+                                <select
+                                    className="identity-grid__select rules-modal__select text-subtext"
+                                    style={{ color: 'var(--text-main)' }}
+                                    value={id.gmOnlyGenerators === false ? 'Everyone' : 'GM Only'}
+                                    onChange={(e) =>
+                                        updateRoomSetting('gmOnlyGenerators', e.target.value === 'GM Only')
+                                    }
+                                >
+                                    <option value="GM Only">GM Only</option>
+                                    <option value="Everyone">Everyone</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="rules-modal__label text-label" style={{ color: 'var(--text-main)' }}>
                                     Damage Override{' '}
                                     <TooltipIcon
                                         onClick={() =>

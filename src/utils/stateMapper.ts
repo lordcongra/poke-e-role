@@ -369,6 +369,7 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
         settingEcoBadge: meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false',
         gmEcoBadge: meta['gm-eco-badge'] === true || meta['gm-eco-badge'] === 'true',
         gmOnlyLootGen: meta['gm-only-loot-gen'] !== false && meta['gm-only-loot-gen'] !== 'false',
+        gmOnlyGenerators: meta['gm-only-generators'] !== false && meta['gm-only-generators'] !== 'false',
         colorAct: String(meta['color-act'] || '#4890fc'),
         colorEva: String(meta['color-eva'] || '#c387fc'),
         colorCla: String(meta['color-cla'] || '#dfad43'),
@@ -555,6 +556,8 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (state.identity.gmEcoBadge !== undefined) flatMetadata['gm-eco-badge'] = state.identity.gmEcoBadge;
             if (state.identity.gmOnlyLootGen !== undefined)
                 flatMetadata['gm-only-loot-gen'] = state.identity.gmOnlyLootGen;
+            if (state.identity.gmOnlyGenerators !== undefined)
+                flatMetadata['gm-only-generators'] = state.identity.gmOnlyGenerators;
 
             if (state.identity.colorAct !== undefined) flatMetadata['color-act'] = state.identity.colorAct;
             if (state.identity.colorEva !== undefined) flatMetadata['color-eva'] = state.identity.colorEva;

@@ -16,6 +16,7 @@ const EXCLUDED_FROM_TOKEN_SAVE = new Set([
     'diceEngine',
     'homebrewAccess',
     'gmOnlyLootGen',
+    'gmOnlyGenerators',
     'gmOnlyMatchups',
     'gmOnlyDamageOverride',
     'gmDemoMode'
@@ -199,6 +200,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         gmEcoBadge: false,
 
         gmOnlyLootGen: true,
+        gmOnlyGenerators: true,
         gmOnlyMatchups: false,
         gmOnlyDamageOverride: false,
         gmDemoMode: false,

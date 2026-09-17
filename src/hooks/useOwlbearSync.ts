@@ -430,6 +430,8 @@ export function useOwlbearSync() {
                             homebrewAccess:
                                 sData.homebrewAccess !== undefined ? String(sData.homebrewAccess) : undefined,
                             gmOnlyLootGen: sData.gmOnlyLootGen !== undefined ? Boolean(sData.gmOnlyLootGen) : undefined,
+                            gmOnlyGenerators:
+                                sData.gmOnlyGenerators !== undefined ? Boolean(sData.gmOnlyGenerators) : undefined,
                             gmOnlyMatchups:
                                 sData.gmOnlyMatchups !== undefined ? Boolean(sData.gmOnlyMatchups) : undefined,
                             gmOnlyDamageOverride:
@@ -467,6 +469,8 @@ export function useOwlbearSync() {
                                     sData.homebrewAccess !== undefined ? String(sData.homebrewAccess) : undefined,
                                 gmOnlyLootGen:
                                     sData.gmOnlyLootGen !== undefined ? Boolean(sData.gmOnlyLootGen) : undefined,
+                                gmOnlyGenerators:
+                                    sData.gmOnlyGenerators !== undefined ? Boolean(sData.gmOnlyGenerators) : undefined,
                                 gmOnlyMatchups:
                                     sData.gmOnlyMatchups !== undefined ? Boolean(sData.gmOnlyMatchups) : undefined,
                                 gmOnlyDamageOverride:

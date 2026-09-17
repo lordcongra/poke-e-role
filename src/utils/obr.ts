@@ -98,6 +98,7 @@ export async function saveRoomSettingsToOwlbear(updates: Record<string, unknown>
                     else if (k === 'diceEngine') roomMeta.diceEngine = v;
                     else if (k === 'homebrewAccess') roomMeta.homebrewAccess = v;
                     else if (k === 'gmOnlyLootGen') roomMeta.gmOnlyLootGen = Boolean(v);
+                    else if (k === 'gmOnlyGenerators') roomMeta.gmOnlyGenerators = Boolean(v);
                     else if (k === 'gmOnlyMatchups') roomMeta.gmOnlyMatchups = Boolean(v);
                     else if (k === 'gmOnlyDamageOverride') roomMeta.gmOnlyDamageOverride = Boolean(v);
                     else if (k === 'gmDemoMode') roomMeta.gmDemoMode = Boolean(v);
