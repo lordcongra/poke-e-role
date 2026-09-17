@@ -77,6 +77,34 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 <li>
                     <strong>Clean Trainer Sheets:</strong> Removed the Pokémon autocomplete dropdown from the Trainer and Special Trainer "Concept" field to allow seamless freeform class entry.
                 </li>
+            </ul>,
+            <strong key="lookup-tool-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
+                🔍 Unified Lookup Tool: Moves & Cross-Referencing
+            </strong>,
+            <ul
+                key="lookup-tool-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Renamed to "Lookup Tool":</strong> What was originally the Pokémon Lookup tool in the GM Screen has been expanded into the unified <strong>Lookup Tool</strong>, now featuring dual tabs to seamlessly search both Pokémon and Moves!
+                </li>
+                <li>
+                    <strong>Full Move Database Search:</strong> Added a comprehensive Move Lookup tab allowing GMs and players to search and filter every move by Typing, Damage Category (Physical, Special, Support), Targets, Power, Accuracy, Rank requirements, and mechanical effects.
+                </li>
+                <li>
+                    <strong>Interactive Click-Through Cross-Referencing:</strong> Integrated smooth bidirectional navigation between Pokémon and Moves. When viewing a Pokémon's learnset (e.g. Charizard), click on any move (like <em>Flamethrower</em>) to instantly jump straight into its complete move card details.
+                </li>
+                <li>
+                    <strong>Move Learnset Reverse Lookup:</strong> While viewing any move in Move Lookup, expand the learnset section to see a full list of every Pokémon capable of learning it and at what ranks, with 1-click links to jump directly to that Pokémon's profile!
+                </li>
             </ul>
         ]
     },
