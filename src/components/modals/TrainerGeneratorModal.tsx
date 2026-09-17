@@ -15,10 +15,7 @@ import {
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { NATURES } from '../../data/constants';
-import {
-    TRAINER_CLASSES,
-    type TrainerProfileType
-} from '../../data/trainerClasses';
+import { TRAINER_CLASSES, type TrainerProfileType } from '../../data/trainerClasses';
 import {
     RANK_ORDER,
     ALL_POKEMON_TYPES,
@@ -54,15 +51,27 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
     const [isSpecialTrainer, setIsSpecialTrainer] = useState<boolean>(false);
     const [autoSpecialForMystic, setAutoSpecialForMystic] = useState<boolean>(false);
     const [profile, setProfile] = useState<TrainerProfileType | 'auto'>('auto');
-    const [assignBadges, setAssignBadges] = useState<boolean>(true);
+    const [assignBadges, setAssignBadges] = useState<boolean>(false);
 
     // Pokémon Team Form State
     const [generateTeam, setGenerateTeam] = useState<boolean>(true);
     const [teamSize, setTeamSize] = useState<number>(3);
-    const [typeSpecialtyMode, setTypeSpecialtyMode] = useState<'concept' | 'monotype' | 'dual' | 'variety' | 'manual'>('concept');
+    const [typeSpecialtyMode, setTypeSpecialtyMode] = useState<'concept' | 'monotype' | 'dual' | 'variety' | 'manual'>(
+        'concept'
+    );
     const [manualTypes, setManualTypes] = useState<string[]>([]);
-    const [teamRankMode, setTeamRankMode] = useState<'match_trainer' | 'random'>('match_trainer');
+    const [teamRankMode, setTeamRankMode] = useState<'match_trainer' | 'random' | 'custom'>('match_trainer');
+    const [customPokemonRanks, setCustomPokemonRanks] = useState<Rank[]>([
+        'Starter',
+        'Starter',
+        'Starter',
+        'Starter',
+        'Starter',
+        'Starter'
+    ]);
     const [capPokemonRank, setCapPokemonRank] = useState<boolean>(true);
+    const [allowDuplicates, setAllowDuplicates] = useState<boolean>(false);
+    const [buildType, setBuildType] = useState<'minmax' | 'average' | 'wild'>('minmax');
 
     // Evolution Stage Filters
     const [allowedLineLengths, setAllowedLineLengths] = useState<number[]>([1, 2, 3]);
@@ -81,7 +90,12 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
 
     // Artwork & Token Image State (OBR mode)
     const [tokenImageMode, setTokenImageMode] = useState<'default' | 'prompt_each' | 'fallback_pokeball'>('default');
-    const [defaultImage, setDefaultImage] = useState<{ url: string; width: number; height: number; name?: string } | null>(null);
+    const [defaultImage, setDefaultImage] = useState<{
+        url: string;
+        width: number;
+        height: number;
+        name?: string;
+    } | null>(null);
     const [autoMatchSceneImages, setAutoMatchSceneImages] = useState<boolean>(true);
 
     useEffect(() => {
@@ -165,6 +179,14 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
         });
     };
 
+    const handleCustomRankChange = (slotIndex: number, newRank: Rank) => {
+        setCustomPokemonRanks((prev) => {
+            const next = [...prev];
+            next[slotIndex] = newRank;
+            return next;
+        });
+    };
+
     const handlePickDefaultImage = async () => {
         if (!OBR.isAvailable) return;
         if (typeof OBR.assets?.downloadImages === 'function') {
@@ -205,7 +227,10 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                 typeSpecialtyMode,
                 manualTypes,
                 teamRankMode,
+                customPokemonRanks,
                 capPokemonRank,
+                allowDuplicates,
+                buildType,
                 allowedLineLengths,
                 allowedStageIndices,
                 includeLegendaries,
@@ -419,7 +444,9 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                             <div style={{ display: 'flex', gap: '6px' }}>
                                 <select
                                     value={age}
-                                    onChange={(e) => setAge(e.target.value as 'Child' | 'Teen' | 'Adult' | 'Senior' | 'random')}
+                                    onChange={(e) =>
+                                        setAge(e.target.value as 'Child' | 'Teen' | 'Adult' | 'Senior' | 'random')
+                                    }
                                     className="trainer-gen-modal__select"
                                     style={{ flex: 1 }}
                                 >
@@ -446,7 +473,9 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                             <div style={{ display: 'flex', gap: '6px' }}>
                                 <select
                                     value={gender}
-                                    onChange={(e) => setGender(e.target.value as 'Male' | 'Female' | 'Non-Binary' | 'random')}
+                                    onChange={(e) =>
+                                        setGender(e.target.value as 'Male' | 'Female' | 'Non-Binary' | 'random')
+                                    }
                                     className="trainer-gen-modal__select"
                                     style={{ flex: 1 }}
                                 >
@@ -577,13 +606,19 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                 {/* 2. POKÉMON TEAM SECTION */}
                 <div className="trainer-gen-modal__section">
                     <div className="trainer-gen-modal__section-header">
-                        <label className="trainer-gen-modal__checkbox-label" style={{ fontSize: '0.95rem', fontWeight: 'bold' }}>
+                        <label
+                            className="trainer-gen-modal__checkbox-label"
+                            style={{ fontSize: '0.95rem', fontWeight: 'bold' }}
+                        >
                             <input
                                 type="checkbox"
                                 checked={generateTeam}
                                 onChange={(e) => setGenerateTeam(e.target.checked)}
                             />
-                            <span className="text-title-primary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span
+                                className="text-title-primary"
+                                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                            >
                                 <Flame size={16} color="var(--primary)" /> Generate Pokémon Team
                             </span>
                         </label>
@@ -655,7 +690,7 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                 />
                             </div>
 
-                            {/* Type Specialty & Rank Rules */}
+                            {/* Type Specialty & Build Tier */}
                             <div className="trainer-gen-modal__grid--2col">
                                 <div className="trainer-gen-modal__field">
                                     <label className="trainer-gen-modal__field-label text-label">
@@ -671,10 +706,15 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                     </label>
                                     <select
                                         value={typeSpecialtyMode}
-                                        onChange={(e) => setTypeSpecialtyMode(e.target.value as typeof typeSpecialtyMode)}
+                                        onChange={(e) =>
+                                            setTypeSpecialtyMode(e.target.value as typeof typeSpecialtyMode)
+                                        }
                                         className="trainer-gen-modal__select"
                                     >
-                                        <option value="concept">Concept Default {selectedConcept ? `(${selectedConcept.typePreferences.join(', ')})` : ''}</option>
+                                        <option value="concept">
+                                            Concept Default{' '}
+                                            {selectedConcept ? `(${selectedConcept.typePreferences.join(', ')})` : ''}
+                                        </option>
                                         <option value="monotype">Random Monotype (Single Type Team)</option>
                                         <option value="dual">Random Dual-Type (Two Types Mixed)</option>
                                         <option value="variety">High Variety (Any / All Types)</option>
@@ -684,49 +724,145 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
 
                                 <div className="trainer-gen-modal__field">
                                     <label className="trainer-gen-modal__field-label text-label">
-                                        Pokémon Rank Rule:
+                                        Pokémon Build Tier:
                                         <TooltipIcon
                                             onClick={() =>
                                                 setTooltipInfo({
-                                                    title: 'Pokémon Rank Rules',
-                                                    desc: 'Match Trainer Rank gives all Pokémon the exact same rank as the Trainer. Randomized Ranks picks varied ranks. The obedience guard ensures no Pokémon exceeds the Trainer rank.'
+                                                    title: 'Pokémon Build Tier',
+                                                    desc: 'Min-Max (Competent / Default): Evaluates base stats and limits to auto-detect whether the species is a Physical or Special attacker and smart defense bias (Evasion vs Clash), optimizing points for battle-readiness.\n\nAverage (Balanced): Distributes points evenly across attributes and skills for standard encounters.\n\nWild (Untrained): Completely randomizes stat and skill distribution, mimicking raw wild Pokémon.'
                                                 })
                                             }
                                         />
                                     </label>
-                                    <div style={{ display: 'flex', gap: '14px', alignItems: 'center', marginTop: '4px' }}>
-                                        <label className="trainer-gen-modal__checkbox-label">
-                                            <input
-                                                type="radio"
-                                                name="teamRankMode"
-                                                checked={teamRankMode === 'match_trainer'}
-                                                onChange={() => setTeamRankMode('match_trainer')}
-                                            />
-                                            <span>Match Trainer</span>
-                                        </label>
-                                        <label className="trainer-gen-modal__checkbox-label">
-                                            <input
-                                                type="radio"
-                                                name="teamRankMode"
-                                                checked={teamRankMode === 'random'}
-                                                onChange={() => setTeamRankMode('random')}
-                                            />
-                                            <span>Random Ranks</span>
-                                        </label>
-                                    </div>
-                                    {teamRankMode === 'random' && (
-                                        <label className="trainer-gen-modal__checkbox-label" style={{ marginTop: '4px' }}>
-                                            <input
-                                                type="checkbox"
-                                                checked={capPokemonRank}
-                                                onChange={(e) => setCapPokemonRank(e.target.checked)}
-                                            />
-                                            <span className="text-subtext">
-                                                Cap Rank ≤ Trainer Rank (Prevents Disobedience)
-                                            </span>
-                                        </label>
-                                    )}
+                                    <select
+                                        value={buildType}
+                                        onChange={(e) => setBuildType(e.target.value as 'minmax' | 'average' | 'wild')}
+                                        className="trainer-gen-modal__select"
+                                    >
+                                        <option value="minmax">Min-Max (Smart Bias / Competent)</option>
+                                        <option value="average">Average (Balanced)</option>
+                                        <option value="wild">Wild (Random / Untrained)</option>
+                                    </select>
                                 </div>
+                            </div>
+
+                            {/* Pokémon Rank Rule */}
+                            <div className="trainer-gen-modal__field" style={{ marginTop: '8px' }}>
+                                <label className="trainer-gen-modal__field-label text-label">
+                                    Pokémon Rank Rule:
+                                    <TooltipIcon
+                                        onClick={() =>
+                                            setTooltipInfo({
+                                                title: 'Pokémon Rank Rules',
+                                                desc: 'Match Trainer: Gives all Pokémon the exact same rank as the Trainer.\n\nRandom Ranks: Varied ranks with an optional obedience guard.\n\nSpecify Per Pokémon: Gives individual dropdowns for each slot on the team (e.g. 3 Standard and 3 Rookie).'
+                                            })
+                                        }
+                                    />
+                                </label>
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        gap: '14px',
+                                        alignItems: 'center',
+                                        marginTop: '4px',
+                                        flexWrap: 'wrap'
+                                    }}
+                                >
+                                    <label className="trainer-gen-modal__checkbox-label">
+                                        <input
+                                            type="radio"
+                                            name="teamRankMode"
+                                            checked={teamRankMode === 'match_trainer'}
+                                            onChange={() => setTeamRankMode('match_trainer')}
+                                        />
+                                        <span>Match Trainer</span>
+                                    </label>
+                                    <label className="trainer-gen-modal__checkbox-label">
+                                        <input
+                                            type="radio"
+                                            name="teamRankMode"
+                                            checked={teamRankMode === 'random'}
+                                            onChange={() => setTeamRankMode('random')}
+                                        />
+                                        <span>Random Ranks</span>
+                                    </label>
+                                    <label className="trainer-gen-modal__checkbox-label">
+                                        <input
+                                            type="radio"
+                                            name="teamRankMode"
+                                            checked={teamRankMode === 'custom'}
+                                            onChange={() => setTeamRankMode('custom')}
+                                        />
+                                        <span>Specify Per Pokémon</span>
+                                    </label>
+                                </div>
+
+                                {teamRankMode === 'random' && (
+                                    <label className="trainer-gen-modal__checkbox-label" style={{ marginTop: '6px' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={capPokemonRank}
+                                            onChange={(e) => setCapPokemonRank(e.target.checked)}
+                                        />
+                                        <span className="text-subtext">
+                                            Cap Rank ≤ Trainer Rank (Prevents Disobedience)
+                                        </span>
+                                    </label>
+                                )}
+
+                                {teamRankMode === 'custom' && (
+                                    <div
+                                        style={{
+                                            marginTop: '8px',
+                                            padding: '10px 12px',
+                                            background: 'rgba(0, 0, 0, 0.25)',
+                                            borderRadius: '6px',
+                                            border: '1px solid var(--border)'
+                                        }}
+                                    >
+                                        <span
+                                            className="text-subtext"
+                                            style={{ display: 'block', marginBottom: '8px', fontSize: '0.78rem' }}
+                                        >
+                                            Select rank for each Pokémon slot in the party:
+                                        </span>
+                                        <div
+                                            style={{
+                                                display: 'grid',
+                                                gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+                                                gap: '8px'
+                                            }}
+                                        >
+                                            {Array.from({ length: teamSize }).map((_, slotIdx) => (
+                                                <div
+                                                    key={slotIdx}
+                                                    style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}
+                                                >
+                                                    <span className="text-label" style={{ fontSize: '0.75rem' }}>
+                                                        Slot {slotIdx + 1} Rank:
+                                                    </span>
+                                                    <select
+                                                        value={
+                                                            customPokemonRanks[slotIdx] ||
+                                                            (rank !== 'random' ? rank : 'Starter')
+                                                        }
+                                                        onChange={(e) =>
+                                                            handleCustomRankChange(slotIdx, e.target.value as Rank)
+                                                        }
+                                                        className="trainer-gen-modal__select"
+                                                        style={{ padding: '4px 6px', fontSize: '0.8rem' }}
+                                                    >
+                                                        {RANK_ORDER.map((r) => (
+                                                            <option key={r} value={r}>
+                                                                {r}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Manual Type Picker (if manual selected) */}
@@ -874,7 +1010,10 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                             onChange={(e) => setScaleLoyaltyHappiness(e.target.checked)}
                                         />
                                         <span>
-                                            <Sparkles size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                                            <Sparkles
+                                                size={14}
+                                                style={{ verticalAlign: 'middle', marginRight: '4px' }}
+                                            />
                                             Scale Pokémon Loyalty & Happiness with Rank
                                         </span>
                                         <TooltipIcon
@@ -882,6 +1021,23 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                                 setTooltipInfo({
                                                     title: 'Scalar Loyalty & Happiness',
                                                     desc: 'Scales bond according to corebook rank achievements: Starter/Rookie Pokémon start at 1–2; Standard rank has 1 maxed partner (5) with others at 2–3; Expert and Ace+ rosters feature loyal 5/5 partners.'
+                                                })
+                                            }
+                                        />
+                                    </label>
+
+                                    <label className="trainer-gen-modal__checkbox-label" style={{ marginTop: '8px' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={allowDuplicates}
+                                            onChange={(e) => setAllowDuplicates(e.target.checked)}
+                                        />
+                                        <span>Allow Duplicate Pokémon</span>
+                                        <TooltipIcon
+                                            onClick={() =>
+                                                setTooltipInfo({
+                                                    title: 'Allow Duplicate Pokémon',
+                                                    desc: 'When unchecked (default), each Pokémon generated for the team will be a unique species. Check this box if you want to allow trainers to carry multiple Pokémon of the exact same species (e.g. two Lapras).'
                                                 })
                                             }
                                         />
@@ -919,7 +1075,11 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                 </label>
                                 <select
                                     value={tokenImageMode}
-                                    onChange={(e) => setTokenImageMode(e.target.value as 'default' | 'prompt_each' | 'fallback_pokeball')}
+                                    onChange={(e) =>
+                                        setTokenImageMode(
+                                            e.target.value as 'default' | 'prompt_each' | 'fallback_pokeball'
+                                        )
+                                    }
                                     className="trainer-gen-modal__select"
                                 >
                                     <option value="default">Use Default Image for Tokens</option>
@@ -948,7 +1108,13 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                             />
                                             <span
                                                 className="text-subtext"
-                                                style={{ fontSize: '0.8rem', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                                                style={{
+                                                    fontSize: '0.8rem',
+                                                    flex: 1,
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap'
+                                                }}
                                                 title={defaultImage.name || 'Selected Image'}
                                             >
                                                 {defaultImage.name || 'Selected Asset'}
@@ -994,13 +1160,14 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                     onChange={(e) => setAutoMatchSceneImages(e.target.checked)}
                                 />
                                 <span>
-                                    Auto-match images from existing tokens on map (e.g. if 'Kingler' is on the scene, reuse its art)
+                                    Auto-match images from existing tokens on map (e.g. if 'Kingler' is on the scene,
+                                    reuse its art)
                                 </span>
                                 <TooltipIcon
                                     onClick={() =>
                                         setTooltipInfo({
                                             title: 'Auto-Match Scene Tokens',
-                                            desc: 'Scans all existing tokens on the Owlbear map. If a token with a matching species or trainer name is found, its image is automatically copied so you don’t have to re-select it.'
+                                            desc: 'Scans active tokens currently placed on the Owlbear map to automatically reuse existing artwork. Due to Owlbear Rodeo SDK limitations, extensions cannot silently query or browse your asset library in the background without opening the interactive file picker, making scanning the active scene the only automated solution available.'
                                         })
                                     }
                                 />
@@ -1023,7 +1190,9 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                     checked={destination === 'new'}
                                     onChange={() => setDestination('new')}
                                 />
-                                <span>{isStandaloneMode ? 'Create New Sheet (Nested Team)' : 'Spawn New Token(s)'}</span>
+                                <span>
+                                    {isStandaloneMode ? 'Create New Sheet (Nested Team)' : 'Spawn New Token(s)'}
+                                </span>
                             </label>
                             {(!generateTeam || teamSize === 0) && (
                                 <label className="trainer-gen-modal__checkbox-label">
@@ -1033,7 +1202,9 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                         checked={destination === 'overwrite'}
                                         onChange={() => setDestination('overwrite')}
                                     />
-                                    <span>{isStandaloneMode ? 'Overwrite Active Sheet' : 'Overwrite Selected Token'}</span>
+                                    <span>
+                                        {isStandaloneMode ? 'Overwrite Active Sheet' : 'Overwrite Selected Token'}
+                                    </span>
                                 </label>
                             )}
                         </div>

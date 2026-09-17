@@ -23,8 +23,11 @@ export interface TrainerGeneratorConfig {
     teamSize: number; // 0 - 6
     typeSpecialtyMode: 'concept' | 'monotype' | 'dual' | 'variety' | 'manual';
     manualTypes: string[];
-    teamRankMode: 'match_trainer' | 'random';
+    teamRankMode: 'match_trainer' | 'random' | 'custom';
+    customPokemonRanks?: Rank[];
     capPokemonRank: boolean;
+    allowDuplicates?: boolean;
+    buildType?: 'minmax' | 'average' | 'wild';
     allowedLineLengths: number[]; // e.g. [1, 2, 3]
     allowedStageIndices: number[]; // e.g. [1, 2, 3]
     includeLegendaries: boolean;
@@ -34,16 +37,50 @@ export interface TrainerGeneratorConfig {
 }
 
 export const ALL_POKEMON_TYPES = [
-    'Normal', 'Fire', 'Water', 'Grass', 'Electric', 'Ice',
-    'Fighting', 'Poison', 'Ground', 'Flying', 'Psychic', 'Bug',
-    'Rock', 'Ghost', 'Dragon', 'Steel', 'Dark', 'Fairy'
+    'Normal',
+    'Fire',
+    'Water',
+    'Grass',
+    'Electric',
+    'Ice',
+    'Fighting',
+    'Poison',
+    'Ground',
+    'Flying',
+    'Psychic',
+    'Bug',
+    'Rock',
+    'Ghost',
+    'Dragon',
+    'Steel',
+    'Dark',
+    'Fairy'
 ];
 
 export const MYTHICAL_POKEMON_NAMES = new Set([
-    'mew', 'celebi', 'jirachi', 'deoxys', 'phione', 'manaphy',
-    'darkrai', 'shaymin', 'arceus', 'victini', 'keldeo', 'meloetta',
-    'genesect', 'diancie', 'hoopa', 'volcanion', 'magearna', 'marshadow',
-    'zeraora', 'meltan', 'melmetal', 'zarude', 'pecharunt'
+    'mew',
+    'celebi',
+    'jirachi',
+    'deoxys',
+    'phione',
+    'manaphy',
+    'darkrai',
+    'shaymin',
+    'arceus',
+    'victini',
+    'keldeo',
+    'meloetta',
+    'genesect',
+    'diancie',
+    'hoopa',
+    'volcanion',
+    'magearna',
+    'marshadow',
+    'zeraora',
+    'meltan',
+    'melmetal',
+    'zarude',
+    'pecharunt'
 ]);
 
 const KANTO_BADGE_PRESETS: { name: string; emoji: string }[] = [
@@ -398,13 +435,15 @@ export function filterPokemonLookupPool(
     targetTypes: string[],
     config: TrainerGeneratorConfig
 ): PokedexLookupItem[] {
-    const isSpecialType = (t: string) => targetTypes.length === 0 || targetTypes.includes('Any') || targetTypes.includes(t);
+    const isSpecialType = (t: string) =>
+        targetTypes.length === 0 || targetTypes.includes('Any') || targetTypes.includes(t);
 
     return lookup.filter((mon) => {
         const cleanName = mon.name.toLowerCase();
 
         // 1. Exclude Megas / Special Forms unless enabled
-        const isMegaOrForm = cleanName.includes('(mega') || cleanName.includes('(primal') || cleanName.includes('(gigantamax');
+        const isMegaOrForm =
+            cleanName.includes('(mega') || cleanName.includes('(primal') || cleanName.includes('(gigantamax');
         if (isMegaOrForm && !config.includeMegas) return false;
 
         // 2. Legendaries
@@ -445,31 +484,32 @@ export async function generateFullTrainerTeam(
         concept = TRAINER_CLASSES.find((c) => c.id === config.conceptId) || null;
     }
 
-    const resolvedRank: Rank = config.rank === 'random'
-        ? (concept?.minRank || RANK_ORDER[Math.floor(Math.random() * RANK_ORDER.length)])
-        : config.rank;
+    const resolvedRank: Rank =
+        config.rank === 'random'
+            ? concept?.minRank || RANK_ORDER[Math.floor(Math.random() * RANK_ORDER.length)]
+            : config.rank;
 
-    const resolvedAge = config.age === 'random'
-        ? (['Teen', 'Adult', 'Senior'] as const)[Math.floor(Math.random() * 3)]
-        : config.age;
+    const resolvedAge =
+        config.age === 'random' ? (['Teen', 'Adult', 'Senior'] as const)[Math.floor(Math.random() * 3)] : config.age;
 
-    const resolvedGender = config.gender === 'random'
-        ? (['Male', 'Female', 'Non-Binary'] as const)[Math.floor(Math.random() * 3)]
-        : config.gender;
+    const resolvedGender =
+        config.gender === 'random'
+            ? (['Male', 'Female', 'Non-Binary'] as const)[Math.floor(Math.random() * 3)]
+            : config.gender;
 
     const validNatures = NATURES.filter((n) => n && n.trim() !== '');
-    const resolvedNature = config.nature === 'random' || !config.nature
-        ? validNatures[Math.floor(Math.random() * validNatures.length)]
-        : config.nature;
+    const resolvedNature =
+        config.nature === 'random' || !config.nature
+            ? validNatures[Math.floor(Math.random() * validNatures.length)]
+            : config.nature;
 
     let isSpecial = config.isSpecialTrainer;
     if (config.autoSpecialForMystic && concept?.isSupernatural) {
         isSpecial = true;
     }
 
-    const resolvedProfile: TrainerProfileType = config.profile === 'auto'
-        ? (concept?.suggestedProfile || 'battler')
-        : config.profile;
+    const resolvedProfile: TrainerProfileType =
+        config.profile === 'auto' ? concept?.suggestedProfile || 'battler' : config.profile;
 
     const defaultName = concept ? concept.name : 'Trainer';
     const finalTrainerName = config.trainerName?.trim() || defaultName;
@@ -528,17 +568,27 @@ export async function generateFullTrainerTeam(
         }
 
         const trainerRankIdx = RANK_ORDER.indexOf(resolvedRank);
+        const usedSpecies = new Set<string>();
 
         for (let i = 0; i < config.teamSize; i++) {
-            const chosenMon = eligiblePool[Math.floor(Math.random() * eligiblePool.length)];
+            let candidatePool = eligiblePool;
+            if (!config.allowDuplicates) {
+                const uniqueAvailable = eligiblePool.filter((m) => !usedSpecies.has(m.name.toLowerCase()));
+                if (uniqueAvailable.length > 0) {
+                    candidatePool = uniqueAvailable;
+                }
+            }
+
+            const chosenMon = candidatePool[Math.floor(Math.random() * candidatePool.length)];
             if (!chosenMon) continue;
+            usedSpecies.add(chosenMon.name.toLowerCase());
 
             // Determine Rank
             let pokeRank: Rank = resolvedRank;
-            if (config.teamRankMode === 'random') {
-                const maxAvailableIdx = config.capPokemonRank
-                    ? Math.max(0, trainerRankIdx)
-                    : RANK_ORDER.length - 1;
+            if (config.teamRankMode === 'custom' && config.customPokemonRanks && config.customPokemonRanks[i]) {
+                pokeRank = config.customPokemonRanks[i];
+            } else if (config.teamRankMode === 'random') {
+                const maxAvailableIdx = config.capPokemonRank ? Math.max(0, trainerRankIdx) : RANK_ORDER.length - 1;
                 const randomIdx = Math.floor(Math.random() * (maxAvailableIdx + 1));
                 pokeRank = RANK_ORDER[randomIdx];
             }
@@ -549,7 +599,7 @@ export async function generateFullTrainerTeam(
                 randomizeSpecies: false,
                 randomizeGender: true,
                 randomizeNature: true,
-                buildType: 'average',
+                buildType: config.buildType || 'minmax',
                 combatBias: 'balanced',
                 defensePreference: 'auto',
                 targetAtkCount: 2,
@@ -580,9 +630,23 @@ export async function generateFullTrainerTeam(
                 spilloverJitter: true
             };
 
-            const pokeBuild = await generateBuild(pokeGenConfig, state);
+            const pokemonState: CharacterState = {
+                ...state,
+                identity: {
+                    ...state.identity,
+                    mode: 'Pokémon',
+                    age: ''
+                }
+            };
+
+            const pokeBuild = await generateBuild(pokeGenConfig, pokemonState);
             if (pokeBuild) {
-                const pokeMeta = buildTokenMetadataFromBuild(pokeBuild, chosenMon.name, `${import.meta.env.BASE_URL || '/'}pokeball.svg`);
+                const pokeMeta = buildTokenMetadataFromBuild(
+                    pokeBuild,
+                    chosenMon.name,
+                    `${import.meta.env.BASE_URL || '/'}pokeball.svg`
+                );
+                pokeMeta['age'] = '';
 
                 if (config.scaleLoyaltyHappiness) {
                     const { loyalty, happiness } = calculateScalarLoyaltyHappiness(pokeRank, i);

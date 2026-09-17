@@ -1,6 +1,6 @@
 import type { TempBuild, TempMove, CharacterState, GeneratorConfig, Rank } from '../store/storeTypes';
 import { fetchPokemonData, fetchMoveData, MOVES_URLS, SPECIES_URLS, loadLocalDataset } from './api';
-import { getRankPoints, getAgePoints } from '../store/useCharacterStore';
+import { getRankPoints } from '../store/useCharacterStore';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { assignWildStats, assignMinMaxStats, assignAverageStats } from './generatorLogic';
 import { draftInitialMoves, draftSpilloverMoves, sortDraftedMoves } from './moveDraftingLogic';
@@ -117,13 +117,9 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     const rank = config.targetRank || state.identity.rank || 'Starter';
     const { core: rankCore, social: rankSocial, skills: rankSkill, skillLimit } = getRankPoints(rank);
 
-    // In Pokerole PMD homebrews and Trainer campaigns, characters benefit from Age attribute and social bonus points
-    const { core: ageCore, social: ageSocial } = state.identity.age
-        ? getAgePoints(state.identity.age)
-        : { core: 0, social: 0 };
-
-    const attributePoints = rankCore + ageCore;
-    const socialPoints = rankSocial + ageSocial;
+    // Pokémon in core Pokerole do not use the Age mechanic and only receive Rank points
+    const attributePoints = rankCore;
+    const socialPoints = rankSocial;
     const maxSkillRank = skillLimit;
 
     // Bulletproof parsing: derive base stats & limits directly from pdRecord with fallback to state
@@ -609,7 +605,7 @@ export function buildTokenMetadataFromBuild(
         'ability-list': abilities.join(','),
         nature: build.nature || '-- Select --',
         gender: build.gender !== undefined ? build.gender : 'Genderless',
-        age: 'Adult',
+        age: '',
         mode: 'Pokémon',
         'show-trackers': true,
         ruleset: 'vg-vit-hp',

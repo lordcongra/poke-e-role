@@ -203,7 +203,8 @@ export function IdentityHeader() {
                     saveToOwlbear({ 'token-image-url': url });
                     const dim = await new Promise<{ width: number; height: number }>((resolve) => {
                         const domImg = new window.Image();
-                        domImg.onload = () => resolve({ width: domImg.naturalWidth || 300, height: domImg.naturalHeight || 300 });
+                        domImg.onload = () =>
+                            resolve({ width: domImg.naturalWidth || 300, height: domImg.naturalHeight || 300 });
                         domImg.onerror = () => resolve({ width: 300, height: 300 });
                         domImg.src = url;
                     });
@@ -215,7 +216,9 @@ export function IdentityHeader() {
                                 imageRecord.url = url;
                                 imageRecord.width = dim.width;
                                 imageRecord.height = dim.height;
-                                const imgGrid = (item as Record<string, unknown>).grid as Record<string, unknown> | undefined;
+                                const imgGrid = (item as Record<string, unknown>).grid as
+                                    | Record<string, unknown>
+                                    | undefined;
                                 if (imgGrid) {
                                     imgGrid.dpi = dim.width;
                                     imgGrid.offset = {
@@ -250,7 +253,8 @@ export function IdentityHeader() {
                     if (!selectedWidth || !selectedHeight) {
                         const dim = await new Promise<{ width: number; height: number }>((resolve) => {
                             const domImg = new window.Image();
-                            domImg.onload = () => resolve({ width: domImg.naturalWidth || 300, height: domImg.naturalHeight || 300 });
+                            domImg.onload = () =>
+                                resolve({ width: domImg.naturalWidth || 300, height: domImg.naturalHeight || 300 });
                             domImg.onerror = () => resolve({ width: 300, height: 300 });
                             domImg.src = selectedUrl;
                         });
@@ -267,7 +271,9 @@ export function IdentityHeader() {
                                 imageRecord.width = selectedWidth;
                                 imageRecord.height = selectedHeight;
 
-                                const imgGrid = (item as Record<string, unknown>).grid as Record<string, unknown> | undefined;
+                                const imgGrid = (item as Record<string, unknown>).grid as
+                                    | Record<string, unknown>
+                                    | undefined;
                                 if (imgGrid) {
                                     imgGrid.dpi = selectedWidth;
                                     imgGrid.offset = {

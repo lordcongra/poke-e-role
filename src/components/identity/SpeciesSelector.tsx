@@ -54,7 +54,7 @@ export function SpeciesSelector({ uniqueSpecies, onOpenPokedex }: SpeciesSelecto
                 <div className="identity-header__species-container">
                     <input
                         type="text"
-                        list="species-datalist"
+                        list={identityStore.mode === 'Pokémon' ? 'species-datalist' : undefined}
                         className="identity-grid__input identity-header__flex-input text-label"
                         placeholder={identityStore.mode === 'Pokémon' ? 'e.g. Aron' : 'e.g. Bug Catcher'}
                         value={identityStore.species || ''}
@@ -64,11 +64,13 @@ export function SpeciesSelector({ uniqueSpecies, onOpenPokedex }: SpeciesSelecto
                             if (event.key === 'Enter') handleFetch();
                         }}
                     />
-                    <datalist id="species-datalist">
-                        {uniqueSpecies.map((species) => (
-                            <option key={species} value={species} />
-                        ))}
-                    </datalist>
+                    {identityStore.mode === 'Pokémon' && (
+                        <datalist id="species-datalist">
+                            {uniqueSpecies.map((species) => (
+                                <option key={species} value={species} />
+                            ))}
+                        </datalist>
+                    )}
                     {isFetching && (
                         <span
                             className="identity-header__loading-icon"
