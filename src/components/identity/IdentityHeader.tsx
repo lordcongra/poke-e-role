@@ -12,7 +12,8 @@ import { TransformationModal } from '../modals/TransformationModal';
 import { broadcastInfo } from '../../utils/diceRoller';
 import { isStandaloneMode } from '../../utils/storageAdapter';
 import { imageManager, autoCropTransparency } from '../../utils/imageManager';
-import { saveToOwlbear } from '../../utils/obr';
+import { saveToOwlbear, METADATA_ID } from '../../utils/obr';
+import { buildGraphicsFromMeta, renderTokenGraphics } from '../../utils/graphicsManager';
 import { Image as ImageIcon, Radio, Upload, Globe, RefreshCw, Dna, Trash2, AlertTriangle } from 'lucide-react';
 import './IdentityHeader.css';
 
@@ -200,12 +201,38 @@ export function IdentityHeader() {
                 if (url) {
                     setIdentity('tokenImageUrl', url);
                     saveToOwlbear({ 'token-image-url': url });
+                    const dim = await new Promise<{ width: number; height: number }>((resolve) => {
+                        const domImg = new window.Image();
+                        domImg.onload = () => resolve({ width: domImg.naturalWidth || 300, height: domImg.naturalHeight || 300 });
+                        domImg.onerror = () => resolve({ width: 300, height: 300 });
+                        domImg.src = url;
+                    });
                     await OBR.scene.items.updateItems([tokenId], (items) => {
                         for (const item of items) {
                             const imgItem = item as Record<string, unknown>;
-                            if (imgItem.image) (imgItem.image as Record<string, unknown>).url = url;
+                            if (imgItem.image) {
+                                const imageRecord = imgItem.image as Record<string, unknown>;
+                                imageRecord.url = url;
+                                imageRecord.width = dim.width;
+                                imageRecord.height = dim.height;
+                                const imgGrid = (item as Record<string, unknown>).grid as Record<string, unknown> | undefined;
+                                if (imgGrid) {
+                                    imgGrid.dpi = dim.width;
+                                    imgGrid.offset = {
+                                        x: dim.width / 2,
+                                        y: dim.height / 2
+                                    };
+                                }
+                            }
                         }
                     });
+                    const updatedItems = await OBR.scene.items.getItems([tokenId]);
+                    if (updatedItems.length > 0) {
+                        const meta = (updatedItems[0].metadata[METADATA_ID] as Record<string, unknown>) || {};
+                        const gData = buildGraphicsFromMeta(meta);
+                        const currentRole = await OBR.player.getRole();
+                        await renderTokenGraphics(updatedItems[0], gData, currentRole, true);
+                    }
                 }
                 return;
             }
@@ -213,34 +240,58 @@ export function IdentityHeader() {
             if (images && images.length > 0) {
                 const img = images[0];
                 const selectedUrl = img.image?.url || '';
-                const selectedWidth = img.image?.width || 0;
-                const selectedHeight = img.image?.height || 0;
+                let selectedWidth = img.image?.width || 0;
+                let selectedHeight = img.image?.height || 0;
 
                 if (selectedUrl) {
                     setIdentity('tokenImageUrl', selectedUrl);
                     saveToOwlbear({ 'token-image-url': selectedUrl });
+
+                    if (!selectedWidth || !selectedHeight) {
+                        const dim = await new Promise<{ width: number; height: number }>((resolve) => {
+                            const domImg = new window.Image();
+                            domImg.onload = () => resolve({ width: domImg.naturalWidth || 300, height: domImg.naturalHeight || 300 });
+                            domImg.onerror = () => resolve({ width: 300, height: 300 });
+                            domImg.src = selectedUrl;
+                        });
+                        selectedWidth = dim.width;
+                        selectedHeight = dim.height;
+                    }
+
                     await OBR.scene.items.updateItems([tokenId], (items) => {
                         for (const item of items) {
                             const imgItem = item as Record<string, unknown>;
                             if (imgItem.image) {
                                 const imageRecord = imgItem.image as Record<string, unknown>;
-                                const oldWidth = (imageRecord.width as number) || 1;
-                                const oldScaleX = item.scale.x || 1;
-                                const oldScaleY = item.scale.y || 1;
-
                                 imageRecord.url = selectedUrl;
-                                if (selectedWidth && selectedHeight) {
-                                    imageRecord.width = selectedWidth;
-                                    imageRecord.height = selectedHeight;
+                                imageRecord.width = selectedWidth;
+                                imageRecord.height = selectedHeight;
 
-                                    const physicalWidth = oldWidth * Math.abs(oldScaleX);
-                                    const newScale = physicalWidth / selectedWidth;
-                                    item.scale.x = oldScaleX < 0 ? -newScale : newScale;
-                                    item.scale.y = oldScaleY < 0 ? -newScale : newScale;
+                                const imgGrid = (item as Record<string, unknown>).grid as Record<string, unknown> | undefined;
+                                if (imgGrid) {
+                                    imgGrid.dpi = selectedWidth;
+                                    imgGrid.offset = {
+                                        x: selectedWidth / 2,
+                                        y: selectedHeight / 2
+                                    };
                                 }
+
+                                const signX = (item.scale.x || 1) < 0 ? -1 : 1;
+                                const signY = (item.scale.y || 1) < 0 ? -1 : 1;
+                                item.scale.x = signX;
+                                item.scale.y = signY;
                             }
                         }
                     });
+
+                    // Re-render tracker graphics cleanly anchored at new image center
+                    const updatedItems = await OBR.scene.items.getItems([tokenId]);
+                    if (updatedItems.length > 0) {
+                        const meta = (updatedItems[0].metadata[METADATA_ID] as Record<string, unknown>) || {};
+                        const gData = buildGraphicsFromMeta(meta);
+                        const currentRole = await OBR.player.getRole();
+                        await renderTokenGraphics(updatedItems[0], gData, currentRole, true);
+                    }
                 } else {
                     if (OBR.isAvailable)
                         OBR.notification.show('Could not extract URL. Please check F12 Console!', 'ERROR');
