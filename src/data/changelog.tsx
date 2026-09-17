@@ -1,7 +1,6 @@
-import React from 'react';
 import type { ReactNode } from 'react';
 
-export const CURRENT_VERSION = '3.5.0';
+export const CURRENT_VERSION = '3.6.0';
 
 export interface ChangelogEntry {
     version: string;
@@ -10,6 +9,77 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
+    {
+        version: '3.6.0',
+        date: 'September 2026',
+        changes: [
+            <strong key="trainer-generator-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
+                🧑‍🏫 Trainer & Team Generator
+            </strong>,
+            <ul
+                key="trainer-generator-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Complete Trainer & Team Generation:</strong> Instantly generate standalone NPC Trainers or complete battle-ready teams of 0–6 Pokémon with Pokerole-accurate ranks, attributes, skills, and suggested gym badges.
+                </li>
+                <li>
+                    <strong>50+ Curated Trainer Classes:</strong> Select or randomize from over 50 thematic trainer concepts across 7 categories (Wild & Nature, Martial & Combat, Urban & Specialist, Scholar & Tech, Social & Show, Villains & Grunts, Elite & Universal) with tailored type preferences, Supernatural tags, and suggested stat archetypes.
+                </li>
+                <li>
+                    <strong>Smart Pokémon Build Tiers:</strong> Defaulted to <em>Min-Max (Competent)</em>, which auto-detects each Pokémon species' natural attack bias (Physical vs Special) and defensive bias (Evasion vs Clash) to cap primary offensive and defensive stats first. Options also available for <em>Average (Balanced)</em> and <em>Wild (Untrained)</em>.
+                </li>
+                <li>
+                    <strong>Granular Pokémon Rank Rules:</strong> Choose between matching the Trainer's rank, randomized ranks (with obedience cap), or <em>Specify Per Pokémon</em> with individual rank dropdowns for each team slot.
+                </li>
+                <li>
+                    <strong>Unique Species by Default:</strong> Automatically guarantees no duplicate Pokémon on the team (e.g. preventing multiple Lapras on a Skier's roster), with an optional checkbox to allow duplicates.
+                </li>
+                <li>
+                    <strong>OBR Token Spawning & Formations:</strong> Batch-spawns the Trainer and their party onto the Owlbear Rodeo map in an organized tactical formation, pre-calculating tracker graphics for HP and Will bars. In Standalone mode, creates the Trainer and nests their party members in the sidebar directory.
+                </li>
+                <li>
+                    <strong>Artwork Picker & Map Auto-Detection:</strong> Supports selecting a default image from your OBR library, prompting for each token with species pre-filled in search, or auto-matching artwork from existing tokens on the active map.
+                </li>
+                <li>
+                    <strong>Token Image Centering & Fallback Fixes:</strong> Fixed token pivot offsets when updating images from the OBR library so HUD graphics remain centered, and ensured fallback Pokéball icons resolve absolute URLs to eliminate broken image icons.
+                </li>
+            </ul>,
+            <strong key="room-rules-permissions-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
+                📜 Room Rules & GM Permissions
+            </strong>,
+            <ul
+                key="room-rules-permissions-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Room Rules Hidden for Non-GMs:</strong> The Room Rules button on the global toolbar is now strictly restricted to GMs and hidden from players (was meant to always be that way, oops).
+                </li>
+                <li>
+                    <strong>Generators Locked Behind Room Rules:</strong> The Pokémon and Trainer generators are now locked behind Room Rules permissions and defaulted to <strong>GM Only</strong>. GMs can choose to grant access to <strong>Everyone</strong> from the Room Rules menu whenever desired.
+                </li>
+                <li>
+                    <strong>Clean Trainer Sheets:</strong> Removed the Pokémon autocomplete dropdown from the Trainer and Special Trainer "Concept" field to allow seamless freeform class entry.
+                </li>
+            </ul>
+        ]
+    },
     {
         version: '3.5.0',
         date: 'September 2026',
@@ -455,336 +525,23 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     <code>[Acc +2: Sound Move]</code>.
                 </li>
             </ul>,
-            <div
-                key="car-reminder-310"
-                style={{
-                    border: '2px solid var(--semantic-danger)',
-                    padding: '12px',
-                    borderRadius: '6px',
-                    backgroundColor: 'color-mix(in srgb, var(--semantic-danger) 10%, transparent)',
-                    marginBottom: '12px'
-                }}
-            >
-                <strong style={{ color: 'var(--semantic-danger)', fontSize: '1.1em' }}>
-                    ⚠️ Reminder: Custom Action Rolls URL Change
-                </strong>
-                <p
-                    className="text-subtext"
-                    style={{
-                        color: 'var(--text-main)',
-                        marginTop: '6px',
-                        marginBottom: '8px',
-                        fontSize: '0.9em',
-                        lineHeight: '1.4'
-                    }}
-                >
-                    If you haven't updated yet, the <strong>Custom Action Rolls (CAR)</strong> extension has moved!
-                    Please update your VTT room to use the new manifest link below to keep your dice rolling smoothly:
-                </p>
-                <p style={{ margin: 0, fontSize: '0.9em', fontWeight: 'bold', color: 'var(--text-main)' }}>
-                    🔗 New CAR Link:{' '}
-                    <a
-                        href="https://custom-action-rolls.narcolepticdracu.com/manifest.json"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-value-highlight"
-                        style={{ wordBreak: 'break-all' }}
-                    >
-                        https://custom-action-rolls.narcolepticdracu.com/manifest.json
-                    </a>
-                </p>
-            </div>,
-            <span key="init-bugfix" className="text-subtext" style={{ color: 'var(--text-main)' }}>
-                Fixed a race condition bug in the Initiative Tracker that caused the UI to glitch when rapidly skipping
-                turns.
-            </span>
-        ]
-    },
-    {
-        version: '2.8.1',
-        date: 'August 2026',
-        changes: [
-            <div
-                key="car-link-update"
-                style={{
-                    border: '2px solid var(--semantic-danger)',
-                    padding: '12px',
-                    borderRadius: '6px',
-                    backgroundColor: 'color-mix(in srgb, var(--semantic-danger) 10%, transparent)',
-                    marginBottom: '16px'
-                }}
-            >
-                <strong style={{ color: 'var(--semantic-danger)', fontSize: '1.1em' }}>
-                    ⚠️ Custom Action Rolls URL Change
-                </strong>
-                <p
-                    className="text-subtext"
-                    style={{
-                        color: 'var(--text-main)',
-                        marginTop: '6px',
-                        marginBottom: '8px',
-                        fontSize: '0.9em',
-                        lineHeight: '1.4'
-                    }}
-                >
-                    The <strong>Custom Action Rolls (CAR)</strong> extension has moved to a new host! If your dice rolls
-                    have stopped working, or if you are installing it for the first time, please use the new manifest
-                    link below:
-                </p>
-                <p style={{ margin: 0, fontSize: '0.9em', fontWeight: 'bold', color: 'var(--text-main)' }}>
-                    🔗 New CAR Manifest Link:{' '}
-                    <a
-                        href="https://custom-action-rolls.narcolepticdracu.com/manifest.json"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-value-highlight"
-                        style={{ wordBreak: 'break-all' }}
-                    >
-                        https://custom-action-rolls.narcolepticdracu.com/manifest.json
-                    </a>
-                </p>
-            </div>
-        ]
-    },
-    {
-        version: '2.8.0',
-        date: 'June 2026',
-        changes: [
-            <div
-                key="dice-deprecation"
-                style={{
-                    border: '2px solid var(--semantic-danger)',
-                    padding: '12px',
-                    borderRadius: '6px',
-                    backgroundColor: 'color-mix(in srgb, var(--semantic-danger) 10%, transparent)',
-                    marginBottom: '16px'
-                }}
-            >
-                <strong style={{ color: 'var(--semantic-danger)', fontSize: '1.1em' }}>
-                    ⚠️ ACTION REQUIRED: Dice+ is retiring!
-                </strong>
-                <p
-                    className="text-subtext"
-                    style={{
-                        color: 'var(--text-main)',
-                        marginTop: '6px',
-                        marginBottom: '8px',
-                        fontSize: '0.9em',
-                        lineHeight: '1.4'
-                    }}
-                >
-                    The legacy <strong>Dice+</strong> engine is being fully deprecated and will be removed in an
-                    upcoming release. You MUST switch your room to use <strong>Custom Action Rolls (CAR)</strong> to
-                    ensure your dice continue to work. CAR natively supports advanced mechanics like exploding dice!
-                </p>
-                <p style={{ margin: 0, fontSize: '0.9em', fontWeight: 'bold', color: 'var(--text-main)' }}>
-                    🔗 CAR Manifest Link:{' '}
-                    <a
-                        href="https://custom-action-rolls.narcolepticdracu.com/manifest.json"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-value-highlight"
-                        style={{ wordBreak: 'break-all' }}
-                    >
-                        https://custom-action-rolls.narcolepticdracu.com/manifest.json
-                    </a>
-                </p>
-            </div>,
-            <strong key="hb-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
-                🛠️ Homebrew Workshop Overhaul (Anti-Crash Update)
-            </strong>,
             <ul
-                key="hb-list"
+                key="init-bugfix-list"
                 className="text-subtext"
                 style={{
                     color: 'var(--text-main)',
                     paddingLeft: '20px',
                     marginTop: '6px',
-                    marginBottom: '12px',
+                    marginBottom: '16px',
                     fontSize: '0.9em',
                     lineHeight: '1.5'
                 }}
             >
                 <li>
-                    <strong>Local Storage Migration:</strong> To prevent hitting Owlbear Rodeo's strict 16KB Room Data
-                    limit (which was causing room crashes), all Homebrew data is now saved directly to your browser's
-                    local storage. Your existing data will port over automatically!
-                </li>
-                <li>
-                    <strong>Peer-to-Peer Syncing:</strong> Added a <strong>📢 Share with Table</strong> button! This
-                    uses direct WebRTC broadcasting to send your custom creations to everyone in the room without
-                    bloating the OBR database.
-                </li>
-                <li>
-                    <strong>Smart Merging:</strong> Receiving a broadcast from the GM or another player will now safely{' '}
-                    <em>merge</em> their homebrew with yours, preventing accidental overwrites of your own custom
-                    creations.
-                </li>
-                <li>
-                    <strong>Unsaved Changes Indicator:</strong> The "Backup All" button will now turn red and show a
-                    warning if you have unexported changes, ensuring you never forget to back up your hard work to a
-                    JSON file! For the very first time this extension loads after this update it will tell you that you
-                    need to back up even if you've backed up everything prior.
+                    Fixed a race condition bug in the Initiative Tracker that caused the UI to glitch when rapidly skipping
+                    turns.
                 </li>
             </ul>
-        ]
-    },
-    {
-        version: '2.7.5',
-        date: 'May 2026',
-        changes: [
-            <div
-                key="init-update"
-                style={{
-                    border: '2px solid var(--secondary)',
-                    padding: '12px',
-                    borderRadius: '6px',
-                    backgroundColor: 'color-mix(in srgb, var(--secondary) 10%, transparent)',
-                    marginTop: '8px',
-                    marginBottom: '12px'
-                }}
-            >
-                <div
-                    className="text-theme-header"
-                    style={{
-                        backgroundColor: 'var(--semantic-danger)',
-                        padding: '10px',
-                        borderRadius: '4px',
-                        marginBottom: '12px',
-                        fontWeight: 'bold',
-                        textAlign: 'center',
-                        boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
-                    }}
-                >
-                    🚨 IMPORTANT: You can now safely uninstall the "Pretty Sordid" extension! 🚨
-                </div>
-                <strong style={{ color: 'var(--secondary)', fontSize: '1.1em' }}>
-                    🚀 Initiative Tracker Complete Overhaul
-                </strong>
-                <p
-                    className="text-subtext"
-                    style={{ color: 'var(--text-main)', marginTop: '6px', marginBottom: '8px', fontSize: '0.9em' }}
-                >
-                    The built-in tracker has been rebuilt from the ground up to perfectly integrate into your screen
-                    without layout bugs.
-                </p>
-                <ul
-                    className="text-subtext"
-                    style={{
-                        color: 'var(--text-main)',
-                        paddingLeft: '20px',
-                        marginTop: '4px',
-                        marginBottom: 0,
-                        lineHeight: '1.5',
-                        fontSize: '0.9em'
-                    }}
-                >
-                    <li>
-                        <strong>Per-Player HUD:</strong> Tracker location, layout, and size limits now save locally to
-                        your personal browser.
-                    </li>
-                    <li>
-                        <strong>Horizontal & Vertical Modes:</strong> Switch between a vertical list or a horizontal
-                        bar.
-                    </li>
-                    <li>
-                        <strong>Smart Bounds:</strong> Set max width/height limits. The list scrolls if you limit the
-                        height/width.
-                    </li>
-                    <li>
-                        <strong>Auto-Scrolling:</strong> The tracker automatically smooth-scrolls to the active Pokémon
-                        when turns pass!
-                    </li>
-                    <li>
-                        <strong>Find any bugs?:</strong> Please let @congra know in the Pokerole Discord or report an
-                        issue on Github!
-                    </li>
-                </ul>
-            </div>,
-            <div key="dice-deprecation" style={{ marginBottom: '12px' }}>
-                <strong style={{ color: 'var(--semantic-danger)', fontSize: '1.05em' }}>
-                    ⚠️ Dice+ Deprecation Notice
-                </strong>
-                <p className="text-subtext" style={{ color: 'var(--text-main)', margin: '4px 0', fontSize: '0.9em' }}>
-                    The legacy <strong>Dice+</strong> engine will be deprecated in an upcoming release.{' '}
-                    <strong>Custom Action Rolls (CAR)</strong> is now the default and recommended engine for this sheet,
-                    as it supports advanced mechanics like exploding dice and dynamic roll logs. Please switch over in
-                    the Room Rules (📜) menu! Contact Congra in the Pokerole Discord with any questions about this
-                    change.
-                </p>
-            </div>,
-            <strong key="hb-status-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
-                ✨ Homebrew Statuses & Exploding Dice
-            </strong>,
-            <ul
-                key="hb-status-list"
-                className="text-subtext"
-                style={{ color: 'var(--text-main)', paddingLeft: '20px', margin: '4px 0', fontSize: '0.9em' }}
-            >
-                <li>
-                    <strong>Custom Statuses:</strong> You can now create custom status conditions in the Homebrew
-                    Workshop! They integrate natively into the sheet's tracker dropdowns, allowing for dynamic
-                    end-of-round damage/healing, action loss, and stat penalties.
-                </li>
-                <li>
-                    <strong>Exploding Dice Tag:</strong> Added the <code>[Acc Xs Add Dmg Limit Y]</code> tag to the Tag
-                    Builder. Roll a specific number on your accuracy dice to bank bonus damage for your attack!{' '}
-                    <em>(Requires the CAR engine)</em>
-                </li>
-                <li>
-                    <strong>Dual Scaling Moves:</strong> You can now properly configure alternative scaling options
-                    (like <em>Photon Geyser</em>) when creating custom moves in the Homebrew Workshop.
-                </li>
-                <li>
-                    <strong>Workshop Duplication:</strong> Added a handy Duplicate (📋 Copy) button to all Workshop
-                    items to speed up your homebrew creation!
-                </li>
-            </ul>
-        ]
-    },
-    {
-        version: '2.7.0',
-        date: 'May 2026',
-        changes: [
-            <span key="init-rebuild" className="text-subtext" style={{ color: 'var(--text-main)' }}>
-                Initiative Tracker completely rebuilt natively into the sheet.
-            </span>,
-            <span key="init-hud" className="text-subtext" style={{ color: 'var(--text-main)' }}>
-                Added Initiative HUD settings to customize placement, size, and layout.
-            </span>,
-            <span key="init-sordid" className="text-subtext" style={{ color: 'var(--text-main)' }}>
-                Removed reliance on the Pretty Sordid extension.
-            </span>
-        ]
-    },
-    {
-        version: '2.6.0',
-        date: 'Idk there are lots from various versions here',
-        changes: [
-            <span key="gen-update" className="text-subtext" style={{ color: 'var(--text-main)' }}>
-                Further improvements to the pokemon generator under the hood.
-            </span>,
-            <span key="img-update" className="text-subtext" style={{ color: 'var(--text-main)' }}>
-                Added ability to update the image of a token from your OBR images - helpful for evolutions when you want
-                to keep your sheet.
-            </span>,
-            <span key="car-update" className="text-subtext" style={{ color: 'var(--text-main)' }}>
-                Added new dice-roller engine option in Rules: Custom Action Rolls! Read up on it in the readme on github
-                to learn more.
-            </span>,
-            <React.Fragment key="action-manager-link">
-                <span className="text-subtext" style={{ color: 'var(--text-main)' }}>
-                    Find Custom Action Rolls manifest link here:{' '}
-                </span>
-                <a
-                    href="https://custom-action-rolls.narcolepticdracu.com/manifest.json"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-value-highlight"
-                >
-                    https://custom-action-rolls.narcolepticdracu.com/manifest.json
-                </a>
-            </React.Fragment>
         ]
     }
 ];

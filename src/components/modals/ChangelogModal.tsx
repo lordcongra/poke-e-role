@@ -25,13 +25,53 @@ export function ChangelogModal({ onClose }: ChangelogModalProps) {
                             <h4 className="changelog-modal__version-title text-title-primary">
                                 v{log.version} <span className="changelog-modal__date text-subtext">- {log.date}</span>
                             </h4>
-                            <ul className="changelog-modal__list text-subtext" style={{ color: 'var(--text-main)' }}>
-                                {log.changes.map((change, idx) => (
-                                    <li key={idx}>{change}</li>
-                                ))}
-                            </ul>
+                            <div className="changelog-modal__changes">
+                                {log.changes.map((change, idx) => {
+                                    if (
+                                        change &&
+                                        typeof change === 'object' &&
+                                        'type' in change &&
+                                        (change.type === 'ul' || change.type === 'div')
+                                    ) {
+                                        return <div key={idx}>{change}</div>;
+                                    }
+                                    if (
+                                        change &&
+                                        typeof change === 'object' &&
+                                        'type' in change &&
+                                        change.type === 'strong'
+                                    ) {
+                                        return (
+                                            <div key={idx} className="changelog-modal__section-title">
+                                                {change}
+                                            </div>
+                                        );
+                                    }
+                                    return (
+                                        <ul
+                                            key={idx}
+                                            className="changelog-modal__list text-subtext"
+                                            style={{ color: 'var(--text-main)' }}
+                                        >
+                                            <li>{change}</li>
+                                        </ul>
+                                    );
+                                })}
+                            </div>
                         </div>
                     ))}
+
+                    <div className="changelog-modal__archive-note text-subtext">
+                        <span>Looking for older version history? </span>
+                        <a
+                            href="https://github.com/lordcongra/poke-e-role/blob/main/CHANGELOG.md"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="changelog-modal__link"
+                        >
+                            View v2.x archive on GitHub
+                        </a>
+                    </div>
                 </div>
 
                 <div className="changelog-modal__actions">

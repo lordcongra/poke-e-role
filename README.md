@@ -1,4 +1,4 @@
-# Pokerole 3.0 Sheet v3.5.0 (Standalone PWA & Owlbear Rodeo Extension)
+# Pokerole 3.0 Sheet v3.6.0 (Standalone PWA & Owlbear Rodeo Extension)
 
 A highly automated, modular character sheet and GM Toolkit for playing **Pokerole 3.0** campaigns (including **Pokémon Mystery Dungeon / PMD** settings).
 
@@ -110,6 +110,15 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 - **Legendary Filtering:** Easily toggle the inclusion of extremely rare, game-breaking legendary items with a single checkbox. This includes things like master balls, rare candy, etc. It will also include anything in the Homebrew Workshop that you tag as Legendary rarity.
 - **GM Access Control:** By default, the generator is a GM-exclusive tool, but it can be globally unlocked for players via the Room Rules menu!
 
+### 🧑‍🏫 Trainer & Team Generator
+
+- **Complete NPC & Party Generation:** Generate standalone trainers or full teams with 0 to 6 Pokémon in seconds, fully statted and battle-ready!
+- **50+ Trainer Classes Across 7 Categories:** Features classic trainer archetypes organized into Generalists, Type Specialists, Competitive Battlers, Wilderness & Exploration, Trade & Working, Academic & Mystical, and Faction/Specialists (including Ace Trainers, Gym Leaders, Backpackers, Ranchers, Musicians, Mediums, Cooks, Police Officers, Schoolkids, and more).
+- **Smart Min-Max Stat & Move Allocation:** Employs intelligent build tiers that auto-detect physical vs. special attack bias and evade vs. clash defensive bias based on species base stats and moves, ensuring generated Pokémon have cohesive, synergistic stat profiles and viable movesets.
+- **Granular Rank & Pokémon Customization:** Control Pokémon team rank globally or specify distinct ranks per team slot (e.g. Starter, Beginner, Amateur, Ace, Pro, Master). Enable or disable duplicate species (default: unique species only).
+- **Automated VTT & Directory Spawning:** In Owlbear Rodeo, tokens spawn dynamically onto the scene in a clean staggered formation around the viewport center. In Standalone mode, creates a dedicated nested folder with the Trainer and all team Pokémon for organized encounter prep.
+- **Smart Asset Matching & Artwork Selection:** In Owlbear Rodeo, seamlessly select default token images from your OBR library or automatically auto-match existing token assets by species/trainer name.
+
 ### 🌐 Live Database Fetching & Offline Resilience
 
 - **Offline-First Architecture:** The extension now ships with a pre-compiled local database of Pokémon, Abilities, Natures, Moves, and Items. It loads instantly and is completely immune to third-party API rate limits or network outages!
@@ -184,6 +193,8 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 - **Global Room Rules:** GMs can click the "📜 Rules" button to globally configure the active Dice Engine, dictate how HP/Spec Def is calculated for the room, and completely disable/enable Pain Penalties for all players!
 - **Homebrew Access Control:** GMs can set Homebrew permissions to "Full Access", "View Only", or completely hide the Workshop from the players' screens.
+- **Generator Access Control:** GMs can control whether players have access to the Random Pokémon Generator and the Trainer & Team Generator (defaulted to GM Only to prevent unwanted map clutter or spoiler generation).
+- **GM Exclusive View:** Room Rules settings are strictly hidden from non-GM players to prevent tampering with campaign mechanics.
 - **Built-in NPC Toggle:** Mark a sheet as a "Private NPC" to instantly hide the sheet's contents from players, preventing meta-gaming during boss fights.
 
 ---
@@ -192,6 +203,6 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 To install this extension into your Owlbear Rodeo room, copy the Manifest URL below and paste it into your Owlbear Rodeo extension manager:
 
-`https://lordcongra.github.io/poke-e-role/manifest.json?v=3.5.0`
+`https://lordcongra.github.io/poke-e-role/manifest.json?v=3.6.0`
 
 _(Note: If the sheet updates, you can force Owlbear to fetch the newest version by bumping the version tag at the end of the URL!)_
