@@ -209,6 +209,31 @@
     border-left: 1px solid var(--border);
 }
 
+/* Generator Split Button specific logic */
+.global-toolbar__gen-group {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+}
+
+.global-toolbar__btn--gen-pkmn {
+    flex: 1;
+    border-radius: 4px 0 0 4px;
+    border-right: none;
+    padding: 6px 4px;
+    font-size: 0.76rem;
+    white-space: nowrap;
+}
+
+.global-toolbar__btn--gen-trnr {
+    flex: 1;
+    border-radius: 0 4px 4px 0;
+    padding: 6px 4px;
+    font-size: 0.76rem;
+    white-space: nowrap;
+    border-left: 1px solid var(--border);
+}
+
 /* Specific Hover Tints based on Dynamic Theme */
 .global-toolbar__btn.action-button--primary-hover:hover {
     background-color: color-mix(in srgb, var(--primary) 10%, var(--panel-alt));

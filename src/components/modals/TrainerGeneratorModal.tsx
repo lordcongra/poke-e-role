@@ -112,12 +112,31 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
 
     const handleRandomizeName = () => {
         const randomName = SAMPLE_FIRST_NAMES[Math.floor(Math.random() * SAMPLE_FIRST_NAMES.length)];
-        const currentConcept = TRAINER_CLASSES.find((c) => c.id === conceptId);
-        if (currentConcept) {
-            setTrainerName(`${currentConcept.name} ${randomName}`);
-        } else {
-            setTrainerName(randomName);
-        }
+        setTrainerName(randomName);
+    };
+
+    const handleRandomizeConcept = () => {
+        const randomClass = TRAINER_CLASSES[Math.floor(Math.random() * TRAINER_CLASSES.length)];
+        handleConceptChange(randomClass.id);
+    };
+
+    const handleRandomizeRank = () => {
+        setRank(RANK_ORDER[Math.floor(Math.random() * RANK_ORDER.length)]);
+    };
+
+    const handleRandomizeAge = () => {
+        const ages: ('Child' | 'Teen' | 'Adult' | 'Senior')[] = ['Child', 'Teen', 'Adult', 'Senior'];
+        setAge(ages[Math.floor(Math.random() * ages.length)]);
+    };
+
+    const handleRandomizeGender = () => {
+        const genders: ('Male' | 'Female' | 'Non-Binary')[] = ['Male', 'Female', 'Non-Binary'];
+        setGender(genders[Math.floor(Math.random() * genders.length)]);
+    };
+
+    const handleRandomizeNature = () => {
+        const validNatures = NATURES.filter((n) => n && n.trim() !== '');
+        setNature(validNatures[Math.floor(Math.random() * validNatures.length)]);
     };
 
     const handleToggleLineLength = (len: number) => {
@@ -223,63 +242,75 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                     }
                                 />
                             </label>
-                            <select
-                                value={conceptId}
-                                onChange={(e) => handleConceptChange(e.target.value)}
-                                className="trainer-gen-modal__select"
-                            >
-                                <option value="random">🎲 Random Concept</option>
-                                <option value="none">Custom / Independent Trainer</option>
-                                <optgroup label="Wild & Nature">
-                                    {TRAINER_CLASSES.filter((c) => c.category === 'Wild').map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name}
-                                        </option>
-                                    ))}
-                                </optgroup>
-                                <optgroup label="Martial & Combat">
-                                    {TRAINER_CLASSES.filter((c) => c.category === 'Martial').map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name}
-                                        </option>
-                                    ))}
-                                </optgroup>
-                                <optgroup label="Urban & Specialist">
-                                    {TRAINER_CLASSES.filter((c) => c.category === 'Urban').map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name}
-                                        </option>
-                                    ))}
-                                </optgroup>
-                                <optgroup label="Scholar & Tech">
-                                    {TRAINER_CLASSES.filter((c) => c.category === 'Scholar').map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name}
-                                        </option>
-                                    ))}
-                                </optgroup>
-                                <optgroup label="Social & Show">
-                                    {TRAINER_CLASSES.filter((c) => c.category === 'Social').map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name}
-                                        </option>
-                                    ))}
-                                </optgroup>
-                                <optgroup label="Villains & Grunts">
-                                    {TRAINER_CLASSES.filter((c) => c.category === 'Villain').map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name}
-                                        </option>
-                                    ))}
-                                </optgroup>
-                                <optgroup label="Elite & Universal">
-                                    {TRAINER_CLASSES.filter((c) => c.category === 'Elite').map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name}
-                                        </option>
-                                    ))}
-                                </optgroup>
-                            </select>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                                <select
+                                    value={conceptId}
+                                    onChange={(e) => handleConceptChange(e.target.value)}
+                                    className="trainer-gen-modal__select"
+                                    style={{ flex: 1 }}
+                                >
+                                    <option value="random">Random Concept</option>
+                                    <option value="none">Custom / Independent Trainer</option>
+                                    <optgroup label="Wild & Nature">
+                                        {TRAINER_CLASSES.filter((c) => c.category === 'Wild').map((c) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.name}
+                                            </option>
+                                        ))}
+                                    </optgroup>
+                                    <optgroup label="Martial & Combat">
+                                        {TRAINER_CLASSES.filter((c) => c.category === 'Martial').map((c) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.name}
+                                            </option>
+                                        ))}
+                                    </optgroup>
+                                    <optgroup label="Urban & Specialist">
+                                        {TRAINER_CLASSES.filter((c) => c.category === 'Urban').map((c) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.name}
+                                            </option>
+                                        ))}
+                                    </optgroup>
+                                    <optgroup label="Scholar & Tech">
+                                        {TRAINER_CLASSES.filter((c) => c.category === 'Scholar').map((c) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.name}
+                                            </option>
+                                        ))}
+                                    </optgroup>
+                                    <optgroup label="Social & Show">
+                                        {TRAINER_CLASSES.filter((c) => c.category === 'Social').map((c) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.name}
+                                            </option>
+                                        ))}
+                                    </optgroup>
+                                    <optgroup label="Villains & Grunts">
+                                        {TRAINER_CLASSES.filter((c) => c.category === 'Villain').map((c) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.name}
+                                            </option>
+                                        ))}
+                                    </optgroup>
+                                    <optgroup label="Elite & Universal">
+                                        {TRAINER_CLASSES.filter((c) => c.category === 'Elite').map((c) => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.name}
+                                            </option>
+                                        ))}
+                                    </optgroup>
+                                </select>
+                                <button
+                                    type="button"
+                                    onClick={handleRandomizeConcept}
+                                    title="Roll a random concept"
+                                    className="action-button action-button--dark"
+                                    style={{ padding: '4px 8px' }}
+                                >
+                                    <Dices size={15} />
+                                </button>
+                            </div>
                         </div>
 
                         <div className="trainer-gen-modal__field">
@@ -328,18 +359,30 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                     }
                                 />
                             </label>
-                            <select
-                                value={rank}
-                                onChange={(e) => setRank(e.target.value as Rank | 'random')}
-                                className="trainer-gen-modal__select"
-                            >
-                                <option value="random">🎲 Random Rank</option>
-                                {RANK_ORDER.map((r) => (
-                                    <option key={r} value={r}>
-                                        {r}
-                                    </option>
-                                ))}
-                            </select>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                                <select
+                                    value={rank}
+                                    onChange={(e) => setRank(e.target.value as Rank | 'random')}
+                                    className="trainer-gen-modal__select"
+                                    style={{ flex: 1 }}
+                                >
+                                    <option value="random">Random Rank</option>
+                                    {RANK_ORDER.map((r) => (
+                                        <option key={r} value={r}>
+                                            {r}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button
+                                    type="button"
+                                    onClick={handleRandomizeRank}
+                                    title="Roll a random rank"
+                                    className="action-button action-button--dark"
+                                    style={{ padding: '4px 8px' }}
+                                >
+                                    <Dices size={14} />
+                                </button>
+                            </div>
                         </div>
 
                         <div className="trainer-gen-modal__field">
@@ -354,47 +397,83 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                     }
                                 />
                             </label>
-                            <select
-                                value={age}
-                                onChange={(e) => setAge(e.target.value as 'Child' | 'Teen' | 'Adult' | 'Senior' | 'random')}
-                                className="trainer-gen-modal__select"
-                            >
-                                <option value="random">🎲 Random Age</option>
-                                <option value="Child">Child (8–12)</option>
-                                <option value="Teen">Teen (13–18)</option>
-                                <option value="Adult">Adult (19–59)</option>
-                                <option value="Senior">Senior (60+)</option>
-                            </select>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                                <select
+                                    value={age}
+                                    onChange={(e) => setAge(e.target.value as 'Child' | 'Teen' | 'Adult' | 'Senior' | 'random')}
+                                    className="trainer-gen-modal__select"
+                                    style={{ flex: 1 }}
+                                >
+                                    <option value="random">Random Age</option>
+                                    <option value="Child">Child (8–12)</option>
+                                    <option value="Teen">Teen (13–18)</option>
+                                    <option value="Adult">Adult (19–59)</option>
+                                    <option value="Senior">Senior (60+)</option>
+                                </select>
+                                <button
+                                    type="button"
+                                    onClick={handleRandomizeAge}
+                                    title="Roll a random age"
+                                    className="action-button action-button--dark"
+                                    style={{ padding: '4px 8px' }}
+                                >
+                                    <Dices size={14} />
+                                </button>
+                            </div>
                         </div>
 
                         <div className="trainer-gen-modal__field">
                             <label className="trainer-gen-modal__field-label text-label">Gender:</label>
-                            <select
-                                value={gender}
-                                onChange={(e) => setGender(e.target.value as 'Male' | 'Female' | 'Non-Binary' | 'random')}
-                                className="trainer-gen-modal__select"
-                            >
-                                <option value="random">🎲 Random</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Non-Binary">Non-Binary</option>
-                            </select>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                                <select
+                                    value={gender}
+                                    onChange={(e) => setGender(e.target.value as 'Male' | 'Female' | 'Non-Binary' | 'random')}
+                                    className="trainer-gen-modal__select"
+                                    style={{ flex: 1 }}
+                                >
+                                    <option value="random">Random Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Non-Binary">Non-Binary</option>
+                                </select>
+                                <button
+                                    type="button"
+                                    onClick={handleRandomizeGender}
+                                    title="Roll a random gender"
+                                    className="action-button action-button--dark"
+                                    style={{ padding: '4px 8px' }}
+                                >
+                                    <Dices size={14} />
+                                </button>
+                            </div>
                         </div>
 
                         <div className="trainer-gen-modal__field">
                             <label className="trainer-gen-modal__field-label text-label">Nature:</label>
-                            <select
-                                value={nature}
-                                onChange={(e) => setNature(e.target.value)}
-                                className="trainer-gen-modal__select"
-                            >
-                                <option value="random">🎲 Random Nature</option>
-                                {Object.keys(NATURES).map((n) => (
-                                    <option key={n} value={n}>
-                                        {n}
-                                    </option>
-                                ))}
-                            </select>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                                <select
+                                    value={nature}
+                                    onChange={(e) => setNature(e.target.value)}
+                                    className="trainer-gen-modal__select"
+                                    style={{ flex: 1 }}
+                                >
+                                    <option value="random">Random Nature</option>
+                                    {NATURES.filter((n) => n && n.trim() !== '').map((n) => (
+                                        <option key={n} value={n}>
+                                            {n}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button
+                                    type="button"
+                                    onClick={handleRandomizeNature}
+                                    title="Roll a random nature"
+                                    className="action-button action-button--dark"
+                                    style={{ padding: '4px 8px' }}
+                                >
+                                    <Dices size={14} />
+                                </button>
+                            </div>
                         </div>
                     </div>
 

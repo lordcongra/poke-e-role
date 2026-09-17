@@ -36,22 +36,13 @@ export const TRAINER_CLASSES: TrainerClass[] = [
         description: 'Young and enthusiastic bug collectors with nets in hand.'
     },
     {
-        id: 'bug_maniac',
-        name: 'Bug Maniac',
-        category: 'Wild',
-        typePreferences: ['Bug'],
-        forceType: true,
-        suggestedProfile: 'scholar',
-        description: 'Obsessive entomologists in bug suits seeking rare specimens.'
-    },
-    {
         id: 'hiker',
         name: 'Hiker',
         category: 'Wild',
-        typePreferences: ['Rock', 'Ground'],
+        typePreferences: ['Rock', 'Ground', 'Fighting'],
         forceType: false,
         suggestedProfile: 'survivalist',
-        description: 'Hearty mountaineers who love robust Rock and Ground types.'
+        description: 'Hearty mountaineers who love robust Rock, Ground, and Fighting types.'
     },
     {
         id: 'fisherman',
@@ -75,7 +66,7 @@ export const TRAINER_CLASSES: TrainerClass[] = [
         id: 'camper',
         name: 'Camper',
         category: 'Wild',
-        typePreferences: ['Grass', 'Ground', 'Normal'],
+        typePreferences: ['Grass', 'Bug', 'Normal'],
         forceType: false,
         suggestedProfile: 'survivalist',
         description: 'Outdoor enthusiasts equipped for the wilderness.'
@@ -106,6 +97,24 @@ export const TRAINER_CLASSES: TrainerClass[] = [
         forceType: false,
         suggestedProfile: 'survivalist',
         description: 'Keepers of wildlife balance and protectors of natural reserves.'
+    },
+    {
+        id: 'backpacker',
+        name: 'Backpacker',
+        category: 'Wild',
+        typePreferences: ['Grass', 'Rock', 'Ground', 'Flying'],
+        forceType: false,
+        suggestedProfile: 'survivalist',
+        description: 'Adventurous nomads trekking through vast trails with versatile, sturdy partners.'
+    },
+    {
+        id: 'rancher',
+        name: 'Rancher',
+        category: 'Wild',
+        typePreferences: ['Normal', 'Ground', 'Electric'],
+        forceType: false,
+        suggestedProfile: 'survivalist',
+        description: 'Ranchers and herders raising livestock, equine, and pastoral Pokémon.'
     },
 
     // --- MARTIAL / COMBAT ---
@@ -190,6 +199,15 @@ export const TRAINER_CLASSES: TrainerClass[] = [
         suggestedProfile: 'battler',
         description: 'Rebellious urban street fighters looking for a brawl.'
     },
+    {
+        id: 'laborer',
+        name: 'Laborer',
+        category: 'Martial',
+        typePreferences: ['Fighting', 'Ground', 'Steel', 'Rock'],
+        forceType: false,
+        suggestedProfile: 'battler',
+        description: 'Hardworking construction and industrial workers battling alongside muscular, robust Pokémon.'
+    },
 
     // --- URBAN / SPECIALIST ---
     {
@@ -226,7 +244,7 @@ export const TRAINER_CLASSES: TrainerClass[] = [
         id: 'ninja_boy',
         name: 'Ninja Boy / Shinobi',
         category: 'Urban',
-        typePreferences: ['Poison', 'Bug', 'Dark'],
+        typePreferences: ['Poison', 'Bug', 'Dark', 'Steel'],
         forceType: false,
         suggestedProfile: 'survivalist',
         description: 'Masters of camouflage, stealth tactics, and ambush strikes.'
@@ -248,6 +266,43 @@ export const TRAINER_CLASSES: TrainerClass[] = [
         forceType: false,
         suggestedProfile: 'socialite',
         description: 'Performers dazzling crowds with spinning balls and hypnotic tricks.'
+    },
+    {
+        id: 'police_officer',
+        name: 'Police Officer',
+        category: 'Urban',
+        typePreferences: ['Fighting', 'Normal', 'Dark', 'Electric'],
+        forceType: false,
+        suggestedProfile: 'battler',
+        description: 'Law enforcement officers maintaining public order with loyal patrol Pokémon.'
+    },
+    {
+        id: 'chef',
+        name: 'Cook / Baker / Chef',
+        category: 'Urban',
+        typePreferences: ['Fire', 'Normal', 'Fairy', 'Grass'],
+        forceType: false,
+        suggestedProfile: 'scholar',
+        description: 'Culinary masters creating delicious meals alongside fire and food-loving Pokémon.'
+    },
+    {
+        id: 'artist',
+        name: 'Artist',
+        category: 'Urban',
+        typePreferences: ['Normal', 'Poison', 'Fairy', 'Psychic'],
+        forceType: false,
+        suggestedProfile: 'socialite',
+        description: 'Creative painters capturing nature through vibrant strokes and colorful companions.'
+    },
+    {
+        id: 'medium',
+        name: 'Medium',
+        category: 'Urban',
+        typePreferences: ['Ghost', 'Psychic', 'Dark'],
+        forceType: false,
+        suggestedProfile: 'mystic',
+        isSupernatural: true,
+        description: 'Spiritual conduits who commune with spirits, shades, and otherworldly entities.'
     },
 
     // --- SCHOLAR / TECH ---
@@ -282,19 +337,19 @@ export const TRAINER_CLASSES: TrainerClass[] = [
         id: 'poke_maniac',
         name: 'Poké Maniac',
         category: 'Scholar',
-        typePreferences: ['Dragon', 'Rock', 'Normal'],
+        typePreferences: ['Any'],
         forceType: false,
         suggestedProfile: 'scholar',
-        description: 'Devoted collectors obsessed with monstrous and legendary species.'
+        description: 'Devoted collectors obsessed with rare and monstrous species across all types.'
     },
     {
         id: 'ruin_maniac',
         name: 'Ruin Maniac',
         category: 'Scholar',
-        typePreferences: ['Rock', 'Ground', 'Steel'],
+        typePreferences: ['Rock', 'Ground', 'Steel', 'Ghost', 'Dark'],
         forceType: false,
         suggestedProfile: 'scholar',
-        description: 'Archaeologists unearthing relics and ancient fossil Pokémon.'
+        description: 'Archaeologists unearthing relics, ancient fossils, and haunted ruins.'
     },
 
     // --- SOCIAL / SHOW ---
@@ -351,6 +406,33 @@ export const TRAINER_CLASSES: TrainerClass[] = [
         forceType: false,
         suggestedProfile: 'socialite',
         description: 'Bright young trainers testing their skills against travelers.'
+    },
+    {
+        id: 'schoolkid',
+        name: 'Schoolkid',
+        category: 'Social',
+        typePreferences: ['Normal', 'Fairy', 'Electric'],
+        forceType: false,
+        suggestedProfile: 'balanced',
+        description: 'Bright students applying classroom theory and regional study in battle.'
+    },
+    {
+        id: 'musician',
+        name: 'Musician',
+        category: 'Social',
+        typePreferences: ['Electric', 'Poison', 'Dark', 'Normal'],
+        forceType: false,
+        suggestedProfile: 'socialite',
+        description: 'Passionate musicians rocking out with rhythmic beats and loud sound-based Pokémon.'
+    },
+    {
+        id: 'pokefan',
+        name: 'Pokéfan',
+        category: 'Social',
+        typePreferences: ['Fairy', 'Normal', 'Electric'],
+        forceType: false,
+        suggestedProfile: 'socialite',
+        description: 'Devoted fans who passionately adore, pamper, and show off their beloved cute companions.'
     },
 
     // --- VILLAIN / CRIMINAL ---

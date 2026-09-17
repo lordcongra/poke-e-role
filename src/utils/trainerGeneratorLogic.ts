@@ -245,7 +245,7 @@ export function buildTrainerTokenMetadata(
 
     const metadata: Record<string, unknown> = {
         nickname: trainerName.trim(),
-        species: '',
+        species: concept ? concept.name : '',
         rank: rank,
         type1: '',
         type2: '',
@@ -457,8 +457,9 @@ export async function generateFullTrainerTeam(
         ? (['Male', 'Female', 'Non-Binary'] as const)[Math.floor(Math.random() * 3)]
         : config.gender;
 
+    const validNatures = NATURES.filter((n) => n && n.trim() !== '');
     const resolvedNature = config.nature === 'random' || !config.nature
-        ? Object.keys(NATURES)[Math.floor(Math.random() * Object.keys(NATURES).length)]
+        ? validNatures[Math.floor(Math.random() * validNatures.length)]
         : config.nature;
 
     let isSpecial = config.isSpecialTrainer;
