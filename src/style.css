@@ -68,7 +68,7 @@ html[data-theme='dark'],
     --dark: #888;
     --text-main: #e0e0e0;
     --text-muted: #aaa;
-    --input-bg: #2c2c2c;
+    --input-bg: color-mix(in srgb, var(--primary) 10%, #202020);
     --label-bg: #333;
     --row-odd: rgba(255, 255, 255, 0.03);
     --row-even: rgba(0, 0, 0, 0.3);
@@ -81,10 +81,19 @@ html[data-theme='dark'],
     color-scheme: dark !important;
 }
 
-/* 🔥 Force native HTML <option> popups to obey the sheet's dynamic panel theme */
-select option {
+/* 🔥 Force native HTML <select>, <option>, and <optgroup> popups to obey the sheet's dynamic panel theme */
+select,
+select option,
+select optgroup {
     background-color: var(--panel-bg) !important;
     color: var(--text-main) !important;
+}
+
+select option:checked,
+select option:focus,
+select option:hover {
+    background-color: color-mix(in srgb, var(--primary) 35%, var(--panel-bg)) !important;
+    color: #ffffff !important;
 }
 
 /* =========================================

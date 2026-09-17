@@ -23,10 +23,12 @@ import {
     type TrainerGeneratorConfig,
     type PokedexLookupItem
 } from '../../utils/trainerGeneratorLogic';
-import { spawnTrainerAndTeam, type TrainerSpawnImageOptions } from '../../utils/trainerTokenSpawner';
+import { type TrainerSpawnImageOptions } from '../../utils/trainerTokenSpawner';
 import { fetchPokemonLookupIndex } from '../../utils/api';
 import { isStandaloneMode } from '../../utils/storageAdapter';
 import type { Rank } from '../../store/entityTypes';
+import { BIOMES, BIOME_MAP, BIOME_TOOLTIP_NOTE, getTrainerClassesForBiome } from '../../data/biomeData';
+import { TrainerPreviewModal } from './TrainerPreviewModal';
 import './TrainerGeneratorModal.css';
 
 interface TrainerGeneratorModalProps {
@@ -40,6 +42,10 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
     const [pokedexLookup, setPokedexLookup] = useState<PokedexLookupItem[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
+    const [biomeId, setBiomeId] = useState<string>('none');
+    const [previewResult, setPreviewResult] = useState<any | null>(null);
+    const [spawnImageOptions, setSpawnImageOptions] = useState<TrainerSpawnImageOptions | null>(null);
+    const [spawnDestination, setSpawnDestination] = useState<'new' | 'overwrite'>('new');
 
     // Trainer Identity Form State
     const [conceptId, setConceptId] = useState<string>('random');
@@ -132,7 +138,14 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
     };
 
     const handleRandomizeConcept = () => {
-        const randomClass = TRAINER_CLASSES[Math.floor(Math.random() * TRAINER_CLASSES.length)];
+        let pool = TRAINER_CLASSES;
+        if (biomeId && biomeId !== 'none') {
+            const bClasses = getTrainerClassesForBiome(biomeId);
+            if (bClasses.length > 0) {
+                pool = bClasses;
+            }
+        }
+        const randomClass = pool[Math.floor(Math.random() * pool.length)];
         handleConceptChange(randomClass.id);
     };
 
@@ -236,7 +249,8 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                 includeLegendaries,
                 includeMythicals,
                 includeMegas,
-                scaleLoyaltyHappiness
+                scaleLoyaltyHappiness,
+                biomeId: biomeId !== 'none' ? biomeId : undefined
             };
 
             const imageOptions: TrainerSpawnImageOptions = {
@@ -248,17 +262,66 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
             };
 
             const result = await generateFullTrainerTeam(config, store, pokedexLookup);
-            await spawnTrainerAndTeam(result, destination, imageOptions);
-            onClose();
+            setSpawnImageOptions(imageOptions);
+            setSpawnDestination(destination);
+            setPreviewResult(result);
         } catch (error) {
             console.error('[TrainerGeneratorModal] Generation failed:', error);
-            alert('Failed to generate trainer. See console for details.');
+            setTooltipInfo({
+                title: 'Generation Failed',
+                desc: 'Failed to generate trainer. See browser console for details.'
+            });
         } finally {
             setIsGenerating(false);
         }
     };
 
+    if (previewResult && spawnImageOptions) {
+        return (
+            <TrainerPreviewModal
+                result={previewResult}
+                config={{
+                    trainerName: trainerName.trim() || undefined,
+                    conceptId,
+                    rank,
+                    age,
+                    gender,
+                    nature,
+                    isSpecialTrainer,
+                    autoSpecialForMystic,
+                    profile,
+                    assignBadges,
+                    generateTeam,
+                    teamSize,
+                    typeSpecialtyMode,
+                    manualTypes,
+                    teamRankMode,
+                    customPokemonRanks,
+                    capPokemonRank,
+                    allowDuplicates,
+                    buildType,
+                    allowedLineLengths,
+                    allowedStageIndices,
+                    includeLegendaries,
+                    includeMythicals,
+                    includeMegas,
+                    scaleLoyaltyHappiness,
+                    biomeId: biomeId !== 'none' ? biomeId : undefined
+                }}
+                pokedexLookup={pokedexLookup}
+                destination={spawnDestination}
+                imageOptions={spawnImageOptions}
+                onClose={() => {
+                    setPreviewResult(null);
+                    onClose();
+                }}
+            />
+        );
+    }
+
     const selectedConcept = TRAINER_CLASSES.find((c) => c.id === conceptId);
+    const selectedBiomeDef = biomeId !== 'none' ? BIOME_MAP[biomeId] : null;
+    const biomeClasses = biomeId !== 'none' ? getTrainerClassesForBiome(biomeId) : [];
 
     return (
         <div className="trainer-gen-modal__overlay">
@@ -277,14 +340,40 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                 <div className="trainer-gen-modal__section">
                     <div className="trainer-gen-modal__section-header">
                         <h3 className="trainer-gen-modal__section-title text-title-primary">
-                            <Shield size={16} color="var(--primary)" /> Trainer Identity
+                            <Shield size={16} color="var(--primary)" /> Trainer Identity & Biome
                         </h3>
                         <span className="text-subtext" style={{ fontSize: '0.78rem' }}>
-                            Core Concept & Attributes
+                            Core Concept, Biome & Attributes
                         </span>
                     </div>
 
                     <div className="trainer-gen-modal__grid--2col">
+                        <div className="trainer-gen-modal__field">
+                            <label className="trainer-gen-modal__field-label text-label">
+                                Location / Biome Ecosystem:
+                                <TooltipIcon
+                                    onClick={() =>
+                                        setTooltipInfo({
+                                            title: 'Location / Biome Filter',
+                                            desc: BIOME_TOOLTIP_NOTE
+                                        })
+                                    }
+                                />
+                            </label>
+                            <select
+                                value={biomeId}
+                                onChange={(e) => setBiomeId(e.target.value)}
+                                className="trainer-gen-modal__select"
+                            >
+                                <option value="none">Any Biome / Location (Unrestricted)</option>
+                                {BIOMES.map((b) => (
+                                    <option key={b.id} value={b.id}>
+                                        [{b.tag}] {b.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
                         <div className="trainer-gen-modal__field">
                             <label className="trainer-gen-modal__field-label text-label">
                                 Trainer Concept / Class:
@@ -292,7 +381,7 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                     onClick={() =>
                                         setTooltipInfo({
                                             title: 'Trainer Class / Concept',
-                                            desc: 'Select an iconic Pokémon trainer class. Classes come with natural type preferences, typical ranks, and suggested stat/skill profiles.'
+                                            desc: "Select an iconic Pokémon trainer class. Classes come with natural type preferences, typical ranks, and suggested stat/skill profiles. When a Biome is selected, clicking the dice button rolls from that biome's thematic concepts!"
                                         })
                                     }
                                 />
@@ -306,6 +395,15 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                 >
                                     <option value="random">Random Concept</option>
                                     <option value="none">Custom / Independent Trainer</option>
+                                    {biomeClasses.length > 0 && (
+                                        <optgroup label={`Thematic for ${selectedBiomeDef?.name || 'Selected Biome'}`}>
+                                            {biomeClasses.map((c) => (
+                                                <option key={`biome-${c.id}`} value={c.id}>
+                                                    {c.name}
+                                                </option>
+                                            ))}
+                                        </optgroup>
+                                    )}
                                     <optgroup label="Wild & Nature">
                                         {TRAINER_CLASSES.filter((c) => c.category === 'Wild').map((c) => (
                                             <option key={c.id} value={c.id}>
@@ -359,7 +457,11 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                 <button
                                     type="button"
                                     onClick={handleRandomizeConcept}
-                                    title="Roll a random concept"
+                                    title={
+                                        biomeClasses.length > 0
+                                            ? `Roll a random concept from ${selectedBiomeDef?.name}`
+                                            : 'Roll a random concept'
+                                    }
                                     className="action-button action-button--dark"
                                     style={{ padding: '4px 8px' }}
                                 >
@@ -367,27 +469,92 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                 </button>
                             </div>
                         </div>
+                    </div>
 
-                        <div className="trainer-gen-modal__field">
-                            <label className="trainer-gen-modal__field-label text-label">
-                                Trainer Name / Nickname:
-                                <TooltipIcon
-                                    onClick={() =>
-                                        setTooltipInfo({
-                                            title: 'Trainer Name',
-                                            desc: 'Custom name for the Trainer sheet/token. Leave blank to default to the selected concept class (e.g. "Bird Keeper").'
-                                        })
-                                    }
-                                />
-                            </label>
-                            <input
-                                type="text"
-                                value={trainerName}
-                                onChange={(e) => setTrainerName(e.target.value)}
-                                placeholder={selectedConcept ? selectedConcept.name : 'e.g. Ace Trainer (default)'}
-                                className="trainer-gen-modal__input"
-                            />
+                    {/* Thematic Concept Quick-Pick Chips */}
+                    {biomeClasses.length > 0 && (
+                        <div
+                            style={{
+                                marginTop: '8px',
+                                marginBottom: '4px',
+                                padding: '8px 12px',
+                                background: 'rgba(255, 255, 255, 0.04)',
+                                borderRadius: '6px',
+                                border: '1px solid var(--border)'
+                            }}
+                        >
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    marginBottom: '6px'
+                                }}
+                            >
+                                <span
+                                    style={{
+                                        fontSize: '0.78rem',
+                                        fontWeight: 600,
+                                        color: 'var(--primary)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                    }}
+                                >
+                                    <Sparkles size={13} /> Thematic Trainer Concepts for {selectedBiomeDef?.name}:
+                                </span>
+                                <span className="text-subtext" style={{ fontSize: '0.72rem' }}>
+                                    Click chip to choose
+                                </span>
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                {biomeClasses.map((c) => {
+                                    const isSelected = conceptId === c.id;
+                                    return (
+                                        <button
+                                            key={c.id}
+                                            type="button"
+                                            onClick={() => handleConceptChange(c.id)}
+                                            style={{
+                                                fontSize: '0.74rem',
+                                                padding: '3px 9px',
+                                                borderRadius: '12px',
+                                                border: isSelected
+                                                    ? '1px solid var(--primary)'
+                                                    : '1px solid var(--border)',
+                                                background: isSelected ? 'var(--primary)' : 'rgba(0, 0, 0, 0.25)',
+                                                color: isSelected ? '#fff' : 'var(--text-color)',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.15s ease'
+                                            }}
+                                        >
+                                            {c.name}
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
+                    )}
+
+                    <div className="trainer-gen-modal__field" style={{ marginTop: '8px' }}>
+                        <label className="trainer-gen-modal__field-label text-label">
+                            Trainer Name / Nickname:
+                            <TooltipIcon
+                                onClick={() =>
+                                    setTooltipInfo({
+                                        title: 'Trainer Name',
+                                        desc: 'Custom name for the Trainer sheet/token. Leave blank to default to the selected concept class (e.g. "Bird Keeper").'
+                                    })
+                                }
+                            />
+                        </label>
+                        <input
+                            type="text"
+                            value={trainerName}
+                            onChange={(e) => setTrainerName(e.target.value)}
+                            placeholder={selectedConcept ? selectedConcept.name : 'e.g. Ace Trainer (default)'}
+                            className="trainer-gen-modal__input"
+                        />
                     </div>
 
                     <div className="trainer-gen-modal__grid">
@@ -688,6 +855,41 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                     onChange={(e) => setTeamSize(Number(e.target.value))}
                                     style={{ width: '100%', accentColor: 'var(--primary)', marginTop: '4px' }}
                                 />
+                            </div>
+
+                            {/* Location / Biome Filter */}
+                            <div className="trainer-gen-modal__field">
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <label className="trainer-gen-modal__field-label text-label">
+                                        Location / Biome Ecosystem:
+                                        <TooltipIcon
+                                            onClick={() =>
+                                                setTooltipInfo({
+                                                    title: 'Location / Biome Filter',
+                                                    desc: BIOME_TOOLTIP_NOTE
+                                                })
+                                            }
+                                        />
+                                    </label>
+                                    {biomeId !== 'none' && selectedBiomeDef && (
+                                        <span className="text-subtext" style={{ fontSize: '0.75rem' }}>
+                                            Pool: <strong>{selectedBiomeDef.name}</strong> (
+                                            {selectedBiomeDef.types.join(', ')})
+                                        </span>
+                                    )}
+                                </div>
+                                <select
+                                    value={biomeId}
+                                    onChange={(e) => setBiomeId(e.target.value)}
+                                    className="trainer-gen-modal__select"
+                                >
+                                    <option value="none">Any Biome / Location (Unrestricted)</option>
+                                    {BIOMES.map((b) => (
+                                        <option key={b.id} value={b.id}>
+                                            [{b.tag}] {b.name}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
 
                             {/* Type Specialty & Build Tier */}

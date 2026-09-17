@@ -107,11 +107,17 @@
     padding: 6px 10px;
     border: 1px solid var(--border);
     border-radius: 6px;
-    background: var(--input-bg);
+    background: var(--panel-bg);
     color: var(--text-main);
     box-sizing: border-box;
     font-size: 0.85rem;
     transition: border-color 0.2s ease;
+}
+
+.trainer-gen-modal__select option,
+.trainer-gen-modal__select optgroup {
+    background-color: var(--panel-bg) !important;
+    color: var(--text-main) !important;
 }
 
 .trainer-gen-modal__select:focus,

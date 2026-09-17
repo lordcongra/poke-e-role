@@ -1,0 +1,219 @@
+.trainer-preview__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: color-mix(in srgb, var(--dark) 65%, transparent);
+    z-index: 1050;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(2px);
+}
+
+.trainer-preview__content {
+    background: var(--panel-bg);
+    padding: 16px 18px;
+    border-radius: 8px;
+    width: 680px;
+    max-width: 95vw;
+    border: 2px solid var(--primary);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    color: var(--text-main);
+}
+
+.trainer-preview__title {
+    margin-top: 0;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.trainer-preview__tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.trainer-preview__tab-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    border-radius: 4px;
+    background: var(--input-bg);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+}
+
+.trainer-preview__tab-btn:hover {
+    border-color: var(--primary);
+    color: var(--text);
+}
+
+.trainer-preview__tab-btn--active {
+    background: var(--primary);
+    color: var(--button-text, #fff);
+    border-color: var(--primary);
+}
+
+.trainer-preview__scroll-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 14px;
+    overflow-y: auto;
+    padding-right: 4px;
+    flex: 1;
+}
+
+.trainer-preview__section {
+    background: var(--panel-alt);
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.trainer-preview__section-title {
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+}
+
+.trainer-preview__grid-5 {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+}
+
+.trainer-preview__grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px 14px;
+}
+
+.trainer-preview__grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.trainer-preview__grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.trainer-preview__stat-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.trainer-preview__row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.trainer-preview__input {
+    width: 100%;
+    padding: 5px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--input-bg);
+    color: var(--text-main);
+    box-sizing: border-box;
+    font-size: 0.85rem;
+}
+
+.trainer-preview__select {
+    width: 100%;
+    padding: 4px 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--input-bg);
+    color: var(--text-main);
+    box-sizing: border-box;
+    font-size: 0.85rem;
+}
+
+.trainer-preview__reroll-bar {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-start;
+    padding-top: 4px;
+}
+
+.trainer-preview__actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    gap: 8px;
+}
+
+.trainer-preview__actions-left {
+    display: flex;
+    gap: 8px;
+}
+
+.trainer-preview__actions-right {
+    display: flex;
+    gap: 8px;
+}
+
+.trainer-preview__badge-chip {
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    font-size: 0.78rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.trainer-preview__skill-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.trainer-preview__skill-group {
+    background: rgba(0, 0, 0, 0.18);
+    border-radius: 6px;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+}
+
+.trainer-preview__skill-group-title {
+    font-size: 0.72rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--primary);
+    display: block;
+    margin-bottom: 4px;
+}

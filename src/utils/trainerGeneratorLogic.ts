@@ -3,6 +3,7 @@ import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { getRankPoints, getAgePoints } from '../store/useCharacterStore';
 import { TRAINER_CLASSES, type TrainerClass, type TrainerProfileType } from '../data/trainerClasses';
 import { NATURES } from '../data/constants';
+import { BIOME_MAP } from '../data/biomeData';
 import { generateBuild, buildTokenMetadataFromBuild } from './generatorUtils';
 import type { GeneratorConfig, TempBuild } from '../store/storeTypes';
 
@@ -34,6 +35,7 @@ export interface TrainerGeneratorConfig {
     includeMythicals: boolean;
     includeMegas: boolean;
     scaleLoyaltyHappiness: boolean;
+    biomeId?: string;
 }
 
 export const ALL_POKEMON_TYPES = [
@@ -57,31 +59,14 @@ export const ALL_POKEMON_TYPES = [
     'Fairy'
 ];
 
-export const MYTHICAL_POKEMON_NAMES = new Set([
-    'mew',
-    'celebi',
-    'jirachi',
-    'deoxys',
-    'phione',
-    'manaphy',
-    'darkrai',
-    'shaymin',
-    'arceus',
-    'victini',
-    'keldeo',
-    'meloetta',
-    'genesect',
-    'diancie',
-    'hoopa',
-    'volcanion',
-    'magearna',
-    'marshadow',
-    'zeraora',
-    'meltan',
-    'melmetal',
-    'zarude',
-    'pecharunt'
-]);
+export {
+    MYTHICAL_POKEMON_NAMES,
+    type PokedexLookupItem,
+    type PokemonLookupFilterOptions,
+    calculateScalarLoyaltyHappiness,
+    filterPokemonLookupPool
+} from './pokemonFilterUtils';
+import { type PokedexLookupItem, calculateScalarLoyaltyHappiness, filterPokemonLookupPool } from './pokemonFilterUtils';
 
 const KANTO_BADGE_PRESETS: { name: string; emoji: string }[] = [
     { name: 'Boulder Badge', emoji: '🪨' },
@@ -363,112 +348,9 @@ export function buildTrainerTokenMetadata(
         metadata[`${skill}-base`] = skills[skill] || 0;
         metadata[`${skill}-buff`] = 0;
     });
+    metadata['skills-ranks'] = { ...skills };
 
     return metadata;
-}
-
-export function calculateScalarLoyaltyHappiness(
-    rank: Rank,
-    memberIndex: number
-): { loyalty: number; happiness: number } {
-    switch (rank) {
-        case 'Starter':
-        case 'Rookie':
-            return {
-                loyalty: 1,
-                happiness: Math.floor(Math.random() * 2) + 1 // 1-2
-            };
-        case 'Standard':
-            // Partner/Ace Pokémon has 5/5, others have 2-3
-            if (memberIndex === 0) {
-                return { loyalty: 5, happiness: 4 };
-            }
-            return {
-                loyalty: 2,
-                happiness: Math.floor(Math.random() * 2) + 2 // 2-3
-            };
-        case 'Advanced':
-            if (memberIndex === 0) {
-                return { loyalty: 5, happiness: 5 };
-            } else if (memberIndex === 1) {
-                return { loyalty: 4, happiness: 4 };
-            }
-            return {
-                loyalty: 3,
-                happiness: 3
-            };
-        case 'Expert':
-            return {
-                loyalty: memberIndex < 2 ? 5 : 4,
-                happiness: memberIndex < 2 ? 5 : 4
-            };
-        case 'Ace':
-        case 'Master':
-        case 'Champion':
-            return {
-                loyalty: 5,
-                happiness: 5
-            };
-        default:
-            return { loyalty: 1, happiness: 1 };
-    }
-}
-
-export interface PokedexLookupItem {
-    name: string;
-    dexId: string;
-    type1: string;
-    type2: string;
-    ability1: string;
-    ability2: string;
-    hiddenAbility: string;
-    eventAbilities: string;
-    legendary: boolean;
-    starter: boolean;
-    stage?: number;
-    totalStages?: number;
-    moves: Array<[string, string]>;
-}
-
-export function filterPokemonLookupPool(
-    lookup: PokedexLookupItem[],
-    targetTypes: string[],
-    config: TrainerGeneratorConfig
-): PokedexLookupItem[] {
-    const isSpecialType = (t: string) =>
-        targetTypes.length === 0 || targetTypes.includes('Any') || targetTypes.includes(t);
-
-    return lookup.filter((mon) => {
-        const cleanName = mon.name.toLowerCase();
-
-        // 1. Exclude Megas / Special Forms unless enabled
-        const isMegaOrForm =
-            cleanName.includes('(mega') || cleanName.includes('(primal') || cleanName.includes('(gigantamax');
-        if (isMegaOrForm && !config.includeMegas) return false;
-
-        // 2. Legendaries
-        if (mon.legendary && !config.includeLegendaries) return false;
-
-        // 3. Mythicals
-        if (MYTHICAL_POKEMON_NAMES.has(cleanName) && !config.includeMythicals) return false;
-
-        // 4. Line length filter (totalStages)
-        const totalStages = mon.totalStages ?? 1;
-        if (!config.allowedLineLengths.includes(totalStages)) return false;
-
-        // 5. Stage index filter (stage)
-        const stage = mon.stage ?? 1;
-        if (!config.allowedStageIndices.includes(stage)) return false;
-
-        // 6. Type matching
-        if (targetTypes.length > 0 && !targetTypes.includes('Any')) {
-            const matchesType1 = isSpecialType(mon.type1);
-            const matchesType2 = Boolean(mon.type2 && mon.type2 !== 'None' && isSpecialType(mon.type2));
-            if (!matchesType1 && !matchesType2) return false;
-        }
-
-        return true;
-    });
 }
 
 export async function generateFullTrainerTeam(
@@ -479,7 +361,18 @@ export async function generateFullTrainerTeam(
     // 1. Resolve Trainer Identity
     let concept: TrainerClass | null = null;
     if (config.conceptId === 'random') {
-        concept = TRAINER_CLASSES[Math.floor(Math.random() * TRAINER_CLASSES.length)];
+        if (config.biomeId && config.biomeId !== 'none' && config.biomeId !== 'any') {
+            const biome = BIOME_MAP[config.biomeId];
+            if (biome && biome.associatedClasses && biome.associatedClasses.length > 0) {
+                const eligible = TRAINER_CLASSES.filter((c) => biome.associatedClasses.includes(c.id));
+                if (eligible.length > 0) {
+                    concept = eligible[Math.floor(Math.random() * eligible.length)];
+                }
+            }
+        }
+        if (!concept) {
+            concept = TRAINER_CLASSES[Math.floor(Math.random() * TRAINER_CLASSES.length)];
+        }
     } else if (config.conceptId && config.conceptId !== 'none') {
         concept = TRAINER_CLASSES.find((c) => c.id === config.conceptId) || null;
     }
@@ -567,98 +460,13 @@ export async function generateFullTrainerTeam(
             eligiblePool = lookupList.filter((m) => !m.legendary);
         }
 
-        const trainerRankIdx = RANK_ORDER.indexOf(resolvedRank);
         const usedSpecies = new Set<string>();
 
         for (let i = 0; i < config.teamSize; i++) {
-            let candidatePool = eligiblePool;
-            if (!config.allowDuplicates) {
-                const uniqueAvailable = eligiblePool.filter((m) => !usedSpecies.has(m.name.toLowerCase()));
-                if (uniqueAvailable.length > 0) {
-                    candidatePool = uniqueAvailable;
-                }
-            }
-
-            const chosenMon = candidatePool[Math.floor(Math.random() * candidatePool.length)];
-            if (!chosenMon) continue;
-            usedSpecies.add(chosenMon.name.toLowerCase());
-
-            // Determine Rank
-            let pokeRank: Rank = resolvedRank;
-            if (config.teamRankMode === 'custom' && config.customPokemonRanks && config.customPokemonRanks[i]) {
-                pokeRank = config.customPokemonRanks[i];
-            } else if (config.teamRankMode === 'random') {
-                const maxAvailableIdx = config.capPokemonRank ? Math.max(0, trainerRankIdx) : RANK_ORDER.length - 1;
-                const randomIdx = Math.floor(Math.random() * (maxAvailableIdx + 1));
-                pokeRank = RANK_ORDER[randomIdx];
-            }
-
-            const pokeGenConfig: GeneratorConfig = {
-                targetSpecies: chosenMon.name,
-                targetRank: pokeRank,
-                randomizeSpecies: false,
-                randomizeGender: true,
-                randomizeNature: true,
-                buildType: config.buildType || 'minmax',
-                combatBias: 'balanced',
-                defensePreference: 'auto',
-                targetAtkCount: 2,
-                targetSupCount: 1,
-                includePmd: false,
-                includeCustom: false,
-                overridePrimaryStab: false,
-                overrideSecondaryStab: false,
-                overrideCoverage: false,
-                coveragePreference: 'balanced',
-                primaryStabCount: 1,
-                secondaryStabCount: 1,
-                coverageCount: 1,
-                autoSelectBias: true,
-                ensureDefenses: true,
-                minStats: {},
-                minSocials: {},
-                includePreEvolutions: true,
-                evo2Stage1Offset: 1,
-                evo3Stage2Offset: 1,
-                evo3Stage1Offset: 2,
-                allowOverrank: false,
-                overrankAmount: 0,
-                allowPreEvoOverrank: false,
-                useSpilloverRatio: true,
-                spilloverAtkRatio: 0.5,
-                spilloverSupRatio: 0.5,
-                spilloverJitter: true
-            };
-
-            const pokemonState: CharacterState = {
-                ...state,
-                identity: {
-                    ...state.identity,
-                    mode: 'Pokémon',
-                    age: ''
-                }
-            };
-
-            const pokeBuild = await generateBuild(pokeGenConfig, pokemonState);
-            if (pokeBuild) {
-                const pokeMeta = buildTokenMetadataFromBuild(
-                    pokeBuild,
-                    chosenMon.name,
-                    `${import.meta.env.BASE_URL || '/'}pokeball.svg`
-                );
-                pokeMeta['age'] = '';
-
-                if (config.scaleLoyaltyHappiness) {
-                    const { loyalty, happiness } = calculateScalarLoyaltyHappiness(pokeRank, i);
-                    pokeMeta['loyalty-curr'] = loyalty;
-                    pokeMeta['happiness-curr'] = happiness;
-                }
-
-                teamMembers.push({
-                    species: chosenMon.name,
-                    build: pokeBuild,
-                    metadata: pokeMeta
-                });
+            const member = await pickAndGenerateTeamMember(i, config, resolvedRank, state, eligiblePool, usedSpecies);
+            if (member) {
+                usedSpecies.add(member.species.toLowerCase());
+                teamMembers.push(member);
             }
         }
     }
@@ -669,5 +477,118 @@ export async function generateFullTrainerTeam(
         concept,
         trainerMetadata,
         teamMembers
+    };
+}
+
+export async function pickAndGenerateTeamMember(
+    slotIndex: number,
+    config: TrainerGeneratorConfig,
+    resolvedRank: Rank,
+    state: CharacterState,
+    lookupList: PokedexLookupItem[],
+    usedSpecies: Set<string> = new Set()
+): Promise<{ species: string; build: TempBuild; metadata: Record<string, unknown> } | null> {
+    let candidatePool = lookupList;
+    if (!config.allowDuplicates) {
+        const uniqueAvailable = lookupList.filter((m) => !usedSpecies.has(m.name.toLowerCase()));
+        if (uniqueAvailable.length > 0) {
+            candidatePool = uniqueAvailable;
+        }
+    }
+
+    if (candidatePool.length === 0) {
+        candidatePool = lookupList;
+    }
+
+    const chosenMon = candidatePool[Math.floor(Math.random() * candidatePool.length)];
+    if (!chosenMon) return null;
+
+    // Determine Rank
+    const trainerRankIdx = RANK_ORDER.indexOf(resolvedRank);
+    let pokeRank: Rank = resolvedRank;
+    if (config.teamRankMode === 'custom' && config.customPokemonRanks && config.customPokemonRanks[slotIndex]) {
+        pokeRank = config.customPokemonRanks[slotIndex];
+    } else if (config.teamRankMode === 'random') {
+        const maxAvailableIdx = config.capPokemonRank ? Math.max(0, trainerRankIdx) : RANK_ORDER.length - 1;
+        const randomIdx = Math.floor(Math.random() * (maxAvailableIdx + 1));
+        pokeRank = RANK_ORDER[randomIdx];
+    }
+
+    return generateSingleTeamMember(slotIndex, chosenMon, pokeRank, config, state);
+}
+
+export async function generateSingleTeamMember(
+    slotIndex: number,
+    chosenMon: PokedexLookupItem,
+    pokeRank: Rank,
+    config: TrainerGeneratorConfig,
+    state: CharacterState
+): Promise<{ species: string; build: TempBuild; metadata: Record<string, unknown> } | null> {
+    const pokeGenConfig: GeneratorConfig = {
+        targetSpecies: chosenMon.name,
+        targetRank: pokeRank,
+        randomizeSpecies: false,
+        randomizeGender: true,
+        randomizeNature: true,
+        buildType: config.buildType || 'minmax',
+        combatBias: 'balanced',
+        defensePreference: 'auto',
+        targetAtkCount: 2,
+        targetSupCount: 1,
+        includePmd: false,
+        includeCustom: false,
+        overridePrimaryStab: false,
+        overrideSecondaryStab: false,
+        overrideCoverage: false,
+        coveragePreference: 'balanced',
+        primaryStabCount: 1,
+        secondaryStabCount: 1,
+        coverageCount: 1,
+        autoSelectBias: true,
+        ensureDefenses: true,
+        minStats: {},
+        minSocials: {},
+        includePreEvolutions: true,
+        evo2Stage1Offset: 1,
+        evo3Stage2Offset: 1,
+        evo3Stage1Offset: 2,
+        allowOverrank: false,
+        overrankAmount: 0,
+        allowPreEvoOverrank: false,
+        useSpilloverRatio: true,
+        spilloverAtkRatio: 0.5,
+        spilloverSupRatio: 0.5,
+        spilloverJitter: true
+    };
+
+    const pokemonState: CharacterState = {
+        ...state,
+        identity: {
+            ...state.identity,
+            mode: 'Pokémon',
+            age: ''
+        }
+    };
+
+    const pokeBuild = await generateBuild(pokeGenConfig, pokemonState);
+    if (!pokeBuild) return null;
+
+    const pokeMeta = buildTokenMetadataFromBuild(
+        pokeBuild,
+        chosenMon.name,
+        `${import.meta.env.BASE_URL || '/'}pokeball.svg`
+    );
+    pokeMeta['age'] = '';
+
+    if (config.scaleLoyaltyHappiness) {
+        const { loyalty, happiness } = calculateScalarLoyaltyHappiness(pokeRank, slotIndex);
+        pokeMeta['loyalty-curr'] = loyalty;
+        pokeMeta['happiness-curr'] = happiness;
+    }
+
+    return {
+        species: chosenMon.name,
+        build: pokeBuild,
+        metadata: pokeMeta
     };
 }

@@ -132,6 +132,8 @@ export interface TempBuild {
     includePmd: boolean;
     pokemonData?: Record<string, unknown>;
     baseStats?: Record<string, number>;
+    loyalty?: number;
+    happiness?: number;
 }
 
 export interface GeneratorConfig {
@@ -177,6 +179,22 @@ export interface GeneratorConfig {
     spilloverAtkRatio: number;
     spilloverSupRatio: number;
     spilloverJitter: boolean;
+
+    // BIOME & BATCH GENERATION
+    selectedBiome?: string;
+    batchCount?: number;
+    batchConfigs?: GeneratorConfig[];
+
+    // SPECIES FILTERS & TRAINER PARITY
+    includeLegendaries?: boolean;
+    includeMythicals?: boolean;
+    includeMegas?: boolean;
+    allowDuplicates?: boolean;
+    scaleLoyaltyHappiness?: boolean;
+    allowedLineLengths?: number[];
+    allowedStageIndices?: number[];
+    usedSpecies?: Set<string>;
+    slotIndex?: number;
 }
 
 export interface CustomAbility {

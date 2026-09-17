@@ -1,5 +1,12 @@
 import type { TempBuild, TempMove, CharacterState, GeneratorConfig, Rank } from '../store/storeTypes';
-import { fetchPokemonData, fetchMoveData, MOVES_URLS, SPECIES_URLS, loadLocalDataset } from './api';
+import {
+    fetchPokemonData,
+    fetchMoveData,
+    MOVES_URLS,
+    SPECIES_URLS,
+    loadLocalDataset,
+    fetchPokemonLookupIndex
+} from './api';
 import { getRankPoints } from '../store/useCharacterStore';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { assignWildStats, assignMinMaxStats, assignAverageStats } from './generatorLogic';
@@ -7,6 +14,11 @@ import { draftInitialMoves, draftSpilloverMoves, sortDraftedMoves } from './move
 import { getLimit, getBase, extractAbilities } from './macroHelpers';
 import { calculateMaxHp, calculateMaxWill } from './combatMath';
 import { NATURES } from '../data/constants';
+import {
+    calculateScalarLoyaltyHappiness,
+    filterPokemonLookupPool,
+    type PokemonLookupFilterOptions
+} from './pokemonFilterUtils';
 
 const RANK_HIERARCHY = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion'];
 const ALL_SKILLS = Object.values(Skill) as string[];
@@ -91,12 +103,65 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
 
     let speciesName = config.targetSpecies || state.identity.species;
 
-    if (config.randomizeSpecies) {
-        const customNames = state.roomCustomPokemon.filter((p) => state.role === 'GM' || !p.gmOnly).map((p) => p.Name);
-        const baseNames = Object.keys(SPECIES_URLS);
-        const allSpecies = [...new Set([...baseNames, ...customNames])];
-        if (allSpecies.length > 0) {
-            speciesName = allSpecies[Math.floor(Math.random() * allSpecies.length)];
+    const shouldPickRandomSpecies =
+        Boolean(config.randomizeSpecies) ||
+        (!config.targetSpecies &&
+            Boolean(
+                (config.selectedBiome && config.selectedBiome !== 'none' && config.selectedBiome !== 'any') ||
+                !state.identity.species
+            ));
+
+    if (shouldPickRandomSpecies) {
+        try {
+            const lookupIndex = await fetchPokemonLookupIndex();
+            const filterOpts: PokemonLookupFilterOptions = {
+                includeMegas: Boolean(config.includeMegas),
+                includeLegendaries: Boolean(config.includeLegendaries),
+                includeMythicals: Boolean(config.includeMythicals),
+                allowedLineLengths: config.allowedLineLengths ?? [1, 2, 3],
+                allowedStageIndices: config.allowedStageIndices ?? [1, 2, 3],
+                biomeId: config.selectedBiome,
+                usedSpecies: config.usedSpecies
+            };
+
+            let eligible = filterPokemonLookupPool(lookupIndex, [], filterOpts);
+
+            if (eligible.length === 0 && config.usedSpecies && config.usedSpecies.size > 0) {
+                // If duplicates filter exhausted the pool, fallback to pool allowing duplicates
+                eligible = filterPokemonLookupPool(lookupIndex, [], {
+                    ...filterOpts,
+                    usedSpecies: undefined
+                });
+            }
+
+            if (eligible.length > 0) {
+                const chosen = eligible[Math.floor(Math.random() * eligible.length)];
+                speciesName = chosen.name;
+            } else {
+                const customNames = state.roomCustomPokemon
+                    .filter((p) => state.role === 'GM' || !p.gmOnly)
+                    .map((p) => p.Name);
+                const baseNames = Object.keys(SPECIES_URLS);
+                const fallbackCandidates = [...new Set([...baseNames, ...customNames])];
+                if (fallbackCandidates.length > 0) {
+                    speciesName = fallbackCandidates[Math.floor(Math.random() * fallbackCandidates.length)];
+                }
+            }
+        } catch (e) {
+            console.warn('[GeneratorUtils] Candidate species lookup failed, using fallback pool:', e);
+            const customNames = state.roomCustomPokemon
+                .filter((p) => state.role === 'GM' || !p.gmOnly)
+                .map((p) => p.Name);
+            const baseNames = Object.keys(SPECIES_URLS);
+            const fallbackCandidates = [...new Set([...baseNames, ...customNames])];
+            if (fallbackCandidates.length > 0) {
+                speciesName = fallbackCandidates[Math.floor(Math.random() * fallbackCandidates.length)];
+            }
+        }
+
+        if (speciesName && config.usedSpecies) {
+            config.usedSpecies.add(speciesName);
+            config.usedSpecies.add(speciesName.toLowerCase());
         }
     }
 
@@ -540,11 +605,21 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         generatedNature = validNatures[Math.floor(Math.random() * validNatures.length)];
     }
 
+    let generatedLoyalty: number | undefined;
+    let generatedHappiness: number | undefined;
+    if (config.scaleLoyaltyHappiness !== false) {
+        const { loyalty, happiness } = calculateScalarLoyaltyHappiness(rank as Rank, config.slotIndex ?? 0);
+        generatedLoyalty = loyalty;
+        generatedHappiness = happiness;
+    }
+
     return {
         species: finalSpeciesName,
         rank: rank as Rank,
         gender: generatedGender,
         nature: generatedNature,
+        loyalty: generatedLoyalty,
+        happiness: generatedHappiness,
         attr: generatedAttributes,
         soc: generatedSocials,
         skills: generatedSkills,
@@ -691,6 +766,13 @@ export function buildTokenMetadataFromBuild(
 
     metadata['moves-data'] = JSON.stringify(movesData);
     metadata['extra-skills-data'] = '[]';
+
+    if (build.loyalty !== undefined) {
+        metadata['loyalty-curr'] = build.loyalty;
+    }
+    if (build.happiness !== undefined) {
+        metadata['happiness-curr'] = build.happiness;
+    }
 
     return metadata;
 }

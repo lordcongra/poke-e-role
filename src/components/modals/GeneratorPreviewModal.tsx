@@ -1,36 +1,39 @@
 import { useState, useEffect } from 'react';
-import OBR, { buildImage, type ImageDownload } from '@owlbear-rodeo/sdk';
+import OBR, { buildImage, type ImageDownload, type Item } from '@owlbear-rodeo/sdk';
 import { Search, Dices, CheckCircle, XCircle, ImagePlus, FilePlus } from 'lucide-react';
 import type { TempBuild } from '../../store/storeTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { CombatStat, SocialStat, Skill } from '../../types/enums';
+import { CombatStat, SocialStat, Skill, SKILL_CATEGORIES } from '../../types/enums';
 import { GeneratorPreviewStatSpinner } from './GeneratorPreviewStatSpinner';
 import { GeneratorPreviewMoveRow } from './GeneratorPreviewMoveRow';
-import { getLimit } from '../../utils/macroHelpers';
 import { isStandaloneMode, storageAdapter } from '../../utils/storageAdapter';
 import { setActiveTokenId, METADATA_ID } from '../../utils/obr';
 import { buildTokenMetadataFromBuild } from '../../utils/generatorUtils';
+import { calculateFormationOffsets } from '../../utils/trainerTokenSpawner';
 import { buildGraphicsFromMeta, renderTokenGraphics } from '../../utils/graphicsManager';
+import { PromptModal } from './PromptModal';
 import './GeneratorPreviewModal.css';
 
 interface GeneratorPreviewModalProps {
-    build: TempBuild;
+    build?: TempBuild;
+    builds?: TempBuild[];
     destination?: 'new' | 'overwrite';
     sheetName?: string;
     onClose: () => void;
-    onReroll: () => void;
+    onReroll?: () => void;
+    onRerollIndex?: (index: number) => void;
 }
 
 export function GeneratorPreviewModal({
     build,
+    builds,
     destination = 'overwrite',
     sheetName,
     onClose,
-    onReroll
+    onReroll,
+    onRerollIndex
 }: GeneratorPreviewModalProps) {
     const applyGeneratedBuild = useCharacterStore((state) => state.applyGeneratedBuild);
-    const mode = useCharacterStore((state) => state.identity.mode);
-    const extraCategories = useCharacterStore((state) => state.extraCategories);
     const config = useCharacterStore((state) => state.generatorConfig);
     const tokenId = useCharacterStore((state) => state.tokenId);
     const setIdentity = useCharacterStore((state) => state.setIdentity);
@@ -40,163 +43,265 @@ export function GeneratorPreviewModal({
     const baseSkills = useCharacterStore((state) => state.skills);
     const willMax = useCharacterStore((state) => state.will.willMax);
 
-    const [localBuild, setLocalBuild] = useState<TempBuild>(build);
+    const [localBuilds, setLocalBuilds] = useState<TempBuild[]>(() => {
+        if (builds && builds.length > 0) return builds;
+        if (build) return [build];
+        return [];
+    });
+    const [activeIndex, setActiveIndex] = useState<number>(0);
+
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
     const [showImagePrompt, setShowImagePrompt] = useState(false);
+    const [isApplying, setIsApplying] = useState(false);
+
+    // PromptModal state for URL inputs
+    const [promptConfig, setPromptConfig] = useState<{
+        isOpen: boolean;
+        title: string;
+        message?: string;
+        defaultValue?: string;
+        onConfirm: (val: string) => void;
+    }>({
+        isOpen: false,
+        title: '',
+        onConfirm: () => {}
+    });
 
     useEffect(() => {
-        setLocalBuild(build);
-    }, [build]);
+        if (builds && builds.length > 0) {
+            setLocalBuilds(builds);
+        } else if (build) {
+            setLocalBuilds([build]);
+        }
+    }, [build, builds]);
+
+    const localBuild = localBuilds[activeIndex] || localBuilds[0];
+    if (!localBuild) return null;
 
     const updateAttribute = (statistic: string, value: number) => {
-        setLocalBuild((previous) => ({ ...previous, attr: { ...previous.attr, [statistic]: Math.max(0, value) } }));
+        setLocalBuilds((prev) => {
+            const next = [...prev];
+            const current = next[activeIndex];
+            if (!current) return prev;
+            next[activeIndex] = {
+                ...current,
+                attr: { ...current.attr, [statistic]: Math.max(0, value) }
+            };
+            return next;
+        });
     };
 
     const updateSocial = (statistic: string, value: number) => {
-        setLocalBuild((previous) => ({ ...previous, soc: { ...previous.soc, [statistic]: Math.max(0, value) } }));
+        setLocalBuilds((prev) => {
+            const next = [...prev];
+            const current = next[activeIndex];
+            if (!current) return prev;
+            next[activeIndex] = {
+                ...current,
+                soc: { ...current.soc, [statistic]: Math.max(0, value) }
+            };
+            return next;
+        });
     };
 
     const updateSkill = (skillName: string, value: number) => {
-        setLocalBuild((previous) => ({ ...previous, skills: { ...previous.skills, [skillName]: Math.max(0, value) } }));
+        setLocalBuilds((prev) => {
+            const next = [...prev];
+            const current = next[activeIndex];
+            if (!current) return prev;
+            next[activeIndex] = {
+                ...current,
+                skills: { ...current.skills, [skillName]: Math.max(0, value) }
+            };
+            return next;
+        });
     };
 
     const handleApply = async () => {
-        if (destination === 'new') {
-            if (isStandaloneMode) {
+        setIsApplying(true);
+        try {
+            if (destination === 'new') {
+                if (isStandaloneMode) {
+                    try {
+                        const store = useCharacterStore.getState();
+                        for (let idx = 0; idx < localBuilds.length; idx++) {
+                            const b = localBuilds[idx];
+                            const providedNickname =
+                                localBuilds.length > 1
+                                    ? sheetName
+                                        ? `${sheetName} ${idx + 1}`
+                                        : b.species
+                                    : sheetName?.trim() || b.species;
+
+                            const newId = await storageAdapter.createLocalCharacter(providedNickname, null);
+
+                            const metadata = buildTokenMetadataFromBuild(
+                                b,
+                                providedNickname,
+                                `${import.meta.env.BASE_URL || '/'}pokeball.svg`
+                            );
+                            await storageAdapter.saveCharacter(newId, metadata, METADATA_ID);
+
+                            if (idx === 0) {
+                                setActiveTokenId(newId);
+                                store.setTokenData(newId, 'PLAYER');
+                                store.loadFromOwlbear({
+                                    nickname: providedNickname,
+                                    species: b.species,
+                                    rank: b.rank || 'Starter',
+                                    gender: b.gender || '',
+                                    nature: b.nature || '-- Select --',
+                                    parentId: null,
+                                    'v2-migrated': true
+                                });
+                                store.applyGeneratedBuild(b);
+                            }
+                        }
+
+                        onClose();
+                    } catch (e) {
+                        console.error('[GeneratorPreviewModal] Failed to create Pokémon sheet(s):', e);
+                        setTooltipInfo({
+                            title: 'Creation Failed',
+                            desc: 'Failed to create new character sheet(s) in Standalone storage.'
+                        });
+                    }
+                    return;
+                }
+
+                // Owlbear Rodeo Mode - Generate New Token(s)
                 try {
-                    const providedNickname = sheetName?.trim() || '';
-                    const newId = await storageAdapter.createLocalCharacter(providedNickname, null);
-                    setActiveTokenId(newId);
-                    const store = useCharacterStore.getState();
-                    store.setTokenData(newId, 'PLAYER');
-                    store.loadFromOwlbear({
-                        nickname: providedNickname,
-                        species: localBuild.species,
-                        rank: localBuild.rank || 'Starter',
-                        gender: localBuild.gender || '',
-                        nature: localBuild.nature || '-- Select --',
-                        parentId: null,
-                        'v2-migrated': true
+                    let images: ImageDownload[] | null = null;
+                    let selectedUrl = '';
+                    let selectedWidth = 0;
+                    let selectedHeight = 0;
+
+                    if (typeof OBR.assets?.downloadImages === 'function') {
+                        images = await OBR.assets.downloadImages();
+                    }
+
+                    if (images && images.length > 0) {
+                        const img = images[0];
+                        selectedUrl = img.image?.url || '';
+                        selectedWidth = img.image?.width || 0;
+                        selectedHeight = img.image?.height || 0;
+                    }
+
+                    if (!selectedUrl) {
+                        selectedUrl = `${import.meta.env.BASE_URL || '/'}pokeball.svg`;
+                    }
+
+                    let resolvedWidth = selectedWidth;
+                    let resolvedHeight = selectedHeight;
+
+                    if (!resolvedWidth || !resolvedHeight) {
+                        const loadedDim = await new Promise<{ width: number; height: number }>((resolve) => {
+                            const img = new window.Image();
+                            img.onload = () =>
+                                resolve({ width: img.naturalWidth || 300, height: img.naturalHeight || 300 });
+                            img.onerror = () => resolve({ width: 300, height: 300 });
+                            img.src = selectedUrl;
+                        });
+                        resolvedWidth = loadedDim.width;
+                        resolvedHeight = loadedDim.height;
+                    }
+
+                    const vpWidth = await OBR.viewport.getWidth();
+                    const vpHeight = await OBR.viewport.getHeight();
+                    const centerPos = await OBR.viewport.inverseTransformPoint({
+                        x: vpWidth / 2,
+                        y: vpHeight / 2
                     });
-                    store.applyGeneratedBuild(localBuild);
+
+                    const count = localBuilds.length;
+                    const offsets = calculateFormationOffsets(count, 200);
+                    const imageContent = {
+                        url: selectedUrl,
+                        mime: 'image/png',
+                        width: resolvedWidth,
+                        height: resolvedHeight
+                    };
+                    const grid = {
+                        dpi: resolvedWidth,
+                        offset: {
+                            x: resolvedWidth / 2,
+                            y: resolvedHeight / 2
+                        }
+                    };
+
+                    const tokenItems: Item[] = [];
+                    const builtMetas: Record<string, unknown>[] = [];
+
+                    for (let idx = 0; idx < count; idx++) {
+                        const b = localBuilds[idx];
+                        const offset = offsets[idx] || { dx: 0, dy: 0 };
+                        const pos = { x: centerPos.x + offset.dx, y: centerPos.y + offset.dy };
+                        const tokenItemName =
+                            count > 1
+                                ? sheetName
+                                    ? `${sheetName} ${idx + 1}`
+                                    : b.species
+                                : sheetName?.trim() || b.species || 'Pokémon';
+
+                        const metadata = buildTokenMetadataFromBuild(b, tokenItemName, selectedUrl);
+                        builtMetas.push(metadata);
+
+                        const tokenItem = buildImage(imageContent, grid)
+                            .name(tokenItemName)
+                            .position(pos)
+                            .layer('CHARACTER')
+                            .metadata({
+                                [METADATA_ID]: metadata
+                            })
+                            .build();
+
+                        tokenItems.push(tokenItem);
+                    }
+
+                    await OBR.scene.items.addItems(tokenItems);
+
+                    if (tokenItems.length > 0) {
+                        const firstItem = tokenItems[0];
+                        setActiveTokenId(firstItem.id);
+                        const store = useCharacterStore.getState();
+                        store.setTokenData(firstItem.id, store.role || 'PLAYER');
+                        store.setIdentity('tokenImageUrl', selectedUrl);
+                        store.loadFromOwlbear(builtMetas[0]);
+                        await OBR.player.select(tokenItems.map((t) => t.id));
+
+                        for (let i = 0; i < tokenItems.length; i++) {
+                            const gData = buildGraphicsFromMeta(builtMetas[i]);
+                            await renderTokenGraphics(tokenItems[i], gData, store.role || 'PLAYER', true);
+                        }
+
+                        if (OBR.isAvailable) {
+                            OBR.notification.show(
+                                count > 1 ? `Created ${count} Pokémon tokens!` : `Created ${tokenItems[0].name} token!`,
+                                'SUCCESS'
+                            );
+                        }
+                    }
                     onClose();
                 } catch (e) {
-                    console.error('[GeneratorPreviewModal] Failed to create new Pokémon sheet:', e);
-                    alert('Failed to create new character sheet.');
+                    console.error('[GeneratorPreviewModal] Failed to spawn new token(s) on Owlbear Rodeo:', e);
+                    setTooltipInfo({
+                        title: 'Token Spawning Failed',
+                        desc: 'Failed to spawn new token(s) onto the Owlbear Rodeo scene.'
+                    });
                 }
                 return;
             }
 
-            // Owlbear Rodeo Mode - Generate New Token
-            try {
-                const providedNickname = sheetName?.trim() || '';
-                const tokenItemName = providedNickname || localBuild.species || 'Pokémon';
+            // Destination = overwrite
+            applyGeneratedBuild(localBuild);
 
-                // Prompt user to pick token image from their OBR asset library
-                let images: ImageDownload[] | null = null;
-                let selectedUrl = '';
-                let selectedWidth = 0;
-                let selectedHeight = 0;
-
-                if (typeof OBR.assets?.downloadImages === 'function') {
-                    images = await OBR.assets.downloadImages();
-                } else {
-                    const url = window.prompt('Enter an Image URL for the new Token:');
-                    if (url) selectedUrl = url;
-                }
-
-                if (images && images.length > 0) {
-                    const img = images[0];
-                    selectedUrl = img.image?.url || '';
-                    selectedWidth = img.image?.width || 0;
-                    selectedHeight = img.image?.height || 0;
-                }
-
-                if (!selectedUrl) {
-                    selectedUrl = `${import.meta.env.BASE_URL || '/'}pokeball.svg`;
-                }
-
-                // Resolve image dimensions to set proper grid dpi and center offset
-                let resolvedWidth = selectedWidth;
-                let resolvedHeight = selectedHeight;
-
-                if (!resolvedWidth || !resolvedHeight) {
-                    const loadedDim = await new Promise<{ width: number; height: number }>((resolve) => {
-                        const img = new window.Image();
-                        img.onload = () =>
-                            resolve({ width: img.naturalWidth || 300, height: img.naturalHeight || 300 });
-                        img.onerror = () => resolve({ width: 300, height: 300 });
-                        img.src = selectedUrl;
-                    });
-                    resolvedWidth = loadedDim.width;
-                    resolvedHeight = loadedDim.height;
-                }
-
-                // Determine viewport center position in world coordinates
-                const vpWidth = await OBR.viewport.getWidth();
-                const vpHeight = await OBR.viewport.getHeight();
-                const centerPos = await OBR.viewport.inverseTransformPoint({
-                    x: vpWidth / 2,
-                    y: vpHeight / 2
-                });
-
-                // Build metadata dictionary
-                const metadata = buildTokenMetadataFromBuild(localBuild, providedNickname, selectedUrl);
-
-                // In Owlbear Rodeo, character tokens use center offset: (width / 2, height / 2)
-                // and grid dpi = resolvedWidth so the token occupies 1 standard grid cell with its origin at the center.
-                const imageContent = {
-                    url: selectedUrl,
-                    mime: 'image/png',
-                    width: resolvedWidth,
-                    height: resolvedHeight
-                };
-                const grid = {
-                    dpi: resolvedWidth,
-                    offset: {
-                        x: resolvedWidth / 2,
-                        y: resolvedHeight / 2
-                    }
-                };
-
-                const tokenItem = buildImage(imageContent, grid)
-                    .name(tokenItemName)
-                    .position(centerPos)
-                    .layer('CHARACTER')
-                    .metadata({
-                        [METADATA_ID]: metadata
-                    })
-                    .build();
-
-                await OBR.scene.items.addItems([tokenItem]);
-                setActiveTokenId(tokenItem.id);
-                const store = useCharacterStore.getState();
-                store.setTokenData(tokenItem.id, store.role || 'PLAYER');
-                store.setIdentity('tokenImageUrl', selectedUrl);
-                store.loadFromOwlbear(metadata);
-                await OBR.player.select([tokenItem.id]);
-
-                // Immediately render tracker graphics on the new token
-                const gData = buildGraphicsFromMeta(metadata);
-                await renderTokenGraphics(tokenItem, gData, store.role || 'PLAYER', true);
-
-                if (OBR.isAvailable) {
-                    OBR.notification.show(`Created ${tokenItemName} token!`, 'SUCCESS');
-                }
+            if (config.randomizeSpecies && OBR.isAvailable && tokenId) {
+                setShowImagePrompt(true);
+            } else {
                 onClose();
-            } catch (e) {
-                console.error('[GeneratorPreviewModal] Failed to spawn new token on Owlbear Rodeo:', e);
-                alert('Failed to spawn new token.');
             }
-            return;
-        }
-
-        applyGeneratedBuild(localBuild);
-
-        if (config.randomizeSpecies && OBR.isAvailable && tokenId) {
-            setShowImagePrompt(true);
-        } else {
-            onClose();
+        } finally {
+            setIsApplying(false);
         }
     };
 
@@ -208,16 +313,25 @@ export function GeneratorPreviewModal({
                 if (typeof OBR.assets?.downloadImages === 'function') {
                     images = await OBR.assets.downloadImages();
                 } else {
-                    const url = window.prompt('Enter an Image URL:');
-                    if (url) {
-                        setIdentity('tokenImageUrl', url);
-                        await OBR.scene.items.updateItems([tokenId!], (items) => {
-                            for (const item of items) {
-                                const imgItem = item as Record<string, unknown>;
-                                if (imgItem.image) (imgItem.image as Record<string, unknown>).url = url;
+                    setPromptConfig({
+                        isOpen: true,
+                        title: 'Enter Image URL',
+                        message: 'Enter a valid image URL for the token:',
+                        onConfirm: async (url) => {
+                            setPromptConfig((p) => ({ ...p, isOpen: false }));
+                            if (url.trim()) {
+                                setIdentity('tokenImageUrl', url.trim());
+                                await OBR.scene.items.updateItems([tokenId!], (items) => {
+                                    for (const item of items) {
+                                        const imgItem = item as Record<string, unknown>;
+                                        if (imgItem.image) (imgItem.image as Record<string, unknown>).url = url.trim();
+                                    }
+                                });
                             }
-                        });
-                    }
+                            onClose();
+                        }
+                    });
+                    return;
                 }
 
                 if (images && images.length > 0) {
@@ -232,132 +346,95 @@ export function GeneratorPreviewModal({
                             }
                         });
                     } else {
-                        OBR.notification.show('Could not extract URL. Please check F12 Console!', 'ERROR');
+                        OBR.notification.show('Could not extract URL from asset library.', 'ERROR');
                     }
                 }
             } catch (e) {
                 console.error('[GeneratorPreviewModal] Failed to pick image:', e);
             }
         }
-
         setShowImagePrompt(false);
         onClose();
     };
 
-    const isTrainer = mode !== 'Pokémon';
-
-    const getSkillLabel = (skillName: string) => {
-        if (localBuild.customSkillMap[skillName]) return localBuild.customSkillMap[skillName] || 'Unnamed';
-        if (isTrainer) {
-            if (skillName === 'channel') return 'Throw';
-            if (skillName === 'clash') return 'Weapon';
-            if (skillName === 'charm') return 'Empathy';
-            if (skillName === 'magic') return 'Science';
-        }
-        return skillName.charAt(0).toUpperCase() + skillName.slice(1);
-    };
-
-    const getBaseAttribute = (attribute: string) => {
-        if (attribute === 'will') return willMax;
-
-        if (localBuild.baseStats && Object.values(CombatStat).includes(attribute as CombatStat)) {
-            return localBuild.baseStats[attribute as string] || 1;
-        }
-
-        if (Object.values(CombatStat).includes(attribute as CombatStat)) {
-            return baseStats[attribute as CombatStat]?.base || 1;
-        }
-        if (Object.values(SocialStat).includes(attribute as SocialStat)) {
-            return baseSocials[attribute as SocialStat]?.base || 1;
-        }
-        return 0;
-    };
-
-    const STAT_NAMES: Record<string, string> = {
-        str: 'Strength',
-        dex: 'Dexterity',
-        vit: 'Vitality',
-        spe: 'Special',
-        ins: 'Insight'
-    };
-
-    const getStatLimit = (attribute: string) => {
-        if (localBuild.pokemonData) {
-            return getLimit(localBuild.pokemonData as Record<string, unknown>, STAT_NAMES[attribute] || '') || 5;
-        }
-        if (Object.values(CombatStat).includes(attribute as CombatStat)) {
-            return baseStats[attribute as CombatStat]?.limit || 5;
-        }
-        return 5;
-    };
-
-    const getBaseSkill = (skillName: string) => {
-        if (baseSkills[skillName as Skill]) return baseSkills[skillName as Skill].base;
-        for (const category of extraCategories) {
-            const foundSkill = category.skills.find((s) => s.id === skillName);
-            if (foundSkill) return foundSkill.base;
-        }
-        return 0;
-    };
-
-    const skillCategories = [
-        { title: 'FIGHT', skills: ['brawl', 'channel', 'clash', 'evasion'] },
-        { title: 'SURVIVE', skills: ['alert', 'athletic', 'nature', 'stealth'] },
-        { title: 'SOCIAL', skills: ['charm', 'etiquette', 'intimidate', 'perform'] }
-    ];
-
-    if (build.includePmd) {
-        skillCategories.push({
-            title: isTrainer ? 'KNOWLEDGE' : 'KNOWLEDGE (PMD)',
-            skills: ['crafts', 'lore', 'medicine', 'magic']
-        });
-    }
-
-    const mappedExtraCategories = extraCategories.map((category) => ({
-        title: (category.name || 'CUSTOM').toUpperCase(),
-        skills: category.skills.map((extraSkill) => extraSkill.id)
-    }));
-
-    const allCategories = [...skillCategories, ...mappedExtraCategories];
-    const baseInsForMoves = localBuild.baseStats ? localBuild.baseStats['ins'] : baseStats[CombatStat.INS]?.base || 1;
-    const dynamicMaxMoves = baseInsForMoves + (localBuild.attr['ins'] || 0) + 3;
+    const isMultiple = localBuilds.length > 1;
 
     return (
         <div className="generator-preview__overlay">
-            {/* The style object here is dynamic and permitted by our architectural rules */}
-            <div className="generator-preview__content" style={{ display: showImagePrompt ? 'none' : 'flex' }}>
-                <h3 className="generator-preview__title modal-title-with-icon text-title-primary">
-                    <Search size={20} /> Build Preview: {localBuild.species}
-                    {(localBuild.gender || localBuild.nature) && (
-                        <span style={{ fontSize: '0.85em', color: 'var(--text-muted)', fontWeight: 'normal' }}>
-                            ({[localBuild.gender, localBuild.nature].filter(Boolean).join(', ')})
-                        </span>
-                    )}
+            <div className="generator-preview__content">
+                <h3 className="generator-preview__title text-title-primary">
+                    <Search size={20} /> Pokémon Auto-Build Preview
                 </h3>
 
+                {/* Batch Tabs if multiple Pokémon generated */}
+                {isMultiple && (
+                    <div className="generator-preview__tabs">
+                        {localBuilds.map((b, idx) => (
+                            <button
+                                key={idx}
+                                type="button"
+                                className={`generator-preview__tab-btn ${activeIndex === idx ? 'generator-preview__tab-btn--active' : ''}`}
+                                onClick={() => setActiveIndex(idx)}
+                            >
+                                #{idx + 1}: {b.species}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 <div className="generator-preview__scroll-container">
+                    {/* Species & Rank Header */}
                     <div className="generator-preview__section">
-                        <div className="generator-preview__section-title text-title-primary">
-                            Attributes (Rank Added)
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <h4 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--primary)' }}>
+                                    {localBuild.species}
+                                </h4>
+                                <span className="text-subtext" style={{ fontSize: '0.8rem' }}>
+                                    Rank: {localBuild.rank} | Nature: {localBuild.nature} | Ability:{' '}
+                                    {String(
+                                        localBuild.pokemonData?.Ability1 ||
+                                            localBuild.pokemonData?.ability1 ||
+                                            'Default'
+                                    )}
+                                    {localBuild.loyalty !== undefined && (
+                                        <>
+                                            {' '}
+                                            | Loyalty: {localBuild.loyalty} | Happiness: {localBuild.happiness}
+                                        </>
+                                    )}
+                                </span>
+                            </div>
+                            {isMultiple && onRerollIndex && (
+                                <button
+                                    type="button"
+                                    className="action-button action-button--theme"
+                                    onClick={() => onRerollIndex(activeIndex)}
+                                    style={{ padding: '4px 8px', fontSize: '0.78rem' }}
+                                >
+                                    <Dices size={14} /> Reroll This #{activeIndex + 1}
+                                </button>
+                            )}
                         </div>
+                    </div>
+
+                    {/* Combat Attributes (Base + Allocated) */}
+                    <div className="generator-preview__section">
+                        <span className="generator-preview__section-title text-title-primary">
+                            Combat Attributes (Base + Rank)
+                        </span>
                         <div className="generator-preview__grid-5">
                             {Object.values(CombatStat).map((statistic) => {
-                                const baseVal = getBaseAttribute(statistic);
-                                const limitVal = getStatLimit(statistic);
+                                const baseValue = Number(baseStats[statistic]?.base || 2);
+                                const allocated = localBuild.attr[statistic] || 0;
                                 return (
                                     <div key={statistic} className="generator-preview__stat-column">
-                                        <label
-                                            className="text-label"
-                                            title={`Base: ${baseVal} | Limit: ${limitVal} | Total: ${baseVal + (localBuild.attr[statistic] || 0)}`}
-                                        >
+                                        <span className="generator-preview__stat-label text-label">
                                             {statistic.toUpperCase()}
-                                        </label>
-                                        <span className="generator-preview__stat-subtext--nowrap text-subtext">
-                                            Base: {baseVal} | Limit: {limitVal}
                                         </span>
                                         <GeneratorPreviewStatSpinner
-                                            value={localBuild.attr[statistic] || 0}
-                                            onChange={(value) => updateAttribute(statistic, value)}
+                                            value={baseValue + allocated}
+                                            onChange={(val) => updateAttribute(statistic, val - baseValue)}
                                         />
                                     </div>
                                 );
@@ -365,23 +442,23 @@ export function GeneratorPreviewModal({
                         </div>
                     </div>
 
+                    {/* Social Attributes (Base + Allocated) */}
                     <div className="generator-preview__section">
-                        <div className="generator-preview__section-title text-title-primary">Socials (Rank Added)</div>
+                        <span className="generator-preview__section-title text-title-primary">
+                            Social Attributes (Base + Rank)
+                        </span>
                         <div className="generator-preview__grid-5">
                             {Object.values(SocialStat).map((statistic) => {
-                                const baseVal = getBaseAttribute(statistic);
+                                const baseValue = Number(baseSocials[statistic]?.base || 1);
+                                const allocated = localBuild.soc[statistic] || 0;
                                 return (
                                     <div key={statistic} className="generator-preview__stat-column">
-                                        <label
-                                            className="text-label"
-                                            title={`Base: ${baseVal} | Total: ${baseVal + (localBuild.soc[statistic] || 0)}`}
-                                        >
+                                        <span className="generator-preview__stat-label text-label">
                                             {statistic.toUpperCase()}
-                                        </label>
-                                        <span className="text-subtext">Base: {baseVal}</span>
+                                        </span>
                                         <GeneratorPreviewStatSpinner
-                                            value={localBuild.soc[statistic] || 0}
-                                            onChange={(value) => updateSocial(statistic, value)}
+                                            value={baseValue + allocated}
+                                            onChange={(val) => updateSocial(statistic, val - baseValue)}
                                         />
                                     </div>
                                 );
@@ -389,53 +466,63 @@ export function GeneratorPreviewModal({
                         </div>
                     </div>
 
+                    {/* Skills (Base + Allocated) */}
                     <div className="generator-preview__section">
-                        <div className="generator-preview__section-title generator-preview__section-title--spaced text-title-primary">
-                            Skills
-                        </div>
-                        <div className="generator-preview__grid-4">
-                            {allCategories.map((category, index) => (
-                                <div key={`${category.title}-${index}`} className="generator-preview__skill-category">
-                                    <div className="generator-preview__skill-category-title text-label">
-                                        {category.title}
+                        <span className="generator-preview__section-title text-title-primary">
+                            Skills (Base + Rank)
+                        </span>
+                        <div className="generator-preview__skill-categories">
+                            {SKILL_CATEGORIES.map((category) => (
+                                <div key={category.name} className="generator-preview__skill-group">
+                                    <span className="generator-preview__skill-group-title">{category.name}</span>
+                                    <div className="generator-preview__grid-4">
+                                        {category.skills.map((skill) => {
+                                            const baseValue = Number(baseSkills[skill.key]?.base || 0);
+                                            const allocated = localBuild.skills[skill.key] || 0;
+                                            return (
+                                                <div key={skill.key} className="generator-preview__stat-column">
+                                                    <span className="generator-preview__stat-label text-label">
+                                                        {skill.label}
+                                                    </span>
+                                                    <GeneratorPreviewStatSpinner
+                                                        value={baseValue + allocated}
+                                                        onChange={(val) => updateSkill(skill.key, val - baseValue)}
+                                                    />
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                    {category.skills.map((skillName) => (
-                                        <div key={skillName} className="generator-preview__skill-row">
-                                            <label
-                                                className="generator-preview__skill-label text-label"
-                                                style={{ color: 'var(--text-main)' }}
-                                                title={getSkillLabel(skillName)}
-                                            >
-                                                {getSkillLabel(skillName)}
-                                            </label>
-                                            <GeneratorPreviewStatSpinner
-                                                value={localBuild.skills[skillName] || 0}
-                                                onChange={(value) => updateSkill(skillName, value)}
-                                            />
-                                        </div>
-                                    ))}
                                 </div>
                             ))}
                         </div>
                     </div>
 
+                    {/* Drafted Moves */}
                     <div className="generator-preview__section">
-                        <div className="generator-preview__section-title text-title-primary">
-                            Moves (Max: {dynamicMaxMoves})
-                        </div>
+                        <span className="generator-preview__section-title generator-preview__section-title--spaced text-title-primary">
+                            Drafted Moves ({localBuild.moves.length})
+                        </span>
                         <div className="generator-preview__grid-2">
                             {localBuild.moves.map((move, index) => {
-                                const accuracyAttributeTotal =
-                                    getBaseAttribute(move.attr) +
-                                    (localBuild.attr[move.attr] || localBuild.soc[move.attr] || 0);
-                                const accuracySkillTotal =
-                                    getBaseSkill(move.skill) + (localBuild.skills[move.skill] || 0);
-                                const accuracyPool = accuracyAttributeTotal + accuracySkillTotal;
+                                const statKey = move.attr ? move.attr.toLowerCase() : 'str';
+                                const skillKey = move.skill ? move.skill.toLowerCase() : 'brawl';
+                                const baseAttrVal = Number(
+                                    baseStats[statKey as CombatStat]?.base ||
+                                        baseSocials[statKey as SocialStat]?.base ||
+                                        (statKey === 'will' ? willMax : 2)
+                                );
+                                const allocatedAttrVal = localBuild.attr[statKey] || localBuild.soc[statKey] || 0;
+                                const baseSkillVal = Number(baseSkills[skillKey as Skill]?.base || 0);
+                                const allocatedSkillVal = localBuild.skills[skillKey] || 0;
+                                const accuracyPool = baseAttrVal + allocatedAttrVal + baseSkillVal + allocatedSkillVal;
 
-                                const damageAttributeTotal =
-                                    getBaseAttribute(move.dmgStat) +
-                                    (localBuild.attr[move.dmgStat] || localBuild.soc[move.dmgStat] || 0);
-                                const damagePool = move.cat === 'Status' ? '-' : move.power + damageAttributeTotal;
+                                const damageStatistic = move.dmgStat ? move.dmgStat.toLowerCase() : '';
+                                let damagePool: string | number = 'N/A';
+                                if (damageStatistic) {
+                                    const baseDmgAttr = Number(baseStats[damageStatistic as CombatStat]?.base || 2);
+                                    const allocatedDmgAttr = localBuild.attr[damageStatistic] || 0;
+                                    damagePool = baseDmgAttr + allocatedDmgAttr + (move.power || 0);
+                                }
 
                                 return (
                                     <GeneratorPreviewMoveRow
@@ -451,34 +538,58 @@ export function GeneratorPreviewModal({
                     </div>
                 </div>
 
+                {/* Footer Controls */}
                 <div className="generator-preview__actions">
                     <button
                         type="button"
                         onClick={onClose}
+                        disabled={isApplying}
                         className="action-button action-button--dark generator-preview__btn-cancel"
                     >
-                        <XCircle size={16} /> Discard
+                        <XCircle size={16} /> Cancel
                     </button>
-                    <button
-                        type="button"
-                        onClick={onReroll}
-                        className="action-button action-button--secondary generator-preview__btn-reroll"
-                    >
-                        <Dices size={16} /> Reroll
-                    </button>
+
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        {isMultiple && onRerollIndex && (
+                            <button
+                                type="button"
+                                onClick={() => onRerollIndex(activeIndex)}
+                                disabled={isApplying}
+                                className="action-button action-button--theme"
+                            >
+                                <Dices size={16} /> Reroll #{activeIndex + 1}
+                            </button>
+                        )}
+                        {onReroll && (
+                            <button
+                                type="button"
+                                onClick={onReroll}
+                                disabled={isApplying}
+                                className="action-button action-button--theme"
+                            >
+                                <Dices size={16} /> {isMultiple ? `Reroll All (${localBuilds.length})` : 'Reroll'}
+                            </button>
+                        )}
+                    </div>
+
                     <button
                         type="button"
                         onClick={handleApply}
+                        disabled={isApplying}
                         className={`action-button ${destination === 'new' ? 'action-button--theme' : 'action-button--red'} generator-preview__btn-apply`}
                     >
                         {destination === 'new' ? (
                             isStandaloneMode ? (
                                 <>
-                                    <FilePlus size={16} /> Create Sheet
+                                    <FilePlus size={16} />{' '}
+                                    {isMultiple ? `Create All (${localBuilds.length}) Sheets` : 'Create Sheet'}
                                 </>
                             ) : (
                                 <>
-                                    <ImagePlus size={16} /> Select Image & Create Token
+                                    <ImagePlus size={16} />{' '}
+                                    {isMultiple
+                                        ? `Select Image & Spawn All (${localBuilds.length})`
+                                        : 'Select Image & Create Token'}
                                 </>
                             )
                         ) : (
@@ -490,6 +601,7 @@ export function GeneratorPreviewModal({
                 </div>
             </div>
 
+            {/* Overwrite image prompt */}
             {showImagePrompt && (
                 <div className="generator-preview-tooltip__overlay generator-preview-tooltip__overlay--high-z">
                     <div className="generator-preview-tooltip__content">
@@ -519,9 +631,10 @@ export function GeneratorPreviewModal({
                 </div>
             )}
 
+            {/* Tooltip Overlay */}
             {tooltipInfo && (
-                <div className="generator-preview-tooltip__overlay">
-                    <div className="generator-preview-tooltip__content">
+                <div className="generator-preview-tooltip__overlay" onClick={() => setTooltipInfo(null)}>
+                    <div className="generator-preview-tooltip__content" onClick={(e) => e.stopPropagation()}>
                         <h3 className="generator-preview-tooltip__title text-title-primary">{tooltipInfo.title}</h3>
                         <p className="generator-preview-tooltip__desc text-subtext">{tooltipInfo.desc}</p>
                         <div className="generator-preview-tooltip__actions">
@@ -536,6 +649,16 @@ export function GeneratorPreviewModal({
                     </div>
                 </div>
             )}
+
+            {/* PromptModal (in-app dialog replacing window.prompt) */}
+            <PromptModal
+                isOpen={promptConfig.isOpen}
+                title={promptConfig.title}
+                message={promptConfig.message}
+                defaultValue={promptConfig.defaultValue}
+                onConfirm={promptConfig.onConfirm}
+                onCancel={() => setPromptConfig((p) => ({ ...p, isOpen: false }))}
+            />
         </div>
     );
 }

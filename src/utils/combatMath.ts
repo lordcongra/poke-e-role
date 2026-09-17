@@ -1,4 +1,4 @@
-import type { MoveData, CharacterState, CustomAbility, InventoryItem } from '../store/storeTypes';
+import type { MoveData, CharacterState, CustomAbility, InventoryItem, Rank } from '../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { parseCombatTags, type CombatBonuses } from './tagParser';
 
@@ -450,4 +450,59 @@ export function calculateTargetDefensesFromMeta(meta: Record<string, unknown>): 
     const spd = Math.max(1, sdefBase + sdefBuff - sdefDebuff + invMods.spd + rankDefBonus);
 
     return { def, spd };
+}
+
+/**
+ * Calculates scalar Loyalty and Happiness for a Pokémon based on rank and team slot index.
+ * - Starter / Rookie: Loyalty 1, Happiness 1–2
+ * - Standard: Partner/Ace (slot 0) has Loyalty 5, Happiness 4; others have Loyalty 2, Happiness 2–3
+ * - Advanced: Ace has 5/5, second member has 4/4, others have Loyalty 3, Happiness 3
+ * - Expert: Top 2 members have 5/4 or 5/5, others 4/4
+ * - Ace / Master / Champion: Full loyalty (5) and happiness (5)
+ */
+export function calculateScalarLoyaltyHappiness(
+    rank: Rank,
+    memberIndex: number = 0
+): { loyalty: number; happiness: number } {
+    switch (rank) {
+        case 'Starter':
+        case 'Rookie':
+            return {
+                loyalty: 1,
+                happiness: Math.floor(Math.random() * 2) + 1 // 1-2
+            };
+        case 'Standard':
+            // Partner/Ace Pokémon has 5/4, others have 2-3
+            if (memberIndex === 0) {
+                return { loyalty: 5, happiness: 4 };
+            }
+            return {
+                loyalty: 2,
+                happiness: Math.floor(Math.random() * 2) + 2 // 2-3
+            };
+        case 'Advanced':
+            if (memberIndex === 0) {
+                return { loyalty: 5, happiness: 5 };
+            } else if (memberIndex === 1) {
+                return { loyalty: 4, happiness: 4 };
+            }
+            return {
+                loyalty: 3,
+                happiness: 3
+            };
+        case 'Expert':
+            return {
+                loyalty: memberIndex < 2 ? 5 : 4,
+                happiness: memberIndex < 2 ? 5 : 4
+            };
+        case 'Ace':
+        case 'Master':
+        case 'Champion':
+            return {
+                loyalty: 5,
+                happiness: 5
+            };
+        default:
+            return { loyalty: 1, happiness: 1 };
+    }
 }

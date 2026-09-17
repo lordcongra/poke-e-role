@@ -38,7 +38,17 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
         useSpilloverRatio: false,
         spilloverAtkRatio: 2,
         spilloverSupRatio: 1,
-        spilloverJitter: true
+        spilloverJitter: true,
+        selectedBiome: '',
+        batchCount: 1,
+        batchConfigs: [],
+        includeLegendaries: false,
+        includeMythicals: false,
+        includeMegas: false,
+        allowDuplicates: false,
+        scaleLoyaltyHappiness: true,
+        allowedLineLengths: [1, 2, 3],
+        allowedStageIndices: [1, 2, 3]
     },
 
     setGeneratorConfig: (config) => set((state) => ({ generatorConfig: { ...state.generatorConfig, ...config } })),
@@ -68,9 +78,10 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
             const newIdentity = { ...state.identity };
             const newHealth = { ...state.health };
             const newWill = { ...state.will };
+            const newDerived = { ...state.derived };
             const updatesToSave: Record<string, unknown> = {};
 
-            if (build.pokemonData && build.species !== state.identity.species) {
+            if (build.species) {
                 newIdentity.species = build.species;
                 updatesToSave['species'] = build.species;
             }
@@ -88,6 +99,16 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
             if (build.nature !== undefined) {
                 newIdentity.nature = build.nature;
                 updatesToSave['nature'] = build.nature;
+            }
+
+            if (build.loyalty !== undefined) {
+                newDerived.loyal = build.loyalty;
+                updatesToSave['loyalty-curr'] = build.loyalty;
+            }
+
+            if (build.happiness !== undefined) {
+                newDerived.happy = build.happiness;
+                updatesToSave['happiness-curr'] = build.happiness;
             }
 
             Object.values(CombatStat).forEach((statistic) => {
@@ -165,7 +186,8 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
                 extraCategories: newExtraCategories,
                 identity: newIdentity,
                 health: newHealth,
-                will: newWill
+                will: newWill,
+                derived: newDerived
             };
         });
     }
