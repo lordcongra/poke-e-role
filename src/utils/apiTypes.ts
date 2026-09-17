@@ -119,6 +119,8 @@ export interface PokemonLookupEntry {
     eventAbilities: string;
     legendary: boolean;
     starter: boolean;
+    stage?: number;
+    totalStages?: number;
     moves: [string, string][]; // [MoveName, LearnedRank]
     isCustom?: boolean;
 }

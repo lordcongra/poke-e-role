@@ -196,6 +196,66 @@ async function build() {
     const pokedex = loadMergedDataset('Pokedex', 'pokedex');
     const pokemonLookup = [];
 
+    // Pre-index pokedex entries by name for evolution hierarchy calculations
+    const pokedexMap = new Map();
+    pokedex.entries.forEach(([fileName, { data }]) => {
+        const rawName = data.Name || data.name || fileName.replace('.json', '');
+        pokedexMap.set(rawName.toLowerCase(), data);
+    });
+
+    function getEvolutionInfo(data) {
+        if (!data) return { stage: 1, totalStages: 1 };
+        const isSpecialForm = (kind) => ['Mega', 'Gigantamax', 'Primal', 'Form'].includes(String(kind || ''));
+
+        // If this is a Mega or special form, inherit base form's evolution stage
+        if (Array.isArray(data.Evolutions)) {
+            const formFrom = data.Evolutions.find((e) => e.From && isSpecialForm(e.Kind));
+            if (formFrom) {
+                const baseData = pokedexMap.get(String(formFrom.From).toLowerCase());
+                if (baseData) {
+                    return getEvolutionInfo(baseData);
+                }
+            }
+        }
+
+        let stepsBack = 0;
+        let curr = data;
+        const visited = new Set();
+        while (curr && Array.isArray(curr.Evolutions) && stepsBack < 5) {
+            const fromEvo = curr.Evolutions.find((e) => e.From && !isSpecialForm(e.Kind));
+            if (!fromEvo) break;
+            const fromName = String(fromEvo.From).toLowerCase();
+            if (visited.has(fromName)) break;
+            visited.add(fromName);
+            curr = pokedexMap.get(fromName);
+            stepsBack++;
+        }
+
+        function getMaxStepsForward(node, seen = new Set()) {
+            if (!node || !Array.isArray(node.Evolutions)) return 0;
+            const forwardEvos = node.Evolutions.filter((e) => e.To && !isSpecialForm(e.Kind));
+            if (forwardEvos.length === 0) return 0;
+            let maxSub = 0;
+            for (const evo of forwardEvos) {
+                const toName = String(evo.To).toLowerCase();
+                if (seen.has(toName)) continue;
+                const nextNode = pokedexMap.get(toName);
+                const sub = 1 + getMaxStepsForward(nextNode, new Set([...seen, toName]));
+                if (sub > maxSub) maxSub = sub;
+            }
+            return maxSub;
+        }
+
+        const stepsForward = getMaxStepsForward(data);
+        const stage = stepsBack + 1;
+        const totalStages = Math.min(3, Math.max(1, stage + stepsForward));
+
+        return {
+            stage: Math.min(stage, 3),
+            totalStages
+        };
+    }
+
     pokedex.entries.forEach(([fileName, { data }]) => {
         try {
             const rawName = data.Name || data.name || fileName.replace('.json', '');
@@ -214,6 +274,8 @@ async function build() {
                   )
                 : [];
 
+            const evoInfo = getEvolutionInfo(data);
+
             pokemonLookup.push({
                 name: rawName,
                 dexId: String(data.DexID || data.dexId || data.Number || '').padStart(4, '0'),
@@ -225,6 +287,8 @@ async function build() {
                 eventAbilities: data.EventAbilities || data.eventAbilities || '',
                 legendary: Boolean(data.Legendary || data.legendary),
                 starter: Boolean(data.GoodStarter || data.goodStarter),
+                stage: evoInfo.stage,
+                totalStages: evoInfo.totalStages,
                 moves: movesList
             });
         } catch (error) {

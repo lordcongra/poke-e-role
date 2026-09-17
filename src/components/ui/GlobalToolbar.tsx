@@ -27,6 +27,7 @@ import { BattleOrganizerModal } from '../modals/battleOrganizer/BattleOrganizerM
 import { BattleOrganizerSettingsModal } from '../modals/battleOrganizer/BattleOrganizerSettingsModal';
 import { getBattleOrganizerSettings } from '../modals/battleOrganizer/battleOrganizerSettingsHelper';
 import { PrintBattleOrganizer } from '../print/PrintBattleOrganizer';
+import { TrainerGeneratorModal } from '../modals/TrainerGeneratorModal';
 
 // Icons
 import {
@@ -38,10 +39,6 @@ import {
     BookOpen,
     Package,
     Bell,
-    Sun,
-    Moon,
-    Save,
-    Upload,
     Printer,
     Wand2,
     Palette,
@@ -49,7 +46,12 @@ import {
     XCircle,
     Eye,
     ShieldCheck,
-    Layers
+    Layers,
+    UserCheck,
+    Sun,
+    Moon,
+    Save,
+    Upload
 } from 'lucide-react';
 import './GlobalToolbar.css';
 
@@ -62,6 +64,7 @@ type ActiveModal =
     | 'changelog'
     | 'init'
     | 'generator'
+    | 'trainer-generator'
     | 'print'
     | 'theme'
     | 'accessibility'
@@ -428,14 +431,24 @@ export function GlobalToolbar() {
                         </button>
 
                         {showPokemonGeneratorButton && (
-                            <button
-                                type="button"
-                                className="global-toolbar__btn action-button--primary-hover"
-                                onClick={() => setActiveModal('generator')}
-                                title="Open Pokémon Generator"
-                            >
-                                <Wand2 size={16} color="var(--primary)" /> PKMN Generator
-                            </button>
+                            <>
+                                <button
+                                    type="button"
+                                    className="global-toolbar__btn action-button--primary-hover"
+                                    onClick={() => setActiveModal('generator')}
+                                    title="Open Pokémon Generator"
+                                >
+                                    <Wand2 size={16} color="var(--primary)" /> PKMN Generator
+                                </button>
+                                <button
+                                    type="button"
+                                    className="global-toolbar__btn action-button--primary-hover"
+                                    onClick={() => setActiveModal('trainer-generator')}
+                                    title="Open Trainer & Team Generator"
+                                >
+                                    <UserCheck size={16} color="var(--primary)" /> Trainer Gen
+                                </button>
+                            </>
                         )}
 
                         {showLootGenButton && (
@@ -581,6 +594,7 @@ export function GlobalToolbar() {
             {activeModal === 'rules' && <RulesModal onClose={() => setActiveModal(null)} />}
             {activeModal === 'loot' && <ItemGeneratorModal onClose={() => setActiveModal(null)} />}
             {activeModal === 'generator' && <GeneratorModal onClose={() => setActiveModal(null)} />}
+            {activeModal === 'trainer-generator' && <TrainerGeneratorModal onClose={() => setActiveModal(null)} />}
             {activeModal === 'changelog' && <ChangelogModal onClose={handleCloseChangelog} />}
             {activeModal === 'init' && <InitiativeSettingsModal onClose={() => setActiveModal(null)} />}
             {activeModal === 'print' && <PrintSettingsModal onClose={() => setActiveModal(null)} />}
