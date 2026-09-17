@@ -543,11 +543,3 @@ export const TRAINER_CLASSES: TrainerClass[] = [
         description: 'Official League arbiters testing trainers on badge challenges.'
     }
 ];
-
-// Groundwork for optional trainer names
-export const SAMPLE_FIRST_NAMES = [
-    'Alex', 'Brenda', 'Calvin', 'Diana', 'Ethan', 'Fiona', 'George', 'Haley',
-    'Ian', 'Joey', 'Kendra', 'Liam', 'Maya', 'Nico', 'Olivia', 'Peter',
-    'Quinn', 'Ruby', 'Sammy', 'Toby', 'Uma', 'Victor', 'Wendy', 'Xavier',
-    'Yasmine', 'Zack', 'Cynthia', 'Steven', 'Lance', 'Sabrina', 'Brock', 'Misty'
-];

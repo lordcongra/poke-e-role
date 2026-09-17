@@ -14,7 +14,6 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { NATURES } from '../../data/constants';
 import {
     TRAINER_CLASSES,
-    SAMPLE_FIRST_NAMES,
     type TrainerProfileType
 } from '../../data/trainerClasses';
 import {
@@ -108,11 +107,6 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                 setIsSpecialTrainer(true);
             }
         }
-    };
-
-    const handleRandomizeName = () => {
-        const randomName = SAMPLE_FIRST_NAMES[Math.floor(Math.random() * SAMPLE_FIRST_NAMES.length)];
-        setTrainerName(randomName);
     };
 
     const handleRandomizeConcept = () => {
@@ -325,24 +319,13 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                     }
                                 />
                             </label>
-                            <div style={{ display: 'flex', gap: '6px' }}>
-                                <input
-                                    type="text"
-                                    value={trainerName}
-                                    onChange={(e) => setTrainerName(e.target.value)}
-                                    placeholder={selectedConcept ? selectedConcept.name : 'e.g. Ace Trainer (default)'}
-                                    className="trainer-gen-modal__input"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={handleRandomizeName}
-                                    title="Roll a random first name"
-                                    className="action-button action-button--dark"
-                                    style={{ padding: '4px 8px' }}
-                                >
-                                    <Dices size={15} />
-                                </button>
-                            </div>
+                            <input
+                                type="text"
+                                value={trainerName}
+                                onChange={(e) => setTrainerName(e.target.value)}
+                                placeholder={selectedConcept ? selectedConcept.name : 'e.g. Ace Trainer (default)'}
+                                className="trainer-gen-modal__input"
+                            />
                         </div>
                     </div>
 
