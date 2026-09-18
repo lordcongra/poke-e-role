@@ -42,6 +42,7 @@ export interface SkillCategoryGroup {
         key: Skill;
         label: string;
         trainerLabel: string;
+        specialTrainerLabel?: string;
     }>;
 }
 
@@ -49,10 +50,10 @@ export const SKILL_CATEGORIES: SkillCategoryGroup[] = [
     {
         name: 'Fight',
         skills: [
-            { key: Skill.BRAWL, label: 'Brawl', trainerLabel: 'Brawl' },
-            { key: Skill.CHANNEL, label: 'Channel', trainerLabel: 'Throw' },
-            { key: Skill.CLASH, label: 'Clash', trainerLabel: 'Weapon' },
-            { key: Skill.EVASION, label: 'Evasion', trainerLabel: 'Evasion' }
+            { key: Skill.BRAWL, label: 'Brawl', trainerLabel: 'Brawl', specialTrainerLabel: 'Brawl' },
+            { key: Skill.CHANNEL, label: 'Channel', trainerLabel: 'Throw', specialTrainerLabel: 'Throw' },
+            { key: Skill.CLASH, label: 'Clash', trainerLabel: 'Weapon', specialTrainerLabel: 'Channel' },
+            { key: Skill.EVASION, label: 'Evasion', trainerLabel: 'Evasion', specialTrainerLabel: 'Evasion' }
         ]
     },
     {

@@ -531,13 +531,19 @@ export function TrainerPreviewModal({
                                             <div className="trainer-preview__grid-4">
                                                 {category.skills.map((skill) => {
                                                     const currentVal = trainerSkills[skill.key] || 0;
+                                                    const isSpecialTrainer =
+                                                        result.trainerMetadata['mode'] === 'Trainer (Special)';
+                                                    const displayLabel =
+                                                        isSpecialTrainer && skill.specialTrainerLabel
+                                                            ? skill.specialTrainerLabel
+                                                            : skill.trainerLabel;
                                                     return (
                                                         <div key={skill.key} className="trainer-preview__stat-col">
                                                             <span
                                                                 className="text-label"
                                                                 style={{ fontSize: '0.75rem' }}
                                                             >
-                                                                {skill.trainerLabel}
+                                                                {displayLabel}
                                                             </span>
                                                             <GeneratorPreviewStatSpinner
                                                                 value={currentVal}

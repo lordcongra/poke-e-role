@@ -143,6 +143,198 @@ export function determineSuggestedBadges(rank: Rank): Badge[] {
     return badges;
 }
 
+function allocatePrioritizedAttributes(
+    points: number,
+    priorityList: string[],
+    maxAllocPerStat: number = 4,
+    isBalanced: boolean = false
+): Record<string, number> {
+    const ranks: Record<string, number> = {};
+    priorityList.forEach((stat) => (ranks[stat] = 0));
+
+    if (points <= 0 || priorityList.length === 0) return ranks;
+
+    if (isBalanced) {
+        // Even round-robin distribution for Balanced profile
+        let rem = points;
+        while (rem > 0 && priorityList.some((s) => ranks[s] < maxAllocPerStat)) {
+            for (const stat of priorityList) {
+                if (rem <= 0) break;
+                if (ranks[stat] < maxAllocPerStat) {
+                    ranks[stat]++;
+                    rem--;
+                }
+            }
+        }
+        return ranks;
+    }
+
+    let rem = points;
+    const p1 = priorityList[0];
+    const p2 = priorityList[1];
+    const p3 = priorityList[2];
+    const lowerPriority = priorityList.slice(3);
+
+    // Sequence: Top 2 prioritized (up to +2 each), splash p3 (+1), advance top 2 (up to +3 each),
+    // advance splash p3 (+2), cap top 2 (up to +4 each), advance splash p3 (up to +4), then spillover to lower.
+    const plannedSteps: Array<{ stat: string; target: number }> = [];
+
+    // Phase 1: Establish top 2 (up to +2 each)
+    if (p1) plannedSteps.push({ stat: p1, target: 1 });
+    if (p2) plannedSteps.push({ stat: p2, target: 1 });
+    if (p1) plannedSteps.push({ stat: p1, target: 2 });
+    if (p2) plannedSteps.push({ stat: p2, target: 2 });
+
+    // Phase 2: Introduce splash to 3rd priority
+    if (p3) plannedSteps.push({ stat: p3, target: 1 });
+
+    // Phase 3: Push top 2 to high tier (+3 each)
+    if (p1) plannedSteps.push({ stat: p1, target: 3 });
+    if (p2) plannedSteps.push({ stat: p2, target: 3 });
+
+    // Phase 4: Strengthen splash (+2)
+    if (p3) plannedSteps.push({ stat: p3, target: 2 });
+
+    // Phase 5: Cap top 2 at maximum (+4 each)
+    if (p1) plannedSteps.push({ stat: p1, target: 4 });
+    if (p2) plannedSteps.push({ stat: p2, target: 4 });
+
+    // Phase 6: Max out 3rd priority (+3, +4)
+    if (p3) {
+        plannedSteps.push({ stat: p3, target: 3 });
+        plannedSteps.push({ stat: p3, target: 4 });
+    }
+
+    // Execute planned steps
+    for (const step of plannedSteps) {
+        if (rem <= 0) break;
+        if (ranks[step.stat] < step.target && ranks[step.stat] < maxAllocPerStat) {
+            ranks[step.stat]++;
+            rem--;
+        }
+    }
+
+    // Phase 7: Overflow remaining points into 4th, 5th, etc.
+    if (rem > 0) {
+        for (const stat of lowerPriority) {
+            while (rem > 0 && ranks[stat] < maxAllocPerStat) {
+                ranks[stat]++;
+                rem--;
+            }
+        }
+    }
+
+    // Safety fallback: any remaining into any stat
+    if (rem > 0) {
+        for (const stat of priorityList) {
+            while (rem > 0 && ranks[stat] < maxAllocPerStat) {
+                ranks[stat]++;
+                rem--;
+            }
+        }
+    }
+
+    return ranks;
+}
+
+function allocatePrioritizedSkills(
+    points: number,
+    skillPriority: Skill[],
+    skillLimit: number,
+    isBalanced: boolean = false
+): Record<string, number> {
+    const skillRanks: Record<string, number> = {};
+    Object.values(Skill).forEach((s) => (skillRanks[s] = 0));
+
+    if (points <= 0 || skillPriority.length === 0) return skillRanks;
+
+    if (isBalanced) {
+        let rem = points;
+        while (rem > 0 && skillPriority.some((s) => skillRanks[s] < skillLimit)) {
+            for (const skill of skillPriority) {
+                if (rem <= 0) break;
+                if (skillRanks[skill] < skillLimit) {
+                    skillRanks[skill]++;
+                    rem--;
+                }
+            }
+        }
+        return skillRanks;
+    }
+
+    let rem = points;
+    const p1 = skillPriority[0];
+    const p2 = skillPriority[1];
+    const p3 = skillPriority[2];
+    const p4 = skillPriority[3];
+    const p5 = skillPriority[4];
+    const others = skillPriority.slice(5);
+
+    // 1. Give 1 point to top 4 skills to establish basic competency
+    if (p1 && rem > 0) {
+        skillRanks[p1]++;
+        rem--;
+    }
+    if (p2 && rem > 0) {
+        skillRanks[p2]++;
+        rem--;
+    }
+    if (p3 && rem > 0) {
+        skillRanks[p3]++;
+        rem--;
+    }
+    if (p4 && rem > 0) {
+        skillRanks[p4]++;
+        rem--;
+    }
+
+    // 2. Advance Top 2 skills towards skillLimit
+    while (rem > 0 && (skillRanks[p1] < skillLimit || (p2 && skillRanks[p2] < skillLimit))) {
+        if (rem > 0 && skillRanks[p1] < skillLimit) {
+            skillRanks[p1]++;
+            rem--;
+        }
+        if (rem > 0 && p2 && skillRanks[p2] < skillLimit) {
+            skillRanks[p2]++;
+            rem--;
+        }
+    }
+
+    // 3. Advance secondary skills (p3, p4, p5)
+    const secondaries = [p3, p4, p5].filter(Boolean) as Skill[];
+    while (rem > 0 && secondaries.some((s) => skillRanks[s] < skillLimit)) {
+        for (const s of secondaries) {
+            if (rem <= 0) break;
+            if (skillRanks[s] < skillLimit) {
+                skillRanks[s]++;
+                rem--;
+            }
+        }
+    }
+
+    // 4. Fill remaining priority skills
+    if (rem > 0) {
+        for (const s of others) {
+            while (rem > 0 && skillRanks[s] < skillLimit) {
+                skillRanks[s]++;
+                rem--;
+            }
+        }
+    }
+
+    // 5. Overflow into any skill if needed
+    if (rem > 0) {
+        for (const s of Object.values(Skill)) {
+            while (rem > 0 && skillRanks[s] < skillLimit) {
+                skillRanks[s]++;
+                rem--;
+            }
+        }
+    }
+
+    return skillRanks;
+}
+
 export function allocateTrainerStats(
     rank: Rank,
     age: string,
@@ -156,30 +348,25 @@ export function allocateTrainerStats(
     const rankPts = getRankPoints(rank);
     const agePts = getAgePoints(age);
 
-    let remCore = rankPts.core + agePts.core;
-    let remSoc = rankPts.social + agePts.social;
-    let remSkill = rankPts.skills;
+    const remCore = rankPts.core + agePts.core;
+    const remSoc = rankPts.social + agePts.social;
+    const remSkill = rankPts.skills;
     const skillLimit = rankPts.skillLimit;
 
-    // Base attributes: all 1, limit 5. If special, spe is 1 (limit 5). Otherwise spe is 0.
-    const attrRanks: Record<string, number> = { str: 0, dex: 0, vit: 0, ins: 0, spe: 0 };
-    const socRanks: Record<string, number> = { tou: 0, coo: 0, bea: 0, cut: 0, cle: 0 };
-    const skillRanks: Record<string, number> = {};
-    Object.values(Skill).forEach((s) => (skillRanks[s] = 0));
-
-    // Profile Weightings
-    let attrPriority: string[] = ['str', 'dex', 'vit', 'ins'];
+    // Profile Weightings (For trainers: CHANNEL = Throw, CLASH = Weapon [or Channel if Special Trainer], CHARM = Empathy, MAGIC = Science)
+    let attrPriority: string[] = isSpecial ? ['str', 'dex', 'vit', 'ins', 'spe'] : ['str', 'dex', 'vit', 'ins'];
     let socPriority: string[] = ['tou', 'coo', 'cle', 'bea', 'cut'];
-    let skillPriority: string[] = [Skill.BRAWL, Skill.CHANNEL, Skill.CLASH, Skill.ATHLETIC, Skill.ALERT, Skill.EVASION];
+    let skillPriority: Skill[] = [Skill.BRAWL, Skill.CLASH, Skill.CHANNEL, Skill.ATHLETIC, Skill.ALERT, Skill.EVASION];
 
     switch (profile) {
         case 'survivalist':
-            attrPriority = ['dex', 'ins', 'vit', 'str'];
+            // Survivalists: Dex > Str > Vit > Ins (spe last if special)
+            attrPriority = isSpecial ? ['dex', 'str', 'vit', 'ins', 'spe'] : ['dex', 'str', 'vit', 'ins'];
             socPriority = ['tou', 'cle', 'coo', 'cut', 'bea'];
             skillPriority = [Skill.NATURE, Skill.ALERT, Skill.ATHLETIC, Skill.STEALTH, Skill.EVASION, Skill.CHANNEL];
             break;
         case 'socialite':
-            attrPriority = ['ins', 'dex', 'vit', 'str'];
+            attrPriority = isSpecial ? ['ins', 'dex', 'vit', 'spe', 'str'] : ['ins', 'dex', 'vit', 'str'];
             socPriority = ['coo', 'bea', 'cut', 'cle', 'tou'];
             skillPriority = [Skill.CHARM, Skill.ETIQUETTE, Skill.PERFORM, Skill.INTIMIDATE, Skill.ALERT, Skill.EVASION];
             break;
@@ -189,9 +376,16 @@ export function allocateTrainerStats(
             skillPriority = [Skill.MAGIC, Skill.MEDICINE, Skill.LORE, Skill.CRAFTS, Skill.ALERT];
             break;
         case 'mystic':
-            attrPriority = isSpecial ? ['ins', 'spe', 'dex', 'vit', 'str'] : ['ins', 'dex', 'vit', 'str'];
+            // Mystics/Special Trainers: Spe & Ins top 2, Dex & Vit splash, Str strictly last
+            attrPriority = isSpecial
+                ? Math.random() < 0.5
+                    ? ['spe', 'ins', 'dex', 'vit', 'str']
+                    : ['ins', 'spe', 'dex', 'vit', 'str']
+                : ['ins', 'dex', 'vit', 'str'];
             socPriority = ['cle', 'coo', 'tou', 'cut', 'bea'];
-            skillPriority = [Skill.CHANNEL, Skill.ALERT, Skill.LORE, Skill.BRAWL, Skill.EVASION];
+            skillPriority = isSpecial
+                ? [Skill.CLASH, Skill.ALERT, Skill.LORE, Skill.EVASION, Skill.CHANNEL]
+                : [Skill.ALERT, Skill.LORE, Skill.EVASION, Skill.CHANNEL];
             break;
         case 'balanced':
             attrPriority = isSpecial ? ['str', 'dex', 'vit', 'ins', 'spe'] : ['str', 'dex', 'vit', 'ins'];
@@ -202,52 +396,22 @@ export function allocateTrainerStats(
         default:
             attrPriority = isSpecial ? ['str', 'dex', 'vit', 'ins', 'spe'] : ['str', 'dex', 'vit', 'ins'];
             socPriority = ['tou', 'coo', 'cle', 'bea', 'cut'];
-            skillPriority = [Skill.BRAWL, Skill.CHANNEL, Skill.CLASH, Skill.ATHLETIC, Skill.ALERT, Skill.EVASION];
+            skillPriority = [Skill.BRAWL, Skill.CLASH, Skill.CHANNEL, Skill.ATHLETIC, Skill.ALERT, Skill.EVASION];
             break;
     }
 
+    const isBalanced = profile === 'balanced';
+
     // Allocate Core Attributes (Base is 1, max allocation is 4 so total is 5)
-    while (remCore > 0 && attrPriority.some((a) => attrRanks[a] < 4)) {
-        for (const stat of attrPriority) {
-            if (remCore <= 0) break;
-            if (attrRanks[stat] < 4) {
-                attrRanks[stat]++;
-                remCore--;
-            }
-        }
-    }
+    const rawAttr = allocatePrioritizedAttributes(remCore, attrPriority, 4, isBalanced);
+    const attrRanks: Record<string, number> = { str: 0, dex: 0, vit: 0, ins: 0, spe: 0, ...rawAttr };
 
     // Allocate Social Attributes (Base is 1, max allocation is 4 so total is 5)
-    while (remSoc > 0 && socPriority.some((s) => socRanks[s] < 4)) {
-        for (const stat of socPriority) {
-            if (remSoc <= 0) break;
-            if (socRanks[stat] < 4) {
-                socRanks[stat]++;
-                remSoc--;
-            }
-        }
-    }
+    const rawSoc = allocatePrioritizedAttributes(remSoc, socPriority, 4, isBalanced);
+    const socRanks: Record<string, number> = { tou: 0, coo: 0, bea: 0, cut: 0, cle: 0, ...rawSoc };
 
     // Allocate Skills (Max rank per skill = skillLimit)
-    while (remSkill > 0 && skillPriority.some((s) => skillRanks[s] < skillLimit)) {
-        for (const skill of skillPriority) {
-            if (remSkill <= 0) break;
-            if (skillRanks[skill] < skillLimit) {
-                skillRanks[skill]++;
-                remSkill--;
-            }
-        }
-    }
-    // Spillover skills to any skill if primary priorities are capped
-    if (remSkill > 0) {
-        const allSkills = Object.values(Skill);
-        for (const skill of allSkills) {
-            while (remSkill > 0 && skillRanks[skill] < skillLimit) {
-                skillRanks[skill]++;
-                remSkill--;
-            }
-        }
-    }
+    const skillRanks = allocatePrioritizedSkills(remSkill, skillPriority, skillLimit, isBalanced);
 
     return { attr: attrRanks, soc: socRanks, skills: skillRanks };
 }
@@ -311,7 +475,7 @@ export function buildTrainerTokenMetadata(
 
         // Skill Labels mapped for Trainer Mode
         [`label-${Skill.CHANNEL}`]: 'Throw',
-        [`label-${Skill.CLASH}`]: 'Weapon',
+        [`label-${Skill.CLASH}`]: isSpecialTrainer ? 'Channel' : 'Weapon',
         [`label-${Skill.CHARM}`]: 'Empathy',
         [`label-${Skill.MAGIC}`]: 'Science',
 

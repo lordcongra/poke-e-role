@@ -29,14 +29,22 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
 
             // If switching between 'Trainer' and 'Trainer (Special)', simply update mode without wiping or restoring backups
             if (wasTrainer && isTrainer) {
-                const updatesToSave: Record<string, unknown> = { mode: newMode };
+                const isSpecial = newMode === 'Trainer (Special)';
+                const clashLabel = isSpecial ? 'Channel' : 'Weapon';
+                const newSkills = { ...state.skills };
+                newSkills[Skill.CLASH] = { ...newSkills[Skill.CLASH], customName: clashLabel };
+
+                const updatesToSave: Record<string, unknown> = {
+                    mode: newMode,
+                    [`label-${Skill.CLASH}`]: clashLabel
+                };
                 const newIdentity = { ...state.identity, mode: newMode };
                 try {
                     saveToOwlbear(updatesToSave);
                 } catch (e) {
                     console.error('[MacroSlice] Failed to save mode switch metadata to Owlbear.', e);
                 }
-                return { identity: newIdentity };
+                return { identity: newIdentity, skills: newSkills };
             }
 
             const currentBackupKey = isTrainer ? 'pokemonBackup' : 'trainerBackup';
@@ -54,9 +62,13 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             const newIdentity = { ...state.identity, mode: newMode, [currentBackupKey]: backupStr };
             const newStats = { ...state.stats };
 
+            const isSpecial = newMode === 'Trainer (Special)';
             const newSkills = { ...state.skills };
             newSkills[Skill.CHANNEL] = { ...newSkills[Skill.CHANNEL], customName: isTrainer ? 'Throw' : 'Channel' };
-            newSkills[Skill.CLASH] = { ...newSkills[Skill.CLASH], customName: isTrainer ? 'Weapon' : 'Clash' };
+            newSkills[Skill.CLASH] = {
+                ...newSkills[Skill.CLASH],
+                customName: isSpecial ? 'Channel' : isTrainer ? 'Weapon' : 'Clash'
+            };
             newSkills[Skill.CHARM] = { ...newSkills[Skill.CHARM], customName: isTrainer ? 'Empathy' : 'Charm' };
             newSkills[Skill.MAGIC] = { ...newSkills[Skill.MAGIC], customName: isTrainer ? 'Science' : 'Magic' };
 

@@ -38,6 +38,7 @@ export function SkillsTable() {
     const remainingPoints = rankData.skills + extras.skill - spentSkill;
 
     const isTrainer = mode !== 'Pokémon';
+    const isSpecialTrainer = mode === 'Trainer (Special)';
 
     const abilityText = getAbilityText(ability, customAbilities);
     const inventoryModifiers = parseCombatTags(inventory, extraCategories, undefined, abilityText);
@@ -76,7 +77,10 @@ export function SkillsTable() {
                         <CategoryHeader title="FIGHT" />
                         <SkillRow skill={Skill.BRAWL} defaultLabel="Brawl" />
                         <SkillRow skill={Skill.CHANNEL} defaultLabel={isTrainer ? 'Throw' : 'Channel'} />
-                        <SkillRow skill={Skill.CLASH} defaultLabel={isTrainer ? 'Weapon' : 'Clash'} />
+                        <SkillRow
+                            skill={Skill.CLASH}
+                            defaultLabel={isSpecialTrainer ? 'Channel' : isTrainer ? 'Weapon' : 'Clash'}
+                        />
                         <SkillRow skill={Skill.EVASION} defaultLabel="Evasion" />
 
                         <CategoryHeader title="SURVIVE" />
