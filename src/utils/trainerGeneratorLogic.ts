@@ -3,34 +3,33 @@ import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { getRankPoints, getAgePoints } from '../store/useCharacterStore';
 import { TRAINER_CLASSES, type TrainerClass, type TrainerProfileType } from '../data/trainerClasses';
 import { NATURES } from '../data/constants';
-import { getTrainerClassesForBiome } from '../data/biomeData';
+import { BIOMES, BIOME_MAP, getTrainerClassesForBiome } from '../data/biomeData';
 import { generateBuild, buildTokenMetadataFromBuild } from './generatorUtils';
 import type { GeneratorConfig, TempBuild } from '../store/storeTypes';
 
 export interface TrainerGeneratorConfig {
     trainerName?: string;
-    conceptId: string; // 'none' | 'random' | TrainerClass.id
+    conceptId: string;
     rank: Rank | 'random';
     age: 'Child' | 'Teen' | 'Adult' | 'Senior' | 'random';
     gender: 'Male' | 'Female' | 'Non-Binary' | 'random';
-    nature: string | 'random';
+    nature: string;
     isSpecialTrainer: boolean;
     autoSpecialForMystic: boolean;
     profile: TrainerProfileType | 'auto';
     assignBadges: boolean;
 
-    // Team Options
     generateTeam: boolean;
-    teamSize: number; // 0 - 6
+    teamSize: number;
     typeSpecialtyMode: 'concept' | 'monotype' | 'dual' | 'variety' | 'manual';
     manualTypes: string[];
     teamRankMode: 'match_trainer' | 'random' | 'custom';
-    customPokemonRanks?: Rank[];
+    customPokemonRanks: Rank[];
     capPokemonRank: boolean;
-    allowDuplicates?: boolean;
-    buildType?: 'minmax' | 'average' | 'wild';
-    allowedLineLengths: number[]; // e.g. [1, 2, 3]
-    allowedStageIndices: number[]; // e.g. [1, 2, 3]
+    allowDuplicates: boolean;
+    buildType: 'minmax' | 'average' | 'wild';
+    allowedLineLengths: number[];
+    allowedStageIndices: number[];
     includeLegendaries: boolean;
     includeMythicals: boolean;
     includeMegas: boolean;
@@ -38,7 +37,12 @@ export interface TrainerGeneratorConfig {
     biomeId?: string; // Fallback / legacy
     trainerBiomeId?: string; // Biome for trainer origin & concepts
     teamBiomeId?: string; // Biome for Pokémon team ecosystem
+    biomeConceptMixMode?: BiomeConceptMixMode;
+    customSlotMixModes?: SlotMixMode[];
 }
+
+export type BiomeConceptMixMode = 'concept_only' | 'biome_only' | 'union' | 'combo' | 'split';
+export type SlotMixMode = 'concept_only' | 'biome_only' | 'union' | 'combo';
 
 export const ALL_POKEMON_TYPES = [
     'Normal',
@@ -60,6 +64,8 @@ export const ALL_POKEMON_TYPES = [
     'Dark',
     'Fairy'
 ];
+
+export const RANK_ORDER: Rank[] = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion'];
 
 import {
     MYTHICAL_POKEMON_NAMES,
@@ -88,8 +94,6 @@ const KANTO_BADGE_PRESETS: { name: string; emoji: string }[] = [
     { name: 'Earth Badge', emoji: '🌱' }
 ];
 
-export const RANK_ORDER: Rank[] = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion'];
-
 export interface GeneratedTrainerResult {
     trainerName: string;
     resolvedRank: Rank;
@@ -100,6 +104,8 @@ export interface GeneratedTrainerResult {
         build: TempBuild;
         metadata: Record<string, unknown>;
     }>;
+    config?: TrainerGeneratorConfig;
+    originBiomeId?: string;
 }
 
 export function determineSuggestedBadges(rank: Rank): Badge[] {
@@ -425,7 +431,8 @@ export function buildTrainerTokenMetadata(
     nature: string,
     isSpecialTrainer: boolean,
     profile: TrainerProfileType,
-    assignBadges: boolean
+    assignBadges: boolean,
+    originBiomeId?: string
 ): Record<string, unknown> {
     const { attr, soc, skills } = allocateTrainerStats(rank, age, profile, isSpecialTrainer);
 
@@ -451,6 +458,7 @@ export function buildTrainerTokenMetadata(
         age: age,
         mode: modeString,
         'dex-category': concept ? concept.name : 'Trainer',
+        'origin-biome': originBiomeId || '',
         'show-trackers': true,
         ruleset: 'vg-vit-hp',
         'v2-migrated': true,
@@ -529,25 +537,27 @@ export function buildTrainerTokenMetadata(
 export function getEligibleTeamPool(
     config: TrainerGeneratorConfig,
     lookupList: PokedexLookupItem[],
-    concept: TrainerClass | null
+    concept: TrainerClass | null,
+    slotIndex: number = 0
 ): PokedexLookupItem[] {
-    // Resolve Target Types
-    let teamTypes: string[] = [];
+    // 1. Resolve Concept Types
+    let conceptTypes: string[] = [];
     if (config.typeSpecialtyMode === 'concept' && concept) {
-        teamTypes = concept.typePreferences;
+        conceptTypes = concept.typePreferences;
     } else if (config.typeSpecialtyMode === 'monotype') {
-        teamTypes = [ALL_POKEMON_TYPES[Math.floor(Math.random() * ALL_POKEMON_TYPES.length)]];
+        conceptTypes = [ALL_POKEMON_TYPES[Math.floor(Math.random() * ALL_POKEMON_TYPES.length)]];
     } else if (config.typeSpecialtyMode === 'dual') {
         const t1 = ALL_POKEMON_TYPES[Math.floor(Math.random() * ALL_POKEMON_TYPES.length)];
         const rest = ALL_POKEMON_TYPES.filter((t) => t !== t1);
         const t2 = rest[Math.floor(Math.random() * rest.length)];
-        teamTypes = [t1, t2];
+        conceptTypes = [t1, t2];
     } else if (config.typeSpecialtyMode === 'manual' && config.manualTypes.length > 0) {
-        teamTypes = config.manualTypes;
+        conceptTypes = config.manualTypes;
     } else {
-        teamTypes = ['Any'];
+        conceptTypes = ['Any'];
     }
 
+    // 2. Resolve Active Biome
     const teamBiome =
         config.teamBiomeId !== undefined
             ? config.teamBiomeId === 'none'
@@ -555,32 +565,74 @@ export function getEligibleTeamPool(
                 : config.teamBiomeId
             : config.biomeId;
 
-    const filterOpts: PokemonLookupFilterOptions = {
-        ...config,
-        biomeId: teamBiome
-    };
+    // 3. Resolve Active Mix Mode for this slot
+    let mode: SlotMixMode = 'concept_only';
+    if (teamBiome && teamBiome !== 'none') {
+        if (config.biomeConceptMixMode === 'split') {
+            mode = config.customSlotMixModes?.[slotIndex] || 'concept_only';
+        } else if (config.biomeConceptMixMode) {
+            mode = config.biomeConceptMixMode as SlotMixMode;
+        } else {
+            mode = 'concept_only';
+        }
+    }
 
-    let eligiblePool = filterPokemonLookupPool(lookupList, teamTypes, filterOpts);
+    let targetTypes: string[] = [];
+    const filterOpts: PokemonLookupFilterOptions = { ...config };
+
+    switch (mode) {
+        case 'biome_only': {
+            targetTypes = ['Any'];
+            filterOpts.biomeId = teamBiome;
+            break;
+        }
+        case 'union': {
+            const biomeDef = teamBiome ? BIOME_MAP[teamBiome] : undefined;
+            const biomeTypes = biomeDef?.types || [];
+            if (conceptTypes.includes('Any') || biomeTypes.length === 0) {
+                targetTypes = ['Any'];
+            } else {
+                targetTypes = Array.from(new Set([...conceptTypes, ...biomeTypes]));
+            }
+            filterOpts.biomeId = undefined;
+            break;
+        }
+        case 'combo': {
+            targetTypes = conceptTypes;
+            filterOpts.biomeId = teamBiome;
+            break;
+        }
+        case 'concept_only':
+        default: {
+            targetTypes = conceptTypes;
+            filterOpts.biomeId = undefined;
+            break;
+        }
+    }
+
+    let eligiblePool = filterPokemonLookupPool(lookupList, targetTypes, filterOpts);
     if (eligiblePool.length === 0) {
         // Fallback 1: relax stage filters if pool is empty
-        eligiblePool = filterPokemonLookupPool(lookupList, teamTypes, {
+        eligiblePool = filterPokemonLookupPool(lookupList, targetTypes, {
             ...filterOpts,
             allowedLineLengths: [1, 2, 3],
             allowedStageIndices: [1, 2, 3]
         });
     }
-    // Fallback 2: If biome restricted out the concept's specialty types (e.g. Swimmer with Water in a Desert biome),
-    // relax the biome constraint FIRST so the trainer still gets their concept types (Bug for Bug Catcher, Water for Swimmer)
-    if (eligiblePool.length === 0 && teamTypes.length > 0 && !teamTypes.includes('Any')) {
-        eligiblePool = filterPokemonLookupPool(lookupList, teamTypes, {
+
+    // Fallback 2: For combo mode, if no dual-typed species exist matching both concept and biome,
+    // relax to concept_only so the trainer receives their signature typing
+    if (eligiblePool.length === 0 && mode === 'combo') {
+        eligiblePool = filterPokemonLookupPool(lookupList, conceptTypes, {
             ...config,
             biomeId: undefined,
             allowedLineLengths: [1, 2, 3],
             allowedStageIndices: [1, 2, 3]
         });
     }
+
+    // Fallback 3: If still empty, relax any type/biome constraint
     if (eligiblePool.length === 0) {
-        // Ultimate fallback to full lookup
         eligiblePool = lookupList.filter((m) => !m.legendary);
     }
     return eligiblePool;
@@ -591,12 +643,35 @@ export async function generateFullTrainerTeam(
     state: CharacterState,
     lookupList: PokedexLookupItem[]
 ): Promise<GeneratedTrainerResult> {
+    // 0. Resolve Biomes if 'random' or 'match_trainer' was passed
+    let resolvedTrainerBiome = config.trainerBiomeId || config.biomeId;
+    if (resolvedTrainerBiome === 'random') {
+        resolvedTrainerBiome = BIOMES[Math.floor(Math.random() * BIOMES.length)].id;
+    } else if (resolvedTrainerBiome === 'none') {
+        resolvedTrainerBiome = undefined;
+    }
+
+    let resolvedTeamBiome = config.teamBiomeId;
+    if (resolvedTeamBiome === 'random') {
+        resolvedTeamBiome = BIOMES[Math.floor(Math.random() * BIOMES.length)].id;
+    } else if (resolvedTeamBiome === 'match_trainer') {
+        resolvedTeamBiome = resolvedTrainerBiome || BIOMES[Math.floor(Math.random() * BIOMES.length)].id;
+    }
+
+    const effectiveConfig: TrainerGeneratorConfig = {
+        ...config,
+        trainerBiomeId: resolvedTrainerBiome,
+        teamBiomeId: resolvedTeamBiome,
+        biomeId: resolvedTeamBiome
+    };
+
     // 1. Resolve Trainer Identity
     let concept: TrainerClass | null = null;
-    const trainerBiome = config.trainerBiomeId || config.biomeId;
-    if (config.conceptId === 'biome_match') {
-        if (trainerBiome && trainerBiome !== 'none' && trainerBiome !== 'any') {
-            const eligible = getTrainerClassesForBiome(trainerBiome);
+    if (effectiveConfig.conceptId === 'any_random') {
+        concept = TRAINER_CLASSES[Math.floor(Math.random() * TRAINER_CLASSES.length)];
+    } else if (effectiveConfig.conceptId === 'biome_match') {
+        if (resolvedTrainerBiome && resolvedTrainerBiome !== 'none' && resolvedTrainerBiome !== 'any') {
+            const eligible = getTrainerClassesForBiome(resolvedTrainerBiome);
             if (eligible.length > 0) {
                 concept = eligible[Math.floor(Math.random() * eligible.length)];
             }
@@ -604,41 +679,50 @@ export async function generateFullTrainerTeam(
         if (!concept) {
             concept = TRAINER_CLASSES[Math.floor(Math.random() * TRAINER_CLASSES.length)];
         }
-    } else if (config.conceptId === 'random') {
-        concept = TRAINER_CLASSES[Math.floor(Math.random() * TRAINER_CLASSES.length)];
-    } else if (config.conceptId && config.conceptId !== 'none') {
-        concept = TRAINER_CLASSES.find((c) => c.id === config.conceptId) || null;
+    } else if (effectiveConfig.conceptId === 'random') {
+        let pool = TRAINER_CLASSES;
+        if (resolvedTrainerBiome && resolvedTrainerBiome !== 'none' && resolvedTrainerBiome !== 'any') {
+            const eligible = getTrainerClassesForBiome(resolvedTrainerBiome);
+            if (eligible.length > 0 && Math.random() < 0.75) {
+                pool = eligible;
+            }
+        }
+        concept = pool[Math.floor(Math.random() * pool.length)];
+    } else if (effectiveConfig.conceptId && effectiveConfig.conceptId !== 'none') {
+        concept = TRAINER_CLASSES.find((c) => c.id === effectiveConfig.conceptId) || null;
     }
 
     const resolvedRank: Rank =
-        config.rank === 'random'
+        effectiveConfig.rank === 'random'
             ? concept?.minRank || RANK_ORDER[Math.floor(Math.random() * RANK_ORDER.length)]
-            : config.rank;
+            : effectiveConfig.rank;
 
     const resolvedAge =
-        config.age === 'random' ? (['Teen', 'Adult', 'Senior'] as const)[Math.floor(Math.random() * 3)] : config.age;
+        effectiveConfig.age === 'random'
+            ? (['Teen', 'Adult', 'Senior'] as const)[Math.floor(Math.random() * 3)]
+            : effectiveConfig.age;
 
     const resolvedGender =
-        config.gender === 'random'
+        effectiveConfig.gender === 'random'
             ? (['Male', 'Female', 'Non-Binary'] as const)[Math.floor(Math.random() * 3)]
-            : config.gender;
+            : effectiveConfig.gender;
 
     const validNatures = NATURES.filter((n) => n && n.trim() !== '');
     const resolvedNature =
-        config.nature === 'random' || !config.nature
+        effectiveConfig.nature === 'random' || !effectiveConfig.nature
             ? validNatures[Math.floor(Math.random() * validNatures.length)]
-            : config.nature;
+            : effectiveConfig.nature;
 
-    let isSpecial = config.isSpecialTrainer;
-    if (config.autoSpecialForMystic && concept?.isSupernatural) {
+    let isSpecial = effectiveConfig.isSpecialTrainer;
+    if (effectiveConfig.autoSpecialForMystic && concept?.isSupernatural) {
         isSpecial = true;
     }
 
     const resolvedProfile: TrainerProfileType =
-        config.profile === 'auto' ? concept?.suggestedProfile || 'battler' : config.profile;
+        effectiveConfig.profile === 'auto' ? concept?.suggestedProfile || 'battler' : effectiveConfig.profile;
 
     const defaultName = concept ? concept.name : 'Trainer';
-    const finalTrainerName = config.trainerName?.trim() || defaultName;
+    const finalTrainerName = effectiveConfig.trainerName?.trim() || defaultName;
 
     // 2. Build Trainer Metadata
     const trainerMetadata = buildTrainerTokenMetadata(
@@ -650,7 +734,8 @@ export async function generateFullTrainerTeam(
         resolvedNature,
         isSpecial,
         resolvedProfile,
-        config.assignBadges
+        effectiveConfig.assignBadges,
+        resolvedTrainerBiome
     );
 
     // 3. Resolve Pokémon Team
@@ -660,12 +745,19 @@ export async function generateFullTrainerTeam(
         metadata: Record<string, unknown>;
     }> = [];
 
-    if (config.generateTeam && config.teamSize > 0) {
-        const eligiblePool = getEligibleTeamPool(config, lookupList, concept);
+    if (effectiveConfig.generateTeam && effectiveConfig.teamSize > 0) {
         const usedSpecies = new Set<string>();
 
-        for (let i = 0; i < config.teamSize; i++) {
-            const member = await pickAndGenerateTeamMember(i, config, resolvedRank, state, eligiblePool, usedSpecies);
+        for (let i = 0; i < effectiveConfig.teamSize; i++) {
+            const eligiblePool = getEligibleTeamPool(effectiveConfig, lookupList, concept, i);
+            const member = await pickAndGenerateTeamMember(
+                i,
+                effectiveConfig,
+                resolvedRank,
+                state,
+                eligiblePool,
+                usedSpecies
+            );
             if (member) {
                 usedSpecies.add(member.species.toLowerCase());
                 teamMembers.push(member);
@@ -678,7 +770,9 @@ export async function generateFullTrainerTeam(
         resolvedRank,
         concept,
         trainerMetadata,
-        teamMembers
+        teamMembers,
+        config: effectiveConfig,
+        originBiomeId: resolvedTrainerBiome
     };
 }
 

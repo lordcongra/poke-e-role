@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
-import { User, Shield, Sparkles, Dices, XCircle, CheckCircle, Award } from 'lucide-react';
+import { useState } from 'react';
+import { User, Shield, Sparkles, Dices, XCircle, CheckCircle, Award, Compass } from 'lucide-react';
 import type { Rank } from '../../store/storeTypes';
 import { CombatStat, SocialStat, Skill, SKILL_CATEGORIES } from '../../types/enums';
-import { RANKS, NATURES } from '../../data/constants';
+import { RANKS, NATURES, TYPE_COLORS } from '../../data/constants';
+import { BIOME_MAP } from '../../data/biomeData';
 import {
     type GeneratedTrainerResult,
     type TrainerGeneratorConfig,
@@ -17,6 +18,53 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { GeneratorPreviewStatSpinner } from './GeneratorPreviewStatSpinner';
 import { GeneratorPreviewMoveRow } from './GeneratorPreviewMoveRow';
 import './TrainerPreviewModal.css';
+
+function getMemberTypes(
+    member: { species: string; build: any; metadata?: Record<string, unknown> },
+    lookupList: PokedexLookupItem[]
+): string[] {
+    const pd = member.build.pokemonData as Record<string, any> | undefined;
+    const t1 = String(pd?.Type1 || pd?.type1 || member.metadata?.type1 || '').trim();
+    const t2 = String(pd?.Type2 || pd?.type2 || member.metadata?.type2 || '').trim();
+    const types = [t1, t2].filter((t) => t && t.toLowerCase() !== 'none' && t.toLowerCase() !== 'undefined');
+    if (types.length > 0) return types;
+    const lookup = lookupList.find((p) => p.name.toLowerCase() === member.species.toLowerCase());
+    if (lookup) {
+        return [lookup.type1, lookup.type2].filter(
+            (t) => t && t.toLowerCase() !== 'none' && t.toLowerCase() !== 'undefined'
+        );
+    }
+    return [];
+}
+
+function getMemberBaseStat(
+    build: { baseStats?: Record<string, number>; pokemonData?: Record<string, unknown> },
+    statKey: string,
+    fallback: number = 2
+): number {
+    const lowerKey = statKey.toLowerCase();
+    if (build.baseStats && build.baseStats[lowerKey] !== undefined) {
+        return Number(build.baseStats[lowerKey]);
+    }
+    const pd = build.pokemonData as Record<string, any> | undefined;
+    if (pd?.BaseStats) {
+        const fullKeyMap: Record<string, string> = {
+            str: 'Strength',
+            dex: 'Dexterity',
+            vit: 'Vitality',
+            spe: 'Special',
+            ins: 'Insight'
+        };
+        const mappedName = fullKeyMap[lowerKey];
+        if (mappedName && pd.BaseStats[mappedName] !== undefined) {
+            return Number(pd.BaseStats[mappedName]);
+        }
+        if (pd.BaseStats[statKey.toUpperCase()] !== undefined) {
+            return Number(pd.BaseStats[statKey.toUpperCase()]);
+        }
+    }
+    return fallback;
+}
 
 interface TrainerPreviewModalProps {
     result: GeneratedTrainerResult;
@@ -112,20 +160,19 @@ export function TrainerPreviewModal({
     };
 
     // --- Reroll Team Member Logic ---
-    const eligiblePool = useMemo(() => {
-        return getEligibleTeamPool(config, pokedexLookup, result.concept);
-    }, [config, pokedexLookup, result.concept]);
+    const activeConfig = result.config || config;
 
     const handleRerollMember = async (slotIdx: number) => {
         const usedSpecies = new Set(
             teamMembers.filter((_, idx) => idx !== slotIdx).map((m) => m.species.toLowerCase())
         );
+        const slotPool = getEligibleTeamPool(activeConfig, pokedexLookup, result.concept, slotIdx);
         const newMember = await pickAndGenerateTeamMember(
             slotIdx,
-            config,
+            activeConfig,
             trainerRank,
             store,
-            eligiblePool,
+            slotPool,
             usedSpecies
         );
         if (newMember) {
@@ -142,7 +189,8 @@ export function TrainerPreviewModal({
         const usedSpecies = new Set<string>();
         const nextMembers = [];
         for (let i = 0; i < teamMembers.length; i++) {
-            const member = await pickAndGenerateTeamMember(i, config, trainerRank, store, eligiblePool, usedSpecies);
+            const slotPool = getEligibleTeamPool(activeConfig, pokedexLookup, result.concept, i);
+            const member = await pickAndGenerateTeamMember(i, activeConfig, trainerRank, store, slotPool, usedSpecies);
             if (member) {
                 usedSpecies.add(member.species.toLowerCase());
                 nextMembers.push(member);
@@ -317,9 +365,48 @@ export function TrainerPreviewModal({
                         <>
                             {/* Concept & Identity */}
                             <div className="trainer-preview__section">
-                                <span className="trainer-preview__section-title text-title-primary">
-                                    <Shield size={14} color="var(--primary)" /> Trainer Profile
-                                </span>
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        marginBottom: '8px'
+                                    }}
+                                >
+                                    <span className="trainer-preview__section-title text-title-primary">
+                                        <Shield size={14} color="var(--primary)" /> Trainer Profile
+                                    </span>
+                                    {(() => {
+                                        const originBiomeId = (result.originBiomeId ||
+                                            activeConfig.trainerBiomeId ||
+                                            result.trainerMetadata?.['origin-biome']) as string | undefined;
+                                        const originBiomeDef =
+                                            originBiomeId && originBiomeId !== 'none'
+                                                ? BIOME_MAP[originBiomeId]
+                                                : undefined;
+                                        if (!originBiomeDef) return null;
+                                        return (
+                                            <span
+                                                style={{
+                                                    fontSize: '0.78rem',
+                                                    color: 'var(--subtext)',
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '5px',
+                                                    background: 'rgba(255, 255, 255, 0.05)',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '6px',
+                                                    border: '1px solid var(--border)'
+                                                }}
+                                            >
+                                                <Compass size={13} color="var(--primary)" /> Origin Biome:{' '}
+                                                <strong style={{ color: 'var(--text-main)' }}>
+                                                    [{originBiomeDef.tag}] {originBiomeDef.name}
+                                                </strong>
+                                            </span>
+                                        );
+                                    })()}
+                                </div>
                                 <div className="trainer-preview__grid-3" style={{ marginBottom: '8px' }}>
                                     <div>
                                         <label className="text-label" style={{ fontSize: '0.78rem' }}>
@@ -610,11 +697,53 @@ export function TrainerPreviewModal({
                         <>
                             {/* Identity Header */}
                             <div className="trainer-preview__section">
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        flexWrap: 'wrap',
+                                        gap: '8px'
+                                    }}
+                                >
                                     <div>
-                                        <h4 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--primary)' }}>
-                                            {activeMember.species}
-                                        </h4>
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                flexWrap: 'wrap'
+                                            }}
+                                        >
+                                            <h4 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--primary)' }}>
+                                                {activeMember.species}
+                                            </h4>
+                                            {(() => {
+                                                const memberTypes = getMemberTypes(activeMember, pokedexLookup);
+                                                if (memberTypes.length === 0) return null;
+                                                return (
+                                                    <div
+                                                        style={{
+                                                            display: 'inline-flex',
+                                                            gap: '4px',
+                                                            alignItems: 'center'
+                                                        }}
+                                                    >
+                                                        {memberTypes.map((t) => (
+                                                            <span
+                                                                key={t}
+                                                                className="trainer-preview__type-pill"
+                                                                style={{
+                                                                    backgroundColor: TYPE_COLORS[t] || 'var(--primary)'
+                                                                }}
+                                                            >
+                                                                {t}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
                                         <span className="text-subtext" style={{ fontSize: '0.8rem' }}>
                                             Rank: {activeMember.build.rank} | Nature: {activeMember.build.nature} |
                                             Ability:{' '}
@@ -642,7 +771,11 @@ export function TrainerPreviewModal({
                                 </span>
                                 <div className="trainer-preview__grid-5">
                                     {Object.values(CombatStat).map((stat) => {
-                                        const baseVal = Number(store.stats[stat]?.base || 2);
+                                        const baseVal = getMemberBaseStat(
+                                            activeMember.build,
+                                            stat,
+                                            stat === 'ins' ? 1 : 2
+                                        );
                                         const rankVal = activeMember.build.attr[stat] || 0;
                                         return (
                                             <div key={stat} className="trainer-preview__stat-col">
@@ -725,15 +858,40 @@ export function TrainerPreviewModal({
                                     Drafted Moves ({activeMember.build.moves.length})
                                 </span>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                    {activeMember.build.moves.map((move, mIdx) => (
-                                        <GeneratorPreviewMoveRow
-                                            key={mIdx}
-                                            move={move}
-                                            accuracyPool={3}
-                                            damagePool={move.dmgStat ? 3 : 'N/A'}
-                                            onOpenTooltip={setTooltipInfo}
-                                        />
-                                    ))}
+                                    {activeMember.build.moves.map((move, mIdx) => {
+                                        const statKey = (move.attr || 'dex').toLowerCase();
+                                        const skillKey = (move.skill || 'brawl').toLowerCase();
+                                        const baseAttr = getMemberBaseStat(
+                                            activeMember.build,
+                                            statKey,
+                                            statKey === 'ins' ? 1 : 2
+                                        );
+                                        const allocatedAttr = activeMember.build.attr[statKey] || 0;
+                                        const skillVal = activeMember.build.skills[skillKey] || 0;
+                                        const accuracyPool = baseAttr + allocatedAttr + skillVal;
+
+                                        const damageStatKey = move.dmgStat ? move.dmgStat.toLowerCase() : '';
+                                        let damagePool: string | number = 'N/A';
+                                        if (damageStatKey) {
+                                            const baseDmg = getMemberBaseStat(
+                                                activeMember.build,
+                                                damageStatKey,
+                                                damageStatKey === 'ins' ? 1 : 2
+                                            );
+                                            const allocatedDmg = activeMember.build.attr[damageStatKey] || 0;
+                                            damagePool = baseDmg + allocatedDmg + (move.power || 0);
+                                        }
+
+                                        return (
+                                            <GeneratorPreviewMoveRow
+                                                key={mIdx}
+                                                move={move}
+                                                accuracyPool={accuracyPool}
+                                                damagePool={damagePool}
+                                                onOpenTooltip={setTooltipInfo}
+                                            />
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </>

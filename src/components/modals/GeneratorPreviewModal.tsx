@@ -12,6 +12,7 @@ import { buildTokenMetadataFromBuild } from '../../utils/generatorUtils';
 import { calculateFormationOffsets } from '../../utils/trainerTokenSpawner';
 import { buildGraphicsFromMeta, renderTokenGraphics } from '../../utils/graphicsManager';
 import { PromptModal } from './PromptModal';
+import { TYPE_COLORS } from '../../data/constants';
 import './GeneratorPreviewModal.css';
 
 interface GeneratorPreviewModalProps {
@@ -77,6 +78,27 @@ export function GeneratorPreviewModal({
 
     const localBuild = localBuilds[activeIndex] || localBuilds[0];
     if (!localBuild) return null;
+
+    const getSpeciesBaseStat = (statKey: string, fallback: number = 2): number => {
+        if (localBuild.baseStats && localBuild.baseStats[statKey] !== undefined) {
+            return localBuild.baseStats[statKey];
+        }
+        const pd = localBuild.pokemonData as Record<string, any> | undefined;
+        if (pd?.BaseStats) {
+            const fullKeyMap: Record<string, string> = {
+                str: 'Strength',
+                dex: 'Dexterity',
+                vit: 'Vitality',
+                spe: 'Special',
+                ins: 'Insight'
+            };
+            const mappedName = fullKeyMap[statKey.toLowerCase()];
+            if (mappedName && pd.BaseStats[mappedName] !== undefined) {
+                return Number(pd.BaseStats[mappedName]);
+            }
+        }
+        return baseStats[statKey as CombatStat]?.base || fallback;
+    };
 
     const updateAttribute = (statistic: string, value: number) => {
         setLocalBuilds((prev) => {
@@ -385,11 +407,45 @@ export function GeneratorPreviewModal({
                 <div className="generator-preview__scroll-container">
                     {/* Species & Rank Header */}
                     <div className="generator-preview__section">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div
+                            style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                flexWrap: 'wrap',
+                                gap: '8px'
+                            }}
+                        >
                             <div>
-                                <h4 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--primary)' }}>
-                                    {localBuild.species}
-                                </h4>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                    <h4 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--primary)' }}>
+                                        {localBuild.species}
+                                    </h4>
+                                    {(() => {
+                                        const pd = localBuild.pokemonData as Record<string, any> | undefined;
+                                        const t1 = String(pd?.Type1 || pd?.type1 || '').trim();
+                                        const t2 = String(pd?.Type2 || pd?.type2 || '').trim();
+                                        const types = [t1, t2].filter(
+                                            (t) => t && t.toLowerCase() !== 'none' && t.toLowerCase() !== 'undefined'
+                                        );
+                                        if (types.length === 0) return null;
+                                        return (
+                                            <div style={{ display: 'inline-flex', gap: '4px', alignItems: 'center' }}>
+                                                {types.map((t) => (
+                                                    <span
+                                                        key={t}
+                                                        className="generator-preview__type-pill"
+                                                        style={{
+                                                            backgroundColor: TYPE_COLORS[t] || 'var(--primary)'
+                                                        }}
+                                                    >
+                                                        {t}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
                                 <span className="text-subtext" style={{ fontSize: '0.8rem' }}>
                                     Rank: {localBuild.rank} | Nature: {localBuild.nature} | Ability:{' '}
                                     {String(
@@ -425,7 +481,7 @@ export function GeneratorPreviewModal({
                         </span>
                         <div className="generator-preview__grid-5">
                             {Object.values(CombatStat).map((statistic) => {
-                                const baseValue = Number(baseStats[statistic]?.base || 2);
+                                const baseValue = getSpeciesBaseStat(statistic, statistic === 'ins' ? 1 : 2);
                                 const allocated = localBuild.attr[statistic] || 0;
                                 return (
                                     <div key={statistic} className="generator-preview__stat-column">
@@ -506,11 +562,12 @@ export function GeneratorPreviewModal({
                             {localBuild.moves.map((move, index) => {
                                 const statKey = move.attr ? move.attr.toLowerCase() : 'str';
                                 const skillKey = move.skill ? move.skill.toLowerCase() : 'brawl';
-                                const baseAttrVal = Number(
-                                    baseStats[statKey as CombatStat]?.base ||
-                                        baseSocials[statKey as SocialStat]?.base ||
-                                        (statKey === 'will' ? willMax : 2)
-                                );
+                                const isCombatStat = Object.values(CombatStat).includes(statKey as CombatStat);
+                                const baseAttrVal = isCombatStat
+                                    ? getSpeciesBaseStat(statKey, statKey === 'ins' ? 1 : 2)
+                                    : Number(
+                                          baseSocials[statKey as SocialStat]?.base || (statKey === 'will' ? willMax : 1)
+                                      );
                                 const allocatedAttrVal = localBuild.attr[statKey] || localBuild.soc[statKey] || 0;
                                 const baseSkillVal = Number(baseSkills[skillKey as Skill]?.base || 0);
                                 const allocatedSkillVal = localBuild.skills[skillKey] || 0;
@@ -519,7 +576,10 @@ export function GeneratorPreviewModal({
                                 const damageStatistic = move.dmgStat ? move.dmgStat.toLowerCase() : '';
                                 let damagePool: string | number = 'N/A';
                                 if (damageStatistic) {
-                                    const baseDmgAttr = Number(baseStats[damageStatistic as CombatStat]?.base || 2);
+                                    const baseDmgAttr = getSpeciesBaseStat(
+                                        damageStatistic,
+                                        damageStatistic === 'ins' ? 1 : 2
+                                    );
                                     const allocatedDmgAttr = localBuild.attr[damageStatistic] || 0;
                                     damagePool = baseDmgAttr + allocatedDmgAttr + (move.power || 0);
                                 }

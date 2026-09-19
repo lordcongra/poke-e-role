@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import {
     UserCheck,
+    User,
+    Compass,
+    Layers,
     XCircle,
     Dices,
     Hourglass,
@@ -21,8 +24,12 @@ import {
     ALL_POKEMON_TYPES,
     generateFullTrainerTeam,
     type TrainerGeneratorConfig,
-    type PokedexLookupItem
+    type PokedexLookupItem,
+    type BiomeConceptMixMode,
+    type SlotMixMode
 } from '../../utils/trainerGeneratorLogic';
+
+export type TeamThemeStrategy = 'concept' | 'biome' | 'mix' | 'custom';
 import { type TrainerSpawnImageOptions } from '../../utils/trainerTokenSpawner';
 import { fetchPokemonLookupIndex } from '../../utils/api';
 import { isStandaloneMode } from '../../utils/storageAdapter';
@@ -42,8 +49,8 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
     const [pokedexLookup, setPokedexLookup] = useState<PokedexLookupItem[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
-    const [trainerBiomeId, setTrainerBiomeId] = useState<string>('none');
-    const [teamBiomeId, setTeamBiomeId] = useState<string>('none');
+    const [trainerBiomeId, setTrainerBiomeId] = useState<string>('random');
+    const [teamBiomeId, setTeamBiomeId] = useState<string>('match_trainer');
     const [previewResult, setPreviewResult] = useState<any | null>(null);
     const [spawnImageOptions, setSpawnImageOptions] = useState<TrainerSpawnImageOptions | null>(null);
     const [spawnDestination, setSpawnDestination] = useState<'new' | 'overwrite'>('new');
@@ -63,6 +70,7 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
     // Pokémon Team Form State
     const [generateTeam, setGenerateTeam] = useState<boolean>(true);
     const [teamSize, setTeamSize] = useState<number>(3);
+    const [teamThemeStrategy, setTeamThemeStrategy] = useState<TeamThemeStrategy>('concept');
     const [typeSpecialtyMode, setTypeSpecialtyMode] = useState<'concept' | 'monotype' | 'dual' | 'variety' | 'manual'>(
         'concept'
     );
@@ -79,6 +87,15 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
     const [capPokemonRank, setCapPokemonRank] = useState<boolean>(true);
     const [allowDuplicates, setAllowDuplicates] = useState<boolean>(false);
     const [buildType, setBuildType] = useState<'minmax' | 'average' | 'wild'>('minmax');
+    const [biomeConceptMixMode, setBiomeConceptMixMode] = useState<BiomeConceptMixMode>('concept_only');
+    const [customSlotMixModes, setCustomSlotMixModes] = useState<SlotMixMode[]>([
+        'concept_only',
+        'concept_only',
+        'concept_only',
+        'concept_only',
+        'concept_only',
+        'concept_only'
+    ]);
 
     // Evolution Stage Filters
     const [allowedLineLengths, setAllowedLineLengths] = useState<number[]>([1, 2, 3]);
@@ -105,13 +122,22 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
     } | null>(null);
     const [autoMatchSceneImages, setAutoMatchSceneImages] = useState<boolean>(true);
 
+    const effectiveTeamBiomeValue =
+        teamThemeStrategy === 'concept' || teamThemeStrategy === 'custom'
+            ? 'none'
+            : teamBiomeId === 'none'
+              ? trainerBiomeId !== 'none'
+                  ? 'match_trainer'
+                  : 'random'
+              : teamBiomeId;
+
     const resolvedTeamBiomeId =
-        teamBiomeId === 'match_trainer'
+        effectiveTeamBiomeValue === 'match_trainer'
             ? trainerBiomeId !== 'none'
                 ? trainerBiomeId
-                : undefined
-            : teamBiomeId !== 'none'
-              ? teamBiomeId
+                : 'random'
+            : effectiveTeamBiomeValue !== 'none'
+              ? effectiveTeamBiomeValue
               : undefined;
 
     useEffect(() => {
@@ -221,6 +247,111 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
         });
     };
 
+    const handleSlotMixModeChange = (slotIndex: number, mode: SlotMixMode) => {
+        setCustomSlotMixModes((prev) => {
+            const next = [...prev];
+            next[slotIndex] = mode;
+            return next;
+        });
+    };
+
+    const handleSurpriseMe = () => {
+        // 1. Trainer Origin / Biome (60% chance of having a specific biome)
+        const hasBiome = Math.random() < 0.6;
+        const randomBiome = hasBiome ? BIOMES[Math.floor(Math.random() * BIOMES.length)] : null;
+        const newTrainerBiomeId = randomBiome ? randomBiome.id : 'none';
+        setTrainerBiomeId(newTrainerBiomeId);
+
+        // 2. Trainer Concept (thematic for biome or any class)
+        let conceptPool = TRAINER_CLASSES;
+        if (randomBiome) {
+            const bClasses = getTrainerClassesForBiome(randomBiome.id);
+            if (bClasses.length > 0 && Math.random() < 0.75) {
+                conceptPool = bClasses;
+            }
+        }
+        const chosenClass = conceptPool[Math.floor(Math.random() * conceptPool.length)];
+        setConceptId(chosenClass.id);
+        if (chosenClass.isSupernatural) {
+            setIsSpecialTrainer(true);
+        } else {
+            setIsSpecialTrainer(false);
+        }
+
+        // 3. Trainer Rank (respect minimum rank of class)
+        const minRankIdx = chosenClass.minRank ? RANK_ORDER.indexOf(chosenClass.minRank) : 0;
+        const availableRanks = RANK_ORDER.slice(Math.max(0, minRankIdx));
+        const chosenRank = availableRanks[Math.floor(Math.random() * availableRanks.length)];
+        setRank(chosenRank);
+
+        // 4. Age, Gender, Nature, Profile
+        const ages: ('Child' | 'Teen' | 'Adult' | 'Senior')[] = ['Child', 'Teen', 'Adult', 'Senior'];
+        setAge(ages[Math.floor(Math.random() * ages.length)]);
+
+        const genders: ('Male' | 'Female' | 'Non-Binary')[] = ['Male', 'Female', 'Non-Binary'];
+        setGender(genders[Math.floor(Math.random() * genders.length)]);
+
+        const validNatures = NATURES.filter((n) => n && n.trim() !== '');
+        setNature(validNatures[Math.floor(Math.random() * validNatures.length)]);
+
+        const profiles: (TrainerProfileType | 'auto')[] = [
+            'auto',
+            'battler',
+            'survivalist',
+            'scholar',
+            'mystic',
+            'socialite',
+            'balanced'
+        ];
+        setProfile(profiles[Math.floor(Math.random() * profiles.length)]);
+
+        // 5. Team Options
+        setGenerateTeam(true);
+        const randomTeamSize = Math.floor(Math.random() * 5) + 2; // 2 to 6
+        setTeamSize(randomTeamSize);
+
+        // 6. Theme Strategy
+        const strategies: TeamThemeStrategy[] = ['concept', 'biome', 'mix', 'custom'];
+        const chosenStrategy = strategies[Math.floor(Math.random() * strategies.length)];
+        setTeamThemeStrategy(chosenStrategy);
+
+        // Biome for team
+        const targetTeamBiome = randomBiome
+            ? Math.random() < 0.6
+                ? 'match_trainer'
+                : BIOMES[Math.floor(Math.random() * BIOMES.length)].id
+            : BIOMES[Math.floor(Math.random() * BIOMES.length)].id;
+        setTeamBiomeId(targetTeamBiome);
+
+        // Mix modes
+        const mixModes: BiomeConceptMixMode[] = ['union', 'combo', 'split'];
+        const chosenMixMode = mixModes[Math.floor(Math.random() * mixModes.length)];
+        setBiomeConceptMixMode(chosenMixMode);
+
+        if (chosenMixMode === 'split') {
+            const slotOptions: SlotMixMode[] = ['concept_only', 'biome_only', 'union', 'combo'];
+            setCustomSlotMixModes([
+                slotOptions[Math.floor(Math.random() * slotOptions.length)],
+                slotOptions[Math.floor(Math.random() * slotOptions.length)],
+                slotOptions[Math.floor(Math.random() * slotOptions.length)],
+                slotOptions[Math.floor(Math.random() * slotOptions.length)],
+                slotOptions[Math.floor(Math.random() * slotOptions.length)],
+                slotOptions[Math.floor(Math.random() * slotOptions.length)]
+            ]);
+        }
+
+        // Custom types
+        const typeModes: ('monotype' | 'dual' | 'variety')[] = ['monotype', 'dual', 'variety'];
+        setTypeSpecialtyMode(typeModes[Math.floor(Math.random() * typeModes.length)]);
+
+        // Build Tier & Rank Mode
+        const buildTiers: ('minmax' | 'average')[] = ['minmax', 'average'];
+        setBuildType(buildTiers[Math.floor(Math.random() * buildTiers.length)]);
+
+        const rankModes: ('match_trainer' | 'random')[] = ['match_trainer', 'random'];
+        setTeamRankMode(rankModes[Math.floor(Math.random() * rankModes.length)]);
+    };
+
     const handlePickDefaultImage = async () => {
         if (!OBR.isAvailable) return;
         if (typeof OBR.assets?.downloadImages === 'function') {
@@ -244,6 +375,53 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
     const handleGenerate = async () => {
         setIsGenerating(true);
         try {
+            const rollBiome = () => BIOMES[Math.floor(Math.random() * BIOMES.length)].id;
+
+            let actualTrainerBiomeId: string | undefined = undefined;
+            if (trainerBiomeId === 'random') {
+                actualTrainerBiomeId = rollBiome();
+            } else if (trainerBiomeId !== 'none') {
+                actualTrainerBiomeId = trainerBiomeId;
+            }
+
+            let effectiveTeamBiomeId: string | undefined = undefined;
+            let effectiveTypeSpecialtyMode = typeSpecialtyMode;
+            let effectiveMixMode: BiomeConceptMixMode = 'concept_only';
+
+            if (teamThemeStrategy === 'concept') {
+                effectiveTeamBiomeId = undefined;
+                effectiveTypeSpecialtyMode = 'concept';
+                effectiveMixMode = 'concept_only';
+            } else if (teamThemeStrategy === 'biome') {
+                if (teamBiomeId === 'match_trainer') {
+                    effectiveTeamBiomeId = actualTrainerBiomeId || rollBiome();
+                } else if (teamBiomeId === 'random') {
+                    effectiveTeamBiomeId = rollBiome();
+                } else if (teamBiomeId && teamBiomeId !== 'none') {
+                    effectiveTeamBiomeId = teamBiomeId;
+                } else {
+                    effectiveTeamBiomeId = actualTrainerBiomeId || rollBiome();
+                }
+                effectiveTypeSpecialtyMode = 'variety';
+                effectiveMixMode = 'biome_only';
+            } else if (teamThemeStrategy === 'mix') {
+                if (teamBiomeId === 'match_trainer') {
+                    effectiveTeamBiomeId = actualTrainerBiomeId || rollBiome();
+                } else if (teamBiomeId === 'random') {
+                    effectiveTeamBiomeId = rollBiome();
+                } else if (teamBiomeId && teamBiomeId !== 'none') {
+                    effectiveTeamBiomeId = teamBiomeId;
+                } else {
+                    effectiveTeamBiomeId = actualTrainerBiomeId || rollBiome();
+                }
+                effectiveTypeSpecialtyMode = 'concept';
+                effectiveMixMode = biomeConceptMixMode;
+            } else if (teamThemeStrategy === 'custom') {
+                effectiveTeamBiomeId = undefined;
+                effectiveTypeSpecialtyMode = typeSpecialtyMode === 'concept' ? 'monotype' : typeSpecialtyMode;
+                effectiveMixMode = 'concept_only';
+            }
+
             const config: TrainerGeneratorConfig = {
                 trainerName: trainerName.trim() || undefined,
                 conceptId,
@@ -258,7 +436,7 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
 
                 generateTeam,
                 teamSize: generateTeam ? teamSize : 0,
-                typeSpecialtyMode,
+                typeSpecialtyMode: effectiveTypeSpecialtyMode,
                 manualTypes,
                 teamRankMode,
                 customPokemonRanks,
@@ -271,9 +449,11 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                 includeMythicals,
                 includeMegas,
                 scaleLoyaltyHappiness,
-                trainerBiomeId: trainerBiomeId !== 'none' ? trainerBiomeId : undefined,
-                teamBiomeId: resolvedTeamBiomeId,
-                biomeId: resolvedTeamBiomeId
+                trainerBiomeId: actualTrainerBiomeId,
+                teamBiomeId: effectiveTeamBiomeId,
+                biomeId: effectiveTeamBiomeId,
+                biomeConceptMixMode: effectiveMixMode,
+                customSlotMixModes
             };
 
             const imageOptions: TrainerSpawnImageOptions = {
@@ -300,6 +480,28 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
     };
 
     if (previewResult && spawnImageOptions) {
+        let effectiveTeamBiomeId: string | undefined = undefined;
+        let effectiveTypeSpecialtyMode = typeSpecialtyMode;
+        let effectiveMixMode: BiomeConceptMixMode = 'concept_only';
+
+        if (teamThemeStrategy === 'concept') {
+            effectiveTeamBiomeId = undefined;
+            effectiveTypeSpecialtyMode = 'concept';
+            effectiveMixMode = 'concept_only';
+        } else if (teamThemeStrategy === 'biome') {
+            effectiveTeamBiomeId = resolvedTeamBiomeId;
+            effectiveTypeSpecialtyMode = 'variety';
+            effectiveMixMode = 'biome_only';
+        } else if (teamThemeStrategy === 'mix') {
+            effectiveTeamBiomeId = resolvedTeamBiomeId;
+            effectiveTypeSpecialtyMode = 'concept';
+            effectiveMixMode = biomeConceptMixMode;
+        } else if (teamThemeStrategy === 'custom') {
+            effectiveTeamBiomeId = undefined;
+            effectiveTypeSpecialtyMode = typeSpecialtyMode === 'concept' ? 'monotype' : typeSpecialtyMode;
+            effectiveMixMode = 'concept_only';
+        }
+
         return (
             <TrainerPreviewModal
                 result={previewResult}
@@ -316,7 +518,7 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                     assignBadges,
                     generateTeam,
                     teamSize,
-                    typeSpecialtyMode,
+                    typeSpecialtyMode: effectiveTypeSpecialtyMode,
                     manualTypes,
                     teamRankMode,
                     customPokemonRanks,
@@ -330,8 +532,10 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                     includeMegas,
                     scaleLoyaltyHappiness,
                     trainerBiomeId: trainerBiomeId !== 'none' ? trainerBiomeId : undefined,
-                    teamBiomeId: resolvedTeamBiomeId,
-                    biomeId: resolvedTeamBiomeId
+                    teamBiomeId: effectiveTeamBiomeId,
+                    biomeId: effectiveTeamBiomeId,
+                    biomeConceptMixMode: effectiveMixMode,
+                    customSlotMixModes
                 }}
                 pokedexLookup={pokedexLookup}
                 destination={spawnDestination}
@@ -345,21 +549,49 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
     }
 
     const selectedConcept = TRAINER_CLASSES.find((c) => c.id === conceptId);
-    const selectedTrainerBiomeDef = trainerBiomeId !== 'none' ? BIOME_MAP[trainerBiomeId] : null;
-    const biomeClasses = trainerBiomeId !== 'none' ? getTrainerClassesForBiome(trainerBiomeId) : [];
-    const selectedTeamBiomeDef = resolvedTeamBiomeId ? BIOME_MAP[resolvedTeamBiomeId] : null;
+    const selectedTrainerBiomeDef =
+        trainerBiomeId !== 'none' && trainerBiomeId !== 'random' ? BIOME_MAP[trainerBiomeId] : null;
+    const biomeClasses =
+        trainerBiomeId !== 'none' && trainerBiomeId !== 'random' ? getTrainerClassesForBiome(trainerBiomeId) : [];
+    const selectedTeamBiomeDef =
+        resolvedTeamBiomeId &&
+        resolvedTeamBiomeId !== 'none' &&
+        resolvedTeamBiomeId !== 'random' &&
+        resolvedTeamBiomeId !== 'match_trainer'
+            ? BIOME_MAP[resolvedTeamBiomeId]
+            : null;
 
     return (
         <div className="trainer-gen-modal__overlay">
             <div className="trainer-gen-modal__content">
                 {/* Modal Header */}
                 <div className="trainer-gen-modal__header">
-                    <h2 className="trainer-gen-modal__title text-title-primary">
-                        <UserCheck size={22} color="var(--primary)" /> Trainer & Team Generator
-                    </h2>
-                    <p className="trainer-gen-modal__subtitle text-subtext">
-                        Create full Pokerole Trainer sheets and generate matching battle teams in one click.
-                    </p>
+                    <div
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: '10px'
+                        }}
+                    >
+                        <div>
+                            <h2 className="trainer-gen-modal__title text-title-primary">
+                                <UserCheck size={22} color="var(--primary)" /> Trainer & Team Generator
+                            </h2>
+                            <p className="trainer-gen-modal__subtitle text-subtext">
+                                Create full Pokerole Trainer sheets and generate matching battle teams in one click.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            className="trainer-gen-modal__surprise-btn"
+                            onClick={handleSurpriseMe}
+                            title="Roll a completely random, thematic Trainer and Team across all factors"
+                        >
+                            <Dices size={16} /> Surprise Me!
+                        </button>
+                    </div>
                 </div>
 
                 {/* 1. TRAINER IDENTITY SECTION */}
@@ -386,18 +618,34 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                     }
                                 />
                             </label>
-                            <select
-                                value={trainerBiomeId}
-                                onChange={(e) => handleTrainerBiomeChange(e.target.value)}
-                                className="trainer-gen-modal__select"
-                            >
-                                <option value="none">Any Biome / Origin (Unrestricted)</option>
-                                {BIOMES.map((b) => (
-                                    <option key={b.id} value={b.id}>
-                                        [{b.tag}] {b.name}
-                                    </option>
-                                ))}
-                            </select>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                                <select
+                                    value={trainerBiomeId}
+                                    onChange={(e) => handleTrainerBiomeChange(e.target.value)}
+                                    className="trainer-gen-modal__select"
+                                    style={{ flex: 1 }}
+                                >
+                                    <option value="random">Random Biome / Origin (Flavor)</option>
+                                    <option value="none">Any Biome / Origin (None)</option>
+                                    {BIOMES.map((b) => (
+                                        <option key={b.id} value={b.id}>
+                                            [{b.tag}] {b.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const randomB = BIOMES[Math.floor(Math.random() * BIOMES.length)];
+                                        handleTrainerBiomeChange(randomB.id);
+                                    }}
+                                    title="Roll and lock a specific random biome"
+                                    className="action-button action-button--dark"
+                                    style={{ padding: '4px 8px' }}
+                                >
+                                    <Dices size={15} />
+                                </button>
+                            </div>
                         </div>
 
                         <div className="trainer-gen-modal__field">
@@ -419,16 +667,26 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                     className="trainer-gen-modal__select"
                                     style={{ flex: 1 }}
                                 >
-                                    {biomeClasses.length > 0 && (
-                                        <option value="biome_match">
-                                            Random from Biome Match ({selectedTrainerBiomeDef?.name})
-                                        </option>
+                                    {trainerBiomeId === 'random' ? (
+                                        <>
+                                            <option value="random">Random Concept (Thematic to Origin Biome)</option>
+                                            <option value="biome_match">Strictly Thematic to Rolled Biome</option>
+                                            <option value="any_random">Random Concept (Any Class Worldwide)</option>
+                                        </>
+                                    ) : (
+                                        <>
+                                            {biomeClasses.length > 0 && (
+                                                <option value="biome_match">
+                                                    Random from Biome Match ({selectedTrainerBiomeDef?.name})
+                                                </option>
+                                            )}
+                                            <option value="random">
+                                                {biomeClasses.length > 0
+                                                    ? 'Random Concept (Thematic / Any Class)'
+                                                    : 'Random Concept'}
+                                            </option>
+                                        </>
                                     )}
-                                    <option value="random">
-                                        {biomeClasses.length > 0
-                                            ? 'Random Concept (Any Class / Unrestricted)'
-                                            : 'Random Concept'}
-                                    </option>
                                     <option value="none">Custom / Independent Trainer</option>
                                     {biomeClasses.length > 0 && (
                                         <optgroup
@@ -895,127 +1153,463 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                 </div>
                             </div>
 
-                            {/* Location / Biome Filter */}
+                            {/* Team Theme Strategy Master Selector */}
                             <div className="trainer-gen-modal__field">
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <label className="trainer-gen-modal__field-label text-label">
-                                        Team Biome Ecosystem:
+                                        Team Theme & Composition:
                                         <TooltipIcon
                                             onClick={() =>
                                                 setTooltipInfo({
-                                                    title: 'Team Biome Ecosystem',
-                                                    desc: 'Filters Pokémon species on the team to a specific biome ecosystem. By default, this is unrestricted so trainers can have Pokémon from anywhere, or you can match the trainer origin or specify a different habitat.'
+                                                    title: 'Team Theme & Composition',
+                                                    desc: 'Select the primary rule that determines how Pokémon are drafted for this team:\n\n• Trainer Concept (Default): Pokémon strictly match the trainer’s class (e.g. Bug types for Bug Catcher) from any habitat worldwide.\n• Local Habitat / Biome: Pokémon are wild species native to a specific biome/environment.\n• Concept + Biome Mix: Blends trainer concept types with a local habitat (e.g. Camper on a Beach).\n• Custom Types: Pick specific types, Monotype, Dual-Type, or high variety.'
                                                 })
                                             }
                                         />
                                     </label>
-                                    {selectedTeamBiomeDef && (
-                                        <span className="text-subtext" style={{ fontSize: '0.75rem' }}>
-                                            Pool: <strong>{selectedTeamBiomeDef.name}</strong> (
-                                            {selectedTeamBiomeDef.types.join(', ')})
-                                        </span>
-                                    )}
-                                </div>
-                                <select
-                                    value={teamBiomeId}
-                                    onChange={(e) => setTeamBiomeId(e.target.value)}
-                                    className="trainer-gen-modal__select"
-                                >
-                                    <option value="none">Any Biome / Ecosystem (Unrestricted)</option>
-                                    <option value="match_trainer">
-                                        Match Trainer Biome{' '}
-                                        {selectedTrainerBiomeDef
-                                            ? `(${selectedTrainerBiomeDef.name})`
-                                            : '(Unrestricted)'}
-                                    </option>
-                                    {BIOMES.map((b) => (
-                                        <option key={b.id} value={b.id}>
-                                            [{b.tag}] {b.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                <span
-                                    className="text-subtext"
-                                    style={{ fontSize: '0.73rem', marginTop: '3px', display: 'block' }}
-                                >
-                                    {teamBiomeId === 'none'
-                                        ? 'Draws matching Pokémon from any habitat worldwide (decoupled from trainer location).'
-                                        : teamBiomeId === 'match_trainer'
-                                          ? `Draws matching Pokémon native to the trainer’s origin (${selectedTrainerBiomeDef?.name || 'Unrestricted'}).`
-                                          : `Draws matching Pokémon native to ${selectedTeamBiomeDef?.name || 'selected biome'}.`}
-                                </span>
-                            </div>
-
-                            {/* Type Specialty & Build Tier */}
-                            <div className="trainer-gen-modal__grid--2col">
-                                <div className="trainer-gen-modal__field">
-                                    <label className="trainer-gen-modal__field-label text-label">
-                                        Type Specialty:
-                                        <TooltipIcon
-                                            onClick={() =>
-                                                setTooltipInfo({
-                                                    title: 'Type Specialty',
-                                                    desc: 'Determines the types of Pokémon chosen. Concept Default uses the class preference (e.g. Flying for Bird Keeper). Random Monotype picks 1 random type, Dual-Type picks 2 types, and Variety allows all types.'
-                                                })
-                                            }
-                                        />
-                                    </label>
-                                    <select
-                                        value={typeSpecialtyMode}
-                                        onChange={(e) =>
-                                            setTypeSpecialtyMode(e.target.value as typeof typeSpecialtyMode)
-                                        }
-                                        className="trainer-gen-modal__select"
-                                    >
-                                        <option value="concept">
-                                            Concept Default{' '}
-                                            {selectedConcept
-                                                ? `(${selectedConcept.name}: ${selectedConcept.typePreferences.join(', ')})`
-                                                : conceptId === 'biome_match'
-                                                  ? `(Thematic for ${selectedTrainerBiomeDef?.name || 'Biome'} Class)`
-                                                  : '(Matches Rolled Trainer Class)'}
-                                        </option>
-                                        <option value="monotype">Random Monotype (Single Type Team)</option>
-                                        <option value="dual">Random Dual-Type (Two Types Mixed)</option>
-                                        <option value="variety">High Variety (Any / All Types)</option>
-                                        <option value="manual">Pick Specific Types</option>
-                                    </select>
-                                    <span
-                                        className="text-subtext"
-                                        style={{ fontSize: '0.73rem', marginTop: '3px', display: 'block' }}
-                                    >
-                                        {typeSpecialtyMode === 'concept'
-                                            ? selectedConcept
-                                                ? `Pokémon will match ${selectedConcept.name}'s preferred types (${selectedConcept.typePreferences.join(', ')}).`
-                                                : conceptId === 'biome_match'
-                                                  ? `Pokémon will match the concept types of the rolled ${selectedTrainerBiomeDef?.name || 'biome'} class (e.g. Bug for Bug Catcher).`
-                                                  : 'Pokémon will automatically match the preferred types of the rolled trainer class.'
-                                            : null}
+                                    <span className="text-subtext" style={{ fontSize: '0.75rem' }}>
+                                        Active Theme:{' '}
+                                        <strong>
+                                            {teamThemeStrategy === 'concept'
+                                                ? 'Trainer Concept'
+                                                : teamThemeStrategy === 'biome'
+                                                  ? 'Local Habitat / Biome'
+                                                  : teamThemeStrategy === 'mix'
+                                                    ? 'Concept + Biome Mix'
+                                                    : 'Custom Types / Variety'}
+                                        </strong>
                                     </span>
                                 </div>
 
-                                <div className="trainer-gen-modal__field">
-                                    <label className="trainer-gen-modal__field-label text-label">
-                                        Pokémon Build Tier:
-                                        <TooltipIcon
-                                            onClick={() =>
-                                                setTooltipInfo({
-                                                    title: 'Pokémon Build Tier',
-                                                    desc: 'Min-Max (Competent / Default): Evaluates base stats and limits to auto-detect whether the species is a Physical or Special attacker and smart defense bias (Evasion vs Clash), optimizing points for battle-readiness.\n\nAverage (Balanced): Distributes points evenly across attributes and skills for standard encounters.\n\nWild (Untrained): Completely randomizes stat and skill distribution, mimicking raw wild Pokémon.'
-                                                })
-                                            }
-                                        />
-                                    </label>
-                                    <select
-                                        value={buildType}
-                                        onChange={(e) => setBuildType(e.target.value as 'minmax' | 'average' | 'wild')}
-                                        className="trainer-gen-modal__select"
+                                <div className="trainer-gen-modal__strategy-presets">
+                                    <button
+                                        type="button"
+                                        className={`trainer-gen-modal__strategy-btn ${teamThemeStrategy === 'concept' ? 'trainer-gen-modal__strategy-btn--active' : ''}`}
+                                        onClick={() => setTeamThemeStrategy('concept')}
                                     >
-                                        <option value="minmax">Min-Max (Smart Bias / Competent)</option>
-                                        <option value="average">Average (Balanced)</option>
-                                        <option value="wild">Wild (Random / Untrained)</option>
-                                    </select>
+                                        <User size={14} /> Trainer Concept
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`trainer-gen-modal__strategy-btn ${teamThemeStrategy === 'biome' ? 'trainer-gen-modal__strategy-btn--active' : ''}`}
+                                        onClick={() => setTeamThemeStrategy('biome')}
+                                    >
+                                        <Compass size={14} /> Local Habitat
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`trainer-gen-modal__strategy-btn ${teamThemeStrategy === 'mix' ? 'trainer-gen-modal__strategy-btn--active' : ''}`}
+                                        onClick={() => setTeamThemeStrategy('mix')}
+                                    >
+                                        <Layers size={14} /> Concept + Biome Mix
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`trainer-gen-modal__strategy-btn ${teamThemeStrategy === 'custom' ? 'trainer-gen-modal__strategy-btn--active' : ''}`}
+                                        onClick={() => setTeamThemeStrategy('custom')}
+                                    >
+                                        <Sparkles size={14} /> Custom Types
+                                    </button>
                                 </div>
+
+                                {/* Dynamic Strategy Configuration Panel */}
+                                {teamThemeStrategy === 'concept' && (
+                                    <div className="trainer-gen-modal__strategy-card">
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                marginBottom: '6px'
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <Shield size={15} color="var(--primary)" />
+                                                <span className="text-title-secondary" style={{ fontWeight: 600 }}>
+                                                    {selectedConcept
+                                                        ? selectedConcept.name
+                                                        : conceptId === 'biome_match'
+                                                          ? `Thematic ${selectedTrainerBiomeDef?.name || 'Biome'} Concept`
+                                                          : 'Trainer Class Specialty'}
+                                                </span>
+                                            </div>
+                                            {selectedConcept && selectedConcept.typePreferences.length > 0 && (
+                                                <div className="trainer-gen-modal__type-tags">
+                                                    {selectedConcept.typePreferences.map((t) => (
+                                                        <span key={t} className="trainer-gen-modal__type-tag">
+                                                            {t}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <p
+                                            className="text-subtext"
+                                            style={{ margin: 0, fontSize: '0.78rem', lineHeight: 1.4 }}
+                                        >
+                                            {selectedConcept
+                                                ? `Team will be drafted strictly from ${selectedConcept.name}'s signature types (${selectedConcept.typePreferences.join(', ')}) worldwide, without environmental habitat restrictions.`
+                                                : conceptId === 'biome_match'
+                                                  ? `Team will match the signature concept types of the rolled ${selectedTrainerBiomeDef?.name || 'biome'} class worldwide.`
+                                                  : 'Team will automatically adapt to match the preferred signature types of the rolled trainer class worldwide.'}
+                                        </p>
+                                    </div>
+                                )}
+
+                                {teamThemeStrategy === 'biome' && (
+                                    <div className="trainer-gen-modal__strategy-card">
+                                        <div className="trainer-gen-modal__field">
+                                            <div
+                                                style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center'
+                                                }}
+                                            >
+                                                <label className="trainer-gen-modal__field-label text-label">
+                                                    Select Native Habitat / Biome:
+                                                    <TooltipIcon
+                                                        onClick={() =>
+                                                            setTooltipInfo({
+                                                                title: 'Native Habitat / Biome',
+                                                                desc: 'Drafts wild Pokémon native to this specific habitat ecosystem, regardless of the trainer class.'
+                                                            })
+                                                        }
+                                                    />
+                                                </label>
+                                                {selectedTeamBiomeDef && (
+                                                    <span className="text-subtext" style={{ fontSize: '0.75rem' }}>
+                                                        Native Types:{' '}
+                                                        <strong>{selectedTeamBiomeDef.types.join(', ')}</strong>
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '6px' }}>
+                                                <select
+                                                    value={teamBiomeId}
+                                                    onChange={(e) => setTeamBiomeId(e.target.value)}
+                                                    className="trainer-gen-modal__select"
+                                                    style={{ flex: 1 }}
+                                                >
+                                                    {trainerBiomeId !== 'none' && (
+                                                        <option value="match_trainer">
+                                                            Match Trainer Origin{' '}
+                                                            {selectedTrainerBiomeDef
+                                                                ? `(${selectedTrainerBiomeDef.name})`
+                                                                : '(Rolled with Trainer)'}
+                                                        </option>
+                                                    )}
+                                                    <option value="random">Random Biome / Habitat</option>
+                                                    {BIOMES.map((b) => (
+                                                        <option key={b.id} value={b.id}>
+                                                            [{b.tag}] {b.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const randomB =
+                                                            BIOMES[Math.floor(Math.random() * BIOMES.length)];
+                                                        setTeamBiomeId(randomB.id);
+                                                    }}
+                                                    title="Roll and lock a specific random habitat"
+                                                    className="action-button action-button--dark"
+                                                    style={{ padding: '4px 8px' }}
+                                                >
+                                                    <Dices size={15} />
+                                                </button>
+                                            </div>
+                                            <span
+                                                className="text-subtext"
+                                                style={{ fontSize: '0.75rem', marginTop: '3px', display: 'block' }}
+                                            >
+                                                {teamBiomeId === 'random' ? (
+                                                    <>
+                                                        A random habitat will be selected during generation, drafting
+                                                        wild species native to that ecosystem.
+                                                    </>
+                                                ) : teamBiomeId === 'match_trainer' ? (
+                                                    <>
+                                                        Pokémon will be wild species native to{' '}
+                                                        <strong>
+                                                            {selectedTrainerBiomeDef
+                                                                ? selectedTrainerBiomeDef.name
+                                                                : "the trainer's rolled origin habitat"}
+                                                        </strong>
+                                                        .
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        Pokémon will be wild species native to{' '}
+                                                        <strong>
+                                                            {selectedTeamBiomeDef?.name || 'the selected habitat'}
+                                                        </strong>
+                                                        , reflecting the local route or dungeon fauna.
+                                                    </>
+                                                )}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {teamThemeStrategy === 'mix' && (
+                                    <div className="trainer-gen-modal__strategy-card">
+                                        <div className="trainer-gen-modal__field">
+                                            <div
+                                                style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center'
+                                                }}
+                                            >
+                                                <label className="trainer-gen-modal__field-label text-label">
+                                                    1. Select Habitat Ecosystem:
+                                                </label>
+                                                {selectedTeamBiomeDef && (
+                                                    <span className="text-subtext" style={{ fontSize: '0.75rem' }}>
+                                                        Habitat Pool: <strong>{selectedTeamBiomeDef.name}</strong> (
+                                                        {selectedTeamBiomeDef.types.join(', ')})
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '6px' }}>
+                                                <select
+                                                    value={teamBiomeId}
+                                                    onChange={(e) => setTeamBiomeId(e.target.value)}
+                                                    className="trainer-gen-modal__select"
+                                                    style={{ flex: 1 }}
+                                                >
+                                                    {trainerBiomeId !== 'none' && (
+                                                        <option value="match_trainer">
+                                                            Match Trainer Origin{' '}
+                                                            {selectedTrainerBiomeDef
+                                                                ? `(${selectedTrainerBiomeDef.name})`
+                                                                : '(Rolled with Trainer)'}
+                                                        </option>
+                                                    )}
+                                                    <option value="random">Random Biome / Habitat</option>
+                                                    {BIOMES.map((b) => (
+                                                        <option key={b.id} value={b.id}>
+                                                            [{b.tag}] {b.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const randomB =
+                                                            BIOMES[Math.floor(Math.random() * BIOMES.length)];
+                                                        setTeamBiomeId(randomB.id);
+                                                    }}
+                                                    title="Roll and lock a specific random habitat"
+                                                    className="action-button action-button--dark"
+                                                    style={{ padding: '4px 8px' }}
+                                                >
+                                                    <Dices size={15} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="trainer-gen-modal__field" style={{ marginTop: '8px' }}>
+                                            <label className="trainer-gen-modal__field-label text-label">
+                                                2. Biome & Concept Mixing Mode:
+                                                <TooltipIcon
+                                                    onClick={() =>
+                                                        setTooltipInfo({
+                                                            title: 'Biome & Concept Mixing',
+                                                            desc: 'Fine-tune how Pokémon are drafted when a Team Biome is selected:\n\n• Concept Only: Biome serves as cosmetic origin/theming; Pokémon stick strictly to the trainer class typing.\n• Biome Only: Pokémon are selected solely from the biome types and native habitat.\n• Wider Pool: Merges trainer concept types with biome types for a diverse roster.\n• Combo Hybrid: Selects Pokémon that fit BOTH the trainer concept and the biome.\n• Split Pick: Granularly configure the generation mode for each individual Pokémon slot.'
+                                                        })
+                                                    }
+                                                />
+                                            </label>
+
+                                            <div className="trainer-gen-modal__mix-presets">
+                                                {[
+                                                    {
+                                                        mode: 'concept_only' as const,
+                                                        label: 'Concept Only',
+                                                        title: 'Stick to trainer concept (biome is cosmetic)'
+                                                    },
+                                                    {
+                                                        mode: 'biome_only' as const,
+                                                        label: 'Biome Only',
+                                                        title: 'Stick to biome habitat & native types'
+                                                    },
+                                                    {
+                                                        mode: 'union' as const,
+                                                        label: 'Wider Pool',
+                                                        title: 'Combine concept + biome types into a larger pool'
+                                                    },
+                                                    {
+                                                        mode: 'combo' as const,
+                                                        label: 'Combo Hybrid',
+                                                        title: 'Require Pokémon to match both concept and biome'
+                                                    },
+                                                    {
+                                                        mode: 'split' as const,
+                                                        label: 'Split Pick',
+                                                        title: 'Choose drafting mode per Pokémon slot'
+                                                    }
+                                                ].map((opt) => (
+                                                    <button
+                                                        key={opt.mode}
+                                                        type="button"
+                                                        className={`trainer-gen-modal__mix-btn ${biomeConceptMixMode === opt.mode ? 'trainer-gen-modal__mix-btn--active' : ''}`}
+                                                        onClick={() => setBiomeConceptMixMode(opt.mode)}
+                                                        title={opt.title}
+                                                    >
+                                                        {opt.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            <div className="trainer-gen-modal__mix-hint text-subtext">
+                                                {biomeConceptMixMode === 'concept_only' && (
+                                                    <>
+                                                        Pokémon strictly match trainer concept. The selected biome
+                                                        serves as origin/theming.
+                                                    </>
+                                                )}
+                                                {biomeConceptMixMode === 'biome_only' && (
+                                                    <>
+                                                        Pokémon strictly match{' '}
+                                                        <strong>{selectedTeamBiomeDef?.name || 'biome'}</strong> native
+                                                        types and habitat.
+                                                    </>
+                                                )}
+                                                {biomeConceptMixMode === 'union' && (
+                                                    <>
+                                                        Pokémon pool expands to include both trainer concept types and{' '}
+                                                        <strong>{selectedTeamBiomeDef?.name || 'biome'}</strong> types.
+                                                    </>
+                                                )}
+                                                {biomeConceptMixMode === 'combo' && (
+                                                    <>
+                                                        Pokémon must share both trainer concept typing and{' '}
+                                                        <strong>{selectedTeamBiomeDef?.name || 'biome'}</strong> typing
+                                                        (e.g. Grass/Poison in Swamp).
+                                                    </>
+                                                )}
+                                                {biomeConceptMixMode === 'split' && (
+                                                    <>
+                                                        Granularly select the generation mode for each individual
+                                                        Pokémon slot below:
+                                                    </>
+                                                )}
+                                            </div>
+
+                                            {biomeConceptMixMode === 'split' && teamSize > 0 && (
+                                                <div className="trainer-gen-modal__slot-mix-grid">
+                                                    {Array.from({ length: teamSize }).map((_, slotIdx) => (
+                                                        <div key={slotIdx} className="trainer-gen-modal__slot-mix-card">
+                                                            <div className="trainer-gen-modal__slot-mix-header">
+                                                                <span className="trainer-gen-modal__slot-mix-title text-title-secondary">
+                                                                    Slot #{slotIdx + 1}
+                                                                </span>
+                                                            </div>
+                                                            <select
+                                                                value={customSlotMixModes[slotIdx] || 'concept_only'}
+                                                                onChange={(e) =>
+                                                                    handleSlotMixModeChange(
+                                                                        slotIdx,
+                                                                        e.target.value as SlotMixMode
+                                                                    )
+                                                                }
+                                                                className="trainer-gen-modal__select trainer-gen-modal__slot-select"
+                                                            >
+                                                                <option value="concept_only">Concept Only</option>
+                                                                <option value="biome_only">Biome Only</option>
+                                                                <option value="union">Wider Pool (Both)</option>
+                                                                <option value="combo">Combo Hybrid (Shared)</option>
+                                                            </select>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {teamThemeStrategy === 'custom' && (
+                                    <div className="trainer-gen-modal__strategy-card">
+                                        <div className="trainer-gen-modal__field">
+                                            <label className="trainer-gen-modal__field-label text-label">
+                                                Select Type Specialty:
+                                                <TooltipIcon
+                                                    onClick={() =>
+                                                        setTooltipInfo({
+                                                            title: 'Type Specialty',
+                                                            desc: 'Determines the types of Pokémon chosen. Random Monotype picks 1 random type, Dual-Type picks 2 types, and Variety allows all types.'
+                                                        })
+                                                    }
+                                                />
+                                            </label>
+                                            <select
+                                                value={typeSpecialtyMode === 'concept' ? 'monotype' : typeSpecialtyMode}
+                                                onChange={(e) =>
+                                                    setTypeSpecialtyMode(e.target.value as typeof typeSpecialtyMode)
+                                                }
+                                                className="trainer-gen-modal__select"
+                                            >
+                                                <option value="monotype">Random Monotype (Single Type Team)</option>
+                                                <option value="dual">Random Dual-Type (Two Types Mixed)</option>
+                                                <option value="variety">High Variety (Any / All Types)</option>
+                                                <option value="manual">Pick Specific Types Manually</option>
+                                            </select>
+
+                                            {typeSpecialtyMode === 'manual' && (
+                                                <div style={{ marginTop: '8px' }}>
+                                                    <span
+                                                        className="text-subtext"
+                                                        style={{
+                                                            fontSize: '0.75rem',
+                                                            display: 'block',
+                                                            marginBottom: '4px'
+                                                        }}
+                                                    >
+                                                        Select 1 or 2 Types ({manualTypes.length}/2):
+                                                    </span>
+                                                    <div className="trainer-gen-modal__type-grid">
+                                                        {ALL_POKEMON_TYPES.map((t) => (
+                                                            <div
+                                                                key={t}
+                                                                onClick={() => handleToggleManualType(t)}
+                                                                className={`trainer-gen-modal__type-pill ${manualTypes.includes(t) ? 'trainer-gen-modal__type-pill--selected' : ''}`}
+                                                            >
+                                                                {t}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Pokémon Build Tier */}
+                            <div className="trainer-gen-modal__field" style={{ marginTop: '8px' }}>
+                                <label className="trainer-gen-modal__field-label text-label">
+                                    Pokémon Build Tier:
+                                    <TooltipIcon
+                                        onClick={() =>
+                                            setTooltipInfo({
+                                                title: 'Pokémon Build Tier',
+                                                desc: 'Min-Max (Competent / Default): Evaluates base stats and limits to auto-detect whether the species is a Physical or Special attacker and smart defense bias (Evasion vs Clash), optimizing points for battle-readiness.\n\nAverage (Balanced): Distributes points evenly across attributes and skills for standard encounters.\n\nWild (Untrained): Completely randomizes stat and skill distribution, mimicking raw wild Pokémon.'
+                                            })
+                                        }
+                                    />
+                                </label>
+                                <select
+                                    value={buildType}
+                                    onChange={(e) => setBuildType(e.target.value as 'minmax' | 'average' | 'wild')}
+                                    className="trainer-gen-modal__select"
+                                >
+                                    <option value="minmax">Min-Max (Smart Bias / Competent)</option>
+                                    <option value="average">Average (Balanced)</option>
+                                    <option value="wild">Wild (Random / Untrained)</option>
+                                </select>
                             </div>
 
                             {/* Pokémon Rank Rule */}
@@ -1136,26 +1730,6 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                                     </div>
                                 )}
                             </div>
-
-                            {/* Manual Type Picker (if manual selected) */}
-                            {typeSpecialtyMode === 'manual' && (
-                                <div className="trainer-gen-modal__field">
-                                    <label className="trainer-gen-modal__field-label text-label">
-                                        Select 1 or 2 Types:
-                                    </label>
-                                    <div className="trainer-gen-modal__type-grid">
-                                        {ALL_POKEMON_TYPES.map((t) => (
-                                            <div
-                                                key={t}
-                                                onClick={() => handleToggleManualType(t)}
-                                                className={`trainer-gen-modal__type-pill ${manualTypes.includes(t) ? 'trainer-gen-modal__type-pill--selected' : ''}`}
-                                            >
-                                                {t}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
 
                             {/* Evolutionary Filters */}
                             <div className="trainer-gen-modal__grid--2col">

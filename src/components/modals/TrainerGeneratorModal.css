@@ -276,3 +276,181 @@
     display: flex;
     justify-content: flex-end;
 }
+
+/* Biome & Concept Mixing Styles */
+.trainer-gen-modal__mix-section {
+    margin-top: 6px;
+    padding: 10px 12px;
+    background: color-mix(in srgb, var(--primary) 6%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border));
+    border-radius: 6px;
+}
+
+.trainer-gen-modal__mix-presets {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+
+.trainer-gen-modal__mix-btn {
+    flex: 1;
+    min-width: 90px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--panel-bg);
+    color: var(--text-main);
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.trainer-gen-modal__mix-btn:hover:not(:disabled) {
+    border-color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+}
+
+.trainer-gen-modal__mix-btn--active {
+    background: var(--primary) !important;
+    color: #fff !important;
+    border-color: var(--primary) !important;
+    font-weight: bold;
+    box-shadow: 0 0 8px color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
+.trainer-gen-modal__mix-hint {
+    font-size: 0.75rem;
+    margin-top: 6px;
+    line-height: 1.35;
+    color: color-mix(in srgb, var(--text-main) 80%, transparent);
+}
+
+/* Split Pick Slot Grid */
+.trainer-gen-modal__slot-mix-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.trainer-gen-modal__slot-mix-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 10px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+.trainer-gen-modal__slot-mix-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.trainer-gen-modal__slot-mix-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.trainer-gen-modal__slot-select {
+    padding: 4px 8px;
+    font-size: 0.78rem;
+}
+
+/* Surprise Me Header Button */
+.trainer-gen-modal__surprise-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 6px;
+    border: 1px solid var(--primary);
+    background: color-mix(in srgb, var(--primary) 18%, var(--panel-bg));
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.trainer-gen-modal__surprise-btn:hover {
+    background: var(--primary);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 45%, transparent);
+}
+
+.trainer-gen-modal__surprise-btn:active {
+    transform: translateY(0);
+}
+
+/* Team Theme Strategy Master Selector Styles */
+.trainer-gen-modal__strategy-presets {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+
+.trainer-gen-modal__strategy-btn {
+    flex: 1;
+    min-width: 140px;
+    padding: 7px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--panel-bg);
+    color: var(--text-main);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.trainer-gen-modal__strategy-btn:hover:not(:disabled) {
+    border-color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+}
+
+.trainer-gen-modal__strategy-btn--active {
+    background: var(--primary) !important;
+    color: #fff !important;
+    border-color: var(--primary) !important;
+    font-weight: bold;
+    box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
+.trainer-gen-modal__strategy-card {
+    margin-top: 8px;
+    padding: 12px 14px;
+    background: color-mix(in srgb, var(--panel-bg) 80%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border));
+    border-radius: 6px;
+}
+
+.trainer-gen-modal__type-tags {
+    display: inline-flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.trainer-gen-modal__type-tag {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--primary);
+    color: #fff;
+    letter-spacing: 0.2px;
+}
