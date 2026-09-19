@@ -12,17 +12,17 @@ import {
     Sparkles,
     Filter
 } from 'lucide-react';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import { generateBuild } from '../../utils/generatorUtils';
-import type { TempBuild, Rank } from '../../store/storeTypes';
-import { CombatStat, SocialStat } from '../../types/enums';
+import { useCharacterStore } from '../../../store/useCharacterStore';
+import { generateBuild } from '../../../utils/generatorUtils';
+import type { TempBuild, Rank } from '../../../store/storeTypes';
+import { CombatStat, SocialStat } from '../../../types/enums';
 import { GeneratorPreviewModal } from './GeneratorPreviewModal';
-import { TooltipIcon } from '../ui/TooltipIcon';
-import { NumberSpinner } from '../ui/NumberSpinner';
-import { isStandaloneMode } from '../../utils/storageAdapter';
-import { loadLocalDataset, SPECIES_URLS } from '../../utils/api';
-import { RANKS } from '../../data/constants';
-import { BIOMES, BIOME_TOOLTIP_NOTE } from '../../data/biomeData';
+import { TooltipIcon } from '../../ui/TooltipIcon';
+import { NumberSpinner } from '../../ui/NumberSpinner';
+import { isStandaloneMode } from '../../../utils/storageAdapter';
+import { loadLocalDataset, SPECIES_URLS } from '../../../utils/api';
+import { RANKS } from '../../../data/constants';
+import { BIOMES, BIOME_TOOLTIP_NOTE } from '../../../data/biomeData';
 import './GeneratorModal.css';
 
 export function GeneratorModal({ onClose }: { onClose: () => void }) {

@@ -48,6 +48,13 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
         ...Object.fromEntries(roomCustomTypes.map((type) => [type.name, type.color]))
     };
 
+    const getMoveTypeColor = (type?: string) => {
+        if (!type) return 'var(--panel-alt)';
+        const clean = type.trim();
+        const title = clean.charAt(0).toUpperCase() + clean.slice(1).toLowerCase();
+        return combinedColors[clean] || combinedColors[title] || 'var(--panel-alt)';
+    };
+
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [bankModalOpen, setBankModalOpen] = useState(false);
 
@@ -166,11 +173,9 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
                     <select
                         value={move.type}
                         onChange={(event) => updateMove(move.id, 'type', event.target.value)}
-                        className="move-card__select text-label"
+                        className={`move-card__select ${move.type ? 'text-theme-header' : 'text-label'}`}
                         style={{
-                            background: combinedColors[move.type] || 'var(--panel-alt)',
-                            color: move.type ? 'white' : 'var(--text-main)',
-                            textShadow: move.type ? '1px 1px 1px rgba(0,0,0,0.8)' : 'none'
+                            background: getMoveTypeColor(move.type)
                         }}
                     >
                         <option value="">Type</option>

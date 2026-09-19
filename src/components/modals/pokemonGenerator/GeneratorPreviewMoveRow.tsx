@@ -1,8 +1,8 @@
 import { Info } from 'lucide-react';
-import type { TempMove } from '../../store/storeTypes';
+import type { TempMove } from '../../../store/storeTypes';
 import './GeneratorPreviewModal.css';
 
-interface GeneratorPreviewMoveRowProps {
+export interface GeneratorPreviewMoveRowProps {
     move: TempMove;
     accuracyPool: number;
     damagePool: string | number;

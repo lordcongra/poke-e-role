@@ -1,7 +1,7 @@
 import { Minus, Plus } from 'lucide-react';
 import './GeneratorPreviewModal.css';
 
-interface GeneratorPreviewStatSpinnerProps {
+export interface GeneratorPreviewStatSpinnerProps {
     value: number;
     onChange: (value: number) => void;
 }

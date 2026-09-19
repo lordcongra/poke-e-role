@@ -1,6 +1,6 @@
 import OBR from '@owlbear-rodeo/sdk';
 import { Dices, Backpack, XCircle } from 'lucide-react';
-import { useCharacterStore } from '../../store/useCharacterStore';
+import { useCharacterStore } from '../../../store/useCharacterStore';
 import './ItemGeneratorResultModal.css';
 
 interface ItemGeneratorResultModalProps {

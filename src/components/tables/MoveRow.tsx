@@ -48,6 +48,13 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
         ...Object.fromEntries(roomCustomTypes.map((type) => [type.name, type.color]))
     };
 
+    const getMoveTypeColor = (type?: string) => {
+        if (!type) return 'transparent';
+        const clean = type.trim();
+        const title = clean.charAt(0).toUpperCase() + clean.slice(1).toLowerCase();
+        return combinedColors[clean] || combinedColors[title] || 'transparent';
+    };
+
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [bankModalOpen, setBankModalOpen] = useState(false);
 
@@ -228,11 +235,11 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                     <select
                         value={move.type}
                         onChange={(event) => updateMove(move.id, 'type', event.target.value)}
-                        className="form-select--transparent move-row__type-select text-label"
+                        className={`form-select--transparent move-row__type-select ${
+                            move.type ? 'text-theme-header' : 'text-label'
+                        }`}
                         style={{
-                            background: combinedColors[move.type] || 'transparent',
-                            color: move.type ? 'white' : 'inherit',
-                            textShadow: move.type ? '1px 1px 1px rgba(0,0,0,0.8)' : 'none'
+                            background: getMoveTypeColor(move.type)
                         }}
                     >
                         <option value="">Type</option>
