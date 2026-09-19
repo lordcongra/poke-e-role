@@ -15,10 +15,10 @@ import type { CharacterState } from '../../store/storeTypes';
 // Modals
 import { HomebrewModal } from '../homebrew/HomebrewModal';
 import { RulesModal } from '../modals/RulesModal';
-import { ItemGeneratorModal } from '../modals/ItemGeneratorModal';
+import { ItemGeneratorModal } from '../modals/itemGenerator';
 import { ChangelogModal } from '../modals/ChangelogModal';
 import { InitiativeSettingsModal } from '../modals/InitiativeSettingsModal';
-import { GeneratorModal } from '../modals/GeneratorModal';
+import { GeneratorModal } from '../modals/pokemonGenerator';
 import { PrintSettingsModal } from '../modals/PrintSettingsModal';
 import { ThemeSettingsModal } from '../modals/ThemeSettingsModal';
 import { AccessibilityModal } from '../modals/AccessibilityModal';
@@ -27,7 +27,7 @@ import { BattleOrganizerModal } from '../modals/battleOrganizer/BattleOrganizerM
 import { BattleOrganizerSettingsModal } from '../modals/battleOrganizer/BattleOrganizerSettingsModal';
 import { getBattleOrganizerSettings } from '../modals/battleOrganizer/battleOrganizerSettingsHelper';
 import { PrintBattleOrganizer } from '../print/PrintBattleOrganizer';
-import { TrainerGeneratorModal } from '../modals/TrainerGeneratorModal';
+import { TrainerGeneratorModal } from '../modals/trainerGenerator';
 
 // Icons
 import {

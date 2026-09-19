@@ -1,18 +1,15 @@
 import { useState, useEffect } from 'react';
 import OBR, { buildImage, type ImageDownload, type Item } from '@owlbear-rodeo/sdk';
 import { Search, Dices, CheckCircle, XCircle, ImagePlus, FilePlus } from 'lucide-react';
-import type { TempBuild } from '../../store/storeTypes';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import { CombatStat, SocialStat, Skill, SKILL_CATEGORIES } from '../../types/enums';
-import { GeneratorPreviewStatSpinner } from './GeneratorPreviewStatSpinner';
-import { GeneratorPreviewMoveRow } from './GeneratorPreviewMoveRow';
-import { isStandaloneMode, storageAdapter } from '../../utils/storageAdapter';
-import { setActiveTokenId, METADATA_ID } from '../../utils/obr';
-import { buildTokenMetadataFromBuild } from '../../utils/generatorUtils';
-import { calculateFormationOffsets } from '../../utils/trainerTokenSpawner';
-import { buildGraphicsFromMeta, renderTokenGraphics } from '../../utils/graphicsManager';
-import { PromptModal } from './PromptModal';
-import { TYPE_COLORS } from '../../data/constants';
+import type { TempBuild } from '../../../store/storeTypes';
+import { useCharacterStore } from '../../../store/useCharacterStore';
+import { isStandaloneMode, storageAdapter } from '../../../utils/storageAdapter';
+import { setActiveTokenId, METADATA_ID } from '../../../utils/obr';
+import { buildTokenMetadataFromBuild } from '../../../utils/generatorUtils';
+import { calculateFormationOffsets } from '../../../utils/trainerTokenSpawner';
+import { buildGraphicsFromMeta, renderTokenGraphics } from '../../../utils/graphicsManager';
+import { PromptModal } from '../PromptModal';
+import { PokemonBuildPreview } from './PokemonBuildPreview';
 import './GeneratorPreviewModal.css';
 
 interface GeneratorPreviewModalProps {
@@ -38,11 +35,6 @@ export function GeneratorPreviewModal({
     const config = useCharacterStore((state) => state.generatorConfig);
     const tokenId = useCharacterStore((state) => state.tokenId);
     const setIdentity = useCharacterStore((state) => state.setIdentity);
-
-    const baseStats = useCharacterStore((state) => state.stats);
-    const baseSocials = useCharacterStore((state) => state.socials);
-    const baseSkills = useCharacterStore((state) => state.skills);
-    const willMax = useCharacterStore((state) => state.will.willMax);
 
     const [localBuilds, setLocalBuilds] = useState<TempBuild[]>(() => {
         if (builds && builds.length > 0) return builds;
@@ -78,27 +70,6 @@ export function GeneratorPreviewModal({
 
     const localBuild = localBuilds[activeIndex] || localBuilds[0];
     if (!localBuild) return null;
-
-    const getSpeciesBaseStat = (statKey: string, fallback: number = 2): number => {
-        if (localBuild.baseStats && localBuild.baseStats[statKey] !== undefined) {
-            return localBuild.baseStats[statKey];
-        }
-        const pd = localBuild.pokemonData as Record<string, any> | undefined;
-        if (pd?.BaseStats) {
-            const fullKeyMap: Record<string, string> = {
-                str: 'Strength',
-                dex: 'Dexterity',
-                vit: 'Vitality',
-                spe: 'Special',
-                ins: 'Insight'
-            };
-            const mappedName = fullKeyMap[statKey.toLowerCase()];
-            if (mappedName && pd.BaseStats[mappedName] !== undefined) {
-                return Number(pd.BaseStats[mappedName]);
-            }
-        }
-        return baseStats[statKey as CombatStat]?.base || fallback;
-    };
 
     const updateAttribute = (statistic: string, value: number) => {
         setLocalBuilds((prev) => {
@@ -405,63 +376,14 @@ export function GeneratorPreviewModal({
                 )}
 
                 <div className="generator-preview__scroll-container">
-                    {/* Species & Rank Header */}
-                    <div className="generator-preview__section">
-                        <div
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                flexWrap: 'wrap',
-                                gap: '8px'
-                            }}
-                        >
-                            <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                    <h4 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--primary)' }}>
-                                        {localBuild.species}
-                                    </h4>
-                                    {(() => {
-                                        const pd = localBuild.pokemonData as Record<string, any> | undefined;
-                                        const t1 = String(pd?.Type1 || pd?.type1 || '').trim();
-                                        const t2 = String(pd?.Type2 || pd?.type2 || '').trim();
-                                        const types = [t1, t2].filter(
-                                            (t) => t && t.toLowerCase() !== 'none' && t.toLowerCase() !== 'undefined'
-                                        );
-                                        if (types.length === 0) return null;
-                                        return (
-                                            <div style={{ display: 'inline-flex', gap: '4px', alignItems: 'center' }}>
-                                                {types.map((t) => (
-                                                    <span
-                                                        key={t}
-                                                        className="generator-preview__type-pill"
-                                                        style={{
-                                                            backgroundColor: TYPE_COLORS[t] || 'var(--primary)'
-                                                        }}
-                                                    >
-                                                        {t}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        );
-                                    })()}
-                                </div>
-                                <span className="text-subtext" style={{ fontSize: '0.8rem' }}>
-                                    Rank: {localBuild.rank} | Nature: {localBuild.nature} | Ability:{' '}
-                                    {String(
-                                        localBuild.pokemonData?.Ability1 ||
-                                            localBuild.pokemonData?.ability1 ||
-                                            'Default'
-                                    )}
-                                    {localBuild.loyalty !== undefined && (
-                                        <>
-                                            {' '}
-                                            | Loyalty: {localBuild.loyalty} | Happiness: {localBuild.happiness}
-                                        </>
-                                    )}
-                                </span>
-                            </div>
-                            {isMultiple && onRerollIndex && (
+                    <PokemonBuildPreview
+                        build={localBuild}
+                        onUpdateAttr={updateAttribute}
+                        onUpdateSoc={updateSocial}
+                        onUpdateSkill={updateSkill}
+                        onOpenTooltip={setTooltipInfo}
+                        actionSlot={
+                            isMultiple && onRerollIndex ? (
                                 <button
                                     type="button"
                                     className="action-button action-button--theme"
@@ -470,132 +392,9 @@ export function GeneratorPreviewModal({
                                 >
                                     <Dices size={14} /> Reroll This #{activeIndex + 1}
                                 </button>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Combat Attributes (Base + Allocated) */}
-                    <div className="generator-preview__section">
-                        <span className="generator-preview__section-title text-title-primary">
-                            Combat Attributes (Base + Rank)
-                        </span>
-                        <div className="generator-preview__grid-5">
-                            {Object.values(CombatStat).map((statistic) => {
-                                const baseValue = getSpeciesBaseStat(statistic, statistic === 'ins' ? 1 : 2);
-                                const allocated = localBuild.attr[statistic] || 0;
-                                return (
-                                    <div key={statistic} className="generator-preview__stat-column">
-                                        <span className="generator-preview__stat-label text-label">
-                                            {statistic.toUpperCase()}
-                                        </span>
-                                        <GeneratorPreviewStatSpinner
-                                            value={baseValue + allocated}
-                                            onChange={(val) => updateAttribute(statistic, val - baseValue)}
-                                        />
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Social Attributes (Base + Allocated) */}
-                    <div className="generator-preview__section">
-                        <span className="generator-preview__section-title text-title-primary">
-                            Social Attributes (Base + Rank)
-                        </span>
-                        <div className="generator-preview__grid-5">
-                            {Object.values(SocialStat).map((statistic) => {
-                                const baseValue = Number(baseSocials[statistic]?.base || 1);
-                                const allocated = localBuild.soc[statistic] || 0;
-                                return (
-                                    <div key={statistic} className="generator-preview__stat-column">
-                                        <span className="generator-preview__stat-label text-label">
-                                            {statistic.toUpperCase()}
-                                        </span>
-                                        <GeneratorPreviewStatSpinner
-                                            value={baseValue + allocated}
-                                            onChange={(val) => updateSocial(statistic, val - baseValue)}
-                                        />
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Skills (Base + Allocated) */}
-                    <div className="generator-preview__section">
-                        <span className="generator-preview__section-title text-title-primary">
-                            Skills (Base + Rank)
-                        </span>
-                        <div className="generator-preview__skill-categories">
-                            {SKILL_CATEGORIES.map((category) => (
-                                <div key={category.name} className="generator-preview__skill-group">
-                                    <span className="generator-preview__skill-group-title">{category.name}</span>
-                                    <div className="generator-preview__grid-4">
-                                        {category.skills.map((skill) => {
-                                            const baseValue = Number(baseSkills[skill.key]?.base || 0);
-                                            const allocated = localBuild.skills[skill.key] || 0;
-                                            return (
-                                                <div key={skill.key} className="generator-preview__stat-column">
-                                                    <span className="generator-preview__stat-label text-label">
-                                                        {skill.label}
-                                                    </span>
-                                                    <GeneratorPreviewStatSpinner
-                                                        value={baseValue + allocated}
-                                                        onChange={(val) => updateSkill(skill.key, val - baseValue)}
-                                                    />
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Drafted Moves */}
-                    <div className="generator-preview__section">
-                        <span className="generator-preview__section-title generator-preview__section-title--spaced text-title-primary">
-                            Drafted Moves ({localBuild.moves.length})
-                        </span>
-                        <div className="generator-preview__grid-2">
-                            {localBuild.moves.map((move, index) => {
-                                const statKey = move.attr ? move.attr.toLowerCase() : 'str';
-                                const skillKey = move.skill ? move.skill.toLowerCase() : 'brawl';
-                                const isCombatStat = Object.values(CombatStat).includes(statKey as CombatStat);
-                                const baseAttrVal = isCombatStat
-                                    ? getSpeciesBaseStat(statKey, statKey === 'ins' ? 1 : 2)
-                                    : Number(
-                                          baseSocials[statKey as SocialStat]?.base || (statKey === 'will' ? willMax : 1)
-                                      );
-                                const allocatedAttrVal = localBuild.attr[statKey] || localBuild.soc[statKey] || 0;
-                                const baseSkillVal = Number(baseSkills[skillKey as Skill]?.base || 0);
-                                const allocatedSkillVal = localBuild.skills[skillKey] || 0;
-                                const accuracyPool = baseAttrVal + allocatedAttrVal + baseSkillVal + allocatedSkillVal;
-
-                                const damageStatistic = move.dmgStat ? move.dmgStat.toLowerCase() : '';
-                                let damagePool: string | number = 'N/A';
-                                if (damageStatistic) {
-                                    const baseDmgAttr = getSpeciesBaseStat(
-                                        damageStatistic,
-                                        damageStatistic === 'ins' ? 1 : 2
-                                    );
-                                    const allocatedDmgAttr = localBuild.attr[damageStatistic] || 0;
-                                    damagePool = baseDmgAttr + allocatedDmgAttr + (move.power || 0);
-                                }
-
-                                return (
-                                    <GeneratorPreviewMoveRow
-                                        key={index}
-                                        move={move}
-                                        accuracyPool={accuracyPool}
-                                        damagePool={damagePool}
-                                        onOpenTooltip={setTooltipInfo}
-                                    />
-                                );
-                            })}
-                        </div>
-                    </div>
+                            ) : undefined
+                        }
+                    />
                 </div>
 
                 {/* Footer Controls */}
