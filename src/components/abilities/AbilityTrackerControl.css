@@ -1,0 +1,66 @@
+.ability-tracker {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: var(--panel-alt, rgba(0, 0, 0, 0.2));
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    margin-top: 4px;
+    transition: all 0.2s ease;
+}
+
+.ability-tracker--active {
+    border-color: var(--primary, #3b82f6);
+    background: rgba(59, 130, 246, 0.08);
+}
+
+.ability-tracker__toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+    min-width: 0;
+}
+
+.ability-tracker__checkbox {
+    cursor: pointer;
+    margin: 0;
+    accent-color: var(--primary, #3b82f6);
+}
+
+.ability-tracker__icon {
+    color: var(--primary, #3b82f6);
+    flex-shrink: 0;
+}
+
+.ability-tracker__name {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ability-tracker__benefit {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--primary, #3b82f6);
+    color: #ffffff;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+}
+
+.ability-tracker__btn-menu {
+    padding: 3px 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}

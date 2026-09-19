@@ -73,6 +73,8 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
     useCharacterStore((state) => state.identity.rank);
     const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
     const ability = useCharacterStore((state) => state.identity.ability);
+    useCharacterStore((state) => state.identity.abilityActive);
+    useCharacterStore((state) => state.identity.abilityTags);
 
     useCharacterStore((state) => state.trackers.firstHitDmg);
     useCharacterStore((state) => state.trackers.firstHitAcc);

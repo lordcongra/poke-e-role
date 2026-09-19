@@ -27,6 +27,8 @@ export function SkillsTable() {
     const inventory = useCharacterStore((state) => state.inventory);
     const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
     const ability = useCharacterStore((state) => state.identity.ability);
+    useCharacterStore((state) => state.identity.abilityActive);
+    useCharacterStore((state) => state.identity.abilityTags);
 
     const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
 

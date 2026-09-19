@@ -302,17 +302,36 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
     const abilityListStr = String(meta['ability-list'] || '');
     const loadedAbilities = abilityListStr ? abilityListStr.split(',') : [];
 
-    return {
-        ...state.identity,
-        nickname: String(meta['nickname'] || ''),
-        species: String(meta['species'] || ''),
-        nature: String(meta['nature'] || ''),
-        rank: (meta['rank'] as Rank) || 'Starter',
+        const loadedRank = (meta['rank'] as Rank) || 'Starter';
+        const loadedAbility = String(meta['ability'] || '');
+        let loadedTags = String(meta['ability-tags'] || '');
+        const cleanLoadedAbility = loadedAbility.replace(/\s*\(HA\)$/i, '').trim();
+        if (cleanLoadedAbility === 'Huge Power' || cleanLoadedAbility === 'Pure Power') {
+            const cleanRank = String(loadedRank).toLowerCase().trim();
+            const isHigh = cleanRank === 'expert' || cleanRank === 'ace' || cleanRank === 'master' || cleanRank === 'champion';
+            if (!isHigh && loadedTags.includes('[Str +2]')) {
+                loadedTags = loadedTags.replace(/\[Str \+2\]/g, '[Str +1]');
+            } else if (isHigh && loadedTags.includes('[Str +1]')) {
+                loadedTags = loadedTags.replace(/\[Str \+1\]/g, '[Str +2]');
+            }
+        }
 
-        type1: String(meta['type1'] || meta['Type1'] || ''),
-        type2: String(meta['type2'] || meta['Type2'] || ''),
+        return {
+            ...state.identity,
+            nickname: String(meta['nickname'] || ''),
+            species: String(meta['species'] || ''),
+            nature: String(meta['nature'] || ''),
+            rank: loadedRank,
 
-        ability: String(meta['ability'] || ''),
+            type1: String(meta['type1'] || meta['Type1'] || ''),
+            type2: String(meta['type2'] || meta['Type2'] || ''),
+
+            ability: loadedAbility,
+            abilityActive:
+                meta['ability-active'] === undefined
+                    ? true
+                    : meta['ability-active'] === true || meta['ability-active'] === 'true',
+            abilityTags: loadedTags,
         availableAbilities: loadedAbilities,
         mode: String(meta['mode'] || 'Pokémon'),
         age: String(meta['age'] || ''),
@@ -485,6 +504,9 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (state.identity.species !== undefined) flatMetadata['species'] = state.identity.species;
             if (state.identity.nature !== undefined) flatMetadata['nature'] = state.identity.nature;
             if (state.identity.ability !== undefined) flatMetadata['ability'] = state.identity.ability;
+            if (state.identity.abilityActive !== undefined)
+                flatMetadata['ability-active'] = state.identity.abilityActive;
+            if (state.identity.abilityTags !== undefined) flatMetadata['ability-tags'] = state.identity.abilityTags;
             if (state.identity.availableAbilities !== undefined)
                 flatMetadata['ability-list'] = state.identity.availableAbilities.join(',');
             if (state.identity.type1 !== undefined) flatMetadata['type1'] = state.identity.type1;

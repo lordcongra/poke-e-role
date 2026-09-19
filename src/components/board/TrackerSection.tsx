@@ -18,6 +18,8 @@ import { TakeChancesModal } from '../modals/combat/TakeChancesModal';
 import { ClashModal } from '../modals/combat/ClashModal';
 import { RestModal } from '../modals/combat/RestModal';
 import { Dices, RotateCcw, Tent, XCircle } from 'lucide-react';
+import { AbilityTrackerControl } from '../abilities/AbilityTrackerControl';
+import { getAbilityBenefitSummary } from '../../data/abilities/knownAbilities';
 import './TrackerSection.css';
 
 const ICON_SHADOW = 'drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8)) drop-shadow(0 1px 4px rgba(0, 0, 0, 0.6))';
@@ -26,6 +28,11 @@ export function TrackerSection() {
     const trackers = useCharacterStore((state) => state.trackers);
     const updateTracker = useCharacterStore((state) => state.updateTracker);
     const resetRound = useCharacterStore((state) => state.resetRound);
+
+    const abilityName = useCharacterStore((state) => state.identity.ability);
+    const abilityActive = useCharacterStore((state) => state.identity.abilityActive ?? true);
+    const abilityTags = useCharacterStore((state) => state.identity.abilityTags || '');
+    const rank = useCharacterStore((state) => state.identity.rank);
 
     const activeTransformation = useCharacterStore((state) => state.identity.activeTransformation);
     const isMaxed = activeTransformation === 'Dynamax' || activeTransformation === 'Gigantamax';
@@ -254,6 +261,12 @@ export function TrackerSection() {
     addStatCondition('DEF', derived.defBuff, derived.defDebuff);
     addStatCondition('S.DEF', derived.sdefBuff, derived.sdefDebuff);
 
+    if (abilityName && abilityActive) {
+        const benefit = getAbilityBenefitSummary(abilityName, abilityTags, rank);
+        const abilityLabel = benefit ? `Ability: ${abilityName} (${benefit})` : `Ability: ${abilityName}`;
+        conditions.push({ id: 'active-ability', label: abilityLabel, bg: '#2563eb', text: '#fff' });
+    }
+
     return (
         <CollapsingSection title="ROUND TRACKER" className="sheet-panel tracker-section">
             <div className="tracker-section__horizontal-wrapper">
@@ -397,6 +410,8 @@ export function TrackerSection() {
                             </label>
                         </div>
                     </div>
+
+                    <AbilityTrackerControl />
 
                     <div className="tracker-section__reset-rest-row">
                         <button

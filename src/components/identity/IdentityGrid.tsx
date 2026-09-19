@@ -8,7 +8,8 @@ import { CustomInfoRow } from '../ui/CustomInfoRow';
 import { SpeciesSelector } from './SpeciesSelector';
 import { StandaloneAvatar } from '../standalone/StandaloneAvatar';
 import { isStandaloneMode } from '../../utils/storageAdapter';
-import { Plus, AlertTriangle, XCircle } from 'lucide-react';
+import { Plus, AlertTriangle, XCircle, Tag } from 'lucide-react';
+import { TagBuilderModal } from '../modals/items/TagBuilderModal';
 
 interface IdentityGridProps {
     onOpenAbility: () => void;
@@ -46,6 +47,7 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex, onOpe
     const [speciesList, setSpeciesList] = useState<string[]>([]);
     const [deleteCustomInfoId, setDeleteCustomInfoId] = useState<string | null>(null);
     const [slotTooltipInfo, setSlotTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
+    const [showAbilityTagBuilder, setShowAbilityTagBuilder] = useState(false);
 
     useEffect(() => {
         loadLocalDataset()
@@ -174,14 +176,26 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex, onOpe
                     <span className="identity-grid__label text-label">
                         Ability <TooltipIcon onClick={onOpenAbility} />
                     </span>
-                    <input
-                        type="text"
-                        list="ability-datalist"
-                        className="identity-grid__input text-label"
-                        value={identityStore.ability || ''}
-                        onChange={(event) => setIdentity('ability', event.target.value)}
-                        placeholder="Type or select..."
-                    />
+                    <div style={{ display: 'flex', gap: '4px', width: '100%' }}>
+                        <input
+                            type="text"
+                            list="ability-datalist"
+                            className="identity-grid__input text-label"
+                            value={identityStore.ability || ''}
+                            onChange={(event) => setIdentity('ability', event.target.value)}
+                            placeholder="Type or select..."
+                            style={{ flex: 1 }}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowAbilityTagBuilder(true)}
+                            className="action-button action-button--dark"
+                            style={{ padding: '0 6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            title="Configure Smart Tags for Ability"
+                        >
+                            <Tag size={13} />
+                        </button>
+                    </div>
                     <datalist id="ability-datalist">
                         {uniqueAbilities.map((ability) => (
                             <option key={ability} value={ability} />
@@ -406,6 +420,14 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex, onOpe
                         </div>
                     </div>
                 </div>
+            )}
+
+            {showAbilityTagBuilder && (
+                <TagBuilderModal
+                    targetId="ability"
+                    targetType="ability"
+                    onClose={() => setShowAbilityTagBuilder(false)}
+                />
             )}
         </>
     );

@@ -215,7 +215,7 @@
     border-radius: 6px;
     max-width: 300px;
     width: 90%;
-    border: 2px solid var(--semantic-danger);
+    border: 2px solid var(--primary);
     box-shadow: 0 4px 15px color-mix(in srgb, var(--dark) 50%, transparent);
     text-align: center;
 }
@@ -225,7 +225,7 @@
 }
 
 .identity-header__modal-title {
-    color: var(--semantic-danger);
+    color: var(--primary);
 }
 
 .identity-header__modal-text {

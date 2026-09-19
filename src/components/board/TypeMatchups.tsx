@@ -24,6 +24,8 @@ export function TypeMatchups() {
     const inventory = useCharacterStore((state) => state.inventory);
     const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
     const abilityName = useCharacterStore((state) => state.identity.ability);
+    const abilityActive = useCharacterStore((state) => state.identity.abilityActive);
+    const abilityTags = useCharacterStore((state) => state.identity.abilityTags);
 
     if (!type1 && !type2) {
         return (
@@ -46,6 +48,10 @@ export function TypeMatchups() {
 
     if (abilityText) {
         stringsToParse.push(abilityText.toLowerCase());
+    }
+
+    if (abilityActive !== false && abilityTags) {
+        stringsToParse.push(abilityTags.toLowerCase());
     }
 
     if (activeTransformation === 'Custom' && activeFormId) {

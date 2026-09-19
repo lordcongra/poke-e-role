@@ -23,6 +23,8 @@ export function CoreTable() {
     const extraCategories = useCharacterStore((state) => state.extraCategories);
     const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
     const ability = useCharacterStore((state) => state.identity.ability);
+    useCharacterStore((state) => state.identity.abilityActive);
+    useCharacterStore((state) => state.identity.abilityTags);
 
     const currentRank = useCharacterStore((state) => state.identity.rank);
     const currentAge = useCharacterStore((state) => state.identity.age);

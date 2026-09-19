@@ -352,6 +352,8 @@ export interface IdentitySlice {
         type1: string;
         type2: string;
         ability: string;
+        abilityActive?: boolean;
+        abilityTags?: string;
         availableAbilities: string[];
         mode: string;
         age: string;

@@ -384,7 +384,7 @@ export function IdentityHeader() {
                                 Close
                             </button>
                             <button
-                                className="action-button identity-header__modal-btn identity-header__modal-btn--broadcast"
+                                className="action-button action-button--secondary identity-header__modal-btn"
                                 onClick={() => {
                                     if (typeof modalConfig.content === 'string') {
                                         broadcastInfo(modalConfig.title, modalConfig.content);
@@ -392,7 +392,7 @@ export function IdentityHeader() {
                                     }
                                 }}
                             >
-                                <Radio size={16} /> Broadcast
+                                <Radio size={16} style={{ filter: ICON_SHADOW }} /> Broadcast
                             </button>
                         </div>
                     </div>

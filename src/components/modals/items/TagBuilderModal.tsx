@@ -8,6 +8,7 @@ import './TagBuilderModal.css';
 interface TagBuilderModalProps {
     targetId: string;
     targetType:
+        | 'ability'
         | 'item'
         | 'move'
         | 'homebrew_ability'
@@ -19,6 +20,8 @@ interface TagBuilderModalProps {
 }
 
 export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderModalProps) {
+    const setIdentity = useCharacterStore((state) => state.setIdentity);
+    const identityAbilityTags = useCharacterStore((state) => state.identity.abilityTags);
     const updateInventoryItem = useCharacterStore((state) => state.updateInventoryItem);
     const updateMove = useCharacterStore((state) => state.updateMove);
     const updateCustomAbility = useCharacterStore((state) => state.updateCustomAbility);
@@ -250,7 +253,10 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                 tag = tag.replace(']', ' @ Half HP]');
             }
 
-            if (targetType === 'move') {
+            if (targetType === 'ability') {
+                const currentTags = identityAbilityTags || '';
+                setIdentity('abilityTags', currentTags ? `${currentTags} ${tag}`.trim() : tag);
+            } else if (targetType === 'move') {
                 const move = moves.find((m) => m.id === targetId);
                 if (move) updateMove(targetId, 'desc', move.desc ? `${move.desc} ${tag}`.trim() : tag);
             } else if (targetType === 'homebrew_move') {

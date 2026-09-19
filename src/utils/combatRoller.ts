@@ -193,6 +193,8 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     }
 
     if (itemBuffs.accItemNames.length > 0) tags.push(`Item: ${itemBuffs.accItemNames.join(', ')}`);
+    if (itemBuffs.accAbilityNames && itemBuffs.accAbilityNames.length > 0)
+        tags.push(`Ability: ${itemBuffs.accAbilityNames.join(', ')}`);
 
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';
 
@@ -364,6 +366,8 @@ export async function executeDamageRoll(
     }
 
     if (itemBuffs.dmgItemNames.length > 0) tags.push(`Item: ${itemBuffs.dmgItemNames.join(', ')}`);
+    if (itemBuffs.dmgAbilityNames && itemBuffs.dmgAbilityNames.length > 0)
+        tags.push(`Ability: ${itemBuffs.dmgAbilityNames.join(', ')}`);
 
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';
     const mathModifier = finalFlatMod !== 0 ? (finalFlatMod > 0 ? `+${finalFlatMod}` : `${finalFlatMod}`) : '';

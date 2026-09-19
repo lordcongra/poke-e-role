@@ -34,6 +34,9 @@ export interface CombatBonuses {
     itemNames: string[];
     accItemNames: string[];
     dmgItemNames: string[];
+    abilityNames: string[];
+    accAbilityNames: string[];
+    dmgAbilityNames: string[];
 }
 
 interface TagTriggers {
@@ -191,6 +194,14 @@ function extractDamage(
         } else if (requirement === 'super effective') {
             bonuses.seDmg += safeParseInt(match[1]);
             triggers.damage = true;
+        } else if (requirement === 'stab') {
+            const state = useCharacterStore.getState();
+            const p1 = (state.identity.type1 || '').toLowerCase();
+            const p2 = (state.identity.type2 || '').toLowerCase();
+            if (moveType && (moveType === p1 || moveType === p2)) {
+                bonuses.dmg += safeParseInt(match[1]);
+                triggers.damage = true;
+            }
         } else if (move && requirement === 'physical' && move.category === 'Physical') {
             bonuses.dmg += safeParseInt(match[1]);
             triggers.damage = true;
@@ -485,7 +496,10 @@ export function parseCombatTags(
         accFaceAddsDmgLimit: 0,
         itemNames: [],
         accItemNames: [],
-        dmgItemNames: []
+        dmgItemNames: [],
+        abilityNames: [],
+        accAbilityNames: [],
+        dmgAbilityNames: []
     };
 
     const state = useCharacterStore.getState();
@@ -515,6 +529,22 @@ export function parseCombatTags(
 
     if (abilityText) {
         itemsToParse.push({ name: 'Ability', desc: abilityText });
+    }
+
+    if (state.identity.abilityActive !== false && state.identity.abilityTags) {
+        let desc = state.identity.abilityTags;
+        const cleanAbility = (state.identity.ability || '').replace(/\s*\(HA\)$/i, '').trim();
+        if (cleanAbility === 'Huge Power' || cleanAbility === 'Pure Power') {
+            const rank = (state.identity.rank || 'Starter').toLowerCase().trim();
+            const isHigh = rank === 'expert' || rank === 'ace' || rank === 'master' || rank === 'champion';
+            if (!isHigh && desc.includes('[Str +2]')) {
+                desc = desc.replace(/\[Str \+2\]/g, '[Str +1]');
+            } else if (isHigh && desc.includes('[Str +1]')) {
+                desc = desc.replace(/\[Str \+1\]/g, '[Str +2]');
+            }
+        }
+        const abilityDisplayName = state.identity.ability ? `Ability: ${state.identity.ability}` : 'Ability';
+        itemsToParse.push({ name: abilityDisplayName, desc });
     }
 
     if (move && move.desc) {
@@ -562,7 +592,12 @@ export function parseCombatTags(
         extractRoundEffects(description, bonuses, triggers, isHalfHp);
         extractMechanics(description, moveType, move, bonuses, triggers, isHalfHp);
 
-        if (name && name !== 'Ability' && name !== 'Move' && name !== 'Active Form') {
+        if (name.startsWith('Ability:')) {
+            const cleanAbilityName = name.replace('Ability:', '').trim();
+            if (triggers.general || triggers.accuracy || triggers.damage) bonuses.abilityNames.push(cleanAbilityName);
+            if (triggers.general || triggers.accuracy) bonuses.accAbilityNames.push(cleanAbilityName);
+            if (triggers.general || triggers.damage) bonuses.dmgAbilityNames.push(cleanAbilityName);
+        } else if (name && name !== 'Ability' && name !== 'Move' && name !== 'Active Form') {
             if (triggers.general || triggers.accuracy || triggers.damage) bonuses.itemNames.push(name);
             if (triggers.general || triggers.accuracy) bonuses.accItemNames.push(name);
             if (triggers.general || triggers.damage) bonuses.dmgItemNames.push(name);

@@ -5,6 +5,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import { syncHealthAndWill } from '../../utils/macroHelpers';
 
 import { isStandaloneMode } from '../../utils/storageAdapter';
+import { getKnownAbility } from '../../data/abilities/knownAbilities';
 
 const EXCLUDED_FROM_TOKEN_SAVE = new Set([
     'printConfig',
@@ -23,6 +24,8 @@ const EXCLUDED_FROM_TOKEN_SAVE = new Set([
 ]);
 
 const OBR_KEY_MAP: Record<string, string> = {
+    abilityActive: 'ability-active',
+    abilityTags: 'ability-tags',
     showTrackers: 'show-trackers',
     isNPC: 'is-npc',
     rolls: 'rolls',
@@ -148,6 +151,8 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         type1: '',
         type2: '',
         ability: '',
+        abilityActive: true,
+        abilityTags: '',
         availableAbilities: [],
         mode: 'Pokémon',
         age: '',
@@ -334,8 +339,34 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
             const newHealth = { ...state.health };
             const newWill = { ...state.will };
 
+            if (field === 'ability') {
+                const cleanAbilityName = String(value).replace(/\s*\(HA\)$/i, '').trim();
+                const known = getKnownAbility(cleanAbilityName, newIdentity.rank);
+                if (known) {
+                    newIdentity.abilityTags = known.tags;
+                    newIdentity.abilityActive = known.autoActive ?? true;
+                    updatesToSave['ability-tags'] = known.tags;
+                    updatesToSave['ability-active'] = newIdentity.abilityActive;
+                } else if (!cleanAbilityName) {
+                    newIdentity.abilityTags = '';
+                    newIdentity.abilityActive = true;
+                    updatesToSave['ability-tags'] = '';
+                    updatesToSave['ability-active'] = true;
+                }
+            }
+
             if (field === 'ruleset' || field === 'rank') {
                 syncHealthAndWill(state, state.stats, newIdentity, newHealth, newWill, updatesToSave);
+                if (field === 'rank') {
+                    const cleanAbilityName = String(newIdentity.ability || '').replace(/\s*\(HA\)$/i, '').trim();
+                    if (cleanAbilityName === 'Huge Power' || cleanAbilityName === 'Pure Power') {
+                        const newKnown = getKnownAbility(cleanAbilityName, String(value));
+                        if (newKnown) {
+                            newIdentity.abilityTags = newKnown.tags;
+                            updatesToSave['ability-tags'] = newKnown.tags;
+                        }
+                    }
+                }
             }
 
             if (!EXCLUDED_FROM_TOKEN_SAVE.has(field as string)) {
