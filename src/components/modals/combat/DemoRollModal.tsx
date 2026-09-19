@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Clapperboard, CheckCircle, XCircle } from 'lucide-react';
-import { useCharacterStore } from '../../store/useCharacterStore';
+import { useCharacterStore } from '../../../store/useCharacterStore';
 import './DemoRollModal.css';
 
 export function DemoRollModal() {

@@ -11,7 +11,7 @@ import {
     parseCombatTags,
     getAbilityText
 } from '../../utils/combatUtils';
-import { MoveEditModal } from '../modals/MoveEditModal';
+import { MoveEditModal } from '../modals/moveLookup/MoveEditModal';
 import { POKEMON_TYPES, TYPE_COLORS } from '../../data/constants';
 import {
     Target,

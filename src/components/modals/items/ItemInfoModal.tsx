@@ -1,5 +1,5 @@
 import { Megaphone, XCircle } from 'lucide-react';
-import { broadcastInfo } from '../../utils/diceRoller';
+import { broadcastInfo } from '../../../utils/diceRoller';
 import './ItemInfoModal.css';
 
 interface ItemInfoModalProps {

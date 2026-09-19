@@ -8,7 +8,7 @@ import { setActiveTokenId, METADATA_ID } from '../../../utils/obr';
 import { buildTokenMetadataFromBuild } from '../../../utils/generatorUtils';
 import { calculateFormationOffsets } from '../../../utils/trainerTokenSpawner';
 import { buildGraphicsFromMeta, renderTokenGraphics } from '../../../utils/graphicsManager';
-import { PromptModal } from '../PromptModal';
+import { PromptModal } from '../settings/PromptModal';
 import { PokemonBuildPreview } from './PokemonBuildPreview';
 import './GeneratorPreviewModal.css';
 

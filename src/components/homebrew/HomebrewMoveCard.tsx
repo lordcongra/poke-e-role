@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomMove } from '../../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
-import { TagBuilderModal } from '../modals/TagBuilderModal';
+import { TagBuilderModal } from '../modals/items/TagBuilderModal';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { ChevronDown, Tag, Copy, X, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';

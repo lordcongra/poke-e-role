@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { RefreshCw, Move, RotateCcw, AlertTriangle, XCircle, CheckCircle } from 'lucide-react';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import { STATS_META_ID } from '../../utils/graphicsManager';
-import { NumberSpinner } from '../ui/NumberSpinner';
+import { useCharacterStore } from '../../../store/useCharacterStore';
+import { STATS_META_ID } from '../../../utils/graphicsManager';
+import { NumberSpinner } from '../../ui/NumberSpinner';
 
 interface TrackerBadgeColorsProps {
     onOpenPlacementModal: () => void;

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { TrainerBadgeRow } from './TrainerBadgeRow';
-import { BadgeImageModal } from '../modals/BadgeImageModal';
+import { BadgeImageModal } from '../modals/species/BadgeImageModal';
 import { imageManager } from '../../utils/imageManager';
 import type { Badge } from '../../store/entityTypes';
 import { Plus, Trash2, XCircle, AlertTriangle } from 'lucide-react';

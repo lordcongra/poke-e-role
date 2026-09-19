@@ -14,9 +14,9 @@ import { STATUS_COLORS } from '../../data/constants';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { NumberSpinner } from '../ui/NumberSpinner';
-import { TakeChancesModal } from '../modals/TakeChancesModal';
-import { ClashModal } from '../modals/ClashModal';
-import { RestModal } from '../modals/RestModal';
+import { TakeChancesModal } from '../modals/combat/TakeChancesModal';
+import { ClashModal } from '../modals/combat/ClashModal';
+import { RestModal } from '../modals/combat/RestModal';
 import { Dices, RotateCcw, Tent, XCircle } from 'lucide-react';
 import './TrackerSection.css';
 

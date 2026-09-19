@@ -6,9 +6,9 @@ import { fetchPokemonData, fetchAbilityData, fetchNatureData, fetchMoveData, loa
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { IdentityGrid } from './IdentityGrid';
 import { IdentityControls } from './IdentityControls';
-import { TrackerSettingsModal } from '../modals/TrackerSettingsModal';
-import { PokedexModal } from '../modals/PokedexModal';
-import { TransformationModal } from '../modals/TransformationModal';
+import { TrackerSettingsModal } from '../modals/trackers/TrackerSettingsModal';
+import { PokedexModal } from '../modals/species/PokedexModal';
+import { TransformationModal } from '../modals/species/TransformationModal';
 import { broadcastInfo } from '../../utils/diceRoller';
 import { isStandaloneMode } from '../../utils/storageAdapter';
 import { imageManager, autoCropTransparency } from '../../utils/imageManager';

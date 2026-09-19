@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import { Shield, Copy, Megaphone, Check } from 'lucide-react';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import { POKEMON_TYPES, TYPE_COLORS } from '../../data/constants';
-import { getMatchupGroups } from '../../utils/typeMatchupLogic';
-import { broadcastInfo } from '../../utils/diceRoller';
+import { useCharacterStore } from '../../../store/useCharacterStore';
+import { POKEMON_TYPES, TYPE_COLORS } from '../../../data/constants';
+import { getMatchupGroups } from '../../../utils/typeMatchupLogic';
+import { broadcastInfo } from '../../../utils/diceRoller';
 import './GmScreenTypeMatrix.css';
 
 export function GmScreenTypeMatrix() {

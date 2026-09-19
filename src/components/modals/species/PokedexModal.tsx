@@ -1,6 +1,6 @@
 import { Book, X, Megaphone, XCircle } from 'lucide-react';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import { broadcastInfo } from '../../utils/diceRoller';
+import { useCharacterStore } from '../../../store/useCharacterStore';
+import { broadcastInfo } from '../../../utils/diceRoller';
 import './PokedexModal.css';
 
 interface PokedexModalProps {

@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import OBR, { type ImageDownload } from '@owlbear-rodeo/sdk';
-import type { Badge } from '../../store/entityTypes';
-import { isStandaloneMode } from '../../utils/storageAdapter';
-import { imageManager, autoCropTransparency } from '../../utils/imageManager';
+import type { Badge } from '../../../store/entityTypes';
+import { isStandaloneMode } from '../../../utils/storageAdapter';
+import { imageManager, autoCropTransparency } from '../../../utils/imageManager';
 import { Image as ImageIcon, Upload, Globe, Trash2, XCircle } from 'lucide-react';
 import './BadgeImageModal.css';
 

@@ -11,14 +11,14 @@ import {
     getAbilityText,
     calculateStatTotal
 } from '../../utils/combatUtils';
-import { TargetingModal } from '../modals/TargetingModal';
+import { TargetingModal } from '../modals/combat/TargetingModal';
 import { MoveCard } from './MoveCard';
 import { MoveRow } from './MoveRow';
 import { CollapsingSection } from '../ui/CollapsingSection';
-import { GlobalModifiersModal } from '../modals/GlobalModifiersModal';
+import { GlobalModifiersModal } from '../modals/combat/GlobalModifiersModal';
 import { MovesTableModifiers } from './MovesTableModifiers';
 import { MovesTableLearnset } from './MovesTableLearnset';
-import { DualScaleModal } from '../modals/DualScaleModal';
+import { DualScaleModal } from '../modals/combat/DualScaleModal';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { Plus, AlertTriangle, Trash2, XCircle, Check } from 'lucide-react';
 import './MovesTable.css';

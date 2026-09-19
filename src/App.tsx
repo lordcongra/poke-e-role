@@ -13,7 +13,7 @@ import { InventoryTable } from './components/tables/InventoryTable';
 import { TrackerSection } from './components/board/TrackerSection';
 import { TrainerBadges } from './components/board/TrainerBadges';
 import { PrintSheet } from './components/print/PrintSheet';
-import { DemoRollModal } from './components/modals/DemoRollModal';
+import { DemoRollModal } from './components/modals/combat/DemoRollModal';
 import { GlobalToolbar } from './components/ui/GlobalToolbar';
 import { Sidebar } from './components/standalone/Sidebar';
 import { InitiativeTracker } from './components/initiative/InitiativeTracker';

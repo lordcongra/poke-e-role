@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { Target, XCircle, Swords } from 'lucide-react';
-import type { MoveData } from '../../store/storeTypes';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import { STATS_META_ID } from '../../utils/graphicsManager';
-import { calculateTargetDefensesFromMeta } from '../../utils/combatUtils';
-import { isStandaloneMode, storageAdapter } from '../../utils/storageAdapter';
-import { TooltipIcon } from '../ui/TooltipIcon';
+import type { MoveData } from '../../../store/storeTypes';
+import { useCharacterStore } from '../../../store/useCharacterStore';
+import { STATS_META_ID } from '../../../utils/graphicsManager';
+import { calculateTargetDefensesFromMeta } from '../../../utils/combatUtils';
+import { isStandaloneMode, storageAdapter } from '../../../utils/storageAdapter';
+import { TooltipIcon } from '../../ui/TooltipIcon';
 import './TargetingModal.css';
 
 interface TargetingModalProps {

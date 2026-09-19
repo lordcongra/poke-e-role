@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BookOpen, Swords } from 'lucide-react';
-import { PokemonLookupTab } from './pokemonLookup/PokemonLookupTab';
-import { MoveLookupTab } from './moveLookup/MoveLookupTab';
+import { PokemonLookupTab } from '../pokemonLookup/PokemonLookupTab';
+import { MoveLookupTab } from '../moveLookup/MoveLookupTab';
 import './GmPokemonLookup.css';
 
 export function GmPokemonLookup() {

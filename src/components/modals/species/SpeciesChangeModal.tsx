@@ -1,5 +1,5 @@
 import { Dna, Sparkles, AlertTriangle, XCircle } from 'lucide-react';
-import { useCharacterStore } from '../../store/useCharacterStore';
+import { useCharacterStore } from '../../../store/useCharacterStore';
 import './SpeciesChangeModal.css';
 
 interface SpeciesChangeModalProps {

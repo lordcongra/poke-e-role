@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Calculator, Copy, Megaphone, Check } from 'lucide-react';
-import { CATCH_BALLS_TABLE, CATCH_RANKS_TABLE } from '../../data/gmScreenData';
-import { broadcastInfo } from '../../utils/diceRoller';
+import { CATCH_BALLS_TABLE, CATCH_RANKS_TABLE } from '../../../data/gmScreenData';
+import { broadcastInfo } from '../../../utils/diceRoller';
 import './GmScreenCatchCalculator.css';
 
 export function GmScreenCatchCalculator() {

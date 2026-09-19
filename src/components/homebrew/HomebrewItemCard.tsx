@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomItem } from '../../store/storeTypes';
-import { TagBuilderModal } from '../modals/TagBuilderModal';
+import { TagBuilderModal } from '../modals/items/TagBuilderModal';
 import { ChevronDown, Tag, Copy, X, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 import './HomebrewItemCard.css';

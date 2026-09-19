@@ -1,7 +1,7 @@
 import { Settings, X } from 'lucide-react';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import { NumberSpinner } from '../ui/NumberSpinner';
-import { isStandaloneMode } from '../../utils/storageAdapter';
+import { useCharacterStore } from '../../../store/useCharacterStore';
+import { NumberSpinner } from '../../ui/NumberSpinner';
+import { isStandaloneMode } from '../../../utils/storageAdapter';
 import './InitiativeSettingsModal.css';
 
 export function InitiativeSettingsModal({ onClose }: { onClose: () => void }) {

@@ -1,5 +1,5 @@
 import { Tent, XCircle } from 'lucide-react';
-import { useCharacterStore } from '../../store/useCharacterStore';
+import { useCharacterStore } from '../../../store/useCharacterStore';
 import './RestModal.css';
 
 interface RestModalProps {

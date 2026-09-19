@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useCharacterStore } from '../../store/useCharacterStore';
+import { useCharacterStore } from '../../../store/useCharacterStore';
 import { Eye, Type, Save, Trash2, XCircle, X } from 'lucide-react';
 import './AccessibilityModal.css';
 

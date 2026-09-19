@@ -1,6 +1,6 @@
 import { Move, CheckCircle, RotateCcw } from 'lucide-react';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import { NumberSpinner } from '../ui/NumberSpinner';
+import { useCharacterStore } from '../../../store/useCharacterStore';
+import { NumberSpinner } from '../../ui/NumberSpinner';
 
 interface TrackerPlacementModalProps {
     onClose: () => void;

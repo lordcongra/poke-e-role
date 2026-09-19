@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { BookOpen } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { BookOpen, Check } from 'lucide-react';
+import { useCharacterStore } from '../../store/useCharacterStore';
+import { MoveDetailModal } from '../modals/moveLookup/MoveDetailModal';
 
 interface MovesTableLearnsetProps {
     learnset: Array<{ Learned: string; Name: string }>;
@@ -7,6 +9,13 @@ interface MovesTableLearnsetProps {
 
 export function MovesTableLearnset({ learnset }: MovesTableLearnsetProps) {
     const [showLearnset, setShowLearnset] = useState(false);
+    const [selectedMoveName, setSelectedMoveName] = useState<string | null>(null);
+
+    const characterMoves = useCharacterStore((state) => state.moves);
+    const learnedSet = useMemo(
+        () => new Set(characterMoves.map((m) => m.name.toLowerCase().trim()).filter(Boolean)),
+        [characterMoves]
+    );
 
     if (learnset.length === 0) return null;
 
@@ -52,16 +61,36 @@ export function MovesTableLearnset({ learnset }: MovesTableLearnsetProps) {
                                 {rank}
                             </div>
                             <div className="moves-table__learnset-moves-list">
-                                {groupedLearnset[rank].map((moveName, index) => (
-                                    <span key={index} className="moves-table__learnset-pill text-subtext">
-                                        {moveName}
-                                    </span>
-                                ))}
+                                {groupedLearnset[rank].map((moveName, index) => {
+                                    const isLearned = learnedSet.has(moveName.toLowerCase().trim());
+                                    return (
+                                        <button
+                                            key={`${rank}-${moveName}-${index}`}
+                                            type="button"
+                                            onClick={() => setSelectedMoveName(moveName)}
+                                            className={`moves-table__learnset-pill text-subtext ${
+                                                isLearned ? 'moves-table__learnset-pill--learned' : ''
+                                            }`}
+                                            title={isLearned ? `${moveName} (Learned) - Click to view details` : `Click to view ${moveName} details`}
+                                        >
+                                            {isLearned && <Check size={11} className="moves-table__learnset-pill-icon" />}
+                                            <span>{moveName}</span>
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
                     ))}
                 </div>
             )}
+
+            {selectedMoveName && (
+                <MoveDetailModal
+                    moveName={selectedMoveName}
+                    onClose={() => setSelectedMoveName(null)}
+                />
+            )}
         </div>
     );
 }
+

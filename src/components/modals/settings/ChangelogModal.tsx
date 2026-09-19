@@ -1,5 +1,5 @@
 import { Megaphone, X, PartyPopper } from 'lucide-react';
-import { CHANGELOG_DATA, CURRENT_VERSION } from '../../data/changelog';
+import { CHANGELOG_DATA, CURRENT_VERSION } from '../../../data/changelog';
 import './ChangelogModal.css';
 
 interface ChangelogModalProps {

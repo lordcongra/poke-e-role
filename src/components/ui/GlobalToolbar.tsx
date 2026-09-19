@@ -14,15 +14,15 @@ import type { CharacterState } from '../../store/storeTypes';
 
 // Modals
 import { HomebrewModal } from '../homebrew/HomebrewModal';
-import { RulesModal } from '../modals/RulesModal';
+import { RulesModal } from '../modals/settings/RulesModal';
 import { ItemGeneratorModal } from '../modals/itemGenerator';
-import { ChangelogModal } from '../modals/ChangelogModal';
-import { InitiativeSettingsModal } from '../modals/InitiativeSettingsModal';
+import { ChangelogModal } from '../modals/settings/ChangelogModal';
+import { InitiativeSettingsModal } from '../modals/trackers/InitiativeSettingsModal';
 import { GeneratorModal } from '../modals/pokemonGenerator';
-import { PrintSettingsModal } from '../modals/PrintSettingsModal';
-import { ThemeSettingsModal } from '../modals/ThemeSettingsModal';
-import { AccessibilityModal } from '../modals/AccessibilityModal';
-import { GmScreenModal } from '../modals/GmScreenModal';
+import { PrintSettingsModal } from '../modals/settings/PrintSettingsModal';
+import { ThemeSettingsModal } from '../modals/settings/ThemeSettingsModal';
+import { AccessibilityModal } from '../modals/settings/AccessibilityModal';
+import { GmScreenModal } from '../modals/gmScreen/GmScreenModal';
 import { BattleOrganizerModal } from '../modals/battleOrganizer/BattleOrganizerModal';
 import { BattleOrganizerSettingsModal } from '../modals/battleOrganizer/BattleOrganizerSettingsModal';
 import { getBattleOrganizerSettings } from '../modals/battleOrganizer/battleOrganizerSettingsHelper';

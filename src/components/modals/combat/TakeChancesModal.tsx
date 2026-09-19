@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Clover, Dices, XCircle } from 'lucide-react';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import { rollDicePlus } from '../../utils/combatUtils';
-import { NumberSpinner } from '../ui/NumberSpinner';
+import { useCharacterStore } from '../../../store/useCharacterStore';
+import { rollDicePlus } from '../../../utils/combatUtils';
+import { NumberSpinner } from '../../ui/NumberSpinner';
 import './TakeChancesModal.css';
 
 interface TakeChancesModalProps {

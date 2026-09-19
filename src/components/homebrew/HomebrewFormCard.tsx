@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomForm } from '../../store/storeTypes';
 import { ALL_MOVES, ALL_SPECIES } from '../../utils/api';
-import { TagBuilderModal } from '../modals/TagBuilderModal';
+import { TagBuilderModal } from '../modals/items/TagBuilderModal';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { ChevronDown, Copy, X, Tag, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';

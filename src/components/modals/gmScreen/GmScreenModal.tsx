@@ -49,17 +49,17 @@ import {
     type RangerFieldAssist,
     type RangerPartnerBondLevel,
     type RangerDangerousBuff
-} from '../../data/gmScreenData';
-import { GmCombatCards } from './gmCards/GmCombatCards';
-import { GmStatusCards } from './gmCards/GmStatusCards';
-import { GmReferenceCards } from './gmCards/GmReferenceCards';
-import { GmHomebrewCards } from './gmCards/GmHomebrewCards';
-import { GmRangersCards } from './gmCards/GmRangersCards';
+} from '../../../data/gmScreenData';
+import { GmCombatCards } from '../gmCards/GmCombatCards';
+import { GmStatusCards } from '../gmCards/GmStatusCards';
+import { GmReferenceCards } from '../gmCards/GmReferenceCards';
+import { GmHomebrewCards } from '../gmCards/GmHomebrewCards';
+import { GmRangersCards } from '../gmCards/GmRangersCards';
 import { GmScreenCatchCalculator } from './GmScreenCatchCalculator';
 import { GmScreenTypeMatrix } from './GmScreenTypeMatrix';
 import { GmPokemonLookup } from './GmPokemonLookup';
-import { broadcastInfo } from '../../utils/diceRoller';
-import { getBaseShareUrl } from '../../utils/helper';
+import { broadcastInfo } from '../../../utils/diceRoller';
+import { getBaseShareUrl } from '../../../utils/helper';
 import './GmScreenModal.css';
 
 interface GmScreenModalProps {

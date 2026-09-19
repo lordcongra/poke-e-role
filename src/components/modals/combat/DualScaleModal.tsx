@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Scale, CheckCircle } from 'lucide-react';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import type { PendingDualScale } from '../../store/storeTypes';
+import { useCharacterStore } from '../../../store/useCharacterStore';
+import type { PendingDualScale } from '../../../store/storeTypes';
 import './DualScaleModal.css';
 
 interface DualScaleDialogProps {

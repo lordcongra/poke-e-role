@@ -1,4 +1,4 @@
-import { useCharacterStore } from '../../store/useCharacterStore';
+import { useCharacterStore } from '../../../store/useCharacterStore';
 
 export function TrackerVisibilityToggles() {
     const identityStore = useCharacterStore((state) => state.identity);

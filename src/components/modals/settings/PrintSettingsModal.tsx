@@ -1,5 +1,5 @@
 import { Printer, X } from 'lucide-react';
-import { useCharacterStore } from '../../store/useCharacterStore';
+import { useCharacterStore } from '../../../store/useCharacterStore';
 import './PrintSettingsModal.css';
 
 interface PrintSettingsModalProps {

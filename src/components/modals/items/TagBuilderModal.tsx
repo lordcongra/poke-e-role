@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Tag, XCircle } from 'lucide-react';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import { CombatStat, SocialStat, Skill } from '../../types/enums';
-import { POKEMON_TYPES } from '../../data/constants';
+import { useCharacterStore } from '../../../store/useCharacterStore';
+import { CombatStat, SocialStat, Skill } from '../../../types/enums';
+import { POKEMON_TYPES } from '../../../data/constants';
 import './TagBuilderModal.css';
 
 interface TagBuilderModalProps {

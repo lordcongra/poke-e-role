@@ -1,13 +1,13 @@
 import { Swords, Dumbbell, Sparkles, XCircle } from 'lucide-react';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import { CombatStat, Skill } from '../../types/enums';
+import { useCharacterStore } from '../../../store/useCharacterStore';
+import { CombatStat, Skill } from '../../../types/enums';
 import {
     rollGeneric,
     parseCombatTags,
     getAbilityText,
     calculateStatTotal,
     calculateSkillTotal
-} from '../../utils/combatUtils';
+} from '../../../utils/combatUtils';
 import './ClashModal.css';
 
 interface ClashModalProps {

@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { fetchItemData } from '../../utils/api';
 import { KNOWN_ITEMS } from '../../data/constants';
-import { TagBuilderModal } from '../modals/TagBuilderModal';
+import { TagBuilderModal } from '../modals/items/TagBuilderModal';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { InventoryItemRow } from './InventoryItemRow';
-import { ItemInfoModal } from '../modals/ItemInfoModal';
-import { SmartTagsGuideModal } from '../modals/SmartTagsGuideModal';
+import { ItemInfoModal } from '../modals/items/ItemInfoModal';
+import { SmartTagsGuideModal } from '../modals/items/SmartTagsGuideModal';
 import { AlertTriangle, Plus, Check, Trash2, XCircle } from 'lucide-react';
 import './InventoryTable.css';
 

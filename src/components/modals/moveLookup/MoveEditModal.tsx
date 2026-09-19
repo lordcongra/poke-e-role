@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Pencil, XCircle, Megaphone, Tags } from 'lucide-react';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import { TagBuilderModal } from './TagBuilderModal';
-import { broadcastInfo } from '../../utils/diceRoller';
+import { useCharacterStore } from '../../../store/useCharacterStore';
+import { TagBuilderModal } from '../items/TagBuilderModal';
+import { broadcastInfo } from '../../../utils/diceRoller';
 import './MoveEditModal.css';
 
 interface MoveEditModalProps {

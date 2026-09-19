@@ -1,7 +1,7 @@
 import { SlidersHorizontal, Dices } from 'lucide-react';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import { NumberSpinner } from '../ui/NumberSpinner';
-import { TooltipIcon } from '../ui/TooltipIcon';
+import { useCharacterStore } from '../../../store/useCharacterStore';
+import { NumberSpinner } from '../../ui/NumberSpinner';
+import { TooltipIcon } from '../../ui/TooltipIcon';
 import './GlobalModifiersModal.css';
 
 interface GlobalModifiersModalProps {

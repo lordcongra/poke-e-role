@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { ScrollText, X, XCircle } from 'lucide-react';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import { TooltipIcon } from '../ui/TooltipIcon';
-import { isStandaloneMode } from '../../utils/storageAdapter';
+import { useCharacterStore } from '../../../store/useCharacterStore';
+import { TooltipIcon } from '../../ui/TooltipIcon';
+import { isStandaloneMode } from '../../../utils/storageAdapter';
 import './RulesModal.css';
 
 export function RulesModal({ onClose }: { onClose: () => void }) {

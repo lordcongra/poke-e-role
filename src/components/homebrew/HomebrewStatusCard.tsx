@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomStatus } from '../../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
-import { TagBuilderModal } from '../modals/TagBuilderModal';
+import { TagBuilderModal } from '../modals/items/TagBuilderModal';
 import { ChevronDown, Tag, Copy, X, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 import './HomebrewStatusCard.css';

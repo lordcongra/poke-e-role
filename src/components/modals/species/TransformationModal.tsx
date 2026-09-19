@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import OBR, { type ImageDownload } from '@owlbear-rodeo/sdk';
 import { Dna, Image as ImageIcon, Sparkles, Trash2, AlertTriangle, X, XCircle, RotateCcw } from 'lucide-react';
-import { useCharacterStore } from '../../store/useCharacterStore';
-import { POKEMON_TYPES } from '../../data/constants';
-import type { TransformationType } from '../../store/storeTypes';
-import { isStandaloneMode } from '../../utils/storageAdapter';
-import { imageManager, autoCropTransparency } from '../../utils/imageManager';
+import { useCharacterStore } from '../../../store/useCharacterStore';
+import { POKEMON_TYPES } from '../../../data/constants';
+import type { TransformationType } from '../../../store/storeTypes';
+import { isStandaloneMode } from '../../../utils/storageAdapter';
+import { imageManager, autoCropTransparency } from '../../../utils/imageManager';
 import './TransformationModal.css';
 
 interface TransformationModalProps {

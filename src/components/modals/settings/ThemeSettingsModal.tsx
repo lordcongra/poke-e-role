@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useCharacterStore } from '../../store/useCharacterStore';
+import { useCharacterStore } from '../../../store/useCharacterStore';
 import { Palette, Trash2, Save, XCircle } from 'lucide-react';
 import './ThemeSettingsModal.css';
 
