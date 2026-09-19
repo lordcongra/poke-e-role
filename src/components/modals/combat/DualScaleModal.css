@@ -155,9 +155,16 @@
 }
 
 .dual-scale__option-result {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     font-size: 0.82rem;
     font-weight: 700;
     color: var(--primary, #3b82f6);
+}
+
+.dual-scale__option-result svg {
+    flex-shrink: 0;
 }
 
 .dual-scale__option-subtext {

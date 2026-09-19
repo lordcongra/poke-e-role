@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Scale, CheckCircle, Check, Target, Swords, Sparkles } from 'lucide-react';
+import { Scale, CheckCircle, Check, Target, Swords, Sparkles, Shield } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import type { PendingDualScale, MoveData } from '../../../store/storeTypes';
 import {
@@ -187,6 +187,9 @@ function DualScaleDialog({ pendingDualScale, resolveDualScale }: DualScaleDialog
                                         </div>
                                         <div className="dual-scale__option-stats">
                                             <span className="dual-scale__option-result text-value-highlight">
+                                                {cat === 'Physical' && <Swords size={12} />}
+                                                {cat === 'Special' && <Sparkles size={12} />}
+                                                {cat === 'Status' && <Shield size={12} />}
                                                 {preview.label}
                                             </span>
                                             <span className="dual-scale__option-subtext text-subtext">
@@ -237,7 +240,7 @@ function DualScaleDialog({ pendingDualScale, resolveDualScale }: DualScaleDialog
                                                 Stat: <strong>{preview.statVal}</strong>
                                             </span>
                                             <span className="dual-scale__option-result text-value-highlight">
-                                                🎯 {preview.totalDice} Acc Dice
+                                                <Target size={12} /> {preview.totalDice} Acc Dice
                                             </span>
                                         </div>
                                     </button>
@@ -276,7 +279,7 @@ function DualScaleDialog({ pendingDualScale, resolveDualScale }: DualScaleDialog
                                                 {opt === 'none' ? 'No Skill' : <>Skill: <strong>{preview.skillVal}</strong></>}
                                             </span>
                                             <span className="dual-scale__option-result text-value-highlight">
-                                                🎯 {preview.totalDice} Acc Dice
+                                                <Target size={12} /> {preview.totalDice} Acc Dice
                                             </span>
                                         </div>
                                     </button>
@@ -323,7 +326,7 @@ function DualScaleDialog({ pendingDualScale, resolveDualScale }: DualScaleDialog
                                                 Stat: <strong>{preview.statVal}</strong>
                                             </span>
                                             <span className="dual-scale__option-result text-value-highlight">
-                                                ⚔️ {preview.text}
+                                                <Swords size={12} /> {preview.text}
                                             </span>
                                         </div>
                                     </button>
