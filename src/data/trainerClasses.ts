@@ -84,7 +84,7 @@ export const TRAINER_CLASSES: TrainerClass[] = [
         id: 'aroma_lady',
         name: 'Aroma Lady',
         category: 'Wild',
-        typePreferences: ['Grass'],
+        typePreferences: ['Grass', 'Fairy'],
         forceType: true,
         suggestedProfile: 'socialite',
         description: 'Botanists and herbalists attracted to soothing floral scents.'
