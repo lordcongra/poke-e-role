@@ -1,6 +1,7 @@
 import type { InventoryItem, MoveData, ExtraCategory } from '../store/storeTypes';
 import { Skill } from '../types/enums';
 import { useCharacterStore } from '../store/useCharacterStore';
+import { getKnownAbility } from '../data/abilities/knownAbilities';
 
 export interface CombatBonuses {
     stats: Record<string, number>;
@@ -12,6 +13,7 @@ export interface CombatBonuses {
     acc: number;
     chance: number;
     seDmg: number;
+    critDmg: number;
     firstHitDmg: number;
     firstHitAcc: number;
     gainTempHp: number;
@@ -50,8 +52,101 @@ const safeParseInt = (value: string | undefined) => parseInt((value || '0').repl
 function checkCondition(conditionStr: string | undefined, isHalfHp: boolean): boolean {
     if (!conditionStr) return true;
     const cond = conditionStr.toLowerCase().trim();
-    if (cond === 'half hp' || cond === 'half hp or less') return isHalfHp;
-    return true; // Default to true if condition is unrecognized
+
+    // 1. Half HP
+    if (
+        cond === 'half hp' ||
+        cond === 'half hp or less' ||
+        cond === 'half-hp' ||
+        cond === '<=50% hp' ||
+        cond === '<= 50% hp' ||
+        cond === '<=50%' ||
+        cond === '50% hp' ||
+        cond.includes('half hp') ||
+        cond.includes('50%') ||
+        cond.includes('half-hp')
+    ) {
+        return isHalfHp;
+    }
+
+    const state = useCharacterStore.getState();
+
+    // 2. Ability Boost Trigger (e.g., Sap Sipper, Moxie, Beast Boost, Steam Engine, etc.)
+    if (cond === 'boost' || cond === 'triggered' || cond === 'active' || cond === 'ability boost') {
+        return state.identity.abilityBoostActive === true;
+    }
+
+    // 3. Status checks
+    const activeStatuses = (state.statuses || []).filter(
+        (s) => s.name && s.name.toLowerCase() !== 'healthy'
+    );
+
+    // Generic status: "@ Status", "@ Any Status", "@ Status Ailment"
+    if (
+        cond === 'status' ||
+        cond === 'any status' ||
+        cond === 'status ailment' ||
+        cond === 'status effect' ||
+        cond === 'ailment' ||
+        cond === 'statused'
+    ) {
+        return activeStatuses.length > 0;
+    }
+
+    const hasStatus = (matcher: (name: string, custom: string) => boolean) => {
+        return activeStatuses.some((s) => {
+            const n = (s.name || '').toLowerCase();
+            const c = (s.customName || '').toLowerCase();
+            return matcher(n, c);
+        });
+    };
+
+    if (cond === 'burn' || cond === 'burned') {
+        return hasStatus((n, c) => n.includes('burn') || c.includes('burn'));
+    }
+    if (cond === '1st degree burn' || cond === '1st deg burn') {
+        return hasStatus((n, c) => n.includes('1st degree burn') || c.includes('1st degree burn'));
+    }
+    if (cond === '2nd degree burn' || cond === '2nd deg burn') {
+        return hasStatus((n, c) => n.includes('2nd degree burn') || c.includes('2nd degree burn'));
+    }
+    if (cond === '3rd degree burn' || cond === '3rd deg burn') {
+        return hasStatus((n, c) => n.includes('3rd degree burn') || c.includes('3rd degree burn'));
+    }
+    if (cond === 'poison' || cond === 'poisoned') {
+        return hasStatus((n, c) => n.includes('poison') || c.includes('poison') || n.includes('toxic') || c.includes('toxic'));
+    }
+    if (cond === 'badly poisoned' || cond === 'toxic') {
+        return hasStatus((n, c) => n.includes('badly poisoned') || c.includes('badly poisoned') || n.includes('toxic') || c.includes('toxic'));
+    }
+    if (cond === 'paralysis' || cond === 'paralyzed') {
+        return hasStatus((n, c) => n.includes('paraly') || c.includes('paraly'));
+    }
+    if (cond === 'frozen solid' || cond === 'frozen' || cond === 'freeze') {
+        return hasStatus((n, c) => n.includes('frozen') || c.includes('frozen') || n.includes('freeze') || c.includes('freeze'));
+    }
+    if (cond === 'sleep' || cond === 'asleep' || cond === 'sleeping') {
+        return hasStatus((n, c) => n.includes('sleep') || c.includes('sleep'));
+    }
+    if (cond === 'confusion' || cond === 'confused') {
+        return hasStatus((n, c) => n.includes('confus') || c.includes('confus'));
+    }
+    if (cond === 'in love' || cond === 'infatuation' || cond === 'infatuated') {
+        return hasStatus((n, c) => n.includes('love') || c.includes('love') || n.includes('infat') || c.includes('infat'));
+    }
+    if (cond === 'disable' || cond === 'disabled') {
+        return hasStatus((n, c) => n.includes('disable') || c.includes('disable'));
+    }
+    if (cond === 'flinch' || cond === 'flinched') {
+        return hasStatus((n, c) => n.includes('flinch') || c.includes('flinch'));
+    }
+
+    // Direct match against standard or custom status name
+    if (hasStatus((n, c) => n === cond || c === cond)) {
+        return true;
+    }
+
+    return false;
 }
 
 // =========================================
@@ -172,6 +267,21 @@ function extractInitiativeAndChance(
     }
 }
 
+function matchesModifier(req: string, move: MoveData | undefined): boolean {
+    if (!move) return false;
+    const desc = (move.desc || '').toLowerCase();
+    const name = (move.name || '').toLowerCase();
+    if (desc.includes(req) || name.includes(req)) return true;
+    if (req === 'fist move' && (desc.includes('punch') || name.includes('punch') || desc.includes('fist') || name.includes('fist'))) return true;
+    if (req === 'bite move' && (desc.includes('bite') || name.includes('bite') || desc.includes('fang') || name.includes('fang') || desc.includes('jaw') || name.includes('jaw'))) return true;
+    if (req === 'cutter move' && (desc.includes('slicing') || desc.includes('cutter') || desc.includes('slash') || name.includes('cutter') || name.includes('slash') || name.includes('blade'))) return true;
+    if (req === 'sound move' && (desc.includes('sound') || desc.includes('voice') || desc.includes('song') || desc.includes('roar') || desc.includes('screech') || name.includes('sound') || name.includes('song') || name.includes('roar'))) return true;
+    if (req === 'projectile move' && (desc.includes('projectile') || desc.includes('pulse') || desc.includes('aura') || desc.includes('bullet') || desc.includes('cannon') || desc.includes('blast') || name.includes('pulse') || name.includes('cannon') || name.includes('blast'))) return true;
+    if (req === 'wind move' && (desc.includes('wind') || desc.includes('gust') || desc.includes('cyclone') || desc.includes('hurricane') || desc.includes('breeze') || name.includes('wind') || name.includes('gust') || name.includes('hurricane'))) return true;
+    if (req === 'recoil' && desc.includes('recoil')) return true;
+    return false;
+}
+
 function extractDamage(
     description: string,
     moveType: string,
@@ -208,10 +318,8 @@ function extractDamage(
         } else if (move && requirement === 'special' && move.category === 'Special') {
             bonuses.dmg += safeParseInt(match[1]);
             triggers.damage = true;
-        } else if (move && MOVE_MODIFIERS.includes(requirement)) {
-            const moveDesc = (move.desc || '').toLowerCase();
-            const moveName = (move.name || '').toLowerCase();
-            if (moveDesc.includes(requirement) || moveName.includes(requirement)) {
+        } else if (move && (MOVE_MODIFIERS.includes(requirement) || matchesModifier(requirement, move))) {
+            if (matchesModifier(requirement, move)) {
                 bonuses.dmg += safeParseInt(match[1]);
                 triggers.damage = true;
             }
@@ -246,20 +354,42 @@ function extractAccuracy(
         if (!requirement || requirement === moveType) {
             bonuses.acc += safeParseInt(match[1]);
             triggers.accuracy = true;
+        } else if (requirement === 'low accuracy') {
+            const moveDesc = (move?.desc || '').toLowerCase();
+            const moveName = (move?.name || '').toLowerCase();
+            const hasLowAcc = bonuses.addLowAcc > 0 || moveDesc.includes('low accuracy') || moveName.includes('low accuracy');
+            if (hasLowAcc) {
+                bonuses.acc += safeParseInt(match[1]);
+                triggers.accuracy = true;
+            }
         } else if (move && requirement === 'physical' && move.category === 'Physical') {
             bonuses.acc += safeParseInt(match[1]);
             triggers.accuracy = true;
         } else if (move && requirement === 'special' && move.category === 'Special') {
             bonuses.acc += safeParseInt(match[1]);
             triggers.accuracy = true;
-        } else if (move && MOVE_MODIFIERS.includes(requirement)) {
-            const moveDesc = (move.desc || '').toLowerCase();
-            const moveName = (move.name || '').toLowerCase();
-            if (moveDesc.includes(requirement) || moveName.includes(requirement)) {
+        } else if (move && (MOVE_MODIFIERS.includes(requirement) || matchesModifier(requirement, move))) {
+            if (matchesModifier(requirement, move)) {
                 bonuses.acc += safeParseInt(match[1]);
                 triggers.accuracy = true;
             }
         }
+    }
+}
+
+function extractCritDamage(
+    description: string,
+    bonuses: CombatBonuses,
+    triggers: TagTriggers,
+    isHalfHp: boolean
+) {
+    const critMatches = description.matchAll(
+        /\[\s*crit(?:\s*dmg|\s*damage)?\s*([+-]?\s*\d+)(?:\s*(?:dmg|damage))?(?:\s*@\s*([^\]]+))?\s*\]/gi
+    );
+    for (const match of critMatches) {
+        if (!checkCondition(match[2], isHalfHp)) continue;
+        bonuses.critDmg += safeParseInt(match[1]);
+        triggers.damage = true;
     }
 }
 
@@ -287,10 +417,8 @@ function extractLowAccuracy(
         } else if (move && requirement === 'special' && move.category === 'Special') {
             bonuses.addLowAcc += safeParseInt(match[1]);
             triggers.accuracy = true;
-        } else if (move && MOVE_MODIFIERS.includes(requirement)) {
-            const moveDesc = (move.desc || '').toLowerCase();
-            const moveName = (move.name || '').toLowerCase();
-            if (moveDesc.includes(requirement) || moveName.includes(requirement)) {
+        } else if (move && (MOVE_MODIFIERS.includes(requirement) || matchesModifier(requirement, move))) {
+            if (matchesModifier(requirement, move)) {
                 bonuses.addLowAcc += safeParseInt(match[1]);
                 triggers.accuracy = true;
             }
@@ -338,28 +466,36 @@ function extractTempHp(description: string, bonuses: CombatBonuses, triggers: Ta
 }
 
 function extractRoundEffects(description: string, bonuses: CombatBonuses, triggers: TagTriggers, isHalfHp: boolean) {
-    const damageMatch = description.matchAll(/\[\s*deal (\d+) damage at end of round(?:\s*@\s*([^\]]+))?\s*\]/gi);
+    const damageMatch = description.matchAll(
+        /\[\s*(?:deal\s*)?(\d+)\s*(?:damage|dmg)\s*(?:at end of round|at round end|round end)(?:\s*@\s*([^\]]+))?\s*\]/gi
+    );
     for (const match of damageMatch) {
         if (!checkCondition(match[2], isHalfHp)) continue;
         bonuses.roundDamage += safeParseInt(match[1]);
         triggers.general = true;
     }
 
-    const willDmgMatch = description.matchAll(/\[\s*reduce will by (\d+) at end of round(?:\s*@\s*([^\]]+))?\s*\]/gi);
+    const willDmgMatch = description.matchAll(
+        /\[\s*reduce\s*will\s*(?:by\s*)?(\d+)\s*(?:at end of round|at round end|round end)(?:\s*@\s*([^\]]+))?\s*\]/gi
+    );
     for (const match of willDmgMatch) {
         if (!checkCondition(match[2], isHalfHp)) continue;
         bonuses.roundWillDamage += safeParseInt(match[1]);
         triggers.general = true;
     }
 
-    const healMatch = description.matchAll(/\[\s*heal (\d+) round end(?:\s*@\s*([^\]]+))?\s*\]/gi);
+    const healMatch = description.matchAll(
+        /\[\s*heal\s*(\d+)(?:\s*hp)?\s*(?:round end|at end of round|at round end)(?:\s*@\s*([^\]]+))?\s*\]/gi
+    );
     for (const match of healMatch) {
         if (!checkCondition(match[2], isHalfHp)) continue;
         bonuses.roundHeal += safeParseInt(match[1]);
         triggers.general = true;
     }
 
-    const willHealMatch = description.matchAll(/\[\s*restore (\d+) will round end(?:\s*@\s*([^\]]+))?\s*\]/gi);
+    const willHealMatch = description.matchAll(
+        /\[\s*restore\s*(\d+)\s*will\s*(?:round end|at end of round|at round end)(?:\s*@\s*([^\]]+))?\s*\]/gi
+    );
     for (const match of willHealMatch) {
         if (!checkCondition(match[2], isHalfHp)) continue;
         bonuses.roundWillRestore += safeParseInt(match[1]);
@@ -475,6 +611,7 @@ export function parseCombatTags(
         acc: 0,
         chance: 0,
         seDmg: 0,
+        critDmg: 0,
         firstHitDmg: 0,
         firstHitAcc: 0,
         gainTempHp: 0,
@@ -531,20 +668,26 @@ export function parseCombatTags(
         itemsToParse.push({ name: 'Ability', desc: abilityText });
     }
 
-    if (state.identity.abilityActive !== false && state.identity.abilityTags) {
+    if (state.identity.abilityActive !== false) {
         let desc = state.identity.abilityTags;
         const cleanAbility = (state.identity.ability || '').replace(/\s*\(HA\)$/i, '').trim();
-        if (cleanAbility === 'Huge Power' || cleanAbility === 'Pure Power') {
-            const rank = (state.identity.rank || 'Starter').toLowerCase().trim();
-            const isHigh = rank === 'expert' || rank === 'ace' || rank === 'master' || rank === 'champion';
-            if (!isHigh && desc.includes('[Str +2]')) {
-                desc = desc.replace(/\[Str \+2\]/g, '[Str +1]');
-            } else if (isHigh && desc.includes('[Str +1]')) {
-                desc = desc.replace(/\[Str \+1\]/g, '[Str +2]');
-            }
+        if (!desc && cleanAbility) {
+            const known = getKnownAbility(cleanAbility, state.identity.rank);
+            if (known) desc = known.tags;
         }
-        const abilityDisplayName = state.identity.ability ? `Ability: ${state.identity.ability}` : 'Ability';
-        itemsToParse.push({ name: abilityDisplayName, desc });
+        if (desc) {
+            if (cleanAbility === 'Huge Power' || cleanAbility === 'Pure Power') {
+                const rank = (state.identity.rank || 'Starter').toLowerCase().trim();
+                const isHigh = rank === 'expert' || rank === 'ace' || rank === 'master' || rank === 'champion';
+                if (!isHigh && desc.includes('[Str +2]')) {
+                    desc = desc.replace(/\[Str \+2\]/g, '[Str +1]');
+                } else if (isHigh && desc.includes('[Str +1]')) {
+                    desc = desc.replace(/\[Str \+1\]/g, '[Str +2]');
+                }
+            }
+            const abilityDisplayName = state.identity.ability ? `Ability: ${state.identity.ability}` : 'Ability';
+            itemsToParse.push({ name: abilityDisplayName, desc });
+        }
     }
 
     if (move && move.desc) {
@@ -585,8 +728,9 @@ export function parseCombatTags(
         extractDefenses(description, bonuses, triggers, isHalfHp);
         extractInitiativeAndChance(description, bonuses, triggers, isHalfHp);
         extractDamage(description, moveType, move, isComboMove, bonuses, triggers, isHalfHp);
-        extractAccuracy(description, moveType, move, bonuses, triggers, isHalfHp);
+        extractCritDamage(description, bonuses, triggers, isHalfHp);
         extractLowAccuracy(description, moveType, move, bonuses, triggers, isHalfHp);
+        extractAccuracy(description, moveType, move, bonuses, triggers, isHalfHp);
         extractFirstHit(description, bonuses, triggers, isHalfHp);
         extractTempHp(description, bonuses, triggers, isHalfHp);
         extractRoundEffects(description, bonuses, triggers, isHalfHp);

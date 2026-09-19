@@ -34,10 +34,10 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     // --- Passives: Roll Modifiers & Criticals ---
     'Compound Eyes': {
         name: 'Compound Eyes',
-        tags: '[Acc +1]',
+        tags: '[Acc +1: Low Accuracy]',
         autoActive: true,
-        summary: 'Increases accuracy of moves.',
-        benefitDisplay: '+1 ACC'
+        summary: 'Increases accuracy of moves that have Low Accuracy.',
+        benefitDisplay: '+1 Acc (Low Acc Moves)'
     },
     'Super Luck': {
         name: 'Super Luck',
@@ -48,17 +48,17 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
     Sniper: {
         name: 'Sniper',
-        tags: '[Acc 6s Add Dmg Limit 6]',
+        tags: '[Crit Dmg +1]',
         autoActive: true,
-        summary: 'Adds extra damage dice on critical hits.',
-        benefitDisplay: 'Critical Exploding Dice'
+        summary: 'Adds an extra damage die when landing a critical hit (3 bonus dice instead of 2).',
+        benefitDisplay: '+1 Crit Dmg Die'
     },
     Hustle: {
         name: 'Hustle',
         tags: '[Low Acc +1: Physical] [Dmg +2: Physical]',
         autoActive: true,
-        summary: 'Reduces accuracy but increases physical damage.',
-        benefitDisplay: '-1 Acc, +2 Phys Dmg'
+        summary: 'Inflicts Low Accuracy 1 on physical moves, but increases physical damage by 2.',
+        benefitDisplay: 'Low Acc 1, +2 Phys Dmg'
     },
     'Keen Eye': {
         name: 'Keen Eye',
@@ -323,57 +323,57 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
         benefitDisplay: '+1 Offense (Terrain/Booster)'
     },
 
-    // --- Situational: Status Buffs (Toggleable) ---
+    // --- Situational: Status Buffs (Auto-gated by Status Condition) ---
     Guts: {
         name: 'Guts',
-        tags: '[Dmg +2: Physical]',
-        autoActive: false,
-        summary: 'Boosts physical damage when inflicted with a status condition.',
-        benefitDisplay: '+2 Phys Dmg (Statused)'
+        tags: '[Str +2 @ Status]',
+        autoActive: true,
+        summary: 'Boosts Strength when inflicted with a status condition.',
+        benefitDisplay: '+2 STR (Statused)'
     },
     'Marvel Scale': {
         name: 'Marvel Scale',
-        tags: '[Def +2]',
-        autoActive: false,
+        tags: '[Def +2 @ Status]',
+        autoActive: true,
         summary: 'Boosts Defense when inflicted with a status condition.',
         benefitDisplay: '+2 DEF (Statused)'
     },
     'Quick Feet': {
         name: 'Quick Feet',
-        tags: '[Dex +2]',
-        autoActive: false,
+        tags: '[Dex +2 @ Status]',
+        autoActive: true,
         summary: 'Boosts agility when inflicted with a status condition.',
         benefitDisplay: '+2 DEX (Statused)'
     },
     'Toxic Boost': {
         name: 'Toxic Boost',
-        tags: '[Dmg +2: Physical]',
-        autoActive: false,
-        summary: 'Boosts physical damage when poisoned.',
-        benefitDisplay: '+2 Phys Dmg (Poisoned)'
+        tags: '[Str +2 @ Poison]',
+        autoActive: true,
+        summary: 'Boosts Strength when poisoned.',
+        benefitDisplay: '+2 STR (Poisoned)'
     },
     'Flare Boost': {
         name: 'Flare Boost',
-        tags: '[Spe +2]',
-        autoActive: false,
+        tags: '[Spe +2 @ Burn]',
+        autoActive: true,
         summary: 'Boosts Special when burned.',
         benefitDisplay: '+2 SPE (Burned)'
     },
     'Poison Heal': {
         name: 'Poison Heal',
-        tags: '[Heal 1 Round End]',
-        autoActive: false,
+        tags: '[Heal 1 Round End @ Poison]',
+        autoActive: true,
         summary: 'Restores HP each round instead of taking poison damage.',
         benefitDisplay: 'Heal 1 Round End (Poisoned)'
     },
 
-    // --- Situational: Type Absorption & Immunities (Toggleable) ---
+    // --- Situational: Type Absorption & Immunities (Persistent Immunity + Trigger Boost) ---
     'Flash Fire': {
         name: 'Flash Fire',
-        tags: '[Immune: Fire] [Dmg +1: Fire]',
+        tags: '[Immune: Fire] [Dmg +1: Fire @ Boost]',
         autoActive: true,
         summary: 'Immune to Fire damage; activates +1 Fire damage when struck.',
-        benefitDisplay: 'Immune: Fire (+1 Fire Dmg)'
+        benefitDisplay: 'Immune: Fire (+1 Fire Dmg Boost)'
     },
     'Volt Absorb': {
         name: 'Volt Absorb',
@@ -391,10 +391,10 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
     'Sap Sipper': {
         name: 'Sap Sipper',
-        tags: '[Immune: Grass] [Str +1]',
+        tags: '[Immune: Grass] [Str +1 @ Boost]',
         autoActive: true,
         summary: 'Immunity to Grass moves; boosts Strength when struck.',
-        benefitDisplay: 'Immune: Grass (+1 STR)'
+        benefitDisplay: 'Immune: Grass (+1 STR Boost)'
     },
     'Earth Eater': {
         name: 'Earth Eater',
@@ -405,47 +405,47 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
     'Motor Drive': {
         name: 'Motor Drive',
-        tags: '[Immune: Electric] [Dex +1]',
+        tags: '[Immune: Electric] [Dex +1 @ Boost]',
         autoActive: true,
         summary: 'Immunity to Electric moves; boosts Dexterity when struck.',
-        benefitDisplay: 'Immune: Electric (+1 DEX)'
+        benefitDisplay: 'Immune: Electric (+1 DEX Boost)'
     },
     'Lightning Rod': {
         name: 'Lightning Rod',
-        tags: '[Immune: Electric] [Spe +1]',
+        tags: '[Immune: Electric] [Spe +1 @ Boost]',
         autoActive: true,
         summary: 'Draws and negates Electric moves; boosts Special.',
-        benefitDisplay: 'Immune: Electric (+1 SPE)'
+        benefitDisplay: 'Immune: Electric (+1 SPE Boost)'
     },
     'Storm Drain': {
         name: 'Storm Drain',
-        tags: '[Immune: Water] [Spe +1]',
+        tags: '[Immune: Water] [Spe +1 @ Boost]',
         autoActive: true,
         summary: 'Draws and negates Water moves; boosts Special.',
-        benefitDisplay: 'Immune: Water (+1 SPE)'
+        benefitDisplay: 'Immune: Water (+1 SPE Boost)'
     },
     'Well-Baked Body': {
         name: 'Well-Baked Body',
-        tags: '[Immune: Fire] [Def +2]',
+        tags: '[Immune: Fire] [Def +2 @ Boost]',
         autoActive: true,
         summary: 'Takes no damage from Fire attacks and raises Defense.',
-        benefitDisplay: 'Immune: Fire (+2 DEF)'
+        benefitDisplay: 'Immune: Fire (+2 DEF Boost)'
     },
 
-    // --- Situational: Escalation & Combat Events (Toggleable) ---
+    // --- Situational: Escalation & Combat Events (Toggleable Boost) ---
     Moxie: {
         name: 'Moxie',
-        tags: '[Str +1]',
-        autoActive: false,
+        tags: '[Str +1 @ Boost]',
+        autoActive: true,
         summary: 'Increases Strength when knocking out an opponent.',
-        benefitDisplay: '+1 STR (On KO)'
+        benefitDisplay: '+1 STR (Boost)'
     },
     'Beast Boost': {
         name: 'Beast Boost',
-        tags: '[Str +1] [Spe +1]',
-        autoActive: false,
+        tags: '[Str +1 @ Boost]',
+        autoActive: true,
         summary: 'Increases highest offensive stat upon scoring a knockout.',
-        benefitDisplay: '+1 Offense (On KO)'
+        benefitDisplay: '+1 Offense (Boost)'
     },
     'Soul-Heart': {
         name: 'Soul-Heart',
@@ -477,24 +477,24 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
     Defiant: {
         name: 'Defiant',
-        tags: '[Str +2]',
-        autoActive: false,
+        tags: '[Str +2 @ Boost]',
+        autoActive: true,
         summary: 'Increases Strength by 2 when an attribute is lowered by a foe.',
-        benefitDisplay: '+2 STR (Stat Lowered)'
+        benefitDisplay: '+2 STR (Boost)'
     },
     Competitive: {
         name: 'Competitive',
-        tags: '[Spe +2]',
-        autoActive: false,
+        tags: '[Spe +2 @ Boost]',
+        autoActive: true,
         summary: 'Increases Special by 2 when an attribute is lowered by a foe.',
-        benefitDisplay: '+2 SPE (Stat Lowered)'
+        benefitDisplay: '+2 SPE (Boost)'
     },
     Unburden: {
         name: 'Unburden',
-        tags: '[Dex +2]',
-        autoActive: false,
+        tags: '[Dex +2 @ Boost]',
+        autoActive: true,
         summary: 'Increases Dexterity upon consuming or losing held item.',
-        benefitDisplay: '+2 DEX (No Item)'
+        benefitDisplay: '+2 DEX (Boost)'
     }
 };
 
@@ -522,25 +522,50 @@ export function getKnownAbility(name: string, rank?: string): KnownAbility | und
     return base;
 }
 
-export function getAbilityBenefitSummary(name: string, tags?: string, rank?: string): string {
+export function getAbilityBenefitSummary(
+    name: string,
+    tags?: string,
+    rank?: string,
+    isHalfHp?: boolean,
+    isBoostActive?: boolean
+): string {
     const cleanName = (name || '').replace(/\s*\(HA\)$/i, '').trim();
     const known = getKnownAbility(cleanName, rank);
 
+    let display = '';
     if (tags) {
         if (cleanName === 'Huge Power' || cleanName === 'Pure Power') {
-            if (tags.includes('[Str +2]')) return '+2 STR';
-            if (tags.includes('[Str +1]')) return '+1 STR';
-            return isHighRank(rank) ? '+2 STR' : '+1 STR';
+            if (tags.includes('[Str +2]')) display = '+2 STR';
+            else if (tags.includes('[Str +1]')) display = '+1 STR';
+            else display = isHighRank(rank) ? '+2 STR' : '+1 STR';
+        } else if (known?.benefitDisplay && tags === known.tags) {
+            display = known.benefitDisplay;
+        } else {
+            const cleaned = tags
+                .replace(/\[|\]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+            display = cleaned.length > 30 ? `${cleaned.slice(0, 27)}...` : cleaned;
         }
-        if (known?.benefitDisplay && tags === known.tags) {
-            return known.benefitDisplay;
-        }
-        const cleaned = tags
-            .replace(/\[|\]/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim();
-        return cleaned.length > 30 ? `${cleaned.slice(0, 27)}...` : cleaned;
+    } else {
+        display = known?.benefitDisplay || '';
     }
 
-    return known?.benefitDisplay || '';
+    if (isHalfHp !== undefined && display) {
+        if (display.includes('@ <=50% HP')) {
+            display = isHalfHp ? display.replace('@ <=50% HP', '(Active)') : display;
+        } else if (/@\s*half\s*hp/i.test(display)) {
+            display = isHalfHp ? display.replace(/@\s*half\s*hp/i, '(Active)') : display;
+        }
+    }
+
+    if (isBoostActive !== undefined && display) {
+        if (display.includes('(Boost)')) {
+            display = isBoostActive ? display.replace('(Boost)', '(Boost Active)') : display;
+        } else if (display.includes('Boost)')) {
+            display = isBoostActive ? display.replace('Boost)', 'Boost Active)') : display;
+        }
+    }
+
+    return display;
 }

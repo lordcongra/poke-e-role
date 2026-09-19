@@ -9,8 +9,11 @@ import './AbilityTrackerControl.css';
 export function AbilityTrackerControl() {
     const ability = useCharacterStore((state) => state.identity.ability);
     const abilityActive = useCharacterStore((state) => state.identity.abilityActive ?? true);
+    const abilityBoostActive = useCharacterStore((state) => state.identity.abilityBoostActive ?? false);
     const abilityTags = useCharacterStore((state) => state.identity.abilityTags || '');
     const rank = useCharacterStore((state) => state.identity.rank);
+    const hpCurr = useCharacterStore((state) => state.health.hpCurr);
+    const hpMax = useCharacterStore((state) => state.health.hpMax);
     const setIdentity = useCharacterStore((state) => state.setIdentity);
 
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -18,7 +21,9 @@ export function AbilityTrackerControl() {
 
     if (!ability) return null;
 
-    const benefit = getAbilityBenefitSummary(ability, abilityTags, rank);
+    const isHalfHp = (hpCurr || 0) <= Math.floor(Math.max(1, hpMax || 1) / 2);
+    const hasBoostTag = abilityTags.toLowerCase().includes('@ boost');
+    const benefit = getAbilityBenefitSummary(ability, abilityTags, rank, isHalfHp, abilityBoostActive);
 
     return (
         <>
@@ -36,6 +41,18 @@ export function AbilityTrackerControl() {
                 </label>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {abilityActive && hasBoostTag && (
+                        <button
+                            type="button"
+                            onClick={() => setIdentity('abilityBoostActive', !abilityBoostActive)}
+                            className={`action-button ${abilityBoostActive ? 'action-button--theme' : 'action-button--dark'}`}
+                            title={abilityBoostActive ? 'Trigger boost is Active (click to turn off)' : 'Trigger boost is Inactive (click to activate)'}
+                            style={{ fontSize: '0.72rem', padding: '2px 6px', height: '22px', whiteSpace: 'nowrap' }}
+                        >
+                            Boost {abilityBoostActive ? 'ON' : 'OFF'}
+                        </button>
+                    )}
+
                     {abilityActive && benefit && (
                         <span className="ability-tracker__benefit" title={benefit}>
                             {benefit}

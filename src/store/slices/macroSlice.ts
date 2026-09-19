@@ -20,6 +20,7 @@ import {
     handleTokenImageSwap,
     type TransformationDraft
 } from '../../utils/transformationLogic';
+import { getKnownAbility } from '../../data/abilities/knownAbilities';
 
 export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> = (set, get) => ({
     setMode: (newMode) =>
@@ -293,6 +294,8 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
 
             const abilities = extractAbilities(data);
             const learnsetArray = parseLearnset(data.Moves);
+            const defaultAbility = abilities.length > 0 ? abilities[0] : '';
+            const known = getKnownAbility(defaultAbility, state.identity.rank);
 
             const newIdentity = {
                 ...state.identity,
@@ -300,7 +303,10 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 type1: String(data.Type1 || ''),
                 type2: String(data.Type2 || ''),
                 availableAbilities: abilities,
-                ability: abilities.length > 0 ? abilities[0] : '',
+                ability: defaultAbility,
+                abilityActive: known?.autoActive ?? true,
+                abilityBoostActive: false,
+                abilityTags: known?.tags || '',
                 learnset: learnsetArray,
                 dexId: String(data.DexID || ''),
                 dexCategory: String(data.DexCategory || ''),
@@ -313,6 +319,9 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             updatesToSave['type1'] = newIdentity.type1;
             updatesToSave['type2'] = newIdentity.type2;
             updatesToSave['ability'] = newIdentity.ability;
+            updatesToSave['ability-active'] = newIdentity.abilityActive;
+            updatesToSave['ability-boost-active'] = false;
+            updatesToSave['ability-tags'] = newIdentity.abilityTags;
             updatesToSave['ability-list'] = abilities.join(',');
             updatesToSave['dex-id'] = newIdentity.dexId;
             updatesToSave['dex-category'] = newIdentity.dexCategory;

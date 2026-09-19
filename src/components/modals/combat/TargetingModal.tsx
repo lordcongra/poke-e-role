@@ -6,6 +6,7 @@ import { useCharacterStore } from '../../../store/useCharacterStore';
 import { STATS_META_ID } from '../../../utils/graphicsManager';
 import { calculateTargetDefensesFromMeta } from '../../../utils/combatUtils';
 import { isStandaloneMode, storageAdapter } from '../../../utils/storageAdapter';
+import { parseCombatTags } from '../../../utils/tagParser';
 import { TooltipIcon } from '../../ui/TooltipIcon';
 import './TargetingModal.css';
 
@@ -46,6 +47,11 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
     const bankedAccDice = useCharacterStore((state) => state.trackers.bankedAccDice);
     const role = useCharacterStore((state) => state.role);
     const isPhysicalMove = String(move.category).startsWith('Phys');
+
+    const inventory = useCharacterStore((state) => state.inventory);
+    const extraCategories = useCharacterStore((state) => state.extraCategories);
+    const itemBuffs = parseCombatTags(inventory, extraCategories, move);
+    const critDice = 2 + (itemBuffs.critDmg || 0);
 
     const bankedDice = (move.id && bankedAccDice[move.id]) || 0;
     const canOverride = role === 'GM' || !gmOnlyDamageOverride;
@@ -250,8 +256,12 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                         value={effectiveness}
                         onChange={(e) => setEffectiveness(Number(e.target.value))}
                     >
-                        <option value={2}>4x Super Effective (+2 Dmg)</option>
-                        <option value={1}>2x Super Effective (+1 Dmg)</option>
+                        <option value={2}>
+                            4x Super Effective (+2 Dmg{itemBuffs.seDmg > 0 ? `, +${itemBuffs.seDmg} SE Dice` : ''})
+                        </option>
+                        <option value={1}>
+                            2x Super Effective (+1 Dmg{itemBuffs.seDmg > 0 ? `, +${itemBuffs.seDmg} SE Dice` : ''})
+                        </option>
                         <option value={0}>1x Normal Effectiveness</option>
                         <option value={-1}>0.5x Not Very Effective (-1 Dmg)</option>
                         <option value={-2}>0.25x Not Very Effective (-2 Dmg)</option>
@@ -313,7 +323,7 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
                             onChange={(e) => setIsCrit(e.target.checked)}
                             className="targeting-modal__checkbox"
                         />
-                        Critical Hit?
+                        Critical Hit? (+{critDice} Dice)
                         <TooltipIcon
                             onClick={() =>
                                 setModalConfig({

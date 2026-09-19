@@ -109,7 +109,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
             return [...Object.values(Skill).map(formatEnum), ...customSkillNames];
         }
         if (category === 'combat')
-            return ['Dmg', 'Acc', 'Init', 'Chance', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc', 'Low Acc Penalty'];
+            return ['Dmg', 'Acc', 'Init', 'Chance', 'Crit Dmg', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc', 'Low Acc Penalty'];
         if (category === 'matchup') return ['Immune', 'Resist', 'Weak', 'Remove Immunities', 'Remove Immunity'];
 
         if (category === 'mechanic')
@@ -150,6 +150,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                 'Frozen Solid',
                 'Confusion',
                 'In Love',
+                'Disable',
                 'Flinch'
             ];
         if (category === 'move_mechanics')
@@ -160,14 +161,23 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                 'Recoil',
                 'Successive Actions',
                 'Set Damage',
-                'Powder'
+                'Powder',
+                'Fist Move',
+                'Bite Move',
+                'Cutter Move',
+                'Sound Move',
+                'Projectile Move',
+                'Wind Move',
+                'Basic Heal',
+                'Complete Heal',
+                'Minor Heal'
             ];
         return [];
     };
 
     const showTypeSelect =
         (category === 'combat' &&
-            !['Init', 'Chance', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc'].includes(target)) ||
+            !['Init', 'Chance', 'Crit Dmg', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc'].includes(target)) ||
         (category === 'matchup' && target !== 'Remove Immunities') ||
         (category === 'mechanic' && target === 'Ignore Pain');
 
@@ -196,7 +206,7 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
         if (category === 'stat' || category === 'skill') {
             tag = `[${target} ${sign}]`;
         } else if (category === 'combat') {
-            if (['Init', 'Chance', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc'].includes(target)) {
+            if (['Init', 'Chance', 'Crit Dmg', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc'].includes(target)) {
                 tag = `[${target} ${sign}]`;
             } else if (target === 'Low Acc Penalty') {
                 const actualTarget = 'Low Acc';
@@ -245,12 +255,23 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
             else if (target === 'Successive Actions') tag = `[Successive Actions]`;
             else if (target === 'Set Damage') tag = `[Set Damage ${Math.abs(numValue)}]`;
             else if (target === 'Powder') tag = `[Powder]`;
+            else tag = `[${target}]`;
         }
 
         if (tag) {
             // Append condition logically inside the bracket
-            if (condition === 'half hp') {
-                tag = tag.replace(']', ' @ Half HP]');
+            if (condition && condition !== 'none') {
+                if (condition === 'half hp') {
+                    tag = tag.replace(']', ' @ Half HP]');
+                } else if (condition === 'boost') {
+                    tag = tag.replace(']', ' @ Boost]');
+                } else {
+                    const formattedCond = condition
+                        .split(' ')
+                        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                        .join(' ');
+                    tag = tag.replace(']', ` @ ${formattedCond}]`);
+                }
             }
 
             if (targetType === 'ability') {
@@ -414,6 +435,21 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                         >
                             <option value="none">-- Always Active --</option>
                             <option value="half hp">At Half HP or Less</option>
+                            <option value="boost">Trigger / Boost Active</option>
+                            <option value="status">While Afflicted by Any Status</option>
+                            <option value="burn">While Afflicted by Burn</option>
+                            <option value="1st degree burn">While Afflicted by 1st Degree Burn</option>
+                            <option value="2nd degree burn">While Afflicted by 2nd Degree Burn</option>
+                            <option value="3rd degree burn">While Afflicted by 3rd Degree Burn</option>
+                            <option value="poison">While Afflicted by Poison</option>
+                            <option value="badly poisoned">While Afflicted by Badly Poisoned</option>
+                            <option value="paralysis">While Afflicted by Paralysis</option>
+                            <option value="frozen solid">While Afflicted by Frozen Solid</option>
+                            <option value="sleep">While Afflicted by Sleep</option>
+                            <option value="confusion">While Afflicted by Confusion</option>
+                            <option value="in love">While Afflicted by In Love</option>
+                            <option value="disable">While Afflicted by Disable</option>
+                            <option value="flinch">While Afflicted by Flinch</option>
                         </select>
                     </div>
 

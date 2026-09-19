@@ -76,6 +76,15 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
     useCharacterStore((state) => state.identity.abilityActive);
     useCharacterStore((state) => state.identity.abilityTags);
 
+    useCharacterStore((state) => state.health.hpCurr);
+    useCharacterStore((state) => state.health.hpMax);
+    useCharacterStore((state) => state.identity.type1);
+    useCharacterStore((state) => state.identity.type2);
+    useCharacterStore((state) => state.identity.activeTransformation);
+    useCharacterStore((state) => state.identity.terastallizeAffinity);
+    useCharacterStore((state) => state.identity.terastallizeBonusActive);
+    useCharacterStore((state) => state.statuses);
+
     useCharacterStore((state) => state.trackers.firstHitDmg);
     useCharacterStore((state) => state.trackers.firstHitAcc);
 

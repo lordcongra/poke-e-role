@@ -27,6 +27,9 @@ export function DerivedBoard() {
     const mode = useCharacterStore((state) => state.identity.mode);
     const ability = useCharacterStore((state) => state.identity.ability);
     const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
+    useCharacterStore((state) => state.identity.abilityActive);
+    useCharacterStore((state) => state.identity.abilityTags);
+    useCharacterStore((state) => state.identity.rank);
 
     const health = useCharacterStore((state) => state.health);
     const will = useCharacterStore((state) => state.will);

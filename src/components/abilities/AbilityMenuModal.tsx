@@ -14,14 +14,19 @@ interface AbilityMenuModalProps {
 export function AbilityMenuModal({ isOpen, onClose, onOpenTagBuilder }: AbilityMenuModalProps) {
     const ability = useCharacterStore((state) => state.identity.ability);
     const abilityActive = useCharacterStore((state) => state.identity.abilityActive ?? true);
+    const abilityBoostActive = useCharacterStore((state) => state.identity.abilityBoostActive ?? false);
     const abilityTags = useCharacterStore((state) => state.identity.abilityTags || '');
     const rank = useCharacterStore((state) => state.identity.rank);
+    const hpCurr = useCharacterStore((state) => state.health.hpCurr);
+    const hpMax = useCharacterStore((state) => state.health.hpMax);
     const setIdentity = useCharacterStore((state) => state.setIdentity);
 
     const [datasetText, setDatasetText] = useState<{ effect?: string; desc?: string } | null>(null);
 
+    const isHalfHp = (hpCurr || 0) <= Math.floor(Math.max(1, hpMax || 1) / 2);
+    const hasBoostTag = abilityTags.toLowerCase().includes('@ boost');
     const known = getKnownAbility(ability, rank);
-    const benefit = getAbilityBenefitSummary(ability, abilityTags, rank);
+    const benefit = getAbilityBenefitSummary(ability, abilityTags, rank, isHalfHp, abilityBoostActive);
 
     useEffect(() => {
         if (!isOpen || !ability) {
@@ -107,6 +112,38 @@ export function AbilityMenuModal({ isOpen, onClose, onOpenTagBuilder }: AbilityM
                         <Power size={14} /> {abilityActive ? 'Turn Off' : 'Activate'}
                     </button>
                 </div>
+
+                {hasBoostTag && (
+                    <div
+                        className={`ability-modal__status-box ${
+                            abilityBoostActive ? 'ability-modal__status-box--active' : ''
+                        }`}
+                        style={{ marginTop: '8px' }}
+                    >
+                        <div className="ability-modal__status-info">
+                            <span className="ability-modal__status-label text-subtext">Trigger Boost Status</span>
+                            <span
+                                className={`ability-modal__status-state ${
+                                    abilityBoostActive
+                                        ? 'ability-modal__status-state--active'
+                                        : 'ability-modal__status-state--inactive'
+                                }`}
+                            >
+                                {abilityBoostActive ? 'Boost Active (+Boost Tags Active)' : 'Boost Inactive (Click to Activate)'}
+                            </span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setIdentity('abilityBoostActive', !abilityBoostActive)}
+                            className={`action-button ${
+                                abilityBoostActive ? 'action-button--theme' : 'action-button--dark'
+                            }`}
+                            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                        >
+                            <Power size={14} /> {abilityBoostActive ? 'Deactivate Boost' : 'Activate Boost'}
+                        </button>
+                    </div>
+                )}
 
                 <div className="ability-modal__section">
                     <span className="ability-modal__section-title text-label">Mechanical Tags</span>

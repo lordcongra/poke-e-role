@@ -353,6 +353,7 @@ export interface IdentitySlice {
         type2: string;
         ability: string;
         abilityActive?: boolean;
+        abilityBoostActive?: boolean;
         abilityTags?: string;
         availableAbilities: string[];
         mode: string;

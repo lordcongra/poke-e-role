@@ -12,6 +12,7 @@ import type {
     Rank
 } from '../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
+import { getKnownAbility } from '../data/abilities/knownAbilities';
 
 // =========================================
 // OBR METADATA -> ZUSTAND HYDRATION PARSERS
@@ -306,6 +307,10 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
         const loadedAbility = String(meta['ability'] || '');
         let loadedTags = String(meta['ability-tags'] || '');
         const cleanLoadedAbility = loadedAbility.replace(/\s*\(HA\)$/i, '').trim();
+        if (!loadedTags && cleanLoadedAbility) {
+            const known = getKnownAbility(cleanLoadedAbility, loadedRank);
+            if (known) loadedTags = known.tags;
+        }
         if (cleanLoadedAbility === 'Huge Power' || cleanLoadedAbility === 'Pure Power') {
             const cleanRank = String(loadedRank).toLowerCase().trim();
             const isHigh = cleanRank === 'expert' || cleanRank === 'ace' || cleanRank === 'master' || cleanRank === 'champion';
@@ -315,6 +320,9 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
                 loadedTags = loadedTags.replace(/\[Str \+1\]/g, '[Str +2]');
             }
         }
+
+        const loadedBoostActive =
+            meta['ability-boost-active'] === true || meta['ability-boost-active'] === 'true';
 
         return {
             ...state.identity,
@@ -331,6 +339,7 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
                 meta['ability-active'] === undefined
                     ? true
                     : meta['ability-active'] === true || meta['ability-active'] === 'true',
+            abilityBoostActive: loadedBoostActive,
             abilityTags: loadedTags,
         availableAbilities: loadedAbilities,
         mode: String(meta['mode'] || 'Pokémon'),
@@ -409,7 +418,7 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
         claOffsetX: Number(meta['cla-offset-x']) || 0,
         claOffsetY: Number(meta['cla-offset-y']) || 0,
 
-        // 🔥 Hydrate overrides
+        // --- Hydrate overrides ---
         themePrimaryOverride: String(meta['theme-primary-override'] || ''),
         themeSecondaryOverride: String(meta['theme-secondary-override'] || ''),
 
@@ -506,6 +515,8 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (state.identity.ability !== undefined) flatMetadata['ability'] = state.identity.ability;
             if (state.identity.abilityActive !== undefined)
                 flatMetadata['ability-active'] = state.identity.abilityActive;
+            if (state.identity.abilityBoostActive !== undefined)
+                flatMetadata['ability-boost-active'] = state.identity.abilityBoostActive;
             if (state.identity.abilityTags !== undefined) flatMetadata['ability-tags'] = state.identity.abilityTags;
             if (state.identity.availableAbilities !== undefined)
                 flatMetadata['ability-list'] = state.identity.availableAbilities.join(',');
@@ -601,7 +612,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (state.identity.claOffsetX !== undefined) flatMetadata['cla-offset-x'] = state.identity.claOffsetX;
             if (state.identity.claOffsetY !== undefined) flatMetadata['cla-offset-y'] = state.identity.claOffsetY;
 
-            // 🔥 Export overrides
+            // --- Export overrides ---
             if (state.identity.themePrimaryOverride !== undefined)
                 flatMetadata['theme-primary-override'] = state.identity.themePrimaryOverride;
             if (state.identity.themeSecondaryOverride !== undefined)

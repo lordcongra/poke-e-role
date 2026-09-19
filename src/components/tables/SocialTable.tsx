@@ -33,6 +33,8 @@ export function SocialTable() {
     const ability = useCharacterStore((state) => state.identity.ability);
     useCharacterStore((state) => state.identity.abilityActive);
     useCharacterStore((state) => state.identity.abilityTags);
+    useCharacterStore((state) => state.health.hpCurr);
+    useCharacterStore((state) => state.health.hpMax);
 
     const currentRank = useCharacterStore((state) => state.identity.rank);
     const currentAge = useCharacterStore((state) => state.identity.age);

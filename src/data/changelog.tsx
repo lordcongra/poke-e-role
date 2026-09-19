@@ -13,10 +13,11 @@ import {
     Link2,
     Accessibility,
     Smartphone,
-    BookOpen
+    BookOpen,
+    Zap
 } from 'lucide-react';
 
-export const CURRENT_VERSION = '3.6.1';
+export const CURRENT_VERSION = '3.6.2';
 
 export interface ChangelogEntry {
     version: string;
@@ -26,9 +27,46 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
     {
-        version: '3.6.1',
+        version: '3.6.2',
         date: 'September 2026',
         changes: [
+            <strong key="ability-automation-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Zap size={16} /> Automated Ability Integration & Smart Tags
+            </strong>,
+            <ul
+                key="ability-automation-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Reactive Ability Automation:</strong> Integrated dozens of canonical abilities (Blaze, Overgrow, Torrent, Swarm, Huge Power, Pure Power, Hustle, Keen Eye, Super Luck, Sniper, Compound Eyes, Guts, Marvel Scale, Quick Feet, Poison Heal, Toxic Boost, Flare Boost, and more) into the sheet's reactive Tag engine without cumbersome hardcoding.
+                </li>
+                <li>
+                    <strong>Dynamic Rank Scaling:</strong> Abilities with rank-dependent bonuses like Huge Power and Pure Power automatically scale their stat boosts based on the Pokémon's current Rank (from Starter through Master).
+                </li>
+                <li>
+                    <strong>Move Category Modifiers:</strong> Added system-wide support for move category damage tags including <code>[Dmg +X: Fist Move]</code>, <code>[Dmg +X: Pulse Move]</code>, <code>[Dmg +X: Sound Move]</code>, <code>[Dmg +X: Ballistics Move]</code>, <code>[Dmg +X: Blade Move]</code>, and <code>[Dmg +X: Contact]</code>.
+                </li>
+                <li>
+                    <strong>Accuracy & Critical Tags:</strong> Added <code>[Crit Dmg +X]</code> for clean critical hit damage calculation (e.g. Sniper) without tampering with dice pools, as well as <code>[Acc +X: Low Accuracy]</code> and <code>[Low Acc +X: Physical/Special]</code> to properly aid moves with the mechanical Low Accuracy tag (e.g. Compound Eyes).
+                </li>
+                <li>
+                    <strong>Comprehensive Status Triggers:</strong> Added the universal <code>@ Status</code> trigger tag and dedicated triggers for every condition (<code>@ Burn</code>, <code>@ Frozen Solid</code>, <code>@ Poison</code>, <code>@ Badly Poisoned</code>, <code>@ Paralysis</code>, <code>@ Asleep</code>, <code>@ Confusion</code>, <code>@ Blind</code>, <code>@ Infatuated</code>, etc.) for cross-system use on abilities, items, moves, and custom forms.
+                </li>
+                <li>
+                    <strong>Conditional Round-End Healing:</strong> Added support for conditional round-end regeneration tags like <code>[Heal X Round End @ Condition]</code> (e.g. <code>[Heal 1 Round End @ Poison]</code> for Poison Heal).
+                </li>
+                <li>
+                    <strong>Interactive Ability Boost Tracking:</strong> Added an inline Ability Boost toggle in the Round Tracker condition drawer and Ability Menu modal for manual and absorption abilities (Sap Sipper, Lightning Rod, Motor Drive, Storm Drain, Flash Fire, Well-Baked Body, Moxie, Beast Boost, Defiant, Competitive, Unburden) using the <code>@ Boost</code> tag.
+                </li>
+            </ul>,
             <strong key="trainer-generator-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                 <Users size={16} /> Trainer & Team Generator
             </strong>,

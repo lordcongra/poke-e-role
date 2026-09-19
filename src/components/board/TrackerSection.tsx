@@ -262,7 +262,10 @@ export function TrackerSection() {
     addStatCondition('S.DEF', derived.sdefBuff, derived.sdefDebuff);
 
     if (abilityName && abilityActive) {
-        const benefit = getAbilityBenefitSummary(abilityName, abilityTags, rank);
+        const hpCurr = Number(health.hpCurr) || 0;
+        const hpMax = Math.max(1, Number(health.hpMax) || 1);
+        const isHalfHp = hpCurr <= Math.floor(hpMax / 2);
+        const benefit = getAbilityBenefitSummary(abilityName, abilityTags, rank, isHalfHp);
         const abilityLabel = benefit ? `Ability: ${abilityName} (${benefit})` : `Ability: ${abilityName}`;
         conditions.push({ id: 'active-ability', label: abilityLabel, bg: '#2563eb', text: '#fff' });
     }

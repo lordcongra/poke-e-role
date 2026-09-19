@@ -25,6 +25,7 @@ const EXCLUDED_FROM_TOKEN_SAVE = new Set([
 
 const OBR_KEY_MAP: Record<string, string> = {
     abilityActive: 'ability-active',
+    abilityBoostActive: 'ability-boost-active',
     abilityTags: 'ability-tags',
     showTrackers: 'show-trackers',
     isNPC: 'is-npc',
@@ -152,6 +153,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         type2: '',
         ability: '',
         abilityActive: true,
+        abilityBoostActive: false,
         abilityTags: '',
         availableAbilities: [],
         mode: 'Pokémon',
@@ -342,6 +344,8 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
             if (field === 'ability') {
                 const cleanAbilityName = String(value).replace(/\s*\(HA\)$/i, '').trim();
                 const known = getKnownAbility(cleanAbilityName, newIdentity.rank);
+                newIdentity.abilityBoostActive = false;
+                updatesToSave['ability-boost-active'] = false;
                 if (known) {
                     newIdentity.abilityTags = known.tags;
                     newIdentity.abilityActive = known.autoActive ?? true;

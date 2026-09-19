@@ -150,7 +150,6 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     const baseCriticalReductions = hasItemHighCrit || hasMoveHighCrit ? 1 : 0;
     let totalCriticalReductions = baseCriticalReductions + itemBuffs.stackingHighCritStacks;
 
-    if (abilityString.includes('super luck')) totalCriticalReductions++;
     criticalRequirement = Math.max(1, criticalRequirement - totalCriticalReductions);
 
     useCharacterStore.getState().incrementAction();
@@ -258,12 +257,16 @@ export async function executeDamageRoll(
         }
     }
 
-    const isSniper = abilityString.includes('sniper');
     if (isCritical) {
+        const critDiceBonus = 2 + (itemBuffs.critDmg || 0);
         if (!override.active || override.type !== 'flat') {
-            actualDicePool += isSniper ? 3 : 2;
+            actualDicePool += critDiceBonus;
         }
-        tags.push(isSniper ? `Sniper Crit (+3 Dice)` : `CRITICAL HIT`);
+        if (itemBuffs.critDmg > 0) {
+            tags.push(`Critical Hit (+${critDiceBonus} Dice)`);
+        } else {
+            tags.push(`CRITICAL HIT`);
+        }
     }
 
     let pain = getPainPenalty(move.dmg1, state);
@@ -308,7 +311,7 @@ export async function executeDamageRoll(
             tags.push(`Paralysis minus 2 Dmg Dice`);
         }
 
-        // ✨ PULL FROM THE BANK ✨
+        // --- PULL FROM THE BANK ---
         let bankedDiceTag = '';
         const bankedDice = state.trackers.bankedAccDice[move.id] || 0;
         if (bankedDice > 0) {
