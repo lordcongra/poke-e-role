@@ -81,8 +81,13 @@ html[data-theme='dark'],
     color-scheme: dark !important;
 }
 
-/* 🔥 Force native HTML <select>, <option>, and <optgroup> popups to obey the sheet's dynamic panel theme */
-select,
+/* 🔥 Base styling for native <select> elements */
+select {
+    background-color: var(--panel-bg);
+    color: var(--text-main);
+}
+
+/* 🔥 Force native HTML <option> and <optgroup> popups to obey the sheet's dynamic panel theme */
 select option,
 select optgroup {
     background-color: var(--panel-bg) !important;

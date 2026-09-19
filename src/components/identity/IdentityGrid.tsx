@@ -71,6 +71,13 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex, onOpe
         ])
     );
 
+    const getTypeColor = (type?: string) => {
+        if (!type || type === 'None' || type === '--') return 'var(--panel-alt)';
+        const clean = type.trim();
+        const title = clean.charAt(0).toUpperCase() + clean.slice(1).toLowerCase();
+        return allTypeColors[clean] || allTypeColors[title] || 'var(--panel-alt)';
+    };
+
     return (
         <>
             <div
@@ -83,9 +90,9 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex, onOpe
                     <input
                         type="text"
                         className="identity-grid__input text-label"
-                        placeholder="Unnamed..."
-                        value={identityStore.nickname || ''}
+                        value={identityStore.nickname}
                         onChange={(event) => setIdentity('nickname', event.target.value)}
+                        placeholder="Nickname..."
                     />
                 </div>
 
@@ -97,7 +104,7 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex, onOpe
                     </span>
                     <select
                         className="identity-grid__select text-label"
-                        value={identityStore.nature || ''}
+                        value={identityStore.nature}
                         onChange={(event) => setIdentity('nature', event.target.value)}
                     >
                         {NATURES.map((nature) => (
@@ -111,7 +118,7 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex, onOpe
                     <span className="identity-grid__label text-label">Rank</span>
                     <select
                         className="identity-grid__select text-label"
-                        value={identityStore.rank || 'Starter'}
+                        value={identityStore.rank}
                         onChange={(event) => setIdentity('rank', event.target.value as Rank)}
                     >
                         {RANKS.map((rank) => (
@@ -126,9 +133,13 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex, onOpe
                     <span className="identity-grid__label text-label">Typing</span>
                     <div className="identity-header__typing-container">
                         <select
-                            className={`identity-grid__select identity-header__type-select ${identityStore.type1 && identityStore.type1 !== 'None' ? 'text-theme-header' : 'text-label'}`}
+                            className={`identity-grid__select identity-header__type-select ${
+                                identityStore.type1 && identityStore.type1 !== 'None'
+                                    ? 'text-theme-header'
+                                    : 'text-label'
+                            }`}
                             style={{
-                                background: allTypeColors[identityStore.type1] || 'var(--panel-alt)'
+                                background: getTypeColor(identityStore.type1)
                             }}
                             value={identityStore.type1 || ''}
                             onChange={(event) => setIdentity('type1', event.target.value)}
@@ -140,9 +151,13 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex, onOpe
                             ))}
                         </select>
                         <select
-                            className={`identity-grid__select identity-header__type-select ${identityStore.type2 && identityStore.type2 !== 'None' ? 'text-theme-header' : 'text-label'}`}
+                            className={`identity-grid__select identity-header__type-select ${
+                                identityStore.type2 && identityStore.type2 !== 'None'
+                                    ? 'text-theme-header'
+                                    : 'text-label'
+                            }`}
                             style={{
-                                background: allTypeColors[identityStore.type2] || 'var(--panel-alt)'
+                                background: getTypeColor(identityStore.type2)
                             }}
                             value={identityStore.type2 || ''}
                             onChange={(event) => setIdentity('type2', event.target.value)}

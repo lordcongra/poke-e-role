@@ -47,6 +47,7 @@ export const TYPE_COLORS: Record<string, string> = {
     Stellar: '#4DD0E1'
 };
 
+
 export const NATURES = [
     '',
     'Hardy',
@@ -149,19 +150,19 @@ export const KNOWN_ITEMS: KnownItem[] = [
 ];
 
 export const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-    Healthy: { bg: '#A5D6A7', text: '#000' },
-    '1st Degree Burn': { bg: '#FFCC80', text: '#000' },
-    '2nd Degree Burn': { bg: '#FF8A65', text: '#000' },
-    '3rd Degree Burn': { bg: '#D32F2F', text: '#FFF' },
-    Poison: { bg: '#CE93D8', text: '#000' },
-    'Badly Poisoned': { bg: '#8E24AA', text: '#FFF' },
-    Paralysis: { bg: '#FFF59D', text: '#000' },
-    'Frozen Solid': { bg: '#81D4FA', text: '#000' },
-    Sleep: { bg: '#9FA8DA', text: '#000' },
-    'In Love': { bg: '#F48FB1', text: '#000' },
-    Confusion: { bg: '#80CBC4', text: '#000' },
-    Disable: { bg: '#E0E0E0', text: '#000' },
-    Flinch: { bg: '#B0BEC5', text: '#000' }
+    Healthy: { bg: '#4CAF50', text: '#FFFFFF' },
+    '1st Degree Burn': { bg: '#FFA726', text: '#FFFFFF' },
+    '2nd Degree Burn': { bg: '#FF7043', text: '#FFFFFF' },
+    '3rd Degree Burn': { bg: '#D32F2F', text: '#FFFFFF' },
+    Poison: { bg: '#AB47BC', text: '#FFFFFF' },
+    'Badly Poisoned': { bg: '#7B1FA2', text: '#FFFFFF' },
+    Paralysis: { bg: '#FBC02D', text: '#FFFFFF' },
+    'Frozen Solid': { bg: '#29B6F6', text: '#FFFFFF' },
+    Sleep: { bg: '#7E57C2', text: '#FFFFFF' },
+    'In Love': { bg: '#EC407A', text: '#FFFFFF' },
+    Confusion: { bg: '#26A69A', text: '#FFFFFF' },
+    Disable: { bg: '#78909C', text: '#FFFFFF' },
+    Flinch: { bg: '#607D8B', text: '#FFFFFF' }
 };
 
 export const STATUS_RULES: Record<string, string> = {

@@ -36,10 +36,15 @@ export function StatusBox() {
             </div>
             <div className="status-box__content">
                 {statuses.map((status, index) => {
-                    const customStatusData = customStatuses.find((s) => s.name === status.name);
+                    const customStatusData = customStatuses.find(
+                        (s) => s.name.toLowerCase() === status.name.toLowerCase()
+                    );
+                    const matchedStatusColor =
+                        STATUS_COLORS[status.name] ||
+                        Object.entries(STATUS_COLORS).find(([k]) => k.toLowerCase() === status.name.toLowerCase())?.[1];
                     const colors = customStatusData
                         ? { bg: customStatusData.color, text: customStatusData.textColor }
-                        : STATUS_COLORS[status.name] || { bg: '#FFF', text: '#000' };
+                        : matchedStatusColor || { bg: '#FFF', text: '#000' };
 
                     let statusDesc = STATUS_RULES[status.name] || 'Custom Effect.';
                     if (customStatusData) {
@@ -49,8 +54,8 @@ export function StatusBox() {
                     return (
                         <div key={status.id} className="status-box__row">
                             <select
-                                className="identity-grid__select status-box__select"
-                                style={{ background: colors.bg, color: colors.text }}
+                                className="identity-grid__select status-box__select text-theme-header"
+                                style={{ background: colors.bg }}
                                 value={status.name}
                                 onChange={(event) => updateStatus(status.id, 'name', event.target.value)}
                             >
