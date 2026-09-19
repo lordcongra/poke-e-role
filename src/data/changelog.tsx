@@ -1,6 +1,22 @@
 import type { ReactNode } from 'react';
+import {
+    Users,
+    Map,
+    Scroll,
+    Search,
+    Swords,
+    Shield,
+    ImageIcon,
+    Palette,
+    Dices,
+    Crown,
+    Link2,
+    Accessibility,
+    Smartphone,
+    BookOpen
+} from 'lucide-react';
 
-export const CURRENT_VERSION = '3.6.0';
+export const CURRENT_VERSION = '3.6.1';
 
 export interface ChangelogEntry {
     version: string;
@@ -10,11 +26,11 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
     {
-        version: '3.6.0',
+        version: '3.6.1',
         date: 'September 2026',
         changes: [
-            <strong key="trainer-generator-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
-                🧑‍🏫 Trainer & Team Generator
+            <strong key="trainer-generator-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Users size={16} /> Trainer & Team Generator
             </strong>,
             <ul
                 key="trainer-generator-list"
@@ -56,8 +72,8 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     <strong>Token Image Centering & Fallback Fixes:</strong> Fixed token pivot offsets when updating images from the OBR library so HUD graphics remain centered, and ensured fallback Pokéball icons resolve absolute URLs to eliminate broken image icons.
                 </li>
             </ul>,
-            <strong key="biome-ecosystems-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
-                🗺️ 25-Biome Ecosystems & Habitat Filtering
+            <strong key="biome-ecosystems-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Map size={16} /> 25-Biome Ecosystems & Habitat Filtering
             </strong>,
             <ul
                 key="biome-ecosystems-list"
@@ -90,8 +106,36 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     <strong>Categorized Skills & Previews:</strong> Grouped Pokémon and Trainer skills under canonical categories (Fight, Survive, Social, Knowledge) in Title Case, with interactive preview modals to tinker stats, reroll individual members, and verify rosters before spawning.
                 </li>
             </ul>,
-            <strong key="room-rules-permissions-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
-                📜 Room Rules & GM Permissions
+            <strong key="learnset-modal-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <BookOpen size={16} /> Interactive Move Learnsets & 1-Click Quick-Add
+            </strong>,
+            <ul
+                key="learnset-modal-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Interactive Learnset Pills:</strong> All rank-grouped learnset pills nested under the character sheet's moves table are now interactive buttons. Clicking any move name opens a comprehensive Move Detail Modal with its typing, category, damage/accuracy formulas, power, target, active tags, mechanical rules, and flavor text.
+                </li>
+                <li>
+                    <strong>1-Click Quick-Add (+) Buttons:</strong> Each unlearned move features a dedicated <code>+</code> button directly on the pill to instantly learn and equip the move into an empty or new move slot—bypassing the modal for rapid character building.
+                </li>
+                <li>
+                    <strong>Smart Move Deduplication:</strong> The sheet automatically cross-checks your equipped moves in real time; moves already learned display an equipped checkmark (✓) and hide the quick-add button to prevent accidental duplicate slots.
+                </li>
+                <li>
+                    <strong>In-Modal Discord Markdown & Table Broadcast:</strong> Move Detail Modals include 1-click buttons to copy clean Discord-formatted Markdown or broadcast move details directly to the Owlbear Rodeo tabletop or Standalone Roll Log.
+                </li>
+            </ul>,
+            <strong key="room-rules-permissions-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Scroll size={16} /> Room Rules & GM Permissions
             </strong>,
             <ul
                 key="room-rules-permissions-list"
@@ -115,8 +159,8 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     <strong>Clean Trainer Sheets:</strong> Removed the Pokémon autocomplete dropdown from the Trainer and Special Trainer "Concept" field to allow seamless freeform class entry.
                 </li>
             </ul>,
-            <strong key="lookup-tool-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
-                🔍 Unified Lookup Tool: Moves & Cross-Referencing
+            <strong key="lookup-tool-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Search size={16} /> Unified Lookup Tool: Moves & Cross-Referencing
             </strong>,
             <ul
                 key="lookup-tool-list"
@@ -149,8 +193,8 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
         version: '3.5.0',
         date: 'September 2026',
         changes: [
-            <strong key="pokedex-lookup-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
-                🔍 GM Screen: Pokédex Lookup Tool
+            <strong key="pokedex-lookup-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Search size={16} /> GM Screen: Pokédex Lookup Tool
             </strong>,
             <ul
                 key="pokedex-lookup-list"
@@ -183,8 +227,8 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     <strong>Homebrew Workshop Integration:</strong> Automatically includes custom Pokémon created in your Homebrew Workshop alongside canon Pokémon in all searches.
                 </li>
             </ul>,
-            <strong key="battle-organizer-sync-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
-                ⚔️ Battle Organizer: Full Round Reset & Action Sync
+            <strong key="battle-organizer-sync-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Swords size={16} /> Battle Organizer: Full Round Reset & Action Sync
             </strong>,
             <ul
                 key="battle-organizer-sync-list"
@@ -220,8 +264,8 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
         version: '3.4.0',
         date: 'September 2026',
         changes: [
-            <strong key="battle-organizer-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
-                ⚔️ Battle Organizer Sheet & Encounter Manager
+            <strong key="battle-organizer-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Swords size={16} /> Battle Organizer Sheet & Encounter Manager
             </strong>,
             <ul
                 key="battle-organizer-list"
@@ -254,8 +298,8 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     <strong>Print-to-PDF Battle Sheet:</strong> Export comprehensive, print-ready battle sheets with full stadium graphics, combatant stat lines, and action tracking grids.
                 </li>
             </ul>,
-            <strong key="gm-screen-update-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
-                🛡️ GM Screen & Reference Guide
+            <strong key="gm-screen-update-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Shield size={16} /> GM Screen & Reference Guide
             </strong>,
             <ul
                 key="gm-screen-update-list"
@@ -279,8 +323,8 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     <strong>Community Requests & Feedback:</strong> Have suggestions or want specific reference rules added? Reach out to <strong>@congra</strong> on the Pokérole Discord!
                 </li>
             </ul>,
-            <strong key="avatar-delete-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
-                🖼️ Artwork & Display Image Management
+            <strong key="avatar-delete-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <ImageIcon size={16} /> Artwork & Display Image Management
             </strong>,
             <ul
                 key="avatar-delete-list"
@@ -307,8 +351,8 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
         version: '3.3.0',
         date: 'August 2026',
         changes: [
-            <strong key="gm-screen-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
-                🛡️ GM Screen & Rules Cheat Sheet Modal
+            <strong key="gm-screen-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Shield size={16} /> GM Screen & Rules Cheat Sheet Modal
             </strong>,
             <ul
                 key="gm-screen-list"
@@ -341,8 +385,8 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     <strong>Special Thanks & Credit:</strong> Huge thanks and credit to Willowlark for putting together and compiling the reference information for this cheat sheet!
                 </li>
             </ul>,
-            <strong key="toolbar-theme-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
-                🎨 Global Toolbar Theme & UI Polish
+            <strong key="toolbar-theme-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Palette size={16} /> Global Toolbar Theme & UI Polish
             </strong>,
             <ul
                 key="toolbar-theme-list"
@@ -366,8 +410,8 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
         version: '3.2.0',
         date: 'August 2026',
         changes: [
-            <strong key="gen-token-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
-                🎲 Auto-Build Pokémon: Owlbear Rodeo Token Spawning
+            <strong key="gen-token-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Dices size={16} /> Auto-Build Pokémon: Owlbear Rodeo Token Spawning
             </strong>,
             <ul
                 key="gen-token-list"
@@ -393,8 +437,8 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     selected.
                 </li>
             </ul>,
-            <strong key="master-champ-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
-                👑 Master & Champion Rank Passive Automation
+            <strong key="master-champ-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Crown size={16} /> Master & Champion Rank Passive Automation
             </strong>,
             <ul
                 key="master-champ-list"
@@ -433,8 +477,8 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     marginBottom: '16px'
                 }}
             >
-                <strong className="text-title-primary" style={{ fontSize: '1.1em' }}>
-                    🔗 Custom Action Rolls (CAR) Manifest Helper
+                <strong className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <Link2 size={16} /> Custom Action Rolls (CAR) Manifest Helper
                 </strong>
                 <p
                     className="text-subtext"
@@ -449,8 +493,8 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     Added built-in detection to warn if an outdated/retired hosting link for Custom Action Rolls is
                     detected. The active manifest URL is also directly available in the Room Rules modal.
                 </p>
-                <p style={{ margin: 0, fontSize: '0.9em', fontWeight: 'bold', color: 'var(--text-main)' }}>
-                    🔗 Current CAR Manifest Link:{' '}
+                <p style={{ margin: 0, fontSize: '0.9em', fontWeight: 'bold', color: 'var(--text-main)', display: 'inline-flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
+                    <Link2 size={14} /> Current CAR Manifest Link:{' '}
                     <a
                         href="https://custom-action-rolls.narcolepticdracu.com/manifest.json"
                         target="_blank"
@@ -468,8 +512,8 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
         version: '3.1.0',
         date: 'August 2026',
         changes: [
-            <strong key="ui-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
-                🎨 Dynamic Theming UI Overhaul
+            <strong key="ui-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Palette size={16} /> Dynamic Theming UI Overhaul
             </strong>,
             <ul
                 key="ui-list"
@@ -502,8 +546,8 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     use unified, accessible text scaling across the board.
                 </li>
             </ul>,
-            <strong key="a11y-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
-                ♿ Accessibility Settings
+            <strong key="a11y-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Accessibility size={16} /> Accessibility Settings
             </strong>,
             <ul
                 key="a11y-list"
@@ -540,8 +584,8 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     marginBottom: '16px'
                 }}
             >
-                <strong className="text-title-primary" style={{ fontSize: '1.1em' }}>
-                    📱 Standalone App & Offline Mode (PWA)
+                <strong className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <Smartphone size={16} /> Standalone App & Offline Mode (PWA)
                 </strong>
                 <p
                     className="text-subtext"
@@ -559,8 +603,8 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     organize all your characters and encounters into folders.
                 </p>
             </div>,
-            <strong key="combat-title" className="text-title-primary" style={{ fontSize: '1.1em' }}>
-                ⚔️ Combat Engine & Targeting Upgrades
+            <strong key="combat-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Swords size={16} /> Combat Engine & Targeting Upgrades
             </strong>,
             <ul
                 key="combat-list"

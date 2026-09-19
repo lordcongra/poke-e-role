@@ -77,8 +77,10 @@ export function MoveDetailModal({ moveName, onClose }: MoveDetailModalProps) {
                 if (!found) {
                     found = lookupList.find(
                         (m) =>
-                            m.name.toLowerCase().trim().replace(/[^a-z0-9]/g, '') ===
-                            cleanTarget.replace(/[^a-z0-9]/g, '')
+                            m.name
+                                .toLowerCase()
+                                .trim()
+                                .replace(/[^a-z0-9]/g, '') === cleanTarget.replace(/[^a-z0-9]/g, '')
                     );
                 }
 
@@ -286,10 +288,7 @@ export function MoveDetailModal({ moveName, onClose }: MoveDetailModalProps) {
 
                             {/* Type / Category / Power Badges */}
                             <div className="move-detail-modal__badges-row">
-                                <span
-                                    className="move-detail-modal__type-badge"
-                                    style={{ backgroundColor: typeColor }}
-                                >
+                                <span className="move-detail-modal__type-badge" style={{ backgroundColor: typeColor }}>
                                     {move.type}
                                 </span>
                                 <span className="move-detail-modal__category-badge text-subtext">{move.category}</span>

@@ -155,7 +155,7 @@ export function buildPokemonDiscordMarkdown(
         }
     }
 
-    return `## 📖 **#${pokemon.dexId} ${pokemon.name}**
+    return `## **#${pokemon.dexId} ${pokemon.name}**
 > **Type:** ${typesStr}
 > **Abilities:** ${standardAbilities}${haText}${statsStr}${matchedMoveInfo}
 
@@ -189,7 +189,7 @@ export function buildPokemonBroadcast(
     }
 
     return {
-        title: `📖 #${pokemon.dexId} ${pokemon.name}`,
+        title: `#${pokemon.dexId} ${pokemon.name}`,
         desc: `Type: ${typesStr} | Abilities: ${standardAbilities}${haText}${statsText}${extraMove}`
     };
 }

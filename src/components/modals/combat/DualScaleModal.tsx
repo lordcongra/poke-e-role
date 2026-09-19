@@ -159,7 +159,8 @@ function DualScaleDialog({ pendingDualScale, resolveDualScale }: DualScaleDialog
                     <Scale size={20} /> Move Scaling Options
                 </h3>
                 <p className="dual-scale__desc text-subtext">
-                    <b>{pendingDualScale.moveName}</b> has variable scaling. Compare the resulting values below and choose your preferred roll configuration:
+                    <b>{pendingDualScale.moveName}</b> has variable scaling. Compare the resulting values below and
+                    choose your preferred roll configuration:
                 </p>
 
                 {/* Move Category Choice */}
@@ -276,7 +277,13 @@ function DualScaleDialog({ pendingDualScale, resolveDualScale }: DualScaleDialog
                                         </div>
                                         <div className="dual-scale__option-stats">
                                             <span className="dual-scale__option-stat text-subtext">
-                                                {opt === 'none' ? 'No Skill' : <>Skill: <strong>{preview.skillVal}</strong></>}
+                                                {opt === 'none' ? (
+                                                    'No Skill'
+                                                ) : (
+                                                    <>
+                                                        Skill: <strong>{preview.skillVal}</strong>
+                                                    </>
+                                                )}
                                             </span>
                                             <span className="dual-scale__option-result text-value-highlight">
                                                 <Target size={12} /> {preview.totalDice} Acc Dice

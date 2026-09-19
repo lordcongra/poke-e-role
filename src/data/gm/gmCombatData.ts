@@ -132,12 +132,12 @@ export const MOVE_RESOLUTION_STEPS = [
     {
         step: 3,
         title: 'Damage Roll & Critical Hits',
-        desc: 'Attacker determines Damage Dice pool (Move Power + Strength/Special - Defender’s Defense/Sp.Def). If Accuracy scored 3+ successes HIGHER than required, it is a Critical Hit (+2 extra Damage Dice to the pool)!\n\n💡 Minimum 1 Base Damage: Even if you roll 0 successes on the damage dice pool, a successful hit still deals 1 base damage (unless the foe has Resistance or Immunity).'
+        desc: 'Attacker determines Damage Dice pool (Move Power + Strength/Special - Defender’s Defense/Sp.Def). If Accuracy scored 3+ successes HIGHER than required, it is a Critical Hit (+2 extra Damage Dice to the pool)!\n\nMinimum 1 Base Damage: Even if you roll 0 successes on the damage dice pool, a successful hit still deals 1 base damage (unless the foe has Resistance or Immunity).'
     },
     {
         step: 4,
         title: 'Weakness, Resistance & Added Effects',
-        desc: '⚡ 1+ Success Requirement: You DO need at least 1 successful dice roll on the damage roll for Added Effects to activate and for Super Effective bonuses to apply!\n\n• Added Effects: Any secondary effect (burn, flinch, stat reduction on target, etc.) ONLY activates if at least 1 success was rolled on the damage dice.\n• Weakness Bonus (+1 / +2): Requires at least 1 success on the damage roll. Each Weakness adds +1 flat damage (+1 for 2x Super Effective, +2 for 4x Extremely Effective).\n• Resistance (-1): Each Resistance subtracts 1 flat damage (reducing 1 base damage down to 0).\n• Immunity: Target takes 0 damage and ignores all effects.'
+        desc: '1+ Success Requirement: You DO need at least 1 successful dice roll on the damage roll for Added Effects to activate and for Super Effective bonuses to apply!\n\n• Added Effects: Any secondary effect (burn, flinch, stat reduction on target, etc.) ONLY activates if at least 1 success was rolled on the damage dice.\n• Weakness Bonus (+1 / +2): Requires at least 1 success on the damage roll. Each Weakness adds +1 flat damage (+1 for 2x Super Effective, +2 for 4x Extremely Effective).\n• Resistance (-1): Each Resistance subtracts 1 flat damage (reducing 1 base damage down to 0).\n• Immunity: Target takes 0 damage and ignores all effects.'
     },
     {
         step: 5,
@@ -182,35 +182,35 @@ export const REACTION_RULES_EXAMPLES: ReactionRuleExample[] = [
     {
         id: 'reaction-vs-reaction',
         title: 'Reaction vs. Reaction (Higher Number Resolves First)',
-        scenario: 'Togekiss uses Air Slash on its turn. Cyndaquil reacts with Quick Attack (⬆️1). Togekiss responds with Extreme Speed (⬆️2).',
+        scenario: 'Togekiss uses Air Slash on its turn. Cyndaquil reacts with Quick Attack (↑1). Togekiss responds with Extreme Speed (↑2).',
         orderSteps: [
-            '1. Extreme Speed (⬆️2) [Togekiss]',
-            '2. Quick Attack (⬆️1) [Cyndaquil]',
+            '1. Extreme Speed (↑2) [Togekiss]',
+            '2. Quick Attack (↑1) [Cyndaquil]',
             '3. Air Slash (Main Action) [Togekiss]'
         ],
-        explanation: 'Extreme Speed (⬆️2) resolves first. Quick Attack (⬆️1) resolves second. Togekiss’s initial Air Slash resolves last. Note: Once Extreme Speed (⬆️2) is used, Cyndaquil cannot respond with a lower Reaction (like Reaction 1).'
+        explanation: 'Extreme Speed (↑2) resolves first. Quick Attack (↑1) resolves second. Togekiss’s initial Air Slash resolves last. Note: Once Extreme Speed (↑2) is used, Cyndaquil cannot respond with a lower Reaction (like Reaction 1).'
     },
     {
         id: 'late-reaction-vs-late-reaction',
         title: 'Late Reaction vs. Late Reaction (Lower Number Resolves First)',
-        scenario: 'Charizard uses Slash on its turn. Blastoise sets a trap with Avalanche (⬇️4). Charizard answers with Dragon Tail (⬇️6).',
+        scenario: 'Charizard uses Slash on its turn. Blastoise sets a trap with Avalanche (↓4). Charizard answers with Dragon Tail (↓6).',
         orderSteps: [
             '1. Slash (Main Action) [Charizard]',
-            '2. Avalanche (⬇️4) [Blastoise]',
-            '3. Dragon Tail (⬇️6) [Charizard]'
+            '2. Avalanche (↓4) [Blastoise]',
+            '3. Dragon Tail (↓6) [Charizard]'
         ],
-        explanation: 'Charizard’s Slash hits first. Then Blastoise’s Avalanche (⬇️4) triggers. Finally, Charizard’s Dragon Tail (⬇️6) knocks Blastoise back.'
+        explanation: 'Charizard’s Slash hits first. Then Blastoise’s Avalanche (↓4) triggers. Finally, Charizard’s Dragon Tail (↓6) knocks Blastoise back.'
     },
     {
         id: 'reaction-vs-late-reaction',
         title: 'Reaction vs. Late Reaction (Reaction ➔ Main Action ➔ Late Reaction)',
-        scenario: 'Blastoise uses Water Gun on its turn. Charizard reacts with Quick Attack (⬆️1). Blastoise answers with Avalanche (⬇️4).',
+        scenario: 'Blastoise uses Water Gun on its turn. Charizard reacts with Quick Attack (↑1). Blastoise answers with Avalanche (↓4).',
         orderSteps: [
-            '1. Quick Attack (⬆️1) [Charizard]',
+            '1. Quick Attack (↑1) [Charizard]',
             '2. Water Gun (Main Action) [Blastoise]',
-            '3. Avalanche (⬇️4) [Blastoise]'
+            '3. Avalanche (↓4) [Blastoise]'
         ],
-        explanation: 'Quick Attack (⬆️1) resolves before the main action. Then Water Gun resolves. Finally, Avalanche (⬇️4) triggers after the main hit resolves. (Note: You cannot use a regular Reaction ⬆️ against a Late Reaction ⬇️).'
+        explanation: 'Quick Attack (↑1) resolves before the main action. Then Water Gun resolves. Finally, Avalanche (↓4) triggers after the main hit resolves. (Note: You cannot use a regular Reaction ↑ against a Late Reaction ↓).'
     }
 ];
 
@@ -225,15 +225,15 @@ export const REACTION_CORE_RULES = [
     },
     {
         title: 'Preemption & Lockout',
-        desc: 'If a higher reaction number is declared (e.g. ⬆️2 Extreme Speed), you cannot respond to it with a lower reaction number (e.g. ⬆️1 Quick Attack).'
+        desc: 'If a higher reaction number is declared (e.g. ↑2 Extreme Speed), you cannot respond to it with a lower reaction number (e.g. ↑1 Quick Attack).'
     },
     {
         title: 'Cannot React to a Late Reaction',
-        desc: 'Standard Reactions (⬆️) CANNOT be used against a Late Reaction (⬇️). Late Reactions can only be answered by another Late Reaction (⬇️).'
+        desc: 'Standard Reactions (↑) CANNOT be used against a Late Reaction (↓). Late Reactions can only be answered by another Late Reaction (↓).'
     },
     {
         title: 'Can Late React to a Reaction',
-        desc: 'You CAN use a Late Reaction (⬇️) to answer an opponent’s standard Reaction (⬆️).'
+        desc: 'You CAN use a Late Reaction (↓) to answer an opponent’s standard Reaction (↑).'
     },
     {
         title: 'No Reaction Without a Reason',

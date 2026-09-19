@@ -47,7 +47,7 @@ export function GmScreenTypeMatrix() {
             : '';
         const immune = matchupGroups[0]?.length ? `\n• **Immune (0x):** ${matchupGroups[0].join(', ')}` : '';
 
-        const text = `## 🛡️ **Type Matchup Profile: ${combinedTypeName}**${weak4}${weak2}${resistHalf}${resistQuarter}${immune}`;
+        const text = `## **Type Matchup Profile: ${combinedTypeName}**${weak4}${weak2}${resistHalf}${resistQuarter}${immune}`;
 
         try {
             await navigator.clipboard.writeText(text);

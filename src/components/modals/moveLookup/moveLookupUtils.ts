@@ -68,7 +68,7 @@ export function buildMoveDiscordMarkdown(move: MoveLookupEntry): string {
         : [];
     const attrText = activeAttrs.length > 0 ? `\n> **Attributes:** ${activeAttrs.join(', ')}` : '';
 
-    return `## ⚔️ **${move.name}**
+    return `## **${move.name}**
 > **Type:** ${move.type} | **Category:** ${move.category} | **Power:** ${move.power}
 > **Accuracy:** ${accStr} | **Damage:** ${dmgStr}
 > **Target:** ${move.target || 'None'}${attrText}
@@ -96,7 +96,7 @@ export function buildMoveBroadcast(move: MoveLookupEntry): { title: string; desc
     const attrSnippet = activeAttrs.length > 0 ? ` • Attr: ${activeAttrs.join(', ')}` : '';
 
     return {
-        title: `⚔️ ${move.name} (${move.type} / ${move.category})`,
+        title: `${move.name} (${move.type} / ${move.category})`,
         desc: `Power: ${move.power} | Acc: ${accStr} | Dmg: ${dmgStr} | Target: ${move.target || 'None'}${attrSnippet}\n${move.effect || move.description || ''}`
     };
 }

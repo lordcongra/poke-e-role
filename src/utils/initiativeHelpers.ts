@@ -257,7 +257,7 @@ export function resolveInitiativeRolls(participants: InitiativeParticipant[]): R
             tiebreaker = roll;
         }
 
-        const tiebreakerNote = tiebreaker > 0 ? ` (🎲 Tiebreaker: [${tiebreaker}])` : '';
+        const tiebreakerNote = tiebreaker > 0 ? ` (Tiebreaker: [${tiebreaker}])` : '';
         logSummary += `${c.name}: [${c.d6}] + Base ${c.baseInit} = ${c.total}${tiebreakerNote}\n`;
 
         return { ...c, tiebreaker };

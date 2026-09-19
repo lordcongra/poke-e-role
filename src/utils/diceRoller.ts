@@ -98,7 +98,7 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
 
                 const rollerName = state.identity.nickname || state.identity.species || 'Combatant';
                 addRollLogEntry(
-                    '⚡ Initiative Stalemate Re-roll',
+                    'Initiative Stalemate Re-roll',
                     `Stalemate detected on Total ${rollTotal} (Base ${baseInit})!\n${rollerName} rolled 1d6 tiebreaker: [${assignedTiebreaker}]`,
                     state.identity.tokenImageUrl || '',
                     rollerName
@@ -196,7 +196,7 @@ export async function assignInitiative(tokenId: string, rollTotal: number, baseI
 
             const rollerName = state.identity.nickname || state.identity.species || 'Combatant';
             addRollLogEntry(
-                '⚡ Initiative Stalemate Re-roll',
+                'Initiative Stalemate Re-roll',
                 `Stalemate detected on Total ${rollTotal} (Base ${baseInit})!\n${rollerName} rolled 1d6 tiebreaker: [${assignedTiebreaker}]`,
                 state.identity.tokenImageUrl || '',
                 rollerName
@@ -225,7 +225,7 @@ export async function broadcastInfo(title: string, description: string) {
     const icon = state.identity.tokenImageUrl || `${import.meta.env.BASE_URL || '/'}pokeball.svg`;
 
     if (isStandaloneMode || !OBR.isAvailable) {
-        addRollLogEntry(`📢 ${title}`, description, icon, playerName);
+        addRollLogEntry(title, description, icon, playerName);
         return;
     }
 
@@ -240,7 +240,7 @@ export async function broadcastInfo(title: string, description: string) {
             characterName: playerName,
             tokenId: state.tokenId || undefined,
             playerId: playerId,
-            label: `📢 ${title}`,
+            label: title,
             result: description,
             icon,
             targetVisibility
@@ -389,7 +389,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
             if (seNegated) {
                 popupMessage += `\n( 0 base successes: Super Effective bonus negated )`;
             }
-            popupMessage += `\n💡 0 Successes: Still deals 1 Base Damage (unless target has Resistance / Protect). Added effects & Chance Dice do not trigger.`;
+            popupMessage += `\n0 Successes: Still deals 1 Base Damage (unless target has Resistance / Protect). Added effects & Chance Dice do not trigger.`;
         }
 
         const executeStateIntercepts = async (messageAppendix: string) => {
@@ -427,9 +427,9 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                     if (tempGained > currentTempMax) {
                         store.updateHealth('temporaryHitPointsMax', tempGained);
                         store.updateHealth('temporaryHitPoints', tempGained);
-                        finalMsg += `\n🛡️ Gained ${tempGained} Temp HP`;
+                        finalMsg += `\nGained ${tempGained} Temp HP`;
                     } else {
-                        finalMsg += `\n🛡️ Current Shield Holds`;
+                        finalMsg += `\nCurrent Shield Holds`;
                     }
                 }
             } else if (rollType === 'acc_face' && state.tokenId && payload) {
@@ -451,9 +451,9 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                         store.updateTracker('bankedAccDice', newBank);
 
                         const limitMsg = actualAdded < matches ? ` (Max ${limit})` : '';
-                        finalMsg += `\n💥 Banked +${actualAdded} Damage Dice!${limitMsg}`;
+                        finalMsg += `\nBanked +${actualAdded} Damage Dice!${limitMsg}`;
                     } else {
-                        finalMsg += `\n💥 Bank is full! (Max ${limit})`;
+                        finalMsg += `\nBank is full! (Max ${limit})`;
                     }
                 }
             }

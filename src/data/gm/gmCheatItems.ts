@@ -293,7 +293,7 @@ ${formatDiscordTable(
 • **Forfeit Added Effects on the Target:** Your Move hits but you don’t want it to have lasting effects on those affected, so any **Added effect that would apply to the target is forfeited**. Added Effects that affect the User still apply.
 • **Forfeit Critical Hit Bonus Dice:** Your Accuracy roll may have been impeccable, but you **do not add the extra damage dice (+2 dice)** on your roll. Even so, the Move still counts as a Critical Hit landed, but we are not gonna be fainting shinies here!
 
-> 💕 **In Love Status Condition (Storyteller Discretion):**
+> **In Love Status Condition (Storyteller Discretion):**
 > When a Pokémon is **In Love**, they are trying to earn their beloved's favor. At the Storyteller's discretion, this can mean dealing **Half Damage**, or applying **all Holding Back options** (forfeiting poison/added effects and critical hits)—because landing a critical hit or poisoning your crush is definitely not going to win you any dates (huge red flag!).
 > *Can attack at full power by succeeding on a Loyalty or Insight roll (3+ successes).*`
     },
@@ -303,7 +303,7 @@ ${formatDiscordTable(
         category: 'rules',
         categoryLabel: 'Combat & Rules',
         badge: 'Priority & Timing',
-        summary: 'Reactions (⬆️) resolve BEFORE incoming actions (highest speed first). Late Reactions (⬇️) resolve AFTER incoming actions (lowest speed first).',
+        summary: 'Reactions (↑) resolve BEFORE incoming actions (highest speed first). Late Reactions (↓) resolve AFTER incoming actions (lowest speed first).',
         keywords: [
             'reactions',
             'reaction',
@@ -321,22 +321,22 @@ ${formatDiscordTable(
             'interrupt'
         ],
         broadcastText:
-            'Reactions & Late Reactions:\n• Reactions (⬆️): Instant movements used when it’s not your turn. Resolve BEFORE the incoming action hits. Higher numbers resolve FIRST (e.g. Extreme Speed ⬆️2 resolves before Quick Attack ⬆️1).\n• Late Reactions (⬇️): Retaliations/traps that resolve AFTER the incoming action hits. Higher numbers resolve LATER (Lower numbers resolve first: Main Action ➔ Avalanche ⬇️4 ➔ Dragon Tail ⬇️6).\n• Interactivity: You CANNOT react (⬆️) to a Late Reaction (⬇️), but you CAN Late React (⬇️) to a Reaction (⬆️).\n• Action Cost: Rolling any Reaction or Late Reaction consumes 1 Action for the Round (bound to Multi-Action chart). Max 1 reaction per turn.\n• Trigger Rule: Cannot use a reaction without an incoming trigger/target (support moves like Wide Guard / Cover an Ally can protect allies).',
+            'Reactions & Late Reactions:\n• Reactions (↑): Instant movements used when it’s not your turn. Resolve BEFORE the incoming action hits. Higher numbers resolve FIRST (e.g. Extreme Speed ↑2 resolves before Quick Attack ↑1).\n• Late Reactions (↓): Retaliations/traps that resolve AFTER the incoming action hits. Higher numbers resolve LATER (Lower numbers resolve first: Main Action ➔ Avalanche ↓4 ➔ Dragon Tail ↓6).\n• Interactivity: You CANNOT react (↑) to a Late Reaction (↓), but you CAN Late React (↓) to a Reaction (↑).\n• Action Cost: Rolling any Reaction or Late Reaction consumes 1 Action for the Round (bound to Multi-Action chart). Max 1 reaction per turn.\n• Trigger Rule: Cannot use a reaction without an incoming trigger/target (support moves like Wide Guard / Cover an Ally can protect allies).',
         discordMarkdown: `## ⚡ **Reactions & Late Reactions**
 > *Reactions are fast, tactical maneuvers and moves used when it is not your turn yet.*
 
-### ⬆️ **Reactions [1..6] (Fast - Resolve Before Main Action)**
+### ↑ **Reactions [1..6] (Fast - Resolve Before Main Action)**
 • **Timing:** Resolve **BEFORE** the incoming main action hits (speeds range from 1 to 6).
-• **Speed Order:** **Higher numbers resolve FIRST** *(e.g. Protect ⬆️5 resolves before Upper Hand ⬆️3, which resolves before Quick Attack ⬆️1)*.
-• **Examples by Speed:** Quick Attack / Water Shuriken (⬆️1), Extreme Speed (⬆️2), Upper Hand (⬆️3), King’s Shield (⬆️4), Protect (⬆️5), Evade / Clash maneuvers (⬆️6).
+• **Speed Order:** **Higher numbers resolve FIRST** *(e.g. Protect ↑5 resolves before Upper Hand ↑3, which resolves before Quick Attack ↑1)*.
+• **Examples by Speed:** Quick Attack / Water Shuriken (↑1), Extreme Speed (↑2), Upper Hand (↑3), King’s Shield (↑4), Protect (↑5), Evade / Clash maneuvers (↑6).
 • **Preemption:** You **cannot** answer a higher reaction number with a lower reaction number.
 
-### ⬇️ **Late Reactions [1..6] (Delayed - Resolve After Main Action)**
+### ↓ **Late Reactions [1..6] (Delayed - Resolve After Main Action)**
 • **Timing:** Resolve **AFTER** the incoming main action hits (speeds range from 1 to 6, like enduring a blow to trigger a counter or trap).
 • **Speed Order (Reverse):** **Higher numbers resolve LATER** *(e.g. Main Slash ➔ Late Reaction 1 Circle Throw ➔ Late Reaction 3 Shell Trap ➔ Late Reaction 4 Avalanche ➔ Late Reaction 5 Counter ➔ Late Reaction 6 Dragon Tail)*.
-• **Examples by Speed:** Circle Throw / Feint (⬇️1), Shell Trap (⬇️3), Avalanche (⬇️4), Counter / Mirror Coat / Metal Burst (⬇️5), Dragon Tail / Roar / Whirlwind (⬇️6).
-• **Interaction Rule:** You **CANNOT** use a standard Reaction (⬆️) against a Late Reaction (⬇️). Late Reactions can only be answered by another Late Reaction.
-• **Late Reacting to a Reaction:** You **CAN** use a Late Reaction against a Reaction *(e.g. ⬆️1 Quick Attack ➔ Main Action ➔ ⬇️4 Avalanche)*.
+• **Examples by Speed:** Circle Throw / Feint (↓1), Shell Trap (↓3), Avalanche (↓4), Counter / Mirror Coat / Metal Burst (↓5), Dragon Tail / Roar / Whirlwind (↓6).
+• **Interaction Rule:** You **CANNOT** use a standard Reaction (↑) against a Late Reaction (↓). Late Reactions can only be answered by another Late Reaction.
+• **Late Reacting to a Reaction:** You **CAN** use a Late Reaction against a Reaction *(e.g. ↑1 Quick Attack ➔ Main Action ➔ ↓4 Avalanche)*.
 
 ---
 ### ⚠️ **Key Rules & Limitations**

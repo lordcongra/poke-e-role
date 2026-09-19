@@ -1,5 +1,5 @@
 import React from 'react';
-import { Megaphone, Sparkles } from 'lucide-react';
+import { Megaphone, Sparkles, Heart, ArrowUp, ArrowDown } from 'lucide-react';
 import {
     DIFFICULTY_TABLE,
     WILL_SPENDING,
@@ -391,8 +391,15 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                             lineHeight: '1.35'
                         }}
                     >
-                        <strong style={{ color: '#E91E63' }}>
-                            💕 In Love Status Condition (Storyteller Discretion):
+                        <strong
+                            style={{
+                                color: '#E91E63',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 4
+                            }}
+                        >
+                            <Heart size={14} fill="#E91E63" /> In Love Status Condition (Storyteller Discretion):
                         </strong>{' '}
                         When a Pokémon is <strong>In Love</strong>, they are trying to earn their crush’s favor. At the
                         Storyteller’s discretion, this can mean dealing <strong>Half Damage</strong> or enforcing{' '}
@@ -440,7 +447,7 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                                         gap: '4px'
                                     }}
                                 >
-                                    ⬆️ Reaction [1..6]
+                                    <ArrowUp size={13} /> Reaction [1..6]
                                 </span>
                                 <strong style={{ color: '#00ACC1' }}>Resolves BEFORE Action</strong>
                             </div>
@@ -457,8 +464,8 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                             </p>
                             <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', lineHeight: '1.35' }}>
                                 <em>
-                                    Examples: Quick Attack / Water Shuriken (⬆️1), Extreme Speed (⬆️2), Upper Hand
-                                    (⬆️3), King’s Shield (⬆️4), Protect (⬆️5), Evade / Clash maneuvers (⬆️6).
+                                    Examples: Quick Attack / Water Shuriken (↑1), Extreme Speed (↑2), Upper Hand (↑3),
+                                    King’s Shield (↑4), Protect (↑5), Evade / Clash maneuvers (↑6).
                                 </em>
                             </div>
                         </div>
@@ -489,7 +496,7 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                                         gap: '4px'
                                     }}
                                 >
-                                    ⬇️ Late Reaction [1..6]
+                                    <ArrowDown size={13} /> Late Reaction [1..6]
                                 </span>
                                 <strong style={{ color: '#7E57C2' }}>Resolves AFTER Action</strong>
                             </div>
@@ -507,8 +514,8 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                             </p>
                             <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
                                 <em>
-                                    Examples: Circle Throw / Feint (⬇️1), Shell Trap (⬇️3), Avalanche (⬇️4), Counter /
-                                    Mirror Coat (⬇️5), Dragon Tail / Roar (⬇️6).
+                                    Examples: Circle Throw / Feint (↓1), Shell Trap (↓3), Avalanche (↓4), Counter /
+                                    Mirror Coat (↓5), Dragon Tail / Roar (↓6).
                                 </em>
                             </div>
                         </div>

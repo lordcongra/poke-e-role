@@ -26,7 +26,7 @@ export function GmScreenCatchCalculator() {
         const hpText = hpCondition === 'one' ? '1 HP (+2)' : hpCondition === 'half' ? 'Half HP (+1)' : 'Full HP (+0)';
         const statusText = statusCount > 0 ? `${statusCount} Status Ailment(s) (+${statusCount})` : 'None (+0)';
 
-        const text = `## 🔴 **Catching Attempt: ${rank.rank} Pokémon**
+        const text = `## **Catching Attempt: ${rank.rank} Pokémon**
 > **Pokéball:** ${ballLabel}
 > **HP Condition:** ${hpText}
 > **Status:** ${statusText}

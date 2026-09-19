@@ -1,5 +1,5 @@
 import React from 'react';
-import { Megaphone, Layers, Sparkles, Pill } from 'lucide-react';
+import { Megaphone, Layers, Sparkles, Pill, Heart } from 'lucide-react';
 import {
     STATUS_CATEGORIES_DATA,
     STATUS_RULES_INFO,
@@ -180,7 +180,9 @@ export const GmStatusCards: React.FC<GmStatusCardsProps> = ({
                                             marginTop: '2px'
                                         }}
                                     >
-                                        <strong>💕 Storyteller Note:</strong> Being <em>In Love</em> means trying to
+                                        <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                            <Heart size={13} color="#F48FB1" fill="#F48FB1" /> Storyteller Note:
+                                        </strong>{' '}
                                         earn their crush’s favor. At the GM’s discretion, they deal{' '}
                                         <strong>Half Damage</strong> or apply <strong>all Holding Back options</strong>{' '}
                                         (no crits, no poison/added effects—poisoning your crush is a massive red flag!).

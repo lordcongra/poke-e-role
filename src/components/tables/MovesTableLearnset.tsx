@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
-import { BookOpen, Check } from 'lucide-react';
+import { BookOpen, Check, Plus, Loader2 } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { MoveDetailModal } from '../modals/moveLookup/MoveDetailModal';
+import { fetchMoveData } from '../../utils/api';
 
 interface MovesTableLearnsetProps {
     learnset: Array<{ Learned: string; Name: string }>;
@@ -10,12 +11,51 @@ interface MovesTableLearnsetProps {
 export function MovesTableLearnset({ learnset }: MovesTableLearnsetProps) {
     const [showLearnset, setShowLearnset] = useState(false);
     const [selectedMoveName, setSelectedMoveName] = useState<string | null>(null);
+    const [addingMoves, setAddingMoves] = useState<Set<string>>(new Set());
 
     const characterMoves = useCharacterStore((state) => state.moves);
     const learnedSet = useMemo(
         () => new Set(characterMoves.map((m) => m.name.toLowerCase().trim()).filter(Boolean)),
         [characterMoves]
     );
+
+    const handleQuickAdd = async (moveName: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (learnedSet.has(moveName.toLowerCase().trim()) || addingMoves.has(moveName)) return;
+
+        setAddingMoves((prev) => new Set(prev).add(moveName));
+        try {
+            const store = useCharacterStore.getState();
+            const existingMoves = store.moves;
+
+            // Find an empty move slot or create a new slot
+            const emptySlot = existingMoves.find((m) => !m.name || m.name.trim() === '');
+            let targetId: string;
+
+            if (emptySlot) {
+                targetId = emptySlot.id;
+            } else {
+                store.addMove();
+                const updatedMoves = useCharacterStore.getState().moves;
+                targetId = updatedMoves[updatedMoves.length - 1].id;
+            }
+
+            const fullData = await fetchMoveData(moveName);
+            if (fullData) {
+                store.applyMoveData(targetId, fullData as Record<string, unknown>);
+            } else {
+                store.updateMove(targetId, 'name', moveName);
+            }
+        } catch (err) {
+            console.error('[MovesTableLearnset] Failed to quick-add move:', err);
+        } finally {
+            setAddingMoves((prev) => {
+                const next = new Set(prev);
+                next.delete(moveName);
+                return next;
+            });
+        }
+    };
 
     if (learnset.length === 0) return null;
 
@@ -63,19 +103,46 @@ export function MovesTableLearnset({ learnset }: MovesTableLearnsetProps) {
                             <div className="moves-table__learnset-moves-list">
                                 {groupedLearnset[rank].map((moveName, index) => {
                                     const isLearned = learnedSet.has(moveName.toLowerCase().trim());
+                                    const isAdding = addingMoves.has(moveName);
                                     return (
-                                        <button
+                                        <div
                                             key={`${rank}-${moveName}-${index}`}
-                                            type="button"
-                                            onClick={() => setSelectedMoveName(moveName)}
                                             className={`moves-table__learnset-pill text-subtext ${
                                                 isLearned ? 'moves-table__learnset-pill--learned' : ''
                                             }`}
-                                            title={isLearned ? `${moveName} (Learned) - Click to view details` : `Click to view ${moveName} details`}
                                         >
-                                            {isLearned && <Check size={11} className="moves-table__learnset-pill-icon" />}
-                                            <span>{moveName}</span>
-                                        </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedMoveName(moveName)}
+                                                className="moves-table__learnset-name-btn"
+                                                title={
+                                                    isLearned
+                                                        ? `${moveName} (Learned) - Click to view details`
+                                                        : `Click to view ${moveName} details`
+                                                }
+                                            >
+                                                {isLearned && (
+                                                    <Check size={11} className="moves-table__learnset-pill-icon" />
+                                                )}
+                                                <span>{moveName}</span>
+                                            </button>
+                                            {!isLearned && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => handleQuickAdd(moveName, e)}
+                                                    className="moves-table__learnset-add-btn"
+                                                    disabled={isAdding}
+                                                    title={`Quick-add ${moveName} to move slots`}
+                                                    aria-label={`Quick-add ${moveName} to move slots`}
+                                                >
+                                                    {isAdding ? (
+                                                        <Loader2 size={11} className="animate-spin" />
+                                                    ) : (
+                                                        <Plus size={11} />
+                                                    )}
+                                                </button>
+                                            )}
+                                        </div>
                                     );
                                 })}
                             </div>
@@ -85,12 +152,8 @@ export function MovesTableLearnset({ learnset }: MovesTableLearnsetProps) {
             )}
 
             {selectedMoveName && (
-                <MoveDetailModal
-                    moveName={selectedMoveName}
-                    onClose={() => setSelectedMoveName(null)}
-                />
+                <MoveDetailModal moveName={selectedMoveName} onClose={() => setSelectedMoveName(null)} />
             )}
         </div>
     );
 }
-

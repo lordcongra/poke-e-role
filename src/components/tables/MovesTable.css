@@ -165,24 +165,21 @@
 
 .moves-table__learnset-pill {
     background: var(--label-bg);
-    padding: 3px 8px;
     border-radius: 12px;
-    border: 1px solid transparent;
-    cursor: pointer;
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
     font-size: 0.76rem;
     font-family: inherit;
     color: var(--text-main);
     display: inline-flex;
-    align-items: center;
-    gap: 4px;
+    align-items: stretch;
     transition: all 0.15s ease;
     user-select: none;
+    overflow: hidden;
 }
 
 .moves-table__learnset-pill:hover {
     background: var(--panel-bg);
     border-color: var(--primary);
-    color: var(--primary);
     transform: translateY(-1px);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
@@ -194,6 +191,56 @@
 .moves-table__learnset-pill--learned {
     border-color: rgba(var(--primary-rgb, 59, 130, 246), 0.35);
     background: color-mix(in srgb, var(--primary) 14%, var(--label-bg));
+}
+
+.moves-table__learnset-name-btn {
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-size: inherit;
+    font-family: inherit;
+    padding: 3px 6px 3px 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.moves-table__learnset-pill--learned .moves-table__learnset-name-btn {
+    padding: 3px 8px;
+}
+
+.moves-table__learnset-name-btn:hover {
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+.moves-table__learnset-add-btn {
+    background: transparent;
+    border: none;
+    border-left: 1px solid color-mix(in srgb, var(--border, rgba(255, 255, 255, 0.12)) 80%, transparent);
+    color: var(--text-muted);
+    padding: 3px 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.moves-table__learnset-add-btn:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--primary) 25%, transparent);
+    color: var(--primary);
+}
+
+.moves-table__learnset-add-btn:active:not(:disabled) {
+    transform: scale(0.9);
+}
+
+.moves-table__learnset-add-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
 }
 
 .moves-table__learnset-pill-icon {
