@@ -303,45 +303,62 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
     const abilityListStr = String(meta['ability-list'] || '');
     const loadedAbilities = abilityListStr ? abilityListStr.split(',') : [];
 
-        const loadedRank = (meta['rank'] as Rank) || 'Starter';
-        const loadedAbility = String(meta['ability'] || '');
-        let loadedTags = String(meta['ability-tags'] || '');
-        const cleanLoadedAbility = loadedAbility.replace(/\s*\(HA\)$/i, '').trim();
-        if (!loadedTags && cleanLoadedAbility) {
-            const known = getKnownAbility(cleanLoadedAbility, loadedRank);
-            if (known) loadedTags = known.tags;
-        }
-        if (cleanLoadedAbility === 'Huge Power' || cleanLoadedAbility === 'Pure Power') {
-            const cleanRank = String(loadedRank).toLowerCase().trim();
-            const isHigh = cleanRank === 'expert' || cleanRank === 'ace' || cleanRank === 'master' || cleanRank === 'champion';
-            if (!isHigh && loadedTags.includes('[Str +2]')) {
-                loadedTags = loadedTags.replace(/\[Str \+2\]/g, '[Str +1]');
-            } else if (isHigh && loadedTags.includes('[Str +1]')) {
-                loadedTags = loadedTags.replace(/\[Str \+1\]/g, '[Str +2]');
+    const loadedRank = (meta['rank'] as Rank) || 'Starter';
+    const loadedAbility = String(meta['ability'] || '');
+    let loadedTags = String(meta['ability-tags'] || '');
+    const cleanLoadedAbility = loadedAbility.replace(/\s*\(HA\)$/i, '').trim();
+    if (cleanLoadedAbility) {
+        const known = getKnownAbility(cleanLoadedAbility, loadedRank);
+        if (known) {
+            loadedTags = known.tags;
+        } else if (!loadedTags) {
+            // No tags
+        } else {
+            const isCustom = state.roomCustomAbilities?.some(
+                (ca) => ca.name.trim().toLowerCase() === cleanLoadedAbility.toLowerCase()
+            );
+            if (
+                !isCustom &&
+                (loadedTags.includes('[Str +1]') || loadedTags.includes('[Str +2]')) &&
+                cleanLoadedAbility !== 'Huge Power' &&
+                cleanLoadedAbility !== 'Pure Power'
+            ) {
+                loadedTags = '';
             }
         }
+    }
+    if (cleanLoadedAbility === 'Huge Power' || cleanLoadedAbility === 'Pure Power') {
+        const cleanRank = String(loadedRank).toLowerCase().trim();
+        const isHigh =
+            cleanRank === 'expert' || cleanRank === 'ace' || cleanRank === 'master' || cleanRank === 'champion';
+        if (!isHigh && loadedTags.includes('[Str +2]')) {
+            loadedTags = loadedTags.replace(/\[Str \+2\]/g, '[Str +1]');
+        } else if (isHigh && loadedTags.includes('[Str +1]')) {
+            loadedTags = loadedTags.replace(/\[Str \+1\]/g, '[Str +2]');
+        }
+    }
 
-        const loadedBoostActive =
-            meta['ability-boost-active'] === true || meta['ability-boost-active'] === 'true';
+    const loadedBoostActive = meta['ability-boost-active'] === true || meta['ability-boost-active'] === 'true';
 
-        return {
-            ...state.identity,
-            nickname: String(meta['nickname'] || ''),
-            species: String(meta['species'] || ''),
-            nature: String(meta['nature'] || ''),
-            rank: loadedRank,
+    return {
+        ...state.identity,
+        nickname: String(meta['nickname'] || ''),
+        species: String(meta['species'] || ''),
+        nature: String(meta['nature'] || ''),
+        rank: loadedRank,
 
-            type1: String(meta['type1'] || meta['Type1'] || ''),
-            type2: String(meta['type2'] || meta['Type2'] || ''),
+        type1: String(meta['type1'] || meta['Type1'] || ''),
+        type2: String(meta['type2'] || meta['Type2'] || ''),
 
-            ability: loadedAbility,
-            abilityActive:
-                meta['ability-active'] === undefined
-                    ? true
-                    : meta['ability-active'] === true || meta['ability-active'] === 'true',
-            abilityBoostActive: loadedBoostActive,
-            abilityTags: loadedTags,
+        ability: loadedAbility,
+        abilityActive:
+            meta['ability-active'] === undefined
+                ? true
+                : meta['ability-active'] === true || meta['ability-active'] === 'true',
+        abilityBoostActive: loadedBoostActive,
+        abilityTags: loadedTags,
         availableAbilities: loadedAbilities,
+        previousNativeAbility: String(meta['previous-native-ability'] || ''),
         mode: String(meta['mode'] || 'Pokémon'),
         age: String(meta['age'] || ''),
         gender: String(meta['gender'] || ''),
@@ -520,6 +537,8 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (state.identity.abilityTags !== undefined) flatMetadata['ability-tags'] = state.identity.abilityTags;
             if (state.identity.availableAbilities !== undefined)
                 flatMetadata['ability-list'] = state.identity.availableAbilities.join(',');
+            if (state.identity.previousNativeAbility !== undefined)
+                flatMetadata['previous-native-ability'] = state.identity.previousNativeAbility;
             if (state.identity.type1 !== undefined) flatMetadata['type1'] = state.identity.type1;
             if (state.identity.type2 !== undefined) flatMetadata['type2'] = state.identity.type2;
             if (state.identity.mode !== undefined) flatMetadata['mode'] = state.identity.mode;

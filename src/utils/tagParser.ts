@@ -77,9 +77,7 @@ function checkCondition(conditionStr: string | undefined, isHalfHp: boolean): bo
     }
 
     // 3. Status checks
-    const activeStatuses = (state.statuses || []).filter(
-        (s) => s.name && s.name.toLowerCase() !== 'healthy'
-    );
+    const activeStatuses = (state.statuses || []).filter((s) => s.name && s.name.toLowerCase() !== 'healthy');
 
     // Generic status: "@ Status", "@ Any Status", "@ Status Ailment"
     if (
@@ -114,16 +112,26 @@ function checkCondition(conditionStr: string | undefined, isHalfHp: boolean): bo
         return hasStatus((n, c) => n.includes('3rd degree burn') || c.includes('3rd degree burn'));
     }
     if (cond === 'poison' || cond === 'poisoned') {
-        return hasStatus((n, c) => n.includes('poison') || c.includes('poison') || n.includes('toxic') || c.includes('toxic'));
+        return hasStatus(
+            (n, c) => n.includes('poison') || c.includes('poison') || n.includes('toxic') || c.includes('toxic')
+        );
     }
     if (cond === 'badly poisoned' || cond === 'toxic') {
-        return hasStatus((n, c) => n.includes('badly poisoned') || c.includes('badly poisoned') || n.includes('toxic') || c.includes('toxic'));
+        return hasStatus(
+            (n, c) =>
+                n.includes('badly poisoned') ||
+                c.includes('badly poisoned') ||
+                n.includes('toxic') ||
+                c.includes('toxic')
+        );
     }
     if (cond === 'paralysis' || cond === 'paralyzed') {
         return hasStatus((n, c) => n.includes('paraly') || c.includes('paraly'));
     }
     if (cond === 'frozen solid' || cond === 'frozen' || cond === 'freeze') {
-        return hasStatus((n, c) => n.includes('frozen') || c.includes('frozen') || n.includes('freeze') || c.includes('freeze'));
+        return hasStatus(
+            (n, c) => n.includes('frozen') || c.includes('frozen') || n.includes('freeze') || c.includes('freeze')
+        );
     }
     if (cond === 'sleep' || cond === 'asleep' || cond === 'sleeping') {
         return hasStatus((n, c) => n.includes('sleep') || c.includes('sleep'));
@@ -132,7 +140,9 @@ function checkCondition(conditionStr: string | undefined, isHalfHp: boolean): bo
         return hasStatus((n, c) => n.includes('confus') || c.includes('confus'));
     }
     if (cond === 'in love' || cond === 'infatuation' || cond === 'infatuated') {
-        return hasStatus((n, c) => n.includes('love') || c.includes('love') || n.includes('infat') || c.includes('infat'));
+        return hasStatus(
+            (n, c) => n.includes('love') || c.includes('love') || n.includes('infat') || c.includes('infat')
+        );
     }
     if (cond === 'disable' || cond === 'disabled') {
         return hasStatus((n, c) => n.includes('disable') || c.includes('disable'));
@@ -272,12 +282,68 @@ function matchesModifier(req: string, move: MoveData | undefined): boolean {
     const desc = (move.desc || '').toLowerCase();
     const name = (move.name || '').toLowerCase();
     if (desc.includes(req) || name.includes(req)) return true;
-    if (req === 'fist move' && (desc.includes('punch') || name.includes('punch') || desc.includes('fist') || name.includes('fist'))) return true;
-    if (req === 'bite move' && (desc.includes('bite') || name.includes('bite') || desc.includes('fang') || name.includes('fang') || desc.includes('jaw') || name.includes('jaw'))) return true;
-    if (req === 'cutter move' && (desc.includes('slicing') || desc.includes('cutter') || desc.includes('slash') || name.includes('cutter') || name.includes('slash') || name.includes('blade'))) return true;
-    if (req === 'sound move' && (desc.includes('sound') || desc.includes('voice') || desc.includes('song') || desc.includes('roar') || desc.includes('screech') || name.includes('sound') || name.includes('song') || name.includes('roar'))) return true;
-    if (req === 'projectile move' && (desc.includes('projectile') || desc.includes('pulse') || desc.includes('aura') || desc.includes('bullet') || desc.includes('cannon') || desc.includes('blast') || name.includes('pulse') || name.includes('cannon') || name.includes('blast'))) return true;
-    if (req === 'wind move' && (desc.includes('wind') || desc.includes('gust') || desc.includes('cyclone') || desc.includes('hurricane') || desc.includes('breeze') || name.includes('wind') || name.includes('gust') || name.includes('hurricane'))) return true;
+    if (
+        req === 'fist move' &&
+        (desc.includes('punch') || name.includes('punch') || desc.includes('fist') || name.includes('fist'))
+    )
+        return true;
+    if (
+        req === 'bite move' &&
+        (desc.includes('bite') ||
+            name.includes('bite') ||
+            desc.includes('fang') ||
+            name.includes('fang') ||
+            desc.includes('jaw') ||
+            name.includes('jaw'))
+    )
+        return true;
+    if (
+        req === 'cutter move' &&
+        (desc.includes('slicing') ||
+            desc.includes('cutter') ||
+            desc.includes('slash') ||
+            name.includes('cutter') ||
+            name.includes('slash') ||
+            name.includes('blade'))
+    )
+        return true;
+    if (
+        req === 'sound move' &&
+        (desc.includes('sound') ||
+            desc.includes('voice') ||
+            desc.includes('song') ||
+            desc.includes('roar') ||
+            desc.includes('screech') ||
+            name.includes('sound') ||
+            name.includes('song') ||
+            name.includes('roar'))
+    )
+        return true;
+    if (
+        req === 'projectile move' &&
+        (desc.includes('projectile') ||
+            desc.includes('pulse') ||
+            desc.includes('aura') ||
+            desc.includes('bullet') ||
+            desc.includes('cannon') ||
+            desc.includes('blast') ||
+            name.includes('pulse') ||
+            name.includes('cannon') ||
+            name.includes('blast'))
+    )
+        return true;
+    if (
+        req === 'wind move' &&
+        (desc.includes('wind') ||
+            desc.includes('gust') ||
+            desc.includes('cyclone') ||
+            desc.includes('hurricane') ||
+            desc.includes('breeze') ||
+            name.includes('wind') ||
+            name.includes('gust') ||
+            name.includes('hurricane'))
+    )
+        return true;
     if (req === 'recoil' && desc.includes('recoil')) return true;
     return false;
 }
@@ -357,7 +423,8 @@ function extractAccuracy(
         } else if (requirement === 'low accuracy') {
             const moveDesc = (move?.desc || '').toLowerCase();
             const moveName = (move?.name || '').toLowerCase();
-            const hasLowAcc = bonuses.addLowAcc > 0 || moveDesc.includes('low accuracy') || moveName.includes('low accuracy');
+            const hasLowAcc =
+                bonuses.addLowAcc > 0 || moveDesc.includes('low accuracy') || moveName.includes('low accuracy');
             if (hasLowAcc) {
                 bonuses.acc += safeParseInt(match[1]);
                 triggers.accuracy = true;
@@ -377,12 +444,7 @@ function extractAccuracy(
     }
 }
 
-function extractCritDamage(
-    description: string,
-    bonuses: CombatBonuses,
-    triggers: TagTriggers,
-    isHalfHp: boolean
-) {
+function extractCritDamage(description: string, bonuses: CombatBonuses, triggers: TagTriggers, isHalfHp: boolean) {
     const critMatches = description.matchAll(
         /\[\s*crit(?:\s*dmg|\s*damage)?\s*([+-]?\s*\d+)(?:\s*(?:dmg|damage))?(?:\s*@\s*([^\]]+))?\s*\]/gi
     );
@@ -671,10 +733,23 @@ export function parseCombatTags(
     if (state.identity.abilityActive !== false) {
         let desc = state.identity.abilityTags;
         const cleanAbility = (state.identity.ability || '').replace(/\s*\(HA\)$/i, '').trim();
-        if (!desc && cleanAbility) {
-            const known = getKnownAbility(cleanAbility, state.identity.rank);
-            if (known) desc = known.tags;
+        const known = getKnownAbility(cleanAbility, state.identity.rank);
+
+        if (known) {
+            desc = known.tags;
+        } else if (
+            !state.roomCustomAbilities?.some((ca) => ca.name.trim().toLowerCase() === cleanAbility.toLowerCase())
+        ) {
+            if (
+                desc &&
+                (desc.includes('[Str +1]') || desc.includes('[Str +2]')) &&
+                cleanAbility !== 'Huge Power' &&
+                cleanAbility !== 'Pure Power'
+            ) {
+                desc = '';
+            }
         }
+
         if (desc) {
             if (cleanAbility === 'Huge Power' || cleanAbility === 'Pure Power') {
                 const rank = (state.identity.rank || 'Starter').toLowerCase().trim();

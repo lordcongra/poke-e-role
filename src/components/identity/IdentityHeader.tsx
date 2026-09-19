@@ -1,20 +1,25 @@
-import { useState, useRef } from 'react';
-import type { ReactNode } from 'react';
-import OBR, { type ImageDownload } from '@owlbear-rodeo/sdk';
+import { useState } from 'react';
+import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { fetchPokemonData, fetchAbilityData, fetchNatureData, fetchMoveData, loadLocalDataset } from '../../utils/api';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { IdentityGrid } from './IdentityGrid';
 import { IdentityControls } from './IdentityControls';
 import { TrackerSettingsModal } from '../modals/trackers/TrackerSettingsModal';
 import { PokedexModal } from '../modals/species/PokedexModal';
 import { TransformationModal } from '../modals/species/TransformationModal';
-import { broadcastInfo } from '../../utils/diceRoller';
+import { AbilityMenuModal } from '../abilities/AbilityMenuModal';
+import { TagBuilderModal } from '../modals/items/TagBuilderModal';
+import { NatureInfoModal } from '../modals/identity/NatureInfoModal';
+import { TokenImageModal } from '../modals/identity/TokenImageModal';
 import { isStandaloneMode } from '../../utils/storageAdapter';
-import { imageManager, autoCropTransparency } from '../../utils/imageManager';
-import { saveToOwlbear, METADATA_ID } from '../../utils/obr';
-import { buildGraphicsFromMeta, renderTokenGraphics } from '../../utils/graphicsManager';
-import { Image as ImageIcon, Radio, Upload, Globe, RefreshCw, Dna, Trash2, AlertTriangle } from 'lucide-react';
+import { syncCharacterDataset } from '../../utils/syncService';
+import {
+    updateObrTokenImage,
+    saveStandaloneTokenFile,
+    saveStandaloneTokenUrl,
+    deleteStandaloneTokenImage
+} from '../../utils/tokenImageService';
+import { Image as ImageIcon, RefreshCw, Dna } from 'lucide-react';
 import './IdentityHeader.css';
 
 const ICON_SHADOW = 'drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8)) drop-shadow(0 1px 4px rgba(0, 0, 0, 0.6))';
@@ -22,41 +27,22 @@ const ICON_SHADOW = 'drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8)) drop-shadow(0 1
 export function IdentityHeader() {
     const identityStore = useCharacterStore((state) => state.identity) || {};
     const setIdentity = useCharacterStore((state) => state.setIdentity);
-    const refreshSpeciesData = useCharacterStore((state) => state.refreshSpeciesData);
     const tokenId = useCharacterStore((state) => state.tokenId);
 
-    const [modalConfig, setModalConfig] = useState<{ title: string; content: string | ReactNode } | null>(null);
-    const [showTrackerSettings, setShowTrackerSettings] = useState<boolean>(false);
-    const [showPokedexModal, setShowPokedexModal] = useState<boolean>(false);
-    const [showTransformationModal, setShowTransformationModal] = useState<boolean>(false);
-
-    const [showImagePicker, setShowImagePicker] = useState<boolean>(false);
-    const [confirmDeleteImage, setConfirmDeleteImage] = useState<boolean>(false);
+    const [natureModalOpen, setNatureModalOpen] = useState(false);
+    const [showTrackerSettings, setShowTrackerSettings] = useState(false);
+    const [showPokedexModal, setShowPokedexModal] = useState(false);
+    const [showTransformationModal, setShowTransformationModal] = useState(false);
+    const [showAbilityMenuModal, setShowAbilityMenuModal] = useState(false);
+    const [showAbilityTagBuilder, setShowAbilityTagBuilder] = useState(false);
+    const [showImagePicker, setShowImagePicker] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const imageInputRef = useRef<HTMLInputElement>(null);
 
     const handleRefresh = async () => {
         if (isRefreshing) return;
         setIsRefreshing(true);
         try {
-            await loadLocalDataset();
-            const store = useCharacterStore.getState();
-
-            for (const move of store.moves) {
-                if (move.name) {
-                    const data = await fetchMoveData(move.name);
-                    if (data) store.applyMoveData(move.id, data as Record<string, unknown>);
-                }
-            }
-
-            if (identityStore.species && identityStore.mode === 'Pokémon') {
-                const data = await fetchPokemonData(identityStore.species);
-                if (data) refreshSpeciesData(data as Record<string, unknown>);
-            }
-
-            if (identityStore.ability) {
-                await fetchAbilityData(identityStore.ability);
-            }
+            await syncCharacterDataset();
         } catch (error) {
             console.error('[IdentityHeader] Refresh failed:', error);
         } finally {
@@ -64,248 +50,37 @@ export function IdentityHeader() {
         }
     };
 
-    const openAbilityModal = async () => {
-        if (!identityStore.ability) {
-            setModalConfig({ title: 'Ability', content: 'No ability selected.' });
-            return;
-        }
-        setModalConfig({ title: 'Ability', content: 'Loading...' });
-        const data = await fetchAbilityData(identityStore.ability);
-
-        if (data && (data.Description || data.Effect)) {
-            const content = [data.Description, data.Effect].filter(Boolean).join('\n\n');
-            setModalConfig({ title: identityStore.ability, content });
-        } else {
-            setModalConfig({ title: 'Ability', content: 'Could not load ability data.' });
-        }
-    };
-
-    const openNatureModal = async () => {
-        if (!identityStore.nature || identityStore.nature === '-- Select --') {
-            setModalConfig({ title: 'Nature', content: 'No nature selected.' });
-            return;
-        }
-        setModalConfig({ title: 'Nature', content: 'Loading...' });
-        const data = await fetchNatureData(identityStore.nature);
-
-        if (data) {
-            const content = [];
-
-            const safeData = data as Record<string, unknown>;
-            const keywords = safeData.Keywords || safeData.keywords;
-            const desc = safeData.Description || safeData.description;
-            const confidence = safeData.Confidence || safeData.confidence;
-            const statUp = safeData['Stat Up'] || safeData['stat up'] || safeData.StatUp;
-            const statDown = safeData['Stat Down'] || safeData['stat down'] || safeData.StatDown;
-
-            if (keywords) content.push(`Keywords: ${keywords}`);
-            if (confidence) content.push(`Confidence: ${confidence}`);
-            if (statUp) content.push(`Stat Up: ${statUp}`);
-            if (statDown) content.push(`Stat Down: ${statDown}`);
-            if (desc) content.push(String(desc));
-
-            if (content.length === 0) content.push(JSON.stringify(data, null, 2));
-
-            setModalConfig({ title: `Nature: ${identityStore.nature}`, content: content.join('\n\n') });
-        } else {
-            setModalConfig({ title: 'Nature', content: 'Could not load nature data.' });
-        }
-    };
-
-    const handleStandaloneUrl = async () => {
-        const url = window.prompt('Enter an Image URL:');
-        if (url) {
-            if (identityStore.tokenImageUrl && identityStore.tokenImageUrl.startsWith('local-img:')) {
-                await imageManager.deleteImage(identityStore.tokenImageUrl, tokenId || undefined);
-            }
-
-            setIdentity('tokenImageUrl', url);
-            try {
-                saveToOwlbear({ 'token-image-url': url });
-            } catch (e) {
-                console.error('[IdentityHeader] Failed to save token image URL to Owlbear:', e);
-            }
-        }
-        setShowImagePicker(false);
-    };
-
-    const handleStandaloneFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        try {
-            const croppedBlob = await autoCropTransparency(file);
-            const croppedFile = new File([croppedBlob], file.name, { type: croppedBlob.type });
-
-            const imgId = await imageManager.saveImage(croppedFile);
-
-            if (identityStore.tokenImageUrl && identityStore.tokenImageUrl.startsWith('local-img:')) {
-                await imageManager.deleteImage(identityStore.tokenImageUrl, tokenId || undefined);
-            }
-
-            setIdentity('tokenImageUrl', imgId);
-            saveToOwlbear({ 'token-image-url': imgId });
-        } catch (error) {
-            console.error('[IdentityHeader] Failed to save image to IndexedDB', error);
-            alert('Failed to save image locally. It may be too large or your browser blocked the database.');
-        }
-
-        setShowImagePicker(false);
-        setConfirmDeleteImage(false);
-        if (imageInputRef.current) imageInputRef.current.value = '';
-    };
-
-    const handleDeleteAvatar = async () => {
-        if (identityStore.tokenImageUrl && identityStore.tokenImageUrl.startsWith('local-img:')) {
-            try {
-                await imageManager.deleteImage(identityStore.tokenImageUrl, tokenId || undefined);
-            } catch (error) {
-                console.error('[IdentityHeader] Failed to delete image from IndexedDB:', error);
-            }
-        }
-
-        setIdentity('tokenImageUrl', '');
-        try {
-            saveToOwlbear({ 'token-image-url': '' });
-            window.dispatchEvent(new Event('pkr-character-list-update'));
-        } catch (error) {
-            console.error('[IdentityHeader] Failed to clear token image URL in storage:', error);
-        }
-
-        setShowImagePicker(false);
-        setConfirmDeleteImage(false);
-    };
-
     const handleUpdateTokenImage = async () => {
         if (isStandaloneMode) {
-            setConfirmDeleteImage(false);
             setShowImagePicker(true);
             return;
         }
-
-        if (!OBR.isAvailable || !tokenId) {
-            const url = window.prompt(`Enter an Image URL:`);
-            if (url) {
-                setIdentity('tokenImageUrl', url);
-            }
-            return;
+        if (tokenId) {
+            await updateObrTokenImage(tokenId, setIdentity);
         }
+    };
 
+    const handleStandaloneUploadFile = async (file: File) => {
         try {
-            let images: ImageDownload[] | null = null;
-
-            if (typeof OBR.assets?.downloadImages === 'function') {
-                images = await OBR.assets.downloadImages();
-            } else {
-                const url = window.prompt('Enter an Image URL:');
-                if (url) {
-                    setIdentity('tokenImageUrl', url);
-                    saveToOwlbear({ 'token-image-url': url });
-                    const dim = await new Promise<{ width: number; height: number }>((resolve) => {
-                        const domImg = new window.Image();
-                        domImg.onload = () =>
-                            resolve({ width: domImg.naturalWidth || 300, height: domImg.naturalHeight || 300 });
-                        domImg.onerror = () => resolve({ width: 300, height: 300 });
-                        domImg.src = url;
-                    });
-                    await OBR.scene.items.updateItems([tokenId], (items) => {
-                        for (const item of items) {
-                            const imgItem = item as Record<string, unknown>;
-                            if (imgItem.image) {
-                                const imageRecord = imgItem.image as Record<string, unknown>;
-                                imageRecord.url = url;
-                                imageRecord.width = dim.width;
-                                imageRecord.height = dim.height;
-                                const imgGrid = (item as Record<string, unknown>).grid as
-                                    | Record<string, unknown>
-                                    | undefined;
-                                if (imgGrid) {
-                                    imgGrid.dpi = dim.width;
-                                    imgGrid.offset = {
-                                        x: dim.width / 2,
-                                        y: dim.height / 2
-                                    };
-                                }
-                            }
-                        }
-                    });
-                    const updatedItems = await OBR.scene.items.getItems([tokenId]);
-                    if (updatedItems.length > 0) {
-                        const meta = (updatedItems[0].metadata[METADATA_ID] as Record<string, unknown>) || {};
-                        const gData = buildGraphicsFromMeta(meta);
-                        const currentRole = await OBR.player.getRole();
-                        await renderTokenGraphics(updatedItems[0], gData, currentRole, true);
-                    }
-                }
-                return;
-            }
-
-            if (images && images.length > 0) {
-                const img = images[0];
-                const selectedUrl = img.image?.url || '';
-                let selectedWidth = img.image?.width || 0;
-                let selectedHeight = img.image?.height || 0;
-
-                if (selectedUrl) {
-                    setIdentity('tokenImageUrl', selectedUrl);
-                    saveToOwlbear({ 'token-image-url': selectedUrl });
-
-                    if (!selectedWidth || !selectedHeight) {
-                        const dim = await new Promise<{ width: number; height: number }>((resolve) => {
-                            const domImg = new window.Image();
-                            domImg.onload = () =>
-                                resolve({ width: domImg.naturalWidth || 300, height: domImg.naturalHeight || 300 });
-                            domImg.onerror = () => resolve({ width: 300, height: 300 });
-                            domImg.src = selectedUrl;
-                        });
-                        selectedWidth = dim.width;
-                        selectedHeight = dim.height;
-                    }
-
-                    await OBR.scene.items.updateItems([tokenId], (items) => {
-                        for (const item of items) {
-                            const imgItem = item as Record<string, unknown>;
-                            if (imgItem.image) {
-                                const imageRecord = imgItem.image as Record<string, unknown>;
-                                imageRecord.url = selectedUrl;
-                                imageRecord.width = selectedWidth;
-                                imageRecord.height = selectedHeight;
-
-                                const imgGrid = (item as Record<string, unknown>).grid as
-                                    | Record<string, unknown>
-                                    | undefined;
-                                if (imgGrid) {
-                                    imgGrid.dpi = selectedWidth;
-                                    imgGrid.offset = {
-                                        x: selectedWidth / 2,
-                                        y: selectedHeight / 2
-                                    };
-                                }
-
-                                const signX = (item.scale.x || 1) < 0 ? -1 : 1;
-                                const signY = (item.scale.y || 1) < 0 ? -1 : 1;
-                                item.scale.x = signX;
-                                item.scale.y = signY;
-                            }
-                        }
-                    });
-
-                    // Re-render tracker graphics cleanly anchored at new image center
-                    const updatedItems = await OBR.scene.items.getItems([tokenId]);
-                    if (updatedItems.length > 0) {
-                        const meta = (updatedItems[0].metadata[METADATA_ID] as Record<string, unknown>) || {};
-                        const gData = buildGraphicsFromMeta(meta);
-                        const currentRole = await OBR.player.getRole();
-                        await renderTokenGraphics(updatedItems[0], gData, currentRole, true);
-                    }
-                } else {
-                    if (OBR.isAvailable)
-                        OBR.notification.show('Could not extract URL. Please check F12 Console!', 'ERROR');
-                }
-            }
+            await saveStandaloneTokenFile(file, tokenId || null, identityStore.tokenImageUrl || '', setIdentity);
         } catch (error) {
-            console.error('[IdentityHeader] Failed to pick manual token image:', error);
+            console.error('[IdentityHeader] Failed to save image to IndexedDB:', error);
+            alert('Failed to save image locally. It may be too large or your browser blocked the database.');
         }
+        setShowImagePicker(false);
+    };
+
+    const handleStandaloneEnterUrl = async () => {
+        const url = window.prompt('Enter an Image URL:');
+        if (url) {
+            await saveStandaloneTokenUrl(url, tokenId || null, identityStore.tokenImageUrl || '', setIdentity);
+        }
+        setShowImagePicker(false);
+    };
+
+    const handleStandaloneDeleteImage = async () => {
+        await deleteStandaloneTokenImage(tokenId || null, identityStore.tokenImageUrl || '', setIdentity);
+        setShowImagePicker(false);
     };
 
     const isTransformed = identityStore.activeTransformation !== 'None';
@@ -351,13 +126,10 @@ export function IdentityHeader() {
             className="sheet-panel identity-header"
         >
             <IdentityGrid
-                onOpenAbility={openAbilityModal}
-                onOpenNature={openNatureModal}
+                onOpenAbility={() => setShowAbilityMenuModal(true)}
+                onOpenNature={() => setNatureModalOpen(true)}
                 onOpenPokedex={() => setShowPokedexModal(true)}
-                onOpenImagePicker={() => {
-                    setConfirmDeleteImage(false);
-                    setShowImagePicker(true);
-                }}
+                onOpenImagePicker={() => setShowImagePicker(true)}
             />
 
             <IdentityControls onOpenTrackerSettings={() => setShowTrackerSettings(true)} />
@@ -365,169 +137,34 @@ export function IdentityHeader() {
             {showTrackerSettings && <TrackerSettingsModal onClose={() => setShowTrackerSettings(false)} />}
             {showPokedexModal && <PokedexModal onClose={() => setShowPokedexModal(false)} />}
             {showTransformationModal && <TransformationModal onClose={() => setShowTransformationModal(false)} />}
-
-            {modalConfig && (
-                <div className="identity-header__modal-overlay identity-header__modal-overlay--high-z">
-                    <div className="identity-header__modal-content identity-header__modal-content--large">
-                        <h3 className="identity-header__modal-title identity-header__modal-title--large text-title-primary">
-                            {modalConfig.title}
-                        </h3>
-                        <hr className="identity-header__modal-divider" />
-                        <div className="identity-header__modal-text identity-header__modal-text--pre-wrap text-subtext">
-                            {modalConfig.content}
-                        </div>
-                        <div className="identity-header__modal-actions">
-                            <button
-                                className="action-button action-button--dark identity-header__modal-btn"
-                                onClick={() => setModalConfig(null)}
-                            >
-                                Close
-                            </button>
-                            <button
-                                className="action-button action-button--secondary identity-header__modal-btn"
-                                onClick={() => {
-                                    if (typeof modalConfig.content === 'string') {
-                                        broadcastInfo(modalConfig.title, modalConfig.content);
-                                        setModalConfig(null);
-                                    }
-                                }}
-                            >
-                                <Radio size={16} style={{ filter: ICON_SHADOW }} /> Broadcast
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            {showAbilityMenuModal && (
+                <AbilityMenuModal
+                    isOpen={showAbilityMenuModal}
+                    onClose={() => setShowAbilityMenuModal(false)}
+                    onOpenTagBuilder={() => setShowAbilityTagBuilder(true)}
+                />
+            )}
+            {showAbilityTagBuilder && (
+                <TagBuilderModal
+                    targetId="ability"
+                    targetType="ability"
+                    onClose={() => setShowAbilityTagBuilder(false)}
+                />
             )}
 
-            {showImagePicker && (
-                <div className="identity-header__modal-overlay identity-header__modal-overlay--high-z">
-                    <div className="identity-header__modal-content">
-                        <h3
-                            className="identity-header__modal-title text-title-primary"
-                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-                        >
-                            <ImageIcon size={20} /> Update Artwork
-                        </h3>
-                        <p className="identity-header__modal-text identity-header__picker-desc text-subtext">
-                            Choose how you'd like to supply or manage the image for this character.
-                        </p>
+            <NatureInfoModal
+                isOpen={natureModalOpen}
+                nature={identityStore.nature || ''}
+                onClose={() => setNatureModalOpen(false)}
+            />
 
-                        <div className="identity-header__picker-options">
-                            <button
-                                type="button"
-                                className="action-button action-button--dark identity-header__picker-btn"
-                                onClick={() => imageInputRef.current?.click()}
-                            >
-                                <span className="identity-header__picker-btn-title text-theme-header">
-                                    <Upload size={16} /> Upload Local File
-                                </span>
-                                <span
-                                    className="identity-header__picker-btn-sub text-subtext"
-                                    style={{ color: 'white' }}
-                                >
-                                    (Recommended - Saved safely to your browser's database)
-                                </span>
-                            </button>
-
-                            <button
-                                type="button"
-                                className="action-button identity-header__picker-btn identity-header__picker-btn--web"
-                                onClick={handleStandaloneUrl}
-                            >
-                                <span className="identity-header__picker-btn-title text-theme-header">
-                                    <Globe size={16} /> Use Web URL
-                                </span>
-                                <span
-                                    className="identity-header__picker-btn-sub text-subtext"
-                                    style={{ color: 'white' }}
-                                >
-                                    (Lightweight - Image breaks if the web link dies)
-                                </span>
-                            </button>
-
-                            {Boolean(identityStore.tokenImageUrl) && (
-                                <>
-                                    {confirmDeleteImage ? (
-                                        <div className="identity-header__picker-confirm-box">
-                                            <p
-                                                className="text-subtext"
-                                                style={{
-                                                    color: 'var(--semantic-danger)',
-                                                    fontWeight: 600,
-                                                    margin: '4px 0 8px 0',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    gap: '6px'
-                                                }}
-                                            >
-                                                <AlertTriangle size={16} /> Delete image permanently?
-                                            </p>
-                                            <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                                                <button
-                                                    type="button"
-                                                    className="action-button action-button--red"
-                                                    style={{ flex: 1, padding: '8px 12px' }}
-                                                    onClick={handleDeleteAvatar}
-                                                >
-                                                    <Trash2 size={14} /> Yes, Delete
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className="action-button action-button--dark"
-                                                    style={{ flex: 1, padding: '8px 12px' }}
-                                                    onClick={() => setConfirmDeleteImage(false)}
-                                                >
-                                                    Cancel
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            className="action-button action-button--red identity-header__picker-btn"
-                                            onClick={() => setConfirmDeleteImage(true)}
-                                        >
-                                            <span
-                                                className="identity-header__picker-btn-title"
-                                                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-                                            >
-                                                <Trash2 size={16} /> Delete Display Image
-                                            </span>
-                                            <span
-                                                className="identity-header__picker-btn-sub text-subtext"
-                                                style={{ color: 'white' }}
-                                            >
-                                                (Remove portrait & clear from storage)
-                                            </span>
-                                        </button>
-                                    )}
-                                </>
-                            )}
-                        </div>
-
-                        <hr className="identity-header__modal-divider identity-header__picker-divider" />
-
-                        <button
-                            type="button"
-                            className="action-button action-button--dark identity-header__modal-close-btn"
-                            onClick={() => {
-                                setShowImagePicker(false);
-                                setConfirmDeleteImage(false);
-                            }}
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            <input
-                type="file"
-                ref={imageInputRef}
-                onChange={handleStandaloneFile}
-                accept="image/*"
-                className="identity-header__file-input"
+            <TokenImageModal
+                isOpen={showImagePicker}
+                onClose={() => setShowImagePicker(false)}
+                hasCurrentImage={Boolean(identityStore.tokenImageUrl)}
+                onUploadFile={handleStandaloneUploadFile}
+                onEnterUrl={handleStandaloneEnterUrl}
+                onDeleteImage={handleStandaloneDeleteImage}
             />
         </CollapsingSection>
     );

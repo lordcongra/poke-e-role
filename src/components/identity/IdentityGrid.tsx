@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { Rank, SheetMode } from '../../store/storeTypes';
-import { loadLocalDataset, ALL_ABILITIES, SPECIES_URLS } from '../../utils/api';
+import { loadLocalDataset, SPECIES_URLS } from '../../utils/api';
 import { POKEMON_TYPES, TYPE_COLORS, NATURES, AGES, RANKS } from '../../data/constants';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { CustomInfoRow } from '../ui/CustomInfoRow';
 import { SpeciesSelector } from './SpeciesSelector';
 import { StandaloneAvatar } from '../standalone/StandaloneAvatar';
 import { isStandaloneMode } from '../../utils/storageAdapter';
-import { Plus, AlertTriangle, XCircle, Tag } from 'lucide-react';
-import { TagBuilderModal } from '../modals/items/TagBuilderModal';
+import { Plus } from 'lucide-react';
+import { AbilityCombobox } from '../abilities/AbilityCombobox';
+import { SlotTooltipModal } from '../modals/identity/SlotTooltipModal';
+import { CustomInfoDeleteModal } from '../modals/identity/CustomInfoDeleteModal';
 
 interface IdentityGridProps {
     onOpenAbility: () => void;
@@ -28,13 +30,10 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex, onOpe
     const removeCustomInfo = useCharacterStore((state) => state.removeCustomInfo);
 
     const role = useCharacterStore((state) => state.role);
-
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes || []);
-    const roomCustomAbilities = useCharacterStore((state) => state.roomCustomAbilities || []);
     const roomCustomPokemon = useCharacterStore((state) => state.roomCustomPokemon || []);
 
     const filteredTypes = roomCustomTypes.filter((type) => role === 'GM' || !type.gmOnly);
-    const filteredAbilities = roomCustomAbilities.filter((ability) => role === 'GM' || !ability.gmOnly);
     const filteredPokemon = roomCustomPokemon.filter((pokemon) => role === 'GM' || !pokemon.gmOnly);
 
     const allTypes = [...POKEMON_TYPES, ...filteredTypes.map((type) => type.name)];
@@ -43,16 +42,13 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex, onOpe
         ...Object.fromEntries(filteredTypes.map((type) => [type.name, type.color]))
     };
 
-    const [allAbilitiesList, setAllAbilitiesList] = useState<string[]>([]);
     const [speciesList, setSpeciesList] = useState<string[]>([]);
     const [deleteCustomInfoId, setDeleteCustomInfoId] = useState<string | null>(null);
     const [slotTooltipInfo, setSlotTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
-    const [showAbilityTagBuilder, setShowAbilityTagBuilder] = useState(false);
 
     useEffect(() => {
         loadLocalDataset()
             .then(() => {
-                setAllAbilitiesList([...ALL_ABILITIES]);
                 const formattedSpecies = Object.keys(SPECIES_URLS).map((species) =>
                     species
                         .split('-')
@@ -65,13 +61,6 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex, onOpe
     }, []);
 
     const uniqueSpecies = Array.from(new Set([...speciesList, ...filteredPokemon.map((pokemon) => pokemon.Name)]));
-    const uniqueAbilities = Array.from(
-        new Set([
-            ...(identityStore.availableAbilities || []),
-            ...allAbilitiesList,
-            ...filteredAbilities.map((ability) => ability.name)
-        ])
-    );
 
     const getTypeColor = (type?: string) => {
         if (!type || type === 'None' || type === '--') return 'var(--panel-alt)';
@@ -172,36 +161,9 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex, onOpe
                         </select>
                     </div>
                 </div>
-                <div className="identity-grid__row">
-                    <span className="identity-grid__label text-label">
-                        Ability <TooltipIcon onClick={onOpenAbility} />
-                    </span>
-                    <div style={{ display: 'flex', gap: '4px', width: '100%' }}>
-                        <input
-                            type="text"
-                            list="ability-datalist"
-                            className="identity-grid__input text-label"
-                            value={identityStore.ability || ''}
-                            onChange={(event) => setIdentity('ability', event.target.value)}
-                            placeholder="Type or select..."
-                            style={{ flex: 1 }}
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowAbilityTagBuilder(true)}
-                            className="action-button action-button--dark"
-                            style={{ padding: '0 6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            title="Configure Smart Tags for Ability"
-                        >
-                            <Tag size={13} />
-                        </button>
-                    </div>
-                    <datalist id="ability-datalist">
-                        {uniqueAbilities.map((ability) => (
-                            <option key={ability} value={ability} />
-                        ))}
-                    </datalist>
-                </div>
+
+                {/* Ability Combobox with Dropdown & Quick-Swap */}
+                <AbilityCombobox onOpenAbilityModal={onOpenAbility} />
 
                 <div className="identity-grid__row">
                     <span className="identity-grid__label text-label">Mode</span>
@@ -362,71 +324,20 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex, onOpe
             </div>
 
             {slotTooltipInfo && (
-                <div className="identity-header__modal-overlay">
-                    <div className="identity-header__modal-content" style={{ color: 'var(--text-main)' }}>
-                        <h3 className="identity-header__modal-title text-title-primary">{slotTooltipInfo.title}</h3>
-                        <p className="identity-header__modal-text identity-header__modal-text--pre-wrap text-subtext">
-                            {slotTooltipInfo.desc}
-                        </p>
-                        <div className="identity-header__modal-actions">
-                            <button
-                                type="button"
-                                className="action-button action-button--dark identity-header__modal-btn"
-                                onClick={() => setSlotTooltipInfo(null)}
-                            >
-                                <XCircle size={16} /> Close
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <SlotTooltipModal
+                    title={slotTooltipInfo.title}
+                    desc={slotTooltipInfo.desc}
+                    onClose={() => setSlotTooltipInfo(null)}
+                />
             )}
 
             {deleteCustomInfoId && (
-                <div className="identity-header__modal-overlay">
-                    <div className="identity-header__modal-content">
-                        <h3
-                            className="identity-header__modal-title text-title-primary"
-                            style={{
-                                color: 'var(--semantic-danger)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '6px'
-                            }}
-                        >
-                            <AlertTriangle size={20} /> Confirm Deletion
-                        </h3>
-                        <p className="identity-header__modal-text text-subtext">
-                            Are you sure you want to delete this Custom Field?
-                        </p>
-                        <div className="identity-header__modal-actions">
-                            <button
-                                type="button"
-                                className="action-button action-button--dark identity-header__modal-btn"
-                                onClick={() => setDeleteCustomInfoId(null)}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className="action-button action-button--red identity-header__modal-btn"
-                                onClick={() => {
-                                    removeCustomInfo(deleteCustomInfoId);
-                                    setDeleteCustomInfoId(null);
-                                }}
-                            >
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {showAbilityTagBuilder && (
-                <TagBuilderModal
-                    targetId="ability"
-                    targetType="ability"
-                    onClose={() => setShowAbilityTagBuilder(false)}
+                <CustomInfoDeleteModal
+                    onConfirm={() => {
+                        removeCustomInfo(deleteCustomInfoId);
+                        setDeleteCustomInfoId(null);
+                    }}
+                    onCancel={() => setDeleteCustomInfoId(null)}
                 />
             )}
         </>

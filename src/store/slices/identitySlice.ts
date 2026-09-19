@@ -27,6 +27,7 @@ const OBR_KEY_MAP: Record<string, string> = {
     abilityActive: 'ability-active',
     abilityBoostActive: 'ability-boost-active',
     abilityTags: 'ability-tags',
+    previousNativeAbility: 'previous-native-ability',
     showTrackers: 'show-trackers',
     isNPC: 'is-npc',
     rolls: 'rolls',
@@ -156,6 +157,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         abilityBoostActive: false,
         abilityTags: '',
         availableAbilities: [],
+        previousNativeAbility: '',
         mode: 'Pokémon',
         age: '',
         gender: '',
@@ -342,7 +344,21 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
             const newWill = { ...state.will };
 
             if (field === 'ability') {
-                const cleanAbilityName = String(value).replace(/\s*\(HA\)$/i, '').trim();
+                const currentAbility = String(state.identity.ability || '').trim();
+                const newAbilityStr = String(value || '').trim();
+                const nativeList = state.identity.availableAbilities || [];
+                const isCurrentNative = nativeList.some((a) => a.toLowerCase() === currentAbility.toLowerCase());
+                const isNewNative = nativeList.some((a) => a.toLowerCase() === newAbilityStr.toLowerCase());
+
+                if (isCurrentNative && !isNewNative && currentAbility) {
+                    newIdentity.previousNativeAbility = currentAbility;
+                    updatesToSave['previous-native-ability'] = currentAbility;
+                } else if (isNewNative) {
+                    newIdentity.previousNativeAbility = newAbilityStr;
+                    updatesToSave['previous-native-ability'] = newAbilityStr;
+                }
+
+                const cleanAbilityName = newAbilityStr.replace(/\s*\(HA\)$/i, '').trim();
                 const known = getKnownAbility(cleanAbilityName, newIdentity.rank);
                 newIdentity.abilityBoostActive = false;
                 updatesToSave['ability-boost-active'] = false;
@@ -351,7 +367,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                     newIdentity.abilityActive = known.autoActive ?? true;
                     updatesToSave['ability-tags'] = known.tags;
                     updatesToSave['ability-active'] = newIdentity.abilityActive;
-                } else if (!cleanAbilityName) {
+                } else {
                     newIdentity.abilityTags = '';
                     newIdentity.abilityActive = true;
                     updatesToSave['ability-tags'] = '';
@@ -362,7 +378,9 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
             if (field === 'ruleset' || field === 'rank') {
                 syncHealthAndWill(state, state.stats, newIdentity, newHealth, newWill, updatesToSave);
                 if (field === 'rank') {
-                    const cleanAbilityName = String(newIdentity.ability || '').replace(/\s*\(HA\)$/i, '').trim();
+                    const cleanAbilityName = String(newIdentity.ability || '')
+                        .replace(/\s*\(HA\)$/i, '')
+                        .trim();
                     if (cleanAbilityName === 'Huge Power' || cleanAbilityName === 'Pure Power') {
                         const newKnown = getKnownAbility(cleanAbilityName, String(value));
                         if (newKnown) {

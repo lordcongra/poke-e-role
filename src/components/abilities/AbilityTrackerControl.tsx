@@ -34,7 +34,11 @@ export function AbilityTrackerControl() {
                         checked={abilityActive}
                         onChange={(e) => setIdentity('abilityActive', e.target.checked)}
                         className="ability-tracker__checkbox"
-                        title={abilityActive ? 'Ability is active (click to turn off)' : 'Ability is inactive (click to turn on)'}
+                        title={
+                            abilityActive
+                                ? 'Ability is active (click to turn off)'
+                                : 'Ability is inactive (click to turn on)'
+                        }
                     />
                     <Zap size={14} className="ability-tracker__icon" />
                     <span className="ability-tracker__name">{ability}</span>
@@ -46,7 +50,11 @@ export function AbilityTrackerControl() {
                             type="button"
                             onClick={() => setIdentity('abilityBoostActive', !abilityBoostActive)}
                             className={`action-button ${abilityBoostActive ? 'action-button--theme' : 'action-button--dark'}`}
-                            title={abilityBoostActive ? 'Trigger boost is Active (click to turn off)' : 'Trigger boost is Inactive (click to activate)'}
+                            title={
+                                abilityBoostActive
+                                    ? 'Trigger boost is Active (click to turn off)'
+                                    : 'Trigger boost is Inactive (click to activate)'
+                            }
                             style={{ fontSize: '0.72rem', padding: '2px 6px', height: '22px', whiteSpace: 'nowrap' }}
                         >
                             Boost {abilityBoostActive ? 'ON' : 'OFF'}
@@ -80,11 +88,7 @@ export function AbilityTrackerControl() {
             )}
 
             {isTagBuilderOpen && (
-                <TagBuilderModal
-                    targetId="ability"
-                    targetType="ability"
-                    onClose={() => setIsTagBuilderOpen(false)}
-                />
+                <TagBuilderModal targetId="ability" targetType="ability" onClose={() => setIsTagBuilderOpen(false)} />
             )}
         </>
     );

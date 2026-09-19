@@ -109,7 +109,17 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
             return [...Object.values(Skill).map(formatEnum), ...customSkillNames];
         }
         if (category === 'combat')
-            return ['Dmg', 'Acc', 'Init', 'Chance', 'Crit Dmg', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc', 'Low Acc Penalty'];
+            return [
+                'Dmg',
+                'Acc',
+                'Init',
+                'Chance',
+                'Crit Dmg',
+                'Combo Dmg',
+                'First Hit Dmg',
+                'First Hit Acc',
+                'Low Acc Penalty'
+            ];
         if (category === 'matchup') return ['Immune', 'Resist', 'Weak', 'Remove Immunities', 'Remove Immunity'];
 
         if (category === 'mechanic')
