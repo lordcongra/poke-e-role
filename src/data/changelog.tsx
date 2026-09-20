@@ -18,7 +18,7 @@ import {
     Layers
 } from 'lucide-react';
 
-export const CURRENT_VERSION = '3.6.2';
+export const CURRENT_VERSION = '3.6.3';
 
 export interface ChangelogEntry {
     version: string;
@@ -28,7 +28,7 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
     {
-        version: '3.6.2',
+        version: '3.6.3',
         date: 'September 2026',
         changes: [
             <strong key="token-ui-autoscale-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>

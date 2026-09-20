@@ -1,4 +1,4 @@
-# Pokerole 3.0 Sheet v3.6.2 (Standalone PWA & Owlbear Rodeo Extension)
+# Pokerole 3.0 Sheet v3.6.3 (Standalone PWA & Owlbear Rodeo Extension)
 
 A highly automated, modular character sheet and GM Toolkit for playing **Pokerole 3.0** campaigns (including **Pokémon Mystery Dungeon / PMD** settings).
 
@@ -203,6 +203,6 @@ If you are new to the Pokerole Extension, here are a few core concepts to get yo
 
 To install this extension into your Owlbear Rodeo room, copy the Manifest URL below and paste it into your Owlbear Rodeo extension manager:
 
-`https://lordcongra.github.io/poke-e-role/manifest.json?v=3.6.2`
+`https://lordcongra.github.io/poke-e-role/manifest.json?v=3.6.3`
 
 _(Note: If the sheet updates, you can force Owlbear to fetch the newest version by bumping the version tag at the end of the URL!)_
