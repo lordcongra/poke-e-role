@@ -46,10 +46,13 @@ export function StatusBox() {
                         ? { bg: customStatusData.color, text: customStatusData.textColor }
                         : matchedStatusColor || { bg: '#FFF', text: '#000' };
 
-                    let statusDesc = STATUS_RULES[status.name] || 'Custom Effect.';
-                    if (customStatusData) {
-                        statusDesc = `${customStatusData.description}\n\nEffects: ${customStatusData.effects}`;
-                    }
+                    const statusDesc = customStatusData
+                        ? `${customStatusData.description}\n\nEffects: ${customStatusData.effects}`
+                        : STATUS_RULES[status.name] ||
+                          Object.entries(STATUS_RULES).find(
+                              ([k]) => k.toLowerCase() === status.name.toLowerCase()
+                          )?.[1] ||
+                          'Custom Effect.';
 
                     return (
                         <div key={status.id} className="status-box__row">

@@ -501,7 +501,7 @@ ${formatDiscordTable(
             'sleep'
         ],
         broadcastText:
-            'Status Categories & Rules:\n• Aggravating: Worsens over time if untreated (3rd Burn, Badly Poisoned).\n• Fixed: Constant effect; needs items/care to heal (1st/2nd Burn, Poison, Paralysis).\n• Volatile: Temporary; heals after time/switching out (Confused, Disabled, Flinch, Frozen, In Love, Sleep).\n• Stacking: Statuses stack! Inflicting burn/poison again bumps to next degree. Only Full Heal/Restore & Lum Berry cure multiple conditions at once.',
+            'Status Categories & Rules:\n• Aggravating: Worsens over time if untreated (3rd Burn, Badly Poisoned).\n• Fixed: Constant effect; needs items/care to heal (1st/2nd Burn, Poison, Paralysis).\n• Volatile: Temporary; heals after time/switching out (Confused, Disabled, Flinch, Frozen, In Love, Sleep).\n• Stacking: Statuses stack! Inflicting burn/poison again bumps to next degree. Only Full Heal/Restore & Lum Berry cure multiple conditions at once.\n• Burn & Poison Damage: Deals damage upon infliction and again at the end of the round.',
         discordMarkdown: `## 🧪 **Pokerole Status Ailments & Conditions**
 > *Status conditions impair Pokémon and humans. They fall into three primary categories:*
 
@@ -513,6 +513,7 @@ ${formatDiscordTable(
 > ⚠️ **Status Stacking & Curing:**
 > • Statuses **can stack** (e.g. Asleep + Poisoned + Confused at once). Re-inflicting Burn or Poison bumps it to the next degree!
 > • **Only Full Heal, Full Restore, and Lum Berry** cure more than one condition at a time.
+> • **Burn & Poison Damage:** Burn and Poison deal damage upon infliction and again at the end of the round.
 > • Official League matches may enforce single-condition or sleep clauses.
 
 ---

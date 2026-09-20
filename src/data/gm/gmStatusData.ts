@@ -41,6 +41,8 @@ export const STATUS_CATEGORIES_DATA: StatusCategoryInfo[] = [
 export const STATUS_RULES_INFO = {
     overview:
         'Status Ailments & Conditions impair the normal state of Pokémon and trainers. They range from painful physical burns to mental distractions like confusion.',
+    damageTiming:
+        'Burn and Poison deal damage upon infliction and again at the end of the round.',
     stacking:
         'Status Ailments & Conditions can stack into each other! A Pokémon can be asleep, poisoned, and confused simultaneously. Inflicting Burn or Poison more than once bumps it to the next degree.',
     curing:
@@ -71,7 +73,7 @@ export const STATUS_EFFECTS_DATA: StatusEffectData[] = [
         categoryType: 'Fixed',
         color: '#FFCC80',
         textColor: '#000000',
-        effect: '1 Damage at end of each round. Fire-type Pokémon are immune.',
+        effect: '1 Damage upon infliction and again at end of each round. Fire-type Pokémon are immune.',
         resist: 'Dexterity + Athletic (Action): 4 Cumulative Successes to cure.',
         duration: 'Until Cured or Fainting'
     },
@@ -82,7 +84,7 @@ export const STATUS_EFFECTS_DATA: StatusEffectData[] = [
         categoryType: 'Fixed',
         color: '#FF8A65',
         textColor: '#000000',
-        effect: '2 Lethal Damage at end of each round. Fire-type Pokémon are immune.',
+        effect: '2 Lethal Damage upon infliction and again at end of each round. Fire-type Pokémon are immune.',
         resist: 'Dexterity + Athletic (Action): 6 Cumulative Successes to cure.',
         duration: 'Until Cured, Fainting, or Death'
     },
@@ -93,7 +95,7 @@ export const STATUS_EFFECTS_DATA: StatusEffectData[] = [
         categoryType: 'Aggravating',
         color: '#D32F2F',
         textColor: '#FFFFFF',
-        effect: '3 Lethal Damage at end of round. Increases by +1 each round. Fire-type Pokémon are immune.',
+        effect: '3 Lethal Damage upon infliction and again at end of round. Increases by +1 each round. Fire-type Pokémon are immune.',
         resist: 'Dexterity + Athletic (Action): 8 Cumulative Successes to cure.',
         duration: 'Until Cured, Fainting, or Death'
     },
@@ -148,7 +150,7 @@ export const STATUS_EFFECTS_DATA: StatusEffectData[] = [
         categoryType: 'Fixed',
         color: '#CE93D8',
         textColor: '#000000',
-        effect: '2 Damage at end of each round. Poison and Steel types are immune.',
+        effect: '2 Damage upon infliction and again at end of each round. Poison and Steel types are immune.',
         resist: 'Subject remains completely immobile: Damage applies per hour instead.',
         duration: 'Until Fainting or 8 Hours'
     },
@@ -170,7 +172,7 @@ export const STATUS_EFFECTS_DATA: StatusEffectData[] = [
         categoryType: 'Aggravating',
         color: '#8E24AA',
         textColor: '#FFFFFF',
-        effect: '2 Lethal Damage at end of round. Increases by +2 each round. Poison & Steel immune.',
+        effect: '2 Lethal Damage upon infliction and again at end of round. Increases by +2 each round. Poison & Steel immune.',
         resist: 'Subject remains completely immobile: Damage applies per hour instead.',
         duration: 'Until Fainting or Death'
     },

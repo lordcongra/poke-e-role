@@ -155,6 +155,7 @@ export const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
     '2nd Degree Burn': { bg: '#FF7043', text: '#FFFFFF' },
     '3rd Degree Burn': { bg: '#D32F2F', text: '#FFFFFF' },
     Poison: { bg: '#AB47BC', text: '#FFFFFF' },
+    Poisoned: { bg: '#AB47BC', text: '#FFFFFF' },
     'Badly Poisoned': { bg: '#7B1FA2', text: '#FFFFFF' },
     Paralysis: { bg: '#FBC02D', text: '#FFFFFF' },
     'Frozen Solid': { bg: '#29B6F6', text: '#FFFFFF' },
@@ -168,14 +169,16 @@ export const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
 export const STATUS_RULES: Record<string, string> = {
     Healthy: 'No status effect.',
     '1st Degree Burn':
-        'Deal 1 point of damage at the end of each Round. Fire-type Pokémon are immune. Recovery: Dexterity + Athletic (Action): 4 successes.',
+        'Deal 1 point of damage upon infliction and again at the end of each Round. Fire-type Pokémon are immune. Recovery: Dexterity + Athletic (Action): 4 successes.',
     '2nd Degree Burn':
-        'Deal 2 points of lethal damage** at the end of each Round. Fire-type Pokémon are immune. Recovery: Dexterity + Athletic (Action): 6 successes.',
+        'Deal 2 points of lethal damage** upon infliction and again at the end of each Round. Fire-type Pokémon are immune. Recovery: Dexterity + Athletic (Action): 6 successes.',
     '3rd Degree Burn':
-        'Deal 3 points of lethal damage** at the end of each Round. Increase Damage by 1 each Round that passes. Fire-type Pokémon are immune. Recovery: Dexterity + Athletic (Action): 8 successes.',
-    Poison: 'Deal 2 points of damage at the end of each Round. Poison and Steel-type Pokémon are immune.',
+        'Deal 3 points of lethal damage** upon infliction and again at the end of each Round. Increase Damage by 1 each Round that passes. Fire-type Pokémon are immune. Recovery: Dexterity + Athletic (Action): 8 successes.',
+    Poison: 'Deal 2 points of damage upon infliction and again at the end of each Round. Poison and Steel-type Pokémon are immune.',
+    Poisoned:
+        'Deal 2 points of damage upon infliction and again at the end of each Round. Poison and Steel-type Pokémon are immune.',
     'Badly Poisoned':
-        'Deal 2 points of lethal damage** at the end of the Round. Increase Damage by 2 each Round that passes. Poison and Steel-type Pokémon are immune.',
+        'Deal 2 points of lethal damage** upon infliction and again at the end of the Round. Increase Damage by 2 each Round that passes. Poison and Steel-type Pokémon are immune.',
     Paralysis:
         'The subject loses 2 points in Dexterity. Electric-type Pokémon are immune. The subject cannot treat this on their own.',
     'Frozen Solid':

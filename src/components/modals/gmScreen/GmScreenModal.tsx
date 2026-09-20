@@ -232,7 +232,7 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
     };
 
     const handleBroadcastStatusRules = () => {
-        const text = `Status Ailments & Conditions Categories:\n• Aggravating: Worsens over time if untreated.\n• Fixed: Constant effect; needs treatment/items to heal.\n• Volatile: Temporary; heals naturally or on switch.\n• Stacking: Conditions can stack! Re-inflicting burn/poison bumps degree. Only Full Heal/Restore & Lum Berry cure multiple conditions at once.`;
+        const text = `Status Ailments & Conditions Categories:\n• Aggravating: Worsens over time if untreated.\n• Fixed: Constant effect; needs treatment/items to heal.\n• Volatile: Temporary; heals naturally or on switch.\n• Burn & Poison: Deals damage upon infliction and again at the end of the round.\n• Stacking: Conditions can stack! Re-inflicting burn/poison bumps degree. Only Full Heal/Restore & Lum Berry cure multiple conditions at once.`;
         broadcastInfo(`Status Rules & Categories`, text);
     };
 

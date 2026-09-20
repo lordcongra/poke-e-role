@@ -1,5 +1,5 @@
 import React from 'react';
-import { Megaphone, Layers, Sparkles, Pill, Heart } from 'lucide-react';
+import { Megaphone, Layers, Sparkles, Pill, Heart, Flame } from 'lucide-react';
 import {
     STATUS_CATEGORIES_DATA,
     STATUS_RULES_INFO,
@@ -88,6 +88,21 @@ export const GmStatusCards: React.FC<GmStatusCardsProps> = ({
                         </div>
 
                         <div className="status-rules-box__notes">
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'flex-start',
+                                    gap: '6px',
+                                    fontSize: '0.8rem',
+                                    color: 'var(--text-main)',
+                                    lineHeight: '1.4'
+                                }}
+                            >
+                                <Flame size={14} color="#FF7043" style={{ flexShrink: 0, marginTop: '2px' }} />
+                                <span>
+                                    <strong>Burn & Poison Damage:</strong> {STATUS_RULES_INFO.damageTiming}
+                                </span>
+                            </div>
                             <div
                                 style={{
                                     display: 'flex',
