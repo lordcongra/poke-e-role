@@ -94,16 +94,16 @@ export async function renderTokenGraphics(
                 // Effective visual size in grid squares (excluding transparent padding)
                 const visualGridSquaresX = rawGridSquaresX * contentWidthFraction;
 
-                // Standard 1x1 tokens (or slightly resized sprites up to 1.35 squares) evaluate to 1.25.
+                // Standard 1x1 tokens (or slightly resized sprites up to 1.35 squares) evaluate to 2.0.
                 // Multi-cell tokens (e.g. 2x2, 3x3) scale HUD gently.
                 if (visualGridSquaresX <= 1.35) {
-                    tokenScale = 1.25;
+                    tokenScale = 2.0;
                 } else {
-                    tokenScale = Math.min(2.5, 1.25 + (visualGridSquaresX - 1) * 0.25);
+                    tokenScale = Math.min(3.5, 2.0 + (visualGridSquaresX - 1) * 0.35);
                 }
 
                 // If the sprite has bottom transparent padding (bottomFraction < 0.93):
-                // Anchor baseBottomY with comfortable ~24px breathing space below the visible character feet
+                // Anchor baseBottomY with clean breathing space below the visible character feet
                 if (bottomFraction < 0.93) {
                     const offsetY = token.grid?.offset?.y ?? rawHeight / 2;
                     const visualBottomPixel = rawHeight * bottomFraction;
@@ -111,14 +111,14 @@ export async function renderTokenGraphics(
                     const pixelToScene = sceneDpi / tokenDpi;
                     const visualBottomY = pixelDistFromCenter * pixelToScene * scaleY;
 
-                    // Place baseBottomY so the HP bar sits with clean breathing space below the visible feet
-                    baseBottomY = visualBottomY + 34 * tokenScale;
+                    // Place baseBottomY so the HP bar sits comfortably below the visible feet (~25px breathing space)
+                    baseBottomY = visualBottomY + 35;
                 } else {
                     // Standard full-bleed / circular token bottom
                     baseBottomY = Math.max(75, rawGridSquaresY * 0.5 * sceneDpi);
                 }
             } else {
-                tokenScale = Math.abs(token.scale?.x || 1) * 1.25;
+                tokenScale = Math.abs(token.scale?.x || 1) * 2.0;
                 baseBottomY = 75 * tokenScale;
             }
 

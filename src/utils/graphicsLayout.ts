@@ -28,7 +28,7 @@ export function buildGraphicDefinitions(
 
     const barWidth = 112 * scale;
     const startX = -barWidth / 2 + data.xOffset * scale;
-    const baseY = baseBottomY + (10 + data.yOffset) * scale;
+    const baseY = baseBottomY + (20 + data.yOffset) * scale;
 
     const healthBaseX = startX + data.hpOffsetX * scale;
     const healthBaseY = baseY - 19 * scale + data.hpOffsetY * scale;

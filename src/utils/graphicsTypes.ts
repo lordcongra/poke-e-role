@@ -1,7 +1,7 @@
 import type { AttachmentBehavior } from '@owlbear-rodeo/sdk';
 
 export const SEVERED_BEHAVIORS: AttachmentBehavior[] = ['SCALE', 'ROTATION'];
-export const CURRENT_VERSION = '-v15';
+export const CURRENT_VERSION = '-v18';
 
 export type GraphicDefinition =
     | {
