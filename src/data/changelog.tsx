@@ -15,7 +15,7 @@ import {
     Smartphone,
     BookOpen,
     Zap,
-    Maximize2
+    Layers
 } from 'lucide-react';
 
 export const CURRENT_VERSION = '3.6.2';
@@ -32,7 +32,7 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
         date: 'September 2026',
         changes: [
             <strong key="token-ui-autoscale-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                <Maximize2 size={16} /> Token UI Scaling Improvements & Autoscale UI
+                <Layers size={16} /> Token UI Scaling, Render Layers & HUD Controls
             </strong>,
             <ul
                 key="token-ui-autoscale-list"
@@ -51,6 +51,9 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 </li>
                 <li>
                     <strong>Autoscale UI Button:</strong> If an existing token's HUD appears misaligned or needs recalibration after the update, open Tracker Settings and click the new <strong>Autoscale UI</strong> button (or <strong>Autoscale All</strong> for GMs) to instantly calibrate and fix token UI scaling and vertical offsets.
+                </li>
+                <li>
+                    <strong>Custom HUD Render Layers:</strong> Added a new <strong>HUD Layer</strong> option in Tracker Settings! You can now choose whether a token's HUD renders above token attachments like weapons and hats (<em>Above Attachments / Popover</em>), on the standard attachment layer (<em>With Attachments</em>), on the character plane (<em>Character Layer</em>), or tucked underneath the sprite (<em>Behind Token / Mount</em>).
                 </li>
             </ul>,
             <strong key="ability-automation-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
