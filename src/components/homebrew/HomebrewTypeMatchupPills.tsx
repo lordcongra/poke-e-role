@@ -1,7 +1,6 @@
 import { X } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { TYPE_COLORS } from '../../data/constants';
-import { getContrastColor } from '../../utils/colorUtils';
 import './HomebrewTypes.css';
 
 interface HomebrewTypeMatchupPillsProps {
@@ -20,24 +19,28 @@ export function HomebrewTypeMatchupPills({ items, onRemove, canEdit }: HomebrewT
         <div className="homebrew-types__pill-container">
             {items.map((item) => {
                 const bgColor = ALL_COLORS[item] || 'var(--dark)';
-                const textColor = getContrastColor(bgColor, 0.55);
 
                 return (
                     <span
                         key={item}
                         onClick={() => canEdit && onRemove(item)}
-                        className={`homebrew-types__pill text-subtext ${canEdit ? 'homebrew-types__pill--editable' : ''}`}
+                        className={`homebrew-types__pill text-theme-header ${canEdit ? 'homebrew-types__pill--editable' : ''}`}
                         title={canEdit ? 'Click to remove' : ''}
                         style={{
                             background: bgColor,
-                            color: textColor,
-                            fontWeight: 'bold',
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '4px'
                         }}
                     >
-                        {item} {canEdit && <X size={12} color={textColor} />}
+                        {item}{' '}
+                        {canEdit && (
+                            <X
+                                size={12}
+                                color="#ffffff"
+                                style={{ filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8))' }}
+                            />
+                        )}
                     </span>
                 );
             })}

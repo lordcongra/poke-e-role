@@ -360,6 +360,9 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
 
                 const cleanAbilityName = newAbilityStr.replace(/\s*\(HA\)$/i, '').trim();
                 const known = getKnownAbility(cleanAbilityName, newIdentity.rank);
+                const customAbility = state.roomCustomAbilities?.find(
+                    (ca) => ca.name.trim().toLowerCase() === cleanAbilityName.toLowerCase()
+                );
                 newIdentity.abilityBoostActive = false;
                 updatesToSave['ability-boost-active'] = false;
                 if (known) {
@@ -367,6 +370,12 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                     newIdentity.abilityActive = known.autoActive ?? true;
                     updatesToSave['ability-tags'] = known.tags;
                     updatesToSave['ability-active'] = newIdentity.abilityActive;
+                } else if (customAbility) {
+                    const customTags = `${customAbility.effect || ''} ${customAbility.description || ''}`.trim();
+                    newIdentity.abilityTags = customTags;
+                    newIdentity.abilityActive = true;
+                    updatesToSave['ability-tags'] = customTags;
+                    updatesToSave['ability-active'] = true;
                 } else {
                     newIdentity.abilityTags = '';
                     newIdentity.abilityActive = true;

@@ -63,14 +63,15 @@ export function AbilityMenuModal({ isOpen, onClose, onOpenTagBuilder }: AbilityM
 
             if (custom) {
                 if (isMounted) {
+                    const customTags = `${custom.effect || ''} ${custom.description || ''}`.trim();
                     setDetailsMap((prev) => ({
                         ...prev,
                         [abName]: {
                             name: abName,
                             effect: custom.effect,
                             desc: custom.description,
-                            summary: known?.summary,
-                            tags: known?.tags
+                            summary: known?.summary || custom.effect || custom.description,
+                            tags: known?.tags || customTags
                         }
                     }));
                 }
@@ -140,17 +141,19 @@ export function AbilityMenuModal({ isOpen, onClose, onOpenTagBuilder }: AbilityM
     const activeDetail = detailsMap[currentAbility];
     const cleanCurrentAbility = currentAbility.replace(/\s*\(HA\)$/i, '').trim();
     const activeKnown = getKnownAbility(cleanCurrentAbility, rank);
-    const isCustomAbility = roomCustomAbilities.some(
+    const customMatch = roomCustomAbilities.find(
         (ca) => ca.name.trim().toLowerCase() === cleanCurrentAbility.toLowerCase()
     );
+    const customTags = customMatch ? `${customMatch.effect || ''} ${customMatch.description || ''}`.trim() : '';
     const effectiveTags = activeKnown
         ? activeKnown.tags
-        : !isCustomAbility &&
-            (abilityTags.includes('[Str +1]') || abilityTags.includes('[Str +2]')) &&
-            cleanCurrentAbility !== 'Huge Power' &&
-            cleanCurrentAbility !== 'Pure Power'
-          ? ''
-          : abilityTags;
+        : customMatch
+          ? abilityTags || customTags
+          : (abilityTags.includes('[Str +1]') || abilityTags.includes('[Str +2]')) &&
+              cleanCurrentAbility !== 'Huge Power' &&
+              cleanCurrentAbility !== 'Pure Power'
+            ? ''
+            : abilityTags;
     const activeBenefit = getAbilityBenefitSummary(currentAbility, effectiveTags, rank, isHalfHp, abilityBoostActive);
     const hasBoostTag = effectiveTags.toLowerCase().includes('@ boost');
 

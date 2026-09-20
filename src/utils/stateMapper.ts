@@ -309,14 +309,19 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
     const cleanLoadedAbility = loadedAbility.replace(/\s*\(HA\)$/i, '').trim();
     if (cleanLoadedAbility) {
         const known = getKnownAbility(cleanLoadedAbility, loadedRank);
+        const custom = state.roomCustomAbilities?.find(
+            (ca) => ca.name.trim().toLowerCase() === cleanLoadedAbility.toLowerCase()
+        );
         if (known) {
             loadedTags = known.tags;
+        } else if (custom) {
+            if (!loadedTags) {
+                loadedTags = `${custom.effect || ''} ${custom.description || ''}`.trim();
+            }
         } else if (!loadedTags) {
             // No tags
         } else {
-            const isCustom = state.roomCustomAbilities?.some(
-                (ca) => ca.name.trim().toLowerCase() === cleanLoadedAbility.toLowerCase()
-            );
+            const isCustom = Boolean(custom);
             if (
                 !isCustom &&
                 (loadedTags.includes('[Str +1]') || loadedTags.includes('[Str +2]')) &&

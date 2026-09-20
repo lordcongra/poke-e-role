@@ -197,7 +197,15 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
         const newAbilities = get().roomCustomAbilities.map((ability) =>
             ability.id === id ? { ...ability, [field]: value } : ability
         );
+        const updatedAbility = newAbilities.find((a) => a.id === id);
         set({ roomCustomAbilities: newAbilities, needsBackup: true });
+        if (
+            updatedAbility &&
+            get().identity.ability?.trim().toLowerCase() === updatedAbility.name.trim().toLowerCase()
+        ) {
+            const customTags = `${updatedAbility.effect || ''} ${updatedAbility.description || ''}`.trim();
+            get().setIdentity('abilityTags', customTags);
+        }
         syncHomebrewToApi(get().roomCustomPokemon, get().roomCustomMoves, newAbilities, get().roomCustomItems);
         saveHomebrewLocal(get());
     },

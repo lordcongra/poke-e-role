@@ -295,7 +295,13 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             const abilities = extractAbilities(data);
             const learnsetArray = parseLearnset(data.Moves);
             const defaultAbility = abilities.length > 0 ? abilities[0] : '';
-            const known = getKnownAbility(defaultAbility, state.identity.rank);
+            const cleanDefAbility = defaultAbility.replace(/\s*\(HA\)$/i, '').trim();
+            const known = getKnownAbility(cleanDefAbility, state.identity.rank);
+            const custom = state.roomCustomAbilities?.find(
+                (ca) => ca.name.trim().toLowerCase() === cleanDefAbility.toLowerCase()
+            );
+            const initialTags =
+                known?.tags || (custom ? `${custom.effect || ''} ${custom.description || ''}`.trim() : '');
 
             const newIdentity = {
                 ...state.identity,
@@ -306,7 +312,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 ability: defaultAbility,
                 abilityActive: known?.autoActive ?? true,
                 abilityBoostActive: false,
-                abilityTags: known?.tags || '',
+                abilityTags: initialTags,
                 learnset: learnsetArray,
                 dexId: String(data.DexID || ''),
                 dexCategory: String(data.DexCategory || ''),

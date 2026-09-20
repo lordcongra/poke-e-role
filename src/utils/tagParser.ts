@@ -734,12 +734,20 @@ export function parseCombatTags(
         let desc = state.identity.abilityTags;
         const cleanAbility = (state.identity.ability || '').replace(/\s*\(HA\)$/i, '').trim();
         const known = getKnownAbility(cleanAbility, state.identity.rank);
+        const customAbility = state.roomCustomAbilities?.find(
+            (ca) => ca.name.trim().toLowerCase() === cleanAbility.toLowerCase()
+        );
 
         if (known) {
             desc = known.tags;
-        } else if (
-            !state.roomCustomAbilities?.some((ca) => ca.name.trim().toLowerCase() === cleanAbility.toLowerCase())
-        ) {
+        } else if (customAbility) {
+            const customTags = `${customAbility.effect || ''} ${customAbility.description || ''}`.trim();
+            if (desc) {
+                desc = customTags && !desc.includes(customTags) ? `${desc} ${customTags}`.trim() : desc;
+            } else {
+                desc = customTags;
+            }
+        } else {
             if (
                 desc &&
                 (desc.includes('[Str +1]') || desc.includes('[Str +2]')) &&

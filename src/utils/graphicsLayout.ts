@@ -7,13 +7,21 @@ function getHealthColor(percentage: number): string {
     return '#F44336';
 }
 
+export interface TokenBounds {
+    bottomY: number;
+    centerX: number;
+    scaleFactor: number;
+}
+
 export function buildGraphicDefinitions(
     data: GraphicsData,
     role: 'PLAYER' | 'GM',
     isTokenVisible: boolean,
-    tokenScale: number
+    tokenScale: number,
+    tokenBounds?: TokenBounds
 ): Record<string, GraphicDefinition> {
-    const scale = tokenScale * ((data.trackerScale ?? 100) / 100);
+    const baseScale = tokenBounds ? tokenBounds.scaleFactor : tokenScale;
+    const scale = baseScale * ((data.trackerScale ?? 100) / 100);
 
     const healthPercentage = Math.max(0, Math.min(1, data.hpCurr / Math.max(1, data.hpMax)));
     const tempHpPercentage =
@@ -26,8 +34,10 @@ export function buildGraphicDefinitions(
         data.temporaryWillMax > 0 ? Math.max(0, Math.min(1, data.temporaryWill / data.temporaryWillMax)) : 0;
 
     const barWidth = 112 * scale;
-    const startX = -barWidth / 2 + data.xOffset * scale;
-    const baseY = (85 + data.yOffset) * scale;
+    const centerX = tokenBounds ? tokenBounds.centerX : 0;
+    const startX = centerX - barWidth / 2 + data.xOffset * scale;
+    const baseBottomY = tokenBounds ? tokenBounds.bottomY : 75 * tokenScale;
+    const baseY = baseBottomY + (10 + data.yOffset) * scale;
 
     const healthBaseX = startX + data.hpOffsetX * scale;
     const healthBaseY = baseY - 19 * scale + data.hpOffsetX * scale;

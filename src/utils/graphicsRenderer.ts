@@ -1,9 +1,9 @@
-import OBR from '@owlbear-rodeo/sdk';
+import OBR, { isImage } from '@owlbear-rodeo/sdk';
 import type { Item } from '@owlbear-rodeo/sdk';
 import type { CharacterState } from '../store/storeTypes';
 import { buildGraphicsFromState, type GraphicsData } from './graphicsDataBuilder';
 import { GRAPHICS_META_ID, STATS_META_ID } from './graphicsManager';
-import { buildGraphicDefinitions } from './graphicsLayout';
+import { buildGraphicDefinitions, type TokenBounds } from './graphicsLayout';
 import { applyGraphicsToOwlbear } from './graphicsEngine';
 
 const renderMutex: Record<string, Promise<void>> = {};
@@ -58,8 +58,34 @@ export async function renderTokenGraphics(
 
             const isTokenVisible = token.visible !== false;
             const scale = Math.abs(token.scale.x || 1);
+            let tokenBounds: TokenBounds | undefined = undefined;
 
-            const graphicDefinitions = buildGraphicDefinitions(data, role, isTokenVisible, scale);
+            if (isImage(token)) {
+                const sceneDpi = await OBR.scene.grid.getDpi().catch(() => 150);
+                const tokenDpi = token.grid?.dpi || sceneDpi || 150;
+                const rawWidth = token.image?.width || tokenDpi;
+                const rawHeight = token.image?.height || tokenDpi;
+                const scaleX = Math.abs(token.scale?.x || 1);
+                const scaleY = Math.abs(token.scale?.y || 1);
+
+                const pixelToScene = sceneDpi / tokenDpi;
+                const sceneWidth = rawWidth * pixelToScene * scaleX;
+
+                const offsetX = token.grid?.offset?.x ?? rawWidth / 2;
+                const offsetY = token.grid?.offset?.y ?? rawHeight / 2;
+
+                const bottomY = (rawHeight - offsetY) * pixelToScene * scaleY;
+                const centerX = (rawWidth / 2 - offsetX) * pixelToScene * scaleX;
+                const scaleFactor = Math.max(0.2, sceneWidth / Math.max(1, sceneDpi));
+
+                tokenBounds = {
+                    bottomY,
+                    centerX,
+                    scaleFactor
+                };
+            }
+
+            const graphicDefinitions = buildGraphicDefinitions(data, role, isTokenVisible, scale, tokenBounds);
             await applyGraphicsToOwlbear(token, graphicDefinitions, localAttached);
         } catch (error) {
             console.error('[GraphicsRenderer] Token Graphics Sync Error:', error);
