@@ -18,7 +18,8 @@
     justify-content: space-between;
     gap: 12px;
     min-width: 0;
-    height: 100%;
+    min-height: 100%;
+    height: auto;
 }
 
 .tracker-section__row-space-between {
@@ -199,14 +200,17 @@
     background: var(--row-odd);
     border: 1px solid var(--border);
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-    padding: 0 8px;
+    padding: 3px 8px;
     border-radius: 4px;
-    height: 28px; /* Hard-locked to perfectly match the Reset/Rest buttons */
+    min-height: 28px;
+    height: auto;
     box-sizing: border-box;
 }
 
 .tracker-section__conditions-label {
     white-space: nowrap;
+    align-self: flex-start;
+    padding-top: 2px;
 }
 
 .tracker-section__conditions-list {
@@ -214,6 +218,7 @@
     flex-wrap: wrap;
     gap: 4px;
     align-items: center;
+    flex: 1 1 auto;
 }
 
 /* 🔥 Updated condition pills to lock text to white with the unified shadow */

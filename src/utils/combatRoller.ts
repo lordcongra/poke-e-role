@@ -61,8 +61,7 @@ export async function rollStatus(status: StatusItem, state: CharacterState) {
         dicePool += rankSkillBonus;
     }
 
-    let pain = getPainPenalty(attribute, state);
-    if (itemBuffs.ignorePain) pain = 0;
+    const pain = getPainPenalty(attribute, state, itemBuffs);
 
     const successModifier = state.trackers.globalSucc + pain;
     const mathModifier =
@@ -121,8 +120,8 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
         ignoredAccuracyPenalty = baseLowAccuracy - moveLowAccuracy;
     }
 
-    let pain = getPainPenalty(move.acc1, state);
-    if (itemBuffs.ignorePain) pain = 0;
+    const rawPain = getPainPenalty(move.acc1, state);
+    const pain = getPainPenalty(move.acc1, state, itemBuffs, move);
 
     const genericSuccessModifier = state.trackers.globalSucc + statuses.confusionPenalty + pain;
     const successModifier = genericSuccessModifier - moveLowAccuracy;
@@ -159,6 +158,7 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
 
     if (rankSkillBonus > 0) tags.push('Master/Champion Rank (+2 Dice)');
     if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
+    else if (rawPain < 0 && itemBuffs.ignorePain) tags.push('Ignored Pain Penalty');
     if (ignoredAccuracyPenalty > 0) tags.push(`Ignored ${ignoredAccuracyPenalty} Low Acc`);
     if (moveLowAccuracy > 0) tags.push(`Low Accuracy ${moveLowAccuracy}`);
     if (genericSuccessModifier !== 0)
@@ -269,11 +269,13 @@ export async function executeDamageRoll(
         }
     }
 
-    let pain = getPainPenalty(move.dmg1, state);
-    if (itemBuffs.ignorePain) pain = 0;
+    const rawPain = getPainPenalty(move.dmg1, state);
+    const pain = getPainPenalty(move.dmg1, state, itemBuffs, move);
     if (pain < 0) {
         finalFlatMod += pain;
         tags.push(`Pain Penalty ${Math.abs(pain)}`);
+    } else if (rawPain < 0 && itemBuffs.ignorePain) {
+        tags.push('Ignored Pain Penalty');
     }
 
     if (state.trackers.globalSucc !== 0) {
@@ -419,8 +421,7 @@ export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {
     let dicePool = attributeTotal + skillTotal + rankSkillBonus;
     if (normalizedAttr === 'dex') dicePool += statuses.paralysisDexterityPenalty;
 
-    let pain = getPainPenalty(check.attr, state);
-    if (itemBuffs.ignorePain) pain = 0;
+    const pain = getPainPenalty(check.attr, state, itemBuffs);
 
     const tags: string[] = [];
     if (rankSkillBonus > 0) tags.push('Master/Champion Rank (+2 Dice)');
@@ -489,8 +490,7 @@ export async function rollGeneric(
     let finalDicePool = dicePool + rankSkillBonus;
     if (attribute.toLowerCase() === 'dex') finalDicePool += statuses.paralysisDexterityPenalty;
 
-    let pain = getPainPenalty(attribute, state);
-    if (itemBuffs.ignorePain) pain = 0;
+    const pain = getPainPenalty(attribute, state, itemBuffs);
 
     const genericSuccessModifier = state.trackers.globalSucc + statuses.confusionPenalty + pain;
     const mathModifier =

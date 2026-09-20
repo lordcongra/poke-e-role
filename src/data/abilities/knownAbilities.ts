@@ -71,31 +71,31 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     // --- Pinch / Half-HP Triggers ---
     Blaze: {
         name: 'Blaze',
-        tags: '[Dmg +2: Fire @ Half HP]',
+        tags: '[Dmg +2: Fire @ Half HP] [Ignore Pain: Fire @ Half HP]',
         autoActive: true,
-        summary: 'Increases Fire-type move damage when at half HP or less.',
-        benefitDisplay: '+2 Fire Dmg @ <=50% HP'
+        summary: 'Increases Fire-type move damage and ignores pain penalties when at half HP or less.',
+        benefitDisplay: '+2 Fire Dmg & Ignore Pain @ <=50% HP'
     },
     Overgrow: {
         name: 'Overgrow',
-        tags: '[Dmg +2: Grass @ Half HP]',
+        tags: '[Dmg +2: Grass @ Half HP] [Ignore Pain: Grass @ Half HP]',
         autoActive: true,
-        summary: 'Increases Grass-type move damage when at half HP or less.',
-        benefitDisplay: '+2 Grass Dmg @ <=50% HP'
+        summary: 'Increases Grass-type move damage and ignores pain penalties when at half HP or less.',
+        benefitDisplay: '+2 Grass Dmg & Ignore Pain @ <=50% HP'
     },
     Torrent: {
         name: 'Torrent',
-        tags: '[Dmg +2: Water @ Half HP]',
+        tags: '[Dmg +2: Water @ Half HP] [Ignore Pain: Water @ Half HP]',
         autoActive: true,
-        summary: 'Increases Water-type move damage when at half HP or less.',
-        benefitDisplay: '+2 Water Dmg @ <=50% HP'
+        summary: 'Increases Water-type move damage and ignores pain penalties when at half HP or less.',
+        benefitDisplay: '+2 Water Dmg & Ignore Pain @ <=50% HP'
     },
     Swarm: {
         name: 'Swarm',
-        tags: '[Dmg +2: Bug @ Half HP]',
+        tags: '[Dmg +2: Bug @ Half HP] [Ignore Pain: Bug @ Half HP]',
         autoActive: true,
-        summary: 'Increases Bug-type move damage when at half HP or less.',
-        benefitDisplay: '+2 Bug Dmg @ <=50% HP'
+        summary: 'Increases Bug-type move damage and ignores pain penalties when at half HP or less.',
+        benefitDisplay: '+2 Bug Dmg & Ignore Pain @ <=50% HP'
     },
     Berserk: {
         name: 'Berserk',

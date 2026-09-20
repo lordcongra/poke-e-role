@@ -615,7 +615,15 @@ function extractMechanics(
         if (!checkCondition(match[2], isHalfHp)) continue;
         const requirement = match[1]?.toLowerCase().trim();
 
-        if (!requirement || requirement === moveType) {
+        if (!requirement) {
+            bonuses.ignorePain = true;
+            triggers.general = true;
+        } else if (
+            moveType &&
+            (requirement === moveType ||
+                requirement.replace(/\s*move$/i, '').trim() === moveType ||
+                requirement.replace(/\s*-\s*type$/i, '').trim() === moveType)
+        ) {
             bonuses.ignorePain = true;
             triggers.general = true;
         } else if (move && requirement === 'physical' && move.category === 'Physical') {
@@ -624,10 +632,8 @@ function extractMechanics(
         } else if (move && requirement === 'special' && move.category === 'Special') {
             bonuses.ignorePain = true;
             triggers.general = true;
-        } else if (move && MOVE_MODIFIERS.includes(requirement)) {
-            const moveDesc = (move.desc || '').toLowerCase();
-            const moveName = (move.name || '').toLowerCase();
-            if (moveDesc.includes(requirement) || moveName.includes(requirement)) {
+        } else if (move && (MOVE_MODIFIERS.includes(requirement) || matchesModifier(requirement, move))) {
+            if (matchesModifier(requirement, move)) {
                 bonuses.ignorePain = true;
                 triggers.general = true;
             }

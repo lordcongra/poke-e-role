@@ -29,9 +29,22 @@ export function getAbilityText(abilityName: string, customAbilities: CustomAbili
     return custom ? `${custom.description} ${custom.effect}` : '';
 }
 
-export function getPainPenalty(attribute: string, state: CharacterState): number {
+export function getPainPenalty(
+    attribute: string,
+    state: CharacterState,
+    itemBuffs?: CombatBonuses,
+    move?: MoveData
+): number {
     const painSetting = String(state.identity.pain || 'Enabled').toLowerCase();
     if (painSetting !== 'enabled') return 0;
+
+    if (itemBuffs?.ignorePain) return 0;
+
+    if (move && !itemBuffs) {
+        const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
+        const buffs = parseCombatTags(state.inventory, state.extraCategories, move, abilityText);
+        if (buffs.ignorePain) return 0;
+    }
 
     const normalizedAttribute = String(attribute || '')
         .toLowerCase()

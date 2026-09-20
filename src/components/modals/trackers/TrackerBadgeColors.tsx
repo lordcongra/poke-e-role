@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import OBR from '@owlbear-rodeo/sdk';
-import { RefreshCw, Move, RotateCcw, AlertTriangle, XCircle, CheckCircle } from 'lucide-react';
+import OBR, { isImage } from '@owlbear-rodeo/sdk';
+import { RefreshCw, Move, RotateCcw, AlertTriangle, XCircle, CheckCircle, Maximize2 } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { STATS_META_ID } from '../../../utils/graphicsManager';
 import { NumberSpinner } from '../../ui/NumberSpinner';
@@ -50,6 +50,112 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
             console.error('[TrackerBadgeColors] Failed to sync colors:', error);
         }
         setShowSyncConfirm(false);
+    };
+
+    const handleAutoscale = async () => {
+        let optimalScale = 100;
+        if (OBR.isAvailable) {
+            try {
+                const tokenId = useCharacterStore.getState().tokenId;
+                if (tokenId) {
+                    const items = await OBR.scene.items.getItems([tokenId]);
+                    if (items.length > 0) {
+                        const token = items[0];
+                        if (isImage(token)) {
+                            let sceneDpi = 150;
+                            try {
+                                if (await OBR.scene.isReady()) sceneDpi = await OBR.scene.grid.getDpi();
+                            } catch {
+                                sceneDpi = 150;
+                            }
+                            if (!sceneDpi || sceneDpi <= 0) sceneDpi = 150;
+
+                            const rawWidth = token.image?.width || 150;
+                            const tokenDpi =
+                                token.grid?.dpi && token.grid.dpi > 0 ? token.grid.dpi : token.image?.width || sceneDpi;
+                            const scaleX = Math.abs(token.scale?.x || 1);
+                            const gridSquares = (rawWidth / tokenDpi) * scaleX;
+
+                            if (gridSquares > 2.5) optimalScale = 150;
+                            else if (gridSquares > 1.5) optimalScale = 125;
+                            else optimalScale = 100;
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn('[TrackerBadgeColors] Autoscale error:', err);
+            }
+        }
+
+        setIdentity('trackerScale', optimalScale);
+        setIdentity('yOffset', 0);
+        setIdentity('xOffset', 0);
+        if (OBR.isAvailable) {
+            OBR.notification.show(`Autoscaled HUD to ${optimalScale}%!`, 'SUCCESS');
+        }
+    };
+
+    const handleAutoscaleAll = async () => {
+        if (!OBR.isAvailable) return;
+        try {
+            let sceneDpi = 150;
+            try {
+                if (await OBR.scene.isReady()) sceneDpi = await OBR.scene.grid.getDpi();
+            } catch {
+                sceneDpi = 150;
+            }
+            if (!sceneDpi || sceneDpi <= 0) sceneDpi = 150;
+
+            const items = await OBR.scene.items.getItems(
+                (item) =>
+                    item.layer === 'CHARACTER' &&
+                    (item.metadata[STATS_META_ID] !== undefined ||
+                        item.metadata['pokerole-pmd-extension/stats'] !== undefined)
+            );
+
+            await OBR.scene.items.updateItems(
+                items.map((i) => i.id),
+                (tokensToUpdate) => {
+                    for (const token of tokensToUpdate) {
+                        let optimalScale = 100;
+                        if (isImage(token)) {
+                            const rawWidth = token.image?.width || 150;
+                            const tokenDpi =
+                                token.grid?.dpi && token.grid.dpi > 0 ? token.grid.dpi : token.image?.width || sceneDpi;
+                            const scaleX = Math.abs(token.scale?.x || 1);
+                            const gridSquares = (rawWidth / tokenDpi) * scaleX;
+
+                            if (gridSquares > 2.5) optimalScale = 150;
+                            else if (gridSquares > 1.5) optimalScale = 125;
+                            else optimalScale = 100;
+                        }
+
+                        const targetMetaKey =
+                            token.metadata[STATS_META_ID] !== undefined
+                                ? STATS_META_ID
+                                : 'pokerole-pmd-extension/stats';
+                        const rawMeta = ((token.metadata[targetMetaKey] as Record<string, unknown>) || {}) as Record<
+                            string,
+                            unknown
+                        >;
+                        rawMeta['tracker-scale'] = optimalScale;
+                        rawMeta['y-offset'] = 0;
+                        rawMeta['x-offset'] = 0;
+                        token.metadata[targetMetaKey] = rawMeta;
+                    }
+                }
+            );
+
+            // Also synchronize active character store values
+            setIdentity('trackerScale', 100);
+            setIdentity('yOffset', 0);
+            setIdentity('xOffset', 0);
+
+            OBR.notification.show(`Autoscaled HUDs for ${items.length} token(s)!`, 'SUCCESS');
+        } catch (error) {
+            console.error('[TrackerBadgeColors] Failed to autoscale all tokens:', error);
+            OBR.notification.show('Failed to autoscale tokens.', 'ERROR');
+        }
     };
 
     return (
@@ -112,7 +218,7 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                 </div>
             </div>
 
-            <div className="tracker-settings__offset-container">
+            <div className="tracker-settings__offset-container tracker-settings__autoscale-container">
                 <label
                     className="tracker-settings__offset-label"
                     title="Scales the entire HUD up or down! Default is 100%."
@@ -125,6 +231,14 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                         max={500}
                     />
                 </label>
+                <button
+                    type="button"
+                    onClick={handleAutoscale}
+                    className="action-button action-button--dark tracker-settings__autoscale-btn text-theme-header"
+                    title="Automatically calculate and set the optimal HUD scale and offsets for this token based on its size."
+                >
+                    <Maximize2 size={13} /> Autoscale UI
+                </button>
             </div>
 
             <div className="tracker-settings__offset-container">
@@ -163,13 +277,24 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                     <RotateCcw size={16} /> Reset
                 </button>
                 {role === 'GM' && (
-                    <button
-                        type="button"
-                        onClick={() => setShowSyncConfirm(true)}
-                        className="action-button action-button--theme tracker-settings__modal-btn text-theme-header"
-                    >
-                        <RefreshCw size={16} /> Sync
-                    </button>
+                    <>
+                        <button
+                            type="button"
+                            onClick={() => setShowSyncConfirm(true)}
+                            className="action-button action-button--theme tracker-settings__modal-btn text-theme-header"
+                            title="Sync custom status colors across all tokens."
+                        >
+                            <RefreshCw size={16} /> Sync
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleAutoscaleAll}
+                            className="action-button action-button--dark tracker-settings__modal-btn text-theme-header"
+                            title="Autoscale HUD size and offsets for all tokens on the map."
+                        >
+                            <Maximize2 size={16} /> Autoscale All
+                        </button>
+                    </>
                 )}
             </div>
 

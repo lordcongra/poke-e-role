@@ -14,7 +14,8 @@ import {
     Accessibility,
     Smartphone,
     BookOpen,
-    Zap
+    Zap,
+    Maximize2
 } from 'lucide-react';
 
 export const CURRENT_VERSION = '3.6.2';
@@ -30,6 +31,28 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
         version: '3.6.2',
         date: 'September 2026',
         changes: [
+            <strong key="token-ui-autoscale-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Maximize2 size={16} /> Token UI Scaling Improvements & Autoscale UI
+            </strong>,
+            <ul
+                key="token-ui-autoscale-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Updated Token UI Scaling:</strong> I've updated how tracker HUD elements and badges scale across different grid DPIs and token resolutions. Overall, this improves initial token scaling out of the box so you won't need to make manual size adjustments as often in the future.
+                </li>
+                <li>
+                    <strong>Autoscale UI Button:</strong> If an existing token's HUD appears misaligned or needs recalibration after the update, open Tracker Settings and click the new <strong>Autoscale UI</strong> button (or <strong>Autoscale All</strong> for GMs) to instantly calibrate and fix token UI scaling and vertical offsets.
+                </li>
+            </ul>,
             <strong key="ability-automation-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                 <Zap size={16} /> Automated Ability Integration & Smart Tags
             </strong>,

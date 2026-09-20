@@ -61,22 +61,34 @@ export async function renderTokenGraphics(
             let tokenBounds: TokenBounds | undefined = undefined;
 
             if (isImage(token)) {
-                const sceneDpi = await OBR.scene.grid.getDpi().catch(() => 150);
-                const tokenDpi = token.grid?.dpi || sceneDpi || 150;
-                const rawWidth = token.image?.width || tokenDpi;
-                const rawHeight = token.image?.height || tokenDpi;
+                let sceneDpi = 150;
+                try {
+                    if (await OBR.scene.isReady()) {
+                        sceneDpi = await OBR.scene.grid.getDpi();
+                    }
+                } catch {
+                    sceneDpi = 150;
+                }
+                if (!sceneDpi || sceneDpi <= 0) sceneDpi = 150;
+
+                const rawWidth = token.image?.width || 150;
+                const rawHeight = token.image?.height || 150;
+                const tokenDpi =
+                    token.grid?.dpi && token.grid.dpi > 0 ? token.grid.dpi : token.image?.width || sceneDpi;
                 const scaleX = Math.abs(token.scale?.x || 1);
                 const scaleY = Math.abs(token.scale?.y || 1);
 
                 const pixelToScene = sceneDpi / tokenDpi;
-                const sceneWidth = rawWidth * pixelToScene * scaleX;
+                const gridSquaresX = (rawWidth / tokenDpi) * scaleX;
 
                 const offsetX = token.grid?.offset?.x ?? rawWidth / 2;
                 const offsetY = token.grid?.offset?.y ?? rawHeight / 2;
 
                 const bottomY = (rawHeight - offsetY) * pixelToScene * scaleY;
                 const centerX = (rawWidth / 2 - offsetX) * pixelToScene * scaleX;
-                const scaleFactor = Math.max(0.2, sceneWidth / Math.max(1, sceneDpi));
+
+                // Scale factor: standard 1x1 tokens evaluate to 1.0. Larger tokens scale proportionally with safe bounds.
+                const scaleFactor = Math.max(0.5, Math.min(2.5, Math.sqrt(Math.max(0.5, gridSquaresX))));
 
                 tokenBounds = {
                     bottomY,

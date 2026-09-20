@@ -163,7 +163,6 @@ export function useOwlbearSync() {
                 };
 
                 let sceneFollowupTimeout: ReturnType<typeof setTimeout> | null = null;
-                let sceneLateFollowupTimeout: ReturnType<typeof setTimeout> | null = null;
 
                 const handleSceneReady = async () => {
                     if (!isMounted) return;
@@ -184,21 +183,15 @@ export function useOwlbearSync() {
                         }
                     }
 
-                    // Initial render for currently loaded items
-                    await renderAllTokens(true);
+                    // Initial render for currently loaded items (non-destructive to avoid flickering)
+                    await renderAllTokens(false);
 
-                    // Follow-up renders to catch late-arriving persistent tokens (from Persistent Tokens extension)
+                    // Follow-up render to catch late-arriving persistent tokens (from Persistent Tokens extension)
                     if (sceneFollowupTimeout) clearTimeout(sceneFollowupTimeout);
                     sceneFollowupTimeout = setTimeout(async () => {
                         if (!isMounted) return;
                         await renderAllTokens(false);
-                    }, 600);
-
-                    if (sceneLateFollowupTimeout) clearTimeout(sceneLateFollowupTimeout);
-                    sceneLateFollowupTimeout = setTimeout(async () => {
-                        if (!isMounted) return;
-                        await renderAllTokens(true);
-                    }, 1800);
+                    }, 800);
                 };
 
                 const isReady = await OBR.scene.isReady();
@@ -213,7 +206,6 @@ export function useOwlbearSync() {
                         // Scene unloading: clean cache and cancel pending follow-up timers
                         clearKnownTransforms();
                         if (sceneFollowupTimeout) clearTimeout(sceneFollowupTimeout);
-                        if (sceneLateFollowupTimeout) clearTimeout(sceneLateFollowupTimeout);
                     }
                 });
                 unsubs.push(unsubReady);
