@@ -21,8 +21,6 @@ import {
 } from '../../utils/combatUtils';
 import './DerivedBoard.css';
 
-const ICON_SHADOW = 'drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8)) drop-shadow(0 1px 4px rgba(0, 0, 0, 0.6))';
-
 export function DerivedBoard() {
     const mode = useCharacterStore((state) => state.identity.mode);
     const ability = useCharacterStore((state) => state.identity.ability);
@@ -192,7 +190,7 @@ export function DerivedBoard() {
                                         rollDicePlus(`1d6+${initiative}`, 'Initiative', 'init', String(initiative))
                                     }
                                 >
-                                    <Dices size={16} style={{ filter: ICON_SHADOW }} />
+                                    <Dices size={16} />
                                 </button>
                             </div>
                         </div>

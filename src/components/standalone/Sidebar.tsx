@@ -7,8 +7,6 @@ import { BackupModal } from './BackupModal';
 import { Menu, ChevronLeft, FolderPlus, FilePlus, Save, ArchiveRestore, AlertTriangle, X } from 'lucide-react';
 import './Sidebar.css';
 
-const ICON_SHADOW = 'drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8)) drop-shadow(0 1px 4px rgba(0, 0, 0, 0.6))';
-
 export function Sidebar() {
     const [isPromptDismissed, setIsPromptDismissed] = useState(false);
 
@@ -102,13 +100,13 @@ export function Sidebar() {
                         className="action-button action-button--dark sidebar__btn text-theme-header"
                         onClick={() => handleCreate('folder')}
                     >
-                        <FolderPlus size={14} style={{ filter: ICON_SHADOW }} /> Add Folder
+                        <FolderPlus size={14} /> Add Folder
                     </button>
                     <button
                         className="action-button action-button--theme sidebar__btn text-theme-header"
                         onClick={() => handleCreate('character')}
                     >
-                        <FilePlus size={14} style={{ filter: ICON_SHADOW }} /> Add Sheet
+                        <FilePlus size={14} /> Add Sheet
                     </button>
                 </div>
                 <div className="sidebar__create-row sidebar__backup-row">
@@ -123,7 +121,7 @@ export function Sidebar() {
                                 : 'Export all folders and characters'
                         }
                     >
-                        <Save size={14} style={{ filter: ICON_SHADOW }} /> Backup
+                        <Save size={14} /> Backup
                         {hasUnbackedChanges && <span className="sidebar__backup-badge" title="Unbacked changes" />}
                     </button>
                     <button
@@ -131,7 +129,7 @@ export function Sidebar() {
                         onClick={() => restoreInputRef.current?.click()}
                         title="Restore from a Master Backup file"
                     >
-                        <ArchiveRestore size={14} style={{ filter: ICON_SHADOW }} /> Restore
+                        <ArchiveRestore size={14} /> Restore
                     </button>
                     <input
                         type="file"

@@ -92,7 +92,7 @@ export function InventoryItemRow({
                     />
                     <button
                         type="button"
-                        className="action-button action-button--dark inventory-item__icon-btn inventory-item__icon-btn--info"
+                        className="action-button action-button--ghost inventory-item__icon-btn inventory-item__icon-btn--info"
                         onClick={() => handleInfoClick(item.id, item.name, item.desc)}
                         disabled={fetchingItems[item.id]}
                         title="View Details"

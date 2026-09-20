@@ -188,7 +188,7 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
                     <button
                         type="button"
                         onClick={() => setEditModalOpen(true)}
-                        className="action-button action-button--ghost move-row__edit-btn text-theme-header"
+                        className="action-button action-button--ghost move-row__edit-btn"
                         style={{ color: 'var(--primary)' }}
                         title="Edit Move & Tags"
                     >

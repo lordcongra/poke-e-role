@@ -22,8 +22,6 @@ import { AbilityTrackerControl } from '../abilities/AbilityTrackerControl';
 import { getAbilityBenefitSummary } from '../../data/abilities/knownAbilities';
 import './TrackerSection.css';
 
-const ICON_SHADOW = 'drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8)) drop-shadow(0 1px 4px rgba(0, 0, 0, 0.6))';
-
 export function TrackerSection() {
     const trackers = useCharacterStore((state) => state.trackers);
     const updateTracker = useCharacterStore((state) => state.updateTracker);
@@ -290,7 +288,7 @@ export function TrackerSection() {
                                     }
                                     className="action-button action-button--dark tracker-section__toggle-btn"
                                 >
-                                    <Dices size={14} style={{ marginRight: '4px', filter: ICON_SHADOW }} /> Evade
+                                    <Dices size={14} style={{ marginRight: '4px' }} /> Evade
                                 </button>
                                 <input
                                     type="checkbox"
@@ -322,7 +320,7 @@ export function TrackerSection() {
                                     }
                                     className="action-button action-button--dark tracker-section__toggle-btn"
                                 >
-                                    <Dices size={14} style={{ marginRight: '4px', filter: ICON_SHADOW }} /> Clash
+                                    <Dices size={14} style={{ marginRight: '4px' }} /> Clash
                                 </button>
                                 <input
                                     type="checkbox"
@@ -376,7 +374,7 @@ export function TrackerSection() {
                                 onClick={rollManeuver}
                                 className="action-button action-button--dark tracker-section__maneuver-btn"
                             >
-                                <Dices size={16} style={{ filter: ICON_SHADOW }} />
+                                <Dices size={16} />
                             </button>
                         </div>
 
@@ -422,7 +420,7 @@ export function TrackerSection() {
                             onClick={resetRound}
                             className="action-button action-button--theme tracker-section__reset-btn"
                         >
-                            <RotateCcw size={14} style={{ filter: ICON_SHADOW }} /> Reset
+                            <RotateCcw size={14} /> Reset
                         </button>
                         <button
                             type="button"
@@ -430,7 +428,7 @@ export function TrackerSection() {
                             className="action-button action-button--secondary tracker-section__rest-btn"
                             title="Fully heal HP/Will and clear statuses"
                         >
-                            <Tent size={14} style={{ filter: ICON_SHADOW }} /> Rest
+                            <Tent size={14} /> Rest
                         </button>
                     </div>
                 </div>
@@ -488,7 +486,7 @@ export function TrackerSection() {
                             onClick={openChancesModal}
                             className="action-button action-button--dark tracker-section__roll-btn"
                         >
-                            <Dices size={14} style={{ filter: ICON_SHADOW }} /> Roll
+                            <Dices size={14} /> Roll
                         </button>
                     </div>
 

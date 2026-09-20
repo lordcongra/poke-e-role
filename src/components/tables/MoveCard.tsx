@@ -149,7 +149,7 @@ export const MoveCard = memo(function MoveCard({ move, skills, extraCategories, 
                     <button
                         type="button"
                         onClick={() => setEditModalOpen(true)}
-                        className="action-button action-button--dark move-card__edit-btn text-theme-header"
+                        className="action-button action-button--dark move-card__edit-btn"
                         style={{ color: 'var(--primary)' }}
                         title="Edit Move & Tags"
                     >

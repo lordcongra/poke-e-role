@@ -166,22 +166,15 @@ export function MovesTable() {
                                 <th className="moves-table__th-name">
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                         <div style={{ width: '25px', display: 'flex', justifyContent: 'center' }}>
-                                            <span
-                                                style={{
-                                                    display: 'flex',
-                                                    filter: 'drop-shadow(1px 1px 2px rgba(0,0,0,0.8)) drop-shadow(0 1px 4px rgba(0,0,0,0.6))'
-                                                }}
-                                            >
-                                                <TooltipIcon
-                                                    onClick={() =>
-                                                        setTooltipInfo({
-                                                            title: 'Move Markers',
-                                                            description:
-                                                                'Use the dropdown next to your move names to visually mark moves. For example, use a ★ to denote a move gained via Overrank!'
-                                                        })
-                                                    }
-                                                />
-                                            </span>
+                                            <TooltipIcon
+                                                onClick={() =>
+                                                    setTooltipInfo({
+                                                        title: 'Move Markers',
+                                                        description:
+                                                            'Use the dropdown next to your move names to visually mark moves. For example, use a ★ to denote a move gained via Overrank!'
+                                                    })
+                                                }
+                                            />
                                         </div>
                                         <div style={{ flex: 1, textAlign: 'center', paddingRight: '25px' }}>Name</div>
                                     </div>

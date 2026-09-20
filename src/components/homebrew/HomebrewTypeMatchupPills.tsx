@@ -33,14 +33,7 @@ export function HomebrewTypeMatchupPills({ items, onRemove, canEdit }: HomebrewT
                             gap: '4px'
                         }}
                     >
-                        {item}{' '}
-                        {canEdit && (
-                            <X
-                                size={12}
-                                color="#ffffff"
-                                style={{ filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8))' }}
-                            />
-                        )}
+                        {item} {canEdit && <X size={12} color="#ffffff" />}
                     </span>
                 );
             })}

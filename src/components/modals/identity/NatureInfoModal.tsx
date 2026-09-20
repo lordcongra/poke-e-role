@@ -9,8 +9,6 @@ interface NatureInfoModalProps {
     onClose: () => void;
 }
 
-const ICON_SHADOW = 'drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8)) drop-shadow(0 1px 4px rgba(0, 0, 0, 0.6))';
-
 export function NatureInfoModal({ isOpen, nature, onClose }: NatureInfoModalProps) {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
@@ -94,7 +92,7 @@ export function NatureInfoModal({ isOpen, nature, onClose }: NatureInfoModalProp
                         onClick={handleBroadcast}
                         disabled={isLoading}
                     >
-                        <Radio size={16} style={{ filter: ICON_SHADOW }} /> Broadcast
+                        <Radio size={16} /> Broadcast
                     </button>
                 </div>
             </div>

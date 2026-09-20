@@ -15,6 +15,7 @@
     cursor: pointer;
     margin-left: 6px;
     position: relative;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
     transition:
         color 0.2s ease,
         opacity 0.2s ease,
@@ -56,11 +57,12 @@
 .health-section__header .tooltip-icon,
 .status-box__header .tooltip-icon,
 .timer-box__header .tooltip-icon,
-.derived-board__box-header .tooltip-icon {
+.derived-board__box-header .tooltip-icon,
+.text-theme-header .tooltip-icon {
     color: #ffffff !important;
     opacity: 0.9 !important;
-    /* 🔥 Apply the exact same drop-shadow as the header text so it pops perfectly! */
-    filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.8)) !important;
+    /* High-contrast drop-shadow that creates a crisp outline and punchy contrast */
+    filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.95)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.7)) !important;
 }
 
 .theme-header--primary .tooltip-icon:hover,
@@ -68,10 +70,11 @@
 .health-section__header .tooltip-icon:hover,
 .status-box__header .tooltip-icon:hover,
 .timer-box__header .tooltip-icon:hover,
-.derived-board__box-header .tooltip-icon:hover {
+.derived-board__box-header .tooltip-icon:hover,
+.text-theme-header .tooltip-icon:hover {
     color: #ffffff !important;
     opacity: 1 !important;
-    filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 1)) !important;
+    filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 1)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.85)) !important;
     transform: scale(1.1);
 }
 

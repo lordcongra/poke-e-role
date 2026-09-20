@@ -55,8 +55,6 @@ import {
 } from 'lucide-react';
 import './GlobalToolbar.css';
 
-const ICON_SHADOW = 'drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8)) drop-shadow(0 1px 4px rgba(0, 0, 0, 0.6))';
-
 type ActiveModal =
     | 'homebrew'
     | 'rules'
@@ -531,7 +529,7 @@ export function GlobalToolbar() {
                                 title="Export Character (Download JSON)"
                                 aria-label="Export Character JSON"
                             >
-                                <Save size={16} style={{ filter: ICON_SHADOW }} />
+                                <Save size={16} />
                             </button>
                             <button
                                 type="button"
@@ -540,7 +538,7 @@ export function GlobalToolbar() {
                                 title="Import Character (Upload JSON)"
                                 aria-label="Import Character JSON"
                             >
-                                <Upload size={16} style={{ filter: ICON_SHADOW }} />
+                                <Upload size={16} />
                             </button>
                             <input
                                 type="file"
@@ -556,7 +554,7 @@ export function GlobalToolbar() {
                                 title="Print Sheet"
                                 aria-label="Print Sheet"
                             >
-                                <Printer size={16} style={{ filter: ICON_SHADOW }} />
+                                <Printer size={16} />
                             </button>
                         </div>
                     </div>

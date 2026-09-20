@@ -35,6 +35,9 @@
     --label-bg: #e0e0e0;
     --row-odd: rgba(0, 0, 0, 0.02);
     --row-even: rgba(0, 0, 0, 0.08);
+
+    /* Universal drop-shadow for icons and vector graphics */
+    --shadow-icon: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.8)) drop-shadow(0 1px 4px rgba(0, 0, 0, 0.6));
 }
 
 html[data-theme='dark'],
@@ -712,4 +715,42 @@ body {
 .dyslexia-mode select,
 .dyslexia-mode textarea {
     font-family: 'Comic Sans MS', 'Lexend', 'OpenDyslexic', sans-serif !important;
+}
+
+/* =========================================
+   🛡️ AUTOMATIC SVG DROP-SHADOWS
+   ========================================= */
+
+/* Ensure SVGs inside high-contrast themed headers and solid action buttons receive drop shadow */
+.text-theme-header svg,
+.theme-header--primary svg,
+.theme-header--secondary svg,
+.action-button--theme svg,
+.action-button--secondary svg,
+.action-button--red svg,
+.action-button--dark svg,
+.type-matchups__pill svg,
+.sidebar__init-badge svg {
+    filter: var(--shadow-icon);
+}
+
+/* Explicit exemptions: Temp/Shield buttons, Ghost/Edit buttons, Inventory inline icons, Tooltip inner SVGs, and Spinners */
+.resource-box__add-temp-btn svg,
+.resource-box__add-temp-btn--will svg,
+.resource-box__temp-shield-btn svg,
+.resource-box__temp-shield-btn--will svg,
+.action-button--ghost svg,
+.move-row__edit-btn svg,
+.move-card__edit-btn svg,
+.inventory-item__icon-btn svg,
+.tooltip-icon svg,
+.spin-animation {
+    filter: none !important;
+}
+
+/* Clean appearance when printing */
+@media print {
+    svg {
+        filter: none !important;
+    }
 }

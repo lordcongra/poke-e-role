@@ -197,12 +197,15 @@
     justify-content: center;
 }
 
-.inventory-item__icon-btn--info {
-    color: var(--primary);
-}
-
+.inventory-item__icon-btn--info,
 .inventory-item__icon-btn--tag {
     color: var(--text-main);
+    transition: color 0.2s ease;
+}
+
+.inventory-item__icon-btn--info:hover,
+.inventory-item__icon-btn--tag:hover {
+    color: var(--primary);
 }
 
 .inventory-item__desc-cell {
