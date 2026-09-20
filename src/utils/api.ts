@@ -386,8 +386,12 @@ function mergeCustomPokemonWithLookup(baseEntries: PokemonLookupEntry[]): Pokemo
             ability2: cp.Ability2 || '',
             hiddenAbility: cp.HiddenAbility || '',
             eventAbilities: cp.EventAbilities || '',
-            legendary: false,
+            legendary: Boolean(cp.Legendary),
+            mythical: Boolean(cp.Mythical),
+            ultraBeast: Boolean(cp.UltraBeast),
+            paradox: Boolean(cp.Paradox),
             starter: false,
+            recommendedRank: cp.RecommendedRank || undefined,
             moves,
             isCustom: true
         };

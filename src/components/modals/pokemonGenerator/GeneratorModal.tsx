@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
     Dices,
     AlertTriangle,
@@ -20,7 +20,7 @@ import { GeneratorPreviewModal } from './GeneratorPreviewModal';
 import { TooltipIcon } from '../../ui/TooltipIcon';
 import { NumberSpinner } from '../../ui/NumberSpinner';
 import { isStandaloneMode } from '../../../utils/storageAdapter';
-import { loadLocalDataset, SPECIES_URLS } from '../../../utils/api';
+import { loadLocalDataset, SPECIES_URLS, fetchPokemonLookupIndex, type PokemonLookupEntry } from '../../../utils/api';
 import { RANKS } from '../../../data/constants';
 import { BIOMES, BIOME_TOOLTIP_NOTE } from '../../../data/biomeData';
 import './GeneratorModal.css';
@@ -40,6 +40,7 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
     const [targetRank, setTargetRank] = useState<Rank>(identity.rank || 'Starter');
     const [sheetName, setSheetName] = useState<string>('');
     const [speciesList, setSpeciesList] = useState<string[]>([]);
+    const [pokedexLookup, setPokedexLookup] = useState<PokemonLookupEntry[]>([]);
 
     const [isGenerating, setIsGenerating] = useState(false);
     const [previewBuilds, setPreviewBuilds] = useState<TempBuild[] | null>(null);
@@ -143,10 +144,32 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                 setSpeciesList(formattedSpecies.sort());
             })
             .catch((error) => console.error('[GeneratorModal] Failed to load local dataset:', error));
+
+        fetchPokemonLookupIndex()
+            .then((lookup) => setPokedexLookup(lookup))
+            .catch((error) => console.error('[GeneratorModal] Failed to load lookup index:', error));
     }, []);
 
     const filteredCustomPokemon = roomCustomPokemon.filter((p) => role === 'GM' || !p.gmOnly).map((p) => p.Name);
     const uniqueSpecies = Array.from(new Set([...speciesList, ...filteredCustomPokemon]));
+
+    const activeTargetRecRank =
+        activeConfig.recommendedRankMode === 'exact'
+            ? String(activeConfig.exactRecommendedRank || 'Standard')
+            : currentRank;
+
+    const displayedSpecies = useMemo(() => {
+        if (!activeConfig.filterRecommendedRank || pokedexLookup.length === 0) {
+            return uniqueSpecies;
+        }
+        const targetLower = activeTargetRecRank.toLowerCase();
+        const allowedLookupNames = new Set(
+            pokedexLookup
+                .filter((p) => (p.recommendedRank || 'Standard').toLowerCase() === targetLower)
+                .map((p) => p.name.toLowerCase())
+        );
+        return uniqueSpecies.filter((name) => allowedLookupNames.has(name.toLowerCase()));
+    }, [activeConfig.filterRecommendedRank, activeTargetRecRank, pokedexLookup, uniqueSpecies]);
 
     const hasType2 = identity.type2 && identity.type2 !== 'None';
     const type1Label = identity.type1 || 'Primary';
@@ -185,14 +208,16 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
             return {
                 ...config,
                 targetSpecies: config.randomizeSpecies ? undefined : targetSpecies.trim() || undefined,
-                targetRank: targetRank
+                targetRank: targetRank,
+                slotIndex: slotIdx
             };
         }
         const slot = slotConfigs[slotIdx] || { config, targetSpecies, targetRank };
         return {
             ...slot.config,
             targetSpecies: slot.config.randomizeSpecies ? undefined : slot.targetSpecies.trim() || undefined,
-            targetRank: slot.targetRank
+            targetRank: slot.targetRank,
+            slotIndex: slotIdx
         };
     };
 
@@ -445,14 +470,18 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                 list="generator-species-datalist"
                                 className="generator-modal__input text-label"
                                 placeholder={
-                                    activeConfig.randomizeSpecies ? 'Random Species (Enabled Below)' : 'e.g. Lucario'
+                                    activeConfig.randomizeSpecies
+                                        ? 'Random Species (Enabled Below)'
+                                        : activeConfig.filterRecommendedRank
+                                          ? `e.g. Lucario (${activeTargetRecRank})`
+                                          : 'e.g. Lucario'
                                 }
                                 value={activeConfig.randomizeSpecies ? '' : currentSpecies}
                                 onChange={(e) => updateCurrentSpecies(e.target.value)}
                                 disabled={activeConfig.randomizeSpecies}
                             />
                             <datalist id="generator-species-datalist">
-                                {uniqueSpecies.map((s) => (
+                                {displayedSpecies.map((s) => (
                                     <option key={s} value={s} />
                                 ))}
                             </datalist>
@@ -496,6 +525,167 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                 ))}
                             </select>
                         </div>
+                    </div>
+
+                    {/* Recommended Rank Filter Row */}
+                    <div className="generator-modal__destination-box" style={{ padding: '8px 12px' }}>
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                flexWrap: 'wrap',
+                                gap: '8px'
+                            }}
+                        >
+                            <label
+                                className="generator-modal__checkbox-label text-label"
+                                style={{ margin: 0, fontWeight: 600 }}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={Boolean(activeConfig.filterRecommendedRank)}
+                                    onChange={(e) => setConfigProxy({ filterRecommendedRank: e.target.checked })}
+                                    className="generator-modal__checkbox"
+                                />
+                                Filter by Recommended Rank
+                                <TooltipIcon
+                                    onClick={() =>
+                                        setTooltipInfo({
+                                            title: 'Recommended Rank Filter',
+                                            desc: "These are purely suggested ranks from the core rules and Pokédex, and are not necessarily 100% reflective of the rank these Pokémon absolutely should be used at — they're just suggestions. When enabled, only species matching the selected recommended rank criteria will be generated or suggested."
+                                        })
+                                    }
+                                />
+                            </label>
+
+                            {activeConfig.filterRecommendedRank && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                    <span className="text-subtext" style={{ fontSize: '0.78rem' }}>
+                                        Allowed Rank:
+                                    </span>
+                                    <select
+                                        value={
+                                            activeConfig.recommendedRankMode === 'exact'
+                                                ? activeConfig.exactRecommendedRank || 'Standard'
+                                                : 'match'
+                                        }
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (val === 'match') {
+                                                setConfigProxy({ recommendedRankMode: 'match' });
+                                            } else {
+                                                setConfigProxy({
+                                                    recommendedRankMode: 'exact',
+                                                    exactRecommendedRank: val as Rank
+                                                });
+                                            }
+                                        }}
+                                        className="generator-modal__select text-label"
+                                        style={{
+                                            width: 'auto',
+                                            minWidth: '170px',
+                                            padding: '3px 8px',
+                                            fontSize: '0.8rem'
+                                        }}
+                                    >
+                                        <option value="match">Match Pokémon Rank ({currentRank})</option>
+                                        {RANKS.map((r) => (
+                                            <option key={r} value={r}>
+                                                {r}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* If batchCount > 1 and syncPresets is ON, allow per-pokemon slot customization option */}
+                        {activeConfig.filterRecommendedRank && batchCount > 1 && syncPresets && (
+                            <div style={{ marginTop: '8px', borderTop: '1px solid var(--border)', paddingTop: '6px' }}>
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        marginBottom: '4px'
+                                    }}
+                                >
+                                    <span className="text-subtext" style={{ fontSize: '0.74rem' }}>
+                                        Per-Pokémon Batch Filter:
+                                    </span>
+                                    <div style={{ display: 'flex', gap: '6px' }}>
+                                        <button
+                                            type="button"
+                                            className={`action-button ${activeConfig.recommendedRankMode !== 'custom' ? 'action-button--theme' : 'action-button--dark'}`}
+                                            style={{ fontSize: '0.72rem', padding: '2px 6px' }}
+                                            onClick={() => setConfigProxy({ recommendedRankMode: 'match' })}
+                                        >
+                                            Synced for Batch
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className={`action-button ${activeConfig.recommendedRankMode === 'custom' ? 'action-button--theme' : 'action-button--dark'}`}
+                                            style={{ fontSize: '0.72rem', padding: '2px 6px' }}
+                                            onClick={() => setConfigProxy({ recommendedRankMode: 'custom' })}
+                                        >
+                                            Custom Per Slot
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {activeConfig.recommendedRankMode === 'custom' && (
+                                    <div
+                                        style={{
+                                            display: 'grid',
+                                            gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+                                            gap: '6px',
+                                            marginTop: '4px'
+                                        }}
+                                    >
+                                        {Array.from({ length: batchCount }).map((_, i) => {
+                                            const customVal = activeConfig.customSlotRecommendedRanks?.[i] || 'match';
+                                            return (
+                                                <div
+                                                    key={i}
+                                                    style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}
+                                                >
+                                                    <span className="text-subtext" style={{ fontSize: '0.7rem' }}>
+                                                        Pokémon #{i + 1}:
+                                                    </span>
+                                                    <select
+                                                        value={customVal}
+                                                        onChange={(e) => {
+                                                            const nextArr = [
+                                                                ...(activeConfig.customSlotRecommendedRanks || [
+                                                                    'Starter',
+                                                                    'Starter',
+                                                                    'Starter',
+                                                                    'Starter',
+                                                                    'Starter',
+                                                                    'Starter'
+                                                                ])
+                                                            ];
+                                                            nextArr[i] = e.target.value;
+                                                            setConfigProxy({ customSlotRecommendedRanks: nextArr });
+                                                        }}
+                                                        className="generator-modal__select text-label"
+                                                        style={{ fontSize: '0.74rem', padding: '2px 4px' }}
+                                                    >
+                                                        <option value="match">Match Rank</option>
+                                                        {RANKS.map((r) => (
+                                                            <option key={r} value={r}>
+                                                                {r}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Optional Sheet / Token Nickname when generating New */}
@@ -939,6 +1129,24 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
                                             className="generator-modal__checkbox"
                                         />
                                         <span>Mythicals</span>
+                                    </label>
+                                    <label className="generator-modal__checkbox-label text-label">
+                                        <input
+                                            type="checkbox"
+                                            checked={Boolean(config.includeUltraBeasts)}
+                                            onChange={(e) => setConfig({ includeUltraBeasts: e.target.checked })}
+                                            className="generator-modal__checkbox"
+                                        />
+                                        <span>Ultra Beasts</span>
+                                    </label>
+                                    <label className="generator-modal__checkbox-label text-label">
+                                        <input
+                                            type="checkbox"
+                                            checked={Boolean(config.includeParadox)}
+                                            onChange={(e) => setConfig({ includeParadox: e.target.checked })}
+                                            className="generator-modal__checkbox"
+                                        />
+                                        <span>Paradox</span>
                                     </label>
                                     <label className="generator-modal__checkbox-label text-label">
                                         <input

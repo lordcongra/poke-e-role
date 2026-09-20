@@ -209,6 +209,125 @@ export function HomebrewPokemonCard({
                                 className="homebrew-pokemon-card__name-input text-label"
                             />
                         </div>
+                        <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <label className="text-subtext" style={{ fontSize: '0.75rem', fontWeight: 600 }}>
+                                Recommended Rank
+                            </label>
+                            <select
+                                value={pokemon.RecommendedRank || ''}
+                                onChange={(e) =>
+                                    canEdit && updateCustomPokemon(pokemon.id, 'RecommendedRank', e.target.value)
+                                }
+                                disabled={!canEdit}
+                                className="homebrew-pokemon-card__rank-select"
+                            >
+                                <option value="">None / Unset</option>
+                                <option value="Starter">Starter</option>
+                                <option value="Rookie">Rookie</option>
+                                <option value="Standard">Standard</option>
+                                <option value="Advanced">Advanced</option>
+                                <option value="Expert">Expert</option>
+                                <option value="Ace">Ace</option>
+                                <option value="Master">Master</option>
+                                <option value="Champion">Champion</option>
+                            </select>
+                        </div>
+
+                        <div
+                            className="homebrew-pokemon-card__classifications"
+                            style={{
+                                marginTop: '8px',
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: '12px',
+                                padding: '6px 8px',
+                                background: 'var(--row-even)',
+                                borderRadius: '4px',
+                                border: '1px solid var(--border)'
+                            }}
+                        >
+                            <label
+                                className="text-label"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    cursor: canEdit ? 'pointer' : 'default',
+                                    fontSize: '0.8rem'
+                                }}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={Boolean(pokemon.Legendary)}
+                                    onChange={(e) =>
+                                        canEdit && updateCustomPokemon(pokemon.id, 'Legendary', e.target.checked)
+                                    }
+                                    disabled={!canEdit}
+                                />
+                                <span>Legendary</span>
+                            </label>
+                            <label
+                                className="text-label"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    cursor: canEdit ? 'pointer' : 'default',
+                                    fontSize: '0.8rem'
+                                }}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={Boolean(pokemon.Mythical)}
+                                    onChange={(e) =>
+                                        canEdit && updateCustomPokemon(pokemon.id, 'Mythical', e.target.checked)
+                                    }
+                                    disabled={!canEdit}
+                                />
+                                <span>Mythical</span>
+                            </label>
+                            <label
+                                className="text-label"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    cursor: canEdit ? 'pointer' : 'default',
+                                    fontSize: '0.8rem'
+                                }}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={Boolean(pokemon.UltraBeast)}
+                                    onChange={(e) =>
+                                        canEdit && updateCustomPokemon(pokemon.id, 'UltraBeast', e.target.checked)
+                                    }
+                                    disabled={!canEdit}
+                                />
+                                <span>Ultra Beast</span>
+                            </label>
+                            <label
+                                className="text-label"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    cursor: canEdit ? 'pointer' : 'default',
+                                    fontSize: '0.8rem'
+                                }}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={Boolean(pokemon.Paradox)}
+                                    onChange={(e) =>
+                                        canEdit && updateCustomPokemon(pokemon.id, 'Paradox', e.target.checked)
+                                    }
+                                    disabled={!canEdit}
+                                />
+                                <span>Paradox</span>
+                            </label>
+                        </div>
+
                         <textarea
                             value={pokemon.DexDescription || ''}
                             onChange={(e) =>

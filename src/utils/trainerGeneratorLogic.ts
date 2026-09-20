@@ -31,7 +31,8 @@ export {
 
 import type { TrainerGeneratorConfig, GeneratedTrainerResult } from './trainerGeneratorTypes';
 import { buildTrainerTokenMetadata } from './trainerStatAllocation';
-import { RANK_ORDER, getEligibleTeamPool, pickAndGenerateTeamMember } from './trainerTeamPoolLogic';
+import { RANK_ORDER, resolveSlotRank, getEligibleTeamPool, pickAndGenerateTeamMember } from './trainerTeamPoolLogic';
+export { resolveSlotRank };
 
 /**
  * Main orchestrator for generating a complete Trainer and their Pokémon team.
@@ -147,14 +148,16 @@ export async function generateFullTrainerTeam(
         const usedSpecies = new Set<string>();
 
         for (let i = 0; i < effectiveConfig.teamSize; i++) {
-            const eligiblePool = getEligibleTeamPool(effectiveConfig, lookupList, concept, i);
+            const slotRank = resolveSlotRank(effectiveConfig, resolvedRank, i);
+            const eligiblePool = getEligibleTeamPool(effectiveConfig, lookupList, concept, i, slotRank);
             const member = await pickAndGenerateTeamMember(
                 i,
                 effectiveConfig,
                 resolvedRank,
                 state,
                 eligiblePool,
-                usedSpecies
+                usedSpecies,
+                slotRank
             );
             if (member) {
                 usedSpecies.add(member.species.toLowerCase());

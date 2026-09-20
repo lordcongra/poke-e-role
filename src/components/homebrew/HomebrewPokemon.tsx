@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomPokemon } from '../../store/storeTypes';
-import { ALL_ABILITIES, ALL_MOVES } from '../../utils/api';
+import { ALL_ABILITIES, ALL_MOVES, loadLocalDataset } from '../../utils/api';
 import { HomebrewPokemonCard } from './HomebrewPokemonCard';
 import { POKEMON_TYPES, TYPE_COLORS } from '../../data/constants';
 import { isStandaloneMode } from '../../utils/storageAdapter';
@@ -26,6 +26,22 @@ export function HomebrewPokemon() {
     const overwriteCustomPokemonData = useCharacterStore((state) => state.overwriteCustomPokemonData);
     const mergeCustomPokemonData = useCharacterStore((state) => state.mergeCustomPokemonData);
 
+    const [allOfficialAbilities, setAllOfficialAbilities] = useState<string[]>(ALL_ABILITIES);
+    const [allOfficialMoves, setAllOfficialMoves] = useState<string[]>(ALL_MOVES);
+
+    useEffect(() => {
+        let isMounted = true;
+        loadLocalDataset().then(() => {
+            if (isMounted) {
+                setAllOfficialAbilities([...ALL_ABILITIES]);
+                setAllOfficialMoves([...ALL_MOVES]);
+            }
+        });
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
     const filteredTypes = roomCustomTypes.filter((type) => role === 'GM' || !type.gmOnly);
     const allTypes = [...POKEMON_TYPES, ...filteredTypes.map((type) => type.name)];
     const allTypeColors = {
@@ -33,17 +49,32 @@ export function HomebrewPokemon() {
         ...Object.fromEntries(filteredTypes.map((type) => [type.name, type.color]))
     };
 
-    const abilityOptions = Array.from(
-        new Set([
-            ...ALL_ABILITIES,
-            ...roomCustomAbilities.filter((ability) => role === 'GM' || !ability.gmOnly).map((ability) => ability.name)
-        ])
+    const abilityOptions = useMemo(
+        () =>
+            Array.from(
+                new Set([
+                    ...allOfficialAbilities,
+                    ...roomCustomAbilities
+                        .filter((ability) => role === 'GM' || !ability.gmOnly)
+                        .map((ability) => ability.name)
+                ])
+            )
+                .filter(Boolean)
+                .sort(),
+        [allOfficialAbilities, roomCustomAbilities, role]
     );
-    const moveOptions = Array.from(
-        new Set([
-            ...ALL_MOVES,
-            ...roomCustomMoves.filter((move) => role === 'GM' || !move.gmOnly).map((move) => move.name)
-        ])
+
+    const moveOptions = useMemo(
+        () =>
+            Array.from(
+                new Set([
+                    ...allOfficialMoves,
+                    ...roomCustomMoves.filter((move) => role === 'GM' || !move.gmOnly).map((move) => move.name)
+                ])
+            )
+                .filter(Boolean)
+                .sort(),
+        [allOfficialMoves, roomCustomMoves, role]
     );
 
     const fileReference = useRef<HTMLInputElement>(null);

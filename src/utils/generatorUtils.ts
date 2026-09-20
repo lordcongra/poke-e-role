@@ -114,14 +114,32 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
     if (shouldPickRandomSpecies) {
         try {
             const lookupIndex = await fetchPokemonLookupIndex();
+            let allowedRecommendedRanks: string[] | undefined = undefined;
+            if (config.filterRecommendedRank) {
+                let targetRank: string = config.targetRank || state.identity.rank || 'Starter';
+                if (config.recommendedRankMode === 'exact') {
+                    targetRank = (config.exactRecommendedRank as string) || targetRank;
+                } else if (config.recommendedRankMode === 'custom') {
+                    const customVal = config.customSlotRecommendedRanks?.[config.slotIndex ?? 0];
+                    if (customVal && customVal !== 'match') {
+                        targetRank = customVal;
+                    }
+                }
+                allowedRecommendedRanks = [targetRank];
+            }
+
             const filterOpts: PokemonLookupFilterOptions = {
                 includeMegas: Boolean(config.includeMegas),
                 includeLegendaries: Boolean(config.includeLegendaries),
                 includeMythicals: Boolean(config.includeMythicals),
+                includeUltraBeasts: Boolean(config.includeUltraBeasts),
+                includeParadox: Boolean(config.includeParadox),
                 allowedLineLengths: config.allowedLineLengths ?? [1, 2, 3],
                 allowedStageIndices: config.allowedStageIndices ?? [1, 2, 3],
                 biomeId: config.selectedBiome,
-                usedSpecies: config.usedSpecies
+                usedSpecies: config.usedSpecies,
+                filterRecommendedRank: Boolean(config.filterRecommendedRank),
+                allowedRecommendedRanks
             };
 
             let eligible = filterPokemonLookupPool(lookupIndex, [], filterOpts);
@@ -131,6 +149,14 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
                 eligible = filterPokemonLookupPool(lookupIndex, [], {
                     ...filterOpts,
                     usedSpecies: undefined
+                });
+            }
+
+            if (eligible.length === 0 && filterOpts.filterRecommendedRank) {
+                // If recommended rank combined with other filters produced 0 matches, relax recommended rank
+                eligible = filterPokemonLookupPool(lookupIndex, [], {
+                    ...filterOpts,
+                    filterRecommendedRank: false
                 });
             }
 

@@ -44,11 +44,17 @@ export const createGeneratorSlice: StateCreator<CharacterState, [], [], Generato
         batchConfigs: [],
         includeLegendaries: false,
         includeMythicals: false,
+        includeUltraBeasts: false,
+        includeParadox: false,
         includeMegas: false,
         allowDuplicates: false,
         scaleLoyaltyHappiness: true,
         allowedLineLengths: [1, 2, 3],
-        allowedStageIndices: [1, 2, 3]
+        allowedStageIndices: [1, 2, 3],
+        filterRecommendedRank: false,
+        recommendedRankMode: 'match',
+        exactRecommendedRank: 'Standard',
+        customSlotRecommendedRanks: ['Starter', 'Starter', 'Starter', 'Starter', 'Starter', 'Starter']
     },
 
     setGeneratorConfig: (config) => set((state) => ({ generatorConfig: { ...state.generatorConfig, ...config } })),

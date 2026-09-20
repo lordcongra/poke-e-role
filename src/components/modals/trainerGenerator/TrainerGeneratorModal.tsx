@@ -9,7 +9,8 @@ import {
     type TrainerGeneratorConfig,
     type PokedexLookupItem,
     type BiomeConceptMixMode,
-    type SlotMixMode
+    type SlotMixMode,
+    type GeneratedTrainerResult
 } from '../../../utils/trainerGeneratorLogic';
 import { type TrainerSpawnImageOptions } from '../../../utils/trainerTokenSpawner';
 import { fetchPokemonLookupIndex } from '../../../utils/api';
@@ -36,7 +37,7 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
     const [trainerBiomeId, setTrainerBiomeId] = useState<string>('random');
     const [teamBiomeId, setTeamBiomeId] = useState<string>('match_trainer');
-    const [previewResult, setPreviewResult] = useState<any | null>(null);
+    const [previewResult, setPreviewResult] = useState<GeneratedTrainerResult | null>(null);
     const [spawnImageOptions, setSpawnImageOptions] = useState<TrainerSpawnImageOptions | null>(null);
     const [spawnDestination, setSpawnDestination] = useState<'new' | 'overwrite'>('new');
 
@@ -89,8 +90,23 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
     // Exclusions & Special Toggles
     const [includeLegendaries, setIncludeLegendaries] = useState<boolean>(false);
     const [includeMythicals, setIncludeMythicals] = useState<boolean>(false);
+    const [includeUltraBeasts, setIncludeUltraBeasts] = useState<boolean>(false);
+    const [includeParadox, setIncludeParadox] = useState<boolean>(false);
     const [includeMegas, setIncludeMegas] = useState<boolean>(false);
     const [scaleLoyaltyHappiness, setScaleLoyaltyHappiness] = useState<boolean>(true);
+    const [filterRecommendedRank, setFilterRecommendedRank] = useState<boolean>(false);
+    const [recommendedRankMode, setRecommendedRankMode] = useState<'match_pokemon' | 'exact' | 'custom'>(
+        'match_pokemon'
+    );
+    const [exactRecommendedRank, setExactRecommendedRank] = useState<Rank>('Standard');
+    const [customSlotRecommendedRanks, setCustomSlotRecommendedRanks] = useState<(Rank | 'match_pokemon')[]>([
+        'match_pokemon',
+        'match_pokemon',
+        'match_pokemon',
+        'match_pokemon',
+        'match_pokemon',
+        'match_pokemon'
+    ]);
 
     // Destination & Spawning Options
     const [destination, setDestination] = useState<'new' | 'overwrite'>('new');
@@ -310,13 +326,19 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                 allowedStageIndices,
                 includeLegendaries,
                 includeMythicals,
+                includeUltraBeasts,
+                includeParadox,
                 includeMegas,
                 scaleLoyaltyHappiness,
                 trainerBiomeId: actualTrainerBiomeId,
                 teamBiomeId: effectiveTeamBiomeId,
                 biomeId: effectiveTeamBiomeId,
                 biomeConceptMixMode: effectiveMixMode,
-                customSlotMixModes
+                customSlotMixModes,
+                filterRecommendedRank,
+                recommendedRankMode,
+                exactRecommendedRank,
+                customSlotRecommendedRanks
             };
 
             const imageOptions: TrainerSpawnImageOptions = {
@@ -392,13 +414,19 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                     allowedStageIndices,
                     includeLegendaries,
                     includeMythicals,
+                    includeUltraBeasts,
+                    includeParadox,
                     includeMegas,
                     scaleLoyaltyHappiness,
                     trainerBiomeId: trainerBiomeId !== 'none' ? trainerBiomeId : undefined,
                     teamBiomeId: effectiveTeamBiomeId,
                     biomeId: effectiveTeamBiomeId,
                     biomeConceptMixMode: effectiveMixMode,
-                    customSlotMixModes
+                    customSlotMixModes,
+                    filterRecommendedRank,
+                    recommendedRankMode,
+                    exactRecommendedRank,
+                    customSlotRecommendedRanks
                 }}
                 pokedexLookup={pokedexLookup}
                 destination={spawnDestination}
@@ -507,12 +535,24 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                     setIncludeLegendaries={setIncludeLegendaries}
                     includeMythicals={includeMythicals}
                     setIncludeMythicals={setIncludeMythicals}
+                    includeUltraBeasts={includeUltraBeasts}
+                    setIncludeUltraBeasts={setIncludeUltraBeasts}
+                    includeParadox={includeParadox}
+                    setIncludeParadox={setIncludeParadox}
                     includeMegas={includeMegas}
                     setIncludeMegas={setIncludeMegas}
                     scaleLoyaltyHappiness={scaleLoyaltyHappiness}
                     setScaleLoyaltyHappiness={setScaleLoyaltyHappiness}
                     allowDuplicates={allowDuplicates}
                     setAllowDuplicates={setAllowDuplicates}
+                    filterRecommendedRank={filterRecommendedRank}
+                    setFilterRecommendedRank={setFilterRecommendedRank}
+                    recommendedRankMode={recommendedRankMode}
+                    setRecommendedRankMode={setRecommendedRankMode}
+                    exactRecommendedRank={exactRecommendedRank}
+                    setExactRecommendedRank={setExactRecommendedRank}
+                    customSlotRecommendedRanks={customSlotRecommendedRanks}
+                    setCustomSlotRecommendedRanks={setCustomSlotRecommendedRanks}
                     onOpenTooltip={setTooltipInfo}
                 />
 

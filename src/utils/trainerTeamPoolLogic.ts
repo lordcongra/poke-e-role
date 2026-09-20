@@ -33,11 +33,24 @@ export const ALL_POKEMON_TYPES = [
 
 export const RANK_ORDER: Rank[] = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion'];
 
+export function resolveSlotRank(config: TrainerGeneratorConfig, resolvedRank: Rank, slotIndex: number): Rank {
+    const trainerRankIdx = RANK_ORDER.indexOf(resolvedRank);
+    if (config.teamRankMode === 'custom' && config.customPokemonRanks && config.customPokemonRanks[slotIndex]) {
+        return config.customPokemonRanks[slotIndex];
+    } else if (config.teamRankMode === 'random') {
+        const maxAvailableIdx = config.capPokemonRank ? Math.max(0, trainerRankIdx) : RANK_ORDER.length - 1;
+        const randomIdx = Math.floor(Math.random() * (maxAvailableIdx + 1));
+        return RANK_ORDER[randomIdx];
+    }
+    return resolvedRank;
+}
+
 export function getEligibleTeamPool(
     config: TrainerGeneratorConfig,
     lookupList: PokedexLookupItem[],
     concept: TrainerClass | null,
-    slotIndex: number = 0
+    slotIndex: number = 0,
+    slotRank?: Rank
 ): PokedexLookupItem[] {
     // 1. Resolve Concept Types
     let conceptTypes: string[] = [];
@@ -109,6 +122,27 @@ export function getEligibleTeamPool(
         }
     }
 
+    // 4. Resolve Recommended Rank filter if active
+    if (config.filterRecommendedRank) {
+        let targetRank: string = 'Standard';
+        if (config.recommendedRankMode === 'match_pokemon' || !config.recommendedRankMode) {
+            targetRank =
+                slotRank || resolveSlotRank(config, config.rank === 'random' ? 'Starter' : config.rank, slotIndex);
+        } else if (config.recommendedRankMode === 'exact') {
+            targetRank = config.exactRecommendedRank || 'Standard';
+        } else if (config.recommendedRankMode === 'custom') {
+            const customVal = config.customSlotRecommendedRanks?.[slotIndex] || 'match_pokemon';
+            if (customVal === 'match_pokemon') {
+                targetRank =
+                    slotRank || resolveSlotRank(config, config.rank === 'random' ? 'Starter' : config.rank, slotIndex);
+            } else {
+                targetRank = customVal;
+            }
+        }
+        filterOpts.filterRecommendedRank = true;
+        filterOpts.allowedRecommendedRanks = [targetRank];
+    }
+
     let eligiblePool = filterPokemonLookupPool(lookupList, targetTypes, filterOpts);
     if (eligiblePool.length === 0) {
         // Fallback 1: relax stage filters if pool is empty
@@ -130,9 +164,22 @@ export function getEligibleTeamPool(
         });
     }
 
-    // Fallback 3: If still empty, relax any type/biome constraint
+    // Fallback 3: If still empty, relax recommended rank filter if it was enforced
+    if (eligiblePool.length === 0 && filterOpts.filterRecommendedRank) {
+        eligiblePool = filterPokemonLookupPool(lookupList, targetTypes, {
+            ...filterOpts,
+            filterRecommendedRank: false
+        });
+    }
+
+    // Fallback 4: If still empty, relax any type/biome constraint while respecting species inclusion toggles
     if (eligiblePool.length === 0) {
-        eligiblePool = lookupList.filter((m) => !m.legendary);
+        eligiblePool = filterPokemonLookupPool(lookupList, ['Any'], {
+            ...filterOpts,
+            filterRecommendedRank: false,
+            allowedLineLengths: [1, 2, 3],
+            allowedStageIndices: [1, 2, 3]
+        });
     }
     return eligiblePool;
 }
@@ -143,7 +190,8 @@ export async function pickAndGenerateTeamMember(
     resolvedRank: Rank,
     state: CharacterState,
     lookupList: PokedexLookupItem[],
-    usedSpecies: Set<string> = new Set()
+    usedSpecies: Set<string> = new Set(),
+    presetPokeRank?: Rank
 ): Promise<{ species: string; build: TempBuild; metadata: Record<string, unknown> } | null> {
     let candidatePool = lookupList;
     if (!config.allowDuplicates) {
@@ -160,15 +208,7 @@ export async function pickAndGenerateTeamMember(
     const chosenMon = candidatePool[Math.floor(Math.random() * candidatePool.length)];
     if (!chosenMon) return null;
 
-    const trainerRankIdx = RANK_ORDER.indexOf(resolvedRank);
-    let pokeRank: Rank = resolvedRank;
-    if (config.teamRankMode === 'custom' && config.customPokemonRanks && config.customPokemonRanks[slotIndex]) {
-        pokeRank = config.customPokemonRanks[slotIndex];
-    } else if (config.teamRankMode === 'random') {
-        const maxAvailableIdx = config.capPokemonRank ? Math.max(0, trainerRankIdx) : RANK_ORDER.length - 1;
-        const randomIdx = Math.floor(Math.random() * (maxAvailableIdx + 1));
-        pokeRank = RANK_ORDER[randomIdx];
-    }
+    const pokeRank: Rank = presetPokeRank || resolveSlotRank(config, resolvedRank, slotIndex);
 
     return generateSingleTeamMember(slotIndex, chosenMon, pokeRank, config, state);
 }

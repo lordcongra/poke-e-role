@@ -49,12 +49,24 @@ export interface TrainerTeamSectionProps {
     setIncludeLegendaries: (val: boolean) => void;
     includeMythicals: boolean;
     setIncludeMythicals: (val: boolean) => void;
+    includeUltraBeasts: boolean;
+    setIncludeUltraBeasts: (val: boolean) => void;
+    includeParadox: boolean;
+    setIncludeParadox: (val: boolean) => void;
     includeMegas: boolean;
     setIncludeMegas: (val: boolean) => void;
     scaleLoyaltyHappiness: boolean;
     setScaleLoyaltyHappiness: (val: boolean) => void;
     allowDuplicates: boolean;
     setAllowDuplicates: (val: boolean) => void;
+    filterRecommendedRank: boolean;
+    setFilterRecommendedRank: (val: boolean) => void;
+    recommendedRankMode: 'match_pokemon' | 'exact' | 'custom';
+    setRecommendedRankMode: (mode: 'match_pokemon' | 'exact' | 'custom') => void;
+    exactRecommendedRank: Rank;
+    setExactRecommendedRank: (rank: Rank) => void;
+    customSlotRecommendedRanks: (Rank | 'match_pokemon')[];
+    setCustomSlotRecommendedRanks: React.Dispatch<React.SetStateAction<(Rank | 'match_pokemon')[]>>;
     onOpenTooltip: (info: { title: string; desc: string }) => void;
 }
 
@@ -93,12 +105,24 @@ export const TrainerTeamSection: React.FC<TrainerTeamSectionProps> = ({
     setIncludeLegendaries,
     includeMythicals,
     setIncludeMythicals,
+    includeUltraBeasts,
+    setIncludeUltraBeasts,
+    includeParadox,
+    setIncludeParadox,
     includeMegas,
     setIncludeMegas,
     scaleLoyaltyHappiness,
     setScaleLoyaltyHappiness,
     allowDuplicates,
     setAllowDuplicates,
+    filterRecommendedRank,
+    setFilterRecommendedRank,
+    recommendedRankMode,
+    setRecommendedRankMode,
+    exactRecommendedRank,
+    setExactRecommendedRank,
+    customSlotRecommendedRanks,
+    setCustomSlotRecommendedRanks,
     onOpenTooltip
 }) => {
     const selectedConcept = TRAINER_CLASSES.find((c) => c.id === conceptId);
@@ -157,6 +181,14 @@ export const TrainerTeamSection: React.FC<TrainerTeamSectionProps> = ({
 
     const handleCustomRankChange = (slotIndex: number, newRank: Rank) => {
         setCustomPokemonRanks((prev) => {
+            const next = [...prev];
+            next[slotIndex] = newRank;
+            return next;
+        });
+    };
+
+    const handleCustomRecRankChange = (slotIndex: number, newRank: Rank | 'match_pokemon') => {
+        setCustomSlotRecommendedRanks((prev) => {
             const next = [...prev];
             next[slotIndex] = newRank;
             return next;
@@ -773,6 +805,114 @@ export const TrainerTeamSection: React.FC<TrainerTeamSectionProps> = ({
                         )}
                     </div>
 
+                    {/* Filter by Recommended Rank */}
+                    <div className="trainer-gen-modal__field">
+                        <label
+                            className="trainer-gen-modal__checkbox-label"
+                            style={{ fontWeight: 600, fontSize: '0.85rem' }}
+                        >
+                            <input
+                                type="checkbox"
+                                checked={filterRecommendedRank}
+                                onChange={(e) => setFilterRecommendedRank(e.target.checked)}
+                            />
+                            <span>Filter Pokémon by Recommended Rank</span>
+                            <TooltipIcon
+                                onClick={() =>
+                                    onOpenTooltip({
+                                        title: 'Recommended Rank Filter',
+                                        desc: "These are purely suggested ranks from the core rules and Pokédex, and are not necessarily 100% reflective of the rank these Pokémon absolutely should be used at — they're just suggestions. When enabled, Pokémon generated for the team will be filtered to match the chosen recommended rank criteria."
+                                    })
+                                }
+                            />
+                        </label>
+
+                        {filterRecommendedRank && (
+                            <div
+                                style={{ marginTop: '8px', paddingLeft: '8px', borderLeft: '2px solid var(--primary)' }}
+                            >
+                                <div className="trainer-gen-modal__presets">
+                                    {[
+                                        { mode: 'match_pokemon' as const, label: 'Match Pokémon Rank' },
+                                        { mode: 'exact' as const, label: 'Same for Team' },
+                                        { mode: 'custom' as const, label: 'Custom Per Slot' }
+                                    ].map((opt) => (
+                                        <button
+                                            key={opt.mode}
+                                            type="button"
+                                            className={`trainer-gen-modal__preset-btn ${recommendedRankMode === opt.mode ? 'trainer-gen-modal__preset-btn--active' : ''}`}
+                                            onClick={() => setRecommendedRankMode(opt.mode)}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {recommendedRankMode === 'exact' && (
+                                    <div
+                                        style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                                    >
+                                        <span className="text-subtext" style={{ fontSize: '0.78rem' }}>
+                                            Team Recommended Rank:
+                                        </span>
+                                        <select
+                                            value={exactRecommendedRank}
+                                            onChange={(e) => setExactRecommendedRank(e.target.value as Rank)}
+                                            className="trainer-gen-modal__select"
+                                            style={{ width: 'auto', minWidth: '140px' }}
+                                        >
+                                            {RANK_ORDER.map((r) => (
+                                                <option key={r} value={r}>
+                                                    {r}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+
+                                {recommendedRankMode === 'custom' && teamSize > 0 && (
+                                    <div
+                                        style={{
+                                            marginTop: '8px',
+                                            display: 'grid',
+                                            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                                            gap: '6px'
+                                        }}
+                                    >
+                                        {Array.from({ length: teamSize }).map((_, idx) => (
+                                            <div
+                                                key={idx}
+                                                style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}
+                                            >
+                                                <span className="text-subtext" style={{ fontSize: '0.72rem' }}>
+                                                    Slot #{idx + 1} Rec. Rank:
+                                                </span>
+                                                <select
+                                                    value={customSlotRecommendedRanks[idx] || 'match_pokemon'}
+                                                    onChange={(e) =>
+                                                        handleCustomRecRankChange(
+                                                            idx,
+                                                            e.target.value as Rank | 'match_pokemon'
+                                                        )
+                                                    }
+                                                    className="trainer-gen-modal__select"
+                                                    style={{ fontSize: '0.74rem', padding: '3px 6px' }}
+                                                >
+                                                    <option value="match_pokemon">Match Slot Rank</option>
+                                                    {RANK_ORDER.map((r) => (
+                                                        <option key={r} value={r}>
+                                                            {r}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
                     {/* Build Optimization Strategy */}
                     <div className="trainer-gen-modal__field">
                         <label className="trainer-gen-modal__field-label text-label">
@@ -909,6 +1049,22 @@ export const TrainerTeamSection: React.FC<TrainerTeamSectionProps> = ({
                                         onChange={(e) => setIncludeMythicals(e.target.checked)}
                                     />
                                     <span>Mythicals</span>
+                                </label>
+                                <label className="trainer-gen-modal__checkbox-label">
+                                    <input
+                                        type="checkbox"
+                                        checked={includeUltraBeasts}
+                                        onChange={(e) => setIncludeUltraBeasts(e.target.checked)}
+                                    />
+                                    <span>Ultra Beasts</span>
+                                </label>
+                                <label className="trainer-gen-modal__checkbox-label">
+                                    <input
+                                        type="checkbox"
+                                        checked={includeParadox}
+                                        onChange={(e) => setIncludeParadox(e.target.checked)}
+                                    />
+                                    <span>Paradox</span>
                                 </label>
                                 <label className="trainer-gen-modal__checkbox-label">
                                     <input

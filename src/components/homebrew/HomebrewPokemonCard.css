@@ -54,6 +54,19 @@
     border-radius: 4px;
 }
 
+.homebrew-pokemon-card__rank-select {
+    width: 100%;
+    height: 32px;
+    padding: 4px 8px;
+    background: var(--input-bg);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    flex: none;
+    box-sizing: border-box;
+}
+
 .homebrew-pokemon-card__stats-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;

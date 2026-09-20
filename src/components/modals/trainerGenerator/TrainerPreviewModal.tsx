@@ -9,7 +9,8 @@ import {
     type PokedexLookupItem,
     pickAndGenerateTeamMember,
     allocateTrainerStats,
-    getEligibleTeamPool
+    getEligibleTeamPool,
+    resolveSlotRank
 } from '../../../utils/trainerGeneratorLogic';
 import { spawnTrainerAndTeam, type TrainerSpawnImageOptions } from '../../../utils/trainerTokenSpawner';
 import { buildTokenMetadataFromBuild } from '../../../utils/generatorUtils';
@@ -118,14 +119,17 @@ export function TrainerPreviewModal({
         const usedSpecies = new Set(
             teamMembers.filter((_, idx) => idx !== slotIdx).map((m) => m.species.toLowerCase())
         );
-        const slotPool = getEligibleTeamPool(activeConfig, pokedexLookup, result.concept, slotIdx);
+        const slotRank =
+            (teamMembers[slotIdx]?.build?.rank as Rank) || resolveSlotRank(activeConfig, trainerRank, slotIdx);
+        const slotPool = getEligibleTeamPool(activeConfig, pokedexLookup, result.concept, slotIdx, slotRank);
         const newMember = await pickAndGenerateTeamMember(
             slotIdx,
             activeConfig,
             trainerRank,
             store,
             slotPool,
-            usedSpecies
+            usedSpecies,
+            slotRank
         );
         if (newMember) {
             setTeamMembers((prev) => {
@@ -141,8 +145,17 @@ export function TrainerPreviewModal({
         const usedSpecies = new Set<string>();
         const nextMembers = [];
         for (let i = 0; i < teamMembers.length; i++) {
-            const slotPool = getEligibleTeamPool(activeConfig, pokedexLookup, result.concept, i);
-            const member = await pickAndGenerateTeamMember(i, activeConfig, trainerRank, store, slotPool, usedSpecies);
+            const slotRank = (teamMembers[i]?.build?.rank as Rank) || resolveSlotRank(activeConfig, trainerRank, i);
+            const slotPool = getEligibleTeamPool(activeConfig, pokedexLookup, result.concept, i, slotRank);
+            const member = await pickAndGenerateTeamMember(
+                i,
+                activeConfig,
+                trainerRank,
+                store,
+                slotPool,
+                usedSpecies,
+                slotRank
+            );
             if (member) {
                 usedSpecies.add(member.species.toLowerCase());
                 nextMembers.push(member);

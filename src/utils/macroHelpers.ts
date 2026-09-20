@@ -3,6 +3,7 @@ import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from './combatUtils';
 import { MAX_MOVES_DATA } from '../data/maxMoves';
 import type { PokemonApiResponse } from './apiTypes';
+import { MYTHICAL_POKEMON_NAMES, ULTRA_BEAST_NAMES, PARADOX_POKEMON_NAMES } from './pokemonFilterUtils';
 
 export const parseHeight = (dataHeight: unknown): string => {
     if (typeof dataHeight === 'object' && dataHeight !== null) {
@@ -145,6 +146,11 @@ export const convertApiPokemonToCustom = (data: PokemonApiResponse): Omit<Custom
         Height: parseHeight(data.Height),
         Weight: parseWeight(data.Weight),
         DexDescription: data.DexDescription ? String(data.DexDescription) : '',
+        RecommendedRank: data.RecommendedRank ? String(data.RecommendedRank) : '',
+        Legendary: Boolean(dataRecord.Legendary || dataRecord.legendary),
+        Mythical: MYTHICAL_POKEMON_NAMES.has(String(data.Name || '').toLowerCase()),
+        UltraBeast: ULTRA_BEAST_NAMES.has(String(data.Name || '').toLowerCase()),
+        Paradox: PARADOX_POKEMON_NAMES.has(String(data.Name || '').toLowerCase()),
         gmOnly: false
     };
 };

@@ -188,6 +188,8 @@ export interface GeneratorConfig {
     // SPECIES FILTERS & TRAINER PARITY
     includeLegendaries?: boolean;
     includeMythicals?: boolean;
+    includeUltraBeasts?: boolean;
+    includeParadox?: boolean;
     includeMegas?: boolean;
     allowDuplicates?: boolean;
     scaleLoyaltyHappiness?: boolean;
@@ -195,6 +197,12 @@ export interface GeneratorConfig {
     allowedStageIndices?: number[];
     usedSpecies?: Set<string>;
     slotIndex?: number;
+
+    // RECOMMENDED RANK FILTER
+    filterRecommendedRank?: boolean;
+    recommendedRankMode?: 'match' | 'exact' | 'custom';
+    exactRecommendedRank?: Rank | string;
+    customSlotRecommendedRanks?: (Rank | string)[];
 }
 
 export interface CustomAbility {
@@ -257,6 +265,11 @@ export interface CustomPokemon {
     DexCategory?: string;
     Height?: string;
     Weight?: string;
+    RecommendedRank?: string;
+    Legendary?: boolean;
+    Mythical?: boolean;
+    UltraBeast?: boolean;
+    Paradox?: boolean;
     DexDescription?: string;
     gmOnly?: boolean;
 }

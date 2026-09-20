@@ -26,6 +26,45 @@ export const MYTHICAL_POKEMON_NAMES = new Set([
     'pecharunt'
 ]);
 
+export const ULTRA_BEAST_NAMES = new Set([
+    'nihilego',
+    'buzzwole',
+    'pheromosa',
+    'xurkitree',
+    'celesteela',
+    'kartana',
+    'guzzlord',
+    'poipole',
+    'naganadel',
+    'stakataka',
+    'blacephalon'
+]);
+
+export const PARADOX_POKEMON_NAMES = new Set([
+    'great tusk',
+    'scream tail',
+    'brute bonnet',
+    'flutter mane',
+    'slither wing',
+    'sandy shocks',
+    'roaring moon',
+    'koraidon',
+    'walking wake',
+    'gouging fire',
+    'raging bolt',
+    'iron treads',
+    'iron bundle',
+    'iron hands',
+    'iron jugulis',
+    'iron moth',
+    'iron thorns',
+    'iron valiant',
+    'miraidon',
+    'iron leaves',
+    'iron crown',
+    'iron boulder'
+]);
+
 export interface PokedexLookupItem {
     name: string;
     dexId: string;
@@ -36,7 +75,11 @@ export interface PokedexLookupItem {
     hiddenAbility: string;
     eventAbilities: string;
     legendary: boolean;
+    mythical?: boolean;
+    ultraBeast?: boolean;
+    paradox?: boolean;
     starter: boolean;
+    recommendedRank?: string;
     stage?: number;
     totalStages?: number;
     moves: Array<[string, string]>;
@@ -46,10 +89,14 @@ export interface PokemonLookupFilterOptions {
     includeMegas?: boolean;
     includeLegendaries?: boolean;
     includeMythicals?: boolean;
+    includeUltraBeasts?: boolean;
+    includeParadox?: boolean;
     allowedLineLengths?: number[];
     allowedStageIndices?: number[];
     biomeId?: string;
     usedSpecies?: Set<string>;
+    filterRecommendedRank?: boolean;
+    allowedRecommendedRanks?: string[];
 }
 export { calculateScalarLoyaltyHappiness } from './combatMath';
 
@@ -77,11 +124,27 @@ export function filterPokemonLookupPool(
             cleanName.includes('(mega') || cleanName.includes('(primal') || cleanName.includes('(gigantamax');
         if (isMegaOrForm && !config.includeMegas) return false;
 
-        // 2. Legendaries
-        if (mon.legendary && !config.includeLegendaries) return false;
+        // 2. Ultra Beasts
+        const isUltraBeast = ULTRA_BEAST_NAMES.has(cleanName) || Boolean(mon.ultraBeast);
+        if (isUltraBeast) {
+            if (!config.includeUltraBeasts) return false;
+        }
 
-        // 3. Mythicals
-        if (MYTHICAL_POKEMON_NAMES.has(cleanName) && !config.includeMythicals) return false;
+        // 3. Paradox Pokémon
+        const isParadox = PARADOX_POKEMON_NAMES.has(cleanName) || Boolean(mon.paradox);
+        if (isParadox) {
+            if (!config.includeParadox) return false;
+        }
+
+        // 4. Mythicals
+        const isMythical = MYTHICAL_POKEMON_NAMES.has(cleanName) || Boolean(mon.mythical);
+        if (isMythical) {
+            if (!config.includeMythicals) return false;
+        }
+
+        // 5. Standard Legendaries (excluding Ultra Beasts, Paradox, and Mythicals)
+        const isStandardLegendary = mon.legendary && !isUltraBeast && !isParadox && !isMythical;
+        if (isStandardLegendary && !config.includeLegendaries) return false;
 
         // 4. Line length filter (totalStages)
         const totalStages = mon.totalStages ?? 1;
@@ -106,6 +169,18 @@ export function filterPokemonLookupPool(
                 const matchesBiome2 = Boolean(mon.type2 && mon.type2 !== 'None' && biome.types.includes(mon.type2));
                 if (!matchesBiome1 && !matchesBiome2) return false;
             }
+        }
+
+        // 8. Recommended Rank filter
+        if (
+            config.filterRecommendedRank &&
+            config.allowedRecommendedRanks &&
+            config.allowedRecommendedRanks.length > 0
+        ) {
+            if (!mon.recommendedRank) return false;
+            const monRank = mon.recommendedRank.toLowerCase();
+            const allowed = config.allowedRecommendedRanks.map((r) => r.toLowerCase());
+            if (!allowed.includes(monRank)) return false;
         }
 
         return true;

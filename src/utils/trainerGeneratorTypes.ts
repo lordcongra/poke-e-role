@@ -29,6 +29,8 @@ export interface TrainerGeneratorConfig {
     allowedStageIndices: number[];
     includeLegendaries: boolean;
     includeMythicals: boolean;
+    includeUltraBeasts: boolean;
+    includeParadox: boolean;
     includeMegas: boolean;
     scaleLoyaltyHappiness: boolean;
     biomeId?: string; // Fallback / legacy
@@ -36,6 +38,10 @@ export interface TrainerGeneratorConfig {
     teamBiomeId?: string; // Biome for Pokémon team ecosystem
     biomeConceptMixMode?: BiomeConceptMixMode;
     customSlotMixModes?: SlotMixMode[];
+    filterRecommendedRank?: boolean;
+    recommendedRankMode?: 'match_pokemon' | 'exact' | 'custom';
+    exactRecommendedRank?: Rank;
+    customSlotRecommendedRanks?: (Rank | 'match_pokemon')[];
 }
 
 export interface GeneratedTrainerResult {

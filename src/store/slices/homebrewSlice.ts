@@ -322,6 +322,11 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
             Height: initialData?.Height || '',
             Weight: initialData?.Weight || '',
             DexDescription: initialData?.DexDescription || '',
+            RecommendedRank: initialData?.RecommendedRank || '',
+            Legendary: initialData?.Legendary ?? false,
+            Mythical: initialData?.Mythical ?? false,
+            UltraBeast: initialData?.UltraBeast ?? false,
+            Paradox: initialData?.Paradox ?? false,
             gmOnly: initialData?.gmOnly ?? false
         };
         const newPokemon = [...get().roomCustomPokemon, newPokemonItem];

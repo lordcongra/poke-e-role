@@ -287,6 +287,7 @@ async function build() {
                 eventAbilities: data.EventAbilities || data.eventAbilities || '',
                 legendary: Boolean(data.Legendary || data.legendary),
                 starter: Boolean(data.GoodStarter || data.goodStarter),
+                recommendedRank: data.RecommendedRank || data.recommendedRank || 'Standard',
                 stage: evoInfo.stage,
                 totalStages: evoInfo.totalStages,
                 moves: movesList

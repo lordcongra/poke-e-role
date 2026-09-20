@@ -54,6 +54,7 @@ export interface PokemonApiResponse {
     DexCategory?: string;
     Height?: { Meters?: number; Feet?: number } | string;
     Weight?: { Kilograms?: number; Pounds?: number } | string;
+    RecommendedRank?: string;
     DexDescription?: string;
 }
 
@@ -118,7 +119,11 @@ export interface PokemonLookupEntry {
     hiddenAbility: string;
     eventAbilities: string;
     legendary: boolean;
+    mythical?: boolean;
+    ultraBeast?: boolean;
+    paradox?: boolean;
     starter: boolean;
+    recommendedRank?: string;
     stage?: number;
     totalStages?: number;
     moves: [string, string][]; // [MoveName, LearnedRank]

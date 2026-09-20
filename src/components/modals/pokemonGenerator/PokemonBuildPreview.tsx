@@ -143,6 +143,20 @@ export const PokemonBuildPreview: React.FC<PokemonBuildPreviewProps> = ({
                         <span className="text-subtext" style={{ fontSize: '0.8rem' }}>
                             Rank: {build.rank} | Nature: {build.nature} | Ability:{' '}
                             {String(build.pokemonData?.Ability1 || build.pokemonData?.ability1 || 'Default')}
+                            {(build.pokemonData?.RecommendedRank ||
+                                (pokedexLookup &&
+                                    pokedexLookup.find((p) => p.name.toLowerCase() === species.toLowerCase())
+                                        ?.recommendedRank)) && (
+                                <>
+                                    {' '}
+                                    | Rec. Rank:{' '}
+                                    {String(
+                                        build.pokemonData?.RecommendedRank ||
+                                            pokedexLookup?.find((p) => p.name.toLowerCase() === species.toLowerCase())
+                                                ?.recommendedRank
+                                    )}
+                                </>
+                            )}
                             {build.loyalty !== undefined && (
                                 <>
                                     {' '}
