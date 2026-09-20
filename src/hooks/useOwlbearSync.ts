@@ -130,13 +130,23 @@ export function useOwlbearSync() {
                     OBR.broadcast.sendMessage(`${EXTENSION_ID}/homebrew-request`, {}, { destination: 'REMOTE' });
                 }
 
+                const clearKnownTransforms = () => {
+                    for (const key of Object.keys(knownTransforms)) {
+                        delete knownTransforms[key];
+                    }
+                };
+
                 const renderAllTokens = async (forceRebuild = false) => {
                     try {
                         const allItems = await OBR.scene.items.getItems(
-                            (i) => i.layer === 'CHARACTER' && i.metadata[METADATA_ID] !== undefined
+                            (i) =>
+                                i.layer === 'CHARACTER' &&
+                                (i.metadata[METADATA_ID] !== undefined ||
+                                    i.metadata['pokerole-pmd-extension/stats'] !== undefined)
                         );
                         for (const item of allItems) {
-                            const meta = item.metadata[METADATA_ID] as Record<string, unknown>;
+                            const meta = (item.metadata[METADATA_ID] ||
+                                item.metadata['pokerole-pmd-extension/stats']) as Record<string, unknown>;
                             knownTransforms[item.id] = {
                                 x: item.scale.x,
                                 y: item.scale.y,
@@ -152,10 +162,15 @@ export function useOwlbearSync() {
                     }
                 };
 
-                let initialRenderDone = false;
-                const triggerInitialRender = async () => {
-                    if (initialRenderDone) return;
-                    initialRenderDone = true;
+                let sceneFollowupTimeout: ReturnType<typeof setTimeout> | null = null;
+                let sceneLateFollowupTimeout: ReturnType<typeof setTimeout> | null = null;
+
+                const handleSceneReady = async () => {
+                    if (!isMounted) return;
+
+                    // Reset knownTransforms cache because OBR.scene.local items are wiped on scene switch/load
+                    clearKnownTransforms();
+
                     if (role === 'GM') {
                         try {
                             const legacyItems = await OBR.scene.items.getItems(
@@ -168,18 +183,37 @@ export function useOwlbearSync() {
                             console.warn('[SyncEngine] Failed to clean legacy network graphics:', e);
                         }
                     }
-                    await renderAllTokens();
-                    setTimeout(() => renderAllTokens(true), 1500);
+
+                    // Initial render for currently loaded items
+                    await renderAllTokens(true);
+
+                    // Follow-up renders to catch late-arriving persistent tokens (from Persistent Tokens extension)
+                    if (sceneFollowupTimeout) clearTimeout(sceneFollowupTimeout);
+                    sceneFollowupTimeout = setTimeout(async () => {
+                        if (!isMounted) return;
+                        await renderAllTokens(false);
+                    }, 600);
+
+                    if (sceneLateFollowupTimeout) clearTimeout(sceneLateFollowupTimeout);
+                    sceneLateFollowupTimeout = setTimeout(async () => {
+                        if (!isMounted) return;
+                        await renderAllTokens(true);
+                    }, 1800);
                 };
 
                 const isReady = await OBR.scene.isReady();
                 if (isReady) {
-                    await triggerInitialRender();
+                    await handleSceneReady();
                 }
 
                 const unsubReady = OBR.scene.onReadyChange(async (ready) => {
                     if (ready) {
-                        await triggerInitialRender();
+                        await handleSceneReady();
+                    } else {
+                        // Scene unloading: clean cache and cancel pending follow-up timers
+                        clearKnownTransforms();
+                        if (sceneFollowupTimeout) clearTimeout(sceneFollowupTimeout);
+                        if (sceneLateFollowupTimeout) clearTimeout(sceneLateFollowupTimeout);
                     }
                 });
                 unsubs.push(unsubReady);
@@ -189,18 +223,25 @@ export function useOwlbearSync() {
                         const items = await OBR.scene.items.getItems([targetTokenId]);
                         if (items.length > 0) {
                             const tokenItem = items[0];
-                            if (tokenItem.layer !== 'CHARACTER' && !tokenItem.metadata[METADATA_ID]) {
+                            const rawMeta =
+                                tokenItem.metadata[METADATA_ID] || tokenItem.metadata['pokerole-pmd-extension/stats'];
+                            if (tokenItem.layer !== 'CHARACTER' && !rawMeta) {
                                 return;
                             }
 
                             const store = useCharacterStore.getState();
                             setActiveTokenId(targetTokenId);
                             store.setTokenData(targetTokenId, role);
-                            const meta = tokenItem.metadata[METADATA_ID] as Record<string, unknown> | undefined;
+                            const meta = rawMeta as Record<string, unknown> | undefined;
 
                             if (meta) {
                                 try {
                                     store.loadFromOwlbear(meta);
+                                    // Self-healing: ensure graphics are rendered for the selected token
+                                    const gData = buildGraphicsFromMeta(meta);
+                                    renderTokenGraphics(tokenItem, gData, role, false).catch((err) =>
+                                        console.warn('[SyncEngine] Failed to render graphics on token selection:', err)
+                                    );
                                 } catch (e) {
                                     console.error(
                                         '[SyncEngine] CRITICAL: Corrupted token metadata detected. Resetting sheet to protect engine.',
@@ -307,10 +348,18 @@ export function useOwlbearSync() {
                 unsubs.push(unsubPlayer);
 
                 const unsubItems = OBR.scene.items.onChange(async (items) => {
+                    const currentItemIds = new Set(items.map((i) => i.id));
+                    for (const id of Object.keys(knownTransforms)) {
+                        if (!currentItemIds.has(id)) {
+                            delete knownTransforms[id];
+                        }
+                    }
+
                     for (const item of items) {
-                        if (item.layer === 'CHARACTER' && item.metadata[METADATA_ID]) {
+                        const rawMeta = item.metadata[METADATA_ID] || item.metadata['pokerole-pmd-extension/stats'];
+                        if (item.layer === 'CHARACTER' && rawMeta) {
                             try {
-                                const meta = (item.metadata[METADATA_ID] as Record<string, unknown>) || {};
+                                const meta = (rawMeta as Record<string, unknown>) || {};
                                 const lastTransform = knownTransforms[item.id];
 
                                 const rawX = item.scale.x;
@@ -650,6 +699,9 @@ export function useOwlbearSync() {
 
         return () => {
             isMounted = false;
+            for (const key of Object.keys(knownTransforms)) {
+                delete knownTransforms[key];
+            }
             unsubs.forEach((unsub) => unsub());
         };
     }, []);

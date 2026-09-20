@@ -48,6 +48,8 @@ export async function applyGraphicsToOwlbear(
         const explicitId = `${token.id}-${role}${CURRENT_VERSION}`;
         const existing = validExistingItems.find((item) => item.id === explicitId);
 
+        const tokenPos = token.position || { x: 0, y: 0 };
+
         // 🚨 FIX: Removed `&& definition.visible` so we ALWAYS build the attachments.
         // If they are hidden, they will simply be created with `.visible(false)` so the GM can still see them faded!
         if (!existing) {
@@ -61,7 +63,7 @@ export async function applyGraphicsToOwlbear(
                     .fillOpacity(definition.fillOpacity ?? 0)
                     .closed(definition.closed)
                     .tension(0)
-                    .position(token.position)
+                    .position(tokenPos)
                     .attachedTo(token.id)
                     .disableHit(true)
                     .locked(true)
@@ -84,7 +86,7 @@ export async function applyGraphicsToOwlbear(
                     .fillColor(definition.color)
                     .fillOpacity(definition.fillOpacity)
                     .id(explicitId)
-                    .position({ x: token.position.x + definition.x, y: token.position.y + definition.y })
+                    .position({ x: tokenPos.x + definition.x, y: tokenPos.y + definition.y })
                     .attachedTo(token.id)
                     .disableHit(true)
                     .locked(true)
@@ -105,7 +107,7 @@ export async function applyGraphicsToOwlbear(
                     .name('')
                     .textType('PLAIN')
                     .plainText(definition.text)
-                    .position({ x: token.position.x + definition.x, y: token.position.y + definition.y })
+                    .position({ x: tokenPos.x + definition.x, y: tokenPos.y + definition.y })
                     .width(definition.width)
                     .height(definition.height)
                     .textAlign(definition.align)
@@ -135,6 +137,13 @@ export async function applyGraphicsToOwlbear(
 
     if (itemsToCreate.length > 0) {
         try {
+            // Guard against any orphaned/pre-existing local items with identical IDs to avoid OBR SDK duplicate ID collisions
+            const allLocal = await OBR.scene.local.getItems();
+            const existingLocalIds = new Set(allLocal.map((i) => i.id));
+            const conflictingIds = itemsToCreate.map((i) => i.id).filter((id) => existingLocalIds.has(id));
+            if (conflictingIds.length > 0) {
+                await OBR.scene.local.deleteItems(conflictingIds);
+            }
             await OBR.scene.local.addItems(itemsToCreate);
         } catch (error) {
             console.error('[GraphicsEngine] Error creating graphics:', error);
