@@ -55,6 +55,12 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 <li>
                     <strong>Custom HUD Render Layers:</strong> Added a new <strong>HUD Layer</strong> option in Tracker Settings! You can now choose whether a token's HUD renders above token attachments like weapons and hats (<em>Above Attachments / Popover</em>), on the standard attachment layer (<em>With Attachments</em>), on the character plane (<em>Character Layer</em>), or tucked underneath the sprite (<em>Behind Token / Mount</em>).
                 </li>
+                <li>
+                    <strong>Room-Wide Default HUD Scale:</strong> GMs can now set a room-level baseline HUD scale in the <strong>Room Rules</strong> modal. This room setting automatically scales all token HUDs across the scene, while individual tokens can still adjust their relative scale in Tracker Settings.
+                </li>
+                <li>
+                    <strong>Sync Offsets & Coordinates Tool:</strong> GMs can now sync token HUD coordinates, layer preferences, and fine-tune placements across all tokens on the map with a single click using the new <strong>Sync Offsets</strong> button in Tracker Settings (and <strong>Sync All</strong> in the Fine-Tune Placements modal).
+                </li>
             </ul>,
             <strong key="ability-automation-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                 <Zap size={16} /> Automated Ability Integration & Smart Tags

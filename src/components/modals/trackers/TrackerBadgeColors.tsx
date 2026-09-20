@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import OBR, { isImage } from '@owlbear-rodeo/sdk';
-import { RefreshCw, Move, RotateCcw, AlertTriangle, XCircle, CheckCircle, Maximize2 } from 'lucide-react';
+import { RefreshCw, Move, RotateCcw, AlertTriangle, XCircle, CheckCircle, Maximize2, Info } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { STATS_META_ID } from '../../../utils/graphicsManager';
 import { NumberSpinner } from '../../ui/NumberSpinner';
@@ -17,6 +17,7 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
 
     const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [showSyncConfirm, setShowSyncConfirm] = useState(false);
+    const [showSyncOffsetsConfirm, setShowSyncOffsetsConfirm] = useState(false);
 
     const confirmResetColors = () => {
         setIdentity('colorAct', '#4890fc');
@@ -29,7 +30,10 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
         if (!OBR.isAvailable) return;
         try {
             const items = await OBR.scene.items.getItems(
-                (item) => item.layer === 'CHARACTER' && item.metadata[STATS_META_ID] !== undefined
+                (item) =>
+                    item.layer === 'CHARACTER' &&
+                    (item.metadata[STATS_META_ID] !== undefined ||
+                        item.metadata['pokerole-pmd-extension/stats'] !== undefined)
             );
             const updates = {
                 'color-act': identityStore.colorAct,
@@ -41,16 +45,75 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                 items.map((item) => item.id),
                 (itemsToUpdate) => {
                     for (const item of itemsToUpdate) {
-                        if (!item.metadata[STATS_META_ID]) item.metadata[STATS_META_ID] = {};
-                        Object.assign(item.metadata[STATS_META_ID] as Record<string, unknown>, updates);
+                        const targetMetaKey =
+                            item.metadata[STATS_META_ID] !== undefined
+                                ? STATS_META_ID
+                                : item.metadata['pokerole-pmd-extension/stats'] !== undefined
+                                  ? 'pokerole-pmd-extension/stats'
+                                  : STATS_META_ID;
+                        if (!item.metadata[targetMetaKey]) item.metadata[targetMetaKey] = {};
+                        Object.assign(item.metadata[targetMetaKey] as Record<string, unknown>, updates);
                     }
                 }
             );
-            OBR.notification.show('Tracker colors synced across all tokens!', 'SUCCESS');
+            OBR.notification.show(`Tracker colors synced to ${items.length} tokens!`, 'SUCCESS');
         } catch (error) {
             console.error('[TrackerBadgeColors] Failed to sync colors:', error);
+            OBR.notification.show('Failed to sync colors across all tokens.', 'ERROR');
+        } finally {
+            setShowSyncConfirm(false);
         }
-        setShowSyncConfirm(false);
+    };
+
+    const confirmSyncOffsets = async () => {
+        if (!OBR.isAvailable) return;
+        try {
+            const items = await OBR.scene.items.getItems(
+                (item) =>
+                    item.layer === 'CHARACTER' &&
+                    (item.metadata[STATS_META_ID] !== undefined ||
+                        item.metadata['pokerole-pmd-extension/stats'] !== undefined)
+            );
+            const updates: Record<string, unknown> = {
+                'x-offset': identityStore.xOffset || 0,
+                'y-offset': identityStore.yOffset || 0,
+                'tracker-layer': identityStore.trackerLayer ?? 'ATTACHMENT',
+                'hp-offset-x': identityStore.hpOffsetX || 0,
+                'hp-offset-y': identityStore.hpOffsetY || 0,
+                'will-offset-x': identityStore.willOffsetX || 0,
+                'will-offset-y': identityStore.willOffsetY || 0,
+                'def-offset-x': identityStore.defOffsetX || 0,
+                'def-offset-y': identityStore.defOffsetY || 0,
+                'act-offset-x': identityStore.actOffsetX || 0,
+                'act-offset-y': identityStore.actOffsetY || 0,
+                'eva-offset-x': identityStore.evaOffsetX || 0,
+                'eva-offset-y': identityStore.evaOffsetY || 0,
+                'cla-offset-x': identityStore.claOffsetX || 0,
+                'cla-offset-y': identityStore.claOffsetY || 0
+            };
+
+            await OBR.scene.items.updateItems(
+                items.map((item) => item.id),
+                (itemsToUpdate) => {
+                    for (const item of itemsToUpdate) {
+                        const targetMetaKey =
+                            item.metadata[STATS_META_ID] !== undefined
+                                ? STATS_META_ID
+                                : item.metadata['pokerole-pmd-extension/stats'] !== undefined
+                                  ? 'pokerole-pmd-extension/stats'
+                                  : STATS_META_ID;
+                        if (!item.metadata[targetMetaKey]) item.metadata[targetMetaKey] = {};
+                        Object.assign(item.metadata[targetMetaKey] as Record<string, unknown>, updates);
+                    }
+                }
+            );
+            OBR.notification.show(`Synced HUD coordinates and offsets to ${items.length} tokens!`, 'SUCCESS');
+        } catch (error) {
+            console.error('[TrackerBadgeColors] Failed to sync HUD offsets:', error);
+            OBR.notification.show('Failed to sync HUD offsets across tokens.', 'ERROR');
+        } finally {
+            setShowSyncOffsetsConfirm(false);
+        }
     };
 
     const handleAutoscale = async () => {
@@ -279,6 +342,12 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                         max={500}
                     />
                 </div>
+                <div className="tracker-settings__scale-hint text-subtext">
+                    <Info size={13} className="tracker-settings__scale-hint-icon" />
+                    <span>
+                        Default room-wide HUD scale can be configured in <strong>Room Rules</strong>.
+                    </span>
+                </div>
                 <div className="tracker-settings__offset-row">
                     <div
                         className="tracker-settings__offset-label-wrap"
@@ -432,7 +501,15 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                             className="action-button action-button--theme tracker-settings__modal-btn text-theme-header"
                             title="Sync custom status colors across all tokens."
                         >
-                            <RefreshCw size={16} /> Sync
+                            <RefreshCw size={16} /> Sync Colors
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setShowSyncOffsetsConfirm(true)}
+                            className="action-button action-button--theme tracker-settings__modal-btn text-theme-header"
+                            title="Sync HUD coordinates and placement offsets across all tokens on the map."
+                        >
+                            <Move size={16} /> Sync Offsets
                         </button>
                         <button
                             type="button"
@@ -509,6 +586,36 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                                 onClick={confirmSyncColors}
                             >
                                 <CheckCircle size={16} /> Sync
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showSyncOffsetsConfirm && (
+                <div className="tracker-settings__overlay tracker-settings__overlay--high-z">
+                    <div className="tracker-settings__content tracker-settings__content--sync">
+                        <h3 className="tracker-settings__title tracker-settings__title--sync modal-title-with-icon text-title-primary">
+                            <Move size={20} /> Sync Offsets
+                        </h3>
+                        <p className="tracker-settings__description text-subtext">
+                            This will push your current HUD coordinates (X-Offset, Y-Offset, Layer, and fine-tune
+                            placement offsets) to EVERY token on the map. Are you sure?
+                        </p>
+                        <div className="tracker-settings__modal-actions">
+                            <button
+                                type="button"
+                                className="action-button action-button--dark tracker-settings__modal-btn text-theme-header"
+                                onClick={() => setShowSyncOffsetsConfirm(false)}
+                            >
+                                <XCircle size={16} /> Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="action-button action-button--theme tracker-settings__modal-btn text-theme-header"
+                                onClick={confirmSyncOffsets}
+                            >
+                                <CheckCircle size={16} /> Sync Offsets
                             </button>
                         </div>
                     </div>

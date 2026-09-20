@@ -1,7 +1,7 @@
 import OBR, { isImage } from '@owlbear-rodeo/sdk';
 import type { Item } from '@owlbear-rodeo/sdk';
 import type { CharacterState } from '../store/storeTypes';
-import { buildGraphicsFromState, type GraphicsData } from './graphicsDataBuilder';
+import { buildGraphicsFromState, buildGraphicsFromMeta, type GraphicsData } from './graphicsDataBuilder';
 import { GRAPHICS_META_ID, STATS_META_ID } from './graphicsManager';
 import { buildGraphicDefinitions } from './graphicsLayout';
 import { applyGraphicsToOwlbear } from './graphicsEngine';
@@ -129,4 +129,45 @@ export async function renderTokenGraphics(
     });
 
     await renderMutex[token.id];
+}
+
+export async function renderAllSceneTokens(forceRebuild = false, roomDefaultScale?: number) {
+    if (!OBR.isAvailable) return;
+    try {
+        const isReady = await OBR.scene.isReady();
+        if (!isReady) return;
+
+        const role = await OBR.player.getRole();
+        const allItems = await OBR.scene.items.getItems(
+            (i) =>
+                i.layer === 'CHARACTER' &&
+                (i.metadata[STATS_META_ID] !== undefined || i.metadata['pokerole-pmd-extension/stats'] !== undefined)
+        );
+
+        let scale = roomDefaultScale;
+        if (scale === undefined) {
+            try {
+                const roomMeta = (await OBR.room.getMetadata())['pokerole-pmd-extension/room-settings'] as
+                    | Record<string, unknown>
+                    | undefined;
+                if (roomMeta?.roomDefaultScale !== undefined) {
+                    scale = Number(roomMeta.roomDefaultScale);
+                }
+            } catch {
+                scale = 100;
+            }
+        }
+        if (!scale || isNaN(scale)) scale = 100;
+
+        for (const item of allItems) {
+            const meta = (item.metadata[STATS_META_ID] || item.metadata['pokerole-pmd-extension/stats']) as Record<
+                string,
+                unknown
+            >;
+            const gData = buildGraphicsFromMeta(meta, scale);
+            await renderTokenGraphics(item, gData, role, forceRebuild);
+        }
+    } catch (error) {
+        console.error('[GraphicsRenderer] Error rendering all scene tokens:', error);
+    }
 }

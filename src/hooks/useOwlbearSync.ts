@@ -154,7 +154,8 @@ export function useOwlbearSync() {
                                 v: item.visible,
                                 metaStr: JSON.stringify(meta)
                             };
-                            const gData = buildGraphicsFromMeta(meta);
+                            const currentRoomScale = useCharacterStore.getState().identity.roomDefaultScale ?? 100;
+                            const gData = buildGraphicsFromMeta(meta, currentRoomScale);
                             await renderTokenGraphics(item, gData, role, forceRebuild);
                         }
                     } catch (e) {
@@ -230,7 +231,7 @@ export function useOwlbearSync() {
                                 try {
                                     store.loadFromOwlbear(meta);
                                     // Self-healing: ensure graphics are rendered for the selected token
-                                    const gData = buildGraphicsFromMeta(meta);
+                                    const gData = buildGraphicsFromMeta(meta, store.identity.roomDefaultScale ?? 100);
                                     renderTokenGraphics(tokenItem, gData, role, false).catch((err) =>
                                         console.warn('[SyncEngine] Failed to render graphics on token selection:', err)
                                     );
@@ -384,7 +385,10 @@ export function useOwlbearSync() {
                                 }
 
                                 if (needsGraphicsUpdate) {
-                                    const gData = buildGraphicsFromMeta(meta);
+                                    const gData = buildGraphicsFromMeta(
+                                        meta,
+                                        useCharacterStore.getState().identity.roomDefaultScale ?? 100
+                                    );
                                     renderTokenGraphics(item, gData, role);
                                 }
 
@@ -479,7 +483,9 @@ export function useOwlbearSync() {
                                 sData.gmOnlyDamageOverride !== undefined
                                     ? Boolean(sData.gmOnlyDamageOverride)
                                     : undefined,
-                            gmDemoMode: sData.gmDemoMode !== undefined ? Boolean(sData.gmDemoMode) : undefined
+                            gmDemoMode: sData.gmDemoMode !== undefined ? Boolean(sData.gmDemoMode) : undefined,
+                            roomDefaultScale:
+                                sData.roomDefaultScale !== undefined ? Number(sData.roomDefaultScale) : undefined
                         });
 
                         store.applyRoomSettings(mapRoomSettings(data));
@@ -487,6 +493,8 @@ export function useOwlbearSync() {
                 } catch (e) {
                     console.error('[SyncEngine] Engine recovered from room metadata crash:', e);
                 }
+
+                let lastSyncedRoomScale = useCharacterStore.getState().identity.roomDefaultScale ?? 100;
 
                 const unsubRoom = OBR.room.onMetadataChange((meta) => {
                     try {
@@ -518,10 +526,25 @@ export function useOwlbearSync() {
                                     sData.gmOnlyDamageOverride !== undefined
                                         ? Boolean(sData.gmOnlyDamageOverride)
                                         : undefined,
-                                gmDemoMode: sData.gmDemoMode !== undefined ? Boolean(sData.gmDemoMode) : undefined
+                                gmDemoMode: sData.gmDemoMode !== undefined ? Boolean(sData.gmDemoMode) : undefined,
+                                roomDefaultScale:
+                                    sData.roomDefaultScale !== undefined ? Number(sData.roomDefaultScale) : undefined
                             });
 
                             store.applyRoomSettings(mapRoomSettings(data));
+
+                            if (data.roomDefaultScale !== undefined) {
+                                const incomingScale = Number(data.roomDefaultScale);
+                                if (incomingScale !== lastSyncedRoomScale) {
+                                    lastSyncedRoomScale = incomingScale;
+                                    renderAllTokens(true).catch((err) =>
+                                        console.warn(
+                                            '[SyncEngine] Error re-rendering tokens on room scale change:',
+                                            err
+                                        )
+                                    );
+                                }
+                            }
                         }
                     } catch (e) {
                         console.error('[SyncEngine] Engine recovered from room metadata sync crash:', e);

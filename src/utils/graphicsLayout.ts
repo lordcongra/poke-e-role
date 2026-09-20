@@ -14,7 +14,9 @@ export function buildGraphicDefinitions(
     tokenScale: number,
     baseBottomY: number = 75
 ): Record<string, GraphicDefinition> {
-    const scale = tokenScale * ((data.trackerScale ?? 100) / 100);
+    const roomScale = (data.roomDefaultScale ?? 100) / 100;
+    const userScale = (data.trackerScale ?? 100) / 100;
+    const scale = tokenScale * roomScale * userScale;
 
     const healthPercentage = Math.max(0, Math.min(1, data.hpCurr / Math.max(1, data.hpMax)));
     const tempHpPercentage =

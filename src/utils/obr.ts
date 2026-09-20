@@ -102,6 +102,7 @@ export async function saveRoomSettingsToOwlbear(updates: Record<string, unknown>
                     else if (k === 'gmOnlyMatchups') roomMeta.gmOnlyMatchups = Boolean(v);
                     else if (k === 'gmOnlyDamageOverride') roomMeta.gmOnlyDamageOverride = Boolean(v);
                     else if (k === 'gmDemoMode') roomMeta.gmDemoMode = Boolean(v);
+                    else if (k === 'roomDefaultScale') roomMeta.roomDefaultScale = Number(v);
                     else roomMeta[k] = v;
                 }
 
@@ -112,5 +113,40 @@ export async function saveRoomSettingsToOwlbear(updates: Record<string, unknown>
         }, 250);
     } catch (err) {
         console.error('[OBR Engine] Failed to import OBR SDK for room settings save:', err);
+    }
+}
+
+export async function flushRoomSettingsToOwlbear(updates?: Record<string, unknown>) {
+    try {
+        const { default: OBR } = await import('@owlbear-rodeo/sdk');
+        if (!OBR.isAvailable) return;
+
+        if (updates) {
+            Object.assign(pendingRoomUpdates, updates);
+        }
+        clearTimeout(roomSaveTimeout);
+        const updatesToPush = { ...pendingRoomUpdates };
+        pendingRoomUpdates = {};
+
+        const meta = await OBR.room.getMetadata();
+        const roomMeta = (meta[ROOM_SETTINGS_META_ID] as Record<string, unknown>) || {};
+
+        for (const [k, v] of Object.entries(updatesToPush)) {
+            if (k === 'ruleset') roomMeta.ruleset = v;
+            else if (k === 'pain') roomMeta.painEnabled = v === 'Enabled';
+            else if (k === 'diceEngine') roomMeta.diceEngine = v;
+            else if (k === 'homebrewAccess') roomMeta.homebrewAccess = v;
+            else if (k === 'gmOnlyLootGen') roomMeta.gmOnlyLootGen = Boolean(v);
+            else if (k === 'gmOnlyGenerators') roomMeta.gmOnlyGenerators = Boolean(v);
+            else if (k === 'gmOnlyMatchups') roomMeta.gmOnlyMatchups = Boolean(v);
+            else if (k === 'gmOnlyDamageOverride') roomMeta.gmOnlyDamageOverride = Boolean(v);
+            else if (k === 'gmDemoMode') roomMeta.gmDemoMode = Boolean(v);
+            else if (k === 'roomDefaultScale') roomMeta.roomDefaultScale = Number(v);
+            else roomMeta[k] = v;
+        }
+
+        await OBR.room.setMetadata({ [ROOM_SETTINGS_META_ID]: roomMeta });
+    } catch (error) {
+        console.error('[OBR Engine] Failed to flush room settings:', error);
     }
 }

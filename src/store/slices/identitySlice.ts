@@ -20,7 +20,8 @@ const EXCLUDED_FROM_TOKEN_SAVE = new Set([
     'gmOnlyGenerators',
     'gmOnlyMatchups',
     'gmOnlyDamageOverride',
-    'gmDemoMode'
+    'gmDemoMode',
+    'roomDefaultScale'
 ]);
 
 const OBR_KEY_MAP: Record<string, string> = {
@@ -230,6 +231,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
 
         trackerScale: 100,
         trackerLayer: 'ATTACHMENT',
+        roomDefaultScale: 100,
         xOffset: 0,
         yOffset: 0,
         hpOffsetX: 0,

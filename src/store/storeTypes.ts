@@ -429,6 +429,7 @@ export interface IdentitySlice {
 
         trackerScale: number;
         trackerLayer: 'POPOVER' | 'ATTACHMENT' | 'CHARACTER' | 'MOUNT';
+        roomDefaultScale: number;
         xOffset: number;
         yOffset: number;
         hpOffsetX: number;
@@ -481,6 +482,7 @@ export interface RoomSettings {
     gmOnlyMatchups: boolean;
     gmOnlyDamageOverride: boolean;
     gmDemoMode: boolean;
+    roomDefaultScale: number;
 }
 
 export type SheetMode = 'Pokémon' | 'Trainer' | 'Trainer (Special)';

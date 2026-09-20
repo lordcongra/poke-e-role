@@ -1,8 +1,12 @@
 import { useState } from 'react';
-import { ScrollText, X, XCircle } from 'lucide-react';
+import OBR from '@owlbear-rodeo/sdk';
+import { ScrollText, X, XCircle, RefreshCw } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { TooltipIcon } from '../../ui/TooltipIcon';
+import { NumberSpinner } from '../../ui/NumberSpinner';
 import { isStandaloneMode } from '../../../utils/storageAdapter';
+import { flushRoomSettingsToOwlbear } from '../../../utils/obr';
+import { renderAllSceneTokens } from '../../../utils/graphicsRenderer';
 import './RulesModal.css';
 
 export function RulesModal({ onClose }: { onClose: () => void }) {
@@ -10,6 +14,32 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
     const updateRoomSetting = useCharacterStore((state) => state.updateRoomSetting);
     const role = useCharacterStore((state) => state.role);
     const [modalConfig, setModalConfig] = useState<{ title: string; content: string } | null>(null);
+    const [isSyncingScale, setIsSyncingScale] = useState(false);
+
+    const handleScaleChange = (val: number) => {
+        const clamped = Math.max(25, Math.min(300, val));
+        updateRoomSetting('roomDefaultScale', clamped);
+        renderAllSceneTokens(false, clamped).catch(() => {});
+    };
+
+    const handleSyncDefaultScale = async () => {
+        setIsSyncingScale(true);
+        try {
+            const targetScale = id.roomDefaultScale ?? 100;
+            await flushRoomSettingsToOwlbear({ roomDefaultScale: targetScale });
+            await renderAllSceneTokens(true, targetScale);
+            if (OBR.isAvailable) {
+                OBR.notification.show(`Applied ${targetScale}% default HUD scale to all tokens on scene!`, 'SUCCESS');
+            }
+        } catch (err) {
+            console.error('[RulesModal] Failed to sync default scale:', err);
+            if (OBR.isAvailable) {
+                OBR.notification.show('Failed to apply default HUD scale.', 'ERROR');
+            }
+        } finally {
+            setIsSyncingScale(false);
+        }
+    };
 
     return (
         <div className="rules-modal__overlay">
@@ -243,6 +273,60 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                     <option value="Everyone">Everyone</option>
                                     <option value="GM Only">GM Only</option>
                                 </select>
+                            </div>
+
+                            <div>
+                                <label className="rules-modal__label text-label" style={{ color: 'var(--text-main)' }}>
+                                    Default Token HUD Scale (%){' '}
+                                    <TooltipIcon
+                                        onClick={() =>
+                                            setModalConfig({
+                                                title: 'Default Token HUD Scale',
+                                                content:
+                                                    'Controls the baseline scale of all token HUDs across the room. Default is 100%. Individual tokens can still adjust their scale relative to this baseline in Tracker Settings.'
+                                            })
+                                        }
+                                    />
+                                </label>
+                                <div className="rules-modal__scale-row">
+                                    <div className="rules-modal__step-btn-group">
+                                        <button
+                                            type="button"
+                                            className="rules-modal__step-btn text-theme-header"
+                                            onClick={() => handleScaleChange((id.roomDefaultScale ?? 100) - 10)}
+                                            title="Decrease baseline HUD scale by 10%"
+                                        >
+                                            -10
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="rules-modal__step-btn text-theme-header"
+                                            onClick={() => handleScaleChange((id.roomDefaultScale ?? 100) + 10)}
+                                            title="Increase baseline HUD scale by 10%"
+                                        >
+                                            +10
+                                        </button>
+                                    </div>
+                                    <NumberSpinner
+                                        value={id.roomDefaultScale ?? 100}
+                                        onChange={handleScaleChange}
+                                        min={25}
+                                        max={300}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="action-button action-button--theme rules-modal__sync-btn text-theme-header"
+                                        onClick={handleSyncDefaultScale}
+                                        disabled={isSyncingScale}
+                                        title="Immediately save and apply this default HUD scale to all tokens on the scene."
+                                    >
+                                        <RefreshCw
+                                            size={13}
+                                            className={isSyncingScale ? 'rules-modal__spin-icon' : ''}
+                                        />{' '}
+                                        Update Default
+                                    </button>
+                                </div>
                             </div>
 
                             {role === 'GM' && (
