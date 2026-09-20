@@ -72,8 +72,7 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                             if (!sceneDpi || sceneDpi <= 0) sceneDpi = 150;
 
                             const rawWidth = token.image?.width || 150;
-                            const tokenDpi =
-                                token.grid?.dpi && token.grid.dpi > 0 ? token.grid.dpi : sceneDpi;
+                            const tokenDpi = token.grid?.dpi && token.grid.dpi > 0 ? token.grid.dpi : sceneDpi;
                             const scaleX = Math.abs(token.scale?.x || 1);
                             const rawGridSquares = (rawWidth / tokenDpi) * scaleX;
 
@@ -139,14 +138,11 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                         let optimalScale = 100;
                         if (isImage(token)) {
                             const rawWidth = token.image?.width || 150;
-                            const tokenDpi =
-                                token.grid?.dpi && token.grid.dpi > 0 ? token.grid.dpi : sceneDpi;
+                            const tokenDpi = token.grid?.dpi && token.grid.dpi > 0 ? token.grid.dpi : sceneDpi;
                             const scaleX = Math.abs(token.scale?.x || 1);
                             const rawGridSquares = (rawWidth / tokenDpi) * scaleX;
 
-                            const visualBounds = token.image?.url
-                                ? getCachedVisualBounds(token.image.url)
-                                : null;
+                            const visualBounds = token.image?.url ? getCachedVisualBounds(token.image.url) : null;
                             const contentWidthFraction = visualBounds?.contentWidthFraction ?? 1.0;
                             const gridSquares = rawGridSquares * contentWidthFraction;
 
@@ -257,7 +253,9 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                             <button
                                 type="button"
                                 className="tracker-settings__step-btn text-theme-header"
-                                onClick={() => setIdentity('trackerScale', Math.max(10, (identityStore.trackerScale ?? 100) - 10))}
+                                onClick={() =>
+                                    setIdentity('trackerScale', Math.max(10, (identityStore.trackerScale ?? 100) - 10))
+                                }
                                 title="Decrease HUD scale by 10%"
                             >
                                 -10
@@ -265,7 +263,9 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                             <button
                                 type="button"
                                 className="tracker-settings__step-btn text-theme-header"
-                                onClick={() => setIdentity('trackerScale', Math.min(500, (identityStore.trackerScale ?? 100) + 10))}
+                                onClick={() =>
+                                    setIdentity('trackerScale', Math.min(500, (identityStore.trackerScale ?? 100) + 10))
+                                }
                                 title="Increase HUD scale by 10%"
                             >
                                 +10
@@ -278,6 +278,29 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                         min={10}
                         max={500}
                     />
+                </div>
+                <div className="tracker-settings__offset-row">
+                    <div
+                        className="tracker-settings__offset-label-wrap"
+                        title="Choose whether the HUD sits in front of attachments, alongside them, or behind the token."
+                    >
+                        <span className="text-label">HUD Layer:</span>
+                    </div>
+                    <select
+                        value={identityStore.trackerLayer ?? 'ATTACHMENT'}
+                        onChange={(event) =>
+                            setIdentity(
+                                'trackerLayer',
+                                event.target.value as 'POPOVER' | 'ATTACHMENT' | 'CHARACTER' | 'MOUNT'
+                            )
+                        }
+                        className="tracker-settings__layer-select text-theme-header"
+                    >
+                        <option value="POPOVER">Above Attachments (Top)</option>
+                        <option value="ATTACHMENT">With Attachments (Default)</option>
+                        <option value="CHARACTER">Character Layer</option>
+                        <option value="MOUNT">Behind Token (Back)</option>
+                    </select>
                 </div>
                 <div className="tracker-settings__offset-row">
                     <div

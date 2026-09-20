@@ -74,8 +74,7 @@ export async function renderTokenGraphics(
 
                 const rawWidth = token.image?.width || sceneDpi;
                 const rawHeight = token.image?.height || sceneDpi;
-                const tokenDpi =
-                    token.grid?.dpi && token.grid.dpi > 0 ? token.grid.dpi : sceneDpi;
+                const tokenDpi = token.grid?.dpi && token.grid.dpi > 0 ? token.grid.dpi : sceneDpi;
                 const scaleX = Math.abs(token.scale?.x || 1);
                 const scaleY = Math.abs(token.scale?.y || 1);
 
@@ -123,7 +122,7 @@ export async function renderTokenGraphics(
             }
 
             const graphicDefinitions = buildGraphicDefinitions(data, role, isTokenVisible, tokenScale, baseBottomY);
-            await applyGraphicsToOwlbear(token, graphicDefinitions, localAttached);
+            await applyGraphicsToOwlbear(token, graphicDefinitions, localAttached, data.trackerLayer ?? 'ATTACHMENT');
         } catch (error) {
             console.error('[GraphicsRenderer] Token Graphics Sync Error:', error);
         }

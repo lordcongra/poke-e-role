@@ -425,6 +425,7 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
         colorCla: String(meta['color-cla'] || '#dfad43'),
 
         trackerScale: meta['tracker-scale'] !== undefined ? Number(meta['tracker-scale']) : 100,
+        trackerLayer: (meta['tracker-layer'] as 'POPOVER' | 'ATTACHMENT' | 'CHARACTER' | 'MOUNT') || 'ATTACHMENT',
         xOffset: Number(meta['x-offset']) || 0,
         yOffset: Number(meta['y-offset']) || 0,
         hpOffsetX: Number(meta['hp-offset-x']) || 0,
@@ -621,6 +622,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (state.identity.colorCla !== undefined) flatMetadata['color-cla'] = state.identity.colorCla;
 
             if (state.identity.trackerScale !== undefined) flatMetadata['tracker-scale'] = state.identity.trackerScale;
+            if (state.identity.trackerLayer !== undefined) flatMetadata['tracker-layer'] = state.identity.trackerLayer;
             if (state.identity.xOffset !== undefined) flatMetadata['x-offset'] = state.identity.xOffset;
             if (state.identity.yOffset !== undefined) flatMetadata['y-offset'] = state.identity.yOffset;
             if (state.identity.hpOffsetX !== undefined) flatMetadata['hp-offset-x'] = state.identity.hpOffsetX;

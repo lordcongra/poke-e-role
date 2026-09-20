@@ -44,6 +44,7 @@ export interface GraphicsData {
     colorCla: string;
 
     trackerScale: number;
+    trackerLayer: 'POPOVER' | 'ATTACHMENT' | 'CHARACTER' | 'MOUNT';
     xOffset: number;
     yOffset: number;
     hpOffsetX: number;
@@ -103,6 +104,7 @@ export function buildGraphicsFromState(meta: Record<string, unknown>, state: Cha
         colorCla: String(meta['color-cla'] || DEFAULT_COLOR_CLA),
 
         trackerScale: state.identity.trackerScale ?? 100,
+        trackerLayer: state.identity.trackerLayer ?? 'ATTACHMENT',
         xOffset: state.identity.xOffset || 0,
         yOffset: state.identity.yOffset || 0,
         hpOffsetX: state.identity.hpOffsetX || 0,
@@ -160,6 +162,7 @@ export function buildGraphicsFromMeta(meta: Record<string, unknown>): GraphicsDa
         colorCla: String(meta['color-cla'] || DEFAULT_COLOR_CLA),
 
         trackerScale: meta['tracker-scale'] !== undefined ? Number(meta['tracker-scale']) : 100,
+        trackerLayer: (meta['tracker-layer'] as 'POPOVER' | 'ATTACHMENT' | 'CHARACTER' | 'MOUNT') || 'ATTACHMENT',
         xOffset: Number(meta['x-offset']) || 0,
         yOffset: Number(meta['y-offset']) || 0,
         hpOffsetX: Number(meta['hp-offset-x']) || 0,

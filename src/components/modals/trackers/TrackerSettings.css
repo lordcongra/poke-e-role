@@ -239,6 +239,27 @@
     gap: 8px;
 }
 
+.tracker-settings__layer-select {
+    background: var(--card-bg, #2a2b36);
+    color: var(--text-main, #ffffff);
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.18));
+    border-radius: 4px;
+    padding: 3px 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    max-width: 175px;
+    transition:
+        border-color 0.15s ease,
+        background 0.15s ease;
+}
+
+.tracker-settings__layer-select:hover,
+.tracker-settings__layer-select:focus {
+    border-color: var(--primary, #3b82f6);
+}
+
 .tracker-settings__offset-label-wrap {
     display: flex;
     align-items: center;
@@ -260,7 +281,10 @@
     font-size: 0.72rem;
     font-weight: 700;
     cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        transform 0.1s ease;
     user-select: none;
     line-height: 1.3;
 }

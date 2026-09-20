@@ -428,6 +428,7 @@ export interface IdentitySlice {
         colorCla: string;
 
         trackerScale: number;
+        trackerLayer: 'POPOVER' | 'ATTACHMENT' | 'CHARACTER' | 'MOUNT';
         xOffset: number;
         yOffset: number;
         hpOffsetX: number;

@@ -1,5 +1,5 @@
 import OBR, { buildCurve, buildText, buildShape } from '@owlbear-rodeo/sdk';
-import type { Item, Curve, Text as OBRText, Shape as OBRShape } from '@owlbear-rodeo/sdk';
+import type { Item, Curve, Text as OBRText, Shape as OBRShape, Layer } from '@owlbear-rodeo/sdk';
 import type { GraphicDefinition } from './graphicsTypes';
 import { SEVERED_BEHAVIORS, CURRENT_VERSION } from './graphicsTypes';
 import { GRAPHICS_META_ID } from './graphicsManager';
@@ -9,7 +9,8 @@ const almostEqual = (valueA: number, valueB: number) => Math.abs(valueA - valueB
 export async function applyGraphicsToOwlbear(
     token: Item,
     graphicDefinitions: Record<string, GraphicDefinition>,
-    localAttachedItems: Item[]
+    localAttachedItems: Item[],
+    targetLayer: Layer = 'ATTACHMENT'
 ) {
     const itemsToDelete: string[] = [];
     const validExistingItems: Item[] = [];
@@ -25,6 +26,7 @@ export async function applyGraphicsToOwlbear(
             item.id !== explicitId ||
             item.type !== definition.type ||
             (item.type === 'SHAPE' && (item as OBRShape).shapeType !== 'CIRCLE') ||
+            item.layer !== targetLayer ||
             foundRoles.has(role)
         ) {
             itemsToDelete.push(item.id);
@@ -67,7 +69,7 @@ export async function applyGraphicsToOwlbear(
                     .attachedTo(token.id)
                     .disableHit(true)
                     .locked(true)
-                    .layer('ATTACHMENT')
+                    .layer(targetLayer)
                     .zIndex(definition.z)
                     .metadata({ [GRAPHICS_META_ID]: role })
                     .visible(definition.visible)
@@ -90,7 +92,7 @@ export async function applyGraphicsToOwlbear(
                     .attachedTo(token.id)
                     .disableHit(true)
                     .locked(true)
-                    .layer('ATTACHMENT')
+                    .layer(targetLayer)
                     .zIndex(definition.z)
                     .metadata({ [GRAPHICS_META_ID]: role })
                     .visible(definition.visible)
@@ -115,7 +117,7 @@ export async function applyGraphicsToOwlbear(
                     .attachedTo(token.id)
                     .disableHit(true)
                     .locked(true)
-                    .layer('ATTACHMENT')
+                    .layer(targetLayer)
                     .zIndex(definition.z)
                     .metadata({ [GRAPHICS_META_ID]: role })
                     .visible(definition.visible)
