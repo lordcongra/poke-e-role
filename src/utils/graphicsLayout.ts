@@ -7,21 +7,14 @@ function getHealthColor(percentage: number): string {
     return '#F44336';
 }
 
-export interface TokenBounds {
-    bottomY: number;
-    centerX: number;
-    scaleFactor: number;
-}
-
 export function buildGraphicDefinitions(
     data: GraphicsData,
     role: 'PLAYER' | 'GM',
     isTokenVisible: boolean,
     tokenScale: number,
-    tokenBounds?: TokenBounds
+    baseBottomY: number = 75
 ): Record<string, GraphicDefinition> {
-    const baseScale = tokenBounds ? tokenBounds.scaleFactor : tokenScale;
-    const scale = baseScale * ((data.trackerScale ?? 100) / 100);
+    const scale = tokenScale * ((data.trackerScale ?? 100) / 100);
 
     const healthPercentage = Math.max(0, Math.min(1, data.hpCurr / Math.max(1, data.hpMax)));
     const tempHpPercentage =
@@ -34,18 +27,16 @@ export function buildGraphicDefinitions(
         data.temporaryWillMax > 0 ? Math.max(0, Math.min(1, data.temporaryWill / data.temporaryWillMax)) : 0;
 
     const barWidth = 112 * scale;
-    const centerX = tokenBounds ? tokenBounds.centerX : 0;
-    const startX = centerX - barWidth / 2 + data.xOffset * scale;
-    const baseBottomY = tokenBounds ? tokenBounds.bottomY : 75 * tokenScale;
+    const startX = -barWidth / 2 + data.xOffset * scale;
     const baseY = baseBottomY + (10 + data.yOffset) * scale;
 
     const healthBaseX = startX + data.hpOffsetX * scale;
-    const healthBaseY = baseY - 19 * scale + data.hpOffsetX * scale;
-    const healthCenterX = -barWidth / 2 + data.xOffset * scale + data.hpOffsetX * scale;
+    const healthBaseY = baseY - 19 * scale + data.hpOffsetY * scale;
+    const healthCenterX = healthBaseX;
 
     const willBaseX = startX + data.willOffsetX * scale;
-    const willBaseY = baseY - 2 * scale + data.willOffsetX * scale;
-    const willCenterX = -barWidth / 2 + data.xOffset * scale + data.willOffsetX * scale;
+    const willBaseY = baseY - 2 * scale + data.willOffsetY * scale;
+    const willCenterX = willBaseX;
 
     const graphicDefinitions: Record<string, GraphicDefinition> = {};
 

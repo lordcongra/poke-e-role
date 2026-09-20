@@ -3,8 +3,9 @@ import type { Item } from '@owlbear-rodeo/sdk';
 import type { CharacterState } from '../store/storeTypes';
 import { buildGraphicsFromState, type GraphicsData } from './graphicsDataBuilder';
 import { GRAPHICS_META_ID, STATS_META_ID } from './graphicsManager';
-import { buildGraphicDefinitions, type TokenBounds } from './graphicsLayout';
+import { buildGraphicDefinitions } from './graphicsLayout';
 import { applyGraphicsToOwlbear } from './graphicsEngine';
+import { detectImageVisualBounds } from './imageBoundsDetector';
 
 const renderMutex: Record<string, Promise<void>> = {};
 
@@ -57,8 +58,8 @@ export async function renderTokenGraphics(
             }
 
             const isTokenVisible = token.visible !== false;
-            const scale = Math.abs(token.scale.x || 1);
-            let tokenBounds: TokenBounds | undefined = undefined;
+            let tokenScale = 1;
+            let baseBottomY = 75;
 
             if (isImage(token)) {
                 let sceneDpi = 150;
@@ -71,33 +72,57 @@ export async function renderTokenGraphics(
                 }
                 if (!sceneDpi || sceneDpi <= 0) sceneDpi = 150;
 
-                const rawWidth = token.image?.width || 150;
-                const rawHeight = token.image?.height || 150;
+                const rawWidth = token.image?.width || sceneDpi;
+                const rawHeight = token.image?.height || sceneDpi;
                 const tokenDpi =
-                    token.grid?.dpi && token.grid.dpi > 0 ? token.grid.dpi : token.image?.width || sceneDpi;
+                    token.grid?.dpi && token.grid.dpi > 0 ? token.grid.dpi : sceneDpi;
                 const scaleX = Math.abs(token.scale?.x || 1);
                 const scaleY = Math.abs(token.scale?.y || 1);
 
-                const pixelToScene = sceneDpi / tokenDpi;
-                const gridSquaresX = (rawWidth / tokenDpi) * scaleX;
+                // Number of grid squares occupied on the scene
+                const rawGridSquaresX = (rawWidth / tokenDpi) * scaleX;
+                const rawGridSquaresY = (rawHeight / tokenDpi) * scaleY;
 
-                const offsetX = token.grid?.offset?.x ?? rawWidth / 2;
-                const offsetY = token.grid?.offset?.y ?? rawHeight / 2;
+                // Inspect visual non-transparent bounds
+                const visualBounds = token.image?.url
+                    ? await detectImageVisualBounds(token.image.url).catch(() => null)
+                    : null;
 
-                const bottomY = (rawHeight - offsetY) * pixelToScene * scaleY;
-                const centerX = (rawWidth / 2 - offsetX) * pixelToScene * scaleX;
+                const contentWidthFraction = visualBounds?.contentWidthFraction ?? 1.0;
+                const bottomFraction = visualBounds?.bottomFraction ?? 1.0;
 
-                // Scale factor: standard 1x1 tokens evaluate to 1.0. Larger tokens scale proportionally with safe bounds.
-                const scaleFactor = Math.max(0.5, Math.min(2.5, Math.sqrt(Math.max(0.5, gridSquaresX))));
+                // Effective visual size in grid squares (excluding transparent padding)
+                const visualGridSquaresX = rawGridSquaresX * contentWidthFraction;
 
-                tokenBounds = {
-                    bottomY,
-                    centerX,
-                    scaleFactor
-                };
+                // Standard 1x1 tokens (or slightly resized sprites up to 1.35 squares) evaluate to 1.25.
+                // Multi-cell tokens (e.g. 2x2, 3x3) scale HUD gently.
+                if (visualGridSquaresX <= 1.35) {
+                    tokenScale = 1.25;
+                } else {
+                    tokenScale = Math.min(2.5, 1.25 + (visualGridSquaresX - 1) * 0.25);
+                }
+
+                // If the sprite has bottom transparent padding (bottomFraction < 0.93):
+                // Anchor baseBottomY with comfortable ~24px breathing space below the visible character feet
+                if (bottomFraction < 0.93) {
+                    const offsetY = token.grid?.offset?.y ?? rawHeight / 2;
+                    const visualBottomPixel = rawHeight * bottomFraction;
+                    const pixelDistFromCenter = visualBottomPixel - offsetY;
+                    const pixelToScene = sceneDpi / tokenDpi;
+                    const visualBottomY = pixelDistFromCenter * pixelToScene * scaleY;
+
+                    // Place baseBottomY so the HP bar sits with clean breathing space below the visible feet
+                    baseBottomY = visualBottomY + 34 * tokenScale;
+                } else {
+                    // Standard full-bleed / circular token bottom
+                    baseBottomY = Math.max(75, rawGridSquaresY * 0.5 * sceneDpi);
+                }
+            } else {
+                tokenScale = Math.abs(token.scale?.x || 1) * 1.25;
+                baseBottomY = 75 * tokenScale;
             }
 
-            const graphicDefinitions = buildGraphicDefinitions(data, role, isTokenVisible, scale, tokenBounds);
+            const graphicDefinitions = buildGraphicDefinitions(data, role, isTokenVisible, tokenScale, baseBottomY);
             await applyGraphicsToOwlbear(token, graphicDefinitions, localAttached);
         } catch (error) {
             console.error('[GraphicsRenderer] Token Graphics Sync Error:', error);

@@ -19,8 +19,9 @@ export function NumberSpinner({ value, onChange, min = 0, max = 9999, disabled =
             <button
                 type="button"
                 className="number-spinner__button"
-                onClick={() => !disabled && onChange(Math.max(min, value - 1))}
+                onClick={(e) => !disabled && onChange(Math.max(min, value - (e.shiftKey ? 10 : 1)))}
                 disabled={disabled}
+                title="Decrement (Shift+click for -10)"
             >
                 <Minus size={14} />
             </button>
@@ -42,8 +43,9 @@ export function NumberSpinner({ value, onChange, min = 0, max = 9999, disabled =
             <button
                 type="button"
                 className="number-spinner__button"
-                onClick={() => !disabled && onChange(Math.min(max, value + 1))}
+                onClick={(e) => !disabled && onChange(Math.min(max, value + (e.shiftKey ? 10 : 1)))}
                 disabled={disabled}
+                title="Increment (Shift+click for +10)"
             >
                 <Plus size={14} />
             </button>

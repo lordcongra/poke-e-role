@@ -210,6 +210,116 @@
     white-space: nowrap;
 }
 
+.tracker-settings__autoscale-full-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.82rem;
+}
+
+.tracker-settings__offsets-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+    background: var(--panel-alt, rgba(0, 0, 0, 0.15));
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+}
+
+.tracker-settings__offset-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.tracker-settings__offset-label-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tracker-settings__step-btn-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tracker-settings__step-btn {
+    background: var(--card-bg, #2a2b36);
+    color: var(--text-main, #ffffff);
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.18));
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+    user-select: none;
+    line-height: 1.3;
+}
+
+.tracker-settings__step-btn:hover {
+    background: var(--primary, #3b82f6);
+    border-color: var(--primary, #3b82f6);
+    color: #ffffff;
+}
+
+.tracker-settings__step-btn:active {
+    transform: scale(0.92);
+}
+
+.tracker-settings__preset-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--border, rgba(255, 255, 255, 0.1));
+}
+
+.tracker-settings__preset-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.tracker-settings__preset-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.tracker-settings__preset-chip {
+    background: var(--card-bg, #2a2b36);
+    color: var(--text-main, #ffffff);
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.16));
+    border-radius: 12px;
+    padding: 3px 9px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    line-height: 1.2;
+}
+
+.tracker-settings__preset-chip:hover {
+    background: var(--primary, #3b82f6);
+    border-color: var(--primary, #3b82f6);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.tracker-settings__preset-chip:active {
+    transform: scale(0.95);
+}
+
 .tracker-settings__offset-label {
     display: flex;
     align-items: center;

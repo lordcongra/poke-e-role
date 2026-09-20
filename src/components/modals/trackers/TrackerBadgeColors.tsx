@@ -4,6 +4,7 @@ import { RefreshCw, Move, RotateCcw, AlertTriangle, XCircle, CheckCircle, Maximi
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { STATS_META_ID } from '../../../utils/graphicsManager';
 import { NumberSpinner } from '../../ui/NumberSpinner';
+import { detectImageVisualBounds, getCachedVisualBounds } from '../../../utils/imageBoundsDetector';
 
 interface TrackerBadgeColorsProps {
     onOpenPlacementModal: () => void;
@@ -72,12 +73,18 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
 
                             const rawWidth = token.image?.width || 150;
                             const tokenDpi =
-                                token.grid?.dpi && token.grid.dpi > 0 ? token.grid.dpi : token.image?.width || sceneDpi;
+                                token.grid?.dpi && token.grid.dpi > 0 ? token.grid.dpi : sceneDpi;
                             const scaleX = Math.abs(token.scale?.x || 1);
-                            const gridSquares = (rawWidth / tokenDpi) * scaleX;
+                            const rawGridSquares = (rawWidth / tokenDpi) * scaleX;
 
-                            if (gridSquares > 2.5) optimalScale = 150;
-                            else if (gridSquares > 1.5) optimalScale = 125;
+                            const visualBounds = token.image?.url
+                                ? await detectImageVisualBounds(token.image.url).catch(() => null)
+                                : null;
+                            const contentWidthFraction = visualBounds?.contentWidthFraction ?? 1.0;
+                            const gridSquares = rawGridSquares * contentWidthFraction;
+
+                            if (gridSquares >= 2.6) optimalScale = 150;
+                            else if (gridSquares >= 1.85) optimalScale = 125;
                             else optimalScale = 100;
                         }
                     }
@@ -113,6 +120,18 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                         item.metadata['pokerole-pmd-extension/stats'] !== undefined)
             );
 
+            // Pre-fetch visual bounds for all token images
+            await Promise.all(
+                items.map(async (token) => {
+                    if (isImage(token) && token.image?.url) {
+                        await detectImageVisualBounds(token.image.url).catch(() => null);
+                    }
+                })
+            );
+
+            const currentTokenId = useCharacterStore.getState().tokenId;
+            let currentTokenScale = 100;
+
             await OBR.scene.items.updateItems(
                 items.map((i) => i.id),
                 (tokensToUpdate) => {
@@ -121,13 +140,23 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                         if (isImage(token)) {
                             const rawWidth = token.image?.width || 150;
                             const tokenDpi =
-                                token.grid?.dpi && token.grid.dpi > 0 ? token.grid.dpi : token.image?.width || sceneDpi;
+                                token.grid?.dpi && token.grid.dpi > 0 ? token.grid.dpi : sceneDpi;
                             const scaleX = Math.abs(token.scale?.x || 1);
-                            const gridSquares = (rawWidth / tokenDpi) * scaleX;
+                            const rawGridSquares = (rawWidth / tokenDpi) * scaleX;
 
-                            if (gridSquares > 2.5) optimalScale = 150;
-                            else if (gridSquares > 1.5) optimalScale = 125;
+                            const visualBounds = token.image?.url
+                                ? getCachedVisualBounds(token.image.url)
+                                : null;
+                            const contentWidthFraction = visualBounds?.contentWidthFraction ?? 1.0;
+                            const gridSquares = rawGridSquares * contentWidthFraction;
+
+                            if (gridSquares >= 2.6) optimalScale = 150;
+                            else if (gridSquares >= 1.85) optimalScale = 125;
                             else optimalScale = 100;
+                        }
+
+                        if (token.id === currentTokenId) {
+                            currentTokenScale = optimalScale;
                         }
 
                         const targetMetaKey =
@@ -146,8 +175,8 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                 }
             );
 
-            // Also synchronize active character store values
-            setIdentity('trackerScale', 100);
+            // Also synchronize active character store values with the active token's computed scale
+            setIdentity('trackerScale', currentTokenScale);
             setIdentity('yOffset', 0);
             setIdentity('xOffset', 0);
 
@@ -217,55 +246,151 @@ export function TrackerBadgeColors({ onOpenPlacementModal }: TrackerBadgeColorsP
                     />
                 </div>
             </div>
-
-            <div className="tracker-settings__offset-container tracker-settings__autoscale-container">
-                <label
-                    className="tracker-settings__offset-label"
-                    title="Scales the entire HUD up or down! Default is 100%."
-                >
-                    <span className="text-label">HUD Size (%):</span>
+            <div className="tracker-settings__offsets-block">
+                <div className="tracker-settings__offset-row">
+                    <div
+                        className="tracker-settings__offset-label-wrap"
+                        title="Scales the entire HUD up or down! Default is 100%."
+                    >
+                        <span className="text-label">HUD Size (%):</span>
+                        <div className="tracker-settings__step-btn-group">
+                            <button
+                                type="button"
+                                className="tracker-settings__step-btn text-theme-header"
+                                onClick={() => setIdentity('trackerScale', Math.max(10, (identityStore.trackerScale ?? 100) - 10))}
+                                title="Decrease HUD scale by 10%"
+                            >
+                                -10
+                            </button>
+                            <button
+                                type="button"
+                                className="tracker-settings__step-btn text-theme-header"
+                                onClick={() => setIdentity('trackerScale', Math.min(500, (identityStore.trackerScale ?? 100) + 10))}
+                                title="Increase HUD scale by 10%"
+                            >
+                                +10
+                            </button>
+                        </div>
+                    </div>
                     <NumberSpinner
                         value={identityStore.trackerScale ?? 100}
                         onChange={(value) => setIdentity('trackerScale', value)}
                         min={10}
                         max={500}
                     />
-                </label>
-                <button
-                    type="button"
-                    onClick={handleAutoscale}
-                    className="action-button action-button--dark tracker-settings__autoscale-btn text-theme-header"
-                    title="Automatically calculate and set the optimal HUD scale and offsets for this token based on its size."
-                >
-                    <Maximize2 size={13} /> Autoscale UI
-                </button>
-            </div>
-
-            <div className="tracker-settings__offset-container">
-                <label
-                    className="tracker-settings__offset-label"
-                    title="Positive numbers push the UI down, Negative numbers pull it up!"
-                >
-                    <span className="text-label">Y-Offset:</span>
+                </div>
+                <div className="tracker-settings__offset-row">
+                    <div
+                        className="tracker-settings__offset-label-wrap"
+                        title="Positive numbers push the UI down, Negative numbers pull it up!"
+                    >
+                        <span className="text-label">Y-Offset:</span>
+                        <div className="tracker-settings__step-btn-group">
+                            <button
+                                type="button"
+                                className="tracker-settings__step-btn text-theme-header"
+                                onClick={() => setIdentity('yOffset', (identityStore.yOffset || 0) - 10)}
+                                title="Move UI Up by 10"
+                            >
+                                -10
+                            </button>
+                            <button
+                                type="button"
+                                className="tracker-settings__step-btn text-theme-header"
+                                onClick={() => setIdentity('yOffset', (identityStore.yOffset || 0) + 10)}
+                                title="Move UI Down by 10"
+                            >
+                                +10
+                            </button>
+                        </div>
+                    </div>
                     <NumberSpinner
                         value={identityStore.yOffset}
                         onChange={(value) => setIdentity('yOffset', value)}
                         min={-9999}
                         max={9999}
                     />
-                </label>
-                <label
-                    className="tracker-settings__offset-label"
-                    title="Positive numbers push the UI right, Negative numbers pull it left!"
-                >
-                    <span className="text-label">X-Offset:</span>
+                </div>
+
+                <div className="tracker-settings__offset-row">
+                    <div
+                        className="tracker-settings__offset-label-wrap"
+                        title="Positive numbers push the UI right, Negative numbers pull it left!"
+                    >
+                        <span className="text-label">X-Offset:</span>
+                        <div className="tracker-settings__step-btn-group">
+                            <button
+                                type="button"
+                                className="tracker-settings__step-btn text-theme-header"
+                                onClick={() => setIdentity('xOffset', (identityStore.xOffset || 0) - 10)}
+                                title="Move UI Left by 10"
+                            >
+                                -10
+                            </button>
+                            <button
+                                type="button"
+                                className="tracker-settings__step-btn text-theme-header"
+                                onClick={() => setIdentity('xOffset', (identityStore.xOffset || 0) + 10)}
+                                title="Move UI Right by 10"
+                            >
+                                +10
+                            </button>
+                        </div>
+                    </div>
                     <NumberSpinner
                         value={identityStore.xOffset}
                         onChange={(value) => setIdentity('xOffset', value)}
                         min={-9999}
                         max={9999}
                     />
-                </label>
+                </div>
+
+                <button
+                    type="button"
+                    onClick={handleAutoscale}
+                    className="action-button action-button--dark text-theme-header tracker-settings__autoscale-full-btn"
+                    title="Automatically calculate and set the optimal HUD scale and offsets for this token based on its size."
+                >
+                    <Maximize2 size={14} /> Autoscale UI
+                </button>
+
+                <div className="tracker-settings__preset-row">
+                    <span className="tracker-settings__preset-label text-subtext">Auto-Presets:</span>
+                    <div className="tracker-settings__preset-chips">
+                        <button
+                            type="button"
+                            className="tracker-settings__preset-chip text-theme-header"
+                            onClick={() => setIdentity('yOffset', -40)}
+                            title="Pulls UI up by 40 to close transparent dead space around sprites like Pikachu or Eevee."
+                        >
+                            Tuck Sprite (-40)
+                        </button>
+                        <button
+                            type="button"
+                            className="tracker-settings__preset-chip text-theme-header"
+                            onClick={() => setIdentity('yOffset', 0)}
+                            title="Resets Y-Offset to default token base."
+                        >
+                            Standard (0)
+                        </button>
+                        <button
+                            type="button"
+                            className="tracker-settings__preset-chip text-theme-header"
+                            onClick={() => setIdentity('yOffset', 30)}
+                            title="Pushes UI down by 30 to give extra room for tall ground characters or shoes like Trainer and Rotom."
+                        >
+                            Push Down (+30)
+                        </button>
+                        <button
+                            type="button"
+                            className="tracker-settings__preset-chip text-theme-header"
+                            onClick={() => setIdentity('yOffset', -160)}
+                            title="Places the HUD above the token's head."
+                        >
+                            Overhead
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div className="tracker-settings__button-row">
