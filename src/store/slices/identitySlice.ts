@@ -144,6 +144,19 @@ try {
     console.warn('[IdentitySlice] Failed to parse init settings from local storage.', e);
 }
 
+let initialRoomDefaultScale = 100;
+try {
+    const storedScale = localStorage.getItem('pkr_room_default_scale');
+    if (storedScale) {
+        const parsed = Number(storedScale);
+        if (!isNaN(parsed) && parsed >= 25 && parsed <= 300) {
+            initialRoomDefaultScale = parsed;
+        }
+    }
+} catch (e) {
+    console.warn('[IdentitySlice] Failed to load room scale from local storage.', e);
+}
+
 export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentitySlice> = (set, get) => ({
     tokenId: null,
     role: isStandaloneMode ? 'GM' : 'PLAYER',
@@ -231,7 +244,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
 
         trackerScale: 100,
         trackerLayer: 'ATTACHMENT',
-        roomDefaultScale: 100,
+        roomDefaultScale: initialRoomDefaultScale,
         xOffset: 0,
         yOffset: 0,
         hpOffsetX: 0,
@@ -290,15 +303,26 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
             identity: { ...state.identity, pendingDemoRoll: rollData }
         })),
 
-    applyRoomSettings: (settings) =>
+    applyRoomSettings: (settings) => {
+        if (settings.roomDefaultScale !== undefined && typeof localStorage !== 'undefined') {
+            try {
+                localStorage.setItem('pkr_room_default_scale', String(settings.roomDefaultScale));
+            } catch {}
+        }
         set((state) => ({
             identity: {
                 ...state.identity,
                 ...settings
             }
-        })),
+        }));
+    },
 
     updateRoomSetting: (field, value) => {
+        if (field === 'roomDefaultScale' && typeof localStorage !== 'undefined') {
+            try {
+                localStorage.setItem('pkr_room_default_scale', String(value));
+            } catch {}
+        }
         set((state) => ({
             identity: {
                 ...state.identity,

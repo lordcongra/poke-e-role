@@ -40,6 +40,8 @@ export function useOwlbearSync() {
     useEffect(() => {
         const unsubs: Array<() => void> = [];
         let isMounted = true;
+        let sceneFollowupTimeout: ReturnType<typeof setTimeout> | null = null;
+        let sceneBadgeRefreshTimeout: ReturnType<typeof setTimeout> | null = null;
 
         // 1. Load Local Homebrew for this specific room immediately
         useCharacterStore.getState().loadHomebrewLocal();
@@ -57,7 +59,109 @@ export function useOwlbearSync() {
                 const currentStore = useCharacterStore.getState();
                 currentStore.setTokenData(currentStore.tokenId || '', role);
 
-                // 2. Setup Peer-to-Peer Homebrew Handshake
+                // 2. Load Room Settings and Room Rules FIRST, so roomDefaultScale is applied BEFORE any scene tokens are rendered
+                const mapRoomSettings = (sData: Record<string, unknown>) => ({
+                    ruleset: sData.ruleset !== undefined ? String(sData.ruleset) : undefined,
+                    pain: sData.painEnabled !== undefined ? (sData.painEnabled ? 'Enabled' : 'Disabled') : undefined,
+                    diceEngine:
+                        sData.diceEngine !== undefined ? (String(sData.diceEngine) as 'dice-plus' | 'car') : undefined,
+                    homebrewAccess: sData.homebrewAccess !== undefined ? String(sData.homebrewAccess) : undefined,
+                    gmOnlyLootGen: sData.gmOnlyLootGen !== undefined ? Boolean(sData.gmOnlyLootGen) : undefined,
+                    gmOnlyGenerators:
+                        sData.gmOnlyGenerators !== undefined ? Boolean(sData.gmOnlyGenerators) : undefined,
+                    gmOnlyMatchups: sData.gmOnlyMatchups !== undefined ? Boolean(sData.gmOnlyMatchups) : undefined,
+                    gmOnlyDamageOverride:
+                        sData.gmOnlyDamageOverride !== undefined ? Boolean(sData.gmOnlyDamageOverride) : undefined,
+                    gmDemoMode: sData.gmDemoMode !== undefined ? Boolean(sData.gmDemoMode) : undefined,
+                    roomDefaultScale: sData.roomDefaultScale !== undefined ? Number(sData.roomDefaultScale) : undefined
+                });
+
+                let lastSyncedRoomScale = useCharacterStore.getState().identity.roomDefaultScale ?? 100;
+
+                try {
+                    const roomMeta = await OBR.room.getMetadata();
+                    if (roomMeta[ROOM_META_ID]) {
+                        const data = roomMeta[ROOM_META_ID] as Record<string, unknown>;
+                        const store = useCharacterStore.getState();
+
+                        // --- MIGRATION SCRIPT ---
+                        const hasLegacyHomebrew =
+                            data.customTypes ||
+                            data.customAbilities ||
+                            data.customMoves ||
+                            data.customPokemon ||
+                            data.customItems ||
+                            data.customForms ||
+                            data.customStatuses;
+
+                        if (hasLegacyHomebrew) {
+                            console.log('[SyncEngine] Migrating legacy homebrew data to local storage...');
+                            store.mergeAllHomebrewData(
+                                (data.customTypes as CustomType[]) || [],
+                                (data.customAbilities as CustomAbility[]) || [],
+                                (data.customMoves as CustomMove[]) || [],
+                                (data.customPokemon as CustomPokemon[]) || [],
+                                (data.customItems as CustomItem[]) || [],
+                                (data.customForms as CustomForm[]) || [],
+                                (data.customStatuses as CustomStatus[]) || [],
+                                true // silent flag
+                            );
+
+                            if (role === 'GM') {
+                                const cleanedRoomSettings = { ...data };
+                                delete cleanedRoomSettings.customTypes;
+                                delete cleanedRoomSettings.customAbilities;
+                                delete cleanedRoomSettings.customMoves;
+                                delete cleanedRoomSettings.customPokemon;
+                                delete cleanedRoomSettings.customItems;
+                                delete cleanedRoomSettings.customForms;
+                                delete cleanedRoomSettings.customStatuses;
+
+                                await OBR.room.setMetadata({ [ROOM_META_ID]: cleanedRoomSettings });
+                                OBR.notification.show(
+                                    '[ ⚙ ] Legacy Homebrew Data successfully migrated to Local Storage!',
+                                    'SUCCESS'
+                                );
+                            }
+                        }
+
+                        const mapped = mapRoomSettings(data);
+                        store.applyRoomSettings(mapped);
+                        if (mapped.roomDefaultScale !== undefined) {
+                            lastSyncedRoomScale = mapped.roomDefaultScale;
+                        }
+                    }
+                } catch (e) {
+                    console.error('[SyncEngine] Engine recovered from room metadata crash:', e);
+                }
+
+                const unsubRoom = OBR.room.onMetadataChange((meta) => {
+                    try {
+                        if (meta[ROOM_META_ID]) {
+                            const data = meta[ROOM_META_ID] as Record<string, unknown>;
+                            const store = useCharacterStore.getState();
+                            store.applyRoomSettings(mapRoomSettings(data));
+
+                            if (data.roomDefaultScale !== undefined) {
+                                const incomingScale = Number(data.roomDefaultScale);
+                                if (incomingScale !== lastSyncedRoomScale) {
+                                    lastSyncedRoomScale = incomingScale;
+                                    renderAllTokens(true).catch((err) =>
+                                        console.warn(
+                                            '[SyncEngine] Error re-rendering tokens on room scale change:',
+                                            err
+                                        )
+                                    );
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error('[SyncEngine] Engine recovered from room metadata sync crash:', e);
+                    }
+                });
+                unsubs.push(unsubRoom);
+
+                // 3. Setup Peer-to-Peer Homebrew Handshake
                 const unsubHomebrewRequest = OBR.broadcast.onMessage(`${EXTENSION_ID}/homebrew-request`, () => {
                     if (role === 'GM') {
                         const payload = useCharacterStore.getState().getHomebrewPayload();
@@ -136,7 +240,7 @@ export function useOwlbearSync() {
                     }
                 };
 
-                const renderAllTokens = async (forceRebuild = false) => {
+                const renderAllTokens = async (forceRebuild: boolean | 'badges-only' = false) => {
                     try {
                         const allItems = await OBR.scene.items.getItems(
                             (i) =>
@@ -162,8 +266,6 @@ export function useOwlbearSync() {
                         console.error('[SyncEngine] Error rendering tokens on load:', e);
                     }
                 };
-
-                let sceneFollowupTimeout: ReturnType<typeof setTimeout> | null = null;
 
                 const handleSceneReady = async () => {
                     if (!isMounted) return;
@@ -193,6 +295,23 @@ export function useOwlbearSync() {
                         if (!isMounted) return;
                         await renderAllTokens(false);
                     }, 800);
+
+                    // Targeted badge-only refresh: only rebuilds the Evade and Clash text glyphs once fonts are warm.
+                    // HP, Will, Def, and badge background circles are NEVER deleted, so there is zero HUD flicker!
+                    if (sceneBadgeRefreshTimeout) clearTimeout(sceneBadgeRefreshTimeout);
+                    sceneBadgeRefreshTimeout = setTimeout(async () => {
+                        if (!isMounted) return;
+                        await renderAllTokens('badges-only');
+                    }, 1200);
+
+                    if (typeof document !== 'undefined' && document.fonts) {
+                        document.fonts.ready
+                            .then(() => {
+                                if (!isMounted) return;
+                                renderAllTokens('badges-only');
+                            })
+                            .catch(() => {});
+                    }
                 };
 
                 const isReady = await OBR.scene.isReady();
@@ -207,6 +326,7 @@ export function useOwlbearSync() {
                         // Scene unloading: clean cache and cancel pending follow-up timers
                         clearKnownTransforms();
                         if (sceneFollowupTimeout) clearTimeout(sceneFollowupTimeout);
+                        if (sceneBadgeRefreshTimeout) clearTimeout(sceneBadgeRefreshTimeout);
                     }
                 });
                 unsubs.push(unsubReady);
@@ -413,145 +533,6 @@ export function useOwlbearSync() {
                 });
                 unsubs.push(unsubItems);
 
-                try {
-                    const roomMeta = await OBR.room.getMetadata();
-                    if (roomMeta[ROOM_META_ID]) {
-                        const data = roomMeta[ROOM_META_ID] as Record<string, unknown>;
-                        const store = useCharacterStore.getState();
-
-                        // --- MIGRATION SCRIPT ---
-                        const hasLegacyHomebrew =
-                            data.customTypes ||
-                            data.customAbilities ||
-                            data.customMoves ||
-                            data.customPokemon ||
-                            data.customItems ||
-                            data.customForms ||
-                            data.customStatuses;
-
-                        if (hasLegacyHomebrew) {
-                            console.log('[SyncEngine] Migrating legacy homebrew data to local storage...');
-                            store.mergeAllHomebrewData(
-                                (data.customTypes as CustomType[]) || [],
-                                (data.customAbilities as CustomAbility[]) || [],
-                                (data.customMoves as CustomMove[]) || [],
-                                (data.customPokemon as CustomPokemon[]) || [],
-                                (data.customItems as CustomItem[]) || [],
-                                (data.customForms as CustomForm[]) || [],
-                                (data.customStatuses as CustomStatus[]) || [],
-                                true // silent flag
-                            );
-
-                            if (role === 'GM') {
-                                const cleanedRoomSettings = { ...data };
-                                delete cleanedRoomSettings.customTypes;
-                                delete cleanedRoomSettings.customAbilities;
-                                delete cleanedRoomSettings.customMoves;
-                                delete cleanedRoomSettings.customPokemon;
-                                delete cleanedRoomSettings.customItems;
-                                delete cleanedRoomSettings.customForms;
-                                delete cleanedRoomSettings.customStatuses;
-
-                                await OBR.room.setMetadata({ [ROOM_META_ID]: cleanedRoomSettings });
-                                OBR.notification.show(
-                                    '[ ⚙ ] Legacy Homebrew Data successfully migrated to Local Storage!',
-                                    'SUCCESS'
-                                );
-                            }
-                        }
-
-                        const mapRoomSettings = (sData: Record<string, unknown>) => ({
-                            ruleset: sData.ruleset !== undefined ? String(sData.ruleset) : undefined,
-                            pain:
-                                sData.painEnabled !== undefined
-                                    ? sData.painEnabled
-                                        ? 'Enabled'
-                                        : 'Disabled'
-                                    : undefined,
-                            diceEngine:
-                                sData.diceEngine !== undefined
-                                    ? (String(sData.diceEngine) as 'dice-plus' | 'car')
-                                    : undefined,
-                            homebrewAccess:
-                                sData.homebrewAccess !== undefined ? String(sData.homebrewAccess) : undefined,
-                            gmOnlyLootGen: sData.gmOnlyLootGen !== undefined ? Boolean(sData.gmOnlyLootGen) : undefined,
-                            gmOnlyGenerators:
-                                sData.gmOnlyGenerators !== undefined ? Boolean(sData.gmOnlyGenerators) : undefined,
-                            gmOnlyMatchups:
-                                sData.gmOnlyMatchups !== undefined ? Boolean(sData.gmOnlyMatchups) : undefined,
-                            gmOnlyDamageOverride:
-                                sData.gmOnlyDamageOverride !== undefined
-                                    ? Boolean(sData.gmOnlyDamageOverride)
-                                    : undefined,
-                            gmDemoMode: sData.gmDemoMode !== undefined ? Boolean(sData.gmDemoMode) : undefined,
-                            roomDefaultScale:
-                                sData.roomDefaultScale !== undefined ? Number(sData.roomDefaultScale) : undefined
-                        });
-
-                        store.applyRoomSettings(mapRoomSettings(data));
-                    }
-                } catch (e) {
-                    console.error('[SyncEngine] Engine recovered from room metadata crash:', e);
-                }
-
-                let lastSyncedRoomScale = useCharacterStore.getState().identity.roomDefaultScale ?? 100;
-
-                const unsubRoom = OBR.room.onMetadataChange((meta) => {
-                    try {
-                        if (meta[ROOM_META_ID]) {
-                            const data = meta[ROOM_META_ID] as Record<string, unknown>;
-                            const store = useCharacterStore.getState();
-
-                            const mapRoomSettings = (sData: Record<string, unknown>) => ({
-                                ruleset: sData.ruleset !== undefined ? String(sData.ruleset) : undefined,
-                                pain:
-                                    sData.painEnabled !== undefined
-                                        ? sData.painEnabled
-                                            ? 'Enabled'
-                                            : 'Disabled'
-                                        : undefined,
-                                diceEngine:
-                                    sData.diceEngine !== undefined
-                                        ? (String(sData.diceEngine) as 'dice-plus' | 'car')
-                                        : undefined,
-                                homebrewAccess:
-                                    sData.homebrewAccess !== undefined ? String(sData.homebrewAccess) : undefined,
-                                gmOnlyLootGen:
-                                    sData.gmOnlyLootGen !== undefined ? Boolean(sData.gmOnlyLootGen) : undefined,
-                                gmOnlyGenerators:
-                                    sData.gmOnlyGenerators !== undefined ? Boolean(sData.gmOnlyGenerators) : undefined,
-                                gmOnlyMatchups:
-                                    sData.gmOnlyMatchups !== undefined ? Boolean(sData.gmOnlyMatchups) : undefined,
-                                gmOnlyDamageOverride:
-                                    sData.gmOnlyDamageOverride !== undefined
-                                        ? Boolean(sData.gmOnlyDamageOverride)
-                                        : undefined,
-                                gmDemoMode: sData.gmDemoMode !== undefined ? Boolean(sData.gmDemoMode) : undefined,
-                                roomDefaultScale:
-                                    sData.roomDefaultScale !== undefined ? Number(sData.roomDefaultScale) : undefined
-                            });
-
-                            store.applyRoomSettings(mapRoomSettings(data));
-
-                            if (data.roomDefaultScale !== undefined) {
-                                const incomingScale = Number(data.roomDefaultScale);
-                                if (incomingScale !== lastSyncedRoomScale) {
-                                    lastSyncedRoomScale = incomingScale;
-                                    renderAllTokens(true).catch((err) =>
-                                        console.warn(
-                                            '[SyncEngine] Error re-rendering tokens on room scale change:',
-                                            err
-                                        )
-                                    );
-                                }
-                            }
-                        }
-                    } catch (e) {
-                        console.error('[SyncEngine] Engine recovered from room metadata sync crash:', e);
-                    }
-                });
-                unsubs.push(unsubRoom);
-
                 // Receive the Roll Sync broadcast from REMOTE players
                 const unsubRollLogSync = OBR.broadcast.onMessage(`${EXTENSION_ID}/roll-log-sync`, async (event) => {
                     const rollData = event.data as RollSyncData;
@@ -717,6 +698,8 @@ export function useOwlbearSync() {
             for (const key of Object.keys(knownTransforms)) {
                 delete knownTransforms[key];
             }
+            if (sceneFollowupTimeout) clearTimeout(sceneFollowupTimeout);
+            if (sceneBadgeRefreshTimeout) clearTimeout(sceneBadgeRefreshTimeout);
             unsubs.forEach((unsub) => unsub());
         };
     }, []);

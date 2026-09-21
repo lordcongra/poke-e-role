@@ -29,7 +29,7 @@ export async function renderTokenGraphics(
     token: Item,
     data: GraphicsData,
     role: 'PLAYER' | 'GM',
-    forceRebuild = false
+    forceRebuild: boolean | 'badges-only' = false
 ) {
     if (!OBR.isAvailable) return;
 
@@ -52,9 +52,18 @@ export async function renderTokenGraphics(
                 return;
             }
 
-            if (forceRebuild && localAttached.length > 0) {
+            if (forceRebuild === true && localAttached.length > 0) {
                 await OBR.scene.local.deleteItems(localAttached.map((item) => item.id));
                 localAttached = [];
+            } else if (forceRebuild === 'badges-only' && localAttached.length > 0) {
+                const badgeFgItems = localAttached.filter((item) => {
+                    const roleMeta = item.metadata[GRAPHICS_META_ID] as string;
+                    return roleMeta === 'badge-eva-fg' || roleMeta === 'badge-cla-fg';
+                });
+                if (badgeFgItems.length > 0) {
+                    await OBR.scene.local.deleteItems(badgeFgItems.map((item) => item.id));
+                    localAttached = localAttached.filter((item) => !badgeFgItems.some((b) => b.id === item.id));
+                }
             }
 
             const isTokenVisible = token.visible !== false;
@@ -131,7 +140,7 @@ export async function renderTokenGraphics(
     await renderMutex[token.id];
 }
 
-export async function renderAllSceneTokens(forceRebuild = false, roomDefaultScale?: number) {
+export async function renderAllSceneTokens(forceRebuild: boolean | 'badges-only' = false, roomDefaultScale?: number) {
     if (!OBR.isAvailable) return;
     try {
         const isReady = await OBR.scene.isReady();

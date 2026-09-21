@@ -434,7 +434,7 @@ export function buildGraphicDefinitions(
                 weight: 600,
                 stroke: 0,
                 color: '#FFFFFF',
-                fontFamily: 'Arial, sans-serif',
+                fontFamily: 'Arial, "Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols", sans-serif',
                 z: 4,
                 visible: isVisible
             };

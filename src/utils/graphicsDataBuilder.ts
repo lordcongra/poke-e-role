@@ -1,4 +1,5 @@
 import type { CharacterState } from '../store/storeTypes';
+import { useCharacterStore } from '../store/useCharacterStore';
 import {
     parseCombatTags,
     getAbilityText,
@@ -124,7 +125,11 @@ export function buildGraphicsFromState(meta: Record<string, unknown>, state: Cha
     };
 }
 
-export function buildGraphicsFromMeta(meta: Record<string, unknown>, roomDefaultScale = 100): GraphicsData {
+export function buildGraphicsFromMeta(meta: Record<string, unknown>, roomDefaultScale?: number): GraphicsData {
+    const defaultScale =
+        roomDefaultScale !== undefined
+            ? roomDefaultScale
+            : (useCharacterStore.getState().identity.roomDefaultScale ?? 100);
     const { def: defTotal, spd: sdefTotal } = calculateTargetDefensesFromMeta(meta);
 
     return {
@@ -165,7 +170,7 @@ export function buildGraphicsFromMeta(meta: Record<string, unknown>, roomDefault
 
         trackerScale: meta['tracker-scale'] !== undefined ? Number(meta['tracker-scale']) : 100,
         trackerLayer: (meta['tracker-layer'] as 'POPOVER' | 'ATTACHMENT' | 'CHARACTER' | 'MOUNT') || 'ATTACHMENT',
-        roomDefaultScale,
+        roomDefaultScale: defaultScale,
         xOffset: Number(meta['x-offset']) || 0,
         yOffset: Number(meta['y-offset']) || 0,
         hpOffsetX: Number(meta['hp-offset-x']) || 0,
