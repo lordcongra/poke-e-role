@@ -77,14 +77,27 @@ export function useOwlbearSync() {
                     roomDefaultScale: sData.roomDefaultScale !== undefined ? Number(sData.roomDefaultScale) : undefined
                 });
 
+                // 2. Load Room and Scene Settings Concurrently BEFORE any rendering or listeners
                 let lastSyncedRoomScale = useCharacterStore.getState().identity.roomDefaultScale ?? 100;
                 let lastSyncedGmOnlyTrackers = useCharacterStore.getState().identity.gmOnlyTrackers ?? false;
+                let lastSyncedSceneScale = useCharacterStore.getState().identity.sceneDefaultScale;
 
                 try {
-                    const roomMeta = await OBR.room.getMetadata();
-                    if (roomMeta[ROOM_META_ID]) {
-                        const data = roomMeta[ROOM_META_ID] as Record<string, unknown>;
-                        const store = useCharacterStore.getState();
+                    const [roomMetaResult, sceneMetaResult] = await Promise.all([
+                        OBR.room.getMetadata().catch(() => ({})),
+                        OBR.scene
+                            .isReady()
+                            .then(async (ready) => {
+                                if (!ready) return null;
+                                return OBR.scene.getMetadata().catch(() => ({}));
+                            })
+                            .catch(() => null)
+                    ]);
+
+                    const store = useCharacterStore.getState();
+
+                    if (roomMetaResult && ROOM_META_ID in roomMetaResult) {
+                        const data = roomMetaResult[ROOM_META_ID] as Record<string, unknown>;
 
                         // --- MIGRATION SCRIPT ---
                         const hasLegacyHomebrew =
@@ -119,7 +132,14 @@ export function useOwlbearSync() {
                                 delete cleanedRoomSettings.customForms;
                                 delete cleanedRoomSettings.customStatuses;
 
-                                await OBR.room.setMetadata({ [ROOM_META_ID]: cleanedRoomSettings });
+                                OBR.room
+                                    .setMetadata({ [ROOM_META_ID]: cleanedRoomSettings })
+                                    .catch((e) =>
+                                        console.warn(
+                                            '[SyncEngine] Failed to clean legacy homebrew in room metadata:',
+                                            e
+                                        )
+                                    );
                                 OBR.notification.show(
                                     '[ ⚙ ] Legacy Homebrew Data successfully migrated to Local Storage!',
                                     'SUCCESS'
@@ -136,8 +156,26 @@ export function useOwlbearSync() {
                             lastSyncedGmOnlyTrackers = mapped.gmOnlyTrackers;
                         }
                     }
+
+                    if (sceneMetaResult && SCENE_SETTINGS_META_ID in sceneMetaResult) {
+                        const sceneData = sceneMetaResult[SCENE_SETTINGS_META_ID] as
+                            | Record<string, unknown>
+                            | undefined;
+                        if (
+                            sceneData?.sceneDefaultScale != null &&
+                            !isNaN(Number(sceneData.sceneDefaultScale)) &&
+                            Number(sceneData.sceneDefaultScale) > 0
+                        ) {
+                            const parsed = Number(sceneData.sceneDefaultScale);
+                            store.setSceneScale(parsed);
+                            lastSyncedSceneScale = parsed;
+                        } else {
+                            store.setSceneScale(null);
+                            lastSyncedSceneScale = null;
+                        }
+                    }
                 } catch (e) {
-                    console.error('[SyncEngine] Engine recovered from room metadata crash:', e);
+                    console.error('[SyncEngine] Engine recovered from room/scene metadata crash:', e);
                 }
 
                 const unsubRoom = OBR.room.onMetadataChange((meta) => {
@@ -194,24 +232,20 @@ export function useOwlbearSync() {
                             !isNaN(Number(sceneData.sceneDefaultScale)) &&
                             Number(sceneData.sceneDefaultScale) > 0
                         ) {
-                            useCharacterStore.getState().setSceneScale(Number(sceneData.sceneDefaultScale));
+                            const parsed = Number(sceneData.sceneDefaultScale);
+                            useCharacterStore.getState().setSceneScale(parsed);
+                            lastSyncedSceneScale = parsed;
                         } else {
                             useCharacterStore.getState().setSceneScale(null);
+                            lastSyncedSceneScale = null;
                         }
                     } catch (e) {
                         console.error('[SyncEngine] Error syncing scene metadata on ready:', e);
                     }
                 };
 
-                await syncSceneSettings();
-
-                let lastSyncedSceneScale = useCharacterStore.getState().identity.sceneDefaultScale;
-
                 const unsubSceneMeta = OBR.scene.onMetadataChange((meta) => {
                     try {
-                        if (!(SCENE_SETTINGS_META_ID in meta)) {
-                            return;
-                        }
                         const sceneData = meta[SCENE_SETTINGS_META_ID] as Record<string, unknown> | undefined;
                         const incomingScale =
                             sceneData?.sceneDefaultScale != null &&

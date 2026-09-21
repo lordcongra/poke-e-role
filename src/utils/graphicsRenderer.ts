@@ -120,8 +120,12 @@ export async function renderTokenGraphics(
                     const pixelToScene = sceneDpi / tokenDpi;
                     const visualBottomY = pixelDistFromCenter * pixelToScene * scaleY;
 
-                    // Place baseBottomY so the HP bar sits comfortably below the visible feet (~25px breathing space)
-                    baseBottomY = visualBottomY + 35;
+                    // Place baseBottomY so the HUD hugs the visible feet proportionally at any scale
+                    const roomScale =
+                        (data.roomDefaultScale && data.roomDefaultScale > 0 ? data.roomDefaultScale : 100) / 100;
+                    const userScale = (data.trackerScale && data.trackerScale > 0 ? data.trackerScale : 100) / 100;
+                    const effectiveScale = tokenScale * roomScale * userScale;
+                    baseBottomY = visualBottomY + 17.5 * effectiveScale;
                 } else {
                     // Standard full-bleed / circular token bottom
                     baseBottomY = Math.max(75, rawGridSquaresY * 0.5 * sceneDpi);

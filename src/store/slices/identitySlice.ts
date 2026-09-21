@@ -164,6 +164,19 @@ try {
     console.warn('[IdentitySlice] Failed to load room scale from local storage.', e);
 }
 
+let initialSceneDefaultScale: number | null = null;
+try {
+    const storedSceneScale = localStorage.getItem('pkr_scene_default_scale');
+    if (storedSceneScale) {
+        const parsed = Number(storedSceneScale);
+        if (!isNaN(parsed) && parsed >= 25 && parsed <= 300) {
+            initialSceneDefaultScale = parsed;
+        }
+    }
+} catch (e) {
+    console.warn('[IdentitySlice] Failed to load scene scale from local storage.', e);
+}
+
 export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentitySlice> = (set) => ({
     tokenId: null,
     role: isStandaloneMode ? 'GM' : 'PLAYER',
@@ -253,7 +266,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         trackerScale: 100,
         trackerLayer: 'ATTACHMENT',
         roomDefaultScale: initialRoomDefaultScale,
-        sceneDefaultScale: null,
+        sceneDefaultScale: initialSceneDefaultScale,
         xOffset: 0,
         yOffset: 0,
         hpOffsetX: 0,
@@ -344,15 +357,34 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         }
     },
 
-    setSceneScale: (scale) =>
+    setSceneScale: (scale) => {
+        if (typeof localStorage !== 'undefined') {
+            try {
+                if (scale != null && !isNaN(scale) && scale >= 25 && scale <= 300) {
+                    localStorage.setItem('pkr_scene_default_scale', String(scale));
+                } else {
+                    localStorage.removeItem('pkr_scene_default_scale');
+                }
+            } catch {}
+        }
         set((state) => ({
             identity: {
                 ...state.identity,
                 sceneDefaultScale: scale
             }
-        })),
+        }));
+    },
 
     updateSceneScale: (scale) => {
+        if (typeof localStorage !== 'undefined') {
+            try {
+                if (scale != null && !isNaN(scale) && scale >= 25 && scale <= 300) {
+                    localStorage.setItem('pkr_scene_default_scale', String(scale));
+                } else {
+                    localStorage.removeItem('pkr_scene_default_scale');
+                }
+            } catch {}
+        }
         set((state) => ({
             identity: {
                 ...state.identity,
