@@ -4,8 +4,10 @@ import { isStandaloneMode } from '../../../utils/storageAdapter';
 import { imageManager } from '../../../utils/imageManager';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { STATUS_OPTIONS } from '../../../data/constants';
-import { Trash2, Dices, Shield, Swords, User, Skull, X, FileText, Minus, Plus, Lock, RotateCcw } from 'lucide-react';
+import { Trash2, Dices, Shield, Swords, User, Skull, X, FileText, Minus, Plus, Lock } from 'lucide-react';
 import { addRollLogEntry } from '../../../utils/diceRoller';
+import { CombatantActionSlots } from './CombatantActionSlots';
+import './CombatantRow.css';
 
 interface CombatantRowProps {
     combatant: CombatantRowData;
@@ -146,18 +148,14 @@ export function CombatantRow({
         if (nowIsEvade) {
             nextEvadeUsed = true;
         } else if (prevWasEvade) {
-            const hasOtherEvade = newActions.some(
-                (a, idx) => idx !== actionIndex && /evad|dodge/i.test(a.text.trim())
-            );
+            const hasOtherEvade = newActions.some((a, idx) => idx !== actionIndex && /evad|dodge/i.test(a.text.trim()));
             if (!hasOtherEvade) nextEvadeUsed = false;
         }
 
         if (nowIsClash) {
             nextClashUsed = true;
         } else if (prevWasClash) {
-            const hasOtherClash = newActions.some(
-                (a, idx) => idx !== actionIndex && /clash/i.test(a.text.trim())
-            );
+            const hasOtherClash = newActions.some((a, idx) => idx !== actionIndex && /clash/i.test(a.text.trim()));
             if (!hasOtherClash) nextClashUsed = false;
         }
 
@@ -195,12 +193,8 @@ export function CombatantRow({
         const isEvade = /evad|dodge/i.test(clearedAction.text.trim());
         const isClash = /clash/i.test(clearedAction.text.trim());
 
-        const hasOtherEvade = newActions.some(
-            (a, idx) => idx !== actionIndex && /evad|dodge/i.test(a.text.trim())
-        );
-        const hasOtherClash = newActions.some(
-            (a, idx) => idx !== actionIndex && /clash/i.test(a.text.trim())
-        );
+        const hasOtherEvade = newActions.some((a, idx) => idx !== actionIndex && /evad|dodge/i.test(a.text.trim()));
+        const hasOtherClash = newActions.some((a, idx) => idx !== actionIndex && /clash/i.test(a.text.trim()));
 
         let nextEvadeUsed = combatant.evadeUsed;
         if (isEvade && !hasOtherEvade) {
@@ -225,8 +219,8 @@ export function CombatantRow({
             isEvade && !hasOtherEvade
                 ? ' Evade reaction was reset to available.'
                 : isClash && !hasOtherClash
-                ? ' Clash reaction was reset to available.'
-                : '';
+                  ? ' Clash reaction was reset to available.'
+                  : '';
 
         addRollLogEntry(
             `Action Restored: ${charName}`,
@@ -558,60 +552,13 @@ export function CombatantRow({
             </td>
 
             {/* 5 Action Counters */}
-            <td className="bo-cell bo-cell--actions">
-                <div className="bo-actions-grid">
-                    {combatant.actions.map((act, actIdx) => {
-                        const isSuccess = act.status === 'success';
-                        const isFailed = act.status === 'failed';
-
-                        return (
-                            <div
-                                key={actIdx}
-                                className={`bo-action-box ${isSuccess ? 'bo-action-box--success' : ''} ${isFailed ? 'bo-action-box--failed' : ''}`}
-                            >
-                                <input
-                                    type="text"
-                                    className="bo-action-text-input text-subtext"
-                                    value={act.text}
-                                    onChange={(e) => handleActionTextChange(actIdx, e.target.value)}
-                                    placeholder="Move / Act"
-                                    title={`Action ${actIdx + 1} Description / Move`}
-                                    aria-label={`Action ${actIdx + 1} for ${combatant.name || 'Combatant'}`}
-                                />
-                                <div className="bo-action-status-row">
-                                    <button
-                                        type="button"
-                                        className={`bo-status-btn bo-status-btn--check ${isSuccess ? 'bo-status-btn--active-check' : ''}`}
-                                        onClick={() => handleActionStatusToggle(actIdx, 'success')}
-                                        title={`Mark Action ${actIdx + 1} Used / Success (✓)`}
-                                        aria-label={`Action ${actIdx + 1} success`}
-                                    >
-                                        ✓
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className={`bo-status-btn bo-status-btn--cross ${isFailed ? 'bo-status-btn--active-cross' : ''}`}
-                                        onClick={() => handleActionStatusToggle(actIdx, 'failed')}
-                                        title={`Mark Action ${actIdx + 1} Failed / Clash / Evade / Cancelled (✗)`}
-                                        aria-label={`Action ${actIdx + 1} failed`}
-                                    >
-                                        ✗
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="bo-status-btn bo-status-btn--clear"
-                                        onClick={() => handleActionClear(actIdx)}
-                                        title={`Quick Clear: Reset Action ${actIdx + 1} and restore to action counter`}
-                                        aria-label={`Action ${actIdx + 1} clear`}
-                                    >
-                                        <RotateCcw size={10} />
-                                    </button>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </td>
+            <CombatantActionSlots
+                actions={combatant.actions}
+                combatantName={combatant.name}
+                onActionTextChange={handleActionTextChange}
+                onActionStatusToggle={handleActionStatusToggle}
+                onActionClear={handleActionClear}
+            />
 
             {/* Quick Reactions, Fainted & Row Actions */}
             <td className="bo-cell bo-cell--tools">

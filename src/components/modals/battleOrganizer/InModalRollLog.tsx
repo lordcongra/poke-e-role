@@ -322,7 +322,7 @@ export function InModalRollLog({
                                     {/* Action Rolls from Action Rolls menu: Confirm if user wants to add to round tracker / action counter */}
                                     {matchedCombatant && isActionRoll && onMarkAction && (
                                         <>
-                                             {actionRollDecision === 'pending' && (
+                                            {actionRollDecision === 'pending' && (
                                                 <div className="in-modal-roll-log__actions-bar">
                                                     <span className="in-modal-roll-log__action-label">
                                                         Add to action counter?
@@ -411,33 +411,37 @@ export function InModalRollLog({
                                     )}
 
                                     {/* Quick Mark Action Buttons for Move Accuracy, Evade, Clash & Action-Consuming Status Recovery */}
-                                    {matchedCombatant && !isActionRoll && parsed?.canMarkInRollLog && moveName && onMarkAction && (
-                                        <div className="in-modal-roll-log__actions-bar">
-                                            <span className="in-modal-roll-log__action-label">
-                                                <Swords size={11} /> Mark {moveName}:
-                                            </span>
-                                            <button
-                                                type="button"
-                                                className={`in-modal-roll-log__mark-btn in-modal-roll-log__mark-btn--hit ${currentStatus === 'success' ? 'in-modal-roll-log__mark-btn--active-hit' : ''}`}
-                                                onClick={() =>
-                                                    handleMark(r.id, matchedCombatant.id, moveName, 'success')
-                                                }
-                                                title="Mark as Hit / Success (✓)"
-                                            >
-                                                <Check size={11} /> Hit
-                                            </button>
-                                            <button
-                                                type="button"
-                                                className={`in-modal-roll-log__mark-btn in-modal-roll-log__mark-btn--miss ${currentStatus === 'failed' ? 'in-modal-roll-log__mark-btn--active-miss' : ''}`}
-                                                onClick={() =>
-                                                    handleMark(r.id, matchedCombatant.id, moveName, 'failed')
-                                                }
-                                                title="Mark as Miss / Fail / Cancel (✗)"
-                                            >
-                                                <X size={11} /> Miss
-                                            </button>
-                                        </div>
-                                    )}
+                                    {matchedCombatant &&
+                                        !isActionRoll &&
+                                        parsed?.canMarkInRollLog &&
+                                        moveName &&
+                                        onMarkAction && (
+                                            <div className="in-modal-roll-log__actions-bar">
+                                                <span className="in-modal-roll-log__action-label">
+                                                    <Swords size={11} /> Mark {moveName}:
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    className={`in-modal-roll-log__mark-btn in-modal-roll-log__mark-btn--hit ${currentStatus === 'success' ? 'in-modal-roll-log__mark-btn--active-hit' : ''}`}
+                                                    onClick={() =>
+                                                        handleMark(r.id, matchedCombatant.id, moveName, 'success')
+                                                    }
+                                                    title="Mark as Hit / Success (✓)"
+                                                >
+                                                    <Check size={11} /> Hit
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className={`in-modal-roll-log__mark-btn in-modal-roll-log__mark-btn--miss ${currentStatus === 'failed' ? 'in-modal-roll-log__mark-btn--active-miss' : ''}`}
+                                                    onClick={() =>
+                                                        handleMark(r.id, matchedCombatant.id, moveName, 'failed')
+                                                    }
+                                                    title="Mark as Miss / Fail / Cancel (✗)"
+                                                >
+                                                    <X size={11} /> Miss
+                                                </button>
+                                            </div>
+                                        )}
                                 </div>
                             );
                         })

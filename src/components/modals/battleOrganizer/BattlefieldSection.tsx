@@ -7,6 +7,7 @@ import type {
     BattleOrganizerTimerEffect,
     RollLogLayoutMode
 } from '../../../types/battleOrganizerTypes';
+import './BattlefieldSection.css';
 
 export interface BattlefieldSectionProps {
     battlefield: BattlefieldData;
