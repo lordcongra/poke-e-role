@@ -14,7 +14,7 @@ import type {
 } from '../store/storeTypes';
 import { fetchPokemonData, fetchMoveData } from '../utils/api';
 import { buildGraphicsFromMeta, renderTokenGraphics, STATS_META_ID } from '../utils/graphicsManager';
-import { saveToOwlbear, setActiveTokenId, hasPendingUpdates } from '../utils/obr';
+import { saveToOwlbear, setActiveTokenId, hasPendingUpdates, SCENE_SETTINGS_META_ID } from '../utils/obr';
 import { assignInitiative } from '../utils/diceRoller';
 import { isStandaloneMode } from '../utils/storageAdapter';
 import { isBattleOrganizerOpen } from '../components/modals/battleOrganizer/battleOrganizerSettingsHelper';
@@ -72,11 +72,13 @@ export function useOwlbearSync() {
                     gmOnlyMatchups: sData.gmOnlyMatchups !== undefined ? Boolean(sData.gmOnlyMatchups) : undefined,
                     gmOnlyDamageOverride:
                         sData.gmOnlyDamageOverride !== undefined ? Boolean(sData.gmOnlyDamageOverride) : undefined,
+                    gmOnlyTrackers: sData.gmOnlyTrackers !== undefined ? Boolean(sData.gmOnlyTrackers) : undefined,
                     gmDemoMode: sData.gmDemoMode !== undefined ? Boolean(sData.gmDemoMode) : undefined,
                     roomDefaultScale: sData.roomDefaultScale !== undefined ? Number(sData.roomDefaultScale) : undefined
                 });
 
                 let lastSyncedRoomScale = useCharacterStore.getState().identity.roomDefaultScale ?? 100;
+                let lastSyncedGmOnlyTrackers = useCharacterStore.getState().identity.gmOnlyTrackers ?? false;
 
                 try {
                     const roomMeta = await OBR.room.getMetadata();
@@ -130,6 +132,9 @@ export function useOwlbearSync() {
                         if (mapped.roomDefaultScale !== undefined) {
                             lastSyncedRoomScale = mapped.roomDefaultScale;
                         }
+                        if (mapped.gmOnlyTrackers !== undefined) {
+                            lastSyncedGmOnlyTrackers = mapped.gmOnlyTrackers;
+                        }
                     }
                 } catch (e) {
                     console.error('[SyncEngine] Engine recovered from room metadata crash:', e);
@@ -142,16 +147,32 @@ export function useOwlbearSync() {
                             const store = useCharacterStore.getState();
                             store.applyRoomSettings(mapRoomSettings(data));
 
+                            if (data.gmOnlyTrackers !== undefined) {
+                                const incomingGmTrackers = Boolean(data.gmOnlyTrackers);
+                                if (incomingGmTrackers !== lastSyncedGmOnlyTrackers) {
+                                    lastSyncedGmOnlyTrackers = incomingGmTrackers;
+                                    renderAllTokens(true).catch((err) =>
+                                        console.warn(
+                                            '[SyncEngine] Error re-rendering tokens on gmOnlyTrackers change:',
+                                            err
+                                        )
+                                    );
+                                }
+                            }
+
                             if (data.roomDefaultScale !== undefined) {
                                 const incomingScale = Number(data.roomDefaultScale);
                                 if (incomingScale !== lastSyncedRoomScale) {
                                     lastSyncedRoomScale = incomingScale;
-                                    renderAllTokens(true).catch((err) =>
-                                        console.warn(
-                                            '[SyncEngine] Error re-rendering tokens on room scale change:',
-                                            err
-                                        )
-                                    );
+                                    const activeSceneScale = useCharacterStore.getState().identity.sceneDefaultScale;
+                                    if (activeSceneScale === null || activeSceneScale === undefined) {
+                                        renderAllTokens(true).catch((err) =>
+                                            console.warn(
+                                                '[SyncEngine] Error re-rendering tokens on room scale change:',
+                                                err
+                                            )
+                                        );
+                                    }
                                 }
                             }
                         }
@@ -160,6 +181,57 @@ export function useOwlbearSync() {
                     }
                 });
                 unsubs.push(unsubRoom);
+
+                // 2b. Load Scene Settings (e.g. per-room/scene scale override)
+                const syncSceneSettings = async () => {
+                    try {
+                        const sceneIsReady = await OBR.scene.isReady();
+                        if (!sceneIsReady) return;
+                        const sceneMeta = await OBR.scene.getMetadata();
+                        const sceneData = sceneMeta[SCENE_SETTINGS_META_ID] as Record<string, unknown> | undefined;
+                        if (
+                            sceneData?.sceneDefaultScale != null &&
+                            !isNaN(Number(sceneData.sceneDefaultScale)) &&
+                            Number(sceneData.sceneDefaultScale) > 0
+                        ) {
+                            useCharacterStore.getState().setSceneScale(Number(sceneData.sceneDefaultScale));
+                        } else {
+                            useCharacterStore.getState().setSceneScale(null);
+                        }
+                    } catch (e) {
+                        console.error('[SyncEngine] Error syncing scene metadata on ready:', e);
+                    }
+                };
+
+                await syncSceneSettings();
+
+                let lastSyncedSceneScale = useCharacterStore.getState().identity.sceneDefaultScale;
+
+                const unsubSceneMeta = OBR.scene.onMetadataChange((meta) => {
+                    try {
+                        if (!(SCENE_SETTINGS_META_ID in meta)) {
+                            return;
+                        }
+                        const sceneData = meta[SCENE_SETTINGS_META_ID] as Record<string, unknown> | undefined;
+                        const incomingScale =
+                            sceneData?.sceneDefaultScale != null &&
+                            !isNaN(Number(sceneData.sceneDefaultScale)) &&
+                            Number(sceneData.sceneDefaultScale) > 0
+                                ? Number(sceneData.sceneDefaultScale)
+                                : null;
+
+                        if (incomingScale !== lastSyncedSceneScale) {
+                            lastSyncedSceneScale = incomingScale;
+                            useCharacterStore.getState().setSceneScale(incomingScale);
+                            renderAllTokens(true).catch((err) =>
+                                console.warn('[SyncEngine] Error re-rendering tokens on scene scale change:', err)
+                            );
+                        }
+                    } catch (e) {
+                        console.error('[SyncEngine] Error in scene metadata change listener:', e);
+                    }
+                });
+                unsubs.push(unsubSceneMeta);
 
                 // 3. Setup Peer-to-Peer Homebrew Handshake
                 const unsubHomebrewRequest = OBR.broadcast.onMessage(`${EXTENSION_ID}/homebrew-request`, () => {
@@ -258,9 +330,16 @@ export function useOwlbearSync() {
                                 v: item.visible,
                                 metaStr: JSON.stringify(meta)
                             };
-                            const currentRoomScale = useCharacterStore.getState().identity.roomDefaultScale ?? 100;
-                            const gData = buildGraphicsFromMeta(meta, currentRoomScale);
-                            await renderTokenGraphics(item, gData, role, forceRebuild);
+                            const freshStore = useCharacterStore.getState();
+                            const activeSceneScale = freshStore.identity.sceneDefaultScale;
+                            const activeRoomScale = freshStore.identity.roomDefaultScale;
+                            const effectiveScale =
+                                activeSceneScale != null && activeSceneScale > 0
+                                    ? activeSceneScale
+                                    : (activeRoomScale ?? 100);
+                            const gData = buildGraphicsFromMeta(meta, effectiveScale);
+                            const currentRole = freshStore.role || role;
+                            await renderTokenGraphics(item, gData, currentRole, forceRebuild);
                         }
                     } catch (e) {
                         console.error('[SyncEngine] Error rendering tokens on load:', e);
@@ -269,6 +348,10 @@ export function useOwlbearSync() {
 
                 const handleSceneReady = async () => {
                     if (!isMounted) return;
+
+                    // Sync scene metadata for active scene first
+                    await syncSceneSettings();
+                    lastSyncedSceneScale = useCharacterStore.getState().identity.sceneDefaultScale;
 
                     // Reset knownTransforms cache because OBR.scene.local items are wiped on scene switch/load
                     clearKnownTransforms();
@@ -327,11 +410,13 @@ export function useOwlbearSync() {
                         clearKnownTransforms();
                         if (sceneFollowupTimeout) clearTimeout(sceneFollowupTimeout);
                         if (sceneBadgeRefreshTimeout) clearTimeout(sceneBadgeRefreshTimeout);
+                        useCharacterStore.getState().setSceneScale(null);
+                        lastSyncedSceneScale = null;
                     }
                 });
                 unsubs.push(unsubReady);
 
-                const loadTokenAndLearnset = async (targetTokenId: string) => {
+                const loadTokenAndLearnset = async (targetTokenId: string, overrideRole?: 'PLAYER' | 'GM') => {
                     try {
                         const items = await OBR.scene.items.getItems([targetTokenId]);
                         if (items.length > 0) {
@@ -342,17 +427,25 @@ export function useOwlbearSync() {
                                 return;
                             }
 
+                            const currentRole = overrideRole || (await OBR.player.getRole()) || role;
                             const store = useCharacterStore.getState();
                             setActiveTokenId(targetTokenId);
-                            store.setTokenData(targetTokenId, role);
+                            store.setTokenData(targetTokenId, currentRole);
                             const meta = rawMeta as Record<string, unknown> | undefined;
 
                             if (meta) {
                                 try {
                                     store.loadFromOwlbear(meta);
                                     // Self-healing: ensure graphics are rendered for the selected token
-                                    const gData = buildGraphicsFromMeta(meta, store.identity.roomDefaultScale ?? 100);
-                                    renderTokenGraphics(tokenItem, gData, role, false).catch((err) =>
+                                    const freshStore = useCharacterStore.getState();
+                                    const activeSceneScale = freshStore.identity.sceneDefaultScale;
+                                    const activeRoomScale = freshStore.identity.roomDefaultScale;
+                                    const effectiveScale =
+                                        activeSceneScale != null && activeSceneScale > 0
+                                            ? activeSceneScale
+                                            : (activeRoomScale ?? 100);
+                                    const gData = buildGraphicsFromMeta(meta, effectiveScale);
+                                    renderTokenGraphics(tokenItem, gData, currentRole, false).catch((err) =>
                                         console.warn('[SyncEngine] Failed to render graphics on token selection:', err)
                                     );
                                 } catch (e) {
@@ -437,7 +530,7 @@ export function useOwlbearSync() {
                 try {
                     const selected = await OBR.player.getSelection();
                     if (selected && selected.length > 0) {
-                        await loadTokenAndLearnset(selected[0]);
+                        await loadTokenAndLearnset(selected[0], role);
                     }
                 } catch (e) {
                     console.error('[SyncEngine] Engine recovered from startup selection crash:', e);
@@ -447,7 +540,7 @@ export function useOwlbearSync() {
                     const currentRole = player.role || (await OBR.player.getRole());
                     if (player.selection && player.selection.length > 0) {
                         try {
-                            await loadTokenAndLearnset(player.selection[0]);
+                            await loadTokenAndLearnset(player.selection[0], currentRole);
                         } catch (e) {
                             console.error('[SyncEngine] Engine recovered from token click crash:', e);
                         }
@@ -505,11 +598,16 @@ export function useOwlbearSync() {
                                 }
 
                                 if (needsGraphicsUpdate) {
-                                    const gData = buildGraphicsFromMeta(
-                                        meta,
-                                        useCharacterStore.getState().identity.roomDefaultScale ?? 100
-                                    );
-                                    renderTokenGraphics(item, gData, role);
+                                    const freshStore = useCharacterStore.getState();
+                                    const activeSceneScale = freshStore.identity.sceneDefaultScale;
+                                    const activeRoomScale = freshStore.identity.roomDefaultScale;
+                                    const effectiveScale =
+                                        activeSceneScale != null && activeSceneScale > 0
+                                            ? activeSceneScale
+                                            : (activeRoomScale ?? 100);
+                                    const gData = buildGraphicsFromMeta(meta, effectiveScale);
+                                    const currentRole = freshStore.role || role;
+                                    renderTokenGraphics(item, gData, currentRole);
                                 }
 
                                 const storeState = useCharacterStore.getState();

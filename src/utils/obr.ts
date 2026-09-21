@@ -101,6 +101,7 @@ export async function saveRoomSettingsToOwlbear(updates: Record<string, unknown>
                     else if (k === 'gmOnlyGenerators') roomMeta.gmOnlyGenerators = Boolean(v);
                     else if (k === 'gmOnlyMatchups') roomMeta.gmOnlyMatchups = Boolean(v);
                     else if (k === 'gmOnlyDamageOverride') roomMeta.gmOnlyDamageOverride = Boolean(v);
+                    else if (k === 'gmOnlyTrackers') roomMeta.gmOnlyTrackers = Boolean(v);
                     else if (k === 'gmDemoMode') roomMeta.gmDemoMode = Boolean(v);
                     else if (k === 'roomDefaultScale') roomMeta.roomDefaultScale = Number(v);
                     else roomMeta[k] = v;
@@ -140,6 +141,7 @@ export async function flushRoomSettingsToOwlbear(updates?: Record<string, unknow
             else if (k === 'gmOnlyGenerators') roomMeta.gmOnlyGenerators = Boolean(v);
             else if (k === 'gmOnlyMatchups') roomMeta.gmOnlyMatchups = Boolean(v);
             else if (k === 'gmOnlyDamageOverride') roomMeta.gmOnlyDamageOverride = Boolean(v);
+            else if (k === 'gmOnlyTrackers') roomMeta.gmOnlyTrackers = Boolean(v);
             else if (k === 'gmDemoMode') roomMeta.gmDemoMode = Boolean(v);
             else if (k === 'roomDefaultScale') roomMeta.roomDefaultScale = Number(v);
             else roomMeta[k] = v;
@@ -148,5 +150,43 @@ export async function flushRoomSettingsToOwlbear(updates?: Record<string, unknow
         await OBR.room.setMetadata({ [ROOM_SETTINGS_META_ID]: roomMeta });
     } catch (error) {
         console.error('[OBR Engine] Failed to flush room settings:', error);
+    }
+}
+
+export const SCENE_SETTINGS_META_ID = 'pokerole-pmd-extension/scene-settings';
+
+export async function flushSceneSettingsToOwlbear(updates: { sceneDefaultScale?: number }) {
+    try {
+        const { default: OBR } = await import('@owlbear-rodeo/sdk');
+        if (!OBR.isAvailable) return;
+        const role = await OBR.player.getRole();
+        if (role !== 'GM') return;
+        const isReady = await OBR.scene.isReady();
+        if (!isReady) return;
+
+        const meta = await OBR.scene.getMetadata();
+        const sceneMeta = (meta[SCENE_SETTINGS_META_ID] as Record<string, unknown>) || {};
+        if (updates.sceneDefaultScale !== undefined) {
+            sceneMeta.sceneDefaultScale = Number(updates.sceneDefaultScale);
+        }
+
+        await OBR.scene.setMetadata({ [SCENE_SETTINGS_META_ID]: sceneMeta });
+    } catch (error) {
+        console.error('[OBR Engine] Failed to flush scene settings:', error);
+    }
+}
+
+export async function clearSceneScaleFromOwlbear() {
+    try {
+        const { default: OBR } = await import('@owlbear-rodeo/sdk');
+        if (!OBR.isAvailable) return;
+        const role = await OBR.player.getRole();
+        if (role !== 'GM') return;
+        const isReady = await OBR.scene.isReady();
+        if (!isReady) return;
+
+        await OBR.scene.setMetadata({ [SCENE_SETTINGS_META_ID]: { sceneDefaultScale: null } });
+    } catch (error) {
+        console.error('[OBR Engine] Failed to clear scene scale:', error);
     }
 }

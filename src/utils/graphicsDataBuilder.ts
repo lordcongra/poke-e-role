@@ -47,6 +47,7 @@ export interface GraphicsData {
     trackerScale: number;
     trackerLayer: 'POPOVER' | 'ATTACHMENT' | 'CHARACTER' | 'MOUNT';
     roomDefaultScale?: number;
+    gmOnlyTrackers?: boolean;
     xOffset: number;
     yOffset: number;
     hpOffsetX: number;
@@ -107,7 +108,11 @@ export function buildGraphicsFromState(meta: Record<string, unknown>, state: Cha
 
         trackerScale: state.identity.trackerScale ?? 100,
         trackerLayer: state.identity.trackerLayer ?? 'ATTACHMENT',
-        roomDefaultScale: state.identity.roomDefaultScale ?? 100,
+        roomDefaultScale:
+            state.identity.sceneDefaultScale != null && state.identity.sceneDefaultScale > 0
+                ? state.identity.sceneDefaultScale
+                : (state.identity.roomDefaultScale ?? 100),
+        gmOnlyTrackers: Boolean(state.identity.gmOnlyTrackers),
         xOffset: state.identity.xOffset || 0,
         yOffset: state.identity.yOffset || 0,
         hpOffsetX: state.identity.hpOffsetX || 0,
@@ -126,10 +131,13 @@ export function buildGraphicsFromState(meta: Record<string, unknown>, state: Cha
 }
 
 export function buildGraphicsFromMeta(meta: Record<string, unknown>, roomDefaultScale?: number): GraphicsData {
+    const id = useCharacterStore.getState().identity;
     const defaultScale =
         roomDefaultScale !== undefined
             ? roomDefaultScale
-            : (useCharacterStore.getState().identity.roomDefaultScale ?? 100);
+            : id.sceneDefaultScale != null && id.sceneDefaultScale > 0
+              ? id.sceneDefaultScale
+              : (id.roomDefaultScale ?? 100);
     const { def: defTotal, spd: sdefTotal } = calculateTargetDefensesFromMeta(meta);
 
     return {
@@ -171,6 +179,7 @@ export function buildGraphicsFromMeta(meta: Record<string, unknown>, roomDefault
         trackerScale: meta['tracker-scale'] !== undefined ? Number(meta['tracker-scale']) : 100,
         trackerLayer: (meta['tracker-layer'] as 'POPOVER' | 'ATTACHMENT' | 'CHARACTER' | 'MOUNT') || 'ATTACHMENT',
         roomDefaultScale: defaultScale,
+        gmOnlyTrackers: Boolean(id.gmOnlyTrackers),
         xOffset: Number(meta['x-offset']) || 0,
         yOffset: Number(meta['y-offset']) || 0,
         hpOffsetX: Number(meta['hp-offset-x']) || 0,

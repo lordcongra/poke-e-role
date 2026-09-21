@@ -165,6 +165,7 @@
     background: var(--input-bg);
     border: 1px solid var(--border);
     border-radius: 4px;
+    flex-wrap: wrap;
 }
 
 .rules-modal__step-btn-group {

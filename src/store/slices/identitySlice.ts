@@ -1,6 +1,11 @@
 import type { StateCreator } from 'zustand';
 import type { CharacterState, IdentitySlice } from '../storeTypes';
-import { saveToOwlbear, saveRoomSettingsToOwlbear } from '../../utils/obr';
+import {
+    saveToOwlbear,
+    saveRoomSettingsToOwlbear,
+    flushSceneSettingsToOwlbear,
+    clearSceneScaleFromOwlbear
+} from '../../utils/obr';
 import OBR from '@owlbear-rodeo/sdk';
 import { syncHealthAndWill } from '../../utils/macroHelpers';
 
@@ -20,8 +25,10 @@ const EXCLUDED_FROM_TOKEN_SAVE = new Set([
     'gmOnlyGenerators',
     'gmOnlyMatchups',
     'gmOnlyDamageOverride',
+    'gmOnlyTrackers',
     'gmDemoMode',
-    'roomDefaultScale'
+    'roomDefaultScale',
+    'sceneDefaultScale'
 ]);
 
 const OBR_KEY_MAP: Record<string, string> = {
@@ -157,7 +164,7 @@ try {
     console.warn('[IdentitySlice] Failed to load room scale from local storage.', e);
 }
 
-export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentitySlice> = (set, get) => ({
+export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentitySlice> = (set) => ({
     tokenId: null,
     role: isStandaloneMode ? 'GM' : 'PLAYER',
     identity: {
@@ -227,6 +234,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         gmOnlyGenerators: true,
         gmOnlyMatchups: false,
         gmOnlyDamageOverride: false,
+        gmOnlyTrackers: false,
         gmDemoMode: false,
 
         // Apply Local Settings
@@ -245,6 +253,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         trackerScale: 100,
         trackerLayer: 'ATTACHMENT',
         roomDefaultScale: initialRoomDefaultScale,
+        sceneDefaultScale: null,
         xOffset: 0,
         yOffset: 0,
         hpOffsetX: 0,
@@ -331,9 +340,31 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         }));
 
         if (OBR.isAvailable && !isStandaloneMode) {
-            const currentRole = get().role;
-            if (currentRole === 'GM') {
-                saveRoomSettingsToOwlbear({ [field]: value });
+            saveRoomSettingsToOwlbear({ [field]: value });
+        }
+    },
+
+    setSceneScale: (scale) =>
+        set((state) => ({
+            identity: {
+                ...state.identity,
+                sceneDefaultScale: scale
+            }
+        })),
+
+    updateSceneScale: (scale) => {
+        set((state) => ({
+            identity: {
+                ...state.identity,
+                sceneDefaultScale: scale
+            }
+        }));
+
+        if (OBR.isAvailable && !isStandaloneMode) {
+            if (scale === null || scale === undefined) {
+                clearSceneScaleFromOwlbear().catch(() => {});
+            } else {
+                flushSceneSettingsToOwlbear({ sceneDefaultScale: scale }).catch(() => {});
             }
         }
     },

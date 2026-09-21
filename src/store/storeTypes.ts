@@ -412,6 +412,7 @@ export interface IdentitySlice {
         gmOnlyGenerators: boolean;
         gmOnlyMatchups: boolean;
         gmOnlyDamageOverride: boolean;
+        gmOnlyTrackers?: boolean;
         gmDemoMode: boolean;
 
         // Initiative HUD User Settings
@@ -430,6 +431,7 @@ export interface IdentitySlice {
         trackerScale: number;
         trackerLayer: 'POPOVER' | 'ATTACHMENT' | 'CHARACTER' | 'MOUNT';
         roomDefaultScale: number;
+        sceneDefaultScale: number | null;
         xOffset: number;
         yOffset: number;
         hpOffsetX: number;
@@ -466,6 +468,8 @@ export interface IdentitySlice {
     setIdentity: <K extends keyof IdentitySlice['identity']>(field: K, value: IdentitySlice['identity'][K]) => void;
     applyRoomSettings: (settings: Partial<RoomSettings>) => void;
     updateRoomSetting: <K extends keyof RoomSettings>(field: K, value: RoomSettings[K]) => void;
+    setSceneScale: (scale: number | null) => void;
+    updateSceneScale: (scale: number | null) => void;
     setPrintConfig: (config: Partial<PrintConfig>) => void;
     setTokenData: (tokenId: string, role: 'GM' | 'PLAYER') => void;
     applyLearnset: (data: Record<string, unknown>) => void;
@@ -481,6 +485,7 @@ export interface RoomSettings {
     gmOnlyGenerators: boolean;
     gmOnlyMatchups: boolean;
     gmOnlyDamageOverride: boolean;
+    gmOnlyTrackers?: boolean;
     gmDemoMode: boolean;
     roomDefaultScale: number;
 }

@@ -6,6 +6,7 @@ import { GRAPHICS_META_ID, STATS_META_ID } from './graphicsManager';
 import { buildGraphicDefinitions } from './graphicsLayout';
 import { applyGraphicsToOwlbear } from './graphicsEngine';
 import { detectImageVisualBounds } from './imageBoundsDetector';
+import { SCENE_SETTINGS_META_ID } from './obr';
 
 const renderMutex: Record<string, Promise<void>> = {};
 
@@ -45,7 +46,7 @@ export async function renderTokenGraphics(
                 (item) => item.attachedTo === tokenId && item.metadata[GRAPHICS_META_ID] !== undefined
             );
 
-            if (!data.showTrackers || !data.hasSpeciesOrTrainer) {
+            if (!data.showTrackers || !data.hasSpeciesOrTrainer || (data.gmOnlyTrackers && role !== 'GM')) {
                 if (localAttached.length > 0) {
                     await OBR.scene.local.deleteItems(localAttached.map((item) => item.id));
                 }
@@ -156,11 +157,26 @@ export async function renderAllSceneTokens(forceRebuild: boolean | 'badges-only'
         let scale = roomDefaultScale;
         if (scale === undefined) {
             try {
-                const roomMeta = (await OBR.room.getMetadata())['pokerole-pmd-extension/room-settings'] as
+                const sceneMeta = (await OBR.scene.getMetadata())[SCENE_SETTINGS_META_ID] as
                     | Record<string, unknown>
                     | undefined;
-                if (roomMeta?.roomDefaultScale !== undefined) {
-                    scale = Number(roomMeta.roomDefaultScale);
+                if (
+                    sceneMeta?.sceneDefaultScale != null &&
+                    !isNaN(Number(sceneMeta.sceneDefaultScale)) &&
+                    Number(sceneMeta.sceneDefaultScale) > 0
+                ) {
+                    scale = Number(sceneMeta.sceneDefaultScale);
+                } else {
+                    const roomMeta = (await OBR.room.getMetadata())['pokerole-pmd-extension/room-settings'] as
+                        | Record<string, unknown>
+                        | undefined;
+                    if (
+                        roomMeta?.roomDefaultScale != null &&
+                        !isNaN(Number(roomMeta.roomDefaultScale)) &&
+                        Number(roomMeta.roomDefaultScale) > 0
+                    ) {
+                        scale = Number(roomMeta.roomDefaultScale);
+                    }
                 }
             } catch {
                 scale = 100;
