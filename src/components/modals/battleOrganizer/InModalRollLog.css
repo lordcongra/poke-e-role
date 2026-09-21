@@ -7,14 +7,32 @@
     overflow: hidden;
     box-sizing: border-box;
     transition: max-height 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    --roll-log-font-scale: 1;
+}
+
+.in-modal-roll-log--font-sm {
+    --roll-log-font-scale: 1;
+}
+
+.in-modal-roll-log--font-md {
+    --roll-log-font-scale: 1.2;
+}
+
+.in-modal-roll-log--font-lg {
+    --roll-log-font-scale: 1.4;
+}
+
+.in-modal-roll-log--font-xl {
+    --roll-log-font-scale: 1.65;
 }
 
 .in-modal-roll-log--floating {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    width: 320px;
-    max-height: 420px;
+    width: calc(340px * var(--roll-log-font-scale, 1));
+    max-width: min(540px, calc(100vw - 24px));
+    max-height: min(calc(450px * var(--roll-log-font-scale, 1)), calc(100vh - 60px));
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.75);
     z-index: 10070;
 }
@@ -47,9 +65,9 @@
 }
 
 .in-modal-roll-log--collapsed {
-    max-height: 38px !important;
-    min-height: 38px !important;
-    height: 38px !important;
+    max-height: calc(38px * var(--roll-log-font-scale, 1)) !important;
+    min-height: calc(38px * var(--roll-log-font-scale, 1)) !important;
+    height: calc(38px * var(--roll-log-font-scale, 1)) !important;
 }
 
 .in-modal-roll-log__empty {
@@ -68,7 +86,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    padding: calc(8px * var(--roll-log-font-scale, 1)) 12px;
     background: var(--panel-alt, #222);
     border-bottom: 1px solid var(--border, #333);
     cursor: pointer;
@@ -83,9 +101,9 @@
     min-width: 0;
 }
 
-.in-modal-roll-log__title {
+.in-modal-roll-log .in-modal-roll-log__title {
     font-weight: 700;
-    font-size: 0.82rem;
+    font-size: calc(0.85rem * var(--roll-log-font-scale, 1)) !important;
     color: var(--text-main, #fff);
 }
 
@@ -129,10 +147,10 @@
     background: var(--row-odd, #252525);
     border: 1px solid var(--border, #333);
     border-radius: 6px;
-    padding: 8px;
+    padding: calc(8px * var(--roll-log-font-scale, 1));
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: calc(6px * var(--roll-log-font-scale, 1));
 }
 
 .in-modal-roll-log__entry-top {
@@ -141,9 +159,9 @@
     gap: 8px;
 }
 
-.in-modal-roll-log__avatar {
-    width: 26px;
-    height: 26px;
+.in-modal-roll-log .in-modal-roll-log__avatar {
+    width: calc(26px * var(--roll-log-font-scale, 1));
+    height: calc(26px * var(--roll-log-font-scale, 1));
     border-radius: 50%;
     overflow: hidden;
     background: var(--panel-bg, #1e1e1e);
@@ -151,73 +169,85 @@
     flex-shrink: 0;
 }
 
-.in-modal-roll-log__avatar img {
+.in-modal-roll-log .in-modal-roll-log__avatar img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-.in-modal-roll-log__meta {
+.in-modal-roll-log .in-modal-roll-log__meta {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
+    gap: calc(2px * var(--roll-log-font-scale, 1));
 }
 
-.in-modal-roll-log__char {
-    font-size: 0.78rem;
+.in-modal-roll-log .in-modal-roll-log__char {
+    font-size: calc(0.85rem * var(--roll-log-font-scale, 1)) !important;
     font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     color: var(--text-main, #fff);
+    line-height: 1.25;
 }
 
-.in-modal-roll-log__label {
-    font-size: 0.72rem;
+.in-modal-roll-log .in-modal-roll-log__label {
+    font-size: calc(0.78rem * var(--roll-log-font-scale, 1)) !important;
     color: var(--text-muted, #aaa);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.35;
 }
 
-.in-modal-roll-log__btn-dismiss {
+.in-modal-roll-log .in-modal-roll-log__btn-dismiss {
     background: transparent;
     border: none;
     color: var(--text-muted, #888);
     cursor: pointer;
-    padding: 2px;
+    padding: calc(2px * var(--roll-log-font-scale, 1));
     border-radius: 3px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.in-modal-roll-log__btn-dismiss:hover {
+.in-modal-roll-log .in-modal-roll-log__btn-dismiss:hover {
     color: var(--semantic-danger, #ef4444);
     background: color-mix(in srgb, var(--semantic-danger, #ef4444) 15%, transparent);
 }
 
-.in-modal-roll-log__result {
-    font-size: 0.76rem;
+.in-modal-roll-log .in-modal-roll-log__btn-dismiss svg {
+    width: calc(13px * var(--roll-log-font-scale, 1));
+    height: calc(13px * var(--roll-log-font-scale, 1));
+}
+
+.in-modal-roll-log .in-modal-roll-log__result {
+    font-size: calc(0.82rem * var(--roll-log-font-scale, 1)) !important;
     background: var(--panel-alt, #1d1d1d);
     border-radius: 4px;
-    padding: 6px;
+    padding: calc(6px * var(--roll-log-font-scale, 1)) calc(8px * var(--roll-log-font-scale, 1));
     white-space: pre-line;
     word-break: break-word;
+    line-height: 1.45;
     border-left: 2px solid var(--primary, #3b82f6);
+    color: var(--text-main, #fff);
+    font-weight: 600;
+    letter-spacing: 0.02em;
 }
 
-.in-modal-roll-log__actions-bar {
+.in-modal-roll-log .in-modal-roll-log__actions-bar {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding-top: 4px;
+    gap: calc(6px * var(--roll-log-font-scale, 1));
+    padding-top: calc(4px * var(--roll-log-font-scale, 1));
     border-top: 1px dashed var(--border, #444);
+    flex-wrap: wrap;
 }
 
-.in-modal-roll-log__action-label {
-    font-size: 0.7rem;
+.in-modal-roll-log .in-modal-roll-log__action-label {
+    font-size: calc(0.76rem * var(--roll-log-font-scale, 1)) !important;
     display: flex;
     align-items: center;
     gap: 4px;
@@ -229,48 +259,113 @@
     color: var(--text-muted, #aaa);
 }
 
-.in-modal-roll-log__mark-btn {
+.in-modal-roll-log .in-modal-roll-log__action-label svg {
+    width: calc(12px * var(--roll-log-font-scale, 1));
+    height: calc(12px * var(--roll-log-font-scale, 1));
+}
+
+.in-modal-roll-log .in-modal-roll-log__choice-btn {
     border: 1px solid transparent;
     border-radius: 4px;
-    font-size: 0.7rem;
+    font-size: calc(0.76rem * var(--roll-log-font-scale, 1)) !important;
     font-weight: 700;
-    padding: 3px 7px;
+    padding: calc(4px * var(--roll-log-font-scale, 1)) calc(8px * var(--roll-log-font-scale, 1));
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: calc(4px * var(--roll-log-font-scale, 1));
     transition:
         background 0.15s ease,
         border-color 0.15s ease;
 }
 
-.in-modal-roll-log__mark-btn--hit {
+.in-modal-roll-log .in-modal-roll-log__choice-btn svg {
+    width: calc(12px * var(--roll-log-font-scale, 1));
+    height: calc(12px * var(--roll-log-font-scale, 1));
+}
+
+.in-modal-roll-log .in-modal-roll-log__choice-btn--yes {
+    background: color-mix(in srgb, var(--primary, #3b82f6) 18%, transparent);
+    color: var(--primary, #3b82f6);
+    border-color: color-mix(in srgb, var(--primary, #3b82f6) 40%, transparent);
+}
+
+.in-modal-roll-log .in-modal-roll-log__choice-btn--yes:hover {
+    background: color-mix(in srgb, var(--primary, #3b82f6) 35%, transparent);
+}
+
+.in-modal-roll-log .in-modal-roll-log__choice-btn--no {
+    background: color-mix(in srgb, #aaa 15%, transparent);
+    color: var(--text-muted, #aaa);
+    border-color: color-mix(in srgb, #aaa 30%, transparent);
+}
+
+.in-modal-roll-log .in-modal-roll-log__choice-btn--no:hover {
+    background: color-mix(in srgb, #aaa 28%, transparent);
+    color: var(--text-main, #fff);
+}
+
+.in-modal-roll-log .in-modal-roll-log__link-btn {
+    background: transparent;
+    border: none;
+    color: var(--primary, #3b82f6);
+    font-size: calc(0.74rem * var(--roll-log-font-scale, 1)) !important;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0 4px;
+}
+
+.in-modal-roll-log .in-modal-roll-log__link-btn:hover {
+    filter: brightness(1.2);
+}
+
+.in-modal-roll-log .in-modal-roll-log__mark-btn {
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font-size: calc(0.76rem * var(--roll-log-font-scale, 1)) !important;
+    font-weight: 700;
+    padding: calc(4px * var(--roll-log-font-scale, 1)) calc(8px * var(--roll-log-font-scale, 1));
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: calc(4px * var(--roll-log-font-scale, 1));
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.in-modal-roll-log .in-modal-roll-log__mark-btn svg {
+    width: calc(12px * var(--roll-log-font-scale, 1));
+    height: calc(12px * var(--roll-log-font-scale, 1));
+}
+
+.in-modal-roll-log .in-modal-roll-log__mark-btn--hit {
     background: color-mix(in srgb, #22c55e 15%, transparent);
     color: #22c55e;
     border-color: color-mix(in srgb, #22c55e 40%, transparent);
 }
 
-.in-modal-roll-log__mark-btn--hit:hover {
+.in-modal-roll-log .in-modal-roll-log__mark-btn--hit:hover {
     background: color-mix(in srgb, #22c55e 30%, transparent);
 }
 
-.in-modal-roll-log__mark-btn--active-hit {
+.in-modal-roll-log .in-modal-roll-log__mark-btn--active-hit {
     background: #22c55e;
     color: #000;
     border-color: #22c55e;
 }
 
-.in-modal-roll-log__mark-btn--miss {
+.in-modal-roll-log .in-modal-roll-log__mark-btn--miss {
     background: color-mix(in srgb, #ef4444 15%, transparent);
     color: #ef4444;
     border-color: color-mix(in srgb, #ef4444 40%, transparent);
 }
 
-.in-modal-roll-log__mark-btn--miss:hover {
+.in-modal-roll-log .in-modal-roll-log__mark-btn--miss:hover {
     background: color-mix(in srgb, #ef4444 30%, transparent);
 }
 
-.in-modal-roll-log__mark-btn--active-miss {
+.in-modal-roll-log .in-modal-roll-log__mark-btn--active-miss {
     background: #ef4444;
     color: #fff;
     border-color: #ef4444;
@@ -281,6 +376,6 @@
         right: 8px;
         bottom: 8px;
         width: calc(100vw - 16px);
-        max-width: 320px;
+        max-width: 340px;
     }
 }

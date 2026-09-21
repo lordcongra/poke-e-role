@@ -174,6 +174,13 @@
     flex-direction: column;
 }
 
+.bo-sheet-modal__body .health-section__box,
+.bo-sheet-modal__body .derived-board__box,
+.bo-sheet-modal__body .status-box,
+.bo-sheet-modal__body .timer-box {
+    padding: 0 !important;
+}
+
 .bo-sheet-modal__loading {
     display: flex;
     flex-direction: column;

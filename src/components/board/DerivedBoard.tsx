@@ -117,7 +117,7 @@ export function DerivedBoard() {
                 </div>
 
                 <div className="derived-board__health-row">
-                    <div className="sheet-panel health-section__box derived-board__box derived-board__box--primary-border">
+                    <div className="health-section__box derived-board__box derived-board__box--primary-border">
                         <div className="derived-board__box-header theme-header--primary derived-board__box-header--medium">
                             DEFENSE
                         </div>
@@ -140,7 +140,7 @@ export function DerivedBoard() {
                         </div>
                     </div>
 
-                    <div className="sheet-panel health-section__box derived-board__box derived-board__box--primary-border">
+                    <div className="health-section__box derived-board__box derived-board__box--primary-border">
                         <div className="derived-board__box-header theme-header--primary derived-board__box-header--medium">
                             SPEC. DEFENSE
                         </div>
@@ -170,7 +170,7 @@ export function DerivedBoard() {
                     <div
                         className={`derived-board__group-left ${mode !== 'Pokémon' ? 'derived-board__group-left--full' : ''}`}
                     >
-                        <div className="sheet-panel health-section__box derived-board__box derived-board__box--large derived-board__box--secondary-border">
+                        <div className="health-section__box derived-board__box derived-board__box--large derived-board__box--secondary-border">
                             <div className="derived-board__box-header theme-header--secondary derived-board__box-header--small">
                                 INITIATIVE{' '}
                                 <TooltipIcon
@@ -194,7 +194,7 @@ export function DerivedBoard() {
                                 </button>
                             </div>
                         </div>
-                        <div className="sheet-panel health-section__box derived-board__box derived-board__box--secondary-border">
+                        <div className="health-section__box derived-board__box derived-board__box--secondary-border">
                             <div className="derived-board__box-header theme-header--secondary derived-board__box-header--small">
                                 EVADE{' '}
                                 <TooltipIcon
@@ -215,7 +215,7 @@ export function DerivedBoard() {
 
                         {mode === 'Pokémon' && (
                             <>
-                                <div className="sheet-panel health-section__box derived-board__box derived-board__box--secondary-border">
+                                <div className="health-section__box derived-board__box derived-board__box--secondary-border">
                                     <div className="derived-board__box-header theme-header--secondary derived-board__box-header--small">
                                         CLASH(P){' '}
                                         <TooltipIcon
@@ -234,7 +234,7 @@ export function DerivedBoard() {
                                         {clashPhysical}
                                     </div>
                                 </div>
-                                <div className="sheet-panel health-section__box derived-board__box derived-board__box--secondary-border">
+                                <div className="health-section__box derived-board__box derived-board__box--secondary-border">
                                     <div className="derived-board__box-header theme-header--secondary derived-board__box-header--small">
                                         CLASH(S){' '}
                                         <TooltipIcon
@@ -259,7 +259,7 @@ export function DerivedBoard() {
 
                     {mode === 'Pokémon' && (
                         <div className="derived-board__group-right">
-                            <div className="sheet-panel health-section__box derived-board__box derived-board__box--secondary-border">
+                            <div className="health-section__box derived-board__box derived-board__box--secondary-border">
                                 <div className="derived-board__box-header theme-header--secondary derived-board__box-header--small">
                                     HAPPY
                                 </div>
@@ -272,7 +272,7 @@ export function DerivedBoard() {
                                     />
                                 </div>
                             </div>
-                            <div className="sheet-panel health-section__box derived-board__box derived-board__box--secondary-border">
+                            <div className="health-section__box derived-board__box derived-board__box--secondary-border">
                                 <div className="derived-board__box-header theme-header--secondary derived-board__box-header--small">
                                     LOYAL
                                 </div>

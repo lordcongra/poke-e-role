@@ -13,7 +13,7 @@ export function TimerBox() {
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
 
     return (
-        <div className="sheet-panel health-section__box timer-box">
+        <div className="health-section__box timer-box">
             <div className="timer-box__header theme-header--secondary">
                 <span className="timer-box__header-title">
                     TIMERS{' '}

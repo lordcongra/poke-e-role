@@ -1,6 +1,6 @@
 .timer-box {
     flex: 1;
-    padding: 0;
+    padding: 0 !important;
     border: 1px solid var(--secondary);
     display: flex;
     flex-direction: column;

@@ -1,7 +1,20 @@
 import { useState, useEffect } from 'react';
 import type { CombatantRowData, RollLogLayoutMode } from '../../../types/battleOrganizerTypes';
 import { imageManager } from '../../../utils/imageManager';
-import { Dices, Trash2, ChevronDown, ChevronUp, X, Check, Swords, Move, Columns2, LayoutGrid } from 'lucide-react';
+import {
+    Dices,
+    Trash2,
+    ChevronDown,
+    ChevronUp,
+    X,
+    Check,
+    Swords,
+    Move,
+    Columns2,
+    LayoutGrid,
+    Type
+} from 'lucide-react';
+import { parseRollLogEntry } from './battleOrganizerUtils';
 import './InModalRollLog.css';
 
 export interface RollLogEntry {
@@ -12,7 +25,10 @@ export interface RollLogEntry {
     label: string;
     result: string;
     icon: string;
+    rollType?: string;
 }
+
+export type RollLogFontSize = 'sm' | 'md' | 'lg' | 'xl';
 
 interface InModalRollLogProps {
     combatants?: CombatantRowData[];
@@ -39,6 +55,46 @@ export function InModalRollLog({
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [resolvedIcons, setResolvedIcons] = useState<Record<string, string>>({});
     const [markedStatus, setMarkedStatus] = useState<Record<string, 'success' | 'failed'>>({});
+    const [actionRollDecisions, setActionRollDecisions] = useState<Record<string, 'pending' | 'add' | 'skip'>>({});
+
+    const [fontSize, setFontSize] = useState<RollLogFontSize>(() => {
+        try {
+            const saved = localStorage.getItem('pkr_roll_log_font_size');
+            if (saved === 'sm' || saved === 'md' || saved === 'lg' || saved === 'xl') return saved;
+        } catch {
+            // ignore
+        }
+        return 'sm';
+    });
+
+    const handleCycleFontSize = () => {
+        setFontSize((prev) => {
+            let next: RollLogFontSize = 'sm';
+            if (prev === 'sm') next = 'md';
+            else if (prev === 'md') next = 'lg';
+            else if (prev === 'lg') next = 'xl';
+            else next = 'sm';
+            try {
+                localStorage.setItem('pkr_roll_log_font_size', next);
+            } catch {
+                // ignore
+            }
+            return next;
+        });
+    };
+
+    const getFontSizeLabel = (size: RollLogFontSize): string => {
+        switch (size) {
+            case 'sm':
+                return 'Normal';
+            case 'md':
+                return 'Medium';
+            case 'lg':
+                return 'Large';
+            case 'xl':
+                return 'Extra Large';
+        }
+    };
 
     useEffect(() => {
         let isMounted = true;
@@ -121,42 +177,6 @@ export function InModalRollLog({
         }
     };
 
-    // Extract character and move names from label
-    const parseRollMeta = (label: string, fallbackChar?: string) => {
-        const clean = label
-            .replace(/^\[PRIVATE\]\s*/i, '')
-            .replace(/^(?:📢|🎲|💥|🩹|🍀|🎯|🛡️|❄️)\s*/u, '')
-            .trim();
-
-        let charName = fallbackChar || '';
-        let moveName = '';
-
-        const matchAccDmg = clean.match(/^(.+?)\s+rolled\s+(.+?)\s*\((?:Acc|Damage|Attack|Dmg)\)/i);
-        if (matchAccDmg) {
-            charName = matchAccDmg[1].trim();
-            moveName = matchAccDmg[2].trim();
-        } else {
-            const matchRolled = clean.match(/^(.+?)\s+(?:rolled|used)\s+(.+?)(?:!|\s*\[|$)/i);
-            if (matchRolled) {
-                charName = matchRolled[1].trim();
-                moveName = matchRolled[2].trim();
-            } else {
-                const matchSimple = clean.match(/^(.+?)\s*(?:\(Acc\)|\(Damage\)|\(Attack\)|\(Dmg\))/i);
-                if (matchSimple) {
-                    moveName = matchSimple[1].trim();
-                } else if (clean && !clean.includes('!')) {
-                    moveName = clean.split('[')[0].trim();
-                }
-            }
-        }
-
-        if (moveName.match(/^(?:custom dice|a General|Recovery|Check)/i)) {
-            moveName = '';
-        }
-
-        return { charName, moveName };
-    };
-
     const handleMark = (rollId: string, combatantId: string, moveName: string, status: 'success' | 'failed') => {
         setMarkedStatus((prev) => ({ ...prev, [rollId]: status }));
         if (onMarkAction) {
@@ -185,16 +205,25 @@ export function InModalRollLog({
 
     return (
         <div
-            className={`in-modal-roll-log in-modal-roll-log--${layoutMode} ${isCollapsed ? 'in-modal-roll-log--collapsed' : ''}`}
+            className={`in-modal-roll-log in-modal-roll-log--${layoutMode} in-modal-roll-log--font-${fontSize} ${isCollapsed ? 'in-modal-roll-log--collapsed' : ''}`}
         >
             {/* Header */}
             <div className="in-modal-roll-log__header" onClick={() => setIsCollapsed(!isCollapsed)}>
                 <div className="in-modal-roll-log__header-left">
                     <Dices size={15} color="var(--primary)" />
-                    <span className="in-modal-roll-log__title text-label">Roll Log ({rolls.length})</span>
+                    <span className="in-modal-roll-log__title">Roll Log ({rolls.length})</span>
                 </div>
 
                 <div className="in-modal-roll-log__header-right" onClick={(e) => e.stopPropagation()}>
+                    <button
+                        type="button"
+                        className="in-modal-roll-log__btn-icon"
+                        onClick={handleCycleFontSize}
+                        title={`Font Size: ${getFontSizeLabel(fontSize)} (Click to enlarge)`}
+                        aria-label="Change Roll Log Font Size"
+                    >
+                        <Type size={13} />
+                    </button>
                     {onCycleLayoutMode && (
                         <button
                             type="button"
@@ -234,7 +263,7 @@ export function InModalRollLog({
             {!isCollapsed && (
                 <div className="in-modal-roll-log__list">
                     {rolls.length === 0 ? (
-                        <div className="in-modal-roll-log__empty text-subtext">
+                        <div className="in-modal-roll-log__empty">
                             <Dices size={28} color="var(--primary)" style={{ opacity: 0.4 }} />
                             <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>No rolls recorded yet</span>
                             <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
@@ -243,7 +272,10 @@ export function InModalRollLog({
                         </div>
                     ) : (
                         rolls.slice(0, maxRolls).map((r) => {
-                            const { charName, moveName } = parseRollMeta(r.label, r.characterName || r.player);
+                            const parsed = parseRollLogEntry(r as unknown as Record<string, unknown>);
+                            const moveName = parsed?.moveName || '';
+                            const charName = parsed?.charName || r.characterName || r.player;
+
                             const matchedCombatant = combatants.find(
                                 (c) =>
                                     (r.tokenId && c.tokenId && r.tokenId === c.tokenId) ||
@@ -259,6 +291,9 @@ export function InModalRollLog({
                             const iconSrc = effectiveIcon || `${import.meta.env.BASE_URL || '/'}pokeball.svg`;
                             const displayChar = matchedCombatant?.name || charName || r.characterName || r.player;
 
+                            const isActionRoll = parsed?.isActionRoll;
+                            const actionRollDecision = actionRollDecisions[r.id] || 'pending';
+
                             return (
                                 <div key={r.id} className="in-modal-roll-log__entry">
                                     <div className="in-modal-roll-log__entry-top">
@@ -266,8 +301,10 @@ export function InModalRollLog({
                                             <img src={iconSrc} alt={displayChar} />
                                         </div>
                                         <div className="in-modal-roll-log__meta">
-                                            <span className="in-modal-roll-log__char text-label">{displayChar}</span>
-                                            <span className="in-modal-roll-log__label text-subtext">{r.label}</span>
+                                            <span className="in-modal-roll-log__char">{displayChar}</span>
+                                            <span className="in-modal-roll-log__label" title={r.label}>
+                                                {r.label}
+                                            </span>
                                         </div>
                                         <button
                                             type="button"
@@ -280,12 +317,103 @@ export function InModalRollLog({
                                         </button>
                                     </div>
 
-                                    <div className="in-modal-roll-log__result text-label">{r.result}</div>
+                                    <div className="in-modal-roll-log__result">{r.result}</div>
 
-                                    {/* Quick Mark Action Buttons */}
-                                    {matchedCombatant && moveName && onMarkAction && (
+                                    {/* Action Rolls from Action Rolls menu: Confirm if user wants to add to round tracker / action counter */}
+                                    {matchedCombatant && isActionRoll && onMarkAction && (
+                                        <>
+                                             {actionRollDecision === 'pending' && (
+                                                <div className="in-modal-roll-log__actions-bar">
+                                                    <span className="in-modal-roll-log__action-label">
+                                                        Add to action counter?
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        className="in-modal-roll-log__choice-btn in-modal-roll-log__choice-btn--yes"
+                                                        onClick={() =>
+                                                            setActionRollDecisions((prev) => ({
+                                                                ...prev,
+                                                                [r.id]: 'add'
+                                                            }))
+                                                        }
+                                                        title="Add this Action Roll to the Round Tracker action counter"
+                                                    >
+                                                        <Check size={11} /> Yes
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="in-modal-roll-log__choice-btn in-modal-roll-log__choice-btn--no"
+                                                        onClick={() =>
+                                                            setActionRollDecisions((prev) => ({
+                                                                ...prev,
+                                                                [r.id]: 'skip'
+                                                            }))
+                                                        }
+                                                        title="Free action - do not add to action counter"
+                                                    >
+                                                        <X size={11} /> No (Free)
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {actionRollDecision === 'skip' && (
+                                                <div className="in-modal-roll-log__actions-bar">
+                                                    <span
+                                                        className="in-modal-roll-log__action-label"
+                                                        style={{ fontStyle: 'italic', opacity: 0.8 }}
+                                                    >
+                                                        Free Action (Not added to round tracker)
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        className="in-modal-roll-log__link-btn"
+                                                        onClick={() =>
+                                                            setActionRollDecisions((prev) => ({
+                                                                ...prev,
+                                                                [r.id]: 'pending'
+                                                            }))
+                                                        }
+                                                        title="Change decision"
+                                                    >
+                                                        Change
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {actionRollDecision === 'add' && (
+                                                <div className="in-modal-roll-log__actions-bar">
+                                                    <span className="in-modal-roll-log__action-label">
+                                                        <Swords size={11} /> Mark {moveName}:
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        className={`in-modal-roll-log__mark-btn in-modal-roll-log__mark-btn--hit ${currentStatus === 'success' ? 'in-modal-roll-log__mark-btn--active-hit' : ''}`}
+                                                        onClick={() =>
+                                                            handleMark(r.id, matchedCombatant.id, moveName, 'success')
+                                                        }
+                                                        title="Mark as Hit / Success (✓) and add to action counter"
+                                                    >
+                                                        <Check size={11} /> Hit
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className={`in-modal-roll-log__mark-btn in-modal-roll-log__mark-btn--miss ${currentStatus === 'failed' ? 'in-modal-roll-log__mark-btn--active-miss' : ''}`}
+                                                        onClick={() =>
+                                                            handleMark(r.id, matchedCombatant.id, moveName, 'failed')
+                                                        }
+                                                        title="Mark as Miss / Fail (✗) and add to action counter"
+                                                    >
+                                                        <X size={11} /> Miss
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+
+                                    {/* Quick Mark Action Buttons for Move Accuracy, Evade, Clash & Action-Consuming Status Recovery */}
+                                    {matchedCombatant && !isActionRoll && parsed?.canMarkInRollLog && moveName && onMarkAction && (
                                         <div className="in-modal-roll-log__actions-bar">
-                                            <span className="in-modal-roll-log__action-label text-subtext">
+                                            <span className="in-modal-roll-log__action-label">
                                                 <Swords size={11} /> Mark {moveName}:
                                             </span>
                                             <button

@@ -252,9 +252,9 @@ export function useBattleOrganizerSync({
             if (!settings.autoSyncActions || !logData) return;
 
             const parsedRoll = parseRollLogEntry(logData);
-            if (!parsedRoll) return;
+            if (!parsedRoll || !parsedRoll.shouldAddToRoundTracker) return;
 
-            const { rollId, charName, moveName, rollTokenId, isEvade, isClash, isDamageRoll, cleanLabel } = parsedRoll;
+            const { rollId, charName, moveName, rollTokenId, isEvade, isClash, cleanLabel } = parsedRoll;
 
             if (rollId) {
                 if (processedRollIdsRef.current.has(rollId)) {
@@ -267,8 +267,8 @@ export function useBattleOrganizerSync({
                 }
             }
 
-            // Throttle rapid duplicate rolls of the exact same move for the same combatant within 1.2s
-            const throttleKey = `${rollTokenId || charName}|${moveName.toLowerCase().trim()}|${isDamageRoll ? 'dmg' : 'acc'}`;
+            // Throttle rapid duplicate rolls of the exact same action for the same combatant within 1.2s
+            const throttleKey = `${rollTokenId || charName}|${moveName.toLowerCase().trim()}|${parsedRoll.rollKind}`;
             const lastTime = lastMoveRollTimestampRef.current.get(throttleKey);
             const now = Date.now();
             if (lastTime && now - lastTime < 1200) {
@@ -296,48 +296,31 @@ export function useBattleOrganizerSync({
 
                     if (!isMatch) return c;
 
-                    // Handle reaction rolls (Evade / Clash) directly on checkboxes without consuming an action slot
-                    if (isEvade) {
-                        if (!c.evadeUsed) {
-                            changed = true;
-                            return { ...c, evadeUsed: true };
-                        }
-                        return c;
+                    let updatedCombatant = { ...c };
+
+                    // Toggle reaction checkboxes (Evade / Clash)
+                    if (isEvade && !updatedCombatant.evadeUsed) {
+                        updatedCombatant.evadeUsed = true;
+                        changed = true;
+                    }
+                    if (isClash && !updatedCombatant.clashUsed) {
+                        updatedCombatant.clashUsed = true;
+                        changed = true;
                     }
 
-                    if (isClash) {
-                        if (!c.clashUsed) {
-                            changed = true;
-                            return { ...c, clashUsed: true };
-                        }
-                        return c;
-                    }
-
-                    const newActions = [...c.actions] as CombatantRowData['actions'];
-
-                    // If this is a damage roll and the move name already exists in an action slot,
-                    // do not allocate a new action slot because damage resolves the preceding accuracy roll.
-                    if (isDamageRoll) {
-                        const alreadyPresent = newActions.some(
-                            (a) => a.text.trim().toLowerCase() === moveName.toLowerCase().trim()
-                        );
-                        if (alreadyPresent) return c;
-                    }
-
+                    // Fill an action slot
+                    const newActions = [...updatedCombatant.actions] as CombatantRowData['actions'];
                     const targetIdx = newActions.findIndex((a) => !a.text.trim());
                     if (targetIdx !== -1) {
                         newActions[targetIdx] = {
                             ...newActions[targetIdx],
                             text: moveName
                         };
+                        updatedCombatant.actions = newActions;
                         changed = true;
-                        return {
-                            ...c,
-                            actions: newActions
-                        };
                     }
 
-                    return c;
+                    return updatedCombatant;
                 });
 
                 if (!changed) return prev;

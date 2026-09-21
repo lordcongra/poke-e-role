@@ -156,14 +156,16 @@ export function useBattleOrganizer() {
                 const willChanged = prevCombatant.willCurr !== updated.willCurr && typeof updated.willCurr === 'number';
                 const evadeChanged = prevCombatant.evadeUsed !== updated.evadeUsed;
                 const clashChanged = prevCombatant.clashUsed !== updated.clashUsed;
+                const actionsChanged = JSON.stringify(prevCombatant.actions) !== JSON.stringify(updated.actions);
 
-                if (statusChanged || hpChanged || willChanged || evadeChanged || clashChanged) {
+                if (statusChanged || hpChanged || willChanged || evadeChanged || clashChanged || actionsChanged) {
                     syncCombatantToToken(updated, {
                         syncStatus: statusChanged,
                         syncHp: hpChanged,
                         syncWill: willChanged,
                         syncEvade: evadeChanged,
-                        syncClash: clashChanged
+                        syncClash: clashChanged,
+                        syncActions: actionsChanged
                     });
                 }
             }

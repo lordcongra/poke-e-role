@@ -147,7 +147,7 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     const hasItemHighCrit = itemBuffs.highCritStacks > 0;
     const hasMoveHighCrit = moveDescription.includes('high critical');
     const baseCriticalReductions = hasItemHighCrit || hasMoveHighCrit ? 1 : 0;
-    let totalCriticalReductions = baseCriticalReductions + itemBuffs.stackingHighCritStacks;
+    const totalCriticalReductions = baseCriticalReductions + itemBuffs.stackingHighCritStacks;
 
     criticalRequirement = Math.max(1, criticalRequirement - totalCriticalReductions);
 
@@ -453,7 +453,12 @@ export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';
     const rollName = (check.name || '').trim() || 'Skill Check';
 
-    await rollDicePlus(`${Math.max(1, dicePool)}d6>3${mathModifier}`, `${nickname} rolled ${rollName}!${finalTags}`);
+    await rollDicePlus(
+        `${Math.max(1, dicePool)}d6>3${mathModifier}`,
+        `[Action Roll] ${nickname} rolled ${rollName}!${finalTags}`,
+        'action_roll',
+        check.id
+    );
 }
 
 export async function rollGeneric(

@@ -262,22 +262,186 @@ export function useBattleOrganizerTokenOps({
         [lastTokenFingerprintsRef, pendingTokenSyncRef, updateState]
     );
 
-    // 2. Gentle 30-second soft-sync interval (paused when tab/window is hidden)
+    // 2. Real-time Reactive Sync: OBR Scene Tokens, Character Store & Standalone changes
     useEffect(() => {
-        const initialTimer = setTimeout(() => {
-            refreshTokenStats(true);
-        }, 500);
+        let isMounted = true;
+        let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
+        const triggerRefresh = (delay = 120) => {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                if (isMounted) {
+                    refreshTokenStats(true);
+                }
+            }, delay);
+        };
+
+        // Initial sync on mount
+        const initialTimer = setTimeout(() => {
+            if (isMounted) refreshTokenStats(true);
+        }, 300);
+
+        // 1. OBR scene items change listener (when tokens are updated by sheets, other players, or GM)
+        let unsubObr: (() => void) | null = null;
+        if (OBR.isAvailable && !isStandaloneMode) {
+            OBR.onReady(() => {
+                if (!isMounted) return;
+                try {
+                    unsubObr = OBR.scene.items.onChange((items) => {
+                        const hasCharChange = items.some((i) => i.layer === 'CHARACTER');
+                        if (hasCharChange) {
+                            triggerRefresh(150);
+                        }
+                    });
+                } catch (e) {
+                    console.warn('[BattleOrganizer] Failed to subscribe to OBR.scene.items.onChange:', e);
+                }
+            });
+        }
+
+        // 2. Standalone / cross-tab events
+        const handleLocalChange = () => triggerRefresh(100);
+        window.addEventListener('pkr-local-data-changed', handleLocalChange);
+        window.addEventListener('storage', handleLocalChange);
+
+        // 3. In-memory useCharacterStore changes (when user edits a sheet in the same window)
+        const unsubStore = useCharacterStore.subscribe((currState, prevState) => {
+            const statusChanged = currState.statuses !== prevState.statuses;
+            const hpChanged =
+                currState.health.hpCurr !== prevState.health.hpCurr ||
+                currState.health.hpMax !== prevState.health.hpMax;
+            const willChanged =
+                currState.will.willCurr !== prevState.will.willCurr ||
+                currState.will.willMax !== prevState.will.willMax;
+            const evadeChanged = currState.trackers.evade !== prevState.trackers.evade;
+            const clashChanged = currState.trackers.clash !== prevState.trackers.clash;
+            if (statusChanged || hpChanged || willChanged || evadeChanged || clashChanged) {
+                const targetTokenId = currState.tokenId;
+                const charName = (currState.identity.nickname || currState.identity.species || '').toLowerCase().trim();
+                if (targetTokenId || charName) {
+                    updateState(
+                        (prev) => {
+                            const currentRound = prev.rounds[prev.activeRoundIndex];
+                            if (!currentRound) return prev;
+
+                            const targetCombatant = currentRound.combatants.find(
+                                (c) =>
+                                    (targetTokenId && c.tokenId === targetTokenId) ||
+                                    (charName && c.name.toLowerCase().trim() === charName)
+                            );
+                            if (!targetCombatant) return prev;
+
+                            const { statusText, isFainted } = parseStatusesFromMetadata({
+                                'status-list': JSON.stringify(currState.statuses)
+                            });
+
+                            let updated = false;
+                            let nextStatus = targetCombatant.status;
+                            if (statusText !== targetCombatant.status) {
+                                nextStatus = statusText;
+                                updated = true;
+                            }
+
+                            let nextFainted = targetCombatant.isFainted;
+                            if (isFainted || (currState.health.hpCurr <= 0 && currState.health.hpMax > 0)) {
+                                if (!nextFainted) {
+                                    nextFainted = true;
+                                    updated = true;
+                                }
+                            } else if (currState.health.hpCurr > 0 && !isFainted && nextFainted) {
+                                nextFainted = false;
+                                updated = true;
+                            }
+
+                            let nextHpCurr = targetCombatant.hpCurr;
+                            let nextHpMax = targetCombatant.hpMax;
+                            if (
+                                currState.health.hpCurr !== targetCombatant.hpCurr ||
+                                currState.health.hpMax !== targetCombatant.hpMax
+                            ) {
+                                nextHpCurr = currState.health.hpCurr;
+                                nextHpMax = currState.health.hpMax;
+                                updated = true;
+                            }
+
+                            let nextWillCurr = targetCombatant.willCurr;
+                            let nextWillMax = targetCombatant.willMax;
+                            if (
+                                currState.will.willCurr !== targetCombatant.willCurr ||
+                                currState.will.willMax !== targetCombatant.willMax
+                            ) {
+                                nextWillCurr = currState.will.willCurr;
+                                nextWillMax = currState.will.willMax;
+                                updated = true;
+                            }
+
+                            let nextEvade = targetCombatant.evadeUsed;
+                            let nextClash = targetCombatant.clashUsed;
+                            if (currState.trackers.evade !== targetCombatant.evadeUsed) {
+                                nextEvade = currState.trackers.evade;
+                                updated = true;
+                            }
+                            if (currState.trackers.clash !== targetCombatant.clashUsed) {
+                                nextClash = currState.trackers.clash;
+                                updated = true;
+                            }
+
+                            if (!updated) return prev;
+
+                            const newCombatants = currentRound.combatants.map((c) =>
+                                c.id === targetCombatant.id
+                                    ? {
+                                          ...c,
+                                          status: nextStatus,
+                                          isFainted: nextFainted,
+                                          hpCurr: nextHpCurr,
+                                          hpMax: nextHpMax,
+                                          willCurr: nextWillCurr,
+                                          willMax: nextWillMax,
+                                          evadeUsed: nextEvade,
+                                          clashUsed: nextClash
+                                      }
+                                    : c
+                            );
+
+                            const updatedRound: BattleRoundData = {
+                                ...currentRound,
+                                combatants: newCombatants
+                            };
+                            return {
+                                ...prev,
+                                rounds: prev.rounds.map((r, idx) =>
+                                    idx === prev.activeRoundIndex ? updatedRound : r
+                                )
+                            };
+                        },
+                        false,
+                        true
+                    );
+                }
+
+                triggerRefresh(150);
+            }
+        });
+
+        // Periodic gentle fallback heartbeat (every 15s when tab is active)
         const intervalId = setInterval(() => {
             if (typeof document !== 'undefined' && !document.hidden) {
                 refreshTokenStats(true);
             }
-        }, 30000);
+        }, 15000);
+
         return () => {
+            isMounted = false;
             clearTimeout(initialTimer);
+            if (debounceTimer) clearTimeout(debounceTimer);
             clearInterval(intervalId);
+            if (unsubObr) unsubObr();
+            window.removeEventListener('pkr-local-data-changed', handleLocalChange);
+            window.removeEventListener('storage', handleLocalChange);
+            unsubStore();
         };
-    }, [refreshTokenStats]);
+    }, [refreshTokenStats, updateState]);
 
     // 3. Pull from Initiative / Character Sheets
     const pullFromInitiative = useCallback(
@@ -681,6 +845,7 @@ export function useBattleOrganizerTokenOps({
                 syncWill?: boolean;
                 syncEvade?: boolean;
                 syncClash?: boolean;
+                syncActions?: boolean;
             }
         ) => {
             try {
@@ -730,6 +895,13 @@ export function useBattleOrganizerTokenOps({
                     updates['clashes-used'] = combatant.clashUsed;
                 }
 
+                if (syncOptions.syncActions) {
+                    const usedActionsCount = combatant.actions.filter(
+                        (a) => a.status === 'success' || a.status === 'failed' || (a.text && a.text.trim().length > 0)
+                    ).length;
+                    updates['actions-used'] = Math.max(0, Math.min(5, usedActionsCount));
+                }
+
                 if (Object.keys(updates).length === 0) return;
 
                 // Live in-memory update for current window's active character store if it matches
@@ -749,6 +921,9 @@ export function useBattleOrganizerTokenOps({
                     }
                     if (syncOptions.syncClash) {
                         globalStore.updateTracker('clash', combatant.clashUsed);
+                    }
+                    if (syncOptions.syncActions && typeof updates['actions-used'] === 'number') {
+                        globalStore.updateTracker('actions', updates['actions-used'] as number);
                     }
                 }
 
@@ -770,6 +945,21 @@ export function useBattleOrganizerTokenOps({
                     tokenSyncTimersRef.current.delete(targetTokenId!);
                     try {
                         await storageAdapter.saveCharacter(targetTokenId!, updates, 'pokerole-extension/stats');
+                        if (OBR.isAvailable && !isStandaloneMode) {
+                            await OBR.scene.items.updateItems([targetTokenId!], (items) => {
+                                for (const item of items) {
+                                    if (typeof updates['actions-used'] === 'number') {
+                                        item.metadata['actions-used'] = updates['actions-used'];
+                                    }
+                                    if (typeof updates['evasions-used'] === 'boolean') {
+                                        item.metadata['evasions-used'] = updates['evasions-used'];
+                                    }
+                                    if (typeof updates['clashes-used'] === 'boolean') {
+                                        item.metadata['clashes-used'] = updates['clashes-used'];
+                                    }
+                                }
+                            });
+                        }
                         console.log(`[useBattleOrganizer] Synced updates for "${combatant.name}" to token:`, updates);
                     } catch (err) {
                         console.warn('[useBattleOrganizer] Failed to save token updates:', err);

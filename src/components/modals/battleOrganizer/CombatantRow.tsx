@@ -4,7 +4,8 @@ import { isStandaloneMode } from '../../../utils/storageAdapter';
 import { imageManager } from '../../../utils/imageManager';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { STATUS_OPTIONS } from '../../../data/constants';
-import { Trash2, Dices, Shield, Swords, User, Skull, X, FileText, Minus, Plus, Lock } from 'lucide-react';
+import { Trash2, Dices, Shield, Swords, User, Skull, X, FileText, Minus, Plus, Lock, RotateCcw } from 'lucide-react';
+import { addRollLogEntry } from '../../../utils/diceRoller';
 
 interface CombatantRowProps {
     combatant: CombatantRowData;
@@ -127,12 +128,45 @@ export function CombatantRow({
     };
 
     const handleActionTextChange = (actionIndex: number, text: string) => {
+        const prevAction = combatant.actions[actionIndex];
         const newActions = [...combatant.actions] as CombatantRowData['actions'];
         newActions[actionIndex] = {
             ...newActions[actionIndex],
             text
         };
-        handleFieldChange('actions', newActions);
+
+        const prevWasEvade = prevAction && /evad|dodge/i.test(prevAction.text.trim());
+        const nowIsEvade = /evad|dodge/i.test(text.trim());
+        const prevWasClash = prevAction && /clash/i.test(prevAction.text.trim());
+        const nowIsClash = /clash/i.test(text.trim());
+
+        let nextEvadeUsed = combatant.evadeUsed;
+        let nextClashUsed = combatant.clashUsed;
+
+        if (nowIsEvade) {
+            nextEvadeUsed = true;
+        } else if (prevWasEvade) {
+            const hasOtherEvade = newActions.some(
+                (a, idx) => idx !== actionIndex && /evad|dodge/i.test(a.text.trim())
+            );
+            if (!hasOtherEvade) nextEvadeUsed = false;
+        }
+
+        if (nowIsClash) {
+            nextClashUsed = true;
+        } else if (prevWasClash) {
+            const hasOtherClash = newActions.some(
+                (a, idx) => idx !== actionIndex && /clash/i.test(a.text.trim())
+            );
+            if (!hasOtherClash) nextClashUsed = false;
+        }
+
+        onUpdate({
+            ...combatant,
+            actions: newActions,
+            evadeUsed: nextEvadeUsed,
+            clashUsed: nextClashUsed
+        });
     };
 
     const handleActionStatusToggle = (actionIndex: number, targetStatus: ActionStatus) => {
@@ -145,6 +179,63 @@ export function CombatantRow({
             status: nextStatus
         };
         handleFieldChange('actions', newActions);
+    };
+
+    const handleActionClear = (actionIndex: number) => {
+        const clearedAction = combatant.actions[actionIndex];
+        if (!clearedAction.text && clearedAction.status === 'none') return;
+
+        const actionText = clearedAction.text.trim() || `Action ${actionIndex + 1}`;
+        const newActions = [...combatant.actions] as CombatantRowData['actions'];
+        newActions[actionIndex] = {
+            text: '',
+            status: 'none'
+        };
+
+        const isEvade = /evad|dodge/i.test(clearedAction.text.trim());
+        const isClash = /clash/i.test(clearedAction.text.trim());
+
+        const hasOtherEvade = newActions.some(
+            (a, idx) => idx !== actionIndex && /evad|dodge/i.test(a.text.trim())
+        );
+        const hasOtherClash = newActions.some(
+            (a, idx) => idx !== actionIndex && /clash/i.test(a.text.trim())
+        );
+
+        let nextEvadeUsed = combatant.evadeUsed;
+        if (isEvade && !hasOtherEvade) {
+            nextEvadeUsed = false;
+        }
+
+        let nextClashUsed = combatant.clashUsed;
+        if (isClash && !hasOtherClash) {
+            nextClashUsed = false;
+        }
+
+        onUpdate({
+            ...combatant,
+            actions: newActions,
+            evadeUsed: nextEvadeUsed,
+            clashUsed: nextClashUsed
+        });
+
+        // Notify in roll log that the action was cleared and restored
+        const charName = combatant.name.trim() || 'Combatant';
+        const reactionMsg =
+            isEvade && !hasOtherEvade
+                ? ' Evade reaction was reset to available.'
+                : isClash && !hasOtherClash
+                ? ' Clash reaction was reset to available.'
+                : '';
+
+        addRollLogEntry(
+            `Action Restored: ${charName}`,
+            `Action ${actionIndex + 1} (${actionText}) was cleared and restored to the action counter.${reactionMsg}`,
+            combatant.image || '',
+            charName,
+            charName,
+            combatant.tokenId
+        );
     };
 
     const handleToggleEvade = () => {
@@ -505,6 +596,15 @@ export function CombatantRow({
                                         aria-label={`Action ${actIdx + 1} failed`}
                                     >
                                         ✗
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="bo-status-btn bo-status-btn--clear"
+                                        onClick={() => handleActionClear(actIdx)}
+                                        title={`Quick Clear: Reset Action ${actIdx + 1} and restore to action counter`}
+                                        aria-label={`Action ${actIdx + 1} clear`}
+                                    >
+                                        <RotateCcw size={10} />
                                     </button>
                                 </div>
                             </div>

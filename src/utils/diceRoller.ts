@@ -22,7 +22,8 @@ export function addRollLogEntry(
     icon: string,
     player: string,
     characterName?: string,
-    tokenId?: string
+    tokenId?: string,
+    rollType?: string
 ) {
     const activeTokenId = tokenId || useCharacterStore.getState().tokenId || undefined;
     const rollLogData = {
@@ -32,7 +33,8 @@ export function addRollLogEntry(
         tokenId: activeTokenId,
         label,
         result,
-        icon: icon || `${import.meta.env.BASE_URL || '/'}pokeball.svg`
+        icon: icon || `${import.meta.env.BASE_URL || '/'}pokeball.svg`,
+        rollType
     };
     try {
         const stored = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
@@ -527,6 +529,7 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 label: finalLabel,
                 result: finalCompiledMsg,
                 icon,
+                rollType,
                 targetVisibility
             };
 

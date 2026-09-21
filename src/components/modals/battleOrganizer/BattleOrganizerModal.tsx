@@ -173,11 +173,24 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
         });
     };
 
-    const handleMarkActionFromRoll = (combatantId: string, moveName: string, status: 'success' | 'failed') => {
+    const handleMarkActionFromRoll = (
+        combatantId: string,
+        moveName: string,
+        status: 'success' | 'failed',
+        options?: { isEvade?: boolean; isClash?: boolean }
+    ) => {
         const currentCombatants = currentRound?.combatants || [];
         const combatant = currentCombatants.find((c) => c.id === combatantId);
         if (!combatant) return;
-        updateCombatant(markCombatantActionStatus(combatant, moveName, status));
+
+        let updated = markCombatantActionStatus(combatant, moveName, status);
+        if (options?.isEvade || /^(?:evade|evasion)$/i.test(moveName.trim())) {
+            updated = { ...updated, evadeUsed: true };
+        }
+        if (options?.isClash || /(?:physical clash|special clash|^clash$)/i.test(moveName.trim())) {
+            updated = { ...updated, clashUsed: true };
+        }
+        updateCombatant(updated);
     };
 
     useEffect(() => {

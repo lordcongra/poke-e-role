@@ -42,7 +42,7 @@
 
 .derived-board__box {
     flex: 1;
-    padding: 0;
+    padding: 0 !important;
     overflow: hidden;
     border: 2px solid var(--border);
     border-radius: 4px;

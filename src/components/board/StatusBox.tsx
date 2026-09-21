@@ -22,7 +22,7 @@ export function StatusBox() {
     const STATUS_OPTIONS_COMBINED = [...STATUS_OPTIONS, ...customStatuses.map((s) => s.name)];
 
     return (
-        <div className="sheet-panel health-section__box status-box">
+        <div className="health-section__box status-box">
             <div className="status-box__header theme-header--secondary">
                 <span className="status-box__header-title">
                     STATUS{' '}

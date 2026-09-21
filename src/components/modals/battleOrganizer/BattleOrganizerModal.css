@@ -1450,6 +1450,16 @@
     box-shadow: 0 0 6px rgba(239, 83, 80, 0.6);
 }
 
+.bo-status-btn--clear {
+    color: var(--text-muted, #777);
+}
+
+.bo-status-btn--clear:hover {
+    color: var(--semantic-danger, #ef4444);
+    border-color: var(--semantic-danger, #ef4444);
+    background: color-mix(in srgb, var(--semantic-danger, #ef4444) 15%, transparent);
+}
+
 /* --- Row Tools --- */
 .bo-tools-group {
     display: flex;
