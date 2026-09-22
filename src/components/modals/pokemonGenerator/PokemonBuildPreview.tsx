@@ -1,7 +1,6 @@
 import React from 'react';
 import type { TempBuild, TempMove } from '../../../store/storeTypes';
-import { useCharacterStore } from '../../../store/useCharacterStore';
-import { CombatStat, SocialStat, Skill, SKILL_CATEGORIES } from '../../../types/enums';
+import { CombatStat, SocialStat, SKILL_CATEGORIES } from '../../../types/enums';
 import { TYPE_COLORS } from '../../../data/constants';
 import type { PokedexLookupItem } from '../../../utils/pokemonFilterUtils';
 import { GeneratorPreviewStatSpinner } from './GeneratorPreviewStatSpinner';
@@ -28,8 +27,9 @@ export function getPokemonBaseStat(
     if (build.baseStats && build.baseStats[lowerKey] !== undefined) {
         return Number(build.baseStats[lowerKey]);
     }
-    const pd = build.pokemonData as Record<string, any> | undefined;
-    if (pd?.BaseStats) {
+    const pd = build.pokemonData as Record<string, unknown> | undefined;
+    const baseStats = pd?.BaseStats as Record<string, unknown> | undefined;
+    if (baseStats) {
         const fullKeyMap: Record<string, string> = {
             str: 'Strength',
             dex: 'Dexterity',
@@ -38,11 +38,11 @@ export function getPokemonBaseStat(
             ins: 'Insight'
         };
         const mappedName = fullKeyMap[lowerKey];
-        if (mappedName && pd.BaseStats[mappedName] !== undefined) {
-            return Number(pd.BaseStats[mappedName]);
+        if (mappedName && baseStats[mappedName] !== undefined) {
+            return Number(baseStats[mappedName]);
         }
-        if (pd.BaseStats[statKey.toUpperCase()] !== undefined) {
-            return Number(pd.BaseStats[statKey.toUpperCase()]);
+        if (baseStats[statKey.toUpperCase()] !== undefined) {
+            return Number(baseStats[statKey.toUpperCase()]);
         }
     }
     return fallback;
@@ -54,7 +54,7 @@ export function getPokemonTypes(
     metadata?: Record<string, unknown>,
     lookupList?: PokedexLookupItem[]
 ): string[] {
-    const pd = build.pokemonData as Record<string, any> | undefined;
+    const pd = build.pokemonData as Record<string, unknown> | undefined;
     const t1 = String(pd?.Type1 || pd?.type1 || metadata?.type1 || '').trim();
     const t2 = String(pd?.Type2 || pd?.type2 || metadata?.type2 || '').trim();
     const types = [t1, t2].filter((t) => t && t.toLowerCase() !== 'none' && t.toLowerCase() !== 'undefined');
@@ -80,10 +80,6 @@ export const PokemonBuildPreview: React.FC<PokemonBuildPreviewProps> = ({
     onOpenTooltip,
     actionSlot
 }) => {
-    const baseSocials = useCharacterStore((state) => state.socials);
-    const baseSkills = useCharacterStore((state) => state.skills);
-    const willMax = useCharacterStore((state) => state.will.willMax);
-
     const species = build.species;
     const types = getPokemonTypes(species, build, metadata, pokedexLookup);
 
@@ -185,7 +181,7 @@ export const PokemonBuildPreview: React.FC<PokemonBuildPreviewProps> = ({
                                 </span>
                                 <GeneratorPreviewStatSpinner
                                     value={baseValue + allocated}
-                                    onChange={(val) => onUpdateAttr(statistic, val - baseValue)}
+                                    onChange={(val) => onUpdateAttr(statistic, Math.max(0, val - baseValue))}
                                 />
                             </div>
                         );
@@ -200,7 +196,7 @@ export const PokemonBuildPreview: React.FC<PokemonBuildPreviewProps> = ({
                 </span>
                 <div className="generator-preview__grid-5">
                     {Object.values(SocialStat).map((statistic) => {
-                        const baseValue = Number(baseSocials[statistic]?.base || 1);
+                        const baseValue = 1;
                         const allocated = build.soc[statistic] || 0;
                         return (
                             <div key={statistic} className="generator-preview__stat-column">
@@ -209,7 +205,7 @@ export const PokemonBuildPreview: React.FC<PokemonBuildPreviewProps> = ({
                                 </span>
                                 <GeneratorPreviewStatSpinner
                                     value={baseValue + allocated}
-                                    onChange={(val) => onUpdateSoc(statistic, val - baseValue)}
+                                    onChange={(val) => onUpdateSoc(statistic, Math.max(0, val - baseValue))}
                                 />
                             </div>
                         );
@@ -217,28 +213,24 @@ export const PokemonBuildPreview: React.FC<PokemonBuildPreviewProps> = ({
                 </div>
             </div>
 
-            {/* Skills (Base + Rank) */}
+            {/* Skills */}
             <div className="generator-preview__section">
-                <span className="generator-preview__section-title text-title-primary">Skills (Base + Rank)</span>
+                <span className="generator-preview__section-title text-title-primary">Skills</span>
                 <div className="generator-preview__skill-categories">
                     {SKILL_CATEGORIES.map((category) => (
                         <div key={category.name} className="generator-preview__skill-group">
                             <span className="generator-preview__skill-group-title">{category.name}</span>
                             <div className="generator-preview__grid-4">
                                 {category.skills.map((skill) => {
-                                    const baseValue =
-                                        (build.pokemonData?.[skill.label] as number) ??
-                                        (build.pokemonData?.[skill.key] as number) ??
-                                        Number(baseSkills[skill.key]?.base || 0);
-                                    const allocated = build.skills[skill.key] || 0;
+                                    const skillVal = build.skills[skill.key] || 0;
                                     return (
                                         <div key={skill.key} className="generator-preview__stat-column">
                                             <span className="generator-preview__stat-label text-label">
                                                 {skill.label}
                                             </span>
                                             <GeneratorPreviewStatSpinner
-                                                value={baseValue + allocated}
-                                                onChange={(val) => onUpdateSkill(skill.key, val - baseValue)}
+                                                value={skillVal}
+                                                onChange={(val) => onUpdateSkill(skill.key, Math.max(0, val))}
                                             />
                                         </div>
                                     );
@@ -259,15 +251,25 @@ export const PokemonBuildPreview: React.FC<PokemonBuildPreviewProps> = ({
                         const statKey = move.attr ? move.attr.toLowerCase() : 'str';
                         const skillKey = move.skill ? move.skill.toLowerCase() : 'brawl';
                         const isCombatStat = Object.values(CombatStat).includes(statKey as CombatStat);
-                        const baseAttrVal = isCombatStat
-                            ? getPokemonBaseStat(build, statKey, statKey === 'ins' ? 1 : 2)
-                            : Number(baseSocials[statKey as SocialStat]?.base || (statKey === 'will' ? willMax : 1));
-                        const allocatedAttrVal = build.attr[statKey] || build.soc[statKey] || 0;
-                        const baseSkillVal =
-                            (build.pokemonData?.[skillKey] as number) ??
-                            Number(baseSkills[skillKey as Skill]?.base || 0);
-                        const allocatedSkillVal = build.skills[skillKey] || 0;
-                        const accuracyPool = baseAttrVal + allocatedAttrVal + baseSkillVal + allocatedSkillVal;
+                        const isSocialStat = Object.values(SocialStat).includes(statKey as SocialStat);
+
+                        let attrVal = 0;
+                        if (isCombatStat) {
+                            const baseStatVal = getPokemonBaseStat(build, statKey, statKey === 'ins' ? 1 : 2);
+                            const allocatedStatVal = build.attr[statKey] || 0;
+                            attrVal = baseStatVal + allocatedStatVal;
+                        } else if (isSocialStat) {
+                            attrVal = 1 + (build.soc[statKey] || 0);
+                        } else if (statKey === 'will') {
+                            const pd = (build.pokemonData || {}) as Record<string, unknown>;
+                            const willBase = Number(pd.BaseWill) || 3;
+                            const insBase = getPokemonBaseStat(build, 'ins', 1);
+                            const insAllocated = build.attr['ins'] || 0;
+                            attrVal = willBase + insBase + insAllocated;
+                        }
+
+                        const skillVal = skillKey && skillKey !== 'none' ? (build.skills[skillKey] || 0) : 0;
+                        const accuracyPool = attrVal + skillVal;
 
                         const damageStatistic = move.dmgStat ? move.dmgStat.toLowerCase() : '';
                         let damagePool: string | number = 'N/A';

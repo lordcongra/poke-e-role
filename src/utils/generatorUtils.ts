@@ -247,6 +247,13 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
 
     const fakeState = {
         ...state,
+        socials: Object.values(SocialStat).reduce(
+            (acc, s) => {
+                acc[s] = { base: 1, rank: 0, buff: 0, debuff: 0, limit: 5 };
+                return acc;
+            },
+            {} as CharacterState['socials']
+        ),
         stats: {
             ...state.stats,
             [CombatStat.STR]: { ...state.stats[CombatStat.STR], base: baseStr, limit: limitStr },
@@ -561,9 +568,9 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
             if (COMBAT_STATS.includes(opt)) {
                 val = (genAttr[opt] || 0) + (bStats[opt] || 0);
             } else if (SOCIAL_STATS.includes(opt)) {
-                val = (genSoc[opt] || 0) + (state.socials[opt as SocialStat]?.base || 0);
+                val = (genSoc[opt] || 0) + 1;
             } else if (opt === 'will') {
-                val = state.will.willMax;
+                val = baseIns + (genAttr['ins'] || 0) + (Number(pdRecord.BaseWill) || 3);
             }
             if (val > maxVal) {
                 maxVal = val;
@@ -582,18 +589,7 @@ export async function generateBuild(config: GeneratorConfig, state: CharacterSta
         let best = options[0];
         let maxVal = -1;
         for (const opt of options) {
-            let base = 0;
-            if (state.skills[opt as Skill]) base = state.skills[opt as Skill].base;
-            else {
-                for (const cat of state.extraCategories) {
-                    const sk = cat.skills.find((s) => s.id === opt);
-                    if (sk) {
-                        base = sk.base;
-                        break;
-                    }
-                }
-            }
-            const val = (genSkills[opt] || 0) + base;
+            const val = genSkills[opt] || 0;
             if (val > maxVal) {
                 maxVal = val;
                 best = opt;
