@@ -41,10 +41,10 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
     'Super Luck': {
         name: 'Super Luck',
-        tags: '[High Crit]',
+        tags: '[Stacking High Crit]',
         autoActive: true,
-        summary: 'Increases critical hit threshold.',
-        benefitDisplay: 'High Crit'
+        summary: 'Increases critical hit threshold. Stacks with moves that have High Critical and held items like Razor Claw.',
+        benefitDisplay: 'Stacking High Crit'
     },
     Sniper: {
         name: 'Sniper',
@@ -507,10 +507,16 @@ export function isHighRank(rank?: string): boolean {
 export function getKnownAbility(name: string, rank?: string): KnownAbility | undefined {
     if (!name) return undefined;
     const cleanName = name.replace(/\s*\(HA\)$/i, '').trim();
-    const base = KNOWN_ABILITIES[cleanName];
+    let base = KNOWN_ABILITIES[cleanName];
+    if (!base) {
+        const lower = cleanName.toLowerCase();
+        const foundKey = Object.keys(KNOWN_ABILITIES).find((k) => k.toLowerCase() === lower);
+        if (foundKey) base = KNOWN_ABILITIES[foundKey];
+    }
     if (!base) return undefined;
 
-    if (cleanName === 'Huge Power' || cleanName === 'Pure Power') {
+    const baseName = base.name || cleanName;
+    if (baseName === 'Huge Power' || baseName === 'Pure Power') {
         const high = isHighRank(rank);
         return {
             ...base,

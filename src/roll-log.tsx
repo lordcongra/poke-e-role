@@ -12,6 +12,7 @@ interface RollData {
     label: string;
     result: string;
     icon: string;
+    isCrit?: boolean;
 }
 
 // Strictly type the custom Window property for HMR to avoid 'any'
@@ -190,37 +191,49 @@ export function RollLog() {
                     </button>
                 </div>
                 <div className="roll-log__list">
-                    {rolls.map((r) => (
-                        <div key={r.id} className="roll-log__entry">
-                            <div className="roll-log__entry-header">
-                                <img
-                                    src={resolvedIcons[r.id] || r.icon}
-                                    alt="Token"
-                                    className="roll-log__entry-icon"
-                                    onError={(e) => {
-                                        e.currentTarget.src = `${import.meta.env.BASE_URL || '/'}pokeball.svg`;
-                                    }}
-                                />
-                                <strong className="text-title-primary" style={{ fontSize: '0.9rem' }}>
-                                    {r.player}
-                                </strong>
-                                <button
-                                    type="button"
-                                    onClick={() => dismiss(r.id)}
-                                    className="roll-log__entry-dismiss text-subtext"
-                                    title="Dismiss"
+                    {rolls.map((r) => {
+                        const isCrit = Boolean(
+                            r.isCrit ||
+                            /critical hit/i.test(r.result) ||
+                            /CRITICAL HIT/i.test(r.label) ||
+                            /It's a critical hit/i.test(r.result)
+                        );
+                        return (
+                            <div key={r.id} className={`roll-log__entry ${isCrit ? 'roll-log__entry--crit' : ''}`}>
+                                <div className="roll-log__entry-header">
+                                    <img
+                                        src={resolvedIcons[r.id] || r.icon}
+                                        alt="Token"
+                                        className="roll-log__entry-icon"
+                                        onError={(e) => {
+                                            e.currentTarget.src = `${import.meta.env.BASE_URL || '/'}pokeball.svg`;
+                                        }}
+                                    />
+                                    <strong className="text-title-primary" style={{ fontSize: '0.9rem' }}>
+                                        {r.player}
+                                    </strong>
+                                    {isCrit && <span className="roll-log__crit-badge">Critical Hit!</span>}
+                                    <button
+                                        type="button"
+                                        onClick={() => dismiss(r.id)}
+                                        className="roll-log__entry-dismiss text-subtext"
+                                        title="Dismiss"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                                <div className="roll-log__entry-label text-label" style={{ color: 'var(--primary)' }}>
+                                    {r.label}
+                                </div>
+                                <div
+                                    className="roll-log__entry-result text-subtext"
+                                    style={{ color: 'var(--text-main)' }}
                                 >
-                                    <X size={16} />
-                                </button>
+                                    {r.result}
+                                </div>
                             </div>
-                            <div className="roll-log__entry-label text-label" style={{ color: 'var(--primary)' }}>
-                                {r.label}
-                            </div>
-                            <div className="roll-log__entry-result text-subtext" style={{ color: 'var(--text-main)' }}>
-                                {r.result}
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
         </div>

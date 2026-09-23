@@ -36,10 +36,23 @@ export function matchesPowerFilter(power: number | string, category: string, sel
 }
 
 /**
+ * Convert CamelCase or PascalCase stat names (e.g. "SameAsCopiedMove") into spaced words ("Same As Copied Move").
+ */
+export function formatStatName(raw?: string): string {
+    if (!raw) return '';
+    const trimmed = raw.trim();
+    if (!trimmed) return '';
+    return trimmed
+        .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+        .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+        .trim();
+}
+
+/**
  * Format Accuracy string from Accuracy1 and Accuracy2.
  */
 export function formatAccuracy(acc1?: string, acc2?: string): string {
-    const parts = [acc1, acc2].filter(Boolean);
+    const parts = [formatStatName(acc1), formatStatName(acc2)].filter(Boolean);
     return parts.length > 0 ? parts.join(' + ') : 'None';
 }
 
@@ -47,9 +60,10 @@ export function formatAccuracy(acc1?: string, acc2?: string): string {
  * Format Damage string from Damage1, Damage2, and Power.
  */
 export function formatDamage(dmg1?: string, dmg2?: string, power?: number | string): string {
-    const parts = [dmg1, dmg2].filter(Boolean);
-    if (parts.length === 0) return power !== undefined && power !== 0 ? `+${power}` : '-';
-    return power !== undefined && power !== 0 ? `${parts.join(' + ')} + ${power}` : parts.join(' + ');
+    const parts = [formatStatName(dmg1), formatStatName(dmg2)].filter(Boolean);
+    const hasPower = power !== undefined && power !== 0 && String(power).trim() !== '' && String(power).trim() !== '0';
+    if (parts.length === 0) return hasPower ? `+${power}` : '-';
+    return hasPower ? `${parts.join(' + ')} + ${power}` : parts.join(' + ');
 }
 
 /**

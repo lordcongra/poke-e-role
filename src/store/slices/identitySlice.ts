@@ -26,6 +26,7 @@ const EXCLUDED_FROM_TOKEN_SAVE = new Set([
     'gmOnlyMatchups',
     'gmOnlyDamageOverride',
     'gmOnlyTrackers',
+    'gmOnlyAttributeLock',
     'gmDemoMode',
     'roomDefaultScale',
     'sceneDefaultScale'
@@ -95,6 +96,9 @@ const OBR_KEY_MAP: Record<string, string> = {
     teraImageUrl: 'tera-image-url',
     gmDemoMode: 'gm-demo-mode',
     gmOnlyDamageOverride: 'gm-only-damage-override',
+    gmOnlyAttributeLock: 'gm-only-attribute-lock',
+    coreLocked: 'core-locked',
+    socialLocked: 'social-locked',
     themePrimaryOverride: 'theme-primary-override',
     themeSecondaryOverride: 'theme-secondary-override',
     dexId: 'dex-id',
@@ -248,6 +252,9 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         gmOnlyMatchups: false,
         gmOnlyDamageOverride: false,
         gmOnlyTrackers: false,
+        gmOnlyAttributeLock: true,
+        coreLocked: true,
+        socialLocked: true,
         gmDemoMode: false,
 
         // Apply Local Settings
@@ -331,10 +338,16 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 localStorage.setItem('pkr_room_default_scale', String(settings.roomDefaultScale));
             } catch {}
         }
+        const cleanSettings: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(settings)) {
+            if (v !== undefined) {
+                cleanSettings[k] = v;
+            }
+        }
         set((state) => ({
             identity: {
                 ...state.identity,
-                ...settings
+                ...cleanSettings
             }
         }));
     },

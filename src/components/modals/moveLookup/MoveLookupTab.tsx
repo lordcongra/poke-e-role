@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Loader2, AlertCircle, Search } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { TYPE_COLORS, POKEMON_TYPES } from '../../../data/constants';
+import { isStandaloneMode } from '../../../utils/storageAdapter';
 import { useMoveLookup } from './useMoveLookup';
 import { MoveLookupFilterPanel } from './MoveLookupFilterPanel';
 import { MoveLookupCard } from './MoveLookupCard';
@@ -14,17 +15,22 @@ interface MoveLookupTabProps {
 
 export function MoveLookupTab({ initialMoveName, onSelectPokemon, onFilterPokemonByMove }: MoveLookupTabProps) {
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
+    const role = useCharacterStore((state) => state.role);
+
+    const visibleTypes = useMemo(() => {
+        return roomCustomTypes.filter((t) => isStandaloneMode || role === 'GM' || !t.gmOnly);
+    }, [roomCustomTypes, role]);
 
     const allTypes = useMemo(() => {
         const standard = POKEMON_TYPES.filter(Boolean);
-        const custom = roomCustomTypes.map((t) => t.name);
+        const custom = visibleTypes.map((t) => t.name);
         return [...standard, ...custom];
-    }, [roomCustomTypes]);
+    }, [visibleTypes]);
 
     const allTypeColors: Record<string, string> = useMemo(() => {
-        const customMap = Object.fromEntries(roomCustomTypes.map((t) => [t.name, t.color]));
+        const customMap = Object.fromEntries(visibleTypes.map((t) => [t.name, t.color]));
         return { ...TYPE_COLORS, ...customMap };
-    }, [roomCustomTypes]);
+    }, [visibleTypes]);
 
     const {
         movesData,

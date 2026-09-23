@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { TYPE_COLORS } from '../../../data/constants';
+import { isStandaloneMode } from '../../../utils/storageAdapter';
 import { fetchMoveLookupIndex, fetchMoveData } from '../../../utils/api';
 import type { MoveLookupEntry } from '../../../utils/apiTypes';
 import { broadcastInfo } from '../../../utils/diceRoller';
@@ -45,12 +46,14 @@ export function MoveDetailModal({ moveName, onClose }: MoveDetailModalProps) {
     // Global Store States
     const moves = useCharacterStore((state) => state.moves);
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
+    const role = useCharacterStore((state) => state.role);
 
     // Type Color Mapping (Defaults + Custom Room Types)
     const allTypeColors: Record<string, string> = useMemo(() => {
-        const customTypeMap = Object.fromEntries(roomCustomTypes.map((t) => [t.name, t.color]));
+        const visibleTypes = roomCustomTypes.filter((t) => isStandaloneMode || role === 'GM' || !t.gmOnly);
+        const customTypeMap = Object.fromEntries(visibleTypes.map((t) => [t.name, t.color]));
         return { ...TYPE_COLORS, ...customTypeMap };
-    }, [roomCustomTypes]);
+    }, [roomCustomTypes, role]);
 
     // Check if Pokemon already has this move
     const isLearned = useMemo(() => {

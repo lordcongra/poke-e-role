@@ -43,6 +43,15 @@
     color: var(--semantic-danger);
 }
 
+.social-table__lock-btn {
+    padding: 2px 6px;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+}
+
 .social-table__reset-btn {
     padding: 2px 6px;
     white-space: nowrap;

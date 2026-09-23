@@ -132,3 +132,26 @@
     padding: 6px;
     border-radius: 4px;
 }
+
+.roll-log-widget__entry--crit {
+    border: 1.5px solid #f59e0b;
+    box-shadow:
+        0 0 10px rgba(245, 158, 11, 0.25),
+        inset 0 0 6px rgba(245, 158, 11, 0.1);
+    background: linear-gradient(135deg, var(--row-odd) 75%, rgba(245, 158, 11, 0.12));
+}
+
+.roll-log-widget__crit-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: linear-gradient(135deg, #d97706, #f59e0b);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 999px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 1px 4px rgba(245, 158, 11, 0.4);
+    letter-spacing: 0.02em;
+}

@@ -9,6 +9,7 @@ interface RollData {
     label: string;
     result: string;
     icon: string;
+    isCrit?: boolean;
 }
 
 interface RollLogWidgetProps {
@@ -124,8 +125,17 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
                 <div className="roll-log-widget__list">
                     {rolls.map((r) => {
                         const iconUrl = resolvedIcons[r.id] || r.icon;
+                        const isCrit = Boolean(
+                            r.isCrit ||
+                            /critical hit/i.test(r.result) ||
+                            /CRITICAL HIT/i.test(r.label) ||
+                            /It's a critical hit/i.test(r.result)
+                        );
                         return (
-                            <div key={r.id} className="roll-log-widget__entry">
+                            <div
+                                key={r.id}
+                                className={`roll-log-widget__entry ${isCrit ? 'roll-log-widget__entry--crit' : ''}`}
+                            >
                                 <div className="roll-log-widget__entry-header">
                                     <img
                                         src={iconUrl}
@@ -138,6 +148,7 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
                                     <strong className="text-title-primary" style={{ fontSize: '0.85rem' }}>
                                         {r.player}
                                     </strong>
+                                    {isCrit && <span className="roll-log-widget__crit-badge">Critical Hit!</span>}
                                     <button
                                         type="button"
                                         onClick={() => dismiss(r.id)}

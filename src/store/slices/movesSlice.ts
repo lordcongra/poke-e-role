@@ -200,9 +200,19 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                         };
                     }
 
-                    const rawAcc1 = String(data.Accuracy1 || 'STR');
-                    const rawAcc2 = String(data.Accuracy2 || 'None');
-                    const rawDmg1 = String(data.Damage1 || 'None');
+                    const formatStatName = (raw?: string): string => {
+                        if (!raw) return '';
+                        const trimmed = raw.trim();
+                        if (!trimmed) return '';
+                        return trimmed
+                            .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+                            .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+                            .trim();
+                    };
+
+                    const rawAcc1 = formatStatName(String(data.Accuracy1 || 'STR'));
+                    const rawAcc2 = formatStatName(String(data.Accuracy2 || 'None'));
+                    const rawDmg1 = formatStatName(String(data.Damage1 || 'None'));
 
                     const accString =
                         rawAcc2.toLowerCase() === 'none' ? `Accuracy: ${rawAcc1}` : `Accuracy: ${rawAcc1} + ${rawAcc2}`;

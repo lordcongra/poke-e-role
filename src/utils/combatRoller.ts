@@ -9,7 +9,8 @@ import {
     calculateStatTotal,
     calculateSkillTotal,
     getRankBonusStats,
-    calculateBaseAccuracy
+    calculateBaseAccuracy,
+    calculateCriticalRequirement
 } from './combatMath';
 import { parseCombatTags } from './tagParser';
 import { rollDicePlus } from './diceRoller';
@@ -143,13 +144,8 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
         useCharacterStore.getState().updateTracker('firstHitAcc', false);
     }
 
-    let criticalRequirement = requiredSuccesses + 3;
-    const hasItemHighCrit = itemBuffs.highCritStacks > 0;
-    const hasMoveHighCrit = moveDescription.includes('high critical');
-    const baseCriticalReductions = hasItemHighCrit || hasMoveHighCrit ? 1 : 0;
-    const totalCriticalReductions = baseCriticalReductions + itemBuffs.stackingHighCritStacks;
-
-    criticalRequirement = Math.max(1, criticalRequirement - totalCriticalReductions);
+    const critResult = calculateCriticalRequirement(move, requiredSuccesses, state, itemBuffs);
+    const criticalRequirement = critResult.criticalRequirement;
 
     useCharacterStore.getState().incrementAction();
 
@@ -170,6 +166,11 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
 
     tags.push(`Need ${requiredSuccesses} Succ`);
     tags.push(`Crit on ${criticalRequirement}+`);
+    for (const expl of critResult.critExplanationTags) {
+        if (!tags.includes(expl)) {
+            tags.push(expl);
+        }
+    }
 
     const isValidForBank = itemBuffs.accFaceAddsDmg > 0 && move.category !== 'Status';
 
@@ -191,9 +192,18 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
         tags.push(`CANNOT BE EVADED`);
     }
 
-    if (itemBuffs.accItemNames.length > 0) tags.push(`Item: ${itemBuffs.accItemNames.join(', ')}`);
-    if (itemBuffs.accAbilityNames && itemBuffs.accAbilityNames.length > 0)
-        tags.push(`Ability: ${itemBuffs.accAbilityNames.join(', ')}`);
+    if (itemBuffs.accItemNames.length > 0) {
+        const uniqueItems = Array.from(new Set(itemBuffs.accItemNames));
+        tags.push(`Item: ${uniqueItems.join(', ')}`);
+    }
+    if (itemBuffs.accAbilityNames && itemBuffs.accAbilityNames.length > 0) {
+        const filteredAbilities = Array.from(new Set(itemBuffs.accAbilityNames)).filter(
+            (name) => !tags.includes(`Ability: ${name}`)
+        );
+        if (filteredAbilities.length > 0) {
+            tags.push(`Ability: ${filteredAbilities.join(', ')}`);
+        }
+    }
 
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';
 

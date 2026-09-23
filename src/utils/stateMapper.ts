@@ -314,6 +314,20 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
         );
         if (known) {
             loadedTags = known.tags;
+            const rawMetaTags = String(meta['ability-tags'] || '').trim();
+            if (rawMetaTags && rawMetaTags !== known.tags) {
+                let cleanOldTags = rawMetaTags;
+                if (cleanLoadedAbility.toLowerCase() === 'super luck') {
+                    cleanOldTags = cleanOldTags.replace(/\[\s*high crit(?:ical)?\s*\]/gi, '').trim();
+                }
+                const knownLower = known.tags.toLowerCase();
+                const extra = cleanOldTags
+                    .split(/\s+(?=\[)/)
+                    .map((t) => t.trim())
+                    .filter((t) => t && !knownLower.includes(t.toLowerCase()))
+                    .join(' ');
+                if (extra) loadedTags = `${loadedTags} ${extra}`.trim();
+            }
         } else if (custom) {
             if (!loadedTags) {
                 loadedTags = `${custom.effect || ''} ${custom.description || ''}`.trim();
@@ -372,6 +386,8 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
         social: String(meta['social'] || ''),
         hand: String(meta['hand'] || ''),
         isNPC: meta['is-npc'] === true || meta['is-npc'] === 'true',
+        coreLocked: meta['core-locked'] !== undefined ? Boolean(meta['core-locked']) : true,
+        socialLocked: meta['social-locked'] !== undefined ? Boolean(meta['social-locked']) : true,
         pokemonBackup: String(meta['pokemon-backup'] || ''),
         trainerBackup: String(meta['trainer-backup'] || ''),
 
@@ -417,9 +433,6 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
         settingDefBadge: meta['setting-def-badge'] !== false && meta['setting-def-badge'] !== 'false',
         gmDefBadge: meta['gm-def-badge'] === true || meta['gm-def-badge'] === 'true',
         settingEcoBadge: meta['setting-eco-badge'] !== false && meta['setting-eco-badge'] !== 'false',
-        gmEcoBadge: meta['gm-eco-badge'] === true || meta['gm-eco-badge'] === 'true',
-        gmOnlyLootGen: meta['gm-only-loot-gen'] !== false && meta['gm-only-loot-gen'] !== 'false',
-        gmOnlyGenerators: meta['gm-only-generators'] !== false && meta['gm-only-generators'] !== 'false',
         colorAct: String(meta['color-act'] || '#4890fc'),
         colorEva: String(meta['color-eva'] || '#c387fc'),
         colorCla: String(meta['color-cla'] || '#dfad43'),
@@ -477,7 +490,10 @@ export function hydrateStateFromMetadata(
     const newTrackers = parseTrackers(meta);
 
     return {
-        identity: newIdentity,
+        identity: {
+            ...state.identity,
+            ...newIdentity
+        },
         health: newHealth,
         will: newWill,
         derived: newDerived,
@@ -556,6 +572,8 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (state.identity.social !== undefined) flatMetadata['social'] = state.identity.social;
             if (state.identity.hand !== undefined) flatMetadata['hand'] = state.identity.hand;
             if (state.identity.isNPC !== undefined) flatMetadata['is-npc'] = state.identity.isNPC;
+            if (state.identity.coreLocked !== undefined) flatMetadata['core-locked'] = state.identity.coreLocked;
+            if (state.identity.socialLocked !== undefined) flatMetadata['social-locked'] = state.identity.socialLocked;
 
             // Forms & Transformations
             flatMetadata['token-image-url'] = state.identity.tokenImageUrl || '';
@@ -612,10 +630,6 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (state.identity.settingEcoBadge !== undefined)
                 flatMetadata['setting-eco-badge'] = state.identity.settingEcoBadge;
             if (state.identity.gmEcoBadge !== undefined) flatMetadata['gm-eco-badge'] = state.identity.gmEcoBadge;
-            if (state.identity.gmOnlyLootGen !== undefined)
-                flatMetadata['gm-only-loot-gen'] = state.identity.gmOnlyLootGen;
-            if (state.identity.gmOnlyGenerators !== undefined)
-                flatMetadata['gm-only-generators'] = state.identity.gmOnlyGenerators;
 
             if (state.identity.colorAct !== undefined) flatMetadata['color-act'] = state.identity.colorAct;
             if (state.identity.colorEva !== undefined) flatMetadata['color-eva'] = state.identity.colorEva;

@@ -596,14 +596,14 @@ function extractMechanics(
     triggers: TagTriggers,
     isHalfHp: boolean
 ) {
-    const hcMatches = description.matchAll(/\[\s*high crit(?:\s*@\s*([^\]]+))?\s*\]/gi);
+    const hcMatches = description.matchAll(/\[\s*high crit(?:ical)?(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of hcMatches) {
         if (!checkCondition(match[1], isHalfHp)) continue;
         bonuses.highCritStacks += 1;
         triggers.accuracy = true;
     }
 
-    const stackHcMatches = description.matchAll(/\[\s*stacking high crit(?:\s*@\s*([^\]]+))?\s*\]/gi);
+    const stackHcMatches = description.matchAll(/\[\s*stacking high crit(?:ical)?(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of stackHcMatches) {
         if (!checkCondition(match[1], isHalfHp)) continue;
         bonuses.stackingHighCritStacks += 1;
@@ -746,6 +746,20 @@ export function parseCombatTags(
 
         if (known) {
             desc = known.tags;
+            const currentTags = state.identity.abilityTags?.trim();
+            if (currentTags && currentTags !== known.tags) {
+                let cleanCurrent = currentTags;
+                if (cleanAbility.toLowerCase() === 'super luck') {
+                    cleanCurrent = cleanCurrent.replace(/\[\s*high crit(?:ical)?\s*\]/gi, '').trim();
+                }
+                const knownLower = known.tags.toLowerCase();
+                const extra = cleanCurrent
+                    .split(/\s+(?=\[)/)
+                    .map((t) => t.trim())
+                    .filter((t) => t && !knownLower.includes(t.toLowerCase()))
+                    .join(' ');
+                if (extra) desc = `${desc} ${extra}`.trim();
+            }
         } else if (customAbility) {
             const customTags = `${customAbility.effect || ''} ${customAbility.description || ''}`.trim();
             if (desc) {

@@ -3,7 +3,8 @@ import { CombatStat } from '../../types/enums';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { parseCombatTags, getAbilityText, calculateStatTotal } from '../../utils/combatUtils';
 import { CollapsingSection } from '../ui/CollapsingSection';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Lock, Unlock } from 'lucide-react';
+import OBR from '@owlbear-rodeo/sdk';
 import './CoreTable.css';
 
 const STATISTIC_COLORS = {
@@ -27,6 +28,11 @@ export function CoreTable() {
     useCharacterStore((state) => state.identity.abilityTags);
     useCharacterStore((state) => state.health.hpCurr);
     useCharacterStore((state) => state.health.hpMax);
+
+    const isLocked = useCharacterStore((state) => state.identity.coreLocked ?? true);
+    const setIdentity = useCharacterStore((state) => state.setIdentity);
+    const role = useCharacterStore((state) => state.role);
+    const gmOnlyAttributeLock = useCharacterStore((state) => state.identity.gmOnlyAttributeLock ?? true);
 
     const currentRank = useCharacterStore((state) => state.identity.rank);
     const currentAge = useCharacterStore((state) => state.identity.age);
@@ -53,15 +59,46 @@ export function CoreTable() {
         });
     };
 
+    const handleToggleLock = () => {
+        if (isLocked) {
+            if (role !== 'GM' && gmOnlyAttributeLock) {
+                const msg = 'Your GM must unlock this sheet for you or enable users to unlock sheets in Room Rules.';
+                if (OBR.isAvailable) {
+                    OBR.notification.show(msg, 'WARNING');
+                } else {
+                    alert(msg);
+                }
+                return;
+            }
+            setIdentity('coreLocked', false);
+        } else {
+            setIdentity('coreLocked', true);
+        }
+    };
+
     const headerElements = (
-        <button
-            type="button"
-            onClick={handleResetBuffs}
-            className="action-button action-button--dark core-table__reset-btn text-theme-header"
-            title="Reset all Core Buffs & Debuffs to 0"
-        >
-            <RotateCcw size={14} /> Reset Buffs
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button
+                type="button"
+                onClick={handleToggleLock}
+                className={`action-button ${isLocked ? 'action-button--dark' : 'action-button--theme'} core-table__lock-btn text-theme-header`}
+                title={
+                    isLocked
+                        ? 'Base & Limit are locked to prevent accidental edits (click to unlock)'
+                        : 'Base & Limit are unlocked (click to lock)'
+                }
+            >
+                {isLocked ? <Lock size={13} /> : <Unlock size={13} />} {isLocked ? 'Locked' : 'Unlocked'}
+            </button>
+            <button
+                type="button"
+                onClick={handleResetBuffs}
+                className="action-button action-button--dark core-table__reset-btn text-theme-header"
+                title="Reset all Core Buffs & Debuffs to 0"
+            >
+                <RotateCcw size={14} /> Reset Buffs
+            </button>
+        </div>
     );
 
     return (
@@ -98,6 +135,7 @@ export function CoreTable() {
                                             value={data.base}
                                             onChange={(value: number) => setStatistic(statistic, 'base', value)}
                                             min={1}
+                                            disabled={isLocked}
                                         />
                                     </td>
                                     <td className="data-table__cell--middle">
@@ -105,6 +143,7 @@ export function CoreTable() {
                                             value={data.limit}
                                             onChange={(value: number) => setStatistic(statistic, 'limit', value)}
                                             min={1}
+                                            disabled={isLocked}
                                         />
                                     </td>
                                     <td className="data-table__cell--middle">

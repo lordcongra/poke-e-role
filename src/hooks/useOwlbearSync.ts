@@ -73,6 +73,8 @@ export function useOwlbearSync() {
                     gmOnlyDamageOverride:
                         sData.gmOnlyDamageOverride !== undefined ? Boolean(sData.gmOnlyDamageOverride) : undefined,
                     gmOnlyTrackers: sData.gmOnlyTrackers !== undefined ? Boolean(sData.gmOnlyTrackers) : undefined,
+                    gmOnlyAttributeLock:
+                        sData.gmOnlyAttributeLock !== undefined ? Boolean(sData.gmOnlyAttributeLock) : undefined,
                     gmDemoMode: sData.gmDemoMode !== undefined ? Boolean(sData.gmDemoMode) : undefined,
                     roomDefaultScale: sData.roomDefaultScale !== undefined ? Number(sData.roomDefaultScale) : undefined
                 });

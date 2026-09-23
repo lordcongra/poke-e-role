@@ -268,8 +268,28 @@ export const PokemonBuildPreview: React.FC<PokemonBuildPreviewProps> = ({
                             attrVal = willBase + insBase + insAllocated;
                         }
 
-                        const skillVal = skillKey && skillKey !== 'none' ? (build.skills[skillKey] || 0) : 0;
+                        const skillVal = skillKey && skillKey !== 'none' ? build.skills[skillKey] || 0 : 0;
                         const accuracyPool = attrVal + skillVal;
+
+                        const pokemonTypes = getPokemonTypes(build.species, build, metadata, pokedexLookup).map((t) =>
+                            t.toLowerCase()
+                        );
+                        const moveType = (move.type || '').trim().toLowerCase();
+                        const pd = build.pokemonData as Record<string, unknown> | undefined;
+                        const rawAbility =
+                            build.ability ||
+                            metadata?.ability ||
+                            metadata?.['ability'] ||
+                            pd?.Ability1 ||
+                            pd?.ability1 ||
+                            pd?.Ability ||
+                            pd?.ability;
+                        const abilityName = String(rawAbility || '')
+                            .trim()
+                            .toLowerCase();
+                        const isProteanLibero = abilityName === 'protean' || abilityName === 'libero';
+                        const hasStab = Boolean(moveType && (pokemonTypes.includes(moveType) || isProteanLibero));
+                        const stabBonus = hasStab ? (abilityName === 'adaptability' ? 2 : 1) : 0;
 
                         const damageStatistic = move.dmgStat ? move.dmgStat.toLowerCase() : '';
                         let damagePool: string | number = 'N/A';
@@ -280,7 +300,7 @@ export const PokemonBuildPreview: React.FC<PokemonBuildPreviewProps> = ({
                                 damageStatistic === 'ins' ? 1 : 2
                             );
                             const allocatedDmgAttr = build.attr[damageStatistic] || 0;
-                            damagePool = baseDmgAttr + allocatedDmgAttr + (move.power || 0);
+                            damagePool = baseDmgAttr + allocatedDmgAttr + (move.power || 0) + stabBonus;
                         }
 
                         return (
@@ -289,6 +309,8 @@ export const PokemonBuildPreview: React.FC<PokemonBuildPreviewProps> = ({
                                 move={move}
                                 accuracyPool={accuracyPool}
                                 damagePool={damagePool}
+                                hasStab={hasStab}
+                                stabBonus={stabBonus}
                                 onOpenTooltip={onOpenTooltip}
                             />
                         );

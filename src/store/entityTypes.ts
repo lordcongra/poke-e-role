@@ -122,6 +122,7 @@ export interface TempBuild {
     rank?: Rank;
     gender?: string;
     nature?: string;
+    ability?: string;
     attr: Record<string, number>;
     soc: Record<string, number>;
     skills: Record<string, number>;

@@ -9,7 +9,7 @@ export function CategoryHeader({ title }: CategoryHeaderProps) {
     return (
         <tr className="category-header__row text-theme-header">
             <th className="category-header__title">{title}</th>
-            <th>Base</th>
+            <th>Rank</th>
             <th>Buff</th>
             <th>Total</th>
         </tr>

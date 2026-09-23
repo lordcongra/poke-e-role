@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Search, Loader2, AlertCircle, XCircle } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { TYPE_COLORS } from '../../../data/constants';
+import { isStandaloneMode } from '../../../utils/storageAdapter';
 import { usePokemonLookup } from './usePokemonLookup';
 import { PokemonLookupFilterPanel } from './PokemonLookupFilterPanel';
 import { PokemonLookupCard } from './PokemonLookupCard';
@@ -14,11 +15,13 @@ export interface PokemonLookupTabProps {
 
 export function PokemonLookupTab({ initialPokemonName, initialMoveFilter, onSelectMove }: PokemonLookupTabProps) {
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
+    const role = useCharacterStore((state) => state.role);
 
     const allTypeColors: Record<string, string> = useMemo(() => {
-        const customTypeMap = Object.fromEntries(roomCustomTypes.map((t) => [t.name, t.color]));
+        const visibleTypes = roomCustomTypes.filter((t) => isStandaloneMode || role === 'GM' || !t.gmOnly);
+        const customTypeMap = Object.fromEntries(visibleTypes.map((t) => [t.name, t.color]));
         return { ...TYPE_COLORS, ...customTypeMap };
-    }, [roomCustomTypes]);
+    }, [roomCustomTypes, role]);
 
     const {
         lookupData,

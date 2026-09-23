@@ -23,9 +23,11 @@ export function addRollLogEntry(
     player: string,
     characterName?: string,
     tokenId?: string,
-    rollType?: string
+    rollType?: string,
+    isCrit?: boolean
 ) {
     const activeTokenId = tokenId || useCharacterStore.getState().tokenId || undefined;
+    const detectedCrit = isCrit !== undefined ? isCrit : /critical hit/i.test(result) || /critical hit/i.test(label);
     const rollLogData = {
         id: crypto.randomUUID(),
         player,
@@ -34,7 +36,8 @@ export function addRollLogEntry(
         label,
         result,
         icon: icon || `${import.meta.env.BASE_URL || '/'}pokeball.svg`,
-        rollType
+        rollType,
+        isCrit: detectedCrit
     };
     try {
         const stored = JSON.parse(localStorage.getItem('pkr_roll_log') || '[]');
@@ -358,6 +361,14 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
         const finalSum = rawSum + actualFlatMod;
         const modStr = actualFlatMod > 0 ? `+${actualFlatMod}` : actualFlatMod < 0 ? `-${Math.abs(actualFlatMod)}` : '';
 
+        // Detect critical hit:
+        // 1. Accuracy roll met or exceeded the Crit threshold:
+        const critMatch = label.match(/Crit on (\d+)\+/i);
+        const isAccCrit = Boolean(critMatch && finalSuccesses >= parseInt(critMatch[1], 10) && finalSuccesses > 0);
+        // 2. Damage roll tagged with CRITICAL HIT:
+        const isDmgCrit = rollType === 'damage' && (/CRITICAL HIT/i.test(label) || /Critical Hit/i.test(label));
+        const isCrit = isAccCrit || isDmgCrit;
+
         // Safely wipe emojis strictly from the start in case they were appended
         const cleanLabel = label.replace(/^(?:🎲|💥|🩹|🍀|🎯|🛡️|❄️|🛡|❄)\s*/u, '').trim();
         const privacyTag = targetVisibility === 'gm_only' ? '[PRIVATE] ' : '';
@@ -392,6 +403,10 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 popupMessage += `\n( 0 base successes: Super Effective bonus negated )`;
             }
             popupMessage += `\n0 Successes: Still deals 1 Base Damage (unless target has Resistance / Protect). Added effects & Chance Dice do not trigger.`;
+        }
+
+        if (isCrit) {
+            popupMessage += "\nIt's a critical hit!";
         }
 
         const executeStateIntercepts = async (messageAppendix: string) => {
@@ -465,14 +480,24 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
         // --- STANDALONE OVERRIDE: Log directly to Roll Log widget ---
         if (isStandaloneMode || !OBR.isAvailable) {
             const compiledMessage = await executeStateIntercepts('');
-            addRollLogEntry(finalLabel, compiledMessage, icon, playerName, playerName);
+            addRollLogEntry(
+                finalLabel,
+                compiledMessage,
+                icon,
+                playerName,
+                playerName,
+                state.tokenId || undefined,
+                rollType,
+                isCrit
+            );
             return;
         }
 
         // --- NATIVE OBR ROLL ---
         const playerId = await OBR.player.getId();
         const obrPlayerName = await OBR.player.getName();
-        const mensaje = `${obrPlayerName} | ${finalLabel}`;
+        const critPrefix = isCrit ? 'CRITICAL HIT! | ' : '';
+        const mensaje = `${obrPlayerName} | ${critPrefix}${finalLabel}`;
 
         let diceTheme: Record<string, unknown> | undefined = undefined;
         let isOutdatedCarDetected = false;
@@ -530,7 +555,8 @@ export async function rollDicePlus(notation: string, label: string, rollType = '
                 result: finalCompiledMsg,
                 icon,
                 rollType,
-                targetVisibility
+                targetVisibility,
+                isCrit
             };
 
             try {

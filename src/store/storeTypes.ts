@@ -413,6 +413,9 @@ export interface IdentitySlice {
         gmOnlyMatchups: boolean;
         gmOnlyDamageOverride: boolean;
         gmOnlyTrackers?: boolean;
+        gmOnlyAttributeLock?: boolean;
+        coreLocked?: boolean;
+        socialLocked?: boolean;
         gmDemoMode: boolean;
 
         // Initiative HUD User Settings
@@ -486,6 +489,7 @@ export interface RoomSettings {
     gmOnlyMatchups: boolean;
     gmOnlyDamageOverride: boolean;
     gmOnlyTrackers?: boolean;
+    gmOnlyAttributeLock?: boolean;
     gmDemoMode: boolean;
     roomDefaultScale: number;
 }

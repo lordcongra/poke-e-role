@@ -2,6 +2,7 @@ import { useState } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { ScrollText, X, XCircle, RefreshCw, RotateCcw } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
+import type { RoomSettings } from '../../../store/storeTypes';
 import { TooltipIcon } from '../../ui/TooltipIcon';
 import { NumberSpinner } from '../../ui/NumberSpinner';
 import { isStandaloneMode } from '../../../utils/storageAdapter';
@@ -22,6 +23,25 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
     const [modalConfig, setModalConfig] = useState<{ title: string; content: string } | null>(null);
     const [isSyncingGlobalScale, setIsSyncingGlobalScale] = useState(false);
     const [isSyncingRoomScale, setIsSyncingRoomScale] = useState(false);
+
+    const handleClose = () => {
+        if (!isStandaloneMode) {
+            flushRoomSettingsToOwlbear().catch(() => {});
+        }
+        onClose();
+    };
+
+    const handleRoomSelectChange = <K extends keyof RoomSettings>(
+        field: K,
+        val: RoomSettings[K],
+        e: React.ChangeEvent<HTMLSelectElement>
+    ) => {
+        e.target.blur();
+        updateRoomSetting(field, val);
+        if (!isStandaloneMode) {
+            flushRoomSettingsToOwlbear({ [field]: val }).catch(() => {});
+        }
+    };
 
     const handleGlobalScaleChange = (val: number) => {
         const clamped = Math.max(25, Math.min(300, val));
@@ -101,8 +121,12 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
         }
     };
 
-    const handleTrackersVisibilityChange = (gmOnly: boolean) => {
+    const handleTrackersVisibilityChange = (gmOnly: boolean, e: React.ChangeEvent<HTMLSelectElement>) => {
+        e.target.blur();
         updateRoomSetting('gmOnlyTrackers', gmOnly);
+        if (!isStandaloneMode) {
+            flushRoomSettingsToOwlbear({ gmOnlyTrackers: gmOnly }).catch(() => {});
+        }
         renderAllSceneTokens(true).catch(() => {});
     };
 
@@ -113,7 +137,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                     <h3 className="rules-modal__title modal-title-with-icon text-title-primary">
                         <ScrollText size={20} /> Room Rules & Permissions
                     </h3>
-                    <button onClick={onClose} className="rules-modal__close-x" title="Close">
+                    <button onClick={handleClose} className="rules-modal__close-x" title="Close">
                         <X size={20} strokeWidth={2.5} />
                     </button>
                 </div>
@@ -137,7 +161,10 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                 className="identity-grid__select rules-modal__select text-subtext"
                                 style={{ color: 'var(--text-main)' }}
                                 value={id.diceEngine || 'car'}
-                                onChange={(e) => updateRoomSetting('diceEngine', e.target.value as 'dice-plus' | 'car')}
+                                onWheel={(e) => e.currentTarget.blur()}
+                                onChange={(e) =>
+                                    handleRoomSelectChange('diceEngine', e.target.value as 'dice-plus' | 'car', e)
+                                }
                             >
                                 <option value="car">Custom Action Rolls (3D Dice & Chat Log)</option>
                                 <option value="dice-plus">Dice+ (3D Physics Dice)</option>
@@ -181,7 +208,8 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                             className="identity-grid__select rules-modal__select text-subtext"
                             style={{ color: 'var(--text-main)' }}
                             value={id.ruleset || 'vg-vit-hp'}
-                            onChange={(e) => updateRoomSetting('ruleset', e.target.value)}
+                            onWheel={(e) => e.currentTarget.blur()}
+                            onChange={(e) => handleRoomSelectChange('ruleset', e.target.value, e)}
                         >
                             <option value="vg-vit-hp">VIT = DEF/HP, INS = SPD</option>
                             <option value="tabletop">VIT = DEF/SPD/HP</option>
@@ -206,7 +234,8 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                             className="identity-grid__select rules-modal__select text-subtext"
                             style={{ color: 'var(--text-main)' }}
                             value={id.pain || 'Enabled'}
-                            onChange={(e) => updateRoomSetting('pain', e.target.value)}
+                            onWheel={(e) => e.currentTarget.blur()}
+                            onChange={(e) => handleRoomSelectChange('pain', e.target.value, e)}
                         >
                             <option>Enabled</option>
                             <option>Disabled</option>
@@ -232,7 +261,8 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                     className="identity-grid__select rules-modal__select text-subtext"
                                     style={{ color: 'var(--text-main)' }}
                                     value={id.homebrewAccess || 'Full'}
-                                    onChange={(e) => updateRoomSetting('homebrewAccess', e.target.value)}
+                                    onWheel={(e) => e.currentTarget.blur()}
+                                    onChange={(e) => handleRoomSelectChange('homebrewAccess', e.target.value, e)}
                                 >
                                     <option value="Full">Full Access</option>
                                     <option value="View Only">View Only</option>
@@ -257,7 +287,10 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                     className="identity-grid__select rules-modal__select text-subtext"
                                     style={{ color: 'var(--text-main)' }}
                                     value={id.gmOnlyLootGen === false ? 'Everyone' : 'GM Only'}
-                                    onChange={(e) => updateRoomSetting('gmOnlyLootGen', e.target.value === 'GM Only')}
+                                    onWheel={(e) => e.currentTarget.blur()}
+                                    onChange={(e) =>
+                                        handleRoomSelectChange('gmOnlyLootGen', e.target.value === 'GM Only', e)
+                                    }
                                 >
                                     <option value="GM Only">GM Only</option>
                                     <option value="Everyone">Everyone</option>
@@ -281,8 +314,9 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                     className="identity-grid__select rules-modal__select text-subtext"
                                     style={{ color: 'var(--text-main)' }}
                                     value={id.gmOnlyGenerators === false ? 'Everyone' : 'GM Only'}
+                                    onWheel={(e) => e.currentTarget.blur()}
                                     onChange={(e) =>
-                                        updateRoomSetting('gmOnlyGenerators', e.target.value === 'GM Only')
+                                        handleRoomSelectChange('gmOnlyGenerators', e.target.value === 'GM Only', e)
                                     }
                                 >
                                     <option value="GM Only">GM Only</option>
@@ -307,8 +341,9 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                     className="identity-grid__select rules-modal__select text-subtext"
                                     style={{ color: 'var(--text-main)' }}
                                     value={id.gmOnlyDamageOverride ? 'GM Only' : 'Everyone'}
+                                    onWheel={(e) => e.currentTarget.blur()}
                                     onChange={(e) =>
-                                        updateRoomSetting('gmOnlyDamageOverride', e.target.value === 'GM Only')
+                                        handleRoomSelectChange('gmOnlyDamageOverride', e.target.value === 'GM Only', e)
                                     }
                                 >
                                     <option value="Everyone">Everyone</option>
@@ -333,10 +368,40 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                     className="identity-grid__select rules-modal__select text-subtext"
                                     style={{ color: 'var(--text-main)' }}
                                     value={id.gmOnlyMatchups ? 'GM Only' : 'Everyone'}
-                                    onChange={(e) => updateRoomSetting('gmOnlyMatchups', e.target.value === 'GM Only')}
+                                    onWheel={(e) => e.currentTarget.blur()}
+                                    onChange={(e) =>
+                                        handleRoomSelectChange('gmOnlyMatchups', e.target.value === 'GM Only', e)
+                                    }
                                 >
                                     <option value="Everyone">Everyone</option>
                                     <option value="GM Only">GM Only</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="rules-modal__label text-label" style={{ color: 'var(--text-main)' }}>
+                                    Unlock Sheet Attributes{' '}
+                                    <TooltipIcon
+                                        onClick={() =>
+                                            setModalConfig({
+                                                title: 'Unlock Sheet Attributes Permission',
+                                                content:
+                                                    'Controls whether players are allowed to unlock and edit the Base and Limit values in the Core and Social Attributes sections of their sheet. Defaults to "GM Only" to prevent players from accidentally editing Base/Limits instead of Rank. (Global Room Setting)'
+                                            })
+                                        }
+                                    />
+                                </label>
+                                <select
+                                    className="identity-grid__select rules-modal__select text-subtext"
+                                    style={{ color: 'var(--text-main)' }}
+                                    value={id.gmOnlyAttributeLock !== false ? 'GM Only' : 'Everyone'}
+                                    onWheel={(e) => e.currentTarget.blur()}
+                                    onChange={(e) =>
+                                        handleRoomSelectChange('gmOnlyAttributeLock', e.target.value === 'GM Only', e)
+                                    }
+                                >
+                                    <option value="GM Only">GM Only</option>
+                                    <option value="Everyone">Everyone</option>
                                 </select>
                             </div>
 
@@ -357,7 +422,8 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                     className="identity-grid__select rules-modal__select text-subtext"
                                     style={{ color: 'var(--text-main)' }}
                                     value={id.gmOnlyTrackers ? 'GM Only' : 'Everyone'}
-                                    onChange={(e) => handleTrackersVisibilityChange(e.target.value === 'GM Only')}
+                                    onWheel={(e) => e.currentTarget.blur()}
+                                    onChange={(e) => handleTrackersVisibilityChange(e.target.value === 'GM Only', e)}
                                 >
                                     <option value="Everyone">Everyone (Respect Token Settings)</option>
                                     <option value="GM Only">GM Only (Hide All From Players)</option>
@@ -529,7 +595,10 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                         className="identity-grid__select rules-modal__select text-subtext"
                                         style={{ color: 'var(--text-main)' }}
                                         value={id.gmDemoMode ? 'Enabled' : 'Disabled'}
-                                        onChange={(e) => updateRoomSetting('gmDemoMode', e.target.value === 'Enabled')}
+                                        onWheel={(e) => e.currentTarget.blur()}
+                                        onChange={(e) =>
+                                            handleRoomSelectChange('gmDemoMode', e.target.value === 'Enabled', e)
+                                        }
                                     >
                                         <option value="Disabled">Disabled</option>
                                         <option value="Enabled">Enabled</option>
@@ -543,7 +612,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                 <button
                     type="button"
                     className="action-button action-button--dark rules-modal__close-btn"
-                    onClick={onClose}
+                    onClick={handleClose}
                 >
                     <XCircle size={18} /> Close
                 </button>

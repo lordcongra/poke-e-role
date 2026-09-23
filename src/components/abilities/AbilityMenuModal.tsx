@@ -264,10 +264,14 @@ export function AbilityMenuModal({ isOpen, onClose, onOpenTagBuilder }: AbilityM
                 <div className="ability-modal__cards-list">
                     {nativeList.map((abName, idx) => {
                         const isBattleActive = currentAbility.toLowerCase().trim() === abName.toLowerCase().trim();
-                        const detail = detailsMap[abName];
                         const clean = abName.replace(/\s*\(HA\)$/i, '').trim();
                         const known = getKnownAbility(clean, rank);
-                        const displayedTags = isBattleActive ? abilityTags || known?.tags : known?.tags;
+                        const detail = detailsMap[abName];
+                        const safeAbilityTags =
+                            clean.toLowerCase() === 'super luck' && abilityTags.includes('[High Crit]')
+                                ? abilityTags.replace(/\[\s*high crit(?:ical)?\s*\]/gi, '[Stacking High Crit]').trim()
+                                : abilityTags;
+                        const displayedTags = isBattleActive ? safeAbilityTags || known?.tags : known?.tags;
 
                         let slotLabel = `Ability ${idx + 1}`;
                         if (abName.includes('(HA)') || idx === 2) {

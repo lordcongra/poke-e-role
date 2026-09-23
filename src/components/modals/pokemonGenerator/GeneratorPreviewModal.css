@@ -180,6 +180,24 @@
     font-family: monospace;
     padding-right: 4px;
     margin-right: 4px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.generator-preview-move__stab-tag,
+.generator-preview-move__damage-box--stab {
+    display: inline-block;
+    padding: 1px 5px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.1;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--primary) 22%, transparent);
+    color: var(--primary);
+    border: 1px solid color-mix(in srgb, var(--primary) 45%, transparent);
+    letter-spacing: 0.02em;
+    vertical-align: middle;
+    cursor: help;
 }
 
 .generator-preview-move__tooltip-btn {

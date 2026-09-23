@@ -789,6 +789,9 @@
 
 .gm-move-lookup__stat-value {
     font-weight: 600;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    line-height: 1.25;
 }
 
 .gm-move-lookup__attributes-row {

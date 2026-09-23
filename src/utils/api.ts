@@ -1,4 +1,6 @@
 import type { CustomPokemon, CustomMove, CustomAbility, CustomItem } from '../store/storeTypes';
+import { useCharacterStore } from '../store/useCharacterStore';
+import { isStandaloneMode } from './storageAdapter';
 import { fetchWithCache } from './apiClient';
 import type {
     LocalIndexItem,
@@ -188,13 +190,23 @@ export async function fetchBasePokemonData(speciesName: string): Promise<Pokemon
     return await fetchWithCache<PokemonApiResponse>(selectedUrl, cacheKey, speciesName);
 }
 
+function isUserGm(): boolean {
+    if (isStandaloneMode) return true;
+    try {
+        return useCharacterStore.getState().role === 'GM';
+    } catch {
+        return false;
+    }
+}
+
 export async function fetchPokemonData(speciesName: string): Promise<PokemonApiResponse | CustomPokemon | null> {
     if (!speciesName) return null;
     const cleanName = speciesName.trim().toLowerCase();
 
     // 1. Check Homebrew First
+    const isGm = isUserGm();
     const custom = homebrewPokemon.find((p) => p.Name.trim().toLowerCase() === cleanName);
-    if (custom) return custom;
+    if (custom && (isGm || !custom.gmOnly)) return custom;
 
     // 2. Check Local Dataset
     await loadLocalDataset();
@@ -216,8 +228,9 @@ export async function fetchAbilityData(abilityName: string): Promise<AbilityApiR
     const cleanName = baseName.toLowerCase();
 
     // 1. Check Homebrew First
+    const isGm = isUserGm();
     const custom = homebrewAbilities.find((a) => a.name.trim().toLowerCase() === cleanName);
-    if (custom) {
+    if (custom && (isGm || !custom.gmOnly)) {
         return { Name: custom.name, Description: custom.description, Effect: custom.effect };
     }
 
@@ -246,12 +259,13 @@ export async function fetchMoveData(moveName: string): Promise<MoveApiResponse |
     const cleanBaseName = baseName.toLowerCase();
 
     // 1. Check Homebrew First
+    const isGm = isUserGm();
     let custom = homebrewMoves.find((m) => m.name.trim().toLowerCase() === cleanExactName);
     if (!custom && cleanExactName !== cleanBaseName) {
         custom = homebrewMoves.find((m) => m.name.trim().toLowerCase() === cleanBaseName);
     }
 
-    if (custom) {
+    if (custom && (isGm || !custom.gmOnly)) {
         const finalAcc1 =
             custom.acc1Alt && custom.acc1Alt !== 'none' && custom.acc1Alt !== ''
                 ? `${custom.acc1}/${custom.acc1Alt}`
@@ -302,8 +316,9 @@ export async function fetchItemData(itemName: string): Promise<ItemApiResponse |
     const cleanName = itemName.trim().toLowerCase();
 
     // 1. Check Homebrew First
+    const isGm = isUserGm();
     const custom = homebrewItems.find((i) => i.name.trim().toLowerCase() === cleanName);
-    if (custom) {
+    if (custom && (isGm || !custom.gmOnly)) {
         return { Name: custom.name, Description: custom.description };
     }
 
@@ -371,12 +386,33 @@ export async function fetchPokemonLookupIndex(): Promise<PokemonLookupEntry[]> {
 }
 
 function mergeCustomPokemonWithLookup(baseEntries: PokemonLookupEntry[]): PokemonLookupEntry[] {
-    if (!homebrewPokemon || homebrewPokemon.length === 0) {
-        return baseEntries;
+    const isGm = isUserGm();
+    const gmOnlyMoveNames = new Set(homebrewMoves.filter((m) => m.gmOnly).map((m) => m.name.trim().toLowerCase()));
+
+    // If player is not GM, remove any secret GM-only moves from all Pokémon learnsets
+    let sanitizedBase = baseEntries;
+    if (!isGm && gmOnlyMoveNames.size > 0) {
+        sanitizedBase = baseEntries.map((entry) => {
+            if (entry.moves && entry.moves.some(([mName]) => gmOnlyMoveNames.has(mName.trim().toLowerCase()))) {
+                return {
+                    ...entry,
+                    moves: entry.moves.filter(([mName]) => !gmOnlyMoveNames.has(mName.trim().toLowerCase()))
+                };
+            }
+            return entry;
+        });
     }
 
-    const customEntries: PokemonLookupEntry[] = homebrewPokemon.map((cp) => {
-        const moves: [string, string][] = (cp.Moves || []).map((m) => [m.Name, m.Learned]);
+    const allowedPokemon = isGm ? homebrewPokemon : homebrewPokemon.filter((cp) => !cp.gmOnly);
+    if (!allowedPokemon || allowedPokemon.length === 0) {
+        return sanitizedBase;
+    }
+
+    const customEntries: PokemonLookupEntry[] = allowedPokemon.map((cp) => {
+        let moves: [string, string][] = (cp.Moves || []).map((m) => [m.Name, m.Learned]);
+        if (!isGm && gmOnlyMoveNames.size > 0) {
+            moves = moves.filter(([mName]) => !gmOnlyMoveNames.has(mName.trim().toLowerCase()));
+        }
         return {
             name: cp.Name,
             dexId: cp.DexID || 'HB',
@@ -393,11 +429,12 @@ function mergeCustomPokemonWithLookup(baseEntries: PokemonLookupEntry[]): Pokemo
             starter: false,
             recommendedRank: cp.RecommendedRank || undefined,
             moves,
-            isCustom: true
+            isCustom: true,
+            gmOnly: Boolean(cp.gmOnly)
         };
     });
 
-    return [...baseEntries, ...customEntries];
+    return [...sanitizedBase, ...customEntries];
 }
 
 let cachedMoveLookupIndex: MoveLookupEntry[] | null = null;
@@ -434,11 +471,13 @@ export async function fetchMoveLookupIndex(): Promise<MoveLookupEntry[]> {
 }
 
 function mergeCustomMovesWithLookup(baseEntries: MoveLookupEntry[]): MoveLookupEntry[] {
-    if (!homebrewMoves || homebrewMoves.length === 0) {
+    const isGm = isUserGm();
+    const allowedMoves = isGm ? homebrewMoves : homebrewMoves.filter((cm) => !cm.gmOnly);
+    if (!allowedMoves || allowedMoves.length === 0) {
         return baseEntries;
     }
 
-    const customEntries: MoveLookupEntry[] = homebrewMoves.map((cm) => {
+    const customEntries: MoveLookupEntry[] = allowedMoves.map((cm) => {
         return {
             name: cm.name,
             type: cm.type || 'Normal',
@@ -452,7 +491,8 @@ function mergeCustomMovesWithLookup(baseEntries: MoveLookupEntry[]): MoveLookupE
             effect: cm.desc || '',
             description: cm.desc || '',
             attributes: {},
-            isCustom: true
+            isCustom: true,
+            gmOnly: Boolean(cm.gmOnly)
         };
     });
 

@@ -121,7 +121,7 @@ export function SkillsTable() {
                                             />
                                         </div>
                                     </th>
-                                    <th>Base</th>
+                                    <th>Rank</th>
                                     <th>Buff</th>
                                     <th>Total</th>
                                 </tr>

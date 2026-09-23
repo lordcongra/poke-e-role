@@ -128,6 +128,7 @@ export interface PokemonLookupEntry {
     totalStages?: number;
     moves: [string, string][]; // [MoveName, LearnedRank]
     isCustom?: boolean;
+    gmOnly?: boolean;
 }
 
 export type AbilitySlotFilter = 'all' | 'standard' | 'hidden';
@@ -161,4 +162,5 @@ export interface MoveLookupEntry {
     attributes?: Record<string, boolean | number | string>;
     path?: string;
     isCustom?: boolean;
+    gmOnly?: boolean;
 }
