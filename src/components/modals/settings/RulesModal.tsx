@@ -9,7 +9,8 @@ import { isStandaloneMode } from '../../../utils/storageAdapter';
 import {
     flushRoomSettingsToOwlbear,
     flushSceneSettingsToOwlbear,
-    clearSceneScaleFromOwlbear
+    clearSceneScaleFromOwlbear,
+    clearSceneOffsetsFromOwlbear
 } from '../../../utils/obr';
 import { renderAllSceneTokens } from '../../../utils/graphicsRenderer';
 import './RulesModal.css';
@@ -19,10 +20,14 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
     const updateRoomSetting = useCharacterStore((state) => state.updateRoomSetting);
     const updateSceneScale = useCharacterStore((state) => state.updateSceneScale);
     const setSceneScale = useCharacterStore((state) => state.setSceneScale);
+    const updateSceneOffsets = useCharacterStore((state) => state.updateSceneOffsets);
+    const setSceneOffsets = useCharacterStore((state) => state.setSceneOffsets);
     const role = useCharacterStore((state) => state.role);
     const [modalConfig, setModalConfig] = useState<{ title: string; content: string } | null>(null);
     const [isSyncingGlobalScale, setIsSyncingGlobalScale] = useState(false);
     const [isSyncingRoomScale, setIsSyncingRoomScale] = useState(false);
+    const [isSyncingGlobalOffsets, setIsSyncingGlobalOffsets] = useState(false);
+    const [isSyncingRoomOffsets, setIsSyncingRoomOffsets] = useState(false);
 
     const handleClose = () => {
         if (!isStandaloneMode) {
@@ -118,6 +123,117 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
             }
         } finally {
             setIsSyncingRoomScale(false);
+        }
+    };
+
+    const handleGlobalOffsetXChange = (val: number) => {
+        const clamped = Math.max(-300, Math.min(300, val));
+        updateRoomSetting('roomDefaultOffsetX', clamped);
+        if (id.sceneDefaultOffsetX === null || id.sceneDefaultOffsetX === undefined) {
+            renderAllSceneTokens(false, undefined, clamped, id.roomDefaultOffsetY ?? 0).catch(() => {});
+        }
+    };
+
+    const handleGlobalOffsetYChange = (val: number) => {
+        const clamped = Math.max(-300, Math.min(300, val));
+        updateRoomSetting('roomDefaultOffsetY', clamped);
+        if (id.sceneDefaultOffsetY === null || id.sceneDefaultOffsetY === undefined) {
+            renderAllSceneTokens(false, undefined, id.roomDefaultOffsetX ?? 0, clamped).catch(() => {});
+        }
+    };
+
+    const handleSyncGlobalOffsets = async () => {
+        setIsSyncingGlobalOffsets(true);
+        try {
+            const targetX = id.roomDefaultOffsetX ?? 0;
+            const targetY = id.roomDefaultOffsetY ?? 0;
+            await flushRoomSettingsToOwlbear({ roomDefaultOffsetX: targetX, roomDefaultOffsetY: targetY });
+            if (id.sceneDefaultOffsetX == null && id.sceneDefaultOffsetY == null) {
+                await renderAllSceneTokens(true, undefined, targetX, targetY);
+            }
+            if (OBR.isAvailable) {
+                OBR.notification.show(
+                    `Saved Global Offsets (X: ${targetX}, Y: ${targetY}) to room settings!`,
+                    'SUCCESS'
+                );
+            }
+        } catch (err) {
+            console.error('[RulesModal] Failed to sync global offsets:', err);
+            if (OBR.isAvailable) {
+                OBR.notification.show('Failed to save Global Offsets.', 'ERROR');
+            }
+        } finally {
+            setIsSyncingGlobalOffsets(false);
+        }
+    };
+
+    const handleResetGlobalOffsets = async () => {
+        handleGlobalOffsetXChange(0);
+        handleGlobalOffsetYChange(0);
+        await flushRoomSettingsToOwlbear({ roomDefaultOffsetX: 0, roomDefaultOffsetY: 0 });
+        if (id.sceneDefaultOffsetX == null && id.sceneDefaultOffsetY == null) {
+            await renderAllSceneTokens(true, undefined, 0, 0);
+        }
+    };
+
+    const handleRoomOffsetXChange = (val: number) => {
+        const clamped = Math.max(-300, Math.min(300, val));
+        updateSceneOffsets(clamped, id.sceneDefaultOffsetY ?? id.roomDefaultOffsetY ?? 0);
+        renderAllSceneTokens(false, undefined, clamped, id.sceneDefaultOffsetY ?? id.roomDefaultOffsetY ?? 0).catch(
+            () => {}
+        );
+    };
+
+    const handleRoomOffsetYChange = (val: number) => {
+        const clamped = Math.max(-300, Math.min(300, val));
+        updateSceneOffsets(id.sceneDefaultOffsetX ?? id.roomDefaultOffsetX ?? 0, clamped);
+        renderAllSceneTokens(false, undefined, id.sceneDefaultOffsetX ?? id.roomDefaultOffsetX ?? 0, clamped).catch(
+            () => {}
+        );
+    };
+
+    const handleSyncRoomOffsets = async () => {
+        setIsSyncingRoomOffsets(true);
+        try {
+            const targetX = id.sceneDefaultOffsetX ?? id.roomDefaultOffsetX ?? 0;
+            const targetY = id.sceneDefaultOffsetY ?? id.roomDefaultOffsetY ?? 0;
+            updateSceneOffsets(targetX, targetY);
+            await flushSceneSettingsToOwlbear({ sceneDefaultOffsetX: targetX, sceneDefaultOffsetY: targetY });
+            await renderAllSceneTokens(true, undefined, targetX, targetY);
+            if (OBR.isAvailable) {
+                OBR.notification.show(
+                    `Applied Room Offset override (X: ${targetX}, Y: ${targetY}) to current scene!`,
+                    'SUCCESS'
+                );
+            }
+        } catch (err) {
+            console.error('[RulesModal] Failed to sync room offsets:', err);
+            if (OBR.isAvailable) {
+                OBR.notification.show('Failed to apply Room Offsets.', 'ERROR');
+            }
+        } finally {
+            setIsSyncingRoomOffsets(false);
+        }
+    };
+
+    const handleClearRoomOffsets = async () => {
+        setIsSyncingRoomOffsets(true);
+        try {
+            await clearSceneOffsetsFromOwlbear();
+            setSceneOffsets(null, null);
+            const fallbackX = id.roomDefaultOffsetX ?? 0;
+            const fallbackY = id.roomDefaultOffsetY ?? 0;
+            await renderAllSceneTokens(true, undefined, fallbackX, fallbackY);
+            if (OBR.isAvailable) {
+                OBR.notification.show('Cleared Room Offset override. Reverted to Global Offsets.', 'SUCCESS');
+            }
+        } catch (err) {
+            console.error('[RulesModal] Failed to clear room offsets:', err);
+            if (OBR.isAvailable) {
+                OBR.notification.show('Failed to clear Room Offsets.', 'ERROR');
+            }
+        } finally {
+            setIsSyncingRoomOffsets(false);
         }
     };
 
@@ -490,6 +606,124 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                         className="rules-modal__label text-label"
                                         style={{ color: 'var(--text-main)' }}
                                     >
+                                        Global Offsets{' '}
+                                        <TooltipIcon
+                                            onClick={() =>
+                                                setModalConfig({
+                                                    title: 'Global Offsets (Room Default)',
+                                                    content:
+                                                        'Shifts the baseline X and Y position (in pixels) of all token HUDs across all scenes in this room. Positive X pushes right, negative X pulls left. Positive Y pushes down, negative Y pulls up. Tokens can still adjust individual offsets in Tracker Settings, or a Room Offset Override can be set per scene below.'
+                                                })
+                                            }
+                                        />
+                                    </label>
+                                    {((id.roomDefaultOffsetX ?? 0) !== 0 || (id.roomDefaultOffsetY ?? 0) !== 0) && (
+                                        <span style={{ fontSize: '0.72rem', color: 'var(--primary)', fontWeight: 600 }}>
+                                            X: {id.roomDefaultOffsetX ?? 0}px, Y: {id.roomDefaultOffsetY ?? 0}px
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="rules-modal__offset-card">
+                                    <div className="rules-modal__offset-row">
+                                        <span className="rules-modal__offset-label text-subtext">X-Offset:</span>
+                                        <div className="rules-modal__step-btn-group">
+                                            <button
+                                                type="button"
+                                                className="rules-modal__step-btn text-theme-header"
+                                                onClick={() =>
+                                                    handleGlobalOffsetXChange((id.roomDefaultOffsetX ?? 0) - 10)
+                                                }
+                                                title="Move UI Left by 10"
+                                            >
+                                                -10
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="rules-modal__step-btn text-theme-header"
+                                                onClick={() =>
+                                                    handleGlobalOffsetXChange((id.roomDefaultOffsetX ?? 0) + 10)
+                                                }
+                                                title="Move UI Right by 10"
+                                            >
+                                                +10
+                                            </button>
+                                        </div>
+                                        <NumberSpinner
+                                            value={id.roomDefaultOffsetX ?? 0}
+                                            onChange={handleGlobalOffsetXChange}
+                                            min={-300}
+                                            max={300}
+                                        />
+                                        <span className="rules-modal__offset-unit text-subtext">px</span>
+                                    </div>
+                                    <div className="rules-modal__offset-row">
+                                        <span className="rules-modal__offset-label text-subtext">Y-Offset:</span>
+                                        <div className="rules-modal__step-btn-group">
+                                            <button
+                                                type="button"
+                                                className="rules-modal__step-btn text-theme-header"
+                                                onClick={() =>
+                                                    handleGlobalOffsetYChange((id.roomDefaultOffsetY ?? 0) - 10)
+                                                }
+                                                title="Move UI Up by 10"
+                                            >
+                                                -10
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="rules-modal__step-btn text-theme-header"
+                                                onClick={() =>
+                                                    handleGlobalOffsetYChange((id.roomDefaultOffsetY ?? 0) + 10)
+                                                }
+                                                title="Move UI Down by 10"
+                                            >
+                                                +10
+                                            </button>
+                                        </div>
+                                        <NumberSpinner
+                                            value={id.roomDefaultOffsetY ?? 0}
+                                            onChange={handleGlobalOffsetYChange}
+                                            min={-300}
+                                            max={300}
+                                        />
+                                        <span className="rules-modal__offset-unit text-subtext">px</span>
+                                    </div>
+                                    <div className="rules-modal__offset-actions">
+                                        <button
+                                            type="button"
+                                            className="action-button action-button--theme rules-modal__sync-btn text-theme-header"
+                                            onClick={handleSyncGlobalOffsets}
+                                            disabled={isSyncingGlobalOffsets}
+                                            title="Immediately save and apply these Global Offsets to all scenes in the room."
+                                        >
+                                            <RefreshCw
+                                                size={13}
+                                                className={isSyncingGlobalOffsets ? 'rules-modal__spin-icon' : ''}
+                                            />{' '}
+                                            Update Global
+                                        </button>
+                                        {((id.roomDefaultOffsetX ?? 0) !== 0 || (id.roomDefaultOffsetY ?? 0) !== 0) && (
+                                            <button
+                                                type="button"
+                                                className="action-button action-button--dark rules-modal__sync-btn text-subtext"
+                                                onClick={handleResetGlobalOffsets}
+                                                disabled={isSyncingGlobalOffsets}
+                                                title="Reset Global Offsets back to (0, 0)."
+                                                style={{ padding: '3px 7px' }}
+                                            >
+                                                <RotateCcw size={12} /> Reset
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <label
+                                        className="rules-modal__label text-label"
+                                        style={{ color: 'var(--text-main)' }}
+                                    >
                                         Room Scale (%){' '}
                                         <TooltipIcon
                                             onClick={() =>
@@ -565,6 +799,137 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                                 onClick={handleClearRoomScale}
                                                 disabled={isSyncingRoomScale}
                                                 title="Clear room override and revert to Global Scale."
+                                                style={{ padding: '3px 7px' }}
+                                            >
+                                                <RotateCcw size={12} /> Reset
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <label
+                                        className="rules-modal__label text-label"
+                                        style={{ color: 'var(--text-main)' }}
+                                    >
+                                        Room Offset Override{' '}
+                                        <TooltipIcon
+                                            onClick={() =>
+                                                setModalConfig({
+                                                    title: 'Room Offset Override (Scene Map Override)',
+                                                    content:
+                                                        'Supercedes the Global Offsets for this specific room / scene map. Shifts the baseline X and Y position (in pixels) of all token HUDs in this scene. If cleared, it reverts back to the Global Offsets.'
+                                                })
+                                            }
+                                        />
+                                    </label>
+                                    {id.sceneDefaultOffsetX !== null && id.sceneDefaultOffsetX !== undefined ? (
+                                        <span style={{ fontSize: '0.72rem', color: 'var(--primary)', fontWeight: 600 }}>
+                                            Active Override
+                                        </span>
+                                    ) : (
+                                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                                            Using Global (X: {id.roomDefaultOffsetX ?? 0}, Y:{' '}
+                                            {id.roomDefaultOffsetY ?? 0})
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="rules-modal__offset-card">
+                                    <div className="rules-modal__offset-row">
+                                        <span className="rules-modal__offset-label text-subtext">X-Offset:</span>
+                                        <div className="rules-modal__step-btn-group">
+                                            <button
+                                                type="button"
+                                                className="rules-modal__step-btn text-theme-header"
+                                                onClick={() =>
+                                                    handleRoomOffsetXChange(
+                                                        (id.sceneDefaultOffsetX ?? id.roomDefaultOffsetX ?? 0) - 10
+                                                    )
+                                                }
+                                                title="Move UI Left by 10"
+                                            >
+                                                -10
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="rules-modal__step-btn text-theme-header"
+                                                onClick={() =>
+                                                    handleRoomOffsetXChange(
+                                                        (id.sceneDefaultOffsetX ?? id.roomDefaultOffsetX ?? 0) + 10
+                                                    )
+                                                }
+                                                title="Move UI Right by 10"
+                                            >
+                                                +10
+                                            </button>
+                                        </div>
+                                        <NumberSpinner
+                                            value={id.sceneDefaultOffsetX ?? id.roomDefaultOffsetX ?? 0}
+                                            onChange={handleRoomOffsetXChange}
+                                            min={-300}
+                                            max={300}
+                                        />
+                                        <span className="rules-modal__offset-unit text-subtext">px</span>
+                                    </div>
+                                    <div className="rules-modal__offset-row">
+                                        <span className="rules-modal__offset-label text-subtext">Y-Offset:</span>
+                                        <div className="rules-modal__step-btn-group">
+                                            <button
+                                                type="button"
+                                                className="rules-modal__step-btn text-theme-header"
+                                                onClick={() =>
+                                                    handleRoomOffsetYChange(
+                                                        (id.sceneDefaultOffsetY ?? id.roomDefaultOffsetY ?? 0) - 10
+                                                    )
+                                                }
+                                                title="Move UI Up by 10"
+                                            >
+                                                -10
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="rules-modal__step-btn text-theme-header"
+                                                onClick={() =>
+                                                    handleRoomOffsetYChange(
+                                                        (id.sceneDefaultOffsetY ?? id.roomDefaultOffsetY ?? 0) + 10
+                                                    )
+                                                }
+                                                title="Move UI Down by 10"
+                                            >
+                                                +10
+                                            </button>
+                                        </div>
+                                        <NumberSpinner
+                                            value={id.sceneDefaultOffsetY ?? id.roomDefaultOffsetY ?? 0}
+                                            onChange={handleRoomOffsetYChange}
+                                            min={-300}
+                                            max={300}
+                                        />
+                                        <span className="rules-modal__offset-unit text-subtext">px</span>
+                                    </div>
+                                    <div className="rules-modal__offset-actions">
+                                        <button
+                                            type="button"
+                                            className="action-button action-button--theme rules-modal__sync-btn text-theme-header"
+                                            onClick={handleSyncRoomOffsets}
+                                            disabled={isSyncingRoomOffsets}
+                                            title="Immediately save and apply this Room Offset override to the current scene."
+                                        >
+                                            <RefreshCw
+                                                size={13}
+                                                className={isSyncingRoomOffsets ? 'rules-modal__spin-icon' : ''}
+                                            />{' '}
+                                            Update Room
+                                        </button>
+                                        {id.sceneDefaultOffsetX !== null && id.sceneDefaultOffsetX !== undefined && (
+                                            <button
+                                                type="button"
+                                                className="action-button action-button--dark rules-modal__sync-btn text-subtext"
+                                                onClick={handleClearRoomOffsets}
+                                                disabled={isSyncingRoomOffsets}
+                                                title="Clear room offset override and revert to Global Offsets."
                                                 style={{ padding: '3px 7px' }}
                                             >
                                                 <RotateCcw size={12} /> Reset

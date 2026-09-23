@@ -47,6 +47,8 @@ export interface GraphicsData {
     trackerScale: number;
     trackerLayer: 'POPOVER' | 'ATTACHMENT' | 'CHARACTER' | 'MOUNT';
     roomDefaultScale?: number;
+    roomDefaultOffsetX?: number;
+    roomDefaultOffsetY?: number;
     gmOnlyTrackers?: boolean;
     xOffset: number;
     yOffset: number;
@@ -112,6 +114,14 @@ export function buildGraphicsFromState(meta: Record<string, unknown>, state: Cha
             state.identity.sceneDefaultScale != null && state.identity.sceneDefaultScale > 0
                 ? state.identity.sceneDefaultScale
                 : (state.identity.roomDefaultScale ?? 100),
+        roomDefaultOffsetX:
+            state.identity.sceneDefaultOffsetX != null
+                ? state.identity.sceneDefaultOffsetX
+                : (state.identity.roomDefaultOffsetX ?? 0),
+        roomDefaultOffsetY:
+            state.identity.sceneDefaultOffsetY != null
+                ? state.identity.sceneDefaultOffsetY
+                : (state.identity.roomDefaultOffsetY ?? 0),
         gmOnlyTrackers: Boolean(state.identity.gmOnlyTrackers),
         xOffset: state.identity.xOffset || 0,
         yOffset: state.identity.yOffset || 0,
@@ -130,7 +140,12 @@ export function buildGraphicsFromState(meta: Record<string, unknown>, state: Cha
     };
 }
 
-export function buildGraphicsFromMeta(meta: Record<string, unknown>, roomDefaultScale?: number): GraphicsData {
+export function buildGraphicsFromMeta(
+    meta: Record<string, unknown>,
+    roomDefaultScale?: number,
+    roomDefaultOffsetX?: number,
+    roomDefaultOffsetY?: number
+): GraphicsData {
     const id = useCharacterStore.getState().identity;
     const defaultScale =
         roomDefaultScale !== undefined
@@ -138,6 +153,18 @@ export function buildGraphicsFromMeta(meta: Record<string, unknown>, roomDefault
             : id.sceneDefaultScale != null && id.sceneDefaultScale > 0
               ? id.sceneDefaultScale
               : (id.roomDefaultScale ?? 100);
+    const defaultOffsetX =
+        roomDefaultOffsetX !== undefined
+            ? roomDefaultOffsetX
+            : id.sceneDefaultOffsetX != null
+              ? id.sceneDefaultOffsetX
+              : (id.roomDefaultOffsetX ?? 0);
+    const defaultOffsetY =
+        roomDefaultOffsetY !== undefined
+            ? roomDefaultOffsetY
+            : id.sceneDefaultOffsetY != null
+              ? id.sceneDefaultOffsetY
+              : (id.roomDefaultOffsetY ?? 0);
     const { def: defTotal, spd: sdefTotal } = calculateTargetDefensesFromMeta(meta);
 
     return {
@@ -179,6 +206,8 @@ export function buildGraphicsFromMeta(meta: Record<string, unknown>, roomDefault
         trackerScale: meta['tracker-scale'] !== undefined ? Number(meta['tracker-scale']) : 100,
         trackerLayer: (meta['tracker-layer'] as 'POPOVER' | 'ATTACHMENT' | 'CHARACTER' | 'MOUNT') || 'ATTACHMENT',
         roomDefaultScale: defaultScale,
+        roomDefaultOffsetX: defaultOffsetX,
+        roomDefaultOffsetY: defaultOffsetY,
         gmOnlyTrackers: Boolean(id.gmOnlyTrackers),
         xOffset: Number(meta['x-offset']) || 0,
         yOffset: Number(meta['y-offset']) || 0,

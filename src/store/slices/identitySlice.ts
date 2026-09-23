@@ -4,7 +4,8 @@ import {
     saveToOwlbear,
     saveRoomSettingsToOwlbear,
     flushSceneSettingsToOwlbear,
-    clearSceneScaleFromOwlbear
+    clearSceneScaleFromOwlbear,
+    clearSceneOffsetsFromOwlbear
 } from '../../utils/obr';
 import OBR from '@owlbear-rodeo/sdk';
 import { syncHealthAndWill } from '../../utils/macroHelpers';
@@ -29,7 +30,11 @@ const EXCLUDED_FROM_TOKEN_SAVE = new Set([
     'gmOnlyAttributeLock',
     'gmDemoMode',
     'roomDefaultScale',
-    'sceneDefaultScale'
+    'roomDefaultOffsetX',
+    'roomDefaultOffsetY',
+    'sceneDefaultScale',
+    'sceneDefaultOffsetX',
+    'sceneDefaultOffsetY'
 ]);
 
 const OBR_KEY_MAP: Record<string, string> = {
@@ -156,6 +161,8 @@ try {
 }
 
 let initialRoomDefaultScale = 100;
+let initialRoomDefaultOffsetX = 0;
+let initialRoomDefaultOffsetY = 0;
 try {
     const storedScale = localStorage.getItem('pkr_room_default_scale');
     if (storedScale) {
@@ -164,11 +171,23 @@ try {
             initialRoomDefaultScale = parsed;
         }
     }
+    const storedX = localStorage.getItem('pkr_room_default_offset_x');
+    if (storedX) {
+        const parsed = Number(storedX);
+        if (!isNaN(parsed)) initialRoomDefaultOffsetX = parsed;
+    }
+    const storedY = localStorage.getItem('pkr_room_default_offset_y');
+    if (storedY) {
+        const parsed = Number(storedY);
+        if (!isNaN(parsed)) initialRoomDefaultOffsetY = parsed;
+    }
 } catch (e) {
     console.warn('[IdentitySlice] Failed to load room scale from local storage.', e);
 }
 
 let initialSceneDefaultScale: number | null = null;
+let initialSceneDefaultOffsetX: number | null = null;
+let initialSceneDefaultOffsetY: number | null = null;
 try {
     const storedSceneScale = localStorage.getItem('pkr_scene_default_scale');
     if (storedSceneScale) {
@@ -176,6 +195,16 @@ try {
         if (!isNaN(parsed) && parsed >= 25 && parsed <= 300) {
             initialSceneDefaultScale = parsed;
         }
+    }
+    const storedX = localStorage.getItem('pkr_scene_default_offset_x');
+    if (storedX) {
+        const parsed = Number(storedX);
+        if (!isNaN(parsed)) initialSceneDefaultOffsetX = parsed;
+    }
+    const storedY = localStorage.getItem('pkr_scene_default_offset_y');
+    if (storedY) {
+        const parsed = Number(storedY);
+        if (!isNaN(parsed)) initialSceneDefaultOffsetY = parsed;
     }
 } catch (e) {
     console.warn('[IdentitySlice] Failed to load scene scale from local storage.', e);
@@ -273,7 +302,11 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         trackerScale: 100,
         trackerLayer: 'ATTACHMENT',
         roomDefaultScale: initialRoomDefaultScale,
+        roomDefaultOffsetX: initialRoomDefaultOffsetX,
+        roomDefaultOffsetY: initialRoomDefaultOffsetY,
         sceneDefaultScale: initialSceneDefaultScale,
+        sceneDefaultOffsetX: initialSceneDefaultOffsetX,
+        sceneDefaultOffsetY: initialSceneDefaultOffsetY,
         xOffset: 0,
         yOffset: 0,
         hpOffsetX: 0,
@@ -338,6 +371,16 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 localStorage.setItem('pkr_room_default_scale', String(settings.roomDefaultScale));
             } catch {}
         }
+        if (settings.roomDefaultOffsetX !== undefined && typeof localStorage !== 'undefined') {
+            try {
+                localStorage.setItem('pkr_room_default_offset_x', String(settings.roomDefaultOffsetX));
+            } catch {}
+        }
+        if (settings.roomDefaultOffsetY !== undefined && typeof localStorage !== 'undefined') {
+            try {
+                localStorage.setItem('pkr_room_default_offset_y', String(settings.roomDefaultOffsetY));
+            } catch {}
+        }
         const cleanSettings: Record<string, unknown> = {};
         for (const [k, v] of Object.entries(settings)) {
             if (v !== undefined) {
@@ -356,6 +399,16 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         if (field === 'roomDefaultScale' && typeof localStorage !== 'undefined') {
             try {
                 localStorage.setItem('pkr_room_default_scale', String(value));
+            } catch {}
+        }
+        if (field === 'roomDefaultOffsetX' && typeof localStorage !== 'undefined') {
+            try {
+                localStorage.setItem('pkr_room_default_offset_x', String(value));
+            } catch {}
+        }
+        if (field === 'roomDefaultOffsetY' && typeof localStorage !== 'undefined') {
+            try {
+                localStorage.setItem('pkr_room_default_offset_y', String(value));
             } catch {}
         }
         set((state) => ({
@@ -410,6 +463,62 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 clearSceneScaleFromOwlbear().catch(() => {});
             } else {
                 flushSceneSettingsToOwlbear({ sceneDefaultScale: scale }).catch(() => {});
+            }
+        }
+    },
+
+    setSceneOffsets: (x, y) => {
+        if (typeof localStorage !== 'undefined') {
+            try {
+                if (x != null && !isNaN(x)) {
+                    localStorage.setItem('pkr_scene_default_offset_x', String(x));
+                } else {
+                    localStorage.removeItem('pkr_scene_default_offset_x');
+                }
+                if (y != null && !isNaN(y)) {
+                    localStorage.setItem('pkr_scene_default_offset_y', String(y));
+                } else {
+                    localStorage.removeItem('pkr_scene_default_offset_y');
+                }
+            } catch {}
+        }
+        set((state) => ({
+            identity: {
+                ...state.identity,
+                sceneDefaultOffsetX: x,
+                sceneDefaultOffsetY: y
+            }
+        }));
+    },
+
+    updateSceneOffsets: (x, y) => {
+        if (typeof localStorage !== 'undefined') {
+            try {
+                if (x != null && !isNaN(x)) {
+                    localStorage.setItem('pkr_scene_default_offset_x', String(x));
+                } else {
+                    localStorage.removeItem('pkr_scene_default_offset_x');
+                }
+                if (y != null && !isNaN(y)) {
+                    localStorage.setItem('pkr_scene_default_offset_y', String(y));
+                } else {
+                    localStorage.removeItem('pkr_scene_default_offset_y');
+                }
+            } catch {}
+        }
+        set((state) => ({
+            identity: {
+                ...state.identity,
+                sceneDefaultOffsetX: x,
+                sceneDefaultOffsetY: y
+            }
+        }));
+
+        if (OBR.isAvailable && !isStandaloneMode) {
+            if (x === null && y === null) {
+                clearSceneOffsetsFromOwlbear().catch(() => {});
+            } else {
+                flushSceneSettingsToOwlbear({ sceneDefaultOffsetX: x, sceneDefaultOffsetY: y }).catch(() => {});
             }
         }
     },

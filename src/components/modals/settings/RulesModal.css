@@ -225,3 +225,42 @@
         transform: rotate(360deg);
     }
 }
+
+.rules-modal__offset-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 6px;
+    padding: 8px 10px;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+}
+
+.rules-modal__offset-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rules-modal__offset-label {
+    font-weight: 600;
+    font-size: 0.8rem;
+    min-width: 62px;
+    color: var(--text-main);
+}
+
+.rules-modal__offset-unit {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.rules-modal__offset-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    padding-top: 6px;
+    margin-top: 2px;
+    border-top: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
+}

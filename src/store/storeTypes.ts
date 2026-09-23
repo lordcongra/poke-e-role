@@ -434,7 +434,11 @@ export interface IdentitySlice {
         trackerScale: number;
         trackerLayer: 'POPOVER' | 'ATTACHMENT' | 'CHARACTER' | 'MOUNT';
         roomDefaultScale: number;
+        roomDefaultOffsetX: number;
+        roomDefaultOffsetY: number;
         sceneDefaultScale: number | null;
+        sceneDefaultOffsetX: number | null;
+        sceneDefaultOffsetY: number | null;
         xOffset: number;
         yOffset: number;
         hpOffsetX: number;
@@ -473,6 +477,8 @@ export interface IdentitySlice {
     updateRoomSetting: <K extends keyof RoomSettings>(field: K, value: RoomSettings[K]) => void;
     setSceneScale: (scale: number | null) => void;
     updateSceneScale: (scale: number | null) => void;
+    setSceneOffsets: (x: number | null, y: number | null) => void;
+    updateSceneOffsets: (x: number | null, y: number | null) => void;
     setPrintConfig: (config: Partial<PrintConfig>) => void;
     setTokenData: (tokenId: string, role: 'GM' | 'PLAYER') => void;
     applyLearnset: (data: Record<string, unknown>) => void;
@@ -492,6 +498,8 @@ export interface RoomSettings {
     gmOnlyAttributeLock?: boolean;
     gmDemoMode: boolean;
     roomDefaultScale: number;
+    roomDefaultOffsetX?: number;
+    roomDefaultOffsetY?: number;
 }
 
 export type SheetMode = 'Pokémon' | 'Trainer' | 'Trainer (Special)';

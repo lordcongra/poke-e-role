@@ -90,7 +90,6 @@ export async function renderTokenGraphics(
 
                 // Number of grid squares occupied on the scene
                 const rawGridSquaresX = (rawWidth / tokenDpi) * scaleX;
-                const rawGridSquaresY = (rawHeight / tokenDpi) * scaleY;
 
                 // Inspect visual non-transparent bounds
                 const visualBounds = token.image?.url
@@ -100,38 +99,39 @@ export async function renderTokenGraphics(
                 const contentWidthFraction = visualBounds?.contentWidthFraction ?? 1.0;
                 const bottomFraction = visualBounds?.bottomFraction ?? 1.0;
 
+                // DPI normalization relative to standard Owlbear 150 DPI grid
+                const dpiRatio = sceneDpi / 150;
+
                 // Effective visual size in grid squares (excluding transparent padding)
                 const visualGridSquaresX = rawGridSquaresX * contentWidthFraction;
 
-                // Standard 1x1 tokens (or slightly resized sprites up to 1.35 squares) evaluate to 2.0.
+                // Standard 1x1 tokens evaluate to 2.0 * dpiRatio (fitting comfortably across ~1.5 grid units).
                 // Multi-cell tokens (e.g. 2x2, 3x3) scale HUD gently.
-                if (visualGridSquaresX <= 1.35) {
-                    tokenScale = 2.0;
-                } else {
-                    tokenScale = Math.min(3.5, 2.0 + (visualGridSquaresX - 1) * 0.35);
+                // Sub-cell tokens (< 0.95 squares) scale down proportionally so shrunk tokens on older maps have matching HUDs.
+                let cellMultiplier = 2.0;
+                if (visualGridSquaresX < 0.95) {
+                    cellMultiplier = Math.max(0.8, visualGridSquaresX * 2.0);
+                } else if (visualGridSquaresX > 1.35) {
+                    cellMultiplier = Math.min(3.5, 2.0 + (visualGridSquaresX - 1) * 0.35);
                 }
+                tokenScale = cellMultiplier * dpiRatio;
 
-                // If the sprite has bottom transparent padding (bottomFraction < 0.93):
-                // Anchor baseBottomY with clean breathing space below the visible character feet
-                if (bottomFraction < 0.93) {
-                    const offsetY = token.grid?.offset?.y ?? rawHeight / 2;
-                    const visualBottomPixel = rawHeight * bottomFraction;
-                    const pixelDistFromCenter = visualBottomPixel - offsetY;
-                    const pixelToScene = sceneDpi / tokenDpi;
-                    const visualBottomY = pixelDistFromCenter * pixelToScene * scaleY;
+                // Anchor baseBottomY with clean breathing space below the visible character feet or token bottom
+                const offsetY = token.grid?.offset?.y ?? rawHeight / 2;
+                const visualBottomPixel = rawHeight * bottomFraction;
+                const pixelDistFromCenter = visualBottomPixel - offsetY;
+                const pixelToScene = sceneDpi / tokenDpi;
+                const visualBottomY = pixelDistFromCenter * pixelToScene * scaleY;
 
-                    // Place baseBottomY so the HUD hugs the visible feet proportionally at any scale
-                    const roomScale =
-                        (data.roomDefaultScale && data.roomDefaultScale > 0 ? data.roomDefaultScale : 100) / 100;
-                    const userScale = (data.trackerScale && data.trackerScale > 0 ? data.trackerScale : 100) / 100;
-                    const effectiveScale = tokenScale * roomScale * userScale;
-                    baseBottomY = visualBottomY + 17.5 * effectiveScale;
-                } else {
-                    // Standard full-bleed / circular token bottom
-                    baseBottomY = Math.max(75, rawGridSquaresY * 0.5 * sceneDpi);
-                }
+                // Place baseBottomY so the HUD hugs the visible feet proportionally at any scale
+                const roomScale =
+                    (data.roomDefaultScale && data.roomDefaultScale > 0 ? data.roomDefaultScale : 100) / 100;
+                const userScale = (data.trackerScale && data.trackerScale > 0 ? data.trackerScale : 100) / 100;
+                const effectiveScale = tokenScale * roomScale * userScale;
+                baseBottomY = visualBottomY + 17.5 * effectiveScale;
             } else {
-                tokenScale = Math.abs(token.scale?.x || 1) * 2.0;
+                const dpiRatio = 1.0;
+                tokenScale = Math.abs(token.scale?.x || 1) * 2.0 * dpiRatio;
                 baseBottomY = 75 * tokenScale;
             }
 
@@ -145,7 +145,12 @@ export async function renderTokenGraphics(
     await renderMutex[token.id];
 }
 
-export async function renderAllSceneTokens(forceRebuild: boolean | 'badges-only' = false, roomDefaultScale?: number) {
+export async function renderAllSceneTokens(
+    forceRebuild: boolean | 'badges-only' = false,
+    roomDefaultScale?: number,
+    roomDefaultOffsetX?: number,
+    roomDefaultOffsetY?: number
+) {
     if (!OBR.isAvailable) return;
     try {
         const isReady = await OBR.scene.isReady();
@@ -159,41 +164,67 @@ export async function renderAllSceneTokens(forceRebuild: boolean | 'badges-only'
         );
 
         let scale = roomDefaultScale;
-        if (scale === undefined) {
+        let offsetX = roomDefaultOffsetX;
+        let offsetY = roomDefaultOffsetY;
+
+        if (scale === undefined || offsetX === undefined || offsetY === undefined) {
             try {
                 const sceneMeta = (await OBR.scene.getMetadata())[SCENE_SETTINGS_META_ID] as
                     | Record<string, unknown>
                     | undefined;
-                if (
-                    sceneMeta?.sceneDefaultScale != null &&
-                    !isNaN(Number(sceneMeta.sceneDefaultScale)) &&
-                    Number(sceneMeta.sceneDefaultScale) > 0
-                ) {
-                    scale = Number(sceneMeta.sceneDefaultScale);
-                } else {
+
+                if (scale === undefined) {
+                    if (
+                        sceneMeta?.sceneDefaultScale != null &&
+                        !isNaN(Number(sceneMeta.sceneDefaultScale)) &&
+                        Number(sceneMeta.sceneDefaultScale) > 0
+                    ) {
+                        scale = Number(sceneMeta.sceneDefaultScale);
+                    }
+                }
+                if (offsetX === undefined && sceneMeta?.sceneDefaultOffsetX != null) {
+                    offsetX = Number(sceneMeta.sceneDefaultOffsetX);
+                }
+                if (offsetY === undefined && sceneMeta?.sceneDefaultOffsetY != null) {
+                    offsetY = Number(sceneMeta.sceneDefaultOffsetY);
+                }
+
+                if (scale === undefined || offsetX === undefined || offsetY === undefined) {
                     const roomMeta = (await OBR.room.getMetadata())['pokerole-pmd-extension/room-settings'] as
                         | Record<string, unknown>
                         | undefined;
-                    if (
-                        roomMeta?.roomDefaultScale != null &&
-                        !isNaN(Number(roomMeta.roomDefaultScale)) &&
-                        Number(roomMeta.roomDefaultScale) > 0
-                    ) {
-                        scale = Number(roomMeta.roomDefaultScale);
+                    if (scale === undefined) {
+                        if (
+                            roomMeta?.roomDefaultScale != null &&
+                            !isNaN(Number(roomMeta.roomDefaultScale)) &&
+                            Number(roomMeta.roomDefaultScale) > 0
+                        ) {
+                            scale = Number(roomMeta.roomDefaultScale);
+                        }
+                    }
+                    if (offsetX === undefined && roomMeta?.roomDefaultOffsetX != null) {
+                        offsetX = Number(roomMeta.roomDefaultOffsetX);
+                    }
+                    if (offsetY === undefined && roomMeta?.roomDefaultOffsetY != null) {
+                        offsetY = Number(roomMeta.roomDefaultOffsetY);
                     }
                 }
             } catch {
-                scale = 100;
+                if (scale === undefined) scale = 100;
+                if (offsetX === undefined) offsetX = 0;
+                if (offsetY === undefined) offsetY = 0;
             }
         }
         if (!scale || isNaN(scale)) scale = 100;
+        if (offsetX === undefined || isNaN(offsetX)) offsetX = 0;
+        if (offsetY === undefined || isNaN(offsetY)) offsetY = 0;
 
         for (const item of allItems) {
             const meta = (item.metadata[STATS_META_ID] || item.metadata['pokerole-pmd-extension/stats']) as Record<
                 string,
                 unknown
             >;
-            const gData = buildGraphicsFromMeta(meta, scale);
+            const gData = buildGraphicsFromMeta(meta, scale, offsetX, offsetY);
             await renderTokenGraphics(item, gData, role, forceRebuild);
         }
     } catch (error) {

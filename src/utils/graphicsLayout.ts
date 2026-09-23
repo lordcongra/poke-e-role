@@ -28,9 +28,12 @@ export function buildGraphicDefinitions(
     const tempWillPercentage =
         data.temporaryWillMax > 0 ? Math.max(0, Math.min(1, data.temporaryWill / data.temporaryWillMax)) : 0;
 
+    const totalOffsetX = (data.roomDefaultOffsetX ?? 0) + (data.xOffset || 0);
+    const totalOffsetY = (data.roomDefaultOffsetY ?? 0) + (data.yOffset || 0);
+
     const barWidth = 112 * scale;
-    const startX = -barWidth / 2 + data.xOffset * scale;
-    const baseY = baseBottomY + (20 + data.yOffset) * scale;
+    const startX = -barWidth / 2 + totalOffsetX * scale;
+    const baseY = baseBottomY + (20 + totalOffsetY) * scale;
 
     const healthBaseX = startX + data.hpOffsetX * scale;
     const healthBaseY = baseY - 19 * scale + data.hpOffsetY * scale;
@@ -352,7 +355,7 @@ export function buildGraphicDefinitions(
         const badgeWidth = 16 * scale;
         const badgeHeight = 16 * scale;
 
-        const baseXLocal = data.xOffset * scale;
+        const baseXLocal = totalOffsetX * scale;
         const baseActionX = baseXLocal - 55 * scale;
         const baseClashX = baseXLocal - 8 * scale;
         const baseEvadeX = baseXLocal - 27 * scale;
