@@ -16,7 +16,8 @@ import {
     BookOpen,
     Zap,
     Layers,
-    Sliders
+    Sliders,
+    Lock
 } from 'lucide-react';
 
 export const CURRENT_VERSION = '3.6.4';
@@ -52,6 +53,28 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 </li>
                 <li>
                     <strong>Global & Room X/Y Offset Controls:</strong> Added dedicated <strong>Global Offsets (X / Y)</strong> and <strong>Room Offset Override (X / Y)</strong> controls to the <strong>Room Rules & Permissions</strong> menu. GMs can now set baseline X and Y pixel shifts for all tokens across the entire room or override them per scene map, with quick -10/+10 stepping buttons and 1-click resets.
+                </li>
+            </ul>,
+            <strong key="attribute-locking-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Lock size={16} /> Core & Social Attribute Locking
+            </strong>,
+            <ul
+                key="attribute-locking-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Attribute Sheet Locking:</strong> Added interactive lock toggles to the headers of both the Core Attributes and Social Attributes tables. When locked (the default state), Base and Limit spinners are disabled to prevent players from accidentally incrementing base stats instead of allocating ranks with their stat points. Players can still freely allocate rank points while locked.
+                </li>
+                <li>
+                    <strong>GM-Only Attribute Lock Rule:</strong> Added a new permission setting in <strong>Room Rules & Permissions</strong> (<strong>Attribute Locking</strong>, defaulting to GM-Only). When enabled, players cannot unlock their sheet's base attributes unless the GM unlocks it for them or sets the rule to Everyone.
                 </li>
             </ul>
         ]
