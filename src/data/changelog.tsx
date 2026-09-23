@@ -15,10 +15,11 @@ import {
     Smartphone,
     BookOpen,
     Zap,
-    Layers
+    Layers,
+    Sliders
 } from 'lucide-react';
 
-export const CURRENT_VERSION = '3.6.3';
+export const CURRENT_VERSION = '3.6.4';
 
 export interface ChangelogEntry {
     version: string;
@@ -27,6 +28,34 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
+    {
+        version: '3.6.4',
+        date: 'September 2026',
+        changes: [
+            <strong key="hud-refinement-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Sliders size={16} /> Global & Room HUD Offsets & Tracker Calibration
+            </strong>,
+            <ul
+                key="hud-refinement-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Tracker Recalibration Notice:</strong> A quick heads-up and apology - I changed up how the token trackers for HP, Will, etc auto-scale in this update, so you may need to retool or nudge your existing token trackers slightly (using the <strong>Autoscale UI</strong> button or offset spinners in Tracker Settings). Overall, HUDs should now scale and position themselves far more naturally and reliably across tokens of all shapes, sizes, and aspect ratios without awkward clipping or manual guesswork. It ain't perfect but it's better than it was for sure.
+                </li>
+                <li>
+                    <strong>Global & Room X/Y Offset Controls:</strong> Added dedicated <strong>Global Offsets (X / Y)</strong> and <strong>Room Offset Override (X / Y)</strong> controls to the <strong>Room Rules & Permissions</strong> menu. GMs can now set baseline X and Y pixel shifts for all tokens across the entire room or override them per scene map, with quick -10/+10 stepping buttons and 1-click resets.
+                </li>
+            </ul>
+        ]
+    },
     {
         version: '3.6.3',
         date: 'September 2026',
