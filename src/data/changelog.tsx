@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { LucideIcon } from 'lucide-react';
 import {
     Users,
     Map,
@@ -22,16 +23,146 @@ import {
 
 export const CURRENT_VERSION = '3.6.4';
 
+export interface ChangelogHighlight {
+    id: string;
+    version: string;
+    title: string;
+    icon: LucideIcon;
+    badge?: string;
+    summary: string;
+    details: ReactNode;
+}
+
 export interface ChangelogEntry {
     version: string;
     date: string;
+    highlights?: ChangelogHighlight[];
     changes: ReactNode[];
+}
+
+export interface ChangelogDiffResult {
+    unseenVersions: string[];
+    highlights: ChangelogHighlight[];
+    isCatchUp: boolean;
+    catchUpFromVersion: string | null;
+}
+
+export function getChangelogDiff(lastSeenVersion: string | null): ChangelogDiffResult {
+    const allVersions = CHANGELOG_DATA.map((entry) => entry.version);
+    const latestVersion = CHANGELOG_DATA[0]?.version || CURRENT_VERSION;
+
+    // Helper to extract top N highlights across all entries, prioritizing unseen
+    const allRecentHighlights = CHANGELOG_DATA.flatMap((e) => e.highlights || []);
+    const getTopHighlights = (priorityList: ChangelogHighlight[], limit = 6): ChangelogHighlight[] => {
+        const result: ChangelogHighlight[] = [];
+        const seenIds = new Set<string>();
+
+        for (const item of priorityList) {
+            if (!seenIds.has(item.id)) {
+                result.push(item);
+                seenIds.add(item.id);
+            }
+            if (result.length >= limit) return result;
+        }
+
+        for (const item of allRecentHighlights) {
+            if (!seenIds.has(item.id)) {
+                result.push(item);
+                seenIds.add(item.id);
+            }
+            if (result.length >= limit) break;
+        }
+
+        return result;
+    };
+
+    // First time user or no stored version
+    if (!lastSeenVersion) {
+        return {
+            unseenVersions: [latestVersion],
+            highlights: getTopHighlights(CHANGELOG_DATA[0]?.highlights || []),
+            isCatchUp: false,
+            catchUpFromVersion: null
+        };
+    }
+
+    // User is fully up to date
+    if (lastSeenVersion === latestVersion) {
+        return {
+            unseenVersions: [],
+            highlights: getTopHighlights(CHANGELOG_DATA[0]?.highlights || []),
+            isCatchUp: false,
+            catchUpFromVersion: null
+        };
+    }
+
+    const seenIndex = allVersions.indexOf(lastSeenVersion);
+
+    if (seenIndex > 0) {
+        // Versions between 0 and seenIndex are unseen
+        const unseenEntries = CHANGELOG_DATA.slice(0, seenIndex);
+        const unseenVersions = unseenEntries.map((e) => e.version);
+        const unseenHighlights = unseenEntries.flatMap((e) => e.highlights || []);
+
+        return {
+            unseenVersions,
+            highlights: getTopHighlights(unseenHighlights),
+            isCatchUp: unseenVersions.length > 1,
+            catchUpFromVersion: lastSeenVersion
+        };
+    }
+
+    // If unseen index not found (e.g. older historical version not in list)
+    return {
+        unseenVersions: [latestVersion],
+        highlights: getTopHighlights(CHANGELOG_DATA[0]?.highlights || []),
+        isCatchUp: true,
+        catchUpFromVersion: lastSeenVersion
+    };
 }
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
     {
         version: '3.6.4',
         date: 'September 2026',
+        highlights: [
+            {
+                id: 'hud-offsets-calibration',
+                version: '3.6.4',
+                title: 'HUD Offsets & Calibration',
+                icon: Sliders,
+                badge: 'GM & Trackers',
+                summary: 'Fine-tune token trackers room-wide with X/Y offsets & autoscale.',
+                details: (
+                    <div>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Tracker Recalibration Notice:</strong> Token trackers for HP, Will, etc. have been updated to auto-scale far more naturally across tokens of all shapes and sizes. If needed, click the <strong>Autoscale UI</strong> button or use offset spinners in Tracker Settings to quickly nudge existing tokens into alignment.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Global & Room X/Y Offset Controls:</strong> Added dedicated <strong>Global Offsets (X / Y)</strong> and <strong>Room Offset Override (X / Y)</strong> controls to the <strong>Room Rules & Permissions</strong> menu. GMs can now set baseline X and Y pixel shifts for all tokens across the entire room or override them per scene map, with quick -10/+10 stepping buttons and 1-click resets.
+                        </p>
+                    </div>
+                )
+            },
+            {
+                id: 'attribute-sheet-locking',
+                version: '3.6.4',
+                title: 'Attribute Sheet Locking',
+                icon: Lock,
+                badge: 'Sheet Security',
+                summary: 'Prevent accidental stat edits with interactive lock toggles.',
+                details: (
+                    <div>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Attribute Sheet Locking:</strong> Added interactive lock toggles to the headers of both the Core Attributes and Social Attributes tables. When locked (the default state), Base and Limit spinners are disabled to prevent players from accidentally incrementing base stats instead of allocating ranks with their stat points. Players can still freely allocate rank points while locked.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>GM-Only Attribute Lock Rule:</strong> Added a new permission setting in <strong>Room Rules & Permissions</strong> (<strong>Attribute Locking</strong>, defaulting to GM-Only). When enabled, players cannot unlock their sheet's base attributes unless the GM unlocks it for them or sets the rule to Everyone.
+                        </p>
+                    </div>
+                )
+            }
+        ],
         changes: [
             <strong key="hud-refinement-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                 <Sliders size={16} /> Global & Room HUD Offsets & Tracker Calibration
@@ -82,6 +213,68 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
     {
         version: '3.6.3',
         date: 'September 2026',
+        highlights: [
+            {
+                id: 'trainer-team-generator',
+                version: '3.6.3',
+                title: 'Trainer & Team Generator',
+                icon: Users,
+                badge: 'NPC Generator',
+                summary: 'Build battle-ready NPC trainers & teams with 50+ classes.',
+                details: (
+                    <div>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Complete Trainer & Team Generation:</strong> Instantly generate standalone NPC Trainers or complete battle-ready teams of 0–6 Pokémon with Pokerole-accurate ranks, attributes, skills, and suggested gym badges.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>50+ Curated Trainer Classes & Smart Tiers:</strong> Select or randomize from over 50 classes across 7 categories. Defaulted to <em>Min-Max (Competent)</em> to naturally bias stats, with support for tactical formation batch-spawning directly onto the Owlbear Rodeo map.
+                        </p>
+                    </div>
+                )
+            },
+            {
+                id: 'unified-lookup-tool',
+                version: '3.6.3',
+                title: 'Unified Lookup Tool',
+                icon: Search,
+                badge: 'Search & Moves',
+                summary: 'Dual-tab search across 1,200+ Pokémon, moves & learnsets.',
+                details: (
+                    <div>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Dual-Tab Lookup Engine:</strong> What was originally the Pokémon Lookup tool has been expanded into the unified <strong>Lookup Tool</strong> with dual tabs to seamlessly search both Pokémon and Moves!
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Full Move Database Search:</strong> Search and filter every move by Typing, Damage Category (Physical, Special, Support), Targets, Power, Accuracy, Rank requirements, and mechanical effects.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Bidirectional Cross-Referencing:</strong> Click any move in a Pokémon's learnset to view its move card, or expand any move's reverse learnset to view all Pokémon that can learn it with 1-click links!
+                        </p>
+                    </div>
+                )
+            },
+            {
+                id: 'ability-automation',
+                version: '3.6.3',
+                title: 'Automated Ability Tags',
+                icon: Zap,
+                badge: 'Combat Engine',
+                summary: 'Reactive rank scaling & automatic triggers for abilities.',
+                details: (
+                    <div>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Reactive Ability Automation:</strong> Integrated dozens of canonical abilities (Blaze, Overgrow, Torrent, Swarm, Huge Power, Pure Power, Hustle, Keen Eye, Super Luck, Sniper, Compound Eyes, Guts, Marvel Scale, Quick Feet, Poison Heal, Toxic Boost, Flare Boost, and more) into the sheet's reactive Tag engine without cumbersome hardcoding.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Dynamic Rank Scaling:</strong> Abilities with rank-dependent bonuses like Huge Power and Pure Power automatically scale their stat boosts based on current Rank (from Starter through Master).
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Move Category Modifiers & Triggers:</strong> Added move category damage tags like <code>[Dmg +X: Fist Move]</code>, critical calculation tags like <code>[Crit Dmg +X]</code>, and universal status triggers like <code>@ Burn</code> and <code>@ Poison</code>.
+                        </p>
+                    </div>
+                )
+            }
+        ],
         changes: [
             <strong key="token-ui-autoscale-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                 <Layers size={16} /> Token UI Scaling, Render Layers & HUD Controls
@@ -314,6 +507,35 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
     {
         version: '3.5.0',
         date: 'September 2026',
+        highlights: [
+            {
+                id: 'battle-organizer',
+                version: '3.5.0',
+                title: 'Battle Organizer & Encounters',
+                icon: Swords,
+                badge: 'Combat Engine',
+                summary: 'Track rounds, battlefield conditions, sync token actions & print PDF.',
+                details: (
+                    <div>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Interactive Battlefield & Arena Conditions:</strong> Track stadium pitch layout, active weather conditions, terrain types, environmental hazards, and Player/Foe Force Fields (Reflect, Light Screen, Safeguard, Mist) with auto-decrementing duration boxes when advancing rounds.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Multi-Round Combat & Action Economy:</strong> Plan and organize battles round-by-round with multi-round duplicate and reorder tools. Track individual action slots per combatant with completion marks (✓), clash/fail indicators (✗), held items, and status conditions.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Full Round Reset & Live Action Sync:</strong> The Battle Organizer acts as a complete round reset engine! Pull combatants and initiatives straight from the Initiative Order. The <em>Push Actions to Sheet</em> and <em>Refresh Stats</em> buttons sync all action economy states directly to map tokens and character sheets in real time.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Live HP & Will Resource Display:</strong> Added compact HP and Will indicators for each combatant directly in the Organizer view so GMs and players can monitor vital resources at a glance during combat.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Owlbear Modal, Multi-Window & Print PDF:</strong> Open as a dedicated full-size modal in Owlbear Rodeo, pop out into an independent browser window for multi-monitor setups, or export comprehensive print-ready PDF battle sheets with stadium graphics and stat lines.
+                        </p>
+                    </div>
+                )
+            }
+        ],
         changes: [
             <strong key="pokedex-lookup-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                 <Search size={16} /> GM Screen: Pokédex Lookup Tool
@@ -385,6 +607,26 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
     {
         version: '3.4.0',
         date: 'September 2026',
+        highlights: [
+            {
+                id: 'gm-screen-guide',
+                version: '3.4.0',
+                title: 'GM Screen & Reference',
+                icon: Shield,
+                badge: 'GM Tools',
+                summary: 'Core rules, catching calculator, and reference tables.',
+                details: (
+                    <div>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Core Rules & Reference Tables:</strong> Includes all essential information from the corebook for quick reference—combat flow, difficulty, will points, trainer actions, cover, healing, status stacking, rank balance, and the interactive Catching Calculator.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Homebrew & Expansion Mechanics:</strong> Includes reference guides for PMD (dungeon items, food, weapons, switchers) and Pokémon Rangers (Styler, styles, maneuvers, partner bonds).
+                        </p>
+                    </div>
+                )
+            }
+        ],
         changes: [
             <strong key="battle-organizer-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                 <Swords size={16} /> Battle Organizer Sheet & Encounter Manager
