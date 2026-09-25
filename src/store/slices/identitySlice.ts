@@ -358,7 +358,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         dexDescription: ''
     },
 
-    setTokenData: (tokenId, role) => set({ tokenId, role }),
+    setTokenData: (tokenId, role) => set({ tokenId, role: isStandaloneMode ? 'GM' : role }),
 
     setPendingDemoRoll: (rollData) =>
         set((state) => ({

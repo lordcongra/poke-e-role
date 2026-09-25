@@ -1,9 +1,11 @@
 import { useCharacterStore } from '../../../store/useCharacterStore';
+import { isStandaloneMode } from '../../../utils/storageAdapter';
 
 export function TrackerVisibilityToggles() {
     const identityStore = useCharacterStore((state) => state.identity);
     const setIdentity = useCharacterStore((state) => state.setIdentity);
     const role = useCharacterStore((state) => state.role);
+    const isGm = isStandaloneMode || role === 'GM';
 
     return (
         <>
@@ -16,7 +18,7 @@ export function TrackerVisibilityToggles() {
                     />{' '}
                     Show HP Bar
                 </label>
-                {role === 'GM' && (
+                {isGm && (
                     <label
                         className="tracker-settings__gm-label text-subtext"
                         title="Hide this UI element from Players entirely."
@@ -40,7 +42,7 @@ export function TrackerVisibilityToggles() {
                     />{' '}
                     Show HP Numbers
                 </label>
-                {role === 'GM' && (
+                {isGm && (
                     <label className="tracker-settings__gm-label text-subtext">
                         <input
                             type="checkbox"
@@ -61,7 +63,7 @@ export function TrackerVisibilityToggles() {
                     />{' '}
                     Show Will Bar
                 </label>
-                {role === 'GM' && (
+                {isGm && (
                     <label className="tracker-settings__gm-label text-subtext">
                         <input
                             type="checkbox"
@@ -82,7 +84,7 @@ export function TrackerVisibilityToggles() {
                     />{' '}
                     Show Will Numbers
                 </label>
-                {role === 'GM' && (
+                {isGm && (
                     <label className="tracker-settings__gm-label text-subtext">
                         <input
                             type="checkbox"
@@ -105,7 +107,7 @@ export function TrackerVisibilityToggles() {
                     />{' '}
                     Show Defenses
                 </label>
-                {role === 'GM' && (
+                {isGm && (
                     <label className="tracker-settings__gm-label text-subtext">
                         <input
                             type="checkbox"
@@ -126,7 +128,7 @@ export function TrackerVisibilityToggles() {
                     />{' '}
                     Show Actions
                 </label>
-                {role === 'GM' && (
+                {isGm && (
                     <label className="tracker-settings__gm-label text-subtext">
                         <input
                             type="checkbox"

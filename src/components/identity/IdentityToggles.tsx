@@ -1,5 +1,6 @@
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { LayoutList, Settings, Lock } from 'lucide-react';
+import { isStandaloneMode } from '../../utils/storageAdapter';
 
 interface IdentityTogglesProps {
     onOpenTrackerSettings: () => void;
@@ -32,7 +33,7 @@ export function IdentityToggles({ onOpenTrackerSettings }: IdentityTogglesProps)
                 </button>
             </div>
 
-            {role === 'GM' && (
+            {(isStandaloneMode || role === 'GM') && (
                 <div className="identity-header__toggle-box identity-header__toggle-box--primary">
                     <label className="identity-header__toggle-label text-theme-header">
                         <input

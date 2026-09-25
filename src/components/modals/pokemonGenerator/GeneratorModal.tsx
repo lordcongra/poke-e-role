@@ -150,7 +150,9 @@ export function GeneratorModal({ onClose }: { onClose: () => void }) {
             .catch((error) => console.error('[GeneratorModal] Failed to load lookup index:', error));
     }, []);
 
-    const filteredCustomPokemon = roomCustomPokemon.filter((p) => role === 'GM' || !p.gmOnly).map((p) => p.Name);
+    const filteredCustomPokemon = roomCustomPokemon
+        .filter((p) => isStandaloneMode || role === 'GM' || !p.gmOnly)
+        .map((p) => p.Name);
     const uniqueSpecies = Array.from(new Set([...speciesList, ...filteredCustomPokemon]));
 
     const activeTargetRecRank =

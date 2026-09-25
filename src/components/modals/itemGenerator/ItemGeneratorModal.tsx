@@ -8,6 +8,7 @@ import { ItemGeneratorResultModal } from './ItemGeneratorResultModal';
 import { ItemGeneratorPocketGroup } from './ItemGeneratorPocketGroup';
 import { ItemGeneratorTmFilters } from './ItemGeneratorTmFilters';
 import { POKEMON_TYPES, TYPE_COLORS } from '../../../data/constants';
+import { isStandaloneMode } from '../../../utils/storageAdapter';
 import './ItemGeneratorModal.css';
 
 interface ItemGeneratorModalProps {
@@ -50,7 +51,7 @@ export function ItemGeneratorModal({ onClose }: ItemGeneratorModalProps) {
     const [generatedItem, setGeneratedItem] = useState<{ name: string; description: string } | null>(null);
     const [activePool, setActivePool] = useState<PoolItem[]>([]);
 
-    const visibleTypes = roomCustomTypes.filter((type) => role === 'GM' || !type.gmOnly);
+    const visibleTypes = roomCustomTypes.filter((type) => isStandaloneMode || role === 'GM' || !type.gmOnly);
     const allTypes = [...POKEMON_TYPES.filter((t) => t !== ''), ...visibleTypes.map((type) => type.name)];
     const allTypeColors = {
         ...TYPE_COLORS,

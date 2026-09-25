@@ -294,7 +294,7 @@ export function useBattleOrganizer() {
         async (combatant: CombatantRowData) => {
             try {
                 const role = useCharacterStore.getState().role;
-                if (role === 'PLAYER' && combatant.isNPC) {
+                if (!isStandaloneMode && role === 'PLAYER' && combatant.isNPC) {
                     return;
                 }
 
@@ -317,7 +317,7 @@ export function useBattleOrganizer() {
                         window.dispatchEvent(new CustomEvent('pkr-select-character', { detail: { id: match.id } }));
                         const store = useCharacterStore.getState();
                         setActiveTokenId(match.id);
-                        store.setTokenData(match.id, 'PLAYER');
+                        store.setTokenData(match.id, 'GM');
                         store.loadFromOwlbear((match.metadata || {}) as Record<string, unknown>);
                         const tokenImgUrl =
                             combatant.image || extractTokenImage(match.metadata as Record<string, unknown>);

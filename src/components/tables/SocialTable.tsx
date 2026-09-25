@@ -5,6 +5,7 @@ import { parseCombatTags, getAbilityText, calculateStatTotal } from '../../utils
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { RotateCcw, Lock, Unlock } from 'lucide-react';
 import OBR from '@owlbear-rodeo/sdk';
+import { isStandaloneMode } from '../../utils/storageAdapter';
 import './SocialTable.css';
 
 const SOCIAL_COLORS = {
@@ -67,7 +68,7 @@ export function SocialTable() {
 
     const handleToggleLock = () => {
         if (isLocked) {
-            if (role !== 'GM' && gmOnlyAttributeLock) {
+            if (!isStandaloneMode && role !== 'GM' && gmOnlyAttributeLock) {
                 const msg = 'Your GM must unlock this sheet for you or enable users to unlock sheets in Room Rules.';
                 if (OBR.isAvailable) {
                     OBR.notification.show(msg, 'WARNING');

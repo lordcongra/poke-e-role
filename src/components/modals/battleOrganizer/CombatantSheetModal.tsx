@@ -50,7 +50,7 @@ export function CombatantSheetModal({
     const role = useCharacterStore((state) => state.role);
     const isNPC = useCharacterStore((state) => state.identity.isNPC);
     const gmOnlyMatchups = useCharacterStore((state) => state.identity.gmOnlyMatchups);
-    const isLocked = role === 'PLAYER' && (Boolean(combatant.isNPC) || Boolean(isNPC));
+    const isLocked = !isStandaloneMode && role === 'PLAYER' && (Boolean(combatant.isNPC) || Boolean(isNPC));
 
     // Save previous window theme colors to restore when CombatantSheetModal is closed
     const initialThemeRef = useRef<{ primary: string; secondary: string } | null>(null);
@@ -140,7 +140,7 @@ export function CombatantSheetModal({
                         const meta = (match.metadata || {}) as Record<string, unknown>;
                         setActiveTokenId(match.id);
                         const store = useCharacterStore.getState();
-                        store.setTokenData(match.id, 'PLAYER');
+                        store.setTokenData(match.id, 'GM');
                         store.loadFromOwlbear(meta);
 
                         const tokenImgUrl = combatant.image || extractTokenImage(meta);
@@ -233,7 +233,7 @@ export function CombatantSheetModal({
         };
     }, [combatant]);
 
-    const selectableCombatants = allCombatants.filter((c) => !(role === 'PLAYER' && c.isNPC));
+    const selectableCombatants = allCombatants.filter((c) => !(!isStandaloneMode && role === 'PLAYER' && c.isNPC));
     const currentIndex = selectableCombatants.findIndex((c) => c.id === combatant.id);
     const hasMultiple = selectableCombatants.length > 1;
 

@@ -10,7 +10,8 @@ import { Pencil, Copy, X, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './HomebrewTypes.css';
 
 export function HomebrewTypes() {
-    const role = useCharacterStore((state) => state.role);
+    const storeRole = useCharacterStore((state) => state.role);
+    const role = isStandaloneMode ? 'GM' : storeRole;
     const access = useCharacterStore((state) => state.identity.homebrewAccess);
     const canEdit = isStandaloneMode || role === 'GM' || access === 'Full';
 

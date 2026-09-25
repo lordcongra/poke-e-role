@@ -9,7 +9,8 @@ import { Plus, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 
 export function HomebrewAbilities() {
-    const role = useCharacterStore((state) => state.role);
+    const storeRole = useCharacterStore((state) => state.role);
+    const role = isStandaloneMode ? 'GM' : storeRole;
     const access = useCharacterStore((state) => state.identity.homebrewAccess);
     const canEdit = isStandaloneMode || role === 'GM' || access === 'Full';
 

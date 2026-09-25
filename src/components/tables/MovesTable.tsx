@@ -3,6 +3,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import type { MoveData } from '../../store/storeTypes';
 import { CombatStat } from '../../types/enums';
 import { loadLocalDataset, ALL_MOVES } from '../../utils/api';
+import { isStandaloneMode } from '../../utils/storageAdapter';
 import {
     calculateBaseDamage,
     executeDamageRoll,
@@ -148,7 +149,9 @@ export function MovesTable() {
             <datalist id="move-list">
                 {[
                     ...moveList,
-                    ...roomCustomMoves.filter((move) => role === 'GM' || !move.gmOnly).map((move) => move.name)
+                    ...roomCustomMoves
+                        .filter((move) => isStandaloneMode || role === 'GM' || !move.gmOnly)
+                        .map((move) => move.name)
                 ].map((moveName) => (
                     <option key={moveName} value={moveName} />
                 ))}

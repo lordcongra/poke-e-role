@@ -137,7 +137,7 @@ export function GeneratorPreviewModal({
 
                             if (idx === 0) {
                                 setActiveTokenId(newId);
-                                store.setTokenData(newId, 'PLAYER');
+                                store.setTokenData(newId, 'GM');
                                 store.loadFromOwlbear({
                                     nickname: providedNickname,
                                     species: b.species,

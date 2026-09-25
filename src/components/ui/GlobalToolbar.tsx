@@ -93,7 +93,7 @@ export function GlobalToolbar() {
 
     const fileInputReference = useRef<HTMLInputElement>(null);
 
-    const isGm = isStandaloneMode || localRole === 'GM';
+    const isGm = isStandaloneMode || storeRole === 'GM' || localRole === 'GM';
     const showHomebrewButton = isStandaloneMode || canViewHomebrew(localRole, homebrewAccess);
     const showLootGenButton = isGm || gmOnlyLootGen === false;
     const showPokemonGeneratorButton = isGm || gmOnlyGenerators === false;

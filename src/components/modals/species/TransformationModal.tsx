@@ -94,7 +94,7 @@ export function TransformationModal({ onClose }: TransformationModalProps) {
 
     const allTypes = [
         ...POKEMON_TYPES.filter((t) => t !== '' && t !== 'Stellar'),
-        ...roomCustomTypes.filter((t) => role === 'GM' || !t.gmOnly).map((t) => t.name)
+        ...roomCustomTypes.filter((t) => isStandaloneMode || role === 'GM' || !t.gmOnly).map((t) => t.name)
     ];
 
     const handleSelectTrans = (e: React.ChangeEvent<HTMLSelectElement>) => {

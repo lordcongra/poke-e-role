@@ -164,7 +164,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
 
     const handleOpenCombatantSheet = (combatant: CombatantRowData) => {
         const role = useCharacterStore.getState().role;
-        if (role === 'PLAYER' && combatant.isNPC) {
+        if (!isStandaloneMode && role === 'PLAYER' && combatant.isNPC) {
             return;
         }
         setActiveSheetCombatant(combatant);
@@ -473,7 +473,7 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                         allCombatants={currentRound?.combatants || []}
                         onSelectCombatant={(c) => {
                             const role = useCharacterStore.getState().role;
-                            if (role === 'PLAYER' && c.isNPC) return;
+                            if (!isStandaloneMode && role === 'PLAYER' && c.isNPC) return;
                             setActiveSheetCombatant(c);
                         }}
                         onClose={() => setActiveSheetCombatant(null)}

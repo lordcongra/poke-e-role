@@ -270,7 +270,7 @@ function App() {
     }, []);
 
     const renderSheetContent = () => {
-        if (isNPC && role === 'PLAYER') {
+        if (!isStandaloneMode && isNPC && role === 'PLAYER') {
             return (
                 <div id="gm-lock-screen" className="app-gm-lock">
                     <h2 className="app-gm-lock__icon text-title-primary">

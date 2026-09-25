@@ -54,7 +54,7 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
     const critDice = 2 + (itemBuffs.critDmg || 0);
 
     const bankedDice = (move.id && bankedAccDice[move.id]) || 0;
-    const canOverride = role === 'GM' || !gmOnlyDamageOverride;
+    const canOverride = isStandaloneMode || role === 'GM' || !gmOnlyDamageOverride;
 
     useEffect(() => {
         let isMounted = true;

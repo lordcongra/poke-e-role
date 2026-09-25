@@ -32,7 +32,7 @@ export function CombatantRow({
 }: CombatantRowProps) {
     const [resolvedImage, setResolvedImage] = useState<string>('');
     const role = useCharacterStore((state) => state.role);
-    const isLocked = role === 'PLAYER' && !!combatant.isNPC;
+    const isLocked = !isStandaloneMode && role === 'PLAYER' && !!combatant.isNPC;
     const customStatuses = useCharacterStore((state) => state.roomCustomStatuses || []);
 
     const combinedStatusOptions = Array.from(

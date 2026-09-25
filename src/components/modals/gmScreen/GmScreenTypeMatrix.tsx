@@ -4,6 +4,7 @@ import { useCharacterStore } from '../../../store/useCharacterStore';
 import { POKEMON_TYPES, TYPE_COLORS } from '../../../data/constants';
 import { getMatchupGroups } from '../../../utils/typeMatchupLogic';
 import { broadcastInfo } from '../../../utils/diceRoller';
+import { isStandaloneMode } from '../../../utils/storageAdapter';
 import './GmScreenTypeMatrix.css';
 
 export function GmScreenTypeMatrix() {
@@ -15,7 +16,7 @@ export function GmScreenTypeMatrix() {
     const [copied, setCopied] = useState<boolean>(false);
 
     const visibleTypes = useMemo(() => {
-        return roomCustomTypes.filter((type) => role === 'GM' || !type.gmOnly);
+        return roomCustomTypes.filter((type) => isStandaloneMode || role === 'GM' || !type.gmOnly);
     }, [roomCustomTypes, role]);
 
     const allTypeOptions = useMemo(() => {

@@ -164,7 +164,7 @@ export async function spawnTrainerAndTeam(
 
             // Switch to the newly created Trainer
             setActiveTokenId(trainerId);
-            store.setTokenData(trainerId, 'PLAYER');
+            store.setTokenData(trainerId, 'GM');
             store.loadFromOwlbear({
                 ...result.trainerMetadata,
                 parentId: null

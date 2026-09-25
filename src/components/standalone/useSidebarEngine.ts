@@ -138,7 +138,7 @@ export function useSidebarEngine() {
     const handleSelectCharacter = useCallback(async (id: string, meta: Record<string, unknown>) => {
         setActiveTokenId(id);
         const store = useCharacterStore.getState();
-        store.setTokenData(id, 'PLAYER');
+        store.setTokenData(id, 'GM');
         store.loadFromOwlbear(meta);
 
         if (meta['species']) {

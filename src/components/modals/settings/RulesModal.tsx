@@ -939,7 +939,7 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                                 </div>
                             </div>
 
-                            {role === 'GM' && (
+                            {(isStandaloneMode || role === 'GM') && (
                                 <div>
                                     <label
                                         className="rules-modal__label text-label"

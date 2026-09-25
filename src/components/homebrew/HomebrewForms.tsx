@@ -9,7 +9,8 @@ import { Plus, Sparkles, Shield, Save, FolderOpen, AlertTriangle } from 'lucide-
 import './Homebrew.css';
 
 export function HomebrewForms() {
-    const role = useCharacterStore((state) => state.role);
+    const storeRole = useCharacterStore((state) => state.role);
+    const role = isStandaloneMode ? 'GM' : storeRole;
     const access = useCharacterStore((state) => state.identity.homebrewAccess);
     const canEdit = isStandaloneMode || role === 'GM' || access === 'Full';
 

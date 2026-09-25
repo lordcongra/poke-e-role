@@ -43,7 +43,7 @@ export function useInitiativeEngine() {
         return paramShape === 'square' || paramShape === 'none' ? paramShape : 'circle';
     });
     const [isReady, setIsReady] = useState(() => isStandaloneMode);
-    const [isGM, setIsGM] = useState(false);
+    const [isGM, setIsGM] = useState(() => isStandaloneMode);
 
     const [activeTurnId, setActiveTurnId] = useState<string | null>(null);
 

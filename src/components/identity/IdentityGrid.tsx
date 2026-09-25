@@ -33,8 +33,9 @@ export function IdentityGrid({ onOpenAbility, onOpenNature, onOpenPokedex, onOpe
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes || []);
     const roomCustomPokemon = useCharacterStore((state) => state.roomCustomPokemon || []);
 
-    const filteredTypes = roomCustomTypes.filter((type) => role === 'GM' || !type.gmOnly);
-    const filteredPokemon = roomCustomPokemon.filter((pokemon) => role === 'GM' || !pokemon.gmOnly);
+    const isGm = isStandaloneMode || role === 'GM';
+    const filteredTypes = roomCustomTypes.filter((type) => isGm || !type.gmOnly);
+    const filteredPokemon = roomCustomPokemon.filter((pokemon) => isGm || !pokemon.gmOnly);
 
     const allTypes = [...POKEMON_TYPES, ...filteredTypes.map((type) => type.name)];
     const allTypeColors = {

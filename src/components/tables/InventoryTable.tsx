@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { fetchItemData } from '../../utils/api';
 import { KNOWN_ITEMS } from '../../data/constants';
+import { isStandaloneMode } from '../../utils/storageAdapter';
 import { TagBuilderModal } from '../modals/items/TagBuilderModal';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { CollapsingSection } from '../ui/CollapsingSection';
@@ -38,7 +39,9 @@ export function InventoryTable() {
     const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
 
     const activeCount = inventory.filter((item) => item.active).length;
-    const customItemNames = roomCustomItems.filter((item) => role === 'GM' || !item.gmOnly).map((item) => item.name);
+    const customItemNames = roomCustomItems
+        .filter((item) => isStandaloneMode || role === 'GM' || !item.gmOnly)
+        .map((item) => item.name);
 
     const handleInfoClick = async (id: string, name: string, descriptionFallback: string) => {
         if (!name) {
