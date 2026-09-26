@@ -15,8 +15,8 @@ export const SKILLS_DATA = {
         { name: 'Brawl', type: 'General', desc: 'Unarmed melee fighting and physical combat.' },
         { name: 'Throw', type: 'Human*', desc: 'Throwing Pokéballs, stones, and items accurately.' },
         { name: 'Weapons', type: 'Human*', desc: 'Wielding melee and ranged handheld weaponry.' },
-        { name: 'Evasion', type: 'General', desc: 'Dodging attacks, diving for cover, ducking.' },
-        { name: 'Clash', type: 'Pokémon^', desc: 'Contesting opponent attacks with equal power.' },
+        { name: 'Evasion', type: 'General', desc: 'Dodging attacks, diving for cover, ducking. Available to both Pokémon and Humans (it is a Maneuver).' },
+        { name: 'Clash', type: 'Pokémon^', desc: 'Contesting opponent attacks with equal power. Requires using a Move—Humans cannot Clash because Struggle is a Maneuver.' },
         { name: 'Channel', type: 'Pokémon^', desc: 'Focusing spiritual and elemental energy.' }
     ],
     survival: [
@@ -82,6 +82,11 @@ export const WILL_RECOVERY = [
     'Spend quality 2-hour training time with your Pokémon'
 ];
 
+export const WILL_ROLLING_RULE = {
+    title: 'Rolling Will (Stat vs. Resource Pool)',
+    desc: 'Whenever an Action Roll calls for rolling "Will" (such as mental resistance, withstanding terror, social resilience, or special checks), you roll your MAXIMUM Will Score dice pool (Insight + Rank/Bonus), NOT your currently remaining Will Points. Will Points are a spendable resource pool, while your Max Will score is your attribute dice pool.'
+};
+
 // 4. COMBAT FLOW STEPS
 export const COMBAT_FLOW_STEPS = [
     {
@@ -89,6 +94,7 @@ export const COMBAT_FLOW_STEPS = [
         title: 'Combat Starts! Initiative',
         items: [
             'Roll Initiative for each combatant: 1d6 + Dexterity + Alert.',
+            'Trainers In the Fray roll initiative here alongside Pokémon (Trainers in the Trainer Area do not roll initiative).',
             'Each Pokémon combatant declares which Ability is active.',
             'Storyteller / GM informs combatants about active Weather and Terrain effects.'
         ]
@@ -99,7 +105,8 @@ export const COMBAT_FLOW_STEPS = [
         items: [
             'Take turns in initiative order (highest to lowest).',
             'On each Pokémon’s turn: Choose to use a Move / Action, or choose to Pass and do nothing.',
-            'If a Pokémon has already taken 5 Actions this round, they must pass.'
+            'Trainers in the Trainer Area issue commands and can take trainer actions during their Pokémon’s turn.',
+            'If a Pokémon or Trainer has already taken 5 Actions this round, they must pass.'
         ]
     },
     {
@@ -107,7 +114,8 @@ export const COMBAT_FLOW_STEPS = [
         title: 'Round Ends!',
         items: [
             'When every Pokémon in the Initiative Order Passes, the Round ends.',
-            'At the end of the round, Trainers who are NOT In the Fray may take their Trainer Action.'
+            'At the end of the round, Trainers who are NOT In the Fray take their dedicated Trainer turn.',
+            'Optimal Switching Timing: Switching mid-round causes the incoming Pokémon to forfeit all actions until next round. The end of the round is the ideal time to switch Pokémon or deploy replacements for fainted Pokémon!'
         ]
     },
     {

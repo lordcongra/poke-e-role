@@ -10,7 +10,6 @@ import {
     ENVIRONMENTAL_HAZARDS_DATA
 } from './gmStatusData';
 import {
-    TRAINER_ACTIONS_TABLE,
     COVER_TABLE,
     HEALING_TABLE,
     RANK_SUMMARY_TABLE,
@@ -26,17 +25,38 @@ import {
     formatDiscordTable
 } from './gmReferenceData';
 import {
+    TRAINER_ACTIONS_TABLE
+} from './gmTrainerData';
+import {
+    CORE_MANEUVERS_DATA,
+    formatManeuverBroadcast
+} from './gmManeuversData';
+import {
     PMD_BAG_CAPACITY_TABLE,
     PMD_ITEM_WEIGHT_TABLE
 } from './gmHomebrewData';
 import {
     RANGER_STYLERS
 } from './gmRangersData';
+import {
+    STRENGTH_LIFTING_CHART,
+    DEXTERITY_SPEED_CHART
+} from './gmAttributeBenchmarksData';
+import {
+    FLING_DAMAGE_TABLE,
+    ENVIRONMENT_POWER_TABLE
+} from './gmMoveClarificationsData';
 
 export interface GmCheatItem {
     id: string;
     title: string;
-    category: 'rules' | 'status' | 'weather' | 'catching' | 'training' | 'balance' | 'types' | 'homebrew';
+    category:
+        | 'rules'
+        | 'trainer'
+        | 'maneuvers'
+        | 'environment'
+        | 'progression'
+        | 'homebrew';
     categoryLabel: string;
     badge?: string;
     summary: string;
@@ -125,6 +145,63 @@ export const GM_CHEAT_ITEMS: GmCheatItem[] = [
 *(* Typically a human skill | ^ Typically a Pokémon skill)*`
     },
     {
+        id: 'attribute-benchmarks-lifting-speed',
+        title: 'Attribute Benchmarks: Strength & Dexterity',
+        category: 'rules',
+        categoryLabel: 'Combat & Rules',
+        badge: 'Narrative Charts',
+        summary: 'Narrative benchmarks for maximum lifting capacity (Strength, 40 to 1500 lbs) and top running speed (Dexterity, 6 to 99 mph) for humans and Pokémon.',
+        keywords: [
+            'strength',
+            'lifting',
+            'capacity',
+            'weight',
+            'dexterity',
+            'speed',
+            'mph',
+            'kmph',
+            'km/h',
+            'athletic',
+            'carrying',
+            'benchmarks',
+            'running',
+            'crawl',
+            'walk',
+            'narrative',
+            'lbs',
+            'kg'
+        ],
+        broadcastText:
+            'Strength & Dexterity Narrative Benchmarks:\n' +
+            '• Strength Lifting Capacity:\n' +
+            STRENGTH_LIFTING_CHART.map((s) => `  ${s.score} dots: ${s.valueImperial} (${s.valueMetric})`).join('\n') +
+            '\n  * Each Athletic point adds 8 lb / 4 kg. Reduced by Pain Penalties.\n\n' +
+            '• Dexterity Top Speed:\n' +
+            DEXTERITY_SPEED_CHART.map((d) => `  ${d.score} dots: ${d.valueImperial} (${d.valueMetric})`).join('\n') +
+            '\n  * Each Athletic point adds 1.4 mph / 2 km/h. At Half HP walk only, at 1 HP crawl only. Carrying weight halves speed unless lifting 2x weight.',
+        discordMarkdown: `## 🏋️‍♂️ **Attribute Benchmarks: Lifting & Speed**
+> *Narrative guidelines for humans and most Pokémon. Storytellers may adjust for specific species sizes and physiologies.*
+
+### **Strength: Narrative Lifting Capacity**
+${formatDiscordTable(
+    ['Score', 'Rating', 'Imperial (lb)', 'Metric (kg)'],
+    STRENGTH_LIFTING_CHART.map((s) => [String(s.score), s.dots, s.valueImperial, s.valueMetric])
+)}
+• **Athletic Skill:** Each point in your Athletic Skill adds **8 lb / 4 kg** to your Lifting Capacity.
+• **Pain Penalties:** Lifting Capacity is reduced by Pain Penalties.
+
+---
+
+### **Dexterity: Narrative Maximum Speed**
+${formatDiscordTable(
+    ['Score', 'Rating', 'Imperial (mph)', 'Metric (km/h)'],
+    DEXTERITY_SPEED_CHART.map((d) => [String(d.score), d.dots, d.valueImperial, d.valueMetric])
+)}
+• **Athletic Skill:** Each point in your Athletic Skill adds **1.4 mph / 2 km/h** to your maximum speed.
+• **Pain Penalties:** At **Half HP** you can only walk; at **1 HP** remaining you can only crawl.
+• **Carrying Weight:** Lifting someone or something **halves your Speed**, unless you can lift twice the weight of what you are carrying.`
+    },
+    {
         id: 'successes-required',
         title: 'Action Difficulty & Successes Required',
         category: 'rules',
@@ -155,11 +232,11 @@ ${formatDiscordTable(
     },
     {
         id: 'will-points',
-        title: 'Will Points (Spending & Recovery)',
+        title: 'Will Points (Spending, Recovery & Rolling)',
         category: 'rules',
         categoryLabel: 'Combat & Rules',
         badge: 'Core Mechanic',
-        summary: 'Power Through Pain, Take Your Chances, Pushing Fate, and recovery conditions.',
+        summary: 'Power Through Pain, Take Your Chances, Pushing Fate, recovery conditions, and rolling Max Will Stat vs. spendable Will Points.',
         keywords: [
             'will',
             'will points',
@@ -169,10 +246,13 @@ ${formatDiscordTable(
             'faint',
             'reroll',
             're-roll',
-            'will recovery'
+            'will recovery',
+            'rolling will',
+            'max will',
+            'will score'
         ],
         broadcastText:
-            'Will Points Spending:\n• Power Through Pain: Ignore 1 Pain Penalty for scene\n• Take Your Chances: Reroll 1 failure from all Action Rolls this round\n• Pushing Fate: +1 Success to a single roll (not dmg/chance)\n⚠️ Cannot use Take Your Chances & Pushing Fate in same round! Spending all Will causes fainting at scene end.',
+            'Will Points Spending & Rolling:\n• Power Through Pain: Ignore 1 Pain Penalty for scene\n• Take Your Chances: Reroll 1 failure from all Action Rolls this round\n• Pushing Fate: +1 Success to a single roll (not dmg/chance)\n⚠️ Cannot use Take Your Chances & Pushing Fate in same round! Spending all Will causes fainting at scene end.\n• Rolling Will: When an Action Roll requires rolling "Will" (such as mental resistance, withstanding terror, social resilience, or special checks), roll your MAXIMUM Will Score (Insight + Rank/Bonus), NOT your remaining Will Points!',
         discordMarkdown: `## 🌟 **Will Points: Spending & Recovery**
 **Spending Will:**
 • **Power Through the Pain:** Spend **1 Will** to ignore one Pain Penalty for the rest of the scene.
@@ -182,6 +262,9 @@ ${formatDiscordTable(
 > ⚠️ **Important Rules:**
 > • In a single round, you may only use *Take Your Chances* OR *Pushing Fate*—you cannot use both in the same round!
 > • Spending all your Will Points in a scene causes that character to **faint** at the end of the scene!
+
+> 🎲 **Rolling Will (Stat vs. Resource Pool):**
+> Whenever an Action Roll requires rolling **"Will"** (such as mental resistance, withstanding terror, social resilience, or special checks), roll your **Maximum Will Score** dice pool (\`Insight + Rank/Bonus\`), **not** your currently remaining Will Points. Will Points are a spendable resource, while the Max Will score is your attribute dice pool.
 
 **Recovering Will:**
 • Rest for a few days in safety
@@ -195,7 +278,7 @@ ${formatDiscordTable(
         category: 'rules',
         categoryLabel: 'Combat & Rules',
         badge: 'Round Sequence',
-        summary: 'Step-by-step combat order: Initiative, Action Turns, Round End, and Trainer Actions.',
+        summary: 'Step-by-step combat order: Initiative, Action Turns, Round End, Trainer Turns, and Optimal Switching.',
         keywords: [
             'combat flow',
             'round',
@@ -206,19 +289,24 @@ ${formatDiscordTable(
             'in the fray',
             'weather',
             'terrain',
-            'ability'
+            'ability',
+            'switching',
+            'replacing fainted'
         ],
         broadcastText:
-            'Combat Flow:\n1. Combat Starts: Roll Initiative (1d6+Dex+Alert), declare Abilities & Weather/Terrain.\n2. Round Starts: Take turns in init order (Action or Pass). Max 5 actions.\n3. Round Ends: When all pass. Trainers not in the fray may take an action.\n4. Repeat for next round.',
+            'Combat Flow:\n1. Combat Starts: Roll Initiative (1d6+Dex+Alert) for Pokémon & Trainers in the Fray; declare Abilities & Weather/Terrain.\n2. Round Starts: Take turns in init order (Action or Pass). Max 5 actions. Trainers in Area command & act on Pokémon turns.\n3. Round Ends: When all pass. Trainers not in the fray take their turn. (Optimal time to switch Pokémon or deploy fainted replacements without mid-round lockout!).\n4. Next Round: Reset action counts and repeat.',
         discordMarkdown: `## ⚔️ **Pokerole Combat Flow**
 1. **Combat Starts!** Roll Initiative for each combatant: \`1d6 + Dexterity + Alert\`
+   • Trainers *In the Fray* roll initiative alongside Pokémon (Trainers in the Trainer Area do not roll initiative).
    • Each Pokémon declares which Ability is active.
    • Storyteller announces active Weather and Terrain effects.
 2. **Round Starts!** Take turns in initiative order. On each Pokémon's turn:
    • Use a Move or another action.
    • Choose to Pass and do nothing (Mandatory pass if 5 actions already taken this round).
+   • Trainers in the Trainer Area issue commands and take trainer actions during their Pokémon’s turn.
 3. **Round Ends!** When every Pokémon in Initiative order Passes, the round ends.
-   • Trainers who are *not In the Fray* may now take an action.
+   • Trainers who are *not In the Fray* may now take their dedicated Trainer turn.
+   • **Optimal Switching Window:** Switching mid-round causes the new Pokémon to forfeit all actions until next round. The end of the round is the ideal time to switch or send out fainted replacements!
 4. **Next Round:** If combat continues, reset action counts and start the next round.`
     },
     {
@@ -261,6 +349,129 @@ ${formatDiscordTable(
    • **Resistance:** Each Resistance subtracts **-1 flat damage** (reducing 1 base damage down to 0).
    • **Immunity:** The target takes 0 damage and ignores all effects.
 5. **Resolve:** Apply damage, then resolve any declared Late Reactions.`
+    },
+    {
+        id: 'move-clarifications-core',
+        title: 'Move Clarifications: Core Moves & Mechanics',
+        category: 'rules',
+        categoryLabel: 'Combat & Rules',
+        badge: 'Core Clarifications',
+        summary: 'Official core clarifications for Encore, Fling, Hidden Power (Unown), Nature/Secret Power, Natural Gift, Snatch, Substitute Decoys, and Narrative Move use.',
+        keywords: [
+            'moves',
+            'move clarifications',
+            'clarifications',
+            'encore',
+            'fling',
+            'held item',
+            'berries',
+            'natural gift',
+            'nature power',
+            'secret power',
+            'snatch',
+            'substitute',
+            'decoy',
+            'shed tail',
+            'unown',
+            'hidden power',
+            'narrative',
+            'creative moves',
+            'odor sleuth',
+            'reflect'
+        ],
+        broadcastText:
+            'Move Clarifications:\n' +
+            '• Encore: Repeats exact action sequence with same targets. Failed evasion repeats even if unattacked; clash repeats as pretend-clash. 1 round cooldown after.\n' +
+            '• Fling: Throws held item: Common Berry (+1 die), Uncommon (+2 dice), Rare (+3 dice), Held Item (+4 dice). Lost for battle unless retrieved or stolen.\n' +
+            '• Hidden Power: Unown sole movepool exception—can repeat Hidden Power multiple times in same round without penalty.\n' +
+            '• Nature & Secret Power: Nature Power matches environmental energy/terrain type. Secret Power stays Normal type and inflicts environmental status (e.g. Water = -2 Strength). Free choice if multiple sources.\n' +
+            '• Natural Gift: Changes Move Type based on berry flavor (Bitter=Dark, Dry=Ground, Effervescent=Flying, Fresh=Grass, Frozen=Ice, Half-eaten=Bug, Juicy=Water, Numbing=Psychic, Oily=Fight, Rotten=Poison, Salty=Steel, Spicy=Fire, Sour=Electric, Sugary=Fairy, Tough=Rock, Uneatable=Dragon, Withered=Ghost).\n' +
+            '• Snatch: Steals target buffs/debuffs (resets target), Shield moves, Healing moves, Substitute Decoys, and field hazards/terrains/tailwind. Cannot snatch Z-Moves or Max Moves.\n' +
+            '• Substitute Decoys: Costs 2 HP, creates 2 HP decoy with user defenses. Only Physical/Special attacks hit decoy; ignores added/support effects. Hazards & ongoing poison bypass to user directly.\n' +
+            '• Narrative Moves: Creative non-combat problem solving (Odor Sleuth tracking, Keen Eye aerial scouting, Reflect floating bridges, Electric powering machinery).',
+        discordMarkdown: `## 📖 **Pokerole Core Move Clarifications**
+> *Official rules clarifications from the Pokerole Corebook for nuanced moves, environmental interactions, and creative narrative usage.*
+
+---
+
+### 🔁 **Encore**
+*Added Effect: Target repeats exact same action sequence from previous round with identical targets. Duration 1 round. If used on previous round, this Move fails.*
+• **Target Lock:** Repeats actions against same targets. Only if original target is removed can they pick another.
+• **Reactions & Clashes:** If a failed Evasion occurred, repeats a failed Evasion even if no one attacks! If a Clash occurred, performs a pretend-clash if no attack is incoming.
+• **Turn Order:** If the target acted before Encore was cast, it only repeats its remaining prior actions until depleted. Once ended, user must wait 1 Round before reusing.
+
+---
+
+### 🎒 **Fling (Held Item Damage)**
+*Pokémon throws held item as weapon. Item lost for remainder of combat unless an action is spent to retrieve it.*
+${formatDiscordTable(
+    ['Held Item Category', 'Bonus Damage Dice'],
+    FLING_DAMAGE_TABLE.map((f) => [f.itemType, f.extraDice])
+)}
+
+---
+
+### 👁️ **Hidden Power (#201 Unown Exception)**
+• Because Unown’s entire Move pool consists solely of **Hidden Power**, Unown is uniquely able to **repeat Hidden Power several times in the same Round** without penalty.
+
+---
+
+### 🌿 **Nature Power & Secret Power**
+• **Nature Power:** Changes its Type to match the environment or Active Terrain.
+• **Secret Power:** Remains Normal-type, but inflicts the environmental Status Ailment/Condition below.
+• **Multiple Energy Sources:** If multiple environments apply (e.g. snowy mountain building with Psychic Terrain), Trainer/Pokémon chooses which energy to align to.
+
+${formatDiscordTable(
+    ['Environment / Terrain', 'Energy Type', 'Secret Power Status Effect'],
+    ENVIRONMENT_POWER_TABLE.map((e) => [e.environment, e.energyType, e.statusAilment])
+)}
+
+---
+
+### 🍓 **Natural Gift (Berry Flavors & Types)**
+*Natural Gift changes its Move Type according to the flavor of the berry eaten or held.*
+${formatDiscordTable(
+    ['Flavor', 'Type', 'Flavor', 'Type'],
+    [
+        ['Bitter', 'Dark', 'Rotten', 'Poison'],
+        ['Dry', 'Ground', 'Salty', 'Steel'],
+        ['Effervescent', 'Flying', 'Spicy', 'Fire'],
+        ['Fresh', 'Grass', 'Sour', 'Electric'],
+        ['Frozen', 'Ice', 'Sugary', 'Fairy'],
+        ['Half-eaten', 'Bug', 'Tough', 'Rock'],
+        ['Juicy', 'Water', 'Uneatable', 'Dragon'],
+        ['Numbing', 'Psychic', 'Withered', 'Ghost'],
+        ['Oily', 'Fight', '—', '—']
+    ]
+)}
+
+---
+
+### 🧤 **Snatch (Effect Theft)**
+• **Buffs & Debuffs:** User steals all buffs and debuffs; target’s Attributes and Traits reset.
+• **Shield & Healing Moves:** If target is using or targeted by a Shield or Healing move, effect applies to user instead.
+• **Substitute Decoys:** Transferred to user (adopts user defenses, keeps current decoy HP).
+• **Side-of-Field Effects:** Transfers Force Fields, Entry Hazards, Terrains, Tailwind, etc., to user’s side (duration unchanged).
+• **Restrictions:** Cannot Snatch from Z-Moves, Max Moves, or if target already used Snatch that round.
+
+---
+
+### 🛡️ **Substitute Decoys (Substitute & Shed Tail)**
+• **Cost & HP:** Costs **2 HP** to cast; creates a Decoy with **2 HP**.
+• **Defenses:** Inherits user's exact Defense & Special Defense at moment of casting (including buffs/debuffs).
+• **Protection:** All Physical & Special attacks target decoy. **Added effects do NOT apply to decoy or user.**
+• **Support Moves:** Support moves do not affect the decoy or the user.
+• **Bypasses:** Hazards (Sandstorm 1 dmg) and ongoing poison still hit user directly at round end. Decoys cannot be healed or buffed.
+• **Tactics:** Decoys can receive **Cover**, and user Shield Moves can reduce incoming decoy damage.
+
+---
+
+### 🎭 **Narrative Approaches to Moves**
+• **Odor Sleuth:** Track suspects and scent trails across the city or wilderness.
+• **Keen Eye:** Scout ahead from the skies to spot ambushers or terrain features.
+• **Reflect / Light Screen:** Form temporary invisible bridges over ravines or emergency barricades.
+• **Electric Moves:** Jump-start generators, recharge drained batteries, or short-circuit security doors.
+• **Vine Whip:** Anchor precarious platforms, tether falling allies, or swing across gaps.`
     },
     {
         id: 'holding-back-attack',
@@ -399,30 +610,339 @@ ${formatDiscordTable(
   - **Natural Recovery:** With medical care or wound stabilization, heals **1 Lethal Damage / 16 Hours** (instead of 8 hours).
 • **Setting Note:** Banned from official Pokémon League matches; used by ruthless trainers or dangerous wild Pokémon.`
     },
+    // TRAINER RULES CATEGORY
     {
-        id: 'trainer-actions',
-        title: 'Trainer Actions (Area vs In the Fray)',
-        category: 'rules',
-        categoryLabel: 'Combat & Rules',
+        id: 'trainer-actions-table',
+        title: 'Trainer Action Economy & Limits',
+        category: 'trainer',
+        categoryLabel: 'Trainer Rules',
         badge: 'Action Economy',
-        summary: 'Action economy for Giving Commands, Switching, Item usage, Entering the Fray, and Escaping.',
+        summary: 'Actions available to trainers inside the Trainer Area vs In the Fray, and the 5 Actions per Round limit.',
         keywords: [
             'trainer actions',
             'trainer area',
             'in the fray',
-            'giving commands',
-            'switching',
-            'use item',
-            'enter fray',
+            'action economy',
+            'action limit',
+            '5 actions',
+            'cover',
             'run away'
         ],
         broadcastText:
-            'Trainer Actions:\n• Commands: Free (Area) / +1 Action Count (Fray)\n• Switch: 2x Free anytime, then Action on PKMN turn (Area) / Action on Turn (Fray)\n• Item: PKMN Turn (Area) / Your Turn (Fray)\n• Enter Fray: End of Round or Start of Battle (Area) / End of Round (Fray)\n• Search/Move into Cover: Action on Turn (Fray)\n• Run Away: End of Round Action',
+            'Trainer Actions (Area vs Fray):\n• Giving Commands: Free (Area) / +1 Action Count (Fray)\n• Switching Pokémon: Twice Free then Action (Area) / Action on your turn (Fray)\n• Use an Item: Action on Pokémon’s turn (Area) / Action on your turn (Fray)\n• Enter the Fray: End of Round or Battle Start\n• Search / Move to Cover: Action on your turn (Fray only)\n• Run Away: End of Round Action\n(Trainers can take up to 5 Actions per Round, bound to Multiple Action Difficulty).',
         discordMarkdown: `## 🧢 **Trainer Actions (By Position)**
 ${formatDiscordTable(
     ['Action', 'In a Trainer Area', 'In the Fray'],
     TRAINER_ACTIONS_TABLE.map((t) => [t.action, t.trainerArea, t.inFray])
-)}`
+)}
+
+> ℹ️ **Action Economy Limit:** Just like Pokémon, a Trainer can take up to **5 Actions per Round** (bound to the Multiple Action Difficulty chart).`
+    },
+    {
+        id: 'trainer-initiative',
+        title: 'Trainer Initiative & Turn Structure',
+        category: 'trainer',
+        categoryLabel: 'Trainer Rules',
+        badge: 'Turn Timing',
+        summary: 'In the Fray (rolls 1d6 + Dex + Alert) vs Trainer Area (acts on Pokémon turns + dedicated round-end turn).',
+        keywords: [
+            'trainer initiative',
+            'turn structure',
+            'turn timing',
+            'in the fray',
+            'trainer area',
+            'end of round',
+            '5 actions'
+        ],
+        broadcastText:
+            'Trainer Initiative & Turn Timing:\n• In the Fray: Rolls Initiative (1d6 + Dexterity + Alert) alongside Pokémon and acts on their specific initiative step.\n• Trainer Area: Does NOT roll initiative. Instead, acts during each Pokémon’s turn, and also gets a dedicated Trainer turn right before the end of the round.\n• 5 Actions Max: Can take up to 5 Actions per Round (bound to Multiple Action Difficulty).',
+        discordMarkdown: `## ⏱️ **Trainer Initiative & Turn Structure**
+• **In the Fray:** The Trainer rolls Initiative (\`1d6 + Dexterity + Alert\`) alongside the Pokémon and takes their turn on their specific initiative step.
+• **Inside the Trainer Area:** The Trainer does **NOT** roll initiative. Instead, they can take an action during each of their Pokémon’s turns, and also receive a dedicated Trainer turn right before the end of the round.
+• **5 Actions per Round:** Just like Pokémon, a Trainer can take up to 5 Actions per Round (bound to the Multiple Action Difficulty chart).`
+    },
+    {
+        id: 'trainer-commanding',
+        title: 'Commanding Pokémon in Battle',
+        category: 'trainer',
+        categoryLabel: 'Trainer Rules',
+        badge: 'Commands',
+        summary: 'Commands happen on Pokémon’s turn (RAW costs 1 action in fray, free in area; some homebrew as free).',
+        keywords: [
+            'commanding',
+            'commands',
+            'order',
+            'pokemon turn',
+            'trainer turn',
+            'action cost',
+            'fray',
+            'uncommanded',
+            'instinct'
+        ],
+        broadcastText:
+            'Commanding Pokémon in Battle:\n• Commands happen on Pokémon’s Turn: Verbal or gestural commands are issued during the Pokémon’s turn, NOT on the Trainer’s turn.\n• No Direct Attacks on Trainer Turn: A Trainer cannot spend a Trainer Action on their own turn to make a Pokémon attack immediately.\n• Action Cost (RAW): Free Action in the Trainer Area. In the Fray, RAW states commanding costs 1 Trainer Action (adds to multiple action count).\n• Homebrew Note: Some Storytellers homebrew this to keep commanding as a Free Action even in the fray so trainers in combat aren’t heavily penalized.\n• Uncommanded: Acts on its own instincts and loyalty.',
+        discordMarkdown: `## 🗣️ **Commanding Pokémon in Battle**
+• **Commands happen on the Pokémon’s Turn:** Verbal or gestural commands are issued during the Pokémon’s turn, **NOT** on the Trainer’s turn.
+• **No Direct Attacks on Trainer Turn:** A Trainer cannot spend a Trainer Action on their own turn to make a Pokémon attack immediately.
+• **Action Cost (RAW):** Free Action in the Trainer Area. In the Fray, RAW states commanding costs 1 Trainer Action (adds to the Trainer’s multiple action count).
+• *Homebrew Note:* Some Storytellers homebrew this to keep commanding as a Free Action even in the fray so trainers in combat aren’t heavily penalized.
+• **Uncommanded Pokémon:** If a Trainer cannot or chooses not to command their Pokémon, the Pokémon acts on its own instincts and loyalty.`
+    },
+    {
+        id: 'trainer-switching',
+        title: 'Switching & Replacing Pokémon (Mid-Round Warning)',
+        category: 'trainer',
+        categoryLabel: 'Trainer Rules',
+        badge: 'Tactical Warning',
+        summary: 'Mid-round switch lockout causes incoming Pokémon to forfeit actions until next round. Lore & tactical explanation.',
+        keywords: [
+            'switch',
+            'switching',
+            'replace',
+            'fainted',
+            'swap out',
+            'mid-round',
+            'lockout',
+            'panicked',
+            'tactical warning',
+            'free actions'
+        ],
+        broadcastText:
+            '⚠️ Switching & Replacing Pokémon (Mid-Round Warning):\n• Mid-Round Lockout: If you switch out a Pokémon mid-round (or deploy a replacement for a fainted Pokémon mid-round), the incoming Pokémon CANNOT take any actions until the new round begins!\n• In-Universe Lore: The replacement Pokémon is disoriented and panicked from being suddenly thrust into the heat of active combat; it needs a moment to assess the situation and come to its senses (which happens at round end).\n• Tactical Vulnerability: Switching mid-round gives the opponent "free" remaining actions where they can attack or set up without the newly deployed Pokémon being able to act or retaliate.\n• Best Practice: It is almost always ideal to wait until the End of the Round (during the Trainer’s end-of-round turn) to switch Pokémon or deploy replacements.',
+        discordMarkdown: `## ⚠️ **Switching & Replacing Pokémon (Mid-Round Warning)**
+> **Warning:** Swapping mid-round causes the incoming Pokémon to forfeit all actions until the new round begins!
+
+• **Mid-Round Lockout:** If you switch out a Pokémon mid-round (or deploy a replacement for a fainted Pokémon mid-round), the incoming Pokémon **CANNOT** take any actions until the new round begins!
+• **In-Universe Lore:** The replacement Pokémon is disoriented and panicked from being suddenly thrust into the heat of active combat; it needs a moment to assess the situation and come to its senses (which happens at the end of the round).
+• **Tactical Vulnerability:** Switching mid-round gives the opponent **"free" remaining actions** where they can attack or set up without the newly deployed Pokémon being able to act or retaliate.
+• **Best Practice:** It is almost always ideal to wait until the **End of the Round** (during the Trainer’s end-of-round turn) to switch Pokémon or deploy replacements.`
+    },
+    {
+        id: 'humans-in-combat',
+        title: 'Humans & Trainers in Combat (Defenses & Clashing)',
+        category: 'trainer',
+        categoryLabel: 'Trainer Rules',
+        badge: 'Human Combat',
+        summary: 'Human Defenses (Def & Sp.Def), Evasion, unarmed Struggle, and why humans CANNOT Clash (requires a Move).',
+        keywords: [
+            'human',
+            'trainer',
+            'defenses',
+            'vitality',
+            'insight',
+            'evasion',
+            'struggle',
+            'clash',
+            'unarmed',
+            'brawl'
+        ],
+        broadcastText:
+            'Humans & Trainers in Combat:\n• Defenses: Humans calculate both Defense (from Vitality) and Special Defense (from Insight) normally to reduce incoming physical and special damage.\n• Evasion: Humans CAN Evade attacks by rolling Dexterity + Evasion (Evasion is a universal Maneuver).\n• Struggle (p. 528): Humans can use Struggle as an unarmed physical attack (Pool: Strength + Brawl | Damage: Strength | Type: Normal, Physical).\n• CANNOT Clash: Clashing strictly requires using a Move. Because humans do not learn Moves and Struggle is classified as a Maneuver, humans CANNOT Clash against incoming attacks!',
+        discordMarkdown: `## 🥊 **Humans & Trainers in Combat (Defenses, Struggle & Clashing)**
+• **Defenses:** Humans calculate both Defense (from Vitality) and Special Defense (from Insight) normally to reduce incoming physical and special damage.
+• **Evasion:** Humans **CAN Evade** attacks by rolling \`Dexterity + Evasion\` (Evasion is a universal Maneuver).
+• **Struggle Maneuver (p. 528):** Humans can use Struggle as an unarmed physical attack (Pool: \`Strength + Brawl\` | Damage: \`Strength\` | Type: Normal, Physical).
+• **CANNOT Clash:** Clashing strictly requires using a **Move**. Because humans do not learn Moves and Struggle is classified as a **Maneuver**, humans **CANNOT Clash** against incoming attacks!`
+    },
+
+    // MANEUVERS CATEGORY
+    {
+        id: 'maneuvers-core-rules',
+        title: 'Typeless Maneuvers Core Rules & Clashing Restriction',
+        category: 'maneuvers',
+        categoryLabel: 'Maneuvers',
+        badge: 'Core Rules',
+        summary: 'Typeless maneuvers do not use energy, ignore type matchups, are once per round, and CANNOT clash nor be clashed.',
+        keywords: [
+            'maneuvers',
+            'typeless',
+            'core rules',
+            'clash',
+            'cannot clash',
+            'struggle',
+            'energy',
+            'once per round'
+        ],
+        broadcastText:
+            'Typeless Maneuvers Core Rules:\n• Not every attack is a Move! Simple Typeless Maneuvers don’t consume energy and are not bound by type weakness, resistance, or immunities.\n• Once per Round: Each Maneuver can only be used once per Round by a character.\n• CANNOT Clash nor be Clashed: Maneuvers can NEVER be used to Clash against an opponent, nor can an opponent Clash against a Maneuver! (This is why Struggle cannot be used to Clash).\n• Typeless Damage: Maneuvers that deal damage inflict Typeless Damage, ignoring type charts.\n• Universal Access: Anyone (Humans and Pokémon) can perform them.',
+        discordMarkdown: `## 🌀 **Typeless Maneuvers Core Rules**
+> *Not every attack is a Move. Sometimes, you will use simple Typeless Maneuvers. They don’t use energy. So, they are not bound by weakness, resistance, or immunities that Types hold around each other.*
+
+• **Once per Round:** Each Maneuver can only be used once per Round.
+• **CANNOT Clash nor be Clashed:** Maneuvers **can NEVER clash nor be clashed**! (This is why **Struggle** cannot be used to Clash).
+• **Typeless Damage:** Maneuvers that deal damage inflict Typeless Damage.
+• **Universal Access:** Since anyone can perform them, both Humans and Pokémon can enrich their strategy. Feel free to create your own.`
+    },
+    {
+        id: 'maneuvers-list-all',
+        title: 'All 9 Official Typeless Maneuvers Quick Reference',
+        category: 'maneuvers',
+        categoryLabel: 'Maneuvers',
+        badge: 'Quick Reference',
+        summary: 'Ambush, Clash, Cover an Ally, Evasion, Grapple, Help Another, Run Away, Stabilize an Ally, Struggle.',
+        keywords: [
+            'maneuvers',
+            'all maneuvers',
+            'ambush',
+            'clash',
+            'cover an ally',
+            'evasion',
+            'grapple',
+            'help another',
+            'run away',
+            'stabilize an ally',
+            'struggle'
+        ],
+        broadcastText:
+            'Official Typeless Maneuvers:\n' +
+            CORE_MANEUVERS_DATA.map((m) => `• ${m.name} [${m.category}] (Acc: ${m.accuracy} | Target: ${m.target})`).join('\n') +
+            '\n*Note: Maneuvers can only be used once per round and CANNOT clash nor be clashed!*',
+        discordMarkdown: `## 📜 **Official Typeless Maneuvers (All 9)**
+${CORE_MANEUVERS_DATA.map(
+    (m) => `### **${m.name}** [${m.category} | Power: ${m.power}]
+• **Accuracy:** \`${m.accuracy}\` | **Damage Pool:** \`${m.damagePool}\` | **Target:** \`${m.target}\`${m.reaction ? ` | **${m.reaction}**` : ''}
+• **Effect:** ${m.addedEffect}
+• *"${m.flavor}"*`
+).join('\n\n')}`
+    },
+    {
+        id: 'maneuver-ambush',
+        title: 'Maneuver: Ambush',
+        category: 'maneuvers',
+        categoryLabel: 'Maneuvers',
+        badge: 'Maneuver',
+        summary: 'Dexterity + Stealth to act before Initiatives are rolled. Single target resists with Insight + Alert.',
+        keywords: ['ambush', 'stealth', 'surprise', 'initiative', 'pre-battle', 'maneuver'],
+        broadcastText: formatManeuverBroadcast(CORE_MANEUVERS_DATA[0]),
+        discordMarkdown: `## 👤 **Maneuver: Ambush** [Category: Support | Power: —]
+• **Accuracy:** \`Dexterity + Stealth\` | **Damage Pool:** \`—\` | **Target:** \`Single Target\`
+• **Effect:** Before the Battle starts, Target may resist by rolling: Insight + Alert and scoring the same or more successes. The User has 1 Action before Initiatives are rolled in which the Target can’t act. Other foes can still Evade or Clash during this time.
+• *"Sneak through the shadows, keep low to the ground and prepare to pounce on an unsuspecting foe."*`
+    },
+    {
+        id: 'maneuver-clash',
+        title: 'Maneuver: Clash (Reaction 6)',
+        category: 'maneuvers',
+        categoryLabel: 'Maneuvers',
+        badge: 'Reaction 6',
+        summary: 'Strength/Special + Clash to contest incoming Move accuracy. Note: Requires using a Move to contest power!',
+        keywords: ['clash', 'reaction 6', 'contest', 'move', 'struggle', 'counter', 'maneuver'],
+        broadcastText: formatManeuverBroadcast(CORE_MANEUVERS_DATA[1]),
+        discordMarkdown: `## 💥 **Maneuver: Clash** [Category: Support | Reaction 6 (↑6)]
+• **Accuracy:** \`Strength/Special + Clash\` | **Damage Pool:** \`—\` | **Target:** \`Target Self\`
+• **Effect:** Match the number of successes on the Accuracy roll of a Move that targets the User. If successful, the user Clashes (p. 68). This Maneuver is NOT affected by the Multiple Action difficulty chart.
+• *Note: Requires using a Move to contest power. Humans cannot Clash because Struggle is a Maneuver, not a Move.*
+• *"A power struggle can become a clash of mights, usually with explosive results."*`
+    },
+    {
+        id: 'maneuver-cover-an-ally',
+        title: 'Maneuver: Cover an Ally (Reaction 1)',
+        category: 'maneuvers',
+        categoryLabel: 'Maneuvers',
+        badge: 'Reaction 1',
+        summary: 'Will reaction to become the target of incoming attacks aimed at an ally. Loyalty 2 or less won’t use.',
+        keywords: ['cover an ally', 'cover', 'protect', 'intercept', 'reaction 1', 'will', 'loyalty', 'maneuver'],
+        broadcastText: formatManeuverBroadcast(CORE_MANEUVERS_DATA[2]),
+        discordMarkdown: `## 🛡️ **Maneuver: Cover an Ally** [Category: Support | Reaction 1 (↑1)]
+• **Accuracy:** \`Will\` | **Damage Pool:** \`—\` | **Target:** \`Target One Ally\`
+• **Effect:** The User will become the target to incoming attacks towards the Target. This Cover lasts until the User’s Next Turn or until the Target uses a Non-Ranged Physical Move. Pokémon with Loyalty 2 or less won’t use this Maneuver.
+• *"Use your body as a shield to protect your friends! Not even 100 Spearows will go through you!"*`
+    },
+    {
+        id: 'maneuver-evasion',
+        title: 'Maneuver: Evasion (Reaction 6)',
+        category: 'maneuvers',
+        categoryLabel: 'Maneuvers',
+        badge: 'Reaction 6',
+        summary: 'Dexterity + Evasion reaction to dodge incoming attacks. Universal defense for Pokémon and Humans.',
+        keywords: ['evasion', 'dodge', 'evade', 'reaction 6', 'dexterity', 'maneuver'],
+        broadcastText: formatManeuverBroadcast(CORE_MANEUVERS_DATA[3]),
+        discordMarkdown: `## 💨 **Maneuver: Evasion** [Category: Support | Reaction 6 (↑6)]
+• **Accuracy:** \`Dexterity + Evasion\` | **Damage Pool:** \`—\` | **Target:** \`Target Self\`
+• **Effect:** Match the number of successes on the Accuracy roll of a Move that targets the User. If successful, the user Evades (p. 68). This Maneuver is NOT affected by the Multiple Action difficulty chart.
+• *"No time to think! If you hear 'Doooooodge!' You get out of the way A.S.A.P."*`
+    },
+    {
+        id: 'maneuver-grapple',
+        title: 'Maneuver: Grapple (Blocks Target)',
+        category: 'maneuvers',
+        categoryLabel: 'Maneuvers',
+        badge: 'Maneuver',
+        summary: 'Strength + Athletic/Brawl to block target. Target resists with Str/Dex score. User cannot act while grappling.',
+        keywords: ['grapple', 'block', 'wrestling', 'hold', 'strength', 'brawl', 'athletic', 'pin', 'maneuver'],
+        broadcastText: formatManeuverBroadcast(CORE_MANEUVERS_DATA[4]),
+        discordMarkdown: `## 🤼 **Maneuver: Grapple** [Category: Support | Power: —]
+• **Accuracy:** \`Strength + Athletic/Brawl\` | **Damage Pool:** \`—\` | **Target:** \`Single Target (Blocks)\`
+• **Effect:** Blocks the target. The Target may resist this Maneuver by rolling Strength or Dexterity score and scoring the same or more successes than the User. The User can’t Act while Grappling. The User can release the Grapple at any point to act.
+• *"Force the target into a wrestling lock; use a lasso rodeo-style; or simply cling onto one of their legs — the point is: you won’t let them escape!"*`
+    },
+    {
+        id: 'maneuver-help-another',
+        title: 'Maneuver: Help Another (Reaction 1)',
+        category: 'maneuvers',
+        categoryLabel: 'Maneuvers',
+        badge: 'Reaction 1',
+        summary: 'Roll accuracy pool as Chance dice. Each 6 adds +1 die to ally’s accuracy (up to 3 helpers / 6 dice max).',
+        keywords: ['help another', 'assist', 'reaction 1', 'chance dice', 'teamwork', 'bonus dice', 'maneuver'],
+        broadcastText: formatManeuverBroadcast(CORE_MANEUVERS_DATA[5]),
+        discordMarkdown: `## 🤝 **Maneuver: Help Another** [Category: Support | Reaction 1 (↑1)]
+• **Accuracy:** \`Same as Ally’s Attempted Action\` | **Damage Pool:** \`—\` | **Target:** \`Target One Ally\`
+• **Effect:** Roll your Accuracy as if it were Chance dice. Add 1 die to the Accuracy Roll of your Ally for every 6 rolled. Up to 3 Characters may attempt to help a single action. Up to 6 Dice may be added this way.
+• *"Not being the best suited for a task doesn’t mean you won’t do your part in helping out. The best teams work together!"*`
+    },
+    {
+        id: 'maneuver-run-away',
+        title: 'Maneuver: Run Away',
+        category: 'maneuvers',
+        categoryLabel: 'Maneuvers',
+        badge: 'Maneuver',
+        summary: 'Dexterity + Athletic to flee and end battle. Foes contest with Dex + Athletic to block escape.',
+        keywords: ['run away', 'flee', 'escape', 'athletic', 'dexterity', 'retreat', 'maneuver'],
+        broadcastText: formatManeuverBroadcast(CORE_MANEUVERS_DATA[6]),
+        discordMarkdown: `## 🏃 **Maneuver: Run Away** [Category: Support | Power: —]
+• **Accuracy:** \`Dexterity + Athletic\` | **Damage Pool:** \`—\` | **Target:** \`Target Self\`
+• **Effect:** The User runs away from the battlefield to end the battle. Foes might try to prevent this by rolling: Dexterity + Athletic and scoring the same or more successes. If the user is Blocked this Maneuver fails.
+• *"Nope. Nope. Nope."*`
+    },
+    {
+        id: 'maneuver-stabilize-an-ally',
+        title: 'Maneuver: Stabilize an Ally (First Aid & CPR)',
+        category: 'maneuvers',
+        categoryLabel: 'Maneuvers',
+        badge: 'Maneuver',
+        summary: 'Clever + Medicine first aid to halt hourly lethal damage. Once per hour; each lethal damage on ally reduces 1 success.',
+        keywords: ['stabilize', 'first aid', 'cpr', 'medicine', 'clever', 'lethal damage', 'wound', 'maneuver'],
+        broadcastText: formatManeuverBroadcast(CORE_MANEUVERS_DATA[7]),
+        discordMarkdown: `## 🩹 **Maneuver: Stabilize an Ally** [Category: Support | Power: —]
+• **Accuracy:** \`Clever + Medicine\` | **Damage Pool:** \`—\` | **Target:** \`Single Target\`
+• **Effect:** The User applies CPR and/or first aid to an Ally. Target won’t receive Lethal Damage each hour anymore. Each Lethal Damage on the Ally reduces 1 Success to the Accuracy Pool of this Maneuver. This Maneuver can only be used once per hour.
+• *"Apply pressure! Give chest compressions! Suck out the venom! You are not losing anyone today!"*`
+    },
+    {
+        id: 'maneuver-struggle',
+        title: 'Maneuver: Struggle (Why Struggle Cannot Clash)',
+        category: 'maneuvers',
+        categoryLabel: 'Maneuvers',
+        badge: 'Maneuver',
+        summary: 'Universal unarmed/fallback strike. Inflicts Typeless Damage. Crucial: Because Struggle is a Maneuver, it CANNOT clash nor be clashed!',
+        keywords: [
+            'struggle',
+            'clash',
+            'cannot clash',
+            'unarmed',
+            'fallback strike',
+            'brawl',
+            'channel',
+            'throw',
+            'typeless damage',
+            'maneuver'
+        ],
+        broadcastText: formatManeuverBroadcast(CORE_MANEUVERS_DATA[8]),
+        discordMarkdown: `## 🥊 **Maneuver: Struggle** [Category: Physical/Special | Power: Strength/Special]
+• **Accuracy:** \`Dexterity + Brawl / Channel / Throw\` | **Damage Pool:** \`Strength/Special + 0\` | **Target:** \`Single Target\`
+• **Effect:** Universal unarmed / fallback strike. Inflicts Typeless Damage.
+• ⚠️ **Why Struggle CANNOT Clash:** Clashing strictly requires using a **Move**. Because Struggle is officially classified as a **Typeless Maneuver** (p. 528), and the core rules state *"Maneuvers can't clash nor be clashed"*, Struggle can **NEVER** be used to Clash against an incoming attack!
+• *"Scuffle about and make every effort to deliver a blow."*`
     },
     {
         id: 'cover-mechanics',
@@ -466,8 +986,8 @@ ${formatDiscordTable(
     {
         id: 'status-effects-all',
         title: 'Status Effects & Conditions Guide',
-        category: 'status',
-        categoryLabel: 'Status Effects',
+        category: 'environment',
+        categoryLabel: 'Status & Environment',
         badge: 'All Statuses',
         summary: 'Comprehensive guide to Aggravating, Fixed, and Volatile status categories, stacking rules, cure items, and all individual status conditions.',
         keywords: [
@@ -528,8 +1048,8 @@ ${STATUS_EFFECTS_DATA.map(
     {
         id: 'weather-conditions-all',
         title: 'Weather Conditions Reference',
-        category: 'weather',
-        categoryLabel: 'Weather & Environment',
+        category: 'environment',
+        categoryLabel: 'Status & Environment',
         badge: 'Weather',
         summary: 'Sunny, Rain, Sandstorm, Snowy, Hail, Desolate Weather, Typhoon, Strong Winds.',
         keywords: [
@@ -558,8 +1078,8 @@ ${w.effects.map((e) => `• ${e}`).join('\n')}`
     {
         id: 'environmental-hazards-all',
         title: 'Environmental Hazards & Battlefield Conditions',
-        category: 'weather',
-        categoryLabel: 'Weather & Environment',
+        category: 'environment',
+        categoryLabel: 'Status & Environment',
         badge: 'Hazards',
         summary: 'Fog, Muddy, Underwater, On Fire, Electric Poles, Lovely Flowers, Sewers, Jungle, High Poles, Sprinklers, Cemetery, Minefield, Healing Pits, Torn World, Final Destination.',
         keywords: [
@@ -594,8 +1114,8 @@ ${formatDiscordTable(
     {
         id: 'catching-mechanics',
         title: 'Catching Pokémon Rules & Calculator',
-        category: 'catching',
-        categoryLabel: 'Catching & Training',
+        category: 'progression',
+        categoryLabel: 'Catching & Progression',
         badge: 'Catching',
         summary: 'Seal Potency dice, HP bonuses, Status bonuses, and Target Success requirements by Rank.',
         keywords: [
@@ -633,10 +1153,35 @@ ${formatDiscordTable(
 )}`
     },
     {
+        id: 'pokeball-throwing-timing',
+        title: 'Pokéball Throwing Timing & Economy',
+        category: 'progression',
+        categoryLabel: 'Catching & Progression',
+        badge: 'Throw Timing',
+        summary: 'When trainers can throw Pokéballs: In the Fray (on Trainer’s turn) vs Trainer Area (on Pokémon’s turn or end of round).',
+        keywords: [
+            'pokeball',
+            'throw',
+            'throwing',
+            'timing',
+            'action economy',
+            'fray',
+            'trainer area',
+            'turn',
+            'catching'
+        ],
+        broadcastText:
+            'Pokéball Throwing Timing & Economy:\n• In the Fray: Throwing a Pokéball is performed on the Trainer’s turn (at their rolled initiative step).\n• In the Trainer Area: A Pokéball can be thrown during their Pokémon’s turn, or on the Trainer’s dedicated turn right before the end of the round.\n• Action Economy: Throwing a Pokéball is an Action and counts toward the Trainer’s 5 actions per round.',
+        discordMarkdown: `## 🎯 **Pokéball Throwing Timing & Economy**
+• **In the Fray:** Throwing a Pokéball is performed **on the Trainer’s turn** (at their rolled initiative step).
+• **In the Trainer Area:** A Pokéball can be thrown **during their Pokémon’s turn**, or on the Trainer’s dedicated turn right before the end of the round.
+• **Action Economy:** Throwing a Pokéball is an Action and counts toward the Trainer’s 5 actions per round.`
+    },
+    {
         id: 'training-points-guide',
         title: 'Training Points (TP), Sessions & Spending',
-        category: 'training',
-        categoryLabel: 'Catching & Training',
+        category: 'progression',
+        categoryLabel: 'Catching & Progression',
         badge: 'Progression',
         summary: 'Battle TP calculation, 2-hour daily training sessions, Rank Up costs, Evolution, and Move learning.',
         keywords: [
@@ -683,8 +1228,8 @@ ${formatDiscordTable(
     {
         id: 'rank-summary-table',
         title: 'Rank Summary & Attribute/Skill Caps',
-        category: 'balance',
-        categoryLabel: 'Ranks & Balance',
+        category: 'progression',
+        categoryLabel: 'Catching & Progression',
         badge: 'Balance Matrix',
         summary: 'Max Targets, Skill Maximums, Attribute Points, Skill Points, and All Foes Target Max by Rank.',
         keywords: [
@@ -721,8 +1266,8 @@ ${formatDiscordTable(
     {
         id: 'encounter-balancing-chart',
         title: 'Encounter Balancing Difficulty Matrix',
-        category: 'balance',
-        categoryLabel: 'Ranks & Balance',
+        category: 'progression',
+        categoryLabel: 'Catching & Progression',
         badge: 'GM Tool',
         summary: 'Encounter difficulty assessment based on damage effectiveness and target rank differential.',
         keywords: [
@@ -753,8 +1298,8 @@ ${formatDiscordTable(
     {
         id: 'type-matchup-chart',
         title: 'Type Matchup & Effectiveness Chart',
-        category: 'types',
-        categoryLabel: 'Type Matchups',
+        category: 'environment',
+        categoryLabel: 'Status & Environment',
         badge: 'Type Chart',
         summary: 'All 18 Pokémon type weaknesses, resistances, and immunities with interactive filter.',
         keywords: [

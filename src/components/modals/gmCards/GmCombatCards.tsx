@@ -1,16 +1,17 @@
 import React from 'react';
-import { Megaphone, Sparkles, Heart, ArrowUp, ArrowDown } from 'lucide-react';
+import { Megaphone, Sparkles, Heart } from 'lucide-react';
 import {
     DIFFICULTY_TABLE,
     WILL_SPENDING,
     COMBAT_FLOW_STEPS,
     MOVE_RESOLUTION_STEPS,
     HOLDING_BACK_OPTIONS,
-    REACTION_RULES_EXAMPLES,
-    REACTION_CORE_RULES,
     type HoldingBackOption,
     type ReactionRuleExample
 } from '../../../data/gmScreenData';
+import { GmAttributeBenchmarkCard } from './GmAttributeBenchmarkCard';
+import { GmMoveClarificationsCard } from './GmMoveClarificationsCard';
+import { GmReactionRulesCard } from './GmReactionRulesCard';
 
 interface GmCombatCardsProps {
     itemId: string;
@@ -106,10 +107,15 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                         </tbody>
                     </table>
                     <p className="text-subtext" style={{ marginTop: '6px', marginBottom: 0 }}>
-                        * Typically a human skill &nbsp;|&nbsp; ^ Typically a Pokémon skill
+                        * Typically a human skill &nbsp;|&nbsp; ^ Typically a Pokémon skill &nbsp;|&nbsp;
+                        <strong>Note on Clashing:</strong> Clashing requires a Move; humans cannot Clash (Struggle is a
+                        Maneuver). Humans CAN Evade.
                     </p>
                 </div>
             );
+
+        case 'attribute-benchmarks-lifting-speed':
+            return <GmAttributeBenchmarkCard />;
 
         case 'successes-required':
             return (
@@ -196,6 +202,14 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                                 Spending all your Will Points in a scene causes the character to faint at the end of the
                                 scene.
                             </li>
+                            <li>
+                                <strong>Rolling Will (Stat vs. Resource Pool):</strong> Whenever an Action Roll requires
+                                rolling &quot;Will&quot; (such as mental resistance, withstanding terror, social
+                                resilience, or special checks), roll your <strong>Maximum Will Score</strong> dice pool
+                                (<em>Insight + Rank/Bonus</em>),
+                                <strong>not</strong> your currently remaining Will Points! Will Points are a spendable
+                                resource, while your Max Will score is your attribute dice pool.
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -225,7 +239,7 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                                 }}
                             >
                                 <strong style={{ color: 'var(--primary)' }}>
-                                    {s.step}. {s.title}
+                                    Step {s.step}: {s.title}
                                 </strong>
                                 <button
                                     type="button"
@@ -237,9 +251,16 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                                     <Megaphone size={12} /> Broadcast
                                 </button>
                             </div>
-                            <ul style={{ margin: '4px 0 0 0', paddingLeft: '20px', color: 'var(--text-main)' }}>
-                                {s.items.map((it, idx) => (
-                                    <li key={idx}>{it}</li>
+                            <ul
+                                style={{
+                                    margin: '0',
+                                    paddingLeft: '20px',
+                                    color: 'var(--text-main)',
+                                    lineHeight: '1.4'
+                                }}
+                            >
+                                {s.items.map((item, idx) => (
+                                    <li key={idx}>{item}</li>
                                 ))}
                             </ul>
                         </div>
@@ -323,6 +344,9 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                 </div>
             );
 
+        case 'move-clarifications-core':
+            return <GmMoveClarificationsCard />;
+
         case 'holding-back-attack':
             return (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.85rem' }}>
@@ -336,7 +360,8 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
                         }}
                     >
                         <p style={{ margin: '0 0 6px 0', color: 'var(--text-main)', fontStyle: 'italic' }}>
-                            “Sometimes it will be more convenient to contain the full force of your Pokémon attacks.”
+                            &ldquo;Sometimes it will be more convenient to contain the full force of your Pokémon
+                            attacks.&rdquo;
                         </p>
                         <p style={{ margin: '0', color: 'var(--text-muted)' }}>
                             Give the command to <strong>“Hold Back!”</strong>, <strong>“Restrain yourself!”</strong>, or{' '}
@@ -412,286 +437,10 @@ export const GmCombatCards: React.FC<GmCombatCardsProps> = ({
 
         case 'reactions-late-reactions':
             return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.85rem' }}>
-                    {/* Comparison Overview Banner */}
-                    <div
-                        style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                            gap: '10px'
-                        }}
-                    >
-                        {/* Reactions Box */}
-                        <div
-                            style={{
-                                padding: '12px',
-                                borderRadius: '6px',
-                                backgroundColor: 'var(--panel-alt)',
-                                border: '1px solid #00ACC1',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '6px'
-                            }}
-                        >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span
-                                    style={{
-                                        backgroundColor: '#00ACC1',
-                                        color: '#FFFFFF',
-                                        fontWeight: 'bold',
-                                        padding: '2px 8px',
-                                        borderRadius: '4px',
-                                        fontSize: '0.78rem',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '4px'
-                                    }}
-                                >
-                                    <ArrowUp size={13} /> Reaction [1..6]
-                                </span>
-                                <strong style={{ color: '#00ACC1' }}>Resolves BEFORE Action</strong>
-                            </div>
-                            <p
-                                style={{
-                                    margin: '0',
-                                    color: 'var(--text-main)',
-                                    lineHeight: '1.4',
-                                    fontSize: '0.82rem'
-                                }}
-                            >
-                                Almost instantaneous movements used when it is not your turn yet (range from 1 to 6).
-                                Higher Reaction numbers resolve <strong>FIRST</strong>.
-                            </p>
-                            <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', lineHeight: '1.35' }}>
-                                <em>
-                                    Examples: Quick Attack / Water Shuriken (↑1), Extreme Speed (↑2), Upper Hand (↑3),
-                                    King’s Shield (↑4), Protect (↑5), Evade / Clash maneuvers (↑6).
-                                </em>
-                            </div>
-                        </div>
-
-                        {/* Late Reactions Box */}
-                        <div
-                            style={{
-                                padding: '12px',
-                                borderRadius: '6px',
-                                backgroundColor: 'var(--panel-alt)',
-                                border: '1px solid #7E57C2',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '6px'
-                            }}
-                        >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span
-                                    style={{
-                                        backgroundColor: '#7E57C2',
-                                        color: '#FFFFFF',
-                                        fontWeight: 'bold',
-                                        padding: '2px 8px',
-                                        borderRadius: '4px',
-                                        fontSize: '0.78rem',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '4px'
-                                    }}
-                                >
-                                    <ArrowDown size={13} /> Late Reaction [1..6]
-                                </span>
-                                <strong style={{ color: '#7E57C2' }}>Resolves AFTER Action</strong>
-                            </div>
-                            <p
-                                style={{
-                                    margin: '0',
-                                    color: 'var(--text-main)',
-                                    lineHeight: '1.4',
-                                    fontSize: '0.82rem'
-                                }}
-                            >
-                                Delayed counter-attacks & traps that trigger after taking the hit (range from 1 to 6).
-                                Higher Late Reaction numbers resolve <strong>LATER</strong> (Lower numbers resolve
-                                first!).
-                            </p>
-                            <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
-                                <em>
-                                    Examples: Circle Throw / Feint (↓1), Shell Trap (↓3), Avalanche (↓4), Counter /
-                                    Mirror Coat (↓5), Dragon Tail / Roar (↓6).
-                                </em>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Interactive Timing Rules & Examples */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <strong style={{ color: 'var(--primary)', fontSize: '0.9rem' }}>
-                            Resolution Chains & Battle Scenarios:
-                        </strong>
-
-                        {REACTION_RULES_EXAMPLES.map((ex) => (
-                            <div
-                                key={ex.id}
-                                style={{
-                                    padding: '10px 12px',
-                                    borderRadius: '6px',
-                                    backgroundColor: 'var(--panel-alt)',
-                                    border: '1px solid var(--border)',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '8px'
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        gap: '8px'
-                                    }}
-                                >
-                                    <strong style={{ color: 'var(--primary)', fontSize: '0.85rem' }}>{ex.title}</strong>
-                                    <button
-                                        type="button"
-                                        className="action-button action-button--dark gm-card-item-broadcast-btn"
-                                        onClick={() => onBroadcastReactionExample(ex)}
-                                        title="Broadcast scenario to chat/roll log"
-                                        aria-label={`Broadcast ${ex.title}`}
-                                    >
-                                        <Megaphone size={12} /> Broadcast
-                                    </button>
-                                </div>
-
-                                <div
-                                    style={{
-                                        color: 'var(--text-main)',
-                                        fontSize: '0.8rem',
-                                        fontStyle: 'italic',
-                                        lineHeight: '1.35'
-                                    }}
-                                >
-                                    “{ex.scenario}”
-                                </div>
-
-                                {/* Resolution Flow Badges */}
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '6px',
-                                        flexWrap: 'wrap',
-                                        padding: '6px 10px',
-                                        backgroundColor: 'var(--panel-bg)',
-                                        borderRadius: '4px',
-                                        border: '1px solid var(--border)'
-                                    }}
-                                >
-                                    <span
-                                        style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-muted)' }}
-                                    >
-                                        Order:
-                                    </span>
-                                    {ex.orderSteps.map((step, idx) => (
-                                        <span
-                                            key={idx}
-                                            style={{
-                                                fontSize: '0.76rem',
-                                                padding: '2px 8px',
-                                                borderRadius: '4px',
-                                                backgroundColor:
-                                                    idx === 0
-                                                        ? 'color-mix(in srgb, var(--primary) 20%, var(--panel-alt))'
-                                                        : 'var(--panel-alt)',
-                                                border:
-                                                    idx === 0 ? '1px solid var(--primary)' : '1px solid var(--border)',
-                                                color: idx === 0 ? 'var(--primary)' : 'var(--text-main)',
-                                                fontWeight: idx === 0 ? 'bold' : 'normal'
-                                            }}
-                                        >
-                                            {step}
-                                        </span>
-                                    ))}
-                                </div>
-
-                                <p
-                                    style={{
-                                        margin: '0',
-                                        fontSize: '0.78rem',
-                                        color: 'var(--text-main)',
-                                        lineHeight: '1.35'
-                                    }}
-                                >
-                                    {ex.explanation}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Core Rules Checklist */}
-                    <div
-                        style={{
-                            padding: '12px',
-                            borderRadius: '6px',
-                            backgroundColor: 'var(--panel-alt)',
-                            border: '1px solid var(--border)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '8px'
-                        }}
-                    >
-                        <div
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                gap: '8px',
-                                borderBottom: '1px solid var(--border)',
-                                paddingBottom: '6px'
-                            }}
-                        >
-                            <strong style={{ color: 'var(--primary)', fontSize: '0.85rem' }}>
-                                Key Tactical Rules & Limitations
-                            </strong>
-                            <button
-                                type="button"
-                                className="action-button action-button--dark gm-card-item-broadcast-btn"
-                                onClick={onBroadcastReactionCoreRules}
-                                title="Broadcast Core Reaction Rules to chat/roll log"
-                                aria-label="Broadcast Core Reaction Rules"
-                            >
-                                <Megaphone size={12} /> Broadcast Rules
-                            </button>
-                        </div>
-
-                        <div
-                            style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                                gap: '8px'
-                            }}
-                        >
-                            {REACTION_CORE_RULES.map((r, idx) => (
-                                <div
-                                    key={idx}
-                                    style={{
-                                        padding: '8px 10px',
-                                        backgroundColor: 'var(--panel-bg)',
-                                        borderRadius: '4px',
-                                        border: '1px solid var(--border)',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '3px'
-                                    }}
-                                >
-                                    <strong style={{ color: 'var(--primary)', fontSize: '0.8rem' }}>• {r.title}</strong>
-                                    <span
-                                        style={{ fontSize: '0.76rem', color: 'var(--text-main)', lineHeight: '1.35' }}
-                                    >
-                                        {r.desc}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
+                <GmReactionRulesCard
+                    onBroadcastReactionExample={onBroadcastReactionExample}
+                    onBroadcastReactionCoreRules={onBroadcastReactionCoreRules}
+                />
             );
 
         case 'pain-penalties':

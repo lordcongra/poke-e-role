@@ -13,7 +13,12 @@ import type {
     CustomStatus
 } from '../store/storeTypes';
 import { fetchPokemonData, fetchMoveData } from '../utils/api';
-import { buildGraphicsFromMeta, renderTokenGraphics, STATS_META_ID } from '../utils/graphicsManager';
+import {
+    buildGraphicsFromMeta,
+    renderTokenGraphics,
+    STATS_META_ID,
+    cleanupOrphanedGraphics
+} from '../utils/graphicsManager';
 import { saveToOwlbear, setActiveTokenId, hasPendingUpdates, SCENE_SETTINGS_META_ID } from '../utils/obr';
 import { assignInitiative } from '../utils/diceRoller';
 import { isStandaloneMode } from '../utils/storageAdapter';
@@ -25,6 +30,7 @@ const EXTENSION_ID = 'pokerole-pmd-extension';
 
 // NEW: We now track `v: boolean` (visibility) so the engine redraws when tokens are hidden/unhidden!
 const knownTransforms: Record<string, { x: number; y: number; r: number; v: boolean; metaStr: string }> = {};
+let lastSceneItemIds = new Set<string>();
 
 interface RollSyncData {
     id: string;
@@ -421,6 +427,7 @@ export function useOwlbearSync() {
                     for (const key of Object.keys(knownTransforms)) {
                         delete knownTransforms[key];
                     }
+                    lastSceneItemIds.clear();
                 };
 
                 const renderAllTokens = async (forceRebuild: boolean | 'badges-only' = false) => {
@@ -497,6 +504,16 @@ export function useOwlbearSync() {
                         } catch (e) {
                             console.warn('[SyncEngine] Failed to clean legacy network graphics:', e);
                         }
+                    }
+
+                    // Clean up any orphaned local graphics left over from previous scenes
+                    await cleanupOrphanedGraphics();
+
+                    try {
+                        const sceneItems = await OBR.scene.items.getItems();
+                        lastSceneItemIds = new Set(sceneItems.map((i) => i.id));
+                    } catch {
+                        lastSceneItemIds = new Set();
                     }
 
                     // Initial render for currently loaded items (non-destructive to avoid flickering)
@@ -705,10 +722,33 @@ export function useOwlbearSync() {
                     if (isSceneTransitioning) return;
 
                     const currentItemIds = new Set(items.map((i) => i.id));
+                    const deletedTokenIds: string[] = [];
+
+                    for (const prevId of lastSceneItemIds) {
+                        if (!currentItemIds.has(prevId)) {
+                            deletedTokenIds.push(prevId);
+                        }
+                    }
+                    lastSceneItemIds = currentItemIds;
+
                     for (const id of Object.keys(knownTransforms)) {
                         if (!currentItemIds.has(id)) {
                             delete knownTransforms[id];
+                            if (!deletedTokenIds.includes(id)) {
+                                deletedTokenIds.push(id);
+                            }
                         }
+                    }
+
+                    if (deletedTokenIds.length > 0) {
+                        const store = useCharacterStore.getState();
+                        if (store.tokenId && deletedTokenIds.includes(store.tokenId)) {
+                            setActiveTokenId(null);
+                            store.setTokenData('', store.role || 'PLAYER');
+                        }
+                        cleanupOrphanedGraphics(currentItemIds).catch((err) =>
+                            console.error('[SyncEngine] Failed to clean up orphaned graphics on token delete:', err)
+                        );
                     }
 
                     for (const item of items) {
@@ -960,6 +1000,7 @@ export function useOwlbearSync() {
             for (const key of Object.keys(knownTransforms)) {
                 delete knownTransforms[key];
             }
+            lastSceneItemIds.clear();
             if (sceneFollowupTimeout) clearTimeout(sceneFollowupTimeout);
             if (sceneBadgeRefreshTimeout) clearTimeout(sceneBadgeRefreshTimeout);
             unsubs.forEach((unsub) => unsub());

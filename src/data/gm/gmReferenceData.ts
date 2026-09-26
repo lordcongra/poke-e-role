@@ -6,20 +6,7 @@ export const GM_SCREEN_AUTHOR = 'Willowlark';
 export const GM_SCREEN_CREDITS =
     "Pokerole 3.0 GM Screen reference compiled by Willowlark. Adapted and enhanced for Congra's Pokérole Autosheet.";
 
-// 6. TRAINER ACTIONS & COVER
-export const TRAINER_ACTIONS_TABLE = [
-    { action: 'Giving Commands', trainerArea: 'Free Action', inFray: 'Increases Trainer Action Count by 1' },
-    {
-        action: 'Switching Pokémon',
-        trainerArea: 'Twice per Round Free at anytime, then Action on Pokémon’s Turn',
-        inFray: 'Action on your Turn'
-    },
-    { action: 'Use an Item', trainerArea: 'Action on Pokémon’s Turn', inFray: 'Action on your Turn' },
-    { action: 'Enter the Fray', trainerArea: 'End of Round Action or at Start of Battle', inFray: 'End of Round Action' },
-    { action: 'Search for Cover', trainerArea: '— (Not in combat zone)', inFray: 'Action on your Turn' },
-    { action: 'Move into Found Cover', trainerArea: '— (Not in combat zone)', inFray: 'Action on your Turn' },
-    { action: 'Run Away from Battle', trainerArea: 'End of Round Action', inFray: 'End of Round Action' }
-];
+// 6. COVER & HEALING
 
 export const COVER_TABLE = [
     { coverage: '1/4 Coverage', defBonus: '+1 Bonus Def / Sp.Def vs Attacks', addedEffects: 'Yes (Takes added effects)' },

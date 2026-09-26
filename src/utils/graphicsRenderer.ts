@@ -42,6 +42,19 @@ export async function renderTokenGraphics(
         try {
             const tokenId = token.id;
 
+            // Guard: ensure the token is still present in the scene before proceeding
+            const sceneTokens = await OBR.scene.items.getItems([tokenId]);
+            if (sceneTokens.length === 0) {
+                const localAttached = (await OBR.scene.local.getItems()).filter(
+                    (item) => item.attachedTo === tokenId || item.id.startsWith(`${tokenId}-`)
+                );
+                if (localAttached.length > 0) {
+                    await OBR.scene.local.deleteItems(localAttached.map((item) => item.id));
+                }
+                delete renderMutex[tokenId];
+                return;
+            }
+
             let localAttached = (await OBR.scene.local.getItems()).filter(
                 (item) => item.attachedTo === tokenId && item.metadata[GRAPHICS_META_ID] !== undefined
             );
@@ -229,5 +242,72 @@ export async function renderAllSceneTokens(
         }
     } catch (error) {
         console.error('[GraphicsRenderer] Error rendering all scene tokens:', error);
+    }
+}
+
+export async function deleteTokenGraphics(tokenIds: string[] | string) {
+    if (!OBR.isAvailable) return;
+    try {
+        const ids = Array.isArray(tokenIds) ? tokenIds : [tokenIds];
+        if (ids.length === 0) return;
+        const idSet = new Set(ids);
+
+        for (const id of ids) {
+            delete renderMutex[id];
+        }
+
+        const localItems = await OBR.scene.local.getItems();
+        const toDelete = localItems
+            .filter((item) => {
+                if (item.attachedTo && idSet.has(item.attachedTo)) return true;
+                if (
+                    item.metadata[GRAPHICS_META_ID] !== undefined ||
+                    Object.keys(item.metadata).some((k) => k.startsWith('pokerole-extension/graphic'))
+                ) {
+                    for (const id of idSet) {
+                        if (item.id.startsWith(`${id}-`)) return true;
+                    }
+                }
+                return false;
+            })
+            .map((item) => item.id);
+
+        if (toDelete.length > 0) {
+            await OBR.scene.local.deleteItems(toDelete);
+        }
+    } catch (error) {
+        console.error('[GraphicsRenderer] Error deleting token graphics:', error);
+    }
+}
+
+export async function cleanupOrphanedGraphics(activeItemIds?: Set<string>) {
+    if (!OBR.isAvailable) return;
+    try {
+        let currentItemIds = activeItemIds;
+        if (!currentItemIds) {
+            const sceneItems = await OBR.scene.items.getItems();
+            currentItemIds = new Set(sceneItems.map((i) => i.id));
+        }
+
+        const localItems = await OBR.scene.local.getItems();
+        const orphanedIds = localItems
+            .filter((item) => {
+                const isGraphic =
+                    item.metadata[GRAPHICS_META_ID] !== undefined ||
+                    Object.keys(item.metadata).some((k) => k.startsWith('pokerole-extension/graphic'));
+                if (!isGraphic) return false;
+
+                if (!item.attachedTo || !currentItemIds!.has(item.attachedTo)) {
+                    return true;
+                }
+                return false;
+            })
+            .map((item) => item.id);
+
+        if (orphanedIds.length > 0) {
+            await OBR.scene.local.deleteItems(orphanedIds);
+        }
+    } catch (error) {
+        console.error('[GraphicsRenderer] Error cleaning up orphaned graphics:', error);
     }
 }

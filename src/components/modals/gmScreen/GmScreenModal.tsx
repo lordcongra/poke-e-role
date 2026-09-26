@@ -11,16 +11,15 @@ import {
     ChevronRight,
     BookOpen,
     Swords,
-    FlaskConical,
     CloudRain,
     Target,
-    Award,
-    Shield,
     Heart,
     Info,
     ChevronsUpDown,
     Link2,
-    Sparkles
+    Sparkles,
+    UserCheck,
+    Zap
 } from 'lucide-react';
 import {
     GM_CHEAT_ITEMS,
@@ -33,7 +32,7 @@ import {
     type COMBAT_FLOW_STEPS,
     type WEATHER_CONDITIONS_DATA,
     type ENVIRONMENTAL_HAZARDS_DATA,
-    type TRAINER_ACTIONS_TABLE,
+    TRAINER_ACTIONS_TABLE,
     type COVER_TABLE,
     type HEALING_TABLE,
     type PMD_CHARACTER_RULES,
@@ -53,6 +52,8 @@ import {
 import { GmCombatCards } from '../gmCards/GmCombatCards';
 import { GmStatusCards } from '../gmCards/GmStatusCards';
 import { GmReferenceCards } from '../gmCards/GmReferenceCards';
+import { GmTrainerCards } from '../gmCards/GmTrainerCards';
+import { GmManeuverCards } from '../gmCards/GmManeuverCards';
 import { GmHomebrewCards } from '../gmCards/GmHomebrewCards';
 import { GmRangersCards } from '../gmCards/GmRangersCards';
 import { GmScreenCatchCalculator } from './GmScreenCatchCalculator';
@@ -67,17 +68,7 @@ interface GmScreenModalProps {
     initialTab?: string;
 }
 
-type TabCategory =
-    | 'all'
-    | 'rules'
-    | 'status'
-    | 'weather'
-    | 'catching'
-    | 'training'
-    | 'balance'
-    | 'types'
-    | 'lookup'
-    | 'homebrew';
+type TabCategory = 'all' | 'rules' | 'trainer' | 'maneuvers' | 'environment' | 'progression' | 'lookup' | 'homebrew';
 
 export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
     const [searchQuery, setSearchQuery] = useState<string>('');
@@ -92,17 +83,28 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
             }
             const validTabs: TabCategory[] = [
                 'rules',
-                'status',
-                'weather',
-                'catching',
-                'training',
-                'balance',
-                'types',
+                'trainer',
+                'maneuvers',
+                'environment',
+                'progression',
                 'lookup',
                 'homebrew'
             ];
-            if (sectionParam && validTabs.includes(sectionParam as TabCategory)) {
-                return sectionParam as TabCategory;
+            const legacyAliases: Record<string, TabCategory> = {
+                status: 'environment',
+                weather: 'environment',
+                types: 'environment',
+                catching: 'progression',
+                training: 'progression',
+                balance: 'progression'
+            };
+            if (sectionParam) {
+                if (validTabs.includes(sectionParam as TabCategory)) {
+                    return sectionParam as TabCategory;
+                }
+                if (legacyAliases[sectionParam]) {
+                    return legacyAliases[sectionParam];
+                }
             }
             const rawHash = window.location.hash.replace(/^#/, '');
             if (rawHash === 'lookup' || rawHash === 'pokemon-lookup') {
@@ -454,12 +456,10 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
         const counts: Record<string, number> = {
             all: GM_CHEAT_ITEMS.length,
             rules: 0,
-            status: 0,
-            weather: 0,
-            catching: 0,
-            training: 0,
-            balance: 0,
-            types: 0,
+            trainer: 0,
+            maneuvers: 0,
+            environment: 0,
+            progression: 0,
             lookup: 0,
             homebrew: 0
         };
@@ -524,10 +524,12 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
 
         const combatIds = [
             'skills-and-attributes',
+            'attribute-benchmarks-lifting-speed',
             'successes-required',
             'will-points',
             'combat-flow',
             'using-a-move',
+            'move-clarifications-core',
             'holding-back-attack',
             'reactions-late-reactions',
             'pain-penalties',
@@ -546,6 +548,23 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
             );
         }
 
+        const trainerIds = [
+            'trainer-actions-table',
+            'trainer-initiative',
+            'trainer-commanding',
+            'trainer-switching',
+            'humans-in-combat',
+            'pokeball-throwing-timing'
+        ];
+        if (trainerIds.includes(itemId)) {
+            return <GmTrainerCards itemId={itemId} onBroadcastTrainerAction={handleBroadcastTrainerAction} />;
+        }
+
+        const maneuverIds = ['maneuvers-core-rules', 'maneuvers-list-all'];
+        if (maneuverIds.includes(itemId) || itemId.startsWith('maneuver-')) {
+            return <GmManeuverCards itemId={itemId} />;
+        }
+
         const statusIds = ['status-effects-all', 'weather-conditions-all', 'environmental-hazards-all'];
         if (statusIds.includes(itemId)) {
             return (
@@ -560,7 +579,6 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
         }
 
         const referenceIds = [
-            'trainer-actions',
             'cover-mechanics',
             'healing-rates',
             'training-points-guide',
@@ -571,7 +589,6 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
             return (
                 <GmReferenceCards
                     itemId={itemId}
-                    onBroadcastTrainerAction={handleBroadcastTrainerAction}
                     onBroadcastCover={handleBroadcastCover}
                     onBroadcastHealing={handleBroadcastHealing}
                 />
@@ -722,45 +739,31 @@ export function GmScreenModal({ onClose, initialTab }: GmScreenModalProps) {
                         </button>
                         <button
                             type="button"
-                            className={`gm-screen-modal__tab-btn ${activeTab === 'status' ? 'gm-screen-modal__tab-btn--active' : ''}`}
-                            onClick={() => setActiveTab('status')}
+                            className={`gm-screen-modal__tab-btn ${activeTab === 'trainer' ? 'gm-screen-modal__tab-btn--active' : ''}`}
+                            onClick={() => setActiveTab('trainer')}
                         >
-                            <FlaskConical size={14} /> Statuses ({tabCounts.status})
+                            <UserCheck size={14} /> Trainer Rules ({tabCounts.trainer})
                         </button>
                         <button
                             type="button"
-                            className={`gm-screen-modal__tab-btn ${activeTab === 'weather' ? 'gm-screen-modal__tab-btn--active' : ''}`}
-                            onClick={() => setActiveTab('weather')}
+                            className={`gm-screen-modal__tab-btn ${activeTab === 'maneuvers' ? 'gm-screen-modal__tab-btn--active' : ''}`}
+                            onClick={() => setActiveTab('maneuvers')}
                         >
-                            <CloudRain size={14} /> Weather & Hazards ({tabCounts.weather})
+                            <Zap size={14} /> Maneuvers ({tabCounts.maneuvers})
                         </button>
                         <button
                             type="button"
-                            className={`gm-screen-modal__tab-btn ${activeTab === 'catching' ? 'gm-screen-modal__tab-btn--active' : ''}`}
-                            onClick={() => setActiveTab('catching')}
+                            className={`gm-screen-modal__tab-btn ${activeTab === 'environment' ? 'gm-screen-modal__tab-btn--active' : ''}`}
+                            onClick={() => setActiveTab('environment')}
                         >
-                            <Target size={14} /> Catching ({tabCounts.catching})
+                            <CloudRain size={14} /> Status & Environment ({tabCounts.environment})
                         </button>
                         <button
                             type="button"
-                            className={`gm-screen-modal__tab-btn ${activeTab === 'training' ? 'gm-screen-modal__tab-btn--active' : ''}`}
-                            onClick={() => setActiveTab('training')}
+                            className={`gm-screen-modal__tab-btn ${activeTab === 'progression' ? 'gm-screen-modal__tab-btn--active' : ''}`}
+                            onClick={() => setActiveTab('progression')}
                         >
-                            <Award size={14} /> Training (TP) ({tabCounts.training})
-                        </button>
-                        <button
-                            type="button"
-                            className={`gm-screen-modal__tab-btn ${activeTab === 'balance' ? 'gm-screen-modal__tab-btn--active' : ''}`}
-                            onClick={() => setActiveTab('balance')}
-                        >
-                            <ShieldCheck size={14} /> Ranks & Balance ({tabCounts.balance})
-                        </button>
-                        <button
-                            type="button"
-                            className={`gm-screen-modal__tab-btn ${activeTab === 'types' ? 'gm-screen-modal__tab-btn--active' : ''}`}
-                            onClick={() => setActiveTab('types')}
-                        >
-                            <Shield size={14} /> Type Matchups ({tabCounts.types})
+                            <Target size={14} /> Catching & Progression ({tabCounts.progression})
                         </button>
                         <button
                             type="button"

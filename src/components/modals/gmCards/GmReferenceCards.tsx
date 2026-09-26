@@ -1,7 +1,6 @@
 import React from 'react';
 import { Megaphone } from 'lucide-react';
 import {
-    TRAINER_ACTIONS_TABLE,
     COVER_TABLE,
     HEALING_TABLE,
     BATTLE_TP_TABLE,
@@ -13,56 +12,12 @@ import {
 
 interface GmReferenceCardsProps {
     itemId: string;
-    onBroadcastTrainerAction: (t: (typeof TRAINER_ACTIONS_TABLE)[0]) => void;
     onBroadcastCover: (c: (typeof COVER_TABLE)[0]) => void;
     onBroadcastHealing: (h: (typeof HEALING_TABLE)[0]) => void;
 }
 
-export const GmReferenceCards: React.FC<GmReferenceCardsProps> = ({
-    itemId,
-    onBroadcastTrainerAction,
-    onBroadcastCover,
-    onBroadcastHealing
-}) => {
+export const GmReferenceCards: React.FC<GmReferenceCardsProps> = ({ itemId, onBroadcastCover, onBroadcastHealing }) => {
     switch (itemId) {
-        case 'trainer-actions':
-            return (
-                <div className="gm-table-wrapper">
-                    <table className="gm-table">
-                        <thead>
-                            <tr>
-                                <th>Trainer Action</th>
-                                <th>In a Trainer Area</th>
-                                <th>In the Fray</th>
-                                <th style={{ width: '90px', textAlign: 'center' }}>Send</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {TRAINER_ACTIONS_TABLE.map((t) => (
-                                <tr key={t.action}>
-                                    <td>
-                                        <strong>{t.action}</strong>
-                                    </td>
-                                    <td>{t.trainerArea}</td>
-                                    <td>{t.inFray}</td>
-                                    <td style={{ textAlign: 'center' }}>
-                                        <button
-                                            type="button"
-                                            className="action-button action-button--dark gm-card-item-broadcast-btn"
-                                            onClick={() => onBroadcastTrainerAction(t)}
-                                            title={`Broadcast ${t.action} to chat/roll log`}
-                                            aria-label={`Broadcast ${t.action}`}
-                                        >
-                                            <Megaphone size={12} /> Broadcast
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            );
-
         case 'cover-mechanics':
             return (
                 <div className="gm-table-wrapper">
