@@ -11,6 +11,7 @@ import { setActiveTokenId } from '../../utils/obr';
 import { fetchPokemonData } from '../../utils/api';
 import { imageManager } from '../../utils/imageManager';
 import { downloadJson } from '../../utils/fileSystemHelpers';
+import { useSidebarTouchDrag, type TouchDragOverInfo } from './useSidebarTouchDrag';
 
 export type TreeItem = {
     id: string;
@@ -36,10 +37,9 @@ export function useSidebarEngine() {
     const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
 
     const [initTags, setInitTags] = useState<Record<string, string>>({});
-    const [dragOverInfo, setDragOverInfo] = useState<{ id: string; position: 'before' | 'after' | 'inside' } | null>(
-        null
-    );
+    const [dragOverInfo, setDragOverInfo] = useState<TouchDragOverInfo | null>(null);
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; item: TreeItem } | null>(null);
+    const treeContainerRef = useRef<HTMLDivElement | null>(null);
 
     const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
     const [hasUnbackedChanges, setHasUnbackedChanges] = useState(false);
@@ -235,14 +235,23 @@ export function useSidebarEngine() {
     };
 
     // --- CONTEXT MENU ACTIONS ---
+    const openContextMenuAt = useCallback((clientX: number, clientY: number, item: TreeItem) => {
+        const menuHeightEstimate = 220;
+        const menuWidthEstimate = 180;
+        let safeY = clientY;
+        let safeX = clientX;
+        if (safeY + menuHeightEstimate > window.innerHeight) {
+            safeY = Math.max(10, window.innerHeight - menuHeightEstimate);
+        }
+        if (safeX + menuWidthEstimate > window.innerWidth) {
+            safeX = Math.max(10, window.innerWidth - menuWidthEstimate);
+        }
+        setContextMenu({ x: safeX, y: safeY, item });
+    }, []);
+
     const handleContextMenu = (e: React.MouseEvent, item: TreeItem) => {
         e.preventDefault();
-        const menuHeightEstimate = 180;
-        let safeY = e.clientY;
-        if (safeY + menuHeightEstimate > window.innerHeight) {
-            safeY = window.innerHeight - menuHeightEstimate;
-        }
-        setContextMenu({ x: e.clientX, y: safeY, item });
+        openContextMenuAt(e.clientX, e.clientY, item);
     };
 
     const executeRename = async (item: TreeItem) => {
@@ -425,23 +434,21 @@ export function useSidebarEngine() {
         e.preventDefault();
     };
 
-    const handleDrop = async (e: React.DragEvent, targetItem: TreeItem | null) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setDragOverInfo(null);
-
-        const draggedId = e.dataTransfer.getData('itemId');
-        const draggedType = e.dataTransfer.getData('itemType');
-
+    const executeMoveItem = async (
+        draggedId: string,
+        draggedType: 'folder' | 'character',
+        targetItem: TreeItem | null,
+        position: 'before' | 'after' | 'inside' = 'inside'
+    ) => {
         if (!draggedId || draggedId === targetItem?.id) return;
 
         if (!targetItem) {
             if (draggedType === 'folder') await storageAdapter.moveFolder(draggedId, null);
             else await storageAdapter.moveItem(draggedId, null);
+            markDataChanged();
+            loadData();
             return;
         }
-
-        const position = dragOverInfo?.id === targetItem.id ? dragOverInfo.position : 'inside';
 
         let newParentId = targetItem.parentId;
         if (position === 'inside') {
@@ -476,7 +483,38 @@ export function useSidebarEngine() {
         loadData();
     };
 
+    const handleDrop = async (e: React.DragEvent, targetItem: TreeItem | null) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const position =
+            dragOverInfo && targetItem && dragOverInfo.id === targetItem.id ? dragOverInfo.position : 'inside';
+        setDragOverInfo(null);
+
+        const draggedId = e.dataTransfer.getData('itemId');
+        const draggedType = e.dataTransfer.getData('itemType') as 'folder' | 'character';
+
+        if (!draggedId) return;
+        await executeMoveItem(draggedId, draggedType, targetItem, position);
+    };
+
+    const {
+        liftedItemId,
+        touchGhostItem,
+        touchGhostPos,
+        isDragActive: isTouchDragActive,
+        handleItemTouchStart,
+        isClickBlocked
+    } = useSidebarTouchDrag({
+        items,
+        treeContainerRef,
+        onDropItem: executeMoveItem,
+        onOpenContextMenu: openContextMenuAt,
+        dragOverInfo,
+        setDragOverInfo
+    });
+
     const getDragClass = (itemId: string) => {
+        if (liftedItemId === itemId) return 'sidebar__item--lifted';
         if (dragOverInfo?.id !== itemId) return '';
         if (dragOverInfo.position === 'before') return 'sidebar__item--drag-before';
         if (dragOverInfo.position === 'after') return 'sidebar__item--drag-after';
@@ -607,7 +645,16 @@ export function useSidebarEngine() {
         handleDragLeave,
         handleDrop,
         handleContextMenu,
+        closeContextMenu: () => setContextMenu(null),
         getDragClass,
-        setDragOverInfo
+        setDragOverInfo,
+        dragOverInfo,
+        treeContainerRef,
+        liftedItemId,
+        touchGhostItem,
+        touchGhostPos,
+        isTouchDragActive,
+        handleItemTouchStart,
+        isClickBlocked
     };
 }

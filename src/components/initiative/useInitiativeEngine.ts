@@ -626,32 +626,34 @@ export function useInitiativeEngine() {
         }
     };
 
-    const handleAddStandaloneCombatant = (char: StandaloneCharOption) => {
-        if (combatants.find((c) => c.id === char.id)) return;
+    const handleAddStandaloneCombatant = useCallback((char: StandaloneCharOption) => {
+        setCombatants((prevCombatants) => {
+            if (prevCombatants.find((c) => c.id === char.id)) return prevCombatants;
 
-        const baseInit = calculateBaseInitFromCharacterData(char.rawMetadata, useCharacterStore.getState());
-        const resolvedName = extractCharacterName(char.rawMetadata, char.name);
-        const newList = sortCombatants([
-            ...combatants,
-            {
-                id: char.id,
-                name: resolvedName,
-                image: char.image,
-                d6: 0,
-                baseInit: baseInit,
-                total: baseInit,
-                tiebreaker: 0
+            const baseInit = calculateBaseInitFromCharacterData(char.rawMetadata, useCharacterStore.getState());
+            const resolvedName = extractCharacterName(char.rawMetadata, char.name);
+            const newList = sortCombatants([
+                ...prevCombatants,
+                {
+                    id: char.id,
+                    name: resolvedName,
+                    image: char.image,
+                    d6: 0,
+                    baseInit: baseInit,
+                    total: baseInit,
+                    tiebreaker: 0
+                }
+            ]);
+
+            try {
+                localStorage.setItem('pkr_standalone_init_list', JSON.stringify(newList));
+                window.dispatchEvent(new Event('pkr-standalone-init-update'));
+            } catch (error) {
+                console.error('[InitiativeEngine] Failed to add standalone combatant to localStorage:', error);
             }
-        ]);
-
-        setCombatants(newList);
-        try {
-            localStorage.setItem('pkr_standalone_init_list', JSON.stringify(newList));
-            window.dispatchEvent(new Event('pkr-standalone-init-update'));
-        } catch (error) {
-            console.error('[InitiativeEngine] Failed to add standalone combatant to localStorage:', error);
-        }
-    };
+            return newList;
+        });
+    }, []);
 
     const handleAddObrCombatant = async (item: Item) => {
         if (!OBR.isAvailable) return;
@@ -695,6 +697,34 @@ export function useInitiativeEngine() {
             }
         }
     };
+
+    useEffect(() => {
+        const handleCustomAddCharacter = async (e: Event) => {
+            const detail = (e as CustomEvent<{ id: string }>).detail;
+            if (detail?.id) {
+                try {
+                    const chars = await storageAdapter.getLocalCharacters();
+                    const target = chars.find((c) => c.id === detail.id);
+                    if (target) {
+                        const meta = (target.metadata || {}) as Record<string, unknown>;
+                        handleAddStandaloneCombatant({
+                            id: target.id,
+                            name: extractCharacterName(meta, target.name),
+                            image: extractTokenImage(meta),
+                            rawMetadata: meta
+                        });
+                    }
+                } catch (error) {
+                    console.error('[InitiativeEngine] Failed to add dropped combatant:', error);
+                }
+            }
+        };
+
+        window.addEventListener('pkr-init-add-character', handleCustomAddCharacter);
+        return () => {
+            window.removeEventListener('pkr-init-add-character', handleCustomAddCharacter);
+        };
+    }, [handleAddStandaloneCombatant]);
 
     // --- Dynamic Transformers ---
 

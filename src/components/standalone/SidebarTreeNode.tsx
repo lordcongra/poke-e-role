@@ -1,6 +1,6 @@
 import type { TreeItem } from './useSidebarEngine';
 import { SidebarAvatar } from './SidebarAvatar';
-import { ChevronDown, ChevronRight, Folder, Dna, Trash2, Swords } from 'lucide-react';
+import { ChevronDown, ChevronRight, Folder, Dna, Trash2, Swords, MoreVertical } from 'lucide-react';
 
 interface SidebarTreeNodeProps {
     parentId: string | null;
@@ -18,6 +18,8 @@ interface SidebarTreeNodeProps {
     onToggleExpand: (e: React.MouseEvent, id: string) => void;
     onContextMenu: (e: React.MouseEvent, item: TreeItem) => void;
     onDelete: (item: TreeItem) => void;
+    onTouchStart?: (e: React.TouchEvent, item: TreeItem) => void;
+    isClickBlocked?: () => boolean;
 }
 
 export function SidebarTreeNode(props: SidebarTreeNodeProps) {
@@ -36,7 +38,9 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
         onSelect,
         onToggleExpand,
         onContextMenu,
-        onDelete
+        onDelete,
+        onTouchStart,
+        isClickBlocked
     } = props;
 
     const children = items.filter((i) => i.parentId === parentId);
@@ -57,19 +61,31 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
                         <div
                             className={`sidebar__item ${activeTokenId === item.id ? 'sidebar__item--active' : ''} ${getDragClass(item.id)}`}
                             style={{ paddingLeft: `${depth * 16 + 8}px` }}
+                            data-item-id={item.id}
+                            data-item-type={item.type}
                             draggable
                             onDragStart={(e) => onDragStart(e, item)}
                             onDragOver={(e) => onDragOver(e, item)}
                             onDragLeave={onDragLeave}
                             onDrop={(e) => onDrop(e, item)}
+                            onTouchStart={(e) => onTouchStart?.(e, item)}
                             onClick={(e) => {
+                                if (isClickBlocked && isClickBlocked()) {
+                                    return;
+                                }
                                 if (item.type === 'character') {
                                     onSelect(item.id, item.meta as Record<string, unknown>);
                                 } else {
                                     onToggleExpand(e, item.id);
                                 }
                             }}
-                            onContextMenu={(e) => onContextMenu(e, item)}
+                            onContextMenu={(e) => {
+                                if (isClickBlocked && isClickBlocked()) {
+                                    e.preventDefault();
+                                    return;
+                                }
+                                onContextMenu(e, item);
+                            }}
                         >
                             <div className="sidebar__item-content">
                                 {hasChildren ? (
@@ -117,16 +133,30 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
                                     </span>
                                 )}
                             </div>
-                            <button
-                                className="sidebar__delete-btn"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onDelete(item);
-                                }}
-                                title="Delete"
-                            >
-                                <Trash2 size={16} />
-                            </button>
+                            <div className="sidebar__item-actions">
+                                <button
+                                    type="button"
+                                    className="sidebar__more-btn"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onContextMenu(e, item);
+                                    }}
+                                    title="More options"
+                                    aria-label="More options"
+                                >
+                                    <MoreVertical size={16} />
+                                </button>
+                                <button
+                                    className="sidebar__delete-btn"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDelete(item);
+                                    }}
+                                    title="Delete"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
                         </div>
 
                         {isExpanded && <SidebarTreeNode {...props} parentId={item.id} depth={depth + 1} />}

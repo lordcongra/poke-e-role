@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSidebarEngine } from './useSidebarEngine';
 import { SidebarContextMenu } from './SidebarContextMenu';
 import { SidebarTreeNode } from './SidebarTreeNode';
 import { RestoreBackupModal } from './RestoreBackupModal';
 import { BackupModal } from './BackupModal';
-import { Menu, ChevronLeft, FolderPlus, FilePlus, Save, ArchiveRestore, AlertTriangle, X } from 'lucide-react';
+import { Menu, ChevronLeft, FolderPlus, FilePlus, Save, ArchiveRestore, AlertTriangle, X, Folder } from 'lucide-react';
+import { SidebarAvatar } from './SidebarAvatar';
 import './Sidebar.css';
 
 export function Sidebar() {
@@ -46,12 +47,21 @@ export function Sidebar() {
         handleDrop,
         handleContextMenu,
         getDragClass,
-        setDragOverInfo
+        setDragOverInfo,
+        dragOverInfo,
+        treeContainerRef,
+        touchGhostItem,
+        touchGhostPos,
+        handleItemTouchStart,
+        isClickBlocked,
+        closeContextMenu
     } = useSidebarEngine();
 
-    useEffect(() => {
+    const [prevHasUnbacked, setPrevHasUnbacked] = useState(hasUnbackedChanges);
+    if (prevHasUnbacked !== hasUnbackedChanges) {
+        setPrevHasUnbacked(hasUnbackedChanges);
         setIsPromptDismissed(false);
-    }, [hasUnbackedChanges]);
+    }
 
     if (isCollapsed) {
         return (
@@ -175,6 +185,7 @@ export function Sidebar() {
             </div>
 
             <div
+                ref={treeContainerRef}
                 className="sidebar__tree"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => handleDrop(e, null)}
@@ -196,22 +207,61 @@ export function Sidebar() {
                     onToggleExpand={toggleExpand}
                     onContextMenu={handleContextMenu}
                     onDelete={executeDelete}
+                    onTouchStart={handleItemTouchStart}
+                    isClickBlocked={isClickBlocked}
                 />
 
                 {items.length === 0 && (
                     <p className="sidebar__empty text-subtext">Directory is empty. Create a file above!</p>
                 )}
-                <div className="sidebar__dropzone-root text-subtext">Drop here to move to Root</div>
+                <div
+                    className={`sidebar__dropzone-root text-subtext ${
+                        dragOverInfo?.id === '__root__' ? 'sidebar__dropzone-root--active' : ''
+                    }`}
+                    data-drop-zone="root"
+                >
+                    Drop here to move to Root
+                </div>
             </div>
 
+            {/* Floating Drag Ghost for Touch Drag-and-Drop */}
+            {touchGhostItem && touchGhostPos && (
+                <div
+                    className="sidebar__drag-ghost"
+                    style={{
+                        left: `${touchGhostPos.x}px`,
+                        top: `${touchGhostPos.y}px`
+                    }}
+                >
+                    {touchGhostItem.type === 'folder' ? (
+                        <span className="sidebar__item-icon" style={{ color: 'var(--primary)' }}>
+                            <Folder size={16} />
+                        </span>
+                    ) : (
+                        <SidebarAvatar meta={touchGhostItem.meta} />
+                    )}
+                    <span className="sidebar__drag-ghost-name text-label">{touchGhostItem.name}</span>
+                </div>
+            )}
+
             {contextMenu && (
-                <SidebarContextMenu
-                    contextMenu={contextMenu}
-                    onRename={executeRename}
-                    onMove={executeMove}
-                    onDuplicate={executeDuplicate}
-                    onDelete={executeDelete}
-                />
+                <>
+                    <div
+                        className="sidebar__context-backdrop"
+                        onClick={closeContextMenu}
+                        onTouchStart={(e) => {
+                            e.stopPropagation();
+                            closeContextMenu();
+                        }}
+                    />
+                    <SidebarContextMenu
+                        contextMenu={contextMenu}
+                        onRename={executeRename}
+                        onMove={executeMove}
+                        onDuplicate={executeDuplicate}
+                        onDelete={executeDelete}
+                    />
+                </>
             )}
 
             {/* Custom Backup Modal */}
