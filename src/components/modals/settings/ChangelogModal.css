@@ -15,8 +15,8 @@
     background: var(--panel-bg);
     padding: 18px 20px;
     border-radius: 10px;
-    width: 620px;
-    max-width: 95%;
+    width: 660px;
+    max-width: min(660px, 94vw);
     max-height: 88vh;
     border: 2px solid var(--primary);
     box-shadow: 0 4px 20px color-mix(in srgb, var(--dark) 50%, transparent);
@@ -104,6 +104,8 @@
     margin-bottom: 14px;
     padding-bottom: 12px;
     border-bottom: 1px dashed var(--border);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .changelog-modal__highlights-header {
@@ -111,6 +113,8 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .changelog-modal__highlights-heading {
@@ -132,17 +136,19 @@
 
 .changelog-modal__cards-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-@media (max-width: 580px) {
+@media (max-width: 600px) {
     .changelog-modal__cards-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 400px) {
     .changelog-modal__cards-grid {
         grid-template-columns: 1fr;
     }
@@ -158,6 +164,7 @@
     flex-direction: column;
     text-align: left;
     min-height: 82px;
+    min-width: 0;
     box-sizing: border-box;
     transition:
         transform 0.15s ease,
@@ -220,6 +227,8 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 4px;
+    min-width: 0;
+    width: 100%;
 }
 
 .changelog-card__icon-box {
@@ -238,11 +247,14 @@
     display: flex;
     align-items: center;
     gap: 4px;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .changelog-card__version {
     font-size: 0.7em;
     color: var(--text-muted);
+    flex-shrink: 0;
 }
 
 .changelog-card__badge {
@@ -252,6 +264,10 @@
     background: color-mix(in srgb, var(--primary) 18%, transparent);
     color: var(--primary);
     font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
 }
 
 .changelog-card__title {

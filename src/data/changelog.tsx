@@ -18,10 +18,11 @@ import {
     Zap,
     Layers,
     Sliders,
-    Lock
+    Lock,
+    UserCheck
 } from 'lucide-react';
 
-export const CURRENT_VERSION = '3.6.4';
+export const CURRENT_VERSION = '3.6.5';
 
 export interface ChangelogHighlight {
     id: string;
@@ -122,6 +123,112 @@ export function getChangelogDiff(lastSeenVersion: string | null): ChangelogDiffR
 }
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
+    {
+        version: '3.6.5',
+        date: 'September 2026',
+        highlights: [
+            {
+                id: 'gm-screen-clarifications-benchmarks',
+                version: '3.6.5',
+                title: 'GM Screen & Move Clarifications',
+                icon: BookOpen,
+                badge: 'GM Screen',
+                summary: 'Core Move Clarifications, Attribute Benchmarks, and streamlined categories.',
+                details: (
+                    <div>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Move Clarifications & Mechanics:</strong> Added official Corebook rules clarifications for nuanced moves and interactions including <strong>Encore</strong>, <strong>Fling</strong> (held item damage table), <strong>Nature Power & Secret Power</strong> (environmental matrix), <strong>Natural Gift</strong> (berry flavors & typing), <strong>Snatch</strong>, <strong>Substitute Decoys</strong>, <strong>Hidden Power</strong> (Unown exception), and <strong>Narrative Move Usage</strong>.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Attribute Benchmarks:</strong> Added narrative lifting capacity (Strength, 40–1500 lbs) and maximum speed (Dexterity, 6–99 mph) benchmark tables with Athletic skill scaling, carrying weight, and pain penalty adjustments.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Streamlined Category Tabs:</strong> Consolidated low-item categories into unified <strong>Status & Environment</strong> and <strong>Catching & Progression</strong> tabs for a cleaner, faster browsing experience.
+                        </p>
+                    </div>
+                )
+            },
+            {
+                id: 'gm-screen-trainer-maneuvers',
+                version: '3.6.5',
+                title: 'Trainer Combat Rules & Maneuvers',
+                icon: UserCheck,
+                badge: 'Trainer Rules',
+                summary: 'Trainer action economy, fray vs. area positioning, switching & core maneuvers.',
+                details: (
+                    <div>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Trainer Action Economy & Positioning:</strong> Added comprehensive rules for Trainer Area vs. In the Fray positioning, initiative rolls (<code>1d6 + Dexterity + Alert</code> when in the fray), command action counts, and the 5 Actions per Round limit.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Tactical Switching & Mid-Round Lockout:</strong> Documented switching mechanics (Area: 2 free switches then 1 action; Fray: costs an action on Trainer’s turn). Clarified the tactical reason why switching mid-round disorients Pokémon (preventing them from acting until the next round), making Round End the optimal window to swap or send out fainted replacements.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Humans in Combat & Clashing:</strong> Clarified that humans can Evade, but CANNOT Clash (because Clashing strictly requires using a Move, and Struggle is officially classified as a Maneuver).
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Dedicated Maneuvers Category:</strong> Added a dedicated Maneuvers deck with quick-reference cards and chat broadcast triggers for Struggle, Clash, Evasion, Grapple, Ambush, Cover an Ally, Help Another, Run Away, and Stabilize.
+                        </p>
+                    </div>
+                )
+            }
+        ],
+        changes: [
+            <strong key="gm-screen-additions-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <BookOpen size={16} /> GM Screen: Move Clarifications, Attribute Benchmarks & Category Cleanup
+            </strong>,
+            <ul
+                key="gm-screen-additions-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Move Clarifications:</strong> Added in-depth reference cards and chat broadcast options for nuanced moves and mechanics from the Corebook (Encore action sequences, Fling item damage dice, Nature/Secret Power environmental alignments, Natural Gift berry flavor typing, Snatch theft rules, Substitute Decoy protections, and Unown Hidden Power).
+                </li>
+                <li>
+                    <strong>Attribute Benchmarks:</strong> Added Strength (Lifting Capacity) and Dexterity (Top Speed) narrative benchmark charts with per-row broadcast triggers, Athletics scaling, and pain penalty reductions.
+                </li>
+                <li>
+                    <strong>Category Consolidation:</strong> Reorganized GM Screen tabs into cleaner, balanced categories (merging Statuses, Weather, Hazards, and Types into <strong>Status & Environment</strong>; and merging Catching, Training, and Ranks into <strong>Catching & Progression</strong>).
+                </li>
+            </ul>,
+            <strong key="trainer-maneuvers-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <UserCheck size={16} /> Trainer Combat Rules, Switching Mechanics & Core Maneuvers
+            </strong>,
+            <ul
+                key="trainer-maneuvers-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Trainer Action Economy & Positioning:</strong> Added reference tables and rules for Trainer Area vs. In the Fray actions (Commands, Switching, Items, Moving to Cover, Entering Fray, Running Away) under the 5 Actions per Round limit.
+                </li>
+                <li>
+                    <strong>Tactical Switching & Mid-Round Lockout:</strong> Added official mechanics on switching (Area: 2 free switches then 1 action; Fray: Action on Trainer’s turn). Clarified why switching mid-round locks out actions until next round due to combat disorientation, making Round End the optimal time to swap or deploy fainted replacements.
+                </li>
+                <li>
+                    <strong>Humans in Combat & Clashing:</strong> Clarified that humans can Evade incoming attacks, but CANNOT Clash (because Clashing requires a Move, and Struggle is officially a Maneuver). Included Pokémon bodyguarding mechanics and homebrew combat options.
+                </li>
+                <li>
+                    <strong>Dedicated Maneuvers Category:</strong> Added a dedicated Maneuvers section to the GM Screen with individual reference cards and chat broadcast triggers for all core maneuvers (Struggle, Clash, Evade, Cover an Ally, Grapple, Ambush, Help Another, Run Away, Stabilize).
+                </li>
+            </ul>
+        ]
+    },
     {
         version: '3.6.4',
         date: 'September 2026',
