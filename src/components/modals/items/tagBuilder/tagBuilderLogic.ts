@@ -120,9 +120,12 @@ export function generateExplanation(config: TagBuilderConfig, builtTag: string):
         else if (target === 'Weak') base = typeOption ? `Adds weakness to ${typeOption}-type moves` : 'Adds weakness';
         else if (target === 'Remove Immunities') base = 'Ignores enemy type immunities when attacking';
     } else if (category === 'mechanic') {
-        if (target === 'High Crit') base = 'Lowers critical hit threshold by 1';
+        if (target === 'High Crit')
+            base =
+                'Lowers critical hit threshold by 1 (Standard rule: High Critical does not stack across items/moves)';
         else if (target === 'Stacking High Crit')
-            base = 'Lowers critical threshold, stacking with item and move bonuses';
+            base =
+                'Lowers critical threshold by 1 and explicitly stacks with High Critical moves and items (like Razor Claw). Normal [High Crit] does not stack by default; use this for abilities like Super Luck or homebrew situations where stacking crits are permitted';
         else if (target === 'Ignore Pain')
             base = typeOption ? `Ignores pain penalties while using ${typeOption} moves` : 'Ignores all pain penalties';
         else if (target === 'Ignore Low Acc') base = `Ignores up to ${Math.abs(num)} Low Accuracy penalty dice`;
