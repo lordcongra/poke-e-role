@@ -50,8 +50,10 @@ export function Sidebar() {
         setDragOverInfo,
         dragOverInfo,
         treeContainerRef,
+        liftedItemId,
         touchGhostItem,
         touchGhostPos,
+        isTouchDragActive,
         handleItemTouchStart,
         isClickBlocked,
         closeContextMenu
@@ -186,7 +188,7 @@ export function Sidebar() {
 
             <div
                 ref={treeContainerRef}
-                className="sidebar__tree"
+                className={`sidebar__tree ${isTouchDragActive || liftedItemId ? 'sidebar__tree--dragging' : ''}`}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => handleDrop(e, null)}
                 onMouseLeave={() => setDragOverInfo(null)}
@@ -207,6 +209,7 @@ export function Sidebar() {
                     onToggleExpand={toggleExpand}
                     onContextMenu={handleContextMenu}
                     onDelete={executeDelete}
+                    liftedItemId={liftedItemId}
                     onTouchStart={handleItemTouchStart}
                     isClickBlocked={isClickBlocked}
                 />

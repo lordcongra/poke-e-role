@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { TreeItem } from './useSidebarEngine';
 import { SidebarAvatar } from './SidebarAvatar';
 import { ChevronDown, ChevronRight, Folder, Dna, Trash2, Swords, MoreVertical } from 'lucide-react';
@@ -20,6 +21,7 @@ interface SidebarTreeNodeProps {
     onDelete: (item: TreeItem) => void;
     onTouchStart?: (e: React.TouchEvent, item: TreeItem) => void;
     isClickBlocked?: () => boolean;
+    liftedItemId?: string | null;
 }
 
 export function SidebarTreeNode(props: SidebarTreeNodeProps) {
@@ -40,8 +42,12 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
         onContextMenu,
         onDelete,
         onTouchStart,
-        isClickBlocked
+        isClickBlocked,
+        liftedItemId
     } = props;
+
+    // Track hovered item for desktop mouse drag - keeps draggable=false for mobile touch interactions
+    const [hoveredId, setHoveredId] = useState<string | null>(null);
 
     const children = items.filter((i) => i.parentId === parentId);
     if (children.length === 0) return null;
@@ -63,14 +69,27 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
                             style={{ paddingLeft: `${depth * 16 + 8}px` }}
                             data-item-id={item.id}
                             data-item-type={item.type}
-                            draggable
-                            onDragStart={(e) => onDragStart(e, item)}
+                            draggable={!liftedItemId && hoveredId === item.id}
+                            onMouseEnter={() => setHoveredId(item.id)}
+                            onMouseLeave={() => setHoveredId((prev) => (prev === item.id ? null : prev))}
+                            onDragStart={(e) => {
+                                if (liftedItemId || (isClickBlocked && isClickBlocked())) {
+                                    e.preventDefault();
+                                    return;
+                                }
+                                onDragStart(e, item);
+                            }}
                             onDragOver={(e) => onDragOver(e, item)}
                             onDragLeave={onDragLeave}
                             onDrop={(e) => onDrop(e, item)}
-                            onTouchStart={(e) => onTouchStart?.(e, item)}
+                            onTouchStart={(e) => {
+                                setHoveredId(null);
+                                onTouchStart?.(e, item);
+                            }}
                             onClick={(e) => {
                                 if (isClickBlocked && isClickBlocked()) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
                                     return;
                                 }
                                 if (item.type === 'character') {
@@ -80,8 +99,9 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
                                 }
                             }}
                             onContextMenu={(e) => {
-                                if (isClickBlocked && isClickBlocked()) {
+                                if (liftedItemId || (isClickBlocked && isClickBlocked())) {
                                     e.preventDefault();
+                                    e.stopPropagation();
                                     return;
                                 }
                                 onContextMenu(e, item);

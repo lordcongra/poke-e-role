@@ -434,54 +434,57 @@ export function useSidebarEngine() {
         e.preventDefault();
     };
 
-    const executeMoveItem = async (
-        draggedId: string,
-        draggedType: 'folder' | 'character',
-        targetItem: TreeItem | null,
-        position: 'before' | 'after' | 'inside' = 'inside'
-    ) => {
-        if (!draggedId || draggedId === targetItem?.id) return;
+    const executeMoveItem = useCallback(
+        async (
+            draggedId: string,
+            draggedType: 'folder' | 'character',
+            targetItem: TreeItem | null,
+            position: 'before' | 'after' | 'inside' = 'inside'
+        ) => {
+            if (!draggedId || draggedId === targetItem?.id) return;
 
-        if (!targetItem) {
-            if (draggedType === 'folder') await storageAdapter.moveFolder(draggedId, null);
-            else await storageAdapter.moveItem(draggedId, null);
-            markDataChanged();
-            loadData();
-            return;
-        }
-
-        let newParentId = targetItem.parentId;
-        if (position === 'inside') {
-            newParentId = targetItem.id;
-        }
-
-        if (draggedType === 'folder') await storageAdapter.moveFolder(draggedId, newParentId);
-        else await storageAdapter.moveItem(draggedId, newParentId);
-
-        const currentOrder = JSON.parse(localStorage.getItem('pkr_sidebar_order') || '[]') as string[];
-        const filteredOrder = currentOrder.filter((id) => id !== draggedId);
-
-        if (position === 'inside') {
-            filteredOrder.push(draggedId);
-        } else {
-            let targetIndex = filteredOrder.indexOf(targetItem.id);
-            if (targetIndex === -1) {
-                filteredOrder.push(targetItem.id);
-                targetIndex = filteredOrder.indexOf(targetItem.id);
+            if (!targetItem) {
+                if (draggedType === 'folder') await storageAdapter.moveFolder(draggedId, null);
+                else await storageAdapter.moveItem(draggedId, null);
+                markDataChanged();
+                loadData();
+                return;
             }
-            if (position === 'after') targetIndex += 1;
-            filteredOrder.splice(targetIndex, 0, draggedId);
-        }
 
-        localStorage.setItem('pkr_sidebar_order', JSON.stringify(filteredOrder));
-        markDataChanged();
+            let newParentId = targetItem.parentId;
+            if (position === 'inside') {
+                newParentId = targetItem.id;
+            }
 
-        if (position === 'inside' || newParentId) {
-            setExpandedNodes((prev) => ({ ...prev, [newParentId!]: true }));
-        }
+            if (draggedType === 'folder') await storageAdapter.moveFolder(draggedId, newParentId);
+            else await storageAdapter.moveItem(draggedId, newParentId);
 
-        loadData();
-    };
+            const currentOrder = JSON.parse(localStorage.getItem('pkr_sidebar_order') || '[]') as string[];
+            const filteredOrder = currentOrder.filter((id) => id !== draggedId);
+
+            if (position === 'inside') {
+                filteredOrder.push(draggedId);
+            } else {
+                let targetIndex = filteredOrder.indexOf(targetItem.id);
+                if (targetIndex === -1) {
+                    filteredOrder.push(targetItem.id);
+                    targetIndex = filteredOrder.indexOf(targetItem.id);
+                }
+                if (position === 'after') targetIndex += 1;
+                filteredOrder.splice(targetIndex, 0, draggedId);
+            }
+
+            localStorage.setItem('pkr_sidebar_order', JSON.stringify(filteredOrder));
+            markDataChanged();
+
+            if (position === 'inside' || newParentId) {
+                setExpandedNodes((prev) => ({ ...prev, [newParentId!]: true }));
+            }
+
+            loadData();
+        },
+        [loadData]
+    );
 
     const handleDrop = async (e: React.DragEvent, targetItem: TreeItem | null) => {
         e.preventDefault();
@@ -509,6 +512,7 @@ export function useSidebarEngine() {
         treeContainerRef,
         onDropItem: executeMoveItem,
         onOpenContextMenu: openContextMenuAt,
+        onCloseContextMenu: () => setContextMenu(null),
         dragOverInfo,
         setDragOverInfo
     });

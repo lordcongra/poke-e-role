@@ -169,6 +169,13 @@
     overscroll-behavior: contain; /* Prevents swiping from leaking to the background sheet! */
 }
 
+.sidebar__tree--dragging,
+.sidebar__tree--dragging * {
+    touch-action: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
 /* Freeze the entire app background when actively dragging a file on mobile */
 html.dnd-polyfilled,
 html.dnd-polyfilled body,
@@ -274,9 +281,12 @@ html.dnd-polyfilled .app-layout {
 }
 
 .sidebar__item--drag-inside {
-    background: color-mix(in srgb, var(--primary) 20%, transparent) !important;
-    border: 1.5px dashed var(--primary) !important;
+    background: color-mix(in srgb, var(--primary) 28%, transparent) !important;
+    border: 2px dashed var(--primary) !important;
     border-radius: 6px;
+    box-shadow: 0 0 12px color-mix(in srgb, var(--primary) 35%, transparent);
+    transform: scale(1.02);
+    transition: transform 0.1s ease, background 0.1s ease;
 }
 
 .sidebar__item-content {
@@ -402,9 +412,13 @@ html.dnd-polyfilled .app-layout {
 }
 
 /* Floating Drag Ghost for Mobile Touch Drag-and-Drop */
+.sidebar__drag-ghost,
+.sidebar__drag-ghost * {
+    pointer-events: none !important;
+}
+
 .sidebar__drag-ghost {
     position: fixed;
-    pointer-events: none;
     z-index: 10000;
     display: flex;
     align-items: center;

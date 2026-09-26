@@ -16,6 +16,7 @@ interface UseSidebarTouchDragProps {
         position: 'before' | 'after' | 'inside'
     ) => Promise<void>;
     onOpenContextMenu: (x: number, y: number, item: TreeItem) => void;
+    onCloseContextMenu?: () => void;
     dragOverInfo: TouchDragOverInfo | null;
     setDragOverInfo: React.Dispatch<React.SetStateAction<TouchDragOverInfo | null>>;
 }
@@ -25,7 +26,7 @@ export function useSidebarTouchDrag({
     treeContainerRef,
     onDropItem,
     onOpenContextMenu,
-    dragOverInfo,
+    onCloseContextMenu,
     setDragOverInfo
 }: UseSidebarTouchDragProps) {
     const [liftedItemId, setLiftedItemId] = useState<string | null>(null);
@@ -40,11 +41,27 @@ export function useSidebarTouchDrag({
     const isDraggingRef = useRef(false);
     const lastActionTimeRef = useRef(0);
 
-    // Keep ref of dragOverInfo so touch-end listener has fresh state without recreation
-    const dragOverInfoRef = useRef<TouchDragOverInfo | null>(dragOverInfo);
+    // Keep latest props in refs to avoid re-binding window listeners during active gestures
+    const itemsRef = useRef(items);
+    const onDropItemRef = useRef(onDropItem);
+    const onOpenContextMenuRef = useRef(onOpenContextMenu);
+
     useEffect(() => {
-        dragOverInfoRef.current = dragOverInfo;
-    }, [dragOverInfo]);
+        itemsRef.current = items;
+        onDropItemRef.current = onDropItem;
+        onOpenContextMenuRef.current = onOpenContextMenu;
+    });
+
+    // Synchronous drop target ref - updated instantaneously with no React render lag
+    const currentDropRef = useRef<TouchDragOverInfo | null>(null);
+
+    const updateDragOver = useCallback(
+        (info: TouchDragOverInfo | null) => {
+            currentDropRef.current = info;
+            setDragOverInfo(info);
+        },
+        [setDragOverInfo]
+    );
 
     const cleanupTimer = useCallback(() => {
         if (holdTimerRef.current !== null) {
@@ -59,11 +76,111 @@ export function useSidebarTouchDrag({
         setTouchGhostItem(null);
         setTouchGhostPos(null);
         setIsDragActive(false);
-        setDragOverInfo(null);
+        updateDragOver(null);
         touchActiveItem.current = null;
         isLiftedRef.current = false;
         isDraggingRef.current = false;
-    }, [cleanupTimer, setDragOverInfo]);
+    }, [cleanupTimer, updateDragOver]);
+
+    // Crucial: Intercept & suppress native browser contextmenu events during hold, drag, and shortly after
+    useEffect(() => {
+        const handleContextMenuCapture = (e: MouseEvent) => {
+            if (
+                isLiftedRef.current ||
+                isDraggingRef.current ||
+                touchActiveItem.current !== null ||
+                Date.now() - lastActionTimeRef.current < 800
+            ) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        };
+
+        window.addEventListener('contextmenu', handleContextMenuCapture, { capture: true });
+        document.addEventListener('contextmenu', handleContextMenuCapture, { capture: true });
+        return () => {
+            window.removeEventListener('contextmenu', handleContextMenuCapture, { capture: true });
+            document.removeEventListener('contextmenu', handleContextMenuCapture, { capture: true });
+        };
+    }, []);
+
+    // Dual-point hit testing helper: tests both thumb touch point and badge offset point
+    const resolveHitElement = useCallback((clientX: number, clientY: number) => {
+        // Point 1: Direct thumb touch point
+        let el = document.elementFromPoint(clientX, clientY);
+
+        // Point 2: If direct point misses a tree item, try 30px higher (where the ghost badge floats)
+        if (!el?.closest('.sidebar__item, .init-tracker, .sidebar__dropzone-root')) {
+            const elevatedEl = document.elementFromPoint(clientX, clientY - 30);
+            if (elevatedEl?.closest('.sidebar__item, .init-tracker, .sidebar__dropzone-root')) {
+                el = elevatedEl;
+            }
+        }
+        return el;
+    }, []);
+
+    const calculateDropInfo = useCallback(
+        (clientX: number, clientY: number): TouchDragOverInfo | null => {
+            const activeItem = touchActiveItem.current;
+            if (!activeItem) return null;
+
+            const hit = resolveHitElement(clientX, clientY);
+            if (!hit) return null;
+
+            // Check 1: Initiative Tracker standalone container
+            const initTarget = hit.closest(
+                '.init-tracker__standalone-wrapper, .init-tracker, [data-drop-zone="initiative"]'
+            );
+            if (initTarget) {
+                return { id: '__initiative__', position: 'inside' };
+            }
+
+            // Check 2: Root Dropzone
+            const rootTarget = hit.closest('.sidebar__dropzone-root, [data-drop-zone="root"]');
+            if (rootTarget) {
+                return { id: '__root__', position: 'inside' };
+            }
+
+            // Check 3: Sidebar Tree Item (Folder or Character)
+            const itemEl = hit.closest('.sidebar__item') as HTMLElement | null;
+            if (itemEl) {
+                const targetId = itemEl.getAttribute('data-item-id');
+                const targetType = itemEl.getAttribute('data-item-type');
+                if (targetId && targetId !== activeItem.id) {
+                    const rect = itemEl.getBoundingClientRect();
+                    const relY = clientY - rect.top;
+
+                    // When dragging a character sheet onto a folder, it should ALWAYS drop inside the folder
+                    if (targetType === 'folder') {
+                        if (activeItem.type === 'character') {
+                            return { id: targetId, position: 'inside' };
+                        }
+                        // Reordering folder-relative-to-folder
+                        let pos: 'before' | 'after' | 'inside' = 'inside';
+                        if (relY < rect.height * 0.2) {
+                            pos = 'before';
+                        } else if (relY > rect.height * 0.8) {
+                            pos = 'after';
+                        }
+                        return { id: targetId, position: pos };
+                    }
+
+                    // Dropping relative to a character row
+                    const pos: 'before' | 'after' = relY < rect.height * 0.5 ? 'before' : 'after';
+                    return { id: targetId, position: pos };
+                }
+            }
+
+            // Check 4: Sidebar tree empty area -> treat as root dropzone
+            const treeTarget = hit.closest('.sidebar__tree');
+            if (treeTarget && !itemEl) {
+                return { id: '__root__', position: 'inside' };
+            }
+
+            return null;
+        },
+        [resolveHitElement]
+    );
 
     const onWindowTouchMove = useCallback(
         (e: TouchEvent) => {
@@ -76,7 +193,7 @@ export function useSidebarTouchDrag({
             // Case A: Before the 300ms hold timer has elapsed
             if (!isLiftedRef.current) {
                 if (dist > 8) {
-                    // Finger moved beyond slop threshold -> native vertical scroll in progress
+                    // Finger moved beyond 8px slop -> user is scrolling the list naturally
                     cleanupTimer();
                     touchActiveItem.current = null;
                 }
@@ -90,7 +207,7 @@ export function useSidebarTouchDrag({
                     setIsDragActive(true);
                 }
 
-                // Prevent native scrolling while actively dragging an item
+                // Prevent native page scrolling while actively dragging an item
                 if (e.cancelable) {
                     e.preventDefault();
                 }
@@ -111,63 +228,12 @@ export function useSidebarTouchDrag({
                     }
                 }
 
-                // Hit testing drop targets
-                const hit = document.elementFromPoint(touch.clientX, touch.clientY);
-                if (!hit) {
-                    setDragOverInfo(null);
-                    return;
-                }
-
-                // Check 1: Initiative Tracker standalone container
-                const initTarget = hit.closest(
-                    '.init-tracker__standalone-wrapper, .init-tracker, [data-drop-zone="initiative"]'
-                );
-                if (initTarget) {
-                    setDragOverInfo({ id: '__initiative__', position: 'inside' });
-                    return;
-                }
-
-                // Check 2: Root Dropzone
-                const rootTarget = hit.closest('.sidebar__dropzone-root, [data-drop-zone="root"]');
-                if (rootTarget) {
-                    setDragOverInfo({ id: '__root__', position: 'inside' });
-                    return;
-                }
-
-                // Check 3: Sidebar Tree Item
-                const itemEl = hit.closest('.sidebar__item') as HTMLElement | null;
-                if (itemEl) {
-                    const targetId = itemEl.getAttribute('data-item-id');
-                    const targetType = itemEl.getAttribute('data-item-type');
-                    if (targetId && targetId !== touchActiveItem.current?.id) {
-                        const rect = itemEl.getBoundingClientRect();
-                        const relY = touch.clientY - rect.top;
-                        let pos: 'before' | 'after' | 'inside' = 'inside';
-                        if (relY < rect.height * 0.25) {
-                            pos = 'before';
-                        } else if (relY > rect.height * 0.75) {
-                            pos = 'after';
-                        } else if (targetType === 'folder') {
-                            pos = 'inside';
-                        } else {
-                            pos = relY < rect.height * 0.5 ? 'before' : 'after';
-                        }
-                        setDragOverInfo({ id: targetId, position: pos });
-                        return;
-                    }
-                }
-
-                // Check 4: Sidebar tree empty area -> treat as root dropzone
-                const treeTarget = hit.closest('.sidebar__tree');
-                if (treeTarget && !itemEl) {
-                    setDragOverInfo({ id: '__root__', position: 'inside' });
-                    return;
-                }
-
-                setDragOverInfo(null);
+                // Hit testing drop targets beneath the touch
+                const dropInfo = calculateDropInfo(touch.clientX, touch.clientY);
+                updateDragOver(dropInfo);
             }
         },
-        [cleanupTimer, setDragOverInfo, treeContainerRef]
+        [calculateDropInfo, cleanupTimer, treeContainerRef, updateDragOver]
     );
 
     const onWindowTouchEnd = useCallback(
@@ -175,43 +241,59 @@ export function useSidebarTouchDrag({
             const activeItem = touchActiveItem.current;
             const isLifted = isLiftedRef.current;
             const isDragging = isDraggingRef.current;
-            const currentDrop = dragOverInfoRef.current;
 
             cleanupTimer();
 
-            if (isLifted) {
+            if (isLifted && activeItem) {
+                // Prevent synthetic clicks or contextmenu events from browser
+                if (e.cancelable) {
+                    e.preventDefault();
+                }
+                e.stopPropagation();
+
                 lastActionTimeRef.current = Date.now();
 
-                // Option A: Smart Hold
-                // If held for 300ms but released without dragging -> open context menu!
-                if (!isDragging && activeItem) {
-                    const touch = e.changedTouches[0] || touchStartPos.current;
-                    onOpenContextMenu(touch.clientX, touch.clientY, activeItem);
+                const endTouch = e.changedTouches[0] || touchStartPos.current;
+                const totalDist = Math.hypot(
+                    endTouch.clientX - touchStartPos.current.x,
+                    endTouch.clientY - touchStartPos.current.y
+                );
+
+                // Option A: Smart Hold Context Menu
+                // If held for 300ms and released WITHOUT dragging (totalDist < 10 and not marked dragging)
+                if (!isDragging && totalDist < 10) {
+                    onOpenContextMenuRef.current(endTouch.clientX, endTouch.clientY, activeItem);
                     try {
                         if (navigator.vibrate) navigator.vibrate(30);
                     } catch {
                         // Ignore
                     }
-                } else if (isDragging && activeItem) {
-                    // Dropped after active drag
+                } else if (isDragging || totalDist >= 10) {
+                    // Active Drag Dropped!
                     try {
                         if (navigator.vibrate) navigator.vibrate(25);
                     } catch {
                         // Ignore
                     }
 
-                    if (currentDrop?.id === '__initiative__') {
+                    // Re-verify drop target directly at the release coordinates if currentDropRef is empty
+                    let finalDrop = currentDropRef.current;
+                    if (!finalDrop) {
+                        finalDrop = calculateDropInfo(endTouch.clientX, endTouch.clientY);
+                    }
+
+                    if (finalDrop?.id === '__initiative__') {
                         if (activeItem.type === 'character') {
                             window.dispatchEvent(
                                 new CustomEvent('pkr-init-add-character', { detail: { id: activeItem.id } })
                             );
                         }
-                    } else if (currentDrop?.id === '__root__') {
-                        await onDropItem(activeItem.id, activeItem.type, null, 'inside');
-                    } else if (currentDrop?.id) {
-                        const targetItem = items.find((i) => i.id === currentDrop.id);
+                    } else if (finalDrop?.id === '__root__') {
+                        await onDropItemRef.current(activeItem.id, activeItem.type, null, 'inside');
+                    } else if (finalDrop?.id) {
+                        const targetItem = itemsRef.current.find((i) => i.id === finalDrop.id);
                         if (targetItem) {
-                            await onDropItem(activeItem.id, activeItem.type, targetItem, currentDrop.position);
+                            await onDropItemRef.current(activeItem.id, activeItem.type, targetItem, finalDrop.position);
                         }
                     }
                 }
@@ -219,23 +301,40 @@ export function useSidebarTouchDrag({
 
             resetDragState();
         },
-        [cleanupTimer, items, onDropItem, onOpenContextMenu, resetDragState]
+        [calculateDropInfo, cleanupTimer, resetDragState]
     );
 
     const onWindowTouchCancel = useCallback(() => {
+        lastActionTimeRef.current = Date.now();
         resetDragState();
     }, [resetDragState]);
 
+    // Keep stable window listeners using refs to prevent teardown during active drags
+    const onWindowTouchMoveRef = useRef(onWindowTouchMove);
+    const onWindowTouchEndRef = useRef(onWindowTouchEnd);
+    const onWindowTouchCancelRef = useRef(onWindowTouchCancel);
+
     useEffect(() => {
-        window.addEventListener('touchmove', onWindowTouchMove, { passive: false });
-        window.addEventListener('touchend', onWindowTouchEnd, { passive: false });
-        window.addEventListener('touchcancel', onWindowTouchCancel, { passive: false });
+        onWindowTouchMoveRef.current = onWindowTouchMove;
+        onWindowTouchEndRef.current = onWindowTouchEnd;
+        onWindowTouchCancelRef.current = onWindowTouchCancel;
+    });
+
+    useEffect(() => {
+        const handleMove = (e: TouchEvent) => onWindowTouchMoveRef.current(e);
+        const handleEnd = (e: TouchEvent) => onWindowTouchEndRef.current(e);
+        const handleCancel = () => onWindowTouchCancelRef.current();
+
+        window.addEventListener('touchmove', handleMove, { passive: false });
+        window.addEventListener('touchend', handleEnd, { passive: false });
+        window.addEventListener('touchcancel', handleCancel, { passive: false });
+
         return () => {
-            window.removeEventListener('touchmove', onWindowTouchMove);
-            window.removeEventListener('touchend', onWindowTouchEnd);
-            window.removeEventListener('touchcancel', onWindowTouchCancel);
+            window.removeEventListener('touchmove', handleMove);
+            window.removeEventListener('touchend', handleEnd);
+            window.removeEventListener('touchcancel', handleCancel);
         };
-    }, [onWindowTouchMove, onWindowTouchEnd, onWindowTouchCancel]);
+    }, []);
 
     const handleItemTouchStart = useCallback(
         (e: React.TouchEvent, item: TreeItem) => {
@@ -244,11 +343,17 @@ export function useSidebarTouchDrag({
             // Ignore touch starts on interactive controls
             if (target.closest('button, .sidebar__caret, input, select')) return;
 
+            // Close any existing open context menu when starting a new touch
+            if (onCloseContextMenu) {
+                onCloseContextMenu();
+            }
+
             const touch = e.touches[0];
             touchStartPos.current = { x: touch.clientX, y: touch.clientY };
             touchActiveItem.current = item;
             isLiftedRef.current = false;
             isDraggingRef.current = false;
+            currentDropRef.current = null;
 
             cleanupTimer();
 
@@ -266,11 +371,16 @@ export function useSidebarTouchDrag({
                 }
             }, 300);
         },
-        [cleanupTimer]
+        [cleanupTimer, onCloseContextMenu]
     );
 
     const isClickBlocked = useCallback(() => {
-        return Date.now() - lastActionTimeRef.current < 350;
+        return (
+            isLiftedRef.current ||
+            isDraggingRef.current ||
+            touchActiveItem.current !== null ||
+            Date.now() - lastActionTimeRef.current < 600
+        );
     }, []);
 
     return {
