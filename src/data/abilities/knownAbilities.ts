@@ -498,7 +498,7 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     // --- Situational: Escalation & Combat Events (Toggleable Boost) ---
     Moxie: {
         name: 'Moxie',
-        tags: '[Str +1 @ Boost]',
+        tags: '[Str +1 @ Stacking Boost]',
         autoActive: true,
         maxBoost: 3,
         summary: 'Increases Strength when knocking out an opponent (up to +3).',
@@ -506,7 +506,7 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
     'Beast Boost': {
         name: 'Beast Boost',
-        tags: '[Str +1 @ Boost]',
+        tags: '[Str +1 @ Stacking Boost]',
         autoActive: true,
         maxBoost: 3,
         summary: 'Increases highest offensive stat upon scoring a knockout (up to +3).',
@@ -514,7 +514,7 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
     'Soul-Heart': {
         name: 'Soul-Heart',
-        tags: '[Spe +1 @ Boost]',
+        tags: '[Spe +1 @ Stacking Boost]',
         autoActive: true,
         maxBoost: 3,
         summary: 'Increases Special whenever any Pokemon faints (up to +3).',
@@ -522,7 +522,7 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
     'Soul Heart': {
         name: 'Soul Heart',
-        tags: '[Spe +1 @ Boost]',
+        tags: '[Spe +1 @ Stacking Boost]',
         autoActive: true,
         maxBoost: 3,
         summary: 'Increases Special whenever any Pokemon faints (up to +3).',
@@ -544,7 +544,7 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
     'Speed Boost': {
         name: 'Speed Boost',
-        tags: '[Dex +1 @ Boost]',
+        tags: '[Dex +1 @ Stacking Boost]',
         autoActive: true,
         maxBoost: 3,
         summary: 'Increases Dexterity each round (up to +3).',
@@ -559,7 +559,7 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
     Justified: {
         name: 'Justified',
-        tags: '[Str +1 @ Boost]',
+        tags: '[Str +1 @ Stacking Boost]',
         autoActive: true,
         maxBoost: 3,
         summary: 'Increases Strength when struck by Dark-type attacks (up to +3).',
@@ -574,7 +574,7 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
     'Chilling Neigh': {
         name: 'Chilling Neigh',
-        tags: '[Str +1 @ Boost]',
+        tags: '[Str +1 @ Stacking Boost]',
         autoActive: true,
         maxBoost: 3,
         summary: 'Increases Strength upon scoring a knockout (up to +3).',
@@ -582,7 +582,7 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
     'Grim Neigh': {
         name: 'Grim Neigh',
-        tags: '[Spe +1 @ Boost]',
+        tags: '[Spe +1 @ Stacking Boost]',
         autoActive: true,
         maxBoost: 3,
         summary: 'Increases Special upon scoring a knockout (up to +3).',
@@ -590,7 +590,7 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
     'Supreme Overlord': {
         name: 'Supreme Overlord',
-        tags: '[Str +1 @ Boost] [Spe +1 @ Boost]',
+        tags: '[Str +1 @ Stacking Boost] [Spe +1 @ Stacking Boost]',
         autoActive: true,
         maxBoost: 3,
         summary: 'Increases stats for each fallen ally in battle (up to +3).',
@@ -657,19 +657,40 @@ export function getKnownAbility(name: string, rank?: string): KnownAbility | und
 }
 
 export function getMaxBoost(name?: string, tags?: string, descOrEffect?: string): number {
-    if (!name && !tags && !descOrEffect) return 1;
+    const tagStr = (tags || '').trim();
     const cleanName = (name || '').replace(/\s*\(HA\)$/i, '').trim();
+
+    // 1. Explicit max limit in tags, e.g. "@ Stacking Boost: 5" or "@ Stacks: 4" or "@ Max Boost: 6"
+    const explicitLimitMatch =
+        tagStr.match(/@\s*(?:stacking\s+)?boost\s*:\s*(\d+)/i) ||
+        tagStr.match(/@\s*stacks?\s*:\s*(\d+)/i) ||
+        tagStr.match(/@\s*(?:max\s+boost|boost\s+max)\s*:\s*(\d+)/i) ||
+        tagStr.match(/\[\s*(?:max\s+boost|max\s+stacks?)\s*(\d+)\s*\]/i);
+    if (explicitLimitMatch && explicitLimitMatch[1]) {
+        return Math.max(1, parseInt(explicitLimitMatch[1], 10));
+    }
+
+    // 2. Generic Stacking Boost tag: "@ Stacking Boost" or "@ Stacks"
+    const isStackingTag = /@\s*stacking\s+boost\b/i.test(tagStr) || /@\s*stacks?\b/i.test(tagStr);
+
+    // 3. Known ability definition
     const known = getKnownAbility(cleanName);
     if (known?.maxBoost) return known.maxBoost;
 
-    const text = `${tags || ''} ${descOrEffect || ''} ${known?.summary || ''}`.toLowerCase();
+    // 4. Description/Effect text checks ("up to X points", "stacks up to X times")
+    const text = `${tagStr} ${descOrEffect || ''} ${known?.summary || ''}`.toLowerCase();
     const matchPoints = text.match(/up to\s*(\d+)\s*point/i);
     if (matchPoints && matchPoints[1]) {
         return Math.max(1, parseInt(matchPoints[1], 10));
     }
-    const matchStacks = text.match(/stacks?\s*(?:up to)?\s*(\d+)\s*time/i);
+    const matchStacks = text.match(/stacks?\s*(?:up to)?\s*(\d+)\s*(?:time|round|turn|stack)?/i);
     if (matchStacks && matchStacks[1]) {
         return Math.max(1, parseInt(matchStacks[1], 10));
+    }
+
+    // If tag explicitly says "@ Stacking Boost" but no number was specified anywhere, default to 3
+    if (isStackingTag) {
+        return 3;
     }
 
     return 1;
@@ -695,11 +716,15 @@ export function getAbilityBenefitSummary(
         } else if (known?.benefitDisplay && tags === known.tags) {
             display = known.benefitDisplay;
         } else {
-            const cleaned = tags
-                .replace(/\[|\]/g, ' ')
-                .replace(/\s+/g, ' ')
-                .trim();
-            display = cleaned.length > 30 ? `${cleaned.slice(0, 27)}...` : cleaned;
+            const bracketed = tags.match(/\[[^\]]+\]/g);
+            if (bracketed && bracketed.length > 0) {
+                display = bracketed.map((t) => t.replace(/\[|\]/g, '').trim()).join(', ');
+            } else {
+                display = tags
+                    .replace(/\[|\]/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+            }
         }
     } else {
         display = known?.benefitDisplay || '';
@@ -729,16 +754,23 @@ export function getAbilityBenefitSummary(
             } else if (effectiveLevel === 1) {
                 display = display.replace('Boost)', 'Boost Active)');
             }
-        } else if (/@\s*boost/i.test(display)) {
-            if (effectiveLevel > 1) {
-                display = display.replace(/\+1\b/g, `+${effectiveLevel}`);
-                display = display.replace(/@\s*boost/i, `(Boost x${effectiveLevel})`);
-            } else if (effectiveLevel === 1) {
-                display = display.replace(/@\s*boost/i, '(Boost Active)');
-            } else {
-                display = display.replace(/@\s*boost/i, '(Boost)');
+        } else {
+            const boostTagRegex = /@\s*(?:stacking\s+)?boost(?::\s*\d+)?|@\s*stacks?(?::\s*\d+)?/i;
+            if (boostTagRegex.test(display)) {
+                if (effectiveLevel > 1) {
+                    display = display.replace(/\+(\d+)\b/, (_, baseNum) => `+${parseInt(baseNum, 10) * effectiveLevel}`);
+                    display = display.replace(boostTagRegex, `(Boost x${effectiveLevel})`);
+                } else if (effectiveLevel === 1) {
+                    display = display.replace(boostTagRegex, '(Boost Active)');
+                } else {
+                    display = display.replace(boostTagRegex, '(Boost)');
+                }
             }
         }
+    }
+
+    if (display.length > 35) {
+        display = `${display.slice(0, 32)}...`;
     }
 
     return display;

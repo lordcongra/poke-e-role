@@ -1,508 +1,244 @@
 import { useState } from 'react';
-import { Tag, XCircle } from 'lucide-react';
+import { Tag, X, Zap, Swords, Shield, Wrench, Clock, Sparkles, Flame, Plus, Award, TrendingUp } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { CombatStat, SocialStat, Skill } from '../../../types/enums';
 import { POKEMON_TYPES } from '../../../data/constants';
+import type { TagBuilderModalProps, TagBuilderConfig } from './tagBuilder/tagBuilderTypes';
+import { useTagBuilderTarget } from './tagBuilder/useTagBuilderTarget';
+import {
+    getTargetOptions,
+    showTypeSelect,
+    showValueInput,
+    PRESETS,
+    getDefaultTargetForCategory
+} from './tagBuilder/tagBuilderConstants';
+import { buildTagString, generateExplanation } from './tagBuilder/tagBuilderLogic';
+import { TagBuilderConfigSection } from './tagBuilder/TagBuilderConfigSection';
+import { TagBuilderPreview } from './tagBuilder/TagBuilderPreview';
 import './TagBuilderModal.css';
 
-interface TagBuilderModalProps {
-    targetId: string;
-    targetType:
-        | 'ability'
-        | 'item'
-        | 'move'
-        | 'homebrew_ability'
-        | 'homebrew_move'
-        | 'homebrew_item'
-        | 'homebrew_form'
-        | 'homebrew_status';
-    onClose: () => void;
-}
-
 export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderModalProps) {
-    const setIdentity = useCharacterStore((state) => state.setIdentity);
-    const identityAbilityTags = useCharacterStore((state) => state.identity.abilityTags);
-    const updateInventoryItem = useCharacterStore((state) => state.updateInventoryItem);
-    const updateMove = useCharacterStore((state) => state.updateMove);
-    const updateCustomAbility = useCharacterStore((state) => state.updateCustomAbility);
-    const updateCustomMove = useCharacterStore((state) => state.updateCustomMove);
-    const updateCustomItem = useCharacterStore((state) => state.updateCustomItem);
-    const updateCustomForm = useCharacterStore((state) => state.updateCustomForm);
-    const updateCustomStatus = useCharacterStore((state) => state.updateCustomStatus);
-
-    const inventory = useCharacterStore((state) => state.inventory);
-    const moves = useCharacterStore((state) => state.moves);
-    const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
-    const customMoves = useCharacterStore((state) => state.roomCustomMoves);
-    const customItems = useCharacterStore((state) => state.roomCustomItems);
-    const customForms = useCharacterStore((state) => state.roomCustomForms);
-    const customStatuses = useCharacterStore((state) => state.roomCustomStatuses);
-
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
     const extraCategories = useCharacterStore((state) => state.extraCategories);
 
-    const [category, setCategory] = useState('stat');
-    const [target, setTarget] = useState('Str');
+    const { targetName, existingTags, handleDeleteTag, handleAppendTag } = useTagBuilderTarget(targetId, targetType);
 
-    // Split Dropdown States
-    const [reqGroup, setReqGroup] = useState<'none' | 'type' | 'category' | 'modifier' | 'misc'>('none');
-    const [typeOption, setTypeOption] = useState('');
-    const [condition, setCondition] = useState('none');
+    // Tag Builder Configuration State
+    const [config, setConfig] = useState<TagBuilderConfig>({
+        category: 'stat',
+        target: 'Str',
+        value: 1,
+        value2: 6,
+        reqGroup: 'none',
+        typeOption: '',
+        condition: 'none',
+        customMaxStacks: 5
+    });
 
-    // Use string | number to allow intermediate values like "-" to exist in state without defaulting to 0
-    const [value, setValue] = useState<string | number>(1);
-    const [value2, setValue2] = useState<string | number>(6); // Specifically used for the limit variable
-
-    const formatEnum = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
-
-    const TYPES = [...POKEMON_TYPES.filter((t) => t !== ''), ...roomCustomTypes.map((t) => t.name)];
-
-    const CATEGORIES = ['Physical', 'Special'];
-
-    const MISC = ['Super Effective'];
-
-    const MODIFIERS = [
-        'Charge Move',
-        'Copy Move',
-        'Force Field',
-        'Basic Heal',
-        'Complete Heal',
-        'Minor Heal',
-        'High Critical',
-        'Low Accuracy',
-        'Bite Move',
-        'Cutter Move',
-        'Fist Move',
-        'Projectile Move',
-        'Wind Move',
-        'Never Miss',
-        'Must Recharge',
-        'Ongoing Damage',
-        'Out of Range',
-        'Powder Move',
-        'Rampage',
-        'Ranged Move',
-        'Reaction',
-        'Late Reaction',
-        'Recoil',
-        'Set Damage',
-        'Sound Move',
-        'Shield Move',
-        'Successive Actions',
-        'Double Action',
-        'Triple Action',
-        'Switcher Move',
-        'Unique Move'
-    ];
-
-    const getTargetOptions = () => {
-        if (category === 'stat') {
-            return [
-                ...Object.values(CombatStat).map(formatEnum),
-                ...Object.values(SocialStat).map(formatEnum),
-                'Def',
-                'Spd'
-            ];
-        }
-        if (category === 'skill') {
-            const customSkillNames = extraCategories.flatMap((c) => c.skills.map((s) => s.name || 'Unnamed'));
-            return [...Object.values(Skill).map(formatEnum), ...customSkillNames];
-        }
-        if (category === 'combat')
-            return [
-                'Dmg',
-                'Acc',
-                'Init',
-                'Chance',
-                'Crit Dmg',
-                'Combo Dmg',
-                'First Hit Dmg',
-                'First Hit Acc',
-                'Low Acc Penalty'
-            ];
-        if (category === 'matchup') return ['Immune', 'Resist', 'Weak', 'Remove Immunities', 'Remove Immunity'];
-
-        if (category === 'mechanic')
-            return [
-                'High Crit',
-                'Stacking High Crit',
-                'Ignore Low Acc',
-                'Ignore Pain',
-                'Recoil',
-                'Super Effective',
-                'Powder',
-                'Gain Temp HP',
-                'Temp HP on Hit',
-                'Temp HP % Dmg',
-                'Acc [X]s Add Dmg Limit [Y]'
-            ];
-
-        if (category === 'turn_based')
-            return [
-                'Deal Damage End of Round',
-                'Reduce Will End of Round',
-                'Heal Round End',
-                'Restore Will Round End',
-                'Lose Action(s)',
-                'No Reactions',
-                'Extra Reaction(s)'
-            ];
-
-        if (category === 'status')
-            return [
-                '1st Degree Burn',
-                '2nd Degree Burn',
-                '3rd Degree Burn',
-                'Poison',
-                'Badly Poisoned',
-                'Paralysis',
-                'Sleep',
-                'Frozen Solid',
-                'Confusion',
-                'In Love',
-                'Disable',
-                'Flinch'
-            ];
-        if (category === 'move_mechanics')
-            return [
-                'High Critical',
-                'Low Accuracy',
-                'Never Miss',
-                'Recoil',
-                'Successive Actions',
-                'Set Damage',
-                'Powder',
-                'Fist Move',
-                'Bite Move',
-                'Cutter Move',
-                'Sound Move',
-                'Projectile Move',
-                'Wind Move',
-                'Basic Heal',
-                'Complete Heal',
-                'Minor Heal'
-            ];
-        return [];
+    const updateConfig = <K extends keyof TagBuilderConfig>(key: K, val: TagBuilderConfig[K]) => {
+        setConfig((prev) => ({ ...prev, [key]: val }));
     };
 
-    const showTypeSelect =
-        (category === 'combat' &&
-            !['Init', 'Chance', 'Crit Dmg', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc'].includes(target)) ||
-        (category === 'matchup' && target !== 'Remove Immunities') ||
-        (category === 'mechanic' && target === 'Ignore Pain');
+    const types = [...POKEMON_TYPES.filter((t) => t !== ''), ...roomCustomTypes.map((t) => t.name)];
 
-    const showValueInput =
-        category === 'stat' ||
-        category === 'skill' ||
-        category === 'combat' ||
-        (category === 'mechanic' &&
-            [
-                'Ignore Low Acc',
-                'Gain Temp HP',
-                'Temp HP on Hit',
-                'Temp HP % Dmg',
-                'Acc [X]s Add Dmg Limit [Y]'
-            ].includes(target)) ||
-        (category === 'turn_based' && target !== 'No Reactions') ||
-        (category === 'move_mechanics' && ['Low Accuracy', 'Set Damage'].includes(target));
+    const categories = [
+        { id: 'stat', label: 'Attributes', icon: <Zap size={14} /> },
+        { id: 'skill', label: 'Skills', icon: <Award size={14} /> },
+        { id: 'combat', label: 'Combat', icon: <Swords size={14} /> },
+        { id: 'matchup', label: 'Matchups', icon: <Shield size={14} /> },
+        { id: 'mechanic', label: 'Mechanics', icon: <Wrench size={14} /> },
+        { id: 'turn_based', label: 'Turn-Based', icon: <Clock size={14} /> },
+        { id: 'status', label: 'Status', icon: <Sparkles size={14} /> },
+        ...(targetType === 'move' ? [{ id: 'move_mechanics', label: 'Move Modifiers', icon: <Flame size={14} /> }] : [])
+    ];
+
+    const applyPreset = (presetKey: string) => {
+        const preset = PRESETS[presetKey];
+        if (preset) {
+            setConfig((prev) => ({
+                ...prev,
+                ...preset,
+                value2: preset.value2 ?? prev.value2,
+                customMaxStacks: preset.customMaxStacks ?? prev.customMaxStacks
+            }));
+        }
+    };
+
+    const handleSelectCategory = (catId: string) => {
+        const defaults = getDefaultTargetForCategory(catId);
+        setConfig((prev) => ({
+            ...prev,
+            category: catId,
+            target: defaults.target,
+            reqGroup: defaults.reqGroup,
+            typeOption: defaults.typeOption
+        }));
+    };
+
+    const currentBuiltTag = buildTagString(config);
+    const explanation = generateExplanation(config, currentBuiltTag);
 
     const handleConfirm = () => {
-        let tag = '';
-
-        const numValue = Number(value) || 0;
-        const numValue2 = Number(value2) || 0;
-        const sign = numValue >= 0 ? `+${numValue}` : `${numValue}`;
-
-        if (category === 'stat' || category === 'skill') {
-            tag = `[${target} ${sign}]`;
-        } else if (category === 'combat') {
-            if (['Init', 'Chance', 'Crit Dmg', 'Combo Dmg', 'First Hit Dmg', 'First Hit Acc'].includes(target)) {
-                tag = `[${target} ${sign}]`;
-            } else if (target === 'Low Acc Penalty') {
-                const actualTarget = 'Low Acc';
-                if (typeOption) tag = `[${actualTarget} ${sign}: ${typeOption}]`;
-                else tag = `[${actualTarget} ${sign}]`;
-            } else {
-                if (typeOption) tag = `[${target} ${sign}: ${typeOption}]`;
-                else tag = `[${target} ${sign}]`;
-            }
-        } else if (category === 'matchup') {
-            if (target === 'Remove Immunities') tag = `[Remove Immunities]`;
-            else if (typeOption) tag = `[${target}: ${typeOption}]`;
-            else {
-                alert('Must select a target type for matchups!');
-                return;
-            }
-        } else if (category === 'mechanic') {
-            if (target === 'High Crit') tag = `[High Crit]`;
-            else if (target === 'Stacking High Crit') tag = `[Stacking High Crit]`;
-            else if (target === 'Ignore Pain') tag = typeOption ? `[Ignore Pain: ${typeOption}]` : `[Ignore Pain]`;
-            else if (target === 'Ignore Low Acc') tag = `[Ignore Low Acc ${Math.abs(numValue)}]`;
-            else if (target === 'Recoil') tag = `[Recoil]`;
-            else if (target === 'Super Effective') tag = `[Super Effective]`;
-            else if (target === 'Powder') tag = `[Powder]`;
-            else if (target === 'Gain Temp HP') tag = `[Gain Temp HP ${Math.abs(numValue)}]`;
-            else if (target === 'Temp HP on Hit') tag = `[Temp HP +${Math.abs(numValue)} on Hit]`;
-            else if (target === 'Temp HP % Dmg') tag = `[Temp HP ${Math.abs(numValue)}% Dmg]`;
-            else if (target === 'Acc [X]s Add Dmg Limit [Y]')
-                tag = `[Acc ${Math.abs(numValue)}s Add Dmg Limit ${Math.abs(numValue2)}]`;
-        } else if (category === 'turn_based') {
-            if (target === 'Deal Damage End of Round') tag = `[Deal ${Math.abs(numValue)} Damage at End of Round]`;
-            else if (target === 'Reduce Will End of Round')
-                tag = `[Reduce Will by ${Math.abs(numValue)} at End of Round]`;
-            else if (target === 'Heal Round End') tag = `[Heal ${Math.abs(numValue)} Round End]`;
-            else if (target === 'Restore Will Round End') tag = `[Restore ${Math.abs(numValue)} Will Round End]`;
-            else if (target === 'Lose Action(s)') tag = `[Lose ${Math.abs(numValue)} Action]`;
-            else if (target === 'No Reactions') tag = `[No Reactions]`;
-            else if (target === 'Extra Reaction(s)') tag = `[${Math.abs(numValue)} Extra Reactions Per Turn]`;
-        } else if (category === 'status') {
-            tag = `[Status: ${target}]`;
-        } else if (category === 'move_mechanics') {
-            if (target === 'High Critical') tag = `[High Critical]`;
-            else if (target === 'Low Accuracy') tag = `[Low Accuracy ${Math.abs(numValue)}]`;
-            else if (target === 'Never Miss') tag = `[Never Miss]`;
-            else if (target === 'Recoil') tag = `[Recoil]`;
-            else if (target === 'Successive Actions') tag = `[Successive Actions]`;
-            else if (target === 'Set Damage') tag = `[Set Damage ${Math.abs(numValue)}]`;
-            else if (target === 'Powder') tag = `[Powder]`;
-            else tag = `[${target}]`;
-        }
-
-        if (tag) {
-            // Append condition logically inside the bracket
-            if (condition && condition !== 'none') {
-                if (condition === 'half hp') {
-                    tag = tag.replace(']', ' @ Half HP]');
-                } else if (condition === 'boost') {
-                    tag = tag.replace(']', ' @ Boost]');
-                } else {
-                    const formattedCond = condition
-                        .split(' ')
-                        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                        .join(' ');
-                    tag = tag.replace(']', ` @ ${formattedCond}]`);
-                }
-            }
-
-            if (targetType === 'ability') {
-                const currentTags = identityAbilityTags || '';
-                setIdentity('abilityTags', currentTags ? `${currentTags} ${tag}`.trim() : tag);
-            } else if (targetType === 'move') {
-                const move = moves.find((m) => m.id === targetId);
-                if (move) updateMove(targetId, 'desc', move.desc ? `${move.desc} ${tag}`.trim() : tag);
-            } else if (targetType === 'homebrew_move') {
-                const hbMove = customMoves.find((m) => m.id === targetId);
-                if (hbMove) updateCustomMove(targetId, 'desc', hbMove.desc ? `${hbMove.desc} ${tag}`.trim() : tag);
-            } else if (targetType === 'homebrew_ability') {
-                const hbAbility = customAbilities.find((a) => a.id === targetId);
-                if (hbAbility)
-                    updateCustomAbility(
-                        targetId,
-                        'effect',
-                        hbAbility.effect ? `${hbAbility.effect} ${tag}`.trim() : tag
-                    );
-            } else if (targetType === 'homebrew_item') {
-                const hbItem = customItems.find((i) => i.id === targetId);
-                if (hbItem)
-                    updateCustomItem(
-                        targetId,
-                        'description',
-                        hbItem.description ? `${hbItem.description} ${tag}`.trim() : tag
-                    );
-            } else if (targetType === 'homebrew_form') {
-                const hbForm = customForms.find((f) => f.id === targetId);
-                if (hbForm) updateCustomForm(targetId, 'tags', hbForm.tags ? `${hbForm.tags} ${tag}`.trim() : tag);
-            } else if (targetType === 'homebrew_status') {
-                const hbStatus = customStatuses.find((s) => s.id === targetId);
-                if (hbStatus)
-                    updateCustomStatus(
-                        targetId,
-                        'effects',
-                        hbStatus.effects ? `${hbStatus.effects} ${tag}`.trim() : tag
-                    );
-            } else {
-                const item = inventory.find((i) => i.id === targetId);
-                if (item) updateInventoryItem(targetId, 'desc', item.desc ? `${item.desc} ${tag}`.trim() : tag);
-            }
+        if (currentBuiltTag) {
+            handleAppendTag(currentBuiltTag);
         }
         onClose();
     };
 
+    const targetOptions = getTargetOptions(config.category, extraCategories);
+    const isTypeSelectVisible = showTypeSelect(config.category, config.target);
+    const isValueInputVisible = showValueInput(config.category, config.target);
+
     return (
-        <div className="tag-builder__overlay">
+        <div className="tag-builder__overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
             <div className="tag-builder__content">
-                <h3 className="tag-builder__title modal-title-with-icon text-title-primary">
-                    <Tag size={20} /> Tag Builder
-                </h3>
-
-                <div className="tag-builder__form-group">
-                    <select
-                        className="identity-grid__select tag-builder__select text-label"
-                        style={{ color: 'var(--text-main)' }}
-                        value={category}
-                        onChange={(e) => {
-                            const newCat = e.target.value;
-                            setCategory(newCat);
-                            setTarget('');
-                            setTypeOption('');
-                            if (newCat === 'matchup') setReqGroup('type');
-                            else setReqGroup('none');
-                        }}
-                    >
-                        <option value="stat">Stat Modifier</option>
-                        <option value="skill">Skill Modifier</option>
-                        <option value="combat">Combat Boost</option>
-                        <option value="matchup">Matchup</option>
-                        <option value="mechanic">Mechanic</option>
-                        <option value="turn_based">Turn-Based / Actions</option>
-                        <option value="status">Status Condition</option>
-                        {targetType === 'move' && <option value="move_mechanics">Move Mechanic</option>}
-                    </select>
-
-                    <select
-                        className="identity-grid__select tag-builder__select text-label"
-                        style={{ color: 'var(--text-main)' }}
-                        value={target}
-                        onChange={(e) => setTarget(e.target.value)}
-                    >
-                        <option value="">-- Select --</option>
-                        {getTargetOptions().map((o) => (
-                            <option key={o} value={o}>
-                                {o}
-                            </option>
-                        ))}
-                    </select>
-
-                    {showTypeSelect && (
-                        <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                            <select
-                                className="identity-grid__select tag-builder__select text-label"
-                                style={{
-                                    color: 'var(--text-main)',
-                                    flex: reqGroup === 'none' ? 'none' : 1,
-                                    width: reqGroup === 'none' ? '100%' : 'auto',
-                                    marginTop: 0
-                                }}
-                                value={reqGroup}
-                                onChange={(e) => {
-                                    setReqGroup(e.target.value as 'none' | 'type' | 'category' | 'modifier' | 'misc');
-                                    setTypeOption('');
-                                }}
-                            >
-                                {category !== 'matchup' && <option value="none">-- No Requirement --</option>}
-                                <option value="type">Move Type</option>
-                                <option value="modifier">Move Keyword</option>
-                                <option value="category">Damage Category</option>
-                                <option value="misc">Miscellaneous</option>
-                            </select>
-
-                            {reqGroup !== 'none' && (
-                                <select
-                                    className="identity-grid__select tag-builder__select text-label"
-                                    style={{ color: 'var(--text-main)', flex: 1, marginTop: 0 }}
-                                    value={typeOption}
-                                    onChange={(e) => setTypeOption(e.target.value)}
-                                >
-                                    <option value="">-- Select Target --</option>
-                                    {reqGroup === 'type' &&
-                                        TYPES.map((t) => (
-                                            <option key={t} value={t}>
-                                                {t}
-                                            </option>
-                                        ))}
-                                    {reqGroup === 'modifier' &&
-                                        MODIFIERS.map((t) => (
-                                            <option key={t} value={t}>
-                                                {t}
-                                            </option>
-                                        ))}
-                                    {reqGroup === 'category' &&
-                                        CATEGORIES.map((t) => (
-                                            <option key={t} value={t}>
-                                                {t}
-                                            </option>
-                                        ))}
-                                    {reqGroup === 'misc' &&
-                                        MISC.map((t) => (
-                                            <option key={t} value={t}>
-                                                {t}
-                                            </option>
-                                        ))}
-                                </select>
-                            )}
-                        </div>
-                    )}
-
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '4px', alignItems: 'center' }}>
-                        <span className="text-label" style={{ whiteSpace: 'nowrap' }}>
-                            Condition:
+                {/* Modal Header */}
+                <div className="tag-builder__header">
+                    <div className="tag-builder__title-group">
+                        <Tag size={18} style={{ color: 'var(--primary, #3b82f6)' }} />
+                        <h3 className="tag-builder__title text-theme-header">Tag Builder</h3>
+                        <span className="tag-builder__target-badge" title={targetName}>
+                            {targetName}
                         </span>
-                        <select
-                            className="identity-grid__select tag-builder__select text-label"
-                            style={{ color: 'var(--text-main)', flex: 1, marginTop: 0 }}
-                            value={condition}
-                            onChange={(e) => setCondition(e.target.value)}
-                        >
-                            <option value="none">-- Always Active --</option>
-                            <option value="half hp">At Half HP or Less</option>
-                            <option value="boost">Trigger / Boost Active</option>
-                            <option value="status">While Afflicted by Any Status</option>
-                            <option value="burn">While Afflicted by Burn</option>
-                            <option value="1st degree burn">While Afflicted by 1st Degree Burn</option>
-                            <option value="2nd degree burn">While Afflicted by 2nd Degree Burn</option>
-                            <option value="3rd degree burn">While Afflicted by 3rd Degree Burn</option>
-                            <option value="poison">While Afflicted by Poison</option>
-                            <option value="badly poisoned">While Afflicted by Badly Poisoned</option>
-                            <option value="paralysis">While Afflicted by Paralysis</option>
-                            <option value="frozen solid">While Afflicted by Frozen Solid</option>
-                            <option value="sleep">While Afflicted by Sleep</option>
-                            <option value="confusion">While Afflicted by Confusion</option>
-                            <option value="in love">While Afflicted by In Love</option>
-                            <option value="disable">While Afflicted by Disable</option>
-                            <option value="flinch">While Afflicted by Flinch</option>
-                        </select>
                     </div>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="tag-builder__close-btn"
+                        title="Close Tag Builder"
+                    >
+                        <X size={18} />
+                    </button>
+                </div>
 
-                    {showValueInput && (
-                        <div className="tag-builder__value-row" style={{ marginTop: '8px' }}>
-                            <span className="text-label">Value:</span>
-                            <input
-                                type="number"
-                                className="identity-grid__input tag-builder__value-input text-label"
-                                style={{ color: 'var(--text-main)' }}
-                                value={value}
-                                onChange={(e) => setValue(e.target.value)}
-                            />
-                            {target === 'Acc [X]s Add Dmg Limit [Y]' && (
-                                <>
-                                    <span className="text-label" style={{ marginLeft: '10px' }}>
-                                        Limit:
-                                    </span>
-                                    <input
-                                        type="number"
-                                        className="identity-grid__input tag-builder__value-input text-label"
-                                        style={{ color: 'var(--text-main)' }}
-                                        value={value2}
-                                        onChange={(e) => setValue2(e.target.value)}
-                                    />
-                                </>
-                            )}
+                {/* Existing Tags Chip Bar */}
+                <div className="tag-builder__existing-tags">
+                    <span className="tag-builder__section-label">Current Tags on {targetName}:</span>
+                    {existingTags.length > 0 ? (
+                        <div className="tag-builder__chip-list">
+                            {existingTags.map((et, i) => (
+                                <span key={i} className="tag-builder__existing-chip">
+                                    {et}
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDeleteTag(et)}
+                                        className="tag-builder__chip-del"
+                                        title={`Delete ${et}`}
+                                    >
+                                        <X size={12} />
+                                    </button>
+                                </span>
+                            ))}
                         </div>
+                    ) : (
+                        <span className="text-subtext" style={{ fontSize: '0.74rem', fontStyle: 'italic' }}>
+                            No tags applied yet. Use the builder below to add one.
+                        </span>
                     )}
                 </div>
 
+                {/* Quick Presets Bar */}
+                <div>
+                    <span className="tag-builder__section-label">Quick Presets:</span>
+                    <div className="tag-builder__presets-bar">
+                        <button type="button" onClick={() => applyPreset('stat')} className="tag-builder__preset-btn">
+                            <Zap size={12} /> +1 Stat
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => applyPreset('stacking_boost')}
+                            className="tag-builder__preset-btn"
+                        >
+                            <TrendingUp size={12} /> Stacking Boost
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => applyPreset('type_dmg')}
+                            className="tag-builder__preset-btn"
+                        >
+                            <Flame size={12} /> Type Dmg
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => applyPreset('immunity')}
+                            className="tag-builder__preset-btn"
+                        >
+                            <Shield size={12} /> Immunity
+                        </button>
+                        <button type="button" onClick={() => applyPreset('pinch')} className="tag-builder__preset-btn">
+                            <Zap size={12} /> Half-HP Boost
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => applyPreset('high_crit')}
+                            className="tag-builder__preset-btn"
+                        >
+                            <Swords size={12} /> High Crit
+                        </button>
+                    </div>
+                </div>
+
+                {/* Category Navigation Tabs */}
+                <div>
+                    <span className="tag-builder__section-label">Category:</span>
+                    <div className="tag-builder__categories">
+                        {categories.map((c) => (
+                            <button
+                                key={c.id}
+                                type="button"
+                                onClick={() => handleSelectCategory(c.id)}
+                                className={`tag-builder__cat-tab ${config.category === c.id ? 'tag-builder__cat-tab--active' : ''}`}
+                            >
+                                {c.icon} {c.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Target Chip Selector */}
+                <div>
+                    <span className="tag-builder__section-label">Select Target / Effect:</span>
+                    <div className="tag-builder__targets-grid">
+                        {targetOptions.map((opt) => (
+                            <button
+                                key={opt}
+                                type="button"
+                                onClick={() => updateConfig('target', opt)}
+                                className={`tag-builder__target-chip ${config.target === opt ? 'tag-builder__target-chip--active' : ''}`}
+                            >
+                                {opt}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Configuration: Requirement, Value & Condition */}
+                <TagBuilderConfigSection
+                    config={config}
+                    onChangeConfig={updateConfig}
+                    types={types}
+                    showTypeSelect={isTypeSelectVisible}
+                    showValueInput={isValueInputVisible}
+                />
+
+                {/* Live Tag Preview Card */}
+                <TagBuilderPreview builtTag={currentBuiltTag} explanation={explanation} />
+
+                {/* Modal Footer Actions */}
                 <div className="tag-builder__actions">
                     <button
+                        type="button"
                         className="action-button action-button--dark tag-builder__btn-cancel text-theme-header"
                         onClick={onClose}
                     >
-                        <XCircle size={16} /> Cancel
+                        <X size={16} /> Cancel
                     </button>
                     <button
+                        type="button"
+                        disabled={!currentBuiltTag}
                         className="action-button action-button--theme tag-builder__btn-confirm text-theme-header"
                         onClick={handleConfirm}
                     >
-                        <Tag size={16} /> Append Tag
+                        <Plus size={16} /> Append Tag
                     </button>
                 </div>
             </div>

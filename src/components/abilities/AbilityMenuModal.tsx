@@ -167,7 +167,7 @@ export function AbilityMenuModal({ isOpen, onClose, onOpenTagBuilder }: AbilityM
         abilityBoostActive,
         effectiveBoostLevel
     );
-    const hasBoostTag = effectiveTags.toLowerCase().includes('@ boost');
+    const hasBoostTag = /@\s*(?:stacking\s+)?boost|@\s*stacks/i.test(effectiveTags) || maxBoost > 1;
 
     const handleSetBoostLevel = (level: number) => {
         setIdentity('abilityBoostLevel', level);

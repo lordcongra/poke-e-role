@@ -25,8 +25,8 @@ export function AbilityTrackerControl() {
     if (!ability) return null;
 
     const isHalfHp = (hpCurr || 0) <= Math.floor(Math.max(1, hpMax || 1) / 2);
-    const hasBoostTag = abilityTags.toLowerCase().includes('@ boost');
     const maxBoost = getMaxBoost(ability, abilityTags);
+    const hasBoostTag = /@\s*(?:stacking\s+)?boost|@\s*stacks/i.test(abilityTags) || maxBoost > 1;
     const effectiveBoostLevel = abilityBoostActive ? Math.max(1, abilityBoostLevel) : 0;
     const benefit = getAbilityBenefitSummary(
         ability,

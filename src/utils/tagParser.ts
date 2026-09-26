@@ -1,7 +1,7 @@
 import type { InventoryItem, MoveData, ExtraCategory } from '../store/storeTypes';
 import { Skill } from '../types/enums';
 import { useCharacterStore } from '../store/useCharacterStore';
-import { getKnownAbility } from '../data/abilities/knownAbilities';
+import { getKnownAbility, getMaxBoost } from '../data/abilities/knownAbilities';
 
 export interface CombatBonuses {
     stats: Record<string, number>;
@@ -52,7 +52,26 @@ const safeParseInt = (value: string | undefined) => parseInt((value || '0').repl
 function isBoostCondition(conditionStr: string | undefined): boolean {
     if (!conditionStr) return false;
     const cond = conditionStr.toLowerCase().trim();
-    return cond === 'boost' || cond === 'triggered' || cond === 'active' || cond === 'ability boost';
+    return (
+        cond === 'boost' ||
+        cond === 'triggered' ||
+        cond === 'active' ||
+        cond === 'ability boost' ||
+        cond.includes('boost') ||
+        cond.startsWith('stack')
+    );
+}
+
+function isStackingBoostCondition(conditionStr: string | undefined): boolean {
+    if (!conditionStr) return false;
+    const cond = conditionStr.toLowerCase().trim();
+    return cond.includes('stack') || /boost\s*(?::|\s*\d+)/i.test(cond);
+}
+
+function getBoostMultiplier(conditionStr: string | undefined, boostLevel: number, maxBoost: number): number {
+    if (!isBoostCondition(conditionStr)) return 1;
+    const isStacking = isStackingBoostCondition(conditionStr) || maxBoost > 1;
+    return isStacking ? Math.max(1, boostLevel) : 1;
 }
 
 function checkCondition(conditionStr: string | undefined, isHalfHp: boolean): boolean {
@@ -209,7 +228,8 @@ function extractStats(
     bonuses: CombatBonuses,
     triggers: TagTriggers,
     isHalfHp: boolean,
-    boostMultiplier: number = 1
+    boostLevel: number = 1,
+    maxBoost: number = 1
 ) {
     const statMatches = description.matchAll(
         /\[\s*(str|strength|dex|dexterity|vit|vitality|spe|special|ins|insight|tou|tough|coo|cool|bea|beauty|cut|cute|cle|clever)\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi
@@ -230,7 +250,7 @@ function extractStats(
             clever: 'cle'
         };
         const statisticKey = map[rawStatistic] || rawStatistic;
-        const mult = isBoostCondition(match[3]) ? boostMultiplier : 1;
+        const mult = getBoostMultiplier(match[3], boostLevel, maxBoost);
         bonuses.stats[statisticKey] = (bonuses.stats[statisticKey] || 0) + safeParseInt(match[2]) * mult;
         triggers.general = true;
     }
@@ -242,7 +262,8 @@ function extractSkills(
     bonuses: CombatBonuses,
     triggers: TagTriggers,
     isHalfHp: boolean,
-    boostMultiplier: number = 1
+    boostLevel: number = 1,
+    maxBoost: number = 1
 ) {
     if (!escapedSkills) return;
     const skillMatches = description.matchAll(
@@ -250,7 +271,7 @@ function extractSkills(
     );
     for (const match of skillMatches) {
         if (!checkCondition(match[3], isHalfHp)) continue;
-        const mult = isBoostCondition(match[3]) ? boostMultiplier : 1;
+        const mult = getBoostMultiplier(match[3], boostLevel, maxBoost);
         bonuses.skills[match[1].toLowerCase()] =
             (bonuses.skills[match[1].toLowerCase()] || 0) + safeParseInt(match[2]) * mult;
         triggers.general = true;
@@ -262,12 +283,13 @@ function extractDefenses(
     bonuses: CombatBonuses,
     triggers: TagTriggers,
     isHalfHp: boolean,
-    boostMultiplier: number = 1
+    boostLevel: number = 1,
+    maxBoost: number = 1
 ) {
     const defenseMatches = description.matchAll(/\[\s*def\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of defenseMatches) {
         if (!checkCondition(match[2], isHalfHp)) continue;
-        const mult = isBoostCondition(match[2]) ? boostMultiplier : 1;
+        const mult = getBoostMultiplier(match[2], boostLevel, maxBoost);
         bonuses.def += safeParseInt(match[1]) * mult;
         triggers.general = true;
     }
@@ -275,7 +297,7 @@ function extractDefenses(
     const specialDefenseMatches = description.matchAll(/\[\s*spd\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of specialDefenseMatches) {
         if (!checkCondition(match[2], isHalfHp)) continue;
-        const mult = isBoostCondition(match[2]) ? boostMultiplier : 1;
+        const mult = getBoostMultiplier(match[2], boostLevel, maxBoost);
         bonuses.spd += safeParseInt(match[1]) * mult;
         triggers.general = true;
     }
@@ -286,12 +308,13 @@ function extractInitiativeAndChance(
     bonuses: CombatBonuses,
     triggers: TagTriggers,
     isHalfHp: boolean,
-    boostMultiplier: number = 1
+    boostLevel: number = 1,
+    maxBoost: number = 1
 ) {
     const initiativeMatches = description.matchAll(/\[\s*init\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of initiativeMatches) {
         if (!checkCondition(match[2], isHalfHp)) continue;
-        const mult = isBoostCondition(match[2]) ? boostMultiplier : 1;
+        const mult = getBoostMultiplier(match[2], boostLevel, maxBoost);
         bonuses.init += safeParseInt(match[1]) * mult;
         triggers.general = true;
     }
@@ -299,7 +322,7 @@ function extractInitiativeAndChance(
     const chanceMatches = description.matchAll(/\[\s*chance\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi);
     for (const match of chanceMatches) {
         if (!checkCondition(match[2], isHalfHp)) continue;
-        const mult = isBoostCondition(match[2]) ? boostMultiplier : 1;
+        const mult = getBoostMultiplier(match[2], boostLevel, maxBoost);
         bonuses.chance += safeParseInt(match[1]) * mult;
         triggers.general = true;
     }
@@ -392,7 +415,8 @@ function extractDamage(
     bonuses: CombatBonuses,
     triggers: TagTriggers,
     isHalfHp: boolean,
-    boostMultiplier: number = 1
+    boostLevel: number = 1,
+    maxBoost: number = 1
 ) {
     const damageMatches = description.matchAll(
         /\[\s*dmg\s*([+-]?\s*\d+)(?:\s*:\s*([^\]@]+))?(?:\s*@\s*([^\]]+))?\s*\]/gi
@@ -400,7 +424,7 @@ function extractDamage(
     for (const match of damageMatches) {
         if (!checkCondition(match[3], isHalfHp)) continue;
         const requirement = match[2]?.toLowerCase().trim();
-        const mult = isBoostCondition(match[3]) ? boostMultiplier : 1;
+        const mult = getBoostMultiplier(match[3], boostLevel, maxBoost);
 
         if (!requirement || requirement === moveType) {
             bonuses.dmg += safeParseInt(match[1]) * mult;
@@ -434,7 +458,7 @@ function extractDamage(
     for (const match of comboMatches) {
         if (!checkCondition(match[2], isHalfHp)) continue;
         if (isComboMove) {
-            const mult = isBoostCondition(match[2]) ? boostMultiplier : 1;
+            const mult = getBoostMultiplier(match[2], boostLevel, maxBoost);
             bonuses.dmg += safeParseInt(match[1]) * mult;
             triggers.damage = true;
         }
@@ -448,7 +472,8 @@ function extractAccuracy(
     bonuses: CombatBonuses,
     triggers: TagTriggers,
     isHalfHp: boolean,
-    boostMultiplier: number = 1
+    boostLevel: number = 1,
+    maxBoost: number = 1
 ) {
     const accuracyMatches = description.matchAll(
         /\[\s*acc\s*([+-]?\s*\d+)(?:\s*:\s*([^\]@]+))?(?:\s*@\s*([^\]]+))?\s*\]/gi
@@ -456,7 +481,7 @@ function extractAccuracy(
     for (const match of accuracyMatches) {
         if (!checkCondition(match[3], isHalfHp)) continue;
         const requirement = match[2]?.toLowerCase().trim();
-        const mult = isBoostCondition(match[3]) ? boostMultiplier : 1;
+        const mult = getBoostMultiplier(match[3], boostLevel, maxBoost);
 
         if (!requirement || requirement === moveType) {
             bonuses.acc += safeParseInt(match[1]) * mult;
@@ -759,7 +784,9 @@ export function parseCombatTags(
     const abilityBoostActive = state.identity.abilityBoostActive ?? false;
     const rawBoostLevel = state.identity.abilityBoostLevel;
     const boostLevel = abilityBoostActive ? Math.max(1, rawBoostLevel ?? 1) : 0;
-    const boostMultiplier = Math.max(1, boostLevel);
+    const cleanAbilityForBoost = (state.identity.ability || '').replace(/\s*\(HA\)$/i, '').trim();
+    const abilityTagsForBoost = state.identity.abilityTags || '';
+    const maxBoost = getMaxBoost(cleanAbilityForBoost, abilityTagsForBoost);
 
     const moveType = (move?.type || '').trim().toLowerCase();
     const moveDescription = (move?.desc || '').toLowerCase();
@@ -780,10 +807,6 @@ export function parseCombatTags(
     const itemsToParse = inventory
         .filter((item) => item.active)
         .map((item) => ({ name: item.name || '', desc: item.desc || '' }));
-
-    if (abilityText) {
-        itemsToParse.push({ name: 'Ability', desc: abilityText });
-    }
 
     if (state.identity.abilityActive !== false) {
         let desc = state.identity.abilityTags;
@@ -828,10 +851,16 @@ export function parseCombatTags(
         } else if (customAbility) {
             const customTags = `${customAbility.effect || ''} ${customAbility.description || ''}`.trim();
             if (desc) {
-                desc = customTags && !desc.includes(customTags) ? `${desc} ${customTags}`.trim() : desc;
+                if (customAbility.effect && desc.includes(customAbility.effect.trim())) {
+                    // Tags are already contained in desc
+                } else if (customTags && !desc.includes(customTags)) {
+                    desc = `${desc} ${customTags}`.trim();
+                }
             } else {
                 desc = customTags;
             }
+        } else if (abilityText) {
+            desc = abilityText;
         } else {
             if (
                 desc &&
@@ -891,14 +920,14 @@ export function parseCombatTags(
             damage: false
         };
 
-        extractStats(description, bonuses, triggers, isHalfHp, boostMultiplier);
-        extractSkills(description, escapedSkills, bonuses, triggers, isHalfHp, boostMultiplier);
-        extractDefenses(description, bonuses, triggers, isHalfHp, boostMultiplier);
-        extractInitiativeAndChance(description, bonuses, triggers, isHalfHp, boostMultiplier);
-        extractDamage(description, moveType, move, isComboMove, bonuses, triggers, isHalfHp, boostMultiplier);
+        extractStats(description, bonuses, triggers, isHalfHp, boostLevel, maxBoost);
+        extractSkills(description, escapedSkills, bonuses, triggers, isHalfHp, boostLevel, maxBoost);
+        extractDefenses(description, bonuses, triggers, isHalfHp, boostLevel, maxBoost);
+        extractInitiativeAndChance(description, bonuses, triggers, isHalfHp, boostLevel, maxBoost);
+        extractDamage(description, moveType, move, isComboMove, bonuses, triggers, isHalfHp, boostLevel, maxBoost);
         extractCritDamage(description, bonuses, triggers, isHalfHp);
         extractLowAccuracy(description, moveType, move, bonuses, triggers, isHalfHp);
-        extractAccuracy(description, moveType, move, bonuses, triggers, isHalfHp, boostMultiplier);
+        extractAccuracy(description, moveType, move, bonuses, triggers, isHalfHp, boostLevel, maxBoost);
         extractFirstHit(description, bonuses, triggers, isHalfHp);
         extractTempHp(description, bonuses, triggers, isHalfHp);
         extractRoundEffects(description, bonuses, triggers, isHalfHp);
