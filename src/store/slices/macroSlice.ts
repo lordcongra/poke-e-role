@@ -312,6 +312,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 ability: defaultAbility,
                 abilityActive: known?.autoActive ?? true,
                 abilityBoostActive: false,
+                abilityBoostLevel: 0,
                 abilityTags: initialTags,
                 learnset: learnsetArray,
                 dexId: String(data.DexID || ''),
@@ -327,6 +328,7 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             updatesToSave['ability'] = newIdentity.ability;
             updatesToSave['ability-active'] = newIdentity.abilityActive;
             updatesToSave['ability-boost-active'] = false;
+            updatesToSave['ability-boost-level'] = 0;
             updatesToSave['ability-tags'] = newIdentity.abilityTags;
             updatesToSave['ability-list'] = abilities.join(',');
             updatesToSave['dex-id'] = newIdentity.dexId;

@@ -354,6 +354,7 @@ export interface IdentitySlice {
         ability: string;
         abilityActive?: boolean;
         abilityBoostActive?: boolean;
+        abilityBoostLevel?: number;
         abilityTags?: string;
         availableAbilities: string[];
         previousNativeAbility?: string;

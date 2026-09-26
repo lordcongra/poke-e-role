@@ -29,6 +29,10 @@ export function TrackerSection() {
 
     const abilityName = useCharacterStore((state) => state.identity.ability);
     const abilityActive = useCharacterStore((state) => state.identity.abilityActive ?? true);
+    const abilityBoostActive = useCharacterStore((state) => state.identity.abilityBoostActive ?? false);
+    const abilityBoostLevel = useCharacterStore(
+        (state) => state.identity.abilityBoostLevel ?? (state.identity.abilityBoostActive ? 1 : 0)
+    );
     const abilityTags = useCharacterStore((state) => state.identity.abilityTags || '');
     const rank = useCharacterStore((state) => state.identity.rank);
 
@@ -263,7 +267,14 @@ export function TrackerSection() {
         const hpCurr = Number(health.hpCurr) || 0;
         const hpMax = Math.max(1, Number(health.hpMax) || 1);
         const isHalfHp = hpCurr <= Math.floor(hpMax / 2);
-        const benefit = getAbilityBenefitSummary(abilityName, abilityTags, rank, isHalfHp);
+        const benefit = getAbilityBenefitSummary(
+            abilityName,
+            abilityTags,
+            rank,
+            isHalfHp,
+            abilityBoostActive,
+            abilityBoostLevel
+        );
         const abilityLabel = benefit ? `Ability: ${abilityName} (${benefit})` : `Ability: ${abilityName}`;
         conditions.push({ id: 'active-ability', label: abilityLabel, bg: '#2563eb', text: '#fff' });
     }

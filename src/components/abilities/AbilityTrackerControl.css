@@ -8,7 +8,9 @@
     background: var(--panel-alt, rgba(0, 0, 0, 0.2));
     border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
     margin-top: 4px;
-    transition: all 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
 }
 
 .ability-tracker--active {
@@ -23,11 +25,14 @@
     cursor: pointer;
     user-select: none;
     min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
 }
 
 .ability-tracker__checkbox {
     cursor: pointer;
     margin: 0;
+    flex-shrink: 0;
     accent-color: var(--primary, #3b82f6);
 }
 
@@ -41,10 +46,18 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.ability-tracker__controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
 }
 
 .ability-tracker__benefit {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     padding: 2px 6px;
     border-radius: 4px;
     background: var(--primary, #3b82f6);
@@ -53,14 +66,106 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 140px;
+    max-width: 120px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.ability-tracker__benefit--clickable {
+    cursor: pointer;
+    transition:
+        transform 0.15s ease,
+        filter 0.15s ease;
+}
+
+.ability-tracker__benefit--clickable:hover {
+    filter: brightness(1.15);
+    transform: scale(1.02);
+}
+
+.ability-tracker__stepper {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
+    background: rgba(0, 0, 0, 0.25);
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.ability-tracker__step-btn {
+    padding: 0 !important;
+    height: 22px !important;
+    width: 20px !important;
+    min-width: 20px !important;
+    max-width: 20px !important;
+    font-size: 0.75rem !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 0 !important;
+    border: none !important;
+    font-weight: bold;
+    cursor: pointer;
+    box-sizing: border-box !important;
+    user-select: none;
+}
+
+.ability-tracker__step-btn:disabled {
+    opacity: 0.3 !important;
+    cursor: not-allowed !important;
+}
+
+.ability-tracker__step-badge {
+    height: 22px !important;
+    width: 68px !important;
+    min-width: 68px !important;
+    max-width: 68px !important;
+    padding: 0 !important;
+    font-size: 0.72rem !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 0 !important;
+    border: none !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+    white-space: nowrap !important;
+    cursor: pointer;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    box-sizing: border-box !important;
+    user-select: none;
+}
+
+.ability-tracker__boost-toggle-btn {
+    height: 22px !important;
+    width: 68px !important;
+    min-width: 68px !important;
+    max-width: 68px !important;
+    padding: 0 !important;
+    font-size: 0.72rem !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+    user-select: none;
 }
 
 .ability-tracker__btn-menu {
-    padding: 3px 6px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.75rem;
+    width: 24px !important;
+    min-width: 24px !important;
+    max-width: 24px !important;
+    height: 22px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     flex-shrink: 0;
+    box-sizing: border-box !important;
 }

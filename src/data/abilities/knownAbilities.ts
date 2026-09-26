@@ -34,10 +34,24 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     // --- Passives: Roll Modifiers & Criticals ---
     'Compound Eyes': {
         name: 'Compound Eyes',
-        tags: '[Acc +1: Low Accuracy]',
+        tags: '[Acc +2: Low Accuracy]',
         autoActive: true,
-        summary: 'Increases accuracy of moves that have Low Accuracy.',
-        benefitDisplay: '+1 Acc (Low Acc Moves)'
+        summary: 'Increases accuracy of moves that have Low Accuracy by 2 dice.',
+        benefitDisplay: '+2 Acc (Low Acc Moves)'
+    },
+    'No Guard': {
+        name: 'No Guard',
+        tags: '[Ignore Low Acc 99]',
+        autoActive: false,
+        summary: 'Ignores Low Accuracy on all moves when active (declares no evasion, shield, or clash).',
+        benefitDisplay: 'Ignore Low Acc (No Guard)'
+    },
+    'Serene Grace': {
+        name: 'Serene Grace',
+        tags: '[Chance +2]',
+        autoActive: true,
+        summary: 'Adds 2 extra chance dice to all moves with chance effects.',
+        benefitDisplay: '+2 Chance Dice'
     },
     'Super Luck': {
         name: 'Super Luck',
@@ -136,10 +150,10 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
     'Mega Launcher': {
         name: 'Mega Launcher',
-        tags: '[Dmg +1: Projectile Move]',
+        tags: '[Dmg +2: Projectile Move]',
         autoActive: true,
-        summary: 'Increases damage of projectile, aura, and pulse moves.',
-        benefitDisplay: '+1 Projectile Dmg'
+        summary: 'Increases damage of projectile, aura, and pulse moves by 2 dice.',
+        benefitDisplay: '+2 Projectile Dmg'
     },
     'Punk Rock': {
         name: 'Punk Rock',
@@ -150,10 +164,10 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
     Reckless: {
         name: 'Reckless',
-        tags: '[Dmg +1: Recoil]',
+        tags: '[Dmg +2: Recoil]',
         autoActive: true,
-        summary: 'Increases damage of moves that cause recoil.',
-        benefitDisplay: '+1 Recoil Dmg'
+        summary: 'Increases damage of moves that cause recoil by 2 dice.',
+        benefitDisplay: '+2 Recoil Dmg'
     },
     'Rock Head': {
         name: 'Rock Head',
@@ -171,6 +185,13 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
 
     // --- Type Damage Boosts & Effectiveness ---
+    'Water Bubble': {
+        name: 'Water Bubble',
+        tags: '[Dmg +2: Water] [Resist: Fire]',
+        autoActive: true,
+        summary: 'Increases Water damage by 2 dice and reduces Fire damage taken.',
+        benefitDisplay: '+2 Water Dmg / Resist Fire'
+    },
     Steelworker: {
         name: 'Steelworker',
         tags: '[Dmg +1: Steel]',
@@ -187,16 +208,58 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
     'Dragon Maw': {
         name: 'Dragon Maw',
-        tags: '[Dmg +1: Dragon]',
+        tags: '[Dmg +2: Dragon]',
         autoActive: true,
-        summary: 'Increases damage of Dragon-type moves.',
-        benefitDisplay: '+1 Dragon Dmg'
+        summary: 'Increases damage of Dragon-type moves by 2 dice.',
+        benefitDisplay: '+2 Dragon Dmg'
     },
     Transistor: {
         name: 'Transistor',
+        tags: '[Dmg +2: Electric]',
+        autoActive: true,
+        summary: 'Increases damage of Electric-type moves by 2 dice.',
+        benefitDisplay: '+2 Electric Dmg'
+    },
+    'Dark Aura': {
+        name: 'Dark Aura',
+        tags: '[Dmg +2: Dark]',
+        autoActive: true,
+        summary: 'Increases damage of Dark-type moves by 2 dice for all on field.',
+        benefitDisplay: '+2 Dark Dmg'
+    },
+    'Fairy Aura': {
+        name: 'Fairy Aura',
+        tags: '[Dmg +2: Fairy]',
+        autoActive: true,
+        summary: 'Increases damage of Fairy-type moves by 2 dice for all on field.',
+        benefitDisplay: '+2 Fairy Dmg'
+    },
+    Aerilate: {
+        name: 'Aerilate',
+        tags: '[Dmg +1: Flying]',
+        autoActive: true,
+        summary: 'Increases damage of Flying-type moves by 1 die.',
+        benefitDisplay: '+1 Flying Dmg'
+    },
+    Pixilate: {
+        name: 'Pixilate',
+        tags: '[Dmg +1: Fairy]',
+        autoActive: true,
+        summary: 'Increases damage of Fairy-type moves by 1 die.',
+        benefitDisplay: '+1 Fairy Dmg'
+    },
+    Refrigerate: {
+        name: 'Refrigerate',
+        tags: '[Dmg +1: Ice]',
+        autoActive: true,
+        summary: 'Increases damage of Ice-type moves by 1 die.',
+        benefitDisplay: '+1 Ice Dmg'
+    },
+    Galvanize: {
+        name: 'Galvanize',
         tags: '[Dmg +1: Electric]',
         autoActive: true,
-        summary: 'Increases damage of Electric-type moves.',
+        summary: 'Increases damage of Electric-type moves by 1 die.',
         benefitDisplay: '+1 Electric Dmg'
     },
     'Steely Spirit': {
@@ -254,17 +317,17 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
     'Sand Rush': {
         name: 'Sand Rush',
-        tags: '[Dex +2]',
+        tags: '[Dex +1]',
         autoActive: false,
-        summary: 'Doubles agility in Sandstorm weather.',
-        benefitDisplay: '+2 DEX (Sand)'
+        summary: 'Increases agility in Sandstorm weather by 1.',
+        benefitDisplay: '+1 DEX (Sand)'
     },
     'Slush Rush': {
         name: 'Slush Rush',
-        tags: '[Dex +2]',
+        tags: '[Dex +1]',
         autoActive: false,
-        summary: 'Doubles agility in Snow or Hail weather.',
-        benefitDisplay: '+2 DEX (Snow)'
+        summary: 'Increases agility in Snow or Hail weather by 1.',
+        benefitDisplay: '+1 DEX (Snow)'
     },
     'Surge Surfer': {
         name: 'Surge Surfer',
@@ -275,10 +338,10 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
     },
     'Solar Power': {
         name: 'Solar Power',
-        tags: '[Spe +1] [Deal 1 Damage at End of Round]',
+        tags: '[Spe +2] [Deal 1 Damage at End of Round]',
         autoActive: false,
-        summary: 'Increases Special in Sun but suffers damage each round.',
-        benefitDisplay: '+1 SPE / 1 Dmg Round End'
+        summary: 'Increases Special by 2 in Sun but suffers damage each round.',
+        benefitDisplay: '+2 SPE / 1 Dmg Round End'
     },
     'Sand Force': {
         name: 'Sand Force',
@@ -437,43 +500,101 @@ export const KNOWN_ABILITIES: Record<string, KnownAbility> = {
         name: 'Moxie',
         tags: '[Str +1 @ Boost]',
         autoActive: true,
-        summary: 'Increases Strength when knocking out an opponent.',
+        maxBoost: 3,
+        summary: 'Increases Strength when knocking out an opponent (up to +3).',
         benefitDisplay: '+1 STR (Boost)'
     },
     'Beast Boost': {
         name: 'Beast Boost',
         tags: '[Str +1 @ Boost]',
         autoActive: true,
-        summary: 'Increases highest offensive stat upon scoring a knockout.',
+        maxBoost: 3,
+        summary: 'Increases highest offensive stat upon scoring a knockout (up to +3).',
         benefitDisplay: '+1 Offense (Boost)'
     },
     'Soul-Heart': {
         name: 'Soul-Heart',
-        tags: '[Spe +1]',
+        tags: '[Spe +1 @ Boost]',
+        autoActive: true,
+        maxBoost: 3,
+        summary: 'Increases Special whenever any Pokemon faints (up to +3).',
+        benefitDisplay: '+1 SPE (Boost)'
+    },
+    'Soul Heart': {
+        name: 'Soul Heart',
+        tags: '[Spe +1 @ Boost]',
+        autoActive: true,
+        maxBoost: 3,
+        summary: 'Increases Special whenever any Pokemon faints (up to +3).',
+        benefitDisplay: '+1 SPE (Boost)'
+    },
+    'Sheer Force': {
+        name: 'Sheer Force',
+        tags: '[Dmg +2]',
         autoActive: false,
-        summary: 'Increases Special whenever any Pokemon faints.',
-        benefitDisplay: '+1 SPE (On Faint)'
+        summary: 'Adds 2 extra dice to moves by forgoing added secondary effects.',
+        benefitDisplay: '+2 Dmg (Sheer Force)'
+    },
+    'Gorilla Tactics': {
+        name: 'Gorilla Tactics',
+        tags: '[Dmg +2]',
+        autoActive: false,
+        summary: 'Adds 2 extra dice to move damage while locked into chosen move.',
+        benefitDisplay: '+2 Dmg (Gorilla Tactics)'
+    },
+    'Speed Boost': {
+        name: 'Speed Boost',
+        tags: '[Dex +1 @ Boost]',
+        autoActive: true,
+        maxBoost: 3,
+        summary: 'Increases Dexterity each round (up to +3).',
+        benefitDisplay: '+1 DEX (Boost)'
+    },
+    Stamina: {
+        name: 'Stamina',
+        tags: '[Def +1 @ Boost] [Spd +1 @ Boost]',
+        autoActive: true,
+        summary: 'Increases Defense and Special Defense when struck.',
+        benefitDisplay: '+1 DEF/SPD (Boost)'
+    },
+    Justified: {
+        name: 'Justified',
+        tags: '[Str +1 @ Boost]',
+        autoActive: true,
+        maxBoost: 3,
+        summary: 'Increases Strength when struck by Dark-type attacks (up to +3).',
+        benefitDisplay: '+1 STR (Boost)'
+    },
+    Rattled: {
+        name: 'Rattled',
+        tags: '[Dex +1 @ Boost]',
+        autoActive: true,
+        summary: 'Increases Dexterity when struck by Bug, Dark, Ghost, or Intimidate.',
+        benefitDisplay: '+1 DEX (Boost)'
     },
     'Chilling Neigh': {
         name: 'Chilling Neigh',
-        tags: '[Str +1]',
-        autoActive: false,
-        summary: 'Increases Strength upon scoring a knockout.',
-        benefitDisplay: '+1 STR (On KO)'
+        tags: '[Str +1 @ Boost]',
+        autoActive: true,
+        maxBoost: 3,
+        summary: 'Increases Strength upon scoring a knockout (up to +3).',
+        benefitDisplay: '+1 STR (Boost)'
     },
     'Grim Neigh': {
         name: 'Grim Neigh',
-        tags: '[Spe +1]',
-        autoActive: false,
-        summary: 'Increases Special upon scoring a knockout.',
-        benefitDisplay: '+1 SPE (On KO)'
+        tags: '[Spe +1 @ Boost]',
+        autoActive: true,
+        maxBoost: 3,
+        summary: 'Increases Special upon scoring a knockout (up to +3).',
+        benefitDisplay: '+1 SPE (Boost)'
     },
     'Supreme Overlord': {
         name: 'Supreme Overlord',
-        tags: '[Str +1] [Spe +1]',
-        autoActive: false,
-        summary: 'Increases stats for each fallen ally in battle.',
-        benefitDisplay: '+1 Offense per Fallen Ally'
+        tags: '[Str +1 @ Boost] [Spe +1 @ Boost]',
+        autoActive: true,
+        maxBoost: 3,
+        summary: 'Increases stats for each fallen ally in battle (up to +3).',
+        benefitDisplay: '+1 Offense (Boost)'
     },
     Defiant: {
         name: 'Defiant',
@@ -513,6 +634,13 @@ export function getKnownAbility(name: string, rank?: string): KnownAbility | und
         const foundKey = Object.keys(KNOWN_ABILITIES).find((k) => k.toLowerCase() === lower);
         if (foundKey) base = KNOWN_ABILITIES[foundKey];
     }
+    if (!base) {
+        const simplified = cleanName.replace(/[-_\s]+/g, '').toLowerCase();
+        const foundKey = Object.keys(KNOWN_ABILITIES).find(
+            (k) => k.replace(/[-_\s]+/g, '').toLowerCase() === simplified
+        );
+        if (foundKey) base = KNOWN_ABILITIES[foundKey];
+    }
     if (!base) return undefined;
 
     const baseName = base.name || cleanName;
@@ -528,12 +656,32 @@ export function getKnownAbility(name: string, rank?: string): KnownAbility | und
     return base;
 }
 
+export function getMaxBoost(name?: string, tags?: string, descOrEffect?: string): number {
+    if (!name && !tags && !descOrEffect) return 1;
+    const cleanName = (name || '').replace(/\s*\(HA\)$/i, '').trim();
+    const known = getKnownAbility(cleanName);
+    if (known?.maxBoost) return known.maxBoost;
+
+    const text = `${tags || ''} ${descOrEffect || ''} ${known?.summary || ''}`.toLowerCase();
+    const matchPoints = text.match(/up to\s*(\d+)\s*point/i);
+    if (matchPoints && matchPoints[1]) {
+        return Math.max(1, parseInt(matchPoints[1], 10));
+    }
+    const matchStacks = text.match(/stacks?\s*(?:up to)?\s*(\d+)\s*time/i);
+    if (matchStacks && matchStacks[1]) {
+        return Math.max(1, parseInt(matchStacks[1], 10));
+    }
+
+    return 1;
+}
+
 export function getAbilityBenefitSummary(
     name: string,
     tags?: string,
     rank?: string,
     isHalfHp?: boolean,
-    isBoostActive?: boolean
+    isBoostActive?: boolean,
+    boostLevel?: number
 ): string {
     const cleanName = (name || '').replace(/\s*\(HA\)$/i, '').trim();
     const known = getKnownAbility(cleanName, rank);
@@ -566,12 +714,33 @@ export function getAbilityBenefitSummary(
     }
 
     if (isBoostActive !== undefined && display) {
+        const effectiveLevel = isBoostActive ? Math.max(1, boostLevel ?? 1) : 0;
         if (display.includes('(Boost)')) {
-            display = isBoostActive ? display.replace('(Boost)', '(Boost Active)') : display;
+            if (effectiveLevel > 1) {
+                display = display.replace(/\+1\b/g, `+${effectiveLevel}`);
+                display = display.replace('(Boost)', `(Boost x${effectiveLevel})`);
+            } else if (effectiveLevel === 1) {
+                display = display.replace('(Boost)', '(Boost Active)');
+            }
         } else if (display.includes('Boost)')) {
-            display = isBoostActive ? display.replace('Boost)', 'Boost Active)') : display;
+            if (effectiveLevel > 1) {
+                display = display.replace(/\+1\b/g, `+${effectiveLevel}`);
+                display = display.replace('Boost)', `Boost x${effectiveLevel})`);
+            } else if (effectiveLevel === 1) {
+                display = display.replace('Boost)', 'Boost Active)');
+            }
+        } else if (/@\s*boost/i.test(display)) {
+            if (effectiveLevel > 1) {
+                display = display.replace(/\+1\b/g, `+${effectiveLevel}`);
+                display = display.replace(/@\s*boost/i, `(Boost x${effectiveLevel})`);
+            } else if (effectiveLevel === 1) {
+                display = display.replace(/@\s*boost/i, '(Boost Active)');
+            } else {
+                display = display.replace(/@\s*boost/i, '(Boost)');
+            }
         }
     }
 
     return display;
 }
+

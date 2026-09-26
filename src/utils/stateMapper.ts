@@ -319,6 +319,22 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
                 let cleanOldTags = rawMetaTags;
                 if (cleanLoadedAbility.toLowerCase() === 'super luck') {
                     cleanOldTags = cleanOldTags.replace(/\[\s*high crit(?:ical)?\s*\]/gi, '').trim();
+                } else if (cleanLoadedAbility.toLowerCase() === 'compound eyes') {
+                    cleanOldTags = cleanOldTags.replace(/\[\s*acc\s*\+?1\s*:\s*low acc(?:uracy)?\s*\]/gi, '').trim();
+                } else if (cleanLoadedAbility.toLowerCase() === 'mega launcher') {
+                    cleanOldTags = cleanOldTags.replace(/\[\s*dmg\s*\+?1\s*:\s*projectile move\s*\]/gi, '').trim();
+                } else if (cleanLoadedAbility.toLowerCase() === 'reckless') {
+                    cleanOldTags = cleanOldTags.replace(/\[\s*dmg\s*\+?1\s*:\s*recoil\s*\]/gi, '').trim();
+                } else if (cleanLoadedAbility.toLowerCase() === 'dragon maw') {
+                    cleanOldTags = cleanOldTags.replace(/\[\s*dmg\s*\+?1\s*:\s*dragon\s*\]/gi, '').trim();
+                } else if (cleanLoadedAbility.toLowerCase() === 'transistor') {
+                    cleanOldTags = cleanOldTags.replace(/\[\s*dmg\s*\+?1\s*:\s*electric\s*\]/gi, '').trim();
+                } else if (cleanLoadedAbility.toLowerCase() === 'solar power') {
+                    cleanOldTags = cleanOldTags.replace(/\[\s*spe\s*\+?1\s*\]/gi, '').trim();
+                } else if (cleanLoadedAbility.toLowerCase() === 'sand rush') {
+                    cleanOldTags = cleanOldTags.replace(/\[\s*dex\s*\+?2\s*\]/gi, '').trim();
+                } else if (cleanLoadedAbility.toLowerCase() === 'slush rush') {
+                    cleanOldTags = cleanOldTags.replace(/\[\s*dex\s*\+?2\s*\]/gi, '').trim();
                 }
                 const knownLower = known.tags.toLowerCase();
                 const extra = cleanOldTags
@@ -358,6 +374,8 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
     }
 
     const loadedBoostActive = meta['ability-boost-active'] === true || meta['ability-boost-active'] === 'true';
+    const rawBoostLevel = meta['ability-boost-level'];
+    const loadedBoostLevel = rawBoostLevel !== undefined ? Number(rawBoostLevel) : loadedBoostActive ? 1 : 0;
 
     return {
         ...state.identity,
@@ -375,6 +393,7 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
                 ? true
                 : meta['ability-active'] === true || meta['ability-active'] === 'true',
         abilityBoostActive: loadedBoostActive,
+        abilityBoostLevel: loadedBoostLevel,
         abilityTags: loadedTags,
         availableAbilities: loadedAbilities,
         previousNativeAbility: String(meta['previous-native-ability'] || ''),
@@ -556,6 +575,8 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
                 flatMetadata['ability-active'] = state.identity.abilityActive;
             if (state.identity.abilityBoostActive !== undefined)
                 flatMetadata['ability-boost-active'] = state.identity.abilityBoostActive;
+            if (state.identity.abilityBoostLevel !== undefined)
+                flatMetadata['ability-boost-level'] = state.identity.abilityBoostLevel;
             if (state.identity.abilityTags !== undefined) flatMetadata['ability-tags'] = state.identity.abilityTags;
             if (state.identity.availableAbilities !== undefined)
                 flatMetadata['ability-list'] = state.identity.availableAbilities.join(',');

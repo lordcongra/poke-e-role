@@ -40,6 +40,7 @@ const EXCLUDED_FROM_TOKEN_SAVE = new Set([
 const OBR_KEY_MAP: Record<string, string> = {
     abilityActive: 'ability-active',
     abilityBoostActive: 'ability-boost-active',
+    abilityBoostLevel: 'ability-boost-level',
     abilityTags: 'ability-tags',
     previousNativeAbility: 'previous-native-ability',
     showTrackers: 'show-trackers',
@@ -223,6 +224,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         ability: '',
         abilityActive: true,
         abilityBoostActive: false,
+        abilityBoostLevel: 0,
         abilityTags: '',
         availableAbilities: [],
         previousNativeAbility: '',
@@ -577,7 +579,9 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                     (ca) => ca.name.trim().toLowerCase() === cleanAbilityName.toLowerCase()
                 );
                 newIdentity.abilityBoostActive = false;
+                newIdentity.abilityBoostLevel = 0;
                 updatesToSave['ability-boost-active'] = false;
+                updatesToSave['ability-boost-level'] = 0;
                 if (known) {
                     newIdentity.abilityTags = known.tags;
                     newIdentity.abilityActive = known.autoActive ?? true;
@@ -595,6 +599,26 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                     updatesToSave['ability-tags'] = '';
                     updatesToSave['ability-active'] = true;
                 }
+            }
+
+            if (field === 'abilityBoostActive') {
+                const isActive = Boolean(value);
+                newIdentity.abilityBoostActive = isActive;
+                newIdentity.abilityBoostLevel = isActive
+                    ? newIdentity.abilityBoostLevel && newIdentity.abilityBoostLevel > 0
+                        ? newIdentity.abilityBoostLevel
+                        : 1
+                    : 0;
+                updatesToSave['ability-boost-active'] = isActive;
+                updatesToSave['ability-boost-level'] = newIdentity.abilityBoostLevel;
+            }
+
+            if (field === 'abilityBoostLevel') {
+                const lvl = Math.max(0, Number(value) || 0);
+                newIdentity.abilityBoostLevel = lvl;
+                newIdentity.abilityBoostActive = lvl > 0;
+                updatesToSave['ability-boost-level'] = lvl;
+                updatesToSave['ability-boost-active'] = lvl > 0;
             }
 
             if (field === 'ruleset' || field === 'rank') {

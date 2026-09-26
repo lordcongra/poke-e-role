@@ -196,7 +196,12 @@ html.dnd-polyfilled .app-layout {
     border: 1px dashed var(--border);
     border-radius: 6px;
     text-align: center;
-    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease,
+        color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .sidebar__dropzone-root--active {
@@ -227,7 +232,9 @@ html.dnd-polyfilled .app-layout {
     /* Prevent mobile text-selection and native popup menus on long-press */
     -webkit-user-select: none;
     -webkit-touch-callout: none;
-    transition: background 0.15s ease, opacity 0.15s ease;
+    transition:
+        background 0.15s ease,
+        opacity 0.15s ease;
 }
 
 .sidebar__item:hover {
@@ -286,7 +293,9 @@ html.dnd-polyfilled .app-layout {
     border-radius: 6px;
     box-shadow: 0 0 12px color-mix(in srgb, var(--primary) 35%, transparent);
     transform: scale(1.02);
-    transition: transform 0.1s ease, background 0.1s ease;
+    transition:
+        transform 0.1s ease,
+        background 0.1s ease;
 }
 
 .sidebar__item-content {
@@ -376,7 +385,10 @@ html.dnd-polyfilled .app-layout {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: opacity 0.2s, color 0.15s, background 0.15s;
+    transition:
+        opacity 0.2s,
+        color 0.15s,
+        background 0.15s;
 }
 
 .sidebar__item:hover .sidebar__more-btn {
@@ -396,7 +408,9 @@ html.dnd-polyfilled .app-layout {
     cursor: pointer;
     opacity: 0;
     padding: 4px;
-    transition: opacity 0.2s, color 0.15s;
+    transition:
+        opacity 0.2s,
+        color 0.15s;
     border-radius: 4px;
     display: flex;
     align-items: center;
@@ -427,8 +441,9 @@ html.dnd-polyfilled .app-layout {
     background: var(--panel-bg);
     border: 1.5px solid var(--primary);
     border-radius: 8px;
-    box-shadow: 0 10px 28px color-mix(in srgb, var(--dark) 60%, transparent),
-                0 0 12px color-mix(in srgb, var(--primary) 40%, transparent);
+    box-shadow:
+        0 10px 28px color-mix(in srgb, var(--dark) 60%, transparent),
+        0 0 12px color-mix(in srgb, var(--primary) 40%, transparent);
     color: var(--text-main);
     font-size: 0.85rem;
     font-weight: 600;

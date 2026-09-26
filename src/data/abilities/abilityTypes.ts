@@ -4,4 +4,6 @@ export interface KnownAbility {
     autoActive?: boolean;
     summary?: string;
     benefitDisplay?: string;
+    maxBoost?: number;
 }
+

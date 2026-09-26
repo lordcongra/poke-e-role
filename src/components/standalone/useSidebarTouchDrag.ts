@@ -223,7 +223,10 @@ export function useSidebarTouchDrag({
                         const intensity = Math.min(14, Math.max(3, (rect.top + edgeThreshold - touch.clientY) / 3));
                         treeEl.scrollTop -= intensity;
                     } else if (touch.clientY > rect.bottom - edgeThreshold && touch.clientY <= rect.bottom + 10) {
-                        const intensity = Math.min(14, Math.max(3, (touch.clientY - (rect.bottom - edgeThreshold)) / 3));
+                        const intensity = Math.min(
+                            14,
+                            Math.max(3, (touch.clientY - (rect.bottom - edgeThreshold)) / 3)
+                        );
                         treeEl.scrollTop += intensity;
                     }
                 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Zap, Tag, XCircle, Power, Shield, RotateCcw, Check, Sparkles } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { getKnownAbility, getAbilityBenefitSummary } from '../../data/abilities/knownAbilities';
+import { getKnownAbility, getAbilityBenefitSummary, getMaxBoost } from '../../data/abilities/knownAbilities';
 import { fetchAbilityData } from '../../utils/api';
 import './AbilityMenuModal.css';
 
@@ -25,6 +25,9 @@ export function AbilityMenuModal({ isOpen, onClose, onOpenTagBuilder }: AbilityM
     const previousNativeAbility = useCharacterStore((state) => state.identity.previousNativeAbility || '');
     const abilityActive = useCharacterStore((state) => state.identity.abilityActive ?? true);
     const abilityBoostActive = useCharacterStore((state) => state.identity.abilityBoostActive ?? false);
+    const abilityBoostLevel = useCharacterStore(
+        (state) => state.identity.abilityBoostLevel ?? (state.identity.abilityBoostActive ? 1 : 0)
+    );
     const abilityTags = useCharacterStore((state) => state.identity.abilityTags || '');
     const rank = useCharacterStore((state) => state.identity.rank);
     const hpCurr = useCharacterStore((state) => state.health.hpCurr);
@@ -154,8 +157,21 @@ export function AbilityMenuModal({ isOpen, onClose, onOpenTagBuilder }: AbilityM
               cleanCurrentAbility !== 'Pure Power'
             ? ''
             : abilityTags;
-    const activeBenefit = getAbilityBenefitSummary(currentAbility, effectiveTags, rank, isHalfHp, abilityBoostActive);
+    const effectiveBoostLevel = abilityBoostActive ? Math.max(1, abilityBoostLevel) : 0;
+    const maxBoost = getMaxBoost(cleanCurrentAbility, effectiveTags, activeDetail?.effect || activeDetail?.desc);
+    const activeBenefit = getAbilityBenefitSummary(
+        currentAbility,
+        effectiveTags,
+        rank,
+        isHalfHp,
+        abilityBoostActive,
+        effectiveBoostLevel
+    );
     const hasBoostTag = effectiveTags.toLowerCase().includes('@ boost');
+
+    const handleSetBoostLevel = (level: number) => {
+        setIdentity('abilityBoostLevel', level);
+    };
 
     return (
         <div className="ability-modal__overlay">
@@ -236,6 +252,76 @@ export function AbilityMenuModal({ isOpen, onClose, onOpenTagBuilder }: AbilityM
                             </button>
                         </div>
 
+                        {/* Boost Controls for Battle Override */}
+                        {hasBoostTag && (
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    padding: '6px 8px',
+                                    background: 'rgba(0,0,0,0.2)',
+                                    borderRadius: '4px',
+                                    gap: '8px'
+                                }}
+                            >
+                                <span className="text-subtext" style={{ fontSize: '0.8rem' }}>
+                                    Trigger Boost:{' '}
+                                    <strong>
+                                        {effectiveBoostLevel > 0
+                                            ? maxBoost > 1
+                                                ? `Level ${effectiveBoostLevel} (+${effectiveBoostLevel})`
+                                                : 'Active'
+                                            : 'Inactive'}
+                                    </strong>
+                                </span>
+                                {maxBoost > 1 ? (
+                                    <div style={{ display: 'flex', gap: '4px' }}>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSetBoostLevel(0)}
+                                            className={`action-button ${
+                                                effectiveBoostLevel === 0
+                                                    ? 'action-button--theme'
+                                                    : 'action-button--dark'
+                                            }`}
+                                            style={{ padding: '2px 8px', fontSize: '0.75rem' }}
+                                            title="Turn Boost Off"
+                                        >
+                                            Off
+                                        </button>
+                                        {Array.from({ length: maxBoost }, (_, i) => i + 1).map((lvl) => (
+                                            <button
+                                                key={lvl}
+                                                type="button"
+                                                onClick={() => handleSetBoostLevel(lvl)}
+                                                className={`action-button ${
+                                                    effectiveBoostLevel === lvl
+                                                        ? 'action-button--theme'
+                                                        : 'action-button--dark'
+                                                }`}
+                                                style={{ padding: '2px 8px', fontSize: '0.75rem' }}
+                                                title={`Set boost to level ${lvl} (+${lvl})`}
+                                            >
+                                                +{lvl}
+                                            </button>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => setIdentity('abilityBoostActive', !abilityBoostActive)}
+                                        className={`action-button ${
+                                            abilityBoostActive ? 'action-button--theme' : 'action-button--dark'
+                                        }`}
+                                        style={{ padding: '2px 8px', fontSize: '0.75rem' }}
+                                    >
+                                        <Power size={11} /> {abilityBoostActive ? 'Deactivate Boost' : 'Activate Boost'}
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
                         {/* Tags */}
                         {effectiveTags && <div className="ability-modal__tags-box">{effectiveTags}</div>}
 
@@ -267,10 +353,19 @@ export function AbilityMenuModal({ isOpen, onClose, onOpenTagBuilder }: AbilityM
                         const clean = abName.replace(/\s*\(HA\)$/i, '').trim();
                         const known = getKnownAbility(clean, rank);
                         const detail = detailsMap[abName];
-                        const safeAbilityTags =
-                            clean.toLowerCase() === 'super luck' && abilityTags.includes('[High Crit]')
-                                ? abilityTags.replace(/\[\s*high crit(?:ical)?\s*\]/gi, '[Stacking High Crit]').trim()
-                                : abilityTags;
+                        let safeAbilityTags = abilityTags;
+                        if (clean.toLowerCase() === 'super luck' && safeAbilityTags.includes('[High Crit]')) {
+                            safeAbilityTags = safeAbilityTags
+                                .replace(/\[\s*high crit(?:ical)?\s*\]/gi, '[Stacking High Crit]')
+                                .trim();
+                        } else if (
+                            clean.toLowerCase() === 'compound eyes' &&
+                            /\[\s*acc\s*\+?1\s*:\s*low acc(?:uracy)?\s*\]/i.test(safeAbilityTags)
+                        ) {
+                            safeAbilityTags = safeAbilityTags
+                                .replace(/\[\s*acc\s*\+?1\s*:\s*low acc(?:uracy)?\s*\]/gi, '[Acc +2: Low Accuracy]')
+                                .trim();
+                        }
                         const displayedTags = isBattleActive ? safeAbilityTags || known?.tags : known?.tags;
 
                         let slotLabel = `Ability ${idx + 1}`;
@@ -344,7 +439,7 @@ export function AbilityMenuModal({ isOpen, onClose, onOpenTagBuilder }: AbilityM
                                     </div>
                                 )}
 
-                                {/* Boost Trigger Toggle for Active Ability */}
+                                {/* Boost Trigger Toggle / Stepper for Active Ability */}
                                 {isBattleActive && hasBoostTag && (
                                     <div
                                         style={{
@@ -353,21 +448,65 @@ export function AbilityMenuModal({ isOpen, onClose, onOpenTagBuilder }: AbilityM
                                             justifyContent: 'space-between',
                                             padding: '6px 8px',
                                             background: 'rgba(0,0,0,0.2)',
-                                            borderRadius: '4px'
+                                            borderRadius: '4px',
+                                            gap: '8px'
                                         }}
                                     >
                                         <span className="text-subtext" style={{ fontSize: '0.8rem' }}>
-                                            Trigger Boost: <strong>{abilityBoostActive ? 'Active' : 'Inactive'}</strong>
+                                            Trigger Boost:{' '}
+                                            <strong>
+                                                {effectiveBoostLevel > 0
+                                                    ? maxBoost > 1
+                                                        ? `Level ${effectiveBoostLevel} (+${effectiveBoostLevel})`
+                                                        : 'Active'
+                                                    : 'Inactive'}
+                                            </strong>
                                         </span>
-                                        <button
-                                            type="button"
-                                            onClick={() => setIdentity('abilityBoostActive', !abilityBoostActive)}
-                                            className={`action-button ${abilityBoostActive ? 'action-button--theme' : 'action-button--dark'}`}
-                                            style={{ padding: '2px 8px', fontSize: '0.75rem' }}
-                                        >
-                                            <Power size={11} />{' '}
-                                            {abilityBoostActive ? 'Deactivate Boost' : 'Activate Boost'}
-                                        </button>
+                                        {maxBoost > 1 ? (
+                                            <div style={{ display: 'flex', gap: '4px' }}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSetBoostLevel(0)}
+                                                    className={`action-button ${
+                                                        effectiveBoostLevel === 0
+                                                            ? 'action-button--theme'
+                                                            : 'action-button--dark'
+                                                    }`}
+                                                    style={{ padding: '2px 8px', fontSize: '0.75rem' }}
+                                                    title="Turn Boost Off"
+                                                >
+                                                    Off
+                                                </button>
+                                                {Array.from({ length: maxBoost }, (_, i) => i + 1).map((lvl) => (
+                                                    <button
+                                                        key={lvl}
+                                                        type="button"
+                                                        onClick={() => handleSetBoostLevel(lvl)}
+                                                        className={`action-button ${
+                                                            effectiveBoostLevel === lvl
+                                                                ? 'action-button--theme'
+                                                                : 'action-button--dark'
+                                                        }`}
+                                                        style={{ padding: '2px 8px', fontSize: '0.75rem' }}
+                                                        title={`Set boost to level ${lvl} (+${lvl})`}
+                                                    >
+                                                        +{lvl}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => setIdentity('abilityBoostActive', !abilityBoostActive)}
+                                                className={`action-button ${
+                                                    abilityBoostActive ? 'action-button--theme' : 'action-button--dark'
+                                                }`}
+                                                style={{ padding: '2px 8px', fontSize: '0.75rem' }}
+                                            >
+                                                <Power size={11} />{' '}
+                                                {abilityBoostActive ? 'Deactivate Boost' : 'Activate Boost'}
+                                            </button>
+                                        )}
                                     </div>
                                 )}
 

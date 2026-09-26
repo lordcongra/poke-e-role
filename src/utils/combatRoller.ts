@@ -111,9 +111,10 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
 
     // Stack native Low Accuracy with dynamic Low Accuracy injected via Tags
     let baseLowAccuracy = itemBuffs.addLowAcc;
-    const lowAccuracyMatch = moveDescription.match(/low accuracy\s*(\d+)/i);
+    const lowAccuracyMatch = moveDescription.match(/\[?\s*low acc(?:uracy)?\s*([+-]?\s*\d+)?\s*\]?/i);
     if (lowAccuracyMatch) {
-        baseLowAccuracy += parseInt(lowAccuracyMatch[1]) || 0;
+        const val = lowAccuracyMatch[1] ? Math.abs(parseInt(lowAccuracyMatch[1].replace(/\s/g, '')) || 1) : 1;
+        baseLowAccuracy += val;
     }
 
     if (baseLowAccuracy > 0) {
