@@ -6,6 +6,7 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
     moves: [],
     skillChecks: [],
     pendingDualScale: null,
+    wishlist: [],
 
     setPendingDualScale: (data) => set({ pendingDualScale: data }),
 
@@ -287,5 +288,44 @@ export const createMovesSlice: StateCreator<CharacterState, [], [], MovesSlice> 
                 console.warn('[MovesSlice] Failed to save removed skill check to Owlbear.', e);
             }
             return { skillChecks: newChecks };
+        }),
+    addToWishlist: (moveName) =>
+        set((state) => {
+            const clean = moveName.trim();
+            if (!clean) return state;
+            if (state.wishlist.some((m) => m.toLowerCase() === clean.toLowerCase())) return state;
+            const newWishlist = [...state.wishlist, clean];
+            try {
+                saveToOwlbear({ 'moves-wishlist-data': JSON.stringify(newWishlist) });
+            } catch (e) {
+                console.warn('[MovesSlice] Failed to save wishlist to Owlbear.', e);
+            }
+            return { wishlist: newWishlist };
+        }),
+    removeFromWishlist: (moveName) =>
+        set((state) => {
+            const clean = moveName.trim().toLowerCase();
+            const newWishlist = state.wishlist.filter((m) => m.toLowerCase() !== clean);
+            try {
+                saveToOwlbear({ 'moves-wishlist-data': JSON.stringify(newWishlist) });
+            } catch (e) {
+                console.warn('[MovesSlice] Failed to save wishlist to Owlbear.', e);
+            }
+            return { wishlist: newWishlist };
+        }),
+    toggleWishlist: (moveName) =>
+        set((state) => {
+            const clean = moveName.trim();
+            if (!clean) return state;
+            const exists = state.wishlist.some((m) => m.toLowerCase() === clean.toLowerCase());
+            const newWishlist = exists
+                ? state.wishlist.filter((m) => m.toLowerCase() !== clean.toLowerCase())
+                : [...state.wishlist, clean];
+            try {
+                saveToOwlbear({ 'moves-wishlist-data': JSON.stringify(newWishlist) });
+            } catch (e) {
+                console.warn('[MovesSlice] Failed to save wishlist to Owlbear.', e);
+            }
+            return { wishlist: newWishlist };
         })
 });

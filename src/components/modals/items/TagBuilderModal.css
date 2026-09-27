@@ -5,7 +5,7 @@
     right: 0;
     bottom: 0;
     background-color: color-mix(in srgb, var(--dark) 70%, transparent);
-    z-index: 1050;
+    z-index: 1600;
     display: flex;
     justify-content: center;
     align-items: center;

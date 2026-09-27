@@ -137,14 +137,94 @@
     margin: 0;
 }
 
+.moves-table__learnset-wishlist-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    background: #f59e0b;
+    color: #000;
+    border-radius: 10px;
+    padding: 0 5px;
+    line-height: 1.3;
+    margin-left: 2px;
+}
+
 .moves-table__learnset-container {
     border: 1px solid var(--border);
     padding: 8px;
     border-radius: 4px;
     background: var(--panel-alt);
     margin-top: 4px;
-    max-height: 200px;
+    max-height: 230px;
     overflow-y: auto;
+}
+
+.moves-table__learnset-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+}
+
+.moves-table__learnset-tabs {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.moves-table__learnset-tab-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s ease;
+}
+
+.moves-table__learnset-tab-btn:hover {
+    background: var(--panel-bg);
+    color: var(--text-main);
+}
+
+.moves-table__learnset-tab-btn--active {
+    background: var(--panel-bg);
+    border-color: var(--border);
+    color: var(--primary);
+}
+
+.moves-table__learnset-tab-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: #f59e0b;
+    color: #000;
+    border-radius: 8px;
+    padding: 0 4px;
+    line-height: 1.2;
+}
+
+.moves-table__learnset-close-icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 3px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.moves-table__learnset-close-icon-btn:hover {
+    background: var(--panel-bg);
+    color: var(--text-main);
 }
 
 .moves-table__learnset-rank-group {
@@ -191,6 +271,33 @@
 .moves-table__learnset-pill--learned {
     border-color: rgba(var(--primary-rgb, 59, 130, 246), 0.35);
     background: color-mix(in srgb, var(--primary) 14%, var(--label-bg));
+}
+
+.moves-table__learnset-pill--wishlisted {
+    border-color: rgba(245, 158, 11, 0.45);
+    background: color-mix(in srgb, #f59e0b 10%, var(--label-bg));
+}
+
+.moves-table__learnset-wishlist-btn {
+    background: transparent;
+    border: none;
+    border-right: 1px solid color-mix(in srgb, var(--border, rgba(255, 255, 255, 0.12)) 80%, transparent);
+    color: var(--text-muted);
+    padding: 3px 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.moves-table__learnset-wishlist-btn:hover {
+    color: #f59e0b;
+    background: color-mix(in srgb, #f59e0b 15%, transparent);
+}
+
+.moves-table__learnset-wishlist-btn--active {
+    color: #f59e0b;
 }
 
 .moves-table__learnset-name-btn {
@@ -243,9 +350,87 @@
     cursor: default;
 }
 
+.moves-table__learnset-remove-wishlist-btn {
+    background: transparent;
+    border: none;
+    border-left: 1px solid color-mix(in srgb, var(--border, rgba(255, 255, 255, 0.12)) 80%, transparent);
+    color: var(--text-muted);
+    padding: 3px 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.moves-table__learnset-remove-wishlist-btn:hover {
+    color: var(--semantic-danger, #ef4444);
+    background: color-mix(in srgb, #ef4444 15%, transparent);
+}
+
 .moves-table__learnset-pill-icon {
     color: var(--semantic-success, #4caf50);
     flex-shrink: 0;
+}
+
+.moves-table__wishlist-add-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.moves-table__wishlist-input {
+    flex: 1 1 0;
+    min-width: 0;
+    width: 0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    background: var(--input-bg, #1a1c23);
+    color: var(--text-main);
+    font-size: 0.8rem;
+    outline: none;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
+}
+
+.moves-table__wishlist-input:focus {
+    border-color: var(--primary);
+}
+
+.moves-table__wishlist-add-submit-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .moves-table__wishlist-add-text {
+        display: none;
+    }
+    .moves-table__wishlist-add-submit-btn {
+        padding: 4px 8px;
+        min-width: 28px;
+    }
+}
+
+.moves-table__wishlist-empty {
+    text-align: center;
+    padding: 16px 8px;
+    color: var(--text-muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
 }
 
 .moves-table__modal-overlay {

@@ -25,6 +25,7 @@ export interface LocalFolder {
 export function isTrackedBackupChange(updates: Record<string, unknown>, existing?: Record<string, unknown>): boolean {
     const trackedDirectKeys = new Set([
         'moves-data',
+        'moves-wishlist-data',
         'skill-checks-data',
         'inv-data',
         'extra-skills-data',

@@ -12,7 +12,8 @@ import {
     Plus,
     Loader2,
     AlertCircle,
-    CheckCircle
+    CheckCircle,
+    Bookmark
 } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { TYPE_COLORS } from '../../../data/constants';
@@ -45,6 +46,8 @@ export function MoveDetailModal({ moveName, onClose }: MoveDetailModalProps) {
 
     // Global Store States
     const moves = useCharacterStore((state) => state.moves);
+    const wishlist = useCharacterStore((state) => state.wishlist || []);
+    const toggleWishlist = useCharacterStore((state) => state.toggleWishlist);
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
     const role = useCharacterStore((state) => state.role);
 
@@ -61,6 +64,13 @@ export function MoveDetailModal({ moveName, onClose }: MoveDetailModalProps) {
         const cleanName = move.name.toLowerCase().trim();
         return moves.some((m) => m.name.toLowerCase().trim() === cleanName);
     }, [moves, move]);
+
+    // Check if move is in wishlist
+    const isWishlisted = useMemo(() => {
+        if (!move) return false;
+        const cleanName = move.name.toLowerCase().trim();
+        return wishlist.some((m) => m.toLowerCase().trim() === cleanName);
+    }, [wishlist, move]);
 
     // Fetch move data on mount or when moveName changes
     useEffect(() => {
@@ -383,6 +393,19 @@ export function MoveDetailModal({ moveName, onClose }: MoveDetailModalProps) {
                             )}
 
                             <div className="move-detail-modal__secondary-actions">
+                                {/* Wishlist Toggle */}
+                                <button
+                                    type="button"
+                                    className={`action-button move-detail-modal__action-btn ${
+                                        isWishlisted ? 'action-button--theme' : 'action-button--dark'
+                                    }`}
+                                    onClick={() => move && toggleWishlist(move.name)}
+                                    title={isWishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'}
+                                >
+                                    <Bookmark size={14} fill={isWishlisted ? 'currentColor' : 'none'} />
+                                    {isWishlisted ? 'Wishlisted' : 'Wishlist'}
+                                </button>
+
                                 {/* Discord Copy */}
                                 <button
                                     type="button"

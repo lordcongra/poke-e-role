@@ -1,153 +1,176 @@
-import { useState, useMemo } from 'react';
-import { BookOpen, Check, Plus, Loader2 } from 'lucide-react';
+import { useState, useMemo, useCallback } from 'react';
+import { BookOpen, Bookmark, X } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { MoveDetailModal } from '../modals/moveLookup/MoveDetailModal';
 import { fetchMoveData } from '../../utils/api';
+import { LearnsetSection } from './learnset/LearnsetSection';
+import { WishlistSection } from './learnset/WishlistSection';
 
 interface MovesTableLearnsetProps {
     learnset: Array<{ Learned: string; Name: string }>;
 }
 
-export function MovesTableLearnset({ learnset }: MovesTableLearnsetProps) {
-    const [showLearnset, setShowLearnset] = useState(false);
+export function MovesTableLearnset({ learnset = [] }: MovesTableLearnsetProps) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState<'learnset' | 'wishlist'>('learnset');
     const [selectedMoveName, setSelectedMoveName] = useState<string | null>(null);
     const [addingMoves, setAddingMoves] = useState<Set<string>>(new Set());
 
     const characterMoves = useCharacterStore((state) => state.moves);
+    const wishlist = useCharacterStore((state) => state.wishlist || []);
+    const addToWishlist = useCharacterStore((state) => state.addToWishlist);
+    const removeFromWishlist = useCharacterStore((state) => state.removeFromWishlist);
+    const toggleWishlist = useCharacterStore((state) => state.toggleWishlist);
+
     const learnedSet = useMemo(
         () => new Set(characterMoves.map((m) => m.name.toLowerCase().trim()).filter(Boolean)),
         [characterMoves]
     );
 
-    const handleQuickAdd = async (moveName: string, e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (learnedSet.has(moveName.toLowerCase().trim()) || addingMoves.has(moveName)) return;
+    const wishlistSet = useMemo(() => new Set(wishlist.map((m) => m.toLowerCase().trim()).filter(Boolean)), [wishlist]);
 
-        setAddingMoves((prev) => new Set(prev).add(moveName));
-        try {
-            const store = useCharacterStore.getState();
-            const existingMoves = store.moves;
+    const handleQuickAdd = useCallback(
+        async (moveName: string, e: React.MouseEvent) => {
+            e.stopPropagation();
+            if (learnedSet.has(moveName.toLowerCase().trim()) || addingMoves.has(moveName)) return;
 
-            // Find an empty move slot or create a new slot
-            const emptySlot = existingMoves.find((m) => !m.name || m.name.trim() === '');
-            let targetId: string;
+            setAddingMoves((prev) => new Set(prev).add(moveName));
+            try {
+                const store = useCharacterStore.getState();
+                const existingMoves = store.moves;
 
-            if (emptySlot) {
-                targetId = emptySlot.id;
-            } else {
-                store.addMove();
-                const updatedMoves = useCharacterStore.getState().moves;
-                targetId = updatedMoves[updatedMoves.length - 1].id;
+                // Find an empty move slot or create a new slot
+                const emptySlot = existingMoves.find((m) => !m.name || m.name.trim() === '');
+                let targetId: string;
+
+                if (emptySlot) {
+                    targetId = emptySlot.id;
+                } else {
+                    store.addMove();
+                    const updatedMoves = useCharacterStore.getState().moves;
+                    targetId = updatedMoves[updatedMoves.length - 1].id;
+                }
+
+                const fullData = await fetchMoveData(moveName);
+                if (fullData) {
+                    store.applyMoveData(targetId, fullData as Record<string, unknown>);
+                } else {
+                    store.updateMove(targetId, 'name', moveName);
+                }
+            } catch (err) {
+                console.error('[MovesTableLearnset] Failed to quick-add move:', err);
+            } finally {
+                setAddingMoves((prev) => {
+                    const next = new Set(prev);
+                    next.delete(moveName);
+                    return next;
+                });
             }
-
-            const fullData = await fetchMoveData(moveName);
-            if (fullData) {
-                store.applyMoveData(targetId, fullData as Record<string, unknown>);
-            } else {
-                store.updateMove(targetId, 'name', moveName);
-            }
-        } catch (err) {
-            console.error('[MovesTableLearnset] Failed to quick-add move:', err);
-        } finally {
-            setAddingMoves((prev) => {
-                const next = new Set(prev);
-                next.delete(moveName);
-                return next;
-            });
-        }
-    };
-
-    if (learnset.length === 0) return null;
-
-    const groupedLearnset = learnset.reduce(
-        (accumulator, move) => {
-            if (!accumulator[move.Learned]) accumulator[move.Learned] = [];
-            accumulator[move.Learned].push(move.Name);
-            return accumulator;
         },
-        {} as Record<string, string[]>
+        [learnedSet, addingMoves]
     );
 
-    const rankOrder = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master', 'Champion', 'Other'];
-    const sortedRanks = Object.keys(groupedLearnset).sort((a, b) => {
-        let indexA = rankOrder.indexOf(a);
-        let indexB = rankOrder.indexOf(b);
-        if (indexA === -1) indexA = 99;
-        if (indexB === -1) indexB = 99;
-        return indexA - indexB;
-    });
+    const hasLearnset = learnset && learnset.length > 0;
+    const hasWishlist = wishlist && wishlist.length > 0;
+
+    // If neither learnset nor wishlist exists, hide section
+    if (!hasLearnset && !hasWishlist) return null;
 
     return (
         <div className="moves-table__learnset-section">
             <button
                 type="button"
-                onClick={() => setShowLearnset(!showLearnset)}
+                onClick={() => setIsOpen(!isOpen)}
                 className="action-button action-button--dark moves-table__learnset-toggle-btn text-theme-header"
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
             >
-                <BookOpen size={16} /> {showLearnset ? 'Hide Learnset' : 'View Learnset'}
+                {hasLearnset ? (
+                    <>
+                        <BookOpen size={16} /> {isOpen ? 'Hide Learnset' : 'View Learnset'}
+                    </>
+                ) : (
+                    <>
+                        <Bookmark size={16} /> {isOpen ? 'Hide Move Wishlist' : 'View Move Wishlist'}
+                    </>
+                )}
             </button>
-            {showLearnset && (
+
+            {/* Expanded Container */}
+            {isOpen && (
                 <div
                     className="moves-table__learnset-container text-label"
                     style={{ color: 'var(--text-main)', fontSize: '0.8rem' }}
                 >
-                    {sortedRanks.map((rank) => (
-                        <div key={rank} className="moves-table__learnset-rank-group">
-                            <div
-                                className="moves-table__learnset-rank-title text-title-primary"
-                                style={{ color: 'var(--primary)' }}
+                    {/* Header Bar with Tabs and Close Button */}
+                    <div className="moves-table__learnset-header-bar">
+                        <div className="moves-table__learnset-tabs">
+                            {hasLearnset && (
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('learnset')}
+                                    className={`moves-table__learnset-tab-btn ${
+                                        activeTab === 'learnset' ? 'moves-table__learnset-tab-btn--active' : ''
+                                    }`}
+                                >
+                                    <BookOpen size={13} /> Learnset
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('wishlist')}
+                                className={`moves-table__learnset-tab-btn ${
+                                    activeTab === 'wishlist' ? 'moves-table__learnset-tab-btn--active' : ''
+                                }`}
                             >
-                                {rank}
-                            </div>
-                            <div className="moves-table__learnset-moves-list">
-                                {groupedLearnset[rank].map((moveName, index) => {
-                                    const isLearned = learnedSet.has(moveName.toLowerCase().trim());
-                                    const isAdding = addingMoves.has(moveName);
-                                    return (
-                                        <div
-                                            key={`${rank}-${moveName}-${index}`}
-                                            className={`moves-table__learnset-pill text-subtext ${
-                                                isLearned ? 'moves-table__learnset-pill--learned' : ''
-                                            }`}
-                                        >
-                                            <button
-                                                type="button"
-                                                onClick={() => setSelectedMoveName(moveName)}
-                                                className="moves-table__learnset-name-btn"
-                                                title={
-                                                    isLearned
-                                                        ? `${moveName} (Learned) - Click to view details`
-                                                        : `Click to view ${moveName} details`
-                                                }
-                                            >
-                                                {isLearned && (
-                                                    <Check size={11} className="moves-table__learnset-pill-icon" />
-                                                )}
-                                                <span>{moveName}</span>
-                                            </button>
-                                            {!isLearned && (
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => handleQuickAdd(moveName, e)}
-                                                    className="moves-table__learnset-add-btn"
-                                                    disabled={isAdding}
-                                                    title={`Quick-add ${moveName} to move slots`}
-                                                    aria-label={`Quick-add ${moveName} to move slots`}
-                                                >
-                                                    {isAdding ? (
-                                                        <Loader2 size={11} className="animate-spin" />
-                                                    ) : (
-                                                        <Plus size={11} />
-                                                    )}
-                                                </button>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                                <Bookmark
+                                    size={13}
+                                    fill={wishlist.length > 0 ? '#f59e0b' : 'none'}
+                                    color={wishlist.length > 0 ? '#f59e0b' : 'currentColor'}
+                                />
+                                <span>Wishlist</span>
+                                {wishlist.length > 0 && (
+                                    <span className="moves-table__learnset-tab-badge">{wishlist.length}</span>
+                                )}
+                            </button>
                         </div>
-                    ))}
+
+                        <button
+                            type="button"
+                            onClick={() => setIsOpen(false)}
+                            className="moves-table__learnset-close-icon-btn"
+                            title="Close"
+                            aria-label="Close"
+                        >
+                            <X size={14} />
+                        </button>
+                    </div>
+
+                    {/* Learnset Tab */}
+                    {activeTab === 'learnset' && hasLearnset && (
+                        <LearnsetSection
+                            learnset={learnset}
+                            learnedSet={learnedSet}
+                            wishlistSet={wishlistSet}
+                            addingMoves={addingMoves}
+                            onSelectMove={setSelectedMoveName}
+                            onQuickAdd={handleQuickAdd}
+                            onToggleWishlist={toggleWishlist}
+                        />
+                    )}
+
+                    {/* Wishlist Tab */}
+                    {activeTab === 'wishlist' && (
+                        <WishlistSection
+                            wishlist={wishlist}
+                            learnedSet={learnedSet}
+                            addingMoves={addingMoves}
+                            onSelectMove={setSelectedMoveName}
+                            onQuickAdd={handleQuickAdd}
+                            onToggleWishlist={toggleWishlist}
+                            onRemoveWishlist={removeFromWishlist}
+                            onAddCustomMove={addToWishlist}
+                        />
+                    )}
                 </div>
             )}
 

@@ -155,6 +155,7 @@ export interface MovesSlice {
     moves: MoveData[];
     skillChecks: SkillCheck[];
     pendingDualScale: PendingDualScale | null;
+    wishlist: string[];
 
     setPendingDualScale: (data: PendingDualScale | null) => void;
     resolveDualScale: (
@@ -173,6 +174,9 @@ export interface MovesSlice {
     addSkillCheck: () => void;
     updateSkillCheck: <K extends keyof SkillCheck>(id: string, field: K, value: SkillCheck[K]) => void;
     removeSkillCheck: (id: string) => void;
+    addToWishlist: (moveName: string) => void;
+    removeFromWishlist: (moveName: string) => void;
+    toggleWishlist: (moveName: string) => void;
 }
 
 export interface InventorySlice {

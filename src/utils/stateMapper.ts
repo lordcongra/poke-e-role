@@ -131,6 +131,21 @@ function parseMoves(meta: Record<string, unknown>, parsedExtraCats: ExtraCategor
     }
 }
 
+function parseWishlist(meta: Record<string, unknown>): string[] {
+    try {
+        const raw = meta['moves-wishlist-data'] ?? meta['wishlist-data'] ?? meta['wishlist'];
+        if (!raw) return [];
+        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        if (Array.isArray(parsed)) {
+            return parsed.map((item) => String(item).trim()).filter(Boolean);
+        }
+        return [];
+    } catch (e) {
+        console.warn('[StateMapper] Failed to parse wishlist from metadata:', e);
+        return [];
+    }
+}
+
 function parseSkillChecks(meta: Record<string, unknown>, parsedExtraCats: ExtraCategory[]): SkillCheck[] {
     try {
         const rawChecks = meta['skill-checks-data'] ? JSON.parse(String(meta['skill-checks-data'])) : [];
@@ -491,6 +506,7 @@ export function hydrateStateFromMetadata(
 ): Partial<CharacterState> {
     const parsedExtraCats = parseExtraCategories(meta);
     const parsedMoves = parseMoves(meta, parsedExtraCats);
+    const parsedWishlist = parseWishlist(meta);
     const parsedChecks = parseSkillChecks(meta, parsedExtraCats);
     const parsedInv = parseInventory(meta);
     const parsedStatuses = parseStatuses(meta);
@@ -525,6 +541,7 @@ export function hydrateStateFromMetadata(
         socials: newSocials,
         skills: newSkills,
         moves: parsedMoves,
+        wishlist: parsedWishlist,
         skillChecks: parsedChecks,
         extraCategories: parsedExtraCats,
         inventory: parsedInv,
@@ -747,6 +764,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
 
         // --- JSON STRINGIFIED OBJECTS ---
         if (state.moves) flatMetadata['moves-data'] = JSON.stringify(state.moves);
+        if (state.wishlist) flatMetadata['moves-wishlist-data'] = JSON.stringify(state.wishlist);
         if (state.inventory) flatMetadata['inv-data'] = JSON.stringify(state.inventory);
         if (state.skillChecks) flatMetadata['skill-checks-data'] = JSON.stringify(state.skillChecks);
         if (state.extraCategories) flatMetadata['extra-skills-data'] = JSON.stringify(state.extraCategories);
