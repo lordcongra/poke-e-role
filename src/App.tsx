@@ -10,6 +10,7 @@ import { SkillsTable } from './components/tables/SkillsTable';
 import { ActionRolls } from './components/tables/ActionRolls';
 import { MovesTable } from './components/tables/MovesTable';
 import { InventoryTable } from './components/tables/InventoryTable';
+import { PassivesTable } from './components/tables/PassivesTable';
 import { TrackerSection } from './components/board/TrackerSection';
 import { TrainerBadges } from './components/board/TrainerBadges';
 import { PrintSheet } from './components/print/PrintSheet';
@@ -302,6 +303,7 @@ function App() {
                         {mode === 'Pokémon' && <TypeMatchups />}
                         <CoreTable />
                         <SocialTable />
+                        <PassivesTable />
                         {mode !== 'Pokémon' && <TrainerBadges />}
                     </div>
 

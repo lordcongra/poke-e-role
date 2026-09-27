@@ -1,4 +1,4 @@
-import type { MoveData, CharacterState, CustomAbility, InventoryItem, Rank } from '../store/storeTypes';
+import type { MoveData, CharacterState, CustomAbility, InventoryItem, PassiveItem, Rank } from '../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { parseCombatTags, type CombatBonuses } from './tagParser';
 
@@ -385,7 +385,20 @@ export function calculateTargetDefensesFromMeta(meta: Record<string, unknown>): 
         console.warn('[CombatMath] Failed to parse inventory for target defenses:', e);
     }
 
-    const invMods = parseCombatTags(inventory, []);
+    let passives: PassiveItem[] = [];
+    try {
+        if (Array.isArray(meta.passives)) {
+            passives = meta.passives as PassiveItem[];
+        } else if (Array.isArray(stateObj?.passives)) {
+            passives = stateObj.passives as PassiveItem[];
+        } else if (meta['passives-data']) {
+            passives = JSON.parse(String(meta['passives-data']));
+        }
+    } catch (e) {
+        console.warn('[CombatMath] Failed to parse passives for target defenses:', e);
+    }
+
+    const invMods = parseCombatTags(inventory, [], undefined, '', passives);
 
     let vitTotal = 2;
     let insTotal = 1;

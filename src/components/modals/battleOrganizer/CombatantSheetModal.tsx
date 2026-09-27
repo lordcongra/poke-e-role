@@ -11,6 +11,7 @@ import { IdentityHeader } from '../../identity/IdentityHeader';
 import { DerivedBoard } from '../../board/DerivedBoard';
 import { CoreTable } from '../../tables/CoreTable';
 import { SocialTable } from '../../tables/SocialTable';
+import { PassivesTable } from '../../tables/PassivesTable';
 import { TypeMatchups } from '../../board/TypeMatchups';
 import { SkillsTable } from '../../tables/SkillsTable';
 import { ActionRolls } from '../../tables/ActionRolls';
@@ -406,6 +407,7 @@ export function CombatantSheetModal({
                                     {mode === 'Pokémon' && <TypeMatchups />}
                                     <CoreTable />
                                     <SocialTable />
+                                    <PassivesTable />
                                     {mode !== 'Pokémon' && <TrainerBadges />}
                                 </div>
 

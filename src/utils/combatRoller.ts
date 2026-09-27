@@ -193,9 +193,14 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
         tags.push(`CANNOT BE EVADED`);
     }
 
-    if (itemBuffs.accItemNames.length > 0) {
-        const uniqueItems = Array.from(new Set(itemBuffs.accItemNames));
+    const pureItems = itemBuffs.accItemNames.filter((name) => !itemBuffs.accPassiveNames?.includes(name));
+    if (pureItems.length > 0) {
+        const uniqueItems = Array.from(new Set(pureItems));
         tags.push(`Item: ${uniqueItems.join(', ')}`);
+    }
+    if (itemBuffs.accPassiveNames && itemBuffs.accPassiveNames.length > 0) {
+        const uniquePassives = Array.from(new Set(itemBuffs.accPassiveNames));
+        tags.push(`Passive: ${uniquePassives.join(', ')}`);
     }
     if (itemBuffs.accAbilityNames && itemBuffs.accAbilityNames.length > 0) {
         const filteredAbilities = Array.from(new Set(itemBuffs.accAbilityNames)).filter(
@@ -381,7 +386,10 @@ export async function executeDamageRoll(
         tags.push(`POWDER: Grass-types are immune`);
     }
 
-    if (itemBuffs.dmgItemNames.length > 0) tags.push(`Item: ${itemBuffs.dmgItemNames.join(', ')}`);
+    const pureDmgItems = itemBuffs.dmgItemNames.filter((name) => !itemBuffs.dmgPassiveNames?.includes(name));
+    if (pureDmgItems.length > 0) tags.push(`Item: ${pureDmgItems.join(', ')}`);
+    if (itemBuffs.dmgPassiveNames && itemBuffs.dmgPassiveNames.length > 0)
+        tags.push(`Passive: ${itemBuffs.dmgPassiveNames.join(', ')}`);
     if (itemBuffs.dmgAbilityNames && itemBuffs.dmgAbilityNames.length > 0)
         tags.push(`Ability: ${itemBuffs.dmgAbilityNames.join(', ')}`);
 

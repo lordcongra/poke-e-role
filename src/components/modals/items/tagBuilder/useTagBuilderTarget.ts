@@ -12,8 +12,10 @@ export function useTagBuilderTarget(targetId: string, targetType: TagTargetType)
     const updateCustomItem = useCharacterStore((state) => state.updateCustomItem);
     const updateCustomForm = useCharacterStore((state) => state.updateCustomForm);
     const updateCustomStatus = useCharacterStore((state) => state.updateCustomStatus);
+    const updatePassive = useCharacterStore((state) => state.updatePassive);
 
     const inventory = useCharacterStore((state) => state.inventory);
+    const passives = useCharacterStore((state) => state.passives);
     const moves = useCharacterStore((state) => state.moves);
     const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
     const customMoves = useCharacterStore((state) => state.roomCustomMoves);
@@ -55,6 +57,10 @@ export function useTagBuilderTarget(targetId: string, targetType: TagTargetType)
         const hbStatus = customStatuses.find((s) => s.id === targetId);
         targetName = hbStatus?.name || 'Custom Status';
         currentRawText = hbStatus?.effects || '';
+    } else if (targetType === 'passive') {
+        const passive = passives.find((p) => p.id === targetId);
+        targetName = passive?.name || 'Passive';
+        currentRawText = passive?.desc || '';
     }
 
     const saveUpdatedTags = (newRawText: string) => {
@@ -64,6 +70,8 @@ export function useTagBuilderTarget(targetId: string, targetType: TagTargetType)
             updateMove(targetId, 'desc', newRawText);
         } else if (targetType === 'item') {
             updateInventoryItem(targetId, 'desc', newRawText);
+        } else if (targetType === 'passive') {
+            updatePassive(targetId, 'desc', newRawText);
         } else if (targetType === 'homebrew_ability') {
             updateCustomAbility(targetId, 'effect', newRawText);
         } else if (targetType === 'homebrew_move') {

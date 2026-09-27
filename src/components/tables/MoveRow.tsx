@@ -67,6 +67,7 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
     };
 
     const inventory = useCharacterStore((state) => state.inventory);
+    const passives = useCharacterStore((state) => state.passives);
     useCharacterStore((state) => state.will);
     useCharacterStore((state) => state.stats);
     useCharacterStore((state) => state.socials);
@@ -89,7 +90,7 @@ export const MoveRow = memo(function MoveRow({ move, skills, extraCategories, on
     useCharacterStore((state) => state.trackers.firstHitAcc);
 
     const abilityText = getAbilityText(ability, customAbilities);
-    const itemBuffs = parseCombatTags(inventory, extraCategories, move, abilityText);
+    const itemBuffs = parseCombatTags(inventory, extraCategories, move, abilityText, passives);
     const fullState = useCharacterStore.getState();
 
     const trackers = useCharacterStore((state) => state.trackers);

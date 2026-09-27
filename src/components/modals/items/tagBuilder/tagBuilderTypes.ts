@@ -6,7 +6,8 @@ export type TagTargetType =
     | 'homebrew_move'
     | 'homebrew_item'
     | 'homebrew_form'
-    | 'homebrew_status';
+    | 'homebrew_status'
+    | 'passive';
 
 export interface TagBuilderModalProps {
     targetId: string;

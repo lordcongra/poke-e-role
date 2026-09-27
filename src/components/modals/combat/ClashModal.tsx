@@ -19,7 +19,7 @@ export function ClashModal({ onClose }: ClashModalProps) {
         onClose();
         const state = useCharacterStore.getState();
         const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
-        const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+        const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText, state.passives);
 
         const statistic = isPhysical ? CombatStat.STR : CombatStat.SPE;
 

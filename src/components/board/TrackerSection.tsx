@@ -49,6 +49,7 @@ export function TrackerSection() {
     const derived = useCharacterStore((state) => state.derived);
     const activeStatuses = useCharacterStore((state) => state.statuses);
     const customStatuses = useCharacterStore((state) => state.roomCustomStatuses);
+    const passives = useCharacterStore((state) => state.passives);
 
     const [maneuver, setManeuver] = useState('none');
     const [showClashModal, setShowClashModal] = useState(false);
@@ -112,7 +113,7 @@ export function TrackerSection() {
     const handleEvadeRoll = () => {
         const state = useCharacterStore.getState();
         const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
-        const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+        const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText, state.passives);
 
         const dexTotal = calculateStatTotal(CombatStat.DEX, state, itemBuffs);
         const evadeTotal = calculateSkillTotal(Skill.EVASION, state, itemBuffs);
@@ -125,7 +126,7 @@ export function TrackerSection() {
 
         const state = useCharacterStore.getState();
         const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
-        const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+        const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText, state.passives);
 
         if (maneuver === 'ambush')
             rollGeneric(
@@ -196,7 +197,7 @@ export function TrackerSection() {
 
     const currentState = useCharacterStore.getState();
     const abilityTxt = getAbilityText(currentState.identity.ability, currentState.roomCustomAbilities);
-    const parsedGlobals = parseCombatTags(currentState.inventory, currentState.extraCategories, undefined, abilityTxt);
+    const parsedGlobals = parseCombatTags(currentState.inventory, currentState.extraCategories, undefined, abilityTxt, passives);
 
     const disableReactions = isMaxed || parsedGlobals.noReactions;
 
@@ -278,6 +279,25 @@ export function TrackerSection() {
         const abilityLabel = benefit ? `Ability: ${abilityName} (${benefit})` : `Ability: ${abilityName}`;
         conditions.push({ id: 'active-ability', label: abilityLabel, bg: '#2563eb', text: '#fff' });
     }
+
+    passives?.forEach((passive) => {
+        if (passive.active && passive.showInConditions) {
+            const rawTags = (passive.desc || '').match(/\[.*?\]/g);
+            let label = `Passive: ${passive.name || 'Passive'}`;
+            if (rawTags && rawTags.length > 0) {
+                const cleanedTags = rawTags.map((t) => t.replace(/[\[\]]/g, '').trim()).filter(Boolean);
+                if (cleanedTags.length > 0 && !passive.name.toLowerCase().includes(cleanedTags[0].toLowerCase())) {
+                    label = `Passive: ${passive.name || 'Passive'} (${cleanedTags.join(', ')})`;
+                }
+            }
+            conditions.push({
+                id: `passive-${passive.id}`,
+                label,
+                bg: '#0d9488',
+                text: '#fff'
+            });
+        }
+    });
 
     return (
         <CollapsingSection title="ROUND TRACKER" className="sheet-panel tracker-section">

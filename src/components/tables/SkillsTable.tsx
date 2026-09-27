@@ -25,6 +25,7 @@ export function SkillsTable() {
     const rankData = getRankPoints(currentRank);
 
     const inventory = useCharacterStore((state) => state.inventory);
+    const passives = useCharacterStore((state) => state.passives);
     const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
     const ability = useCharacterStore((state) => state.identity.ability);
     useCharacterStore((state) => state.identity.abilityActive);
@@ -45,7 +46,7 @@ export function SkillsTable() {
     const isSpecialTrainer = mode === 'Trainer (Special)';
 
     const abilityText = getAbilityText(ability, customAbilities);
-    const inventoryModifiers = parseCombatTags(inventory, extraCategories, undefined, abilityText);
+    const inventoryModifiers = parseCombatTags(inventory, extraCategories, undefined, abilityText, passives);
     const fullState = useCharacterStore.getState();
 
     return (

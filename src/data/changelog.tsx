@@ -22,10 +22,11 @@ import {
     UserCheck,
     Tag,
     Package,
-    Bookmark
+    Bookmark,
+    Sparkles
 } from 'lucide-react';
 
-export const CURRENT_VERSION = '3.6.6';
+export const CURRENT_VERSION = '3.6.7';
 
 export interface ChangelogHighlight {
     id: string;
@@ -126,6 +127,66 @@ export function getChangelogDiff(lastSeenVersion: string | null): ChangelogDiffR
 }
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
+    {
+        version: '3.6.7',
+        date: 'September 2026',
+        highlights: [
+            {
+                id: 'passives-system',
+                version: '3.6.7',
+                title: 'Passives System & Smart Tags',
+                icon: Sparkles,
+                badge: 'Sheet & Tags',
+                summary: 'Track permanent non-item perks, bonuses (like Rare Candy attribute increases), and feats with full Smart Tag math integration and optional Round Tracker condition visibility.',
+                details: (
+                    <div>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Dedicated Passives Table:</strong> Positioned conveniently right below the Social Attributes box, the Passives table lets you record permanent enhancements (such as a Rare Candy attribute bonus, campaign boons, or innate perks) without cluttering your inventory.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Full Sheet Math Integration:</strong> Passives use the exact same Smart Tag system as items and abilities. Any tags (e.g. <code>[Vit +1]</code>, <code>[Acc +1: Low Acc]</code>, <code>[gain temp hp 5]</code>, <code>[heal 1 round]</code>) are fully calculated into Core Attributes, Social Attributes, Skills, HP/Will maximums, Defenses, Move Accuracy & Damage dice, combat rolls, and Round Tracker triggers.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Active Toggles & Condition Visibility:</strong> Easily turn passives on or off with the active checkmark toggle. You can also toggle the eye icon to optionally display active passives directly inside the Round Tracker&apos;s Conditions section as a reminder.
+                        </p>
+                    </div>
+                )
+            }
+        ],
+        changes: [
+            <strong key="passives-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Sparkles size={16} /> Passives System & Smart Tags
+            </strong>,
+            <ul
+                key="passives-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>New Passives Table:</strong> Added an intuitive table right below Social Attributes with collapsible rows, active checkmark toggles, name, description/tags inputs, and reorder controls.
+                </li>
+                <li>
+                    <strong>Smart Tag Math Integration:</strong> All passive tags are automatically parsed across the entire sheet: attribute/skill bonuses, defense calculations, HP/Will bar maximums, move accuracy and damage modifiers, and round tracker events.
+                </li>
+                <li>
+                    <strong>Interactive Tag Builder Support:</strong> Build and insert Smart Tags directly on any passive with one click using the built-in Tag Builder modal.
+                </li>
+                <li>
+                    <strong>Round Tracker Condition Visibility:</strong> Toggle whether an active passive appears in the Round Tracker&apos;s Conditions banner with a single click (defaults to hidden to avoid clutter).
+                </li>
+                <li>
+                    <strong>Token Sync & Storage:</strong> Passives are stored directly in Owlbear Rodeo token metadata and sync live across all connected players and the GM organizer.
+                </li>
+            </ul>
+        ]
+    },
     {
         version: '3.6.6',
         date: 'September 2026',

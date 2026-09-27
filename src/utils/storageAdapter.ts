@@ -29,6 +29,7 @@ export function isTrackedBackupChange(updates: Record<string, unknown>, existing
         'moves-wishlist-data',
         'skill-checks-data',
         'inv-data',
+        'passives-data',
         'extra-skills-data',
         'extra-core',
         'extra-social',

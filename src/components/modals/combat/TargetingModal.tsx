@@ -49,8 +49,9 @@ export function TargetingModal({ move, baseDamage, onClose, onRoll }: TargetingM
     const isPhysicalMove = String(move.category).startsWith('Phys');
 
     const inventory = useCharacterStore((state) => state.inventory);
+    const passives = useCharacterStore((state) => state.passives);
     const extraCategories = useCharacterStore((state) => state.extraCategories);
-    const itemBuffs = parseCombatTags(inventory, extraCategories, move);
+    const itemBuffs = parseCombatTags(inventory, extraCategories, move, undefined, passives);
     const critDice = 2 + (itemBuffs.critDmg || 0);
 
     const bankedDice = (move.id && bankedAccDice[move.id]) || 0;

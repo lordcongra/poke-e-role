@@ -1,27 +1,26 @@
 import type { StateCreator } from 'zustand';
-import type { CharacterState, InventorySlice, InventoryItem, CustomInfo } from '../storeTypes';
+import type { CharacterState, PassivesSlice, PassiveItem } from '../storeTypes';
 import { saveToOwlbear } from '../../utils/obr';
 import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../../utils/combatUtils';
-import { imageManager } from '../../utils/imageManager';
 
-const syncHealthWill = (
+const syncHealthWillForPassives = (
     state: CharacterState,
-    newInventory: InventoryItem[],
+    newPassives: PassiveItem[],
     updatesToSave: Record<string, unknown>
 ) => {
     const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
-    const inventoryModifiers = parseCombatTags(newInventory, state.extraCategories, undefined, abilityText, state.passives);
-    const fakeState = { ...state, inventory: newInventory };
+    const modifiers = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText, newPassives);
+    const fakeState = { ...state, passives: newPassives };
 
     const newHealth = { ...state.health };
     const oldHpMax = newHealth.hpMax;
-    newHealth.hpMax = calculateMaxHp(fakeState, inventoryModifiers);
+    newHealth.hpMax = calculateMaxHp(fakeState, modifiers);
     if (newHealth.hpMax > oldHpMax) newHealth.hpCurr += newHealth.hpMax - oldHpMax;
     else if (newHealth.hpCurr > newHealth.hpMax) newHealth.hpCurr = newHealth.hpMax;
 
     const newWill = { ...state.will };
     const oldWillMax = newWill.willMax;
-    newWill.willMax = calculateMaxWill(fakeState, inventoryModifiers);
+    newWill.willMax = calculateMaxWill(fakeState, modifiers);
     if (newWill.willMax > oldWillMax) newWill.willCurr += newWill.willMax - oldWillMax;
     else if (newWill.willCurr > newWill.willMax) newWill.willCurr = newWill.willMax;
 
@@ -33,63 +32,59 @@ const syncHealthWill = (
     return { health: newHealth, will: newWill };
 };
 
-export const createInventorySlice: StateCreator<CharacterState, [], [], InventorySlice> = (set) => ({
-    inventory: [],
-    notes: '',
-    customInfo: [],
-    tp: 0,
-    currency: 0,
+export const createPassivesSlice: StateCreator<CharacterState, [], [], PassivesSlice> = (set) => ({
+    passives: [],
 
-    addInventoryItem: () =>
+    addPassive: () =>
         set((state) => {
-            const newInventory: InventoryItem[] = [
-                ...state.inventory,
-                { id: crypto.randomUUID(), qty: 1, name: '', desc: '', active: false }
+            const newPassives: PassiveItem[] = [
+                ...state.passives,
+                { id: crypto.randomUUID(), name: '', desc: '', active: true, showInConditions: false }
             ];
-            const updatesToSave: Record<string, unknown> = { 'inv-data': JSON.stringify(newInventory) };
-            const { health, will } = syncHealthWill(state, newInventory, updatesToSave);
+            const updatesToSave: Record<string, unknown> = { 'passives-data': JSON.stringify(newPassives) };
+            const { health, will } = syncHealthWillForPassives(state, newPassives, updatesToSave);
             try {
                 saveToOwlbear(updatesToSave);
             } catch (error) {
-                console.error('[InventorySlice] Failed to save added item to Owlbear:', error);
+                console.error('[PassivesSlice] Failed to save added passive to Owlbear:', error);
             }
-            return { inventory: newInventory, health, will };
+            return { passives: newPassives, health, will };
         }),
 
-    addSpecificInventoryItem: (item) =>
+    addSpecificPassive: (item) =>
         set((state) => {
-            const newInventory: InventoryItem[] = [
-                ...state.inventory,
+            const newPassives: PassiveItem[] = [
+                ...state.passives,
                 {
                     id: crypto.randomUUID(),
-                    qty: item.quantity ?? 1,
                     name: item.name || '',
-                    desc: item.description || '',
-                    active: item.active || false
+                    desc: item.desc || '',
+                    active: item.active !== false,
+                    showInConditions: item.showInConditions || false
                 }
             ];
-            const updatesToSave: Record<string, unknown> = { 'inv-data': JSON.stringify(newInventory) };
-            const { health, will } = syncHealthWill(state, newInventory, updatesToSave);
+            const updatesToSave: Record<string, unknown> = { 'passives-data': JSON.stringify(newPassives) };
+            const { health, will } = syncHealthWillForPassives(state, newPassives, updatesToSave);
             try {
                 saveToOwlbear(updatesToSave);
             } catch (error) {
-                console.error('[InventorySlice] Failed to save specific item to Owlbear:', error);
+                console.error('[PassivesSlice] Failed to save specific passive to Owlbear:', error);
             }
-            return { inventory: newInventory, health, will };
+            return { passives: newPassives, health, will };
         }),
 
-    updateInventoryItem: (id, field, value) =>
+    updatePassive: (id, field, value) =>
         set((state) => {
             let statusChanged = false;
             let newStatuses = [...state.statuses];
             let grantedTempHp = 0;
 
-            const newInventory = state.inventory.map((item) => {
-                if (item.id === id) {
-                    const updated = { ...item, [field]: value };
+            const newPassives = state.passives.map((passive) => {
+                if (passive.id === id) {
+                    const updated = { ...passive, [field]: value };
 
                     if (field === 'active') {
-                        const descriptionText = (item.desc || '').toLowerCase();
+                        const descriptionText = (passive.desc || '').toLowerCase();
 
                         if (value === true) {
                             const tempHpMatch = descriptionText.match(/\[\s*gain temp hp\s*(\d+)\s*\]/i);
@@ -166,13 +161,13 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
                             }
                         }
                     }
-                    return updated as InventoryItem;
+                    return updated as PassiveItem;
                 }
-                return item;
+                return passive;
             });
 
             const updatesToSave: Record<string, unknown> = {};
-            const { health, will } = syncHealthWill(state, newInventory, updatesToSave);
+            const { health, will } = syncHealthWillForPassives(state, newPassives, updatesToSave);
 
             if (grantedTempHp > health.temporaryHitPointsMax) {
                 health.temporaryHitPoints = grantedTempHp;
@@ -181,120 +176,55 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
                 updatesToSave['temporary-hit-points-max'] = grantedTempHp;
             }
 
-            updatesToSave['inv-data'] = JSON.stringify(newInventory);
+            updatesToSave['passives-data'] = JSON.stringify(newPassives);
             if (statusChanged) updatesToSave['status-list'] = JSON.stringify(newStatuses);
 
             try {
                 saveToOwlbear(updatesToSave);
             } catch (error) {
-                console.error('[InventorySlice] Failed to save updated item to Owlbear:', error);
+                console.error('[PassivesSlice] Failed to save updated passive to Owlbear:', error);
             }
-            return { inventory: newInventory, health, will, ...(statusChanged ? { statuses: newStatuses } : {}) };
+            return { passives: newPassives, health, will, ...(statusChanged ? { statuses: newStatuses } : {}) };
         }),
 
-    removeInventoryItem: (id) =>
+    removePassive: (id) =>
         set((state) => {
-            const itemToRemove = state.inventory.find((i) => i.id === id);
-            if (itemToRemove?.imageUrl && itemToRemove.imageUrl.startsWith('local-img:')) {
-                imageManager.deleteImage(itemToRemove.imageUrl).catch((error) => {
-                    console.error('[InventorySlice] Failed to delete item image from IndexedDB:', error);
-                });
-            }
-
-            const newInventory = state.inventory.filter((i) => i.id !== id);
-            const updatesToSave: Record<string, unknown> = { 'inv-data': JSON.stringify(newInventory) };
-            const { health, will } = syncHealthWill(state, newInventory, updatesToSave);
+            const newPassives = state.passives.filter((p) => p.id !== id);
+            const updatesToSave: Record<string, unknown> = { 'passives-data': JSON.stringify(newPassives) };
+            const { health, will } = syncHealthWillForPassives(state, newPassives, updatesToSave);
             try {
                 saveToOwlbear(updatesToSave);
             } catch (error) {
-                console.error('[InventorySlice] Failed to save removed item to Owlbear:', error);
+                console.error('[PassivesSlice] Failed to save removed passive to Owlbear:', error);
             }
-            return { inventory: newInventory, health, will };
+            return { passives: newPassives, health, will };
         }),
 
-    moveUpInventoryItem: (id) =>
+    moveUpPassive: (id) =>
         set((state) => {
-            const index = state.inventory.findIndex((i) => i.id === id);
+            const index = state.passives.findIndex((p) => p.id === id);
             if (index <= 0) return state;
-            const newInventory = [...state.inventory];
-            [newInventory[index - 1], newInventory[index]] = [newInventory[index], newInventory[index - 1]];
+            const newPassives = [...state.passives];
+            [newPassives[index - 1], newPassives[index]] = [newPassives[index], newPassives[index - 1]];
             try {
-                saveToOwlbear({ 'inv-data': JSON.stringify(newInventory) });
+                saveToOwlbear({ 'passives-data': JSON.stringify(newPassives) });
             } catch (error) {
-                console.error('[InventorySlice] Failed to save moved item to Owlbear:', error);
+                console.error('[PassivesSlice] Failed to save moved passive to Owlbear:', error);
             }
-            return { inventory: newInventory };
-        }),
-    moveDownInventoryItem: (id) =>
-        set((state) => {
-            const index = state.inventory.findIndex((i) => i.id === id);
-            if (index < 0 || index >= state.inventory.length - 1) return state;
-            const newInventory = [...state.inventory];
-            [newInventory[index + 1], newInventory[index]] = [newInventory[index], newInventory[index + 1]];
-            try {
-                saveToOwlbear({ 'inv-data': JSON.stringify(newInventory) });
-            } catch (error) {
-                console.error('[InventorySlice] Failed to save moved item to Owlbear:', error);
-            }
-            return { inventory: newInventory };
-        }),
-    setNotes: (text) =>
-        set(() => {
-            try {
-                saveToOwlbear({ notes: text });
-            } catch (error) {
-                console.error('[InventorySlice] Failed to save notes to Owlbear:', error);
-            }
-            return { notes: text };
+            return { passives: newPassives };
         }),
 
-    setTp: (val) =>
-        set(() => {
-            try {
-                saveToOwlbear({ 'training-points': val });
-            } catch (error) {
-                console.error('[InventorySlice] Failed to save TP to Owlbear:', error);
-            }
-            return { tp: val };
-        }),
-    setCurrency: (val) =>
-        set(() => {
-            try {
-                saveToOwlbear({ currency: val });
-            } catch (error) {
-                console.error('[InventorySlice] Failed to save currency to Owlbear:', error);
-            }
-            return { currency: val };
-        }),
-
-    addCustomInfo: () =>
+    moveDownPassive: (id) =>
         set((state) => {
-            const newInfo = [...state.customInfo, { id: crypto.randomUUID(), label: 'New Field', value: '' }];
+            const index = state.passives.findIndex((p) => p.id === id);
+            if (index < 0 || index >= state.passives.length - 1) return state;
+            const newPassives = [...state.passives];
+            [newPassives[index + 1], newPassives[index]] = [newPassives[index], newPassives[index + 1]];
             try {
-                saveToOwlbear({ 'custom-info-data': JSON.stringify(newInfo) });
+                saveToOwlbear({ 'passives-data': JSON.stringify(newPassives) });
             } catch (error) {
-                console.error('[InventorySlice] Failed to save custom info to Owlbear:', error);
+                console.error('[PassivesSlice] Failed to save moved passive to Owlbear:', error);
             }
-            return { customInfo: newInfo };
-        }),
-    updateCustomInfo: (id: string, field: keyof CustomInfo, value: string) =>
-        set((state) => {
-            const newInfo = state.customInfo.map((c) => (c.id === id ? { ...c, [field]: value } : c));
-            try {
-                saveToOwlbear({ 'custom-info-data': JSON.stringify(newInfo) });
-            } catch (error) {
-                console.error('[InventorySlice] Failed to save updated custom info to Owlbear:', error);
-            }
-            return { customInfo: newInfo };
-        }),
-    removeCustomInfo: (id: string) =>
-        set((state) => {
-            const newInfo = state.customInfo.filter((c) => c.id !== id);
-            try {
-                saveToOwlbear({ 'custom-info-data': JSON.stringify(newInfo) });
-            } catch (error) {
-                console.error('[InventorySlice] Failed to save removed custom info to Owlbear:', error);
-            }
-            return { customInfo: newInfo };
+            return { passives: newPassives };
         })
 });

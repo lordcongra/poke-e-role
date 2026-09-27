@@ -1,4 +1,4 @@
-import type { InventoryItem, MoveData, ExtraCategory } from '../store/storeTypes';
+import type { InventoryItem, PassiveItem, MoveData, ExtraCategory } from '../store/storeTypes';
 import { Skill } from '../types/enums';
 import { useCharacterStore } from '../store/useCharacterStore';
 import { getKnownAbility, getMaxBoost } from '../data/abilities/knownAbilities';
@@ -36,6 +36,9 @@ export interface CombatBonuses {
     itemNames: string[];
     accItemNames: string[];
     dmgItemNames: string[];
+    passiveNames: string[];
+    accPassiveNames: string[];
+    dmgPassiveNames: string[];
     abilityNames: string[];
     accAbilityNames: string[];
     dmgAbilityNames: string[];
@@ -737,7 +740,8 @@ export function parseCombatTags(
     inventory: InventoryItem[],
     extraCategories: ExtraCategory[],
     move?: MoveData,
-    abilityText: string = ''
+    abilityText: string = '',
+    passives?: PassiveItem[]
 ): CombatBonuses {
     const bonuses: CombatBonuses = {
         stats: {},
@@ -772,6 +776,9 @@ export function parseCombatTags(
         itemNames: [],
         accItemNames: [],
         dmgItemNames: [],
+        passiveNames: [],
+        accPassiveNames: [],
+        dmgPassiveNames: [],
         abilityNames: [],
         accAbilityNames: [],
         dmgAbilityNames: []
@@ -807,6 +814,13 @@ export function parseCombatTags(
     const itemsToParse = inventory
         .filter((item) => item.active)
         .map((item) => ({ name: item.name || '', desc: item.desc || '' }));
+
+    const effectivePassives = passives !== undefined ? passives : (state.passives || []);
+    effectivePassives
+        .filter((item) => item.active)
+        .forEach((item) => {
+            itemsToParse.push({ name: `Passive: ${item.name || 'Passive'}`, desc: item.desc || '' });
+        });
 
     if (state.identity.abilityActive !== false) {
         let desc = state.identity.abilityTags;
@@ -938,6 +952,20 @@ export function parseCombatTags(
             if (triggers.general || triggers.accuracy || triggers.damage) bonuses.abilityNames.push(cleanAbilityName);
             if (triggers.general || triggers.accuracy) bonuses.accAbilityNames.push(cleanAbilityName);
             if (triggers.general || triggers.damage) bonuses.dmgAbilityNames.push(cleanAbilityName);
+        } else if (name.startsWith('Passive:')) {
+            const cleanPassiveName = name.replace('Passive:', '').trim();
+            if (triggers.general || triggers.accuracy || triggers.damage) {
+                bonuses.itemNames.push(cleanPassiveName);
+                bonuses.passiveNames.push(cleanPassiveName);
+            }
+            if (triggers.general || triggers.accuracy) {
+                bonuses.accItemNames.push(cleanPassiveName);
+                bonuses.accPassiveNames.push(cleanPassiveName);
+            }
+            if (triggers.general || triggers.damage) {
+                bonuses.dmgItemNames.push(cleanPassiveName);
+                bonuses.dmgPassiveNames.push(cleanPassiveName);
+            }
         } else if (name && name !== 'Ability' && name !== 'Move' && name !== 'Active Form') {
             if (triggers.general || triggers.accuracy || triggers.damage) bonuses.itemNames.push(name);
             if (triggers.general || triggers.accuracy) bonuses.accItemNames.push(name);

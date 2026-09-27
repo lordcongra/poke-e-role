@@ -40,6 +40,7 @@ interface DualScaleDialogProps {
 function DualScaleDialog({ pendingDualScale, resolveDualScale }: DualScaleDialogProps) {
     const fullState = useCharacterStore.getState();
     const inventory = useCharacterStore((state) => state.inventory);
+    const passives = useCharacterStore((state) => state.passives);
     const customAbilities = useCharacterStore((state) => state.roomCustomAbilities);
     const ability = useCharacterStore((state) => state.identity.ability);
     const extraCategories = useCharacterStore((state) => state.extraCategories);
@@ -65,8 +66,8 @@ function DualScaleDialog({ pendingDualScale, resolveDualScale }: DualScaleDialog
 
     const abilityText = getAbilityText(ability, customAbilities);
     const itemBuffs = useMemo(
-        () => parseCombatTags(inventory, extraCategories, move, abilityText),
-        [inventory, extraCategories, move, abilityText]
+        () => parseCombatTags(inventory, extraCategories, move, abilityText, passives),
+        [inventory, extraCategories, move, abilityText, passives]
     );
 
     const [selectedAcc1, setSelectedAcc1] = useState<string | undefined>(pendingDualScale.acc1Options?.[0]);

@@ -51,6 +51,7 @@ export function MovesTable() {
     useCharacterStore((state) => state.trackers.firstHitDmg);
     useCharacterStore((state) => state.trackers.firstHitAcc);
     useCharacterStore((state) => state.stats);
+    const passives = useCharacterStore((state) => state.passives);
 
     const [targetingMove, setTargetingMove] = useState<MoveData | null>(null);
     const [deleteMoveId, setDeleteMoveId] = useState<string | null>(null);
@@ -65,7 +66,7 @@ export function MovesTable() {
 
     const state = useCharacterStore.getState();
     const abilityText = getAbilityText(ability, customAbilities);
-    const itemBuffs = parseCombatTags(state.inventory, extraCategories, undefined, abilityText);
+    const itemBuffs = parseCombatTags(state.inventory, extraCategories, undefined, abilityText, passives);
 
     // Completely abstracted Insight math!
     const insightTotal = calculateStatTotal(CombatStat.INS, state, itemBuffs);
@@ -121,7 +122,8 @@ export function MovesTable() {
             currentState.inventory,
             currentState.extraCategories,
             undefined,
-            abilityTxt
+            abilityTxt,
+            currentState.passives
         );
         const totalChance = trackers.globalChance + parsedItems.chance;
 

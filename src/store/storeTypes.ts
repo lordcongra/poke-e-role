@@ -8,6 +8,7 @@ import type {
     StatusItem,
     EffectItem,
     InventoryItem,
+    PassiveItem,
     CustomInfo,
     Badge,
     Trackers,
@@ -202,6 +203,21 @@ export interface InventorySlice {
     addCustomInfo: () => void;
     updateCustomInfo: (id: string, field: keyof CustomInfo, value: string) => void;
     removeCustomInfo: (id: string) => void;
+}
+
+export interface PassivesSlice {
+    passives: PassiveItem[];
+    addPassive: () => void;
+    addSpecificPassive: (passive: {
+        name: string;
+        desc: string;
+        active?: boolean;
+        showInConditions?: boolean;
+    }) => void;
+    updatePassive: <K extends keyof PassiveItem>(id: string, field: K, value: PassiveItem[K]) => void;
+    removePassive: (id: string) => void;
+    moveUpPassive: (id: string) => void;
+    moveDownPassive: (id: string) => void;
 }
 
 export interface TrackerSlice {
@@ -531,6 +547,7 @@ export interface CharacterState
         CoreSlice,
         MovesSlice,
         InventorySlice,
+        PassivesSlice,
         TrackerSlice,
         HomebrewSlice,
         ExtraSkillsSlice,

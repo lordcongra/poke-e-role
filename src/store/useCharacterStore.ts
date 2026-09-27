@@ -3,6 +3,7 @@ import type { CharacterState, Rank } from './storeTypes';
 import { createCoreSlice } from './slices/coreSlice';
 import { createMovesSlice } from './slices/movesSlice';
 import { createInventorySlice } from './slices/inventorySlice';
+import { createPassivesSlice } from './slices/passivesSlice';
 import { createTrackerSlice } from './slices/trackerSlice';
 import { createHomebrewSlice } from './slices/homebrewSlice';
 import { createExtraSkillsSlice } from './slices/extraSkillsSlice';
@@ -53,6 +54,7 @@ export const useCharacterStore = create<CharacterState>()((set, get, api) => ({
     ...createCoreSlice(set, get, api),
     ...createMovesSlice(set, get, api),
     ...createInventorySlice(set, get, api),
+    ...createPassivesSlice(set, get, api),
     ...createTrackerSlice(set, get, api),
     ...createHomebrewSlice(set, get, api),
     ...createExtraSkillsSlice(set, get, api),

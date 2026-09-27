@@ -41,6 +41,7 @@ export function DerivedBoard() {
     const setDerived = useCharacterStore((state) => state.setDerived);
 
     const inventory = useCharacterStore((state) => state.inventory);
+    const passives = useCharacterStore((state) => state.passives);
     const extraCategories = useCharacterStore((state) => state.extraCategories);
 
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
@@ -54,7 +55,7 @@ export function DerivedBoard() {
     const [showTempWillConfirm, setShowTempWillConfirm] = useState(false);
 
     const abilityText = getAbilityText(ability, customAbilities);
-    const inventoryModifiers = parseCombatTags(inventory, extraCategories, undefined, abilityText);
+    const inventoryModifiers = parseCombatTags(inventory, extraCategories, undefined, abilityText, passives);
     const fullState = useCharacterStore.getState();
 
     const dexTotal = calculateStatTotal(CombatStat.DEX, fullState, inventoryModifiers);

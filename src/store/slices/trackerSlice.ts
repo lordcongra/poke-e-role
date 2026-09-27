@@ -135,7 +135,7 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
     resetRound: () =>
         set((state) => {
             const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
-            const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText);
+            const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText, state.passives);
 
             const newHealth = { ...state.health };
             const newWill = { ...state.will };

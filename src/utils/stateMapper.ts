@@ -4,6 +4,7 @@ import type {
     SkillCheck,
     ExtraCategory,
     InventoryItem,
+    PassiveItem,
     StatusItem,
     EffectItem,
     CustomInfo,
@@ -187,6 +188,24 @@ function parseInventory(meta: Record<string, unknown>): InventoryItem[] {
         });
     } catch (e) {
         console.warn('[StateMapper] Failed to parse inventory from metadata:', e);
+        return [];
+    }
+}
+
+function parsePassives(meta: Record<string, unknown>): PassiveItem[] {
+    try {
+        const rawPassives = meta['passives-data'] ? JSON.parse(String(meta['passives-data'])) : [];
+        if (!Array.isArray(rawPassives)) return [];
+
+        return rawPassives.map((p: Record<string, unknown>) => ({
+            id: (p.id as string) || crypto.randomUUID(),
+            name: String(p.name || ''),
+            desc: String(p.desc || p.description || p.effect || ''),
+            active: p.active !== false && p.active !== 'false',
+            showInConditions: p.showInConditions === true || p.showInConditions === 'true'
+        }));
+    } catch (e) {
+        console.warn('[StateMapper] Failed to parse passives from metadata:', e);
         return [];
     }
 }
@@ -519,6 +538,7 @@ export function hydrateStateFromMetadata(
     const parsedWishlist = parseWishlist(meta);
     const parsedChecks = parseSkillChecks(meta, parsedExtraCats);
     const parsedInv = parseInventory(meta);
+    const parsedPassives = parsePassives(meta);
     const parsedStatuses = parseStatuses(meta);
     const parsedEffects = parseEffects(meta);
     const parsedCustomInfo = parseCustomInfo(meta);
@@ -555,6 +575,7 @@ export function hydrateStateFromMetadata(
         skillChecks: parsedChecks,
         extraCategories: parsedExtraCats,
         inventory: parsedInv,
+        passives: parsedPassives,
         statuses: parsedStatuses,
         effects: parsedEffects,
         customInfo: parsedCustomInfo
@@ -776,6 +797,7 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
         if (state.moves) flatMetadata['moves-data'] = JSON.stringify(state.moves);
         if (state.wishlist) flatMetadata['moves-wishlist-data'] = JSON.stringify(state.wishlist);
         if (state.inventory) flatMetadata['inv-data'] = JSON.stringify(state.inventory);
+        if (state.passives) flatMetadata['passives-data'] = JSON.stringify(state.passives);
         if (state.skillChecks) flatMetadata['skill-checks-data'] = JSON.stringify(state.skillChecks);
         if (state.extraCategories) flatMetadata['extra-skills-data'] = JSON.stringify(state.extraCategories);
         if (state.statuses) flatMetadata['status-list'] = JSON.stringify(state.statuses);

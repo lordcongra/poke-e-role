@@ -57,6 +57,14 @@ export interface InventoryItem {
     imageUrl?: string;
 }
 
+export interface PassiveItem {
+    id: string;
+    name: string;
+    desc: string;
+    active?: boolean;
+    showInConditions?: boolean;
+}
+
 export interface CustomInfo {
     id: string;
     label: string;
