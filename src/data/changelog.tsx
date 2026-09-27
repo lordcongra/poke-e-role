@@ -19,7 +19,8 @@ import {
     Layers,
     Sliders,
     Lock,
-    UserCheck
+    UserCheck,
+    Tag
 } from 'lucide-react';
 
 export const CURRENT_VERSION = '3.6.5';
@@ -128,46 +129,49 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
         date: 'September 2026',
         highlights: [
             {
-                id: 'gm-screen-clarifications-benchmarks',
+                id: 'gm-screen-rules-maneuvers',
                 version: '3.6.5',
-                title: 'GM Screen & Move Clarifications',
+                title: 'GM Screen: Rules & Maneuvers',
                 icon: BookOpen,
                 badge: 'GM Screen',
-                summary: 'Core Move Clarifications, Attribute Benchmarks, and streamlined categories.',
+                summary: 'Move clarifications, attribute benchmarks, trainer combat rules, switching, and core maneuvers.',
                 details: (
                     <div>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Move Clarifications & Mechanics:</strong> Added official Corebook rules clarifications for nuanced moves and interactions including <strong>Encore</strong>, <strong>Fling</strong> (held item damage table), <strong>Nature Power & Secret Power</strong> (environmental matrix), <strong>Natural Gift</strong> (berry flavors & typing), <strong>Snatch</strong>, <strong>Substitute Decoys</strong>, <strong>Hidden Power</strong> (Unown exception), and <strong>Narrative Move Usage</strong>.
+                            <strong>Move Clarifications & Benchmarks:</strong> Added official Corebook rule clarifications for nuanced moves (Encore, Fling item damage table, Nature/Secret Power environmental matrix, Natural Gift berry flavor typing, Snatch theft rules, Substitute Decoy protections, and Unown Hidden Power) alongside Strength (lifting capacity, 40–1500 lbs) and Dexterity (speed, 6–99 mph) narrative benchmark tables with Athletics scaling and pain penalty adjustments.
                         </p>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Attribute Benchmarks:</strong> Added narrative lifting capacity (Strength, 40–1500 lbs) and maximum speed (Dexterity, 6–99 mph) benchmark tables with Athletic skill scaling, carrying weight, and pain penalty adjustments.
+                            <strong>Trainer Action Economy & Positioning:</strong> Added comprehensive rules for Trainer Area vs. In the Fray positioning, initiative rolls (<code>1d6 + Dexterity + Alert</code>), command action counts, and the 5 Actions per Round limit.
                         </p>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Streamlined Category Tabs:</strong> Consolidated low-item categories into unified <strong>Status & Environment</strong> and <strong>Catching & Progression</strong> tabs for a cleaner, faster browsing experience.
+                            <strong>Tactical Switching & Maneuvers:</strong> Documented mid-round switching disorientation lockouts and optimal round-end swaps. Clarified human combat limitations (humans can Evade, but cannot Clash). Added a dedicated Maneuvers deck with quick-reference cards and broadcast triggers for all core maneuvers.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Streamlined Categories:</strong> Reorganized GM Screen tabs into unified <strong>Status & Environment</strong> and <strong>Catching & Progression</strong> tabs for a cleaner, faster browsing experience.
                         </p>
                     </div>
                 )
             },
             {
-                id: 'gm-screen-trainer-maneuvers',
+                id: 'upgraded-tag-builder',
                 version: '3.6.5',
-                title: 'Trainer Combat Rules & Maneuvers',
-                icon: UserCheck,
-                badge: 'Trainer Rules',
-                summary: 'Trainer action economy, fray vs. area positioning, switching & core maneuvers.',
+                title: 'Upgraded Tag Builder & Boosts',
+                icon: Tag,
+                badge: 'Tag Builder',
+                summary: 'Redesigned Tag Builder with category tabs, quick presets, stacking boost scaling, and live previews.',
                 details: (
                     <div>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Trainer Action Economy & Positioning:</strong> Added comprehensive rules for Trainer Area vs. In the Fray positioning, initiative rolls (<code>1d6 + Dexterity + Alert</code> when in the fray), command action counts, and the 5 Actions per Round limit.
+                            <strong>Modernized Tag Builder Interface:</strong> Completely redesigned the Tag Builder with an intuitive layout featuring category tabs (Attributes, Skills, Combat, Matchups, Mechanics, Turn-Based, Status), quick-select presets (+1 Stat, Stacking Boost, Type Dmg, Immunity, Half-HP Boost, High Crit), and instant chip selection.
                         </p>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Tactical Switching & Mid-Round Lockout:</strong> Documented switching mechanics (Area: 2 free switches then 1 action; Fray: costs an action on Trainer’s turn). Clarified the tactical reason why switching mid-round disorients Pokémon (preventing them from acting until the next round), making Round End the optimal window to swap or send out fainted replacements.
+                            <strong>Stacking Boosts & Custom Max Tiers:</strong> Added full support for tiered <code>@ Stacking Boost</code> (stepper 1–3) and custom caps (e.g. <code>@ Stacking Boost: 5</code>) with accurate per-tier combat roller scaling (+1 damage per stack) and tracker synchronization.
                         </p>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Humans in Combat & Clashing:</strong> Clarified that humans can Evade, but CANNOT Clash (because Clashing strictly requires using a Move, and Struggle is officially classified as a Maneuver).
+                            <strong>Crit Stacking & Super Luck:</strong> Added dedicated support and live explanations for <code>[Stacking High Crit]</code> vs standard <code>[High Crit]</code>. Standard High Critical does not stack by default in Pokerole; Stacking High Crit enables stacking with moves/items (like Razor Claw) for Super Luck and homebrew rules.
                         </p>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Dedicated Maneuvers Category:</strong> Added a dedicated Maneuvers deck with quick-reference cards and chat broadcast triggers for Struggle, Clash, Evasion, Grapple, Ambush, Cover an Ally, Help Another, Run Away, and Stabilize.
+                            <strong>Live Tag Preview & Standard Spinners:</strong> Added a real-time syntax preview card with plain-language mechanics explanations before appending tags, powered by standardized NumberSpinners with Shift+Click stepping.
                         </p>
                     </div>
                 )
@@ -225,6 +229,34 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 </li>
                 <li>
                     <strong>Dedicated Maneuvers Category:</strong> Added a dedicated Maneuvers section to the GM Screen with individual reference cards and chat broadcast triggers for all core maneuvers (Struggle, Clash, Evade, Cover an Ally, Grapple, Ambush, Help Another, Run Away, Stabilize).
+                </li>
+            </ul>,
+            <strong key="tag-builder-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Tag size={16} /> Tag Builder Modernization, Stacking Boosts & Crit Integration
+            </strong>,
+            <ul
+                key="tag-builder-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Modernized Tag Builder:</strong> Overhauled the Tag Builder modal with category tabs, quick presets, and clean chip selectors across abilities, items, moves, custom forms, and statuses.
+                </li>
+                <li>
+                    <strong>Stacking Boosts & Math Integration:</strong> Added full support for tiered <code>@ Stacking Boost</code> and custom <code>@ Stacking Boost: [N]</code> tags, fixing per-tier damage calculation scaling in the combat roller and tracker condition pill badges.
+                </li>
+                <li>
+                    <strong>Stacking High Crit & Rule Clarity:</strong> Added <code>[Stacking High Crit]</code> tag support with in-builder rule documentation for Super Luck and homebrew crit stacking.
+                </li>
+                <li>
+                    <strong>Live Preview & UI Spinners:</strong> Added real-time syntax and explanation previews, eliminated browser double-spinners using standard NumberSpinner components, and refactored the tag builder architecture into modular sub-components.
                 </li>
             </ul>
         ]
