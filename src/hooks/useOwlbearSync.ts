@@ -23,6 +23,15 @@ import { saveToOwlbear, setActiveTokenId, hasPendingUpdates, SCENE_SETTINGS_META
 import { assignInitiative } from '../utils/diceRoller';
 import { isStandaloneMode } from '../utils/storageAdapter';
 import { isBattleOrganizerOpen } from '../components/modals/battleOrganizer/battleOrganizerSettingsHelper';
+import {
+    initItemArtCatalog,
+    setItemArt,
+    getItemArt,
+    getRemoteShareableItemArt,
+    isRemoteShareableUrl,
+    mergeItemArt,
+    harvestTokensItemArt
+} from '../utils/itemArtCatalog';
 
 const METADATA_ID = STATS_META_ID;
 const ROOM_META_ID = 'pokerole-pmd-extension/room-settings';
@@ -48,9 +57,13 @@ export function useOwlbearSync() {
         let isMounted = true;
         let sceneFollowupTimeout: ReturnType<typeof setTimeout> | null = null;
         let sceneBadgeRefreshTimeout: ReturnType<typeof setTimeout> | null = null;
+        let itemArtHandshakeTimeout: ReturnType<typeof setTimeout> | null = null;
 
         // 1. Load Local Homebrew for this specific room immediately
         useCharacterStore.getState().loadHomebrewLocal();
+
+        // 2. Initialize Item Art Catalog (IndexedDB -> in-memory) for both Standalone and OBR
+        initItemArtCatalog().catch((e) => console.warn('[SyncEngine] Failed to init item art catalog:', e));
 
         // 🚨 Skip Owlbear bindings entirely if running as a standalone app!
         if (isStandaloneMode) {
@@ -64,6 +77,12 @@ export function useOwlbearSync() {
                 const role = await OBR.player.getRole();
                 const currentStore = useCharacterStore.getState();
                 currentStore.setTokenData(currentStore.tokenId || '', role);
+
+                // Passively harvest scene tokens for item art immediately upon ready
+                OBR.scene.items
+                    .getItems()
+                    .then(harvestTokensItemArt)
+                    .catch(() => {});
 
                 // 2. Load Room Settings and Room Rules FIRST, so roomDefaultScale is applied BEFORE any scene tokens are rendered
                 const mapRoomSettings = (sData: Record<string, unknown>) => ({
@@ -423,6 +442,80 @@ export function useOwlbearSync() {
                     OBR.broadcast.sendMessage(`${EXTENSION_ID}/homebrew-request`, {}, { destination: 'REMOTE' });
                 }
 
+                // 5. Setup Peer-to-Peer Item Art Sync Handshake
+                const unsubItemArtUpdate = OBR.broadcast.onMessage(`${EXTENSION_ID}/item-art-update`, (event) => {
+                    const data = event.data as { name?: string; imageUrl?: string };
+                    if (data && data.name && data.imageUrl) {
+                        setItemArt(data.name, data.imageUrl, true /* skipBroadcast */);
+                    }
+                });
+                unsubs.push(unsubItemArtUpdate);
+
+                const unsubItemArtRequest = OBR.broadcast.onMessage(`${EXTENSION_ID}/item-art-request`, () => {
+                    const catalog = getRemoteShareableItemArt();
+                    if (Object.keys(catalog).length > 0) {
+                        OBR.broadcast
+                            .sendMessage(`${EXTENSION_ID}/item-art-sync`, catalog, {
+                                destination: 'REMOTE'
+                            })
+                            .catch(() => {});
+                    }
+                });
+                unsubs.push(unsubItemArtRequest);
+
+                const unsubItemArtQuery = OBR.broadcast.onMessage(`${EXTENSION_ID}/item-art-query`, (event) => {
+                    const data = event.data as { name?: string };
+                    if (data && data.name) {
+                        const art = getItemArt(data.name);
+                        if (art && isRemoteShareableUrl(art)) {
+                            OBR.broadcast
+                                .sendMessage(
+                                    `${EXTENSION_ID}/item-art-update`,
+                                    { name: data.name, imageUrl: art },
+                                    { destination: 'REMOTE' }
+                                )
+                                .catch(() => {});
+                        }
+                    }
+                });
+                unsubs.push(unsubItemArtQuery);
+
+                const unsubItemArtSync = OBR.broadcast.onMessage(`${EXTENSION_ID}/item-art-sync`, (event) => {
+                    const catalog = event.data as Record<string, string>;
+                    if (catalog && typeof catalog === 'object') {
+                        mergeItemArt(catalog, true /* skipBroadcast */);
+                    }
+                });
+                unsubs.push(unsubItemArtSync);
+
+                // Proactively broadcast our shareable item art catalog to any active peers
+                const initialShareable = getRemoteShareableItemArt();
+                if (Object.keys(initialShareable).length > 0) {
+                    OBR.broadcast
+                        .sendMessage(`${EXTENSION_ID}/item-art-sync`, initialShareable, { destination: 'REMOTE' })
+                        .catch(() => {});
+                }
+
+                // Request item art catalog from active peers in the room
+                OBR.broadcast
+                    .sendMessage(`${EXTENSION_ID}/item-art-request`, {}, { destination: 'REMOTE' })
+                    .catch(() => {});
+
+                // Follow-up handshake request to catch late-arriving peers
+                itemArtHandshakeTimeout = setTimeout(() => {
+                    if (!isMounted) return;
+                    OBR.broadcast
+                        .sendMessage(`${EXTENSION_ID}/item-art-request`, {}, { destination: 'REMOTE' })
+                        .catch(() => {});
+
+                    const currentShareable = getRemoteShareableItemArt();
+                    if (Object.keys(currentShareable).length > 0) {
+                        OBR.broadcast
+                            .sendMessage(`${EXTENSION_ID}/item-art-sync`, currentShareable, { destination: 'REMOTE' })
+                            .catch(() => {});
+                    }
+                }, 1500);
+
                 const clearKnownTransforms = () => {
                     for (const key of Object.keys(knownTransforms)) {
                         delete knownTransforms[key];
@@ -438,6 +531,9 @@ export function useOwlbearSync() {
                                 (i.metadata[METADATA_ID] !== undefined ||
                                     i.metadata['pokerole-pmd-extension/stats'] !== undefined)
                         );
+
+                        // Passively harvest known item artwork from active scene tokens
+                        harvestTokensItemArt(allItems).catch(() => {});
                         for (const item of allItems) {
                             const meta = (item.metadata[METADATA_ID] ||
                                 item.metadata['pokerole-pmd-extension/stats']) as Record<string, unknown>;
@@ -571,6 +667,7 @@ export function useOwlbearSync() {
                     try {
                         const items = await OBR.scene.items.getItems([targetTokenId]);
                         if (items.length > 0) {
+                            harvestTokensItemArt(items).catch(() => {});
                             const tokenItem = items[0];
                             const rawMeta =
                                 tokenItem.metadata[METADATA_ID] || tokenItem.metadata['pokerole-pmd-extension/stats'];
@@ -750,6 +847,9 @@ export function useOwlbearSync() {
                             console.error('[SyncEngine] Failed to clean up orphaned graphics on token delete:', err)
                         );
                     }
+
+                    // Harvest item art from updated scene items
+                    harvestTokensItemArt(items).catch(() => {});
 
                     for (const item of items) {
                         const rawMeta = item.metadata[METADATA_ID] || item.metadata['pokerole-pmd-extension/stats'];
@@ -1003,6 +1103,7 @@ export function useOwlbearSync() {
             lastSceneItemIds.clear();
             if (sceneFollowupTimeout) clearTimeout(sceneFollowupTimeout);
             if (sceneBadgeRefreshTimeout) clearTimeout(sceneBadgeRefreshTimeout);
+            if (itemArtHandshakeTimeout) clearTimeout(itemArtHandshakeTimeout);
             unsubs.forEach((unsub) => unsub());
         };
     }, []);

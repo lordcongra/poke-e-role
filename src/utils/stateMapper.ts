@@ -13,6 +13,7 @@ import type {
 } from '../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { getKnownAbility } from '../data/abilities/knownAbilities';
+import { getItemArt } from './itemArtCatalog';
 
 // =========================================
 // OBR METADATA -> ZUSTAND HYDRATION PARSERS
@@ -168,14 +169,22 @@ function parseInventory(meta: Record<string, unknown>): InventoryItem[] {
         const rawInv = meta['inv-data'] ? JSON.parse(String(meta['inv-data'])) : [];
         if (!Array.isArray(rawInv)) return [];
 
-        return rawInv.map((i: Record<string, unknown>) => ({
-            id: (i.id as string) || crypto.randomUUID(),
-            qty: Number(i.qty !== undefined ? i.qty : 1),
-            name: String(i.name || i.Name || ''),
-            desc: String(i.desc || i.Description || i.Effect || ''),
-            active: i.active === true || i.active === 'true',
-            imageUrl: typeof i.imageUrl === 'string' ? i.imageUrl : undefined
-        }));
+        return rawInv.map((i: Record<string, unknown>) => {
+            const rawName = String(i.name || i.Name || '');
+            let imageUrl = typeof i.imageUrl === 'string' ? i.imageUrl : undefined;
+            if ((!imageUrl || imageUrl === 'none') && rawName) {
+                const known = getItemArt(rawName);
+                if (known) imageUrl = known;
+            }
+            return {
+                id: (i.id as string) || crypto.randomUUID(),
+                qty: Number(i.qty !== undefined ? i.qty : 1),
+                name: rawName,
+                desc: String(i.desc || i.Description || i.Effect || ''),
+                active: i.active === true || i.active === 'true',
+                imageUrl
+            };
+        });
     } catch (e) {
         console.warn('[StateMapper] Failed to parse inventory from metadata:', e);
         return [];

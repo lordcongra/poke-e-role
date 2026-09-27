@@ -3,6 +3,7 @@ import { useCharacterStore } from '../../../store/useCharacterStore';
 import { imageManager, autoCropTransparency } from '../../../utils/imageManager';
 import { lookupItemDetails } from '../../../utils/itemLookupUtils';
 import { KNOWN_ITEMS } from '../../../data/constants';
+import { setItemArt, getItemArt, useItemArt } from '../../../utils/itemArtCatalog';
 import { TagBuilderModal } from './TagBuilderModal';
 import { ItemImageSection } from './ItemImageSection';
 import { broadcastInfo } from '../../../utils/diceRoller';
@@ -44,6 +45,17 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
     const [isBroadcasted, setIsBroadcasted] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+    const knownArt = useItemArt(item?.name || localName);
+    const effectiveImageUrl =
+        item?.imageUrl && item.imageUrl !== 'none' ? item.imageUrl : item?.imageUrl !== 'none' ? knownArt : undefined;
+
+    // Automatically adopt known artwork if item has no image and art is discovered
+    useEffect(() => {
+        if (item && !item.imageUrl && item.imageUrl !== 'none' && knownArt) {
+            updateInventoryItem(item.id, 'imageUrl', knownArt);
+        }
+    }, [item?.id, item?.imageUrl, knownArt, updateInventoryItem]);
+
     // Keep localName synced if item updates externally
     useEffect(() => {
         if (item?.name !== undefined && item.name !== localName) {
@@ -56,8 +68,8 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
         let isMounted = true;
         let createdBlobUrl: string | null = null;
 
-        if (item?.imageUrl) {
-            imageManager.getImageUrl(item.imageUrl).then((url) => {
+        if (effectiveImageUrl && effectiveImageUrl !== 'none') {
+            imageManager.getImageUrl(effectiveImageUrl).then((url) => {
                 if (isMounted) {
                     setResolvedImageUrl(url);
                     if (url && url.startsWith('blob:')) {
@@ -75,18 +87,27 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
                 URL.revokeObjectURL(createdBlobUrl);
             }
         };
-    }, [item?.imageUrl]);
+    }, [effectiveImageUrl]);
+
+    const handleSafeClose = () => {
+        const value = (localName || item?.name || '').trim();
+        const currentImg = item?.imageUrl;
+        if (value && currentImg && currentImg !== 'none') {
+            setItemArt(value, currentImg);
+        }
+        onClose();
+    };
 
     // Handle Escape Key to close
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape' && !showTagBuilder && !showDeleteConfirm) {
-                onClose();
+                handleSafeClose();
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [onClose, showTagBuilder, showDeleteConfirm]);
+    }, [handleSafeClose, showTagBuilder, showDeleteConfirm]);
 
     if (!item) return null;
 
@@ -106,6 +127,10 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
             }
 
             updateInventoryItem(item.id, 'imageUrl', imgId);
+            const currentName = (localName || item.name).trim();
+            if (currentName) {
+                setItemArt(currentName, imgId);
+            }
         } catch (error) {
             console.error('[ItemEditModal] Failed to upload image:', error);
         } finally {
@@ -125,6 +150,10 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
                             imageManager.deleteImage(item.imageUrl).catch(() => {});
                         }
                         updateInventoryItem(item.id, 'imageUrl', selectedUrl);
+                        const currentName = (localName || item.name).trim();
+                        if (currentName) {
+                            setItemArt(currentName, selectedUrl);
+                        }
                     }
                 }
             }
@@ -141,6 +170,10 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
             imageManager.deleteImage(item.imageUrl).catch(() => {});
         }
         updateInventoryItem(item.id, 'imageUrl', trimmed);
+        const currentName = (localName || item.name).trim();
+        if (currentName) {
+            setItemArt(currentName, trimmed);
+        }
         setUrlText('');
         setShowUrlInput(false);
     };
@@ -153,7 +186,7 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
                 console.error('[ItemEditModal] Failed to delete image from IndexedDB:', error);
             }
         }
-        updateInventoryItem(item.id, 'imageUrl', undefined);
+        updateInventoryItem(item.id, 'imageUrl', 'none');
     };
 
     const handleApplyItemLookup = async (nameQuery: string, forceOverwrite = false) => {
@@ -174,6 +207,11 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
                         updateInventoryItem(item.id, 'desc', result.fullDescription);
                     }
                 }
+
+                const targetImg = result.imageUrl || getItemArt(result.name) || getItemArt(query);
+                if (targetImg && (!item.imageUrl || item.imageUrl === 'none')) {
+                    updateInventoryItem(item.id, 'imageUrl', targetImg);
+                }
             }
         } catch (e) {
             console.error('[ItemEditModal] Failed to lookup item info:', e);
@@ -186,9 +224,13 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
         const val = e.target.value;
         setLocalName(val);
 
-        // Instant auto-pull if exact match with known item
+        if (val.trim() && item.imageUrl && item.imageUrl !== 'none') {
+            setItemArt(val.trim(), item.imageUrl);
+        }
+
+        // Instant auto-pull if exact match with known item or catalog
         const trimmedLower = val.trim().toLowerCase();
-        if (KNOWN_ITEMS.some((k) => k.name.toLowerCase() === trimmedLower)) {
+        if (KNOWN_ITEMS.some((k) => k.name.toLowerCase() === trimmedLower) || Boolean(getItemArt(val))) {
             handleApplyItemLookup(val, false);
         }
     };
@@ -197,6 +239,14 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
         const value = localName.trim();
         if (value !== item.name) {
             updateInventoryItem(item.id, 'name', value);
+        }
+        if (value && (!item.imageUrl || item.imageUrl === 'none')) {
+            const art = getItemArt(value);
+            if (art) {
+                updateInventoryItem(item.id, 'imageUrl', art);
+            }
+        } else if (value && item.imageUrl && item.imageUrl !== 'none') {
+            setItemArt(value, item.imageUrl);
         }
         if (value && (value !== item.name || !item.desc.trim())) {
             await handleApplyItemLookup(value, false);
@@ -222,7 +272,7 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
     };
 
     return (
-        <div className="item-edit-modal__overlay" onClick={onClose} role="dialog" aria-modal="true">
+        <div className="item-edit-modal__overlay" onClick={handleSafeClose} role="dialog" aria-modal="true">
             <div className="item-edit-modal__dialog" onClick={(e) => e.stopPropagation()}>
                 {/* Accent Bar */}
                 <div className="item-edit-modal__accent-bar" />
@@ -231,7 +281,7 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
                 <button
                     type="button"
                     className="item-edit-modal__close-btn"
-                    onClick={onClose}
+                    onClick={handleSafeClose}
                     title="Close (Esc)"
                     aria-label="Close modal"
                 >
@@ -247,7 +297,7 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
                 <div className="item-edit-modal__body">
                     {/* Image Section */}
                     <ItemImageSection
-                        imageUrl={item.imageUrl}
+                        imageUrl={effectiveImageUrl !== 'none' ? effectiveImageUrl : undefined}
                         resolvedImageUrl={resolvedImageUrl}
                         itemName={item.name}
                         fileInputRef={fileInputRef}
@@ -387,7 +437,7 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
                     <button
                         type="button"
                         className="action-button action-button--theme text-theme-header"
-                        onClick={onClose}
+                        onClick={handleSafeClose}
                     >
                         Done
                     </button>
@@ -412,8 +462,7 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
                                 className="item-edit-modal__delete-text text-subtext"
                                 style={{ color: 'var(--text-main)' }}
                             >
-                                Are you sure you want to delete &ldquo;{item.name || 'this item'}&rdquo;? Any saved
-                                artwork will also be removed.
+                                Are you sure you want to delete &ldquo;{item.name || 'this item'}&rdquo;?
                             </p>
                             <div className="item-edit-modal__delete-actions">
                                 <button

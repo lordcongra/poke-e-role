@@ -2,6 +2,7 @@ import React, { useState, useEffect, memo } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { lookupItemDetails } from '../../utils/itemLookupUtils';
 import { imageManager } from '../../utils/imageManager';
+import { useItemArt, setItemArt, getItemArt } from '../../utils/itemArtCatalog';
 import type { InventoryItem } from '../../store/storeTypes';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { KNOWN_ITEMS } from '../../data/constants';
@@ -36,13 +37,24 @@ export const InventoryCard = memo(function InventoryCard({
     const [prevName, setPrevName] = useState(item.name);
     const [resolvedImg, setResolvedImg] = useState<string | null>(null);
 
+    const knownArt = useItemArt(item.name || localName);
+    const effectiveImageUrl =
+        item.imageUrl && item.imageUrl !== 'none' ? item.imageUrl : item.imageUrl !== 'none' ? knownArt : undefined;
+
+    // Automatically adopt known artwork if item has no image and art is discovered
+    useEffect(() => {
+        if (!item.imageUrl && item.imageUrl !== 'none' && knownArt) {
+            updateInventoryItem(item.id, 'imageUrl', knownArt);
+        }
+    }, [item.id, item.imageUrl, knownArt, updateInventoryItem]);
+
     // Resolve Image Blob / URL
     useEffect(() => {
         let isMounted = true;
         let createdBlobUrl: string | null = null;
 
-        if (item.imageUrl) {
-            imageManager.getImageUrl(item.imageUrl).then((url) => {
+        if (effectiveImageUrl && effectiveImageUrl !== 'none') {
+            imageManager.getImageUrl(effectiveImageUrl).then((url) => {
                 if (isMounted) {
                     setResolvedImg(url);
                     if (url && url.startsWith('blob:')) {
@@ -58,7 +70,7 @@ export const InventoryCard = memo(function InventoryCard({
             isMounted = false;
             if (createdBlobUrl) URL.revokeObjectURL(createdBlobUrl);
         };
-    }, [item.imageUrl]);
+    }, [effectiveImageUrl]);
 
     if (prevName !== item.name) {
         setPrevName(item.name);
@@ -81,6 +93,10 @@ export const InventoryCard = memo(function InventoryCard({
                         useCharacterStore.getState().updateInventoryItem(item.id, 'desc', result.fullDescription);
                     }
                 }
+                const targetImg = result.imageUrl || getItemArt(result.name) || getItemArt(query);
+                if (targetImg && (!item.imageUrl || item.imageUrl === 'none')) {
+                    useCharacterStore.getState().updateInventoryItem(item.id, 'imageUrl', targetImg);
+                }
             }
         } catch (e) {
             console.error('[InventoryCard] Failed to lookup item info:', e);
@@ -91,8 +107,12 @@ export const InventoryCard = memo(function InventoryCard({
         const val = event.target.value;
         setLocalName(val);
 
+        if (val.trim() && item.imageUrl && item.imageUrl !== 'none') {
+            setItemArt(val.trim(), item.imageUrl);
+        }
+
         const trimmedLower = val.trim().toLowerCase();
-        if (KNOWN_ITEMS.some((k) => k.name.toLowerCase() === trimmedLower)) {
+        if (KNOWN_ITEMS.some((k) => k.name.toLowerCase() === trimmedLower) || Boolean(getItemArt(val))) {
             handleApplyItemLookup(val, false);
         }
     };
@@ -101,6 +121,14 @@ export const InventoryCard = memo(function InventoryCard({
         const value = localName.trim();
         if (value !== item.name) {
             updateInventoryItem(item.id, 'name', value);
+        }
+        if (value && (!item.imageUrl || item.imageUrl === 'none')) {
+            const art = getItemArt(value);
+            if (art) {
+                updateInventoryItem(item.id, 'imageUrl', art);
+            }
+        } else if (value && item.imageUrl && item.imageUrl !== 'none') {
+            setItemArt(value, item.imageUrl);
         }
         if (value && (value !== item.name || !item.desc.trim())) {
             await handleApplyItemLookup(value, false);
@@ -182,7 +210,7 @@ export const InventoryCard = memo(function InventoryCard({
                     type="button"
                     className="inventory-item__thumb-btn"
                     onClick={() => onEditItem?.(item.id)}
-                    title={item.imageUrl ? 'Item Artwork (Click to edit)' : 'Add Item Artwork'}
+                    title={effectiveImageUrl ? 'Item Artwork (Click to edit)' : 'Add Item Artwork'}
                     aria-label="Item image"
                 >
                     {resolvedImg ? (

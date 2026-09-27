@@ -12,6 +12,7 @@ import { fetchPokemonData } from '../../utils/api';
 import { imageManager } from '../../utils/imageManager';
 import { downloadJson } from '../../utils/fileSystemHelpers';
 import { useSidebarTouchDrag, type TouchDragOverInfo } from './useSidebarTouchDrag';
+import { getAllItemArt, mergeItemArt, setItemArt } from '../../utils/itemArtCatalog';
 
 export type TreeItem = {
     id: string;
@@ -26,6 +27,7 @@ interface MasterBackupData {
     type?: string;
     folders?: Record<string, unknown>[];
     characters?: Array<{ id: string; metadata: Record<string, unknown> }>;
+    itemArt?: Record<string, string>;
 }
 
 export function useSidebarEngine() {
@@ -140,6 +142,23 @@ export function useSidebarEngine() {
         const store = useCharacterStore.getState();
         store.setTokenData(id, 'GM');
         store.loadFromOwlbear(meta);
+
+        // Harvest any item artwork from selected character into catalog
+        const rawInv = meta['inv-data'];
+        if (typeof rawInv === 'string') {
+            try {
+                const items = JSON.parse(rawInv);
+                if (Array.isArray(items)) {
+                    for (const it of items) {
+                        if (it?.name && it?.imageUrl) {
+                            setItemArt(it.name, it.imageUrl);
+                        }
+                    }
+                }
+            } catch {
+                // Ignore parse errors
+            }
+        }
 
         if (meta['species']) {
             try {
@@ -533,7 +552,14 @@ export function useSidebarEngine() {
         try {
             const chars = await storageAdapter.getLocalCharacters();
             const flds = await storageAdapter.getFolders();
-            const backup = { type: 'pokerole-master-backup', version: 1, characters: chars, folders: flds };
+            const artCatalog = getAllItemArt();
+            const backup = {
+                type: 'pokerole-master-backup',
+                version: 1,
+                characters: chars,
+                folders: flds,
+                itemArt: Object.keys(artCatalog).length > 0 ? artCatalog : undefined
+            };
 
             downloadJson(backup, `PokeRole_Master_Backup_${new Date().toISOString().split('T')[0]}.json`);
             markBackupComplete();
@@ -580,6 +606,11 @@ export function useSidebarEngine() {
         for (const char of data.characters || []) {
             localStorage.setItem(`pkr_char_${char.id}`, JSON.stringify(char.metadata));
         }
+
+        if (data.itemArt && typeof data.itemArt === 'object') {
+            mergeItemArt(data.itemArt, true);
+        }
+
         markBackupComplete();
         window.dispatchEvent(new Event('pkr-local-data-changed'));
         setPendingRestoreData(null);
@@ -601,6 +632,11 @@ export function useSidebarEngine() {
         for (const char of data.characters || []) {
             localStorage.setItem(`pkr_char_${char.id}`, JSON.stringify(char.metadata));
         }
+
+        if (data.itemArt && typeof data.itemArt === 'object') {
+            mergeItemArt(data.itemArt, true);
+        }
+
         markBackupComplete();
         window.dispatchEvent(new Event('pkr-local-data-changed'));
         setPendingRestoreData(null);

@@ -2,6 +2,7 @@ import type { CustomPokemon, CustomMove, CustomAbility, CustomItem } from '../st
 import { useCharacterStore } from '../store/useCharacterStore';
 import { isStandaloneMode } from './storageAdapter';
 import { fetchWithCache } from './apiClient';
+import { setItemArt, isValidItemArtUrl } from './itemArtCatalog';
 import type {
     LocalIndexItem,
     LocalDatasetIndex,
@@ -72,6 +73,15 @@ export function syncHomebrewToApi(
     homebrewMoves = moves;
     homebrewAbilities = abilities;
     homebrewItems = items;
+
+    // Automatically register all custom items with artwork into the item art catalog
+    if (Array.isArray(items)) {
+        for (const item of items) {
+            if (item && item.name && item.imageUrl && isValidItemArtUrl(item.imageUrl)) {
+                setItemArt(item.name, item.imageUrl);
+            }
+        }
+    }
 }
 
 export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
@@ -322,7 +332,7 @@ export async function fetchItemData(itemName: string): Promise<ItemApiResponse |
     const isGm = isUserGm();
     const custom = homebrewItems.find((i) => i.name.trim().toLowerCase() === cleanName);
     if (custom && (isGm || !custom.gmOnly)) {
-        return { Name: custom.name, Description: custom.description };
+        return { Name: custom.name, Description: custom.description, imageUrl: custom.imageUrl };
     }
 
     // 2. Check Local Dataset

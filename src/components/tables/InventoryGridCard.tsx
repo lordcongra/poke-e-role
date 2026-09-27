@@ -2,6 +2,7 @@ import { useState, useEffect, memo } from 'react';
 import type { InventoryItem } from '../../store/storeTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { imageManager } from '../../utils/imageManager';
+import { useItemArt } from '../../utils/itemArtCatalog';
 import { Check, Package, X } from 'lucide-react';
 import './InventoryGridCard.css';
 
@@ -21,12 +22,23 @@ export const InventoryGridCard = memo(function InventoryGridCard({
     const updateInventoryItem = useCharacterStore((state) => state.updateInventoryItem);
     const [resolvedImg, setResolvedImg] = useState<string | null>(null);
 
+    const knownArt = useItemArt(item.name);
+    const effectiveImageUrl =
+        item.imageUrl && item.imageUrl !== 'none' ? item.imageUrl : item.imageUrl !== 'none' ? knownArt : undefined;
+
+    // Automatically adopt known artwork if item has no image and art is discovered
+    useEffect(() => {
+        if (!item.imageUrl && item.imageUrl !== 'none' && knownArt) {
+            updateInventoryItem(item.id, 'imageUrl', knownArt);
+        }
+    }, [item.id, item.imageUrl, knownArt, updateInventoryItem]);
+
     useEffect(() => {
         let isMounted = true;
         let createdBlobUrl: string | null = null;
 
-        if (item.imageUrl) {
-            imageManager.getImageUrl(item.imageUrl).then((url) => {
+        if (effectiveImageUrl && effectiveImageUrl !== 'none') {
+            imageManager.getImageUrl(effectiveImageUrl).then((url) => {
                 if (isMounted) {
                     setResolvedImg(url);
                     if (url && url.startsWith('blob:')) {
@@ -44,7 +56,7 @@ export const InventoryGridCard = memo(function InventoryGridCard({
                 URL.revokeObjectURL(createdBlobUrl);
             }
         };
-    }, [item.imageUrl]);
+    }, [effectiveImageUrl]);
 
     return (
         <div

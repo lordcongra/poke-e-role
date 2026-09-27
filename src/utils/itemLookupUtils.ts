@@ -1,5 +1,8 @@
+import OBR from '@owlbear-rodeo/sdk';
 import { fetchItemData } from './api';
 import { KNOWN_ITEMS } from '../data/constants';
+import { getItemArt, harvestTokensItemArt } from './itemArtCatalog';
+import { isStandaloneMode } from './storageAdapter';
 
 export interface ItemLookupResult {
     found: boolean;
@@ -7,6 +10,7 @@ export interface ItemLookupResult {
     description: string;
     tags: string;
     fullDescription: string;
+    imageUrl?: string;
 }
 
 /**
@@ -41,12 +45,34 @@ export async function lookupItemDetails(rawName: string): Promise<ItemLookupResu
 
     const found = Boolean(data || knownItemMatch);
     const canonicalName = data?.Name || knownItemMatch?.name || trimmed;
+    let knownArt = getItemArt(canonicalName) || getItemArt(trimmed);
+
+    // If artwork is not yet cached in memory and we are in Owlbear Rodeo,
+    // actively harvest scene tokens and query connected peers for this item
+    if (!knownArt && OBR.isAvailable && !isStandaloneMode) {
+        try {
+            const sceneTokens = await OBR.scene.items.getItems();
+            await harvestTokensItemArt(sceneTokens);
+            knownArt = getItemArt(canonicalName) || getItemArt(trimmed);
+        } catch {}
+
+        try {
+            OBR.broadcast
+                .sendMessage(
+                    'pokerole-pmd-extension/item-art-query',
+                    { name: canonicalName },
+                    { destination: 'REMOTE' }
+                )
+                .catch(() => {});
+        } catch {}
+    }
 
     return {
         found,
         name: canonicalName,
         description: descText,
         tags,
-        fullDescription
+        fullDescription,
+        imageUrl: knownArt
     };
 }

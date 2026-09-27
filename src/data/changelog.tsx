@@ -20,10 +20,12 @@ import {
     Sliders,
     Lock,
     UserCheck,
-    Tag
+    Tag,
+    Package,
+    Bookmark
 } from 'lucide-react';
 
-export const CURRENT_VERSION = '3.6.5';
+export const CURRENT_VERSION = '3.6.6';
 
 export interface ChangelogHighlight {
     id: string;
@@ -124,6 +126,97 @@ export function getChangelogDiff(lastSeenVersion: string | null): ChangelogDiffR
 }
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
+    {
+        version: '3.6.6',
+        date: 'September 2026',
+        highlights: [
+            {
+                id: 'bag-grid-and-move-wishlist',
+                version: '3.6.6',
+                title: 'Bag Overhaul & Move Wishlist',
+                icon: Package,
+                badge: 'Bag & Moves',
+                summary: 'Visual Card Grid view with S/M/L scaling, custom item artwork, and Learnset Move Wishlists.',
+                details: (
+                    <div>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Visual Bag & Card Grid View:</strong> Toggle your Bag between the classic compact table and a dynamic Card Grid view with customizable card scaling (Small, Medium, Large density), plus quick hover deletion with safety double-confirmation.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Automatic Item Artwork Sync:</strong> Whenever an item&apos;s artwork is set using an Owlbear Rodeo asset or web link, that image is automatically memorized and synced across all characters and teammates in the room! If anyone adds the same item, it automatically adopts the artwork. You can also pre-assign artwork to custom items directly in the Homebrew Workshop so they sync to all players seamlessly. (Note: local uploads from your device stay private to your own device, while OBR Library images and web URLs sync to everyone).
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Learnset Move Wishlist:</strong> Bookmark desired or future moves directly in your Pokémon&apos;s Learnset modal with a 1-click star/wishlist toggle, or add custom wishlist moves to plan your build progression ahead of time.
+                        </p>
+                    </div>
+                )
+            }
+        ],
+        changes: [
+            <strong key="bag-grid-view-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Package size={16} /> Inventory & Bag Overhaul
+            </strong>,
+            <ul
+                key="bag-grid-view-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Card Grid View:</strong> Added a toggle between the classic list/table view and an interactive Card Grid view with custom artwork previews, item badges, and quantity overlays.
+                </li>
+                <li>
+                    <strong>Card Scaling Options:</strong> Choose between Small, Medium, and Large grid card density scaling presets to tailor item display to your screen size and preference.
+                </li>
+                <li>
+                    <strong>Custom Item Artwork:</strong> Upload local images directly to IndexedDB, pick cloud assets straight from your Owlbear Rodeo image library, or link external URLs, complete with teammate visibility indicators.
+                </li>
+                <li>
+                    <strong>Automatic Table-Wide Artwork Sync:</strong> Item images set via Owlbear Rodeo assets or web links automatically sync across all sheets and connected players. When an item name is added or typed on any sheet, it instantly adopts the known artwork without needing to re-upload.
+                </li>
+                <li>
+                    <strong>Homebrew Item Artwork:</strong> Pre-assign custom artwork to homebrew items in the Homebrew Workshop so all players in the campaign automatically receive the icon when using or adding the item.
+                </li>
+                <li>
+                    <strong>Hover Deletion Safeguards:</strong> Added quick hover delete buttons with confirmation safeguards directly on item cards.
+                </li>
+                <li>
+                    <strong>Mobile & Layout Refinements:</strong> Polished mobile inventory action buttons, centered headers, and refined tooltips and modal spacing.
+                </li>
+            </ul>,
+            <strong key="learnset-wishlist-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Bookmark size={16} /> Learnset Move Wishlist & Bookmarking
+            </strong>,
+            <ul
+                key="learnset-wishlist-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>1-Click Move Wishlist:</strong> Star any move directly from the species Learnset table to bookmark it for future rank-ups and leveling.
+                </li>
+                <li>
+                    <strong>Custom Wishlist Moves:</strong> Add custom or homebrew wishlist moves with custom rank assignments, target categories, and notes.
+                </li>
+                <li>
+                    <strong>Dedicated Wishlist Tab & Quick Action:</strong> Quickly view and manage all bookmarked moves in the dedicated Wishlist section of the Learnset modal.
+                </li>
+            </ul>
+        ]
+    },
     {
         version: '3.6.5',
         date: 'September 2026',
@@ -279,24 +372,6 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                         </p>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
                             <strong>Global & Room X/Y Offset Controls:</strong> Added dedicated <strong>Global Offsets (X / Y)</strong> and <strong>Room Offset Override (X / Y)</strong> controls to the <strong>Room Rules & Permissions</strong> menu. GMs can now set baseline X and Y pixel shifts for all tokens across the entire room or override them per scene map, with quick -10/+10 stepping buttons and 1-click resets.
-                        </p>
-                    </div>
-                )
-            },
-            {
-                id: 'attribute-sheet-locking',
-                version: '3.6.4',
-                title: 'Attribute Sheet Locking',
-                icon: Lock,
-                badge: 'Sheet Security',
-                summary: 'Prevent accidental stat edits with interactive lock toggles.',
-                details: (
-                    <div>
-                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Attribute Sheet Locking:</strong> Added interactive lock toggles to the headers of both the Core Attributes and Social Attributes tables. When locked (the default state), Base and Limit spinners are disabled to prevent players from accidentally incrementing base stats instead of allocating ranks with their stat points. Players can still freely allocate rank points while locked.
-                        </p>
-                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>GM-Only Attribute Lock Rule:</strong> Added a new permission setting in <strong>Room Rules & Permissions</strong> (<strong>Attribute Locking</strong>, defaulting to GM-Only). When enabled, players cannot unlock their sheet's base attributes unless the GM unlocks it for them or sets the rule to Everyone.
                         </p>
                     </div>
                 )

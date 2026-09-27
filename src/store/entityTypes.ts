@@ -223,6 +223,7 @@ export interface CustomItem {
     category?: string;
     rarity?: string;
     gmOnly?: boolean;
+    imageUrl?: string;
 }
 
 export interface CustomMove {

@@ -1,6 +1,7 @@
 import OBR from '@owlbear-rodeo/sdk';
 import { waitForObr } from './obrHelpers';
 import { CombatStat, SocialStat, Skill } from '../types/enums';
+import { setItemArt } from './itemArtCatalog';
 
 export const isStandaloneMode = window.self === window.top;
 
@@ -153,6 +154,21 @@ export const storageAdapter = {
                     markDataChanged();
                 }
                 notifyChange();
+
+                // Passively harvest any inventory artwork updates into the catalog
+                if (updates['inv-data']) {
+                    try {
+                        const rawInv = updates['inv-data'];
+                        const items = typeof rawInv === 'string' ? JSON.parse(rawInv) : rawInv;
+                        if (Array.isArray(items)) {
+                            for (const it of items) {
+                                if (it && it.name && it.imageUrl && it.imageUrl !== 'none') {
+                                    setItemArt(it.name, it.imageUrl);
+                                }
+                            }
+                        }
+                    } catch {}
+                }
             } catch (error) {
                 console.error('[storageAdapter] Failed to save character', error);
                 throw error;

@@ -327,7 +327,6 @@ export function InventoryTable() {
                                     style={{ color: 'var(--text-main)', fontSize: '0.9rem' }}
                                 >
                                     Are you sure you want to delete &ldquo;{itemToDelete?.name || 'this Item'}&rdquo;?
-                                    Any saved artwork will also be removed.
                                 </p>
                                 <div className="inventory-table__modal-actions">
                                     <button

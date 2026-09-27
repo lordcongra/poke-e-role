@@ -99,6 +99,8 @@ export interface ItemApiResponse {
     forPokemon?: string;
     ForTypes?: string;
     forTypes?: string;
+    imageUrl?: string;
+    Image?: string;
 }
 
 export interface NatureApiResponse {
