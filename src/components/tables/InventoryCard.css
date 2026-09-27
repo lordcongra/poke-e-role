@@ -1,0 +1,237 @@
+/* =========================================
+   🎒 INVENTORY CARD (MOBILE VIEW)
+   ========================================= */
+
+.inventory-card {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 9px 11px;
+    margin-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--dark) 8%, transparent);
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease,
+        box-shadow 0.2s ease;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.inventory-card--active {
+    border-color: color-mix(in srgb, var(--primary) 50%, var(--border));
+    border-left: 4px solid var(--primary);
+    background: color-mix(in srgb, var(--primary) 5%, var(--panel-bg));
+    box-shadow: 0 2px 6px color-mix(in srgb, var(--primary) 15%, transparent);
+}
+
+/* --- Header Row --- */
+.inventory-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Equip Toggle Badge */
+.inventory-card__equip-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--panel-alt);
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.inventory-card__equip-checkbox {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+.inventory-card__equip-icon {
+    color: var(--text-muted);
+    opacity: 0.4;
+    transition: all 0.2s ease;
+}
+
+.inventory-card__equip-badge--active {
+    background: color-mix(in srgb, var(--primary) 18%, var(--panel-bg));
+    border-color: var(--primary);
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.inventory-card__equip-badge--active .inventory-card__equip-icon {
+    color: var(--primary);
+    opacity: 1;
+}
+
+/* Quantity Group */
+.inventory-card__qty-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.inventory-card__qty-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.inventory-card .number-spinner {
+    height: 28px;
+    border: 1px solid var(--border);
+    background: var(--panel-bg);
+}
+
+.inventory-card .number-spinner__button {
+    width: 26px !important;
+    height: 100%;
+    cursor: pointer;
+}
+
+.inventory-card .number-spinner__button svg {
+    width: 14px;
+    height: 14px;
+}
+
+.inventory-card .number-spinner__input {
+    font-size: 0.95rem;
+    padding: 0 4px;
+}
+
+/* Header Actions (Sort & Delete) */
+.inventory-card__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.inventory-card__sort-buttons {
+    display: flex;
+    gap: 3px;
+}
+
+.inventory-card__sort-btn {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.inventory-card__delete-btn {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    color: var(--semantic-danger);
+    transition: all 0.2s ease;
+}
+
+.inventory-card__delete-btn:hover {
+    background: color-mix(in srgb, var(--semantic-danger) 18%, transparent);
+}
+
+/* --- Name Row --- */
+.inventory-card__name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+}
+
+.inventory-card__name-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 32px;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--input-bg);
+    font-size: 0.95rem;
+    box-sizing: border-box;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.inventory-card__name-input:focus {
+    border-color: var(--primary);
+    background-color: var(--panel-alt);
+    outline: none;
+}
+
+.inventory-card__action-btn {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--panel-alt);
+    color: var(--text-main);
+    transition: all 0.2s ease;
+}
+
+.inventory-card__action-btn:hover:not(:disabled) {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.inventory-card__action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* --- Description / Notes Row --- */
+.inventory-card__desc-row {
+    width: 100%;
+}
+
+.inventory-card__desc-input {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 44px;
+    max-height: 120px;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--input-bg);
+    font-size: 0.82rem;
+    line-height: 1.4;
+    resize: vertical;
+    font-family: inherit;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.inventory-card__desc-input:focus {
+    border-color: var(--primary);
+    background-color: var(--panel-alt);
+    outline: none;
+}

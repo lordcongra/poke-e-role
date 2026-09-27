@@ -1,0 +1,52 @@
+import { fetchItemData } from './api';
+import { KNOWN_ITEMS } from '../data/constants';
+
+export interface ItemLookupResult {
+    found: boolean;
+    name: string;
+    description: string;
+    tags: string;
+    fullDescription: string;
+}
+
+/**
+ * Looks up item data by name from the PokéRole dataset, homebrew items, and known items constants.
+ * Assembles the official description / effect alongside canonical tags (e.g. [Acc +2], [Dmg +1: Fire]).
+ */
+export async function lookupItemDetails(rawName: string): Promise<ItemLookupResult | null> {
+    const trimmed = rawName.trim();
+    if (!trimmed) return null;
+
+    const data = await fetchItemData(trimmed);
+    const knownItemMatch = KNOWN_ITEMS.find((known) => known.name.toLowerCase() === trimmed.toLowerCase());
+
+    let descText = '';
+    if (data && (data.Description || data.Effect)) {
+        descText = String(data.Description || data.Effect || '').trim();
+    }
+
+    const tags = knownItemMatch?.tags ? knownItemMatch.tags.trim() : '';
+    let fullDescription = descText;
+
+    if (tags) {
+        if (fullDescription) {
+            // Append tags if not already contained in description
+            if (!fullDescription.includes(tags)) {
+                fullDescription = `${fullDescription}\n\n${tags}`;
+            }
+        } else {
+            fullDescription = tags;
+        }
+    }
+
+    const found = Boolean(data || knownItemMatch);
+    const canonicalName = data?.Name || knownItemMatch?.name || trimmed;
+
+    return {
+        found,
+        name: canonicalName,
+        description: descText,
+        tags,
+        fullDescription
+    };
+}

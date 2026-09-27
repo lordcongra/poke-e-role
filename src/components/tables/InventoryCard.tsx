@@ -1,0 +1,239 @@
+import React, { useState, useEffect, memo } from 'react';
+import { useCharacterStore } from '../../store/useCharacterStore';
+import { lookupItemDetails } from '../../utils/itemLookupUtils';
+import { imageManager } from '../../utils/imageManager';
+import type { InventoryItem } from '../../store/storeTypes';
+import { NumberSpinner } from '../ui/NumberSpinner';
+import { KNOWN_ITEMS } from '../../data/constants';
+import { Info, Tag, ChevronUp, ChevronDown, X, Check, Image as ImageIcon } from 'lucide-react';
+import './InventoryCard.css';
+
+interface InventoryCardProps {
+    item: InventoryItem;
+    handleInfoClick: (id: string, name: string, desc: string) => void;
+    fetchingItems: Record<string, boolean>;
+    setTagBuilderData: (d: {
+        id: string;
+        type: 'item' | 'move' | 'homebrew_ability' | 'homebrew_move' | 'homebrew_item';
+    }) => void;
+    setDeleteItemId: (id: string) => void;
+    onEditItem?: (id: string) => void;
+}
+
+export const InventoryCard = memo(function InventoryCard({
+    item,
+    handleInfoClick,
+    fetchingItems,
+    setTagBuilderData,
+    setDeleteItemId,
+    onEditItem
+}: InventoryCardProps) {
+    const updateInventoryItem = useCharacterStore((state) => state.updateInventoryItem);
+    const moveUpInventoryItem = useCharacterStore((state) => state.moveUpInventoryItem);
+    const moveDownInventoryItem = useCharacterStore((state) => state.moveDownInventoryItem);
+
+    const [localName, setLocalName] = useState(item.name);
+    const [prevName, setPrevName] = useState(item.name);
+    const [resolvedImg, setResolvedImg] = useState<string | null>(null);
+
+    // Resolve Image Blob / URL
+    useEffect(() => {
+        let isMounted = true;
+        let createdBlobUrl: string | null = null;
+
+        if (item.imageUrl) {
+            imageManager.getImageUrl(item.imageUrl).then((url) => {
+                if (isMounted) {
+                    setResolvedImg(url);
+                    if (url && url.startsWith('blob:')) {
+                        createdBlobUrl = url;
+                    }
+                }
+            });
+        } else {
+            setResolvedImg(null);
+        }
+
+        return () => {
+            isMounted = false;
+            if (createdBlobUrl) URL.revokeObjectURL(createdBlobUrl);
+        };
+    }, [item.imageUrl]);
+
+    if (prevName !== item.name) {
+        setPrevName(item.name);
+        setLocalName(item.name);
+    }
+
+    const handleApplyItemLookup = async (nameQuery: string, forceOverwrite = false) => {
+        const query = nameQuery.trim();
+        if (!query) return;
+
+        try {
+            const result = await lookupItemDetails(query);
+            if (result) {
+                if (result.name && result.name !== item.name) {
+                    updateInventoryItem(item.id, 'name', result.name);
+                    setLocalName(result.name);
+                }
+                if (result.fullDescription) {
+                    if (forceOverwrite || !item.desc.trim()) {
+                        useCharacterStore.getState().updateInventoryItem(item.id, 'desc', result.fullDescription);
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('[InventoryCard] Failed to lookup item info:', e);
+        }
+    };
+
+    const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const val = event.target.value;
+        setLocalName(val);
+
+        const trimmedLower = val.trim().toLowerCase();
+        if (KNOWN_ITEMS.some((k) => k.name.toLowerCase() === trimmedLower)) {
+            handleApplyItemLookup(val, false);
+        }
+    };
+
+    const handleNameBlur = async () => {
+        const value = localName.trim();
+        if (value !== item.name) {
+            updateInventoryItem(item.id, 'name', value);
+        }
+        if (value && (value !== item.name || !item.desc.trim())) {
+            await handleApplyItemLookup(value, false);
+        }
+    };
+
+    const handleNameKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') {
+            event.currentTarget.blur();
+        }
+    };
+
+    return (
+        <div className={`inventory-card ${item.active ? 'inventory-card--active' : ''}`}>
+            {/* Top Control Bar: Equip Badge Toggle, Qty, Sort, Delete */}
+            <div className="inventory-card__header">
+                <label
+                    className={`inventory-card__equip-badge ${item.active ? 'inventory-card__equip-badge--active' : ''}`}
+                    title={item.active ? 'Active / Equipped item (tap to unequip)' : 'Unequipped item (tap to equip)'}
+                >
+                    <input
+                        type="checkbox"
+                        className="inventory-card__equip-checkbox"
+                        checked={item.active}
+                        onChange={(event) => updateInventoryItem(item.id, 'active', event.target.checked)}
+                    />
+                    <Check
+                        size={14}
+                        className={`inventory-card__equip-icon ${item.active ? 'inventory-card__equip-icon--active' : ''}`}
+                    />
+                    <span>{item.active ? 'Equipped' : 'Equip'}</span>
+                </label>
+
+                <div className="inventory-card__qty-group">
+                    <span className="inventory-card__qty-label text-subtext">Qty:</span>
+                    <NumberSpinner
+                        value={item.qty}
+                        onChange={(value: number) => updateInventoryItem(item.id, 'qty', value)}
+                        min={0}
+                    />
+                </div>
+
+                <div className="inventory-card__header-actions">
+                    <div className="inventory-card__sort-buttons">
+                        <button
+                            type="button"
+                            onClick={() => moveUpInventoryItem(item.id)}
+                            className="action-button action-button--sort inventory-card__sort-btn text-label"
+                            title="Move Up"
+                            aria-label="Move Up"
+                        >
+                            <ChevronUp size={16} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => moveDownInventoryItem(item.id)}
+                            className="action-button action-button--sort inventory-card__sort-btn text-label"
+                            title="Move Down"
+                            aria-label="Move Down"
+                        >
+                            <ChevronDown size={16} />
+                        </button>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setDeleteItemId(item.id)}
+                        className="action-button action-button--dark inventory-card__delete-btn"
+                        title="Delete Item"
+                        aria-label="Delete Item"
+                    >
+                        <X size={16} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Name Row + Info & Tag Actions */}
+            <div className="inventory-card__name-row">
+                <button
+                    type="button"
+                    className="inventory-item__thumb-btn"
+                    onClick={() => onEditItem?.(item.id)}
+                    title={item.imageUrl ? 'Item Artwork (Click to edit)' : 'Add Item Artwork'}
+                    aria-label="Item image"
+                >
+                    {resolvedImg ? (
+                        <img src={resolvedImg} alt={item.name} className="inventory-item__thumb-img" />
+                    ) : (
+                        <ImageIcon size={13} className="inventory-item__thumb-placeholder" />
+                    )}
+                </button>
+                <input
+                    type="text"
+                    list="item-list"
+                    className="identity-grid__input inventory-card__name-input text-label"
+                    style={{ color: 'var(--text-main)' }}
+                    value={localName}
+                    onChange={handleNameChange}
+                    onBlur={handleNameBlur}
+                    onKeyDown={handleNameKeyDown}
+                    placeholder="Item Name"
+                />
+                <button
+                    type="button"
+                    className="action-button action-button--dark inventory-card__action-btn"
+                    onClick={() => handleInfoClick(item.id, item.name, item.desc)}
+                    disabled={fetchingItems[item.id]}
+                    title="View Item Info"
+                    aria-label="View Item Info"
+                >
+                    <Info size={16} />
+                </button>
+                <button
+                    type="button"
+                    className="action-button action-button--dark inventory-card__action-btn"
+                    onClick={() => setTagBuilderData({ id: item.id, type: 'item' })}
+                    title="Add Smart Tags"
+                    aria-label="Add Smart Tags"
+                >
+                    <Tag size={16} />
+                </button>
+            </div>
+
+            {/* Effect / Notes Area */}
+            <div className="inventory-card__desc-row">
+                <textarea
+                    className="identity-grid__input form-input--item-desc inventory-card__desc-input text-subtext"
+                    style={{ color: 'var(--text-main)' }}
+                    value={item.desc}
+                    onChange={(event) => updateInventoryItem(item.id, 'desc', event.target.value)}
+                    placeholder="Effect / Notes..."
+                    rows={2}
+                />
+            </div>
+        </div>
+    );
+});

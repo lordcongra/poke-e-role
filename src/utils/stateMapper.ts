@@ -173,7 +173,8 @@ function parseInventory(meta: Record<string, unknown>): InventoryItem[] {
             qty: Number(i.qty !== undefined ? i.qty : 1),
             name: String(i.name || i.Name || ''),
             desc: String(i.desc || i.Description || i.Effect || ''),
-            active: i.active === true || i.active === 'true'
+            active: i.active === true || i.active === 'true',
+            imageUrl: typeof i.imageUrl === 'string' ? i.imageUrl : undefined
         }));
     } catch (e) {
         console.warn('[StateMapper] Failed to parse inventory from metadata:', e);

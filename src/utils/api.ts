@@ -37,10 +37,8 @@ export type {
 const BASE_URL = import.meta.env.BASE_URL || '/';
 
 const formatLocalPath = (pathStr: string) => {
-    if (pathStr.startsWith('/')) {
-        return BASE_URL + pathStr.slice(1);
-    }
-    return pathStr;
+    const fullPath = pathStr.startsWith('/') ? BASE_URL + pathStr.slice(1) : pathStr;
+    return encodeURI(fullPath);
 };
 
 export const SPECIES_URLS: Record<string, string> = {};
@@ -52,6 +50,7 @@ export const NATURES_URLS: Record<string, string> = {};
 export const ALL_SPECIES: string[] = [];
 export const ALL_ABILITIES: string[] = [];
 export const ALL_MOVES: string[] = [];
+export const ALL_ITEMS: string[] = [];
 export const CATEGORIZED_ITEMS: Record<string, string[]> = {};
 
 let localDatasetIndex: LocalDatasetIndex | null = null;
@@ -113,7 +112,7 @@ export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
             }
 
             // Populate Items
-            if (Object.keys(CATEGORIZED_ITEMS).length === 0 && data.items) {
+            if (Object.keys(ITEMS_URLS).length === 0 && data.items) {
                 Object.keys(data.items).forEach((pocket) => {
                     Object.keys(data.items[pocket]).forEach((category) => {
                         if (!CATEGORIZED_ITEMS[category]) CATEGORIZED_ITEMS[category] = [];
@@ -126,10 +125,14 @@ export async function loadLocalDataset(): Promise<LocalDatasetIndex | null> {
                                 if (!CATEGORIZED_ITEMS[category].includes(item.name)) {
                                     CATEGORIZED_ITEMS[category].push(item.name);
                                 }
+                                if (!ALL_ITEMS.includes(item.name)) {
+                                    ALL_ITEMS.push(item.name);
+                                }
                             });
                         }
                     });
                 });
+                ALL_ITEMS.sort();
             }
 
             // Populate Pokemon

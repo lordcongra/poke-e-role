@@ -54,6 +54,7 @@ export interface InventoryItem {
     name: string;
     desc: string;
     active?: boolean;
+    imageUrl?: string;
 }
 
 export interface CustomInfo {

@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { fetchItemData } from '../../utils/api';
+import { lookupItemDetails } from '../../utils/itemLookupUtils';
+import { imageManager } from '../../utils/imageManager';
 import type { InventoryItem } from '../../store/storeTypes';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { KNOWN_ITEMS } from '../../data/constants';
-import { Info, Tag, ChevronUp, ChevronDown, X } from 'lucide-react';
+import { Info, Tag, ChevronUp, ChevronDown, X, Image as ImageIcon } from 'lucide-react';
 import './InventoryTable.css';
 
 interface InventoryItemRowProps {
@@ -16,6 +17,7 @@ interface InventoryItemRowProps {
         type: 'item' | 'move' | 'homebrew_ability' | 'homebrew_move' | 'homebrew_item';
     }) => void;
     setDeleteItemId: (id: string) => void;
+    onEditItem?: (id: string) => void;
 }
 
 export function InventoryItemRow({
@@ -23,13 +25,38 @@ export function InventoryItemRow({
     handleInfoClick,
     fetchingItems,
     setTagBuilderData,
-    setDeleteItemId
+    setDeleteItemId,
+    onEditItem
 }: InventoryItemRowProps) {
     const updateInventoryItem = useCharacterStore((state) => state.updateInventoryItem);
     const moveUpInventoryItem = useCharacterStore((state) => state.moveUpInventoryItem);
     const moveDownInventoryItem = useCharacterStore((state) => state.moveDownInventoryItem);
 
     const [localName, setLocalName] = useState(item.name);
+    const [resolvedImg, setResolvedImg] = useState<string | null>(null);
+
+    useEffect(() => {
+        let isMounted = true;
+        let createdBlobUrl: string | null = null;
+
+        if (item.imageUrl) {
+            imageManager.getImageUrl(item.imageUrl).then((url) => {
+                if (isMounted) {
+                    setResolvedImg(url);
+                    if (url && url.startsWith('blob:')) {
+                        createdBlobUrl = url;
+                    }
+                }
+            });
+        } else {
+            setResolvedImg(null);
+        }
+
+        return () => {
+            isMounted = false;
+            if (createdBlobUrl) URL.revokeObjectURL(createdBlobUrl);
+        };
+    }, [item.imageUrl]);
 
     const [prevName, setPrevName] = useState(item.name);
     if (prevName !== item.name) {
@@ -37,31 +64,57 @@ export function InventoryItemRow({
         setLocalName(item.name);
     }
 
+    const handleApplyItemLookup = async (nameQuery: string, forceOverwrite = false) => {
+        const query = nameQuery.trim();
+        if (!query) return;
+
+        try {
+            const result = await lookupItemDetails(query);
+            if (result) {
+                if (result.name && result.name !== item.name) {
+                    updateInventoryItem(item.id, 'name', result.name);
+                    setLocalName(result.name);
+                }
+                if (result.fullDescription) {
+                    if (forceOverwrite || !item.desc.trim()) {
+                        useCharacterStore.getState().updateInventoryItem(item.id, 'desc', result.fullDescription);
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('[InventoryItemRow] Failed to lookup item info:', e);
+        }
+    };
+
+    const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const val = event.target.value;
+        setLocalName(val);
+
+        const trimmedLower = val.trim().toLowerCase();
+        if (KNOWN_ITEMS.some((k) => k.name.toLowerCase() === trimmedLower)) {
+            handleApplyItemLookup(val, false);
+        }
+    };
+
     const handleNameBlur = async () => {
         const value = localName.trim();
         if (value !== item.name) {
             updateInventoryItem(item.id, 'name', value);
+        }
+        if (value && (value !== item.name || !item.desc.trim())) {
+            await handleApplyItemLookup(value, false);
+        }
+    };
 
-            const data = await fetchItemData(value);
-            let newDescription = '';
-            if (data && (data.Description || data.Effect)) {
-                newDescription = String(data.Description || data.Effect || '').trim();
-            }
-
-            const knownItemMatch = KNOWN_ITEMS.find((known) => known.name.toLowerCase() === value.toLowerCase());
-
-            const hardcodedTags = knownItemMatch?.tags;
-            if (hardcodedTags) {
-                newDescription = newDescription ? `${newDescription}\n\n${hardcodedTags}` : hardcodedTags;
-            }
-
-            useCharacterStore.getState().updateInventoryItem(item.id, 'desc', newDescription);
+    const handleNameKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') {
+            event.currentTarget.blur();
         }
     };
 
     return (
         <tr className="data-table__row--dynamic">
-            <td className="data-table__cell--top inventory-item__cell-top">
+            <td className="data-table__cell--middle">
                 <input
                     type="checkbox"
                     className="inventory-item__checkbox"
@@ -69,7 +122,7 @@ export function InventoryItemRow({
                     onChange={(event) => updateInventoryItem(item.id, 'active', event.target.checked)}
                 />
             </td>
-            <td className="data-table__cell--top">
+            <td className="data-table__cell--middle">
                 <div className="inventory-item__qty-container">
                     <NumberSpinner
                         value={item.qty}
@@ -78,16 +131,30 @@ export function InventoryItemRow({
                     />
                 </div>
             </td>
-            <td className="data-table__cell--top">
+            <td className="data-table__cell--middle inventory-item__name-cell">
                 <div className="inventory-item__name-container">
+                    <button
+                        type="button"
+                        className="inventory-item__thumb-btn"
+                        onClick={() => onEditItem?.(item.id)}
+                        title={item.imageUrl ? 'Item Artwork (Click to edit)' : 'Add Item Artwork'}
+                        aria-label="Item image"
+                    >
+                        {resolvedImg ? (
+                            <img src={resolvedImg} alt={item.name} className="inventory-item__thumb-img" />
+                        ) : (
+                            <ImageIcon size={13} className="inventory-item__thumb-placeholder" />
+                        )}
+                    </button>
                     <input
                         type="text"
                         list="item-list"
                         className="identity-grid__input inventory-item__name-input text-label"
                         style={{ color: 'var(--text-main)' }}
                         value={localName}
-                        onChange={(event) => setLocalName(event.target.value)}
+                        onChange={handleNameChange}
                         onBlur={handleNameBlur}
+                        onKeyDown={handleNameKeyDown}
                         placeholder="Item Name"
                     />
                     <button
@@ -109,21 +176,24 @@ export function InventoryItemRow({
                     </button>
                 </div>
             </td>
-            <td className="inventory-item__desc-cell">
+            <td className="data-table__cell--middle inventory-item__desc-cell">
                 <textarea
                     className="identity-grid__input form-input--item-desc inventory-item__desc-input text-subtext"
                     style={{ color: 'var(--text-main)' }}
                     value={item.desc}
                     onChange={(event) => updateInventoryItem(item.id, 'desc', event.target.value)}
                     placeholder="Effect / Notes..."
+                    rows={2}
                 />
             </td>
-            <td className="data-table__cell--top">
+            <td className="data-table__cell--middle">
                 <div className="inventory-item__sort-container">
                     <button
                         type="button"
                         onClick={() => moveUpInventoryItem(item.id)}
                         className="action-button action-button--sort inventory-item__sort-btn text-label"
+                        title="Move Up"
+                        aria-label="Move Up"
                     >
                         <ChevronUp size={14} />
                     </button>
@@ -131,19 +201,22 @@ export function InventoryItemRow({
                         type="button"
                         onClick={() => moveDownInventoryItem(item.id)}
                         className="action-button action-button--sort inventory-item__sort-btn text-label"
+                        title="Move Down"
+                        aria-label="Move Down"
                     >
                         <ChevronDown size={14} />
                     </button>
                 </div>
             </td>
-            <td className="data-table__cell--top">
+            <td className="data-table__cell--middle">
                 <button
                     type="button"
                     onClick={() => setDeleteItemId(item.id)}
                     className="action-button action-button--dark inventory-item__delete-btn text-theme-header"
                     title="Delete Item"
+                    aria-label="Delete Item"
                 >
-                    <X size={16} />
+                    <X size={15} />
                 </button>
             </td>
         </tr>

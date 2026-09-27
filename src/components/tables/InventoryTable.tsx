@@ -1,15 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { fetchItemData } from '../../utils/api';
+import { fetchItemData, loadLocalDataset, ALL_ITEMS } from '../../utils/api';
 import { KNOWN_ITEMS } from '../../data/constants';
 import { isStandaloneMode } from '../../utils/storageAdapter';
 import { TagBuilderModal } from '../modals/items/TagBuilderModal';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { InventoryItemRow } from './InventoryItemRow';
+import { InventoryCard } from './InventoryCard';
+import { InventoryGridCard } from './InventoryGridCard';
 import { ItemInfoModal } from '../modals/items/ItemInfoModal';
+import { ItemEditModal } from '../modals/items/ItemEditModal';
 import { SmartTagsGuideModal } from '../modals/items/SmartTagsGuideModal';
-import { AlertTriangle, Plus, Check, Trash2, XCircle } from 'lucide-react';
+import { AlertTriangle, Plus, Check, Trash2, XCircle, List, LayoutGrid, Package } from 'lucide-react';
 import './InventoryTable.css';
 
 export function InventoryTable() {
@@ -27,6 +30,47 @@ export function InventoryTable() {
     const pokedollars = useCharacterStore((state) => state.currency);
     const setTrainingPoints = useCharacterStore((state) => state.setTp);
     const setPokedollars = useCharacterStore((state) => state.setCurrency);
+
+    const [viewMode, setViewMode] = useState<'list' | 'card'>(() => {
+        try {
+            return (localStorage.getItem('pkr_bag_view_mode') as 'list' | 'card') || 'list';
+        } catch {
+            return 'list';
+        }
+    });
+
+    const [cardSize, setCardSize] = useState<'sm' | 'md' | 'lg'>(() => {
+        try {
+            return (localStorage.getItem('pkr_bag_card_size') as 'sm' | 'md' | 'lg') || 'sm';
+        } catch {
+            return 'sm';
+        }
+    });
+
+    const handleSetCardSize = (size: 'sm' | 'md' | 'lg') => {
+        setCardSize(size);
+        try {
+            localStorage.setItem('pkr_bag_card_size', size);
+        } catch {}
+    };
+
+    const handleSetViewMode = (mode: 'list' | 'card') => {
+        setViewMode(mode);
+        try {
+            localStorage.setItem('pkr_bag_view_mode', mode);
+        } catch {}
+    };
+
+    const [allKnownItems, setAllKnownItems] = useState<string[]>(() => KNOWN_ITEMS.map((item) => item.name));
+
+    useEffect(() => {
+        loadLocalDataset().then(() => {
+            const combined = Array.from(new Set([...ALL_ITEMS, ...KNOWN_ITEMS.map((item) => item.name)])).sort();
+            setAllKnownItems(combined);
+        });
+    }, []);
+
+    const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
     const [infoModal, setInfoModal] = useState<{ title: string; desc: string } | null>(null);
     const [tagBuilderData, setTagBuilderData] = useState<{
@@ -66,6 +110,47 @@ export function InventoryTable() {
     const bagHeaderElements = (
         <>
             <TooltipIcon onClick={() => setShowTagsGuide(true)} />
+            <div className="inventory-table__view-toggle">
+                <button
+                    type="button"
+                    className={`inventory-table__view-toggle-btn ${
+                        viewMode === 'list' ? 'inventory-table__view-toggle-btn--active' : ''
+                    }`}
+                    onClick={() => handleSetViewMode('list')}
+                    title="List View"
+                    aria-label="List View"
+                >
+                    <List size={13} />
+                </button>
+                <button
+                    type="button"
+                    className={`inventory-table__view-toggle-btn ${
+                        viewMode === 'card' ? 'inventory-table__view-toggle-btn--active' : ''
+                    }`}
+                    onClick={() => handleSetViewMode('card')}
+                    title="Card Grid View"
+                    aria-label="Card Grid View"
+                >
+                    <LayoutGrid size={13} />
+                </button>
+            </div>
+            {viewMode === 'card' && (
+                <div className="inventory-table__size-toggle" title="Card Sizing">
+                    {(['sm', 'md', 'lg'] as const).map((sz) => (
+                        <button
+                            key={sz}
+                            type="button"
+                            className={`inventory-table__size-toggle-btn ${
+                                cardSize === sz ? 'inventory-table__size-toggle-btn--active' : ''
+                            }`}
+                            onClick={() => handleSetCardSize(sz)}
+                            title={`${sz === 'sm' ? 'Compact' : sz === 'md' ? 'Regular' : 'Spacious'} Card Size`}
+                        >
+                            {sz.toUpperCase()}
+                        </button>
+                    ))}
+                </div>
+            )}
             {activeCount > 1 && (
                 <div
                     className="inventory-table__warning text-label"
@@ -111,42 +196,89 @@ export function InventoryTable() {
     return (
         <div className="inventory-table__container">
             <datalist id="item-list">
-                {[...KNOWN_ITEMS.map((item) => item.name), ...customItemNames].map((itemName) => (
-                    <option key={itemName} value={itemName} />
-                ))}
+                {Array.from(new Set([...allKnownItems, ...customItemNames]))
+                    .sort()
+                    .map((itemName) => (
+                        <option key={itemName} value={itemName} />
+                    ))}
             </datalist>
 
             <CollapsingSection title="BAG" headerElements={bagHeaderElements}>
-                <div className="table-responsive-wrapper">
-                    <table className="data-table inventory-table__table">
-                        <thead>
-                            <tr className="inventory-table__header-row text-theme-header">
-                                <th className="inventory-table__header-cell-check" title="Equipped?">
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <Check size={16} />
-                                    </div>
-                                </th>
-                                <th className="inventory-table__header-cell-qty">Qty</th>
-                                <th className="inventory-table__header-cell-name">Item Name</th>
-                                <th>Effect / Notes</th>
-                                <th className="inventory-table__header-cell-sort">Sort</th>
-                                <th className="inventory-table__header-cell-del">Del</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                {viewMode === 'card' ? (
+                    inventory.length === 0 ? (
+                        <div className="inventory-table__empty-state">
+                            <Package size={32} style={{ opacity: 0.5 }} />
+                            <span className="text-subtext">No items in your bag yet.</span>
+                        </div>
+                    ) : (
+                        <div className={`inventory-table__grid-container inventory-table__grid-container--${cardSize}`}>
                             {inventory.map((item) => (
-                                <InventoryItemRow
+                                <InventoryGridCard
+                                    key={item.id}
+                                    item={item}
+                                    size={cardSize}
+                                    onClick={() => setEditingItemId(item.id)}
+                                    onDelete={() => setDeleteItemId(item.id)}
+                                />
+                            ))}
+                        </div>
+                    )
+                ) : (
+                    <>
+                        <div className="desktop-only-flex table-responsive-wrapper">
+                            <table className="data-table inventory-table__table">
+                                <thead>
+                                    <tr className="inventory-table__header-row text-theme-header">
+                                        <th className="inventory-table__header-cell-check" title="Equipped?">
+                                            <div
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}
+                                            >
+                                                <Check size={16} />
+                                            </div>
+                                        </th>
+                                        <th className="inventory-table__header-cell-qty">Qty</th>
+                                        <th className="inventory-table__header-cell-name">Item Name</th>
+                                        <th>Effect / Notes</th>
+                                        <th className="inventory-table__header-cell-sort">Sort</th>
+                                        <th className="inventory-table__header-cell-del">Del</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {inventory.map((item) => (
+                                        <InventoryItemRow
+                                            key={item.id}
+                                            item={item}
+                                            handleInfoClick={handleInfoClick}
+                                            fetchingItems={fetchingItems}
+                                            setTagBuilderData={setTagBuilderData}
+                                            setDeleteItemId={setDeleteItemId}
+                                            onEditItem={setEditingItemId}
+                                        />
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="mobile-only-flex inventory-table__mobile-card-container">
+                            {inventory.map((item) => (
+                                <InventoryCard
                                     key={item.id}
                                     item={item}
                                     handleInfoClick={handleInfoClick}
                                     fetchingItems={fetchingItems}
                                     setTagBuilderData={setTagBuilderData}
                                     setDeleteItemId={setDeleteItemId}
+                                    onEditItem={setEditingItemId}
                                 />
                             ))}
-                        </tbody>
-                    </table>
-                </div>
+                        </div>
+                    </>
+                )}
+
                 <button
                     type="button"
                     onClick={addInventoryItem}
@@ -178,43 +310,50 @@ export function InventoryTable() {
 
             {showTagsGuide && <SmartTagsGuideModal onClose={() => setShowTagsGuide(false)} />}
 
-            {deleteItemId && (
-                <div className="inventory-table__modal-overlay">
-                    <div className="inventory-table__modal-content">
-                        <h3
-                            className="inventory-table__modal-title modal-title-with-icon text-title-primary"
-                            style={{ color: 'var(--semantic-danger)' }}
-                        >
-                            <AlertTriangle size={20} /> Confirm Deletion
-                        </h3>
-                        <p
-                            className="inventory-table__modal-text text-subtext"
-                            style={{ color: 'var(--text-main)', fontSize: '0.9rem' }}
-                        >
-                            Are you sure you want to delete this Item?
-                        </p>
-                        <div className="inventory-table__modal-actions">
-                            <button
-                                type="button"
-                                className="action-button action-button--dark inventory-table__modal-btn text-theme-header"
-                                onClick={() => setDeleteItemId(null)}
-                            >
-                                <XCircle size={16} /> Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className="action-button action-button--red inventory-table__modal-btn text-theme-header"
-                                onClick={() => {
-                                    removeInventoryItem(deleteItemId);
-                                    setDeleteItemId(null);
-                                }}
-                            >
-                                <Trash2 size={16} /> Delete
-                            </button>
+            {deleteItemId &&
+                (() => {
+                    const itemToDelete = inventory.find((i) => i.id === deleteItemId);
+                    return (
+                        <div className="inventory-table__modal-overlay">
+                            <div className="inventory-table__modal-content">
+                                <h3
+                                    className="inventory-table__modal-title modal-title-with-icon text-title-primary"
+                                    style={{ color: 'var(--semantic-danger)' }}
+                                >
+                                    <AlertTriangle size={20} /> Confirm Deletion
+                                </h3>
+                                <p
+                                    className="inventory-table__modal-text text-subtext"
+                                    style={{ color: 'var(--text-main)', fontSize: '0.9rem' }}
+                                >
+                                    Are you sure you want to delete &ldquo;{itemToDelete?.name || 'this Item'}&rdquo;?
+                                    Any saved artwork will also be removed.
+                                </p>
+                                <div className="inventory-table__modal-actions">
+                                    <button
+                                        type="button"
+                                        className="action-button action-button--dark inventory-table__modal-btn text-theme-header"
+                                        onClick={() => setDeleteItemId(null)}
+                                    >
+                                        <XCircle size={16} /> Cancel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="action-button action-button--red inventory-table__modal-btn text-theme-header"
+                                        onClick={() => {
+                                            removeInventoryItem(deleteItemId);
+                                            setDeleteItemId(null);
+                                        }}
+                                    >
+                                        <Trash2 size={16} /> Delete
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            )}
+                    );
+                })()}
+
+            {editingItemId && <ItemEditModal itemId={editingItemId} onClose={() => setEditingItemId(null)} />}
         </div>
     );
 }

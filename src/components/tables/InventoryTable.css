@@ -14,22 +14,26 @@
 }
 
 .inventory-table__header-cell-check {
-    width: 25px;
+    width: 30px;
     text-align: center;
 }
 
 .inventory-table__header-cell-qty {
-    width: 50px;
+    width: 65px;
     text-align: center;
 }
 
 .inventory-table__header-cell-name {
-    width: 30%;
+    width: 28%;
 }
 
-.inventory-table__header-cell-sort,
+.inventory-table__header-cell-sort {
+    width: 28px;
+    text-align: center;
+}
+
 .inventory-table__header-cell-del {
-    width: 30px;
+    width: 32px;
     text-align: center;
 }
 
@@ -84,6 +88,129 @@
 
 .inventory-table__currency-input--tp {
     width: 50px;
+}
+
+.inventory-table__mobile-card-container {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+/* View Mode Toggle */
+.inventory-table__view-toggle {
+    display: inline-flex;
+    align-items: center;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px;
+    gap: 2px;
+    margin-left: 10px;
+}
+
+.inventory-table__view-toggle-btn {
+    width: 26px;
+    height: 22px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.inventory-table__view-toggle-btn:hover {
+    color: var(--text-main);
+}
+
+.inventory-table__view-toggle-btn--active {
+    background: var(--primary);
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Card Size Toggle */
+.inventory-table__size-toggle {
+    display: inline-flex;
+    align-items: center;
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px;
+    gap: 2px;
+    margin-left: 6px;
+}
+
+.inventory-table__size-toggle-btn {
+    min-width: 20px;
+    height: 22px;
+    padding: 0 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.inventory-table__size-toggle-btn:hover {
+    color: var(--text-main);
+}
+
+.inventory-table__size-toggle-btn--active {
+    background: var(--primary);
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Card Grid Layout */
+.inventory-table__grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 6px;
+    width: 100%;
+    margin-bottom: 6px;
+}
+
+.inventory-table__grid-container--sm {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 6px;
+}
+
+.inventory-table__grid-container--md {
+    grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+    gap: 8px;
+}
+
+.inventory-table__grid-container--lg {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+}
+
+.inventory-table__empty-state {
+    padding: 24px 16px;
+    text-align: center;
+    color: var(--text-muted);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    background: var(--panel-alt);
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
 }
 
 .inventory-table__add-btn {
@@ -165,51 +292,106 @@
 }
 
 /* Inventory Item Row */
-.inventory-item__cell-top {
-    padding-top: 6px;
-}
-
 .inventory-item__checkbox {
     cursor: pointer;
-    transform: scale(1.1);
+    transform: scale(1.15);
+    margin: 0 auto;
+    display: block;
 }
 
 .inventory-item__qty-container {
     display: flex;
     justify-content: center;
+    align-items: center;
+}
+
+.inventory-item__name-cell {
+    padding: 3px 4px;
 }
 
 .inventory-item__name-container {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 4px;
+}
+
+.inventory-item__thumb-btn {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    overflow: hidden;
+    transition:
+        border-color 0.2s ease,
+        transform 0.15s ease;
+}
+
+.inventory-item__thumb-btn:hover {
+    border-color: var(--primary);
+    transform: scale(1.08);
+}
+
+.inventory-item__thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.inventory-item__thumb-placeholder {
+    color: var(--text-muted);
+    opacity: 0.5;
+    transition:
+        color 0.2s ease,
+        opacity 0.2s ease;
+}
+
+.inventory-item__thumb-btn:hover .inventory-item__thumb-placeholder {
+    color: var(--primary);
+    opacity: 1;
 }
 
 .inventory-item__name-input {
     width: 100%;
+    height: 26px;
+    padding: 2px 6px;
+    box-sizing: border-box;
 }
 
 .inventory-item__icon-btn {
     background: transparent;
     padding: 0;
+    width: 22px;
+    height: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 3px;
+    flex-shrink: 0;
 }
 
 .inventory-item__icon-btn--info,
 .inventory-item__icon-btn--tag {
-    color: var(--text-main);
-    transition: color 0.2s ease;
+    color: var(--text-muted);
+    transition:
+        color 0.2s ease,
+        background-color 0.2s ease;
 }
 
 .inventory-item__icon-btn--info:hover,
 .inventory-item__icon-btn--tag:hover {
     color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
 }
 
 .inventory-item__desc-cell {
-    padding: 4px 2px;
+    padding: 3px 4px;
 }
 
 .inventory-item__desc-input {
@@ -217,8 +399,14 @@
     resize: vertical;
     border: 1px solid var(--border);
     background: var(--input-bg);
-    padding: 4px;
-    min-height: 30px;
+    padding: 4px 6px;
+    min-height: 28px;
+    height: 32px;
+    font-size: 0.82rem;
+    line-height: 1.35;
+    box-sizing: border-box;
+    display: block;
+    border-radius: 4px;
     transition:
         border-color 0.2s ease,
         background-color 0.2s ease;
@@ -234,11 +422,15 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
+    justify-content: center;
+    gap: 1px;
+    margin: 0 auto;
 }
 
 .inventory-item__sort-btn {
-    padding: 0 4px;
+    padding: 0;
+    width: 24px;
+    height: 13px;
     cursor: pointer;
     background: transparent;
     border: none;
@@ -246,11 +438,27 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: color 0.15s ease;
+}
+
+.inventory-item__sort-btn:hover {
+    color: var(--primary);
 }
 
 .inventory-item__delete-btn {
-    padding: 2px 6px;
-    display: flex;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+    border-radius: 4px;
+    margin: 0 auto;
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.inventory-item__delete-btn:hover {
+    background: var(--semantic-danger) !important;
 }

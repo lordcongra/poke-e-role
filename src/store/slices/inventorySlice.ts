@@ -2,6 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { CharacterState, InventorySlice, InventoryItem, CustomInfo } from '../storeTypes';
 import { saveToOwlbear } from '../../utils/obr';
 import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../../utils/combatUtils';
+import { imageManager } from '../../utils/imageManager';
 
 const syncHealthWill = (
     state: CharacterState,
@@ -193,6 +194,13 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
 
     removeInventoryItem: (id) =>
         set((state) => {
+            const itemToRemove = state.inventory.find((i) => i.id === id);
+            if (itemToRemove?.imageUrl && itemToRemove.imageUrl.startsWith('local-img:')) {
+                imageManager.deleteImage(itemToRemove.imageUrl).catch((error) => {
+                    console.error('[InventorySlice] Failed to delete item image from IndexedDB:', error);
+                });
+            }
+
             const newInventory = state.inventory.filter((i) => i.id !== id);
             const updatesToSave: Record<string, unknown> = { 'inv-data': JSON.stringify(newInventory) };
             const { health, will } = syncHealthWill(state, newInventory, updatesToSave);
