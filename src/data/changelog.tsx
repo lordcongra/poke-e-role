@@ -141,7 +141,7 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 details: (
                     <div>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Dedicated Passives Table:</strong> Easily track permanent character enhancements (such as Rare Candy attribute bonuses, campaign boons, and innate perks) right below Social Attributes without cluttering your inventory.
+                            <strong>Dedicated Passives Table:</strong> Easily track permanent character enhancements (such as Rare Candy attribute bonuses, campaign boons, and innate perks) right below the Bag and above Notes without cluttering your inventory.
                         </p>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
                             <strong>Smart Item Tags & Clean Descriptions:</strong> No more bracket tags cluttering your item notes! Official item effects are automatically converted into interactive tag pills. In list view, your rows stay neat and slim; simply scroll down inside an item&apos;s description box to view its tag pill at the bottom.
@@ -150,7 +150,7 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                             <strong>Equipped Status Feedback:</strong> Item tags glow with full vibrant color when equipped and dim when unequipped, so you always know at a glance when an item&apos;s bonus is applying to your rolls.
                         </p>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Cleaner Roll Logs with Factors Breakdown:</strong> Roll messages now display clean, easy-to-read math. Whenever abilities, items, or passives modify a roll, tap the new <strong>Factors</strong> button inside the roll log to inspect a complete breakdown of what contributed!
+                            <strong>Cleaner Roll Logs with Factors Breakdown:</strong> Roll messages now display clean, easy-to-read math. Whenever abilities, items, or passives modify a roll, tap the new <strong>Factors</strong> button inside the roll log to inspect a complete breakdown of what contributed! Every factor (stat stage buffs, extra dice, and condition penalties like Confusion or Pain Penalties) is separated into its own card so you know exactly where every modifier comes from.
                         </p>
                     </div>
                 )
@@ -194,10 +194,16 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 }}
             >
                 <li>
-                    <strong>New Passives Table:</strong> Added a dedicated table below Social Attributes to track Rare Candy stat bonuses, campaign rewards, and passive traits with active checkmark toggles.
+                    <strong>New Passives Table:</strong> Added a dedicated table below the Bag and above Notes to track Rare Candy stat bonuses, campaign rewards, and passive traits with active checkmark toggles and standard deletion controls.
                 </li>
                 <li>
                     <strong>Interactive Tag Pills:</strong> Special effects on items, passives, and moves are now visual pills rather than raw bracket text in your notes. Click any pill to adjust its numbers or tap ✕ to remove it.
+                </li>
+                <li>
+                    <strong>Collapsible Tag Pills:</strong> Multiple tags on passives or items neatly collapse into a compact preview that expands with a click, keeping tables clean and legible.
+                </li>
+                <li>
+                    <strong>Tag Builder Search:</strong> Added a real-time search bar to the Tag Builder modal, making it quick and easy to find any tag by name, effect, or keyword without clicking through every category tab.
                 </li>
                 <li>
                     <strong>Slim Scrollable Item Notes:</strong> Bag list rows remain compact; scroll down inside an item&apos;s description box to view its tag pill at the bottom.
@@ -206,7 +212,7 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     <strong>Equipped Status Feedback:</strong> Item tags glow when an item is equipped and dim when unequipped, making it clear when bonuses are active.
                 </li>
                 <li>
-                    <strong>Roll Log Factors Pop-up:</strong> Roll messages are cleaner, with a new Factors button to inspect every ability, item, and passive bonus that modified the roll.
+                    <strong>Detailed Roll Factors Pop-up:</strong> Roll messages are cleaner, with a new Factors button to inspect every ability, item, and passive bonus that modified the roll. Each factor displays on its own card showing its exact contribution (such as extra dice or stat stages), with condition penalties clearly separated.
                 </li>
                 <li>
                     <strong>Move Keywords:</strong> Standard move mechanics like High Critical, Never Miss, and Recoil appear as interactive pills inside Move edit.
