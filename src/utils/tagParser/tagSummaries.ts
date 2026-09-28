@@ -3,6 +3,29 @@ import type { BoostTrackerSource } from './tagTypes';
 import { getMaxBoost } from '../../data/abilities/knownAbilities';
 import { KNOWN_ITEMS } from '../../data/constants';
 
+export function isStatOrSkillMatch(tagText: string, attrOrSkill?: string): boolean {
+    if (!attrOrSkill || attrOrSkill.toLowerCase() === 'none') return false;
+    const lowerTag = tagText.toLowerCase();
+    const cleanTarget = attrOrSkill.toLowerCase().trim();
+    const map: Record<string, string> = {
+        strength: 'str',
+        dexterity: 'dex',
+        vitality: 'vit',
+        special: 'spe',
+        insight: 'ins',
+        tough: 'tou',
+        cool: 'coo',
+        beauty: 'bea',
+        cute: 'cut',
+        clever: 'cle'
+    };
+    const shortCode = map[cleanTarget] || cleanTarget;
+
+    if (lowerTag.includes(cleanTarget)) return true;
+    const regex = new RegExp(`\\b${shortCode}\\b|\\b${cleanTarget}\\b`, 'i');
+    return regex.test(lowerTag);
+}
+
 export function extractActiveEffectSummary(
     desc: string,
     rollType: 'acc' | 'dmg' | 'all' = 'all',
@@ -28,24 +51,20 @@ export function extractActiveEffectSummary(
                 lower.includes('high crit') ||
                 lower.includes('low acc') ||
                 lower.includes('never miss') ||
-                lower.includes('dex') ||
-                lower.includes('spe') ||
-                lower.includes('str') ||
-                lower.includes('vit') ||
-                lower.includes('ins') ||
-                (move?.acc1 && lower.includes(move.acc1.toLowerCase())) ||
-                (move?.acc2 && lower.includes(move.acc2.toLowerCase()))
+                lower.includes('first hit acc') ||
+                isStatOrSkillMatch(lower, move?.acc1) ||
+                isStatOrSkillMatch(lower, move?.acc2)
             ) {
                 isMatch = true;
             }
         } else if (rollType === 'dmg') {
             if (
                 lower.includes('dmg') ||
+                lower.includes('damage') ||
                 lower.includes('crit dmg') ||
                 lower.includes('temp hp') ||
-                lower.includes('str') ||
-                lower.includes('spe') ||
-                (move?.dmg1 && lower.includes(move.dmg1.toLowerCase()))
+                lower.includes('first hit dmg') ||
+                isStatOrSkillMatch(lower, move?.dmg1)
             ) {
                 isMatch = true;
             }
@@ -53,6 +72,9 @@ export function extractActiveEffectSummary(
 
         if (isMatch) {
             let cleaned = tag.replace(/@\s*[^\]]+/gi, '').trim();
+            if (/acc\s*\d+s\s*add(?:s)?\s*dmg(?!\s*dice)/i.test(cleaned)) {
+                cleaned = cleaned.replace(/add(?:s)?\s*dmg/i, 'Add Dmg Dice');
+            }
             if (boostLevel > 1 && /@\s*(?:stacking\s+)?boost/i.test(tag)) {
                 cleaned = cleaned.replace(/([+-])\s*(\d+)/, (_, sign, num) => {
                     const scaled = parseInt(num, 10) * boostLevel;
@@ -65,9 +87,11 @@ export function extractActiveEffectSummary(
         }
     });
 
-    if (cleanEffects.length === 0 && rawTags.length > 0) {
-        const first = rawTags[0].replace(/@\s*[^\]]+/gi, '').trim();
-        return first;
+    if (cleanEffects.length === 0) {
+        if (rollType === 'all' && rawTags.length > 0) {
+            return rawTags[0].replace(/@\s*[^\]]+/gi, '').trim();
+        }
+        return '';
     }
 
     return cleanEffects.join(', ');

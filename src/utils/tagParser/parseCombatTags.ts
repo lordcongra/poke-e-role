@@ -389,8 +389,8 @@ export function parseCombatTags(
             damage: false
         };
 
-        extractStats(description, bonuses, triggers, isHalfHp, boostLevel, maxBoost, boostActive);
-        extractSkills(description, escapedSkills, bonuses, triggers, isHalfHp, boostLevel, maxBoost, boostActive);
+        extractStats(description, bonuses, triggers, isHalfHp, boostLevel, maxBoost, boostActive, move);
+        extractSkills(description, escapedSkills, bonuses, triggers, isHalfHp, boostLevel, maxBoost, boostActive, move);
         extractDefenses(description, bonuses, triggers, isHalfHp, boostLevel, maxBoost, boostActive);
         extractInitiativeAndChance(description, bonuses, triggers, isHalfHp, boostLevel, maxBoost, boostActive);
         extractDamage(
@@ -433,9 +433,15 @@ export function parseCombatTags(
                     ? `${cleanAbilityName} (${dmgEffect})`
                     : cleanAbilityName;
 
-            if (triggers.general || triggers.accuracy || triggers.damage) bonuses.abilityNames.push(generalLabel);
-            if (triggers.general || triggers.accuracy) bonuses.accAbilityNames.push(accLabel);
-            if (triggers.general || triggers.damage) bonuses.dmgAbilityNames.push(dmgLabel);
+            if (triggers.general || (triggers.accuracy && accEffect) || (triggers.damage && dmgEffect)) {
+                bonuses.abilityNames.push(generalLabel);
+            }
+            if ((triggers.general && accEffect) || (triggers.accuracy && accEffect)) {
+                bonuses.accAbilityNames.push(accLabel);
+            }
+            if ((triggers.general && dmgEffect) || (triggers.damage && dmgEffect)) {
+                bonuses.dmgAbilityNames.push(dmgLabel);
+            }
         } else if (item.kind === 'passive') {
             const cleanPassiveName = name.replace(/^Passive:\s*/i, '').trim();
             const generalEffect = extractActiveEffectSummary(item.desc, 'all', move, boostLevel);
@@ -456,15 +462,15 @@ export function parseCombatTags(
                     ? `${cleanPassiveName} (${dmgEffect})`
                     : cleanPassiveName;
 
-            if (triggers.general || triggers.accuracy || triggers.damage) {
+            if (triggers.general || (triggers.accuracy && accEffect) || (triggers.damage && dmgEffect)) {
                 bonuses.itemNames.push(generalLabel);
                 bonuses.passiveNames.push(generalLabel);
             }
-            if (triggers.general || triggers.accuracy) {
+            if ((triggers.general && accEffect) || (triggers.accuracy && accEffect)) {
                 bonuses.accItemNames.push(accLabel);
                 bonuses.accPassiveNames.push(accLabel);
             }
-            if (triggers.general || triggers.damage) {
+            if ((triggers.general && dmgEffect) || (triggers.damage && dmgEffect)) {
                 bonuses.dmgItemNames.push(dmgLabel);
                 bonuses.dmgPassiveNames.push(dmgLabel);
             }
@@ -488,9 +494,15 @@ export function parseCombatTags(
                     ? `${cleanItemName} (${dmgEffect})`
                     : cleanItemName;
 
-            if (triggers.general || triggers.accuracy || triggers.damage) bonuses.itemNames.push(generalLabel);
-            if (triggers.general || triggers.accuracy) bonuses.accItemNames.push(accLabel);
-            if (triggers.general || triggers.damage) bonuses.dmgItemNames.push(dmgLabel);
+            if (triggers.general || (triggers.accuracy && accEffect) || (triggers.damage && dmgEffect)) {
+                bonuses.itemNames.push(generalLabel);
+            }
+            if ((triggers.general && accEffect) || (triggers.accuracy && accEffect)) {
+                bonuses.accItemNames.push(accLabel);
+            }
+            if ((triggers.general && dmgEffect) || (triggers.damage && dmgEffect)) {
+                bonuses.dmgItemNames.push(dmgLabel);
+            }
         }
     });
 

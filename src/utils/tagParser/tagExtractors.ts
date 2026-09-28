@@ -124,7 +124,8 @@ export function extractStats(
     isHalfHp: boolean,
     boostLevel: number = 1,
     maxBoost: number = 1,
-    sourceBoostActive?: boolean
+    sourceBoostActive?: boolean,
+    move?: MoveData
 ) {
     const statMatches = description.matchAll(
         /\[\s*(str|strength|dex|dexterity|vit|vitality|spe|special|ins|insight|tou|tough|coo|cool|bea|beauty|cut|cute|cle|clever)\s*([+-]?\s*\d+)(?:\s*@\s*([^\]]+))?\s*\]/gi
@@ -147,7 +148,22 @@ export function extractStats(
         const statisticKey = map[rawStatistic] || rawStatistic;
         const mult = getBoostMultiplier(match[3], boostLevel, maxBoost);
         bonuses.stats[statisticKey] = (bonuses.stats[statisticKey] || 0) + safeParseInt(match[2]) * mult;
-        triggers.general = true;
+
+        if (move) {
+            const acc1Clean = (move.acc1 || '').toLowerCase().trim();
+            const dmg1Clean = (move.dmg1 || '').toLowerCase().trim();
+            const acc1Short = map[acc1Clean] || acc1Clean;
+            const dmg1Short = map[dmg1Clean] || dmg1Clean;
+
+            if (acc1Clean && (statisticKey === acc1Short || rawStatistic === acc1Clean)) {
+                triggers.accuracy = true;
+            }
+            if (dmg1Clean && (statisticKey === dmg1Short || rawStatistic === dmg1Clean)) {
+                triggers.damage = true;
+            }
+        } else {
+            triggers.general = true;
+        }
     }
 }
 
@@ -159,7 +175,8 @@ export function extractSkills(
     isHalfHp: boolean,
     boostLevel: number = 1,
     maxBoost: number = 1,
-    sourceBoostActive?: boolean
+    sourceBoostActive?: boolean,
+    move?: MoveData
 ) {
     if (!escapedSkills) return;
     const skillMatches = description.matchAll(
@@ -168,9 +185,17 @@ export function extractSkills(
     for (const match of skillMatches) {
         if (!checkCondition(match[3], isHalfHp, sourceBoostActive)) continue;
         const mult = getBoostMultiplier(match[3], boostLevel, maxBoost);
-        bonuses.skills[match[1].toLowerCase()] =
-            (bonuses.skills[match[1].toLowerCase()] || 0) + safeParseInt(match[2]) * mult;
-        triggers.general = true;
+        const skillName = match[1].toLowerCase();
+        bonuses.skills[skillName] = (bonuses.skills[skillName] || 0) + safeParseInt(match[2]) * mult;
+
+        if (move) {
+            const acc2Clean = (move.acc2 || '').toLowerCase().trim();
+            if (acc2Clean && (acc2Clean.includes(skillName) || skillName.includes(acc2Clean))) {
+                triggers.accuracy = true;
+            }
+        } else {
+            triggers.general = true;
+        }
     }
 }
 
@@ -590,17 +615,22 @@ export function extractMechanics(
     for (const match of ignoreAccuracyMatches) {
         if (!checkCondition(match[2], isHalfHp, sourceBoostActive)) continue;
         bonuses.ignoreLowAcc += safeParseInt(match[1]);
-        triggers.accuracy = true;
+        const moveHasLowAcc = Boolean(move?.desc && /low\s*acc/i.test(move.desc));
+        if (!move || moveHasLowAcc || bonuses.addLowAcc > 0) {
+            triggers.accuracy = true;
+        }
     }
 
-    // Capture both [Acc 6s Add Dmg] and [Acc 6s Add Dmg Limit 6]
+    // Capture both [Acc 6s Add Dmg] and [Acc 6s Add Dmg Dice Limit 6]
     const accFaceMatch = description.matchAll(
-        /\[\s*acc\s*(\d+)s\s*add(?:s)?\s*dmg(?:\s*limit\s*(\d+))?(?:\s*@\s*([^\]]+))?\s*\]/gi
+        /\[\s*acc\s*(\d+)s\s*add(?:s)?\s*(?:dmg|damage)(?:\s*dice)?(?:\s*limit\s*(\d+))?(?:\s*@\s*([^\]]+))?\s*\]/gi
     );
     for (const match of accFaceMatch) {
         if (!checkCondition(match[3], isHalfHp, sourceBoostActive)) continue;
         bonuses.accFaceAddsDmg = safeParseInt(match[1]);
         bonuses.accFaceAddsDmgLimit = safeParseInt(match[2]) || 6; // Defaults to 6 if limit isn't explicitly defined!
-        triggers.accuracy = true;
+        if (!move || move.category !== 'Status') {
+            triggers.accuracy = true;
+        }
     }
 }

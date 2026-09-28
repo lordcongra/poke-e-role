@@ -1,6 +1,7 @@
 import OBR from '@owlbear-rodeo/sdk';
 import type { MoveData, CharacterState, StatusItem, SkillCheck } from '../store/storeTypes';
 import { useCharacterStore } from '../store/useCharacterStore';
+import { CombatStat, SocialStat, Skill } from '../types/enums';
 import {
     ATTRIBUTE_MAPPING,
     getPainPenalty,
@@ -14,6 +15,56 @@ import {
 } from './combatMath';
 import { parseCombatTags } from './tagParser';
 import { rollDicePlus } from './diceRoller';
+
+function getStatStageModifier(statKey: string, state: CharacterState): { name: string; stage: number } | null {
+    if (!statKey) return null;
+    const normalized = (ATTRIBUTE_MAPPING[statKey] || statKey).toLowerCase().trim();
+    if (Object.values(CombatStat).includes(normalized as CombatStat)) {
+        const statObj = state.stats[normalized as CombatStat];
+        if (!statObj) return null;
+        const stage = (statObj.buff || 0) - (statObj.debuff || 0);
+        const nameMap: Record<string, string> = {
+            str: 'Strength',
+            dex: 'Dexterity',
+            vit: 'Vitality',
+            spe: 'Special',
+            ins: 'Insight'
+        };
+        return { name: nameMap[normalized] || normalized, stage };
+    }
+    if (Object.values(SocialStat).includes(normalized as SocialStat)) {
+        const statObj = state.socials[normalized as SocialStat];
+        if (!statObj) return null;
+        const stage = (statObj.buff || 0) - (statObj.debuff || 0);
+        const nameMap: Record<string, string> = {
+            tou: 'Tough',
+            coo: 'Cool',
+            bea: 'Beauty',
+            cut: 'Cute',
+            cle: 'Clever'
+        };
+        return { name: nameMap[normalized] || normalized, stage };
+    }
+    return null;
+}
+
+function getSkillBuffModifier(skillKey: string, state: CharacterState): { name: string; buff: number } | null {
+    if (!skillKey || skillKey.toLowerCase() === 'none') return null;
+    const cleanKey = skillKey.toLowerCase().trim();
+    if (Object.values(Skill).includes(cleanKey as Skill)) {
+        const skillObj = state.skills[cleanKey as Skill];
+        if (!skillObj || !skillObj.buff) return null;
+        const formattedName = cleanKey.charAt(0).toUpperCase() + cleanKey.slice(1);
+        return { name: formattedName, buff: skillObj.buff };
+    }
+    for (const cat of state.extraCategories || []) {
+        const custom = cat.skills?.find((s) => s.id === skillKey || (s.name || '').toLowerCase() === cleanKey);
+        if (custom && custom.buff) {
+            return { name: custom.name, buff: custom.buff };
+        }
+    }
+    return null;
+}
 
 export async function rollStatus(status: StatusItem, state: CharacterState) {
     const nickname = state.identity.nickname || state.identity.species || 'Someone';
@@ -138,10 +189,23 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
 
     const dicePool = calculateBaseAccuracy(move, state, itemBuffs);
 
+    const allAccSourceTexts = [
+        ...(itemBuffs.accPassiveNames || []),
+        ...(itemBuffs.accItemNames || []),
+        ...(itemBuffs.accAbilityNames || [])
+    ].join(' ');
+
+    const hasSourcedFirstHit = /first\s*hit/i.test(allAccSourceTexts);
+    const hasSourcedIgnorePain = /ignore(?:d)?\s*pain/i.test(allAccSourceTexts);
+    const hasSourcedIgnoreLowAcc = /ignore\s*low\s*acc/i.test(allAccSourceTexts);
+    const hasSourcedAccBank = /acc\s*\d+s\s*add/i.test(allAccSourceTexts);
+
     let customFirstHitAccTag = '';
     if (itemBuffs.firstHitAcc !== 0 && state.trackers.firstHitAcc) {
         const sign = itemBuffs.firstHitAcc > 0 ? '+' : '';
-        customFirstHitAccTag = `First Hit (${sign}${itemBuffs.firstHitAcc} Dice)`;
+        if (!hasSourcedFirstHit) {
+            customFirstHitAccTag = `First Hit (${sign}${itemBuffs.firstHitAcc} Dice)`;
+        }
         useCharacterStore.getState().updateTracker('firstHitAcc', false);
     }
 
@@ -155,12 +219,30 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
 
     if (rankSkillBonus > 0) tags.push('Master/Champion Rank (+2 Dice)');
     if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}: ${pain} Succ`);
-    else if (rawPain < 0 && itemBuffs.ignorePain) tags.push('Ignored Pain Penalty');
+    else if (rawPain < 0 && itemBuffs.ignorePain && !hasSourcedIgnorePain) tags.push('Ignored Pain Penalty');
     if (statuses.confusionPenalty < 0) tags.push(`Confusion: ${statuses.confusionPenalty} Succ`);
-    if (ignoredAccuracyPenalty > 0) tags.push(`Ignored ${ignoredAccuracyPenalty} Low Acc`);
+    if (ignoredAccuracyPenalty > 0 && !hasSourcedIgnoreLowAcc) tags.push(`Ignored ${ignoredAccuracyPenalty} Low Acc`);
     if (moveLowAccuracy > 0) tags.push(`Low Accuracy ${moveLowAccuracy}: -${moveLowAccuracy} Succ`);
     if (state.trackers.globalSucc !== 0)
         tags.push(`Tracker Mod: ${state.trackers.globalSucc > 0 ? '+' : ''}${state.trackers.globalSucc} Succ`);
+    if (state.trackers.globalAcc !== 0) {
+        const sign = state.trackers.globalAcc > 0 ? '+' : '';
+        const diceWord = Math.abs(state.trackers.globalAcc) === 1 ? 'Die' : 'Dice';
+        tags.push(`Tracker Mod: ${sign}${state.trackers.globalAcc} Acc ${diceWord}`);
+    }
+    const acc1Stage = getStatStageModifier(move.acc1, state);
+    if (acc1Stage && acc1Stage.stage !== 0) {
+        const sign = acc1Stage.stage > 0 ? '+' : '';
+        const diceWord = Math.abs(acc1Stage.stage) === 1 ? 'Die' : 'Dice';
+        const label = acc1Stage.stage > 0 ? `${acc1Stage.name} Buff` : `${acc1Stage.name} Debuff`;
+        tags.push(`${label} (${sign}${acc1Stage.stage} ${diceWord})`);
+    }
+    const acc2Buff = getSkillBuffModifier(move.acc2, state);
+    if (acc2Buff && acc2Buff.buff !== 0) {
+        const sign = acc2Buff.buff > 0 ? '+' : '';
+        const diceWord = Math.abs(acc2Buff.buff) === 1 ? 'Die' : 'Dice';
+        tags.push(`${acc2Buff.name} Buff (${sign}${acc2Buff.buff} ${diceWord})`);
+    }
     if (statuses.paralysisDexterityPenalty < 0 && normalizedAcc1 === 'dex') tags.push(`Paralysis: -2 Dice`);
 
     if (customFirstHitAccTag) tags.push(customFirstHitAccTag);
@@ -176,8 +258,8 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
 
     const isValidForBank = itemBuffs.accFaceAddsDmg > 0 && move.category !== 'Status';
 
-    if (isValidForBank) {
-        tags.push(`Acc ${itemBuffs.accFaceAddsDmg}s Add Dmg (Max ${itemBuffs.accFaceAddsDmgLimit})`);
+    if (isValidForBank && !hasSourcedAccBank) {
+        tags.push(`Acc ${itemBuffs.accFaceAddsDmg}s Add Dmg Dice (Max ${itemBuffs.accFaceAddsDmgLimit})`);
     }
 
     if (statuses.isAsleep) {
@@ -197,30 +279,29 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     const pureItems = itemBuffs.accItemNames.filter((name) => !itemBuffs.accPassiveNames?.includes(name));
     if (pureItems.length > 0) {
         const uniqueItems = Array.from(new Set(pureItems));
-        tags.push(`Item: ${uniqueItems.join(', ')}`);
+        for (const item of uniqueItems) {
+            const tagStr = `Item: ${item}`;
+            if (!tags.includes(tagStr)) {
+                tags.push(tagStr);
+            }
+        }
     }
     if (itemBuffs.accPassiveNames && itemBuffs.accPassiveNames.length > 0) {
-        const uniquePassives = Array.from(new Set(itemBuffs.accPassiveNames)).filter(
-            (name) =>
-                !tags.includes(`Passive: ${name}`) &&
-                !tags.some(
-                    (t) => t.toLowerCase().startsWith('passive:') && t.toLowerCase().includes(name.toLowerCase())
-                )
-        );
-        if (uniquePassives.length > 0) {
-            tags.push(`Passive: ${uniquePassives.join(', ')}`);
+        const uniquePassives = Array.from(new Set(itemBuffs.accPassiveNames));
+        for (const passive of uniquePassives) {
+            const tagStr = `Passive: ${passive}`;
+            if (!tags.includes(tagStr)) {
+                tags.push(tagStr);
+            }
         }
     }
     if (itemBuffs.accAbilityNames && itemBuffs.accAbilityNames.length > 0) {
-        const filteredAbilities = Array.from(new Set(itemBuffs.accAbilityNames)).filter(
-            (name) =>
-                !tags.includes(`Ability: ${name}`) &&
-                !tags.some(
-                    (t) => t.toLowerCase().startsWith('ability:') && t.toLowerCase().includes(name.toLowerCase())
-                )
-        );
-        if (filteredAbilities.length > 0) {
-            tags.push(`Ability: ${filteredAbilities.join(', ')}`);
+        const uniqueAbilities = Array.from(new Set(itemBuffs.accAbilityNames));
+        for (const ability of uniqueAbilities) {
+            const tagStr = `Ability: ${ability}`;
+            if (!tags.includes(tagStr)) {
+                tags.push(tagStr);
+            }
         }
     }
 
@@ -310,6 +391,18 @@ export async function executeDamageRoll(
     if (state.trackers.globalSucc !== 0) {
         tags.push(`Tracker Mod: ${state.trackers.globalSucc > 0 ? '+' : ''}${state.trackers.globalSucc} Succ`);
     }
+    if (state.trackers.globalDmg !== 0) {
+        const sign = state.trackers.globalDmg > 0 ? '+' : '';
+        const diceWord = Math.abs(state.trackers.globalDmg) === 1 ? 'Die' : 'Dice';
+        tags.push(`Tracker Mod: ${sign}${state.trackers.globalDmg} Dmg ${diceWord}`);
+    }
+    const dmg1Stage = getStatStageModifier(move.dmg1, state);
+    if (dmg1Stage && dmg1Stage.stage !== 0) {
+        const sign = dmg1Stage.stage > 0 ? '+' : '';
+        const diceWord = Math.abs(dmg1Stage.stage) === 1 ? 'Die' : 'Dice';
+        const label = dmg1Stage.stage > 0 ? `${dmg1Stage.name} Buff` : `${dmg1Stage.name} Debuff`;
+        tags.push(`${label} (${sign}${dmg1Stage.stage} ${diceWord})`);
+    }
 
     if (effectiveness > 0) {
         tags.push(`SUPER EFFECTIVE (+${effectiveness} Succ)`);
@@ -368,7 +461,7 @@ export async function executeDamageRoll(
         let stabTag = '';
         if (hasTypeMatch || isProtean) {
             stabBonus = 1;
-            stabTag = isProtean && !hasTypeMatch ? ' Protean STAB' : ' STAB';
+            stabTag = isProtean && !hasTypeMatch ? 'Protean STAB (+1 Die)' : 'STAB (+1 Die)';
         }
 
         const isTera = state.identity.activeTransformation === 'Terastallize';
@@ -390,9 +483,16 @@ export async function executeDamageRoll(
         else if (stabBonus > 0) tags.push(stabTag);
     }
 
-    if (itemBuffs.gainTempHp > 0) tags.push(`Gains ${itemBuffs.gainTempHp} Temp HP`);
-    if (itemBuffs.tempHpOnHit > 0) tags.push(`Gains ${itemBuffs.tempHpOnHit} Temp HP on Hit`);
-    if (itemBuffs.tempHpDmgRatio) tags.push(`Gains ${itemBuffs.tempHpDmgRatio} Dmg as Temp HP`);
+    const allDmgSourceTexts = [
+        ...(itemBuffs.dmgPassiveNames || []),
+        ...(itemBuffs.dmgItemNames || []),
+        ...(itemBuffs.dmgAbilityNames || [])
+    ].join(' ');
+    const hasSourcedTempHp = /temp\s*hp/i.test(allDmgSourceTexts);
+
+    if (itemBuffs.gainTempHp > 0 && !hasSourcedTempHp) tags.push(`Gains ${itemBuffs.gainTempHp} Temp HP`);
+    if (itemBuffs.tempHpOnHit > 0 && !hasSourcedTempHp) tags.push(`Gains ${itemBuffs.tempHpOnHit} Temp HP on Hit`);
+    if (itemBuffs.tempHpDmgRatio && !hasSourcedTempHp) tags.push(`Gains ${itemBuffs.tempHpDmgRatio} Dmg as Temp HP`);
 
     const moveDescription = (move.desc || '').toLowerCase();
     if (moveDescription.includes('powder') || moveDescription.includes('spore')) {
@@ -402,14 +502,29 @@ export async function executeDamageRoll(
     const pureDmgItems = Array.from(
         new Set(itemBuffs.dmgItemNames.filter((name) => !itemBuffs.dmgPassiveNames?.includes(name)))
     );
-    if (pureDmgItems.length > 0) tags.push(`Item: ${pureDmgItems.join(', ')}`);
+    for (const item of pureDmgItems) {
+        const tagStr = `Item: ${item}`;
+        if (!tags.includes(tagStr)) {
+            tags.push(tagStr);
+        }
+    }
     if (itemBuffs.dmgPassiveNames && itemBuffs.dmgPassiveNames.length > 0) {
         const uniquePassives = Array.from(new Set(itemBuffs.dmgPassiveNames));
-        tags.push(`Passive: ${uniquePassives.join(', ')}`);
+        for (const passive of uniquePassives) {
+            const tagStr = `Passive: ${passive}`;
+            if (!tags.includes(tagStr)) {
+                tags.push(tagStr);
+            }
+        }
     }
     if (itemBuffs.dmgAbilityNames && itemBuffs.dmgAbilityNames.length > 0) {
         const uniqueAbilities = Array.from(new Set(itemBuffs.dmgAbilityNames));
-        tags.push(`Ability: ${uniqueAbilities.join(', ')}`);
+        for (const ability of uniqueAbilities) {
+            const tagStr = `Ability: ${ability}`;
+            if (!tags.includes(tagStr)) {
+                tags.push(tagStr);
+            }
+        }
     }
 
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';

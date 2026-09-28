@@ -13,7 +13,7 @@ import {
     Target,
     Flame
 } from 'lucide-react';
-import { categorizeFactor, type ParsedFactor } from '../../utils/rollLogParser';
+import { categorizeFactor, consolidateFactors, type ParsedFactor } from '../../utils/rollLogParser';
 import './RollFactorsModal.css';
 
 export interface RollFactorsModalProps {
@@ -43,7 +43,7 @@ export const RollFactorsModal: React.FC<RollFactorsModalProps> = ({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [onClose]);
 
-    const parsedFactors: ParsedFactor[] = factors.map(categorizeFactor);
+    const parsedFactors: ParsedFactor[] = consolidateFactors(factors.map(categorizeFactor));
 
     const getCategoryBadge = (category: ParsedFactor['category']) => {
         switch (category) {
@@ -148,10 +148,10 @@ export const RollFactorsModal: React.FC<RollFactorsModalProps> = ({
                     {/* Factors List */}
                     <div className="roll-factors-modal__factors-section">
                         <span className="roll-factors-modal__section-heading">
-                            Contributing Factors ({factors.length})
+                            Contributing Factors ({parsedFactors.length})
                         </span>
 
-                        {factors.length === 0 ? (
+                        {parsedFactors.length === 0 ? (
                             <div className="roll-factors-modal__empty">
                                 No additional items, abilities, or passives modified this roll.
                             </div>

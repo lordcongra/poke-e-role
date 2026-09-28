@@ -41,7 +41,7 @@ export function buildTagString(config: TagBuilderConfig): string {
         else if (target === 'Temp HP on Hit') tag = `[Temp HP +${Math.abs(numValue)} on Hit]`;
         else if (target === 'Temp HP % Dmg') tag = `[Temp HP ${Math.abs(numValue)}% Dmg]`;
         else if (target === 'Acc [X]s Add Dmg Limit [Y]')
-            tag = `[Acc ${Math.abs(numValue)}s Add Dmg Limit ${Math.abs(numValue2)}]`;
+            tag = `[Acc ${Math.abs(numValue)}s Add Dmg Dice Limit ${Math.abs(numValue2)}]`;
         else tag = `[${target}]`;
     } else if (category === 'turn_based') {
         if (!target) return '';
@@ -104,15 +104,15 @@ export function generateExplanation(config: TagBuilderConfig, builtTag: string):
         base = `Modifies ${target} skill by ${signStr} dice`;
     } else if (category === 'combat') {
         const reqStr = typeOption ? ` on ${typeOption} moves` : '';
-        if (target === 'Dmg') base = `Adds ${signStr} damage${reqStr}`;
+        if (target === 'Dmg') base = `Adds ${signStr} damage dice${reqStr}`;
         else if (target === 'Acc') base = `Adds ${signStr} accuracy dice${reqStr}`;
         else if (target === 'Init') base = `Modifies Initiative by ${signStr}`;
         else if (target === 'Chance') base = `Adds ${signStr} extra Chance dice`;
-        else if (target === 'Crit Dmg') base = `Adds ${signStr} damage on critical hits`;
-        else if (target === 'Combo Dmg') base = `Adds ${signStr} damage to combo/successive moves`;
-        else if (target === 'First Hit Dmg') base = `Adds ${signStr} damage on the first hit each round`;
-        else if (target === 'First Hit Acc') base = `Adds ${signStr} accuracy on the first hit each round`;
-        else if (target === 'Low Acc Penalty') base = `Modifies Low Accuracy penalty by ${signStr}`;
+        else if (target === 'Crit Dmg') base = `Adds ${signStr} damage dice on critical hits`;
+        else if (target === 'Combo Dmg') base = `Adds ${signStr} damage dice to combo/successive moves`;
+        else if (target === 'First Hit Dmg') base = `Adds ${signStr} damage dice on the first hit each round`;
+        else if (target === 'First Hit Acc') base = `Adds ${signStr} accuracy dice on the first hit each round`;
+        else if (target === 'Low Acc Penalty') base = `Modifies Low Accuracy penalty by ${signStr} dice`;
     } else if (category === 'matchup') {
         if (target === 'Immune')
             base = typeOption ? `Grants complete immunity to ${typeOption}-type moves` : 'Grants immunity';
@@ -134,7 +134,7 @@ export function generateExplanation(config: TagBuilderConfig, builtTag: string):
         else if (target === 'Temp HP on Hit') base = `Grants +${Math.abs(num)} Temp HP each time a move hits`;
         else if (target === 'Temp HP % Dmg') base = `Converts ${Math.abs(num)}% of damage dealt into Temp HP`;
         else if (target === 'Acc [X]s Add Dmg Limit [Y]')
-            base = `Each accuracy roll of ${value} adds 1 damage (up to +${value2} max)`;
+            base = `Each accuracy die rolling ${value} adds +1 damage die (up to +${value2} dice max)`;
         else base = `Applies ${target} mechanic`;
     } else if (category === 'turn_based') {
         if (target === 'Deal Damage End of Round') base = `Deals ${Math.abs(num)} damage to target at end of round`;
@@ -331,7 +331,7 @@ export function parseTagStringToConfig(tagStr: string, isMoveContext = false): P
     }
 
     // Acc Xs Add Dmg Limit Y
-    const accLimitMatch = clean.match(/^acc\s*(\d+)s\s*add dmg limit\s*(\d+)$/i);
+    const accLimitMatch = clean.match(/^acc\s*(\d+)s\s*add(?:s)?\s*(?:dmg|damage)(?:\s*dice)?(?:\s*limit)?\s*(\d+)$/i);
     if (accLimitMatch) {
         return {
             category: 'mechanic',
