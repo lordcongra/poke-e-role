@@ -19,31 +19,9 @@ import type {
 } from '../../store/storeTypes';
 import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import { downloadJson } from '../../utils/common/fileSystemHelpers';
-import { Hammer, X, HardDrive, AlertTriangle, Radio, Save, FolderOpen } from 'lucide-react';
+import { Hammer, X, Radio, Save, FolderOpen, AlertTriangle } from 'lucide-react';
+import { HomebrewStorageTracker } from './HomebrewStorageTracker';
 import './Homebrew.css';
-
-// --- STORAGE TRACKER HELPER ---
-const getStorageUsage = () => {
-    let key = 'pkr_homebrew_offline';
-    try {
-        if (OBR.isAvailable && OBR.room && OBR.room.id) {
-            key = `pkr_homebrew_${OBR.room.id}`;
-        }
-        const data = localStorage.getItem(key);
-        if (!data) return { mb: 0, percent: 0 };
-
-        // JavaScript strings are UTF-16, so 2 bytes per character
-        const bytes = data.length * 2;
-        const megabytes = bytes / (1024 * 1024);
-        const percent = Math.min(100, Math.max(0, (megabytes / 5) * 100)); // Browsers cap at ~5MB
-
-        return { mb: Number(megabytes.toFixed(2)), percent };
-    } catch (e) {
-        console.warn('[HomebrewModal] Failed to calculate storage usage:', e);
-        return { mb: 0, percent: 0 };
-    }
-};
-// -----------------------------
 
 export function HomebrewModal({ onClose }: { onClose: () => void }) {
     const role = useCharacterStore((state) => state.role);
@@ -69,9 +47,6 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
         forms: CustomForm[];
         statuses: CustomStatus[];
     } | null>(null);
-
-    // Dynamic Storage State
-    const storageUsage = getStorageUsage();
 
     const handleBroadcastSync = () => {
         if (!OBR.isAvailable) return;
@@ -142,11 +117,6 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
         };
         reader.readAsText(file);
     };
-
-    // Determine Storage Bar Color using our semantic variables
-    let progressColor = 'var(--primary)';
-    if (storageUsage.percent > 90) progressColor = 'var(--semantic-danger)';
-    else if (storageUsage.percent > 70) progressColor = 'var(--secondary)';
 
     return (
         <div className="homebrew-modal__overlay">
@@ -221,60 +191,38 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
 
                 <div
                     className="homebrew-modal__footer"
-                    style={{ flexDirection: 'column', alignItems: 'stretch', gap: '8px' }}
+                    style={{ flexDirection: 'column', alignItems: 'stretch', gap: '10px' }}
                 >
+                    <HomebrewStorageTracker />
+
                     <div
                         style={{
                             display: 'flex',
                             justifyContent: 'space-between',
-                            alignItems: 'flex-end',
-                            gap: '10px'
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: '8px'
                         }}
                     >
-                        {/* --- NEW STORAGE TRACKER --- */}
-                        <div
-                            className="homebrew-modal__storage-tracker"
-                            title="Web browsers limit local domain storage to ~5MB. If you exceed this, you must export your data to clear space!"
+                        <span
+                            className="text-subtext"
                             style={{
+                                color: needsBackup ? 'var(--semantic-danger)' : 'var(--text-muted)',
+                                fontWeight: needsBackup ? 'bold' : 'normal',
                                 display: 'flex',
-                                flexDirection: 'column',
-                                gap: '4px',
-                                flex: 1
+                                alignItems: 'center',
+                                gap: '6px',
+                                fontSize: '0.8rem'
                             }}
                         >
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    fontSize: '0.8rem',
-                                    color: 'var(--text-muted)'
-                                }}
-                            >
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    <HardDrive size={14} /> Storage Limit
-                                </span>
-                                <span>{storageUsage.mb}MB / 5.0MB</span>
-                            </div>
-                            <div
-                                style={{
-                                    width: '100%',
-                                    height: '8px',
-                                    backgroundColor: 'var(--border)',
-                                    borderRadius: '4px',
-                                    overflow: 'hidden'
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        height: '100%',
-                                        width: `${storageUsage.percent}%`,
-                                        backgroundColor: progressColor,
-                                        transition: 'width 0.3s ease, background-color 0.3s ease'
-                                    }}
-                                />
-                            </div>
-                        </div>
-                        {/* --------------------------- */}
+                            {needsBackup ? (
+                                <>
+                                    <AlertTriangle size={14} /> Unexported changes! Please backup your work.
+                                </>
+                            ) : (
+                                'Changes save automatically to your browser.'
+                            )}
+                        </span>
 
                         <div className="homebrew-modal__footer-actions" style={{ flexShrink: 0 }}>
                             {canEdit && (
@@ -311,27 +259,6 @@ export function HomebrewModal({ onClose }: { onClose: () => void }) {
                             )}
                         </div>
                     </div>
-
-                    <span
-                        className="text-subtext"
-                        style={{
-                            color: needsBackup ? 'var(--semantic-danger)' : 'var(--text-muted)',
-                            fontWeight: needsBackup ? 'bold' : 'normal',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '6px',
-                            textAlign: 'center'
-                        }}
-                    >
-                        {needsBackup ? (
-                            <>
-                                <AlertTriangle size={14} /> Unexported changes! Please backup your work.
-                            </>
-                        ) : (
-                            'Changes save automatically to your browser.'
-                        )}
-                    </span>
                 </div>
             </div>
 

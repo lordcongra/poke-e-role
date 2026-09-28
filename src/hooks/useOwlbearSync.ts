@@ -2,13 +2,16 @@ import { useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../store/useCharacterStore';
 import { isStandaloneMode } from '../utils/sync/storageAdapter';
+import { homebrewStorage, initHomebrewBroadcastSync } from '../utils/sync/homebrewStorage';
 import { initItemArtCatalog, harvestTokensItemArt } from '../utils/graphics/itemArtCatalog';
-import { setupOwlbearRoomSync } from './owlbearSync/setupOwlbearRoomSync';
-import { setupOwlbearTokenSync } from './owlbearSync/setupOwlbearTokenSync';
-import { setupOwlbearPlayerSync } from './owlbearSync/setupOwlbearPlayerSync';
-import { setupOwlbearHomebrewSync } from './owlbearSync/setupOwlbearHomebrewSync';
-import { setupOwlbearItemArtSync } from './owlbearSync/setupOwlbearItemArtSync';
-import { setupOwlbearRollSync } from './owlbearSync/setupOwlbearRollSync';
+import {
+    setupOwlbearRoomSync,
+    setupOwlbearTokenSync,
+    setupOwlbearPlayerSync,
+    setupOwlbearHomebrewSync,
+    setupOwlbearItemArtSync,
+    setupOwlbearRollSync
+} from './owlbearSync';
 
 export function useOwlbearSync() {
     useEffect(() => {
@@ -17,16 +20,22 @@ export function useOwlbearSync() {
         let cleanupTokenSync: (() => void) | null = null;
         let cleanupItemArtSync: (() => void) | null = null;
 
-        // 1. Load Local Homebrew for this specific room immediately
+        // 1. Load Local Homebrew and run one-time localStorage migration
         useCharacterStore.getState().loadHomebrewLocal();
+        homebrewStorage.runLocalStorageMigration().catch(() => {});
 
-        // 2. Initialize Item Art Catalog (IndexedDB -> in-memory) for both Standalone and OBR
+        // 2. Multi-tab BroadcastChannel sync for standalone mode
+        unsubs.push(
+            initHomebrewBroadcastSync((data) => {
+                useCharacterStore.getState().applyHomebrewSync(data);
+            })
+        );
+
+        // 3. Initialize Item Art Catalog (IndexedDB -> in-memory) for both Standalone and OBR
         initItemArtCatalog().catch((e) => console.warn('[SyncEngine] Failed to init item art catalog:', e));
 
         // Skip Owlbear bindings entirely if running as a standalone app!
-        if (isStandaloneMode) {
-            return;
-        }
+        if (isStandaloneMode) return () => unsubs.forEach((u) => u());
 
         if (OBR.isAvailable) {
             OBR.onReady(async () => {
@@ -35,24 +44,19 @@ export function useOwlbearSync() {
                 const role = await OBR.player.getRole();
                 const currentStore = useCharacterStore.getState();
                 currentStore.setTokenData(currentStore.tokenId || '', role);
+                currentStore.loadHomebrewLocal();
 
                 // Passively harvest scene tokens for item art immediately upon ready
-                OBR.scene.items
-                    .getItems()
-                    .then(harvestTokensItemArt)
-                    .catch(() => {});
+                OBR.scene.items.getItems().then(harvestTokensItemArt, () => {});
 
                 // Forward declaration for token re-rendering
                 let renderTokens: ((forceRebuild?: boolean | 'badges-only') => Promise<void>) | null = null;
 
-                // 1. Load Room Settings and Scene Settings FIRST, so roomDefaultScale is applied BEFORE any scene tokens are rendered
+                // 1. Load Room Settings and Scene Settings FIRST
                 const roomSync = await setupOwlbearRoomSync(role, async (forceRebuild) => {
-                    if (renderTokens) {
-                        await renderTokens(forceRebuild);
-                    }
+                    if (renderTokens) await renderTokens(forceRebuild);
                 });
                 unsubs.push(...roomSync.unsubs);
-
                 if (!isMounted) return;
 
                 // 2. Set up Token Sync with scene sync and ready management
@@ -64,7 +68,6 @@ export function useOwlbearSync() {
                 });
                 renderTokens = tokenSync.renderAllTokens;
                 cleanupTokenSync = tokenSync.cleanup;
-
                 if (!isMounted) return;
 
                 // 3. Set up Player Sync (active token selection & role changes)

@@ -10,21 +10,11 @@ import type {
 } from '../storeTypes';
 import { syncHomebrewToApi } from '../../utils/api/api';
 import OBR from '@owlbear-rodeo/sdk';
-
-const getStorageKey = () => {
-    try {
-        if (OBR.isAvailable && OBR.room && OBR.room.id) {
-            return `pkr_homebrew_${OBR.room.id}`;
-        }
-    } catch (e) {
-        console.warn('[HomebrewSlice] Failed to retrieve OBR room ID for storage key.', e);
-    }
-    return 'pkr_homebrew_offline';
-};
+import { homebrewStorage, type HomebrewStorageData } from '../../utils/sync/homebrewStorage';
 
 const saveHomebrewLocal = (state: CharacterState) => {
     try {
-        const data = {
+        const data: HomebrewStorageData = {
             customTypes: state.roomCustomTypes,
             customAbilities: state.roomCustomAbilities,
             customMoves: state.roomCustomMoves,
@@ -34,9 +24,11 @@ const saveHomebrewLocal = (state: CharacterState) => {
             customStatuses: state.roomCustomStatuses,
             needsBackup: state.needsBackup
         };
-        localStorage.setItem(getStorageKey(), JSON.stringify(data));
+        homebrewStorage.saveHomebrew(data).catch((error) => {
+            console.error('[HomebrewSlice] Failed to save homebrew data to storage.', error);
+        });
     } catch (error) {
-        console.error('[HomebrewSlice] Failed to save homebrew data locally.', error);
+        console.error('[HomebrewSlice] Failed to queue save homebrew data.', error);
     }
 };
 
@@ -50,19 +42,18 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
     roomCustomStatuses: [],
     needsBackup: false,
 
-    loadHomebrewLocal: () => {
+    loadHomebrewLocal: async () => {
         try {
-            const stored = localStorage.getItem(getStorageKey());
-            if (stored) {
-                const parsed = JSON.parse(stored);
-                const types = parsed.customTypes || [];
-                const abilities = parsed.customAbilities || [];
-                const moves = parsed.customMoves || [];
-                const pokemon = parsed.customPokemon || [];
-                const items = parsed.customItems || [];
-                const forms = parsed.customForms || [];
-                const statuses = parsed.customStatuses || [];
-                const needsBkp = parsed.needsBackup || false;
+            const data = await homebrewStorage.loadHomebrew();
+            if (data) {
+                const types = data.customTypes || [];
+                const abilities = data.customAbilities || [];
+                const moves = data.customMoves || [];
+                const pokemon = data.customPokemon || [];
+                const items = data.customItems || [];
+                const forms = data.customForms || [];
+                const statuses = data.customStatuses || [];
+                const needsBkp = data.needsBackup || false;
 
                 set({
                     roomCustomTypes: types,
@@ -78,8 +69,32 @@ export const createHomebrewSlice: StateCreator<CharacterState, [], [], HomebrewS
                 syncHomebrewToApi(pokemon, moves, abilities, items);
             }
         } catch (error) {
-            console.error('[HomebrewSlice] Failed to load homebrew data from local storage.', error);
+            console.error('[HomebrewSlice] Failed to load homebrew data from storage.', error);
         }
+    },
+
+    applyHomebrewSync: (payload) => {
+        const types = payload.customTypes || [];
+        const abilities = payload.customAbilities || [];
+        const moves = payload.customMoves || [];
+        const pokemon = payload.customPokemon || [];
+        const items = payload.customItems || [];
+        const forms = payload.customForms || [];
+        const statuses = payload.customStatuses || [];
+        const needsBkp = payload.needsBackup ?? false;
+
+        set({
+            roomCustomTypes: types,
+            roomCustomAbilities: abilities,
+            roomCustomMoves: moves,
+            roomCustomPokemon: pokemon,
+            roomCustomItems: items,
+            roomCustomForms: forms,
+            roomCustomStatuses: statuses,
+            needsBackup: needsBkp
+        });
+
+        syncHomebrewToApi(pokemon, moves, abilities, items);
     },
 
     markHomebrewBackedUp: () => {

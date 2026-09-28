@@ -252,7 +252,8 @@ export interface HomebrewSlice {
     roomCustomStatuses: CustomStatus[];
     needsBackup: boolean;
 
-    loadHomebrewLocal: () => void;
+    loadHomebrewLocal: () => Promise<void>;
+    applyHomebrewSync: (payload: HomebrewPayload & { needsBackup?: boolean }) => void;
     getHomebrewPayload: () => HomebrewPayload;
     markHomebrewBackedUp: () => void;
     processHomebrewPayload: (payload: HomebrewPayload) => void;
