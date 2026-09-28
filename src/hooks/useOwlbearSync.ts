@@ -100,6 +100,7 @@ export function useOwlbearSync() {
                     gmOnlyTrackers: sData.gmOnlyTrackers !== undefined ? Boolean(sData.gmOnlyTrackers) : undefined,
                     gmOnlyAttributeLock:
                         sData.gmOnlyAttributeLock !== undefined ? Boolean(sData.gmOnlyAttributeLock) : undefined,
+                    pmdSkills: sData.pmdSkills !== undefined ? Boolean(sData.pmdSkills) : undefined,
                     gmDemoMode: sData.gmDemoMode !== undefined ? Boolean(sData.gmDemoMode) : undefined,
                     roomDefaultScale: sData.roomDefaultScale !== undefined ? Number(sData.roomDefaultScale) : undefined,
                     roomDefaultOffsetX:

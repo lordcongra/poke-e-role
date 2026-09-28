@@ -358,6 +358,31 @@ export function RulesModal({ onClose }: { onClose: () => void }) {
                         </select>
                     </div>
 
+                    <div>
+                        <label className="rules-modal__label text-label" style={{ color: 'var(--text-main)' }}>
+                            Pokémon PMD Skills{' '}
+                            <TooltipIcon
+                                onClick={() =>
+                                    setModalConfig({
+                                        title: 'Pokémon PMD Skills (Knowledge Category)',
+                                        content:
+                                            'Controls whether Pokémon sheets display the Mystery Dungeon Knowledge skills (Crafts, Lore, Medicine, Magic). If disabled, the Knowledge category is hidden on Pokémon sheets. Standard Trainer sheets always retain Knowledge skills. Enabled by default for backwards compatibility.'
+                                    })
+                                }
+                            />
+                        </label>
+                        <select
+                            className="identity-grid__select rules-modal__select text-subtext"
+                            style={{ color: 'var(--text-main)' }}
+                            value={id.pmdSkills !== false ? 'Enabled' : 'Disabled'}
+                            onWheel={(e) => e.currentTarget.blur()}
+                            onChange={(e) => handleRoomSelectChange('pmdSkills', e.target.value === 'Enabled', e)}
+                        >
+                            <option value="Enabled">Enabled (Default - Mystery Dungeon)</option>
+                            <option value="Disabled">Disabled (Base Pokémon)</option>
+                        </select>
+                    </div>
+
                     {!isStandaloneMode && (
                         <>
                             <div>

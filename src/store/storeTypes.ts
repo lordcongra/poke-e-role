@@ -340,7 +340,9 @@ export interface HomebrewSlice {
 
 export interface ExtraSkillsSlice {
     extraCategories: ExtraCategory[];
-    addExtraCategory: () => void;
+    addExtraCategory: (name?: string) => void;
+    addExtraSkill: (categoryId?: string) => void;
+    removeExtraSkill: (categoryId: string, skillId: string) => void;
     updateExtraCategory: (id: string, name: string) => void;
     updateExtraSkill: <K extends keyof ExtraSkill>(
         categoryId: string,
@@ -433,6 +435,7 @@ export interface IdentitySlice {
         gmOnlyAttributeLock?: boolean;
         coreLocked?: boolean;
         socialLocked?: boolean;
+        pmdSkills?: boolean;
         gmDemoMode: boolean;
 
         // Initiative HUD User Settings
@@ -513,6 +516,7 @@ export interface RoomSettings {
     gmOnlyDamageOverride: boolean;
     gmOnlyTrackers?: boolean;
     gmOnlyAttributeLock?: boolean;
+    pmdSkills?: boolean;
     gmDemoMode: boolean;
     roomDefaultScale: number;
     roomDefaultOffsetX?: number;

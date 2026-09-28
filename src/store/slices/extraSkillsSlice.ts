@@ -5,26 +5,76 @@ import { saveToOwlbear } from '../../utils/obr';
 export const createExtraSkillsSlice: StateCreator<CharacterState, [], [], ExtraSkillsSlice> = (set) => ({
     extraCategories: [],
 
-    addExtraCategory: () =>
+    addExtraCategory: (name = 'EXTRA') =>
         set((state) => {
             const categoryId = `cat_${crypto.randomUUID()}`;
             const newCategories: ExtraCategory[] = [
                 ...state.extraCategories,
                 {
                     id: categoryId,
-                    name: 'EXTRA',
-                    skills: [
-                        { id: `${categoryId}_1`, name: '', base: 0, buff: 0 },
-                        { id: `${categoryId}_2`, name: '', base: 0, buff: 0 },
-                        { id: `${categoryId}_3`, name: '', base: 0, buff: 0 },
-                        { id: `${categoryId}_4`, name: '', base: 0, buff: 0 }
-                    ]
+                    name: name || 'EXTRA',
+                    skills: [{ id: `${categoryId}_1`, name: '', base: 0, buff: 0 }]
                 }
             ];
             try {
                 saveToOwlbear({ 'extra-skills-data': JSON.stringify(newCategories) });
             } catch (error) {
                 console.error('[ExtraSkillsSlice] Failed to save new extra category to Owlbear.', error);
+            }
+            return { extraCategories: newCategories };
+        }),
+
+    addExtraSkill: (categoryId?: string) =>
+        set((state) => {
+            let newCategories = [...state.extraCategories];
+            const newSkillId = `skill_${crypto.randomUUID().slice(0, 8)}`;
+            const newSkill = { id: newSkillId, name: '', base: 0, buff: 0 };
+
+            if (newCategories.length === 0) {
+                const newCatId = `cat_${crypto.randomUUID()}`;
+                newCategories = [
+                    {
+                        id: newCatId,
+                        name: 'EXTRA',
+                        skills: [newSkill]
+                    }
+                ];
+            } else {
+                const targetId = categoryId || newCategories[newCategories.length - 1].id;
+                newCategories = newCategories.map((cat) => {
+                    if (cat.id === targetId) {
+                        return {
+                            ...cat,
+                            skills: [...cat.skills, newSkill]
+                        };
+                    }
+                    return cat;
+                });
+            }
+
+            try {
+                saveToOwlbear({ 'extra-skills-data': JSON.stringify(newCategories) });
+            } catch (error) {
+                console.error('[ExtraSkillsSlice] Failed to save added extra skill to Owlbear.', error);
+            }
+            return { extraCategories: newCategories };
+        }),
+
+    removeExtraSkill: (categoryId, skillId) =>
+        set((state) => {
+            const newCategories = state.extraCategories.map((category) => {
+                if (category.id === categoryId) {
+                    return {
+                        ...category,
+                        skills: category.skills.filter((skill) => skill.id !== skillId)
+                    };
+                }
+                return category;
+            });
+            try {
+                saveToOwlbear({ 'extra-skills-data': JSON.stringify(newCategories) });
+            } catch (error) {
+                console.error('[ExtraSkillsSlice] Failed to save removed extra skill to Owlbear.', error);
             }
             return { extraCategories: newCategories };
         }),

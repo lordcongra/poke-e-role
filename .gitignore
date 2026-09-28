@@ -25,6 +25,7 @@ dist-ssr
 
 # AI agent rules & workspace configs
 .agents/
+AGENTS.md
 
 # Local dataset sync & overrides workspace (local only, not tracked in GitHub)
 /data/

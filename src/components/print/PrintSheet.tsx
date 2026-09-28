@@ -153,7 +153,9 @@ export function PrintSheet() {
     );
 
     if (!config.coreSkillsOnly) {
-        if (!config.hideKnowledgeSkills) {
+        const isTrainer = identity.mode !== 'Pokémon';
+        const showKnowledge = !config.hideKnowledgeSkills && (isTrainer || identity.pmdSkills !== false);
+        if (showKnowledge) {
             skillColumns.push(
                 <div key="knowledge">
                     <div className="print-sheet__skill-col-title">KNOWLEDGE</div>
@@ -161,7 +163,7 @@ export function PrintSheet() {
                     {renderSkill('Lore', skills[Skill.LORE].base, config.blankSkills)}
                     {renderSkill('Medicine', skills[Skill.MEDICINE].base, config.blankSkills)}
                     {renderSkill(
-                        skills[Skill.MAGIC].customName || 'Magic',
+                        skills[Skill.MAGIC].customName || (isTrainer ? 'Science' : 'Magic'),
                         skills[Skill.MAGIC].base,
                         config.blankSkills
                     )}

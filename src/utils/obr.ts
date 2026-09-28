@@ -103,6 +103,7 @@ export async function saveRoomSettingsToOwlbear(updates: Record<string, unknown>
                     else if (k === 'gmOnlyDamageOverride') roomMeta.gmOnlyDamageOverride = Boolean(v);
                     else if (k === 'gmOnlyTrackers') roomMeta.gmOnlyTrackers = Boolean(v);
                     else if (k === 'gmOnlyAttributeLock') roomMeta.gmOnlyAttributeLock = Boolean(v);
+                    else if (k === 'pmdSkills') roomMeta.pmdSkills = Boolean(v);
                     else if (k === 'gmDemoMode') roomMeta.gmDemoMode = Boolean(v);
                     else if (k === 'roomDefaultScale') roomMeta.roomDefaultScale = Number(v);
                     else roomMeta[k] = v;
@@ -144,6 +145,7 @@ export async function flushRoomSettingsToOwlbear(updates?: Record<string, unknow
             else if (k === 'gmOnlyDamageOverride') roomMeta.gmOnlyDamageOverride = Boolean(v);
             else if (k === 'gmOnlyTrackers') roomMeta.gmOnlyTrackers = Boolean(v);
             else if (k === 'gmOnlyAttributeLock') roomMeta.gmOnlyAttributeLock = Boolean(v);
+            else if (k === 'pmdSkills') roomMeta.pmdSkills = Boolean(v);
             else if (k === 'gmDemoMode') roomMeta.gmDemoMode = Boolean(v);
             else if (k === 'roomDefaultScale') roomMeta.roomDefaultScale = Number(v);
             else if (k === 'roomDefaultOffsetX') roomMeta.roomDefaultOffsetX = Number(v);

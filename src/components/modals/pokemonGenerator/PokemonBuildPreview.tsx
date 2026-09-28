@@ -1,4 +1,5 @@
 import React from 'react';
+import { useCharacterStore } from '../../../store/useCharacterStore';
 import type { TempBuild, TempMove } from '../../../store/storeTypes';
 import { CombatStat, SocialStat, SKILL_CATEGORIES } from '../../../types/enums';
 import { TYPE_COLORS } from '../../../data/constants';
@@ -82,6 +83,10 @@ export const PokemonBuildPreview: React.FC<PokemonBuildPreviewProps> = ({
 }) => {
     const species = build.species;
     const types = getPokemonTypes(species, build, metadata, pokedexLookup);
+    const pmdSkills = useCharacterStore((state) => state.identity.pmdSkills);
+    const visibleCategories = SKILL_CATEGORIES.filter(
+        (category) => pmdSkills !== false || category.name !== 'Knowledge'
+    );
 
     return (
         <>
@@ -217,7 +222,7 @@ export const PokemonBuildPreview: React.FC<PokemonBuildPreviewProps> = ({
             <div className="generator-preview__section">
                 <span className="generator-preview__section-title text-title-primary">Skills</span>
                 <div className="generator-preview__skill-categories">
-                    {SKILL_CATEGORIES.map((category) => (
+                    {visibleCategories.map((category) => (
                         <div key={category.name} className="generator-preview__skill-group">
                             <span className="generator-preview__skill-group-title">{category.name}</span>
                             <div className="generator-preview__grid-4">

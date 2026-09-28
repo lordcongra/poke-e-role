@@ -28,6 +28,7 @@ const EXCLUDED_FROM_TOKEN_SAVE = new Set([
     'gmOnlyDamageOverride',
     'gmOnlyTrackers',
     'gmOnlyAttributeLock',
+    'pmdSkills',
     'gmDemoMode',
     'roomDefaultScale',
     'roomDefaultOffsetX',
@@ -284,6 +285,7 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         gmOnlyDamageOverride: false,
         gmOnlyTrackers: false,
         gmOnlyAttributeLock: true,
+        pmdSkills: typeof localStorage !== 'undefined' ? localStorage.getItem('pkr_room_pmd_skills') !== 'false' : true,
         coreLocked: true,
         socialLocked: true,
         gmDemoMode: false,
@@ -383,6 +385,13 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 localStorage.setItem('pkr_room_default_offset_y', String(settings.roomDefaultOffsetY));
             } catch {}
         }
+        if (settings.pmdSkills !== undefined && typeof localStorage !== 'undefined') {
+            try {
+                localStorage.setItem('pkr_room_pmd_skills', String(settings.pmdSkills));
+            } catch {
+                /* ignore storage errors */
+            }
+        }
         const cleanSettings: Record<string, unknown> = {};
         for (const [k, v] of Object.entries(settings)) {
             if (v !== undefined) {
@@ -412,6 +421,13 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
             try {
                 localStorage.setItem('pkr_room_default_offset_y', String(value));
             } catch {}
+        }
+        if (field === 'pmdSkills' && typeof localStorage !== 'undefined') {
+            try {
+                localStorage.setItem('pkr_room_pmd_skills', String(value));
+            } catch {
+                /* ignore storage errors */
+            }
         }
         set((state) => ({
             identity: {
