@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Megaphone, X, PartyPopper, ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
+import { Megaphone, X, PartyPopper, ChevronDown, ChevronRight, Sparkles, Bug } from 'lucide-react';
 import { CHANGELOG_DATA, CURRENT_VERSION, getChangelogDiff, type ChangelogHighlight } from '../../../data/changelog';
 import { ChangelogDetailModal } from './ChangelogDetailModal';
 import './ChangelogModal.css';
@@ -79,6 +79,14 @@ export function ChangelogModal({ onClose }: ChangelogModalProps) {
                 </div>
 
                 <div className="changelog-modal__body">
+                    <div className="changelog-modal__bug-banner">
+                        <Bug size={16} className="changelog-modal__bug-banner-icon" />
+                        <span>
+                            Having issues with a new feature? Be sure to make a bug report using the{' '}
+                            <strong>Report Bug</strong> button in the top toolbar!
+                        </span>
+                    </div>
+
                     {/* Top Display Cards / Feature Highlights */}
                     {diff.highlights.length > 0 && (
                         <div className="changelog-modal__highlights-section">

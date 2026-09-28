@@ -220,6 +220,9 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 <li>
                     <strong>Round Tracker Boost Controls:</strong> When abilities, items, or passives grant stacking boosts, a dedicated stepper control appears in the Round Tracker for easy tier tracking.
                 </li>
+                <li>
+                    <strong>In-App Bug Reporting:</strong> Having issues or notice unexpected behavior with a feature? Use the new <strong>Report Bug</strong> button in the top toolbar to send a report and diagnostic details directly to Congra.
+                </li>
             </ul>,
             <strong key="bag-grid-view-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                 <Package size={16} /> Inventory & Bag Overhaul
