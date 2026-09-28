@@ -314,7 +314,9 @@ export const InventoryCard = memo(function InventoryCard({
                             onEditTag={(tagStr) => setTagBuilderData({ id: item.id, type: 'item', initialTag: tagStr })}
                             onDeleteTag={(rawTag) => {
                                 const currentTags =
-                                    item.tags !== undefined ? item.tags : (item.desc.match(/\[[^\]]+\]/g) || []).join(' ');
+                                    item.tags !== undefined
+                                        ? item.tags
+                                        : (item.desc.match(/\[[^\]]+\]/g) || []).join(' ');
                                 const updated = currentTags.replace(rawTag, '').replace(/\s+/g, ' ').trim();
                                 updateInventoryItem(item.id, 'tags', updated);
                                 if (item.desc.includes(rawTag)) {

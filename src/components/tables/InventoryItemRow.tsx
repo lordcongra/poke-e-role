@@ -259,7 +259,9 @@ export function InventoryItemRow({
                 </div>
             </td>
             <td className="data-table__cell--middle inventory-item__desc-cell">
-                <div className={`inventory-item__desc-box ${item.active === false ? 'inventory-item__desc-box--inactive' : ''}`}>
+                <div
+                    className={`inventory-item__desc-box ${item.active === false ? 'inventory-item__desc-box--inactive' : ''}`}
+                >
                     <textarea
                         ref={textareaRef}
                         className="inventory-item__desc-textarea text-subtext"
@@ -304,7 +306,9 @@ export function InventoryItemRow({
                             <TagPillList
                                 tags={itemTags}
                                 size="sm"
-                                onEditTag={(tagStr) => setTagBuilderData({ id: item.id, type: 'item', initialTag: tagStr })}
+                                onEditTag={(tagStr) =>
+                                    setTagBuilderData({ id: item.id, type: 'item', initialTag: tagStr })
+                                }
                                 onDeleteTag={(rawTag) => {
                                     const currentTags =
                                         item.tags !== undefined

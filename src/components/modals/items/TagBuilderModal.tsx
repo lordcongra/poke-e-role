@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
     Tag,
     X,
@@ -14,7 +14,8 @@ import {
     TrendingUp,
     Check,
     Trash2,
-    AlertTriangle
+    AlertTriangle,
+    Search
 } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { POKEMON_TYPES } from '../../../data/constants';
@@ -28,6 +29,7 @@ import {
     getDefaultTargetForCategory
 } from './tagBuilder/tagBuilderConstants';
 import { buildTagString, generateExplanation, parseTagStringToConfig } from './tagBuilder/tagBuilderLogic';
+import { searchEffects, type SearchResultItem } from './tagBuilder/tagBuilderSearch';
 import { TagBuilderConfigSection } from './tagBuilder/TagBuilderConfigSection';
 import { TagBuilderPreview } from './tagBuilder/TagBuilderPreview';
 import './TagBuilderModal.css';
@@ -40,6 +42,9 @@ export function TagBuilderModal({ targetId, targetType, initialTag, onClose }: T
         targetId,
         targetType
     );
+
+    // Search Query State
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Tag Builder Configuration State
     const [config, setConfig] = useState<TagBuilderConfig>(() => {
@@ -135,6 +140,22 @@ export function TagBuilderModal({ targetId, targetType, initialTag, onClose }: T
             }
         }
         onClose();
+    };
+
+    const isMove = targetType === 'move';
+    const searchResults = useMemo(() => {
+        return searchEffects(searchQuery, isMove, extraCategories);
+    }, [searchQuery, isMove, extraCategories]);
+
+    const handleSelectSearchResult = (result: SearchResultItem) => {
+        const defaults = getDefaultTargetForCategory(result.category);
+        setConfig((prev) => ({
+            ...prev,
+            category: result.category,
+            target: result.target,
+            reqGroup: result.category === 'matchup' ? 'type' : defaults.reqGroup,
+            typeOption: result.category === 'matchup' && !prev.typeOption ? 'Fire' : prev.typeOption
+        }));
     };
 
     const targetOptions = getTargetOptions(config.category, extraCategories);
@@ -281,39 +302,116 @@ export function TagBuilderModal({ targetId, targetType, initialTag, onClose }: T
                     </div>
                 </div>
 
-                {/* Category Navigation Tabs */}
-                <div>
-                    <span className="tag-builder__section-label">Category:</span>
-                    <div className="tag-builder__categories">
-                        {categories.map((c) => (
-                            <button
-                                key={c.id}
-                                type="button"
-                                onClick={() => handleSelectCategory(c.id)}
-                                className={`tag-builder__cat-tab ${config.category === c.id ? 'tag-builder__cat-tab--active' : ''}`}
-                            >
-                                {c.icon} {c.label}
-                            </button>
-                        ))}
-                    </div>
+                {/* Search Bar */}
+                <div className="tag-builder__search-bar">
+                    <Search size={14} className="tag-builder__search-icon" />
+                    <input
+                        type="text"
+                        className="tag-builder__search-input"
+                        placeholder="Search effects, stats, mechanics... (e.g. 'crit', 'poison', 'speed', 'heal')"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Escape') setSearchQuery('');
+                            if (e.key === 'Enter' && searchResults.length > 0) {
+                                handleSelectSearchResult(searchResults[0]);
+                            }
+                        }}
+                    />
+                    {searchQuery && (
+                        <button
+                            type="button"
+                            className="tag-builder__search-clear"
+                            onClick={() => setSearchQuery('')}
+                            title="Clear search"
+                        >
+                            <X size={14} />
+                        </button>
+                    )}
                 </div>
 
-                {/* Target Chip Selector */}
-                <div>
-                    <span className="tag-builder__section-label">Select Target / Effect:</span>
-                    <div className="tag-builder__targets-grid">
-                        {targetOptions.map((opt) => (
+                {searchQuery.trim() ? (
+                    <div className="tag-builder__search-results">
+                        <div className="tag-builder__search-header">
+                            <span className="tag-builder__section-label">
+                                Matching Effects ({searchResults.length}):
+                            </span>
                             <button
-                                key={opt}
                                 type="button"
-                                onClick={() => updateConfig('target', opt)}
-                                className={`tag-builder__target-chip ${config.target === opt ? 'tag-builder__target-chip--active' : ''}`}
+                                className="tag-builder__search-clear-link"
+                                onClick={() => setSearchQuery('')}
                             >
-                                {opt}
+                                Browse all categories
                             </button>
-                        ))}
+                        </div>
+                        {searchResults.length > 0 ? (
+                            <div className="tag-builder__search-grid">
+                                {searchResults.map((item) => {
+                                    const isSelected =
+                                        config.category === item.category && config.target === item.target;
+                                    const catObj = categories.find((c) => c.id === item.category);
+                                    return (
+                                        <button
+                                            key={`${item.category}-${item.target}`}
+                                            type="button"
+                                            onClick={() => handleSelectSearchResult(item)}
+                                            className={`tag-builder__search-item ${
+                                                isSelected ? 'tag-builder__search-item--active' : ''
+                                            }`}
+                                        >
+                                            <div className="tag-builder__search-item-top">
+                                                {catObj?.icon}
+                                                <span className="tag-builder__search-item-title">{item.target}</span>
+                                            </div>
+                                            <span className="tag-builder__search-item-cat">{item.categoryLabel}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="tag-builder__search-empty">
+                                No effects found matching &ldquo;{searchQuery}&rdquo;. Try another term or browse
+                                categories below.
+                            </div>
+                        )}
                     </div>
-                </div>
+                ) : (
+                    <>
+                        {/* Category Navigation Tabs */}
+                        <div>
+                            <span className="tag-builder__section-label">Category:</span>
+                            <div className="tag-builder__categories">
+                                {categories.map((c) => (
+                                    <button
+                                        key={c.id}
+                                        type="button"
+                                        onClick={() => handleSelectCategory(c.id)}
+                                        className={`tag-builder__cat-tab ${config.category === c.id ? 'tag-builder__cat-tab--active' : ''}`}
+                                    >
+                                        {c.icon} {c.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Target Chip Selector */}
+                        <div>
+                            <span className="tag-builder__section-label">Select Target / Effect:</span>
+                            <div className="tag-builder__targets-grid">
+                                {targetOptions.map((opt) => (
+                                    <button
+                                        key={opt}
+                                        type="button"
+                                        onClick={() => updateConfig('target', opt)}
+                                        className={`tag-builder__target-chip ${config.target === opt ? 'tag-builder__target-chip--active' : ''}`}
+                                    >
+                                        {opt}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </>
+                )}
 
                 {/* Configuration: Requirement, Value & Condition */}
                 <TagBuilderConfigSection
