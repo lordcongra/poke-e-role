@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
-import { getAbilityText } from '../../utils/combatUtils';
-import { fetchAbilityData } from '../../utils/api';
-import { isStandaloneMode } from '../../utils/storageAdapter';
-import { imageManager } from '../../utils/imageManager';
+import { getAbilityText } from '../../utils/combat/combatUtils';
+import { fetchAbilityData } from '../../utils/api/api';
+import { isStandaloneMode } from '../../utils/sync/storageAdapter';
+import { imageManager } from '../../utils/graphics/imageManager';
 import { Check } from 'lucide-react';
 import './PrintSheet.css';
 

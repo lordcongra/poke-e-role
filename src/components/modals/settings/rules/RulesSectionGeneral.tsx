@@ -1,6 +1,6 @@
 import { useCharacterStore } from '../../../../store/useCharacterStore';
 import { TooltipIcon } from '../../../ui/TooltipIcon';
-import { isStandaloneMode } from '../../../../utils/storageAdapter';
+import { isStandaloneMode } from '../../../../utils/sync/storageAdapter';
 import { handleRoomSelectChange } from './rulesModalUtils';
 
 interface RulesSectionGeneralProps {

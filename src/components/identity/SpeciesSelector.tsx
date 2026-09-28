@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { fetchPokemonData } from '../../utils/api';
+import { fetchPokemonData } from '../../utils/api/api';
 import { SpeciesChangeModal } from '../modals/species/SpeciesChangeModal';
 import { BookOpen, Loader2 } from 'lucide-react';
 

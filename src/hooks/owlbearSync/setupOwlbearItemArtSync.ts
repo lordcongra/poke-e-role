@@ -5,7 +5,7 @@ import {
     getRemoteShareableItemArt,
     isRemoteShareableUrl,
     mergeItemArt
-} from '../../utils/itemArtCatalog';
+} from '../../utils/graphics/itemArtCatalog';
 import { EXTENSION_ID } from './owlbearSyncConstants';
 
 export interface OwlbearItemArtSyncResult {

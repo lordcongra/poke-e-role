@@ -1,12 +1,12 @@
 import { useCallback } from 'react';
 import OBR, { type Image } from '@owlbear-rodeo/sdk';
-import { isStandaloneMode, storageAdapter } from '../../../utils/storageAdapter';
+import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import {
     extractTokenImage,
     extractCharacterName,
     calculateBaseInitFromCharacterData
-} from '../../../utils/initiativeHelpers';
+} from '../../../utils/combat/initiativeHelpers';
 import type { BattleOrganizerState, BattleRoundData, CombatantRowData } from '../../../types/battleOrganizerTypes';
 import {
     parseStatusesFromMetadata,

@@ -1,6 +1,6 @@
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { assignInitiative } from '../../utils/diceRoller';
+import { assignInitiative } from '../../utils/combat/diceRoller';
 import { isBattleOrganizerOpen } from '../../components/modals/battleOrganizer/battleOrganizerSettingsHelper';
 import { EXTENSION_ID, METADATA_ID, type RollSyncData } from './owlbearSyncConstants';
 

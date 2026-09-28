@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import type { CombatantRowData, ActionStatus } from '../../../types/battleOrganizerTypes';
-import { isStandaloneMode } from '../../../utils/storageAdapter';
-import { imageManager } from '../../../utils/imageManager';
+import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
+import { imageManager } from '../../../utils/graphics/imageManager';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { STATUS_OPTIONS } from '../../../data/constants';
 import { Trash2, Dices, Shield, Swords, User, Skull, X, FileText, Minus, Plus, Lock } from 'lucide-react';
-import { addRollLogEntry } from '../../../utils/diceRoller';
+import { addRollLogEntry } from '../../../utils/combat/diceRoller';
 import { CombatantActionSlots } from './CombatantActionSlots';
 import './CombatantRow.css';
 

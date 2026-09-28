@@ -1,9 +1,13 @@
 import OBR from '@owlbear-rodeo/sdk';
 import type { Item, Image } from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { buildGraphicsFromMeta, renderTokenGraphics, cleanupOrphanedGraphics } from '../../utils/graphicsManager';
-import { setActiveTokenId, hasPendingUpdates } from '../../utils/obr';
-import { harvestTokensItemArt } from '../../utils/itemArtCatalog';
+import {
+    buildGraphicsFromMeta,
+    renderTokenGraphics,
+    cleanupOrphanedGraphics
+} from '../../utils/graphics/graphicsManager';
+import { setActiveTokenId, hasPendingUpdates } from '../../utils/sync/obr';
+import { harvestTokensItemArt } from '../../utils/graphics/itemArtCatalog';
 import { METADATA_ID, getEffectiveScaleAndOffsets, type TransformData } from './owlbearSyncConstants';
 
 export interface OwlbearTokenSyncResult {

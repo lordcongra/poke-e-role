@@ -3,7 +3,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { TrainerBadgeRow } from './TrainerBadgeRow';
 import { BadgeImageModal } from '../modals/species/BadgeImageModal';
-import { imageManager } from '../../utils/imageManager';
+import { imageManager } from '../../utils/graphics/imageManager';
 import type { Badge } from '../../store/entityTypes';
 import { Plus, Trash2, XCircle, AlertTriangle } from 'lucide-react';
 import './TrainerBadges.css';

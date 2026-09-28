@@ -1,8 +1,8 @@
 import type { StateCreator } from 'zustand';
 import type { CharacterState, InventorySlice, InventoryItem, CustomInfo } from '../storeTypes';
-import { saveToOwlbear } from '../../utils/obr';
-import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../../utils/combatUtils';
-import { imageManager } from '../../utils/imageManager';
+import { saveToOwlbear } from '../../utils/sync/obr';
+import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../../utils/combat/combatUtils';
+import { imageManager } from '../../utils/graphics/imageManager';
 import { KNOWN_ITEMS } from '../../data/constants';
 
 const syncHealthWill = (

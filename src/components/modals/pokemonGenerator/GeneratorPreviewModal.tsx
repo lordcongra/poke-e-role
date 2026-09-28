@@ -3,11 +3,11 @@ import OBR, { buildImage, type ImageDownload, type Item } from '@owlbear-rodeo/s
 import { Search, Dices, CheckCircle, XCircle, ImagePlus, FilePlus } from 'lucide-react';
 import type { TempBuild } from '../../../store/storeTypes';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { isStandaloneMode, storageAdapter } from '../../../utils/storageAdapter';
-import { setActiveTokenId, METADATA_ID } from '../../../utils/obr';
-import { buildTokenMetadataFromBuild } from '../../../utils/generatorUtils';
-import { calculateFormationOffsets } from '../../../utils/trainerTokenSpawner';
-import { buildGraphicsFromMeta, renderTokenGraphics } from '../../../utils/graphicsManager';
+import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
+import { setActiveTokenId, METADATA_ID } from '../../../utils/sync/obr';
+import { buildTokenMetadataFromBuild } from '../../../utils/generators/generatorUtils';
+import { calculateFormationOffsets } from '../../../utils/generators/trainerTokenSpawner';
+import { buildGraphicsFromMeta, renderTokenGraphics } from '../../../utils/graphics/graphicsManager';
 import { PromptModal } from '../settings/PromptModal';
 import { PokemonBuildPreview } from './PokemonBuildPreview';
 import './GeneratorPreviewModal.css';

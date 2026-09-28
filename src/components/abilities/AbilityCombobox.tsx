@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { loadLocalDataset, ALL_ABILITIES } from '../../utils/api';
+import { loadLocalDataset, ALL_ABILITIES } from '../../utils/api/api';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { TagBuilderModal } from '../modals/items/TagBuilderModal';
 import { ArrowLeftRight, RotateCcw, Check, Tag } from 'lucide-react';

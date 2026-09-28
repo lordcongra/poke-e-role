@@ -1,9 +1,9 @@
 import OBR from '@owlbear-rodeo/sdk';
 import type { Image } from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { fetchPokemonData, fetchMoveData } from '../../utils/api';
-import { saveToOwlbear, setActiveTokenId } from '../../utils/obr';
-import { harvestTokensItemArt } from '../../utils/itemArtCatalog';
+import { fetchPokemonData, fetchMoveData } from '../../utils/api/api';
+import { saveToOwlbear, setActiveTokenId } from '../../utils/sync/obr';
+import { harvestTokensItemArt } from '../../utils/graphics/itemArtCatalog';
 import { METADATA_ID } from './owlbearSyncConstants';
 import { renderTokenGraphicsForMeta } from './setupOwlbearTokenSync';
 

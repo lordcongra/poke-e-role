@@ -11,7 +11,7 @@ import {
     calculateSkillTotal,
     getActiveBoostSources,
     type BoostTrackerSource
-} from '../../utils/combatUtils';
+} from '../../utils/combat/combatUtils';
 import { STATUS_COLORS } from '../../data/constants';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { TooltipIcon } from '../ui/TooltipIcon';

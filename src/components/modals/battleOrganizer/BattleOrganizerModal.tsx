@@ -9,7 +9,7 @@ import { CombatantsTable } from './CombatantsTable';
 import { BattleOrganizerPullModal } from './BattleOrganizerPullModal';
 import { BattleOrganizerTooltipModal } from './BattleOrganizerTooltipModal';
 import { Lightbulb, X } from 'lucide-react';
-import { isStandaloneMode } from '../../../utils/storageAdapter';
+import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import { BattleOrganizerFooter } from './BattleOrganizerFooter';
 import { BattleOrganizerSettingsModal } from './BattleOrganizerSettingsModal';
 import { CombatantSheetModal } from './CombatantSheetModal';

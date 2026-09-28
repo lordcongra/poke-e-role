@@ -1,7 +1,7 @@
 import OBR from '@owlbear-rodeo/sdk';
-import { isStandaloneMode, storageAdapter } from '../../../utils/storageAdapter';
+import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { extractCharacterName } from '../../../utils/initiativeHelpers';
+import { extractCharacterName } from '../../../utils/combat/initiativeHelpers';
 import { STATUS_OPTIONS } from '../../../data/constants';
 import type { StatusItem } from '../../../store/storeTypes';
 import type {

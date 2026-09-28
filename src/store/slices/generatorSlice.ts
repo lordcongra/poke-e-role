@@ -1,8 +1,8 @@
 import type { StateCreator } from 'zustand';
 import type { CharacterState, GeneratorSlice, MoveData } from '../storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
-import { saveToOwlbear } from '../../utils/obr';
-import { syncHealthAndWill } from '../../utils/macroHelpers';
+import { saveToOwlbear } from '../../utils/sync/obr';
+import { syncHealthAndWill } from '../../utils/common/macroHelpers';
 import OBR from '@owlbear-rodeo/sdk';
 
 export const createGeneratorSlice: StateCreator<CharacterState, [], [], GeneratorSlice> = (set, get) => ({

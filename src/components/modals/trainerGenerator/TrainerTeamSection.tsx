@@ -8,7 +8,7 @@ import {
     RANK_ORDER,
     type BiomeConceptMixMode,
     type SlotMixMode
-} from '../../../utils/trainerGeneratorLogic';
+} from '../../../utils/generators/trainerGeneratorLogic';
 import type { Rank } from '../../../store/entityTypes';
 import './TrainerGeneratorModal.css';
 

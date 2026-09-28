@@ -1,6 +1,6 @@
 import type { RoomSettings } from '../../../../store/storeTypes';
-import { flushRoomSettingsToOwlbear } from '../../../../utils/obr';
-import { isStandaloneMode } from '../../../../utils/storageAdapter';
+import { flushRoomSettingsToOwlbear } from '../../../../utils/sync/obr';
+import { isStandaloneMode } from '../../../../utils/sync/storageAdapter';
 
 export const handleRoomSelectChange = <K extends keyof RoomSettings>(
     field: K,

@@ -4,8 +4,8 @@ import { Dna, Image as ImageIcon, Sparkles, Trash2, AlertTriangle, X, XCircle, R
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { POKEMON_TYPES } from '../../../data/constants';
 import type { TransformationType } from '../../../store/storeTypes';
-import { isStandaloneMode } from '../../../utils/storageAdapter';
-import { imageManager, autoCropTransparency } from '../../../utils/imageManager';
+import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
+import { imageManager, autoCropTransparency } from '../../../utils/graphics/imageManager';
 import './TransformationModal.css';
 
 interface TransformationModalProps {

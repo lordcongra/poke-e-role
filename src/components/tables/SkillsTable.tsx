@@ -6,7 +6,7 @@ import { CategoryHeader } from '../ui/CategoryHeader';
 import { SkillRow } from './SkillRow';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { TooltipIcon } from '../ui/TooltipIcon';
-import { parseCombatTags, getAbilityText, calculateSkillTotal } from '../../utils/combatUtils';
+import { parseCombatTags, getAbilityText, calculateSkillTotal } from '../../utils/combat/combatUtils';
 import { Plus, Trash2, FolderPlus } from 'lucide-react';
 import { SkillsTableModals } from './SkillsTableModals';
 import './SkillsTable.css';

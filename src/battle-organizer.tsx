@@ -7,7 +7,7 @@ import {
     subscribeBattleOrganizerSettings,
     setBattleOrganizerOpen
 } from './components/modals/battleOrganizer/battleOrganizerSettingsHelper';
-import { isStandaloneMode } from './utils/storageAdapter';
+import { isStandaloneMode } from './utils/sync/storageAdapter';
 import { useCharacterStore } from './store/useCharacterStore';
 import './style.css';
 

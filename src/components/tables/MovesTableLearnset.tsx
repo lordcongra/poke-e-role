@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { BookOpen, Bookmark, X } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { MoveDetailModal } from '../modals/moveLookup/MoveDetailModal';
-import { fetchMoveData } from '../../utils/api';
+import { fetchMoveData } from '../../utils/api/api';
 import { LearnsetSection } from './learnset/LearnsetSection';
 import { WishlistSection } from './learnset/WishlistSection';
 

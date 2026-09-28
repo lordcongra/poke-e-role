@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { Rank, SheetMode } from '../../store/storeTypes';
-import { loadLocalDataset, SPECIES_URLS } from '../../utils/api';
+import { loadLocalDataset, SPECIES_URLS } from '../../utils/api/api';
 import { POKEMON_TYPES, TYPE_COLORS, NATURES, AGES, RANKS } from '../../data/constants';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { CustomInfoRow } from '../ui/CustomInfoRow';
 import { SpeciesSelector } from './SpeciesSelector';
 import { StandaloneAvatar } from '../standalone/StandaloneAvatar';
-import { isStandaloneMode } from '../../utils/storageAdapter';
+import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import { Plus } from 'lucide-react';
 import { AbilityCombobox } from '../abilities/AbilityCombobox';
 import { SlotTooltipModal } from '../modals/identity/SlotTooltipModal';

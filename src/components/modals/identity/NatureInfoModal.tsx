@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Radio } from 'lucide-react';
-import { fetchNatureData } from '../../../utils/api';
-import { broadcastInfo } from '../../../utils/diceRoller';
+import { fetchNatureData } from '../../../utils/api/api';
+import { broadcastInfo } from '../../../utils/combat/diceRoller';
 
 interface NatureInfoModalProps {
     isOpen: boolean;

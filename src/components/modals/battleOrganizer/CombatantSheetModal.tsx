@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import type { CombatantRowData } from '../../../types/battleOrganizerTypes';
-import { isStandaloneMode, storageAdapter } from '../../../utils/storageAdapter';
+import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { setActiveTokenId } from '../../../utils/obr';
-import { imageManager } from '../../../utils/imageManager';
+import { setActiveTokenId } from '../../../utils/sync/obr';
+import { imageManager } from '../../../utils/graphics/imageManager';
 import OBR, { type Image } from '@owlbear-rodeo/sdk';
-import { extractCharacterName, extractTokenImage } from '../../../utils/initiativeHelpers';
-import { resolveCharacterThemeColors, applyDynamicThemeColors } from '../../../utils/colorUtils';
+import { extractCharacterName, extractTokenImage } from '../../../utils/combat/initiativeHelpers';
+import { resolveCharacterThemeColors, applyDynamicThemeColors } from '../../../utils/common/colorUtils';
 import { IdentityHeader } from '../../identity/IdentityHeader';
 import { DerivedBoard } from '../../board/DerivedBoard';
 import { CoreTable } from '../../tables/CoreTable';

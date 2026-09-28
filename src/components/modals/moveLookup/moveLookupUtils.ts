@@ -1,4 +1,4 @@
-import type { MoveLookupEntry } from '../../../utils/apiTypes';
+import type { MoveLookupEntry } from '../../../utils/api/apiTypes';
 
 export const BASIC_POWERS = ['1', '2', '3'];
 export const HIGH_POWERS = ['4', '5', '6', '7', '8', '10'];

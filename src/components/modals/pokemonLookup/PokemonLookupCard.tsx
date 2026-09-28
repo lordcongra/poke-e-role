@@ -1,5 +1,5 @@
 import { Check, Copy, Link2, Megaphone, ChevronDown, ChevronUp, Sparkles, Zap, Loader2 } from 'lucide-react';
-import type { PokemonLookupEntry, PokemonApiResponse } from '../../../utils/apiTypes';
+import type { PokemonLookupEntry, PokemonApiResponse } from '../../../utils/api/apiTypes';
 import type { CustomPokemon } from '../../../store/storeTypes';
 import { groupMovesByRank } from './pokemonLookupUtils';
 

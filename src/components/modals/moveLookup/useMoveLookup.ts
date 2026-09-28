@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import type { MoveLookupEntry, PokemonLookupEntry } from '../../../utils/apiTypes';
-import { fetchMoveLookupIndex, fetchPokemonLookupIndex } from '../../../utils/api';
-import { broadcastInfo } from '../../../utils/diceRoller';
-import { getBaseShareUrl } from '../../../utils/helper';
+import type { MoveLookupEntry, PokemonLookupEntry } from '../../../utils/api/apiTypes';
+import { fetchMoveLookupIndex, fetchPokemonLookupIndex } from '../../../utils/api/api';
+import { broadcastInfo } from '../../../utils/combat/diceRoller';
+import { getBaseShareUrl } from '../../../utils/common/helper';
 import type { MoveCategoryFilter, LearnedByPokemon } from './moveLookupTypes';
 import { matchesPowerFilter, buildMoveDiscordMarkdown, buildMoveBroadcast } from './moveLookupUtils';
 

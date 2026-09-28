@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { isStandaloneMode } from '../../utils/storageAdapter';
+import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import { useOwlbearPopoverResize } from '../../hooks/useOwlbearPopoverResize';
 import { useInitiativeEngine } from './useInitiativeEngine';
 import { Swords } from 'lucide-react';

@@ -2,7 +2,7 @@ import React from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { Image as ImageIcon, Upload } from 'lucide-react';
 import { TooltipIcon } from '../../ui/TooltipIcon';
-import { isStandaloneMode } from '../../../utils/storageAdapter';
+import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import './TrainerGeneratorModal.css';
 
 export interface TrainerTokenSectionProps {

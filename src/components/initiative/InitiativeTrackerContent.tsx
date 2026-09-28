@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight, Dices, Plus } from 'lucide-react';
 import { CombatantCard } from './CombatantCard';
 import { AddCombatantModal } from './AddCombatantModal';
 import type { Item } from '@owlbear-rodeo/sdk';
-import type { Combatant } from '../../utils/initiativeHelpers';
+import type { Combatant } from '../../utils/combat/initiativeHelpers';
 import type { StandaloneCharOption, ObrCharOption } from './AddCombatantModal';
 
 export interface InitiativeTrackerContentProps {

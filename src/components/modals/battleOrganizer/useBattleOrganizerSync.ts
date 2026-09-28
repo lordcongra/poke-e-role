@@ -1,8 +1,8 @@
 import { useEffect, useCallback } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
-import { isStandaloneMode, storageAdapter } from '../../../utils/storageAdapter';
+import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { extractTokenImage, extractCharacterName } from '../../../utils/initiativeHelpers';
+import { extractTokenImage, extractCharacterName } from '../../../utils/combat/initiativeHelpers';
 import { getBattleOrganizerSettings } from './battleOrganizerSettingsHelper';
 import type { BattleOrganizerState, BattleRoundData, CombatantRowData } from '../../../types/battleOrganizerTypes';
 import {

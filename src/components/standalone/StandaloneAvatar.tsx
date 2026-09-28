@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { imageManager } from '../../utils/imageManager';
+import { imageManager } from '../../utils/graphics/imageManager';
 import './StandaloneAvatar.css';
 
 interface StandaloneAvatarProps {

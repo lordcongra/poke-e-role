@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CharacterState, MacroSlice } from '../storeTypes';
 import { CombatStat, Skill } from '../../types/enums';
-import { saveToOwlbear } from '../../utils/obr';
+import { saveToOwlbear } from '../../utils/sync/obr';
 import OBR from '@owlbear-rodeo/sdk';
 import type { Item } from '@owlbear-rodeo/sdk';
 import {
@@ -13,13 +13,13 @@ import {
     parseLearnset,
     parseHeight,
     parseWeight
-} from '../../utils/macroHelpers';
+} from '../../utils/common/macroHelpers';
 import {
     processReversion,
     processTransformation,
     handleTokenImageSwap,
     type TransformationDraft
-} from '../../utils/transformationLogic';
+} from '../../utils/common/transformationLogic';
 import { getKnownAbility } from '../../data/abilities/knownAbilities';
 
 export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> = (set, get) => ({

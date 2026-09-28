@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ScrollText, X, XCircle } from 'lucide-react';
-import { isStandaloneMode } from '../../../utils/storageAdapter';
-import { flushRoomSettingsToOwlbear } from '../../../utils/obr';
+import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
+import { flushRoomSettingsToOwlbear } from '../../../utils/sync/obr';
 import { RulesSectionGeneral } from './rules/RulesSectionGeneral';
 import { RulesSectionPermissions } from './rules/RulesSectionPermissions';
 import { RulesSectionTokenHud } from './rules/RulesSectionTokenHud';

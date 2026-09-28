@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import type { BattleOrganizerState } from '../../types/battleOrganizerTypes';
-import { isStandaloneMode } from '../../utils/storageAdapter';
-import { imageManager } from '../../utils/imageManager';
+import { isStandaloneMode } from '../../utils/sync/storageAdapter';
+import { imageManager } from '../../utils/graphics/imageManager';
 import './PrintBattleOrganizer.css';
 
 interface PrintBattleOrganizerProps {

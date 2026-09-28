@@ -1,4 +1,4 @@
-import type { MoveLookupEntry } from '../../../utils/apiTypes';
+import type { MoveLookupEntry } from '../../../utils/api/apiTypes';
 
 export type MoveCategoryFilter = 'all' | 'Physical' | 'Special' | 'Status';
 

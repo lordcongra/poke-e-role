@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { imageManager } from '../../utils/imageManager';
-import { cropImageTransparencyUrl } from '../../utils/imageCropUtils';
+import { imageManager } from '../../utils/graphics/imageManager';
+import { cropImageTransparencyUrl } from '../../utils/graphics/imageCropUtils';
 import { Dices, Trash2, ChevronDown, ChevronUp, X, Info } from 'lucide-react';
-import { parseRollLabel } from '../../utils/rollLogParser';
-import { RollFactorsModal } from '../modals/RollFactorsModal';
+import { parseRollLabel } from '../../utils/combat/rollLogParser';
+import { RollFactorsModal } from '../modals';
 import './RollLogWidget.css';
 
 interface RollData {

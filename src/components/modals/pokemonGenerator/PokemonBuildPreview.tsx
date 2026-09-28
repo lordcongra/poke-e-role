@@ -3,7 +3,7 @@ import { useCharacterStore } from '../../../store/useCharacterStore';
 import type { TempBuild, TempMove } from '../../../store/storeTypes';
 import { CombatStat, SocialStat, SKILL_CATEGORIES } from '../../../types/enums';
 import { TYPE_COLORS } from '../../../data/constants';
-import type { PokedexLookupItem } from '../../../utils/pokemonFilterUtils';
+import type { PokedexLookupItem } from '../../../utils/generators/pokemonFilterUtils';
 import { GeneratorPreviewStatSpinner } from './GeneratorPreviewStatSpinner';
 import { GeneratorPreviewMoveRow } from './GeneratorPreviewMoveRow';
 import './GeneratorPreviewModal.css';

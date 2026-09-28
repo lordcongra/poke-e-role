@@ -3,14 +3,14 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import type { MoveData, SkillData, ExtraCategory } from '../../store/storeTypes';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
 import { NumberSpinner } from '../ui/NumberSpinner';
-import { fetchMoveData } from '../../utils/api';
+import { fetchMoveData } from '../../utils/api/api';
 import {
     rollAccuracy,
     calculateBaseDamage,
     calculateBaseAccuracy,
     parseCombatTags,
     getAbilityText
-} from '../../utils/combatUtils';
+} from '../../utils/combat/combatUtils';
 import { MoveEditModal } from '../modals/moveLookup/MoveEditModal';
 import { POKEMON_TYPES, TYPE_COLORS } from '../../data/constants';
 import {

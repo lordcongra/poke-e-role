@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { ALL_SPECIES, fetchBasePokemonData, loadLocalDataset } from '../../utils/api';
-import type { PokemonApiResponse } from '../../utils/apiTypes';
-import { convertApiPokemonToCustom } from '../../utils/macroHelpers';
+import { ALL_SPECIES, fetchBasePokemonData, loadLocalDataset } from '../../utils/api/api';
+import type { PokemonApiResponse } from '../../utils/api/apiTypes';
+import { convertApiPokemonToCustom } from '../../utils/common/macroHelpers';
 import { TYPE_COLORS } from '../../data/constants';
 import { Search, BookOpen, Copy, RefreshCw, X, AlertTriangle, Check, Loader2 } from 'lucide-react';
 import './HomebrewPullPokemonModal.css';

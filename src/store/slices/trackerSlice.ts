@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CharacterState, TrackerSlice } from '../storeTypes';
-import { saveToOwlbear } from '../../utils/obr';
-import { parseCombatTags, getAbilityText } from '../../utils/combatUtils';
+import { saveToOwlbear } from '../../utils/sync/obr';
+import { parseCombatTags, getAbilityText } from '../../utils/combat/combatUtils';
 
 export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSlice> = (set) => ({
     statuses: [{ id: crypto.randomUUID(), name: 'Healthy', customName: '', rounds: 0 }],

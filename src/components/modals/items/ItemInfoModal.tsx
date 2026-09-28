@@ -1,5 +1,5 @@
 import { Megaphone, XCircle } from 'lucide-react';
-import { broadcastInfo } from '../../../utils/diceRoller';
+import { broadcastInfo } from '../../../utils/combat/diceRoller';
 import { TagPillList } from '../../ui/TagPillList';
 import { extractTagsFromText } from './tagBuilder/tagBuilderLogic';
 import { KNOWN_ITEMS } from '../../../data/constants';

@@ -1,4 +1,4 @@
-import { broadcastInfo } from '../../../utils/diceRoller';
+import { broadcastInfo } from '../../../utils/combat/diceRoller';
 import type {
     StatusEffectData,
     HoldingBackOption,

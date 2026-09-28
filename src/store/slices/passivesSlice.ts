@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CharacterState, PassivesSlice, PassiveItem } from '../storeTypes';
-import { saveToOwlbear } from '../../utils/obr';
-import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../../utils/combatUtils';
+import { saveToOwlbear } from '../../utils/sync/obr';
+import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../../utils/combat/combatUtils';
 
 const syncHealthWillForPassives = (
     state: CharacterState,

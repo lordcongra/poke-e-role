@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { canViewHomebrew } from '../../utils/helper';
+import { canViewHomebrew } from '../../utils/common/helper';
 import { CURRENT_VERSION } from '../../data/changelog';
-import { flattenStateToMetadata } from '../../utils/stateMapper';
-import { saveToOwlbear } from '../../utils/obr';
-import { isStandaloneMode } from '../../utils/storageAdapter';
+import { flattenStateToMetadata } from '../../utils/sync/stateMapper';
+import { saveToOwlbear } from '../../utils/sync/obr';
+import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import { useObrReady } from '../../hooks/useObrReady';
-import { setActiveTokenId } from '../../utils/obr';
+import { setActiveTokenId } from '../../utils/sync/obr';
 import { useInitiativePopover } from '../../hooks/useInitiativePopover';
-import { exportCharacterData, parseImportedFile } from '../../utils/fileSystemHelpers';
+import { exportCharacterData, parseImportedFile } from '../../utils/common/fileSystemHelpers';
 import type { CharacterState } from '../../store/storeTypes';
 
 // Modals

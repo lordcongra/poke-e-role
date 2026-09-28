@@ -2,11 +2,11 @@ import { useState, useEffect, useMemo } from 'react';
 import { X, Pencil, Tags, Megaphone, Check, Target, Swords, FileText } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { TYPE_COLORS } from '../../../data/constants';
-import { isStandaloneMode } from '../../../utils/storageAdapter';
+import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import { TagBuilderModal } from '../items/TagBuilderModal';
 import { TagPillList } from '../../ui/TagPillList';
 import { extractMoveTags } from '../items/tagBuilder/tagBuilderLogic';
-import { broadcastInfo } from '../../../utils/diceRoller';
+import { broadcastInfo } from '../../../utils/combat/diceRoller';
 import './MoveEditModal.css';
 
 interface MoveEditModalProps {

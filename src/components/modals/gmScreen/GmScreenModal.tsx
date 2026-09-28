@@ -25,7 +25,7 @@ import { GM_CHEAT_ITEMS, GM_SCREEN_CREDITS, type GmCheatItem } from '../../../da
 import { GmPokemonLookup } from './GmPokemonLookup';
 import { GmScreenCardContent } from './GmScreenCardContent';
 import { broadcastGmCheatItem } from './gmScreenBroadcastUtils';
-import { getBaseShareUrl } from '../../../utils/helper';
+import { getBaseShareUrl } from '../../../utils/common/helper';
 import './GmScreenModal.css';
 
 interface GmScreenModalProps {

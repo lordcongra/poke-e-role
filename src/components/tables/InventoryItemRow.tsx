@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { lookupItemDetails } from '../../utils/itemLookupUtils';
-import { imageManager } from '../../utils/imageManager';
-import { useItemArt, setItemArt, getItemArt } from '../../utils/itemArtCatalog';
+import { lookupItemDetails } from '../../utils/common/itemLookupUtils';
+import { imageManager } from '../../utils/graphics/imageManager';
+import { useItemArt, setItemArt, getItemArt } from '../../utils/graphics/itemArtCatalog';
 import type { InventoryItem } from '../../store/storeTypes';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { KNOWN_ITEMS } from '../../data/constants';

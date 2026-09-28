@@ -7,6 +7,7 @@ export * from './items';
 export * from './moveLookup';
 export * from './pokemonGenerator';
 export * from './pokemonLookup';
+export * from './rollFactors';
 export * from './settings';
 export * from './species';
 export * from './trackers';

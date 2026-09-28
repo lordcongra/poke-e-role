@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { CombatStat, SocialStat, Skill } from '../../types/enums';
-import { rollSkillCheck, rollDicePlus } from '../../utils/combatUtils';
+import { rollSkillCheck, rollDicePlus } from '../../utils/combat/combatUtils';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { Dices, Plus, X, AlertTriangle, XCircle, Trash2 } from 'lucide-react';

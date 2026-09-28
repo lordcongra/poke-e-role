@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { CombatantRowData, RollLogLayoutMode } from '../../../types/battleOrganizerTypes';
-import { imageManager } from '../../../utils/imageManager';
-import { cropImageTransparencyUrl } from '../../../utils/imageCropUtils';
+import { imageManager } from '../../../utils/graphics/imageManager';
+import { cropImageTransparencyUrl } from '../../../utils/graphics/imageCropUtils';
 import {
     Dices,
     Trash2,
@@ -17,8 +17,8 @@ import {
     Info
 } from 'lucide-react';
 import { parseRollLogEntry } from './battleOrganizerUtils';
-import { parseRollLabel } from '../../../utils/rollLogParser';
-import { RollFactorsModal } from '../RollFactorsModal';
+import { parseRollLabel } from '../../../utils/combat/rollLogParser';
+import { RollFactorsModal } from '../rollFactors';
 import './InModalRollLog.css';
 
 export interface RollLogEntry {

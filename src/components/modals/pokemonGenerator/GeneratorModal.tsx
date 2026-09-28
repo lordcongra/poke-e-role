@@ -13,14 +13,19 @@ import {
     Filter
 } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { generateBuild } from '../../../utils/generatorUtils';
+import { generateBuild } from '../../../utils/generators/generatorUtils';
 import type { TempBuild, Rank } from '../../../store/storeTypes';
 import { CombatStat, SocialStat } from '../../../types/enums';
 import { GeneratorPreviewModal } from './GeneratorPreviewModal';
 import { TooltipIcon } from '../../ui/TooltipIcon';
 import { NumberSpinner } from '../../ui/NumberSpinner';
-import { isStandaloneMode } from '../../../utils/storageAdapter';
-import { loadLocalDataset, SPECIES_URLS, fetchPokemonLookupIndex, type PokemonLookupEntry } from '../../../utils/api';
+import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
+import {
+    loadLocalDataset,
+    SPECIES_URLS,
+    fetchPokemonLookupIndex,
+    type PokemonLookupEntry
+} from '../../../utils/api/api';
 import { RANKS } from '../../../data/constants';
 import { BIOMES, BIOME_TOOLTIP_NOTE } from '../../../data/biomeData';
 import './GeneratorModal.css';

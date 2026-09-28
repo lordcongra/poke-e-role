@@ -1,11 +1,11 @@
 import { useCharacterStore, getRankPoints, getAgePoints } from '../../store/useCharacterStore';
 import { CombatStat } from '../../types/enums';
 import { NumberSpinner } from '../ui/NumberSpinner';
-import { parseCombatTags, getAbilityText, calculateStatTotal } from '../../utils/combatUtils';
+import { parseCombatTags, getAbilityText, calculateStatTotal } from '../../utils/combat/combatUtils';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { RotateCcw, Lock, Unlock } from 'lucide-react';
 import OBR from '@owlbear-rodeo/sdk';
-import { isStandaloneMode } from '../../utils/storageAdapter';
+import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import './CoreTable.css';
 
 const STATISTIC_COLORS = {

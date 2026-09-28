@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../../../store/useCharacterStore';
-import { isStandaloneMode } from '../../../../utils/storageAdapter';
+import { isStandaloneMode } from '../../../../utils/sync/storageAdapter';
 import {
     flushRoomSettingsToOwlbear,
     flushSceneSettingsToOwlbear,
     clearSceneScaleFromOwlbear,
     clearSceneOffsetsFromOwlbear
-} from '../../../../utils/obr';
-import { renderAllSceneTokens } from '../../../../utils/graphicsRenderer';
+} from '../../../../utils/sync/obr';
+import { renderAllSceneTokens } from '../../../../utils/graphics/graphicsRenderer';
 
 export function useRulesTokenHudOps() {
     const roomDefaultScale = useCharacterStore((state) => state.identity.roomDefaultScale);

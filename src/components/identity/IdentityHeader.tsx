@@ -11,14 +11,14 @@ import { AbilityMenuModal } from '../abilities/AbilityMenuModal';
 import { TagBuilderModal } from '../modals/items/TagBuilderModal';
 import { NatureInfoModal } from '../modals/identity/NatureInfoModal';
 import { TokenImageModal } from '../modals/identity/TokenImageModal';
-import { isStandaloneMode } from '../../utils/storageAdapter';
-import { syncCharacterDataset } from '../../utils/syncService';
+import { isStandaloneMode } from '../../utils/sync/storageAdapter';
+import { syncCharacterDataset } from '../../utils/sync/syncService';
 import {
     updateObrTokenImage,
     saveStandaloneTokenFile,
     saveStandaloneTokenUrl,
     deleteStandaloneTokenImage
-} from '../../utils/tokenImageService';
+} from '../../utils/graphics/tokenImageService';
 import { Image as ImageIcon, RefreshCw, Dna } from 'lucide-react';
 import './IdentityHeader.css';
 

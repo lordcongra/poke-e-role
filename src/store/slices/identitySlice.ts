@@ -6,11 +6,11 @@ import {
     flushSceneSettingsToOwlbear,
     clearSceneScaleFromOwlbear,
     clearSceneOffsetsFromOwlbear
-} from '../../utils/obr';
+} from '../../utils/sync/obr';
 import OBR from '@owlbear-rodeo/sdk';
-import { syncHealthAndWill } from '../../utils/macroHelpers';
+import { syncHealthAndWill } from '../../utils/common/macroHelpers';
 
-import { isStandaloneMode } from '../../utils/storageAdapter';
+import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import { getKnownAbility } from '../../data/abilities/knownAbilities';
 
 const EXCLUDED_FROM_TOKEN_SAVE = new Set([

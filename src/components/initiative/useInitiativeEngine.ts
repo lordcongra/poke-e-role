@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import type { Item, Image } from '@owlbear-rodeo/sdk';
-import { isStandaloneMode, storageAdapter } from '../../utils/storageAdapter';
+import { isStandaloneMode, storageAdapter } from '../../utils/sync/storageAdapter';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { addRollLogEntry } from '../../utils/diceRoller';
+import { addRollLogEntry } from '../../utils/combat/diceRoller';
 import {
     calculateBaseInitFromCharacterData,
     sortCombatants,
@@ -11,8 +11,8 @@ import {
     extractCharacterName,
     calculateEncodedInitiative,
     resolveInitiativeRolls
-} from '../../utils/initiativeHelpers';
-import type { Combatant } from '../../utils/initiativeHelpers';
+} from '../../utils/combat/initiativeHelpers';
+import type { Combatant } from '../../utils/combat/initiativeHelpers';
 import { useInitiativeThemeSync } from './useInitiativeThemeSync';
 import type { StandaloneCharOption, ObrCharOption } from './AddCombatantModal';
 

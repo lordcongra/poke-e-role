@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../store/useCharacterStore';
-import { isStandaloneMode } from '../utils/storageAdapter';
-import { initItemArtCatalog, harvestTokensItemArt } from '../utils/itemArtCatalog';
+import { isStandaloneMode } from '../utils/sync/storageAdapter';
+import { initItemArtCatalog, harvestTokensItemArt } from '../utils/graphics/itemArtCatalog';
 import { setupOwlbearRoomSync } from './owlbearSync/setupOwlbearRoomSync';
 import { setupOwlbearTokenSync } from './owlbearSync/setupOwlbearTokenSync';
 import { setupOwlbearPlayerSync } from './owlbearSync/setupOwlbearPlayerSync';

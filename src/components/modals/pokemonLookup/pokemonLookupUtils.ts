@@ -1,4 +1,9 @@
-import type { PokemonLookupEntry, PokemonApiResponse, AbilitySlotFilter, TypeMatchMode } from '../../../utils/apiTypes';
+import type {
+    PokemonLookupEntry,
+    PokemonApiResponse,
+    AbilitySlotFilter,
+    TypeMatchMode
+} from '../../../utils/api/apiTypes';
 import type { CustomPokemon } from '../../../store/storeTypes';
 
 export const LEARN_RANKS = ['Starter', 'Rookie', 'Standard', 'Advanced', 'Expert', 'Ace', 'Master'];

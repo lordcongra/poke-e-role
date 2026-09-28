@@ -9,7 +9,7 @@ import {
     HUMAN_COMBAT_RULES,
     type TrainerActionRow
 } from '../../../data/gmScreenData';
-import { broadcastInfo } from '../../../utils/diceRoller';
+import { broadcastInfo } from '../../../utils/combat/diceRoller';
 
 interface GmTrainerCardsProps {
     itemId: string;

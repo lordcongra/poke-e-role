@@ -1,8 +1,8 @@
 import { useState, useEffect, memo } from 'react';
 import type { InventoryItem } from '../../store/storeTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { imageManager } from '../../utils/imageManager';
-import { useItemArt } from '../../utils/itemArtCatalog';
+import { imageManager } from '../../utils/graphics/imageManager';
+import { useItemArt } from '../../utils/graphics/itemArtCatalog';
 import { Check, Package, X } from 'lucide-react';
 import './InventoryGridCard.css';
 

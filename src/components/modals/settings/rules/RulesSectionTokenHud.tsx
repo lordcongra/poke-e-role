@@ -1,7 +1,7 @@
 import { RefreshCw, RotateCcw } from 'lucide-react';
 import { TooltipIcon } from '../../../ui/TooltipIcon';
 import { NumberSpinner } from '../../../ui/NumberSpinner';
-import { isStandaloneMode } from '../../../../utils/storageAdapter';
+import { isStandaloneMode } from '../../../../utils/sync/storageAdapter';
 import { useRulesTokenHudOps } from './useRulesTokenHudOps';
 
 interface RulesSectionTokenHudProps {

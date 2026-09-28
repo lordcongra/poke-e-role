@@ -6,7 +6,7 @@ import {
     formatManeuverBroadcast,
     type ManeuverData
 } from '../../../data/gmScreenData';
-import { broadcastInfo } from '../../../utils/diceRoller';
+import { broadcastInfo } from '../../../utils/combat/diceRoller';
 import { GmManeuverCardItem } from './GmManeuverCardItem';
 
 interface GmManeuverCardsProps {

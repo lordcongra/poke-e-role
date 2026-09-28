@@ -1,4 +1,4 @@
-import { STATS_META_ID } from '../../utils/graphicsManager';
+import { STATS_META_ID } from '../../utils/graphics/graphicsManager';
 
 export const METADATA_ID = STATS_META_ID;
 export const ROOM_META_ID = 'pokerole-pmd-extension/room-settings';

@@ -1,6 +1,6 @@
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { LayoutList, Settings, Lock } from 'lucide-react';
-import { isStandaloneMode } from '../../utils/storageAdapter';
+import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 
 interface IdentityTogglesProps {
     onOpenTrackerSettings: () => void;

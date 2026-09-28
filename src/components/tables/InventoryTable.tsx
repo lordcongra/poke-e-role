@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { fetchItemData, loadLocalDataset, ALL_ITEMS } from '../../utils/api';
+import { fetchItemData, loadLocalDataset, ALL_ITEMS } from '../../utils/api/api';
 import { KNOWN_ITEMS } from '../../data/constants';
-import { isStandaloneMode } from '../../utils/storageAdapter';
+import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import { TagBuilderModal } from '../modals/items/TagBuilderModal';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { CollapsingSection } from '../ui/CollapsingSection';

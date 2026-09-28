@@ -1,9 +1,14 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import type { PokemonLookupEntry, AbilitySlotFilter, TypeMatchMode, PokemonApiResponse } from '../../../utils/apiTypes';
+import type {
+    PokemonLookupEntry,
+    AbilitySlotFilter,
+    TypeMatchMode,
+    PokemonApiResponse
+} from '../../../utils/api/apiTypes';
 import type { CustomPokemon } from '../../../store/storeTypes';
-import { fetchPokemonLookupIndex, fetchPokemonData } from '../../../utils/api';
-import { broadcastInfo } from '../../../utils/diceRoller';
-import { getBaseShareUrl } from '../../../utils/helper';
+import { fetchPokemonLookupIndex, fetchPokemonData } from '../../../utils/api/api';
+import { broadcastInfo } from '../../../utils/combat/diceRoller';
+import { getBaseShareUrl } from '../../../utils/common/helper';
 import { filterPokemonLookup, buildPokemonDiscordMarkdown, buildPokemonBroadcast } from './pokemonLookupUtils';
 
 export function usePokemonLookup(initialPokemonName?: string, initialMoveFilter?: string) {

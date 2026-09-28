@@ -3,8 +3,8 @@ import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomStatus } from '../../store/storeTypes';
 import { HomebrewStatusCard } from './HomebrewStatusCard';
-import { isStandaloneMode } from '../../utils/storageAdapter';
-import { downloadJson } from '../../utils/fileSystemHelpers';
+import { isStandaloneMode } from '../../utils/sync/storageAdapter';
+import { downloadJson } from '../../utils/common/fileSystemHelpers';
 import { Plus, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './Homebrew.css';
 

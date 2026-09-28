@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { imageManager, autoCropTransparency } from '../../../utils/imageManager';
-import { lookupItemDetails } from '../../../utils/itemLookupUtils';
+import { imageManager, autoCropTransparency } from '../../../utils/graphics/imageManager';
+import { lookupItemDetails } from '../../../utils/common/itemLookupUtils';
 import { KNOWN_ITEMS } from '../../../data/constants';
-import { setItemArt, getItemArt, useItemArt } from '../../../utils/itemArtCatalog';
+import { setItemArt, getItemArt, useItemArt } from '../../../utils/graphics/itemArtCatalog';
 import { TagBuilderModal } from './TagBuilderModal';
 import { ItemImageSection } from './ItemImageSection';
-import { broadcastInfo } from '../../../utils/diceRoller';
+import { broadcastInfo } from '../../../utils/combat/diceRoller';
 import { NumberSpinner } from '../../ui/NumberSpinner';
 import OBR, { type ImageDownload } from '@owlbear-rodeo/sdk';
 import {

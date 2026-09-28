@@ -17,10 +17,10 @@ import {
 } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { TYPE_COLORS } from '../../../data/constants';
-import { isStandaloneMode } from '../../../utils/storageAdapter';
-import { fetchMoveLookupIndex, fetchMoveData } from '../../../utils/api';
-import type { MoveLookupEntry } from '../../../utils/apiTypes';
-import { broadcastInfo } from '../../../utils/diceRoller';
+import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
+import { fetchMoveLookupIndex, fetchMoveData } from '../../../utils/api/api';
+import type { MoveLookupEntry } from '../../../utils/api/apiTypes';
+import { broadcastInfo } from '../../../utils/combat/diceRoller';
 import {
     formatAccuracy,
     formatDamage,

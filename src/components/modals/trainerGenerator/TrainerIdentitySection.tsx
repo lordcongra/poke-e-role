@@ -4,7 +4,7 @@ import { TooltipIcon } from '../../ui/TooltipIcon';
 import { BIOMES, BIOME_MAP, getTrainerClassesForBiome } from '../../../data/biomeData';
 import { TRAINER_CLASSES, type TrainerProfileType } from '../../../data/trainerClasses';
 import { NATURES } from '../../../data/constants';
-import { RANK_ORDER } from '../../../utils/trainerGeneratorLogic';
+import { RANK_ORDER } from '../../../utils/generators/trainerGeneratorLogic';
 import type { Rank } from '../../../store/entityTypes';
 import './TrainerGeneratorModal.css';
 

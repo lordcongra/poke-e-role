@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { isStandaloneMode } from '../../utils/storageAdapter';
-import { imageManager } from '../../utils/imageManager';
-import { addRollLogEntry } from '../../utils/diceRoller';
-import { formatInitiativeDisplay, type Combatant } from '../../utils/initiativeHelpers';
+import { isStandaloneMode } from '../../utils/sync/storageAdapter';
+import { imageManager } from '../../utils/graphics/imageManager';
+import { addRollLogEntry } from '../../utils/combat/diceRoller';
+import { formatInitiativeDisplay, type Combatant } from '../../utils/combat/initiativeHelpers';
 import { X, Dices } from 'lucide-react';
 import './CombatantCard.css';
 

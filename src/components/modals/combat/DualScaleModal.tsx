@@ -9,7 +9,7 @@ import {
     calculateSkillTotal,
     parseCombatTags,
     getAbilityText
-} from '../../../utils/combatUtils';
+} from '../../../utils/combat/combatUtils';
 import './DualScaleModal.css';
 
 const ATTRIBUTE_LABELS: Record<string, { short: string; full: string }> = {

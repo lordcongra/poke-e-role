@@ -17,8 +17,8 @@ import type {
     CustomForm,
     CustomStatus
 } from '../../store/storeTypes';
-import { isStandaloneMode } from '../../utils/storageAdapter';
-import { downloadJson } from '../../utils/fileSystemHelpers';
+import { isStandaloneMode } from '../../utils/sync/storageAdapter';
+import { downloadJson } from '../../utils/common/fileSystemHelpers';
 import { Hammer, X, HardDrive, AlertTriangle, Radio, Save, FolderOpen } from 'lucide-react';
 import './Homebrew.css';
 

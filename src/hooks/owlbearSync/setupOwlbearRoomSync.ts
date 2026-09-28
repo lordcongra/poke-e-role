@@ -9,7 +9,7 @@ import type {
     CustomForm,
     CustomStatus
 } from '../../store/storeTypes';
-import { SCENE_SETTINGS_META_ID } from '../../utils/obr';
+import { SCENE_SETTINGS_META_ID } from '../../utils/sync/obr';
 import { ROOM_META_ID, mapRoomSettings } from './owlbearSyncConstants';
 
 export interface OwlbearRoomSyncResult {

@@ -20,7 +20,7 @@ import {
     saveBattleOrganizerSettings,
     subscribeBattleOrganizerSettings
 } from './battleOrganizerSettingsHelper';
-import { isStandaloneMode } from '../../../utils/storageAdapter';
+import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import './BattleOrganizerSettingsModal.css';
 
 interface BattleOrganizerSettingsModalProps {

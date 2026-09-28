@@ -1,5 +1,5 @@
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { getAbilityText, getMatchupGroups } from '../../utils/combatUtils';
+import { getAbilityText, getMatchupGroups } from '../../utils/combat/combatUtils';
 import { TYPE_COLORS } from '../../data/constants';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { ChevronDown } from 'lucide-react';

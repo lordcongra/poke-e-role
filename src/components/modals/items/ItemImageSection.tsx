@@ -1,6 +1,6 @@
 import React from 'react';
 import { Upload, Globe, Image as ImageIcon, Trash2, Info } from 'lucide-react';
-import { isStandaloneMode } from '../../../utils/storageAdapter';
+import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import OBR from '@owlbear-rodeo/sdk';
 
 interface ItemImageSectionProps {

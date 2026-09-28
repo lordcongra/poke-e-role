@@ -1,5 +1,5 @@
 import { Search, Filter, Sparkles, X, Check, Shield, Zap, RotateCcw, Link2 } from 'lucide-react';
-import type { AbilitySlotFilter, TypeMatchMode } from '../../../utils/apiTypes';
+import type { AbilitySlotFilter, TypeMatchMode } from '../../../utils/api/apiTypes';
 import { POKEMON_TYPES } from '../../../data/constants';
 import { TooltipIcon } from '../../ui/TooltipIcon';
 import { LEARN_RANKS } from './pokemonLookupUtils';

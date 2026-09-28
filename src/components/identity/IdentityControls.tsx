@@ -1,4 +1,4 @@
-import { isStandaloneMode } from '../../utils/storageAdapter';
+import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import { IdentityToggles } from './IdentityToggles';
 
 interface IdentityControlsProps {

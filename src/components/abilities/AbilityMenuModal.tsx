@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Zap, Tag, XCircle, Power, Shield, RotateCcw, Check, Sparkles } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { getKnownAbility, getAbilityBenefitSummary, getMaxBoost } from '../../data/abilities/knownAbilities';
-import { fetchAbilityData } from '../../utils/api';
+import { fetchAbilityData } from '../../utils/api/api';
 import { TagPillList } from '../ui/TagPillList';
 import { extractTagsFromText } from '../modals/items/tagBuilder/tagBuilderLogic';
 import './AbilityMenuModal.css';

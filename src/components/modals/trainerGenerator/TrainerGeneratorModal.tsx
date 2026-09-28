@@ -11,9 +11,9 @@ import {
     type BiomeConceptMixMode,
     type SlotMixMode,
     type GeneratedTrainerResult
-} from '../../../utils/trainerGeneratorLogic';
-import { type TrainerSpawnImageOptions } from '../../../utils/trainerTokenSpawner';
-import { fetchPokemonLookupIndex } from '../../../utils/api';
+} from '../../../utils/generators/trainerGeneratorLogic';
+import { type TrainerSpawnImageOptions } from '../../../utils/generators/trainerTokenSpawner';
+import { fetchPokemonLookupIndex } from '../../../utils/api/api';
 import type { Rank } from '../../../store/entityTypes';
 import { BIOMES, getTrainerClassesForBiome } from '../../../data/biomeData';
 import { TrainerPreviewModal } from './TrainerPreviewModal';

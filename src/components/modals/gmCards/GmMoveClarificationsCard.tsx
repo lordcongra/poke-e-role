@@ -13,7 +13,7 @@ import {
     SUBSTITUTE_DECOY_CLARIFICATION,
     NARRATIVE_MOVES_GUIDE
 } from '../../../data/gmScreenData';
-import { broadcastInfo } from '../../../utils/diceRoller';
+import { broadcastInfo } from '../../../utils/combat/diceRoller';
 
 export const GmMoveClarificationsCard: React.FC = () => {
     return (

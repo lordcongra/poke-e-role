@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { Skill } from '../../types/enums';
 import { NumberSpinner } from '../ui/NumberSpinner';
-import { parseCombatTags, getAbilityText, calculateSkillTotal } from '../../utils/combatUtils';
+import { parseCombatTags, getAbilityText, calculateSkillTotal } from '../../utils/combat/combatUtils';
 import './SkillRow.css';
 
 interface SkillRowProps {

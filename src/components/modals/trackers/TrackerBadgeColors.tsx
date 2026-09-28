@@ -2,9 +2,9 @@ import { useState } from 'react';
 import OBR, { isImage } from '@owlbear-rodeo/sdk';
 import { RefreshCw, Move, RotateCcw, AlertTriangle, XCircle, CheckCircle, Maximize2, Info } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { STATS_META_ID } from '../../../utils/graphicsManager';
+import { STATS_META_ID } from '../../../utils/graphics/graphicsManager';
 import { NumberSpinner } from '../../ui/NumberSpinner';
-import { detectImageVisualBounds, getCachedVisualBounds } from '../../../utils/imageBoundsDetector';
+import { detectImageVisualBounds, getCachedVisualBounds } from '../../../utils/graphics/imageBoundsDetector';
 
 interface TrackerBadgeColorsProps {
     onOpenPlacementModal: () => void;

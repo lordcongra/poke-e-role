@@ -1,5 +1,5 @@
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { isStandaloneMode } from '../../../utils/storageAdapter';
+import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 
 export function TrackerVisibilityToggles() {
     const identityStore = useCharacterStore((state) => state.identity);

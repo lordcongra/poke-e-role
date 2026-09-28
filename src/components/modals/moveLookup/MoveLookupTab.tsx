@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Loader2, AlertCircle, Search } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { TYPE_COLORS, POKEMON_TYPES } from '../../../data/constants';
-import { isStandaloneMode } from '../../../utils/storageAdapter';
+import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import { useMoveLookup } from './useMoveLookup';
 import { MoveLookupFilterPanel } from './MoveLookupFilterPanel';
 import { MoveLookupCard } from './MoveLookupCard';

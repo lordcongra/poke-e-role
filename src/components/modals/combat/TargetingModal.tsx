@@ -3,10 +3,10 @@ import OBR from '@owlbear-rodeo/sdk';
 import { Target, XCircle, Swords } from 'lucide-react';
 import type { MoveData } from '../../../store/storeTypes';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { STATS_META_ID } from '../../../utils/graphicsManager';
-import { calculateTargetDefensesFromMeta } from '../../../utils/combatUtils';
-import { isStandaloneMode, storageAdapter } from '../../../utils/storageAdapter';
-import { parseCombatTags } from '../../../utils/tagParser';
+import { STATS_META_ID } from '../../../utils/graphics/graphicsManager';
+import { calculateTargetDefensesFromMeta } from '../../../utils/combat/combatUtils';
+import { isStandaloneMode, storageAdapter } from '../../../utils/sync/storageAdapter';
+import { parseCombatTags } from '../../../utils/tagParser/index';
 import { TooltipIcon } from '../../ui/TooltipIcon';
 import './TargetingModal.css';
 

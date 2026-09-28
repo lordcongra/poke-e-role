@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { isStandaloneMode } from '../../utils/storageAdapter';
-import { imageManager } from '../../utils/imageManager';
-import { extractTokenImage } from '../../utils/initiativeHelpers';
+import { isStandaloneMode } from '../../utils/sync/storageAdapter';
+import { imageManager } from '../../utils/graphics/imageManager';
+import { extractTokenImage } from '../../utils/combat/initiativeHelpers';
 import { File } from 'lucide-react';
 
 interface SidebarAvatarProps {

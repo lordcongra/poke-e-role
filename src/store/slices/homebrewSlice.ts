@@ -8,7 +8,7 @@ import type {
     CustomForm,
     CustomStatus
 } from '../storeTypes';
-import { syncHomebrewToApi } from '../../utils/api';
+import { syncHomebrewToApi } from '../../utils/api/api';
 import OBR from '@owlbear-rodeo/sdk';
 
 const getStorageKey = () => {

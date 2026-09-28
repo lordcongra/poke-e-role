@@ -5,7 +5,7 @@ import { SKILL_CATEGORIES } from '../../../types/enums';
 import { RANKS, NATURES } from '../../../data/constants';
 import { BIOME_MAP } from '../../../data/biomeData';
 import { GeneratorPreviewStatSpinner } from '../pokemonGenerator';
-import type { GeneratedTrainerResult, TrainerGeneratorConfig } from '../../../utils/trainerGeneratorLogic';
+import type { GeneratedTrainerResult, TrainerGeneratorConfig } from '../../../utils/generators/trainerGeneratorLogic';
 import './TrainerPreviewModal.css';
 
 export interface TrainerSheetPreviewProps {

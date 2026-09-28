@@ -7,7 +7,7 @@ import {
     getAbilityText,
     calculateStatTotal,
     calculateSkillTotal
-} from '../../../utils/combatUtils';
+} from '../../../utils/combat/combatUtils';
 import './ClashModal.css';
 
 interface ClashModalProps {

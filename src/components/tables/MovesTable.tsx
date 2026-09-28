@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import type { MoveData } from '../../store/storeTypes';
 import { CombatStat } from '../../types/enums';
-import { loadLocalDataset, ALL_MOVES } from '../../utils/api';
-import { isStandaloneMode } from '../../utils/storageAdapter';
+import { loadLocalDataset, ALL_MOVES } from '../../utils/api/api';
+import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import {
     calculateBaseDamage,
     executeDamageRoll,
@@ -11,7 +11,7 @@ import {
     parseCombatTags,
     getAbilityText,
     calculateStatTotal
-} from '../../utils/combatUtils';
+} from '../../utils/combat/combatUtils';
 import { TargetingModal } from '../modals/combat/TargetingModal';
 import { MoveCard } from './MoveCard';
 import { MoveRow } from './MoveRow';

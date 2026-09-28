@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import { rollStatus } from '../../utils/combatUtils';
+import { rollStatus } from '../../utils/combat/combatUtils';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { STATUS_COLORS, STATUS_RULES, STATUS_OPTIONS } from '../../data/constants';

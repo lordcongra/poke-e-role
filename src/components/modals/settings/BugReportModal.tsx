@@ -8,7 +8,7 @@ import {
     formatBugReportMarkdown,
     formatActiveSheet,
     type BugReportDiagnostics
-} from '../../../utils/bugReportService';
+} from '../../../utils/common/bugReportService';
 import './BugReportModal.css';
 
 interface BugReportModalProps {

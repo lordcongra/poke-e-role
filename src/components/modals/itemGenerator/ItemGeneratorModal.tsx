@@ -2,13 +2,18 @@ import { useState, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { Gift, X, Sparkles, Backpack, Wrench, Hourglass, Dices } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { loadLocalDataset } from '../../../utils/api';
-import { generateLootPool, rollLootItem, formatCamelCase, type PoolItem } from '../../../utils/lootGeneratorLogic';
+import { loadLocalDataset } from '../../../utils/api/api';
+import {
+    generateLootPool,
+    rollLootItem,
+    formatCamelCase,
+    type PoolItem
+} from '../../../utils/generators/lootGeneratorLogic';
 import { ItemGeneratorResultModal } from './ItemGeneratorResultModal';
 import { ItemGeneratorPocketGroup } from './ItemGeneratorPocketGroup';
 import { ItemGeneratorTmFilters } from './ItemGeneratorTmFilters';
 import { POKEMON_TYPES, TYPE_COLORS } from '../../../data/constants';
-import { isStandaloneMode } from '../../../utils/storageAdapter';
+import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import './ItemGeneratorModal.css';
 
 interface ItemGeneratorModalProps {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { CombatStat, Skill } from '../../types/enums';
-import { rollDicePlus } from '../../utils/combatUtils';
+import { rollDicePlus } from '../../utils/combat/combatUtils';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { Dices, Shield, AlertTriangle, Sparkles, XCircle, Trash2 } from 'lucide-react';
@@ -18,7 +18,7 @@ import {
     calculateSDefTotal,
     calculateBaseInitiative,
     getRankBonusStats
-} from '../../utils/combatUtils';
+} from '../../utils/combat/combatUtils';
 import './DerivedBoard.css';
 
 export function DerivedBoard() {

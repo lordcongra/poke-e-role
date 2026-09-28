@@ -1,7 +1,7 @@
 import React from 'react';
 import { Megaphone, ArrowUp, ArrowDown } from 'lucide-react';
 import { REACTION_RULES_EXAMPLES, REACTION_CORE_RULES, type ReactionRuleExample } from '../../../data/gmScreenData';
-import { broadcastInfo } from '../../../utils/diceRoller';
+import { broadcastInfo } from '../../../utils/combat/diceRoller';
 
 interface GmReactionRulesCardProps {
     onBroadcastReactionExample?: (ex: ReactionRuleExample) => void;

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { Badge } from '../../store/storeTypes';
-import { isStandaloneMode } from '../../utils/storageAdapter';
-import { imageManager } from '../../utils/imageManager';
+import { isStandaloneMode } from '../../utils/sync/storageAdapter';
+import { imageManager } from '../../utils/graphics/imageManager';
 import { Trash2, Image as ImageIcon, ImageOff } from 'lucide-react';
 import './TrainerBadges.css';
 

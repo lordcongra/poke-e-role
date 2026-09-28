@@ -4,8 +4,8 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import type { CustomType } from '../../store/storeTypes';
 import { POKEMON_TYPES } from '../../data/constants';
 import { HomebrewTypeEditor } from './HomebrewTypeEditor';
-import { isStandaloneMode } from '../../utils/storageAdapter';
-import { downloadJson } from '../../utils/fileSystemHelpers';
+import { isStandaloneMode } from '../../utils/sync/storageAdapter';
+import { downloadJson } from '../../utils/common/fileSystemHelpers';
 import { Pencil, Copy, X, Save, FolderOpen, AlertTriangle } from 'lucide-react';
 import './HomebrewTypes.css';
 

@@ -6,7 +6,7 @@ import {
     STRENGTH_RULES,
     DEXTERITY_RULES
 } from '../../../data/gmScreenData';
-import { broadcastInfo } from '../../../utils/diceRoller';
+import { broadcastInfo } from '../../../utils/combat/diceRoller';
 
 export const GmAttributeBenchmarkCard: React.FC = () => {
     return (

@@ -1,11 +1,11 @@
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import OBR from '@owlbear-rodeo/sdk';
-import { imageManager } from './utils/imageManager';
-import { cropImageTransparencyUrl } from './utils/imageCropUtils';
+import { imageManager } from './utils/graphics/imageManager';
+import { cropImageTransparencyUrl } from './utils/graphics/imageCropUtils';
 import { Dices, Trash2, X, Info } from 'lucide-react';
-import { parseRollLabel } from './utils/rollLogParser';
-import { RollFactorsModal } from './components/modals/RollFactorsModal';
+import { parseRollLabel } from './utils/combat/rollLogParser';
+import { RollFactorsModal } from './components/modals';
 import './style.css';
 import './roll-log.css';
 

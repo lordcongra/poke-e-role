@@ -2,7 +2,7 @@ import { useState } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { Move, CheckCircle, RotateCcw, RefreshCw, XCircle } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { STATS_META_ID } from '../../../utils/graphicsManager';
+import { STATS_META_ID } from '../../../utils/graphics/graphicsManager';
 import { NumberSpinner } from '../../ui/NumberSpinner';
 
 interface TrackerPlacementModalProps {

@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../store/useCharacterStore';
-import { isStandaloneMode } from '../utils/storageAdapter';
+import { isStandaloneMode } from '../utils/sync/storageAdapter';
 
 export function useInitiativePopover(isObrReady: boolean) {
     const identity = useCharacterStore((state) => state.identity);

@@ -11,9 +11,9 @@ import {
     allocateTrainerStats,
     getEligibleTeamPool,
     resolveSlotRank
-} from '../../../utils/trainerGeneratorLogic';
-import { spawnTrainerAndTeam, type TrainerSpawnImageOptions } from '../../../utils/trainerTokenSpawner';
-import { buildTokenMetadataFromBuild } from '../../../utils/generatorUtils';
+} from '../../../utils/generators/trainerGeneratorLogic';
+import { spawnTrainerAndTeam, type TrainerSpawnImageOptions } from '../../../utils/generators/trainerTokenSpawner';
+import { buildTokenMetadataFromBuild } from '../../../utils/generators/generatorUtils';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { TrainerSheetPreview } from './TrainerSheetPreview';
 import { PokemonBuildPreview } from '../pokemonGenerator';
