@@ -52,17 +52,6 @@ export default defineConfig({
         port: 5173,
         cors: true,
         host: true,
-        proxy: {
-            '/api/discord-webhook': {
-                target: 'https://discord.com',
-                changeOrigin: true,
-                rewrite: (path) =>
-                    path.replace(
-                        /^\/api\/discord-webhook/,
-                        '/api/webhooks/1554157600394977311/hcr_GGm40eB2qBx9mWGcIF55BdomTzQ89yv_I7k_n9EStrRjDRRQ3SJliawnTdcaRrVk'
-                    )
-            }
-        },
         headers: {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',

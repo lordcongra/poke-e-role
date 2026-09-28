@@ -2,30 +2,18 @@ import { CURRENT_VERSION } from '../data/changelog';
 import { isStandaloneMode } from './storageAdapter';
 import OBR from '@owlbear-rodeo/sdk';
 
-// Default fallback webhook encoded in base64 to avoid automated git secret scraping
-const FALLBACK_WEBHOOK_B64 =
-    'aHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTU1NDE1NzYwMDM5NDk3NzMxMS9oY3JfR0dtNDBlQjJxQng5bVdHY0lGNTVCZG9tVHpRODl5dl9JN2tfbjlFU3RyUmpEUlJRM1NKbGlhd25UZGNhUnJWaw==';
+// Default bug report proxy hosted on Cloudflare Workers (keeps Discord webhook secure & unexposed)
+const DEFAULT_BUG_REPORT_ENDPOINT = 'https://pkr-bug-reporter.lordcongra.workers.dev';
 
 export function getDirectDiscordWebhookUrl(): string {
-    const envUrl = import.meta.env.VITE_DISCORD_WEBHOOK_URL;
+    const envUrl = import.meta.env.VITE_BUG_REPORT_ENDPOINT || import.meta.env.VITE_DISCORD_WEBHOOK_URL;
     if (typeof envUrl === 'string' && envUrl.trim().length > 0) {
         return envUrl.trim();
     }
-    try {
-        if (typeof window !== 'undefined' && typeof window.atob === 'function') {
-            return window.atob(FALLBACK_WEBHOOK_B64).trim();
-        }
-    } catch (e) {
-        console.warn('[BugReport] Failed to decode fallback webhook:', e);
-    }
-    return '';
+    return DEFAULT_BUG_REPORT_ENDPOINT;
 }
 
 export function getDiscordWebhookUrl(): string {
-    // In local development, use Vite proxy to avoid CORS and browser extension blocks
-    if (import.meta.env.DEV) {
-        return '/api/discord-webhook';
-    }
     return getDirectDiscordWebhookUrl();
 }
 
@@ -202,9 +190,9 @@ export async function submitBugReportToDiscord(params: {
         }
 
         return { success: true };
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('[BugReport] Failed to send bug report:', err);
-        const msg = err?.message || '';
+        const msg = err instanceof Error ? err.message : String(err);
         if (
             msg.includes('NetworkError') ||
             msg.includes('Failed to fetch') ||

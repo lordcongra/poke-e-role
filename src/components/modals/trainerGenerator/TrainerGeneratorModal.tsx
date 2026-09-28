@@ -29,8 +29,6 @@ interface TrainerGeneratorModalProps {
 }
 
 export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
-    const store = useCharacterStore();
-
     // Data Loading State
     const [pokedexLookup, setPokedexLookup] = useState<PokedexLookupItem[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -349,7 +347,7 @@ export function TrainerGeneratorModal({ onClose }: TrainerGeneratorModalProps) {
                 autoMatchExisting: autoMatchSceneImages
             };
 
-            const result = await generateFullTrainerTeam(config, store, pokedexLookup);
+            const result = await generateFullTrainerTeam(config, useCharacterStore.getState(), pokedexLookup);
             setSpawnImageOptions(imageOptions);
             setSpawnDestination(destination);
             setPreviewResult(result);

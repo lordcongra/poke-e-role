@@ -144,37 +144,42 @@ function measureImageDimensions(url: string): Promise<{ width: number; height: n
  * Helper to update OBR scene item image properties and re-render token graphics.
  */
 async function updateSceneItemImage(tokenId: string, url: string, width: number, height: number): Promise<void> {
-    await OBR.scene.items.updateItems([tokenId], (items) => {
-        for (const item of items) {
-            const imgItem = item as Record<string, unknown>;
-            if (imgItem.image) {
-                const imageRecord = imgItem.image as Record<string, unknown>;
-                imageRecord.url = url;
-                imageRecord.width = width;
-                imageRecord.height = height;
+    if (!OBR.isAvailable) return;
+    try {
+        await OBR.scene.items.updateItems([tokenId], (items) => {
+            for (const item of items) {
+                const imgItem = item as Record<string, unknown>;
+                if (imgItem.image) {
+                    const imageRecord = imgItem.image as Record<string, unknown>;
+                    imageRecord.url = url;
+                    imageRecord.width = width;
+                    imageRecord.height = height;
 
-                const imgGrid = (item as Record<string, unknown>).grid as Record<string, unknown> | undefined;
-                if (imgGrid) {
-                    imgGrid.dpi = width;
-                    imgGrid.offset = {
-                        x: width / 2,
-                        y: height / 2
-                    };
+                    const imgGrid = (item as Record<string, unknown>).grid as Record<string, unknown> | undefined;
+                    if (imgGrid) {
+                        imgGrid.dpi = width;
+                        imgGrid.offset = {
+                            x: width / 2,
+                            y: height / 2
+                        };
+                    }
+
+                    const signX = (item.scale.x || 1) < 0 ? -1 : 1;
+                    const signY = (item.scale.y || 1) < 0 ? -1 : 1;
+                    item.scale.x = signX;
+                    item.scale.y = signY;
                 }
-
-                const signX = (item.scale.x || 1) < 0 ? -1 : 1;
-                const signY = (item.scale.y || 1) < 0 ? -1 : 1;
-                item.scale.x = signX;
-                item.scale.y = signY;
             }
-        }
-    });
+        });
 
-    const updatedItems = await OBR.scene.items.getItems([tokenId]);
-    if (updatedItems.length > 0) {
-        const meta = (updatedItems[0].metadata[METADATA_ID] as Record<string, unknown>) || {};
-        const gData = buildGraphicsFromMeta(meta);
-        const currentRole = await OBR.player.getRole();
-        await renderTokenGraphics(updatedItems[0], gData, currentRole, true);
+        const updatedItems = await OBR.scene.items.getItems([tokenId]);
+        if (updatedItems.length > 0) {
+            const meta = (updatedItems[0].metadata[METADATA_ID] as Record<string, unknown>) || {};
+            const gData = buildGraphicsFromMeta(meta);
+            const currentRole = await OBR.player.getRole();
+            await renderTokenGraphics(updatedItems[0], gData, currentRole, true);
+        }
+    } catch (e) {
+        console.error('[TokenImageService] Failed to update scene item image in Owlbear.', e);
     }
 }

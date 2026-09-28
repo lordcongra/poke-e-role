@@ -9,8 +9,13 @@ import { Check } from 'lucide-react';
 import './PrintSheet.css';
 
 export function PrintSheet() {
-    const state = useCharacterStore();
-    const { identity, stats, socials, skills, moves, roomCustomAbilities, extraCategories } = state;
+    const identity = useCharacterStore((state) => state.identity);
+    const stats = useCharacterStore((state) => state.stats);
+    const socials = useCharacterStore((state) => state.socials);
+    const skills = useCharacterStore((state) => state.skills);
+    const moves = useCharacterStore((state) => state.moves);
+    const roomCustomAbilities = useCharacterStore((state) => state.roomCustomAbilities);
+    const extraCategories = useCharacterStore((state) => state.extraCategories);
     const config = identity.printConfig;
     const statStyle = config.statStyle || 'dots';
 

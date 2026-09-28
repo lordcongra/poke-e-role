@@ -154,8 +154,8 @@ export function BugReportModal({ onClose }: BugReportModalProps) {
                         'Failed to send report to Discord. You can still use "Copy to Clipboard" to message Congra directly.'
                 );
             }
-        } catch (err: any) {
-            setSubmitError(err?.message || 'Unexpected error sending report.');
+        } catch (err: unknown) {
+            setSubmitError(err instanceof Error ? err.message : 'Unexpected error sending report.');
         } finally {
             setIsSubmitting(false);
         }

@@ -36,8 +36,6 @@ export function TrainerPreviewModal({
     imageOptions,
     onClose
 }: TrainerPreviewModalProps) {
-    const store = useCharacterStore();
-
     // Active tab: 'trainer' or team member index (0..N-1)
     const [activeTab, setActiveTab] = useState<'trainer' | number>('trainer');
 
@@ -126,7 +124,7 @@ export function TrainerPreviewModal({
             slotIdx,
             activeConfig,
             trainerRank,
-            store,
+            useCharacterStore.getState(),
             slotPool,
             usedSpecies,
             slotRank
@@ -151,7 +149,7 @@ export function TrainerPreviewModal({
                 i,
                 activeConfig,
                 trainerRank,
-                store,
+                useCharacterStore.getState(),
                 slotPool,
                 usedSpecies,
                 slotRank

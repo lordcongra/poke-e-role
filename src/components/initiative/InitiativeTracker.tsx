@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { isStandaloneMode } from '../../utils/storageAdapter';
-import { CombatantCard } from './CombatantCard';
-import { AddCombatantModal } from './AddCombatantModal';
 import { useOwlbearPopoverResize } from '../../hooks/useOwlbearPopoverResize';
 import { useInitiativeEngine } from './useInitiativeEngine';
-import { ChevronLeft, ChevronRight, Dices, Plus, Swords } from 'lucide-react';
+import { Swords } from 'lucide-react';
+import { InitiativeTrackerContent } from './InitiativeTrackerContent';
 import './InitiativeTracker.css';
 
 interface InitiativeTrackerProps {
@@ -100,101 +99,25 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
         );
     }
 
-    const renderTrackerContent = (isGhost: boolean) => (
-        <>
-            <div className={`init-tracker__header init-tracker__header--${layout}`}>
-                <div className="init-tracker__turn-controls">
-                    <div className="init-tracker__btn-group">
-                        <button
-                            type="button"
-                            className="action-button action-button--dark init-tracker__turn-btn"
-                            onClick={prevTurn}
-                            title="Previous Turn"
-                        >
-                            <ChevronLeft size={16} />
-                        </button>
-                        <button
-                            type="button"
-                            className="action-button action-button--dark init-tracker__turn-btn"
-                            onClick={nextTurn}
-                            title="Next Turn"
-                        >
-                            <ChevronRight size={16} />
-                        </button>
-                    </div>
-
-                    {(isStandaloneMode || isGM) && (
-                        <div className="init-tracker__btn-group">
-                            <button
-                                type="button"
-                                className="action-button action-button--dark init-tracker__turn-btn"
-                                onClick={handleRollAll}
-                                title="Roll Initiative for All Combatants"
-                            >
-                                <Dices size={16} />
-                            </button>
-                            <button
-                                type="button"
-                                className="action-button action-button--dark init-tracker__turn-btn"
-                                onClick={() => setShowAddMenu(true)}
-                                title="Add Combatant"
-                            >
-                                <Plus size={16} />
-                            </button>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {combatants.length === 0 ? (
-                <div className="init-tracker__empty text-subtext">
-                    Waiting for rolls... {isStandaloneMode && '(Drag characters here)'}
-                </div>
-            ) : (
-                <div className={`init-tracker__list init-tracker__list--${layout}`}>
-                    {combatants.map((c, index) => (
-                        <div
-                            id={isGhost ? undefined : `combatant-${c.id}`}
-                            className="init-tracker__list-item"
-                            key={c.id}
-                        >
-                            <CombatantCard
-                                c={c}
-                                shape={shape}
-                                isActive={c.id === activeTurnId}
-                                updateInit={updateInit}
-                                removeInit={removeInit}
-                            />
-                            {index < combatants.length - 1 && layout === 'horizontal' && (
-                                <span className="init-tracker__flow-arrow">
-                                    <ChevronRight size={16} />
-                                </span>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {showAddMenu && (
-                <AddCombatantModal
-                    isStandaloneMode={isStandaloneMode}
-                    availableStandaloneChars={availableChars}
-                    availableObrChars={availableObrChars}
-                    onClose={() => setShowAddMenu(false)}
-                    onAddStandalone={(char) => {
-                        handleAddStandaloneCombatant(char);
-                        setShowAddMenu(false);
-                    }}
-                    onAddObr={(item) => {
-                        handleAddObrCombatant(item);
-                        setShowAddMenu(false);
-                    }}
-                />
-            )}
-
-            {isGhost && showAddMenu && <div className="init-tracker__ghost-spacer" />}
-        </>
-    );
+    const trackerContentProps = {
+        layout,
+        shape,
+        activeTurnId,
+        combatants,
+        isGM,
+        isStandaloneMode,
+        showAddMenu,
+        availableChars,
+        availableObrChars,
+        prevTurn,
+        nextTurn,
+        handleRollAll,
+        setShowAddMenu,
+        updateInit,
+        removeInit,
+        handleAddStandaloneCombatant,
+        handleAddObrCombatant
+    };
 
     if (isStandaloneWidget) {
         return (
@@ -217,7 +140,7 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                         className={`init-tracker init-tracker--${layout} init-tracker__standalone-panel`}
                         style={{ flexDirection: layout === 'horizontal' ? 'row' : 'column' }}
                     >
-                        {renderTrackerContent(false)}
+                        <InitiativeTrackerContent isGhost={false} {...trackerContentProps} />
                     </div>
                 </div>
             </>
@@ -231,11 +154,13 @@ export function InitiativeTracker({ isStandaloneWidget = false }: InitiativeTrac
                 className={`init-tracker init-tracker--${layout} init-tracker--ghost`}
                 aria-hidden="true"
             >
-                {renderTrackerContent(true)}
+                <InitiativeTrackerContent isGhost={true} {...trackerContentProps} />
             </div>
 
             <div className="init-tracker-wrapper">
-                <div className={`init-tracker init-tracker--${layout}`}>{renderTrackerContent(false)}</div>
+                <div className={`init-tracker init-tracker--${layout}`}>
+                    <InitiativeTrackerContent isGhost={false} {...trackerContentProps} />
+                </div>
             </div>
         </>
     );

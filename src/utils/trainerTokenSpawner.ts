@@ -177,6 +177,7 @@ export async function spawnTrainerAndTeam(
     }
 
     // --- OWLBEAR RODEO MODE ---
+    if (!OBR.isAvailable) return;
     try {
         if (destination === 'overwrite' && store.tokenId) {
             await OBR.scene.items.updateItems([store.tokenId], (items) => {

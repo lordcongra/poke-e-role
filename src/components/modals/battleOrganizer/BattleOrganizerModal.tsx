@@ -8,8 +8,9 @@ import { BattleRoundNav } from './BattleRoundNav';
 import { CombatantsTable } from './CombatantsTable';
 import { BattleOrganizerPullModal } from './BattleOrganizerPullModal';
 import { BattleOrganizerTooltipModal } from './BattleOrganizerTooltipModal';
-import { RotateCcw, X, Lightbulb } from 'lucide-react';
+import { Lightbulb, X } from 'lucide-react';
 import { isStandaloneMode } from '../../../utils/storageAdapter';
+import { BattleOrganizerFooter } from './BattleOrganizerFooter';
 import { BattleOrganizerSettingsModal } from './BattleOrganizerSettingsModal';
 import { CombatantSheetModal } from './CombatantSheetModal';
 import { InModalRollLog } from './InModalRollLog';
@@ -403,55 +404,13 @@ export function BattleOrganizerModal({ onClose, onPrint, isPopout }: BattleOrgan
                 </div>
 
                 {/* Modal Footer */}
-                <div className="bo-modal__footer" onWheel={handleStaticWheel}>
-                    <div className="bo-modal__footer-left">
-                        {confirmClear ? (
-                            <div className="bo-confirm-clear">
-                                <span className="text-subtext">Clear entire Battle Organizer?</span>
-                                <button
-                                    type="button"
-                                    className="action-button action-button--dark bo-footer-btn"
-                                    onClick={() => setConfirmClear(false)}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="button"
-                                    className="action-button action-button--red bo-footer-btn"
-                                    onClick={() => {
-                                        clearAll();
-                                        setConfirmClear(false);
-                                        setActiveSheetCombatant(null);
-                                        if (OBR.isAvailable) {
-                                            OBR.notification.show('Battle Organizer sheet has been reset.', 'INFO');
-                                        }
-                                    }}
-                                >
-                                    Confirm Reset
-                                </button>
-                            </div>
-                        ) : (
-                            <button
-                                type="button"
-                                className="action-button action-button--dark bo-footer-btn"
-                                onClick={() => setConfirmClear(true)}
-                                title="Reset all battlefield and round data"
-                            >
-                                <RotateCcw size={14} /> Reset Sheet
-                            </button>
-                        )}
-                    </div>
-
-                    <div className="bo-modal__footer-right">
-                        <button
-                            type="button"
-                            className="action-button action-button--dark bo-footer-btn"
-                            onClick={onClose}
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
+                <BattleOrganizerFooter
+                    confirmClear={confirmClear}
+                    onSetConfirmClear={setConfirmClear}
+                    onClearAll={clearAll}
+                    onClose={onClose}
+                    onWheel={handleStaticWheel}
+                />
 
                 {/* Sub-Modals & Overlays */}
                 {showSettingsModal && <BattleOrganizerSettingsModal onClose={() => setShowSettingsModal(false)} />}

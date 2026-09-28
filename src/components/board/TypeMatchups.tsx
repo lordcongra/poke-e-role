@@ -3,6 +3,7 @@ import { getAbilityText, getMatchupGroups } from '../../utils/combatUtils';
 import { TYPE_COLORS } from '../../data/constants';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { ChevronDown } from 'lucide-react';
+import { TypeMatchupGroupRow } from './TypeMatchupGroupRow';
 import './TypeMatchups.css';
 
 export function TypeMatchups() {
@@ -63,37 +64,17 @@ export function TypeMatchups() {
 
     const groups = getMatchupGroups(type1, type2, visibleTypes, stringsToParse);
 
-    const renderGroup = (label: string, types: string[]) => {
-        if (types.length === 0) return null;
-        return (
-            <div className="type-matchups__group-row">
-                <span className="type-matchups__group-label text-label">{label}</span>
-                <div className="type-matchups__pill-container">
-                    {types.map((t) => {
-                        const bgColor = ALL_COLORS[t] || '#777';
-
-                        return (
-                            <span key={t} className="type-matchups__pill" style={{ background: bgColor }}>
-                                {t}
-                            </span>
-                        );
-                    })}
-                </div>
-            </div>
-        );
-    };
-
     return (
         <CollapsingSection
             title={isTera ? `TYPE MATCHUPS (TERA: ${teraAffinity.toUpperCase()})` : 'TYPE MATCHUPS'}
             className="sheet-panel type-matchups__panel"
         >
             <div className="type-matchups__content">
-                {renderGroup('4x', groups[4])}
-                {renderGroup('2x', groups[2])}
-                {renderGroup('0.5x', groups[0.5])}
-                {renderGroup('0.25x', groups[0.25])}
-                {renderGroup('0x', groups[0])}
+                <TypeMatchupGroupRow label="4x" types={groups[4]} colors={ALL_COLORS} />
+                <TypeMatchupGroupRow label="2x" types={groups[2]} colors={ALL_COLORS} />
+                <TypeMatchupGroupRow label="0.5x" types={groups[0.5]} colors={ALL_COLORS} />
+                <TypeMatchupGroupRow label="0.25x" types={groups[0.25]} colors={ALL_COLORS} />
+                <TypeMatchupGroupRow label="0x" types={groups[0]} colors={ALL_COLORS} />
             </div>
         </CollapsingSection>
     );
