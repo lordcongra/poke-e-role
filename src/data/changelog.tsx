@@ -26,7 +26,7 @@ import {
     Sparkles
 } from 'lucide-react';
 
-export const CURRENT_VERSION = '3.6.7';
+export const CURRENT_VERSION = '3.6.6';
 
 export interface ChangelogHighlight {
     id: string;
@@ -128,78 +128,33 @@ export function getChangelogDiff(lastSeenVersion: string | null): ChangelogDiffR
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
     {
-        version: '3.6.7',
-        date: 'September 2026',
-        highlights: [
-            {
-                id: 'passives-and-tag-pills',
-                version: '3.6.7',
-                title: 'Passives System & Interactive Tag Pills',
-                icon: Sparkles,
-                badge: 'Sheet & Tags',
-                summary: 'New Passives table for permanent non-item perks (like Rare Candy attribute boosts), plus sheet-wide Interactive Tag Pills with click-to-edit values, one-click deletion, and move keyword parsing.',
-                details: (
-                    <div>
-                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Dedicated Passives Table:</strong> Positioned conveniently right below Social Attributes, the Passives table lets you record permanent enhancements (such as Rare Candy attribute bonuses, campaign boons, or innate perks) without cluttering your inventory.
-                        </p>
-                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Interactive Tag Pills (No Manual Typing!):</strong> Smart Tags are now rendered as sleek, interactive pills across Passives, Bag items, Moves, and Abilities. Simply click any tag pill to automatically load its values into the Tag Builder to adjust numbers, click the <strong>✕</strong> to remove it instantly, or use <strong>+ Tag</strong> to add new mechanics without typing brackets.
-                        </p>
-                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Move Keywords & Full Math Integration:</strong> Standard move mechanics (e.g. <code>High Critical</code>, <code>Low Accuracy 1</code>, <code>Never Miss</code>, <code>Recoil</code>) are automatically parsed into interactive pills inside the move edit modal. All passive and item tags seamlessly integrate into Core & Social stats, Skills, Defenses, HP/Will totals, move accuracy/damage formulas, and Round Tracker triggers.
-                        </p>
-                    </div>
-                )
-            }
-        ],
-        changes: [
-            <strong key="passives-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                <Sparkles size={16} /> Passives System & Interactive Tag Pills
-            </strong>,
-            <ul
-                key="passives-list"
-                className="text-subtext"
-                style={{
-                    color: 'var(--text-main)',
-                    paddingLeft: '20px',
-                    marginTop: '6px',
-                    marginBottom: '16px',
-                    fontSize: '0.9em',
-                    lineHeight: '1.5'
-                }}
-            >
-                <li>
-                    <strong>New Passives Table:</strong> Added an intuitive table right below Social Attributes with active checkmark toggles, name inputs, and reorder controls.
-                </li>
-                <li>
-                    <strong>Interactive Tag Pills:</strong> Replaced raw text tag typing with interactive pills across Passives, Bag Items, Moves, and Abilities. Click any pill to modify its numbers in the Tag Builder with 1 click.
-                </li>
-                <li>
-                    <strong>Move Keyword Parsing:</strong> Built-in detection for official move keywords like <code>High Critical</code>, <code>Low Accuracy 1/2/3</code>, <code>Never Miss</code>, <code>Recoil</code>, and <code>Set Damage</code> to render as interactive pills.
-                </li>
-                <li>
-                    <strong>Double-Confirmation Deletion Safeguard:</strong> All tag deletions on pills and within the Tag Builder require confirmation before deletion to prevent accidental loss.
-                </li>
-                <li>
-                    <strong>Round Tracker Boost & Stacking Controls:</strong> When passives, equipped items, or abilities grant <code>@ Boost</code> or <code>@ Stacking Boost</code>, a dedicated Boost control dynamically appears in the Round Tracker between Take Your Chances and Conditions, allowing players to step or toggle their active tier in real-time.
-                </li>
-                <li>
-                    <strong>Smart Tag Math Integration:</strong> All passive and item tags calculate across the entire sheet: attribute/skill bonuses, defense calculations, HP/Will bar maximums, move accuracy and damage modifiers, and round tracker events.
-                </li>
-                <li>
-                    <strong>Owlbear Rodeo Iframe Optimization:</strong> Sized and styled the Smart Tags Guide modal with responsive max-height, smooth internal scrolling, and a top header close button so it fits comfortably inside OBR iframes.
-                </li>
-                <li>
-                    <strong>Round Tracker Condition Visibility:</strong> Toggle whether an active passive appears in the Round Tracker&apos;s Conditions banner with a single click (defaults to hidden to avoid clutter).
-                </li>
-            </ul>
-        ]
-    },
-    {
         version: '3.6.6',
         date: 'September 2026',
         highlights: [
+            {
+                id: 'passives-and-smart-tags',
+                version: '3.6.6',
+                title: 'Passives System & Smart Item Tags',
+                icon: Sparkles,
+                badge: 'Sheet & Tags',
+                summary: 'New Passives table for permanent boosts, interactive tag pills on items with active glow feedback, and cleaner roll log factors.',
+                details: (
+                    <div>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Dedicated Passives Table:</strong> Easily track permanent character enhancements (such as Rare Candy attribute bonuses, campaign boons, and innate perks) right below Social Attributes without cluttering your inventory.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Smart Item Tags & Clean Descriptions:</strong> No more bracket tags cluttering your item notes! Official item effects are automatically converted into interactive tag pills. In list view, your rows stay neat and slim; simply scroll down inside an item&apos;s description box to view its tag pill at the bottom.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Equipped Status Feedback:</strong> Item tags glow with full vibrant color when equipped and dim when unequipped, so you always know at a glance when an item&apos;s bonus is applying to your rolls.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Cleaner Roll Logs with Factors Breakdown:</strong> Roll messages now display clean, easy-to-read math. Whenever abilities, items, or passives modify a roll, tap the new <strong>Factors</strong> button inside the roll log to inspect a complete breakdown of what contributed!
+                        </p>
+                    </div>
+                )
+            },
             {
                 id: 'bag-grid-and-move-wishlist',
                 version: '3.6.6',
@@ -223,6 +178,43 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
             }
         ],
         changes: [
+            <strong key="passives-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Sparkles size={16} /> Passives System & Smart Tags
+            </strong>,
+            <ul
+                key="passives-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>New Passives Table:</strong> Added a dedicated table below Social Attributes to track Rare Candy stat bonuses, campaign rewards, and passive traits with active checkmark toggles.
+                </li>
+                <li>
+                    <strong>Interactive Tag Pills:</strong> Special effects on items, passives, and moves are now visual pills rather than raw bracket text in your notes. Click any pill to adjust its numbers or tap ✕ to remove it.
+                </li>
+                <li>
+                    <strong>Slim Scrollable Item Notes:</strong> Bag list rows remain compact; scroll down inside an item&apos;s description box to view its tag pill at the bottom.
+                </li>
+                <li>
+                    <strong>Equipped Status Feedback:</strong> Item tags glow when an item is equipped and dim when unequipped, making it clear when bonuses are active.
+                </li>
+                <li>
+                    <strong>Roll Log Factors Pop-up:</strong> Roll messages are cleaner, with a new Factors button to inspect every ability, item, and passive bonus that modified the roll.
+                </li>
+                <li>
+                    <strong>Move Keywords:</strong> Standard move mechanics like High Critical, Never Miss, and Recoil appear as interactive pills inside Move edit.
+                </li>
+                <li>
+                    <strong>Round Tracker Boost Controls:</strong> When abilities, items, or passives grant stacking boosts, a dedicated stepper control appears in the Round Tracker for easy tier tracking.
+                </li>
+            </ul>,
             <strong key="bag-grid-view-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                 <Package size={16} /> Inventory & Bag Overhaul
             </strong>,
