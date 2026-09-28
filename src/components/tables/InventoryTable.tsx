@@ -13,6 +13,7 @@ import { ItemInfoModal } from '../modals/items/ItemInfoModal';
 import { ItemEditModal } from '../modals/items/ItemEditModal';
 import { SmartTagsGuideModal } from '../modals/items/SmartTagsGuideModal';
 import { AlertTriangle, Plus, Check, Trash2, XCircle, List, LayoutGrid, Package } from 'lucide-react';
+import { PassivesTable } from './PassivesTable';
 import './InventoryTable.css';
 
 export function InventoryTable() {
@@ -288,6 +289,8 @@ export function InventoryTable() {
                     <Plus size={16} /> Add Item
                 </button>
             </CollapsingSection>
+
+            <PassivesTable />
 
             <CollapsingSection title="NOTES">
                 <textarea

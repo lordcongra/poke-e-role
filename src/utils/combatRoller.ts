@@ -70,9 +70,9 @@ export async function rollStatus(status: StatusItem, state: CharacterState) {
 
     const tags: string[] = [];
     if (rankSkillBonus > 0) tags.push('Master/Champion Rank (+2 Dice)');
-    if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
+    if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}: ${pain} Succ`);
     if (state.trackers.globalSucc !== 0)
-        tags.push(`Net Mod ${state.trackers.globalSucc > 0 ? '+' : ''}${state.trackers.globalSucc} Succ`);
+        tags.push(`Tracker Mod: ${state.trackers.globalSucc > 0 ? '+' : ''}${state.trackers.globalSucc} Succ`);
 
     const tagString = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';
 
@@ -154,12 +154,13 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
     const tags: string[] = [];
 
     if (rankSkillBonus > 0) tags.push('Master/Champion Rank (+2 Dice)');
-    if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
+    if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}: ${pain} Succ`);
     else if (rawPain < 0 && itemBuffs.ignorePain) tags.push('Ignored Pain Penalty');
+    if (statuses.confusionPenalty < 0) tags.push(`Confusion: ${statuses.confusionPenalty} Succ`);
     if (ignoredAccuracyPenalty > 0) tags.push(`Ignored ${ignoredAccuracyPenalty} Low Acc`);
-    if (moveLowAccuracy > 0) tags.push(`Low Accuracy ${moveLowAccuracy}`);
-    if (genericSuccessModifier !== 0)
-        tags.push(`Net Mod ${genericSuccessModifier > 0 ? '+' : ''}${genericSuccessModifier} Succ`);
+    if (moveLowAccuracy > 0) tags.push(`Low Accuracy ${moveLowAccuracy}: -${moveLowAccuracy} Succ`);
+    if (state.trackers.globalSucc !== 0)
+        tags.push(`Tracker Mod: ${state.trackers.globalSucc > 0 ? '+' : ''}${state.trackers.globalSucc} Succ`);
     if (statuses.paralysisDexterityPenalty < 0 && normalizedAcc1 === 'dex') tags.push(`Paralysis: -2 Dice`);
 
     if (customFirstHitAccTag) tags.push(customFirstHitAccTag);
@@ -301,13 +302,13 @@ export async function executeDamageRoll(
     const pain = getPainPenalty(move.dmg1, state, itemBuffs, move);
     if (pain < 0) {
         finalFlatMod += pain;
-        tags.push(`Pain Penalty ${Math.abs(pain)}`);
+        tags.push(`Pain Penalty ${Math.abs(pain)}: ${pain} Succ`);
     } else if (rawPain < 0 && itemBuffs.ignorePain) {
         tags.push('Ignored Pain Penalty');
     }
 
     if (state.trackers.globalSucc !== 0) {
-        tags.push(`Net Mod ${state.trackers.globalSucc > 0 ? '+' : ''}${state.trackers.globalSucc} Succ`);
+        tags.push(`Tracker Mod: ${state.trackers.globalSucc > 0 ? '+' : ''}${state.trackers.globalSucc} Succ`);
     }
 
     if (effectiveness > 0) {
@@ -338,7 +339,7 @@ export async function executeDamageRoll(
 
     if (!override.active || override.type !== 'flat') {
         if (statuses.paralysisDexterityPenalty < 0 && normalizedDamageStatistic === 'dex') {
-            tags.push(`Paralysis minus 2 Dmg Dice`);
+            tags.push(`Paralysis: -2 Dice`);
         }
 
         // --- PULL FROM THE BANK ---
@@ -462,7 +463,10 @@ export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {
 
     const tags: string[] = [];
     if (rankSkillBonus > 0) tags.push('Master/Champion Rank (+2 Dice)');
-    if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
+    if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}: ${pain} Succ`);
+    if (statuses.confusionPenalty < 0) tags.push(`Confusion: ${statuses.confusionPenalty} Succ`);
+    if (state.trackers.globalSucc !== 0)
+        tags.push(`Tracker Mod: ${state.trackers.globalSucc > 0 ? '+' : ''}${state.trackers.globalSucc} Succ`);
 
     const genericSuccessModifier = state.trackers.globalSucc + statuses.confusionPenalty + pain;
     const mathModifier =
@@ -471,8 +475,6 @@ export async function rollSkillCheck(check: SkillCheck, state: CharacterState) {
                 ? `+${genericSuccessModifier}`
                 : `${genericSuccessModifier}`
             : '';
-    if (genericSuccessModifier !== 0)
-        tags.push(`Net Mod ${genericSuccessModifier > 0 ? '+' : ''}${genericSuccessModifier} Succ`);
 
     const chancesUsed = state.trackers.chances;
 
@@ -546,9 +548,10 @@ export async function rollGeneric(
     const tags: string[] = [];
 
     if (rankSkillBonus > 0) tags.push('Master/Champion Rank (+2 Dice)');
-    if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}`);
-    if (genericSuccessModifier !== 0)
-        tags.push(`Net Mod ${genericSuccessModifier > 0 ? '+' : ''}${genericSuccessModifier} Succ`);
+    if (pain < 0) tags.push(`Pain Penalty ${Math.abs(pain)}: ${pain} Succ`);
+    if (statuses.confusionPenalty < 0) tags.push(`Confusion: ${statuses.confusionPenalty} Succ`);
+    if (state.trackers.globalSucc !== 0)
+        tags.push(`Tracker Mod: ${state.trackers.globalSucc > 0 ? '+' : ''}${state.trackers.globalSucc} Succ`);
     if (chancesUsed > 0) tags.push(`Chances: Max ${chancesUsed} Rerolls`);
     if (statuses.paralysisDexterityPenalty < 0 && attribute.toLowerCase() === 'dex') tags.push(`Paralysis: -2 Dice`);
 

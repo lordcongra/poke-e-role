@@ -19,8 +19,7 @@ import {
     ChevronUp,
     ChevronDown,
     AlertTriangle,
-    XCircle,
-    Dices
+    XCircle
 } from 'lucide-react';
 import { TagPillList } from '../../ui/TagPillList';
 import { extractItemTags } from './tagBuilder/tagBuilderLogic';
@@ -388,28 +387,6 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
                         >
                             <RefreshCw size={13} className={isFetchingInfo ? 'spin' : ''} />
                             {isFetchingInfo ? 'Looking up...' : 'Lookup Info'}
-                        </button>
-
-                        <button
-                            type="button"
-                            className={`action-button ${
-                                item.showInRollLog !== false ? 'action-button--theme' : 'action-button--dark'
-                            } item-edit-modal__img-action-btn text-theme-header`}
-                            onClick={() =>
-                                updateInventoryItem(
-                                    item.id,
-                                    'showInRollLog',
-                                    item.showInRollLog === false ? true : false
-                                )
-                            }
-                            title={
-                                item.showInRollLog !== false
-                                    ? 'Showing in Roll Log (Click to hide)'
-                                    : 'Hidden from Roll Log (Click to show)'
-                            }
-                        >
-                            <Dices size={13} />
-                            {item.showInRollLog !== false ? 'In Roll Log' : 'Hide from Log'}
                         </button>
                     </div>
 

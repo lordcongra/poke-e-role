@@ -312,12 +312,26 @@ export const InventoryCard = memo(function InventoryCard({
                         <TagPillList
                             tags={itemTags}
                             onEditTag={(tagStr) => setTagBuilderData({ id: item.id, type: 'item', initialTag: tagStr })}
-                            onDeleteTag={(rawTag) => {
+                            onDeleteTag={(rawTag, tagIndex) => {
                                 const currentTags =
                                     item.tags !== undefined
                                         ? item.tags
                                         : (item.desc.match(/\[[^\]]+\]/g) || []).join(' ');
-                                const updated = currentTags.replace(rawTag, '').replace(/\s+/g, ' ').trim();
+                                let updated = currentTags;
+                                if (typeof tagIndex === 'number') {
+                                    let count = 0;
+                                    updated = currentTags.replace(/\[[^\]]+\]/g, (match) => {
+                                        if (count === tagIndex) {
+                                            count++;
+                                            return '';
+                                        }
+                                        count++;
+                                        return match;
+                                    });
+                                } else {
+                                    updated = currentTags.replace(rawTag, '');
+                                }
+                                updated = updated.replace(/\s+/g, ' ').trim();
                                 updateInventoryItem(item.id, 'tags', updated);
                                 if (item.desc.includes(rawTag)) {
                                     const cleanDesc = item.desc

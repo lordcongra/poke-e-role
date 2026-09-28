@@ -411,18 +411,7 @@ export function parseCombatTags(
         extractFirstHit(description, bonuses, triggers, isHalfHp, boostLevel, maxBoost, boostActive);
         extractTempHp(description, bonuses, triggers, isHalfHp, boostLevel, maxBoost, boostActive);
         extractRoundEffects(description, bonuses, triggers, isHalfHp, boostLevel, maxBoost, boostActive);
-        extractMechanics(
-            description,
-            moveType,
-            move,
-            bonuses,
-            triggers,
-            isHalfHp,
-            item.kind,
-            name,
-            item.showInRollLog !== false,
-            boostActive
-        );
+        extractMechanics(description, moveType, move, bonuses, triggers, isHalfHp, item.kind, name, true, boostActive);
 
         if (item.kind === 'ability') {
             const cleanAbilityName = name.replace(/^Ability:\s*/i, '').trim();
@@ -448,64 +437,60 @@ export function parseCombatTags(
             if (triggers.general || triggers.accuracy) bonuses.accAbilityNames.push(accLabel);
             if (triggers.general || triggers.damage) bonuses.dmgAbilityNames.push(dmgLabel);
         } else if (item.kind === 'passive') {
-            if (item.showInRollLog !== false) {
-                const cleanPassiveName = name.replace(/^Passive:\s*/i, '').trim();
-                const generalEffect = extractActiveEffectSummary(item.desc, 'all', move, boostLevel);
-                const generalLabel =
-                    generalEffect && !cleanPassiveName.toLowerCase().includes(generalEffect.toLowerCase())
-                        ? `${cleanPassiveName} (${generalEffect})`
-                        : cleanPassiveName;
+            const cleanPassiveName = name.replace(/^Passive:\s*/i, '').trim();
+            const generalEffect = extractActiveEffectSummary(item.desc, 'all', move, boostLevel);
+            const generalLabel =
+                generalEffect && !cleanPassiveName.toLowerCase().includes(generalEffect.toLowerCase())
+                    ? `${cleanPassiveName} (${generalEffect})`
+                    : cleanPassiveName;
 
-                const accEffect = extractActiveEffectSummary(item.desc, 'acc', move, boostLevel);
-                const accLabel =
-                    accEffect && !cleanPassiveName.toLowerCase().includes(accEffect.toLowerCase())
-                        ? `${cleanPassiveName} (${accEffect})`
-                        : cleanPassiveName;
+            const accEffect = extractActiveEffectSummary(item.desc, 'acc', move, boostLevel);
+            const accLabel =
+                accEffect && !cleanPassiveName.toLowerCase().includes(accEffect.toLowerCase())
+                    ? `${cleanPassiveName} (${accEffect})`
+                    : cleanPassiveName;
 
-                const dmgEffect = extractActiveEffectSummary(item.desc, 'dmg', move, boostLevel);
-                const dmgLabel =
-                    dmgEffect && !cleanPassiveName.toLowerCase().includes(dmgEffect.toLowerCase())
-                        ? `${cleanPassiveName} (${dmgEffect})`
-                        : cleanPassiveName;
+            const dmgEffect = extractActiveEffectSummary(item.desc, 'dmg', move, boostLevel);
+            const dmgLabel =
+                dmgEffect && !cleanPassiveName.toLowerCase().includes(dmgEffect.toLowerCase())
+                    ? `${cleanPassiveName} (${dmgEffect})`
+                    : cleanPassiveName;
 
-                if (triggers.general || triggers.accuracy || triggers.damage) {
-                    bonuses.itemNames.push(generalLabel);
-                    bonuses.passiveNames.push(generalLabel);
-                }
-                if (triggers.general || triggers.accuracy) {
-                    bonuses.accItemNames.push(accLabel);
-                    bonuses.accPassiveNames.push(accLabel);
-                }
-                if (triggers.general || triggers.damage) {
-                    bonuses.dmgItemNames.push(dmgLabel);
-                    bonuses.dmgPassiveNames.push(dmgLabel);
-                }
+            if (triggers.general || triggers.accuracy || triggers.damage) {
+                bonuses.itemNames.push(generalLabel);
+                bonuses.passiveNames.push(generalLabel);
+            }
+            if (triggers.general || triggers.accuracy) {
+                bonuses.accItemNames.push(accLabel);
+                bonuses.accPassiveNames.push(accLabel);
+            }
+            if (triggers.general || triggers.damage) {
+                bonuses.dmgItemNames.push(dmgLabel);
+                bonuses.dmgPassiveNames.push(dmgLabel);
             }
         } else if (item.kind === 'item') {
-            if (item.showInRollLog !== false) {
-                const cleanItemName = name;
-                const generalEffect = extractActiveEffectSummary(item.desc, 'all', move, boostLevel);
-                const generalLabel =
-                    generalEffect && !cleanItemName.toLowerCase().includes(generalEffect.toLowerCase())
-                        ? `${cleanItemName} (${generalEffect})`
-                        : cleanItemName;
+            const cleanItemName = name;
+            const generalEffect = extractActiveEffectSummary(item.desc, 'all', move, boostLevel);
+            const generalLabel =
+                generalEffect && !cleanItemName.toLowerCase().includes(generalEffect.toLowerCase())
+                    ? `${cleanItemName} (${generalEffect})`
+                    : cleanItemName;
 
-                const accEffect = extractActiveEffectSummary(item.desc, 'acc', move, boostLevel);
-                const accLabel =
-                    accEffect && !cleanItemName.toLowerCase().includes(accEffect.toLowerCase())
-                        ? `${cleanItemName} (${accEffect})`
-                        : cleanItemName;
+            const accEffect = extractActiveEffectSummary(item.desc, 'acc', move, boostLevel);
+            const accLabel =
+                accEffect && !cleanItemName.toLowerCase().includes(accEffect.toLowerCase())
+                    ? `${cleanItemName} (${accEffect})`
+                    : cleanItemName;
 
-                const dmgEffect = extractActiveEffectSummary(item.desc, 'dmg', move, boostLevel);
-                const dmgLabel =
-                    dmgEffect && !cleanItemName.toLowerCase().includes(dmgEffect.toLowerCase())
-                        ? `${cleanItemName} (${dmgEffect})`
-                        : cleanItemName;
+            const dmgEffect = extractActiveEffectSummary(item.desc, 'dmg', move, boostLevel);
+            const dmgLabel =
+                dmgEffect && !cleanItemName.toLowerCase().includes(dmgEffect.toLowerCase())
+                    ? `${cleanItemName} (${dmgEffect})`
+                    : cleanItemName;
 
-                if (triggers.general || triggers.accuracy || triggers.damage) bonuses.itemNames.push(generalLabel);
-                if (triggers.general || triggers.accuracy) bonuses.accItemNames.push(accLabel);
-                if (triggers.general || triggers.damage) bonuses.dmgItemNames.push(dmgLabel);
-            }
+            if (triggers.general || triggers.accuracy || triggers.damage) bonuses.itemNames.push(generalLabel);
+            if (triggers.general || triggers.accuracy) bonuses.accItemNames.push(accLabel);
+            if (triggers.general || triggers.damage) bonuses.dmgItemNames.push(dmgLabel);
         }
     });
 

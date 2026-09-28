@@ -41,14 +41,23 @@
     border-collapse: collapse;
 }
 
-.passives-table__row {
-    transition: background-color 0.15s ease;
+.passives-table__row td {
+    vertical-align: top;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.passives-table__cell-content-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 30px;
 }
 
 .passives-table__cell-check {
     width: 32px;
     text-align: center;
-    padding: 4px 2px;
+    padding: 6px 2px 4px 2px;
 }
 
 .passives-table__checkbox {
@@ -59,8 +68,8 @@
 }
 
 .passives-table__cell-name {
-    width: 32%;
-    min-width: 110px;
+    width: 28%;
+    min-width: 100px;
     padding: 4px 6px;
 }
 
@@ -71,29 +80,142 @@
 .passives-table__desc-wrapper {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
     gap: 4px;
     position: relative;
     width: 100%;
 }
 
-.passives-table__note-input {
+.passives-table__desc-main {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     width: 100%;
-    height: 20px;
-    padding: 1px 4px;
-    background: transparent;
-    border: none;
-    border-bottom: 1px dotted var(--border, rgba(255, 255, 255, 0.15));
-    color: var(--text-muted, #94a3b8);
+}
+
+.passives-table__tags-inline {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    max-width: 65%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+}
+
+.passives-table__tags-inline::-webkit-scrollbar {
+    display: none;
+}
+
+.passives-table__tags-inline .tag-pill-list {
+    flex-wrap: nowrap !important;
+}
+
+.passives-table__expand-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: 12px;
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    color: var(--primary, #3b82f6);
     font-size: 0.72rem;
-    outline: none;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
     transition: all 0.15s ease;
+    user-select: none;
+}
+
+.passives-table__expand-badge:hover {
+    background: rgba(59, 130, 246, 0.28);
+    border-color: var(--primary, #3b82f6);
+    transform: translateY(-1px);
+}
+
+.passives-table__expand-badge--expanded {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--text-main, #f1f5f9);
+}
+
+.passives-table__expand-badge--expanded:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
+.passives-table__expand-icon {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.passives-table__nested-tray {
+    width: 100%;
+    margin-top: 4px;
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-sizing: border-box;
+    animation: passivesTrayFadeIn 0.18s ease-out;
+}
+
+@keyframes passivesTrayFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.passives-table__nested-tray-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-subtext, #94a3b8);
+}
+
+.passives-table__nested-tray .tag-pill-list {
+    flex-wrap: wrap !important;
+    gap: 6px;
+}
+
+.passives-table__note-input {
+    flex: 1;
+    min-width: 70px;
+    height: 30px;
+    padding: 4px 8px;
+    background: var(--input-bg, rgba(0, 0, 0, 0.2));
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.8rem;
+    outline: none;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+}
+
+.passives-table__note-input:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+    color: var(--text-main);
 }
 
 .passives-table__note-input:focus {
-    border-bottom-color: var(--primary, #3b82f6);
+    border-color: var(--primary, #3b82f6);
     color: var(--text-main);
-    background: rgba(0, 0, 0, 0.15);
+    background: rgba(0, 0, 0, 0.35);
 }
 
 .passives-table__input {
@@ -135,8 +257,7 @@
     color: var(--primary);
 }
 
-.passives-table__cell-cond,
-.passives-table__cell-log {
+.passives-table__cell-cond {
     width: 34px;
     text-align: center;
     padding: 4px 2px;
@@ -207,23 +328,21 @@
 }
 
 .passives-table__del-btn {
-    padding: 4px;
-    height: 26px;
     width: 26px;
+    height: 26px;
+    padding: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border-radius: 4px;
-    opacity: 0.7;
-    color: var(--semantic-danger, #ef4444);
+    margin: 0 auto;
     transition:
-        opacity 0.15s ease,
-        transform 0.15s ease;
+        background-color 0.2s ease,
+        color 0.2s ease;
 }
 
 .passives-table__del-btn:hover {
-    opacity: 1;
-    transform: scale(1.1);
+    background: var(--semantic-danger) !important;
 }
 
 .passives-table__add-btn {

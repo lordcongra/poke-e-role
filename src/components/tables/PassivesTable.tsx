@@ -1,24 +1,13 @@
 import { useState } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
+import type { PassiveItem } from '../../store/storeTypes';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { TagBuilderModal } from '../modals/items/TagBuilderModal';
 import { SmartTagsGuideModal } from '../modals/items/SmartTagsGuideModal';
 import { TagPillList } from '../ui/TagPillList';
 import { extractTagsFromText } from '../modals/items/tagBuilder/tagBuilderLogic';
-import {
-    Check,
-    Plus,
-    Trash2,
-    ChevronUp,
-    ChevronDown,
-    Tag,
-    Eye,
-    EyeOff,
-    AlertTriangle,
-    XCircle,
-    Dices
-} from 'lucide-react';
+import { Check, Plus, X, Trash2, ChevronUp, ChevronDown, Tag, Eye, EyeOff, AlertTriangle, XCircle } from 'lucide-react';
 import './PassivesTable.css';
 
 export function PassivesTable() {
@@ -35,6 +24,151 @@ export function PassivesTable() {
     );
     const [showTagsGuide, setShowTagsGuide] = useState(false);
     const [showInfoModal, setShowInfoModal] = useState(false);
+    const [expandedPassiveIds, setExpandedPassiveIds] = useState<Set<string>>(new Set());
+
+    const toggleExpandPassive = (id: string) => {
+        setExpandedPassiveIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    };
+
+    const handleDeleteTag = (passiveId: string, currentDesc: string, rawTag: string, tagIndex?: number) => {
+        let updated: string;
+        if (typeof tagIndex === 'number') {
+            let count = 0;
+            updated = currentDesc.replace(/\[[^\]]+\]/g, (match) => {
+                if (count === tagIndex) {
+                    count++;
+                    return '';
+                }
+                count++;
+                return match;
+            });
+        } else {
+            updated = currentDesc.replace(rawTag, '');
+        }
+        updated = updated.replace(/\s+/g, ' ').trim();
+        updatePassive(passiveId, 'desc', updated);
+    };
+
+    const handleNoteChange = (passive: PassiveItem, noteText: string) => {
+        const tagsOnly = (passive.desc.match(/\[[^\]]+\]/g) || []).join(' ');
+        const newDesc = tagsOnly ? `${tagsOnly} ${noteText.trimStart()}` : noteText;
+        updatePassive(passive.id, 'desc', newDesc);
+    };
+
+    const renderDescCell = (passive: PassiveItem) => {
+        const allTags = extractTagsFromText(passive.desc);
+        const hasMultipleTags = allTags.length > 1;
+        const isExpanded = expandedPassiveIds.has(passive.id);
+        const notesValue = passive.desc.replace(/\[[^\]]+\]/g, '').trim();
+
+        return (
+            <div className="passives-table__desc-wrapper">
+                <div className="passives-table__desc-main">
+                    {hasMultipleTags ? (
+                        isExpanded ? (
+                            <button
+                                type="button"
+                                className="passives-table__expand-badge passives-table__expand-badge--expanded"
+                                onClick={() => toggleExpandPassive(passive.id)}
+                                title="Click to collapse tags tray"
+                                aria-expanded={true}
+                            >
+                                <ChevronUp size={12} className="passives-table__expand-icon" />
+                                <span>Collapse ({allTags.length} tags)</span>
+                            </button>
+                        ) : (
+                            <div className="passives-table__tags-inline">
+                                <TagPillList
+                                    tags={[allTags[0]]}
+                                    onEditTag={(tagStr) =>
+                                        setTagBuilderData({
+                                            id: passive.id,
+                                            type: 'passive',
+                                            initialTag: tagStr
+                                        })
+                                    }
+                                    showAddButton={false}
+                                    emptyText=""
+                                />
+                                <button
+                                    type="button"
+                                    className="passives-table__expand-badge"
+                                    onClick={() => toggleExpandPassive(passive.id)}
+                                    title={`All ${allTags.length} tags: ${allTags.map((t) => t.tag).join(', ')}. Click to expand.`}
+                                    aria-expanded={false}
+                                >
+                                    <ChevronDown size={12} className="passives-table__expand-icon" />
+                                    <span>+{allTags.length - 1} more</span>
+                                </button>
+                            </div>
+                        )
+                    ) : (
+                        <div className="passives-table__tags-inline">
+                            <TagPillList
+                                tags={allTags}
+                                onEditTag={(tagStr) =>
+                                    setTagBuilderData({
+                                        id: passive.id,
+                                        type: 'passive',
+                                        initialTag: tagStr
+                                    })
+                                }
+                                onDeleteTag={(rawTag, tagIdx) =>
+                                    handleDeleteTag(passive.id, passive.desc, rawTag, tagIdx)
+                                }
+                                onAddTag={() => {
+                                    setExpandedPassiveIds((prev) => new Set(prev).add(passive.id));
+                                    setTagBuilderData({ id: passive.id, type: 'passive' });
+                                }}
+                                addLabel={allTags.length > 0 ? '' : 'Tag'}
+                                emptyText=""
+                            />
+                        </div>
+                    )}
+                    <input
+                        type="text"
+                        className="passives-table__note-input text-subtext"
+                        value={notesValue}
+                        onChange={(e) => handleNoteChange(passive, e.target.value)}
+                        placeholder="Notes (optional)..."
+                    />
+                </div>
+
+                {hasMultipleTags && isExpanded && (
+                    <div className="passives-table__nested-tray">
+                        <div className="passives-table__nested-tray-header text-subtext">
+                            <span>Active Smart Tags ({allTags.length}):</span>
+                        </div>
+                        <TagPillList
+                            tags={allTags}
+                            onEditTag={(tagStr) =>
+                                setTagBuilderData({
+                                    id: passive.id,
+                                    type: 'passive',
+                                    initialTag: tagStr
+                                })
+                            }
+                            onDeleteTag={(rawTag, tagIdx) => handleDeleteTag(passive.id, passive.desc, rawTag, tagIdx)}
+                            onAddTag={() => {
+                                setExpandedPassiveIds((prev) => new Set(prev).add(passive.id));
+                                setTagBuilderData({ id: passive.id, type: 'passive' });
+                            }}
+                            addLabel="Tag"
+                            emptyText=""
+                        />
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     const activeCount = passives.filter((p) => p.active !== false).length;
 
@@ -98,17 +232,6 @@ export function PassivesTable() {
                                                 <Eye size={15} />
                                             </div>
                                         </th>
-                                        <th className="passives-table__cell-log" title="Show in Roll Log (default on)">
-                                            <div
-                                                style={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center'
-                                                }}
-                                            >
-                                                <Dices size={15} />
-                                            </div>
-                                        </th>
                                         <th className="passives-table__cell-sort">Sort</th>
                                         <th className="passives-table__cell-del">Del</th>
                                     </tr>
@@ -117,19 +240,21 @@ export function PassivesTable() {
                                     {passives.map((passive, index) => (
                                         <tr key={passive.id} className="data-table__row--dynamic passives-table__row">
                                             <td className="passives-table__cell-check">
-                                                <input
-                                                    type="checkbox"
-                                                    className="passives-table__checkbox"
-                                                    checked={passive.active !== false}
-                                                    onChange={(e) =>
-                                                        updatePassive(passive.id, 'active', e.target.checked)
-                                                    }
-                                                    title={
-                                                        passive.active !== false
-                                                            ? 'Passive active (Click to disable)'
-                                                            : 'Passive disabled (Click to activate)'
-                                                    }
-                                                />
+                                                <div className="passives-table__cell-content-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="passives-table__checkbox"
+                                                        checked={passive.active !== false}
+                                                        onChange={(e) =>
+                                                            updatePassive(passive.id, 'active', e.target.checked)
+                                                        }
+                                                        title={
+                                                            passive.active !== false
+                                                                ? 'Passive active (Click to disable)'
+                                                                : 'Passive disabled (Click to activate)'
+                                                        }
+                                                    />
+                                                </div>
                                             </td>
                                             <td className="passives-table__cell-name">
                                                 <input
@@ -140,110 +265,46 @@ export function PassivesTable() {
                                                     placeholder="e.g. Rare Candy"
                                                 />
                                             </td>
-                                            <td className="passives-table__cell-desc">
-                                                <div className="passives-table__desc-wrapper">
-                                                    <TagPillList
-                                                        tags={extractTagsFromText(passive.desc)}
-                                                        onEditTag={(tagStr) =>
-                                                            setTagBuilderData({
-                                                                id: passive.id,
-                                                                type: 'passive',
-                                                                initialTag: tagStr
-                                                            })
+                                            <td className="passives-table__cell-desc">{renderDescCell(passive)}</td>
+                                            <td className="passives-table__cell-cond">
+                                                <div className="passives-table__cell-content-center">
+                                                    <button
+                                                        type="button"
+                                                        className={`passives-table__cond-btn ${
+                                                            passive.showInConditions
+                                                                ? 'passives-table__cond-btn--active'
+                                                                : ''
+                                                        }`}
+                                                        onClick={() =>
+                                                            updatePassive(
+                                                                passive.id,
+                                                                'showInConditions',
+                                                                !passive.showInConditions
+                                                            )
                                                         }
-                                                        onDeleteTag={(rawTag) => {
-                                                            const updated = passive.desc
-                                                                .replace(rawTag, '')
-                                                                .replace(/\s+/g, ' ')
-                                                                .trim();
-                                                            updatePassive(passive.id, 'desc', updated);
-                                                        }}
-                                                        onAddTag={() =>
-                                                            setTagBuilderData({ id: passive.id, type: 'passive' })
+                                                        title={
+                                                            passive.showInConditions
+                                                                ? 'Showing in Round Tracker Conditions (Click to hide)'
+                                                                : 'Hidden from Round Tracker Conditions (Click to show)'
                                                         }
-                                                        emptyText="No tags"
-                                                    />
-                                                    <input
-                                                        type="text"
-                                                        className="passives-table__note-input text-subtext"
-                                                        value={passive.desc.replace(/\[[^\]]+\]/g, '').trim()}
-                                                        onChange={(e) => {
-                                                            const tagsOnly = (
-                                                                passive.desc.match(/\[[^\]]+\]/g) || []
-                                                            ).join(' ');
-                                                            const newDesc = `${tagsOnly} ${e.target.value}`.trim();
-                                                            updatePassive(passive.id, 'desc', newDesc);
-                                                        }}
-                                                        placeholder="Notes (optional)..."
-                                                    />
+                                                    >
+                                                        {passive.showInConditions ? (
+                                                            <Eye
+                                                                size={16}
+                                                                style={{ color: 'var(--primary, #3b82f6)' }}
+                                                            />
+                                                        ) : (
+                                                            <EyeOff
+                                                                size={16}
+                                                                style={{ opacity: 0.35, color: 'var(--text-main)' }}
+                                                            />
+                                                        )}
+                                                    </button>
                                                 </div>
                                             </td>
-                                            <td className="passives-table__cell-cond">
-                                                <button
-                                                    type="button"
-                                                    className={`passives-table__cond-btn ${
-                                                        passive.showInConditions
-                                                            ? 'passives-table__cond-btn--active'
-                                                            : ''
-                                                    }`}
-                                                    onClick={() =>
-                                                        updatePassive(
-                                                            passive.id,
-                                                            'showInConditions',
-                                                            !passive.showInConditions
-                                                        )
-                                                    }
-                                                    title={
-                                                        passive.showInConditions
-                                                            ? 'Showing in Round Tracker Conditions (Click to hide)'
-                                                            : 'Hidden from Round Tracker Conditions (Click to show)'
-                                                    }
-                                                >
-                                                    {passive.showInConditions ? (
-                                                        <Eye size={16} style={{ color: 'var(--primary, #3b82f6)' }} />
-                                                    ) : (
-                                                        <EyeOff
-                                                            size={16}
-                                                            style={{ opacity: 0.35, color: 'var(--text-main)' }}
-                                                        />
-                                                    )}
-                                                </button>
-                                            </td>
-                                            <td className="passives-table__cell-log">
-                                                <button
-                                                    type="button"
-                                                    className={`passives-table__cond-btn ${
-                                                        passive.showInRollLog !== false
-                                                            ? 'passives-table__cond-btn--active'
-                                                            : ''
-                                                    }`}
-                                                    onClick={() =>
-                                                        updatePassive(
-                                                            passive.id,
-                                                            'showInRollLog',
-                                                            passive.showInRollLog === false ? true : false
-                                                        )
-                                                    }
-                                                    title={
-                                                        passive.showInRollLog !== false
-                                                            ? 'Showing in Roll Log (Click to hide)'
-                                                            : 'Hidden from Roll Log (Click to show)'
-                                                    }
-                                                >
-                                                    <Dices
-                                                        size={16}
-                                                        style={{
-                                                            color:
-                                                                passive.showInRollLog !== false
-                                                                    ? 'var(--primary, #3b82f6)'
-                                                                    : 'var(--text-main)',
-                                                            opacity: passive.showInRollLog !== false ? 1 : 0.35
-                                                        }}
-                                                    />
-                                                </button>
-                                            </td>
+
                                             <td className="passives-table__cell-sort">
-                                                <div className="passives-table__sort-group">
+                                                <div className="passives-table__sort-group passives-table__cell-content-center">
                                                     <button
                                                         type="button"
                                                         className="action-button action-button--ghost passives-table__sort-btn"
@@ -265,14 +326,17 @@ export function PassivesTable() {
                                                 </div>
                                             </td>
                                             <td className="passives-table__cell-del">
-                                                <button
-                                                    type="button"
-                                                    className="action-button action-button--ghost passives-table__del-btn"
-                                                    onClick={() => setDeletePassiveId(passive.id)}
-                                                    title="Delete Passive"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
+                                                <div className="passives-table__cell-content-center">
+                                                    <button
+                                                        type="button"
+                                                        className="action-button action-button--dark passives-table__del-btn text-theme-header"
+                                                        onClick={() => setDeletePassiveId(passive.id)}
+                                                        title="Delete Passive"
+                                                        aria-label="Delete Passive"
+                                                    >
+                                                        <X size={15} />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -299,38 +363,7 @@ export function PassivesTable() {
                                             placeholder="Passive Name"
                                         />
                                     </div>
-                                    <div className="passives-table__desc-wrapper">
-                                        <TagPillList
-                                            tags={extractTagsFromText(passive.desc)}
-                                            onEditTag={(tagStr) =>
-                                                setTagBuilderData({
-                                                    id: passive.id,
-                                                    type: 'passive',
-                                                    initialTag: tagStr
-                                                })
-                                            }
-                                            onDeleteTag={(rawTag) => {
-                                                const updated = passive.desc
-                                                    .replace(rawTag, '')
-                                                    .replace(/\s+/g, ' ')
-                                                    .trim();
-                                                updatePassive(passive.id, 'desc', updated);
-                                            }}
-                                            onAddTag={() => setTagBuilderData({ id: passive.id, type: 'passive' })}
-                                            emptyText="No tags"
-                                        />
-                                        <input
-                                            type="text"
-                                            className="passives-table__note-input text-subtext"
-                                            value={passive.desc.replace(/\[[^\]]+\]/g, '').trim()}
-                                            onChange={(e) => {
-                                                const tagsOnly = (passive.desc.match(/\[[^\]]+\]/g) || []).join(' ');
-                                                const newDesc = `${tagsOnly} ${e.target.value}`.trim();
-                                                updatePassive(passive.id, 'desc', newDesc);
-                                            }}
-                                            placeholder="Notes (optional)..."
-                                        />
-                                    </div>
+                                    {renderDescCell(passive)}
                                     <div className="passives-table__mobile-actions">
                                         <button
                                             type="button"
@@ -348,32 +381,6 @@ export function PassivesTable() {
                                                     <EyeOff size={14} style={{ opacity: 0.5 }} /> Hide from Conditions
                                                 </>
                                             )}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="action-button action-button--dark passives-table__tags-guide-btn"
-                                            onClick={() =>
-                                                updatePassive(
-                                                    passive.id,
-                                                    'showInRollLog',
-                                                    passive.showInRollLog === false ? true : false
-                                                )
-                                            }
-                                            title={
-                                                passive.showInRollLog !== false
-                                                    ? 'Showing in Roll Log (Click to hide)'
-                                                    : 'Hidden from Roll Log (Click to show)'
-                                            }
-                                        >
-                                            <Dices
-                                                size={14}
-                                                style={{
-                                                    color:
-                                                        passive.showInRollLog !== false ? 'var(--primary)' : 'inherit',
-                                                    opacity: passive.showInRollLog !== false ? 1 : 0.5
-                                                }}
-                                            />
-                                            {passive.showInRollLog !== false ? 'In Roll Log' : 'Hide from Log'}
                                         </button>
                                         <div className="passives-table__sort-group">
                                             <button
@@ -394,10 +401,12 @@ export function PassivesTable() {
                                             </button>
                                             <button
                                                 type="button"
-                                                className="action-button action-button--ghost passives-table__del-btn"
+                                                className="action-button action-button--dark passives-table__del-btn text-theme-header"
                                                 onClick={() => setDeletePassiveId(passive.id)}
+                                                title="Delete Passive"
+                                                aria-label="Delete Passive"
                                             >
-                                                <Trash2 size={14} />
+                                                <X size={15} />
                                             </button>
                                         </div>
                                     </div>
@@ -458,8 +467,8 @@ export function PassivesTable() {
                             style={{ marginTop: '8px', color: 'var(--text-main)', lineHeight: 1.5 }}
                         >
                             Use the <strong>Eye icon</strong> toggle on any passive to choose whether it appears in the{' '}
-                            <strong>Conditions</strong> section of the Round Tracker. Use the <strong>Dice icon</strong>{' '}
-                            toggle to include or exclude it from appearing in the <strong>Roll Log</strong>.
+                            <strong>Conditions</strong> section of the Round Tracker. Active passives automatically
+                            contribute their bonuses to your rolls and display in the Roll Factors breakdown.
                         </p>
                         <div
                             className="tracker-modal__actions tracker-modal__actions--center"

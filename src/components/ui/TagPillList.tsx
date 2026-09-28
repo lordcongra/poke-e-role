@@ -13,7 +13,7 @@ export interface TagPillItem {
 export interface TagPillListProps {
     tags: (string | TagPillItem | ParsedTagPill)[];
     onEditTag?: (tag: string) => void;
-    onDeleteTag?: (tag: string) => void;
+    onDeleteTag?: (tag: string, index?: number) => void;
     onAddTag?: () => void;
     addLabel?: string;
     emptyText?: string;
@@ -92,16 +92,23 @@ export const TagPillList = memo(function TagPillList({
     style,
     showAddButton = true
 }: TagPillListProps) {
-    const [confirmingTag, setConfirmingTag] = useState<string | null>(null);
+    const [confirmingIndex, setConfirmingIndex] = useState<number | null>(null);
 
     // Auto-clear confirmation after 4 seconds of inactivity
     useEffect(() => {
-        if (!confirmingTag) return;
+        if (confirmingIndex === null) return;
         const timer = setTimeout(() => {
-            setConfirmingTag(null);
+            setConfirmingIndex(null);
         }, 4000);
         return () => clearTimeout(timer);
-    }, [confirmingTag]);
+    }, [confirmingIndex]);
+
+    // Reset confirming index if tag list shrinks or changes
+    useEffect(() => {
+        if (confirmingIndex !== null && confirmingIndex >= tags.length) {
+            setConfirmingIndex(null);
+        }
+    }, [tags.length, confirmingIndex]);
 
     const normalizedTags: TagPillItem[] = tags.map((t) => {
         if (typeof t === 'string') {
@@ -121,14 +128,14 @@ export const TagPillList = memo(function TagPillList({
     });
 
     // Ensure we don't display a duplicate '+'
-    const cleanAddLabel = (addLabel || 'Tag').replace(/^\+\s*/, '') || 'Tag';
+    const cleanAddLabel = addLabel !== undefined ? addLabel.replace(/^\+\s*/, '').trim() : 'Tag';
 
     return (
         <div className={`tag-pill-list tag-pill-list--${size} ${className}`} style={style}>
             {normalizedTags.map((item, idx) => {
                 const isClickable = !readOnly && Boolean(onEditTag);
                 const hasDelete = !readOnly && Boolean(onDeleteTag);
-                const isConfirming = Boolean(confirmingTag && confirmingTag === (item.raw || item.tag));
+                const isConfirming = confirmingIndex === idx;
 
                 return (
                     <span
@@ -164,8 +171,8 @@ export const TagPillList = memo(function TagPillList({
                                         className="tag-pill__confirm-btn"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            onDeleteTag(item.raw || item.tag);
-                                            setConfirmingTag(null);
+                                            onDeleteTag(item.raw || item.tag, idx);
+                                            setConfirmingIndex(null);
                                         }}
                                         title={`Confirm delete ${item.display || item.tag}`}
                                         aria-label={`Confirm delete ${item.display || item.tag}`}
@@ -177,7 +184,7 @@ export const TagPillList = memo(function TagPillList({
                                         className="tag-pill__cancel-btn"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            setConfirmingTag(null);
+                                            setConfirmingIndex(null);
                                         }}
                                         title="Cancel"
                                         aria-label="Cancel"
@@ -191,7 +198,7 @@ export const TagPillList = memo(function TagPillList({
                                     className="tag-pill__del-btn"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        setConfirmingTag(item.raw || item.tag);
+                                        setConfirmingIndex(idx);
                                     }}
                                     title={`Delete ${item.display || item.tag} (requires confirmation)`}
                                     aria-label={`Delete ${item.display || item.tag}`}
@@ -210,7 +217,7 @@ export const TagPillList = memo(function TagPillList({
             {!readOnly && showAddButton && onAddTag && (
                 <button
                     type="button"
-                    className="tag-pill tag-pill--add"
+                    className={`tag-pill tag-pill--add ${!cleanAddLabel ? 'tag-pill--add-icon-only' : ''}`}
                     onClick={(e) => {
                         e.stopPropagation();
                         onAddTag();
@@ -218,7 +225,7 @@ export const TagPillList = memo(function TagPillList({
                     title="Add a Smart Tag with the Tag Builder"
                 >
                     <Plus size={11} />
-                    <span className="tag-pill__label">{cleanAddLabel}</span>
+                    {cleanAddLabel ? <span className="tag-pill__label">{cleanAddLabel}</span> : null}
                 </button>
             )}
         </div>

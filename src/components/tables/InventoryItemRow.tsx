@@ -6,7 +6,7 @@ import { useItemArt, setItemArt, getItemArt } from '../../utils/itemArtCatalog';
 import type { InventoryItem } from '../../store/storeTypes';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { KNOWN_ITEMS } from '../../data/constants';
-import { Info, Tag, ChevronUp, ChevronDown, X, Image as ImageIcon, Dices } from 'lucide-react';
+import { Info, Tag, ChevronUp, ChevronDown, X, Image as ImageIcon } from 'lucide-react';
 import { extractItemTags } from '../modals/items/tagBuilder/tagBuilderLogic';
 import { TagPillList } from '../ui/TagPillList';
 import './InventoryTable.css';
@@ -236,26 +236,6 @@ export function InventoryItemRow({
                     >
                         <Tag size={14} />
                     </button>
-                    <button
-                        type="button"
-                        className="action-button action-button--ghost inventory-item__icon-btn"
-                        onClick={() =>
-                            updateInventoryItem(item.id, 'showInRollLog', item.showInRollLog === false ? true : false)
-                        }
-                        title={
-                            item.showInRollLog !== false
-                                ? 'Showing in Roll Log (Click to hide)'
-                                : 'Hidden from Roll Log (Click to show)'
-                        }
-                    >
-                        <Dices
-                            size={14}
-                            style={{
-                                color: item.showInRollLog !== false ? 'var(--primary, #3b82f6)' : 'var(--text-main)',
-                                opacity: item.showInRollLog !== false ? 1 : 0.35
-                            }}
-                        />
-                    </button>
                 </div>
             </td>
             <td className="data-table__cell--middle inventory-item__desc-cell">
@@ -309,12 +289,26 @@ export function InventoryItemRow({
                                 onEditTag={(tagStr) =>
                                     setTagBuilderData({ id: item.id, type: 'item', initialTag: tagStr })
                                 }
-                                onDeleteTag={(rawTag) => {
+                                onDeleteTag={(rawTag, tagIndex) => {
                                     const currentTags =
                                         item.tags !== undefined
                                             ? item.tags
                                             : (item.desc.match(/\[[^\]]+\]/g) || []).join(' ');
-                                    const updated = currentTags.replace(rawTag, '').replace(/\s+/g, ' ').trim();
+                                    let updated = currentTags;
+                                    if (typeof tagIndex === 'number') {
+                                        let count = 0;
+                                        updated = currentTags.replace(/\[[^\]]+\]/g, (match) => {
+                                            if (count === tagIndex) {
+                                                count++;
+                                                return '';
+                                            }
+                                            count++;
+                                            return match;
+                                        });
+                                    } else {
+                                        updated = currentTags.replace(rawTag, '');
+                                    }
+                                    updated = updated.replace(/\s+/g, ' ').trim();
                                     updateInventoryItem(item.id, 'tags', updated);
                                     if (item.desc.includes(rawTag)) {
                                         const cleanDesc = item.desc

@@ -73,19 +73,30 @@ export function categorizeFactor(raw: string): ParsedFactor {
         /low\s+accuracy/i.test(trimmed) ||
         /ignored\s+\d+\s+low\s+acc/i.test(trimmed)
     ) {
+        const colonMatch = trimmed.match(/^(.*?):\s*([+-]?\d+\s*(?:succ(?:esses?)?|dice|dmg\s+dice))$/i);
         return {
             raw: trimmed,
             category: 'condition',
-            title: trimmed
+            title: colonMatch ? colonMatch[1].trim() : trimmed,
+            detail: colonMatch ? colonMatch[2].trim() : undefined
         };
     }
 
     // 6. Statuses
-    if (/paralysis/i.test(trimmed) || /asleep/i.test(trimmed) || /frozen/i.test(trimmed)) {
+    if (
+        /paralysis/i.test(trimmed) ||
+        /asleep/i.test(trimmed) ||
+        /frozen/i.test(trimmed) ||
+        /confusion/i.test(trimmed) ||
+        /poison/i.test(trimmed) ||
+        /burn/i.test(trimmed)
+    ) {
+        const colonMatch = trimmed.match(/^(.*?):\s*([+-]?\d+\s*(?:succ(?:esses?)?|dice|dmg\s+dice))$/i);
         return {
             raw: trimmed,
             category: 'status',
-            title: trimmed
+            title: colonMatch ? colonMatch[1].trim() : trimmed,
+            detail: colonMatch ? colonMatch[2].trim() : undefined
         };
     }
 
@@ -102,26 +113,33 @@ export function categorizeFactor(raw: string): ParsedFactor {
         /stacking\s+high\s+crit/i.test(trimmed) ||
         /extra\s+stacking\s+crit/i.test(trimmed)
     ) {
+        const parenMatch = trimmed.match(/^(.*?)(?:\s*\((.*?)\))?$/);
         return {
             raw: trimmed,
             category: 'tactical',
-            title: trimmed
+            title: parenMatch?.[1]?.trim() || trimmed,
+            detail: parenMatch?.[2]?.trim() || undefined
         };
     }
 
-    // 8. Net Mod / Rank bonus
-    if (/net\s+mod/i.test(trimmed) || /rank/i.test(trimmed)) {
+    // 8. Tracker Mod / Net Mod / Rank bonus
+    if (/tracker\s*mod/i.test(trimmed) || /net\s+mod/i.test(trimmed) || /rank/i.test(trimmed)) {
+        const colonMatch = trimmed.match(/^(.*?):\s*([+-]?\d+\s*(?:succ(?:esses?)?|dice|dmg\s+dice))$/i);
+        const parenMatch = trimmed.match(/^(.*?)(?:\s*\((.*?)\))?$/);
         return {
             raw: trimmed,
             category: 'modifier',
-            title: trimmed
+            title: colonMatch ? colonMatch[1].trim() : parenMatch?.[1]?.trim() || trimmed,
+            detail: colonMatch ? colonMatch[2].trim() : parenMatch?.[2]?.trim() || undefined
         };
     }
 
+    const colonMatch = trimmed.match(/^(.*?):\s*([+-]?\d+\s*(?:succ(?:esses?)?|dice|dmg\s+dice))$/i);
     return {
         raw: trimmed,
         category: 'modifier',
-        title: trimmed
+        title: colonMatch ? colonMatch[1].trim() : trimmed,
+        detail: colonMatch ? colonMatch[2].trim() : undefined
     };
 }
 

@@ -213,3 +213,11 @@
     opacity: 1;
     transform: translateY(-1px);
 }
+
+.tag-pill--add-icon-only {
+    padding: 2px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    justify-content: center;
+}
