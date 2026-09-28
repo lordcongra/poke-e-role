@@ -20,6 +20,7 @@ export function AbilityTrackerControl() {
     const setIdentity = useCharacterStore((state) => state.setIdentity);
 
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [tagBuilderInitialTag, setTagBuilderInitialTag] = useState<string | undefined>(undefined);
     const [isTagBuilderOpen, setIsTagBuilderOpen] = useState(false);
 
     if (!ability) return null;
@@ -152,12 +153,23 @@ export function AbilityTrackerControl() {
                 <AbilityMenuModal
                     isOpen={isMenuOpen}
                     onClose={() => setIsMenuOpen(false)}
-                    onOpenTagBuilder={() => setIsTagBuilderOpen(true)}
+                    onOpenTagBuilder={(initTag) => {
+                        setTagBuilderInitialTag(initTag);
+                        setIsTagBuilderOpen(true);
+                    }}
                 />
             )}
 
             {isTagBuilderOpen && (
-                <TagBuilderModal targetId="ability" targetType="ability" onClose={() => setIsTagBuilderOpen(false)} />
+                <TagBuilderModal
+                    targetId="ability"
+                    targetType="ability"
+                    initialTag={tagBuilderInitialTag}
+                    onClose={() => {
+                        setIsTagBuilderOpen(false);
+                        setTagBuilderInitialTag(undefined);
+                    }}
+                />
             )}
         </>
     );

@@ -12,6 +12,7 @@ export type TagTargetType =
 export interface TagBuilderModalProps {
     targetId: string;
     targetType: TagTargetType;
+    initialTag?: string;
     onClose: () => void;
 }
 

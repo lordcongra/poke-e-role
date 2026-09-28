@@ -3,6 +3,7 @@ import type { CharacterState, InventorySlice, InventoryItem, CustomInfo } from '
 import { saveToOwlbear } from '../../utils/obr';
 import { parseCombatTags, getAbilityText, calculateMaxHp, calculateMaxWill } from '../../utils/combatUtils';
 import { imageManager } from '../../utils/imageManager';
+import { KNOWN_ITEMS } from '../../data/constants';
 
 const syncHealthWill = (
     state: CharacterState,
@@ -10,7 +11,13 @@ const syncHealthWill = (
     updatesToSave: Record<string, unknown>
 ) => {
     const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
-    const inventoryModifiers = parseCombatTags(newInventory, state.extraCategories, undefined, abilityText, state.passives);
+    const inventoryModifiers = parseCombatTags(
+        newInventory,
+        state.extraCategories,
+        undefined,
+        abilityText,
+        state.passives
+    );
     const fakeState = { ...state, inventory: newInventory };
 
     const newHealth = { ...state.health };
@@ -58,13 +65,24 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
 
     addSpecificInventoryItem: (item) =>
         set((state) => {
+            const rawName = item.name || '';
+            const rawDesc = item.description || '';
+            const knownMatch = KNOWN_ITEMS.find((k) => k.name.toLowerCase() === rawName.toLowerCase());
+            const legacyTags = Array.from(rawDesc.matchAll(/\[(.*?)\]/g)).map((m) => `[${m[1].trim()}]`);
+            const cleanDesc = rawDesc
+                .replace(/\[.*?\]/g, '')
+                .replace(/\n\s*\n+/g, '\n')
+                .trim();
+            const tags = item.tags || (legacyTags.length > 0 ? legacyTags.join(' ') : knownMatch?.tags || undefined);
+
             const newInventory: InventoryItem[] = [
                 ...state.inventory,
                 {
                     id: crypto.randomUUID(),
                     qty: item.quantity ?? 1,
-                    name: item.name || '',
-                    desc: item.description || '',
+                    name: rawName,
+                    desc: cleanDesc,
+                    tags,
                     active: item.active || false
                 }
             ];
@@ -89,7 +107,12 @@ export const createInventorySlice: StateCreator<CharacterState, [], [], Inventor
                     const updated = { ...item, [field]: value };
 
                     if (field === 'active') {
-                        const descriptionText = (item.desc || '').toLowerCase();
+                        const knownMatch = KNOWN_ITEMS.find(
+                            (k) => k.name.toLowerCase() === (item.name || '').trim().toLowerCase()
+                        );
+                        const canonicalTags = knownMatch?.tags || '';
+                        const combinedTags = `${item.tags || ''} ${item.desc || ''}`.trim() || canonicalTags;
+                        const descriptionText = combinedTags.toLowerCase();
 
                         if (value === true) {
                             const tempHpMatch = descriptionText.match(/\[\s*gain temp hp\s*(\d+)\s*\]/i);

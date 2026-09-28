@@ -636,17 +636,32 @@ export function calculateCriticalRequirement(
         critExplanationTags.push('Move: High Critical');
     }
     if (hasItemHighCrit && !hasMoveHighCrit) {
-        critExplanationTags.push('Item: High Critical');
+        if (itemBuffs.highCritItemNames && itemBuffs.highCritItemNames.length > 0) {
+            critExplanationTags.push('Item: High Critical');
+        }
+        if (itemBuffs.highCritPassiveNames && itemBuffs.highCritPassiveNames.length > 0) {
+            const unique = Array.from(
+                new Set(itemBuffs.highCritPassiveNames.map((p) => p.replace(/^Passive:\s*/i, '').trim()))
+            );
+            critExplanationTags.push(`Passive: ${unique.join(', ')} (High Critical)`);
+        }
     }
-    if (isSuperLuck) {
-        critExplanationTags.push('Ability: Super Luck');
-        if (!itemBuffs.accAbilityNames.includes('Super Luck')) {
+    if (itemBuffs.highCritAbilityNames && itemBuffs.highCritAbilityNames.length > 0) {
+        const abilityNames = itemBuffs.highCritAbilityNames.map((a) => a.replace(/^Ability:\s*/i, '').trim());
+        const unique = Array.from(new Set(abilityNames));
+        critExplanationTags.push(`Ability: ${unique.join(', ')} (High Critical)`);
+        for (const name of unique) {
+            if (!itemBuffs.accAbilityNames.some((a) => a.toLowerCase().includes(name.toLowerCase()))) {
+                itemBuffs.accAbilityNames.push(name);
+            }
+        }
+    } else if (isSuperLuck) {
+        critExplanationTags.push('Ability: Super Luck (High Critical)');
+        if (!itemBuffs.accAbilityNames.some((a) => a.toLowerCase().includes('super luck'))) {
             itemBuffs.accAbilityNames.push('Super Luck');
         }
-        if (stackingStacks > 1) {
-            critExplanationTags.push(`Extra Stacking Crit (+${stackingStacks - 1})`);
-        }
-    } else if (stackingStacks > 0) {
+    }
+    if (stackingStacks > (isSuperLuck ? 1 : 0)) {
         critExplanationTags.push(`Stacking High Crit (${stackingStacks})`);
     }
 

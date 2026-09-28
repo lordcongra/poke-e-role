@@ -132,22 +132,22 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
         date: 'September 2026',
         highlights: [
             {
-                id: 'passives-system',
+                id: 'passives-and-tag-pills',
                 version: '3.6.7',
-                title: 'Passives System & Smart Tags',
+                title: 'Passives System & Interactive Tag Pills',
                 icon: Sparkles,
                 badge: 'Sheet & Tags',
-                summary: 'Track permanent non-item perks, bonuses (like Rare Candy attribute increases), and feats with full Smart Tag math integration and optional Round Tracker condition visibility.',
+                summary: 'New Passives table for permanent non-item perks (like Rare Candy attribute boosts), plus sheet-wide Interactive Tag Pills with click-to-edit values, one-click deletion, and move keyword parsing.',
                 details: (
                     <div>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Dedicated Passives Table:</strong> Positioned conveniently right below the Social Attributes box, the Passives table lets you record permanent enhancements (such as a Rare Candy attribute bonus, campaign boons, or innate perks) without cluttering your inventory.
+                            <strong>Dedicated Passives Table:</strong> Positioned conveniently right below Social Attributes, the Passives table lets you record permanent enhancements (such as Rare Candy attribute bonuses, campaign boons, or innate perks) without cluttering your inventory.
                         </p>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Full Sheet Math Integration:</strong> Passives use the exact same Smart Tag system as items and abilities. Any tags (e.g. <code>[Vit +1]</code>, <code>[Acc +1: Low Acc]</code>, <code>[gain temp hp 5]</code>, <code>[heal 1 round]</code>) are fully calculated into Core Attributes, Social Attributes, Skills, HP/Will maximums, Defenses, Move Accuracy & Damage dice, combat rolls, and Round Tracker triggers.
+                            <strong>Interactive Tag Pills (No Manual Typing!):</strong> Smart Tags are now rendered as sleek, interactive pills across Passives, Bag items, Moves, and Abilities. Simply click any tag pill to automatically load its values into the Tag Builder to adjust numbers, click the <strong>✕</strong> to remove it instantly, or use <strong>+ Tag</strong> to add new mechanics without typing brackets.
                         </p>
                         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
-                            <strong>Active Toggles & Condition Visibility:</strong> Easily turn passives on or off with the active checkmark toggle. You can also toggle the eye icon to optionally display active passives directly inside the Round Tracker&apos;s Conditions section as a reminder.
+                            <strong>Move Keywords & Full Math Integration:</strong> Standard move mechanics (e.g. <code>High Critical</code>, <code>Low Accuracy 1</code>, <code>Never Miss</code>, <code>Recoil</code>) are automatically parsed into interactive pills inside the move edit modal. All passive and item tags seamlessly integrate into Core & Social stats, Skills, Defenses, HP/Will totals, move accuracy/damage formulas, and Round Tracker triggers.
                         </p>
                     </div>
                 )
@@ -155,7 +155,7 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
         ],
         changes: [
             <strong key="passives-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                <Sparkles size={16} /> Passives System & Smart Tags
+                <Sparkles size={16} /> Passives System & Interactive Tag Pills
             </strong>,
             <ul
                 key="passives-list"
@@ -170,19 +170,28 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 }}
             >
                 <li>
-                    <strong>New Passives Table:</strong> Added an intuitive table right below Social Attributes with collapsible rows, active checkmark toggles, name, description/tags inputs, and reorder controls.
+                    <strong>New Passives Table:</strong> Added an intuitive table right below Social Attributes with active checkmark toggles, name inputs, and reorder controls.
                 </li>
                 <li>
-                    <strong>Smart Tag Math Integration:</strong> All passive tags are automatically parsed across the entire sheet: attribute/skill bonuses, defense calculations, HP/Will bar maximums, move accuracy and damage modifiers, and round tracker events.
+                    <strong>Interactive Tag Pills:</strong> Replaced raw text tag typing with interactive pills across Passives, Bag Items, Moves, and Abilities. Click any pill to modify its numbers in the Tag Builder with 1 click.
                 </li>
                 <li>
-                    <strong>Interactive Tag Builder Support:</strong> Build and insert Smart Tags directly on any passive with one click using the built-in Tag Builder modal.
+                    <strong>Move Keyword Parsing:</strong> Built-in detection for official move keywords like <code>High Critical</code>, <code>Low Accuracy 1/2/3</code>, <code>Never Miss</code>, <code>Recoil</code>, and <code>Set Damage</code> to render as interactive pills.
+                </li>
+                <li>
+                    <strong>Double-Confirmation Deletion Safeguard:</strong> All tag deletions on pills and within the Tag Builder require confirmation before deletion to prevent accidental loss.
+                </li>
+                <li>
+                    <strong>Round Tracker Boost & Stacking Controls:</strong> When passives, equipped items, or abilities grant <code>@ Boost</code> or <code>@ Stacking Boost</code>, a dedicated Boost control dynamically appears in the Round Tracker between Take Your Chances and Conditions, allowing players to step or toggle their active tier in real-time.
+                </li>
+                <li>
+                    <strong>Smart Tag Math Integration:</strong> All passive and item tags calculate across the entire sheet: attribute/skill bonuses, defense calculations, HP/Will bar maximums, move accuracy and damage modifiers, and round tracker events.
+                </li>
+                <li>
+                    <strong>Owlbear Rodeo Iframe Optimization:</strong> Sized and styled the Smart Tags Guide modal with responsive max-height, smooth internal scrolling, and a top header close button so it fits comfortably inside OBR iframes.
                 </li>
                 <li>
                     <strong>Round Tracker Condition Visibility:</strong> Toggle whether an active passive appears in the Round Tracker&apos;s Conditions banner with a single click (defaults to hidden to avoid clutter).
-                </li>
-                <li>
-                    <strong>Token Sync & Storage:</strong> Passives are stored directly in Owlbear Rodeo token metadata and sync live across all connected players and the GM organizer.
                 </li>
             </ul>
         ]

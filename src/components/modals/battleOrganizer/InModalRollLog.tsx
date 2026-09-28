@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { CombatantRowData, RollLogLayoutMode } from '../../../types/battleOrganizerTypes';
 import { imageManager } from '../../../utils/imageManager';
+import { cropImageTransparencyUrl } from '../../../utils/imageCropUtils';
 import {
     Dices,
     Trash2,
@@ -12,9 +13,12 @@ import {
     Move,
     Columns2,
     LayoutGrid,
-    Type
+    Type,
+    Info
 } from 'lucide-react';
 import { parseRollLogEntry } from './battleOrganizerUtils';
+import { parseRollLabel } from '../../../utils/rollLogParser';
+import { RollFactorsModal } from '../RollFactorsModal';
 import './InModalRollLog.css';
 
 export interface RollLogEntry {
@@ -56,6 +60,13 @@ export function InModalRollLog({
     const [resolvedIcons, setResolvedIcons] = useState<Record<string, string>>({});
     const [markedStatus, setMarkedStatus] = useState<Record<string, 'success' | 'failed'>>({});
     const [actionRollDecisions, setActionRollDecisions] = useState<Record<string, 'pending' | 'add' | 'skip'>>({});
+    const [factorsModalData, setFactorsModalData] = useState<{
+        title: string;
+        characterName?: string;
+        coreTags: string[];
+        factors: string[];
+        result?: string;
+    } | null>(null);
 
     const [fontSize, setFontSize] = useState<RollLogFontSize>(() => {
         try {
@@ -102,23 +113,45 @@ export function InModalRollLog({
         const resolveIcons = async () => {
             const newIcons: Record<string, string> = {};
             for (const r of rolls) {
-                if (r.icon && r.icon.startsWith('local-img:')) {
+                let resolved = r.icon;
+                if (resolved && resolved.startsWith('local-img:')) {
                     try {
-                        const url = await imageManager.getImageUrl(r.icon);
-                        if (url && isMounted) newIcons[r.id] = url;
+                        const url = await imageManager.getImageUrl(resolved);
+                        if (url) resolved = url;
                     } catch {
                         // ignore icon error
                     }
                 }
+                if (resolved && !resolved.includes('pokeball.svg')) {
+                    try {
+                        const cropped = await cropImageTransparencyUrl(resolved, true);
+                        if (cropped && isMounted) newIcons[r.id] = cropped;
+                    } catch {
+                        if (resolved && isMounted) newIcons[r.id] = resolved;
+                    }
+                } else if (resolved && isMounted) {
+                    newIcons[r.id] = resolved;
+                }
             }
             for (const c of combatants) {
-                if (c.image && c.image.startsWith('local-img:') && !newIcons[c.id]) {
+                let resolved = c.image;
+                if (resolved && resolved.startsWith('local-img:') && !newIcons[c.id]) {
                     try {
-                        const url = await imageManager.getImageUrl(c.image);
-                        if (url && isMounted) newIcons[c.id] = url;
+                        const url = await imageManager.getImageUrl(resolved);
+                        if (url) resolved = url;
                     } catch {
                         // ignore
                     }
+                }
+                if (resolved && !resolved.includes('pokeball.svg') && !newIcons[c.id]) {
+                    try {
+                        const cropped = await cropImageTransparencyUrl(resolved, true);
+                        if (cropped && isMounted) newIcons[c.id] = cropped;
+                    } catch {
+                        if (resolved && isMounted) newIcons[c.id] = resolved;
+                    }
+                } else if (resolved && isMounted && !newIcons[c.id]) {
+                    newIcons[c.id] = resolved;
                 }
             }
             if (isMounted) {
@@ -294,6 +327,8 @@ export function InModalRollLog({
                             const isActionRoll = parsed?.isActionRoll;
                             const actionRollDecision = actionRollDecisions[r.id] || 'pending';
 
+                            const { cleanLabel, coreTags, factorTags } = parseRollLabel(r.label);
+
                             return (
                                 <div key={r.id} className="in-modal-roll-log__entry">
                                     <div className="in-modal-roll-log__entry-top">
@@ -303,7 +338,35 @@ export function InModalRollLog({
                                         <div className="in-modal-roll-log__meta">
                                             <span className="in-modal-roll-log__char">{displayChar}</span>
                                             <span className="in-modal-roll-log__label" title={r.label}>
-                                                {r.label}
+                                                <span>{cleanLabel}</span>
+                                                {coreTags.length > 0 && (
+                                                    <span className="roll-log__core-tags">
+                                                        [ {coreTags.join(' | ')} ]
+                                                    </span>
+                                                )}
+                                                {factorTags.length > 0 && (
+                                                    <button
+                                                        type="button"
+                                                        className="roll-log__factors-btn"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setFactorsModalData({
+                                                                title: cleanLabel,
+                                                                characterName: displayChar,
+                                                                coreTags,
+                                                                factors: factorTags,
+                                                                result: r.result
+                                                            });
+                                                        }}
+                                                        title="View contributing factors, items, passives, and abilities"
+                                                    >
+                                                        <Info size={11} />
+                                                        <span>
+                                                            {factorTags.length}{' '}
+                                                            {factorTags.length === 1 ? 'Factor' : 'Factors'}
+                                                        </span>
+                                                    </button>
+                                                )}
                                             </span>
                                         </div>
                                         <button
@@ -447,6 +510,17 @@ export function InModalRollLog({
                         })
                     )}
                 </div>
+            )}
+
+            {factorsModalData && (
+                <RollFactorsModal
+                    title={factorsModalData.title}
+                    characterName={factorsModalData.characterName}
+                    coreTags={factorsModalData.coreTags}
+                    factors={factorsModalData.factors}
+                    result={factorsModalData.result}
+                    onClose={() => setFactorsModalData(null)}
+                />
             )}
         </div>
     );

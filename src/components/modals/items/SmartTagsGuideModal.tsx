@@ -1,49 +1,78 @@
-import { Tag, XCircle } from 'lucide-react';
+import { Tag, X, XCircle, MousePointerClick } from 'lucide-react';
 import './SmartTagsGuideModal.css';
 
 export function SmartTagsGuideModal({ onClose }: { onClose: () => void }) {
     return (
-        <div className="tags-guide__overlay">
-            <div className="tags-guide__content">
-                <h3 className="tags-guide__title modal-title-with-icon text-title-primary">
-                    <Tag size={20} /> Smart Tags Guide
-                </h3>
-                <p className="tags-guide__desc text-subtext">
-                    Type these exactly as shown (with brackets) into an equipped item's Name or Notes to automatically
-                    apply mechanics. You can use negative numbers to subtract dice!
-                </p>
-                <ul className="tags-guide__list text-subtext" style={{ color: 'var(--text-main)' }}>
-                    <li>
-                        <b>Stats/Skills:</b> <code>[Dex -2]</code>, <code>[Brawl +2]</code>, <code>[Def +1]</code>,{' '}
-                        <code>[Spd +1]</code>
-                    </li>
-                    <li>
-                        <b>Combat:</b> <code>[Dmg +1]</code>, <code>[Acc -1: Physical]</code>, <code>[Chance +2]</code>
-                    </li>
-                    <li>
-                        <b>Matchups:</b> <code>[Immune: Ground]</code>, <code>[Remove Immunity: Type]</code>,{' '}
-                        <code>[Remove Immunities]</code>
-                    </li>
-                    <li>
-                        <b>Mechanics:</b> <code>[High Crit]</code>, <code>[Ignore Low Acc 2]</code>,{' '}
-                        <code>[Status: Poison]</code>, <code>[Recoil]</code>, <code>[Ignore Pain: Bug]</code>
-                    </li>
-                    <li style={{ marginTop: '8px' }}>
-                        <b>Conditions:</b> Append <code>@ Half HP</code> to any tag to make it activate only when at 50%
-                        health or less! Example: <code>[Dmg +2: Bug @ Half HP]</code>
-                    </li>
-                    <li style={{ marginTop: '8px' }}>
-                        <b>Example ("Hustle" Ability):</b> Add <code>[Low Acc +1: Physical] [Dmg +2: Physical]</code> to
-                        lower successes but increase damage on all physical moves!
-                    </li>
-                </ul>
+        <div className="tags-guide__overlay" onClick={onClose}>
+            <div className="tags-guide__content" onClick={(e) => e.stopPropagation()}>
+                <div className="tags-guide__header">
+                    <h3 className="tags-guide__title text-title-primary">
+                        <Tag size={18} /> Smart Tags Guide
+                    </h3>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="tags-guide__header-close-btn"
+                        title="Close Guide"
+                        aria-label="Close Guide"
+                    >
+                        <X size={16} />
+                    </button>
+                </div>
+
+                <div className="tags-guide__body">
+                    <p className="tags-guide__desc text-subtext">
+                        Smart Tags automate mechanics, bonuses, and calculations across <strong>Passives</strong>,{' '}
+                        <strong>Equipped Items</strong>, <strong>Moves</strong>, and <strong>Abilities</strong>.
+                    </p>
+
+                    <div className="tags-guide__callout">
+                        <div className="tags-guide__callout-title">
+                            <MousePointerClick size={14} /> Interactive Tag Pills (No Typing Needed!)
+                        </div>
+                        <p className="text-subtext tags-guide__callout-text">
+                            Tags appear as <strong>clickable pills</strong>. Click any pill to modify its values in the{' '}
+                            <strong>Tag Builder</strong>, or click <strong>✕</strong> to delete it with confirmation.
+                        </p>
+                    </div>
+
+                    <ul className="tags-guide__list text-subtext">
+                        <li>
+                            <b>Attributes & Skills:</b> <code>[Vit +1]</code>, <code>[Dex -2]</code>,{' '}
+                            <code>[Brawl +2]</code>, <code>[Def +1]</code>, <code>[Spd +1]</code>
+                        </li>
+                        <li>
+                            <b>Combat Rolls:</b> <code>[Dmg +1]</code>, <code>[Acc -1: Physical]</code>,{' '}
+                            <code>[Crit Dmg +1]</code>, <code>[Chance +2]</code>
+                        </li>
+                        <li>
+                            <b>Type Matchups:</b> <code>[Immune: Ground]</code>, <code>[Resist: Fire]</code>,{' '}
+                            <code>[Remove Immunity: Type]</code>
+                        </li>
+                        <li>
+                            <b>Mechanics & HP:</b> <code>[Gain Temp HP 5]</code>, <code>[High Crit]</code>,{' '}
+                            <code>[Ignore Low Acc 2]</code>, <code>[Recoil]</code>, <code>[Status: Poison]</code>
+                        </li>
+                        <li>
+                            <b>Conditions:</b> Add <code>@ Half HP</code>, <code>@ Boost</code>, or{' '}
+                            <code>@ Stacking Boost</code> (or <code>@ Stacking Boost: 5</code>) to trigger scalable
+                            combat bonuses!
+                        </li>
+                        <li>
+                            <b>Move Keywords:</b> Official keywords (<code>High Critical</code>,{' '}
+                            <code>Low Accuracy 1</code>, <code>Never Miss</code>) are automatically parsed into
+                            interactive pills!
+                        </li>
+                    </ul>
+                </div>
+
                 <div className="tags-guide__actions">
                     <button
                         type="button"
                         onClick={onClose}
                         className="action-button action-button--dark tags-guide__btn-close text-theme-header"
                     >
-                        <XCircle size={16} /> Close Guide
+                        <XCircle size={15} /> Close Guide
                     </button>
                 </div>
             </div>

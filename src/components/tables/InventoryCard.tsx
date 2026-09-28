@@ -7,6 +7,8 @@ import type { InventoryItem } from '../../store/storeTypes';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { KNOWN_ITEMS } from '../../data/constants';
 import { Info, Tag, ChevronUp, ChevronDown, X, Check, Image as ImageIcon } from 'lucide-react';
+import { TagPillList } from '../ui/TagPillList';
+import { extractItemTags } from '../modals/items/tagBuilder/tagBuilderLogic';
 import './InventoryCard.css';
 
 interface InventoryCardProps {
@@ -16,6 +18,7 @@ interface InventoryCardProps {
     setTagBuilderData: (d: {
         id: string;
         type: 'item' | 'move' | 'homebrew_ability' | 'homebrew_move' | 'homebrew_item';
+        initialTag?: string;
     }) => void;
     setDeleteItemId: (id: string) => void;
     onEditItem?: (id: string) => void;
@@ -88,10 +91,20 @@ export const InventoryCard = memo(function InventoryCard({
                     updateInventoryItem(item.id, 'name', result.name);
                     setLocalName(result.name);
                 }
-                if (result.fullDescription) {
+                if (result.description) {
                     if (forceOverwrite || !item.desc.trim()) {
-                        useCharacterStore.getState().updateInventoryItem(item.id, 'desc', result.fullDescription);
+                        useCharacterStore.getState().updateInventoryItem(item.id, 'desc', result.description);
                     }
+                }
+                if (result.tags) {
+                    useCharacterStore.getState().updateInventoryItem(item.id, 'tags', result.tags);
+                }
+                if (/\[.*?\]/.test(item.desc)) {
+                    const cleaned = item.desc
+                        .replace(/\[.*?\]/g, '')
+                        .replace(/\n\s*\n+/g, '\n')
+                        .trim();
+                    useCharacterStore.getState().updateInventoryItem(item.id, 'desc', cleaned);
                 }
                 const targetImg = result.imageUrl || getItemArt(result.name) || getItemArt(query);
                 if (targetImg && (!item.imageUrl || item.imageUrl === 'none')) {
@@ -252,12 +265,50 @@ export const InventoryCard = memo(function InventoryCard({
             </div>
 
             {/* Effect / Notes Area */}
-            <div className="inventory-card__desc-row">
+            <div className="inventory-card__desc-row" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {extractItemTags(item).length > 0 && (
+                    <TagPillList
+                        tags={extractItemTags(item)}
+                        onEditTag={(tagStr) => setTagBuilderData({ id: item.id, type: 'item', initialTag: tagStr })}
+                        onDeleteTag={(rawTag) => {
+                            const currentTags =
+                                item.tags !== undefined ? item.tags : (item.desc.match(/\[[^\]]+\]/g) || []).join(' ');
+                            const updated = currentTags.replace(rawTag, '').replace(/\s+/g, ' ').trim();
+                            updateInventoryItem(item.id, 'tags', updated);
+                            if (item.desc.includes(rawTag)) {
+                                const cleanDesc = item.desc
+                                    .replace(rawTag, '')
+                                    .replace(/\n\s*\n+/g, '\n')
+                                    .trim();
+                                updateInventoryItem(item.id, 'desc', cleanDesc);
+                            }
+                        }}
+                        onAddTag={() => setTagBuilderData({ id: item.id, type: 'item' })}
+                        showAddButton={false}
+                    />
+                )}
                 <textarea
                     className="identity-grid__input form-input--item-desc inventory-card__desc-input text-subtext"
                     style={{ color: 'var(--text-main)' }}
                     value={item.desc}
                     onChange={(event) => updateInventoryItem(item.id, 'desc', event.target.value)}
+                    onBlur={() => {
+                        if (/\[.*?\]/.test(item.desc)) {
+                            const legacyMatches = Array.from(item.desc.matchAll(/\[(.*?)\]/g)).map(
+                                (m) => `[${m[1].trim()}]`
+                            );
+                            const currentTagList = item.tags
+                                ? Array.from(item.tags.matchAll(/\[(.*?)\]/g)).map((m) => `[${m[1].trim()}]`)
+                                : [];
+                            const merged = Array.from(new Set([...currentTagList, ...legacyMatches])).join(' ');
+                            const cleaned = item.desc
+                                .replace(/\[.*?\]/g, '')
+                                .replace(/\n\s*\n+/g, '\n')
+                                .trim();
+                            updateInventoryItem(item.id, 'tags', merged);
+                            updateInventoryItem(item.id, 'desc', cleaned);
+                        }
+                    }}
                     placeholder="Effect / Notes..."
                     rows={2}
                 />

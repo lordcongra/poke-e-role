@@ -8,7 +8,9 @@ import {
     getAbilityText,
     getStatusPenalties,
     calculateStatTotal,
-    calculateSkillTotal
+    calculateSkillTotal,
+    getActiveBoostSources,
+    type BoostTrackerSource
 } from '../../utils/combatUtils';
 import { STATUS_COLORS } from '../../data/constants';
 import { CollapsingSection } from '../ui/CollapsingSection';
@@ -17,7 +19,7 @@ import { NumberSpinner } from '../ui/NumberSpinner';
 import { TakeChancesModal } from '../modals/combat/TakeChancesModal';
 import { ClashModal } from '../modals/combat/ClashModal';
 import { RestModal } from '../modals/combat/RestModal';
-import { Dices, RotateCcw, Tent, XCircle } from 'lucide-react';
+import { Dices, RotateCcw, Tent, XCircle, TrendingUp } from 'lucide-react';
 import { AbilityTrackerControl } from '../abilities/AbilityTrackerControl';
 import { getAbilityBenefitSummary } from '../../data/abilities/knownAbilities';
 import './TrackerSection.css';
@@ -50,6 +52,37 @@ export function TrackerSection() {
     const activeStatuses = useCharacterStore((state) => state.statuses);
     const customStatuses = useCharacterStore((state) => state.roomCustomStatuses);
     const passives = useCharacterStore((state) => state.passives);
+    const inventory = useCharacterStore((state) => state.inventory);
+
+    // Detect active boost sources across passives and inventory items
+    const boostSources = getActiveBoostSources(passives, inventory, trackers.boostLevels || {});
+
+    const handleStepSourceBoost = (source: BoostTrackerSource, delta: number) => {
+        const nextLevel = Math.max(0, Math.min(source.maxBoost, source.currentLevel + delta));
+        const updated = {
+            ...(trackers.boostLevels || {}),
+            [source.id]: nextLevel
+        };
+        updateTracker('boostLevels', updated);
+    };
+
+    const handleCycleSourceBoost = (source: BoostTrackerSource) => {
+        if (source.maxBoost <= 1) {
+            const nextLevel = source.currentLevel > 0 ? 0 : 1;
+            const updated = {
+                ...(trackers.boostLevels || {}),
+                [source.id]: nextLevel
+            };
+            updateTracker('boostLevels', updated);
+        } else {
+            const nextLevel = source.currentLevel >= source.maxBoost ? 0 : source.currentLevel + 1;
+            const updated = {
+                ...(trackers.boostLevels || {}),
+                [source.id]: nextLevel
+            };
+            updateTracker('boostLevels', updated);
+        }
+    };
 
     const [maneuver, setManeuver] = useState('none');
     const [showClashModal, setShowClashModal] = useState(false);
@@ -113,7 +146,13 @@ export function TrackerSection() {
     const handleEvadeRoll = () => {
         const state = useCharacterStore.getState();
         const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
-        const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText, state.passives);
+        const itemBuffs = parseCombatTags(
+            state.inventory,
+            state.extraCategories,
+            undefined,
+            abilityText,
+            state.passives
+        );
 
         const dexTotal = calculateStatTotal(CombatStat.DEX, state, itemBuffs);
         const evadeTotal = calculateSkillTotal(Skill.EVASION, state, itemBuffs);
@@ -126,7 +165,13 @@ export function TrackerSection() {
 
         const state = useCharacterStore.getState();
         const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
-        const itemBuffs = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText, state.passives);
+        const itemBuffs = parseCombatTags(
+            state.inventory,
+            state.extraCategories,
+            undefined,
+            abilityText,
+            state.passives
+        );
 
         if (maneuver === 'ambush')
             rollGeneric(
@@ -197,7 +242,13 @@ export function TrackerSection() {
 
     const currentState = useCharacterStore.getState();
     const abilityTxt = getAbilityText(currentState.identity.ability, currentState.roomCustomAbilities);
-    const parsedGlobals = parseCombatTags(currentState.inventory, currentState.extraCategories, undefined, abilityTxt, passives);
+    const parsedGlobals = parseCombatTags(
+        currentState.inventory,
+        currentState.extraCategories,
+        undefined,
+        abilityTxt,
+        passives
+    );
 
     const disableReactions = isMaxed || parsedGlobals.noReactions;
 
@@ -279,6 +330,19 @@ export function TrackerSection() {
         const abilityLabel = benefit ? `Ability: ${abilityName} (${benefit})` : `Ability: ${abilityName}`;
         conditions.push({ id: 'active-ability', label: abilityLabel, bg: '#2563eb', text: '#fff' });
     }
+
+    boostSources.forEach((source) => {
+        if (source.currentLevel > 0) {
+            const badgeLabel =
+                source.maxBoost > 1 ? `${source.label}: +${source.currentLevel}` : `${source.label}: Active`;
+            conditions.push({
+                id: `boost-${source.id}`,
+                label: badgeLabel,
+                bg: '#f59e0b',
+                text: '#000000'
+            });
+        }
+    });
 
     passives?.forEach((passive) => {
         if (passive.active && passive.showInConditions) {
@@ -520,6 +584,80 @@ export function TrackerSection() {
                             <Dices size={14} /> Roll
                         </button>
                     </div>
+
+                    {boostSources.length > 0 && (
+                        <div className="tracker-section__boosts-container">
+                            {boostSources.map((source) => (
+                                <div key={source.id} className="tracker-section__boost-row">
+                                    <div className="tracker-section__boost-label-wrap">
+                                        <TrendingUp size={14} className="tracker-section__boost-icon" />
+                                        <span className="tracker-section__action-label text-label" title={source.label}>
+                                            {source.label}
+                                        </span>
+                                        <TooltipIcon
+                                            onClick={() =>
+                                                setTooltipInfo({
+                                                    title: source.label,
+                                                    desc: `Adjust boost level (max ${source.maxBoost} stacks) for ${source.entityName} (${source.effect}). Current level: ${source.currentLevel}.`
+                                                })
+                                            }
+                                        />
+                                        <span className="text-label">:</span>
+                                    </div>
+
+                                    {source.maxBoost > 1 ? (
+                                        <div className="ability-tracker__stepper tracker-section__boost-stepper">
+                                            <button
+                                                type="button"
+                                                disabled={source.currentLevel <= 0}
+                                                onClick={() => handleStepSourceBoost(source, -1)}
+                                                className="action-button action-button--dark ability-tracker__step-btn"
+                                                title="Decrease boost stack (-1)"
+                                                aria-label="Decrease boost stack"
+                                            >
+                                                -
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleCycleSourceBoost(source)}
+                                                className={`action-button ${
+                                                    source.currentLevel > 0
+                                                        ? 'action-button--theme'
+                                                        : 'action-button--dark'
+                                                } ability-tracker__step-badge`}
+                                                title={`Boost Level: ${source.currentLevel}/${source.maxBoost} (Click to cycle, or use +/-)`}
+                                            >
+                                                {source.currentLevel > 0
+                                                    ? `Boost +${source.currentLevel}`
+                                                    : 'Boost OFF'}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                disabled={source.currentLevel >= source.maxBoost}
+                                                onClick={() => handleStepSourceBoost(source, 1)}
+                                                className="action-button action-button--dark ability-tracker__step-btn"
+                                                title="Increase boost stack (+1)"
+                                                aria-label="Increase boost stack"
+                                            >
+                                                +
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleCycleSourceBoost(source)}
+                                            className={`action-button ${
+                                                source.currentLevel > 0 ? 'action-button--theme' : 'action-button--dark'
+                                            } tracker-section__boost-toggle-btn`}
+                                            title={`Click to toggle Boost ${source.currentLevel > 0 ? 'OFF' : 'ON'}`}
+                                        >
+                                            Boost {source.currentLevel > 0 ? 'ON' : 'OFF'}
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
                     <div className="tracker-section__conditions-container">
                         <span className="tracker-section__conditions-label text-label">Conditions:</span>

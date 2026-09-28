@@ -3,12 +3,14 @@ import { Zap, Tag, XCircle, Power, Shield, RotateCcw, Check, Sparkles } from 'lu
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { getKnownAbility, getAbilityBenefitSummary, getMaxBoost } from '../../data/abilities/knownAbilities';
 import { fetchAbilityData } from '../../utils/api';
+import { TagPillList } from '../ui/TagPillList';
+import { extractTagsFromText } from '../modals/items/tagBuilder/tagBuilderLogic';
 import './AbilityMenuModal.css';
 
 interface AbilityMenuModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onOpenTagBuilder: () => void;
+    onOpenTagBuilder: (initialTag?: string) => void;
 }
 
 interface AbilityDetail {
@@ -536,6 +538,46 @@ export function AbilityMenuModal({ isOpen, onClose, onOpenTagBuilder }: AbilityM
                             </div>
                         );
                     })}
+                </div>
+
+                {/* Active Smart Tags Section */}
+                <div className="ability-modal__override-drawer" style={{ marginBottom: '10px' }}>
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            marginBottom: '6px'
+                        }}
+                    >
+                        <span
+                            className="text-label"
+                            style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}
+                        >
+                            Active Smart Tags
+                        </span>
+                        <span className="text-subtext" style={{ fontSize: '0.72rem', opacity: 0.7 }}>
+                            Automated ability mechanics
+                        </span>
+                    </div>
+
+                    <TagPillList
+                        tags={extractTagsFromText(abilityTags)}
+                        onEditTag={(tagStr) => {
+                            onClose();
+                            onOpenTagBuilder(tagStr);
+                        }}
+                        onDeleteTag={(rawTag) => {
+                            const updated = abilityTags.replace(rawTag, '').replace(/\s+/g, ' ').trim();
+                            setIdentity('abilityTags', updated);
+                        }}
+                        onAddTag={() => {
+                            onClose();
+                            onOpenTagBuilder();
+                        }}
+                        emptyText="No tags applied yet"
+                        addLabel="Add Tag"
+                    />
                 </div>
 
                 {/* Temporary Override Section */}

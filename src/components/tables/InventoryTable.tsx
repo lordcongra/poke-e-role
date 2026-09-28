@@ -76,6 +76,7 @@ export function InventoryTable() {
     const [tagBuilderData, setTagBuilderData] = useState<{
         id: string;
         type: 'item' | 'move' | 'homebrew_ability' | 'homebrew_move' | 'homebrew_item';
+        initialTag?: string;
     } | null>(null);
     const [fetchingItems, setFetchingItems] = useState<Record<string, boolean>>({});
 
@@ -302,6 +303,7 @@ export function InventoryTable() {
                 <TagBuilderModal
                     targetId={tagBuilderData.id}
                     targetType={tagBuilderData.type}
+                    initialTag={tagBuilderData.initialTag}
                     onClose={() => setTagBuilderData(null)}
                 />
             )}

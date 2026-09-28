@@ -1,4 +1,5 @@
 import type { TagBuilderConfig } from './tagBuilderTypes';
+import { KNOWN_ITEMS } from '../../../../data/constants';
 
 export function buildTagString(config: TagBuilderConfig): string {
     const { category, target, value, value2, typeOption, condition, customMaxStacks } = config;
@@ -170,4 +171,518 @@ export function generateExplanation(config: TagBuilderConfig, builtTag: string):
     }
 
     return `${base} (always active).`;
+}
+
+export interface ParsedTagPill {
+    tag: string;
+    display: string;
+    raw: string;
+    category?: string;
+    isMoveKeyword?: boolean;
+}
+
+export function parseTagStringToConfig(tagStr: string, isMoveContext = false): Partial<TagBuilderConfig> | null {
+    if (!tagStr) return null;
+    let clean = tagStr.trim();
+    if (clean.startsWith('[') && clean.endsWith(']')) {
+        clean = clean.slice(1, -1).trim();
+    }
+
+    let condition = 'none';
+    let customMaxStacks = 5;
+
+    // Check for @ Condition
+    const atMatch = clean.match(/\s+@\s+([A-Za-z0-9_\s:]+)$/);
+    if (atMatch) {
+        clean = clean.replace(atMatch[0], '').trim();
+        const rawCond = atMatch[1].trim();
+        const lowerCond = rawCond.toLowerCase();
+        if (lowerCond === 'half hp') {
+            condition = 'half hp';
+        } else if (lowerCond === 'boost') {
+            condition = 'boost';
+        } else if (lowerCond === 'stacking boost' || lowerCond === 'stacking_boost') {
+            condition = 'stacking_boost';
+        } else if (lowerCond.startsWith('stacking boost:') || lowerCond.startsWith('stacking_boost:')) {
+            condition = 'custom_stacking_boost';
+            const num = parseInt(lowerCond.split(':')[1], 10);
+            if (!isNaN(num)) customMaxStacks = num;
+        } else {
+            condition = lowerCond;
+        }
+    }
+
+    // Move mechanics keywords (bracketed or unbracketed)
+    const moveKeywordsMap: Record<string, string> = {
+        'high critical': 'High Critical',
+        'high crit': isMoveContext ? 'High Critical' : 'High Crit',
+        'never miss': 'Never Miss',
+        recoil: 'Recoil',
+        'successive actions': 'Successive Actions',
+        'successive action': 'Successive Actions',
+        powder: 'Powder',
+        'powder move': 'Powder',
+        'fist move': 'Fist Move',
+        'bite move': 'Bite Move',
+        'cutter move': 'Cutter Move',
+        'sound move': 'Sound Move',
+        'projectile move': 'Projectile Move',
+        'wind move': 'Wind Move',
+        'basic heal': 'Basic Heal',
+        'complete heal': 'Complete Heal',
+        'minor heal': 'Minor Heal'
+    };
+
+    const lowerClean = clean.toLowerCase();
+    if (moveKeywordsMap[lowerClean]) {
+        const target = moveKeywordsMap[lowerClean];
+        return {
+            category: isMoveContext ? 'move_mechanics' : 'mechanic',
+            target,
+            value: 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Low Accuracy X
+    const lowAccMatch = clean.match(/^low acc(?:uracy)?\s*([+-]?\d+)(?::\s*([^@\]]+))?$/i);
+    if (lowAccMatch) {
+        const val = parseInt(lowAccMatch[1], 10) || 1;
+        const typeOpt = lowAccMatch[2]?.trim() || '';
+        if (isMoveContext && !typeOpt) {
+            return {
+                category: 'move_mechanics',
+                target: 'Low Accuracy',
+                value: Math.abs(val),
+                condition,
+                customMaxStacks
+            };
+        }
+        return {
+            category: 'combat',
+            target: 'Low Acc Penalty',
+            value: val,
+            typeOption: typeOpt,
+            reqGroup: typeOpt ? 'type' : 'none',
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Set Damage X
+    const setDmgMatch = clean.match(/^set damage\s*(\d+)$/i);
+    if (setDmgMatch) {
+        return {
+            category: 'move_mechanics',
+            target: 'Set Damage',
+            value: parseInt(setDmgMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Status: <Name>
+    const statusMatch = clean.match(/^status:\s*(.+)$/i);
+    if (statusMatch) {
+        return {
+            category: 'status',
+            target: statusMatch[1].trim(),
+            value: 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Gain Temp HP X
+    const gainTempHpMatch = clean.match(/^gain temp hp\s*(\d+)$/i);
+    if (gainTempHpMatch) {
+        return {
+            category: 'mechanic',
+            target: 'Gain Temp HP',
+            value: parseInt(gainTempHpMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Temp HP +X on Hit
+    const tempHpOnHitMatch = clean.match(/^temp hp\s*\+?(\d+)\s*on hit$/i);
+    if (tempHpOnHitMatch) {
+        return {
+            category: 'mechanic',
+            target: 'Temp HP on Hit',
+            value: parseInt(tempHpOnHitMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Temp HP X% Dmg
+    const tempHpPctMatch = clean.match(/^temp hp\s*(\d+)%\s*dmg$/i);
+    if (tempHpPctMatch) {
+        return {
+            category: 'mechanic',
+            target: 'Temp HP % Dmg',
+            value: parseInt(tempHpPctMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Acc Xs Add Dmg Limit Y
+    const accLimitMatch = clean.match(/^acc\s*(\d+)s\s*add dmg limit\s*(\d+)$/i);
+    if (accLimitMatch) {
+        return {
+            category: 'mechanic',
+            target: 'Acc [X]s Add Dmg Limit [Y]',
+            value: parseInt(accLimitMatch[1], 10) || 6,
+            value2: parseInt(accLimitMatch[2], 10) || 3,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Ignore Low Acc X
+    const ignoreLowAccMatch = clean.match(/^ignore low acc\s*(\d+)$/i);
+    if (ignoreLowAccMatch) {
+        return {
+            category: 'mechanic',
+            target: 'Ignore Low Acc',
+            value: parseInt(ignoreLowAccMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Turn Based effects
+    const healRoundMatch = clean.match(/^heal\s*(\d+)\s*round end$/i);
+    if (healRoundMatch) {
+        return {
+            category: 'turn_based',
+            target: 'Heal Round End',
+            value: parseInt(healRoundMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    const restoreWillRoundMatch = clean.match(/^restore\s*(\d+)\s*will round end$/i);
+    if (restoreWillRoundMatch) {
+        return {
+            category: 'turn_based',
+            target: 'Restore Will Round End',
+            value: parseInt(restoreWillRoundMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    const dealDmgRoundMatch = clean.match(/^deal\s*(\d+)\s*damage at end of round$/i);
+    if (dealDmgRoundMatch) {
+        return {
+            category: 'turn_based',
+            target: 'Deal Damage End of Round',
+            value: parseInt(dealDmgRoundMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    const reduceWillRoundMatch = clean.match(/^reduce will by\s*(\d+)\s*at end of round$/i);
+    if (reduceWillRoundMatch) {
+        return {
+            category: 'turn_based',
+            target: 'Reduce Will End of Round',
+            value: parseInt(reduceWillRoundMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    const loseActionMatch = clean.match(/^lose\s*(\d+)\s*actions?$/i);
+    if (loseActionMatch) {
+        return {
+            category: 'turn_based',
+            target: 'Lose Action(s)',
+            value: parseInt(loseActionMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    if (clean.toLowerCase() === 'no reactions') {
+        return {
+            category: 'turn_based',
+            target: 'No Reactions',
+            value: 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    const extraReactionMatch = clean.match(/^(\d+)\s*extra reactions? per turn$/i);
+    if (extraReactionMatch) {
+        return {
+            category: 'turn_based',
+            target: 'Extra Reaction(s)',
+            value: parseInt(extraReactionMatch[1], 10) || 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Matchup tags: Immune: X, Resist: X, Weak: X, Remove Immunity: X, Remove Immunities
+    if (clean.toLowerCase() === 'remove immunities') {
+        return {
+            category: 'matchup',
+            target: 'Remove Immunities',
+            value: 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    const matchupMatch = clean.match(/^(immune|resist|weak|remove immunity):\s*(.+)$/i);
+    if (matchupMatch) {
+        const rawTarget = matchupMatch[1].toLowerCase();
+        const targetMap: Record<string, string> = {
+            immune: 'Immune',
+            resist: 'Resist',
+            weak: 'Weak',
+            'remove immunity': 'Remove Immunity'
+        };
+        return {
+            category: 'matchup',
+            target: targetMap[rawTarget] || 'Immune',
+            typeOption: matchupMatch[2].trim(),
+            reqGroup: 'type',
+            value: 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Combat targets: Crit Dmg, Combo Dmg, First Hit Dmg, First Hit Acc, Init, Chance, Dmg, Acc
+    const combatNamedMatch = clean.match(
+        /^(crit dmg|combo dmg|first hit dmg|first hit acc|init|chance)\s*([+-]?\d+)$/i
+    );
+    if (combatNamedMatch) {
+        const targetNameMap: Record<string, string> = {
+            'crit dmg': 'Crit Dmg',
+            'combo dmg': 'Combo Dmg',
+            'first hit dmg': 'First Hit Dmg',
+            'first hit acc': 'First Hit Acc',
+            init: 'Init',
+            chance: 'Chance'
+        };
+        return {
+            category: 'combat',
+            target: targetNameMap[combatNamedMatch[1].toLowerCase()] || 'Crit Dmg',
+            value: parseInt(combatNamedMatch[2], 10) || 1,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Dmg / Acc with optional type/requirement
+    const dmgAccMatch = clean.match(/^(dmg|acc)\s*([+-]?\d+)(?::\s*([^@\]]+))?$/i);
+    if (dmgAccMatch) {
+        const target = dmgAccMatch[1].toLowerCase() === 'dmg' ? 'Dmg' : 'Acc';
+        const val = parseInt(dmgAccMatch[2], 10) || 1;
+        const typeOpt = dmgAccMatch[3]?.trim() || '';
+        return {
+            category: 'combat',
+            target,
+            value: val,
+            typeOption: typeOpt,
+            reqGroup: typeOpt ? 'type' : 'none',
+            condition,
+            customMaxStacks
+        };
+    }
+
+    // Stats and Skills: Target +X / -X
+    const statSkillMatch = clean.match(/^([A-Za-z\.\s]+?)\s*([+-]\s*\d+)$/);
+    if (statSkillMatch) {
+        const rawName = statSkillMatch[1].trim();
+        const val = parseInt(statSkillMatch[2].replace(/\s+/g, ''), 10) || 1;
+
+        const statNormMap: Record<string, string> = {
+            str: 'Str',
+            strength: 'Str',
+            dex: 'Dex',
+            dexterity: 'Dex',
+            vit: 'Vit',
+            vitality: 'Vit',
+            'sp. atk': 'Sp. Atk',
+            'sp.atk': 'Sp. Atk',
+            spatk: 'Sp. Atk',
+            'special attack': 'Sp. Atk',
+            'sp. def': 'Sp. Def',
+            'sp.def': 'Sp. Def',
+            spdef: 'Sp. Def',
+            'special defense': 'Sp. Def',
+            def: 'Def',
+            defense: 'Def',
+            spd: 'Spd',
+            hp: 'Hp',
+            will: 'Will',
+            tough: 'Tough',
+            cool: 'Cool',
+            beauty: 'Beauty',
+            cute: 'Cute',
+            clever: 'Clever'
+        };
+
+        const lowerStat = rawName.toLowerCase();
+        if (statNormMap[lowerStat]) {
+            return {
+                category: 'stat',
+                target: statNormMap[lowerStat],
+                value: val,
+                condition,
+                customMaxStacks
+            };
+        }
+
+        // Otherwise skill
+        return {
+            category: 'skill',
+            target: rawName.charAt(0).toUpperCase() + rawName.slice(1),
+            value: val,
+            condition,
+            customMaxStacks
+        };
+    }
+
+    return null;
+}
+
+export function extractTagsFromText(text: string): ParsedTagPill[] {
+    if (!text) return [];
+    const matches = text.match(/\[[^\]]+\]/g) || [];
+    return matches.map((m) => {
+        const inner = m.slice(1, -1).trim();
+        return {
+            tag: m,
+            display: inner,
+            raw: m,
+            isMoveKeyword: false
+        };
+    });
+}
+
+/**
+ * Extracts all tags for an item from its tags field, any legacy tags in its description,
+ * or canonical tags from KNOWN_ITEMS if neither is present.
+ */
+export function extractItemTags(
+    item: { name?: string; desc?: string; tags?: string } | null | undefined
+): ParsedTagPill[] {
+    if (!item) return [];
+    const knownItem = KNOWN_ITEMS.find((k) => k.name.toLowerCase() === (item.name || '').trim().toLowerCase());
+    const canonicalTags = knownItem?.tags || '';
+    const legacyTags = (item.desc || '').match(/\[[^\]]+\]/g)?.join(' ') || '';
+    const combined = `${item.tags || ''} ${legacyTags}`.trim() || canonicalTags;
+    const pills = extractTagsFromText(combined);
+    const seen = new Set<string>();
+    return pills.filter((p) => {
+        if (seen.has(p.tag)) return false;
+        seen.add(p.tag);
+        return true;
+    });
+}
+
+export function extractMoveTags(desc: string): ParsedTagPill[] {
+    if (!desc) return [];
+    const pills: ParsedTagPill[] = [];
+
+    // 1. Extract bracketed tags
+    const bracketMatches = [...desc.matchAll(/\[([^\]]+)\]/g)];
+    for (const bm of bracketMatches) {
+        pills.push({
+            tag: bm[0],
+            display: bm[1].trim(),
+            raw: bm[0],
+            isMoveKeyword: false
+        });
+    }
+
+    // Text with brackets stripped to avoid double-matching inner keywords
+    const textWithoutBrackets = desc.replace(/\[[^\]]+\]/g, ' ');
+
+    // 2. Unbracketed move keywords
+    const keywordRegexes: {
+        pattern: RegExp;
+        normalize: (match: RegExpMatchArray) => { tag: string; display: string };
+    }[] = [
+        {
+            pattern: /\b(?:low accuracy|low acc)\s*(\d+)\b/gi,
+            normalize: (m) => ({
+                tag: `Low Accuracy ${m[1]}`,
+                display: `Low Accuracy ${m[1]}`
+            })
+        },
+        {
+            pattern: /\b(?:high critical|high crit)\b/gi,
+            normalize: () => ({
+                tag: 'High Critical',
+                display: 'High Critical'
+            })
+        },
+        {
+            pattern: /\bnever miss\b/gi,
+            normalize: () => ({
+                tag: 'Never Miss',
+                display: 'Never Miss'
+            })
+        },
+        {
+            pattern: /\brecoil\b/gi,
+            normalize: () => ({
+                tag: 'Recoil',
+                display: 'Recoil'
+            })
+        },
+        {
+            pattern: /\bsuccessive actions?\b/gi,
+            normalize: () => ({
+                tag: 'Successive Actions',
+                display: 'Successive Actions'
+            })
+        },
+        {
+            pattern: /\bset damage\s*(\d+)\b/gi,
+            normalize: (m) => ({
+                tag: `Set Damage ${m[1]}`,
+                display: `Set Damage ${m[1]}`
+            })
+        },
+        {
+            pattern: /\bpowder(?:\s+move)?\b/gi,
+            normalize: () => ({
+                tag: 'Powder',
+                display: 'Powder'
+            })
+        }
+    ];
+
+    for (const kr of keywordRegexes) {
+        const matches = [...textWithoutBrackets.matchAll(kr.pattern)];
+        for (const m of matches) {
+            const norm = kr.normalize(m);
+            // Avoid duplicate if already in pills
+            if (!pills.some((p) => p.display.toLowerCase() === norm.display.toLowerCase())) {
+                pills.push({
+                    tag: norm.tag,
+                    display: norm.display,
+                    raw: m[0],
+                    isMoveKeyword: true
+                });
+            }
+        }
+    }
+
+    return pills;
 }

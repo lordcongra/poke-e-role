@@ -21,6 +21,7 @@ export function AbilityCombobox({ onOpenAbilityModal }: AbilityComboboxProps) {
     const [allAbilitiesList, setAllAbilitiesList] = useState<string[]>([]);
     const [isAbilityDropdownOpen, setIsAbilityDropdownOpen] = useState(false);
     const [abilitySearch, setAbilitySearch] = useState('');
+    const [tagBuilderInitialTag, setTagBuilderInitialTag] = useState<string | undefined>(undefined);
     const [showAbilityTagBuilder, setShowAbilityTagBuilder] = useState(false);
     const abilityContainerRef = useRef<HTMLDivElement>(null);
 
@@ -256,7 +257,10 @@ export function AbilityCombobox({ onOpenAbilityModal }: AbilityComboboxProps) {
                     {/* Tag Builder Button */}
                     <button
                         type="button"
-                        onClick={() => setShowAbilityTagBuilder(true)}
+                        onClick={() => {
+                            setTagBuilderInitialTag(undefined);
+                            setShowAbilityTagBuilder(true);
+                        }}
                         className="action-button action-button--dark"
                         style={{
                             padding: '0 6px',
@@ -308,7 +312,11 @@ export function AbilityCombobox({ onOpenAbilityModal }: AbilityComboboxProps) {
                 <TagBuilderModal
                     targetId="ability"
                     targetType="ability"
-                    onClose={() => setShowAbilityTagBuilder(false)}
+                    initialTag={tagBuilderInitialTag}
+                    onClose={() => {
+                        setShowAbilityTagBuilder(false);
+                        setTagBuilderInitialTag(undefined);
+                    }}
                 />
             )}
         </div>

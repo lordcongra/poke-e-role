@@ -6,7 +6,9 @@ import { useItemArt, setItemArt, getItemArt } from '../../utils/itemArtCatalog';
 import type { InventoryItem } from '../../store/storeTypes';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { KNOWN_ITEMS } from '../../data/constants';
-import { Info, Tag, ChevronUp, ChevronDown, X, Image as ImageIcon } from 'lucide-react';
+import { Info, Tag, ChevronUp, ChevronDown, X, Image as ImageIcon, Dices } from 'lucide-react';
+import { TagPillList } from '../ui/TagPillList';
+import { extractItemTags } from '../modals/items/tagBuilder/tagBuilderLogic';
 import './InventoryTable.css';
 
 interface InventoryItemRowProps {
@@ -16,6 +18,7 @@ interface InventoryItemRowProps {
     setTagBuilderData: (d: {
         id: string;
         type: 'item' | 'move' | 'homebrew_ability' | 'homebrew_move' | 'homebrew_item';
+        initialTag?: string;
     }) => void;
     setDeleteItemId: (id: string) => void;
     onEditItem?: (id: string) => void;
@@ -87,10 +90,20 @@ export function InventoryItemRow({
                     updateInventoryItem(item.id, 'name', result.name);
                     setLocalName(result.name);
                 }
-                if (result.fullDescription) {
+                if (result.description) {
                     if (forceOverwrite || !item.desc.trim()) {
-                        useCharacterStore.getState().updateInventoryItem(item.id, 'desc', result.fullDescription);
+                        useCharacterStore.getState().updateInventoryItem(item.id, 'desc', result.description);
                     }
+                }
+                if (result.tags) {
+                    useCharacterStore.getState().updateInventoryItem(item.id, 'tags', result.tags);
+                }
+                if (/\[.*?\]/.test(item.desc)) {
+                    const cleaned = item.desc
+                        .replace(/\[.*?\]/g, '')
+                        .replace(/\n\s*\n+/g, '\n')
+                        .trim();
+                    useCharacterStore.getState().updateInventoryItem(item.id, 'desc', cleaned);
                 }
                 const targetImg = result.imageUrl || getItemArt(result.name) || getItemArt(query);
                 if (targetImg && (!item.imageUrl || item.imageUrl === 'none')) {
@@ -202,17 +215,79 @@ export function InventoryItemRow({
                     >
                         <Tag size={14} />
                     </button>
+                    <button
+                        type="button"
+                        className="action-button action-button--ghost inventory-item__icon-btn"
+                        onClick={() =>
+                            updateInventoryItem(item.id, 'showInRollLog', item.showInRollLog === false ? true : false)
+                        }
+                        title={
+                            item.showInRollLog !== false
+                                ? 'Showing in Roll Log (Click to hide)'
+                                : 'Hidden from Roll Log (Click to show)'
+                        }
+                    >
+                        <Dices
+                            size={14}
+                            style={{
+                                color: item.showInRollLog !== false ? 'var(--primary, #3b82f6)' : 'var(--text-main)',
+                                opacity: item.showInRollLog !== false ? 1 : 0.35
+                            }}
+                        />
+                    </button>
                 </div>
             </td>
             <td className="data-table__cell--middle inventory-item__desc-cell">
-                <textarea
-                    className="identity-grid__input form-input--item-desc inventory-item__desc-input text-subtext"
-                    style={{ color: 'var(--text-main)' }}
-                    value={item.desc}
-                    onChange={(event) => updateInventoryItem(item.id, 'desc', event.target.value)}
-                    placeholder="Effect / Notes..."
-                    rows={2}
-                />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
+                    {extractItemTags(item).length > 0 && (
+                        <TagPillList
+                            tags={extractItemTags(item)}
+                            onEditTag={(tagStr) => setTagBuilderData({ id: item.id, type: 'item', initialTag: tagStr })}
+                            onDeleteTag={(rawTag) => {
+                                const currentTags =
+                                    item.tags !== undefined
+                                        ? item.tags
+                                        : (item.desc.match(/\[[^\]]+\]/g) || []).join(' ');
+                                const updated = currentTags.replace(rawTag, '').replace(/\s+/g, ' ').trim();
+                                updateInventoryItem(item.id, 'tags', updated);
+                                if (item.desc.includes(rawTag)) {
+                                    const cleanDesc = item.desc
+                                        .replace(rawTag, '')
+                                        .replace(/\n\s*\n+/g, '\n')
+                                        .trim();
+                                    updateInventoryItem(item.id, 'desc', cleanDesc);
+                                }
+                            }}
+                            onAddTag={() => setTagBuilderData({ id: item.id, type: 'item' })}
+                            showAddButton={false}
+                        />
+                    )}
+                    <textarea
+                        className="identity-grid__input form-input--item-desc inventory-item__desc-input text-subtext"
+                        style={{ color: 'var(--text-main)' }}
+                        value={item.desc}
+                        onChange={(event) => updateInventoryItem(item.id, 'desc', event.target.value)}
+                        onBlur={() => {
+                            if (/\[.*?\]/.test(item.desc)) {
+                                const legacyMatches = Array.from(item.desc.matchAll(/\[(.*?)\]/g)).map(
+                                    (m) => `[${m[1].trim()}]`
+                                );
+                                const currentTagList = item.tags
+                                    ? Array.from(item.tags.matchAll(/\[(.*?)\]/g)).map((m) => `[${m[1].trim()}]`)
+                                    : [];
+                                const merged = Array.from(new Set([...currentTagList, ...legacyMatches])).join(' ');
+                                const cleaned = item.desc
+                                    .replace(/\[.*?\]/g, '')
+                                    .replace(/\n\s*\n+/g, '\n')
+                                    .trim();
+                                updateInventoryItem(item.id, 'tags', merged);
+                                updateInventoryItem(item.id, 'desc', cleaned);
+                            }
+                        }}
+                        placeholder="Effect / Notes..."
+                        rows={2}
+                    />
+                </div>
             </td>
             <td className="data-table__cell--middle">
                 <div className="inventory-item__sort-container">

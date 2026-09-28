@@ -109,10 +109,15 @@
 }
 
 .roll-log-widget__icon {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    object-fit: cover;
+    width: 26px;
+    height: 26px;
+    border-radius: 5px;
+    object-fit: contain;
+    background: color-mix(in srgb, var(--primary, #3b82f6) 10%, rgba(0, 0, 0, 0.3));
+    border: 1px solid color-mix(in srgb, var(--primary, #3b82f6) 30%, var(--border, rgba(255, 255, 255, 0.15)));
+    padding: 1px;
+    box-sizing: border-box;
+    flex-shrink: 0;
 }
 
 .roll-log-widget__dismiss {

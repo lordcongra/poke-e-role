@@ -19,8 +19,11 @@ import {
     ChevronUp,
     ChevronDown,
     AlertTriangle,
-    XCircle
+    XCircle,
+    Dices
 } from 'lucide-react';
+import { TagPillList } from '../../ui/TagPillList';
+import { extractItemTags } from './tagBuilder/tagBuilderLogic';
 import './ItemEditModal.css';
 
 interface ItemEditModalProps {
@@ -40,6 +43,7 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
     const [resolvedImageUrl, setResolvedImageUrl] = useState<string | null>(null);
     const [showUrlInput, setShowUrlInput] = useState(false);
     const [urlText, setUrlText] = useState('');
+    const [tagBuilderInitialTag, setTagBuilderInitialTag] = useState<string | undefined>(undefined);
     const [showTagBuilder, setShowTagBuilder] = useState(false);
     const [isFetchingInfo, setIsFetchingInfo] = useState(false);
     const [isBroadcasted, setIsBroadcasted] = useState(false);
@@ -202,10 +206,22 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
                     setLocalName(result.name);
                 }
 
-                if (result.fullDescription) {
+                if (result.description) {
                     if (forceOverwrite || !item.desc.trim()) {
-                        updateInventoryItem(item.id, 'desc', result.fullDescription);
+                        updateInventoryItem(item.id, 'desc', result.description);
                     }
+                }
+
+                if (result.tags) {
+                    updateInventoryItem(item.id, 'tags', result.tags);
+                }
+
+                if (/\[.*?\]/.test(item.desc)) {
+                    const cleaned = item.desc
+                        .replace(/\[.*?\]/g, '')
+                        .replace(/\n\s*\n+/g, '\n')
+                        .trim();
+                    updateInventoryItem(item.id, 'desc', cleaned);
                 }
 
                 const targetImg = result.imageUrl || getItemArt(result.name) || getItemArt(query);
@@ -266,7 +282,13 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
     };
 
     const handleBroadcast = () => {
-        broadcastInfo(item.name || 'Item', item.desc || 'No description listed.');
+        const effectiveTags = extractItemTags(item)
+            .map((p) => p.tag)
+            .join(' ');
+        const fullBroadcastDesc = effectiveTags
+            ? `${item.desc || ''}\n\n${effectiveTags}`.trim()
+            : item.desc || 'No description listed.';
+        broadcastInfo(item.name || 'Item', fullBroadcastDesc);
         setIsBroadcasted(true);
         setTimeout(() => setIsBroadcasted(false), 2000);
     };
@@ -367,6 +389,28 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
                             <RefreshCw size={13} className={isFetchingInfo ? 'spin' : ''} />
                             {isFetchingInfo ? 'Looking up...' : 'Lookup Info'}
                         </button>
+
+                        <button
+                            type="button"
+                            className={`action-button ${
+                                item.showInRollLog !== false ? 'action-button--theme' : 'action-button--dark'
+                            } item-edit-modal__img-action-btn text-theme-header`}
+                            onClick={() =>
+                                updateInventoryItem(
+                                    item.id,
+                                    'showInRollLog',
+                                    item.showInRollLog === false ? true : false
+                                )
+                            }
+                            title={
+                                item.showInRollLog !== false
+                                    ? 'Showing in Roll Log (Click to hide)'
+                                    : 'Hidden from Roll Log (Click to show)'
+                            }
+                        >
+                            <Dices size={13} />
+                            {item.showInRollLog !== false ? 'In Roll Log' : 'Hide from Log'}
+                        </button>
                     </div>
 
                     {/* Effect / Notes Area */}
@@ -374,19 +418,70 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
                         <div className="item-edit-modal__desc-header">
                             <span className="item-edit-modal__desc-label">Effect / Notes</span>
                         </div>
+                        {extractItemTags(item).length > 0 && (
+                            <div style={{ marginBottom: '8px' }}>
+                                <TagPillList
+                                    tags={extractItemTags(item)}
+                                    onEditTag={(tagStr) => {
+                                        setTagBuilderInitialTag(tagStr);
+                                        setShowTagBuilder(true);
+                                    }}
+                                    onDeleteTag={(rawTag) => {
+                                        const currentTags =
+                                            item.tags !== undefined
+                                                ? item.tags
+                                                : (item.desc.match(/\[[^\]]+\]/g) || []).join(' ');
+                                        const updated = currentTags.replace(rawTag, '').replace(/\s+/g, ' ').trim();
+                                        updateInventoryItem(item.id, 'tags', updated);
+                                        if (item.desc.includes(rawTag)) {
+                                            const cleanDesc = item.desc
+                                                .replace(rawTag, '')
+                                                .replace(/\n\s*\n+/g, '\n')
+                                                .trim();
+                                            updateInventoryItem(item.id, 'desc', cleanDesc);
+                                        }
+                                    }}
+                                    onAddTag={() => {
+                                        setTagBuilderInitialTag(undefined);
+                                        setShowTagBuilder(true);
+                                    }}
+                                    showAddButton={false}
+                                />
+                            </div>
+                        )}
                         <textarea
                             className="item-edit-modal__desc-textarea text-subtext"
                             style={{ color: 'var(--text-main)' }}
                             value={item.desc}
                             onChange={(e) => updateInventoryItem(item.id, 'desc', e.target.value)}
-                            placeholder="Enter item description, effect, or combat tags (e.g. [Battle Item], [Chance Roll +1])..."
+                            onBlur={() => {
+                                if (/\[.*?\]/.test(item.desc)) {
+                                    const legacyMatches = Array.from(item.desc.matchAll(/\[(.*?)\]/g)).map(
+                                        (m) => `[${m[1].trim()}]`
+                                    );
+                                    const currentTagList = item.tags
+                                        ? Array.from(item.tags.matchAll(/\[(.*?)\]/g)).map((m) => `[${m[1].trim()}]`)
+                                        : [];
+                                    const merged = Array.from(new Set([...currentTagList, ...legacyMatches])).join(' ');
+                                    const cleaned = item.desc
+                                        .replace(/\[.*?\]/g, '')
+                                        .replace(/\n\s*\n+/g, '\n')
+                                        .trim();
+                                    updateInventoryItem(item.id, 'tags', merged);
+                                    updateInventoryItem(item.id, 'desc', cleaned);
+                                }
+                            }}
+                            placeholder="Enter item description, effect, or notes..."
                             rows={3}
                         />
                         <div className="item-edit-modal__desc-toolbar">
                             <button
                                 type="button"
                                 className="action-button action-button--dark item-edit-modal__img-action-btn text-theme-header"
-                                onClick={() => setShowTagBuilder(true)}
+                                onClick={() => {
+                                    setTagBuilderInitialTag(undefined);
+                                    setShowTagBuilder(true);
+                                }}
                             >
                                 <Tag size={13} /> Add Smart Tags
                             </button>
@@ -488,6 +583,18 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
                             </div>
                         </div>
                     </div>
+                )}
+
+                {showTagBuilder && (
+                    <TagBuilderModal
+                        targetId={item.id}
+                        targetType="item"
+                        initialTag={tagBuilderInitialTag}
+                        onClose={() => {
+                            setShowTagBuilder(false);
+                            setTagBuilderInitialTag(undefined);
+                        }}
+                    />
                 )}
             </div>
         </div>

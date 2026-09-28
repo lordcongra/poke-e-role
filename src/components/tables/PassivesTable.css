@@ -70,10 +70,30 @@
 
 .passives-table__desc-wrapper {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
     gap: 4px;
     position: relative;
     width: 100%;
+}
+
+.passives-table__note-input {
+    width: 100%;
+    height: 20px;
+    padding: 1px 4px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px dotted var(--border, rgba(255, 255, 255, 0.15));
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.72rem;
+    outline: none;
+    transition: all 0.15s ease;
+}
+
+.passives-table__note-input:focus {
+    border-bottom-color: var(--primary, #3b82f6);
+    color: var(--text-main);
+    background: rgba(0, 0, 0, 0.15);
 }
 
 .passives-table__input {
@@ -105,7 +125,9 @@
     border-radius: 4px;
     color: var(--text-main);
     opacity: 0.8;
-    transition: opacity 0.15s, color 0.15s;
+    transition:
+        opacity 0.15s,
+        color 0.15s;
 }
 
 .passives-table__tag-btn:hover {
@@ -113,7 +135,8 @@
     color: var(--primary);
 }
 
-.passives-table__cell-cond {
+.passives-table__cell-cond,
+.passives-table__cell-log {
     width: 34px;
     text-align: center;
     padding: 4px 2px;
@@ -130,7 +153,9 @@
     cursor: pointer;
     background: transparent;
     border: none;
-    transition: transform 0.15s ease, opacity 0.15s ease;
+    transition:
+        transform 0.15s ease,
+        opacity 0.15s ease;
 }
 
 .passives-table__cond-btn:hover {
@@ -191,7 +216,9 @@
     border-radius: 4px;
     opacity: 0.7;
     color: var(--semantic-danger, #ef4444);
-    transition: opacity 0.15s ease, transform 0.15s ease;
+    transition:
+        opacity 0.15s ease,
+        transform 0.15s ease;
 }
 
 .passives-table__del-btn:hover {

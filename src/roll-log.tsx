@@ -2,13 +2,17 @@ import { StrictMode, useEffect, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import OBR from '@owlbear-rodeo/sdk';
 import { imageManager } from './utils/imageManager';
-import { Dices, Trash2, X } from 'lucide-react';
+import { cropImageTransparencyUrl } from './utils/imageCropUtils';
+import { Dices, Trash2, X, Info } from 'lucide-react';
+import { parseRollLabel } from './utils/rollLogParser';
+import { RollFactorsModal } from './components/modals/RollFactorsModal';
 import './style.css';
 import './roll-log.css';
 
 interface RollData {
     id: string;
     player: string;
+    characterName?: string;
     label: string;
     result: string;
     icon: string;
@@ -31,6 +35,13 @@ export function RollLog() {
         }
     });
     const [resolvedIcons, setResolvedIcons] = useState<Record<string, string>>({});
+    const [factorsModalData, setFactorsModalData] = useState<{
+        title: string;
+        characterName?: string;
+        coreTags: string[];
+        factors: string[];
+        result?: string;
+    } | null>(null);
 
     // 🔥 Default to dark instead of light
     const [theme, setTheme] = useState(localStorage.getItem('pokerole-theme') || 'dark');
@@ -81,13 +92,24 @@ export function RollLog() {
         const resolveIcons = async () => {
             const newIcons: Record<string, string> = {};
             for (const r of rolls) {
-                if (r.icon && r.icon.startsWith('local-img:')) {
+                let resolved = r.icon;
+                if (resolved && resolved.startsWith('local-img:')) {
                     try {
-                        const url = await imageManager.getImageUrl(r.icon);
-                        if (url) newIcons[r.id] = url;
+                        const url = await imageManager.getImageUrl(resolved);
+                        if (url) resolved = url;
                     } catch (e) {
                         console.warn('[RollLog] Failed to resolve local image for roll log.', e);
                     }
+                }
+                if (resolved && !resolved.includes('pokeball.svg')) {
+                    try {
+                        const cropped = await cropImageTransparencyUrl(resolved, true);
+                        if (cropped && isMounted) newIcons[r.id] = cropped;
+                    } catch {
+                        if (resolved && isMounted) newIcons[r.id] = resolved;
+                    }
+                } else if (resolved && isMounted) {
+                    newIcons[r.id] = resolved;
                 }
             }
             if (isMounted) {
@@ -198,6 +220,8 @@ export function RollLog() {
                             /CRITICAL HIT/i.test(r.label) ||
                             /It's a critical hit/i.test(r.result)
                         );
+                        const { cleanLabel, coreTags, factorTags } = parseRollLabel(r.label);
+
                         return (
                             <div key={r.id} className={`roll-log__entry ${isCrit ? 'roll-log__entry--crit' : ''}`}>
                                 <div className="roll-log__entry-header">
@@ -223,7 +247,32 @@ export function RollLog() {
                                     </button>
                                 </div>
                                 <div className="roll-log__entry-label text-label" style={{ color: 'var(--primary)' }}>
-                                    {r.label}
+                                    <span>{cleanLabel}</span>
+                                    {coreTags.length > 0 && (
+                                        <span className="roll-log__core-tags">[ {coreTags.join(' | ')} ]</span>
+                                    )}
+                                    {factorTags.length > 0 && (
+                                        <button
+                                            type="button"
+                                            className="roll-log__factors-btn"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setFactorsModalData({
+                                                    title: cleanLabel,
+                                                    characterName: r.characterName || r.player,
+                                                    coreTags,
+                                                    factors: factorTags,
+                                                    result: r.result
+                                                });
+                                            }}
+                                            title="View contributing factors, items, passives, and abilities"
+                                        >
+                                            <Info size={11} />
+                                            <span>
+                                                {factorTags.length} {factorTags.length === 1 ? 'Factor' : 'Factors'}
+                                            </span>
+                                        </button>
+                                    )}
                                 </div>
                                 <div
                                     className="roll-log__entry-result text-subtext"
@@ -236,6 +285,17 @@ export function RollLog() {
                     })}
                 </div>
             </div>
+
+            {factorsModalData && (
+                <RollFactorsModal
+                    title={factorsModalData.title}
+                    characterName={factorsModalData.characterName}
+                    coreTags={factorsModalData.coreTags}
+                    factors={factorsModalData.factors}
+                    result={factorsModalData.result}
+                    onClose={() => setFactorsModalData(null)}
+                />
+            )}
         </div>
     );
 }

@@ -199,12 +199,24 @@ export async function rollAccuracy(move: MoveData, state: CharacterState) {
         tags.push(`Item: ${uniqueItems.join(', ')}`);
     }
     if (itemBuffs.accPassiveNames && itemBuffs.accPassiveNames.length > 0) {
-        const uniquePassives = Array.from(new Set(itemBuffs.accPassiveNames));
-        tags.push(`Passive: ${uniquePassives.join(', ')}`);
+        const uniquePassives = Array.from(new Set(itemBuffs.accPassiveNames)).filter(
+            (name) =>
+                !tags.includes(`Passive: ${name}`) &&
+                !tags.some(
+                    (t) => t.toLowerCase().startsWith('passive:') && t.toLowerCase().includes(name.toLowerCase())
+                )
+        );
+        if (uniquePassives.length > 0) {
+            tags.push(`Passive: ${uniquePassives.join(', ')}`);
+        }
     }
     if (itemBuffs.accAbilityNames && itemBuffs.accAbilityNames.length > 0) {
         const filteredAbilities = Array.from(new Set(itemBuffs.accAbilityNames)).filter(
-            (name) => !tags.includes(`Ability: ${name}`)
+            (name) =>
+                !tags.includes(`Ability: ${name}`) &&
+                !tags.some(
+                    (t) => t.toLowerCase().startsWith('ability:') && t.toLowerCase().includes(name.toLowerCase())
+                )
         );
         if (filteredAbilities.length > 0) {
             tags.push(`Ability: ${filteredAbilities.join(', ')}`);
@@ -386,12 +398,18 @@ export async function executeDamageRoll(
         tags.push(`POWDER: Grass-types are immune`);
     }
 
-    const pureDmgItems = itemBuffs.dmgItemNames.filter((name) => !itemBuffs.dmgPassiveNames?.includes(name));
+    const pureDmgItems = Array.from(
+        new Set(itemBuffs.dmgItemNames.filter((name) => !itemBuffs.dmgPassiveNames?.includes(name)))
+    );
     if (pureDmgItems.length > 0) tags.push(`Item: ${pureDmgItems.join(', ')}`);
-    if (itemBuffs.dmgPassiveNames && itemBuffs.dmgPassiveNames.length > 0)
-        tags.push(`Passive: ${itemBuffs.dmgPassiveNames.join(', ')}`);
-    if (itemBuffs.dmgAbilityNames && itemBuffs.dmgAbilityNames.length > 0)
-        tags.push(`Ability: ${itemBuffs.dmgAbilityNames.join(', ')}`);
+    if (itemBuffs.dmgPassiveNames && itemBuffs.dmgPassiveNames.length > 0) {
+        const uniquePassives = Array.from(new Set(itemBuffs.dmgPassiveNames));
+        tags.push(`Passive: ${uniquePassives.join(', ')}`);
+    }
+    if (itemBuffs.dmgAbilityNames && itemBuffs.dmgAbilityNames.length > 0) {
+        const uniqueAbilities = Array.from(new Set(itemBuffs.dmgAbilityNames));
+        tags.push(`Ability: ${uniqueAbilities.join(', ')}`);
+    }
 
     const finalTags = tags.length > 0 ? ` [ ${tags.join(' | ')} ]` : '';
     const mathModifier = finalFlatMod !== 0 ? (finalFlatMod > 0 ? `+${finalFlatMod}` : `${finalFlatMod}`) : '';

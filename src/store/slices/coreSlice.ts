@@ -145,7 +145,13 @@ export const createCoreSlice: StateCreator<CharacterState, [], [], CoreSlice> = 
 
             if (stat === CombatStat.VIT || stat === CombatStat.INS) {
                 const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
-                const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText, state.passives);
+                const invMods = parseCombatTags(
+                    state.inventory,
+                    state.extraCategories,
+                    undefined,
+                    abilityText,
+                    state.passives
+                );
                 const fakeState = { ...state, stats: newStats, health: newHealth, will: newWill } as CharacterState;
 
                 const oldHpMax = newHealth.hpMax;

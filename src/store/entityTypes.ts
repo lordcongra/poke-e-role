@@ -55,6 +55,9 @@ export interface InventoryItem {
     desc: string;
     active?: boolean;
     imageUrl?: string;
+    showInRollLog?: boolean;
+    boostLevel?: number;
+    tags?: string;
 }
 
 export interface PassiveItem {
@@ -63,6 +66,8 @@ export interface PassiveItem {
     desc: string;
     active?: boolean;
     showInConditions?: boolean;
+    showInRollLog?: boolean;
+    boostLevel?: number;
 }
 
 export interface CustomInfo {
@@ -92,6 +97,7 @@ export interface Trackers {
     firstHitAcc: boolean;
     firstHitDmg: boolean;
     bankedAccDice: Record<string, number>;
+    boostLevels?: Record<string, number>;
 }
 
 export interface ExtraSkill {

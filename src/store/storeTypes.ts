@@ -192,6 +192,7 @@ export interface InventorySlice {
         description: string;
         quantity?: number;
         active?: boolean;
+        tags?: string;
     }) => void;
     updateInventoryItem: <K extends keyof InventoryItem>(id: string, field: K, value: InventoryItem[K]) => void;
     removeInventoryItem: (id: string) => void;
@@ -208,12 +209,7 @@ export interface InventorySlice {
 export interface PassivesSlice {
     passives: PassiveItem[];
     addPassive: () => void;
-    addSpecificPassive: (passive: {
-        name: string;
-        desc: string;
-        active?: boolean;
-        showInConditions?: boolean;
-    }) => void;
+    addSpecificPassive: (passive: { name: string; desc: string; active?: boolean; showInConditions?: boolean }) => void;
     updatePassive: <K extends keyof PassiveItem>(id: string, field: K, value: PassiveItem[K]) => void;
     removePassive: (id: string) => void;
     moveUpPassive: (id: string) => void;

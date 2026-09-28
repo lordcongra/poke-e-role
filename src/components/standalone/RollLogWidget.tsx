@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { imageManager } from '../../utils/imageManager';
-import { Dices, Trash2, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { cropImageTransparencyUrl } from '../../utils/imageCropUtils';
+import { Dices, Trash2, ChevronDown, ChevronUp, X, Info } from 'lucide-react';
+import { parseRollLabel } from '../../utils/rollLogParser';
+import { RollFactorsModal } from '../modals/RollFactorsModal';
 import './RollLogWidget.css';
 
 interface RollData {
     id: string;
     player: string;
+    characterName?: string;
     label: string;
     result: string;
     icon: string;
@@ -28,6 +32,13 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
     });
     const [resolvedIcons, setResolvedIcons] = useState<Record<string, string>>({});
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [factorsModalData, setFactorsModalData] = useState<{
+        title: string;
+        characterName?: string;
+        coreTags: string[];
+        factors: string[];
+        result?: string;
+    } | null>(null);
 
     useEffect(() => {
         let isMounted = true;
@@ -35,13 +46,24 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
         const resolveIcons = async () => {
             const newIcons: Record<string, string> = {};
             for (const r of rolls) {
-                if (r.icon && r.icon.startsWith('local-img:')) {
+                let resolved = r.icon;
+                if (resolved && resolved.startsWith('local-img:')) {
                     try {
-                        const url = await imageManager.getImageUrl(r.icon);
-                        if (url) newIcons[r.id] = url;
+                        const url = await imageManager.getImageUrl(resolved);
+                        if (url) resolved = url;
                     } catch (e) {
                         console.warn('[RollLogWidget] Failed to resolve local image for roll log.', e);
                     }
+                }
+                if (resolved && !resolved.includes('pokeball.svg')) {
+                    try {
+                        const cropped = await cropImageTransparencyUrl(resolved, true);
+                        if (cropped && isMounted) newIcons[r.id] = cropped;
+                    } catch {
+                        if (resolved && isMounted) newIcons[r.id] = resolved;
+                    }
+                } else if (resolved && isMounted) {
+                    newIcons[r.id] = resolved;
                 }
             }
             if (isMounted) {
@@ -131,6 +153,8 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
                             /CRITICAL HIT/i.test(r.label) ||
                             /It's a critical hit/i.test(r.result)
                         );
+                        const { cleanLabel, coreTags, factorTags } = parseRollLabel(r.label);
+
                         return (
                             <div
                                 key={r.id}
@@ -159,7 +183,34 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
                                         <X size={14} />
                                     </button>
                                 </div>
-                                <div className="text-label">{r.label}</div>
+                                <div className="text-label roll-log-widget__label">
+                                    <span>{cleanLabel}</span>
+                                    {coreTags.length > 0 && (
+                                        <span className="roll-log__core-tags">[ {coreTags.join(' | ')} ]</span>
+                                    )}
+                                    {factorTags.length > 0 && (
+                                        <button
+                                            type="button"
+                                            className="roll-log__factors-btn"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setFactorsModalData({
+                                                    title: cleanLabel,
+                                                    characterName: r.characterName || r.player,
+                                                    coreTags,
+                                                    factors: factorTags,
+                                                    result: r.result
+                                                });
+                                            }}
+                                            title="View contributing factors, items, passives, and abilities"
+                                        >
+                                            <Info size={11} />
+                                            <span>
+                                                {factorTags.length} {factorTags.length === 1 ? 'Factor' : 'Factors'}
+                                            </span>
+                                        </button>
+                                    )}
+                                </div>
                                 <div
                                     className="roll-log-widget__result text-subtext"
                                     style={{ color: 'var(--text-main)' }}
@@ -170,6 +221,17 @@ export function RollLogWidget({ isDocked = false }: RollLogWidgetProps) {
                         );
                     })}
                 </div>
+            )}
+
+            {factorsModalData && (
+                <RollFactorsModal
+                    title={factorsModalData.title}
+                    characterName={factorsModalData.characterName}
+                    coreTags={factorsModalData.coreTags}
+                    factors={factorsModalData.factors}
+                    result={factorsModalData.result}
+                    onClose={() => setFactorsModalData(null)}
+                />
             )}
         </div>
     );

@@ -19,7 +19,8 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
         ignoredPain: 0,
         firstHitAcc: false,
         firstHitDmg: false,
-        bankedAccDice: {}
+        bankedAccDice: {},
+        boostLevels: {}
     },
 
     addStatus: () =>
@@ -107,9 +108,10 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
             else if (field === 'firstHitAcc') obrKey = 'first-hit-acc-active';
             else if (field === 'firstHitDmg') obrKey = 'first-hit-dmg-active';
             else if (field === 'bankedAccDice') obrKey = 'banked-acc-dice';
+            else if (field === 'boostLevels') obrKey = 'boost-levels';
 
             try {
-                if (field === 'bankedAccDice') {
+                if (field === 'bankedAccDice' || field === 'boostLevels') {
                     saveToOwlbear({ [obrKey]: JSON.stringify(value) });
                 } else {
                     saveToOwlbear({ [obrKey]: value });
@@ -135,7 +137,13 @@ export const createTrackerSlice: StateCreator<CharacterState, [], [], TrackerSli
     resetRound: () =>
         set((state) => {
             const abilityText = getAbilityText(state.identity.ability, state.roomCustomAbilities);
-            const invMods = parseCombatTags(state.inventory, state.extraCategories, undefined, abilityText, state.passives);
+            const invMods = parseCombatTags(
+                state.inventory,
+                state.extraCategories,
+                undefined,
+                abilityText,
+                state.passives
+            );
 
             const newHealth = { ...state.health };
             const newWill = { ...state.will };

@@ -15,6 +15,7 @@ import type {
 import { CombatStat, SocialStat, Skill } from '../types/enums';
 import { getKnownAbility } from '../data/abilities/knownAbilities';
 import { getItemArt } from './itemArtCatalog';
+import { KNOWN_ITEMS } from '../data/constants';
 
 // =========================================
 // OBR METADATA -> ZUSTAND HYDRATION PARSERS
@@ -177,13 +178,42 @@ function parseInventory(meta: Record<string, unknown>): InventoryItem[] {
                 const known = getItemArt(rawName);
                 if (known) imageUrl = known;
             }
+            const rawDesc = String(i.desc || i.Description || i.Effect || '');
+            let tags = typeof i.tags === 'string' ? i.tags : '';
+            let cleanDesc = rawDesc;
+
+            // Legacy compatibility: If desc contains bracket tags [ ... ],
+            // extract them into tags and clean up desc!
+            const legacyMatches = Array.from(rawDesc.matchAll(/\[(.*?)\]/g)).map((m) => `[${m[1].trim()}]`);
+            if (legacyMatches.length > 0) {
+                const currentTagList = tags
+                    ? Array.from(tags.matchAll(/\[(.*?)\]/g)).map((m) => `[${m[1].trim()}]`)
+                    : [];
+                tags = Array.from(new Set([...currentTagList, ...legacyMatches])).join(' ');
+                cleanDesc = rawDesc
+                    .replace(/\[.*?\]/g, '')
+                    .replace(/\n\s*\n+/g, '\n')
+                    .trim();
+            }
+
+            // Auto-tag known items if tags are empty!
+            if (!tags && rawName) {
+                const knownItemMatch = KNOWN_ITEMS.find((k) => k.name.toLowerCase() === rawName.toLowerCase());
+                if (knownItemMatch?.tags) {
+                    tags = knownItemMatch.tags;
+                }
+            }
+
             return {
                 id: (i.id as string) || crypto.randomUUID(),
                 qty: Number(i.qty !== undefined ? i.qty : 1),
                 name: rawName,
-                desc: String(i.desc || i.Description || i.Effect || ''),
+                desc: cleanDesc,
+                tags: tags || undefined,
                 active: i.active === true || i.active === 'true',
-                imageUrl
+                imageUrl,
+                showInRollLog: i.showInRollLog !== false && i.showInRollLog !== 'false',
+                boostLevel: typeof i.boostLevel === 'number' ? i.boostLevel : undefined
             };
         });
     } catch (e) {
@@ -202,7 +232,9 @@ function parsePassives(meta: Record<string, unknown>): PassiveItem[] {
             name: String(p.name || ''),
             desc: String(p.desc || p.description || p.effect || ''),
             active: p.active !== false && p.active !== 'false',
-            showInConditions: p.showInConditions === true || p.showInConditions === 'true'
+            showInConditions: p.showInConditions === true || p.showInConditions === 'true',
+            showInRollLog: p.showInRollLog !== false && p.showInRollLog !== 'false',
+            boostLevel: typeof p.boostLevel === 'number' ? p.boostLevel : undefined
         }));
     } catch (e) {
         console.warn('[StateMapper] Failed to parse passives from metadata:', e);
@@ -326,6 +358,14 @@ function parseTrackers(meta: Record<string, unknown>) {
         parsedBankedAccDice = {};
     }
 
+    let parsedBoostLevels: Record<string, number> = {};
+    try {
+        const boostStr = String(meta['boost-levels'] || '{}');
+        parsedBoostLevels = JSON.parse(boostStr);
+    } catch {
+        parsedBoostLevels = {};
+    }
+
     return {
         actions: Number(meta['actions-used']) || 0,
         evade: meta['evasions-used'] === true || meta['evasions-used'] === 'true',
@@ -339,7 +379,8 @@ function parseTrackers(meta: Record<string, unknown>) {
         ignoredPain: Number(meta['ignored-pain-mod']) || 0,
         firstHitAcc: meta['first-hit-acc-active'] === true || meta['first-hit-acc-active'] === 'true',
         firstHitDmg: meta['first-hit-dmg-active'] === true || meta['first-hit-dmg-active'] === 'true',
-        bankedAccDice: parsedBankedAccDice
+        bankedAccDice: parsedBankedAccDice,
+        boostLevels: parsedBoostLevels
     };
 }
 
@@ -791,6 +832,8 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
                 flatMetadata['first-hit-dmg-active'] = state.trackers.firstHitDmg;
             if (state.trackers.bankedAccDice !== undefined)
                 flatMetadata['banked-acc-dice'] = JSON.stringify(state.trackers.bankedAccDice);
+            if (state.trackers.boostLevels !== undefined)
+                flatMetadata['boost-levels'] = JSON.stringify(state.trackers.boostLevels);
         }
 
         // --- JSON STRINGIFIED OBJECTS ---

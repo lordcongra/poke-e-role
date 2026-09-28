@@ -1,5 +1,7 @@
 import { useCharacterStore } from '../../../../store/useCharacterStore';
 import type { TagTargetType } from './tagBuilderTypes';
+import { extractMoveTags } from './tagBuilderLogic';
+import { KNOWN_ITEMS } from '../../../../data/constants';
 
 export function useTagBuilderTarget(targetId: string, targetType: TagTargetType) {
     const setIdentity = useCharacterStore((state) => state.setIdentity);
@@ -36,7 +38,9 @@ export function useTagBuilderTarget(targetId: string, targetType: TagTargetType)
     } else if (targetType === 'item') {
         const item = inventory.find((i) => i.id === targetId);
         targetName = item?.name || 'Item';
-        currentRawText = item?.desc || '';
+        const knownItem = KNOWN_ITEMS.find((k) => k.name.toLowerCase() === (item?.name || '').trim().toLowerCase());
+        const legacyTags = (item?.desc?.match(/\[[^\]]+\]/g) || []).join(' ');
+        currentRawText = item?.tags ?? (legacyTags || knownItem?.tags || '');
     } else if (targetType === 'homebrew_ability') {
         const hbAbility = customAbilities.find((a) => a.id === targetId);
         targetName = hbAbility?.name || 'Custom Ability';
@@ -69,7 +73,15 @@ export function useTagBuilderTarget(targetId: string, targetType: TagTargetType)
         } else if (targetType === 'move') {
             updateMove(targetId, 'desc', newRawText);
         } else if (targetType === 'item') {
-            updateInventoryItem(targetId, 'desc', newRawText);
+            updateInventoryItem(targetId, 'tags', newRawText);
+            const item = inventory.find((i) => i.id === targetId);
+            if (item && /\[.*?\]/.test(item.desc || '')) {
+                const cleanDesc = (item.desc || '')
+                    .replace(/\[.*?\]/g, '')
+                    .replace(/\n\s*\n+/g, '\n')
+                    .trim();
+                updateInventoryItem(targetId, 'desc', cleanDesc);
+            }
         } else if (targetType === 'passive') {
             updatePassive(targetId, 'desc', newRawText);
         } else if (targetType === 'homebrew_ability') {
@@ -85,11 +97,31 @@ export function useTagBuilderTarget(targetId: string, targetType: TagTargetType)
         }
     };
 
-    const existingTags = currentRawText.match(/\[[^\]]+\]/g) || [];
+    const existingTags: string[] =
+        targetType === 'move'
+            ? extractMoveTags(currentRawText).map((p) => p.tag)
+            : currentRawText.match(/\[[^\]]+\]/g) || [];
 
     const handleDeleteTag = (tagToDelete: string) => {
-        const updated = currentRawText.replace(tagToDelete, '').replace(/\s+/g, ' ').trim();
+        let updated = currentRawText.replace(tagToDelete, '');
+        updated = updated
+            .replace(/\s+/g, ' ')
+            .replace(/\s*\.\s*\./g, '.')
+            .trim();
         saveUpdatedTags(updated);
+    };
+
+    const handleReplaceTag = (oldTag: string, newTag: string) => {
+        if (!oldTag) {
+            handleAppendTag(newTag);
+            return;
+        }
+        if (currentRawText.includes(oldTag)) {
+            const updated = currentRawText.replace(oldTag, newTag).replace(/\s+/g, ' ').trim();
+            saveUpdatedTags(updated);
+        } else {
+            handleAppendTag(newTag);
+        }
     };
 
     const handleAppendTag = (tagToAppend: string) => {
@@ -103,6 +135,7 @@ export function useTagBuilderTarget(targetId: string, targetType: TagTargetType)
         currentRawText,
         existingTags,
         handleDeleteTag,
+        handleReplaceTag,
         handleAppendTag
     };
 }

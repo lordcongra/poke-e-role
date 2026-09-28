@@ -29,19 +29,12 @@ export async function lookupItemDetails(rawName: string): Promise<ItemLookupResu
         descText = String(data.Description || data.Effect || '').trim();
     }
 
+    // Keep description clean by stripping any legacy bracket tags
+    const cleanDesc = descText
+        .replace(/\[.*?\]/g, '')
+        .replace(/\n\s*\n+/g, '\n')
+        .trim();
     const tags = knownItemMatch?.tags ? knownItemMatch.tags.trim() : '';
-    let fullDescription = descText;
-
-    if (tags) {
-        if (fullDescription) {
-            // Append tags if not already contained in description
-            if (!fullDescription.includes(tags)) {
-                fullDescription = `${fullDescription}\n\n${tags}`;
-            }
-        } else {
-            fullDescription = tags;
-        }
-    }
 
     const found = Boolean(data || knownItemMatch);
     const canonicalName = data?.Name || knownItemMatch?.name || trimmed;
@@ -70,9 +63,34 @@ export async function lookupItemDetails(rawName: string): Promise<ItemLookupResu
     return {
         found,
         name: canonicalName,
-        description: descText,
+        description: cleanDesc,
         tags,
-        fullDescription,
+        fullDescription: cleanDesc,
         imageUrl: knownArt
     };
+}
+
+/**
+ * Strips bracket tags [ ... ] and cleans excess newlines from an item description.
+ */
+export function cleanItemDescription(desc: string): string {
+    if (!desc) return '';
+    return desc
+        .replace(/\[.*?\]/g, '')
+        .replace(/\n\s*\n+/g, '\n')
+        .trim();
+}
+
+/**
+ * Splits legacy bracket tags out of an item description, returning both the clean text
+ * and the extracted bracket tags.
+ */
+export function splitItemLegacyTags(desc: string): { cleanDesc: string; legacyTags: string[] } {
+    if (!desc) return { cleanDesc: '', legacyTags: [] };
+    const matches = Array.from(desc.matchAll(/\[(.*?)\]/g)).map((m) => `[${m[1].trim()}]`);
+    const cleanDesc = desc
+        .replace(/\[.*?\]/g, '')
+        .replace(/\n\s*\n+/g, '\n')
+        .trim();
+    return { cleanDesc, legacyTags: matches };
 }

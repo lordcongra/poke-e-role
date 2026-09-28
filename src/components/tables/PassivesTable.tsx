@@ -4,7 +4,21 @@ import { CollapsingSection } from '../ui/CollapsingSection';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { TagBuilderModal } from '../modals/items/TagBuilderModal';
 import { SmartTagsGuideModal } from '../modals/items/SmartTagsGuideModal';
-import { Check, Plus, Trash2, ChevronUp, ChevronDown, Tag, Eye, EyeOff, AlertTriangle, XCircle } from 'lucide-react';
+import { TagPillList } from '../ui/TagPillList';
+import { extractTagsFromText } from '../modals/items/tagBuilder/tagBuilderLogic';
+import {
+    Check,
+    Plus,
+    Trash2,
+    ChevronUp,
+    ChevronDown,
+    Tag,
+    Eye,
+    EyeOff,
+    AlertTriangle,
+    XCircle,
+    Dices
+} from 'lucide-react';
 import './PassivesTable.css';
 
 export function PassivesTable() {
@@ -16,7 +30,9 @@ export function PassivesTable() {
     const moveDownPassive = useCharacterStore((state) => state.moveDownPassive);
 
     const [deletePassiveId, setDeletePassiveId] = useState<string | null>(null);
-    const [tagBuilderData, setTagBuilderData] = useState<{ id: string; type: 'passive' } | null>(null);
+    const [tagBuilderData, setTagBuilderData] = useState<{ id: string; type: 'passive'; initialTag?: string } | null>(
+        null
+    );
     const [showTagsGuide, setShowTagsGuide] = useState(false);
     const [showInfoModal, setShowInfoModal] = useState(false);
 
@@ -46,7 +62,8 @@ export function PassivesTable() {
             <CollapsingSection title="PASSIVES" headerElements={passivesHeaderElements} className="sheet-panel">
                 {passives.length === 0 ? (
                     <div className="passives-table__empty text-subtext">
-                        No passives added yet. Click &ldquo;+ Add Passive&rdquo; to add permanent stat increases, boons, or traits.
+                        No passives added yet. Click &ldquo;+ Add Passive&rdquo; to add permanent stat increases, boons,
+                        or traits.
                     </div>
                 ) : (
                     <>
@@ -55,15 +72,41 @@ export function PassivesTable() {
                                 <thead>
                                     <tr className="text-theme-header">
                                         <th className="passives-table__cell-check" title="Active? Toggle effect on/off">
-                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <div
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}
+                                            >
                                                 <Check size={16} />
                                             </div>
                                         </th>
                                         <th className="passives-table__cell-name">Passive Name</th>
                                         <th className="passives-table__cell-desc">Effect / Tags</th>
-                                        <th className="passives-table__cell-cond" title="Show in Round Tracker Conditions (default off)">
-                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <th
+                                            className="passives-table__cell-cond"
+                                            title="Show in Round Tracker Conditions (default off)"
+                                        >
+                                            <div
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}
+                                            >
                                                 <Eye size={15} />
+                                            </div>
+                                        </th>
+                                        <th className="passives-table__cell-log" title="Show in Roll Log (default on)">
+                                            <div
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}
+                                            >
+                                                <Dices size={15} />
                                             </div>
                                         </th>
                                         <th className="passives-table__cell-sort">Sort</th>
@@ -78,8 +121,14 @@ export function PassivesTable() {
                                                     type="checkbox"
                                                     className="passives-table__checkbox"
                                                     checked={passive.active !== false}
-                                                    onChange={(e) => updatePassive(passive.id, 'active', e.target.checked)}
-                                                    title={passive.active !== false ? 'Passive active (Click to disable)' : 'Passive disabled (Click to activate)'}
+                                                    onChange={(e) =>
+                                                        updatePassive(passive.id, 'active', e.target.checked)
+                                                    }
+                                                    title={
+                                                        passive.active !== false
+                                                            ? 'Passive active (Click to disable)'
+                                                            : 'Passive disabled (Click to activate)'
+                                                    }
                                                 />
                                             </td>
                                             <td className="passives-table__cell-name">
@@ -93,30 +142,57 @@ export function PassivesTable() {
                                             </td>
                                             <td className="passives-table__cell-desc">
                                                 <div className="passives-table__desc-wrapper">
+                                                    <TagPillList
+                                                        tags={extractTagsFromText(passive.desc)}
+                                                        onEditTag={(tagStr) =>
+                                                            setTagBuilderData({
+                                                                id: passive.id,
+                                                                type: 'passive',
+                                                                initialTag: tagStr
+                                                            })
+                                                        }
+                                                        onDeleteTag={(rawTag) => {
+                                                            const updated = passive.desc
+                                                                .replace(rawTag, '')
+                                                                .replace(/\s+/g, ' ')
+                                                                .trim();
+                                                            updatePassive(passive.id, 'desc', updated);
+                                                        }}
+                                                        onAddTag={() =>
+                                                            setTagBuilderData({ id: passive.id, type: 'passive' })
+                                                        }
+                                                        emptyText="No tags"
+                                                    />
                                                     <input
                                                         type="text"
-                                                        className="passives-table__input text-subtext"
-                                                        value={passive.desc}
-                                                        onChange={(e) => updatePassive(passive.id, 'desc', e.target.value)}
-                                                        placeholder="Tags: [Vit +1], [Acc +1: Low Acc]"
+                                                        className="passives-table__note-input text-subtext"
+                                                        value={passive.desc.replace(/\[[^\]]+\]/g, '').trim()}
+                                                        onChange={(e) => {
+                                                            const tagsOnly = (
+                                                                passive.desc.match(/\[[^\]]+\]/g) || []
+                                                            ).join(' ');
+                                                            const newDesc = `${tagsOnly} ${e.target.value}`.trim();
+                                                            updatePassive(passive.id, 'desc', newDesc);
+                                                        }}
+                                                        placeholder="Notes (optional)..."
                                                     />
-                                                    <button
-                                                        type="button"
-                                                        className="action-button action-button--ghost passives-table__tag-btn"
-                                                        onClick={() => setTagBuilderData({ id: passive.id, type: 'passive' })}
-                                                        title="Open Tag Builder for this Passive"
-                                                    >
-                                                        <Tag size={14} />
-                                                    </button>
                                                 </div>
                                             </td>
                                             <td className="passives-table__cell-cond">
                                                 <button
                                                     type="button"
                                                     className={`passives-table__cond-btn ${
-                                                        passive.showInConditions ? 'passives-table__cond-btn--active' : ''
+                                                        passive.showInConditions
+                                                            ? 'passives-table__cond-btn--active'
+                                                            : ''
                                                     }`}
-                                                    onClick={() => updatePassive(passive.id, 'showInConditions', !passive.showInConditions)}
+                                                    onClick={() =>
+                                                        updatePassive(
+                                                            passive.id,
+                                                            'showInConditions',
+                                                            !passive.showInConditions
+                                                        )
+                                                    }
                                                     title={
                                                         passive.showInConditions
                                                             ? 'Showing in Round Tracker Conditions (Click to hide)'
@@ -126,8 +202,44 @@ export function PassivesTable() {
                                                     {passive.showInConditions ? (
                                                         <Eye size={16} style={{ color: 'var(--primary, #3b82f6)' }} />
                                                     ) : (
-                                                        <EyeOff size={16} style={{ opacity: 0.35, color: 'var(--text-main)' }} />
+                                                        <EyeOff
+                                                            size={16}
+                                                            style={{ opacity: 0.35, color: 'var(--text-main)' }}
+                                                        />
                                                     )}
+                                                </button>
+                                            </td>
+                                            <td className="passives-table__cell-log">
+                                                <button
+                                                    type="button"
+                                                    className={`passives-table__cond-btn ${
+                                                        passive.showInRollLog !== false
+                                                            ? 'passives-table__cond-btn--active'
+                                                            : ''
+                                                    }`}
+                                                    onClick={() =>
+                                                        updatePassive(
+                                                            passive.id,
+                                                            'showInRollLog',
+                                                            passive.showInRollLog === false ? true : false
+                                                        )
+                                                    }
+                                                    title={
+                                                        passive.showInRollLog !== false
+                                                            ? 'Showing in Roll Log (Click to hide)'
+                                                            : 'Hidden from Roll Log (Click to show)'
+                                                    }
+                                                >
+                                                    <Dices
+                                                        size={16}
+                                                        style={{
+                                                            color:
+                                                                passive.showInRollLog !== false
+                                                                    ? 'var(--primary, #3b82f6)'
+                                                                    : 'var(--text-main)',
+                                                            opacity: passive.showInRollLog !== false ? 1 : 0.35
+                                                        }}
+                                                    />
                                                 </button>
                                             </td>
                                             <td className="passives-table__cell-sort">
@@ -188,27 +300,44 @@ export function PassivesTable() {
                                         />
                                     </div>
                                     <div className="passives-table__desc-wrapper">
+                                        <TagPillList
+                                            tags={extractTagsFromText(passive.desc)}
+                                            onEditTag={(tagStr) =>
+                                                setTagBuilderData({
+                                                    id: passive.id,
+                                                    type: 'passive',
+                                                    initialTag: tagStr
+                                                })
+                                            }
+                                            onDeleteTag={(rawTag) => {
+                                                const updated = passive.desc
+                                                    .replace(rawTag, '')
+                                                    .replace(/\s+/g, ' ')
+                                                    .trim();
+                                                updatePassive(passive.id, 'desc', updated);
+                                            }}
+                                            onAddTag={() => setTagBuilderData({ id: passive.id, type: 'passive' })}
+                                            emptyText="No tags"
+                                        />
                                         <input
                                             type="text"
-                                            className="passives-table__input text-subtext"
-                                            value={passive.desc}
-                                            onChange={(e) => updatePassive(passive.id, 'desc', e.target.value)}
-                                            placeholder="Tags: [Vit +1], [Acc +1: Low Acc]"
+                                            className="passives-table__note-input text-subtext"
+                                            value={passive.desc.replace(/\[[^\]]+\]/g, '').trim()}
+                                            onChange={(e) => {
+                                                const tagsOnly = (passive.desc.match(/\[[^\]]+\]/g) || []).join(' ');
+                                                const newDesc = `${tagsOnly} ${e.target.value}`.trim();
+                                                updatePassive(passive.id, 'desc', newDesc);
+                                            }}
+                                            placeholder="Notes (optional)..."
                                         />
-                                        <button
-                                            type="button"
-                                            className="action-button action-button--ghost passives-table__tag-btn"
-                                            onClick={() => setTagBuilderData({ id: passive.id, type: 'passive' })}
-                                            title="Open Tag Builder"
-                                        >
-                                            <Tag size={14} />
-                                        </button>
                                     </div>
                                     <div className="passives-table__mobile-actions">
                                         <button
                                             type="button"
                                             className="action-button action-button--dark passives-table__tags-guide-btn"
-                                            onClick={() => updatePassive(passive.id, 'showInConditions', !passive.showInConditions)}
+                                            onClick={() =>
+                                                updatePassive(passive.id, 'showInConditions', !passive.showInConditions)
+                                            }
                                         >
                                             {passive.showInConditions ? (
                                                 <>
@@ -219,6 +348,32 @@ export function PassivesTable() {
                                                     <EyeOff size={14} style={{ opacity: 0.5 }} /> Hide from Conditions
                                                 </>
                                             )}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="action-button action-button--dark passives-table__tags-guide-btn"
+                                            onClick={() =>
+                                                updatePassive(
+                                                    passive.id,
+                                                    'showInRollLog',
+                                                    passive.showInRollLog === false ? true : false
+                                                )
+                                            }
+                                            title={
+                                                passive.showInRollLog !== false
+                                                    ? 'Showing in Roll Log (Click to hide)'
+                                                    : 'Hidden from Roll Log (Click to show)'
+                                            }
+                                        >
+                                            <Dices
+                                                size={14}
+                                                style={{
+                                                    color:
+                                                        passive.showInRollLog !== false ? 'var(--primary)' : 'inherit',
+                                                    opacity: passive.showInRollLog !== false ? 1 : 0.5
+                                                }}
+                                            />
+                                            {passive.showInRollLog !== false ? 'In Roll Log' : 'Hide from Log'}
                                         </button>
                                         <div className="passives-table__sort-group">
                                             <button
@@ -266,6 +421,7 @@ export function PassivesTable() {
                 <TagBuilderModal
                     targetId={tagBuilderData.id}
                     targetType="passive"
+                    initialTag={tagBuilderData.initialTag}
                     onClose={() => setTagBuilderData(null)}
                 />
             )}
@@ -275,19 +431,40 @@ export function PassivesTable() {
 
             {/* Info / Tooltip Modal */}
             {showInfoModal && (
-                <div className="tracker-modal__overlay" onClick={(e) => e.target === e.currentTarget && setShowInfoModal(false)}>
+                <div
+                    className="tracker-modal__overlay"
+                    onClick={(e) => e.target === e.currentTarget && setShowInfoModal(false)}
+                >
                     <div className="tracker-modal__content">
                         <h3 className="tracker-modal__title text-title-primary">Passives & Permanent Boons</h3>
-                        <p className="tracker-modal__description text-subtext" style={{ color: 'var(--text-main)', lineHeight: 1.5 }}>
-                            Passives allow you to track permanent stat increases, boons, blessings, or training perks that aren't equipped inventory items (such as a <strong>Rare Candy</strong> bonus attribute, <strong>Gym Leader Blessing</strong>, or custom background perk).
+                        <p
+                            className="tracker-modal__description text-subtext"
+                            style={{ color: 'var(--text-main)', lineHeight: 1.5 }}
+                        >
+                            Passives allow you to track permanent stat increases, boons, blessings, or training perks
+                            that aren't equipped inventory items (such as a <strong>Rare Candy</strong> bonus attribute,{' '}
+                            <strong>Legendary Pokemon Blessing</strong>, or custom background perk).
                         </p>
-                        <p className="tracker-modal__description text-subtext" style={{ marginTop: '8px', color: 'var(--text-main)', lineHeight: 1.5 }}>
-                            Passives use the same <strong>Smart Tags</strong> syntax (e.g. <code>[Vit +1]</code>, <code>[Will +1]</code>, <code>[Acc +1: Low Acc]</code>, <code>[gain temp hp 5]</code>) and automatically calculate into your attributes, HP/Will totals, move rolls, and round effects.
+                        <p
+                            className="tracker-modal__description text-subtext"
+                            style={{ marginTop: '8px', color: 'var(--text-main)', lineHeight: 1.5 }}
+                        >
+                            Passives display bonuses as <strong>Interactive Smart Tag Pills</strong>. Use the{' '}
+                            <strong>+ Tag</strong> button to add bonuses visually via the Tag Builder. Click any pill to
+                            adjust numbers or click ✕ to delete—no typing brackets required!
                         </p>
-                        <p className="tracker-modal__description text-subtext" style={{ marginTop: '8px', color: 'var(--text-main)', lineHeight: 1.5 }}>
-                            Use the <strong>Eye icon</strong> toggle on any passive to choose whether it appears in the <strong>Conditions</strong> section of the Round Tracker.
+                        <p
+                            className="tracker-modal__description text-subtext"
+                            style={{ marginTop: '8px', color: 'var(--text-main)', lineHeight: 1.5 }}
+                        >
+                            Use the <strong>Eye icon</strong> toggle on any passive to choose whether it appears in the{' '}
+                            <strong>Conditions</strong> section of the Round Tracker. Use the <strong>Dice icon</strong>{' '}
+                            toggle to include or exclude it from appearing in the <strong>Roll Log</strong>.
                         </p>
-                        <div className="tracker-modal__actions tracker-modal__actions--center" style={{ gap: '8px', marginTop: '16px' }}>
+                        <div
+                            className="tracker-modal__actions tracker-modal__actions--center"
+                            style={{ gap: '8px', marginTop: '16px' }}
+                        >
                             <button
                                 type="button"
                                 className="action-button action-button--theme"

@@ -1,5 +1,21 @@
-import { useState } from 'react';
-import { Tag, X, Zap, Swords, Shield, Wrench, Clock, Sparkles, Flame, Plus, Award, TrendingUp } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import {
+    Tag,
+    X,
+    Zap,
+    Swords,
+    Shield,
+    Wrench,
+    Clock,
+    Sparkles,
+    Flame,
+    Plus,
+    Award,
+    TrendingUp,
+    Check,
+    Trash2,
+    AlertTriangle
+} from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { POKEMON_TYPES } from '../../../data/constants';
 import type { TagBuilderModalProps, TagBuilderConfig } from './tagBuilder/tagBuilderTypes';
@@ -11,32 +27,65 @@ import {
     PRESETS,
     getDefaultTargetForCategory
 } from './tagBuilder/tagBuilderConstants';
-import { buildTagString, generateExplanation } from './tagBuilder/tagBuilderLogic';
+import { buildTagString, generateExplanation, parseTagStringToConfig } from './tagBuilder/tagBuilderLogic';
 import { TagBuilderConfigSection } from './tagBuilder/TagBuilderConfigSection';
 import { TagBuilderPreview } from './tagBuilder/TagBuilderPreview';
 import './TagBuilderModal.css';
 
-export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderModalProps) {
+export function TagBuilderModal({ targetId, targetType, initialTag, onClose }: TagBuilderModalProps) {
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
     const extraCategories = useCharacterStore((state) => state.extraCategories);
 
-    const { targetName, existingTags, handleDeleteTag, handleAppendTag } = useTagBuilderTarget(targetId, targetType);
+    const { targetName, existingTags, handleDeleteTag, handleReplaceTag, handleAppendTag } = useTagBuilderTarget(
+        targetId,
+        targetType
+    );
 
     // Tag Builder Configuration State
-    const [config, setConfig] = useState<TagBuilderConfig>({
-        category: 'stat',
-        target: 'Str',
-        value: 1,
-        value2: 6,
-        reqGroup: 'none',
-        typeOption: '',
-        condition: 'none',
-        customMaxStacks: 5
+    const [config, setConfig] = useState<TagBuilderConfig>(() => {
+        const defaults: TagBuilderConfig = {
+            category: targetType === 'move' ? 'move_mechanics' : 'stat',
+            target: targetType === 'move' ? 'High Critical' : 'Str',
+            value: 1,
+            value2: 6,
+            reqGroup: 'none',
+            typeOption: '',
+            condition: 'none',
+            customMaxStacks: 5
+        };
+        if (initialTag) {
+            const parsed = parseTagStringToConfig(initialTag, targetType === 'move');
+            if (parsed) {
+                return {
+                    ...defaults,
+                    ...parsed,
+                    value2: parsed.value2 ?? defaults.value2,
+                    customMaxStacks: parsed.customMaxStacks ?? defaults.customMaxStacks
+                };
+            }
+        }
+        return defaults;
     });
 
     const updateConfig = <K extends keyof TagBuilderConfig>(key: K, val: TagBuilderConfig[K]) => {
         setConfig((prev) => ({ ...prev, [key]: val }));
     };
+
+    // Double-confirmation safeguards for deletions
+    const [confirmingChip, setConfirmingChip] = useState<string | null>(null);
+    const [confirmDeleteInitial, setConfirmDeleteInitial] = useState(false);
+
+    useEffect(() => {
+        if (!confirmingChip) return;
+        const timer = setTimeout(() => setConfirmingChip(null), 4000);
+        return () => clearTimeout(timer);
+    }, [confirmingChip]);
+
+    useEffect(() => {
+        if (!confirmDeleteInitial) return;
+        const timer = setTimeout(() => setConfirmDeleteInitial(false), 4000);
+        return () => clearTimeout(timer);
+    }, [confirmDeleteInitial]);
 
     const types = [...POKEMON_TYPES.filter((t) => t !== ''), ...roomCustomTypes.map((t) => t.name)];
 
@@ -79,7 +128,11 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
 
     const handleConfirm = () => {
         if (currentBuiltTag) {
-            handleAppendTag(currentBuiltTag);
+            if (initialTag) {
+                handleReplaceTag(initialTag, currentBuiltTag);
+            } else {
+                handleAppendTag(currentBuiltTag);
+            }
         }
         onClose();
     };
@@ -95,10 +148,21 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                 <div className="tag-builder__header">
                     <div className="tag-builder__title-group">
                         <Tag size={18} style={{ color: 'var(--primary, #3b82f6)' }} />
-                        <h3 className="tag-builder__title text-theme-header">Tag Builder</h3>
+                        <h3 className="tag-builder__title text-theme-header">
+                            {initialTag ? 'Edit Tag' : 'Tag Builder'}
+                        </h3>
                         <span className="tag-builder__target-badge" title={targetName}>
                             {targetName}
                         </span>
+                        {initialTag && (
+                            <span
+                                className="tag-builder__target-badge"
+                                style={{ background: 'var(--primary)', color: '#fff' }}
+                                title={initialTag}
+                            >
+                                {initialTag}
+                            </span>
+                        )}
                     </div>
                     <button
                         type="button"
@@ -115,19 +179,59 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                     <span className="tag-builder__section-label">Current Tags on {targetName}:</span>
                     {existingTags.length > 0 ? (
                         <div className="tag-builder__chip-list">
-                            {existingTags.map((et, i) => (
-                                <span key={i} className="tag-builder__existing-chip">
-                                    {et}
-                                    <button
-                                        type="button"
-                                        onClick={() => handleDeleteTag(et)}
-                                        className="tag-builder__chip-del"
-                                        title={`Delete ${et}`}
+                            {existingTags.map((et: string, i: number) => {
+                                const isConfirming = confirmingChip === et;
+                                return (
+                                    <span
+                                        key={i}
+                                        className={`tag-builder__existing-chip ${
+                                            isConfirming ? 'tag-builder__existing-chip--confirming' : ''
+                                        }`}
                                     >
-                                        <X size={12} />
-                                    </button>
-                                </span>
-                            ))}
+                                        {isConfirming ? 'Delete?' : et}
+                                        {isConfirming ? (
+                                            <span
+                                                style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '3px',
+                                                    marginLeft: '4px'
+                                                }}
+                                            >
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        handleDeleteTag(et);
+                                                        setConfirmingChip(null);
+                                                    }}
+                                                    className="tag-builder__chip-del"
+                                                    style={{ color: '#ef4444' }}
+                                                    title={`Confirm delete ${et}`}
+                                                >
+                                                    <Check size={11} />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setConfirmingChip(null)}
+                                                    className="tag-builder__chip-del"
+                                                    title="Cancel"
+                                                >
+                                                    <X size={11} />
+                                                </button>
+                                            </span>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => setConfirmingChip(et)}
+                                                className="tag-builder__chip-del"
+                                                title={`Delete ${et} (requires confirmation)`}
+                                            >
+                                                <X size={12} />
+                                            </button>
+                                        )}
+                                    </span>
+                                );
+                            })}
                         </div>
                     ) : (
                         <span className="text-subtext" style={{ fontSize: '0.74rem', fontStyle: 'italic' }}>
@@ -225,6 +329,27 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
 
                 {/* Modal Footer Actions */}
                 <div className="tag-builder__actions">
+                    {initialTag && (
+                        <button
+                            type="button"
+                            className={`action-button action-button--red tag-builder__btn-del text-theme-header ${
+                                confirmDeleteInitial ? 'tag-builder__btn-del--confirming' : ''
+                            }`}
+                            style={{ marginRight: 'auto' }}
+                            onClick={() => {
+                                if (!confirmDeleteInitial) {
+                                    setConfirmDeleteInitial(true);
+                                    return;
+                                }
+                                handleDeleteTag(initialTag);
+                                onClose();
+                            }}
+                            title={confirmDeleteInitial ? `Confirm deletion of ${initialTag}` : `Delete ${initialTag}`}
+                        >
+                            {confirmDeleteInitial ? <AlertTriangle size={15} /> : <Trash2 size={15} />}
+                            {confirmDeleteInitial ? 'Confirm Delete?' : 'Delete Tag'}
+                        </button>
+                    )}
                     <button
                         type="button"
                         className="action-button action-button--dark tag-builder__btn-cancel text-theme-header"
@@ -238,7 +363,8 @@ export function TagBuilderModal({ targetId, targetType, onClose }: TagBuilderMod
                         className="action-button action-button--theme tag-builder__btn-confirm text-theme-header"
                         onClick={handleConfirm}
                     >
-                        <Plus size={16} /> Append Tag
+                        {initialTag ? <Check size={16} /> : <Plus size={16} />}
+                        {initialTag ? 'Save Changes' : 'Append Tag'}
                     </button>
                 </div>
             </div>

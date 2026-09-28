@@ -4,6 +4,8 @@ import { useCharacterStore } from '../../../store/useCharacterStore';
 import { TYPE_COLORS } from '../../../data/constants';
 import { isStandaloneMode } from '../../../utils/storageAdapter';
 import { TagBuilderModal } from '../items/TagBuilderModal';
+import { TagPillList } from '../../ui/TagPillList';
+import { extractMoveTags } from '../items/tagBuilder/tagBuilderLogic';
 import { broadcastInfo } from '../../../utils/diceRoller';
 import './MoveEditModal.css';
 
@@ -18,6 +20,7 @@ export function MoveEditModal({ moveId, onClose }: MoveEditModalProps) {
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
     const role = useCharacterStore((state) => state.role);
 
+    const [tagBuilderInitialTag, setTagBuilderInitialTag] = useState<string | undefined>(undefined);
     const [showTagBuilder, setShowTagBuilder] = useState(false);
     const [isBroadcasted, setIsBroadcasted] = useState(false);
 
@@ -127,8 +130,32 @@ export function MoveEditModal({ moveId, onClose }: MoveEditModalProps) {
                             <FileText size={13} style={{ color: typeColor }} /> Description & Combat Tags
                         </span>
                         <span className="text-subtext" style={{ fontSize: '0.72rem', opacity: 0.7 }}>
-                            Editable text
+                            Editable text & active pills
                         </span>
+                    </div>
+
+                    <div style={{ marginBottom: '8px' }}>
+                        <TagPillList
+                            tags={extractMoveTags(move.desc || '')}
+                            onEditTag={(tagStr) => {
+                                setTagBuilderInitialTag(tagStr);
+                                setShowTagBuilder(true);
+                            }}
+                            onDeleteTag={(rawTag) => {
+                                let updated = (move.desc || '').replace(rawTag, '');
+                                updated = updated
+                                    .replace(/\s+/g, ' ')
+                                    .replace(/\s*\.\s*\./g, '.')
+                                    .trim();
+                                updateMove(move.id, 'desc', updated);
+                            }}
+                            onAddTag={() => {
+                                setTagBuilderInitialTag(undefined);
+                                setShowTagBuilder(true);
+                            }}
+                            emptyText="No tags or keywords detected"
+                            addLabel="Add Tag"
+                        />
                     </div>
 
                     <textarea
@@ -141,8 +168,8 @@ export function MoveEditModal({ moveId, onClose }: MoveEditModalProps) {
                     />
 
                     <div className="move-edit-modal__hint text-subtext">
-                        Tip: Use the <strong>Tag Builder</strong> to visually construct and append combat modifier tags
-                        to this move!
+                        Tip: Click any tag or keyword pill above to edit its numbers in the Tag Builder, click ✕ to
+                        delete, or use <strong>+ Add Tag</strong> to append new modifiers!
                     </div>
                 </div>
 
@@ -153,7 +180,10 @@ export function MoveEditModal({ moveId, onClose }: MoveEditModalProps) {
                         <button
                             type="button"
                             className="action-button action-button--dark move-edit-modal__action-btn"
-                            onClick={() => setShowTagBuilder(true)}
+                            onClick={() => {
+                                setTagBuilderInitialTag(undefined);
+                                setShowTagBuilder(true);
+                            }}
                             title="Open Tag Builder to add combat tags"
                         >
                             <Tags size={14} /> Tag Builder
@@ -191,7 +221,15 @@ export function MoveEditModal({ moveId, onClose }: MoveEditModalProps) {
             </div>
 
             {showTagBuilder && (
-                <TagBuilderModal targetId={move.id} targetType="move" onClose={() => setShowTagBuilder(false)} />
+                <TagBuilderModal
+                    targetId={move.id}
+                    targetType="move"
+                    initialTag={tagBuilderInitialTag}
+                    onClose={() => {
+                        setShowTagBuilder(false);
+                        setTagBuilderInitialTag(undefined);
+                    }}
+                />
             )}
         </div>
     );

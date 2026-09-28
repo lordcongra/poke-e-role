@@ -106,6 +106,47 @@
     gap: 6px;
 }
 
+.tracker-section__boosts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+}
+
+.tracker-section__boost-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 3px 6px;
+    border-radius: 5px;
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px dashed rgba(245, 158, 11, 0.35);
+    margin: 4px 0 2px 0;
+}
+
+.tracker-section__boost-label-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tracker-section__boost-icon {
+    color: #f59e0b;
+}
+
+.tracker-section__boost-stepper {
+    display: inline-flex;
+    align-items: center;
+}
+
+.tracker-section__boost-toggle-btn {
+    padding: 2px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
 .tracker-section__roll-btn {
     padding: 2px 8px;
     display: flex;
