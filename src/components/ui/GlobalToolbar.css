@@ -60,6 +60,34 @@
     transform: rotate(0deg);
 }
 
+.global-toolbar__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.global-toolbar__btn--bug-header {
+    background-color: var(--row-odd);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.global-toolbar__btn--bug-header:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background-color: color-mix(in srgb, var(--primary) 10%, var(--row-odd));
+}
+
 .global-toolbar__btn--back-header {
     background-color: var(--semantic-danger);
     border: 1px solid var(--semantic-danger-hover);

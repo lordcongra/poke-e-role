@@ -28,6 +28,7 @@ import { BattleOrganizerSettingsModal } from '../modals/battleOrganizer/BattleOr
 import { getBattleOrganizerSettings } from '../modals/battleOrganizer/battleOrganizerSettingsHelper';
 import { PrintBattleOrganizer } from '../print/PrintBattleOrganizer';
 import { TrainerGeneratorModal } from '../modals/trainerGenerator';
+import { BugReportModal } from '../modals/settings';
 
 // Icons
 import {
@@ -51,7 +52,8 @@ import {
     Sun,
     Moon,
     Save,
-    Upload
+    Upload,
+    Bug
 } from 'lucide-react';
 import './GlobalToolbar.css';
 
@@ -69,6 +71,7 @@ type ActiveModal =
     | 'gm-screen'
     | 'battle-organizer'
     | 'battle-organizer-settings'
+    | 'bug-report'
     | null;
 
 export function GlobalToolbar() {
@@ -353,19 +356,27 @@ export function GlobalToolbar() {
                     TABLE TOOLS & SETTINGS
                 </div>
 
-                {isStandaloneMode && activeTokenId && (
+                <div className="global-toolbar__header-actions" onClick={(e) => e.stopPropagation()}>
                     <button
                         type="button"
-                        className="global-toolbar__btn--back-header action-button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleReturnToMenu();
-                        }}
-                        title="Close sheet and return to file browser"
+                        className="global-toolbar__btn--bug-header action-button"
+                        onClick={() => setActiveModal('bug-report')}
+                        title="Report a bug or send feedback directly to Congra"
                     >
-                        <ArrowLeft size={16} /> Back to Menu
+                        <Bug size={14} color="var(--primary)" /> Report Bug
                     </button>
-                )}
+
+                    {isStandaloneMode && activeTokenId && (
+                        <button
+                            type="button"
+                            className="global-toolbar__btn--back-header action-button"
+                            onClick={handleReturnToMenu}
+                            title="Close sheet and return to file browser"
+                        >
+                            <ArrowLeft size={16} /> Back to Menu
+                        </button>
+                    )}
+                </div>
             </div>
 
             {isExpanded && (
@@ -612,6 +623,7 @@ export function GlobalToolbar() {
                     onPrint={() => setIsPrintingBattleOrganizer(true)}
                 />
             )}
+            {activeModal === 'bug-report' && <BugReportModal onClose={() => setActiveModal(null)} />}
 
             {isPrintingBattleOrganizer && <PrintBattleOrganizer onDone={() => setIsPrintingBattleOrganizer(false)} />}
         </div>
