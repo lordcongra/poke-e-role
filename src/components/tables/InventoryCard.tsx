@@ -154,6 +154,9 @@ export const InventoryCard = memo(function InventoryCard({
         }
     };
 
+    const itemTags = extractItemTags(item);
+    const hasTags = itemTags.length > 0;
+
     return (
         <div className={`inventory-card ${item.active ? 'inventory-card--active' : ''}`}>
             {/* Top Control Bar: Equip Badge Toggle, Qty, Sort, Delete */}
@@ -255,9 +258,15 @@ export const InventoryCard = memo(function InventoryCard({
                 </button>
                 <button
                     type="button"
-                    className="action-button action-button--dark inventory-card__action-btn"
+                    className={`action-button action-button--dark inventory-card__action-btn ${
+                        hasTags ? 'inventory-card__action-btn--tag-active' : ''
+                    }`}
                     onClick={() => setTagBuilderData({ id: item.id, type: 'item' })}
-                    title="Add Smart Tags"
+                    title={
+                        hasTags
+                            ? `Smart Tags: ${itemTags.map((t) => t.tag).join(' ')} (Click to edit)`
+                            : 'Add Smart Tags'
+                    }
                     aria-label="Add Smart Tags"
                 >
                     <Tag size={16} />
@@ -265,30 +274,9 @@ export const InventoryCard = memo(function InventoryCard({
             </div>
 
             {/* Effect / Notes Area */}
-            <div className="inventory-card__desc-row" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {extractItemTags(item).length > 0 && (
-                    <TagPillList
-                        tags={extractItemTags(item)}
-                        onEditTag={(tagStr) => setTagBuilderData({ id: item.id, type: 'item', initialTag: tagStr })}
-                        onDeleteTag={(rawTag) => {
-                            const currentTags =
-                                item.tags !== undefined ? item.tags : (item.desc.match(/\[[^\]]+\]/g) || []).join(' ');
-                            const updated = currentTags.replace(rawTag, '').replace(/\s+/g, ' ').trim();
-                            updateInventoryItem(item.id, 'tags', updated);
-                            if (item.desc.includes(rawTag)) {
-                                const cleanDesc = item.desc
-                                    .replace(rawTag, '')
-                                    .replace(/\n\s*\n+/g, '\n')
-                                    .trim();
-                                updateInventoryItem(item.id, 'desc', cleanDesc);
-                            }
-                        }}
-                        onAddTag={() => setTagBuilderData({ id: item.id, type: 'item' })}
-                        showAddButton={false}
-                    />
-                )}
+            <div className="inventory-card__desc-box">
                 <textarea
-                    className="identity-grid__input form-input--item-desc inventory-card__desc-input text-subtext"
+                    className="inventory-card__desc-textarea text-subtext"
                     style={{ color: 'var(--text-main)' }}
                     value={item.desc}
                     onChange={(event) => updateInventoryItem(item.id, 'desc', event.target.value)}
@@ -312,6 +300,36 @@ export const InventoryCard = memo(function InventoryCard({
                     placeholder="Effect / Notes..."
                     rows={2}
                 />
+                {itemTags.length > 0 && (
+                    <div
+                        className={`inventory-card__desc-tags ${item.active === false ? 'inventory-card__desc-tags--inactive' : ''}`}
+                        title={
+                            item.active === false
+                                ? 'Item unequipped (tags inactive in rolls — equip to activate)'
+                                : 'Item equipped (tags active in rolls)'
+                        }
+                    >
+                        <TagPillList
+                            tags={itemTags}
+                            onEditTag={(tagStr) => setTagBuilderData({ id: item.id, type: 'item', initialTag: tagStr })}
+                            onDeleteTag={(rawTag) => {
+                                const currentTags =
+                                    item.tags !== undefined ? item.tags : (item.desc.match(/\[[^\]]+\]/g) || []).join(' ');
+                                const updated = currentTags.replace(rawTag, '').replace(/\s+/g, ' ').trim();
+                                updateInventoryItem(item.id, 'tags', updated);
+                                if (item.desc.includes(rawTag)) {
+                                    const cleanDesc = item.desc
+                                        .replace(rawTag, '')
+                                        .replace(/\n\s*\n+/g, '\n')
+                                        .trim();
+                                    updateInventoryItem(item.id, 'desc', cleanDesc);
+                                }
+                            }}
+                            onAddTag={() => setTagBuilderData({ id: item.id, type: 'item' })}
+                            showAddButton={false}
+                        />
+                    </div>
+                )}
             </div>
         </div>
     );

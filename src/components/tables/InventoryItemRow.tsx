@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { lookupItemDetails } from '../../utils/itemLookupUtils';
 import { imageManager } from '../../utils/imageManager';
@@ -7,8 +7,8 @@ import type { InventoryItem } from '../../store/storeTypes';
 import { NumberSpinner } from '../ui/NumberSpinner';
 import { KNOWN_ITEMS } from '../../data/constants';
 import { Info, Tag, ChevronUp, ChevronDown, X, Image as ImageIcon, Dices } from 'lucide-react';
-import { TagPillList } from '../ui/TagPillList';
 import { extractItemTags } from '../modals/items/tagBuilder/tagBuilderLogic';
+import { TagPillList } from '../ui/TagPillList';
 import './InventoryTable.css';
 
 interface InventoryItemRowProps {
@@ -78,6 +78,14 @@ export function InventoryItemRow({
         setPrevName(item.name);
         setLocalName(item.name);
     }
+
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = `${Math.max(20, textareaRef.current.scrollHeight)}px`;
+        }
+    }, [item.desc]);
 
     const handleApplyItemLookup = async (nameQuery: string, forceOverwrite = false) => {
         const query = nameQuery.trim();
@@ -153,6 +161,9 @@ export function InventoryItemRow({
         }
     };
 
+    const itemTags = extractItemTags(item);
+    const hasTags = itemTags.length > 0;
+
     return (
         <tr className="data-table__row--dynamic">
             <td className="data-table__cell--middle">
@@ -209,9 +220,19 @@ export function InventoryItemRow({
                     </button>
                     <button
                         type="button"
-                        className="action-button action-button--ghost inventory-item__icon-btn inventory-item__icon-btn--tag"
+                        className={`action-button action-button--ghost inventory-item__icon-btn inventory-item__icon-btn--tag ${
+                            hasTags ? 'inventory-item__icon-btn--tag-active' : ''
+                        }`}
                         onClick={() => setTagBuilderData({ id: item.id, type: 'item' })}
-                        title="Add Smart Tags"
+                        title={
+                            hasTags
+                                ? `Smart Tags: ${itemTags.map((t) => t.tag).join(' ')} (Click to edit)`
+                                : 'Add Smart Tags'
+                        }
+                        style={{
+                            color: hasTags ? 'var(--primary, #3b82f6)' : undefined,
+                            opacity: hasTags ? 1 : 0.4
+                        }}
                     >
                         <Tag size={14} />
                     </button>
@@ -238,35 +259,19 @@ export function InventoryItemRow({
                 </div>
             </td>
             <td className="data-table__cell--middle inventory-item__desc-cell">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
-                    {extractItemTags(item).length > 0 && (
-                        <TagPillList
-                            tags={extractItemTags(item)}
-                            onEditTag={(tagStr) => setTagBuilderData({ id: item.id, type: 'item', initialTag: tagStr })}
-                            onDeleteTag={(rawTag) => {
-                                const currentTags =
-                                    item.tags !== undefined
-                                        ? item.tags
-                                        : (item.desc.match(/\[[^\]]+\]/g) || []).join(' ');
-                                const updated = currentTags.replace(rawTag, '').replace(/\s+/g, ' ').trim();
-                                updateInventoryItem(item.id, 'tags', updated);
-                                if (item.desc.includes(rawTag)) {
-                                    const cleanDesc = item.desc
-                                        .replace(rawTag, '')
-                                        .replace(/\n\s*\n+/g, '\n')
-                                        .trim();
-                                    updateInventoryItem(item.id, 'desc', cleanDesc);
-                                }
-                            }}
-                            onAddTag={() => setTagBuilderData({ id: item.id, type: 'item' })}
-                            showAddButton={false}
-                        />
-                    )}
+                <div className={`inventory-item__desc-box ${item.active === false ? 'inventory-item__desc-box--inactive' : ''}`}>
                     <textarea
-                        className="identity-grid__input form-input--item-desc inventory-item__desc-input text-subtext"
+                        ref={textareaRef}
+                        className="inventory-item__desc-textarea text-subtext"
                         style={{ color: 'var(--text-main)' }}
                         value={item.desc}
-                        onChange={(event) => updateInventoryItem(item.id, 'desc', event.target.value)}
+                        onChange={(event) => {
+                            updateInventoryItem(item.id, 'desc', event.target.value);
+                            if (textareaRef.current) {
+                                textareaRef.current.style.height = 'auto';
+                                textareaRef.current.style.height = `${Math.max(20, textareaRef.current.scrollHeight)}px`;
+                            }
+                        }}
                         onBlur={() => {
                             if (/\[.*?\]/.test(item.desc)) {
                                 const legacyMatches = Array.from(item.desc.matchAll(/\[(.*?)\]/g)).map(
@@ -285,8 +290,40 @@ export function InventoryItemRow({
                             }
                         }}
                         placeholder="Effect / Notes..."
-                        rows={2}
+                        rows={1}
                     />
+                    {hasTags && (
+                        <div
+                            className={`inventory-item__desc-tags ${item.active === false ? 'inventory-item__desc-tags--inactive' : ''}`}
+                            title={
+                                item.active === false
+                                    ? 'Item unequipped (tags inactive in rolls — equip to activate)'
+                                    : 'Item equipped (tags active in rolls)'
+                            }
+                        >
+                            <TagPillList
+                                tags={itemTags}
+                                size="sm"
+                                onEditTag={(tagStr) => setTagBuilderData({ id: item.id, type: 'item', initialTag: tagStr })}
+                                onDeleteTag={(rawTag) => {
+                                    const currentTags =
+                                        item.tags !== undefined
+                                            ? item.tags
+                                            : (item.desc.match(/\[[^\]]+\]/g) || []).join(' ');
+                                    const updated = currentTags.replace(rawTag, '').replace(/\s+/g, ' ').trim();
+                                    updateInventoryItem(item.id, 'tags', updated);
+                                    if (item.desc.includes(rawTag)) {
+                                        const cleanDesc = item.desc
+                                            .replace(rawTag, '')
+                                            .replace(/\n\s*\n+/g, '\n')
+                                            .trim();
+                                        updateInventoryItem(item.id, 'desc', cleanDesc);
+                                    }
+                                }}
+                                showAddButton={false}
+                            />
+                        </div>
+                    )}
                 </div>
             </td>
             <td className="data-table__cell--middle">

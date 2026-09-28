@@ -418,8 +418,41 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
                         <div className="item-edit-modal__desc-header">
                             <span className="item-edit-modal__desc-label">Effect / Notes</span>
                         </div>
+                        <textarea
+                            className="item-edit-modal__desc-textarea text-subtext"
+                            style={{ color: 'var(--text-main)' }}
+                            value={item.desc}
+                            onChange={(e) => updateInventoryItem(item.id, 'desc', e.target.value)}
+                            onBlur={() => {
+                                if (/\[.*?\]/.test(item.desc)) {
+                                    const legacyMatches = Array.from(item.desc.matchAll(/\[(.*?)\]/g)).map(
+                                        (m) => `[${m[1].trim()}]`
+                                    );
+                                    const currentTagList = item.tags
+                                        ? Array.from(item.tags.matchAll(/\[(.*?)\]/g)).map((m) => `[${m[1].trim()}]`)
+                                        : [];
+                                    const merged = Array.from(new Set([...currentTagList, ...legacyMatches])).join(' ');
+                                    const cleaned = item.desc
+                                        .replace(/\[.*?\]/g, '')
+                                        .replace(/\n\s*\n+/g, '\n')
+                                        .trim();
+                                    updateInventoryItem(item.id, 'tags', merged);
+                                    updateInventoryItem(item.id, 'desc', cleaned);
+                                }
+                            }}
+                            placeholder="Enter item description, effect, or notes..."
+                            rows={3}
+                        />
                         {extractItemTags(item).length > 0 && (
-                            <div style={{ marginBottom: '8px' }}>
+                            <div
+                                style={{ marginTop: '4px' }}
+                                className={item.active === false ? 'inventory-item__desc-tags--inactive' : ''}
+                                title={
+                                    item.active === false
+                                        ? 'Item unequipped (tags inactive in rolls — equip to activate)'
+                                        : 'Item equipped (tags active in rolls)'
+                                }
+                            >
                                 <TagPillList
                                     tags={extractItemTags(item)}
                                     onEditTag={(tagStr) => {
@@ -449,31 +482,6 @@ export function ItemEditModal({ itemId, onClose }: ItemEditModalProps) {
                                 />
                             </div>
                         )}
-                        <textarea
-                            className="item-edit-modal__desc-textarea text-subtext"
-                            style={{ color: 'var(--text-main)' }}
-                            value={item.desc}
-                            onChange={(e) => updateInventoryItem(item.id, 'desc', e.target.value)}
-                            onBlur={() => {
-                                if (/\[.*?\]/.test(item.desc)) {
-                                    const legacyMatches = Array.from(item.desc.matchAll(/\[(.*?)\]/g)).map(
-                                        (m) => `[${m[1].trim()}]`
-                                    );
-                                    const currentTagList = item.tags
-                                        ? Array.from(item.tags.matchAll(/\[(.*?)\]/g)).map((m) => `[${m[1].trim()}]`)
-                                        : [];
-                                    const merged = Array.from(new Set([...currentTagList, ...legacyMatches])).join(' ');
-                                    const cleaned = item.desc
-                                        .replace(/\[.*?\]/g, '')
-                                        .replace(/\n\s*\n+/g, '\n')
-                                        .trim();
-                                    updateInventoryItem(item.id, 'tags', merged);
-                                    updateInventoryItem(item.id, 'desc', cleaned);
-                                }
-                            }}
-                            placeholder="Enter item description, effect, or notes..."
-                            rows={3}
-                        />
                         <div className="item-edit-modal__desc-toolbar">
                             <button
                                 type="button"

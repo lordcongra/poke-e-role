@@ -202,6 +202,12 @@
     color: var(--primary);
 }
 
+.inventory-card__action-btn--tag-active {
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
 .inventory-card__action-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -210,6 +216,69 @@
 /* --- Description / Notes Row --- */
 .inventory-card__desc-row {
     width: 100%;
+}
+
+.inventory-card__desc-box {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 44px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--input-bg);
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.inventory-card__desc-box:focus-within {
+    border-color: var(--primary);
+    background-color: var(--panel-alt);
+}
+
+.inventory-card__desc-textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    resize: vertical;
+    font-family: inherit;
+    min-height: 32px;
+    max-height: 120px;
+    box-sizing: border-box;
+    display: block;
+    color: var(--text-main);
+}
+
+.inventory-card__desc-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding-top: 4px;
+    border-top: 1px dashed color-mix(in srgb, var(--border) 60%, transparent);
+    width: 100%;
+}
+
+.inventory-card__desc-tags--inactive {
+    opacity: 0.65;
+}
+
+.inventory-card__desc-tags--inactive .tag-pill {
+    border-style: dashed;
+    filter: grayscale(35%);
+}
+
+.inventory-card__desc-tags--inactive .tag-pill:hover {
+    opacity: 1;
+    filter: none;
 }
 
 .inventory-card__desc-input {
