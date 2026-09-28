@@ -55,24 +55,28 @@ export function BugReportModal({ onClose }: BugReportModalProps) {
             // If character identity is empty and OBR is available, check selected token on scene
             if (!currentDiag.characterName && !currentDiag.characterSpecies && OBR.isAvailable) {
                 try {
-                    const selected = await OBR.scene.items.getSelected();
-                    if (selected.length > 0 && !isCancelled) {
-                        const item = selected[0];
-                        const rawMeta =
-                            (item.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown>) ||
-                            (item.metadata['stats'] as Record<string, unknown>) ||
-                            {};
-                        const name = (rawMeta['nickname'] as string) || (rawMeta['name'] as string) || item.name || '';
-                        const species = (rawMeta['species'] as string) || '';
-                        const rank = (rawMeta['rank'] as string) || '';
-                        if (name || species) {
-                            currentDiag = {
-                                ...currentDiag,
-                                characterName: name,
-                                characterSpecies: species,
-                                characterRank: rank,
-                                activeTokenId: item.id
-                            };
+                    const selection = await OBR.player.getSelection();
+                    if (selection && selection.length > 0 && !isCancelled) {
+                        const items = await OBR.scene.items.getItems(selection);
+                        if (items.length > 0 && !isCancelled) {
+                            const item = items[0];
+                            const rawMeta =
+                                (item.metadata['pokerole-pmd-extension/stats'] as Record<string, unknown>) ||
+                                (item.metadata['stats'] as Record<string, unknown>) ||
+                                {};
+                            const name =
+                                (rawMeta['nickname'] as string) || (rawMeta['name'] as string) || item.name || '';
+                            const species = (rawMeta['species'] as string) || '';
+                            const rank = (rawMeta['rank'] as string) || '';
+                            if (name || species) {
+                                currentDiag = {
+                                    ...currentDiag,
+                                    characterName: name,
+                                    characterSpecies: species,
+                                    characterRank: rank,
+                                    activeTokenId: item.id
+                                };
+                            }
                         }
                     }
                 } catch {
