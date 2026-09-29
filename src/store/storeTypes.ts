@@ -436,6 +436,8 @@ export interface IdentitySlice {
         gmOnlyAttributeLock?: boolean;
         coreLocked?: boolean;
         socialLocked?: boolean;
+        hpLocked?: boolean;
+        willLocked?: boolean;
         pmdSkills?: boolean;
         gmDemoMode: boolean;
 

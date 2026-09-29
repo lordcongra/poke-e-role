@@ -4,3 +4,4 @@ export * from './stateMapper';
 export * from './storageAdapter';
 export * from './syncService';
 export * from './homebrewStorage';
+export * from './userPreferences';

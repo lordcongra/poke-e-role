@@ -262,7 +262,7 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 </li>
             </ul>,
             <strong key="learnset-wishlist-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                <Bookmark size={16} /> Learnset Move Wishlist & Bookmarking
+                <Bookmark size={16} /> Learnset Wishlist & Type Theming
             </strong>,
             <ul
                 key="learnset-wishlist-list"
@@ -284,6 +284,31 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 </li>
                 <li>
                     <strong>Dedicated Wishlist Tab & Quick Action:</strong> Quickly view and manage all bookmarked moves in the dedicated Wishlist section of the Learnset modal.
+                </li>
+                <li>
+                    <strong>Move Type Theming:</strong> Added a toggle to the Learnset so move pills can theme after their type color.
+                </li>
+            </ul>,
+            <strong key="sheet-controls-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Lock size={16} /> Stats & Lock Protections
+            </strong>,
+            <ul
+                key="sheet-controls-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>Base HP & Base Will Stat Locks:</strong> Added lock toggles to the Base values of HP and Will. Keeps base stat allocations locked alongside Core and Social attributes while allowing current and maximum pools to remain freely modular.
+                </li>
+                <li>
+                    <strong>GM Permission Enforcement:</strong> Toggling Base HP or Will locks respects the Room Rules attribute lock setting, showing non-GM players an alert notification if GM permission is required to unlock.
                 </li>
             </ul>
         ]

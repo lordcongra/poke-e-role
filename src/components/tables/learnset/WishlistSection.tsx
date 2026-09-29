@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Bookmark, Plus } from 'lucide-react';
 import { LearnsetPill } from './LearnsetPill';
+import type { MoveTypeInfo } from './useLearnsetTypeColors';
 
 interface WishlistSectionProps {
     wishlist: string[];
     learnedSet: Set<string>;
     addingMoves: Set<string>;
+    getMoveTypeInfo?: (moveName: string) => MoveTypeInfo;
     onSelectMove: (moveName: string) => void;
     onQuickAdd: (moveName: string, e: React.MouseEvent) => void;
     onToggleWishlist: (moveName: string) => void;
@@ -17,6 +19,7 @@ export function WishlistSection({
     wishlist,
     learnedSet,
     addingMoves,
+    getMoveTypeInfo,
     onSelectMove,
     onQuickAdd,
     onToggleWishlist,
@@ -76,6 +79,7 @@ export function WishlistSection({
                             isWishlisted={true}
                             isAdding={addingMoves.has(moveName)}
                             showRemoveWishlist={true}
+                            typeInfo={getMoveTypeInfo?.(moveName)}
                             onSelectMove={onSelectMove}
                             onQuickAdd={onQuickAdd}
                             onToggleWishlist={onToggleWishlist}

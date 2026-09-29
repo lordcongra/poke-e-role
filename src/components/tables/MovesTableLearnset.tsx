@@ -1,10 +1,11 @@
 import { useState, useMemo, useCallback } from 'react';
-import { BookOpen, Bookmark, X } from 'lucide-react';
+import { BookOpen, Bookmark, X, Palette } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { MoveDetailModal } from '../modals/moveLookup/MoveDetailModal';
 import { fetchMoveData } from '../../utils/api/api';
 import { LearnsetSection } from './learnset/LearnsetSection';
 import { WishlistSection } from './learnset/WishlistSection';
+import { useLearnsetTypeColors } from './learnset/useLearnsetTypeColors';
 
 interface MovesTableLearnsetProps {
     learnset: Array<{ Learned: string; Name: string }>;
@@ -15,6 +16,8 @@ export function MovesTableLearnset({ learnset = [] }: MovesTableLearnsetProps) {
     const [activeTab, setActiveTab] = useState<'learnset' | 'wishlist'>('learnset');
     const [selectedMoveName, setSelectedMoveName] = useState<string | null>(null);
     const [addingMoves, setAddingMoves] = useState<Set<string>>(new Set());
+
+    const { colorByType, toggleColorByType, getMoveTypeInfo } = useLearnsetTypeColors();
 
     const characterMoves = useCharacterStore((state) => state.moves);
     const wishlist = useCharacterStore((state) => state.wishlist || []);
@@ -101,7 +104,7 @@ export function MovesTableLearnset({ learnset = [] }: MovesTableLearnsetProps) {
                     className="moves-table__learnset-container text-label"
                     style={{ color: 'var(--text-main)', fontSize: '0.8rem' }}
                 >
-                    {/* Header Bar with Tabs and Close Button */}
+                    {/* Header Bar with Tabs, Color Toggle, and Close Button */}
                     <div className="moves-table__learnset-header-bar">
                         <div className="moves-table__learnset-tabs">
                             {hasLearnset && (
@@ -134,15 +137,34 @@ export function MovesTableLearnset({ learnset = [] }: MovesTableLearnsetProps) {
                             </button>
                         </div>
 
-                        <button
-                            type="button"
-                            onClick={() => setIsOpen(false)}
-                            className="moves-table__learnset-close-icon-btn"
-                            title="Close"
-                            aria-label="Close"
-                        >
-                            <X size={14} />
-                        </button>
+                        <div className="moves-table__learnset-header-actions">
+                            <button
+                                type="button"
+                                onClick={toggleColorByType}
+                                className={`moves-table__learnset-color-toggle-btn ${
+                                    colorByType ? 'moves-table__learnset-color-toggle-btn--active' : ''
+                                }`}
+                                title={
+                                    colorByType
+                                        ? 'Displaying move-themed type colors (click to theme after Pokémon type)'
+                                        : 'Displaying Pokémon type theme (click to show move type colors)'
+                                }
+                                aria-label="Toggle Move Type Colors"
+                            >
+                                <Palette size={12} />
+                                <span>Type Colors</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setIsOpen(false)}
+                                className="moves-table__learnset-close-icon-btn"
+                                title="Close"
+                                aria-label="Close"
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Learnset Tab */}
@@ -152,6 +174,7 @@ export function MovesTableLearnset({ learnset = [] }: MovesTableLearnsetProps) {
                             learnedSet={learnedSet}
                             wishlistSet={wishlistSet}
                             addingMoves={addingMoves}
+                            getMoveTypeInfo={getMoveTypeInfo}
                             onSelectMove={setSelectedMoveName}
                             onQuickAdd={handleQuickAdd}
                             onToggleWishlist={toggleWishlist}
@@ -164,6 +187,7 @@ export function MovesTableLearnset({ learnset = [] }: MovesTableLearnsetProps) {
                             wishlist={wishlist}
                             learnedSet={learnedSet}
                             addingMoves={addingMoves}
+                            getMoveTypeInfo={getMoveTypeInfo}
                             onSelectMove={setSelectedMoveName}
                             onQuickAdd={handleQuickAdd}
                             onToggleWishlist={toggleWishlist}

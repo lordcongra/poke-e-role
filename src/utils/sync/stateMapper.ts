@@ -492,6 +492,8 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
         isNPC: meta['is-npc'] === true || meta['is-npc'] === 'true',
         coreLocked: meta['core-locked'] !== undefined ? Boolean(meta['core-locked']) : true,
         socialLocked: meta['social-locked'] !== undefined ? Boolean(meta['social-locked']) : true,
+        hpLocked: meta['hp-locked'] !== undefined ? Boolean(meta['hp-locked']) : true,
+        willLocked: meta['will-locked'] !== undefined ? Boolean(meta['will-locked']) : true,
         pokemonBackup: String(meta['pokemon-backup'] || ''),
         trainerBackup: String(meta['trainer-backup'] || ''),
 
@@ -684,6 +686,8 @@ export function flattenStateToMetadata(state: CharacterState): Record<string, st
             if (state.identity.isNPC !== undefined) flatMetadata['is-npc'] = state.identity.isNPC;
             if (state.identity.coreLocked !== undefined) flatMetadata['core-locked'] = state.identity.coreLocked;
             if (state.identity.socialLocked !== undefined) flatMetadata['social-locked'] = state.identity.socialLocked;
+            if (state.identity.hpLocked !== undefined) flatMetadata['hp-locked'] = state.identity.hpLocked;
+            if (state.identity.willLocked !== undefined) flatMetadata['will-locked'] = state.identity.willLocked;
 
             // Forms & Transformations
             flatMetadata['token-image-url'] = state.identity.tokenImageUrl || '';

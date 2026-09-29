@@ -4,11 +4,14 @@ import { CombatStat, Skill } from '../../types/enums';
 import { rollDicePlus } from '../../utils/combat/combatUtils';
 import { CollapsingSection } from '../ui/CollapsingSection';
 import { NumberSpinner } from '../ui/NumberSpinner';
-import { Dices, Shield, AlertTriangle, Sparkles, XCircle, Trash2 } from 'lucide-react';
+import { Dices, XCircle } from 'lucide-react';
 import { ResourceBox } from '../ui/ResourceBox';
 import { TooltipIcon } from '../ui/TooltipIcon';
 import { StatusBox } from '../board/StatusBox';
 import { TimerBox } from './TimerBox';
+import { DerivedBoardTempModals } from './DerivedBoardTempModals';
+import OBR from '@owlbear-rodeo/sdk';
+import { isStandaloneMode } from '../../utils/sync/storageAdapter';
 import {
     parseCombatTags,
     getAbilityText,
@@ -43,6 +46,46 @@ export function DerivedBoard() {
     const inventory = useCharacterStore((state) => state.inventory);
     const passives = useCharacterStore((state) => state.passives);
     const extraCategories = useCharacterStore((state) => state.extraCategories);
+
+    const isHpLocked = useCharacterStore((state) => state.identity.hpLocked ?? true);
+    const isWillLocked = useCharacterStore((state) => state.identity.willLocked ?? true);
+    const setIdentity = useCharacterStore((state) => state.setIdentity);
+    const role = useCharacterStore((state) => state.role);
+    const gmOnlyAttributeLock = useCharacterStore((state) => state.identity.gmOnlyAttributeLock ?? true);
+
+    const handleToggleHpLock = () => {
+        if (isHpLocked) {
+            if (!isStandaloneMode && role !== 'GM' && gmOnlyAttributeLock) {
+                const msg = 'Your GM must unlock this sheet for you or enable users to unlock sheets in Room Rules.';
+                if (OBR.isAvailable) {
+                    OBR.notification.show(msg, 'WARNING');
+                } else {
+                    alert(msg);
+                }
+                return;
+            }
+            setIdentity('hpLocked', false);
+        } else {
+            setIdentity('hpLocked', true);
+        }
+    };
+
+    const handleToggleWillLock = () => {
+        if (isWillLocked) {
+            if (!isStandaloneMode && role !== 'GM' && gmOnlyAttributeLock) {
+                const msg = 'Your GM must unlock this sheet for you or enable users to unlock sheets in Room Rules.';
+                if (OBR.isAvailable) {
+                    OBR.notification.show(msg, 'WARNING');
+                } else {
+                    alert(msg);
+                }
+                return;
+            }
+            setIdentity('willLocked', false);
+        } else {
+            setIdentity('willLocked', true);
+        }
+    };
 
     const [tooltipInfo, setTooltipInfo] = useState<{ title: string; desc: string } | null>(null);
 
@@ -84,6 +127,8 @@ export function DerivedBoard() {
                             tempMax={health.temporaryHitPointsMax}
                             tempType="hp"
                             color="var(--primary)"
+                            isBaseLocked={isHpLocked}
+                            onToggleBaseLock={handleToggleHpLock}
                             onCurrChange={(value: number) => updateHealth('hpCurr', value)}
                             onBaseChange={(value: number) => updateHealth('hpBase', value)}
                             onTempChange={(value: number) => updateHealth('temporaryHitPoints', value)}
@@ -104,6 +149,8 @@ export function DerivedBoard() {
                             tempMax={will.temporaryWillMax}
                             tempType="will"
                             color="#2196F3"
+                            isBaseLocked={isWillLocked}
+                            onToggleBaseLock={handleToggleWillLock}
                             onCurrChange={(value: number) => updateWill('willCurr', value)}
                             onBaseChange={(value: number) => updateWill('willBase', value)}
                             onTempChange={(value: number) => updateWill('temporaryWill', value)}
@@ -309,144 +356,41 @@ export function DerivedBoard() {
                 </div>
             )}
 
-            {showAddTempModal && (
-                <div className="derived-board__modal-overlay">
-                    <div className="derived-board__modal-content" style={{ color: 'var(--text-main)' }}>
-                        <h3 className="derived-board__modal-title derived-board__modal-title--temp-hp text-title-primary">
-                            <Shield size={20} /> Set Temporary HP
-                        </h3>
-                        <p className="derived-board__modal-desc text-subtext">
-                            Enter the amount of Temporary HP to grant. This will replace any existing shield.
-                        </p>
-                        <div className="derived-board__spinner-wrapper">
-                            <NumberSpinner value={newTempHp} onChange={setNewTempHp} min={0} max={999} />
-                        </div>
-                        <div className="derived-board__modal-btn-container derived-board__modal-btn-container--spaced">
-                            <button
-                                type="button"
-                                className="action-button action-button--dark derived-board__modal-btn text-theme-header"
-                                onClick={() => setShowAddTempModal(false)}
-                            >
-                                <XCircle size={16} /> Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className="action-button action-button--theme derived-board__modal-btn text-theme-header"
-                                onClick={() => {
-                                    updateHealth('temporaryHitPointsMax', newTempHp);
-                                    updateHealth('temporaryHitPoints', newTempHp);
-                                    setShowAddTempModal(false);
-                                }}
-                            >
-                                <Shield size={16} /> Apply Shield
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {showTempConfirm && (
-                <div className="derived-board__modal-overlay">
-                    <div className="derived-board__modal-content" style={{ color: 'var(--text-main)' }}>
-                        <h3 className="derived-board__modal-title derived-board__modal-title--clear-hp text-title-primary">
-                            <AlertTriangle size={20} /> Clear Temp HP
-                        </h3>
-                        <p className="derived-board__modal-desc text-subtext">
-                            Are you sure you want to completely remove your Temporary HP Shield?
-                        </p>
-                        <div className="derived-board__modal-btn-container derived-board__modal-btn-container--spaced">
-                            <button
-                                type="button"
-                                className="action-button action-button--dark derived-board__modal-btn text-theme-header"
-                                onClick={() => setShowTempConfirm(false)}
-                            >
-                                <XCircle size={16} /> Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className="action-button action-button--red derived-board__modal-btn text-theme-header"
-                                onClick={() => {
-                                    updateHealth('temporaryHitPoints', 0);
-                                    updateHealth('temporaryHitPointsMax', 0);
-                                    setShowTempConfirm(false);
-                                }}
-                            >
-                                <Trash2 size={16} /> Clear
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {showAddTempWillModal && (
-                <div className="derived-board__modal-overlay">
-                    <div className="derived-board__modal-content" style={{ color: 'var(--text-main)' }}>
-                        <h3 className="derived-board__modal-title derived-board__modal-title--temp-will text-title-primary">
-                            <Sparkles size={20} /> Set Temp Willpower
-                        </h3>
-                        <p className="derived-board__modal-desc text-subtext">
-                            Enter the amount of Temporary Willpower to grant. This will replace any existing Temporary
-                            Willpower.
-                        </p>
-                        <div className="derived-board__spinner-wrapper">
-                            <NumberSpinner value={newTempWill} onChange={setNewTempWill} min={0} max={999} />
-                        </div>
-                        <div className="derived-board__modal-btn-container derived-board__modal-btn-container--spaced">
-                            <button
-                                type="button"
-                                className="action-button action-button--dark derived-board__modal-btn text-theme-header"
-                                onClick={() => setShowAddTempWillModal(false)}
-                            >
-                                <XCircle size={16} /> Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className="action-button action-button--secondary derived-board__modal-btn text-theme-header"
-                                onClick={() => {
-                                    updateWill('temporaryWillMax', newTempWill);
-                                    updateWill('temporaryWill', newTempWill);
-                                    setShowAddTempWillModal(false);
-                                }}
-                            >
-                                <Sparkles size={16} /> Apply Temp Will
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {showTempWillConfirm && (
-                <div className="derived-board__modal-overlay">
-                    <div className="derived-board__modal-content" style={{ color: 'var(--text-main)' }}>
-                        <h3 className="derived-board__modal-title derived-board__modal-title--clear-will text-title-primary">
-                            <AlertTriangle size={20} /> Clear Temp Willpower
-                        </h3>
-                        <p className="derived-board__modal-desc text-subtext">
-                            Are you sure you want to completely remove your Temporary Willpower?
-                        </p>
-                        <div className="derived-board__modal-btn-container derived-board__modal-btn-container--spaced">
-                            <button
-                                type="button"
-                                className="action-button action-button--dark derived-board__modal-btn text-theme-header"
-                                onClick={() => setShowTempWillConfirm(false)}
-                            >
-                                <XCircle size={16} /> Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className="action-button action-button--red derived-board__modal-btn text-theme-header"
-                                onClick={() => {
-                                    updateWill('temporaryWill', 0);
-                                    updateWill('temporaryWillMax', 0);
-                                    setShowTempWillConfirm(false);
-                                }}
-                            >
-                                <Trash2 size={16} /> Clear
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Temporary HP and Will Modals */}
+            <DerivedBoardTempModals
+                showAddTempModal={showAddTempModal}
+                setShowAddTempModal={setShowAddTempModal}
+                newTempHp={newTempHp}
+                setNewTempHp={setNewTempHp}
+                showTempConfirm={showTempConfirm}
+                setShowTempConfirm={setShowTempConfirm}
+                showAddTempWillModal={showAddTempWillModal}
+                setShowAddTempWillModal={setShowAddTempWillModal}
+                newTempWill={newTempWill}
+                setNewTempWill={setNewTempWill}
+                showTempWillConfirm={showTempWillConfirm}
+                setShowTempWillConfirm={setShowTempWillConfirm}
+                onApplyTempHp={(val) => {
+                    updateHealth('temporaryHitPointsMax', val);
+                    updateHealth('temporaryHitPoints', val);
+                    setShowAddTempModal(false);
+                }}
+                onClearTempHp={() => {
+                    updateHealth('temporaryHitPoints', 0);
+                    updateHealth('temporaryHitPointsMax', 0);
+                    setShowTempConfirm(false);
+                }}
+                onApplyTempWill={(val) => {
+                    updateWill('temporaryWillMax', val);
+                    updateWill('temporaryWill', val);
+                    setShowAddTempWillModal(false);
+                }}
+                onClearTempWill={() => {
+                    updateWill('temporaryWill', 0);
+                    updateWill('temporaryWillMax', 0);
+                    setShowTempWillConfirm(false);
+                }}
+            />
         </CollapsingSection>
     );
 }

@@ -1,5 +1,5 @@
 import { NumberSpinner } from './NumberSpinner';
-import { Shield, Sparkles, X } from 'lucide-react';
+import { Shield, Sparkles, X, Lock, Unlock } from 'lucide-react';
 import './UI.css';
 
 interface ResourceBoxProps {
@@ -11,6 +11,8 @@ interface ResourceBoxProps {
     tempMax?: number;
     tempType?: 'hp' | 'will';
     color: string;
+    isBaseLocked?: boolean;
+    onToggleBaseLock?: () => void;
     onCurrChange: (val: number) => void;
     onBaseChange: (val: number) => void;
     onTempChange?: (val: number) => void;
@@ -27,6 +29,8 @@ export function ResourceBox({
     tempMax,
     tempType = 'hp',
     color,
+    isBaseLocked = false,
+    onToggleBaseLock,
     onCurrChange,
     onBaseChange,
     onTempChange,
@@ -126,8 +130,25 @@ export function ResourceBox({
                 )}
 
                 <div className="resource-box__sub resource-box__content-layer text-subtext">
-                    <span>Base:</span>
-                    <NumberSpinner value={base} onChange={onBaseChange} min={0} />
+                    <div className="resource-box__base-label-group">
+                        <span>Base:</span>
+                        {onToggleBaseLock && (
+                            <button
+                                type="button"
+                                onClick={onToggleBaseLock}
+                                className={`action-button ${isBaseLocked ? 'action-button--dark' : 'action-button--theme'} resource-box__lock-btn text-theme-header`}
+                                title={
+                                    isBaseLocked
+                                        ? `Base ${title} is locked to prevent accidental edits (click to unlock)`
+                                        : `Base ${title} is unlocked (click to lock)`
+                                }
+                                aria-label={isBaseLocked ? `Unlock base ${title}` : `Lock base ${title}`}
+                            >
+                                {isBaseLocked ? <Lock size={11} /> : <Unlock size={11} />}
+                            </button>
+                        )}
+                    </div>
+                    <NumberSpinner value={base} onChange={onBaseChange} min={0} disabled={isBaseLocked} />
                 </div>
             </div>
         </div>

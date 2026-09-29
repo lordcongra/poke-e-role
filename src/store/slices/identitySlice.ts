@@ -106,6 +106,8 @@ const OBR_KEY_MAP: Record<string, string> = {
     gmOnlyAttributeLock: 'gm-only-attribute-lock',
     coreLocked: 'core-locked',
     socialLocked: 'social-locked',
+    hpLocked: 'hp-locked',
+    willLocked: 'will-locked',
     themePrimaryOverride: 'theme-primary-override',
     themeSecondaryOverride: 'theme-secondary-override',
     dexId: 'dex-id',
@@ -288,6 +290,8 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
         pmdSkills: typeof localStorage !== 'undefined' ? localStorage.getItem('pkr_room_pmd_skills') !== 'false' : true,
         coreLocked: true,
         socialLocked: true,
+        hpLocked: true,
+        willLocked: true,
         gmDemoMode: false,
 
         // Apply Local Settings

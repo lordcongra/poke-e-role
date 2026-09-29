@@ -227,6 +227,39 @@
     color: var(--text-main);
 }
 
+.moves-table__learnset-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.moves-table__learnset-color-toggle-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s ease;
+}
+
+.moves-table__learnset-color-toggle-btn:hover {
+    background: var(--panel-bg);
+    color: var(--text-main);
+    border-color: var(--primary);
+}
+
+.moves-table__learnset-color-toggle-btn--active {
+    background: color-mix(in srgb, var(--primary) 18%, var(--panel-bg));
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
 .moves-table__learnset-rank-group {
     margin-bottom: 6px;
 }
@@ -262,6 +295,11 @@
     border-color: var(--primary);
     transform: translateY(-1px);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.moves-table__learnset-pill[style*='--move-type-color']:hover {
+    border-color: var(--move-type-color);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--move-type-color) 35%, transparent);
 }
 
 .moves-table__learnset-pill:active {

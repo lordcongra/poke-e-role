@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
 import { LearnsetPill } from './LearnsetPill';
+import type { MoveTypeInfo } from './useLearnsetTypeColors';
 
 interface LearnsetSectionProps {
     learnset: Array<{ Learned: string; Name: string }>;
     learnedSet: Set<string>;
     wishlistSet: Set<string>;
     addingMoves: Set<string>;
+    getMoveTypeInfo?: (moveName: string) => MoveTypeInfo;
     onSelectMove: (moveName: string) => void;
     onQuickAdd: (moveName: string, e: React.MouseEvent) => void;
     onToggleWishlist: (moveName: string) => void;
@@ -18,6 +20,7 @@ export function LearnsetSection({
     learnedSet,
     wishlistSet,
     addingMoves,
+    getMoveTypeInfo,
     onSelectMove,
     onQuickAdd,
     onToggleWishlist
@@ -61,6 +64,7 @@ export function LearnsetSection({
                                 isLearned={learnedSet.has(moveName.toLowerCase().trim())}
                                 isWishlisted={wishlistSet.has(moveName.toLowerCase().trim())}
                                 isAdding={addingMoves.has(moveName)}
+                                typeInfo={getMoveTypeInfo?.(moveName)}
                                 onSelectMove={onSelectMove}
                                 onQuickAdd={onQuickAdd}
                                 onToggleWishlist={onToggleWishlist}
