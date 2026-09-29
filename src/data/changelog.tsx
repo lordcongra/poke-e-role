@@ -286,7 +286,7 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     <strong>Dedicated Wishlist Tab & Quick Action:</strong> Quickly view and manage all bookmarked moves in the dedicated Wishlist section of the Learnset modal.
                 </li>
                 <li>
-                    <strong>Move Type Theming:</strong> Added a toggle to the Learnset so move pills can theme after their type color.
+                    <strong>Move Type Theming:</strong> Added a toggle to the Learnset so move pills can theme after their type color. Additionally, you can set per-type color choices for the Learnset pills.
                 </li>
             </ul>,
             <strong key="sheet-controls-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>

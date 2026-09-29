@@ -1,0 +1,311 @@
+.learnset-colors-modal__overlay {
+    position: fixed;
+    inset: 0;
+    background-color: color-mix(in srgb, var(--dark, #000) 65%, transparent);
+    z-index: 1600;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(2px);
+}
+
+.learnset-colors-modal__content {
+    background: var(--panel-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    width: 680px;
+    max-width: min(680px, 94vw);
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+    color: var(--text-main);
+}
+
+.learnset-colors-modal__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    gap: 12px;
+}
+
+.learnset-colors-modal__title-area {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.learnset-colors-modal__title {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.learnset-colors-modal__subtitle {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.learnset-colors-modal__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.learnset-colors-modal__reset-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    font-size: 0.76rem;
+    font-weight: 500;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--panel-alt);
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.learnset-colors-modal__reset-btn:hover:not(:disabled) {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 12%, var(--panel-alt));
+}
+
+.learnset-colors-modal__reset-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.learnset-colors-modal__close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.learnset-colors-modal__close-btn:hover {
+    color: var(--text-main);
+    background: color-mix(in srgb, var(--text-main) 10%, transparent);
+}
+
+.learnset-colors-modal__body {
+    padding: 14px 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex: 1;
+}
+
+.learnset-colors-modal__section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.learnset-colors-modal__section-heading {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.learnset-colors-modal__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+}
+
+.learnset-colors-modal__type-card {
+    background: var(--panel-alt);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    transition:
+        border-color 0.15s ease,
+        background-color 0.15s ease;
+}
+
+.learnset-colors-modal__type-card--modified {
+    border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+}
+
+.learnset-colors-modal__type-card:hover {
+    border-color: var(--primary);
+}
+
+.learnset-colors-modal__card-left {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    flex: 1;
+}
+
+.learnset-colors-modal__preview-pill {
+    border-radius: 12px;
+    border: 1.5px solid;
+    padding: 2px 8px;
+    font-size: 0.74rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.learnset-colors-modal__homebrew-badge {
+    font-size: 0.62rem;
+    font-weight: 600;
+    padding: 1px 4px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--primary) 18%, transparent);
+    color: var(--primary);
+    border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+    flex-shrink: 0;
+    text-transform: uppercase;
+}
+
+.learnset-colors-modal__card-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.learnset-colors-modal__color-input-wrapper {
+    position: relative;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: 1.5px solid var(--border);
+    overflow: hidden;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    transition:
+        transform 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.learnset-colors-modal__color-input-wrapper:hover {
+    transform: scale(1.08);
+    border-color: var(--primary);
+}
+
+.learnset-colors-modal__color-input {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    width: 36px;
+    height: 36px;
+    border: none;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.learnset-colors-modal__color-input::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.learnset-colors-modal__color-input::-webkit-color-swatch {
+    border: none;
+    border-radius: 4px;
+}
+
+.learnset-colors-modal__item-reset-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 3px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.learnset-colors-modal__item-reset-btn:hover {
+    color: var(--semantic-danger, #ef4444);
+    background: color-mix(in srgb, #ef4444 12%, transparent);
+}
+
+.learnset-colors-modal__spin-icon {
+    transition: transform 0.35s ease;
+    flex-shrink: 0;
+}
+
+.learnset-colors-modal__reset-btn:hover .learnset-colors-modal__spin-icon,
+.learnset-colors-modal__item-reset-btn:hover .learnset-colors-modal__spin-icon {
+    transform: rotate(-180deg);
+}
+
+/* Header button group in Learnset bar */
+.moves-table__learnset-color-btn-group {
+    display: inline-flex;
+    align-items: stretch;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.moves-table__learnset-color-btn-group .moves-table__learnset-color-toggle-btn {
+    border: none;
+    border-radius: 0;
+}
+
+.moves-table__learnset-color-settings-btn {
+    background: var(--panel-alt);
+    border: none;
+    border-left: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 3px 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.moves-table__learnset-color-settings-btn:hover {
+    background: color-mix(in srgb, var(--primary) 20%, var(--panel-alt));
+    color: var(--primary);
+}
+
+.moves-table__learnset-color-btn-group
+    .moves-table__learnset-color-toggle-btn--active
+    + .moves-table__learnset-color-settings-btn {
+    background: color-mix(in srgb, var(--primary) 18%, var(--panel-bg));
+    border-left-color: var(--primary);
+    color: var(--primary);
+}

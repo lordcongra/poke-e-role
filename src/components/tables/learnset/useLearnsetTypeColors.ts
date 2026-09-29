@@ -2,9 +2,11 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { fetchMoveLookupIndex } from '../../../utils/api/api';
 import { getUserPreference, setUserPreference } from '../../../utils/sync/userPreferences';
+import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import type { CustomType } from '../../../store/storeTypes';
 
 export const LEARNSET_COLOR_BY_TYPE_KEY = 'learnset_color_by_type';
+export const LEARNSET_CUSTOM_TYPE_COLORS_KEY = 'learnset_custom_type_colors';
 
 /**
  * High-contrast, visually distinct type palette specifically curated for Learnset visibility on dark backgrounds.
@@ -16,7 +18,7 @@ export const LEARNSET_HIGH_CONTRAST_TYPE_COLORS: Record<string, string> = {
     Rock: '#BFA640', // Stony mineral ochre / sandstone (warm golden stone)
     Ground: '#D97746', // Warm terracotta clay / rich red-orange earth
     Flying: '#76A5E8', // Atmospheric sky breeze blue (differentiated from purple)
-    Ghost: '#735797', // Spectral deep violet-purple
+    Ghost: '#7949A5', // Spectral deep violet-purple (RGB: 121, 73, 165)
     Poison: '#A33EA1', // Toxic vivid magenta-violet
     Bug: '#92BC2C', // Vivid lime insect green
     Grass: '#59B44F', // Fresh vibrant meadow green
@@ -47,12 +49,22 @@ export function useLearnsetTypeColors() {
         }
     });
 
+    const [customColors, setCustomColors] = useState<Record<string, string>>(() => {
+        try {
+            const cached = localStorage.getItem(`pkr_pref_${LEARNSET_CUSTOM_TYPE_COLORS_KEY}`);
+            return cached !== null ? JSON.parse(cached) : {};
+        } catch {
+            return {};
+        }
+    });
+
     const [moveTypeMap, setMoveTypeMap] = useState<Record<string, string>>({});
 
+    const role = useCharacterStore((state) => state.role);
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
     const roomCustomMoves = useCharacterStore((state) => state.roomCustomMoves);
 
-    // Initialize from IndexedDB on startup
+    // Initialize preferences from IndexedDB on startup
     useEffect(() => {
         let isMounted = true;
         getUserPreference<boolean>(LEARNSET_COLOR_BY_TYPE_KEY, false).then((val) => {
@@ -60,10 +72,20 @@ export function useLearnsetTypeColors() {
                 setColorByType(val);
             }
         });
+        getUserPreference<Record<string, string>>(LEARNSET_CUSTOM_TYPE_COLORS_KEY, {}).then((val) => {
+            if (isMounted && val && typeof val === 'object') {
+                setCustomColors(val);
+            }
+        });
         return () => {
             isMounted = false;
         };
     }, []);
+
+    // Filter homebrew types respecting GM-only restrictions
+    const visibleCustomTypes = useMemo(() => {
+        return (roomCustomTypes || []).filter((t: CustomType) => isStandaloneMode || role === 'GM' || !t.gmOnly);
+    }, [roomCustomTypes, role]);
 
     // Load move types dictionary from move lookup index and custom moves
     useEffect(() => {
@@ -95,7 +117,7 @@ export function useLearnsetTypeColors() {
         };
     }, [roomCustomMoves]);
 
-    // Combine high-contrast type colors with custom homebrew & room types
+    // Combine high-contrast type colors, custom homebrew & room types, and user custom color overrides
     const combinedColors = useMemo(() => {
         const customMap: Record<string, string> = {};
         (roomCustomTypes || []).forEach((t: CustomType) => {
@@ -103,9 +125,10 @@ export function useLearnsetTypeColors() {
         });
         return {
             ...LEARNSET_HIGH_CONTRAST_TYPE_COLORS,
-            ...customMap
+            ...customMap,
+            ...customColors
         };
-    }, [roomCustomTypes]);
+    }, [roomCustomTypes, customColors]);
 
     const toggleColorByType = useCallback(() => {
         setColorByType((prev) => {
@@ -113,6 +136,33 @@ export function useLearnsetTypeColors() {
             setUserPreference(LEARNSET_COLOR_BY_TYPE_KEY, next);
             return next;
         });
+    }, []);
+
+    const setTypeColorOverride = useCallback((type: string, color: string) => {
+        const cleanType = type.trim();
+        const titleType = cleanType.charAt(0).toUpperCase() + cleanType.slice(1).toLowerCase();
+        setCustomColors((prev) => {
+            const next = { ...prev, [titleType]: color };
+            setUserPreference(LEARNSET_CUSTOM_TYPE_COLORS_KEY, next);
+            return next;
+        });
+    }, []);
+
+    const resetTypeColorOverride = useCallback((type: string) => {
+        const cleanType = type.trim();
+        const titleType = cleanType.charAt(0).toUpperCase() + cleanType.slice(1).toLowerCase();
+        setCustomColors((prev) => {
+            const next = { ...prev };
+            delete next[cleanType];
+            delete next[titleType];
+            setUserPreference(LEARNSET_CUSTOM_TYPE_COLORS_KEY, next);
+            return next;
+        });
+    }, []);
+
+    const resetAllTypeColors = useCallback(() => {
+        setCustomColors({});
+        setUserPreference(LEARNSET_CUSTOM_TYPE_COLORS_KEY, {});
     }, []);
 
     const getMoveTypeInfo = useCallback(
@@ -137,6 +187,11 @@ export function useLearnsetTypeColors() {
     return {
         colorByType,
         toggleColorByType,
-        getMoveTypeInfo
+        getMoveTypeInfo,
+        customColors,
+        setTypeColorOverride,
+        resetTypeColorOverride,
+        resetAllTypeColors,
+        visibleCustomTypes
     };
 }

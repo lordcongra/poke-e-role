@@ -1,11 +1,12 @@
 import { useState, useMemo, useCallback } from 'react';
-import { BookOpen, Bookmark, X, Palette } from 'lucide-react';
+import { BookOpen, Bookmark, X, Palette, Settings } from 'lucide-react';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { MoveDetailModal } from '../modals/moveLookup/MoveDetailModal';
 import { fetchMoveData } from '../../utils/api/api';
 import { LearnsetSection } from './learnset/LearnsetSection';
 import { WishlistSection } from './learnset/WishlistSection';
 import { useLearnsetTypeColors } from './learnset/useLearnsetTypeColors';
+import { LearnsetTypeColorsModal } from './learnset/LearnsetTypeColorsModal';
 
 interface MovesTableLearnsetProps {
     learnset: Array<{ Learned: string; Name: string }>;
@@ -13,11 +14,21 @@ interface MovesTableLearnsetProps {
 
 export function MovesTableLearnset({ learnset = [] }: MovesTableLearnsetProps) {
     const [isOpen, setIsOpen] = useState(false);
+    const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'learnset' | 'wishlist'>('learnset');
     const [selectedMoveName, setSelectedMoveName] = useState<string | null>(null);
     const [addingMoves, setAddingMoves] = useState<Set<string>>(new Set());
 
-    const { colorByType, toggleColorByType, getMoveTypeInfo } = useLearnsetTypeColors();
+    const {
+        colorByType,
+        toggleColorByType,
+        getMoveTypeInfo,
+        customColors,
+        setTypeColorOverride,
+        resetTypeColorOverride,
+        resetAllTypeColors,
+        visibleCustomTypes
+    } = useLearnsetTypeColors();
 
     const characterMoves = useCharacterStore((state) => state.moves);
     const wishlist = useCharacterStore((state) => state.wishlist || []);
@@ -138,22 +149,33 @@ export function MovesTableLearnset({ learnset = [] }: MovesTableLearnsetProps) {
                         </div>
 
                         <div className="moves-table__learnset-header-actions">
-                            <button
-                                type="button"
-                                onClick={toggleColorByType}
-                                className={`moves-table__learnset-color-toggle-btn ${
-                                    colorByType ? 'moves-table__learnset-color-toggle-btn--active' : ''
-                                }`}
-                                title={
-                                    colorByType
-                                        ? 'Displaying move-themed type colors (click to theme after Pokémon type)'
-                                        : 'Displaying Pokémon type theme (click to show move type colors)'
-                                }
-                                aria-label="Toggle Move Type Colors"
-                            >
-                                <Palette size={12} />
-                                <span>Type Colors</span>
-                            </button>
+                            <div className="moves-table__learnset-color-btn-group">
+                                <button
+                                    type="button"
+                                    onClick={toggleColorByType}
+                                    className={`moves-table__learnset-color-toggle-btn ${
+                                        colorByType ? 'moves-table__learnset-color-toggle-btn--active' : ''
+                                    }`}
+                                    title={
+                                        colorByType
+                                            ? 'Displaying move-themed type colors (click to theme after Pokémon type)'
+                                            : 'Displaying Pokémon type theme (click to show move type colors)'
+                                    }
+                                    aria-label="Toggle Move Type Colors"
+                                >
+                                    <Palette size={12} />
+                                    <span>Type Colors</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsColorSettingsOpen(true)}
+                                    className="moves-table__learnset-color-settings-btn"
+                                    title="Configure Learnset Type Colors"
+                                    aria-label="Configure Learnset Type Colors"
+                                >
+                                    <Settings size={12} />
+                                </button>
+                            </div>
 
                             <button
                                 type="button"
@@ -200,6 +222,18 @@ export function MovesTableLearnset({ learnset = [] }: MovesTableLearnsetProps) {
 
             {selectedMoveName && (
                 <MoveDetailModal moveName={selectedMoveName} onClose={() => setSelectedMoveName(null)} />
+            )}
+
+            {isColorSettingsOpen && (
+                <LearnsetTypeColorsModal
+                    isOpen={isColorSettingsOpen}
+                    onClose={() => setIsColorSettingsOpen(false)}
+                    customColors={customColors}
+                    onSetColor={setTypeColorOverride}
+                    onResetColor={resetTypeColorOverride}
+                    onResetAll={resetAllTypeColors}
+                    visibleCustomTypes={visibleCustomTypes}
+                />
             )}
         </div>
     );
