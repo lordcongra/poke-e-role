@@ -96,6 +96,7 @@ export function GlobalToolbar() {
     const [isPrintingBattleOrganizer, setIsPrintingBattleOrganizer] = useState(false);
 
     const fileInputReference = useRef<HTMLInputElement>(null);
+    const handleBattleOrganizerClickRef = useRef<() => void>(() => {});
 
     const isGm = isStandaloneMode || storeRole === 'GM' || localRole === 'GM';
     const showHomebrewButton = isStandaloneMode || canViewHomebrew(localRole, homebrewAccess);
@@ -158,6 +159,10 @@ export function GlobalToolbar() {
             }
             const handleOpenModal = (e: Event) => {
                 const custom = e as CustomEvent<ActiveModal>;
+                if (custom.detail === 'battle-organizer') {
+                    handleBattleOrganizerClickRef.current();
+                    return;
+                }
                 if (custom.detail) {
                     setActiveModal(custom.detail);
                 }
@@ -360,6 +365,7 @@ export function GlobalToolbar() {
             setActiveModal('battle-organizer');
         }
     };
+    handleBattleOrganizerClickRef.current = handleBattleOrganizerClick;
 
     return (
         <div className="global-toolbar-wrapper">
