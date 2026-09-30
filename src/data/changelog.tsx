@@ -27,7 +27,7 @@ import {
     MousePointerClick
 } from 'lucide-react';
 
-export const CURRENT_VERSION = '3.6.6';
+export const CURRENT_VERSION = '3.7.0';
 
 export interface ChangelogHighlight {
     id: string;
@@ -128,6 +128,78 @@ export function getChangelogDiff(lastSeenVersion: string | null): ChangelogDiffR
 }
 
 export const CHANGELOG_DATA: ChangelogEntry[] = [
+    {
+        version: '3.7.0',
+        date: 'September 2026',
+        highlights: [
+            {
+                id: 'welcome-overview',
+                version: '3.7.0',
+                title: 'Welcome Overview & Sheet Controls',
+                icon: MousePointerClick,
+                badge: 'Overview & Tools',
+                summary:
+                    'Brand new landing screen when no character is selected with quick-launch tools, 1-click sheet deselect controls, and customizable unselected theme colors.',
+                details: (
+                    <div>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>New Welcome Overview:</strong> When opening the extension without a token or
+                            character selected, a clean landing screen greets you with quick-launch cards for Pokémon PC
+                            Storage, Generators, the Battle Organizer, and Homebrew Workshop.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>1-Click Return to Menu / Deselect:</strong> Added a dedicated deselect button to both
+                            the character header and top toolbar, allowing you to easily close a character sheet and
+                            return to the main overview without losing your place during combat.
+                        </p>
+                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
+                            <strong>Custom Base Overview Theme:</strong> Personalize your own preferred theme colors for
+                            the overview screen when no token is active. Your active Pokémon will still display their own
+                            vibrant typing colors (such as Fire orange or Water blue) unless you choose to override them
+                            globally.
+                        </p>
+                    </div>
+                )
+            }
+        ],
+        changes: [
+            <strong
+                key="empty-state-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <MousePointerClick size={16} /> Token Overview & Deselect Controls
+            </strong>,
+            <ul
+                key="empty-state-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>New Welcome Overview:</strong> When opening the extension without a token selected, a clean
+                    landing screen now greets you with quick-launch cards for Pokémon PC Storage, Generators, the Battle
+                    Organizer, and Homebrew Workshop.
+                </li>
+                <li>
+                    <strong>1-Click Deselect Button:</strong> Added a dedicated &quot;Deselect&quot; button to the
+                    character header and top toolbar, allowing you to easily close a character sheet and return to the
+                    overview without losing your place during combat.
+                </li>
+                <li>
+                    <strong>Custom Base Overview Theme:</strong> Set your own preferred theme colors for the extension
+                    overview when no token is selected. Active Pokémon will still display their own typing colors (e.g.
+                    Fire orange, Water blue) unless you choose to override them globally.
+                </li>
+            </ul>
+        ]
+    },
     {
         version: '3.6.6',
         date: 'September 2026',
@@ -310,34 +382,6 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 </li>
                 <li>
                     <strong>GM Permission Enforcement:</strong> Toggling Base HP or Will locks respects the Room Rules attribute lock setting, showing non-GM players an alert notification if GM permission is required to unlock.
-                </li>
-            </ul>,
-            <strong key="empty-state-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                <MousePointerClick size={16} /> Token Overview & Deselect Controls
-            </strong>,
-            <ul
-                key="empty-state-list"
-                className="text-subtext"
-                style={{
-                    color: 'var(--text-main)',
-                    paddingLeft: '20px',
-                    marginTop: '6px',
-                    marginBottom: '16px',
-                    fontSize: '0.9em',
-                    lineHeight: '1.5'
-                }}
-            >
-                <li>
-                    <strong>New Welcome Overview:</strong> When opening the extension without a token selected, a clean landing screen now greets you with quick-launch cards for Pokémon PC Storage, Generators, the Battle Organizer, and Homebrew Workshop.
-                </li>
-                <li>
-                    <strong>1-Click Deselect Button:</strong> Added a dedicated &quot;Deselect&quot; button to the character header and top toolbar, allowing you to easily close a character sheet and return to the overview without losing your place during combat.
-                </li>
-                <li>
-                    <strong>Custom Base Overview Theme:</strong> Set your own preferred theme colors for the extension overview when no token is selected. Active Pokémon will still display their own typing colors (e.g. Fire orange, Water blue) unless you choose to override them globally.
-                </li>
-                <li>
-                    <strong>Automatic Settings Protection:</strong> All personal theme preferences, custom color presets, and accessibility options are now automatically preserved and restored in the background, preventing your setup from being lost if your browser clears its temporary cache.
                 </li>
             </ul>
         ]
