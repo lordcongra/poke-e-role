@@ -1,4 +1,5 @@
 import type { CombatStat, SocialStat, Skill } from '../types/enums';
+import type { PcSlice } from '../types/pcStorageTypes';
 import type {
     Rank,
     StatData,
@@ -557,7 +558,8 @@ export interface CharacterState
         GeneratorSlice,
         IdentitySlice,
         MacroSlice,
-        SyncSlice {}
+        SyncSlice,
+        PcSlice {}
 
 declare module './entityTypes' {
     interface TempMove {

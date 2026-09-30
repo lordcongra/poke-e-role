@@ -1,0 +1,179 @@
+/* ==========================================================================
+   Pokémon PC & Party Storage System - Main Orchestrator Styling
+   ========================================================================== */
+
+.pc-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 16px;
+}
+
+.pc-modal {
+    --primary: var(--box-theme, var(--dynamic-type-color, #3b82f6));
+    --secondary-fallback: color-mix(in srgb, var(--primary) 65%, #ffffff);
+    --secondary: var(--dynamic-secondary-color, var(--secondary-fallback));
+    --panel-bg: color-mix(in srgb, var(--primary) 10%, var(--base-panel-dark, #1e1e1e));
+    --panel-alt: color-mix(in srgb, var(--primary) 16%, var(--base-panel-alt-dark, #2a2a2a));
+    --bg: color-mix(in srgb, var(--primary) 14%, var(--base-bg-dark, #121212));
+    --border: color-mix(in srgb, var(--primary) 30%, var(--base-border-dark, #383838));
+    width: 100%;
+    max-width: 1100px;
+    height: 90vh;
+    max-height: 820px;
+    background: var(--panel-bg);
+    border: 1.5px solid var(--border);
+    box-shadow:
+        0 16px 36px rgba(0, 0, 0, 0.6),
+        0 0 24px color-mix(in srgb, var(--primary) 25%, transparent);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    color: var(--text-main, #f8fafc);
+    font-family: inherit;
+}
+
+/* --------------------------------------------------------------------------
+   Modal Body Layout
+   -------------------------------------------------------------------------- */
+.pc-modal__layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Slot Context Menu
+   -------------------------------------------------------------------------- */
+.pc-context-menu {
+    position: fixed;
+    z-index: 10005;
+    background: var(--panel-bg, #1e1e1e);
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.18));
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
+    border-radius: 8px;
+    width: 210px;
+    overflow: hidden;
+    animation: pcMenuFadeIn 0.12s ease-out;
+}
+
+@keyframes pcMenuFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.pc-context-menu__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pc-context-menu__title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 155px;
+}
+
+.pc-context-menu__close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted, #94a3b8);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 2px;
+}
+
+.pc-context-menu__list {
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+}
+
+.pc-context-menu__item {
+    background: transparent;
+    border: none;
+    color: var(--text-main, #f8fafc);
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-align: left;
+    transition: background 0.12s;
+}
+
+.pc-context-menu__item:hover {
+    background: rgba(59, 130, 246, 0.2);
+    color: #fff;
+}
+
+.pc-context-menu__item--danger {
+    color: #f87171;
+}
+
+.pc-context-menu__item--danger:hover {
+    background: rgba(239, 68, 68, 0.25);
+    color: #ef4444;
+}
+
+.pc-context-menu__divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 4px 0;
+}
+
+/* --------------------------------------------------------------------------
+   Mobile & Responsive Layouts
+   -------------------------------------------------------------------------- */
+@media (max-width: 860px) {
+    .pc-modal__layout {
+        flex-direction: column;
+    }
+
+    .pc-party-dock {
+        width: 100%;
+        max-height: 220px;
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .pc-party-dock__slots {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .pc-box-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .pc-party-dock__slots {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .pc-box-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

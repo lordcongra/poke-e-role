@@ -29,6 +29,7 @@ import { getBattleOrganizerSettings } from '../modals/battleOrganizer/battleOrga
 import { PrintBattleOrganizer } from '../print/PrintBattleOrganizer';
 import { TrainerGeneratorModal } from '../modals/trainerGenerator';
 import { BugReportModal } from '../modals/settings';
+import { PcStorageModal } from '../modals/pcStorage/PcStorageModal';
 
 // Icons
 import {
@@ -53,7 +54,8 @@ import {
     Moon,
     Save,
     Upload,
-    Bug
+    Bug,
+    HardDrive
 } from 'lucide-react';
 import './GlobalToolbar.css';
 
@@ -449,6 +451,15 @@ export function GlobalToolbar() {
                             </button>
                         </div>
 
+                        <button
+                            type="button"
+                            className="global-toolbar__btn action-button--primary-hover"
+                            onClick={() => setActiveModal('pc')}
+                            title="Open Pokémon PC Storage & Party Belt"
+                        >
+                            <HardDrive size={16} color="var(--primary)" /> Pokémon PC
+                        </button>
+
                         {showHomebrewButton && (
                             <button
                                 type="button"
@@ -471,27 +482,6 @@ export function GlobalToolbar() {
                             </button>
                         )}
 
-                        {showPokemonGeneratorButton && (
-                            <div className="global-toolbar__gen-group">
-                                <button
-                                    type="button"
-                                    className="global-toolbar__btn global-toolbar__btn--gen-pkmn action-button--primary-hover"
-                                    onClick={() => setActiveModal('generator')}
-                                    title="Open Pokémon Generator"
-                                >
-                                    <Wand2 size={14} color="var(--primary)" /> PKMN Gen
-                                </button>
-                                <button
-                                    type="button"
-                                    className="global-toolbar__btn global-toolbar__btn--gen-trnr action-button--primary-hover"
-                                    onClick={() => setActiveModal('trainer-generator')}
-                                    title="Open Trainer & Team Generator"
-                                >
-                                    <UserCheck size={14} color="var(--primary)" /> TRNR Gen
-                                </button>
-                            </div>
-                        )}
-
                         {showLootGenButton && (
                             <button
                                 type="button"
@@ -500,6 +490,28 @@ export function GlobalToolbar() {
                                 title="Generate Items & TMs"
                             >
                                 <Package size={16} color="var(--primary)" /> Loot Generator
+                            </button>
+                        )}
+
+                        {showPokemonGeneratorButton && (
+                            <button
+                                type="button"
+                                className="global-toolbar__btn action-button--primary-hover"
+                                onClick={() => setActiveModal('generator')}
+                                title="Open Pokémon Generator"
+                            >
+                                <Wand2 size={16} color="var(--primary)" /> PKMN Generator
+                            </button>
+                        )}
+
+                        {showPokemonGeneratorButton && (
+                            <button
+                                type="button"
+                                className="global-toolbar__btn action-button--primary-hover"
+                                onClick={() => setActiveModal('trainer-generator')}
+                                title="Open Trainer & Team Generator"
+                            >
+                                <UserCheck size={16} color="var(--primary)" /> TRNR Generator
                             </button>
                         )}
                     </div>
@@ -652,6 +664,7 @@ export function GlobalToolbar() {
                 />
             )}
             {activeModal === 'bug-report' && <BugReportModal onClose={() => setActiveModal(null)} />}
+            {activeModal === 'pc' && <PcStorageModal onClose={() => setActiveModal(null)} />}
 
             {isPrintingBattleOrganizer && <PrintBattleOrganizer onDone={() => setIsPrintingBattleOrganizer(false)} />}
         </div>

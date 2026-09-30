@@ -1,0 +1,203 @@
+/* ==========================================================================
+   PC Pokémon Sheet Modal (Full Character Sheet View with 2-Way Sync)
+   ========================================================================== */
+
+.pc-sheet-modal__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    z-index: 10060;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px;
+    box-sizing: border-box;
+    animation: pcSheetModalFade 0.15s ease-out;
+}
+
+@keyframes pcSheetModalFade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.pc-sheet-modal__content {
+    background: var(--bg, #121212);
+    border: 2px solid var(--primary, #3b82f6);
+    border-radius: 12px;
+    width: 98%;
+    max-width: 1140px;
+    height: 94vh;
+    max-height: 94vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow:
+        0 16px 48px rgba(0, 0, 0, 0.8),
+        0 0 24px color-mix(in srgb, var(--primary, #3b82f6) 25%, transparent);
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.pc-sheet-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--panel-alt, #222);
+    border-bottom: 1px solid var(--border, #333);
+    flex-shrink: 0;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.pc-sheet-modal__header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.pc-sheet-modal__avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 2px solid var(--primary, #3b82f6);
+    overflow: hidden;
+    background: var(--panel-bg, #1e1e1e);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.pc-sheet-modal__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.pc-sheet-modal__titles {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.pc-sheet-modal__name {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pc-sheet-modal__sub {
+    font-size: 0.78rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pc-sheet-modal__map-badge {
+    background: rgba(34, 197, 94, 0.2);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    color: #4ade80;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.pc-sheet-modal__storage-badge {
+    background: rgba(148, 163, 184, 0.2);
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    color: #cbd5e1;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.pc-sheet-modal__header-center {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pc-sheet-modal__nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: color-mix(in srgb, var(--panel-bg) 75%, transparent);
+    padding: 3px 6px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.pc-sheet-modal__nav-btn {
+    padding: 3px 6px;
+    border-radius: 4px;
+    min-height: unset;
+}
+
+.pc-sheet-modal__select {
+    background: transparent;
+    border: none;
+    color: var(--text-main, #f8fafc);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    max-width: 180px;
+}
+
+.pc-sheet-modal__select option {
+    background: var(--panel-bg, #1e1e1e);
+    color: var(--text-main, #f8fafc);
+}
+
+.pc-sheet-modal__header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pc-sheet-modal__close {
+    padding: 6px;
+    border-radius: 6px;
+    min-height: unset;
+}
+
+.pc-sheet-modal__body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+.pc-sheet-modal__container {
+    max-width: 100% !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+@media (max-width: 768px) {
+    .pc-sheet-modal__content {
+        width: 100%;
+        height: 100vh;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+}

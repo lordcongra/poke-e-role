@@ -1,0 +1,61 @@
+/* ==========================================================================
+   Prompt Modal (Replaces browser window.prompt dialogs) Styling
+   ========================================================================== */
+
+.pc-prompt-backdrop {
+    z-index: 10020;
+}
+
+.pc-prompt-modal {
+    width: 100%;
+    max-width: 440px;
+    background: var(--panel-bg, #1e293b);
+    border: 1px solid var(--primary, #3b82f6);
+    border-radius: 10px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+}
+
+.pc-prompt-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--panel-alt, #0f172a);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pc-prompt-modal__body {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pc-prompt-modal__desc {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+.pc-prompt-modal__input {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: #fff;
+    padding: 8px 12px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.pc-prompt-modal__input:focus {
+    border-color: var(--primary, #3b82f6);
+}
+
+.pc-prompt-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 8px;
+}

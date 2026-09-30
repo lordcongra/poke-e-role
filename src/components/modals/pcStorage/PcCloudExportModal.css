@@ -1,0 +1,115 @@
+/* ==========================================================================
+   Cloud Export Modal (OBR Scene Asset) Styling
+   ========================================================================== */
+
+.pc-cloud-modal-backdrop {
+    z-index: 10015;
+}
+
+.pc-cloud-modal {
+    width: 100%;
+    max-width: 520px;
+    background: var(--panel-bg, #1e293b);
+    border: 1px solid var(--primary, #3b82f6);
+    border-radius: 10px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+}
+
+.pc-cloud-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--panel-alt, #0f172a);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pc-cloud-modal__title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pc-cloud-modal__icon {
+    color: var(--primary, #3b82f6);
+}
+
+.pc-cloud-modal__body {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pc-cloud-modal__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pc-cloud-modal__input {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: #fff;
+    padding: 8px 12px;
+    font-size: 0.95rem;
+    outline: none;
+}
+
+.pc-cloud-modal__input:focus {
+    border-color: var(--primary, #3b82f6);
+}
+
+.pc-cloud-modal__hint-box {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 6px;
+    padding: 8px 10px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.pc-cloud-modal__hint-icon {
+    color: var(--primary, #3b82f6);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.pc-cloud-modal__hint-text {
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
+.pc-cloud-modal__preview {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pc-cloud-modal__tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    max-height: 110px;
+    overflow-y: auto;
+}
+
+.pc-cloud-modal__pkmn-tag {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.75rem;
+}
+
+.pc-cloud-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--panel-alt, #0f172a);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}

@@ -283,6 +283,10 @@ function App() {
         const handleToggle = () => setShowStandaloneTracker((prev) => !prev);
         window.addEventListener('toggle-standalone-tracker', handleToggle);
         initSettingsBackupSync().catch((err) => console.warn('[App] Settings backup sync error:', err));
+        useCharacterStore
+            .getState()
+            .initPcStorage()
+            .catch((err) => console.warn('[App] PC storage init error:', err));
         return () => window.removeEventListener('toggle-standalone-tracker', handleToggle);
     }, []);
 

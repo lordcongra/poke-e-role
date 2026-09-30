@@ -1,0 +1,148 @@
+import React, { useState } from 'react';
+import type { PcBox, PcPokemonSummary } from '../../../types/pcStorageTypes';
+import { PcSlotCard } from './PcSlotCard';
+import { Info, X, PlusCircle } from 'lucide-react';
+import './PcBoxGrid.css';
+
+interface PcBoxGridProps {
+    box: PcBox;
+    pokemonSummaries: Record<string, PcPokemonSummary>;
+    selectedSlot: { type: 'party' | 'box'; index: number } | null;
+    onSelectSlot: (index: number) => void;
+    onEmptySlotClick?: (index: number) => void;
+    onOpenDepositDrawer?: () => void;
+    onContextMenu: (e: React.MouseEvent, index: number, entityId: string) => void;
+    onOpenSheet?: (entityId: string) => void;
+    onDropOnSlot: (targetIndex: number) => void;
+    onDragStart: (e: React.DragEvent, index: number) => void;
+}
+
+export const PcBoxGrid: React.FC<PcBoxGridProps> = ({
+    box,
+    pokemonSummaries,
+    selectedSlot,
+    onSelectSlot,
+    onEmptySlotClick,
+    onOpenDepositDrawer,
+    onContextMenu,
+    onOpenSheet,
+    onDropOnSlot,
+    onDragStart
+}) => {
+    const [dismissBanner, setDismissBanner] = useState(false);
+
+    // Ensure 30 slots exist
+    const slots = Array.from({ length: 30 }, (_, i) => box.slots[i] ?? null);
+    const occupiedCount = slots.filter(Boolean).length;
+    const theme = box.themeColor || '#3b82f6';
+
+    return (
+        <section
+            className="pc-box-grid-container"
+            style={
+                {
+                    '--box-theme': theme,
+                    borderColor: `${theme}66`,
+                    background: `radial-gradient(ellipse at 50% -10%, color-mix(in srgb, ${theme} 22%, transparent) 0%, var(--bg) 75%, color-mix(in srgb, var(--bg) 85%, #000) 100%)`,
+                    boxShadow: `inset 0 1px 0 ${theme}33`
+                } as React.CSSProperties
+            }
+        >
+            {!dismissBanner && (
+                <div className="pc-box-grid__banner">
+                    <div className="pc-box-grid__banner-content">
+                        <Info size={15} className="pc-box-grid__banner-icon" />
+                        <span className="pc-box-grid__banner-text text-subtext">
+                            <strong>Token Tip:</strong> Held items, hats, and accessories attach smoothly with your
+                            Pokémon! For best results, avoid attaching two Pokémon or Trainer tokens directly to each
+                            other.
+                        </span>
+                    </div>
+                    <button
+                        type="button"
+                        className="pc-box-grid__banner-close"
+                        onClick={() => setDismissBanner(true)}
+                        aria-label="Dismiss hint"
+                    >
+                        <X size={13} />
+                    </button>
+                </div>
+            )}
+
+            <div
+                className="pc-box-grid__subheader"
+                style={{
+                    borderBottom: `1px solid ${theme}2a`,
+                    paddingBottom: 6
+                }}
+            >
+                <span className="pc-box-grid__count text-subtext" style={{ color: theme, fontWeight: 700 }}>
+                    Capacity: {occupiedCount} / 30 Pokémon
+                </span>
+                <div className="pc-box-grid__subheader-actions">
+                    {onOpenDepositDrawer && (
+                        <button
+                            type="button"
+                            className="action-button action-button--theme pc-box-grid__deposit-btn"
+                            style={{ background: theme, borderColor: theme }}
+                            onClick={onOpenDepositDrawer}
+                            title="Deposit Pokémon from current map or sheet into this box"
+                        >
+                            <PlusCircle size={13} /> Deposit Pokémon
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            <div className="pc-box-grid">
+                {slots.map((entityId, index) => {
+                    const summary = entityId ? pokemonSummaries[entityId] : null;
+                    const isSelected = selectedSlot?.type === 'box' && selectedSlot?.index === index;
+
+                    if (summary && entityId) {
+                        return (
+                            <div
+                                key={`box-slot-${index}-${entityId}`}
+                                className="pc-box-grid__slot-wrapper"
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={() => onDropOnSlot(index)}
+                            >
+                                <PcSlotCard
+                                    summary={summary}
+                                    isSelected={isSelected}
+                                    isPartySlot={false}
+                                    onClick={() => onSelectSlot(index)}
+                                    onContextMenu={(e) => onContextMenu(e, index, entityId)}
+                                    onOpenSheet={() => onOpenSheet?.(entityId)}
+                                    onDragStart={(e) => onDragStart(e, index)}
+                                />
+                            </div>
+                        );
+                    }
+
+                    return (
+                        <div
+                            key={`box-slot-empty-${index}`}
+                            className={`pc-box-grid__empty-slot ${isSelected ? 'pc-box-grid__empty-slot--selected' : ''}`}
+                            style={{
+                                borderColor: isSelected ? theme : `${theme}22`,
+                                background: isSelected ? `${theme}26` : undefined
+                            }}
+                            onClick={() => {
+                                onSelectSlot(index);
+                                onEmptySlotClick?.(index);
+                            }}
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={() => onDropOnSlot(index)}
+                            title={`Empty Slot ${index + 1} - Click to deposit a Pokémon here`}
+                        >
+                            <span className="pc-box-grid__empty-number text-subtext" style={{ color: `${theme}88` }}>
+                                {index + 1}
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
+        </section>
+    );
+};

@@ -1,0 +1,246 @@
+/* ==========================================================================
+   PC Slot Card Component Styling
+   ========================================================================== */
+
+.pc-slot-card {
+    background: color-mix(in srgb, var(--panel-alt, #242424) 82%, transparent);
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.15));
+    border-radius: 8px;
+    padding: 6px 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: grab;
+    user-select: none;
+    transition: all 0.15s ease;
+    height: 100%;
+    min-height: 64px;
+    box-sizing: border-box;
+}
+
+.pc-slot-card:hover {
+    background: var(--panel-alt, #2a2a2a);
+    border-color: color-mix(in srgb, var(--primary, #3b82f6) 50%, var(--border));
+    transform: translateY(-1px);
+}
+
+.pc-slot-card:active {
+    cursor: grabbing;
+}
+
+.pc-slot-card--selected {
+    border-color: var(--primary, #3b82f6) !important;
+    box-shadow: 0 0 12px color-mix(in srgb, var(--primary, #3b82f6) 40%, transparent);
+    background: color-mix(in srgb, var(--primary, #3b82f6) 16%, var(--panel-alt, #242424)) !important;
+}
+
+.pc-slot-card--party {
+    padding: 8px 10px;
+}
+
+.pc-slot-card__avatar-wrapper {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.pc-slot-card__avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.pc-slot-card__shiny-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    color: #facc15;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 50%;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pc-slot-card__info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pc-slot-card__title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+}
+
+.pc-slot-card__name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pc-slot-card__rank {
+    font-size: 0.68rem;
+    opacity: 0.8;
+}
+
+.pc-slot-card__meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+}
+
+.pc-slot-card__species {
+    font-size: 0.72rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pc-slot-card__types {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.pc-slot-card__type-pill {
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: #64748b;
+    color: #fff;
+}
+
+/* Canonical Pokémon Type Pill Colors */
+.pc-slot-card__type--normal {
+    background: #a8a878;
+}
+.pc-slot-card__type--fire {
+    background: #f08030;
+}
+.pc-slot-card__type--water {
+    background: #6890f0;
+}
+.pc-slot-card__type--grass {
+    background: #78c850;
+}
+.pc-slot-card__type--electric {
+    background: #f8d030;
+    color: #1e293b;
+}
+.pc-slot-card__type--ice {
+    background: #98d8d8;
+    color: #1e293b;
+}
+.pc-slot-card__type--fighting {
+    background: #c03028;
+}
+.pc-slot-card__type--poison {
+    background: #a040a0;
+}
+.pc-slot-card__type--ground {
+    background: #e0c068;
+    color: #1e293b;
+}
+.pc-slot-card__type--flying {
+    background: #a890f0;
+}
+.pc-slot-card__type--psychic {
+    background: #f85888;
+}
+.pc-slot-card__type--bug {
+    background: #a8b820;
+}
+.pc-slot-card__type--rock {
+    background: #b8a038;
+}
+.pc-slot-card__type--ghost {
+    background: #705898;
+}
+.pc-slot-card__type--dragon {
+    background: #7038f8;
+}
+.pc-slot-card__type--steel {
+    background: #b8b8d0;
+    color: #1e293b;
+}
+.pc-slot-card__type--dark {
+    background: #705848;
+}
+.pc-slot-card__type--fairy {
+    background: #ee99ac;
+    color: #1e293b;
+}
+
+.pc-slot-card__hp-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 2px;
+}
+
+.pc-slot-card__hp-fill {
+    height: 100%;
+    transition: width 0.2s ease;
+}
+
+.pc-slot-card__party-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-left: 4px;
+}
+
+.pc-slot-card__btn-sheet {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+}
+
+.pc-slot-card__btn-send,
+.pc-slot-card__btn-recall {
+    font-size: 0.72rem;
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.pc-slot-card__box-actions {
+    display: flex;
+    align-items: center;
+    opacity: 0.7;
+    transition: opacity 0.15s ease;
+}
+
+.pc-slot-card:hover .pc-slot-card__box-actions {
+    opacity: 1;
+}
+
+.pc-slot-card__btn-box-sheet {
+    padding: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}

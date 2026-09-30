@@ -11,6 +11,7 @@ import { createGeneratorSlice } from './slices/generatorSlice';
 import { createIdentitySlice } from './slices/identitySlice';
 import { createMacroSlice } from './slices/macroSlice';
 import { createSyncSlice } from './slices/syncSlice';
+import { createPcSlice } from './slices/pcSlice';
 
 export * from './storeTypes';
 
@@ -61,5 +62,6 @@ export const useCharacterStore = create<CharacterState>()((set, get, api) => ({
     ...createGeneratorSlice(set, get, api),
     ...createIdentitySlice(set, get, api),
     ...createMacroSlice(set, get, api),
-    ...createSyncSlice(set, get, api)
+    ...createSyncSlice(set, get, api),
+    ...createPcSlice(set, get, api)
 }));

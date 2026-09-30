@@ -1,0 +1,130 @@
+/* ==========================================================================
+   Deposit Drawer / Modal (1-Click Storing & Recalling) Styling
+   ========================================================================== */
+
+.pc-deposit-modal-backdrop {
+    z-index: 10015;
+}
+
+.pc-deposit-modal {
+    width: 100%;
+    max-width: 580px;
+    max-height: 82vh;
+    background: var(--panel-bg, #1e293b);
+    border: 1px solid var(--primary, #3b82f6);
+    border-radius: 10px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.pc-deposit-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--panel-alt, #0f172a);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pc-deposit-modal__title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pc-deposit-modal__icon {
+    color: var(--primary, #3b82f6);
+}
+
+.pc-deposit-modal__body {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+}
+
+.pc-deposit-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pc-deposit-section__title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    color: var(--text-main, #f8fafc);
+}
+
+.pc-deposit-card {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition:
+        border-color 0.15s,
+        background 0.15s;
+}
+
+.pc-deposit-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.pc-deposit-card--active {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.4);
+}
+
+.pc-deposit-card__avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.pc-deposit-card__info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.pc-deposit-card__name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pc-deposit-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 8px;
+    max-height: 190px;
+    overflow-y: auto;
+}
+
+.pc-deposit-section--gen {
+    padding-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pc-deposit-btn--gen {
+    width: 100%;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.85rem;
+}
