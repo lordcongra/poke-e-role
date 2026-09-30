@@ -2,7 +2,18 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { canViewHomebrew } from '../../utils/common/helper';
 import { getAbsolutePokeballUrl } from '../../utils/generators/trainerTokenSpawner';
 import OBR from '@owlbear-rodeo/sdk';
-import { HardDrive, Wand2, Users, Layers, Hammer, ArrowLeft, MousePointerClick, Sparkles, Palette } from 'lucide-react';
+import {
+    HardDrive,
+    Wand2,
+    Users,
+    Layers,
+    Hammer,
+    ArrowLeft,
+    MousePointerClick,
+    Sparkles,
+    Palette,
+    Box
+} from 'lucide-react';
 import './TokenEmptyState.css';
 
 interface TokenEmptyStateProps {
@@ -80,13 +91,17 @@ export function TokenEmptyState({ isStandalone = false, onOpenPcModal }: TokenEm
                     <div className="token-empty-state__card-content">
                         <div className="token-empty-state__card-header">
                             <h3 className="token-empty-state__card-title text-title-primary">Pokémon PC Storage</h3>
-                            <span className="token-empty-state__badge token-empty-state__badge--cloud">
-                                <Sparkles size={11} /> Cloud Depot
+                            <span
+                                className={`token-empty-state__badge ${isStandalone ? 'token-empty-state__badge--box' : 'token-empty-state__badge--cloud'}`}
+                            >
+                                {isStandalone ? <Box size={11} /> : <Sparkles size={11} />}
+                                {isStandalone ? 'Box System' : 'Cloud Depot'}
                             </span>
                         </div>
                         <p className="token-empty-state__card-desc text-subtext">
-                            Manage stored Pokémon boxes, withdraw active party members, and backup to OBR cloud scene
-                            storage.
+                            {isStandalone
+                                ? 'Visually organize your Pokémon into storage boxes, manage active party rosters, and quickly switch between character sheets.'
+                                : 'Manage stored Pokémon boxes, withdraw active party members, and backup to OBR cloud scene storage.'}
                         </p>
                         <button
                             type="button"
@@ -112,8 +127,9 @@ export function TokenEmptyState({ isStandalone = false, onOpenPcModal }: TokenEm
                                 <h3 className="token-empty-state__card-title text-title-primary">Pokémon Generator</h3>
                             </div>
                             <p className="token-empty-state__card-desc text-subtext">
-                                Roll wild encounters or new party additions with randomized natures, movesets, and
-                                automatic token spawning.
+                                {isStandalone
+                                    ? 'Roll wild encounters or new party additions with randomized natures, movesets, and automated stat builds.'
+                                    : 'Roll wild encounters or new party additions with randomized natures, movesets, and automatic token spawning.'}
                             </p>
                             <button
                                 type="button"
@@ -140,8 +156,9 @@ export function TokenEmptyState({ isStandalone = false, onOpenPcModal }: TokenEm
                                 <h3 className="token-empty-state__card-title text-title-primary">Trainer Generator</h3>
                             </div>
                             <p className="token-empty-state__card-desc text-subtext">
-                                Generate complete Trainer NPCs, personalities, and balanced Pokémon rosters with token
-                                formations.
+                                {isStandalone
+                                    ? 'Generate complete Trainer characters and NPCs with distinct personalities, backgrounds, and balanced Pokémon rosters.'
+                                    : 'Generate complete Trainer NPCs, personalities, and balanced Pokémon rosters with token formations.'}
                             </p>
                             <button
                                 type="button"
@@ -167,8 +184,9 @@ export function TokenEmptyState({ isStandalone = false, onOpenPcModal }: TokenEm
                             <h3 className="token-empty-state__card-title text-title-primary">Battle Organizer</h3>
                         </div>
                         <p className="token-empty-state__card-desc text-subtext">
-                            Track party health, round timers, initiative order, and combat conditions across the whole
-                            table.
+                            {isStandalone
+                                ? 'Track party health, round timers, initiative order, and combat conditions across your campaign encounters.'
+                                : 'Track party health, round timers, initiative order, and combat conditions across the whole table.'}
                         </p>
                         <button
                             type="button"
