@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { PcStorageHeader } from './PcStorageHeader';
 import { PcPartyDock } from './PcPartyDock';
@@ -11,16 +10,9 @@ import { PcDepositDrawerModal } from './PcDepositDrawerModal';
 import { PcSheetModal } from './PcSheetModal';
 import { PcReleaseConfirmModal } from './PcReleaseConfirmModal';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
-import {
-    spawnPokemonToMap,
-    recallPokemonFromMap,
-    exportBoxCloud,
-    importBoxCloud,
-    buildActiveCharacterSummary,
-    filterTrainerPokemonSummaries
-} from '../../../utils/pc/pcModalOps';
-import { savePcStorage } from '../../../utils/pc/pcStorageAdapter';
+import { buildActiveCharacterSummary, filterTrainerPokemonSummaries } from '../../../utils/pc/pcModalOps';
 import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
+import { usePcModalHandlers } from './usePcModalHandlers';
 import './PcStorageModal.css';
 
 interface PcStorageModalProps {
@@ -99,78 +91,49 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
 
     const canLinkActiveTrainer = identity.mode === 'Trainer' || identity.mode === 'Trainer (Special)';
 
-    // Handlers
-    const handleLinkActiveTrainer = () => {
-        if (!trainer || !campaign) return;
-        if (!canLinkActiveTrainer) {
-            if (OBR.isAvailable) {
-                OBR.notification.show(
-                    'Only tokens set to Trainer or Trainer (Special) mode can be linked to the belt.',
-                    'WARNING'
-                );
-            }
-            return;
-        }
-        const trainerName = identity.nickname || identity.species || 'Trainer';
-        const nextTrainer = {
-            ...trainer,
-            name: trainerName,
-            avatarUrl: identity.tokenImageUrl || trainer.avatarUrl
-        };
-        const nextData = {
-            ...pcData,
-            campaigns: {
-                ...pcData.campaigns,
-                [pcData.activeCampaignId]: {
-                    ...campaign,
-                    trainers: {
-                        ...campaign.trainers,
-                        [trainer.id]: nextTrainer
-                    }
-                }
-            }
-        };
-        useCharacterStore.setState({ pcData: nextData });
-        savePcStorage(nextData);
+    const {
+        isTrainerLinked,
+        handleLinkActiveTrainer,
+        handleUnlinkTrainer,
+        handleSendOut,
+        handleRecall,
+        handleRelinkArtwork,
+        handleClonePokemon,
+        handleUnlinkPokemon,
+        handleReleasePokemon,
+        handleConfirmRelease,
+        handleConfirmCloudUpload,
+        handleDownloadBox,
+        handleCompleteDeposit
+    } = usePcModalHandlers({
+        pcData,
+        campaign,
+        trainer,
+        currentBox,
+        activeBoxIndex,
+        role: role || 'PLAYER',
+        identity: {
+            nickname: identity.nickname,
+            species: identity.species,
+            tokenImageUrl: identity.tokenImageUrl
+        },
+        canLinkActiveTrainer,
+        depositTarget,
+        setDepositTarget,
+        releaseConfirmPokemon,
+        setReleaseConfirmPokemon,
+        sheetViewEntityId,
+        setSheetViewEntityId,
+        setIsExportModalOpen,
+        updatePokemonSummary,
+        deletePokemonFromPc,
+        depositPokemonToBox,
+        setPartySlot,
+        setBoxSlot
+    });
 
-        if (OBR.isAvailable) {
-            OBR.notification.show(`Linked "${trainerName}" to Pokéball Belt!`, 'SUCCESS');
-        }
-    };
-
-    const handleSendOut = async (entityId: string) => {
-        const summary = pcData.pokemonSummaries[entityId];
-        if (!summary) return;
-
-        const result = await spawnPokemonToMap(summary, undefined, role || 'PLAYER');
-        if (result.success) {
-            updatePokemonSummary({
-                ...summary,
-                isOnMap: true,
-                mapTokenId: result.newMapTokenId
-            });
-        }
-    };
-
-    const handleRecall = async (entityId: string) => {
-        const summary = pcData.pokemonSummaries[entityId];
-        if (!summary) return;
-
-        const result = await recallPokemonFromMap(summary.mapTokenId);
-        if (result.success) {
-            updatePokemonSummary({
-                ...summary,
-                isOnMap: false,
-                mapTokenId: undefined,
-                attachedItems: result.attachedItems ?? summary.attachedItems,
-                hp: result.currentHp ?? summary.hp,
-                maxHp: result.maxHp ?? summary.maxHp,
-                will: result.currentWill ?? summary.will,
-                maxWill: result.maxWill ?? summary.maxWill,
-                savedTokenItem: result.savedTokenItem ?? summary.savedTokenItem,
-                fullMetadata: result.fullMetadata ?? summary.fullMetadata
-            });
-        }
+    const handleOpenCharacterSheet = (entityId: string) => {
+        setSheetViewEntityId(entityId);
     };
 
     const handleOpenContextMenu = (e: React.MouseEvent, isParty: boolean, index: number, entityId: string) => {
@@ -181,123 +144,6 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
             index,
             entityId
         });
-    };
-
-    const handleRelinkArtwork = async (entityId: string) => {
-        const summary = pcData.pokemonSummaries[entityId];
-        if (!summary) return;
-
-        if (OBR.isAvailable) {
-            try {
-                const images = await OBR.assets.downloadImages(false);
-                if (images && images.length > 0) {
-                    const selectedUrl = images[0].image?.url;
-                    if (selectedUrl) {
-                        updatePokemonSummary({
-                            ...summary,
-                            tokenImageUrl: selectedUrl
-                        });
-                    }
-                }
-            } catch (e) {
-                console.error('[PcStorageModal] Failed to pick image from Owlbear:', e);
-            }
-        }
-    };
-
-    const handleClonePokemon = (entityId: string) => {
-        const summary = pcData.pokemonSummaries[entityId];
-        if (!summary) return;
-
-        const clonedId = crypto.randomUUID();
-        const clonedSummary = {
-            ...summary,
-            entityId: clonedId,
-            name: `${summary.name || summary.species} (Clone)`,
-            isOnMap: false,
-            mapTokenId: undefined
-        };
-        updatePokemonSummary(clonedSummary);
-        depositPokemonToBox(clonedId, activeBoxIndex);
-    };
-
-    const handleReleasePokemon = (entityId: string) => {
-        const summary = pcData.pokemonSummaries[entityId];
-        if (!summary) return;
-        setReleaseConfirmPokemon(summary);
-    };
-
-    const handleConfirmRelease = () => {
-        if (!releaseConfirmPokemon) return;
-        const name = releaseConfirmPokemon.name || releaseConfirmPokemon.species;
-        if (sheetViewEntityId === releaseConfirmPokemon.entityId) {
-            setSheetViewEntityId(null);
-        }
-        deletePokemonFromPc(releaseConfirmPokemon.entityId);
-        setReleaseConfirmPokemon(null);
-        if (OBR.isAvailable) {
-            OBR.notification.show(`Released "${name}" from storage.`, 'INFO');
-        }
-    };
-
-    const handleOpenCharacterSheet = (entityId: string) => {
-        setSheetViewEntityId(entityId);
-    };
-
-    const handleConfirmCloudUpload = async (customSceneName: string) => {
-        if (!currentBox || !campaign) return;
-        setIsExportModalOpen(false);
-        const success = await exportBoxCloud(currentBox, campaign, pcData.pokemonSummaries, customSceneName);
-        if (success && OBR.isAvailable) {
-            OBR.notification.show(`Saved "${customSceneName}" to Owlbear Rodeo Cloud!`, 'SUCCESS');
-        }
-    };
-
-    const handleDownloadBox = async () => {
-        if (!campaign) return;
-        const imported = await importBoxCloud(campaign);
-        if (imported.length > 0) {
-            for (const sum of imported) {
-                updatePokemonSummary(sum);
-                depositPokemonToBox(sum.entityId, activeBoxIndex);
-            }
-            if (OBR.isAvailable) {
-                OBR.notification.show(`Imported ${imported.length} Pokémon into "${currentBox.name}"!`, 'SUCCESS');
-            }
-        }
-    };
-
-    const handleCompleteDeposit = async (summary: PcPokemonSummary) => {
-        let finalSummary = { ...summary };
-        if (trainer && !finalSummary.trainerId) {
-            finalSummary.trainerId = trainer.id;
-        }
-        if (!finalSummary.fullMetadata) {
-            finalSummary.fullMetadata = flattenStateToMetadata(useCharacterStore.getState());
-        }
-        if (!finalSummary.savedTokenItem && OBR.isAvailable && finalSummary.mapTokenId) {
-            try {
-                const items = await OBR.scene.items.getItems([finalSummary.mapTokenId]);
-                if (items.length > 0) {
-                    finalSummary.savedTokenItem = items[0];
-                }
-            } catch (e) {
-                console.warn('[PcStorageModal] Failed to get map token for deposit:', e);
-            }
-        }
-
-        updatePokemonSummary(finalSummary);
-        if (depositTarget?.targetSlot?.type === 'party') {
-            setPartySlot(trainer.id, depositTarget.targetSlot.index, finalSummary.entityId);
-        } else if (depositTarget?.targetSlot?.type === 'box') {
-            setBoxSlot(activeBoxIndex, depositTarget.targetSlot.index, finalSummary.entityId);
-        } else {
-            depositPokemonToBox(finalSummary.entityId, activeBoxIndex);
-        }
-
-        if (OBR.isAvailable) {
-            OBR.notification.show(`Deposited ${finalSummary.name || finalSummary.species} to storage!`, 'INFO');
-        }
     };
 
     if (!campaign || !trainer || !currentBox) {
@@ -362,6 +208,8 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                         }}
                         onDragStart={(_e, index) => setDragSource({ type: 'party', index })}
                         onLinkActiveTrainer={handleLinkActiveTrainer}
+                        isTrainerLinked={isTrainerLinked}
+                        onUnlinkTrainer={handleUnlinkTrainer}
                     />
 
                     <PcBoxGrid
@@ -411,6 +259,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                         }}
                         onRelinkArtwork={() => handleRelinkArtwork(contextMenu.entityId)}
                         onClone={() => handleClonePokemon(contextMenu.entityId)}
+                        onUnlink={() => handleUnlinkPokemon(contextMenu.entityId)}
                         onRelease={() => handleReleasePokemon(contextMenu.entityId)}
                     />
                 )}
@@ -469,6 +318,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                 <PcReleaseConfirmModal
                     pokemon={releaseConfirmPokemon}
                     onConfirm={handleConfirmRelease}
+                    onUnlink={() => handleUnlinkPokemon(releaseConfirmPokemon.entityId)}
                     onClose={() => setReleaseConfirmPokemon(null)}
                 />
             )}

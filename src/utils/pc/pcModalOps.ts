@@ -106,6 +106,23 @@ export async function spawnPokemonToMap(
                 .build();
         }
 
+        if (OBR.isAvailable) {
+            try {
+                const myId = await OBR.player.getId();
+                const myName = await OBR.player.getName();
+                parentItem.metadata = {
+                    ...parentItem.metadata,
+                    'pokerole-pmd-extension/claimed-by': {
+                        playerId: myId,
+                        playerName: myName,
+                        entityId: summary.entityId
+                    }
+                };
+            } catch {
+                // Ignore player lookup error
+            }
+        }
+
         // Re-home parent token + any attached items with fresh IDs & landing position
         const rehomedItems = rehomeTokenSubtree(parentItem, summary.attachedItems || [], {
             landingPosition: centerPos,
@@ -148,7 +165,9 @@ export async function recallPokemonFromMap(mapTokenId?: string): Promise<RecallP
         const parent = sceneItems.find((i) => i.id === mapTokenId);
 
         if (!parent) {
-            return { success: true, attachedItems: [] };
+            // Token not on active scene (e.g. spawned in another scene, or removed).
+            // Do NOT wipe attachments with an empty array!
+            return { success: true };
         }
 
         const attachedChildren = sceneItems.filter((i) => i.attachedTo === mapTokenId);
@@ -341,4 +360,38 @@ export function filterTrainerPokemonSummaries(
         }
         return false;
     });
+}
+
+export async function clearTokenClaimOps(mapTokenId?: string): Promise<void> {
+    if (!OBR.isAvailable || !mapTokenId) return;
+    try {
+        await OBR.scene.items.updateItems([mapTokenId], (items) => {
+            for (const it of items) {
+                delete it.metadata['pokerole-pmd-extension/claimed-by'];
+            }
+        });
+    } catch (e) {
+        console.warn('[PcModalOps] Failed to clear claimed-by on item:', e);
+    }
+}
+
+export async function unlinkPokemonFromPcOps(
+    summary: PcPokemonSummary,
+    role: 'PLAYER' | 'GM' = 'PLAYER'
+): Promise<void> {
+    if (!OBR.isAvailable) return;
+    try {
+        let tokenId = summary.mapTokenId;
+        if (!summary.isOnMap) {
+            const res = await spawnPokemonToMap(summary, undefined, role);
+            if (res.success && res.newMapTokenId) {
+                tokenId = res.newMapTokenId;
+            }
+        }
+        if (tokenId) {
+            await clearTokenClaimOps(tokenId);
+        }
+    } catch (e) {
+        console.warn('[PcModalOps] Failed to unlink Pokémon to map:', e);
+    }
 }

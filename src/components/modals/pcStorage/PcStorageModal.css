@@ -153,14 +153,16 @@
 
     .pc-party-dock {
         width: 100%;
-        max-height: 220px;
+        max-height: 230px;
         border-right: none;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        overflow-x: hidden;
     }
 
     .pc-party-dock__slots {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
     }
 
     .pc-box-grid {

@@ -35,6 +35,7 @@ export interface TrainerRoster {
     name: string;
     avatarUrl?: string;
     party: (string | null)[]; // 6 slots, each storing entityId or null
+    isLinked?: boolean;
 }
 
 export interface PcBox {

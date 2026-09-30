@@ -1,5 +1,15 @@
 import React, { useEffect, useRef } from 'react';
-import { FileText, ArrowRightLeft, Zap, CornerDownLeft, Image as ImageIcon, Copy, Trash2, X } from 'lucide-react';
+import {
+    FileText,
+    ArrowRightLeft,
+    Zap,
+    CornerDownLeft,
+    Image as ImageIcon,
+    Copy,
+    Trash2,
+    X,
+    Unlink
+} from 'lucide-react';
 
 interface PcSlotContextMenuProps {
     x: number;
@@ -13,6 +23,7 @@ interface PcSlotContextMenuProps {
     onToggleMap?: () => void;
     onRelinkArtwork?: () => void;
     onClone: () => void;
+    onUnlink: () => void;
     onRelease: () => void;
 }
 
@@ -28,6 +39,7 @@ export const PcSlotContextMenu: React.FC<PcSlotContextMenuProps> = ({
     onToggleMap,
     onRelinkArtwork,
     onClone,
+    onUnlink,
     onRelease
 }) => {
     const menuRef = useRef<HTMLDivElement>(null);
@@ -132,6 +144,18 @@ export const PcSlotContextMenu: React.FC<PcSlotContextMenuProps> = ({
                     }}
                 >
                     <Copy size={15} /> Clone Pokémon
+                </button>
+
+                <button
+                    type="button"
+                    className="pc-context-menu__item"
+                    onClick={() => {
+                        onUnlink();
+                        onClose();
+                    }}
+                    title="Unlink Pokémon from PC / Party. If stored away, it will be placed onto the map."
+                >
+                    <Unlink size={15} /> Unlink from Party/PC
                 </button>
 
                 <div className="pc-context-menu__divider" />

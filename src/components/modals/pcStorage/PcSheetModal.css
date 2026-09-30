@@ -10,13 +10,12 @@
     bottom: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(4px);
+    background: var(--bg, #121212);
     z-index: 10060;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 12px;
+    flex-direction: column;
+    padding: 0;
+    margin: 0;
     box-sizing: border-box;
     animation: pcSheetModalFade 0.15s ease-out;
 }
@@ -32,17 +31,15 @@
 
 .pc-sheet-modal__content {
     background: var(--bg, #121212);
-    border: 2px solid var(--primary, #3b82f6);
-    border-radius: 12px;
-    width: 98%;
-    max-width: 1140px;
-    height: 94vh;
-    max-height: 94vh;
+    border: none;
+    border-radius: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100vh;
     display: flex;
     flex-direction: column;
-    box-shadow:
-        0 16px 48px rgba(0, 0, 0, 0.8),
-        0 0 24px color-mix(in srgb, var(--primary, #3b82f6) 25%, transparent);
+    box-shadow: none;
     box-sizing: border-box;
     overflow: hidden;
 }
@@ -51,7 +48,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 16px;
+    padding: 8px 16px;
     background: var(--panel-alt, #222);
     border-bottom: 1px solid var(--border, #333);
     flex-shrink: 0;
@@ -180,14 +177,15 @@
 .pc-sheet-modal__body {
     flex: 1;
     overflow-y: auto;
-    padding: 12px 16px;
+    padding: 8px 12px 24px;
     display: flex;
     flex-direction: column;
 }
 
 .pc-sheet-modal__container {
-    max-width: 100% !important;
-    margin: 0 !important;
+    width: 100% !important;
+    max-width: 1200px !important;
+    margin: 0 auto !important;
     box-shadow: none !important;
     border: none !important;
     background: transparent !important;

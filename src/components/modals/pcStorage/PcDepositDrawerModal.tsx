@@ -4,7 +4,7 @@ import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
 import { METADATA_ID } from '../../../utils/sync/obr';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { PlusCircle, MapPin, Wand2, X, FileText, Check, Archive } from 'lucide-react';
+import { PlusCircle, MapPin, Wand2, X, FileText, Check, Archive, Lock } from 'lucide-react';
 import './PcDepositDrawerModal.css';
 
 interface SceneTokenCandidate {
@@ -21,6 +21,7 @@ interface SceneTokenCandidate {
     rank: string;
     item: Item;
     metadata: Record<string, unknown>;
+    claimedBy?: string;
 }
 
 interface PcDepositDrawerModalProps {
@@ -64,6 +65,7 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                     }
                 }
 
+                const myPlayerId = await OBR.player.getId();
                 const found: SceneTokenCandidate[] = [];
 
                 for (const item of items) {
@@ -81,6 +83,14 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                         const willMax =
                             Number(meta['will-max-display']) || (typeof meta.willMax === 'number' ? meta.willMax : 5);
 
+                        const claimMeta = item.metadata?.['pokerole-pmd-extension/claimed-by'] as
+                            | { playerId?: string; playerName?: string; trainerName?: string }
+                            | undefined;
+                        let claimedBy: string | undefined = undefined;
+                        if (claimMeta?.playerId && claimMeta.playerId !== myPlayerId) {
+                            claimedBy = claimMeta.playerName || claimMeta.trainerName || 'Another Player';
+                        }
+
                         found.push({
                             id: item.id,
                             name: (meta.name as string) || (meta.nickname as string) || item.name || species,
@@ -94,7 +104,8 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                             type2: meta.type2 as string | undefined,
                             rank: (meta.rank as string) || 'Starter',
                             item,
-                            metadata: meta
+                            metadata: meta,
+                            claimedBy
                         });
                     }
                 }
@@ -109,9 +120,36 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
         scanScene();
     }, [isGm]);
 
-    const handleSelectCandidate = (cand: SceneTokenCandidate) => {
+    const handleSelectCandidate = async (cand: SceneTokenCandidate) => {
+        if (cand.claimedBy) return;
+
+        const entityId = (cand.metadata.entityId as string) || crypto.randomUUID();
+        let myPlayerId = '';
+        let myPlayerName = '';
+
+        if (OBR.isAvailable) {
+            try {
+                myPlayerId = await OBR.player.getId();
+                myPlayerName = await OBR.player.getName();
+                if (cand.id) {
+                    await OBR.scene.items.updateItems([cand.id], (items) => {
+                        for (const it of items) {
+                            it.metadata['pokerole-pmd-extension/claimed-by'] = {
+                                playerId: myPlayerId,
+                                playerName: myPlayerName,
+                                entityId,
+                                trainerName: trainerName
+                            };
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn('[PcDepositDrawer] Error stamping claimed-by on candidate:', e);
+            }
+        }
+
         const summary: PcPokemonSummary = {
-            entityId: (cand.metadata.entityId as string) || crypto.randomUUID(),
+            entityId,
             name: cand.name,
             species: cand.species,
             rank: cand.rank,
@@ -125,7 +163,15 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
             isOnMap: true,
             mapTokenId: cand.id,
             savedTokenItem: cand.item,
-            fullMetadata: cand.metadata,
+            fullMetadata: {
+                ...cand.metadata,
+                'pokerole-pmd-extension/claimed-by': {
+                    playerId: myPlayerId,
+                    playerName: myPlayerName,
+                    entityId,
+                    trainerName: trainerName
+                }
+            },
             lastModified: Date.now()
         };
         onDepositSummary(summary);
@@ -252,7 +298,10 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                             ) : (
                                 <div className="pc-deposit-grid">
                                     {sceneCandidates.map((c) => (
-                                        <div key={c.id} className="pc-deposit-card">
+                                        <div
+                                            key={c.id}
+                                            className={`pc-deposit-card ${c.claimedBy ? 'pc-deposit-card--claimed' : ''}`}
+                                        >
                                             <img
                                                 src={c.imageUrl}
                                                 alt={c.name}
@@ -268,14 +317,33 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                                                 <span className="text-subtext">
                                                     {c.species} • {c.hp}/{c.maxHp} HP
                                                 </span>
+                                                {c.claimedBy && (
+                                                    <span
+                                                        className="pc-deposit-card__claimed-tag text-subtext"
+                                                        title={`Claimed by ${c.claimedBy}`}
+                                                    >
+                                                        <Lock size={10} /> Claimed by {c.claimedBy}
+                                                    </span>
+                                                )}
                                             </div>
-                                            <button
-                                                type="button"
-                                                className="action-button action-button--dark"
-                                                onClick={() => handleSelectCandidate(c)}
-                                            >
-                                                Deposit
-                                            </button>
+                                            {c.claimedBy ? (
+                                                <button
+                                                    type="button"
+                                                    className="action-button action-button--dark pc-deposit-btn--disabled"
+                                                    disabled
+                                                    title={`This Pokémon is already claimed by ${c.claimedBy}`}
+                                                >
+                                                    Claimed
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    className="action-button action-button--dark"
+                                                    onClick={() => handleSelectCandidate(c)}
+                                                >
+                                                    Deposit
+                                                </button>
+                                            )}
                                         </div>
                                     ))}
                                 </div>

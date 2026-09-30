@@ -1,7 +1,7 @@
 import React from 'react';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
-import { Zap, CornerDownLeft, Sparkles, FileText } from 'lucide-react';
+import { CornerDownLeft, Sparkles, FileText } from 'lucide-react';
 import './PcSlotCard.css';
 
 interface PcSlotCardProps {
@@ -111,33 +111,51 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
                                 onOpenSheet();
                             }}
                             title="Open Character Sheet"
+                            aria-label="Open Character Sheet"
                         >
-                            <FileText size={11} /> Sheet
+                            <FileText size={13} />
                         </button>
                     )}
                     {summary.isOnMap ? (
                         <button
                             type="button"
-                            className="action-button action-button--dark pc-slot-card__btn-recall"
+                            className="action-button action-button--dark pc-slot-card__btn-action pc-slot-card__btn-recall"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onRecall?.();
                             }}
                             title="Recall Pokémon back into Pokéball"
+                            aria-label="Recall Pokémon back into Pokéball"
                         >
-                            <CornerDownLeft size={12} /> Recall
+                            <CornerDownLeft size={13} />
                         </button>
                     ) : (
                         <button
                             type="button"
-                            className="action-button action-button--theme pc-slot-card__btn-send"
+                            className="action-button action-button--theme pc-slot-card__btn-action pc-slot-card__btn-send"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onSendOut?.();
                             }}
                             title="Send Out Pokémon onto battle map"
+                            aria-label="Send Out Pokémon onto battle map"
                         >
-                            <Zap size={12} /> Send Out
+                            <svg
+                                width={13}
+                                height={13}
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                style={{ display: 'block' }}
+                            >
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="2" y1="12" x2="22" y2="12" />
+                                <circle cx="12" cy="12" r="3" />
+                                <circle cx="12" cy="12" r="1" fill="currentColor" />
+                            </svg>
                         </button>
                     )}
                 </div>
@@ -152,6 +170,7 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
                                 onOpenSheet();
                             }}
                             title="Open Pokémon Sheet"
+                            aria-label="Open Pokémon Sheet"
                         >
                             <FileText size={12} />
                         </button>

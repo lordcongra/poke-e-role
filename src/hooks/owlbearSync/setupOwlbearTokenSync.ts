@@ -117,6 +117,28 @@ export async function setupOwlbearTokenSync(params: {
         try {
             const sceneItems = await OBR.scene.items.getItems();
             lastSceneItemIds = new Set(sceneItems.map((i) => i.id));
+
+            // Clean up any stale ghost tokens left behind from Pokémon recalled on another scene
+            const freshStore = useCharacterStore.getState();
+            const ghostIdsToDelete: string[] = [];
+            for (const item of sceneItems) {
+                if (item.layer === 'CHARACTER') {
+                    const tMeta = (item.metadata[METADATA_ID] || item.metadata['pokerole-pmd-extension/stats']) as
+                        | Record<string, unknown>
+                        | undefined;
+                    if (tMeta?.entityId && typeof tMeta.entityId === 'string') {
+                        const sum = freshStore.pcData.pokemonSummaries[tMeta.entityId];
+                        if (sum && (!sum.isOnMap || (sum.mapTokenId && sum.mapTokenId !== item.id))) {
+                            ghostIdsToDelete.push(item.id);
+                            const attached = sceneItems.filter((a) => a.attachedTo === item.id);
+                            ghostIdsToDelete.push(...attached.map((a) => a.id));
+                        }
+                    }
+                }
+            }
+            if (ghostIdsToDelete.length > 0) {
+                await OBR.scene.items.deleteItems(ghostIdsToDelete);
+            }
         } catch {
             lastSceneItemIds = new Set();
         }
@@ -261,6 +283,61 @@ export async function setupOwlbearTokenSync(params: {
                         const imgItem = item as Image;
                         if (imgItem.image?.url && imgItem.image.url !== storeState.identity.tokenImageUrl) {
                             storeState.setIdentity('tokenImageUrl', imgItem.image.url);
+                        }
+                    }
+
+                    // Sync live Pokémon stats and metadata to PC storage if this token belongs to PC
+                    const entityId = meta.entityId as string | undefined;
+                    if (entityId) {
+                        const pcSummary = storeState.pcData.pokemonSummaries[entityId];
+                        if (pcSummary && pcSummary.isOnMap) {
+                            const curHp =
+                                typeof meta['hp-curr'] === 'number'
+                                    ? meta['hp-curr']
+                                    : !isNaN(Number(meta['hp-curr'])) && meta['hp-curr'] !== ''
+                                      ? Number(meta['hp-curr'])
+                                      : pcSummary.hp;
+                            const mHp =
+                                typeof meta['hp-max-display'] === 'number'
+                                    ? meta['hp-max-display']
+                                    : !isNaN(Number(meta['hp-max-display'])) && meta['hp-max-display'] !== ''
+                                      ? Number(meta['hp-max-display'])
+                                      : pcSummary.maxHp;
+                            const curWill =
+                                typeof meta['will-curr'] === 'number'
+                                    ? meta['will-curr']
+                                    : !isNaN(Number(meta['will-curr'])) && meta['will-curr'] !== ''
+                                      ? Number(meta['will-curr'])
+                                      : pcSummary.will;
+                            const mWill =
+                                typeof meta['will-max-display'] === 'number'
+                                    ? meta['will-max-display']
+                                    : !isNaN(Number(meta['will-max-display'])) && meta['will-max-display'] !== ''
+                                      ? Number(meta['will-max-display'])
+                                      : pcSummary.maxWill;
+                            const name = (meta.name as string) || (meta.nickname as string) || pcSummary.name;
+
+                            if (
+                                curHp !== pcSummary.hp ||
+                                mHp !== pcSummary.maxHp ||
+                                curWill !== pcSummary.will ||
+                                mWill !== pcSummary.maxWill ||
+                                name !== pcSummary.name ||
+                                pcSummary.mapTokenId !== item.id
+                            ) {
+                                storeState.updatePokemonSummary({
+                                    ...pcSummary,
+                                    hp: curHp,
+                                    maxHp: mHp,
+                                    will: curWill,
+                                    maxWill: mWill,
+                                    name,
+                                    mapTokenId: item.id,
+                                    savedTokenItem: item,
+                                    fullMetadata: meta,
+                                    lastModified: Date.now()
+                                });
+                            }
                         }
                     }
                 } catch (e) {

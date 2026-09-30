@@ -80,6 +80,17 @@
     cursor: not-allowed !important;
 }
 
+.pc-party-dock__unlink-trainer-btn {
+    border-color: color-mix(in srgb, var(--semantic-danger, #ef4444) 40%, var(--border, rgba(255, 255, 255, 0.15)));
+    color: color-mix(in srgb, var(--semantic-danger, #ef4444) 85%, #fff);
+}
+
+.pc-party-dock__unlink-trainer-btn:hover {
+    background: color-mix(in srgb, var(--semantic-danger, #ef4444) 20%, var(--panel-alt, #242424));
+    border-color: var(--semantic-danger, #ef4444);
+    color: #fff;
+}
+
 .pc-party-dock__link-avatar {
     width: 18px;
     height: 18px;

@@ -2,7 +2,7 @@ import React from 'react';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
 import { PcSlotCard } from './PcSlotCard';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
-import { Shield, UserCheck, Plus } from 'lucide-react';
+import { Shield, UserCheck, Plus, Unlink } from 'lucide-react';
 import './PcPartyDock.css';
 
 interface PcPartyDockProps {
@@ -11,6 +11,7 @@ interface PcPartyDockProps {
     selectedSlot: { type: 'party' | 'box'; index: number } | null;
     trainerName: string;
     trainerAvatarUrl?: string;
+    isTrainerLinked?: boolean;
     activeCharacterName?: string;
     activeCharacterAvatarUrl?: string;
     canLinkActiveTrainer?: boolean;
@@ -24,6 +25,7 @@ interface PcPartyDockProps {
     onDropOnSlot: (targetIndex: number) => void;
     onDragStart: (e: React.DragEvent, index: number) => void;
     onLinkActiveTrainer?: () => void;
+    onUnlinkTrainer?: () => void;
 }
 
 export const PcPartyDock: React.FC<PcPartyDockProps> = ({
@@ -32,6 +34,7 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
     selectedSlot,
     trainerName,
     trainerAvatarUrl,
+    isTrainerLinked = false,
     activeCharacterName,
     activeCharacterAvatarUrl,
     canLinkActiveTrainer = true,
@@ -44,7 +47,8 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
     onRecall,
     onDropOnSlot,
     onDragStart,
-    onLinkActiveTrainer
+    onLinkActiveTrainer,
+    onUnlinkTrainer
 }) => {
     const occupiedCount = partySlots.filter(Boolean).length;
 
@@ -70,39 +74,52 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                 </div>
                 <div className="pc-party-dock__header-actions">
                     <span className="pc-party-dock__badge text-subtext">{occupiedCount} / 6</span>
-                    {onLinkActiveTrainer && (
+                    {isTrainerLinked && onUnlinkTrainer ? (
                         <button
                             type="button"
-                            className={`pc-party-dock__link-trainer-btn action-button action-button--dark ${
-                                !canLinkActiveTrainer ? 'pc-party-dock__link-trainer-btn--disabled' : ''
-                            }`}
-                            onClick={() => {
-                                if (canLinkActiveTrainer) {
-                                    onLinkActiveTrainer();
-                                }
-                            }}
-                            title={
-                                !canLinkActiveTrainer
-                                    ? 'Cannot link: Current token is in Pokémon mode. Only tokens set to Trainer or Trainer (Special) mode can be linked.'
-                                    : activeCharacterName
-                                      ? `Link "${activeCharacterName}" as Party Trainer`
-                                      : "Link active character/token as this Belt's Trainer"
-                            }
+                            className="pc-party-dock__link-trainer-btn pc-party-dock__unlink-trainer-btn action-button action-button--dark"
+                            onClick={onUnlinkTrainer}
+                            title={`Unlink "${trainerName}" from this Belt`}
+                            aria-label={`Unlink "${trainerName}" from this Belt`}
                         >
-                            {activeCharacterAvatarUrl ? (
-                                <img
-                                    src={activeCharacterAvatarUrl}
-                                    alt="Active Trainer"
-                                    className="pc-party-dock__link-avatar"
-                                    onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                    }}
-                                />
-                            ) : (
-                                <UserCheck size={12} />
-                            )}
-                            <span>Link</span>
+                            <Unlink size={12} />
+                            <span>Unlink</span>
                         </button>
+                    ) : (
+                        onLinkActiveTrainer && (
+                            <button
+                                type="button"
+                                className={`pc-party-dock__link-trainer-btn action-button action-button--dark ${
+                                    !canLinkActiveTrainer ? 'pc-party-dock__link-trainer-btn--disabled' : ''
+                                }`}
+                                onClick={() => {
+                                    if (canLinkActiveTrainer) {
+                                        onLinkActiveTrainer();
+                                    }
+                                }}
+                                title={
+                                    !canLinkActiveTrainer
+                                        ? 'Cannot link: Current token is in Pokémon mode. Only tokens set to Trainer or Trainer (Special) mode can be linked.'
+                                        : activeCharacterName
+                                          ? `Link "${activeCharacterName}" as Party Trainer`
+                                          : "Link active character/token as this Belt's Trainer"
+                                }
+                            >
+                                {activeCharacterAvatarUrl ? (
+                                    <img
+                                        src={activeCharacterAvatarUrl}
+                                        alt="Active Trainer"
+                                        className="pc-party-dock__link-avatar"
+                                        onError={(e) => {
+                                            e.currentTarget.style.display = 'none';
+                                        }}
+                                    />
+                                ) : (
+                                    <UserCheck size={12} />
+                                )}
+                                <span>Link</span>
+                            </button>
+                        )
                     )}
                 </div>
             </div>

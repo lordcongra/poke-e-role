@@ -1,16 +1,22 @@
 import React from 'react';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
-import { AlertTriangle, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Trash2, X, Unlink } from 'lucide-react';
 import './PcReleaseConfirmModal.css';
 
 interface PcReleaseConfirmModalProps {
     pokemon: PcPokemonSummary;
     onConfirm: () => void;
+    onUnlink?: () => void;
     onClose: () => void;
 }
 
-export const PcReleaseConfirmModal: React.FC<PcReleaseConfirmModalProps> = ({ pokemon, onConfirm, onClose }) => {
+export const PcReleaseConfirmModal: React.FC<PcReleaseConfirmModalProps> = ({
+    pokemon,
+    onConfirm,
+    onUnlink,
+    onClose
+}) => {
     const displayName = pokemon.name || pokemon.species;
 
     return (
@@ -73,6 +79,19 @@ export const PcReleaseConfirmModal: React.FC<PcReleaseConfirmModalProps> = ({ po
                     <button type="button" className="action-button action-button--dark" onClick={onClose}>
                         Keep Pokémon
                     </button>
+                    {onUnlink && (
+                        <button
+                            type="button"
+                            className="action-button action-button--secondary"
+                            onClick={() => {
+                                onUnlink();
+                                onClose();
+                            }}
+                            title="Unlink from PC/Party and leave on the battle map"
+                        >
+                            <Unlink size={13} /> Unlink to Map
+                        </button>
+                    )}
                     <button
                         type="button"
                         className="action-button action-button--red pc-release-modal__confirm-btn"

@@ -204,26 +204,25 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    padding-left: 4px;
+    flex-shrink: 0;
 }
 
-.pc-slot-card__btn-sheet {
-    font-size: 0.7rem;
-    padding: 3px 6px;
+.pc-slot-card__btn-sheet,
+.pc-slot-card__btn-action {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    padding: 0;
     display: flex;
     align-items: center;
-    gap: 3px;
-    white-space: nowrap;
+    justify-content: center;
+    border-radius: 6px;
+    transition: transform 0.12s ease;
 }
 
-.pc-slot-card__btn-send,
-.pc-slot-card__btn-recall {
-    font-size: 0.72rem;
-    padding: 4px 8px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
+.pc-slot-card__btn-sheet:hover,
+.pc-slot-card__btn-action:hover {
+    transform: scale(1.05);
 }
 
 .pc-slot-card__box-actions {
