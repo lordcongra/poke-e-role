@@ -333,6 +333,12 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 <li>
                     <strong>1-Click Deselect Button:</strong> Added a dedicated &quot;Deselect&quot; button to the character header and top toolbar, allowing you to easily close a character sheet and return to the overview without losing your place during combat.
                 </li>
+                <li>
+                    <strong>Custom Base Overview Theme:</strong> Set your own preferred theme colors for the extension overview when no token is selected. Active Pokémon will still display their own typing colors (e.g. Fire orange, Water blue) unless you choose to override them globally.
+                </li>
+                <li>
+                    <strong>Automatic Settings Protection:</strong> All personal theme preferences, custom color presets, and accessibility options are now automatically preserved and restored in the background, preventing your setup from being lost if your browser clears its temporary cache.
+                </li>
             </ul>
         ]
     },

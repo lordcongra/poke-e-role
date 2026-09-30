@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { Eye, Type, Save, Trash2, XCircle, X } from 'lucide-react';
+import { Eye, Type, Save, Trash2, XCircle, X, Database } from 'lucide-react';
+import { removeSettingFromIndexedDB, scheduleSettingsBackup } from '../../../utils/sync/userPreferences';
 import './AccessibilityModal.css';
 
 interface AccessibilityModalProps {
@@ -136,15 +137,22 @@ export function AccessibilityModal({ onClose }: AccessibilityModalProps) {
 
     const handleReset = () => {
         try {
-            localStorage.removeItem('pkr_high_contrast');
-            localStorage.removeItem('pkr_contrast_primary');
-            localStorage.removeItem('pkr_contrast_secondary');
-            localStorage.removeItem('pkr_contrast_force');
-            localStorage.removeItem('pkr_contrast_types');
-            localStorage.removeItem('pkr_font_scale');
-            localStorage.removeItem('pkr_dyslexia');
+            const keysToRemove = [
+                'pkr_high_contrast',
+                'pkr_contrast_primary',
+                'pkr_contrast_secondary',
+                'pkr_contrast_force',
+                'pkr_contrast_types',
+                'pkr_font_scale',
+                'pkr_dyslexia'
+            ];
+            for (const k of keysToRemove) {
+                localStorage.removeItem(k);
+                removeSettingFromIndexedDB(k);
+            }
 
             document.body.setAttribute('data-high-contrast', 'true');
+            scheduleSettingsBackup(100);
             window.dispatchEvent(new Event('accessibility-settings-updated'));
         } catch (e) {
             console.warn('[AccessibilityModal] Could not reset accessibility settings in localStorage:', e);
@@ -155,9 +163,24 @@ export function AccessibilityModal({ onClose }: AccessibilityModalProps) {
     return (
         <div className="access-modal__overlay">
             <div className="access-modal__content">
-                <h3 className="access-modal__title modal-title-with-icon text-title-primary">
-                    <Eye size={20} /> Contrast & Vision
-                </h3>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                    <h3 className="access-modal__title modal-title-with-icon text-title-primary" style={{ margin: 0 }}>
+                        <Eye size={20} /> Contrast & Vision
+                    </h3>
+                    <span
+                        className="text-subtext"
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '0.72rem',
+                            color: 'var(--text-muted)'
+                        }}
+                        title="Accessibility settings automatically back up to IndexedDB to survive browser cache purges"
+                    >
+                        <Database size={12} style={{ color: 'var(--primary)' }} /> IndexedDB Backup Active
+                    </span>
+                </div>
 
                 <label className="access-modal__checkbox-container">
                     <input

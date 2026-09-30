@@ -2,7 +2,7 @@ import { useCharacterStore } from '../../store/useCharacterStore';
 import { canViewHomebrew } from '../../utils/common/helper';
 import { getAbsolutePokeballUrl } from '../../utils/generators/trainerTokenSpawner';
 import OBR from '@owlbear-rodeo/sdk';
-import { HardDrive, Wand2, Users, Layers, Hammer, ArrowLeft, MousePointerClick, Sparkles } from 'lucide-react';
+import { HardDrive, Wand2, Users, Layers, Hammer, ArrowLeft, MousePointerClick, Sparkles, Palette } from 'lucide-react';
 import './TokenEmptyState.css';
 
 interface TokenEmptyStateProps {
@@ -38,6 +38,9 @@ export function TokenEmptyState({ isStandalone = false, onOpenPcModal }: TokenEm
         <div className="token-empty-state">
             <div className="token-empty-state__hero">
                 <div className="token-empty-state__icon-wrapper">
+                    <svg className="token-empty-state__border-ring" viewBox="0 0 80 80" aria-hidden="true">
+                        <circle cx="40" cy="40" r="38" className="token-empty-state__ring-circle" />
+                    </svg>
                     <img src={getAbsolutePokeballUrl()} alt="Pokéball" className="token-empty-state__pokeball-img" />
                 </div>
                 <h2 className="token-empty-state__title text-title-primary">
@@ -56,6 +59,16 @@ export function TokenEmptyState({ isStandalone = false, onOpenPcModal }: TokenEm
                         </>
                     )}
                 </p>
+                <div className="token-empty-state__hero-actions">
+                    <button
+                        type="button"
+                        className="action-button action-button--dark token-empty-state__theme-btn"
+                        onClick={() => handleOpenModal('theme')}
+                        title="Customize the default theme color for this overview"
+                    >
+                        <Palette size={14} /> Customize Theme
+                    </button>
+                </div>
             </div>
 
             <div className="token-empty-state__cards-grid">

@@ -23,6 +23,7 @@ import { getContrastColor } from './utils/common/colorUtils';
 import OBR from '@owlbear-rodeo/sdk';
 import { Lock } from 'lucide-react';
 import { TokenEmptyState } from './components/ui/TokenEmptyState';
+import { initSettingsBackupSync } from './utils/sync/userPreferences';
 import './App.css';
 import './style.css';
 
@@ -67,6 +68,7 @@ function App() {
     const initLayout = useCharacterStore((state) => state.identity.initiativeTrackerLayout) || 'vertical';
     const [showStandaloneTracker, setShowStandaloneTracker] = useState(false);
     const [globalOverride, setGlobalOverride] = useState<{ p: string; s: string } | null>(null);
+    const [unselectedOverride, setUnselectedOverride] = useState<{ p: string; s: string } | null>(null);
 
     // Accessibility States
     const [isHighContrast, setIsHighContrast] = useState<boolean>(() => {
@@ -151,6 +153,11 @@ function App() {
                 const s = localStorage.getItem('pkr_global_theme_secondary');
                 if (p) setGlobalOverride({ p, s: s || '' });
                 else setGlobalOverride(null);
+
+                const up = localStorage.getItem('pkr_unselected_theme_primary');
+                const us = localStorage.getItem('pkr_unselected_theme_secondary');
+                if (up) setUnselectedOverride({ p: up, s: us || '' });
+                else setUnselectedOverride(null);
             } catch (e) {
                 console.warn('[App] Failed to access local storage for global theme.', e);
             }
@@ -166,7 +173,15 @@ function App() {
         let finalPrimary = '';
         let finalSecondary = '';
 
-        if (themePrimaryOverride) {
+        if (!activeTokenId) {
+            if (globalOverride) {
+                finalPrimary = globalOverride.p;
+                finalSecondary = globalOverride.s || '';
+            } else if (unselectedOverride) {
+                finalPrimary = unselectedOverride.p;
+                finalSecondary = unselectedOverride.s || '';
+            }
+        } else if (themePrimaryOverride) {
             finalPrimary = themePrimaryOverride;
             finalSecondary = themeSecondaryOverride || '';
         } else if (globalOverride) {
@@ -267,6 +282,7 @@ function App() {
     useEffect(() => {
         const handleToggle = () => setShowStandaloneTracker((prev) => !prev);
         window.addEventListener('toggle-standalone-tracker', handleToggle);
+        initSettingsBackupSync().catch((err) => console.warn('[App] Settings backup sync error:', err));
         return () => window.removeEventListener('toggle-standalone-tracker', handleToggle);
     }, []);
 
