@@ -306,7 +306,7 @@ function App() {
         }
 
         return (
-            <div className="sheet-container app-container" style={{ maxWidth: '100%', margin: '0' }}>
+            <div className="sheet-container" style={{ maxWidth: '100%', margin: '0' }}>
                 <IdentityHeader />
                 <DerivedBoard />
 
