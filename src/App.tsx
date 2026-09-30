@@ -21,7 +21,8 @@ import { RollLogWidget } from './components/standalone/RollLogWidget';
 import { isStandaloneMode } from './utils/sync/storageAdapter';
 import { getContrastColor } from './utils/common/colorUtils';
 import OBR from '@owlbear-rodeo/sdk';
-import { Lock, ArrowLeft } from 'lucide-react';
+import { Lock } from 'lucide-react';
+import { TokenEmptyState } from './components/ui/TokenEmptyState';
 import './App.css';
 import './style.css';
 
@@ -320,7 +321,7 @@ function App() {
             <>
                 <div className="sheet-container app-container">
                     <GlobalToolbar />
-                    {renderSheetContent()}
+                    {!activeTokenId ? <TokenEmptyState /> : renderSheetContent()}
                 </div>
 
                 <DemoRollModal />
@@ -345,15 +346,7 @@ function App() {
                         )}
 
                         <div className="standalone-layout-sheet">
-                            {!activeTokenId ? (
-                                <div className="standalone-empty-state text-subtext">
-                                    <p style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <ArrowLeft size={20} /> Select or create a file in the directory to begin
-                                    </p>
-                                </div>
-                            ) : (
-                                renderSheetContent()
-                            )}
+                            {!activeTokenId ? <TokenEmptyState isStandalone={true} /> : renderSheetContent()}
                         </div>
                     </div>
 

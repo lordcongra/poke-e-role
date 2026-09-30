@@ -23,7 +23,8 @@ import {
     Tag,
     Package,
     Bookmark,
-    Sparkles
+    Sparkles,
+    MousePointerClick
 } from 'lucide-react';
 
 export const CURRENT_VERSION = '3.6.6';
@@ -309,6 +310,28 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                 </li>
                 <li>
                     <strong>GM Permission Enforcement:</strong> Toggling Base HP or Will locks respects the Room Rules attribute lock setting, showing non-GM players an alert notification if GM permission is required to unlock.
+                </li>
+            </ul>,
+            <strong key="empty-state-title" className="text-title-primary" style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <MousePointerClick size={16} /> Token Overview & Deselect Controls
+            </strong>,
+            <ul
+                key="empty-state-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>New Welcome Overview:</strong> When opening the extension without a token selected, a clean landing screen now greets you with quick-launch cards for Pokémon PC Storage, Generators, the Battle Organizer, and Homebrew Workshop.
+                </li>
+                <li>
+                    <strong>1-Click Deselect Button:</strong> Added a dedicated &quot;Deselect&quot; button to the character header and top toolbar, allowing you to easily close a character sheet and return to the overview without losing your place during combat.
                 </li>
             </ul>
         ]

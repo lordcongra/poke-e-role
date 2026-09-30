@@ -19,7 +19,8 @@ import {
     saveStandaloneTokenUrl,
     deleteStandaloneTokenImage
 } from '../../utils/graphics/tokenImageService';
-import { Image as ImageIcon, RefreshCw, Dna } from 'lucide-react';
+import { setActiveTokenId } from '../../utils/sync/obr';
+import { Image as ImageIcon, RefreshCw, Dna, ArrowLeft } from 'lucide-react';
 import './IdentityHeader.css';
 
 export function IdentityHeader() {
@@ -83,6 +84,19 @@ export function IdentityHeader() {
 
     const isTransformed = identityStore.activeTransformation !== 'None';
 
+    const handleDeselect = async () => {
+        if (OBR.isAvailable) {
+            try {
+                await OBR.player.select([]);
+            } catch (e) {
+                console.warn('[IdentityHeader] Failed to deselect OBR token:', e);
+            }
+        }
+        useCharacterStore.setState({ tokenId: null });
+        setActiveTokenId(null);
+        useCharacterStore.getState().loadFromOwlbear({});
+    };
+
     const headerElements = (
         <div className="identity-header__actions-wrapper">
             <button
@@ -112,6 +126,21 @@ export function IdentityHeader() {
                     title="Change this character's artwork."
                 >
                     <ImageIcon size={14} /> Update Token Image
+                </button>
+            )}
+
+            {tokenId && (
+                <button
+                    type="button"
+                    className="action-button action-button--dark identity-header__btn"
+                    onClick={handleDeselect}
+                    title={
+                        isStandaloneMode
+                            ? 'Close sheet and return to file browser'
+                            : 'Deselect this Pokémon and return to overview'
+                    }
+                >
+                    <ArrowLeft size={14} /> {isStandaloneMode ? 'Close Sheet' : 'Deselect'}
                 </button>
             )}
         </div>

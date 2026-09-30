@@ -72,6 +72,7 @@ type ActiveModal =
     | 'battle-organizer'
     | 'battle-organizer-settings'
     | 'bug-report'
+    | 'pc'
     | null;
 
 export function GlobalToolbar() {
@@ -155,6 +156,16 @@ export function GlobalToolbar() {
             if (savedExpanded !== null) {
                 setIsExpanded(savedExpanded === 'true');
             }
+            const handleOpenModal = (e: Event) => {
+                const custom = e as CustomEvent<ActiveModal>;
+                if (custom.detail) {
+                    setActiveModal(custom.detail);
+                }
+            };
+            window.addEventListener('pkr-open-modal', handleOpenModal as EventListener);
+            return () => {
+                window.removeEventListener('pkr-open-modal', handleOpenModal as EventListener);
+            };
         } catch (error) {
             console.warn('[GlobalToolbar] Could not read preferences from localStorage:', error);
         }
@@ -170,7 +181,14 @@ export function GlobalToolbar() {
         }
     };
 
-    const handleReturnToMenu = () => {
+    const handleReturnToMenu = async () => {
+        if (OBR.isAvailable) {
+            try {
+                await OBR.player.select([]);
+            } catch (e) {
+                console.warn('[GlobalToolbar] Failed to deselect OBR player selection:', e);
+            }
+        }
         useCharacterStore.setState({ tokenId: null });
         setActiveTokenId(null);
         useCharacterStore.getState().loadFromOwlbear({});
@@ -366,14 +384,18 @@ export function GlobalToolbar() {
                         <Bug size={14} color="var(--primary)" /> Report Bug
                     </button>
 
-                    {isStandaloneMode && activeTokenId && (
+                    {activeTokenId && (
                         <button
                             type="button"
                             className="global-toolbar__btn--back-header action-button"
                             onClick={handleReturnToMenu}
-                            title="Close sheet and return to file browser"
+                            title={
+                                isStandaloneMode
+                                    ? 'Close sheet and return to file browser'
+                                    : 'Deselect active token and close sheet'
+                            }
                         >
-                            <ArrowLeft size={16} /> Back to Menu
+                            <ArrowLeft size={16} /> {isStandaloneMode ? 'Back to Menu' : 'Deselect Token'}
                         </button>
                     )}
                 </div>

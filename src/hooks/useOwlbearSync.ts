@@ -3,6 +3,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../store/useCharacterStore';
 import { isStandaloneMode } from '../utils/sync/storageAdapter';
 import { homebrewStorage, initHomebrewBroadcastSync } from '../utils/sync/homebrewStorage';
+import { waitForObr } from '../utils/sync/obrHelpers';
 import { initItemArtCatalog, harvestTokensItemArt } from '../utils/graphics/itemArtCatalog';
 import {
     setupOwlbearRoomSync,
@@ -38,7 +39,7 @@ export function useOwlbearSync() {
         if (isStandaloneMode) return () => unsubs.forEach((u) => u());
 
         if (OBR.isAvailable) {
-            OBR.onReady(async () => {
+            waitForObr().then(async () => {
                 if (!isMounted) return;
 
                 const role = await OBR.player.getRole();
