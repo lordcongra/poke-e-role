@@ -2,7 +2,7 @@ import React from 'react';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
 import { PcSlotCard } from './PcSlotCard';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
-import { Shield, UserCheck, Plus, Unlink } from 'lucide-react';
+import { Shield, UserCheck, Plus, Unlink, FileText, MapPin } from 'lucide-react';
 import './PcPartyDock.css';
 
 interface PcPartyDockProps {
@@ -12,6 +12,7 @@ interface PcPartyDockProps {
     trainerName: string;
     trainerAvatarUrl?: string;
     isTrainerLinked?: boolean;
+    isTrainerOnMap?: boolean;
     activeCharacterName?: string;
     activeCharacterAvatarUrl?: string;
     canLinkActiveTrainer?: boolean;
@@ -19,6 +20,8 @@ interface PcPartyDockProps {
     onEmptySlotClick?: (index: number) => void;
     onContextMenu: (e: React.MouseEvent, index: number, entityId: string) => void;
     onOpenSheet?: (entityId: string) => void;
+    onOpenTrainerSheet?: () => void;
+    onDropTrainerToken?: () => void;
     onRelease?: (entityId: string) => void;
     onSendOut: (entityId: string) => void;
     onRecall: (entityId: string) => void;
@@ -35,6 +38,7 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
     trainerName,
     trainerAvatarUrl,
     isTrainerLinked = false,
+    isTrainerOnMap = false,
     activeCharacterName,
     activeCharacterAvatarUrl,
     canLinkActiveTrainer = true,
@@ -42,6 +46,8 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
     onEmptySlotClick,
     onContextMenu,
     onOpenSheet,
+    onOpenTrainerSheet,
+    onDropTrainerToken,
     onRelease: _onRelease,
     onSendOut,
     onRecall,
@@ -74,17 +80,60 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                 </div>
                 <div className="pc-party-dock__header-actions">
                     <span className="pc-party-dock__badge text-subtext">{occupiedCount} / 6</span>
-                    {isTrainerLinked && onUnlinkTrainer ? (
-                        <button
-                            type="button"
-                            className="pc-party-dock__link-trainer-btn pc-party-dock__unlink-trainer-btn action-button action-button--dark"
-                            onClick={onUnlinkTrainer}
-                            title={`Unlink "${trainerName}" from this Belt`}
-                            aria-label={`Unlink "${trainerName}" from this Belt`}
-                        >
-                            <Unlink size={12} />
-                            <span>Unlink</span>
-                        </button>
+                    {isTrainerLinked ? (
+                        <>
+                            {onOpenTrainerSheet && (
+                                <button
+                                    type="button"
+                                    className="pc-party-dock__link-trainer-btn action-button action-button--dark"
+                                    onClick={onOpenTrainerSheet}
+                                    title={`Open ${trainerName}'s Trainer Sheet`}
+                                    aria-label={`Open ${trainerName}'s Trainer Sheet`}
+                                >
+                                    <FileText size={12} />
+                                    <span>Sheet</span>
+                                </button>
+                            )}
+                            {onDropTrainerToken && (
+                                <button
+                                    type="button"
+                                    className={`pc-party-dock__link-trainer-btn action-button action-button--dark ${
+                                        isTrainerOnMap ? 'pc-party-dock__link-trainer-btn--disabled' : ''
+                                    }`}
+                                    onClick={() => {
+                                        if (!isTrainerOnMap) {
+                                            onDropTrainerToken();
+                                        }
+                                    }}
+                                    disabled={isTrainerOnMap}
+                                    title={
+                                        isTrainerOnMap
+                                            ? `${trainerName} is already on the board`
+                                            : `Drop ${trainerName}'s token onto current scene`
+                                    }
+                                    aria-label={
+                                        isTrainerOnMap
+                                            ? `${trainerName} is already on the board`
+                                            : `Drop ${trainerName}'s token onto current scene`
+                                    }
+                                >
+                                    <MapPin size={12} />
+                                    <span>{isTrainerOnMap ? 'On Map' : 'Drop'}</span>
+                                </button>
+                            )}
+                            {onUnlinkTrainer && (
+                                <button
+                                    type="button"
+                                    className="pc-party-dock__link-trainer-btn pc-party-dock__unlink-trainer-btn action-button action-button--dark"
+                                    onClick={onUnlinkTrainer}
+                                    title={`Unlink "${trainerName}" from this Belt`}
+                                    aria-label={`Unlink "${trainerName}" from this Belt`}
+                                >
+                                    <Unlink size={12} />
+                                    <span>Unlink</span>
+                                </button>
+                            )}
+                        </>
                     ) : (
                         onLinkActiveTrainer && (
                             <button

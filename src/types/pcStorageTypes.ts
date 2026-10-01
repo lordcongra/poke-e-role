@@ -36,6 +36,9 @@ export interface TrainerRoster {
     avatarUrl?: string;
     party: (string | null)[]; // 6 slots, each storing entityId or null
     isLinked?: boolean;
+    mapTokenId?: string;
+    savedTokenItem?: Item;
+    fullMetadata?: Record<string, unknown>;
 }
 
 export interface PcBox {
@@ -108,6 +111,7 @@ export interface PcSlice {
     switchCampaign: (campaignId: string) => void;
     addCampaign: (name: string) => void;
     updatePokemonSummary: (summary: PcPokemonSummary) => void;
+    updateTrainerProfile: (trainerId: string, updates: Partial<TrainerRoster>) => void;
     deletePokemonFromPc: (entityId: string) => void;
     openReviewModal: (payload: SheetReviewPayload) => void;
     closeReviewModal: () => void;

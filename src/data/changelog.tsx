@@ -197,6 +197,46 @@ export const CHANGELOG_DATA: ChangelogEntry[] = [
                     overview when no token is selected. Active Pokémon will still display their own typing colors (e.g.
                     Fire orange, Water blue) unless you choose to override them globally.
                 </li>
+            </ul>,
+            <strong
+                key="pc-storage-title"
+                className="text-title-primary"
+                style={{ fontSize: '1.1em', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+                <Layers size={16} /> Pokémon PC Storage & Scene Integration
+            </strong>,
+            <ul
+                key="pc-storage-list"
+                className="text-subtext"
+                style={{
+                    color: 'var(--text-main)',
+                    paddingLeft: '20px',
+                    marginTop: '6px',
+                    marginBottom: '16px',
+                    fontSize: '0.9em',
+                    lineHeight: '1.5'
+                }}
+            >
+                <li>
+                    <strong>1-Click Box Recall & Send Out:</strong> Added dedicated Recall and Send Out buttons
+                    directly on PC Box Pokémon cards, allowing map tokens to be summoned or recalled straight to/from
+                    storage boxes with one click.
+                </li>
+                <li>
+                    <strong>Smart Placement in Front of Trainer:</strong> Sent-out Pokémon now drop naturally in front of
+                    your trainer token on the map (avoiding token stacking), with an unobstructed viewport drop when no
+                    trainer is present.
+                </li>
+                <li>
+                    <strong>Trainer Sheet Access & Quick Spawn:</strong> Open your full Trainer Sheet directly within the
+                    PC modal and use the &quot;Drop Trainer&quot; button to place your trainer token onto any new scene.
+                </li>
+                <li>
+                    <strong>Clean Backup Grid & Open Scene Sync:</strong> Scene backups now arrange all tokens and
+                    trainer in an organized battle grid with accurate sprite proportions and clean health and will bars.
+                    Added an &quot;Update Open Scene&quot; option so you can sync backups directly into your open scene
+                    without creating duplicate scene assets.
+                </li>
             </ul>
         ]
     },

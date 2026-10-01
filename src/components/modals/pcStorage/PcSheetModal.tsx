@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
+import OBR from '@owlbear-rodeo/sdk';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { setActiveTokenId } from '../../../utils/sync/obr';
+import { setActiveTokenId, setIsPcSheetActive } from '../../../utils/sync/obr';
 import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
 import { resolveCharacterThemeColors, applyDynamicThemeColors } from '../../../utils/common/colorUtils';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
@@ -44,9 +45,20 @@ export const PcSheetModal: React.FC<PcSheetModalProps> = ({
     const prevMetaRef = useRef<Record<string, unknown> | null>(null);
     const prevTokenIdRef = useRef<string | null>(null);
     const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const isHydratingRef = useRef(false);
+
+    const currentSummaryRef = useRef(currentSummary);
+    currentSummaryRef.current = currentSummary;
+    const onUpdateSummaryRef = useRef(onUpdateSummary);
+    onUpdateSummaryRef.current = onUpdateSummary;
 
     // Snapshot initial theme and character on mount
     useEffect(() => {
+        setIsPcSheetActive(true);
+        if (OBR.isAvailable) {
+            OBR.player.select([]).catch(() => {});
+        }
+
         const store = useCharacterStore.getState();
         prevTokenIdRef.current = store.tokenId;
         prevMetaRef.current = flattenStateToMetadata(store);
@@ -63,6 +75,7 @@ export const PcSheetModal: React.FC<PcSheetModalProps> = ({
         };
 
         return () => {
+            setIsPcSheetActive(false);
             if (syncTimeoutRef.current) {
                 clearTimeout(syncTimeoutRef.current);
             }
@@ -82,6 +95,7 @@ export const PcSheetModal: React.FC<PcSheetModalProps> = ({
 
     // Load Pokémon metadata whenever currentSummary changes
     useEffect(() => {
+        isHydratingRef.current = true;
         setLoading(true);
         const store = useCharacterStore.getState();
         const targetTokenId =
@@ -125,37 +139,45 @@ export const PcSheetModal: React.FC<PcSheetModalProps> = ({
         );
         applyDynamicThemeColors(colors.primary, colors.secondary);
         setLoading(false);
+
+        const timer = setTimeout(() => {
+            isHydratingRef.current = false;
+        }, 100);
+        return () => clearTimeout(timer);
     }, [currentSummary.entityId, roomCustomTypes]);
 
     // Two-Way Sync: Listen to store changes (HP, Will, stats, inventory potions, etc.)
     useEffect(() => {
         const syncNow = () => {
+            if (isHydratingRef.current) return;
             const currentStore = useCharacterStore.getState();
+            const curr = currentSummaryRef.current;
             const nextMeta = flattenStateToMetadata(currentStore);
-            const nextHp = currentStore.health.hpCurr ?? currentSummary.hp;
-            const nextMaxHp = currentStore.health.hpMax ?? currentSummary.maxHp;
-            const nextWill = currentStore.will.willCurr ?? currentSummary.will;
-            const nextMaxWill = currentStore.will.willMax ?? currentSummary.maxWill;
-            const nextName = currentStore.identity.nickname || currentStore.identity.species || currentSummary.name;
+            const nextHp = currentStore.health.hpCurr ?? curr.hp;
+            const nextMaxHp = currentStore.health.hpMax ?? curr.maxHp;
+            const nextWill = currentStore.will.willCurr ?? curr.will;
+            const nextMaxWill = currentStore.will.willMax ?? curr.maxWill;
+            const nextName = currentStore.identity.nickname || currentStore.identity.species || curr.name;
 
-            onUpdateSummary({
-                ...currentSummary,
+            onUpdateSummaryRef.current({
+                ...curr,
                 name: nextName,
-                species: currentStore.identity.species || currentSummary.species,
-                rank: currentStore.identity.rank || currentSummary.rank,
-                type1: currentStore.identity.type1 || currentSummary.type1,
+                species: currentStore.identity.species || curr.species,
+                rank: currentStore.identity.rank || curr.rank,
+                type1: currentStore.identity.type1 || curr.type1,
                 type2: currentStore.identity.type2,
                 hp: nextHp,
                 maxHp: nextMaxHp,
                 will: nextWill,
                 maxWill: nextMaxWill,
-                tokenImageUrl: currentStore.identity.tokenImageUrl || currentSummary.tokenImageUrl,
+                tokenImageUrl: currentStore.identity.tokenImageUrl || curr.tokenImageUrl,
                 fullMetadata: nextMeta,
                 lastModified: Date.now()
             });
         };
 
         const unsub = useCharacterStore.subscribe((state, prevState) => {
+            if (isHydratingRef.current) return;
             if (
                 state.health !== prevState.health ||
                 state.will !== prevState.will ||
@@ -166,7 +188,7 @@ export const PcSheetModal: React.FC<PcSheetModalProps> = ({
                 state.moves !== prevState.moves
             ) {
                 if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
-                syncTimeoutRef.current = setTimeout(syncNow, 120);
+                syncTimeoutRef.current = setTimeout(syncNow, 150);
             }
         });
 
@@ -175,9 +197,8 @@ export const PcSheetModal: React.FC<PcSheetModalProps> = ({
             if (syncTimeoutRef.current) {
                 clearTimeout(syncTimeoutRef.current);
             }
-            syncNow();
         };
-    }, [currentSummary.entityId, onUpdateSummary]);
+    }, [currentSummary.entityId]);
 
     // Previous / Next navigation
     const currentIndex = allSummaries.findIndex((s) => s.entityId === currentSummary.entityId);
@@ -195,10 +216,35 @@ export const PcSheetModal: React.FC<PcSheetModalProps> = ({
         onSelectEntity(allSummaries[nextIdx].entityId);
     };
 
+    const handleClose = () => {
+        if (syncTimeoutRef.current) {
+            clearTimeout(syncTimeoutRef.current);
+            const currentStore = useCharacterStore.getState();
+            const curr = currentSummaryRef.current;
+            const nextMeta = flattenStateToMetadata(currentStore);
+            onUpdateSummaryRef.current({
+                ...curr,
+                name: currentStore.identity.nickname || currentStore.identity.species || curr.name,
+                species: currentStore.identity.species || curr.species,
+                rank: currentStore.identity.rank || curr.rank,
+                type1: currentStore.identity.type1 || curr.type1,
+                type2: currentStore.identity.type2,
+                hp: currentStore.health.hpCurr ?? curr.hp,
+                maxHp: currentStore.health.hpMax ?? curr.maxHp,
+                will: currentStore.will.willCurr ?? curr.will,
+                maxWill: currentStore.will.willMax ?? curr.maxWill,
+                tokenImageUrl: currentStore.identity.tokenImageUrl || curr.tokenImageUrl,
+                fullMetadata: nextMeta,
+                lastModified: Date.now()
+            });
+        }
+        onClose();
+    };
+
     const displayName = currentSummary.name || currentSummary.species;
 
     return (
-        <div className="pc-sheet-modal__overlay" onClick={onClose}>
+        <div className="pc-sheet-modal__overlay" onClick={handleClose}>
             <div className="pc-sheet-modal__content" onClick={(e) => e.stopPropagation()}>
                 {/* Header */}
                 <div className="pc-sheet-modal__header">
@@ -265,7 +311,7 @@ export const PcSheetModal: React.FC<PcSheetModalProps> = ({
                         <button
                             type="button"
                             className="action-button action-button--ghost pc-sheet-modal__close"
-                            onClick={onClose}
+                            onClick={handleClose}
                             title="Close Sheet"
                             aria-label="Close Character Sheet"
                         >

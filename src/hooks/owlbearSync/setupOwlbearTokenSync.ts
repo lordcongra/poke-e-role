@@ -9,11 +9,25 @@ import {
 import { setActiveTokenId, hasPendingUpdates } from '../../utils/sync/obr';
 import { harvestTokensItemArt } from '../../utils/graphics/itemArtCatalog';
 import { METADATA_ID, getEffectiveScaleAndOffsets, type TransformData } from './owlbearSyncConstants';
+import { recentlySpawnedTokenIds } from '../../utils/pc/pcModalOps';
 
 export interface OwlbearTokenSyncResult {
     renderAllTokens: (forceRebuild?: boolean | 'badges-only') => Promise<void>;
     unsubs: Array<() => void>;
     cleanup: () => void;
+}
+
+function extractEntityId(item: Item): string | undefined {
+    const tMeta = (item.metadata[METADATA_ID] || item.metadata['pokerole-pmd-extension/stats']) as
+        | Record<string, unknown>
+        | undefined;
+    const claimMeta = item.metadata['pokerole-pmd-extension/claimed-by'] as { entityId?: string } | undefined;
+    return (
+        (tMeta?.entityId as string) ||
+        (claimMeta?.entityId as string) ||
+        (item.metadata['entityId'] as string) ||
+        undefined
+    );
 }
 
 export async function renderTokenGraphicsForMeta(
@@ -86,6 +100,33 @@ export async function setupOwlbearTokenSync(params: {
         }
     };
 
+    const cleanGhostTokens = async (sceneItems: Item[]) => {
+        try {
+            const freshStore = useCharacterStore.getState();
+            const ghostIdsToDelete: string[] = [];
+            for (const item of sceneItems) {
+                if (item.layer === 'CHARACTER' && !recentlySpawnedTokenIds.has(item.id)) {
+                    const entityId = extractEntityId(item);
+                    if (entityId) {
+                        const sum = freshStore.pcData.pokemonSummaries[entityId];
+                        if (sum && (!sum.isOnMap || (sum.mapTokenId && sum.mapTokenId !== item.id))) {
+                            ghostIdsToDelete.push(item.id);
+                            const attached = sceneItems.filter((a) => a.attachedTo === item.id);
+                            ghostIdsToDelete.push(...attached.map((a) => a.id));
+                        }
+                    }
+                }
+            }
+            if (ghostIdsToDelete.length > 0) {
+                const unique = Array.from(new Set(ghostIdsToDelete));
+                console.log('[SyncEngine] Deleting ghost Pokémon tokens from scene:', unique);
+                await OBR.scene.items.deleteItems(unique);
+            }
+        } catch (e) {
+            console.warn('[SyncEngine] Failed during ghost token cleanup:', e);
+        }
+    };
+
     const handleSceneReady = async () => {
         if (!isMounted()) return;
 
@@ -117,28 +158,7 @@ export async function setupOwlbearTokenSync(params: {
         try {
             const sceneItems = await OBR.scene.items.getItems();
             lastSceneItemIds = new Set(sceneItems.map((i) => i.id));
-
-            // Clean up any stale ghost tokens left behind from Pokémon recalled on another scene
-            const freshStore = useCharacterStore.getState();
-            const ghostIdsToDelete: string[] = [];
-            for (const item of sceneItems) {
-                if (item.layer === 'CHARACTER') {
-                    const tMeta = (item.metadata[METADATA_ID] || item.metadata['pokerole-pmd-extension/stats']) as
-                        | Record<string, unknown>
-                        | undefined;
-                    if (tMeta?.entityId && typeof tMeta.entityId === 'string') {
-                        const sum = freshStore.pcData.pokemonSummaries[tMeta.entityId];
-                        if (sum && (!sum.isOnMap || (sum.mapTokenId && sum.mapTokenId !== item.id))) {
-                            ghostIdsToDelete.push(item.id);
-                            const attached = sceneItems.filter((a) => a.attachedTo === item.id);
-                            ghostIdsToDelete.push(...attached.map((a) => a.id));
-                        }
-                    }
-                }
-            }
-            if (ghostIdsToDelete.length > 0) {
-                await OBR.scene.items.deleteItems(ghostIdsToDelete);
-            }
+            await cleanGhostTokens(sceneItems);
         } catch {
             lastSceneItemIds = new Set();
         }
@@ -150,6 +170,10 @@ export async function setupOwlbearTokenSync(params: {
         if (sceneFollowupTimeout) clearTimeout(sceneFollowupTimeout);
         sceneFollowupTimeout = setTimeout(async () => {
             if (!isMounted()) return;
+            try {
+                const lateItems = await OBR.scene.items.getItems();
+                await cleanGhostTokens(lateItems);
+            } catch {}
             await renderAllTokens(false);
         }, 800);
 
@@ -224,6 +248,9 @@ export async function setupOwlbearTokenSync(params: {
 
         // Harvest item art from updated scene items
         harvestTokensItemArt(items).catch(() => {});
+
+        // Purge any ghost tokens that were recalled or whose Pokémon is in storage
+        cleanGhostTokens(items).catch(() => {});
 
         for (const item of items) {
             const rawMeta = item.metadata[METADATA_ID] || item.metadata['pokerole-pmd-extension/stats'];
@@ -315,15 +342,20 @@ export async function setupOwlbearTokenSync(params: {
                                     : !isNaN(Number(meta['will-max-display'])) && meta['will-max-display'] !== ''
                                       ? Number(meta['will-max-display'])
                                       : pcSummary.maxWill;
-                            const name = (meta.name as string) || (meta.nickname as string) || pcSummary.name;
+                            const pokeName =
+                                (meta.name as string) || (meta.nickname as string) || item.name || pcSummary.name;
+                            const scaleChanged =
+                                pcSummary.savedTokenItem?.scale?.x !== item.scale?.x ||
+                                pcSummary.savedTokenItem?.scale?.y !== item.scale?.y;
 
                             if (
                                 curHp !== pcSummary.hp ||
                                 mHp !== pcSummary.maxHp ||
                                 curWill !== pcSummary.will ||
                                 mWill !== pcSummary.maxWill ||
-                                name !== pcSummary.name ||
-                                pcSummary.mapTokenId !== item.id
+                                pokeName !== pcSummary.name ||
+                                pcSummary.mapTokenId !== item.id ||
+                                scaleChanged
                             ) {
                                 storeState.updatePokemonSummary({
                                     ...pcSummary,
@@ -331,12 +363,40 @@ export async function setupOwlbearTokenSync(params: {
                                     maxHp: mHp,
                                     will: curWill,
                                     maxWill: mWill,
-                                    name,
+                                    name: pokeName,
                                     mapTokenId: item.id,
                                     savedTokenItem: item,
                                     fullMetadata: meta,
                                     lastModified: Date.now()
                                 });
+                            }
+                        }
+                    }
+
+                    // Sync live Trainer scale, item, and stats if this token belongs to the active campaign trainer
+                    const isTrainerMode = meta.mode === 'Trainer' || meta.mode === 'Trainer (Special)';
+                    if (isTrainerMode) {
+                        const camp = storeState.pcData.campaigns[storeState.pcData.activeCampaignId];
+                        if (camp && camp.trainers) {
+                            for (const [tId, tr] of Object.entries(camp.trainers)) {
+                                const isMatch =
+                                    tr.mapTokenId === item.id ||
+                                    tr.name === meta.name ||
+                                    tr.name === meta.nickname ||
+                                    tr.name === item.name;
+                                if (isMatch) {
+                                    const scaleChanged =
+                                        tr.savedTokenItem?.scale?.x !== item.scale?.x ||
+                                        tr.savedTokenItem?.scale?.y !== item.scale?.y;
+                                    const metaChanged = tr.mapTokenId !== item.id || scaleChanged;
+                                    if (metaChanged) {
+                                        storeState.updateTrainerProfile(tId, {
+                                            mapTokenId: item.id,
+                                            savedTokenItem: item,
+                                            fullMetadata: { ...(tr.fullMetadata || {}), ...meta }
+                                        });
+                                    }
+                                }
                             }
                         }
                     }

@@ -228,6 +228,7 @@
 .pc-slot-card__box-actions {
     display: flex;
     align-items: center;
+    gap: 3px;
     opacity: 0.7;
     transition: opacity 0.15s ease;
 }
@@ -236,7 +237,8 @@
     opacity: 1;
 }
 
-.pc-slot-card__btn-box-sheet {
+.pc-slot-card__btn-box-sheet,
+.pc-slot-card__btn-box-action {
     padding: 3px;
     display: flex;
     align-items: center;

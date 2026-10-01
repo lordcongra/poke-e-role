@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import type {
@@ -9,12 +10,15 @@ import type {
 } from '../../../types/pcStorageTypes';
 import {
     spawnPokemonToMap,
+    spawnTrainerToMap,
     recallPokemonFromMap,
     exportBoxCloud,
+    syncToActiveScene,
     importBoxCloud,
     unlinkPokemonFromPcOps,
     clearTokenClaimOps
 } from '../../../utils/pc/pcModalOps';
+import { checkTrainerOnMap, buildLinkedTrainer } from '../../../utils/pc/pcTrainerOps';
 import { savePcStorage } from '../../../utils/pc/pcStorageAdapter';
 import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
 
@@ -69,8 +73,59 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
     } = params;
 
     const isTrainerLinked = !!trainer?.isLinked || !!trainer?.avatarUrl;
+    const [isTrainerOnMap, setIsTrainerOnMap] = useState(false);
 
-    const handleLinkActiveTrainer = () => {
+    // Detect if the trainer token is currently placed on the active battle scene
+    useEffect(() => {
+        let mounted = true;
+        const check = async () => {
+            const onMap = await checkTrainerOnMap(trainer);
+            if (mounted) setIsTrainerOnMap(onMap);
+        };
+        check();
+        if (OBR.isAvailable) {
+            const unsub = OBR.scene.items.onChange(check);
+            return () => {
+                mounted = false;
+                unsub();
+            };
+        }
+    }, [trainer?.id, trainer?.name, trainer?.mapTokenId]);
+
+    // Auto-sync trainer name and avatar if actively linked to current sheet
+    useEffect(() => {
+        if (!trainer || !campaign || !isTrainerLinked || !canLinkActiveTrainer) return;
+        const currentName = identity.nickname || identity.species;
+        if (!currentName) return;
+        const currentAvatar = identity.tokenImageUrl || undefined;
+        if (trainer.name !== currentName || (currentAvatar && trainer.avatarUrl !== currentAvatar)) {
+            const store = useCharacterStore.getState();
+            const nextTrainer = buildLinkedTrainer(trainer, store, currentName, currentAvatar);
+            const nextData = {
+                ...pcData,
+                campaigns: {
+                    ...pcData.campaigns,
+                    [pcData.activeCampaignId]: {
+                        ...campaign,
+                        trainers: { ...campaign.trainers, [trainer.id]: nextTrainer }
+                    }
+                }
+            };
+            useCharacterStore.setState({ pcData: nextData });
+            savePcStorage(nextData);
+        }
+    }, [
+        isTrainerLinked,
+        canLinkActiveTrainer,
+        trainer,
+        campaign,
+        identity.nickname,
+        identity.species,
+        identity.tokenImageUrl,
+        pcData
+    ]);
+
+    const handleLinkActiveTrainer = async () => {
         if (!trainer || !campaign) return;
         if (!canLinkActiveTrainer) {
             if (OBR.isAvailable) {
@@ -81,12 +136,18 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
             }
             return;
         }
+        const store = useCharacterStore.getState();
         const trainerName = identity.nickname || identity.species || 'Trainer';
+        let savedItem = trainer.savedTokenItem;
+        if (OBR.isAvailable && store.tokenId) {
+            try {
+                const items = await OBR.scene.items.getItems([store.tokenId]);
+                if (items.length > 0) savedItem = items[0];
+            } catch {}
+        }
         const nextTrainer = {
-            ...trainer,
-            name: trainerName,
-            avatarUrl: identity.tokenImageUrl || trainer.avatarUrl,
-            isLinked: true
+            ...buildLinkedTrainer(trainer, store, trainerName, identity.tokenImageUrl || undefined),
+            savedTokenItem: savedItem
         };
         const nextData = {
             ...pcData,
@@ -132,6 +193,19 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         if (!summary) return;
 
         const result = await spawnPokemonToMap(summary, undefined, role || 'PLAYER');
+        if (result.alreadyOnMap) {
+            if (OBR.isAvailable) {
+                OBR.notification.show(`${summary.name || summary.species} is already on the board!`, 'WARNING');
+            }
+            if (result.newMapTokenId && summary.mapTokenId !== result.newMapTokenId) {
+                updatePokemonSummary({
+                    ...summary,
+                    isOnMap: true,
+                    mapTokenId: result.newMapTokenId
+                });
+            }
+            return;
+        }
         if (result.success) {
             updatePokemonSummary({
                 ...summary,
@@ -145,7 +219,7 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         const summary = pcData.pokemonSummaries[entityId];
         if (!summary) return;
 
-        const result = await recallPokemonFromMap(summary.mapTokenId);
+        const result = await recallPokemonFromMap(summary.mapTokenId, summary);
         if (result.success) {
             updatePokemonSummary({
                 ...summary,
@@ -224,7 +298,7 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         if (sheetViewEntityId === releaseConfirmPokemon.entityId) {
             setSheetViewEntityId(null);
         }
-        await clearTokenClaimOps(releaseConfirmPokemon.mapTokenId);
+        await clearTokenClaimOps(releaseConfirmPokemon.mapTokenId, releaseConfirmPokemon.entityId);
         deletePokemonFromPc(releaseConfirmPokemon.entityId);
         setReleaseConfirmPokemon(null);
         if (OBR.isAvailable) {
@@ -232,10 +306,85 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         }
     };
 
-    const handleConfirmCloudUpload = async (customSceneName: string) => {
+    const handleDropTrainerToken = async () => {
+        if (!trainer) return;
+        const res = await spawnTrainerToMap(trainer, role);
+        if (res.alreadyOnMap) {
+            if (OBR.isAvailable) {
+                OBR.notification.show(`${trainer.name} is already on the board!`, 'WARNING');
+            }
+            if (res.newMapTokenId && trainer.mapTokenId !== res.newMapTokenId && campaign) {
+                const nextTrainer = { ...trainer, mapTokenId: res.newMapTokenId };
+                const nextData = {
+                    ...pcData,
+                    campaigns: {
+                        ...pcData.campaigns,
+                        [pcData.activeCampaignId]: {
+                            ...campaign,
+                            trainers: { ...campaign.trainers, [trainer.id]: nextTrainer }
+                        }
+                    }
+                };
+                useCharacterStore.setState({ pcData: nextData });
+                savePcStorage(nextData);
+            }
+            return;
+        }
+        if (res.success && res.newMapTokenId) {
+            const nextTrainer = { ...trainer, mapTokenId: res.newMapTokenId };
+            if (campaign) {
+                const nextData = {
+                    ...pcData,
+                    campaigns: {
+                        ...pcData.campaigns,
+                        [pcData.activeCampaignId]: {
+                            ...campaign,
+                            trainers: { ...campaign.trainers, [trainer.id]: nextTrainer }
+                        }
+                    }
+                };
+                useCharacterStore.setState({ pcData: nextData });
+                savePcStorage(nextData);
+            }
+            if (OBR.isAvailable) {
+                OBR.notification.show(`Placed ${trainer.name} on the map!`, 'SUCCESS');
+            }
+        }
+    };
+
+    const handleConfirmCloudUpload = async (
+        customSceneName: string,
+        includeParty: boolean = true,
+        includeTrainer: boolean = true,
+        targetMode: 'cloud' | 'activeScene' = 'cloud'
+    ) => {
         if (!currentBox || !campaign) return;
         setIsExportModalOpen(false);
-        const success = await exportBoxCloud(currentBox, campaign, pcData.pokemonSummaries, customSceneName);
+        const partyIds = includeParty && trainer ? trainer.party : undefined;
+        const trainerToExport = includeTrainer && trainer ? trainer : undefined;
+
+        if (targetMode === 'activeScene') {
+            const success = await syncToActiveScene(
+                currentBox,
+                campaign,
+                pcData.pokemonSummaries,
+                partyIds,
+                trainerToExport
+            );
+            if (success && OBR.isAvailable) {
+                OBR.notification.show(`Updated current scene with ${currentBox.name} Pokémon!`, 'SUCCESS');
+            }
+            return;
+        }
+
+        const success = await exportBoxCloud(
+            currentBox,
+            campaign,
+            pcData.pokemonSummaries,
+            customSceneName,
+            partyIds,
+            trainerToExport
+        );
         if (success && OBR.isAvailable) {
             OBR.notification.show(`Saved "${customSceneName}" to Owlbear Rodeo Cloud!`, 'SUCCESS');
         }
@@ -294,6 +443,25 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
             }
         }
 
+        // Unify with existing summary if it is the same token
+        if (pcData.pokemonSummaries && finalSummary.mapTokenId) {
+            const existingMatch = Object.values(pcData.pokemonSummaries).find(
+                (s) => s.mapTokenId === finalSummary.mapTokenId || s.savedTokenItem?.id === finalSummary.mapTokenId
+            );
+            if (existingMatch) finalSummary.entityId = existingMatch.entityId;
+        }
+
+        // Prevent duplicate addition if already on belt
+        if (depositTarget?.targetSlot?.type === 'party' && trainer?.party?.includes(finalSummary.entityId)) {
+            if (OBR.isAvailable) {
+                OBR.notification.show(
+                    `${finalSummary.name || finalSummary.species} is already on your belt!`,
+                    'WARNING'
+                );
+            }
+            return;
+        }
+
         updatePokemonSummary(finalSummary);
         if (depositTarget?.targetSlot?.type === 'party' && trainer) {
             setPartySlot(trainer.id, depositTarget.targetSlot.index, finalSummary.entityId);
@@ -310,6 +478,7 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
 
     return {
         isTrainerLinked,
+        isTrainerOnMap,
         handleLinkActiveTrainer,
         handleUnlinkTrainer,
         handleSendOut,
@@ -319,6 +488,7 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         handleUnlinkPokemon,
         handleReleasePokemon,
         handleConfirmRelease,
+        handleDropTrainerToken,
         handleConfirmCloudUpload,
         handleDownloadBox,
         handleCompleteDeposit

@@ -13,6 +13,9 @@ interface PcBoxGridProps {
     onOpenDepositDrawer?: () => void;
     onContextMenu: (e: React.MouseEvent, index: number, entityId: string) => void;
     onOpenSheet?: (entityId: string) => void;
+    onMoveToParty?: (entityId: string) => void;
+    onSendOut?: (entityId: string) => void;
+    onRecall?: (entityId: string) => void;
     onDropOnSlot: (targetIndex: number) => void;
     onDragStart: (e: React.DragEvent, index: number) => void;
 }
@@ -26,6 +29,9 @@ export const PcBoxGrid: React.FC<PcBoxGridProps> = ({
     onOpenDepositDrawer,
     onContextMenu,
     onOpenSheet,
+    onMoveToParty,
+    onSendOut,
+    onRecall,
     onDropOnSlot,
     onDragStart
 }) => {
@@ -114,6 +120,9 @@ export const PcBoxGrid: React.FC<PcBoxGridProps> = ({
                                     onClick={() => onSelectSlot(index)}
                                     onContextMenu={(e) => onContextMenu(e, index, entityId)}
                                     onOpenSheet={() => onOpenSheet?.(entityId)}
+                                    onMoveToParty={() => onMoveToParty?.(entityId)}
+                                    onSendOut={() => onSendOut?.(entityId)}
+                                    onRecall={() => onRecall?.(entityId)}
                                     onDragStart={(e) => onDragStart(e, index)}
                                 />
                             </div>

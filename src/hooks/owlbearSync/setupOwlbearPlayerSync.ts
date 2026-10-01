@@ -2,7 +2,7 @@ import OBR from '@owlbear-rodeo/sdk';
 import type { Image } from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { fetchPokemonData, fetchMoveData } from '../../utils/api/api';
-import { saveToOwlbear, setActiveTokenId } from '../../utils/sync/obr';
+import { saveToOwlbear, setActiveTokenId, getIsPcSheetActive } from '../../utils/sync/obr';
 import { harvestTokensItemArt } from '../../utils/graphics/itemArtCatalog';
 import { METADATA_ID } from './owlbearSyncConstants';
 import { renderTokenGraphicsForMeta } from './setupOwlbearTokenSync';
@@ -17,6 +17,9 @@ export async function setupOwlbearPlayerSync(params: { role: 'PLAYER' | 'GM' }):
     const unsubs: Array<() => void> = [];
 
     const loadTokenAndLearnset = async (targetTokenId: string, overrideRole?: 'PLAYER' | 'GM') => {
+        if (getIsPcSheetActive()) {
+            return;
+        }
         try {
             const items = await OBR.scene.items.getItems([targetTokenId]);
             if (items.length > 0) {

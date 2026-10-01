@@ -1,11 +1,22 @@
 import OBR, { buildImage, type Item } from '@owlbear-rodeo/sdk';
-import type { PcPokemonSummary, PcBox, CampaignProfile } from '../../types/pcStorageTypes';
+import type { PcPokemonSummary, PcBox } from '../../types/pcStorageTypes';
 import { METADATA_ID } from '../sync/obr';
-import { getAbsolutePokeballUrl } from '../generators/trainerTokenSpawner';
+import { getAbsolutePokeballUrl, resolveImageDimensions } from '../generators/trainerTokenSpawner';
 import { rehomeTokenSubtree, calculateRelativeAttachment, chunkItems } from './rehomeEngine';
-import { uploadBoxToObrCloud, downloadBoxFromObrCloud } from './pcStorageAdapter';
+import { exportBoxCloud, syncToActiveScene, importBoxCloud, buildBackupSceneItems } from './pcCloudBackupOps';
+export { exportBoxCloud, syncToActiveScene, importBoxCloud, buildBackupSceneItems };
 
 import { buildGraphicsFromMeta, renderTokenGraphics } from '../graphics/graphicsManager';
+import { resolveExistingCharacterEntityId } from './pcCandidateMatching';
+
+export const recentlySpawnedTokenIds = new Set<string>();
+
+export function markTokenAsRecentlySpawned(id: string) {
+    recentlySpawnedTokenIds.add(id);
+    setTimeout(() => {
+        recentlySpawnedTokenIds.delete(id);
+    }, 3500);
+}
 
 export interface RecallPokemonResult {
     success: boolean;
@@ -22,25 +33,86 @@ export async function spawnPokemonToMap(
     summary: PcPokemonSummary,
     ownerId?: string,
     role: 'PLAYER' | 'GM' = 'PLAYER'
-): Promise<{ success: boolean; newMapTokenId?: string }> {
+): Promise<{ success: boolean; newMapTokenId?: string; alreadyOnMap?: boolean }> {
     if (!OBR.isAvailable) {
         return { success: true };
     }
 
     try {
-        const vpWidth = (await OBR.viewport.getWidth()) || 800;
-        const vpHeight = (await OBR.viewport.getHeight()) || 600;
-        const centerPos = await OBR.viewport.inverseTransformPoint({
-            x: vpWidth / 2,
-            y: vpHeight / 2
+        const gridDpi = (await OBR.scene.grid.getDpi()) || 150;
+        const sceneItems = await OBR.scene.items.getItems();
+
+        // Check if this Pokémon is already actively placed on the current scene
+        if (summary.mapTokenId) {
+            const existing = sceneItems.find((it) => it.id === summary.mapTokenId);
+            if (existing) {
+                await OBR.player.select([existing.id]);
+                return { success: true, newMapTokenId: existing.id, alreadyOnMap: true };
+            }
+        }
+        const existingByEntity = sceneItems.find((it) => {
+            if (it.layer !== 'CHARACTER') return false;
+            const meta = (it.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
+            const claimMeta = it.metadata?.['pokerole-pmd-extension/claimed-by'] as { entityId?: string } | undefined;
+            return (
+                (meta.entityId && meta.entityId === summary.entityId) ||
+                (claimMeta?.entityId && claimMeta.entityId === summary.entityId)
+            );
         });
+        if (existingByEntity) {
+            await OBR.player.select([existingByEntity.id]);
+            return { success: true, newMapTokenId: existingByEntity.id, alreadyOnMap: true };
+        }
+
+        // Check if there is an active trainer token on the scene to drop in front of
+        const trainerToken = sceneItems.find((it) => {
+            if (it.layer !== 'CHARACTER') return false;
+            const meta = (it.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
+            const mode = (meta.mode as string) || '';
+            return mode === 'Trainer' || mode === 'Trainer (Special)';
+        });
+
+        let landingPos: { x: number; y: number };
+        if (trainerToken) {
+            const targetY = trainerToken.position.y + gridDpi * 1.25;
+            const occupiedXs = sceneItems
+                .filter((it) => it.layer === 'CHARACTER' && Math.abs(it.position.y - targetY) < gridDpi * 0.7)
+                .map((it) => it.position.x);
+
+            let chosenOffset = 0;
+            const offsets = [0, gridDpi, -gridDpi, gridDpi * 2, -gridDpi * 2, gridDpi * 3, -gridDpi * 3];
+            for (const off of offsets) {
+                const candX = trainerToken.position.x + off;
+                const isTaken = occupiedXs.some((ox) => Math.abs(ox - candX) < gridDpi * 0.7);
+                if (!isTaken) {
+                    chosenOffset = off;
+                    break;
+                }
+            }
+
+            landingPos = {
+                x: trainerToken.position.x + chosenOffset,
+                y: targetY
+            };
+        } else {
+            // Default drop: 35% from left of viewport so it is NOT covered by extension iframe on the right
+            const vpWidth = (await OBR.viewport.getWidth()) || 800;
+            const vpHeight = (await OBR.viewport.getHeight()) || 600;
+            landingPos = await OBR.viewport.inverseTransformPoint({
+                x: vpWidth * 0.35,
+                y: vpHeight * 0.5
+            });
+        }
 
         let parentItem: Item;
 
         if (summary.savedTokenItem) {
             // Restore exact token geometry, scale, grid, and image from the recalled token
             parentItem = JSON.parse(JSON.stringify(summary.savedTokenItem)) as Item;
-            parentItem.position = centerPos;
+            parentItem.position = landingPos;
+            if (parentItem.scale) {
+                parentItem.scale = { ...parentItem.scale };
+            }
 
             const existingMeta =
                 (parentItem.metadata?.[METADATA_ID] as Record<string, unknown>) || summary.fullMetadata || {};
@@ -68,16 +140,18 @@ export async function spawnPokemonToMap(
                 [METADATA_ID]: mergedMeta
             };
         } else {
-            const gridDpi = (await OBR.scene.grid.getDpi()) || 150;
+            const pokeUrl = summary.tokenImageUrl || getAbsolutePokeballUrl();
+            const dims = await resolveImageDimensions(pokeUrl);
+            const maxDim = Math.max(dims.width, dims.height);
             const pokeImageContent = {
-                url: summary.tokenImageUrl || getAbsolutePokeballUrl(),
-                mime: (summary.tokenImageUrl || '').endsWith('.svg') ? 'image/svg+xml' : 'image/png',
-                width: gridDpi,
-                height: gridDpi
+                url: pokeUrl,
+                mime: pokeUrl.endsWith('.svg') ? 'image/svg+xml' : 'image/png',
+                width: dims.width,
+                height: dims.height
             };
             const pokeGrid = {
-                dpi: gridDpi,
-                offset: { x: gridDpi / 2, y: gridDpi / 2 }
+                dpi: maxDim,
+                offset: { x: dims.width / 2, y: dims.height / 2 }
             };
 
             const metadataObj: Record<string, unknown> = {
@@ -98,7 +172,7 @@ export async function spawnPokemonToMap(
 
             parentItem = buildImage(pokeImageContent, pokeGrid)
                 .name(summary.name || summary.species)
-                .position(centerPos)
+                .position(landingPos)
                 .layer('CHARACTER')
                 .metadata({
                     [METADATA_ID]: metadataObj
@@ -125,9 +199,13 @@ export async function spawnPokemonToMap(
 
         // Re-home parent token + any attached items with fresh IDs & landing position
         const rehomedItems = rehomeTokenSubtree(parentItem, summary.attachedItems || [], {
-            landingPosition: centerPos,
+            landingPosition: landingPos,
             ownerId
         });
+
+        const newParent = rehomedItems[0];
+        const newParentId = newParent.id;
+        markTokenAsRecentlySpawned(newParentId);
 
         // Add to scene in chunks
         const chunks = chunkItems(rehomedItems, 15);
@@ -135,8 +213,6 @@ export async function spawnPokemonToMap(
             await OBR.scene.items.addItems(chunk);
         }
 
-        const newParent = rehomedItems[0];
-        const newParentId = newParent.id;
         await OBR.player.select([newParentId]);
 
         // Render tracker HUD graphics for the newly spawned Pokémon
@@ -155,14 +231,32 @@ export async function spawnPokemonToMap(
     }
 }
 
-export async function recallPokemonFromMap(mapTokenId?: string): Promise<RecallPokemonResult> {
-    if (!OBR.isAvailable || !mapTokenId) {
+export { spawnTrainerToMap } from './pcTrainerOps';
+
+export async function recallPokemonFromMap(
+    mapTokenId?: string,
+    summary?: PcPokemonSummary
+): Promise<RecallPokemonResult> {
+    if (!OBR.isAvailable || (!mapTokenId && !summary?.entityId)) {
         return { success: true };
     }
 
     try {
         const sceneItems = await OBR.scene.items.getItems();
-        const parent = sceneItems.find((i) => i.id === mapTokenId);
+        let parent = mapTokenId ? sceneItems.find((i) => i.id === mapTokenId) : undefined;
+        if (!parent && summary?.entityId) {
+            parent = sceneItems.find((i) => {
+                if (i.layer !== 'CHARACTER') return false;
+                const meta = (i.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
+                const claimMeta = i.metadata?.['pokerole-pmd-extension/claimed-by'] as
+                    | { entityId?: string }
+                    | undefined;
+                return (
+                    (meta.entityId && meta.entityId === summary.entityId) ||
+                    (claimMeta?.entityId && claimMeta.entityId === summary.entityId)
+                );
+            });
+        }
 
         if (!parent) {
             // Token not on active scene (e.g. spawned in another scene, or removed).
@@ -170,7 +264,8 @@ export async function recallPokemonFromMap(mapTokenId?: string): Promise<RecallP
             return { success: true };
         }
 
-        const attachedChildren = sceneItems.filter((i) => i.attachedTo === mapTokenId);
+        const resolvedParentId = parent.id;
+        const attachedChildren = sceneItems.filter((i) => i.attachedTo === resolvedParentId);
         const bundles = attachedChildren.map((child) => calculateRelativeAttachment(parent, child));
 
         const meta = (parent.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
@@ -223,92 +318,6 @@ export async function recallPokemonFromMap(mapTokenId?: string): Promise<RecallP
     }
 }
 
-export async function exportBoxCloud(
-    box: PcBox,
-    campaign: CampaignProfile,
-    pokemonSummaries: Record<string, PcPokemonSummary>,
-    customSceneName?: string
-): Promise<boolean> {
-    const items: Item[] = [];
-    for (const entityId of box.slots) {
-        if (!entityId) continue;
-        const summary = pokemonSummaries[entityId];
-        if (!summary) continue;
-
-        const imgItem = buildImage(
-            {
-                url: summary.tokenImageUrl || getAbsolutePokeballUrl(),
-                mime: (summary.tokenImageUrl || '').endsWith('.svg') ? 'image/svg+xml' : 'image/png',
-                width: 150,
-                height: 150
-            },
-            {
-                dpi: 150,
-                offset: { x: 75, y: 75 }
-            }
-        )
-            .name(summary.name || summary.species)
-            .metadata({
-                [METADATA_ID]: {
-                    ...(summary.fullMetadata || {}),
-                    entityId: summary.entityId,
-                    name: summary.name,
-                    nickname: summary.name,
-                    species: summary.species,
-                    type1: summary.type1,
-                    type2: summary.type2,
-                    'hp-curr': summary.hp,
-                    'hp-max-display': summary.maxHp,
-                    'will-curr': summary.will,
-                    'will-max-display': summary.maxWill,
-                    rank: summary.rank,
-                    'token-image-url': summary.tokenImageUrl
-                }
-            })
-            .build();
-
-        items.push(imgItem);
-    }
-
-    return await uploadBoxToObrCloud(box.name, campaign.name, items, customSceneName);
-}
-
-export async function importBoxCloud(campaign: CampaignProfile): Promise<PcPokemonSummary[]> {
-    const downloadedScenes = await downloadBoxFromObrCloud(campaign.name);
-    const importedSummaries: PcPokemonSummary[] = [];
-
-    for (const scene of downloadedScenes) {
-        if (!scene.items) continue;
-        for (const item of scene.items) {
-            const meta = (item.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
-            const entityId = (meta.entityId as string) || crypto.randomUUID();
-            const hpCurr = Number(meta['hp-curr']) || (typeof meta.hp === 'number' ? meta.hp : 10);
-            const hpMax = Number(meta['hp-max-display']) || (typeof meta.hpMax === 'number' ? meta.hpMax : 10);
-            const willCurr = Number(meta['will-curr']) || (typeof meta.will === 'number' ? meta.will : 5);
-            const willMax = Number(meta['will-max-display']) || (typeof meta.willMax === 'number' ? meta.willMax : 5);
-
-            importedSummaries.push({
-                entityId,
-                name: (meta.name as string) || (meta.nickname as string) || item.name || 'Imported Pokémon',
-                species: (meta.species as string) || item.name || 'Unknown',
-                rank: (meta.rank as string) || 'Starter',
-                type1: (meta.type1 as string) || 'Normal',
-                type2: meta.type2 as string | undefined,
-                hp: hpCurr,
-                maxHp: hpMax,
-                will: willCurr,
-                maxWill: willMax,
-                tokenImageUrl: (meta['token-image-url'] as string) || undefined,
-                fullMetadata: meta,
-                savedTokenItem: item,
-                lastModified: Date.now()
-            });
-        }
-    }
-
-    return importedSummaries;
-}
-
 export function buildActiveCharacterSummary(
     identity: {
         nickname?: string;
@@ -316,31 +325,51 @@ export function buildActiveCharacterSummary(
         rank?: string;
         type1?: string;
         type2?: string;
+        mode?: string;
         tokenImageUrl?: string | null;
     },
     health: { hpCurr?: number; hpMax?: number },
     will: { willCurr?: number; willMax?: number },
     activeTokenId: string | null,
-    fullMetadata: Record<string, unknown>
+    fullMetadata: Record<string, unknown>,
+    existingSummaries?: Record<string, PcPokemonSummary>,
+    partySlots?: (string | null)[]
 ): PcPokemonSummary | null {
+    if (identity.mode === 'Trainer' || identity.mode === 'Trainer (Special)') {
+        return null;
+    }
     const activeName = identity.nickname || identity.species;
     if (!identity.species && !identity.nickname) return null;
 
+    const matchedEntityId = resolveExistingCharacterEntityId(
+        identity,
+        activeTokenId,
+        fullMetadata,
+        existingSummaries,
+        partySlots
+    );
+
+    const entityId = matchedEntityId || (fullMetadata.entityId as string) || activeTokenId || crypto.randomUUID();
+    const existingSummary = matchedEntityId && existingSummaries ? existingSummaries[matchedEntityId] : undefined;
+
     return {
-        entityId: activeTokenId || crypto.randomUUID(),
+        entityId,
+        trainerId: existingSummary?.trainerId,
         name: activeName || 'Active Pokémon',
         species: identity.species || activeName || 'Unknown',
-        rank: identity.rank || 'Starter',
-        type1: identity.type1 || 'Normal',
-        type2: identity.type2 || undefined,
-        hp: health.hpCurr ?? 10,
-        maxHp: health.hpMax ?? 10,
-        will: will.willCurr ?? 5,
-        maxWill: will.willMax ?? 5,
-        tokenImageUrl: identity.tokenImageUrl || undefined,
-        isOnMap: !!activeTokenId,
-        mapTokenId: activeTokenId || undefined,
-        fullMetadata,
+        rank: identity.rank || existingSummary?.rank || 'Starter',
+        type1: identity.type1 || existingSummary?.type1 || 'Normal',
+        type2: identity.type2 || existingSummary?.type2 || undefined,
+        hp: health.hpCurr ?? existingSummary?.hp ?? 10,
+        maxHp: health.hpMax ?? existingSummary?.maxHp ?? 10,
+        will: will.willCurr ?? existingSummary?.will ?? 5,
+        maxWill: will.willMax ?? existingSummary?.maxWill ?? 5,
+        tokenImageUrl: identity.tokenImageUrl || existingSummary?.tokenImageUrl || undefined,
+        isOnMap: activeTokenId ? true : (existingSummary?.isOnMap ?? false),
+        mapTokenId: activeTokenId || existingSummary?.mapTokenId || undefined,
+        savedTokenItem: existingSummary?.savedTokenItem,
+        attachedItems: existingSummary?.attachedItems,
+        fullMetadata: { ...(existingSummary?.fullMetadata || {}), ...fullMetadata, entityId },
         lastModified: Date.now()
     };
 }
@@ -362,14 +391,34 @@ export function filterTrainerPokemonSummaries(
     });
 }
 
-export async function clearTokenClaimOps(mapTokenId?: string): Promise<void> {
-    if (!OBR.isAvailable || !mapTokenId) return;
+export async function clearTokenClaimOps(mapTokenId?: string, entityId?: string): Promise<void> {
+    if (!OBR.isAvailable || (!mapTokenId && !entityId)) return;
     try {
-        await OBR.scene.items.updateItems([mapTokenId], (items) => {
-            for (const it of items) {
-                delete it.metadata['pokerole-pmd-extension/claimed-by'];
+        const sceneItems = await OBR.scene.items.getItems();
+        const targets = sceneItems.filter((it) => {
+            if (mapTokenId && it.id === mapTokenId) return true;
+            if (entityId) {
+                const meta = (it.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
+                const claimMeta = it.metadata?.['pokerole-pmd-extension/claimed-by'] as
+                    | { entityId?: string }
+                    | undefined;
+                return (
+                    (meta.entityId && meta.entityId === entityId) ||
+                    (claimMeta?.entityId && claimMeta.entityId === entityId)
+                );
             }
+            return false;
         });
+        if (targets.length > 0) {
+            await OBR.scene.items.updateItems(
+                targets.map((t) => t.id),
+                (items) => {
+                    for (const it of items) {
+                        delete it.metadata['pokerole-pmd-extension/claimed-by'];
+                    }
+                }
+            );
+        }
     } catch (e) {
         console.warn('[PcModalOps] Failed to clear claimed-by on item:', e);
     }

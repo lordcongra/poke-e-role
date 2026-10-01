@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { PcStorageHeader } from './PcStorageHeader';
 import { PcPartyDock } from './PcPartyDock';
@@ -47,6 +47,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     const switchCampaign = useCharacterStore((s) => s.switchCampaign);
     const addCampaign = useCharacterStore((s) => s.addCampaign);
     const updatePokemonSummary = useCharacterStore((s) => s.updatePokemonSummary);
+    const updateTrainerProfile = useCharacterStore((s) => s.updateTrainerProfile);
     const deletePokemonFromPc = useCharacterStore((s) => s.deletePokemonFromPc);
     const closeReviewModal = useCharacterStore((s) => s.closeReviewModal);
     const applyReviewDiffs = useCharacterStore((s) => s.applyReviewDiffs);
@@ -83,7 +84,9 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         health,
         will,
         activeTokenId,
-        flattenStateToMetadata(useCharacterStore.getState())
+        flattenStateToMetadata(useCharacterStore.getState()),
+        pcData.pokemonSummaries,
+        trainer?.party
     );
 
     // All stored Pokémon that either belong to this trainer or are in PC boxes (and not in the active party)
@@ -93,6 +96,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
 
     const {
         isTrainerLinked,
+        isTrainerOnMap,
         handleLinkActiveTrainer,
         handleUnlinkTrainer,
         handleSendOut,
@@ -102,6 +106,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         handleUnlinkPokemon,
         handleReleasePokemon,
         handleConfirmRelease,
+        handleDropTrainerToken,
         handleConfirmCloudUpload,
         handleDownloadBox,
         handleCompleteDeposit
@@ -135,6 +140,81 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     const handleOpenCharacterSheet = (entityId: string) => {
         setSheetViewEntityId(entityId);
     };
+
+    const trainerSummary: PcPokemonSummary | null = useMemo(() => {
+        if (!trainer || sheetViewEntityId !== trainer.id) return null;
+        const hpCurr =
+            typeof trainer.fullMetadata?.['hp-curr'] === 'number' ? (trainer.fullMetadata['hp-curr'] as number) : 10;
+        const hpMax =
+            typeof trainer.fullMetadata?.['hp-max-display'] === 'number'
+                ? (trainer.fullMetadata['hp-max-display'] as number)
+                : 10;
+        const willCurr =
+            typeof trainer.fullMetadata?.['will-curr'] === 'number' ? (trainer.fullMetadata['will-curr'] as number) : 5;
+        const willMax =
+            typeof trainer.fullMetadata?.['will-max-display'] === 'number'
+                ? (trainer.fullMetadata['will-max-display'] as number)
+                : 5;
+
+        return {
+            entityId: trainer.id,
+            name: trainer.name,
+            species: trainer.name,
+            rank: 'Trainer',
+            type1: 'Normal',
+            hp: hpCurr,
+            maxHp: hpMax,
+            will: willCurr,
+            maxWill: willMax,
+            tokenImageUrl: trainer.avatarUrl,
+            isOnMap: Boolean(trainer.mapTokenId),
+            mapTokenId: trainer.mapTokenId,
+            savedTokenItem: trainer.savedTokenItem,
+            fullMetadata: {
+                ...(trainer.fullMetadata || {}),
+                name: trainer.name,
+                nickname: trainer.name,
+                species: trainer.name,
+                mode: 'Trainer',
+                'token-image-url': trainer.avatarUrl,
+                'hp-curr': hpCurr,
+                'hp-max-display': hpMax,
+                'will-curr': willCurr,
+                'will-max-display': willMax
+            },
+            lastModified: 0
+        };
+    }, [
+        trainer?.id,
+        trainer?.name,
+        trainer?.avatarUrl,
+        trainer?.mapTokenId,
+        trainer?.fullMetadata,
+        trainer?.savedTokenItem,
+        sheetViewEntityId
+    ]);
+
+    const activeSheetSummary = (sheetViewEntityId && pcData.pokemonSummaries[sheetViewEntityId]) || trainerSummary;
+
+    const trainerRef = useRef(trainer);
+    trainerRef.current = trainer;
+
+    const handleUpdateSheetSummary = useCallback(
+        (summary: PcPokemonSummary) => {
+            const currentTrainer = trainerRef.current;
+            if (currentTrainer && summary.entityId === currentTrainer.id) {
+                updateTrainerProfile(currentTrainer.id, {
+                    name: summary.name,
+                    avatarUrl: summary.tokenImageUrl,
+                    fullMetadata: summary.fullMetadata,
+                    savedTokenItem: summary.savedTokenItem
+                });
+            } else {
+                updatePokemonSummary(summary);
+            }
+        },
+        [updateTrainerProfile, updatePokemonSummary]
+    );
 
     const handleOpenContextMenu = (e: React.MouseEvent, isParty: boolean, index: number, entityId: string) => {
         setContextMenu({
@@ -209,7 +289,10 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                         onDragStart={(_e, index) => setDragSource({ type: 'party', index })}
                         onLinkActiveTrainer={handleLinkActiveTrainer}
                         isTrainerLinked={isTrainerLinked}
+                        isTrainerOnMap={isTrainerOnMap}
                         onUnlinkTrainer={handleUnlinkTrainer}
+                        onOpenTrainerSheet={() => setSheetViewEntityId(trainer.id)}
+                        onDropTrainerToken={handleDropTrainerToken}
                     />
 
                     <PcBoxGrid
@@ -221,6 +304,9 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                         onOpenDepositDrawer={() => setDepositTarget({})}
                         onContextMenu={(e, index, id) => handleOpenContextMenu(e, false, index, id)}
                         onOpenSheet={handleOpenCharacterSheet}
+                        onMoveToParty={movePokemonToParty}
+                        onSendOut={handleSendOut}
+                        onRecall={handleRecall}
                         onDropOnSlot={(targetIndex) => {
                             if (dragSource) {
                                 swapPcSlots(
@@ -271,6 +357,9 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                     box={currentBox}
                     campaign={campaign}
                     pokemonSummaries={pcData.pokemonSummaries}
+                    partySlots={trainer?.party}
+                    trainer={trainer}
+                    boxTheme={boxTheme}
                     onConfirm={handleConfirmCloudUpload}
                     onClose={() => setIsExportModalOpen(false)}
                 />
@@ -283,6 +372,9 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                     currentActiveSummary={currentActiveSummary}
                     trainerName={trainer?.name}
                     trainerPokemonSummaries={trainerPokemonSummaries}
+                    pokemonSummaries={pcData.pokemonSummaries}
+                    partySlots={trainer?.party}
+                    boxTheme={boxTheme}
                     onDepositSummary={handleCompleteDeposit}
                     onClose={() => setDepositTarget(null)}
                 />
@@ -302,13 +394,13 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                 />
             )}
 
-            {/* Pokémon Character Sheet Modal with Two-Way Sync */}
-            {sheetViewEntityId && pcData.pokemonSummaries[sheetViewEntityId] && (
+            {/* Pokémon / Trainer Character Sheet Modal with Two-Way Sync */}
+            {activeSheetSummary && (
                 <PcSheetModal
-                    currentSummary={pcData.pokemonSummaries[sheetViewEntityId]}
+                    currentSummary={activeSheetSummary}
                     allSummaries={Object.values(pcData.pokemonSummaries)}
                     onSelectEntity={setSheetViewEntityId}
-                    onUpdateSummary={updatePokemonSummary}
+                    onUpdateSummary={handleUpdateSheetSummary}
                     onClose={() => setSheetViewEntityId(null)}
                 />
             )}

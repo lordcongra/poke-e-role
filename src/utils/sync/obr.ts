@@ -7,6 +7,15 @@ let pendingUpdates: Record<string, unknown> = {};
 let pendingTokenId: string | null = null;
 
 let activeTokenId: string | null = null;
+let isPcSheetActive = false;
+
+export function setIsPcSheetActive(active: boolean) {
+    isPcSheetActive = active;
+}
+
+export function getIsPcSheetActive() {
+    return isPcSheetActive;
+}
 
 export function setActiveTokenId(id: string | null) {
     if (activeTokenId !== id) {

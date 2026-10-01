@@ -260,6 +260,34 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
         }
     },
 
+    updateTrainerProfile: (trainerId: string, updates: Partial<import('../../types/pcStorageTypes').TrainerRoster>) => {
+        try {
+            const { pcData } = get();
+            const camp = pcData.campaigns[pcData.activeCampaignId];
+            if (!camp || !camp.trainers[trainerId]) return;
+
+            const existing = camp.trainers[trainerId];
+            const updatedTrainer = { ...existing, ...updates };
+            const nextData = {
+                ...pcData,
+                campaigns: {
+                    ...pcData.campaigns,
+                    [pcData.activeCampaignId]: {
+                        ...camp,
+                        trainers: {
+                            ...camp.trainers,
+                            [trainerId]: updatedTrainer
+                        }
+                    }
+                }
+            };
+            set({ pcData: nextData });
+            savePcStorage(nextData);
+        } catch (e) {
+            console.error('[PcSlice] Failed to update trainer profile:', e);
+        }
+    },
+
     deletePokemonFromPc: (entityId: string) => {
         try {
             const nextData = applyDeleteSummary(get().pcData, entityId);
