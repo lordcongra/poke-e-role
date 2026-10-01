@@ -1,0 +1,482 @@
+import { storageAdapter, type LocalFolder, isStandaloneMode } from '../sync/storageAdapter';
+import type { TrainerRoster, PcBox, PcStorageData } from '../../types/pcStorageTypes';
+import { useCharacterStore } from '../../store/useCharacterStore';
+import { savePcStorage } from './pcStorageAdapter';
+
+/**
+ * Checks if a character's metadata represents a Trainer.
+ */
+export function isTrainerMetadata(meta?: Record<string, unknown>): boolean {
+    if (!meta) return false;
+    const mode = (meta.mode as string) || (meta.rank as string) || '';
+    return mode === 'Trainer' || mode === 'Trainer (Special)';
+}
+
+/**
+ * Finds the local character ID in the Standalone Sidebar that corresponds to this Trainer.
+ */
+export async function findTrainerSidebarId(trainer?: TrainerRoster): Promise<string | null> {
+    if (!trainer || !isStandaloneMode) return null;
+
+    try {
+        const localChars = await storageAdapter.getLocalCharacters();
+
+        // 1. Direct match by id, savedTokenItem or mapTokenId
+        if (trainer.id) {
+            const byId = localChars.find((c) => c.id === trainer.id);
+            if (byId) return byId.id;
+        }
+        if (trainer.savedTokenItem?.id) {
+            const byToken = localChars.find((c) => c.id === trainer.savedTokenItem?.id);
+            if (byToken) return byToken.id;
+        }
+        if (trainer.mapTokenId) {
+            const byMap = localChars.find((c) => c.id === trainer.mapTokenId);
+            if (byMap) return byMap.id;
+        }
+
+        // 3. Match by Trainer mode & name
+        const cleanName = (trainer.name || '').trim().toLowerCase();
+        if (cleanName) {
+            const byNameAndMode = localChars.find((c) => {
+                const isTrainer = isTrainerMetadata(c.metadata);
+                return isTrainer && c.name.trim().toLowerCase() === cleanName;
+            });
+            if (byNameAndMode) return byNameAndMode.id;
+        }
+
+        return null;
+    } catch (e) {
+        console.warn('[pcSidebarSync] Failed to find trainer sidebar id:', e);
+        return null;
+    }
+}
+
+/**
+ * Checks if a Trainer currently has a "Belt" folder in the sidebar directory.
+ */
+export async function hasTrainerOrganizedFolders(trainer?: TrainerRoster): Promise<boolean> {
+    const trainerSidebarId = await findTrainerSidebarId(trainer);
+    if (!trainerSidebarId) return false;
+
+    try {
+        const folders = await storageAdapter.getFolders();
+        return folders.some((f) => f.parentId === trainerSidebarId && isBeltFolderName(f.name));
+    } catch {
+        return false;
+    }
+}
+
+function isBeltFolderName(name: string): boolean {
+    const lower = name.trim().toLowerCase();
+    return lower === 'belt' || lower === 'belt party' || lower === 'party' || lower === 'belt pokémon';
+}
+
+/**
+ * Gets or creates the "Belt" folder under a specific Trainer.
+ */
+export async function getOrCreateBeltFolder(trainerSidebarId: string): Promise<LocalFolder> {
+    const folders = await storageAdapter.getFolders();
+    const existing = folders.find((f) => f.parentId === trainerSidebarId && isBeltFolderName(f.name));
+    if (existing) return existing;
+
+    const newId = await storageAdapter.createFolder('Belt', trainerSidebarId);
+    return { id: newId, name: 'Belt', parentId: trainerSidebarId };
+}
+
+/**
+ * Gets or creates a Box folder (e.g. "Box 1" or "Meadow") under a specific Trainer.
+ */
+export async function getOrCreateBoxFolder(trainerSidebarId: string, boxName: string): Promise<LocalFolder> {
+    const folders = await storageAdapter.getFolders();
+    const cleanBoxName = boxName.trim();
+    const existing = folders.find(
+        (f) => f.parentId === trainerSidebarId && f.name.trim().toLowerCase() === cleanBoxName.toLowerCase()
+    );
+    if (existing) return existing;
+
+    const newId = await storageAdapter.createFolder(cleanBoxName, trainerSidebarId);
+    return { id: newId, name: cleanBoxName, parentId: trainerSidebarId };
+}
+
+/**
+ * Organizes the Standalone Sidebar under a Trainer:
+ * - Creates a "Belt" folder and moves the 6 party Pokémon into it.
+ * - Creates Box folders for any boxes containing Pokémon for this Trainer and moves them in.
+ * - NEVER moves or alters child Trainer sheets (e.g. Team Rocket Grunts grouped under a Boss).
+ */
+export async function organizeTrainerSidebarFolders(
+    trainer: TrainerRoster,
+    boxes: PcBox[]
+): Promise<{ success: boolean; createdBelt: boolean; createdBoxes: number; movedPokemonCount: number }> {
+    if (!isStandaloneMode) {
+        return { success: false, createdBelt: false, createdBoxes: 0, movedPokemonCount: 0 };
+    }
+
+    const trainerSidebarId = await findTrainerSidebarId(trainer);
+    if (!trainerSidebarId) {
+        return { success: false, createdBelt: false, createdBoxes: 0, movedPokemonCount: 0 };
+    }
+
+    try {
+        const localChars = await storageAdapter.getLocalCharacters();
+        const existingFolders = await storageAdapter.getFolders();
+
+        // 1. Ensure "Belt" folder exists
+        let createdBelt = false;
+        let beltFolder = existingFolders.find((f) => f.parentId === trainerSidebarId && isBeltFolderName(f.name));
+        if (!beltFolder) {
+            const bId = await storageAdapter.createFolder('Belt', trainerSidebarId);
+            beltFolder = { id: bId, name: 'Belt', parentId: trainerSidebarId };
+            createdBelt = true;
+        }
+
+        let movedPokemonCount = 0;
+        let createdBoxes = 0;
+
+        // 2. Move active belt Pokémon into the "Belt" folder
+        const partyIds = (trainer.party || []).filter(Boolean) as string[];
+        for (const pId of partyIds) {
+            const charMatch = localChars.find((c) => c.id === pId || c.metadata?.entityId === pId);
+            if (charMatch) {
+                // Verify this character is not a Trainer!
+                if (!isTrainerMetadata(charMatch.metadata) && charMatch.parentId !== beltFolder.id) {
+                    await storageAdapter.moveItem(charMatch.id, beltFolder.id);
+                    movedPokemonCount++;
+                }
+            }
+        }
+
+        // 3. Create Box folders and move stored Pokémon
+        const activeBoxes = trainer.boxes && trainer.boxes.length > 0 ? trainer.boxes : boxes;
+        for (let i = 0; i < activeBoxes.length; i++) {
+            const box = activeBoxes[i];
+            const storedSlotIds = (box.slots || []).filter(Boolean) as string[];
+            if (storedSlotIds.length === 0 && i > 0) {
+                // Skip creating empty box folders beyond Box 1 unless occupied
+                continue;
+            }
+
+            const boxName = box.name || `Box ${i + 1}`;
+            let boxFolder = existingFolders.find(
+                (f) => f.parentId === trainerSidebarId && f.name.trim().toLowerCase() === boxName.trim().toLowerCase()
+            );
+
+            if (!boxFolder) {
+                const bId = await storageAdapter.createFolder(boxName, trainerSidebarId);
+                boxFolder = { id: bId, name: boxName, parentId: trainerSidebarId };
+                createdBoxes++;
+            }
+
+            for (const sId of storedSlotIds) {
+                const charMatch = localChars.find((c) => c.id === sId || c.metadata?.entityId === sId);
+                if (charMatch) {
+                    if (!isTrainerMetadata(charMatch.metadata) && charMatch.parentId !== boxFolder.id) {
+                        await storageAdapter.moveItem(charMatch.id, boxFolder.id);
+                        movedPokemonCount++;
+                    }
+                }
+            }
+        }
+
+        return { success: true, createdBelt, createdBoxes, movedPokemonCount };
+    } catch (e) {
+        console.error('[pcSidebarSync] Failed to organize trainer folders:', e);
+        return { success: false, createdBelt: false, createdBoxes: 0, movedPokemonCount: 0 };
+    }
+}
+
+/**
+ * Automatically relocates a Pokémon sheet in the sidebar when it is moved
+ * between the Trainer's Belt and PC Storage Boxes.
+ */
+export async function relocateSidebarPokemon(
+    trainer: TrainerRoster,
+    pokemonId: string,
+    target: { type: 'party' } | { type: 'box'; boxIndex: number; boxName: string }
+): Promise<void> {
+    if (!isStandaloneMode || !pokemonId) return;
+
+    const trainerSidebarId = await findTrainerSidebarId(trainer);
+    if (!trainerSidebarId) return;
+
+    try {
+        const localChars = await storageAdapter.getLocalCharacters();
+        const charMatch = localChars.find((c) => c.id === pokemonId || c.metadata?.entityId === pokemonId);
+        if (!charMatch || isTrainerMetadata(charMatch.metadata)) return;
+
+        // Check if the trainer already has folder organization in the sidebar
+        const folders = await storageAdapter.getFolders();
+        const trainerFolders = folders.filter((f) => f.parentId === trainerSidebarId);
+        const hasFolders = trainerFolders.some((f) => isBeltFolderName(f.name));
+
+        if (!hasFolders) {
+            // If the user hasn't organized into folders, at minimum parent directly under the Trainer
+            if (charMatch.parentId !== trainerSidebarId) {
+                await storageAdapter.moveItem(charMatch.id, trainerSidebarId);
+            }
+            return;
+        }
+
+        if (target.type === 'party') {
+            const beltFolder = await getOrCreateBeltFolder(trainerSidebarId);
+            if (charMatch.parentId !== beltFolder.id) {
+                await storageAdapter.moveItem(charMatch.id, beltFolder.id);
+            }
+        } else {
+            const boxName = target.boxName || `Box ${target.boxIndex + 1}`;
+            const boxFolder = await getOrCreateBoxFolder(trainerSidebarId, boxName);
+            if (charMatch.parentId !== boxFolder.id) {
+                await storageAdapter.moveItem(charMatch.id, boxFolder.id);
+            }
+        }
+    } catch (e) {
+        console.warn('[pcSidebarSync] Failed to relocate sidebar pokemon:', e);
+    }
+}
+
+/**
+ * Synchronizes PC box rename to the corresponding folder in the Standalone Sidebar.
+ */
+export async function syncBoxRenameToSidebar(trainer: TrainerRoster, oldName: string, newName: string): Promise<void> {
+    if (!isStandaloneMode) return;
+
+    const trainerSidebarId = await findTrainerSidebarId(trainer);
+    if (!trainerSidebarId) return;
+
+    try {
+        const folders = await storageAdapter.getFolders();
+        const target = folders.find(
+            (f) => f.parentId === trainerSidebarId && f.name.trim().toLowerCase() === oldName.trim().toLowerCase()
+        );
+        if (target && target.name !== newName.trim()) {
+            await storageAdapter.renameFolder(target.id, newName.trim());
+        }
+    } catch (e) {
+        console.warn('[pcSidebarSync] Failed to sync box rename to sidebar folder:', e);
+    }
+}
+
+/**
+ * Synchronizes a sidebar folder rename to the corresponding PC Box.
+ */
+export async function syncSidebarFolderRenameToPc(
+    folderId: string,
+    oldName: string,
+    newName: string,
+    pcData: PcStorageData
+): Promise<boolean> {
+    if (!isStandaloneMode) return false;
+
+    try {
+        const folders = await storageAdapter.getFolders();
+        const target = folders.find((f) => f.id === folderId);
+        if (!target || !target.parentId) return false;
+
+        // Check if parentId is a Trainer
+        const localChars = await storageAdapter.getLocalCharacters();
+        const parentTrainer = localChars.find((c) => c.id === target.parentId && isTrainerMetadata(c.metadata));
+        if (!parentTrainer) return false;
+
+        // Look up trainer roster in pcData
+        let updated = false;
+        const nextData = { ...pcData };
+
+        for (const camp of Object.values(nextData.campaigns)) {
+            for (const tr of Object.values(camp.trainers)) {
+                if (
+                    tr.id === parentTrainer.id ||
+                    tr.savedTokenItem?.id === parentTrainer.id ||
+                    tr.mapTokenId === parentTrainer.id ||
+                    tr.name.toLowerCase() === parentTrainer.name.toLowerCase()
+                ) {
+                    // Check trainer boxes
+                    if (tr.boxes) {
+                        for (const b of tr.boxes) {
+                            if (b.name.trim().toLowerCase() === oldName.trim().toLowerCase()) {
+                                b.name = newName.trim();
+                                updated = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Also check campaign boxes
+            if (camp.boxes) {
+                for (const b of camp.boxes) {
+                    if (b.name.trim().toLowerCase() === oldName.trim().toLowerCase()) {
+                        b.name = newName.trim();
+                        updated = true;
+                    }
+                }
+            }
+        }
+
+        if (updated) {
+            useCharacterStore.setState({ pcData: nextData });
+            await savePcStorage(nextData);
+            return true;
+        }
+        return false;
+    } catch (e) {
+        console.warn('[pcSidebarSync] Failed to sync sidebar folder rename to PC:', e);
+        return false;
+    }
+}
+
+/**
+ * Synchronizes slot swaps in the PC with the Standalone Sidebar folders.
+ */
+export async function syncSwappedSlotsToSidebar(
+    trainer: TrainerRoster,
+    from: { type: 'party' | 'box'; index: number; boxIndex?: number },
+    to: { type: 'party' | 'box'; index: number; boxIndex?: number },
+    nextPcData: PcStorageData,
+    activeBoxIndex: number
+): Promise<void> {
+    if (!isStandaloneMode) return;
+
+    const camp = nextPcData.campaigns[nextPcData.activeCampaignId];
+    if (!camp) return;
+    const activeTrainer = camp.trainers[trainer.id] || trainer;
+    const trainerBoxes = activeTrainer.boxes && activeTrainer.boxes.length > 0 ? activeTrainer.boxes : camp.boxes;
+
+    const entityInFrom =
+        from.type === 'party'
+            ? activeTrainer.party[from.index]
+            : trainerBoxes[from.boxIndex ?? activeBoxIndex]?.slots[from.index];
+
+    const entityInTo =
+        to.type === 'party'
+            ? activeTrainer.party[to.index]
+            : trainerBoxes[to.boxIndex ?? activeBoxIndex]?.slots[to.index];
+
+    if (entityInFrom) {
+        if (from.type === 'party') {
+            await relocateSidebarPokemon(activeTrainer, entityInFrom, { type: 'party' });
+        } else {
+            const bIdx = from.boxIndex ?? activeBoxIndex;
+            const bName = trainerBoxes[bIdx]?.name || `Box ${bIdx + 1}`;
+            await relocateSidebarPokemon(activeTrainer, entityInFrom, { type: 'box', boxIndex: bIdx, boxName: bName });
+        }
+    }
+
+    if (entityInTo) {
+        if (to.type === 'party') {
+            await relocateSidebarPokemon(activeTrainer, entityInTo, { type: 'party' });
+        } else {
+            const bIdx = to.boxIndex ?? activeBoxIndex;
+            const bName = trainerBoxes[bIdx]?.name || `Box ${bIdx + 1}`;
+            await relocateSidebarPokemon(activeTrainer, entityInTo, { type: 'box', boxIndex: bIdx, boxName: bName });
+        }
+    }
+}
+
+/**
+ * Synchronizes a nickname update to the corresponding Pokémon character in the Standalone Sidebar.
+ */
+export async function syncPokemonNicknameToSidebar(pokemonId: string, newNickname: string): Promise<void> {
+    if (!isStandaloneMode || !pokemonId || !newNickname.trim()) return;
+
+    try {
+        const localChars = await storageAdapter.getLocalCharacters();
+        const match = localChars.find((c) => c.id === pokemonId || c.metadata?.entityId === pokemonId);
+        if (match) {
+            await storageAdapter.saveCharacter(
+                match.id,
+                { nickname: newNickname.trim() },
+                'pokerole-pmd-extension/stats'
+            );
+        }
+    } catch (e) {
+        console.warn('[pcSidebarSync] Failed to sync nickname to sidebar character:', e);
+    }
+}
+
+/**
+ * Synchronizes a character rename from the Sidebar to the PC Storage data.
+ */
+export async function syncSidebarCharacterRenameToPc(
+    characterId: string,
+    newNickname: string,
+    pcData: PcStorageData
+): Promise<boolean> {
+    if (!isStandaloneMode) return false;
+
+    try {
+        const summary = pcData.pokemonSummaries[characterId];
+        if (summary && summary.name !== newNickname.trim()) {
+            const nextSummaries = {
+                ...pcData.pokemonSummaries,
+                [characterId]: {
+                    ...summary,
+                    name: newNickname.trim(),
+                    fullMetadata: {
+                        ...summary.fullMetadata,
+                        nickname: newNickname.trim()
+                    }
+                }
+            };
+            const nextData = { ...pcData, pokemonSummaries: nextSummaries };
+            useCharacterStore.setState({ pcData: nextData });
+            await savePcStorage(nextData);
+            return true;
+        }
+        return false;
+    } catch (e) {
+        console.warn('[pcSidebarSync] Failed to sync sidebar rename to PC summary:', e);
+        return false;
+    }
+}
+
+/**
+ * Synchronizes a drag-and-drop move in the Standalone Sidebar to the PC Storage system.
+ * If moved into a "Belt" folder under a Trainer, adds to the Trainer's party.
+ * If moved into a Box folder under a Trainer, deposits into that Box.
+ */
+export async function syncSidebarMoveToPc(
+    characterId: string,
+    targetFolderId: string | null,
+    pcData: PcStorageData
+): Promise<void> {
+    if (!isStandaloneMode || !characterId || !targetFolderId) return;
+
+    try {
+        const folders = await storageAdapter.getFolders();
+        const targetFolder = folders.find((f) => f.id === targetFolderId);
+        if (!targetFolder || !targetFolder.parentId) return;
+
+        const localChars = await storageAdapter.getLocalCharacters();
+        const parentTrainer = localChars.find((c) => c.id === targetFolder.parentId && isTrainerMetadata(c.metadata));
+        if (!parentTrainer) return;
+
+        const camp = pcData.campaigns[pcData.activeCampaignId];
+        if (!camp) return;
+
+        const trainerRoster = Object.values(camp.trainers).find(
+            (t) =>
+                t.id === parentTrainer.id ||
+                t.savedTokenItem?.id === parentTrainer.id ||
+                t.mapTokenId === parentTrainer.id ||
+                t.name.trim().toLowerCase() === parentTrainer.name.trim().toLowerCase()
+        );
+        if (!trainerRoster) return;
+
+        if (isBeltFolderName(targetFolder.name)) {
+            if (!trainerRoster.party.includes(characterId)) {
+                useCharacterStore.getState().movePokemonToParty(characterId);
+            }
+        } else {
+            const boxes = trainerRoster.boxes && trainerRoster.boxes.length > 0 ? trainerRoster.boxes : camp.boxes;
+            const boxIndex = boxes.findIndex(
+                (b) => b.name.trim().toLowerCase() === targetFolder.name.trim().toLowerCase()
+            );
+            if (boxIndex !== -1 && !boxes[boxIndex].slots.includes(characterId)) {
+                useCharacterStore.getState().depositPokemonToBox(characterId, boxIndex);
+            }
+        }
+    } catch (e) {
+        console.warn('[pcSidebarSync] Failed to sync sidebar move to PC:', e);
+    }
+}

@@ -1,18 +1,19 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
-import {
-    storageAdapter,
-    markBackupComplete,
-    markDataChanged,
-    hasUnbackedData,
-    BACKUP_STATUS_EVENT
-} from '../../utils/sync/storageAdapter';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { storageAdapter, markDataChanged, hasUnbackedData, BACKUP_STATUS_EVENT } from '../../utils/sync/storageAdapter';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { setActiveTokenId } from '../../utils/sync/obr';
 import { fetchPokemonData } from '../../utils/api/api';
 import { imageManager } from '../../utils/graphics/imageManager';
-import { downloadJson } from '../../utils/common/fileSystemHelpers';
 import { useSidebarTouchDrag, type TouchDragOverInfo } from './useSidebarTouchDrag';
-import { getAllItemArt, mergeItemArt, setItemArt } from '../../utils/graphics/itemArtCatalog';
+import { setItemArt } from '../../utils/graphics/itemArtCatalog';
+import {
+    organizeTrainerSidebarFolders,
+    syncSidebarFolderRenameToPc,
+    syncSidebarCharacterRenameToPc,
+    syncSidebarMoveToPc,
+    isTrainerMetadata
+} from '../../utils/pc/pcSidebarSync';
+import { useSidebarBackup } from './useSidebarBackup';
 
 export type TreeItem = {
     id: string;
@@ -23,15 +24,12 @@ export type TreeItem = {
     activeTrans: string;
 };
 
-interface MasterBackupData {
-    type?: string;
-    folders?: Record<string, unknown>[];
-    characters?: Array<{ id: string; metadata: Record<string, unknown> }>;
-    itemArt?: Record<string, string>;
-}
-
 export function useSidebarEngine() {
     const activeTokenId = useCharacterStore((state) => state.tokenId);
+    const pcData = useCharacterStore((state) => state.pcData);
+    const openPcModal = useCharacterStore((state) => state.openPcModal);
+    const switchTrainer = useCharacterStore((state) => state.switchTrainer);
+
     const [items, setItems] = useState<TreeItem[]>([]);
     const [isCollapsed, setIsCollapsed] = useState(() => window.innerWidth < 768);
 
@@ -43,11 +41,37 @@ export function useSidebarEngine() {
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; item: TreeItem } | null>(null);
     const treeContainerRef = useRef<HTMLDivElement | null>(null);
 
-    const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
-    const [hasUnbackedChanges, setHasUnbackedChanges] = useState(false);
+    const {
+        isBackupModalOpen,
+        setIsBackupModalOpen,
+        hasUnbackedChanges,
+        setHasUnbackedChanges,
+        pendingRestoreData,
+        restoreInputRef,
+        handleExportMasterBackup,
+        confirmExportMasterBackup,
+        handleRestoreMasterBackup,
+        confirmRestoreMerge,
+        confirmRestoreOverwrite,
+        cancelRestore
+    } = useSidebarBackup();
 
-    const [pendingRestoreData, setPendingRestoreData] = useState<MasterBackupData | null>(null);
-    const restoreInputRef = useRef<HTMLInputElement>(null);
+    // Map of entityId -> active Belt slot number and Trainer name
+    const partyMemberMap = useMemo(() => {
+        const map: Record<string, { trainerName: string; slotNumber: number }> = {};
+        if (!pcData?.campaigns) return map;
+        for (const camp of Object.values(pcData.campaigns)) {
+            for (const tr of Object.values(camp.trainers)) {
+                if (!tr.party) continue;
+                tr.party.forEach((entityId, idx) => {
+                    if (entityId) {
+                        map[entityId] = { trainerName: tr.name, slotNumber: idx + 1 };
+                    }
+                });
+            }
+        }
+        return map;
+    }, [pcData]);
 
     const loadData = useCallback(async () => {
         try {
@@ -99,7 +123,7 @@ export function useSidebarEngine() {
         } catch (error) {
             console.error('[SidebarEngine] Failed to load data:', error);
         }
-    }, []);
+    }, [setHasUnbackedChanges]);
 
     const updateInitTags = useCallback(() => {
         const savedList = localStorage.getItem('pkr_standalone_init_list');
@@ -176,12 +200,15 @@ export function useSidebarEngine() {
         loadData();
         updateInitTags();
 
-        const handleDataChange = () => loadData();
+        const handleDataChange = () => {
+            loadData();
+            updateInitTags();
+        };
         window.addEventListener('pkr-local-data-changed', handleDataChange);
         window.addEventListener('pkr-standalone-init-update', updateInitTags);
 
         const handleActiveCharStorage = async (e: StorageEvent) => {
-            if (e.key === 'pkr_active_character_id' && e.newValue) {
+            if (e.key === 'pkr_active_char_id' && e.newValue) {
                 const chars = await storageAdapter.getLocalCharacters();
                 const match = chars.find((c) => c.id === e.newValue);
                 if (match) {
@@ -235,7 +262,7 @@ export function useSidebarEngine() {
             localStorage.setItem = originalSetItem;
             document.removeEventListener('click', closeContextMenu);
         };
-    }, [loadData, updateInitTags, handleSelectCharacter]);
+    }, [loadData, updateInitTags, handleSelectCharacter, setHasUnbackedChanges]);
 
     const handleCreate = async (type: 'folder' | 'character') => {
         const finalName = newName.trim();
@@ -247,7 +274,7 @@ export function useSidebarEngine() {
                 const newId = await storageAdapter.createLocalCharacter(finalName, null);
                 handleSelectCharacter(newId, { nickname: finalName, parentId: null });
             }
-            setNewName(''); // Clear the input box after creation
+            setNewName('');
         } catch (error) {
             console.error('[SidebarEngine] Creation failed:', error);
         }
@@ -286,6 +313,10 @@ export function useSidebarEngine() {
             localStorage.setItem('pkr_folders', JSON.stringify(updated));
             markDataChanged();
             window.dispatchEvent(new Event('pkr-local-data-changed'));
+
+            syncSidebarFolderRenameToPc(item.id, item.name, newSafeName, useCharacterStore.getState().pcData).catch(
+                console.warn
+            );
         } else {
             const charData = localStorage.getItem(`pkr_char_${item.id}`);
             if (charData) {
@@ -298,6 +329,10 @@ export function useSidebarEngine() {
                 if (activeTokenId === item.id) {
                     useCharacterStore.getState().setIdentity('nickname', newSafeName);
                 }
+
+                syncSidebarCharacterRenameToPc(item.id, newSafeName, useCharacterStore.getState().pcData).catch(
+                    console.warn
+                );
             }
         }
     };
@@ -355,6 +390,9 @@ export function useSidebarEngine() {
                         await storageAdapter.moveFolder(item.id, prevSibling.id);
                     } else {
                         await storageAdapter.moveItem(item.id, prevSibling.id);
+                        syncSidebarMoveToPc(item.id, prevSibling.id, useCharacterStore.getState().pcData).catch(
+                            console.warn
+                        );
                     }
                     setExpandedNodes((prev) => ({ ...prev, [prevSibling.id]: true }));
                     loadData();
@@ -413,6 +451,8 @@ export function useSidebarEngine() {
                 }
 
                 await storageAdapter.deleteLocalCharacter(item.id);
+                // Clean up from PC storage if it was stored in party or box
+                useCharacterStore.getState().deletePokemonFromPc(item.id);
             }
 
             if (activeTokenId === item.id) {
@@ -421,6 +461,64 @@ export function useSidebarEngine() {
                 useCharacterStore.getState().loadFromOwlbear({});
             }
         }
+    };
+
+    const handleOrganizeTrainerFolders = async (item: TreeItem) => {
+        setContextMenu(null);
+        if (item.type !== 'character' || !isTrainerMetadata(item.meta)) return;
+
+        const camp = pcData.campaigns[pcData.activeCampaignId];
+        if (!camp) return;
+
+        let matchedTrainer = Object.values(camp.trainers).find(
+            (t) =>
+                t.id === item.id ||
+                t.savedTokenItem?.id === item.id ||
+                t.mapTokenId === item.id ||
+                t.name.trim().toLowerCase() === item.name.trim().toLowerCase()
+        );
+
+        if (!matchedTrainer) {
+            matchedTrainer = {
+                id: item.id,
+                name: item.name,
+                party: [null, null, null, null, null, null],
+                boxes: [{ id: `box_1_${Date.now()}`, name: 'Box 1', slots: new Array(30).fill(null) }]
+            };
+            useCharacterStore.getState().addTrainer(item.name);
+        }
+
+        const res = await organizeTrainerSidebarFolders(matchedTrainer, camp.boxes);
+        if (res.success) {
+            setExpandedNodes((prev) => ({ ...prev, [item.id]: true }));
+            loadData();
+            alert(
+                `Organized folders for ${item.name}!\n` +
+                    (res.createdBelt ? '• Created Belt folder\n' : '') +
+                    (res.createdBoxes > 0 ? `• Created ${res.createdBoxes} Box folder(s)\n` : '') +
+                    `• Moved ${res.movedPokemonCount} Pokémon sheet(s) into their matching folders.`
+            );
+        } else {
+            alert(`Unable to organize folders for ${item.name}. Please ensure Pokémon are assigned in PC Storage.`);
+        }
+    };
+
+    const handleOpenPc = (item: TreeItem) => {
+        setContextMenu(null);
+        const camp = pcData.campaigns[pcData.activeCampaignId];
+        if (camp) {
+            const matchedTrainer = Object.values(camp.trainers).find(
+                (t) =>
+                    t.id === item.id ||
+                    t.savedTokenItem?.id === item.id ||
+                    t.mapTokenId === item.id ||
+                    t.name.trim().toLowerCase() === item.name.trim().toLowerCase()
+            );
+            if (matchedTrainer) {
+                switchTrainer(matchedTrainer.id);
+            }
+        }
+        openPcModal();
     };
 
     const toggleExpand = (e: React.MouseEvent, id: string) => {
@@ -476,7 +574,10 @@ export function useSidebarEngine() {
             }
 
             if (draggedType === 'folder') await storageAdapter.moveFolder(draggedId, newParentId);
-            else await storageAdapter.moveItem(draggedId, newParentId);
+            else {
+                await storageAdapter.moveItem(draggedId, newParentId);
+                syncSidebarMoveToPc(draggedId, newParentId, useCharacterStore.getState().pcData).catch(console.warn);
+            }
 
             const currentOrder = JSON.parse(localStorage.getItem('pkr_sidebar_order') || '[]') as string[];
             const filteredOrder = currentOrder.filter((id) => id !== draggedId);
@@ -544,109 +645,6 @@ export function useSidebarEngine() {
         return 'sidebar__item--drag-inside';
     };
 
-    const handleExportMasterBackup = () => {
-        setIsBackupModalOpen(true);
-    };
-
-    const confirmExportMasterBackup = async () => {
-        try {
-            const chars = await storageAdapter.getLocalCharacters();
-            const flds = await storageAdapter.getFolders();
-            const artCatalog = getAllItemArt();
-            const backup = {
-                type: 'pokerole-master-backup',
-                version: 1,
-                characters: chars,
-                folders: flds,
-                itemArt: Object.keys(artCatalog).length > 0 ? artCatalog : undefined
-            };
-
-            downloadJson(backup, `PokeRole_Master_Backup_${new Date().toISOString().split('T')[0]}.json`);
-            markBackupComplete();
-            setIsBackupModalOpen(false);
-        } catch (error) {
-            console.error('[SidebarEngine] Failed to create master backup', error);
-            alert('Failed to generate Master Backup.');
-        }
-    };
-
-    const handleRestoreMasterBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            try {
-                const data = JSON.parse(event.target?.result as string);
-                if (data.type === 'pokerole-master-backup') {
-                    setPendingRestoreData(data);
-                } else {
-                    alert('Invalid Master Backup file.');
-                }
-            } catch (err) {
-                console.error('[SidebarEngine] Failed to read backup file:', err);
-                alert('Failed to read backup file. It may be corrupted.');
-            }
-            if (restoreInputRef.current) restoreInputRef.current.value = '';
-        };
-        reader.readAsText(file);
-    };
-
-    const confirmRestoreMerge = () => {
-        if (!pendingRestoreData) return;
-        const data = pendingRestoreData;
-
-        const existingFoldersStr = localStorage.getItem('pkr_folders') || '[]';
-        const existingFolders = JSON.parse(existingFoldersStr) as Record<string, unknown>[];
-        const folderMap = new Map(existingFolders.map((f) => [String(f.id), f]));
-        (data.folders || []).forEach((f: Record<string, unknown>) => {
-            folderMap.set(String(f.id), f);
-        });
-        localStorage.setItem('pkr_folders', JSON.stringify(Array.from(folderMap.values())));
-
-        for (const char of data.characters || []) {
-            localStorage.setItem(`pkr_char_${char.id}`, JSON.stringify(char.metadata));
-        }
-
-        if (data.itemArt && typeof data.itemArt === 'object') {
-            mergeItemArt(data.itemArt, true);
-        }
-
-        markBackupComplete();
-        window.dispatchEvent(new Event('pkr-local-data-changed'));
-        setPendingRestoreData(null);
-        alert('Master Backup Merged Successfully!');
-    };
-
-    const confirmRestoreOverwrite = () => {
-        if (!pendingRestoreData) return;
-        if (
-            !window.confirm(
-                'FINAL WARNING: Overwriting will delete all current local files not in the backup. Are you completely sure?'
-            )
-        ) {
-            return;
-        }
-
-        const data = pendingRestoreData;
-        localStorage.setItem('pkr_folders', JSON.stringify(data.folders || []));
-        for (const char of data.characters || []) {
-            localStorage.setItem(`pkr_char_${char.id}`, JSON.stringify(char.metadata));
-        }
-
-        if (data.itemArt && typeof data.itemArt === 'object') {
-            mergeItemArt(data.itemArt, true);
-        }
-
-        markBackupComplete();
-        window.dispatchEvent(new Event('pkr-local-data-changed'));
-        setPendingRestoreData(null);
-        alert('Master Backup Restored (Overwritten) Successfully!');
-    };
-
-    const cancelRestore = () => {
-        setPendingRestoreData(null);
-    };
-
     const characterCount = items.filter((i) => i.type === 'character').length;
     const folderCount = items.filter((i) => i.type === 'folder').length;
 
@@ -662,6 +660,7 @@ export function useSidebarEngine() {
         expandedNodes,
         initTags,
         contextMenu,
+        partyMemberMap,
         isBackupModalOpen,
         setIsBackupModalOpen,
         hasUnbackedChanges,
@@ -675,6 +674,8 @@ export function useSidebarEngine() {
         confirmRestoreOverwrite,
         cancelRestore,
         handleSelectCharacter,
+        handleOrganizeTrainerFolders,
+        handleOpenPc,
         executeRename,
         executeDuplicate,
         executeMove,

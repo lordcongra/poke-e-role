@@ -56,6 +56,7 @@ export interface CampaignProfile {
     activeTrainerId: string;
     trainers: Record<string, TrainerRoster>;
     boxes: PcBox[];
+    teamParty?: (string | null)[]; // Active Team party for PMD / no-trainer campaigns
     lastSynced?: number;
 }
 
@@ -109,8 +110,10 @@ export interface PcSlice {
     setBoxTheme: (boxIndex: number, color: string, wallpaper?: string) => void;
     switchTrainer: (trainerId: string) => void;
     addTrainer: (name: string) => void;
+    deleteTrainer: (trainerId: string, options?: { deletePc?: boolean; deleteBelt?: boolean }) => boolean;
     switchCampaign: (campaignId: string) => void;
     addCampaign: (name: string) => void;
+    deleteCampaign: (campaignId: string) => boolean;
     updatePokemonSummary: (summary: PcPokemonSummary) => void;
     updateTrainerProfile: (trainerId: string, updates: Partial<TrainerRoster>) => void;
     deletePokemonFromPc: (entityId: string) => void;

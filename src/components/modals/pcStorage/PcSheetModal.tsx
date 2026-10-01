@@ -6,6 +6,7 @@ import { setActiveTokenId, setIsPcSheetActive } from '../../../utils/sync/obr';
 import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
 import { resolveCharacterThemeColors, applyDynamicThemeColors } from '../../../utils/common/colorUtils';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
+import { useResolvedImageUrl } from '../../../utils/graphics/useResolvedImageUrl';
 import { IdentityHeader } from '../../identity/IdentityHeader';
 import { DerivedBoard } from '../../board/DerivedBoard';
 import { CoreTable } from '../../tables/CoreTable';
@@ -38,6 +39,10 @@ export const PcSheetModal: React.FC<PcSheetModalProps> = ({
 }) => {
     const [loading, setLoading] = useState(true);
     const mode = useCharacterStore((state) => state.identity.mode);
+    const storeType1 = useCharacterStore((state) => state.identity.type1);
+    const storeType2 = useCharacterStore((state) => state.identity.type2);
+    const activePrimaryOverride = useCharacterStore((state) => state.identity.themePrimaryOverride);
+    const activeSecondaryOverride = useCharacterStore((state) => state.identity.themeSecondaryOverride);
     const roomCustomTypes = useCharacterStore((state) => state.roomCustomTypes);
 
     // Save previous window theme & character state to restore when modal closes
@@ -127,24 +132,52 @@ export const PcSheetModal: React.FC<PcSheetModalProps> = ({
             store.setIdentity('tokenImageUrl', currentSummary.tokenImageUrl);
         }
 
-        // Apply Pokémon theme
-        const colors = resolveCharacterThemeColors(
-            {
-                type1: currentSummary.type1 || store.identity.type1,
-                type2: currentSummary.type2 || store.identity.type2,
-                themePrimaryOverride: store.identity.themePrimaryOverride,
-                themeSecondaryOverride: store.identity.themeSecondaryOverride
-            },
-            roomCustomTypes
-        );
-        applyDynamicThemeColors(colors.primary, colors.secondary);
         setLoading(false);
 
         const timer = setTimeout(() => {
             isHydratingRef.current = false;
         }, 100);
         return () => clearTimeout(timer);
-    }, [currentSummary.entityId, roomCustomTypes]);
+    }, [currentSummary.entityId]);
+
+    // Reactive Theme Application (runs on character switch, hydration finish, or live theme changes)
+    useEffect(() => {
+        const isTrainer =
+            currentSummary.rank === 'Trainer' || currentSummary.fullMetadata?.mode === 'Trainer' || mode === 'Trainer';
+
+        const rawPrimary =
+            (currentSummary.fullMetadata?.['theme-primary-override'] as string) ||
+            (currentSummary.fullMetadata?.themePrimaryOverride as string) ||
+            activePrimaryOverride ||
+            '';
+
+        const rawSecondary =
+            (currentSummary.fullMetadata?.['theme-secondary-override'] as string) ||
+            (currentSummary.fullMetadata?.themeSecondaryOverride as string) ||
+            activeSecondaryOverride ||
+            '';
+
+        const themeIdentity = {
+            type1: isTrainer ? '' : currentSummary.type1 || storeType1 || '',
+            type2: isTrainer ? '' : currentSummary.type2 || storeType2 || '',
+            themePrimaryOverride: rawPrimary,
+            themeSecondaryOverride: rawSecondary
+        };
+
+        const colors = resolveCharacterThemeColors(themeIdentity, roomCustomTypes);
+        applyDynamicThemeColors(colors.primary, colors.secondary);
+    }, [
+        currentSummary.entityId,
+        currentSummary.type1,
+        currentSummary.type2,
+        currentSummary.fullMetadata,
+        activePrimaryOverride,
+        activeSecondaryOverride,
+        storeType1,
+        storeType2,
+        mode,
+        roomCustomTypes
+    ]);
 
     // Two-Way Sync: Listen to store changes (HP, Will, stats, inventory potions, etc.)
     useEffect(() => {
@@ -242,6 +275,7 @@ export const PcSheetModal: React.FC<PcSheetModalProps> = ({
     };
 
     const displayName = currentSummary.name || currentSummary.species;
+    const resolvedAvatar = useResolvedImageUrl(currentSummary.tokenImageUrl, getAbsolutePokeballUrl());
 
     return (
         <div className="pc-sheet-modal__overlay" onClick={handleClose}>
@@ -251,7 +285,7 @@ export const PcSheetModal: React.FC<PcSheetModalProps> = ({
                     <div className="pc-sheet-modal__header-left">
                         <div className="pc-sheet-modal__avatar">
                             <img
-                                src={currentSummary.tokenImageUrl || getAbsolutePokeballUrl()}
+                                src={resolvedAvatar}
                                 alt={displayName}
                                 onError={(e) => {
                                     e.currentTarget.src = getAbsolutePokeballUrl();

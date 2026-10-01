@@ -22,6 +22,7 @@ interface SidebarTreeNodeProps {
     onTouchStart?: (e: React.TouchEvent, item: TreeItem) => void;
     isClickBlocked?: () => boolean;
     liftedItemId?: string | null;
+    partyMemberMap?: Record<string, { trainerName: string; slotNumber: number }>;
 }
 
 export function SidebarTreeNode(props: SidebarTreeNodeProps) {
@@ -150,6 +151,37 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
                                         style={{ color: 'var(--primary)' }}
                                     >
                                         <Dna size={14} />
+                                    </span>
+                                )}
+
+                                {/* Active Belt Party Pokéball Badge */}
+                                {props.partyMemberMap?.[item.id] && (
+                                    <span
+                                        className="sidebar__party-badge"
+                                        title={`Active in ${props.partyMemberMap[item.id].trainerName}'s Belt (Slot #${props.partyMemberMap[item.id].slotNumber})`}
+                                        style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            marginLeft: 4,
+                                            flexShrink: 0
+                                        }}
+                                    >
+                                        <svg
+                                            width={13}
+                                            height={13}
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2.4"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            style={{ color: 'var(--semantic-danger, #ef4444)' }}
+                                        >
+                                            <circle cx="12" cy="12" r="10" />
+                                            <line x1="2" y1="12" x2="22" y2="12" />
+                                            <circle cx="12" cy="12" r="3" />
+                                            <circle cx="12" cy="12" r="1" fill="currentColor" />
+                                        </svg>
                                     </span>
                                 )}
                             </div>

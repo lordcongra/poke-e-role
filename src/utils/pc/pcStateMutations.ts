@@ -6,10 +6,13 @@ import type {
     CampaignProfile,
     PcBox
 } from '../../types/pcStorageTypes';
-import { createDefaultBox, createDefaultCampaign } from './pcStorageAdapter';
+import { createDefaultBox } from './pcStorageAdapter';
 
 export function getTrainerBoxes(trainer?: TrainerRoster, camp?: CampaignProfile): PcBox[] {
-    if (trainer?.boxes && trainer.boxes.length > 0) return trainer.boxes;
+    if (trainer) {
+        if (trainer.boxes && trainer.boxes.length > 0) return trainer.boxes;
+        return Array.from({ length: 8 }, (_, i) => createDefaultBox(i));
+    }
     if (camp?.boxes && camp.boxes.length > 0) return camp.boxes;
     return Array.from({ length: 8 }, (_, i) => createDefaultBox(i));
 }
@@ -37,7 +40,35 @@ export function applySetPartySlot(
     entityId: string | null
 ): PcStorageData {
     const camp = pcData.campaigns[pcData.activeCampaignId];
-    if (!camp || !camp.trainers[trainerId] || slotIndex < 0 || slotIndex >= 6) return pcData;
+    if (!camp || slotIndex < 0 || slotIndex >= 6) return pcData;
+
+    // PMD / No-Trainer Mode
+    if (trainerId === '__none__') {
+        const team = camp.teamParty || Array(6).fill(null);
+        let nextTeam = [...team];
+        let nextBoxes = camp.boxes;
+
+        if (entityId) {
+            nextTeam = nextTeam.map((s, i) => (i === slotIndex ? entityId : s === entityId ? null : s));
+            nextBoxes = stripEntityFromBoxes(camp.boxes, entityId) || camp.boxes;
+        } else {
+            nextTeam[slotIndex] = null;
+        }
+
+        return {
+            ...pcData,
+            campaigns: {
+                ...pcData.campaigns,
+                [pcData.activeCampaignId]: {
+                    ...camp,
+                    teamParty: nextTeam,
+                    boxes: nextBoxes
+                }
+            }
+        };
+    }
+
+    if (!camp.trainers[trainerId]) return pcData;
 
     const nextTrainers = { ...camp.trainers };
     const currentTrainer = nextTrainers[trainerId];
@@ -73,7 +104,7 @@ export function applySetPartySlot(
             [pcData.activeCampaignId]: {
                 ...camp,
                 trainers: nextTrainers,
-                boxes: nextBoxes
+                boxes: camp.boxes
             }
         }
     };
@@ -99,7 +130,8 @@ export function applySetBoxSlot(
         for (const [tId, tr] of Object.entries(nextTrainers)) {
             nextTrainers[tId] = stripEntityFromTrainer(tr, entityId);
         }
-        nextBoxes = (stripEntityFromBoxes(trainerBoxes, entityId) || trainerBoxes).map((b, bIdx) => {
+        const baseBoxes = activeTrainer ? trainerBoxes : camp.boxes;
+        nextBoxes = (stripEntityFromBoxes(baseBoxes, entityId) || baseBoxes).map((b, bIdx) => {
             if (bIdx === boxIndex) {
                 const slots = [...b.slots];
                 slots[slotIndex] = entityId;
@@ -127,7 +159,7 @@ export function applySetBoxSlot(
             [pcData.activeCampaignId]: {
                 ...camp,
                 trainers: nextTrainers,
-                boxes: nextBoxes
+                boxes: activeTrainer ? camp.boxes : nextBoxes
             }
         }
     };
@@ -143,17 +175,15 @@ export function applySwapPcSlots(
     if (!camp) return pcData;
 
     const activeTrainer = camp.trainers[camp.activeTrainerId];
-    if (!activeTrainer) return pcData;
-
+    const party = activeTrainer ? activeTrainer.party : camp.teamParty || Array(6).fill(null);
     const trainerBoxes = getTrainerBoxes(activeTrainer, camp);
     const fromBoxIdx = from.boxIndex ?? defaultBoxIndex;
     const toBoxIdx = to.boxIndex ?? defaultBoxIndex;
 
-    const fromEntity =
-        from.type === 'party' ? activeTrainer.party[from.index] : trainerBoxes[fromBoxIdx]?.slots[from.index];
-    const toEntity = to.type === 'party' ? activeTrainer.party[to.index] : trainerBoxes[toBoxIdx]?.slots[to.index];
+    const fromEntity = from.type === 'party' ? party[from.index] : trainerBoxes[fromBoxIdx]?.slots[from.index];
+    const toEntity = to.type === 'party' ? party[to.index] : trainerBoxes[toBoxIdx]?.slots[to.index];
 
-    const nextParty = [...activeTrainer.party];
+    const nextParty = [...party];
     const nextBoxes = trainerBoxes.map((b) => ({ ...b, slots: [...b.slots] }));
 
     if (to.type === 'party') {
@@ -168,21 +198,24 @@ export function applySwapPcSlots(
         nextBoxes[fromBoxIdx].slots[from.index] = toEntity;
     }
 
+    const nextTrainers = { ...camp.trainers };
+    if (activeTrainer && nextTrainers[camp.activeTrainerId]) {
+        nextTrainers[camp.activeTrainerId] = {
+            ...activeTrainer,
+            party: nextParty,
+            boxes: nextBoxes
+        };
+    }
+
     return {
         ...pcData,
         campaigns: {
             ...pcData.campaigns,
             [pcData.activeCampaignId]: {
                 ...camp,
-                trainers: {
-                    ...camp.trainers,
-                    [camp.activeTrainerId]: {
-                        ...activeTrainer,
-                        party: nextParty,
-                        boxes: nextBoxes
-                    }
-                },
-                boxes: nextBoxes
+                trainers: nextTrainers,
+                teamParty: activeTrainer ? camp.teamParty : nextParty,
+                boxes: activeTrainer ? camp.boxes : nextBoxes
             }
         }
     };
@@ -195,73 +228,24 @@ export function applyMovePokemonToParty(
     const camp = pcData.campaigns[pcData.activeCampaignId];
     if (!camp) return { nextData: pcData, success: false };
     const trainer = camp.trainers[camp.activeTrainerId];
-    if (!trainer) return { nextData: pcData, success: false };
+    const party = trainer ? trainer.party : camp.teamParty || Array(6).fill(null);
 
-    // Prevent duplicate: if already on belt, do nothing
-    if (trainer.party.includes(entityId)) return { nextData: pcData, success: false };
+    // Prevent duplicate: if already in party, do nothing
+    if (party.includes(entityId)) return { nextData: pcData, success: false };
 
-    const emptyIndex = trainer.party.findIndex((slot) => slot === null);
+    const emptyIndex = party.findIndex((slot) => slot === null);
     if (emptyIndex === -1) return { nextData: pcData, success: false };
 
-    const trainerBoxes = getTrainerBoxes(trainer, camp);
-    const nextBoxes = trainerBoxes.map((b) => ({
+    const boxes = getTrainerBoxes(trainer, camp);
+    const nextBoxes = boxes.map((b) => ({
         ...b,
         slots: b.slots.map((s) => (s === entityId ? null : s))
     }));
 
-    const nextParty = [...trainer.party];
+    const nextParty = [...party];
     nextParty[emptyIndex] = entityId;
 
-    return {
-        nextData: {
-            ...pcData,
-            campaigns: {
-                ...pcData.campaigns,
-                [pcData.activeCampaignId]: {
-                    ...camp,
-                    trainers: {
-                        ...camp.trainers,
-                        [camp.activeTrainerId]: {
-                            ...trainer,
-                            party: nextParty,
-                            boxes: nextBoxes
-                        }
-                    },
-                    boxes: nextBoxes
-                }
-            }
-        },
-        success: true
-    };
-}
-
-export function applyDepositPokemonToBox(
-    pcData: PcStorageData,
-    entityId: string,
-    targetIdx: number
-): { nextData: PcStorageData; success: boolean } {
-    const camp = pcData.campaigns[pcData.activeCampaignId];
-    if (!camp) return { nextData: pcData, success: false };
-
-    const trainer = camp.trainers[camp.activeTrainerId];
-    const trainerBoxes = getTrainerBoxes(trainer, camp);
-    if (targetIdx < 0 || targetIdx >= trainerBoxes.length) return { nextData: pcData, success: false };
-
     const nextTrainers = { ...camp.trainers };
-    let nextParty = trainer ? [...trainer.party] : [];
-    if (trainer) {
-        nextParty = trainer.party.map((s) => (s === entityId ? null : s));
-    }
-
-    const nextBoxes = trainerBoxes.map((b) => ({
-        ...b,
-        slots: b.slots.map((s) => (s === entityId ? null : s))
-    }));
-
-    const emptySlot = nextBoxes[targetIdx].slots.findIndex((s) => s === null);
-    if (emptySlot === -1) return { nextData: pcData, success: false };
-    nextBoxes[targetIdx].slots[emptySlot] = entityId;
-
     if (trainer && nextTrainers[camp.activeTrainerId]) {
         nextTrainers[camp.activeTrainerId] = {
             ...trainer,
@@ -278,7 +262,57 @@ export function applyDepositPokemonToBox(
                 [pcData.activeCampaignId]: {
                     ...camp,
                     trainers: nextTrainers,
-                    boxes: nextBoxes
+                    teamParty: trainer ? camp.teamParty : nextParty,
+                    boxes: trainer ? camp.boxes : nextBoxes
+                }
+            }
+        },
+        success: true
+    };
+}
+
+export function applyDepositPokemonToBox(
+    pcData: PcStorageData,
+    entityId: string,
+    targetIdx: number
+): { nextData: PcStorageData; success: boolean } {
+    const camp = pcData.campaigns[pcData.activeCampaignId];
+    if (!camp) return { nextData: pcData, success: false };
+
+    const trainer = camp.trainers[camp.activeTrainerId];
+    const party = trainer ? trainer.party : camp.teamParty || Array(6).fill(null);
+    const trainerBoxes = getTrainerBoxes(trainer, camp);
+    if (targetIdx < 0 || targetIdx >= trainerBoxes.length) return { nextData: pcData, success: false };
+
+    const nextParty = party.map((s) => (s === entityId ? null : s));
+    const nextBoxes = trainerBoxes.map((b) => ({
+        ...b,
+        slots: b.slots.map((s) => (s === entityId ? null : s))
+    }));
+
+    const emptySlot = nextBoxes[targetIdx].slots.findIndex((s) => s === null);
+    if (emptySlot === -1) return { nextData: pcData, success: false };
+    nextBoxes[targetIdx].slots[emptySlot] = entityId;
+
+    const nextTrainers = { ...camp.trainers };
+    if (trainer && nextTrainers[camp.activeTrainerId]) {
+        nextTrainers[camp.activeTrainerId] = {
+            ...trainer,
+            party: nextParty,
+            boxes: nextBoxes
+        };
+    }
+
+    return {
+        nextData: {
+            ...pcData,
+            campaigns: {
+                ...pcData.campaigns,
+                [pcData.activeCampaignId]: {
+                    ...camp,
+                    trainers: nextTrainers,
+                    teamParty: trainer ? camp.teamParty : nextParty,
+                    boxes: trainer ? camp.boxes : nextBoxes
                 }
             }
         },
@@ -306,7 +340,7 @@ function updateCampaignBoxes(
             [pcData.activeCampaignId]: {
                 ...camp,
                 trainers: nextTrainers,
-                boxes: nextBoxes
+                boxes: activeTrainer ? camp.boxes : nextBoxes
             }
         }
     };
@@ -371,51 +405,7 @@ export function applySetBoxTheme(
     return updateCampaignBoxes(pcData, camp, activeTrainer, nextBoxes);
 }
 
-export function applyAddTrainer(pcData: PcStorageData, name: string): { nextData: PcStorageData; newId: string } {
-    const camp = pcData.campaigns[pcData.activeCampaignId];
-    const newId = `trainer-${crypto.randomUUID().slice(0, 8)}`;
-    if (!camp) return { nextData: pcData, newId };
-
-    return {
-        nextData: {
-            ...pcData,
-            campaigns: {
-                ...pcData.campaigns,
-                [pcData.activeCampaignId]: {
-                    ...camp,
-                    activeTrainerId: newId,
-                    trainers: {
-                        ...camp.trainers,
-                        [newId]: {
-                            id: newId,
-                            name,
-                            party: Array(6).fill(null),
-                            boxes: Array.from({ length: 8 }, (_, i) => createDefaultBox(i))
-                        }
-                    }
-                }
-            }
-        },
-        newId
-    };
-}
-
-export function applyAddCampaign(pcData: PcStorageData, name: string): { nextData: PcStorageData; newId: string } {
-    const newCampId = `camp-${crypto.randomUUID().slice(0, 8)}`;
-    const newCamp = createDefaultCampaign(newCampId, name);
-
-    return {
-        nextData: {
-            ...pcData,
-            activeCampaignId: newCampId,
-            campaigns: {
-                ...pcData.campaigns,
-                [newCampId]: newCamp
-            }
-        },
-        newId: newCampId
-    };
-}
+export { applyAddTrainer, applyAddCampaign } from './pcCampaignTrainerOps';
 
 export function applyUpdateSummary(pcData: PcStorageData, summary: PcPokemonSummary): PcStorageData {
     return {

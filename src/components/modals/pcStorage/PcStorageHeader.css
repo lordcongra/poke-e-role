@@ -22,8 +22,9 @@
 .pc-header__selector-group {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     flex-wrap: wrap;
+    min-width: 0;
 }
 
 .pc-header__dropdown-item {
@@ -48,6 +49,10 @@
     font-weight: 500;
     cursor: pointer;
     outline: none;
+    max-width: 140px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 .pc-header__select option {
@@ -74,10 +79,17 @@
     color: var(--text-main, #f8fafc);
 }
 
+.pc-header__mini-btn--danger:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--semantic-danger, #ef4444);
+}
+
 .pc-header__actions {
     display: flex;
     align-items: center;
     gap: 8px;
+    margin-left: auto;
+    flex-shrink: 0;
 }
 
 .pc-header__cloud-btn {
@@ -86,6 +98,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
 }
 
 .pc-header__close-btn {

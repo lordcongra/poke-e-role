@@ -301,6 +301,17 @@ export const storageAdapter = {
         }
     },
 
+    async renameFolder(id: string, newName: string): Promise<void> {
+        const folders = await this.getFolders();
+        const target = folders.find((f) => f.id === id);
+        if (target) {
+            target.name = newName.trim();
+            localStorage.setItem(FOLDER_STORAGE_KEY, JSON.stringify(folders));
+            markDataChanged();
+            notifyChange();
+        }
+    },
+
     async deleteFolder(id: string): Promise<void> {
         const folders = await this.getFolders();
         const filtered = folders.filter((f) => f.id !== id);

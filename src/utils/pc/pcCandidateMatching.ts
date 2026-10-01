@@ -1,6 +1,10 @@
 import type { Item } from '@owlbear-rodeo/sdk';
 import type { PcPokemonSummary } from '../../types/pcStorageTypes';
 import { METADATA_ID } from '../sync/obr';
+import { storageAdapter } from '../sync/storageAdapter';
+import { getAbsolutePokeballUrl } from '../generators/trainerTokenSpawner';
+import { imageManager } from '../graphics/imageManager';
+import { extractTokenImage } from '../combat/initiativeHelpers';
 
 /**
  * Resolves whether a given active character identity/metadata already corresponds
@@ -134,4 +138,101 @@ export function resolveSceneCandidateMatch(
         isInParty,
         claimedBy
     };
+}
+
+/**
+ * Scans local characters from standalone localStorage and converts them to candidate items.
+ */
+export async function scanStandaloneCandidates(
+    pokemonSummaries: Record<string, PcPokemonSummary>,
+    partySlots: (string | null)[]
+): Promise<
+    Array<{
+        id: string;
+        name: string;
+        species: string;
+        imageUrl: string;
+        hp: number;
+        maxHp: number;
+        will: number;
+        maxWill: number;
+        type1: string;
+        type2?: string;
+        rank: string;
+        item: Item;
+        metadata: Record<string, unknown>;
+        isInParty?: boolean;
+        matchedEntityId?: string;
+    }>
+> {
+    try {
+        const localChars = await storageAdapter.getLocalCharacters();
+        const partyEntityIds = new Set(partySlots.filter(Boolean) as string[]);
+        const found = [];
+
+        for (const char of localChars) {
+            const meta = (char.metadata || {}) as Record<string, unknown>;
+            const mode = (meta.mode as string) || '';
+            if (mode === 'Trainer' || mode === 'Trainer (Special)') continue;
+
+            const species =
+                (meta.species as string) ||
+                (meta.name as string) ||
+                (meta.nickname as string) ||
+                char.name ||
+                'Pokémon';
+            const rawImage = extractTokenImage(meta);
+            let imgUrl = rawImage || getAbsolutePokeballUrl();
+            if (rawImage && rawImage.startsWith('local-img:')) {
+                try {
+                    const resolved = await imageManager.getImageUrl(rawImage);
+                    if (resolved) imgUrl = resolved;
+                } catch (e) {
+                    console.warn('[pcCandidateMatching] Failed to resolve local image:', e);
+                }
+            }
+            const hpCurr = Number(meta['hp-curr']) || (typeof meta.hp === 'number' ? meta.hp : 10);
+            const hpMax = Number(meta['hp-max-display']) || (typeof meta.hpMax === 'number' ? meta.hpMax : 10);
+            const willCurr = Number(meta['will-curr']) || (typeof meta.will === 'number' ? meta.will : 5);
+            const willMax = Number(meta['will-max-display']) || (typeof meta.willMax === 'number' ? meta.willMax : 5);
+
+            let matchedEntityId: string | undefined;
+            for (const [eId, sum] of Object.entries(pokemonSummaries)) {
+                if (eId === char.id || sum.entityId === char.id || (sum.name && sum.name === char.name)) {
+                    matchedEntityId = eId;
+                    break;
+                }
+            }
+
+            const isInParty = Boolean(
+                partyEntityIds.has(char.id) || (matchedEntityId && partyEntityIds.has(matchedEntityId))
+            );
+
+            found.push({
+                id: char.id,
+                name: (meta.nickname as string) || (meta.name as string) || char.name || species,
+                species,
+                imageUrl: imgUrl,
+                hp: hpCurr,
+                maxHp: hpMax,
+                will: willCurr,
+                maxWill: willMax,
+                type1: (meta.type1 as string) || 'Normal',
+                type2: meta.type2 as string | undefined,
+                rank: (meta.rank as string) || 'Starter',
+                item: { id: char.id, name: char.name, layer: 'CHARACTER', metadata: meta } as unknown as Item,
+                metadata: {
+                    ...meta,
+                    'token-image-url': rawImage || imgUrl,
+                    tokenImageUrl: rawImage || imgUrl
+                },
+                isInParty,
+                matchedEntityId
+            });
+        }
+        return found;
+    } catch (e) {
+        console.error('[pcCandidateMatching] Failed to scan standalone candidates:', e);
+        return [];
+    }
 }

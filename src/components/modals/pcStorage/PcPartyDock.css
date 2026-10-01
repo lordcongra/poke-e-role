@@ -152,8 +152,20 @@
     transition: opacity 0.15s;
 }
 
-.pc-party-dock__empty-slot:hover .pc-party-dock__empty-icon {
-    opacity: 0.8;
+.pc-party-dock__pmd-empty-icon {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.4;
+    color: var(--primary, #3b82f6);
+    transition: opacity 0.15s;
+}
+
+.pc-party-dock__empty-slot:hover .pc-party-dock__empty-icon,
+.pc-party-dock__empty-slot:hover .pc-party-dock__pmd-empty-icon {
+    opacity: 0.9;
     filter: none;
 }
 

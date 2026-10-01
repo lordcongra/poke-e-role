@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSidebarEngine } from './useSidebarEngine';
 import { SidebarContextMenu } from './SidebarContextMenu';
 import { SidebarTreeNode } from './SidebarTreeNode';
@@ -23,6 +23,7 @@ export function Sidebar() {
         expandedNodes,
         initTags,
         contextMenu,
+        partyMemberMap,
         isBackupModalOpen,
         setIsBackupModalOpen,
         hasUnbackedChanges,
@@ -36,6 +37,8 @@ export function Sidebar() {
         confirmRestoreOverwrite,
         cancelRestore,
         handleSelectCharacter,
+        handleOrganizeTrainerFolders,
+        handleOpenPc,
         executeRename,
         executeDuplicate,
         executeMove,
@@ -59,11 +62,9 @@ export function Sidebar() {
         closeContextMenu
     } = useSidebarEngine();
 
-    const [prevHasUnbacked, setPrevHasUnbacked] = useState(hasUnbackedChanges);
-    if (prevHasUnbacked !== hasUnbackedChanges) {
-        setPrevHasUnbacked(hasUnbackedChanges);
+    useEffect(() => {
         setIsPromptDismissed(false);
-    }
+    }, [hasUnbackedChanges]);
 
     if (isCollapsed) {
         return (
@@ -200,6 +201,7 @@ export function Sidebar() {
                     activeTokenId={activeTokenId}
                     expandedNodes={expandedNodes}
                     initTags={initTags}
+                    partyMemberMap={partyMemberMap}
                     getDragClass={getDragClass}
                     onDragStart={handleDragStart}
                     onDragOver={handleDragOver}
@@ -263,6 +265,8 @@ export function Sidebar() {
                         onMove={executeMove}
                         onDuplicate={executeDuplicate}
                         onDelete={executeDelete}
+                        onOrganizeFolders={handleOrganizeTrainerFolders}
+                        onOpenPc={handleOpenPc}
                     />
                 </>
             )}

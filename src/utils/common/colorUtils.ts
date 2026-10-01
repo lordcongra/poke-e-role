@@ -147,6 +147,20 @@ export const resolveCharacterThemeColors = (
                 finalSecondary = '';
             }
         }
+
+        // Fallback to unselected / default overview theme (from default screen theme picker)
+        if (!finalPrimary) {
+            try {
+                const unselectedP = localStorage.getItem('pkr_unselected_theme_primary');
+                const unselectedS = localStorage.getItem('pkr_unselected_theme_secondary');
+                if (unselectedP && unselectedP.trim()) {
+                    finalPrimary = unselectedP.trim();
+                    finalSecondary = unselectedS ? unselectedS.trim() : '';
+                }
+            } catch {
+                // ignore
+            }
+        }
     }
 
     if (!finalPrimary) {

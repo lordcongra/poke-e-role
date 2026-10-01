@@ -1,5 +1,16 @@
 import type { TreeItem } from './useSidebarEngine';
-import { Pencil, ArrowUp, ArrowDown, FolderInput, FolderOutput, Copy, Trash2 } from 'lucide-react';
+import { isTrainerMetadata } from '../../utils/pc/pcSidebarSync';
+import {
+    Pencil,
+    ArrowUp,
+    ArrowDown,
+    FolderInput,
+    FolderOutput,
+    Copy,
+    Trash2,
+    FolderPlus,
+    LayoutGrid
+} from 'lucide-react';
 
 interface SidebarContextMenuProps {
     contextMenu: { x: number; y: number; item: TreeItem };
@@ -7,9 +18,21 @@ interface SidebarContextMenuProps {
     onMove: (item: TreeItem, direction: 'up' | 'down' | 'in' | 'out') => void;
     onDuplicate: (item: TreeItem) => void;
     onDelete: (item: TreeItem) => void;
+    onOrganizeFolders?: (item: TreeItem) => void;
+    onOpenPc?: (item: TreeItem) => void;
 }
 
-export function SidebarContextMenu({ contextMenu, onRename, onMove, onDuplicate, onDelete }: SidebarContextMenuProps) {
+export function SidebarContextMenu({
+    contextMenu,
+    onRename,
+    onMove,
+    onDuplicate,
+    onDelete,
+    onOrganizeFolders,
+    onOpenPc
+}: SidebarContextMenuProps) {
+    const isTrainer = contextMenu.item.type === 'character' && isTrainerMetadata(contextMenu.item.meta);
+
     return (
         <div
             className="sidebar__context-menu"
@@ -19,6 +42,26 @@ export function SidebarContextMenu({ contextMenu, onRename, onMove, onDuplicate,
             <button className="sidebar__context-item text-label" onClick={() => onRename(contextMenu.item)}>
                 <Pencil size={14} /> Rename
             </button>
+
+            {isTrainer && onOrganizeFolders && (
+                <button
+                    className="sidebar__context-item text-label"
+                    onClick={() => onOrganizeFolders(contextMenu.item)}
+                    title="Automatically create Belt & Box folders for this Trainer's team"
+                >
+                    <FolderPlus size={14} /> Organize Belt & Box Folders
+                </button>
+            )}
+
+            {isTrainer && onOpenPc && (
+                <button
+                    className="sidebar__context-item text-label"
+                    onClick={() => onOpenPc(contextMenu.item)}
+                    title="Open Pokémon PC Storage for this Trainer"
+                >
+                    <LayoutGrid size={14} /> Open in PC Storage
+                </button>
+            )}
 
             {/* --- Quick Move Directional Pad --- */}
             <button className="sidebar__context-item text-label" onClick={() => onMove(contextMenu.item, 'up')}>

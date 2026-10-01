@@ -4,10 +4,12 @@
 
 .pc-box-grid-container {
     flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     padding: 12px;
     overflow-y: auto;
+    overflow-x: hidden;
     background: var(--bg, #121212);
     border-left: 2px solid var(--border, rgba(255, 255, 255, 0.1));
     transition:
@@ -88,13 +90,15 @@
 
 .pc-box-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     grid-auto-rows: minmax(76px, auto);
     gap: 8px;
+    min-width: 0;
 }
 
 .pc-box-grid__slot-wrapper {
     min-height: 76px;
+    min-width: 0;
 }
 
 .pc-box-grid__empty-slot {

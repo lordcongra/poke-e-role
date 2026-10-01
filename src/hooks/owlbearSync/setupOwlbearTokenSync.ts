@@ -10,6 +10,7 @@ import { setActiveTokenId, hasPendingUpdates } from '../../utils/sync/obr';
 import { harvestTokensItemArt } from '../../utils/graphics/itemArtCatalog';
 import { METADATA_ID, getEffectiveScaleAndOffsets, type TransformData } from './owlbearSyncConstants';
 import { recentlySpawnedTokenIds } from '../../utils/pc/pcModalOps';
+import { isBackupScene, syncBackupSceneTokens } from '../../utils/pc/pcBackupSceneSync';
 
 export interface OwlbearTokenSyncResult {
     renderAllTokens: (forceRebuild?: boolean | 'badges-only') => Promise<void>;
@@ -102,6 +103,11 @@ export async function setupOwlbearTokenSync(params: {
 
     const cleanGhostTokens = async (sceneItems: Item[]) => {
         try {
+            if (await isBackupScene()) {
+                await syncBackupSceneTokens(sceneItems);
+                return;
+            }
+
             const freshStore = useCharacterStore.getState();
             const ghostIdsToDelete: string[] = [];
             for (const item of sceneItems) {

@@ -23,6 +23,13 @@ import {
     applyDeleteSummary,
     applyReviewDiffsToSummary
 } from '../../utils/pc/pcStateMutations';
+import { applyDeleteCampaign, applyDeleteTrainer } from '../../utils/pc/pcCampaignTrainerOps';
+import {
+    relocateSidebarPokemon,
+    syncSwappedSlotsToSidebar,
+    syncBoxRenameToSidebar
+} from '../../utils/pc/pcSidebarSync';
+import { relocatePmdSidebarPokemon } from '../../utils/pc/pcPmdSidebarSync';
 import OBR from '@owlbear-rodeo/sdk';
 
 export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set, get) => ({
@@ -120,6 +127,14 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             const nextData = applySwapPcSlots(pcData, from, to, activeBoxIndex);
             set({ pcData: nextData, selectedPcSlot: null });
             savePcStorage(nextData);
+
+            if (!OBR.isAvailable) {
+                const camp = nextData.campaigns[nextData.activeCampaignId];
+                const tr = camp?.trainers[camp?.activeTrainerId];
+                if (tr) {
+                    syncSwappedSlotsToSidebar(tr, from, to, nextData, activeBoxIndex).catch(console.warn);
+                }
+            }
         } catch (e) {
             console.error('[PcSlice] Failed to swap PC slots:', e);
         }
@@ -136,6 +151,16 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             }
             set({ pcData: nextData });
             savePcStorage(nextData);
+
+            if (!OBR.isAvailable) {
+                const camp = nextData.campaigns[nextData.activeCampaignId];
+                const tr = camp?.trainers[camp?.activeTrainerId];
+                if (tr) {
+                    relocateSidebarPokemon(tr, entityId, { type: 'party' }).catch(console.warn);
+                } else {
+                    relocatePmdSidebarPokemon(entityId, { type: 'party' }).catch(console.warn);
+                }
+            }
             return true;
         } catch (e) {
             console.error('[PcSlice] Failed to move to party:', e);
@@ -158,6 +183,25 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             }
             set({ pcData: nextData });
             savePcStorage(nextData);
+
+            if (!OBR.isAvailable) {
+                const camp = nextData.campaigns[nextData.activeCampaignId];
+                const tr = camp?.trainers[camp?.activeTrainerId];
+                const boxName = (tr?.boxes?.[targetIdx] || camp?.boxes[targetIdx])?.name || `Box ${targetIdx + 1}`;
+                if (tr) {
+                    relocateSidebarPokemon(tr, entityId, {
+                        type: 'box',
+                        boxIndex: targetIdx,
+                        boxName
+                    }).catch(console.warn);
+                } else {
+                    relocatePmdSidebarPokemon(entityId, {
+                        type: 'box',
+                        boxIndex: targetIdx,
+                        boxName
+                    }).catch(console.warn);
+                }
+            }
             return true;
         } catch (e) {
             console.error('[PcSlice] Failed to deposit to box:', e);
@@ -196,9 +240,18 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
 
     renameBox: (boxIndex: number, name: string) => {
         try {
-            const nextData = applyRenameBox(get().pcData, boxIndex, name);
+            const { pcData } = get();
+            const camp = pcData.campaigns[pcData.activeCampaignId];
+            const tr = camp?.trainers[camp?.activeTrainerId];
+            const oldName = (tr?.boxes?.[boxIndex] || camp?.boxes[boxIndex])?.name;
+
+            const nextData = applyRenameBox(pcData, boxIndex, name);
             set({ pcData: nextData });
             savePcStorage(nextData);
+
+            if (!OBR.isAvailable && tr && oldName) {
+                syncBoxRenameToSidebar(tr, oldName, name).catch(console.warn);
+            }
         } catch (e) {
             console.error('[PcSlice] Failed to rename box:', e);
         }
@@ -218,7 +271,8 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
         try {
             const { pcData } = get();
             const camp = pcData.campaigns[pcData.activeCampaignId];
-            if (!camp || !camp.trainers[trainerId]) return;
+            if (!camp) return;
+            if (trainerId !== '__none__' && !camp.trainers[trainerId]) return;
 
             const nextData = {
                 ...pcData,
@@ -230,7 +284,7 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
                     }
                 }
             };
-            set({ pcData: nextData });
+            set({ pcData: nextData, activeBoxIndex: 0 });
             savePcStorage(nextData);
         } catch (e) {
             console.error('[PcSlice] Failed to switch trainer:', e);
@@ -244,6 +298,25 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             savePcStorage(nextData);
         } catch (e) {
             console.error('[PcSlice] Failed to add trainer:', e);
+        }
+    },
+
+    deleteTrainer: (trainerId: string, options?: { deletePc?: boolean; deleteBelt?: boolean }) => {
+        try {
+            const { pcData } = get();
+            const res = applyDeleteTrainer(pcData, pcData.activeCampaignId, trainerId, options);
+            if (!res.success) {
+                if (OBR.isAvailable && res.error) {
+                    OBR.notification.show(res.error, 'WARNING');
+                }
+                return false;
+            }
+            set({ pcData: res.nextData });
+            savePcStorage(res.nextData);
+            return true;
+        } catch (e) {
+            console.error('[PcSlice] Failed to delete trainer:', e);
+            return false;
         }
     },
 
@@ -273,11 +346,47 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
         }
     },
 
+    deleteCampaign: (campaignId: string) => {
+        try {
+            const { pcData } = get();
+            const res = applyDeleteCampaign(pcData, campaignId);
+            if (!res.success) {
+                if (OBR.isAvailable && res.error) {
+                    OBR.notification.show(res.error, 'WARNING');
+                }
+                return false;
+            }
+            set({ pcData: res.nextData, activeBoxIndex: 0 });
+            savePcStorage(res.nextData);
+            return true;
+        } catch (e) {
+            console.error('[PcSlice] Failed to delete campaign:', e);
+            return false;
+        }
+    },
+
     updatePokemonSummary: (summary: PcPokemonSummary) => {
         try {
             const nextData = applyUpdateSummary(get().pcData, summary);
             set({ pcData: nextData });
             savePcStorage(nextData);
+
+            if (!OBR.isAvailable && summary.entityId) {
+                const localKey = `pkr_char_${summary.entityId}`;
+                const existing = localStorage.getItem(localKey);
+                if (existing) {
+                    try {
+                        const parsed = JSON.parse(existing);
+                        const merged = {
+                            ...parsed,
+                            ...(summary.fullMetadata || {}),
+                            nickname: summary.name || parsed.nickname
+                        };
+                        localStorage.setItem(localKey, JSON.stringify(merged));
+                        window.dispatchEvent(new Event('pkr-local-data-changed'));
+                    } catch {}
+                }
+            }
         } catch (e) {
             console.error('[PcSlice] Failed to update pokemon summary:', e);
         }

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import OBR from '@owlbear-rodeo/sdk';
 import {
     FileText,
     ArrowRightLeft,
@@ -101,7 +102,7 @@ export const PcSlotContextMenu: React.FC<PcSlotContextMenuProps> = ({
                     {isPartySlot ? 'Deposit to Box' : 'Move to Party'}
                 </button>
 
-                {onToggleMap && (
+                {onToggleMap && OBR.isAvailable && (
                     <button
                         type="button"
                         className="pc-context-menu__item"
@@ -153,7 +154,11 @@ export const PcSlotContextMenu: React.FC<PcSlotContextMenuProps> = ({
                         onUnlink();
                         onClose();
                     }}
-                    title="Unlink Pokémon from PC / Party. If stored away, it will be placed onto the map."
+                    title={
+                        OBR.isAvailable
+                            ? 'Unlink Pokémon from PC / Party. If stored away, it will be placed onto the map.'
+                            : 'Unlink Pokémon from PC / Party.'
+                    }
                 >
                     <Unlink size={15} /> Unlink from Party/PC
                 </button>

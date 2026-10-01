@@ -3,29 +3,13 @@ import OBR, { type Item } from '@owlbear-rodeo/sdk';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
 import { METADATA_ID } from '../../../utils/sync/obr';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
-import { resolveSceneCandidateMatch } from '../../../utils/pc/pcCandidateMatching';
+import { resolveSceneCandidateMatch, scanStandaloneCandidates } from '../../../utils/pc/pcCandidateMatching';
 import { useCharacterStore } from '../../../store/useCharacterStore';
-import { PlusCircle, MapPin, Wand2, X, FileText, Check, Archive, Lock } from 'lucide-react';
+import { PcDepositCandidateCard, type SceneCandidate } from './PcDepositCandidateCard';
+import { PcDepositStoredCard } from './PcDepositStoredCard';
+import { PcDepositActiveCard } from './PcDepositActiveCard';
+import { PlusCircle, MapPin, Wand2, X, FileText, Archive } from 'lucide-react';
 import './PcDepositDrawerModal.css';
-
-interface SceneTokenCandidate {
-    id: string;
-    name: string;
-    species: string;
-    imageUrl: string;
-    hp: number;
-    maxHp: number;
-    will: number;
-    maxWill: number;
-    type1: string;
-    type2?: string;
-    rank: string;
-    item: Item;
-    metadata: Record<string, unknown>;
-    claimedBy?: string;
-    isInParty?: boolean;
-    matchedEntityId?: string;
-}
 
 interface PcDepositDrawerModalProps {
     targetSlot?: { type: 'party' | 'box'; index: number };
@@ -56,11 +40,17 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
     const isGm = role === 'GM';
     const partyEntityIds = new Set(partySlots.filter(Boolean) as string[]);
 
-    const [sceneCandidates, setSceneCandidates] = useState<SceneTokenCandidate[]>([]);
+    const [sceneCandidates, setSceneCandidates] = useState<SceneCandidate[]>([]);
     const [isLoadingScene, setIsLoadingScene] = useState(false);
 
     useEffect(() => {
-        if (!OBR.isAvailable) return;
+        if (!OBR.isAvailable) {
+            setIsLoadingScene(true);
+            scanStandaloneCandidates(pokemonSummaries, partySlots)
+                .then((candidates) => setSceneCandidates(candidates as SceneCandidate[]))
+                .finally(() => setIsLoadingScene(false));
+            return;
+        }
 
         const scanScene = async () => {
             setIsLoadingScene(true);
@@ -76,7 +66,7 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                 }
 
                 const myPlayerId = await OBR.player.getId();
-                const found: SceneTokenCandidate[] = [];
+                const found: SceneCandidate[] = [];
 
                 for (const item of items) {
                     if (item.attachedTo) continue;
@@ -134,7 +124,7 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
         scanScene();
     }, [isGm, partySlots, pokemonSummaries]);
 
-    const handleSelectCandidate = async (cand: SceneTokenCandidate) => {
+    const handleSelectCandidate = async (cand: SceneCandidate) => {
         if (cand.claimedBy) return;
         if (targetSlot?.type === 'party' && cand.isInParty) return;
 
@@ -163,6 +153,13 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
             }
         }
 
+        const isObr = OBR.isAvailable;
+        const persistentImageUrl =
+            (cand.metadata['token-image-url'] as string) ||
+            (cand.metadata['tokenImageUrl'] as string) ||
+            cand.imageUrl ||
+            undefined;
+
         const summary: PcPokemonSummary = {
             entityId,
             name: cand.name,
@@ -174,18 +171,22 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
             maxHp: cand.maxHp,
             will: cand.will,
             maxWill: cand.maxWill,
-            tokenImageUrl: cand.imageUrl,
-            isOnMap: true,
-            mapTokenId: cand.id,
+            tokenImageUrl: persistentImageUrl,
+            isOnMap: isObr,
+            mapTokenId: isObr ? cand.id : undefined,
             savedTokenItem: cand.item,
             fullMetadata: {
                 ...cand.metadata,
-                'pokerole-pmd-extension/claimed-by': {
-                    playerId: myPlayerId,
-                    playerName: myPlayerName,
-                    entityId,
-                    trainerName: trainerName
-                }
+                ...(isObr && myPlayerId
+                    ? {
+                          'pokerole-pmd-extension/claimed-by': {
+                              playerId: myPlayerId,
+                              playerName: myPlayerName,
+                              entityId,
+                              trainerName: trainerName
+                          }
+                      }
+                    : {})
             },
             lastModified: Date.now()
         };
@@ -193,41 +194,34 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
         onClose();
     };
 
+    const isPmd = !trainerName;
+    const partyButtonText = isPmd ? 'Add to Team' : 'Add to Belt';
+
     const slotTitle = targetSlot
         ? targetSlot.type === 'party'
-            ? `Deposit to Party Slot ${targetSlot.index + 1}`
+            ? isPmd
+                ? `Deposit to Team Slot ${targetSlot.index + 1}`
+                : `Deposit to Party Slot ${targetSlot.index + 1}`
             : `Deposit to Box Slot ${targetSlot.index + 1}`
         : 'Deposit Pokémon to PC';
 
+    const modalThemeStyle = boxTheme
+        ? ({
+              '--box-theme': boxTheme,
+              '--primary': boxTheme,
+              '--panel-bg': `color-mix(in srgb, ${boxTheme} 12%, var(--base-panel-dark, #1e1e1e))`,
+              '--panel-alt': `color-mix(in srgb, ${boxTheme} 18%, var(--base-panel-alt-dark, #2a2a2a))`,
+              '--border': `color-mix(in srgb, ${boxTheme} 35%, var(--base-border-dark, #383838))`
+          } as React.CSSProperties)
+        : undefined;
+
+    const availableStored = trainerPokemonSummaries.filter((p) => !partyEntityIds.has(p.entityId));
+
     return (
-        <div
-            className="modal-backdrop pc-deposit-modal-backdrop"
-            style={
-                boxTheme
-                    ? ({
-                          '--box-theme': boxTheme,
-                          '--primary': boxTheme,
-                          '--panel-bg': `color-mix(in srgb, ${boxTheme} 12%, var(--base-panel-dark, #1e1e1e))`,
-                          '--panel-alt': `color-mix(in srgb, ${boxTheme} 18%, var(--base-panel-alt-dark, #2a2a2a))`,
-                          '--border': `color-mix(in srgb, ${boxTheme} 35%, var(--base-border-dark, #383838))`
-                      } as React.CSSProperties)
-                    : undefined
-            }
-            onClick={onClose}
-        >
+        <div className="modal-backdrop pc-deposit-modal-backdrop" style={modalThemeStyle} onClick={onClose}>
             <div
                 className="modal-container pc-deposit-modal"
-                style={
-                    boxTheme
-                        ? ({
-                              '--box-theme': boxTheme,
-                              '--primary': boxTheme,
-                              '--panel-bg': `color-mix(in srgb, ${boxTheme} 12%, var(--base-panel-dark, #1e1e1e))`,
-                              '--panel-alt': `color-mix(in srgb, ${boxTheme} 18%, var(--base-panel-alt-dark, #2a2a2a))`,
-                              '--border': `color-mix(in srgb, ${boxTheme} 35%, var(--base-border-dark, #383838))`
-                          } as React.CSSProperties)
-                        : undefined
-                }
+                style={modalThemeStyle}
                 onClick={(e) => e.stopPropagation()}
             >
                 <header className="modal-header pc-deposit-modal__header">
@@ -258,180 +252,85 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                             <h4 className="text-label pc-deposit-section__title">
                                 <FileText size={14} /> Currently Selected Character
                             </h4>
-                            <div className="pc-deposit-card pc-deposit-card--active">
-                                <img
-                                    src={currentActiveSummary.tokenImageUrl || getAbsolutePokeballUrl()}
-                                    alt={currentActiveSummary.name}
-                                    className="pc-deposit-card__avatar"
-                                />
-                                <div className="pc-deposit-card__info">
-                                    <span className="pc-deposit-card__name text-label">
-                                        {currentActiveSummary.name || currentActiveSummary.species}
-                                    </span>
-                                    <span className="text-subtext">
-                                        {currentActiveSummary.species} • HP {currentActiveSummary.hp}/
-                                        {currentActiveSummary.maxHp}
-                                    </span>
-                                </div>
-                                {targetSlot?.type === 'party' && partyEntityIds.has(currentActiveSummary.entityId) ? (
-                                    <button
-                                        type="button"
-                                        className="action-button action-button--dark pc-deposit-btn--disabled"
-                                        disabled
-                                        title="This Pokémon is already on your belt."
-                                    >
-                                        <Lock size={14} /> Already on Belt
-                                    </button>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        className="action-button action-button--theme"
-                                        onClick={() => {
-                                            onDepositSummary(currentActiveSummary);
-                                            onClose();
-                                        }}
-                                    >
-                                        <Check size={14} /> {targetSlot?.type === 'party' ? 'Add to Belt' : 'Deposit'}
-                                    </button>
-                                )}
-                            </div>
+                            <PcDepositActiveCard
+                                summary={currentActiveSummary}
+                                targetSlotType={targetSlot?.type}
+                                isAlreadyOnBelt={partyEntityIds.has(currentActiveSummary.entityId)}
+                                partyButtonText={partyButtonText}
+                                onSelect={() => {
+                                    onDepositSummary(currentActiveSummary);
+                                    onClose();
+                                }}
+                            />
                         </div>
                     )}
 
-                    {/* Option 2: Pokémon previously added/assigned to this Trainer or stored in PC */}
-                    {trainerPokemonSummaries.filter((p) => !partyEntityIds.has(p.entityId)).length > 0 && (
+                    {/* Option 2: Stored Pokémon for Trainer */}
+                    {availableStored.length > 0 && (
                         <div className="pc-deposit-section">
                             <h4 className="text-label pc-deposit-section__title">
-                                <Archive size={14} /> Stored Pokémon for {trainerName || 'Trainer'} (
-                                {trainerPokemonSummaries.filter((p) => !partyEntityIds.has(p.entityId)).length})
+                                <Archive size={14} />{' '}
+                                {trainerName ? `Stored Pokémon for ${trainerName}` : 'Stored Team Members (Assembly)'} (
+                                {availableStored.length})
                             </h4>
                             <div className="pc-deposit-grid">
-                                {trainerPokemonSummaries
-                                    .filter((p) => !partyEntityIds.has(p.entityId))
-                                    .map((p) => (
-                                        <div key={p.entityId} className="pc-deposit-card">
-                                            <img
-                                                src={p.tokenImageUrl || getAbsolutePokeballUrl()}
-                                                alt={p.name}
-                                                className="pc-deposit-card__avatar"
-                                                onError={(e) => {
-                                                    e.currentTarget.src = getAbsolutePokeballUrl();
-                                                }}
-                                            />
-                                            <div className="pc-deposit-card__info">
-                                                <span className="pc-deposit-card__name text-label" title={p.name}>
-                                                    {p.name || p.species}
-                                                </span>
-                                                <span className="text-subtext">
-                                                    {p.species} • {p.hp}/{p.maxHp} HP
-                                                </span>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                className="action-button action-button--theme"
-                                                onClick={() => {
-                                                    onDepositSummary(p);
-                                                    onClose();
-                                                }}
-                                            >
-                                                <Check size={14} />{' '}
-                                                {targetSlot?.type === 'party' ? 'Add to Belt' : 'Select'}
-                                            </button>
-                                        </div>
-                                    ))}
+                                {availableStored.map((p) => (
+                                    <PcDepositStoredCard
+                                        key={p.entityId}
+                                        pokemon={p}
+                                        targetSlotType={targetSlot?.type}
+                                        partyButtonText={partyButtonText}
+                                        onSelect={() => {
+                                            onDepositSummary(p);
+                                            onClose();
+                                        }}
+                                    />
+                                ))}
                             </div>
                         </div>
                     )}
 
-                    {/* Option 3: Tokens on the Active Map (GM scans entire map; Player scans only selected token) */}
-                    {OBR.isAvailable && (
-                        <div className="pc-deposit-section">
-                            <h4 className="text-label pc-deposit-section__title">
-                                <MapPin size={14} />{' '}
-                                {isGm ? `Pokémon Tokens on Map (${sceneCandidates.length})` : 'Selected Token on Map'}
-                            </h4>
+                    {/* Option 3: Tokens on Map / Saved Characters in Sidebar */}
+                    <div className="pc-deposit-section">
+                        <h4 className="text-label pc-deposit-section__title">
+                            <MapPin size={14} />{' '}
+                            {OBR.isAvailable
+                                ? isGm
+                                    ? `Pokémon Tokens on Map (${sceneCandidates.length})`
+                                    : 'Selected Token on Map'
+                                : `Saved Characters in Sidebar (${sceneCandidates.length})`}
+                        </h4>
 
-                            {isLoadingScene ? (
-                                <p className="text-subtext">Scanning battle map for tokens...</p>
-                            ) : sceneCandidates.length === 0 ? (
-                                <p className="text-subtext" style={{ fontStyle: 'italic' }}>
-                                    {isGm
+                        {isLoadingScene ? (
+                            <p className="text-subtext">
+                                {OBR.isAvailable
+                                    ? 'Scanning battle map for tokens...'
+                                    : 'Loading sidebar characters...'}
+                            </p>
+                        ) : sceneCandidates.length === 0 ? (
+                            <p className="text-subtext" style={{ fontStyle: 'italic' }}>
+                                {OBR.isAvailable
+                                    ? isGm
                                         ? 'No Pokémon tokens detected on the current map.'
-                                        : 'No Pokémon token selected on the map. Select your token on the map to deposit it.'}
-                                </p>
-                            ) : (
-                                <div className="pc-deposit-grid">
-                                    {sceneCandidates.map((c) => (
-                                        <div
-                                            key={c.id}
-                                            className={`pc-deposit-card ${c.claimedBy ? 'pc-deposit-card--claimed' : ''}`}
-                                        >
-                                            <img
-                                                src={c.imageUrl}
-                                                alt={c.name}
-                                                className="pc-deposit-card__avatar"
-                                                onError={(e) => {
-                                                    e.currentTarget.src = getAbsolutePokeballUrl();
-                                                }}
-                                            />
-                                            <div className="pc-deposit-card__info">
-                                                <span className="pc-deposit-card__name text-label" title={c.name}>
-                                                    {c.name}
-                                                </span>
-                                                <span className="text-subtext">
-                                                    {c.species} • {c.hp}/{c.maxHp} HP
-                                                </span>
-                                                {c.claimedBy ? (
-                                                    <span
-                                                        className="pc-deposit-card__claimed-tag text-subtext"
-                                                        title={`Claimed by ${c.claimedBy}`}
-                                                    >
-                                                        <Lock size={10} /> Claimed by {c.claimedBy}
-                                                    </span>
-                                                ) : c.isInParty ? (
-                                                    <span
-                                                        className="pc-deposit-card__claimed-tag text-subtext"
-                                                        title="Already on your belt"
-                                                    >
-                                                        <Lock size={10} /> In Party
-                                                    </span>
-                                                ) : null}
-                                            </div>
-                                            {c.claimedBy ? (
-                                                <button
-                                                    type="button"
-                                                    className="action-button action-button--dark pc-deposit-btn--disabled"
-                                                    disabled
-                                                    title={`This Pokémon is already claimed by ${c.claimedBy}`}
-                                                >
-                                                    Claimed
-                                                </button>
-                                            ) : targetSlot?.type === 'party' && c.isInParty ? (
-                                                <button
-                                                    type="button"
-                                                    className="action-button action-button--dark pc-deposit-btn--disabled"
-                                                    disabled
-                                                    title="This Pokémon is already on your party belt."
-                                                >
-                                                    <Lock size={12} /> In Party
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    type="button"
-                                                    className="action-button action-button--dark"
-                                                    onClick={() => handleSelectCandidate(c)}
-                                                >
-                                                    {targetSlot?.type === 'party' ? 'Add to Belt' : 'Deposit'}
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
+                                        : 'No Pokémon token selected on the map. Select your token on the map to deposit it.'
+                                    : 'No saved Pokémon found in the sidebar. Create a Pokémon in the sidebar or generator to deposit it.'}
+                            </p>
+                        ) : (
+                            <div className="pc-deposit-grid">
+                                {sceneCandidates.map((c) => (
+                                    <PcDepositCandidateCard
+                                        key={c.id}
+                                        candidate={c}
+                                        targetSlotType={targetSlot?.type}
+                                        partyButtonText={partyButtonText}
+                                        onSelect={() => handleSelectCandidate(c)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
 
-                    {/* Option 3: Generator Quick Link */}
+                    {/* Option 4: Generator Quick Link */}
                     {onOpenGenerator && (
                         <div className="pc-deposit-section pc-deposit-section--gen">
                             <button

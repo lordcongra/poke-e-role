@@ -1,6 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import OBR from '@owlbear-rodeo/sdk';
 import type { PcBox, CampaignProfile, PcPokemonSummary, TrainerRoster } from '../../../types/pcStorageTypes';
-import { CloudUpload, FolderHeart, X, RefreshCw } from 'lucide-react';
+import { CloudUpload, X, RefreshCw, Download } from 'lucide-react';
+import { downloadPcBackupJson } from '../../../utils/pc/pcJsonBackupOps';
+import { isBackupScene, setSceneBackupStatus } from '../../../utils/pc/pcBackupSceneSync';
+import { useCharacterStore } from '../../../store/useCharacterStore';
+import { PcBackupTargetSelector, type PcBackupTargetMode } from './PcBackupTargetSelector';
+import { PcJsonExportOptions } from './PcJsonExportOptions';
+import { PcBackupSceneOptions } from './PcBackupSceneOptions';
+import { PcBackupItemPreview } from './PcBackupItemPreview';
 import './PcCloudExportModal.css';
 
 interface PcCloudExportModalProps {
@@ -32,13 +40,32 @@ export const PcCloudExportModal: React.FC<PcCloudExportModalProps> = ({
     onConfirm,
     onClose
 }) => {
-    const defaultName = `PKR [${campaign.name}] - ${allBoxes.length > 1 ? 'All PC Boxes' : box.name}`;
+    const pcData = useCharacterStore((s) => s.pcData);
+    const isObr = OBR.isAvailable;
+
+    const defaultName = `PKR [${campaign.name}]${trainer ? ' - ' + trainer.name : ''} - ${allBoxes.length > 1 ? 'All PC Boxes' : box.name}`;
     const [sceneName, setSceneName] = useState(defaultName);
-    const [targetMode, setTargetMode] = useState<'activeScene' | 'cloud'>('activeScene');
+    const [targetMode, setTargetMode] = useState<PcBackupTargetMode>(isObr ? 'cloud' : 'json');
     const [includeParty, setIncludeParty] = useState(true);
     const [includeTrainer, setIncludeTrainer] = useState(true);
     const [backupAllBoxes, setBackupAllBoxes] = useState(true);
+    const [isCurrentSceneBackup, setIsCurrentSceneBackup] = useState<boolean>(false);
 
+    // JSON Granular Selection States
+    const [jsonScope, setJsonScope] = useState<'all' | 'custom'>('all');
+    const [selectedCampaignIds, setSelectedCampaignIds] = useState<string[]>([campaign.id]);
+    const [selectedTrainerIds, setSelectedTrainerIds] = useState<string[]>(Object.keys(campaign.trainers || {}));
+    const [selectedBoxIndices, setSelectedBoxIndices] = useState<number[]>((campaign.boxes || []).map((_, i) => i));
+
+    useEffect(() => {
+        if (isObr) {
+            isBackupScene()
+                .then(setIsCurrentSceneBackup)
+                .catch(() => {});
+        }
+    }, [isObr]);
+
+    // Scene Token Resolution
     const boxesToScan = backupAllBoxes && allBoxes && allBoxes.length > 0 ? allBoxes : [box];
     const storedEntityIds = new Set<string>();
     for (const b of boxesToScan) {
@@ -55,46 +82,89 @@ export const PcCloudExportModal: React.FC<PcCloudExportModalProps> = ({
         .map((id) => pokemonSummaries[id])
         .filter(Boolean);
 
-    const totalPokemon = includeParty ? Array.from(new Set([...storedPokemon, ...partyPokemon])) : storedPokemon;
+    const scenePokemon = includeParty ? Array.from(new Set([...storedPokemon, ...partyPokemon])) : storedPokemon;
+
+    // Granular JSON Item Resolution
+    const getJsonItems = (): PcPokemonSummary[] => {
+        if (jsonScope === 'all') {
+            return Object.values(pcData.pokemonSummaries);
+        }
+        const ids = new Set<string>();
+        for (const cId of selectedCampaignIds) {
+            const camp = pcData.campaigns[cId];
+            if (!camp) continue;
+            for (const [tId, tr] of Object.entries(camp.trainers)) {
+                if (selectedTrainerIds.includes(tId)) {
+                    for (const s of tr.party || []) {
+                        if (s) ids.add(s);
+                    }
+                    if (Array.isArray(tr.boxes)) {
+                        tr.boxes.forEach((b, idx) => {
+                            if (selectedBoxIndices.includes(idx)) {
+                                for (const s of b.slots || []) {
+                                    if (s) ids.add(s);
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+            camp.boxes.forEach((b, idx) => {
+                if (selectedBoxIndices.includes(idx)) {
+                    for (const s of b.slots || []) {
+                        if (s) ids.add(s);
+                    }
+                }
+            });
+        }
+        return Array.from(ids)
+            .map((id) => pcData.pokemonSummaries[id])
+            .filter(Boolean);
+    };
+
+    const previewItems = targetMode === 'json' ? getJsonItems() : scenePokemon;
+
+    const handleExecuteExport = () => {
+        if (targetMode === 'json') {
+            downloadPcBackupJson(pcData, {
+                scope: jsonScope,
+                campaignIds: selectedCampaignIds,
+                trainerIds: jsonScope === 'custom' ? selectedTrainerIds : undefined,
+                boxIndices: jsonScope === 'custom' ? selectedBoxIndices : undefined
+            });
+            if (isObr) {
+                OBR.notification.show('Downloaded PC backup JSON to your computer!', 'SUCCESS');
+            }
+            onClose();
+        } else {
+            onConfirm(sceneName.trim() || defaultName, includeParty, includeTrainer, targetMode, backupAllBoxes);
+        }
+    };
+
+    const themeStyles = boxTheme
+        ? ({
+              '--box-theme': boxTheme,
+              '--primary': boxTheme,
+              '--panel-bg': `color-mix(in srgb, ${boxTheme} 12%, var(--base-panel-dark, #1e1e1e))`,
+              '--panel-alt': `color-mix(in srgb, ${boxTheme} 18%, var(--base-panel-alt-dark, #2a2a2a))`,
+              '--border': `color-mix(in srgb, ${boxTheme} 35%, var(--base-border-dark, #383838))`
+          } as React.CSSProperties)
+        : undefined;
 
     return (
-        <div
-            className="modal-backdrop pc-cloud-modal-backdrop"
-            style={
-                boxTheme
-                    ? ({
-                          '--box-theme': boxTheme,
-                          '--primary': boxTheme,
-                          '--panel-bg': `color-mix(in srgb, ${boxTheme} 12%, var(--base-panel-dark, #1e1e1e))`,
-                          '--panel-alt': `color-mix(in srgb, ${boxTheme} 18%, var(--base-panel-alt-dark, #2a2a2a))`,
-                          '--border': `color-mix(in srgb, ${boxTheme} 35%, var(--base-border-dark, #383838))`
-                      } as React.CSSProperties)
-                    : undefined
-            }
-            onClick={onClose}
-        >
-            <div
-                className="modal-container pc-cloud-modal"
-                style={
-                    boxTheme
-                        ? ({
-                              '--box-theme': boxTheme,
-                              '--primary': boxTheme,
-                              '--panel-bg': `color-mix(in srgb, ${boxTheme} 12%, var(--base-panel-dark, #1e1e1e))`,
-                              '--panel-alt': `color-mix(in srgb, ${boxTheme} 18%, var(--base-panel-alt-dark, #2a2a2a))`,
-                              '--border': `color-mix(in srgb, ${boxTheme} 35%, var(--base-border-dark, #383838))`
-                          } as React.CSSProperties)
-                        : undefined
-                }
-                onClick={(e) => e.stopPropagation()}
-            >
+        <div className="modal-backdrop pc-cloud-modal-backdrop" style={themeStyles} onClick={onClose}>
+            <div className="modal-container pc-cloud-modal" style={themeStyles} onClick={(e) => e.stopPropagation()}>
                 <header className="modal-header pc-cloud-modal__header">
                     <div className="pc-cloud-modal__title-group">
                         <CloudUpload size={20} className="pc-cloud-modal__icon" />
                         <div>
-                            <h3 className="modal-title text-title-primary">Backup Box to Owlbear Scene</h3>
+                            <h3 className="modal-title text-title-primary">
+                                {isObr ? 'Backup Pokémon Storage' : 'JSON Backup & Export'}
+                            </h3>
                             <p className="text-subtext">
-                                Update your open backup scene or create a new Scene Asset in cloud library
+                                {isObr
+                                    ? 'Export to an Owlbear Cloud Scene or save an offline JSON backup'
+                                    : 'Save or import offline JSON backup files of your PC storage'}
                             </p>
                         </div>
                     </div>
@@ -111,195 +181,91 @@ export const PcCloudExportModal: React.FC<PcCloudExportModalProps> = ({
 
                 <div className="pc-cloud-modal__body">
                     {/* Destination Mode Selector */}
-                    <div className="pc-cloud-modal__field">
-                        <label className="text-label">Backup Target</label>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <button
-                                type="button"
-                                className={`action-button ${targetMode === 'activeScene' ? 'action-button--theme' : 'action-button--dark'}`}
-                                style={{ flex: 1, padding: '7px 10px', fontSize: '0.78rem' }}
-                                onClick={() => setTargetMode('activeScene')}
-                            >
-                                <RefreshCw size={13} /> Update Open Scene
-                            </button>
-                            <button
-                                type="button"
-                                className={`action-button ${targetMode === 'cloud' ? 'action-button--theme' : 'action-button--dark'}`}
-                                style={{ flex: 1, padding: '7px 10px', fontSize: '0.78rem' }}
-                                onClick={() => setTargetMode('cloud')}
-                            >
-                                <CloudUpload size={13} /> Upload New Scene Asset
-                            </button>
-                        </div>
-                        <span className="text-subtext">
-                            {targetMode === 'activeScene'
-                                ? 'Updates the token grid directly on the scene you have open right now without creating duplicate scene assets.'
-                                : 'Uploads a brand new Scene file into your Owlbear Rodeo Cloud Asset Library.'}
-                        </span>
-                    </div>
+                    <PcBackupTargetSelector targetMode={targetMode} onSelectMode={setTargetMode} />
 
-                    {targetMode === 'cloud' && (
-                        <div className="pc-cloud-modal__field">
-                            <label className="text-label">Scene Asset Name</label>
-                            <input
-                                type="text"
-                                className="pc-cloud-modal__input text-label"
-                                value={sceneName}
-                                onChange={(e) => setSceneName(e.target.value)}
-                                placeholder="e.g. PKR [Kanto] - Box 1 (Grassland)"
-                            />
-                            <span className="text-subtext">
-                                Prefixed with <code>PKR</code> so it is auto-discovered by the Cloud Import picker.
-                            </span>
-                        </div>
+                    {/* Mode Specific Controls */}
+                    {targetMode === 'json' ? (
+                        <PcJsonExportOptions
+                            pcData={pcData}
+                            activeCampaign={campaign}
+                            trainer={trainer}
+                            scope={jsonScope}
+                            setScope={setJsonScope}
+                            selectedCampaignIds={selectedCampaignIds}
+                            setSelectedCampaignIds={setSelectedCampaignIds}
+                            selectedTrainerIds={selectedTrainerIds}
+                            setSelectedTrainerIds={setSelectedTrainerIds}
+                            selectedBoxIndices={selectedBoxIndices}
+                            setSelectedBoxIndices={setSelectedBoxIndices}
+                        />
+                    ) : (
+                        <PcBackupSceneOptions
+                            targetMode={targetMode}
+                            sceneName={sceneName}
+                            setSceneName={setSceneName}
+                            includeTrainer={includeTrainer}
+                            setIncludeTrainer={setIncludeTrainer}
+                            includeParty={includeParty}
+                            setIncludeParty={setIncludeParty}
+                            backupAllBoxes={backupAllBoxes}
+                            setBackupAllBoxes={setBackupAllBoxes}
+                            trainer={trainer}
+                            partyCount={partyPokemon.length}
+                            storedCount={storedPokemon.length}
+                            allBoxesCount={allBoxes.length}
+                            isCurrentSceneBackup={isCurrentSceneBackup}
+                            onToggleSceneBackup={async () => {
+                                const next = !isCurrentSceneBackup;
+                                await setSceneBackupStatus(next);
+                                setIsCurrentSceneBackup(next);
+                                if (isObr) {
+                                    OBR.notification.show(
+                                        next
+                                            ? 'Current scene marked as Backup Scene (cleanup protected).'
+                                            : 'Current scene unmarked as Backup Scene.',
+                                        'INFO'
+                                    );
+                                }
+                            }}
+                        />
                     )}
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        {trainer && (
-                            <label
-                                className="text-subtext"
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    cursor: 'pointer',
-                                    padding: '6px 8px',
-                                    background: 'rgba(0, 0, 0, 0.25)',
-                                    borderRadius: '6px'
-                                }}
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={includeTrainer}
-                                    onChange={(e) => setIncludeTrainer(e.target.checked)}
-                                    style={{ cursor: 'pointer' }}
-                                />
-                                <span>
-                                    Include Trainer <strong>{trainer.name}</strong> at the head of the backup grid
-                                </span>
-                            </label>
-                        )}
-
-                        {partyPokemon.length > 0 && (
-                            <label
-                                className="text-subtext"
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    cursor: 'pointer',
-                                    padding: '6px 8px',
-                                    background: 'rgba(0, 0, 0, 0.25)',
-                                    borderRadius: '6px'
-                                }}
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={includeParty}
-                                    onChange={(e) => setIncludeParty(e.target.checked)}
-                                    style={{ cursor: 'pointer' }}
-                                />
-                                <span>
-                                    Also include active Trainer Belt (<strong>{partyPokemon.length} Pokémon</strong>) in
-                                    backup
-                                </span>
-                            </label>
-                        )}
-
-                        {allBoxes && allBoxes.length > 1 && (
-                            <label
-                                className="text-subtext"
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    cursor: 'pointer',
-                                    padding: '6px 8px',
-                                    background: 'rgba(0, 0, 0, 0.25)',
-                                    borderRadius: '6px'
-                                }}
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={backupAllBoxes}
-                                    onChange={(e) => setBackupAllBoxes(e.target.checked)}
-                                    style={{ cursor: 'pointer' }}
-                                />
-                                <span>
-                                    Backup <strong>All {allBoxes.length} PC Boxes</strong> ({storedPokemon.length}{' '}
-                                    stored Pokémon)
-                                </span>
-                            </label>
-                        )}
-                    </div>
-
-                    <div className="pc-cloud-modal__hint-box">
-                        <FolderHeart size={18} className="pc-cloud-modal__hint-icon" />
-                        <div className="pc-cloud-modal__hint-text text-subtext">
-                            {targetMode === 'activeScene' ? (
-                                <span>
-                                    <strong>In-Place Scene Sync:</strong> All tokens for your{' '}
-                                    {backupAllBoxes ? 'entire PC & Belt' : 'Box & Belt'} will be arranged in a clean
-                                    300px grid on your open Owlbear map without stacking.
-                                </span>
-                            ) : (
-                                <span>
-                                    <strong>Owlbear Asset Library:</strong> A new Scene asset will be saved to your
-                                    Owlbear Cloud library with all tokens spaced out.
-                                </span>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="pc-cloud-modal__preview">
-                        <span className="text-label">
-                            Included in Backup ({totalPokemon.length + (trainer && includeTrainer ? 1 : 0)} items):
-                        </span>
-                        <div className="pc-cloud-modal__tag-list">
-                            {trainer && includeTrainer && (
-                                <span
-                                    className="pc-cloud-modal__pkmn-tag text-subtext"
-                                    style={{
-                                        borderColor: 'var(--primary, #3b82f6)',
-                                        color: 'var(--primary, #3b82f6)'
-                                    }}
-                                >
-                                    ★ Trainer: {trainer.name}
-                                </span>
-                            )}
-                            {totalPokemon.map((p) => (
-                                <span key={p.entityId} className="pc-cloud-modal__pkmn-tag text-subtext">
-                                    {p.name || p.species} ({p.species})
-                                </span>
-                            ))}
-                        </div>
-                    </div>
+                    {/* Item Preview */}
+                    <PcBackupItemPreview
+                        trainerName={trainer?.name}
+                        includeTrainer={
+                            targetMode === 'json'
+                                ? jsonScope === 'all' || selectedTrainerIds.length > 0
+                                : includeTrainer
+                        }
+                        items={previewItems}
+                    />
                 </div>
 
-                <footer className="modal-footer pc-cloud-modal__footer">
+                <footer
+                    className="modal-footer pc-cloud-modal__footer"
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        alignItems: 'center',
+                        gap: '8px'
+                    }}
+                >
                     <button type="button" className="action-button action-button--dark" onClick={onClose}>
                         Cancel
                     </button>
-                    <button
-                        type="button"
-                        className="action-button action-button--theme"
-                        onClick={() =>
-                            onConfirm(
-                                sceneName.trim() || defaultName,
-                                includeParty,
-                                includeTrainer,
-                                targetMode,
-                                backupAllBoxes
-                            )
-                        }
-                    >
+                    <button type="button" className="action-button action-button--theme" onClick={handleExecuteExport}>
                         {targetMode === 'activeScene' ? (
                             <>
                                 <RefreshCw size={14} /> Update Open Scene
                             </>
-                        ) : (
+                        ) : targetMode === 'cloud' ? (
                             <>
                                 <CloudUpload size={14} /> Save to Owlbear Cloud
+                            </>
+                        ) : (
+                            <>
+                                <Download size={14} /> Download JSON Backup
                             </>
                         )}
                     </button>

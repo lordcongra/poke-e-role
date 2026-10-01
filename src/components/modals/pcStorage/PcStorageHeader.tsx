@@ -1,20 +1,25 @@
 import React, { useState } from 'react';
+import OBR from '@owlbear-rodeo/sdk';
 import type { CampaignProfile, TrainerRoster, PcBox } from '../../../types/pcStorageTypes';
 import { PcPromptModal } from './PcPromptModal';
+import { PcDeleteConfirmModal } from './PcDeleteConfirmModal';
 import './PcStorageHeader.css';
 import {
     ChevronLeft,
     ChevronRight,
     Plus,
+    Trash2,
     Edit2,
     Palette,
     CloudUpload,
     CloudDownload,
+    Download,
     Users,
     FolderKanban,
     X,
     Check,
-    HelpCircle
+    HelpCircle,
+    RefreshCw
 } from 'lucide-react';
 
 interface PcStorageHeaderProps {
@@ -22,10 +27,12 @@ interface PcStorageHeaderProps {
     activeCampaignId: string;
     onSwitchCampaign: (id: string) => void;
     onAddCampaign: (name: string) => void;
-    activeTrainer: TrainerRoster;
+    onDeleteCampaign?: (id: string) => void;
+    activeTrainer?: TrainerRoster;
     trainers: Record<string, TrainerRoster>;
     onSwitchTrainer: (id: string) => void;
     onAddTrainer: (name: string) => void;
+    onDeleteTrainer?: (id: string, options?: { deletePc?: boolean; deleteBelt?: boolean }) => void;
     boxes: PcBox[];
     activeBoxIndex: number;
     onSelectBox: (index: number) => void;
@@ -33,7 +40,8 @@ interface PcStorageHeaderProps {
     onRenameBox: (index: number, name: string) => void;
     onSetBoxTheme: (index: number, color: string) => void;
     onUploadCloud: () => void;
-    onDownloadCloud: () => void;
+    onOpenImport: () => void;
+    onSyncPlayers?: () => void;
     onOpenGuide?: () => void;
     onClose: () => void;
 }
@@ -43,10 +51,12 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
     activeCampaignId,
     onSwitchCampaign,
     onAddCampaign,
+    onDeleteCampaign,
     activeTrainer,
     trainers,
     onSwitchTrainer,
     onAddTrainer,
+    onDeleteTrainer,
     boxes,
     activeBoxIndex,
     onSelectBox,
@@ -54,12 +64,18 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
     onRenameBox,
     onSetBoxTheme,
     onUploadCloud,
-    onDownloadCloud,
+    onOpenImport,
+    onSyncPlayers,
     onOpenGuide,
     onClose
 }) => {
     const [isRenaming, setIsRenaming] = useState(false);
     const [renameValue, setRenameValue] = useState('');
+    const [deleteTarget, setDeleteTarget] = useState<{
+        type: 'trainer' | 'campaign';
+        id: string;
+        name: string;
+    } | null>(null);
     const [promptConfig, setPromptConfig] = useState<{
         type: 'campaign' | 'trainer';
         title: string;
@@ -70,6 +86,15 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
     const currentBox = boxes[activeBoxIndex] || boxes[0];
     const canGoPrev = activeBoxIndex > 0;
     const canGoNext = activeBoxIndex < boxes.length - 1;
+
+    const activeTrainerPartyCount = (activeTrainer?.party || []).filter(Boolean).length;
+    const activeTrainerBoxes = activeTrainer?.boxes && activeTrainer.boxes.length > 0 ? activeTrainer.boxes : boxes;
+    let activeTrainerStoredCount = 0;
+    for (const b of activeTrainerBoxes) {
+        for (const s of b.slots || []) {
+            if (s) activeTrainerStoredCount++;
+        }
+    }
 
     const handleStartRename = () => {
         setRenameValue(currentBox.name);
@@ -118,6 +143,21 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                         >
                             <Plus size={13} />
                         </button>
+                        {Object.keys(campaigns).length > 1 && onDeleteCampaign && (
+                            <button
+                                type="button"
+                                className="pc-header__mini-btn pc-header__mini-btn--danger"
+                                onClick={() => {
+                                    const c = campaigns[activeCampaignId];
+                                    if (c) {
+                                        setDeleteTarget({ type: 'campaign', id: c.id, name: c.name });
+                                    }
+                                }}
+                                title="Delete active campaign"
+                            >
+                                <Trash2 size={13} />
+                            </button>
+                        )}
                     </div>
 
                     {/* Trainer Switcher */}
@@ -125,7 +165,7 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                         <Users size={15} className="pc-header__selector-icon" />
                         <select
                             className="pc-header__select"
-                            value={activeTrainer?.id || ''}
+                            value={activeTrainer?.id || '__none__'}
                             onChange={(e) => onSwitchTrainer(e.target.value)}
                         >
                             {Object.values(trainers).map((t) => (
@@ -133,6 +173,7 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                                     {t.name}
                                 </option>
                             ))}
+                            <option value="__none__">None (PMD / Team Storage)</option>
                         </select>
                         <button
                             type="button"
@@ -149,6 +190,22 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                         >
                             <Plus size={13} />
                         </button>
+                        {Object.keys(trainers).length > 1 && onDeleteTrainer && activeTrainer && (
+                            <button
+                                type="button"
+                                className="pc-header__mini-btn pc-header__mini-btn--danger"
+                                onClick={() => {
+                                    setDeleteTarget({
+                                        type: 'trainer',
+                                        id: activeTrainer.id,
+                                        name: activeTrainer.name
+                                    });
+                                }}
+                                title="Delete active trainer profile"
+                            >
+                                <Trash2 size={13} />
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -157,18 +214,32 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                         type="button"
                         className="action-button action-button--dark pc-header__cloud-btn"
                         onClick={onUploadCloud}
-                        title="Upload current box to Owlbear Rodeo Cloud Storage"
+                        title={
+                            OBR.isAvailable
+                                ? 'Backup PC Storage (Cloud Scene Asset, Open Scene Sync, or JSON)'
+                                : 'Download JSON backup of PC storage'
+                        }
                     >
-                        <CloudUpload size={14} /> Cloud Backup
+                        {OBR.isAvailable ? <CloudUpload size={14} /> : <Download size={14} />} Backup
                     </button>
                     <button
                         type="button"
                         className="action-button action-button--dark pc-header__cloud-btn"
-                        onClick={onDownloadCloud}
-                        title="Download or import box from Owlbear Rodeo Cloud Storage"
+                        onClick={onOpenImport}
+                        title="Import Pokémon from Owlbear Cloud Scene Asset, Open Scene, or JSON backup"
                     >
-                        <CloudDownload size={14} /> Cloud Import
+                        <CloudDownload size={14} /> Import
                     </button>
+                    {onSyncPlayers && (
+                        <button
+                            type="button"
+                            className="action-button action-button--dark pc-header__cloud-btn"
+                            onClick={onSyncPlayers}
+                            title="Request connected players in the room to sync their active Belt and PC to the GM"
+                        >
+                            <RefreshCw size={14} /> Sync Players
+                        </button>
+                    )}
                     {onOpenGuide && (
                         <button
                             type="button"
@@ -306,6 +377,25 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                         }
                     }}
                     onClose={() => setPromptConfig(null)}
+                />
+            )}
+
+            {/* In-App Double-Confirmation Modal for Deleting Trainer / Campaign */}
+            {deleteTarget && (
+                <PcDeleteConfirmModal
+                    type={deleteTarget.type}
+                    name={deleteTarget.name}
+                    storedCount={deleteTarget.type === 'trainer' ? activeTrainerStoredCount : undefined}
+                    partyCount={deleteTarget.type === 'trainer' ? activeTrainerPartyCount : undefined}
+                    onConfirm={(opts) => {
+                        if (deleteTarget.type === 'trainer' && onDeleteTrainer) {
+                            onDeleteTrainer(deleteTarget.id, opts);
+                        } else if (deleteTarget.type === 'campaign' && onDeleteCampaign) {
+                            onDeleteCampaign(deleteTarget.id);
+                        }
+                        setDeleteTarget(null);
+                    }}
+                    onCancel={() => setDeleteTarget(null)}
                 />
             )}
         </header>

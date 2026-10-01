@@ -11,7 +11,8 @@ import {
     setupOwlbearPlayerSync,
     setupOwlbearHomebrewSync,
     setupOwlbearItemArtSync,
-    setupOwlbearRollSync
+    setupOwlbearRollSync,
+    setupOwlbearPcSync
 } from './owlbearSync';
 
 export function useOwlbearSync() {
@@ -86,6 +87,10 @@ export function useOwlbearSync() {
                 // 6. Set up Roll Results & Roll Log Broadcasts
                 const rollSync = setupOwlbearRollSync();
                 unsubs.push(...rollSync.unsubs);
+
+                // 7. Set up PC Storage P2P Broadcasts
+                const pcSync = setupOwlbearPcSync(role);
+                unsubs.push(...pcSync.unsubs);
             });
         }
 

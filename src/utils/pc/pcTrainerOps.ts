@@ -1,6 +1,7 @@
 import OBR, { buildImage, type Item } from '@owlbear-rodeo/sdk';
 import type { TrainerRoster } from '../../types/pcStorageTypes';
 import type { CharacterState } from '../../store/storeTypes';
+import { useCharacterStore } from '../../store/useCharacterStore';
 import { flattenStateToMetadata } from '../sync/stateMapper';
 import { METADATA_ID } from '../sync/obr';
 import { getAbsolutePokeballUrl, resolveImageDimensions } from '../generators/trainerTokenSpawner';
@@ -58,6 +59,81 @@ export function buildLinkedTrainer(
         fullMetadata: fullMeta,
         mapTokenId: store.tokenId || trainer.mapTokenId,
         isLinked: true
+    };
+}
+
+/**
+ * Builds a PcPokemonSummary representation of a Trainer profile for sheet viewing.
+ */
+export function buildTrainerSummary(trainer: TrainerRoster): import('../../types/pcStorageTypes').PcPokemonSummary {
+    const hpCurr =
+        typeof trainer.fullMetadata?.['hp-curr'] === 'number' ? (trainer.fullMetadata['hp-curr'] as number) : 10;
+    const hpMax =
+        typeof trainer.fullMetadata?.['hp-max-display'] === 'number'
+            ? (trainer.fullMetadata['hp-max-display'] as number)
+            : 10;
+    const willCurr =
+        typeof trainer.fullMetadata?.['will-curr'] === 'number' ? (trainer.fullMetadata['will-curr'] as number) : 5;
+    const willMax =
+        typeof trainer.fullMetadata?.['will-max-display'] === 'number'
+            ? (trainer.fullMetadata['will-max-display'] as number)
+            : 5;
+    const trainerType1 = (trainer.fullMetadata?.type1 as string) || '';
+    const trainerType2 = (trainer.fullMetadata?.type2 as string) || undefined;
+    const tokenMeta = (trainer.savedTokenItem?.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
+    const store = useCharacterStore.getState();
+    const isStoreTrainer = store.identity.mode === 'Trainer' || (store.identity.rank as string) === 'Trainer';
+    const storeMatchesTrainer =
+        isStoreTrainer &&
+        (store.identity.nickname === trainer.name || store.identity.species === trainer.name || !trainer.name);
+
+    const primaryOverride =
+        (trainer.fullMetadata?.['theme-primary-override'] as string) ||
+        (trainer.fullMetadata?.themePrimaryOverride as string) ||
+        (tokenMeta['theme-primary-override'] as string) ||
+        (storeMatchesTrainer ? store.identity.themePrimaryOverride : '') ||
+        '';
+    const secondaryOverride =
+        (trainer.fullMetadata?.['theme-secondary-override'] as string) ||
+        (trainer.fullMetadata?.themeSecondaryOverride as string) ||
+        (tokenMeta['theme-secondary-override'] as string) ||
+        (storeMatchesTrainer ? store.identity.themeSecondaryOverride : '') ||
+        '';
+
+    return {
+        entityId: trainer.id,
+        name: trainer.name,
+        species: trainer.name,
+        rank: 'Trainer',
+        type1: trainerType1,
+        type2: trainerType2,
+        hp: hpCurr,
+        maxHp: hpMax,
+        will: willCurr,
+        maxWill: willMax,
+        tokenImageUrl: trainer.avatarUrl,
+        isOnMap: Boolean(trainer.mapTokenId),
+        mapTokenId: trainer.mapTokenId,
+        savedTokenItem: trainer.savedTokenItem,
+        fullMetadata: {
+            ...(trainer.fullMetadata || {}),
+            name: trainer.name,
+            nickname: trainer.name,
+            species: trainer.name,
+            mode: 'Trainer',
+            type1: trainerType1,
+            type2: trainerType2 || '',
+            'token-image-url': trainer.avatarUrl,
+            'hp-curr': hpCurr,
+            'hp-max-display': hpMax,
+            'will-curr': willCurr,
+            'will-max-display': willMax,
+            'theme-primary-override': primaryOverride,
+            'theme-secondary-override': secondaryOverride,
+            themePrimaryOverride: primaryOverride,
+            themeSecondaryOverride: secondaryOverride
+        },
+        lastModified: 0
     };
 }
 

@@ -1,21 +1,25 @@
 import React from 'react';
+import OBR from '@owlbear-rodeo/sdk';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
 import { PcSlotCard } from './PcSlotCard';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
-import { Shield, UserCheck, Plus, Unlink, FileText, MapPin } from 'lucide-react';
+import { useResolvedImageUrl } from '../../../utils/graphics/useResolvedImageUrl';
+import { Shield, UserCheck, Plus, Unlink, FileText, MapPin, FolderPlus, Users } from 'lucide-react';
 import './PcPartyDock.css';
 
 interface PcPartyDockProps {
     partySlots: (string | null)[];
     pokemonSummaries: Record<string, PcPokemonSummary>;
     selectedSlot: { type: 'party' | 'box'; index: number } | null;
-    trainerName: string;
+    trainerName?: string;
+    isPmdMode?: boolean;
     trainerAvatarUrl?: string;
     isTrainerLinked?: boolean;
     isTrainerOnMap?: boolean;
     activeCharacterName?: string;
     activeCharacterAvatarUrl?: string;
     canLinkActiveTrainer?: boolean;
+    otherLinkedTrainerName?: string;
     onSelectSlot: (index: number) => void;
     onEmptySlotClick?: (index: number) => void;
     onContextMenu: (e: React.MouseEvent, index: number, entityId: string) => void;
@@ -29,6 +33,7 @@ interface PcPartyDockProps {
     onDragStart: (e: React.DragEvent, index: number) => void;
     onLinkActiveTrainer?: () => void;
     onUnlinkTrainer?: () => void;
+    onOrganizeFolders?: () => void;
 }
 
 export const PcPartyDock: React.FC<PcPartyDockProps> = ({
@@ -36,12 +41,14 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
     pokemonSummaries,
     selectedSlot,
     trainerName,
+    isPmdMode = false,
     trainerAvatarUrl,
     isTrainerLinked = false,
     isTrainerOnMap = false,
     activeCharacterName,
     activeCharacterAvatarUrl,
     canLinkActiveTrainer = true,
+    otherLinkedTrainerName,
     onSelectSlot,
     onEmptySlotClick,
     onContextMenu,
@@ -54,18 +61,25 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
     onDropOnSlot,
     onDragStart,
     onLinkActiveTrainer,
-    onUnlinkTrainer
+    onUnlinkTrainer,
+    onOrganizeFolders
 }) => {
+    const isPmd = isPmdMode || !trainerName;
+    const displayTitle = isPmd ? 'Active Team' : `${trainerName}'s Belt`;
     const occupiedCount = partySlots.filter(Boolean).length;
+    const resolvedTrainerAvatar = useResolvedImageUrl(trainerAvatarUrl);
+    const resolvedActiveAvatar = useResolvedImageUrl(activeCharacterAvatarUrl);
 
     return (
         <aside className="pc-party-dock">
             <div className="pc-party-dock__header">
                 <div className="pc-party-dock__title-group">
-                    {trainerAvatarUrl ? (
+                    {isPmd ? (
+                        <Users size={16} className="pc-party-dock__icon" />
+                    ) : resolvedTrainerAvatar ? (
                         <img
-                            src={trainerAvatarUrl}
-                            alt={trainerName}
+                            src={resolvedTrainerAvatar}
+                            alt={trainerName || 'Trainer'}
                             className="pc-party-dock__trainer-avatar"
                             onError={(e) => {
                                 e.currentTarget.style.display = 'none';
@@ -74,107 +88,133 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                     ) : (
                         <Shield size={16} className="pc-party-dock__icon" />
                     )}
-                    <h3 className="pc-party-dock__title text-title-primary" title={trainerName}>
-                        {trainerName}&apos;s Belt
+                    <h3 className="pc-party-dock__title text-title-primary" title={displayTitle}>
+                        {displayTitle}
                     </h3>
                 </div>
                 <div className="pc-party-dock__header-actions">
                     <span className="pc-party-dock__badge text-subtext">{occupiedCount} / 6</span>
-                    {isTrainerLinked ? (
-                        <>
-                            {onOpenTrainerSheet && (
-                                <button
-                                    type="button"
-                                    className="pc-party-dock__link-trainer-btn action-button action-button--dark"
-                                    onClick={onOpenTrainerSheet}
-                                    title={`Open ${trainerName}'s Trainer Sheet`}
-                                    aria-label={`Open ${trainerName}'s Trainer Sheet`}
-                                >
-                                    <FileText size={12} />
-                                    <span>Sheet</span>
-                                </button>
-                            )}
-                            {onDropTrainerToken && (
+                    {!OBR.isAvailable && onOrganizeFolders && (
+                        <button
+                            type="button"
+                            className="pc-party-dock__link-trainer-btn action-button action-button--dark"
+                            onClick={onOrganizeFolders}
+                            title={
+                                isPmd
+                                    ? 'Auto-organize Active Team and Box folders in the Directory'
+                                    : "Auto-organize this Trainer's Belt and Box folders in the Directory"
+                            }
+                            aria-label="Organize Folders in Directory"
+                        >
+                            <FolderPlus size={12} />
+                            <span>Folders</span>
+                        </button>
+                    )}
+                    {!isPmd &&
+                        (isTrainerLinked ? (
+                            <>
+                                {onOpenTrainerSheet && (
+                                    <button
+                                        type="button"
+                                        className="pc-party-dock__link-trainer-btn action-button action-button--dark"
+                                        onClick={onOpenTrainerSheet}
+                                        title={`Open ${trainerName}'s Trainer Sheet`}
+                                        aria-label={`Open ${trainerName}'s Trainer Sheet`}
+                                    >
+                                        <FileText size={12} />
+                                        <span>Sheet</span>
+                                    </button>
+                                )}
+                                {onDropTrainerToken && OBR.isAvailable && (
+                                    <button
+                                        type="button"
+                                        className={`pc-party-dock__link-trainer-btn action-button action-button--dark ${
+                                            isTrainerOnMap ? 'pc-party-dock__link-trainer-btn--disabled' : ''
+                                        }`}
+                                        onClick={() => {
+                                            if (!isTrainerOnMap) {
+                                                onDropTrainerToken();
+                                            }
+                                        }}
+                                        disabled={isTrainerOnMap}
+                                        title={
+                                            isTrainerOnMap
+                                                ? `${trainerName} is already on the board`
+                                                : `Drop ${trainerName}'s token onto current scene`
+                                        }
+                                        aria-label={
+                                            isTrainerOnMap
+                                                ? `${trainerName} is already on the board`
+                                                : `Drop ${trainerName}'s token onto current scene`
+                                        }
+                                    >
+                                        <MapPin size={12} />
+                                        <span>{isTrainerOnMap ? 'On Map' : 'Drop'}</span>
+                                    </button>
+                                )}
+                                {onUnlinkTrainer && (
+                                    <button
+                                        type="button"
+                                        className="pc-party-dock__link-trainer-btn pc-party-dock__unlink-trainer-btn action-button action-button--dark"
+                                        onClick={onUnlinkTrainer}
+                                        title={`Unlink "${trainerName}" from this Belt`}
+                                        aria-label={`Unlink "${trainerName}" from this Belt`}
+                                    >
+                                        <Unlink size={12} />
+                                        <span>Unlink</span>
+                                    </button>
+                                )}
+                            </>
+                        ) : (
+                            onLinkActiveTrainer && (
                                 <button
                                     type="button"
                                     className={`pc-party-dock__link-trainer-btn action-button action-button--dark ${
-                                        isTrainerOnMap ? 'pc-party-dock__link-trainer-btn--disabled' : ''
+                                        !canLinkActiveTrainer ? 'pc-party-dock__link-trainer-btn--disabled' : ''
                                     }`}
                                     onClick={() => {
-                                        if (!isTrainerOnMap) {
-                                            onDropTrainerToken();
+                                        if (canLinkActiveTrainer) {
+                                            onLinkActiveTrainer();
                                         }
                                     }}
-                                    disabled={isTrainerOnMap}
+                                    disabled={!canLinkActiveTrainer}
                                     title={
-                                        isTrainerOnMap
-                                            ? `${trainerName} is already on the board`
-                                            : `Drop ${trainerName}'s token onto current scene`
-                                    }
-                                    aria-label={
-                                        isTrainerOnMap
-                                            ? `${trainerName} is already on the board`
-                                            : `Drop ${trainerName}'s token onto current scene`
+                                        otherLinkedTrainerName
+                                            ? `Cannot link: This token is already linked to Trainer "${otherLinkedTrainerName}".`
+                                            : !canLinkActiveTrainer
+                                              ? 'Cannot link: Current token is in Pokémon mode. Only tokens set to Trainer or Trainer (Special) mode can be linked.'
+                                              : activeCharacterName
+                                                ? `Link "${activeCharacterName}" as Party Trainer`
+                                                : "Link active character/token as this Belt's Trainer"
                                     }
                                 >
-                                    <MapPin size={12} />
-                                    <span>{isTrainerOnMap ? 'On Map' : 'Drop'}</span>
+                                    {resolvedActiveAvatar ? (
+                                        <img
+                                            src={resolvedActiveAvatar}
+                                            alt="Active Trainer"
+                                            className="pc-party-dock__link-avatar"
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                            }}
+                                        />
+                                    ) : (
+                                        <UserCheck size={12} />
+                                    )}
+                                    <span>Link</span>
                                 </button>
-                            )}
-                            {onUnlinkTrainer && (
-                                <button
-                                    type="button"
-                                    className="pc-party-dock__link-trainer-btn pc-party-dock__unlink-trainer-btn action-button action-button--dark"
-                                    onClick={onUnlinkTrainer}
-                                    title={`Unlink "${trainerName}" from this Belt`}
-                                    aria-label={`Unlink "${trainerName}" from this Belt`}
-                                >
-                                    <Unlink size={12} />
-                                    <span>Unlink</span>
-                                </button>
-                            )}
-                        </>
-                    ) : (
-                        onLinkActiveTrainer && (
-                            <button
-                                type="button"
-                                className={`pc-party-dock__link-trainer-btn action-button action-button--dark ${
-                                    !canLinkActiveTrainer ? 'pc-party-dock__link-trainer-btn--disabled' : ''
-                                }`}
-                                onClick={() => {
-                                    if (canLinkActiveTrainer) {
-                                        onLinkActiveTrainer();
-                                    }
-                                }}
-                                title={
-                                    !canLinkActiveTrainer
-                                        ? 'Cannot link: Current token is in Pokémon mode. Only tokens set to Trainer or Trainer (Special) mode can be linked.'
-                                        : activeCharacterName
-                                          ? `Link "${activeCharacterName}" as Party Trainer`
-                                          : "Link active character/token as this Belt's Trainer"
-                                }
-                            >
-                                {activeCharacterAvatarUrl ? (
-                                    <img
-                                        src={activeCharacterAvatarUrl}
-                                        alt="Active Trainer"
-                                        className="pc-party-dock__link-avatar"
-                                        onError={(e) => {
-                                            e.currentTarget.style.display = 'none';
-                                        }}
-                                    />
-                                ) : (
-                                    <UserCheck size={12} />
-                                )}
-                                <span>Link</span>
-                            </button>
-                        )
-                    )}
+                            )
+                        ))}
                 </div>
             </div>
 
             <p className="pc-party-dock__hint text-subtext">
-                Active Pokémon on your trainer belt. Click &quot;Send Out&quot; to place them on the map.
+                {isPmd
+                    ? OBR.isAvailable
+                        ? 'Active Pokémon on your expedition team. Click "Send Out" to place them on the map.'
+                        : 'Active Pokémon on your expedition team.'
+                    : OBR.isAvailable
+                      ? 'Active Pokémon on your trainer belt. Click "Send Out" to place them on the map.'
+                      : 'Active Pokémon carried on your trainer belt.'}
             </p>
 
             <div className="pc-party-dock__slots">
@@ -215,15 +255,27 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                             }}
                             onDragOver={(e) => e.preventDefault()}
                             onDrop={() => onDropOnSlot(index)}
-                            title={`Empty Party Slot ${index + 1} - Click to deposit a Pokémon here`}
+                            title={
+                                isPmd
+                                    ? `Empty Team Slot ${index + 1} - Click to deposit a Pokémon here`
+                                    : `Empty Party Slot ${index + 1} - Click to deposit a Pokémon here`
+                            }
                         >
-                            <img
-                                src={getAbsolutePokeballUrl()}
-                                alt="Empty Slot"
-                                className="pc-party-dock__empty-icon"
-                            />
+                            {isPmd ? (
+                                <div className="pc-party-dock__pmd-empty-icon">
+                                    <Users size={20} />
+                                </div>
+                            ) : (
+                                <img
+                                    src={getAbsolutePokeballUrl()}
+                                    alt="Empty Slot"
+                                    className="pc-party-dock__empty-icon"
+                                />
+                            )}
                             <div className="pc-party-dock__empty-text">
-                                <span className="pc-party-dock__empty-label text-subtext">Slot {index + 1}</span>
+                                <span className="pc-party-dock__empty-label text-subtext">
+                                    {isPmd ? `Team Member ${index + 1}` : `Slot ${index + 1}`}
+                                </span>
                                 <span className="pc-party-dock__empty-subtext text-subtext">
                                     <Plus size={10} style={{ display: 'inline', marginRight: 2 }} />
                                     Click to Deposit

@@ -128,22 +128,26 @@ export const PcGuideModal: React.FC<PcGuideModalProps> = ({ boxTheme, onClose })
                             <div className="pc-guide-modal__callout">
                                 <strong>Accessing Owlbear Rodeo from another PC or device?</strong>
                                 <br />
-                                Because local storage is browser-specific, use <strong>Cloud Backup</strong> to take
-                                your Pokémon anywhere!
+                                Because local storage is browser-specific, use <strong>Cloud Backup</strong> or{' '}
+                                <strong>JSON Export</strong> to take your Pokémon anywhere!
                             </div>
                             <ol>
                                 <li>
-                                    <strong>Step 1 (On your main PC):</strong> Open an empty or backup scene in Owlbear
-                                    Rodeo. Click <strong>Cloud Backup</strong> &rarr; <strong>Update Open Scene</strong>
-                                    . This places your Trainer, Belt, and Box Pokémon into an organized grid on the map.
+                                    <strong>Option 1 (Backup Scene):</strong> Open a scene in Owlbear Rodeo and click{' '}
+                                    <strong>Cloud Backup</strong> &rarr; <strong>Update Open Scene</strong>. All Trainer
+                                    and Pokémon tokens are placed in an organized grid. Backup scenes are automatically
+                                    protected: visiting them syncs your latest team data and restores your PC on new
+                                    devices without ghost deletion!
                                 </li>
                                 <li>
-                                    <strong>Step 2 (On your other PC / Laptop):</strong> Open the backup scene in
-                                    Owlbear Rodeo. Open the PC and click <strong>Cloud Import</strong>.
+                                    <strong>Option 2 (Local JSON Backup):</strong> In the Cloud Backup modal, select{' '}
+                                    <strong>Download JSON File</strong> to save a lightweight <code>.json</code> backup
+                                    (~50–200 KB) directly to your computer. Click <strong>Import JSON</strong> on any
+                                    computer to restore your team in seconds!
                                 </li>
                                 <li>
-                                    <strong>Done!</strong> All Pokémon tokens with their full sheets, stats, and moves
-                                    are instantly restored into your PC storage on the new device.
+                                    <strong>Option 3 (Cloud Asset):</strong> Choose <strong>Cloud Scene Asset</strong>{' '}
+                                    to save a reusable prefab scene into your Owlbear Cloud library.
                                 </li>
                             </ol>
                         </div>

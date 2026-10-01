@@ -34,41 +34,20 @@ export async function buildBackupSceneItems(
             'will-curr': summary.will,
             'will-max-display': summary.maxWill,
             rank: summary.rank,
-            'token-image-url': sanitizeImageUrl(summary.tokenImageUrl || fallbackUrl)
+            'token-image-url': sanitizeImageUrl(summary.tokenImageUrl || fallbackUrl),
+            'is-backup-token': true,
+            lastModified: summary.lastModified || Date.now()
         };
 
-        if (summary.savedTokenItem) {
-            const raw = JSON.parse(JSON.stringify(summary.savedTokenItem)) as Record<string, unknown>;
-            const clone = {
-                ...raw,
-                id: crypto.randomUUID(),
-                position: pos,
-                layer: 'CHARACTER',
-                visible: true
-            } as Item;
-            delete (clone as unknown as Record<string, unknown>).attachedTo;
-
-            const imageItem = clone as unknown as { image?: { url?: string } };
-            const cleanImgUrl = sanitizeImageUrl(imageItem.image?.url || summary.tokenImageUrl || fallbackUrl);
-            if (imageItem.image) {
-                imageItem.image.url = cleanImgUrl;
-            }
-
-            const merged = {
-                ...((clone.metadata?.[METADATA_ID] as Record<string, unknown>) || {}),
-                ...metaObj
-            };
-            clone.metadata = {
-                ...clone.metadata,
-                [METADATA_ID]: merged,
-                'pokerole-pmd-extension/stats': merged
-            };
-            return clone;
-        }
-
-        const cleanUrl = sanitizeImageUrl(summary.tokenImageUrl || fallbackUrl);
+        const rawSaved = summary.savedTokenItem as
+            | (Item & { image?: { url?: string }; grid?: { dpi?: number; offset?: { x: number; y: number } } })
+            | undefined;
+        const cleanUrl = sanitizeImageUrl(rawSaved?.image?.url || summary.tokenImageUrl || fallbackUrl);
         const dims = await resolveImageDimensions(cleanUrl);
-        return buildImage(
+        const savedGrid = rawSaved?.grid;
+        const savedScale = rawSaved?.scale;
+
+        const builder = buildImage(
             {
                 url: cleanUrl,
                 mime: cleanUrl.endsWith('.svg') ? 'image/svg+xml' : 'image/png',
@@ -76,85 +55,78 @@ export async function buildBackupSceneItems(
                 height: dims.height
             },
             {
-                dpi: dims.width,
-                offset: { x: dims.width / 2, y: dims.height / 2 }
+                dpi: savedGrid?.dpi || dims.width,
+                offset: savedGrid?.offset || { x: dims.width / 2, y: dims.height / 2 }
             }
         )
             .name(summary.name || summary.species)
             .position(pos)
             .layer('CHARACTER')
             .metadata({
+                ...((rawSaved?.metadata?.[METADATA_ID] as Record<string, unknown>) || {}),
                 [METADATA_ID]: metaObj,
-                'pokerole-pmd-extension/stats': metaObj
-            })
-            .build();
+                'pokerole-pmd-extension/stats': metaObj,
+                'pokerole-pmd-extension/is-backup-token': true
+            });
+
+        if (savedScale && typeof savedScale.x === 'number' && typeof savedScale.y === 'number') {
+            builder.scale(savedScale);
+        }
+
+        return builder.build();
     };
 
     let startBeltCol = 0;
     if (trainer) {
         const trainerMeta: Record<string, unknown> = {
             ...(trainer.fullMetadata || {}),
+            trainerId: trainer.id,
+            entityId: trainer.id,
+            'pokerole-pmd-extension/trainer-id': trainer.id,
             name: trainer.name,
             nickname: trainer.name,
             species: trainer.name,
             mode: 'Trainer',
-            'token-image-url': sanitizeImageUrl(trainer.avatarUrl || fallbackUrl)
+            'token-image-url': sanitizeImageUrl(trainer.avatarUrl || fallbackUrl),
+            'is-backup-token': true
         };
 
-        if (trainer.savedTokenItem) {
-            const raw = JSON.parse(JSON.stringify(trainer.savedTokenItem)) as Record<string, unknown>;
-            const clone = {
-                ...raw,
-                id: crypto.randomUUID(),
-                position: { x: 0, y: 0 },
-                layer: 'CHARACTER',
-                visible: true
-            } as Item;
-            delete (clone as unknown as Record<string, unknown>).attachedTo;
+        const rawSaved = trainer.savedTokenItem as
+            | (Item & { image?: { url?: string }; grid?: { dpi?: number; offset?: { x: number; y: number } } })
+            | undefined;
+        const cleanAvatar = sanitizeImageUrl(rawSaved?.image?.url || trainer.avatarUrl || fallbackUrl);
+        const dims = await resolveImageDimensions(cleanAvatar);
+        const savedGrid = rawSaved?.grid;
+        const savedScale = rawSaved?.scale;
 
-            const avatarItem = clone as unknown as { image?: { url?: string } };
-            const cleanAvatar = sanitizeImageUrl(avatarItem.image?.url || trainer.avatarUrl || fallbackUrl);
-            if (avatarItem.image) {
-                avatarItem.image.url = cleanAvatar;
+        const builder = buildImage(
+            {
+                url: cleanAvatar,
+                mime: cleanAvatar.endsWith('.svg') ? 'image/svg+xml' : 'image/png',
+                width: dims.width,
+                height: dims.height
+            },
+            {
+                dpi: savedGrid?.dpi || dims.width,
+                offset: savedGrid?.offset || { x: dims.width / 2, y: dims.height / 2 }
             }
+        )
+            .name(trainer.name)
+            .position({ x: 0, y: 0 })
+            .layer('CHARACTER')
+            .metadata({
+                ...((rawSaved?.metadata?.[METADATA_ID] as Record<string, unknown>) || {}),
+                [METADATA_ID]: trainerMeta,
+                'pokerole-pmd-extension/stats': trainerMeta,
+                'pokerole-pmd-extension/is-backup-token': true
+            });
 
-            const merged = {
-                ...((clone.metadata?.[METADATA_ID] as Record<string, unknown>) || {}),
-                ...trainerMeta
-            };
-            clone.metadata = {
-                ...clone.metadata,
-                [METADATA_ID]: merged,
-                'pokerole-pmd-extension/stats': merged
-            };
-            items.push(clone);
-            startBeltCol = 1;
-        } else {
-            const cleanAvatar = sanitizeImageUrl(trainer.avatarUrl || fallbackUrl);
-            const dims = await resolveImageDimensions(cleanAvatar);
-            const trainerItem = buildImage(
-                {
-                    url: cleanAvatar,
-                    mime: cleanAvatar.endsWith('.svg') ? 'image/svg+xml' : 'image/png',
-                    width: dims.width,
-                    height: dims.height
-                },
-                {
-                    dpi: dims.width,
-                    offset: { x: dims.width / 2, y: dims.height / 2 }
-                }
-            )
-                .name(trainer.name)
-                .position({ x: 0, y: 0 })
-                .layer('CHARACTER')
-                .metadata({
-                    [METADATA_ID]: trainerMeta,
-                    'pokerole-pmd-extension/stats': trainerMeta
-                })
-                .build();
-            items.push(trainerItem);
-            startBeltCol = 1;
+        if (savedScale && typeof savedScale.x === 'number' && typeof savedScale.y === 'number') {
+            builder.scale(savedScale);
         }
+
+        items.push(builder.build());
+        startBeltCol = 1;
     }
 
     // Row 0: Active Party Belt Pokémon
@@ -237,7 +209,8 @@ export async function syncToActiveScene(
                 boxName: allBoxes && allBoxes.length > 1 ? 'All PC Boxes' : box.name,
                 campaignName: campaign.name,
                 updatedAt: Date.now()
-            }
+            },
+            'pokerole-pmd-extension/is-backup-scene': true
         });
 
         // 1. Build the items using the clean spaced grid

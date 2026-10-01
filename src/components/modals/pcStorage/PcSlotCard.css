@@ -140,11 +140,9 @@
 }
 .pc-slot-card__type--electric {
     background: #f8d030;
-    color: #1e293b;
 }
 .pc-slot-card__type--ice {
     background: #98d8d8;
-    color: #1e293b;
 }
 .pc-slot-card__type--fighting {
     background: #c03028;
@@ -154,7 +152,6 @@
 }
 .pc-slot-card__type--ground {
     background: #e0c068;
-    color: #1e293b;
 }
 .pc-slot-card__type--flying {
     background: #a890f0;
@@ -176,14 +173,12 @@
 }
 .pc-slot-card__type--steel {
     background: #b8b8d0;
-    color: #1e293b;
 }
 .pc-slot-card__type--dark {
     background: #705848;
 }
 .pc-slot-card__type--fairy {
     background: #ee99ac;
-    color: #1e293b;
 }
 
 .pc-slot-card__hp-bar {

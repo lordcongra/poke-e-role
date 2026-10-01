@@ -200,6 +200,9 @@ function App() {
                 finalPrimary = typeColor;
                 finalSecondary = '';
             }
+        } else if (unselectedOverride) {
+            finalPrimary = unselectedOverride.p;
+            finalSecondary = unselectedOverride.s || '';
         }
 
         // Apply final resolved theme to DOM

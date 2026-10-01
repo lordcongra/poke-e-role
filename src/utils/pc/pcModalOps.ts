@@ -1,5 +1,5 @@
 import OBR, { buildImage, type Item } from '@owlbear-rodeo/sdk';
-import type { PcPokemonSummary, PcBox } from '../../types/pcStorageTypes';
+import type { PcPokemonSummary, PcBox, TrainerRoster } from '../../types/pcStorageTypes';
 import { METADATA_ID } from '../sync/obr';
 import { getAbsolutePokeballUrl, resolveImageDimensions } from '../generators/trainerTokenSpawner';
 import { rehomeTokenSubtree, calculateRelativeAttachment, chunkItems } from './rehomeEngine';
@@ -32,7 +32,8 @@ export interface RecallPokemonResult {
 export async function spawnPokemonToMap(
     summary: PcPokemonSummary,
     ownerId?: string,
-    role: 'PLAYER' | 'GM' = 'PLAYER'
+    role: 'PLAYER' | 'GM' = 'PLAYER',
+    trainer?: TrainerRoster
 ): Promise<{ success: boolean; newMapTokenId?: string; alreadyOnMap?: boolean }> {
     if (!OBR.isAvailable) {
         return { success: true };
@@ -64,13 +65,23 @@ export async function spawnPokemonToMap(
             return { success: true, newMapTokenId: existingByEntity.id, alreadyOnMap: true };
         }
 
-        // Check if there is an active trainer token on the scene to drop in front of
-        const trainerToken = sceneItems.find((it) => {
-            if (it.layer !== 'CHARACTER') return false;
-            const meta = (it.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
-            const mode = (meta.mode as string) || '';
-            return mode === 'Trainer' || mode === 'Trainer (Special)';
-        });
+        // Only drop in front of a trainer if an active linked trainer is provided AND present on scene
+        let trainerToken: Item | undefined;
+        if (trainer && trainer.isLinked) {
+            trainerToken = sceneItems.find((it) => {
+                if (it.layer !== 'CHARACTER') return false;
+                if (trainer.mapTokenId && it.id === trainer.mapTokenId) return true;
+                const meta = (it.metadata?.[METADATA_ID] || it.metadata?.['pokerole-pmd-extension/stats']) as
+                    | Record<string, unknown>
+                    | undefined;
+                if (!meta) return false;
+                const isTrainer = meta.mode === 'Trainer' || meta.mode === 'Trainer (Special)';
+                return (
+                    isTrainer &&
+                    (meta.name === trainer.name || meta.nickname === trainer.name || it.name === trainer.name)
+                );
+            });
+        }
 
         let landingPos: { x: number; y: number };
         if (trainerToken) {
@@ -376,17 +387,39 @@ export function buildActiveCharacterSummary(
 
 export function filterTrainerPokemonSummaries(
     summaries: Record<string, PcPokemonSummary>,
-    trainer?: { id: string; party: (string | null)[] },
-    campaign?: { boxes: PcBox[] }
+    trainer?: { id: string; party: (string | null)[]; boxes?: PcBox[] },
+    campaign?: { boxes: PcBox[]; teamParty?: (string | null)[] }
 ): PcPokemonSummary[] {
-    const partyEntityIds = new Set(trainer?.party?.filter(Boolean) || []);
+    if (trainer) {
+        const partyEntityIds = new Set(trainer.party?.filter(Boolean) || []);
+        const trainerBoxEntityIds = new Set<string>();
+        for (const b of trainer.boxes || []) {
+            for (const s of b.slots || []) {
+                if (s) trainerBoxEntityIds.add(s);
+            }
+        }
+        return Object.values(summaries).filter((p) => {
+            if (!p) return false;
+            if (partyEntityIds.has(p.entityId)) return false;
+            if (p.trainerId && p.trainerId === trainer.id) return true;
+            if (trainerBoxEntityIds.has(p.entityId)) return true;
+            return false;
+        });
+    }
+
+    // PMD / No-Trainer Mode: Use campaign teamParty and campaign boxes
+    const teamPartyIds = new Set(campaign?.teamParty?.filter(Boolean) || []);
+    const campaignBoxEntityIds = new Set<string>();
+    for (const b of campaign?.boxes || []) {
+        for (const s of b.slots || []) {
+            if (s) campaignBoxEntityIds.add(s);
+        }
+    }
     return Object.values(summaries).filter((p) => {
         if (!p) return false;
-        if (partyEntityIds.has(p.entityId)) return false;
-        if (p.trainerId && trainer && p.trainerId === trainer.id) return true;
-        if (campaign) {
-            return campaign.boxes.some((b) => b.slots.includes(p.entityId));
-        }
+        if (teamPartyIds.has(p.entityId)) return false;
+        if (campaignBoxEntityIds.has(p.entityId)) return true;
+        if (!p.trainerId) return true;
         return false;
     });
 }

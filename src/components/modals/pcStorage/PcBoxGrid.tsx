@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import OBR from '@owlbear-rodeo/sdk';
 import type { PcBox, PcPokemonSummary } from '../../../types/pcStorageTypes';
 import { PcSlotCard } from './PcSlotCard';
 import { Info, X, PlusCircle } from 'lucide-react';
@@ -92,7 +93,11 @@ export const PcBoxGrid: React.FC<PcBoxGridProps> = ({
                             className="action-button action-button--theme pc-box-grid__deposit-btn"
                             style={{ background: theme, borderColor: theme }}
                             onClick={onOpenDepositDrawer}
-                            title="Deposit Pokémon from current map or sheet into this box"
+                            title={
+                                OBR.isAvailable
+                                    ? 'Deposit Pokémon from current map or sheet into this box'
+                                    : 'Deposit Pokémon into this box'
+                            }
                         >
                             <PlusCircle size={13} /> Deposit Pokémon
                         </button>

@@ -1,6 +1,8 @@
 import React from 'react';
+import OBR from '@owlbear-rodeo/sdk';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
+import { useResolvedImageUrl } from '../../../utils/graphics/useResolvedImageUrl';
 import { CornerDownLeft, Sparkles, FileText, ArrowRightLeft } from 'lucide-react';
 import './PcSlotCard.css';
 
@@ -30,6 +32,7 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
     onRecall,
     onDragStart
 }) => {
+    const resolvedAvatar = useResolvedImageUrl(summary.tokenImageUrl, getAbsolutePokeballUrl());
     const hpPercent = summary.maxHp > 0 ? Math.max(0, Math.min(100, (summary.hp / summary.maxHp) * 100)) : 100;
     const hpColor =
         hpPercent > 50
@@ -56,7 +59,7 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
         >
             <div className="pc-slot-card__avatar-wrapper">
                 <img
-                    src={summary.tokenImageUrl || getAbsolutePokeballUrl()}
+                    src={resolvedAvatar}
                     alt={summary.name || summary.species}
                     className="pc-slot-card__avatar"
                     onError={(e) => {
@@ -118,95 +121,97 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
                             <FileText size={13} />
                         </button>
                     )}
-                    {summary.isOnMap ? (
-                        <button
-                            type="button"
-                            className="action-button action-button--dark pc-slot-card__btn-action pc-slot-card__btn-recall"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onRecall?.();
-                            }}
-                            title="Recall Pokémon back into Pokéball"
-                            aria-label="Recall Pokémon back into Pokéball"
-                        >
-                            <CornerDownLeft size={13} />
-                        </button>
-                    ) : (
-                        <button
-                            type="button"
-                            className="action-button action-button--theme pc-slot-card__btn-action pc-slot-card__btn-send"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onSendOut?.();
-                            }}
-                            title="Send Out Pokémon onto battle map"
-                            aria-label="Send Out Pokémon onto battle map"
-                        >
-                            <svg
-                                width={13}
-                                height={13}
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2.2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                style={{ display: 'block' }}
+                    {OBR.isAvailable &&
+                        (summary.isOnMap ? (
+                            <button
+                                type="button"
+                                className="action-button action-button--dark pc-slot-card__btn-action pc-slot-card__btn-recall"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onRecall?.();
+                                }}
+                                title="Recall Pokémon back into Pokéball"
+                                aria-label="Recall Pokémon back into Pokéball"
                             >
-                                <circle cx="12" cy="12" r="10" />
-                                <line x1="2" y1="12" x2="22" y2="12" />
-                                <circle cx="12" cy="12" r="3" />
-                                <circle cx="12" cy="12" r="1" fill="currentColor" />
-                            </svg>
-                        </button>
-                    )}
+                                <CornerDownLeft size={13} />
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                className="action-button action-button--theme pc-slot-card__btn-action pc-slot-card__btn-send"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onSendOut?.();
+                                }}
+                                title="Send Out Pokémon onto battle map"
+                                aria-label="Send Out Pokémon onto battle map"
+                            >
+                                <svg
+                                    width={13}
+                                    height={13}
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    style={{ display: 'block' }}
+                                >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="2" y1="12" x2="22" y2="12" />
+                                    <circle cx="12" cy="12" r="3" />
+                                    <circle cx="12" cy="12" r="1" fill="currentColor" />
+                                </svg>
+                            </button>
+                        ))}
                 </div>
             ) : (
                 <div className="pc-slot-card__box-actions">
-                    {summary.isOnMap
-                        ? onRecall && (
-                              <button
-                                  type="button"
-                                  className="action-button action-button--dark pc-slot-card__btn-box-action pc-slot-card__btn-recall"
-                                  onClick={(e) => {
-                                      e.stopPropagation();
-                                      onRecall();
-                                  }}
-                                  title="Recall Pokémon from map into PC Box"
-                                  aria-label="Recall Pokémon from map into PC Box"
-                              >
-                                  <CornerDownLeft size={12} />
-                              </button>
-                          )
-                        : onSendOut && (
-                              <button
-                                  type="button"
-                                  className="action-button action-button--theme pc-slot-card__btn-box-action pc-slot-card__btn-send"
-                                  onClick={(e) => {
-                                      e.stopPropagation();
-                                      onSendOut();
-                                  }}
-                                  title="Send Out Pokémon onto battle map"
-                                  aria-label="Send Out Pokémon onto battle map"
-                              >
-                                  <svg
-                                      width={11}
-                                      height={11}
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2.2"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      style={{ display: 'block' }}
+                    {OBR.isAvailable &&
+                        (summary.isOnMap
+                            ? onRecall && (
+                                  <button
+                                      type="button"
+                                      className="action-button action-button--dark pc-slot-card__btn-box-action pc-slot-card__btn-recall"
+                                      onClick={(e) => {
+                                          e.stopPropagation();
+                                          onRecall();
+                                      }}
+                                      title="Recall Pokémon from map into PC Box"
+                                      aria-label="Recall Pokémon from map into PC Box"
                                   >
-                                      <circle cx="12" cy="12" r="10" />
-                                      <line x1="2" y1="12" x2="22" y2="12" />
-                                      <circle cx="12" cy="12" r="3" />
-                                      <circle cx="12" cy="12" r="1" fill="currentColor" />
-                                  </svg>
-                              </button>
-                          )}
+                                      <CornerDownLeft size={12} />
+                                  </button>
+                              )
+                            : onSendOut && (
+                                  <button
+                                      type="button"
+                                      className="action-button action-button--theme pc-slot-card__btn-box-action pc-slot-card__btn-send"
+                                      onClick={(e) => {
+                                          e.stopPropagation();
+                                          onSendOut();
+                                      }}
+                                      title="Send Out Pokémon onto battle map"
+                                      aria-label="Send Out Pokémon onto battle map"
+                                  >
+                                      <svg
+                                          width={11}
+                                          height={11}
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth="2.2"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          style={{ display: 'block' }}
+                                      >
+                                          <circle cx="12" cy="12" r="10" />
+                                          <line x1="2" y1="12" x2="22" y2="12" />
+                                          <circle cx="12" cy="12" r="3" />
+                                          <circle cx="12" cy="12" r="1" fill="currentColor" />
+                                      </svg>
+                                  </button>
+                              ))}
                     {onMoveToParty && (
                         <button
                             type="button"

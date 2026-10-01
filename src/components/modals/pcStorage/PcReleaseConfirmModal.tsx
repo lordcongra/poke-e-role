@@ -1,6 +1,7 @@
 import React from 'react';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
+import { useResolvedImageUrl } from '../../../utils/graphics/useResolvedImageUrl';
 import { AlertTriangle, Trash2, X, Unlink } from 'lucide-react';
 import './PcReleaseConfirmModal.css';
 
@@ -18,6 +19,7 @@ export const PcReleaseConfirmModal: React.FC<PcReleaseConfirmModalProps> = ({
     onClose
 }) => {
     const displayName = pokemon.name || pokemon.species;
+    const resolvedAvatar = useResolvedImageUrl(pokemon.tokenImageUrl, getAbsolutePokeballUrl());
 
     return (
         <div className="pc-release-modal-backdrop" onClick={onClose}>
@@ -35,7 +37,7 @@ export const PcReleaseConfirmModal: React.FC<PcReleaseConfirmModalProps> = ({
                 <div className="pc-release-modal__body">
                     <div className="pc-release-modal__card">
                         <img
-                            src={pokemon.tokenImageUrl || getAbsolutePokeballUrl()}
+                            src={resolvedAvatar}
                             alt={displayName}
                             className="pc-release-modal__avatar"
                             onError={(e) => {

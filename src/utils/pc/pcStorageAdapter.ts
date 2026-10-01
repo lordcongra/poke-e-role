@@ -33,6 +33,7 @@ export function createDefaultCampaign(id = 'default', name = 'Main Adventure'): 
             }
         },
         boxes,
+        teamParty: Array(6).fill(null),
         lastSynced: Date.now()
     };
 }
@@ -115,15 +116,6 @@ export async function loadPcStorage(): Promise<PcStorageData> {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
-            if (raw.length > 500_000) {
-                console.warn(
-                    '[PcStorageAdapter] Detected oversized storage payload (>500KB), auto-clearing corrupt cache.'
-                );
-                emergencyClearPcStorage();
-                const fresh = createInitialPcStorageData();
-                savePcStorage(fresh);
-                return fresh;
-            }
             const parsed = JSON.parse(raw) as PcStorageData;
             if (parsed && parsed.campaigns && typeof parsed.campaigns === 'object') {
                 return sanitizePcData(parsed);
@@ -131,7 +123,6 @@ export async function loadPcStorage(): Promise<PcStorageData> {
         }
     } catch (e) {
         console.warn('[PcStorageAdapter] localStorage read failed:', e);
-        emergencyClearPcStorage();
     }
 
     const initial = createInitialPcStorageData();
@@ -156,7 +147,7 @@ if (typeof window !== 'undefined') {
     (window as unknown as Record<string, unknown>).pkrClearPcStorage = emergencyClearPcStorage;
 }
 
-function sanitizePcData(data: PcStorageData): PcStorageData {
+export function sanitizePcData(data: PcStorageData): PcStorageData {
     if (!data.pokemonSummaries || typeof data.pokemonSummaries !== 'object') {
         data.pokemonSummaries = {};
     }
@@ -170,41 +161,89 @@ function sanitizePcData(data: PcStorageData): PcStorageData {
         if (!camp.trainers || typeof camp.trainers !== 'object') {
             camp.trainers = {};
         }
+        if (!Array.isArray(camp.teamParty)) {
+            camp.teamParty = Array(6).fill(null);
+        }
+        if (!Array.isArray(camp.boxes)) {
+            camp.boxes = Array.from({ length: 8 }, (_, i) => createDefaultBox(i));
+        }
+
+        const claimedByTrainer = new Map<string, string>();
+
         for (const t of Object.values(camp.trainers)) {
             if (t.avatarUrl && (t.avatarUrl.startsWith('file:') || t.avatarUrl.startsWith('file:///'))) {
                 t.avatarUrl = undefined;
             }
             if (!Array.isArray(t.party)) {
                 t.party = Array(6).fill(null);
-            } else {
-                for (const pid of t.party) {
-                    if (pid) referencedIds.add(pid);
-                }
             }
             if (!Array.isArray(t.boxes) || t.boxes.length === 0) {
-                t.boxes =
-                    Array.isArray(camp.boxes) && camp.boxes.length > 0
-                        ? JSON.parse(JSON.stringify(camp.boxes))
-                        : Array.from({ length: 8 }, (_, i) => createDefaultBox(i));
+                const isSingleLegacyTrainer =
+                    Object.keys(camp.trainers).length === 1 &&
+                    Array.isArray(camp.boxes) &&
+                    camp.boxes.some((b) => b.slots.some(Boolean));
+                t.boxes = isSingleLegacyTrainer
+                    ? JSON.parse(JSON.stringify(camp.boxes))
+                    : Array.from({ length: 8 }, (_, i) => createDefaultBox(i));
             }
+
+            t.party = t.party.map((pid) => {
+                if (!pid) return null;
+                const existingTrainer = claimedByTrainer.get(pid);
+                if (existingTrainer && existingTrainer !== t.id) return null;
+                const sum = data.pokemonSummaries[pid];
+                if (sum?.trainerId && sum.trainerId !== t.id) return null;
+                claimedByTrainer.set(pid, t.id);
+                return pid;
+            });
+
             for (const b of t.boxes || []) {
                 if (Array.isArray(b.slots)) {
-                    for (const pid of b.slots) {
-                        if (pid) referencedIds.add(pid);
-                    }
+                    b.slots = b.slots.map((pid) => {
+                        if (!pid) return null;
+                        const existingTrainer = claimedByTrainer.get(pid);
+                        if (existingTrainer && existingTrainer !== t.id) return null;
+                        const sum = data.pokemonSummaries[pid];
+                        if (sum?.trainerId && sum.trainerId !== t.id) return null;
+                        claimedByTrainer.set(pid, t.id);
+                        return pid;
+                    });
                 }
             }
         }
-        if (!Array.isArray(camp.boxes)) {
-            camp.boxes = Array.from({ length: 8 }, (_, i) => createDefaultBox(i));
-        } else {
+
+        if (Object.keys(camp.trainers).length > 0) {
             for (const b of camp.boxes) {
                 if (Array.isArray(b.slots)) {
-                    for (const pid of b.slots) {
-                        if (pid) referencedIds.add(pid);
-                    }
+                    b.slots = b.slots.map((pid) => {
+                        if (pid && claimedByTrainer.has(pid)) return null;
+                        return pid;
+                    });
                 }
             }
+            camp.teamParty = camp.teamParty.map((pid) => {
+                if (pid && claimedByTrainer.has(pid)) return null;
+                return pid;
+            });
+        }
+
+        for (const t of Object.values(camp.trainers)) {
+            for (const pid of t.party) {
+                if (pid) referencedIds.add(pid);
+            }
+            for (const b of t.boxes || []) {
+                for (const pid of b.slots || []) {
+                    if (pid) referencedIds.add(pid);
+                }
+            }
+        }
+        for (const b of camp.boxes) {
+            for (const pid of b.slots || []) {
+                if (pid) referencedIds.add(pid);
+            }
+        }
+        for (const pid of camp.teamParty) {
+            if (pid) referencedIds.add(pid);
         }
     }
 
@@ -244,12 +283,6 @@ export async function savePcStorage(data: PcStorageData): Promise<void> {
         if (!payload) return;
 
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-        } catch (e) {
-            console.warn('[PcStorageAdapter] localStorage write failed:', e);
-        }
-
-        try {
             const db = await openDatabase();
             await new Promise<void>((resolve, reject) => {
                 const tx = db.transaction(STORE_NAME, 'readwrite');
@@ -260,6 +293,15 @@ export async function savePcStorage(data: PcStorageData): Promise<void> {
             });
         } catch (e) {
             console.warn('[PcStorageAdapter] IndexedDB write failed:', e);
+        }
+
+        try {
+            const serialized = JSON.stringify(payload);
+            if (serialized.length < 2_500_000) {
+                localStorage.setItem(STORAGE_KEY, serialized);
+            }
+        } catch (e) {
+            console.warn('[PcStorageAdapter] localStorage fallback write skipped or exceeded quota:', e);
         }
     }, 150);
 }

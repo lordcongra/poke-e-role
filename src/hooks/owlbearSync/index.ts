@@ -5,3 +5,4 @@ export * from './setupOwlbearPlayerSync';
 export * from './setupOwlbearHomebrewSync';
 export * from './setupOwlbearItemArtSync';
 export * from './setupOwlbearRollSync';
+export * from './setupOwlbearPcSync';

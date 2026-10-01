@@ -20,7 +20,7 @@ import {
 } from '../../../utils/pc/pcModalOps';
 import { checkTrainerOnMap, buildLinkedTrainer } from '../../../utils/pc/pcTrainerOps';
 import { savePcStorage } from '../../../utils/pc/pcStorageAdapter';
-import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
+import { prepareDepositSummary } from '../../../utils/pc/pcDepositOps';
 
 interface UsePcModalHandlersParams {
     pcData: PcStorageData;
@@ -33,6 +33,7 @@ interface UsePcModalHandlersParams {
         nickname?: string;
         species?: string;
         tokenImageUrl?: string | null;
+        themePrimaryOverride?: string;
     };
     canLinkActiveTrainer: boolean;
     depositTarget: { targetSlot?: { type: 'party' | 'box'; index: number } } | null;
@@ -98,7 +99,11 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         const currentName = identity.nickname || identity.species;
         if (!currentName) return;
         const currentAvatar = identity.tokenImageUrl || undefined;
-        if (trainer.name !== currentName || (currentAvatar && trainer.avatarUrl !== currentAvatar)) {
+        if (
+            trainer.name !== currentName ||
+            (currentAvatar && trainer.avatarUrl !== currentAvatar) ||
+            trainer.fullMetadata?.['theme-primary-override'] !== identity.themePrimaryOverride
+        ) {
             const store = useCharacterStore.getState();
             const nextTrainer = buildLinkedTrainer(trainer, store, currentName, currentAvatar);
             const nextData = {
@@ -122,17 +127,34 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         identity.nickname,
         identity.species,
         identity.tokenImageUrl,
+        identity.themePrimaryOverride,
         pcData
     ]);
 
     const handleLinkActiveTrainer = async () => {
         if (!trainer || !campaign) return;
         if (!canLinkActiveTrainer) {
+            const store = useCharacterStore.getState();
+            const activeTokenId = store.tokenId;
+            const activeTrainerName = (identity.nickname || identity.species || '').trim();
+            const otherTrainer = Object.values(campaign.trainers).find(
+                (t) =>
+                    t.id !== trainer.id &&
+                    ((activeTokenId && (t.mapTokenId === activeTokenId || t.savedTokenItem?.id === activeTokenId)) ||
+                        (t.isLinked && activeTrainerName && t.name.toLowerCase() === activeTrainerName.toLowerCase()))
+            );
             if (OBR.isAvailable) {
-                OBR.notification.show(
-                    'Only tokens set to Trainer or Trainer (Special) mode can be linked to the belt.',
-                    'WARNING'
-                );
+                if (otherTrainer) {
+                    OBR.notification.show(
+                        `Cannot link: This token is already linked to Trainer "${otherTrainer.name}".`,
+                        'WARNING'
+                    );
+                } else {
+                    OBR.notification.show(
+                        'Only tokens set to Trainer or Trainer (Special) mode can be linked to the belt.',
+                        'WARNING'
+                    );
+                }
             }
             return;
         }
@@ -192,7 +214,7 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         const summary = pcData.pokemonSummaries[entityId];
         if (!summary) return;
 
-        const result = await spawnPokemonToMap(summary, undefined, role || 'PLAYER');
+        const result = await spawnPokemonToMap(summary, undefined, role || 'PLAYER', trainer);
         if (result.alreadyOnMap) {
             if (OBR.isAvailable) {
                 OBR.notification.show(`${summary.name || summary.species} is already on the board!`, 'WARNING');
@@ -309,46 +331,26 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
     const handleDropTrainerToken = async () => {
         if (!trainer) return;
         const res = await spawnTrainerToMap(trainer, role);
-        if (res.alreadyOnMap) {
-            if (OBR.isAvailable) {
-                OBR.notification.show(`${trainer.name} is already on the board!`, 'WARNING');
-            }
-            if (res.newMapTokenId && trainer.mapTokenId !== res.newMapTokenId && campaign) {
-                const nextTrainer = { ...trainer, mapTokenId: res.newMapTokenId };
-                const nextData = {
-                    ...pcData,
-                    campaigns: {
-                        ...pcData.campaigns,
-                        [pcData.activeCampaignId]: {
-                            ...campaign,
-                            trainers: { ...campaign.trainers, [trainer.id]: nextTrainer }
-                        }
-                    }
-                };
-                useCharacterStore.setState({ pcData: nextData });
-                savePcStorage(nextData);
-            }
-            return;
+        if (res.alreadyOnMap && OBR.isAvailable) {
+            OBR.notification.show(`${trainer.name} is already on the board!`, 'WARNING');
+        } else if (res.success && res.newMapTokenId && OBR.isAvailable) {
+            OBR.notification.show(`Placed ${trainer.name} on the map!`, 'SUCCESS');
         }
-        if (res.success && res.newMapTokenId) {
+
+        if (res.newMapTokenId && trainer.mapTokenId !== res.newMapTokenId && campaign) {
             const nextTrainer = { ...trainer, mapTokenId: res.newMapTokenId };
-            if (campaign) {
-                const nextData = {
-                    ...pcData,
-                    campaigns: {
-                        ...pcData.campaigns,
-                        [pcData.activeCampaignId]: {
-                            ...campaign,
-                            trainers: { ...campaign.trainers, [trainer.id]: nextTrainer }
-                        }
+            const nextData = {
+                ...pcData,
+                campaigns: {
+                    ...pcData.campaigns,
+                    [pcData.activeCampaignId]: {
+                        ...campaign,
+                        trainers: { ...campaign.trainers, [trainer.id]: nextTrainer }
                     }
-                };
-                useCharacterStore.setState({ pcData: nextData });
-                savePcStorage(nextData);
-            }
-            if (OBR.isAvailable) {
-                OBR.notification.show(`Placed ${trainer.name} on the map!`, 'SUCCESS');
-            }
+                }
+            };
+            useCharacterStore.setState({ pcData: nextData });
+            savePcStorage(nextData);
         }
     };
 
@@ -411,57 +413,19 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
     };
 
     const handleCompleteDeposit = async (summary: PcPokemonSummary) => {
-        let finalSummary = { ...summary };
-        if (trainer && !finalSummary.trainerId) {
-            finalSummary.trainerId = trainer.id;
-        }
-        if (!finalSummary.fullMetadata) {
-            finalSummary.fullMetadata = flattenStateToMetadata(useCharacterStore.getState());
-        }
-        if (!finalSummary.savedTokenItem && OBR.isAvailable && finalSummary.mapTokenId) {
-            try {
-                const items = await OBR.scene.items.getItems([finalSummary.mapTokenId]);
-                if (items.length > 0) {
-                    finalSummary.savedTokenItem = items[0];
-                }
-            } catch (e) {
-                console.warn('[PcModalHandlers] Failed to get map token for deposit:', e);
-            }
-        }
+        const finalSummary = await prepareDepositSummary(
+            summary,
+            trainer,
+            pcData.pokemonSummaries,
+            useCharacterStore.getState()
+        );
 
-        // Stamp claim on map token
-        if (OBR.isAvailable && finalSummary.mapTokenId) {
-            try {
-                const myId = await OBR.player.getId();
-                const myName = await OBR.player.getName();
-                await OBR.scene.items.updateItems([finalSummary.mapTokenId], (items) => {
-                    for (const it of items) {
-                        it.metadata['pokerole-pmd-extension/claimed-by'] = {
-                            playerId: myId,
-                            playerName: myName,
-                            entityId: finalSummary.entityId,
-                            trainerName: trainer?.name
-                        };
-                    }
-                });
-            } catch (e) {
-                console.warn('[PcModalHandlers] Failed to stamp claimed-by on deposit:', e);
-            }
-        }
-
-        // Unify with existing summary if it is the same token
-        if (pcData.pokemonSummaries && finalSummary.mapTokenId) {
-            const existingMatch = Object.values(pcData.pokemonSummaries).find(
-                (s) => s.mapTokenId === finalSummary.mapTokenId || s.savedTokenItem?.id === finalSummary.mapTokenId
-            );
-            if (existingMatch) finalSummary.entityId = existingMatch.entityId;
-        }
-
-        // Prevent duplicate addition if already on belt
-        if (depositTarget?.targetSlot?.type === 'party' && trainer?.party?.includes(finalSummary.entityId)) {
+        // Prevent duplicate addition if already in party
+        const currentParty = trainer ? trainer.party : campaign?.teamParty || [];
+        if (depositTarget?.targetSlot?.type === 'party' && currentParty.includes(finalSummary.entityId)) {
             if (OBR.isAvailable) {
                 OBR.notification.show(
-                    `${finalSummary.name || finalSummary.species} is already on your belt!`,
+                    `${finalSummary.name || finalSummary.species} is already in the party!`,
                     'WARNING'
                 );
             }
@@ -469,8 +433,9 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         }
 
         updatePokemonSummary(finalSummary);
-        if (depositTarget?.targetSlot?.type === 'party' && trainer) {
-            setPartySlot(trainer.id, depositTarget.targetSlot.index, finalSummary.entityId);
+        if (depositTarget?.targetSlot?.type === 'party') {
+            const trId = trainer ? trainer.id : '__none__';
+            setPartySlot(trId, depositTarget.targetSlot.index, finalSummary.entityId);
         } else if (depositTarget?.targetSlot?.type === 'box') {
             setBoxSlot(activeBoxIndex, depositTarget.targetSlot.index, finalSummary.entityId);
         } else {

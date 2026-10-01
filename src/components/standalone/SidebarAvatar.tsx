@@ -17,7 +17,7 @@ export function SidebarAvatar({ meta }: SidebarAvatarProps) {
         const resolveImage = async () => {
             const imageString = extractTokenImage(meta);
 
-            if (!imageString) {
+            if (!imageString || imageString.startsWith('file:') || imageString.startsWith('file:///')) {
                 if (isMounted) setResolvedImage('');
                 return;
             }
