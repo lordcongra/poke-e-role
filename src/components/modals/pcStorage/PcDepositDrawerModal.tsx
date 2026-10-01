@@ -232,14 +232,22 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
             >
                 <header className="modal-header pc-deposit-modal__header">
                     <div className="pc-deposit-modal__title-group">
-                        <PlusCircle size={20} className="pc-deposit-modal__icon" />
-                        <div>
+                        <div className="pc-deposit-modal__title-row">
+                            <PlusCircle size={18} className="pc-deposit-modal__icon" />
                             <h3 className="modal-title text-title-primary">{slotTitle}</h3>
-                            <p className="text-subtext">Choose a Pokémon to store into this slot</p>
                         </div>
+                        <p className="text-subtext pc-deposit-modal__subtitle">
+                            Choose a Pokémon to store into this slot
+                        </p>
                     </div>
-                    <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
-                        <X size={16} />
+                    <button
+                        type="button"
+                        className="action-button action-button--ghost pc-deposit-modal__close-btn"
+                        onClick={onClose}
+                        aria-label="Close"
+                        title="Close"
+                    >
+                        <X size={18} />
                     </button>
                 </header>
 

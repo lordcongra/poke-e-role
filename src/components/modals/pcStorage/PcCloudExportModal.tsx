@@ -9,12 +9,14 @@ interface PcCloudExportModalProps {
     pokemonSummaries: Record<string, PcPokemonSummary>;
     partySlots?: (string | null)[];
     trainer?: TrainerRoster;
+    allBoxes?: PcBox[];
     boxTheme?: string;
     onConfirm: (
         customSceneName: string,
         includeParty: boolean,
         includeTrainer: boolean,
-        targetMode: 'activeScene' | 'cloud'
+        targetMode: 'activeScene' | 'cloud',
+        backupAllBoxes: boolean
     ) => void;
     onClose: () => void;
 }
@@ -25,18 +27,26 @@ export const PcCloudExportModal: React.FC<PcCloudExportModalProps> = ({
     pokemonSummaries,
     partySlots = [],
     trainer,
+    allBoxes = [],
     boxTheme,
     onConfirm,
     onClose
 }) => {
-    const defaultName = `PKR [${campaign.name}] - ${box.name}`;
+    const defaultName = `PKR [${campaign.name}] - ${allBoxes.length > 1 ? 'All PC Boxes' : box.name}`;
     const [sceneName, setSceneName] = useState(defaultName);
     const [targetMode, setTargetMode] = useState<'activeScene' | 'cloud'>('activeScene');
     const [includeParty, setIncludeParty] = useState(true);
     const [includeTrainer, setIncludeTrainer] = useState(true);
+    const [backupAllBoxes, setBackupAllBoxes] = useState(true);
 
-    const boxPokemon = box.slots
-        .filter((id): id is string => Boolean(id))
+    const boxesToScan = backupAllBoxes && allBoxes && allBoxes.length > 0 ? allBoxes : [box];
+    const storedEntityIds = new Set<string>();
+    for (const b of boxesToScan) {
+        for (const s of b.slots || []) {
+            if (s) storedEntityIds.add(s);
+        }
+    }
+    const storedPokemon = Array.from(storedEntityIds)
         .map((id) => pokemonSummaries[id])
         .filter(Boolean);
 
@@ -45,7 +55,7 @@ export const PcCloudExportModal: React.FC<PcCloudExportModalProps> = ({
         .map((id) => pokemonSummaries[id])
         .filter(Boolean);
 
-    const totalPokemon = includeParty ? Array.from(new Set([...boxPokemon, ...partyPokemon])) : boxPokemon;
+    const totalPokemon = includeParty ? Array.from(new Set([...storedPokemon, ...partyPokemon])) : storedPokemon;
 
     return (
         <div
@@ -88,8 +98,14 @@ export const PcCloudExportModal: React.FC<PcCloudExportModalProps> = ({
                             </p>
                         </div>
                     </div>
-                    <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
-                        <X size={16} />
+                    <button
+                        type="button"
+                        className="action-button action-button--ghost pc-deposit-modal__close-btn"
+                        onClick={onClose}
+                        aria-label="Close"
+                        title="Close"
+                    >
+                        <X size={18} />
                     </button>
                 </header>
 
@@ -189,6 +205,32 @@ export const PcCloudExportModal: React.FC<PcCloudExportModalProps> = ({
                                 </span>
                             </label>
                         )}
+
+                        {allBoxes && allBoxes.length > 1 && (
+                            <label
+                                className="text-subtext"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    cursor: 'pointer',
+                                    padding: '6px 8px',
+                                    background: 'rgba(0, 0, 0, 0.25)',
+                                    borderRadius: '6px'
+                                }}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={backupAllBoxes}
+                                    onChange={(e) => setBackupAllBoxes(e.target.checked)}
+                                    style={{ cursor: 'pointer' }}
+                                />
+                                <span>
+                                    Backup <strong>All {allBoxes.length} PC Boxes</strong> ({storedPokemon.length}{' '}
+                                    stored Pokémon)
+                                </span>
+                            </label>
+                        )}
                     </div>
 
                     <div className="pc-cloud-modal__hint-box">
@@ -196,8 +238,9 @@ export const PcCloudExportModal: React.FC<PcCloudExportModalProps> = ({
                         <div className="pc-cloud-modal__hint-text text-subtext">
                             {targetMode === 'activeScene' ? (
                                 <span>
-                                    <strong>In-Place Scene Sync:</strong> All tokens for this Box (and Belt) will be
-                                    arranged in a clean 300px grid on your open Owlbear map without stacking.
+                                    <strong>In-Place Scene Sync:</strong> All tokens for your{' '}
+                                    {backupAllBoxes ? 'entire PC & Belt' : 'Box & Belt'} will be arranged in a clean
+                                    300px grid on your open Owlbear map without stacking.
                                 </span>
                             ) : (
                                 <span>
@@ -241,7 +284,13 @@ export const PcCloudExportModal: React.FC<PcCloudExportModalProps> = ({
                         type="button"
                         className="action-button action-button--theme"
                         onClick={() =>
-                            onConfirm(sceneName.trim() || defaultName, includeParty, includeTrainer, targetMode)
+                            onConfirm(
+                                sceneName.trim() || defaultName,
+                                includeParty,
+                                includeTrainer,
+                                targetMode,
+                                backupAllBoxes
+                            )
                         }
                     >
                         {targetMode === 'activeScene' ? (

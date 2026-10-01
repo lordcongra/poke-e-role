@@ -1,0 +1,158 @@
+/* ==========================================================================
+   PC Guide / Workflow Help Modal
+   ========================================================================== */
+
+.pc-guide-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10040;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.78);
+    backdrop-filter: blur(4px);
+    padding: 16px;
+    animation: pcGuideFadeIn 0.15s ease-out;
+}
+
+@keyframes pcGuideFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.pc-guide-modal {
+    width: 100%;
+    max-width: 580px;
+    max-height: 85vh;
+    background: var(--panel-bg, #1e293b);
+    border: 1px solid var(--primary, #3b82f6);
+    border-radius: 10px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.pc-guide-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--panel-alt, #0f172a);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pc-guide-modal__title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pc-guide-modal__icon {
+    color: var(--primary, #3b82f6);
+    flex-shrink: 0;
+}
+
+.pc-guide-modal__close-btn {
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-muted, #94a3b8) !important;
+    cursor: pointer !important;
+    padding: 6px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none !important;
+    transition:
+        background 0.15s,
+        color 0.15s;
+}
+
+.pc-guide-modal__close-btn:hover {
+    background: rgba(239, 68, 68, 0.2) !important;
+    color: #ef4444 !important;
+}
+
+.pc-guide-modal__tabs {
+    display: flex;
+    background: rgba(0, 0, 0, 0.25);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pc-guide-modal__tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 12px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.pc-guide-modal__tab:hover {
+    color: var(--text-main, #f8fafc);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.pc-guide-modal__tab--active {
+    color: var(--primary, #3b82f6) !important;
+    border-bottom-color: var(--primary, #3b82f6) !important;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.pc-guide-modal__body {
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    line-height: 1.5;
+}
+
+.pc-guide-modal__heading {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-main, #f8fafc);
+    margin: 0 0 6px 0;
+    font-size: 0.9rem;
+}
+
+.pc-guide-modal__content-section ul,
+.pc-guide-modal__content-section ol {
+    margin: 6px 0 0 0;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pc-guide-modal__callout {
+    background: color-mix(in srgb, var(--primary, #3b82f6) 12%, rgba(0, 0, 0, 0.4));
+    border-left: 3px solid var(--primary, #3b82f6);
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin: 8px 0;
+    color: var(--text-main, #f8fafc);
+    font-size: 0.82rem;
+}
+
+.pc-guide-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px 16px;
+    background: var(--panel-alt, #0f172a);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}

@@ -356,12 +356,15 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         customSceneName: string,
         includeParty: boolean = true,
         includeTrainer: boolean = true,
-        targetMode: 'cloud' | 'activeScene' = 'cloud'
+        targetMode: 'cloud' | 'activeScene' = 'cloud',
+        backupAllBoxes: boolean = true
     ) => {
         if (!currentBox || !campaign) return;
         setIsExportModalOpen(false);
         const partyIds = includeParty && trainer ? trainer.party : undefined;
         const trainerToExport = includeTrainer && trainer ? trainer : undefined;
+        const currentTrainerBoxes = trainer?.boxes && trainer.boxes.length > 0 ? trainer.boxes : campaign.boxes;
+        const allBoxesToPass = backupAllBoxes ? currentTrainerBoxes : [currentBox];
 
         if (targetMode === 'activeScene') {
             const success = await syncToActiveScene(
@@ -369,10 +372,12 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
                 campaign,
                 pcData.pokemonSummaries,
                 partyIds,
-                trainerToExport
+                trainerToExport,
+                allBoxesToPass
             );
             if (success && OBR.isAvailable) {
-                OBR.notification.show(`Updated current scene with ${currentBox.name} Pokémon!`, 'SUCCESS');
+                const label = backupAllBoxes ? 'All PC' : currentBox.name;
+                OBR.notification.show(`Updated current scene with ${label} Pokémon!`, 'SUCCESS');
             }
             return;
         }
@@ -383,7 +388,8 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
             pcData.pokemonSummaries,
             customSceneName,
             partyIds,
-            trainerToExport
+            trainerToExport,
+            allBoxesToPass
         );
         if (success && OBR.isAvailable) {
             OBR.notification.show(`Saved "${customSceneName}" to Owlbear Rodeo Cloud!`, 'SUCCESS');

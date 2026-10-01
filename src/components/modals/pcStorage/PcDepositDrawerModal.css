@@ -48,12 +48,52 @@
 
 .pc-deposit-modal__title-group {
     display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.pc-deposit-modal__title-row {
+    display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+}
+
+.pc-deposit-modal__title-row .modal-title {
+    margin: 0;
+    line-height: 1.2;
 }
 
 .pc-deposit-modal__icon {
     color: var(--primary, #3b82f6);
+    flex-shrink: 0;
+}
+
+.pc-deposit-modal__subtitle {
+    margin: 0;
+    padding-left: 26px;
+    font-size: 0.78rem;
+}
+
+.pc-deposit-modal__close-btn {
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-muted, #94a3b8) !important;
+    cursor: pointer !important;
+    padding: 6px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none !important;
+    transition:
+        background 0.15s,
+        color 0.15s,
+        transform 0.15s;
+}
+
+.pc-deposit-modal__close-btn:hover {
+    background: rgba(239, 68, 68, 0.2) !important;
+    color: #ef4444 !important;
 }
 
 .pc-deposit-modal__body {

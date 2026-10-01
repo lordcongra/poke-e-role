@@ -19,6 +19,7 @@ export function createDefaultBox(index: number): PcBox {
 
 export function createDefaultCampaign(id = 'default', name = 'Main Adventure'): CampaignProfile {
     const trainerId = `trainer-${crypto.randomUUID().slice(0, 8)}`;
+    const boxes = Array.from({ length: 8 }, (_, i) => createDefaultBox(i));
     return {
         id,
         name,
@@ -27,10 +28,11 @@ export function createDefaultCampaign(id = 'default', name = 'Main Adventure'): 
             [trainerId]: {
                 id: trainerId,
                 name: 'Trainer',
-                party: Array(6).fill(null)
+                party: Array(6).fill(null),
+                boxes: Array.from({ length: 8 }, (_, i) => createDefaultBox(i))
             }
         },
-        boxes: Array.from({ length: 8 }, (_, i) => createDefaultBox(i)),
+        boxes,
         lastSynced: Date.now()
     };
 }
@@ -169,11 +171,27 @@ function sanitizePcData(data: PcStorageData): PcStorageData {
             camp.trainers = {};
         }
         for (const t of Object.values(camp.trainers)) {
+            if (t.avatarUrl && (t.avatarUrl.startsWith('file:') || t.avatarUrl.startsWith('file:///'))) {
+                t.avatarUrl = undefined;
+            }
             if (!Array.isArray(t.party)) {
                 t.party = Array(6).fill(null);
             } else {
                 for (const pid of t.party) {
                     if (pid) referencedIds.add(pid);
+                }
+            }
+            if (!Array.isArray(t.boxes) || t.boxes.length === 0) {
+                t.boxes =
+                    Array.isArray(camp.boxes) && camp.boxes.length > 0
+                        ? JSON.parse(JSON.stringify(camp.boxes))
+                        : Array.from({ length: 8 }, (_, i) => createDefaultBox(i));
+            }
+            for (const b of t.boxes || []) {
+                if (Array.isArray(b.slots)) {
+                    for (const pid of b.slots) {
+                        if (pid) referencedIds.add(pid);
+                    }
                 }
             }
         }
@@ -190,21 +208,24 @@ function sanitizePcData(data: PcStorageData): PcStorageData {
         }
     }
 
-    // Defensive auto-cleansing: If summaries ballooned beyond 250 (e.g. from an infinite loop)
-    // prune all unreferenced orphan summaries immediately.
-    const summaryKeys = Object.keys(data.pokemonSummaries);
-    if (summaryKeys.length > 250) {
-        console.warn(
-            `[PcStorageAdapter] Detected summary bloat (${summaryKeys.length} summaries). Pruning to referenced entities only.`
-        );
-        const pruned: Record<string, PcPokemonSummary> = {};
-        for (const [id, summary] of Object.entries(data.pokemonSummaries)) {
-            if (referencedIds.has(id)) {
-                pruned[id] = summary;
-            }
+    // Sanitize any file:/// URLs from stored Pokémon summaries
+    for (const summary of Object.values(data.pokemonSummaries)) {
+        if (
+            summary.tokenImageUrl &&
+            (summary.tokenImageUrl.startsWith('file:') || summary.tokenImageUrl.startsWith('file:///'))
+        ) {
+            summary.tokenImageUrl = undefined;
         }
-        data.pokemonSummaries = pruned;
     }
+
+    // Auto-cleansing: prune unreferenced orphan summaries that are not in any party/box and not on the map
+    const pruned: Record<string, PcPokemonSummary> = {};
+    for (const [id, summary] of Object.entries(data.pokemonSummaries)) {
+        if (referencedIds.has(id) || summary.isOnMap) {
+            pruned[id] = summary;
+        }
+    }
+    data.pokemonSummaries = pruned;
 
     return data;
 }

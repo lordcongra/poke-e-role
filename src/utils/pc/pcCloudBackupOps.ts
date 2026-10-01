@@ -1,19 +1,20 @@
 import OBR, { buildImage, type Item } from '@owlbear-rodeo/sdk';
 import { METADATA_ID } from '../sync/obr';
 import type { PcBox, CampaignProfile, PcPokemonSummary, TrainerRoster } from '../../types/pcStorageTypes';
-import { getAbsolutePokeballUrl, resolveImageDimensions } from '../generators/trainerTokenSpawner';
+import { getAbsolutePokeballUrl, resolveImageDimensions, sanitizeImageUrl } from '../generators/trainerTokenSpawner';
 import { uploadBoxToObrCloud, downloadBoxFromObrCloud } from './pcStorageAdapter';
 
 /**
- * Builds array of Character tokens for a Box and optional Trainer Belt arranged
- * in a spaced battle grid (300px spacing) preserving proper aspect ratios and HUD metadata.
+ * Builds array of Character tokens for a Box (or all Boxes) and Trainer Belt arranged
+ * in a spaced battle grid (300px spacing) preserving proper aspect ratios, visibility, and HUD metadata.
  */
 export async function buildBackupSceneItems(
     box: PcBox,
     _campaign: CampaignProfile,
     pokemonSummaries: Record<string, PcPokemonSummary>,
     partyEntityIds?: (string | null)[],
-    trainer?: TrainerRoster
+    trainer?: TrainerRoster,
+    allBoxes?: PcBox[]
 ): Promise<Item[]> {
     const items: Item[] = [];
     const spacing = 300;
@@ -33,7 +34,7 @@ export async function buildBackupSceneItems(
             'will-curr': summary.will,
             'will-max-display': summary.maxWill,
             rank: summary.rank,
-            'token-image-url': summary.tokenImageUrl
+            'token-image-url': sanitizeImageUrl(summary.tokenImageUrl || fallbackUrl)
         };
 
         if (summary.savedTokenItem) {
@@ -42,8 +43,17 @@ export async function buildBackupSceneItems(
                 ...raw,
                 id: crypto.randomUUID(),
                 position: pos,
-                layer: 'CHARACTER'
+                layer: 'CHARACTER',
+                visible: true
             } as Item;
+            delete (clone as unknown as Record<string, unknown>).attachedTo;
+
+            const imageItem = clone as unknown as { image?: { url?: string } };
+            const cleanImgUrl = sanitizeImageUrl(imageItem.image?.url || summary.tokenImageUrl || fallbackUrl);
+            if (imageItem.image) {
+                imageItem.image.url = cleanImgUrl;
+            }
+
             const merged = {
                 ...((clone.metadata?.[METADATA_ID] as Record<string, unknown>) || {}),
                 ...metaObj
@@ -56,11 +66,12 @@ export async function buildBackupSceneItems(
             return clone;
         }
 
-        const dims = await resolveImageDimensions(summary.tokenImageUrl || fallbackUrl);
+        const cleanUrl = sanitizeImageUrl(summary.tokenImageUrl || fallbackUrl);
+        const dims = await resolveImageDimensions(cleanUrl);
         return buildImage(
             {
-                url: summary.tokenImageUrl || fallbackUrl,
-                mime: (summary.tokenImageUrl || '').endsWith('.svg') ? 'image/svg+xml' : 'image/png',
+                url: cleanUrl,
+                mime: cleanUrl.endsWith('.svg') ? 'image/svg+xml' : 'image/png',
                 width: dims.width,
                 height: dims.height
             },
@@ -87,7 +98,7 @@ export async function buildBackupSceneItems(
             nickname: trainer.name,
             species: trainer.name,
             mode: 'Trainer',
-            'token-image-url': trainer.avatarUrl
+            'token-image-url': sanitizeImageUrl(trainer.avatarUrl || fallbackUrl)
         };
 
         if (trainer.savedTokenItem) {
@@ -96,8 +107,17 @@ export async function buildBackupSceneItems(
                 ...raw,
                 id: crypto.randomUUID(),
                 position: { x: 0, y: 0 },
-                layer: 'CHARACTER'
+                layer: 'CHARACTER',
+                visible: true
             } as Item;
+            delete (clone as unknown as Record<string, unknown>).attachedTo;
+
+            const avatarItem = clone as unknown as { image?: { url?: string } };
+            const cleanAvatar = sanitizeImageUrl(avatarItem.image?.url || trainer.avatarUrl || fallbackUrl);
+            if (avatarItem.image) {
+                avatarItem.image.url = cleanAvatar;
+            }
+
             const merged = {
                 ...((clone.metadata?.[METADATA_ID] as Record<string, unknown>) || {}),
                 ...trainerMeta
@@ -110,11 +130,12 @@ export async function buildBackupSceneItems(
             items.push(clone);
             startBeltCol = 1;
         } else {
-            const dims = await resolveImageDimensions(trainer.avatarUrl || fallbackUrl);
+            const cleanAvatar = sanitizeImageUrl(trainer.avatarUrl || fallbackUrl);
+            const dims = await resolveImageDimensions(cleanAvatar);
             const trainerItem = buildImage(
                 {
-                    url: trainer.avatarUrl || fallbackUrl,
-                    mime: (trainer.avatarUrl || '').endsWith('.svg') ? 'image/svg+xml' : 'image/png',
+                    url: cleanAvatar,
+                    mime: cleanAvatar.endsWith('.svg') ? 'image/svg+xml' : 'image/png',
                     width: dims.width,
                     height: dims.height
                 },
@@ -138,6 +159,8 @@ export async function buildBackupSceneItems(
 
     // Row 0: Active Party Belt Pokémon
     const validPartyIds = (partyEntityIds || []).filter((id): id is string => Boolean(id));
+    const processedIds = new Set<string>(validPartyIds);
+
     for (let idx = 0; idx < validPartyIds.length; idx++) {
         const entityId = validPartyIds[idx];
         const summary = pokemonSummaries[entityId];
@@ -148,26 +171,34 @@ export async function buildBackupSceneItems(
         }
     }
 
-    // Row 1+: PC Box Pokémon in 6-column rows
-    const partyIdSet = new Set(validPartyIds);
-    const boxSlots = (box.slots || []).filter((id): id is string => Boolean(id) && !partyIdSet.has(id as string));
-    for (let idx = 0; idx < boxSlots.length; idx++) {
-        const entityId = boxSlots[idx];
-        const summary = pokemonSummaries[entityId];
-        if (summary) {
-            const col = idx % 6;
-            const row = Math.floor(idx / 6);
-            const pos = { x: col * spacing, y: 350 + row * spacing };
-            const item = await createPokemonItem(summary, pos);
-            items.push(item);
+    // Row 1+: PC Box Pokémon arranged in 6-column rows
+    const targetBoxes = allBoxes && allBoxes.length > 0 ? allBoxes : [box];
+    let gridRowOffset = 0;
+
+    for (const b of targetBoxes) {
+        const boxSlots = (b.slots || []).filter((id): id is string => Boolean(id) && !processedIds.has(id as string));
+        if (boxSlots.length === 0) continue;
+
+        for (let idx = 0; idx < boxSlots.length; idx++) {
+            const entityId = boxSlots[idx];
+            processedIds.add(entityId);
+            const summary = pokemonSummaries[entityId];
+            if (summary) {
+                const col = idx % 6;
+                const row = gridRowOffset + Math.floor(idx / 6);
+                const pos = { x: col * spacing, y: 350 + row * spacing };
+                const item = await createPokemonItem(summary, pos);
+                items.push(item);
+            }
         }
+        gridRowOffset += Math.ceil(boxSlots.length / 6);
     }
 
     return items;
 }
 
 /**
- * Uploads a collection of tokens representing a Box and Party to Owlbear Rodeo Cloud Storage.
+ * Uploads a collection of tokens representing a Box (or all Boxes) and Party to Owlbear Rodeo Cloud Storage.
  */
 export async function exportBoxCloud(
     box: PcBox,
@@ -175,10 +206,12 @@ export async function exportBoxCloud(
     pokemonSummaries: Record<string, PcPokemonSummary>,
     customSceneName?: string,
     partyEntityIds?: (string | null)[],
-    trainer?: TrainerRoster
+    trainer?: TrainerRoster,
+    allBoxes?: PcBox[]
 ): Promise<boolean> {
-    const items = await buildBackupSceneItems(box, campaign, pokemonSummaries, partyEntityIds, trainer);
-    return await uploadBoxToObrCloud(box.name, campaign.name, items, customSceneName);
+    const items = await buildBackupSceneItems(box, campaign, pokemonSummaries, partyEntityIds, trainer, allBoxes);
+    const sceneName = allBoxes && allBoxes.length > 1 ? 'All PC Boxes' : box.name;
+    return await uploadBoxToObrCloud(sceneName, campaign.name, items, customSceneName);
 }
 
 /**
@@ -190,7 +223,8 @@ export async function syncToActiveScene(
     campaign: CampaignProfile,
     pokemonSummaries: Record<string, PcPokemonSummary>,
     partyEntityIds?: (string | null)[],
-    trainer?: TrainerRoster
+    trainer?: TrainerRoster,
+    allBoxes?: PcBox[]
 ): Promise<boolean> {
     if (!OBR.isAvailable) return false;
     try {
@@ -200,18 +234,24 @@ export async function syncToActiveScene(
         // Tag scene with backup metadata
         await OBR.scene.setMetadata({
             'pokerole-pmd-extension/pc-backup': {
-                boxName: box.name,
+                boxName: allBoxes && allBoxes.length > 1 ? 'All PC Boxes' : box.name,
                 campaignName: campaign.name,
                 updatedAt: Date.now()
             }
         });
 
         // 1. Build the items using the clean spaced grid
-        const items = await buildBackupSceneItems(box, campaign, pokemonSummaries, partyEntityIds, trainer);
+        const items = await buildBackupSceneItems(box, campaign, pokemonSummaries, partyEntityIds, trainer, allBoxes);
 
         // 2. Clear previous tokens from this PC/box/party/trainer on the active scene
         const sceneItems = await OBR.scene.items.getItems();
-        const boxSlotsSet = new Set((box.slots || []).filter(Boolean));
+        const boxesToClear = allBoxes && allBoxes.length > 0 ? allBoxes : [box];
+        const allBoxSlotEntities = new Set<string>();
+        for (const b of boxesToClear) {
+            for (const s of b.slots || []) {
+                if (s) allBoxSlotEntities.add(s);
+            }
+        }
         const partySet = new Set((partyEntityIds || []).filter(Boolean));
 
         const idsToRemove = sceneItems
@@ -219,7 +259,7 @@ export async function syncToActiveScene(
                 if (it.layer !== 'CHARACTER') return false;
                 const meta = (it.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
                 const entityId = meta.entityId as string;
-                if (entityId && (boxSlotsSet.has(entityId) || partySet.has(entityId))) {
+                if (entityId && (allBoxSlotEntities.has(entityId) || partySet.has(entityId))) {
                     return true;
                 }
                 if (trainer && (meta.name === trainer.name || meta.species === trainer.name)) {

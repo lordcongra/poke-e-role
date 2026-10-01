@@ -38,9 +38,28 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             const data = await loadPcStorage();
             if (OBR.isAvailable && OBR.room?.id) {
                 const roomId = OBR.room.id;
-                if (!data.campaigns[roomId]) {
-                    const roomCamp = createDefaultCampaign(roomId, 'Campaign Room');
-                    data.campaigns[roomId] = roomCamp;
+                // If only 'default' exists, migrate it to the room campaign so there are no duplicate default campaigns
+                if (data.campaigns['default'] && Object.keys(data.campaigns).length === 1) {
+                    const existingDefault = data.campaigns['default'];
+                    existingDefault.id = roomId;
+                    if (existingDefault.name === 'Main Adventure') {
+                        existingDefault.name = 'Campaign Room';
+                    }
+                    data.campaigns[roomId] = existingDefault;
+                    delete data.campaigns['default'];
+                } else if (!data.campaigns[roomId]) {
+                    // Check if 'default' is completely empty: if so, purge it
+                    const def = data.campaigns['default'];
+                    const isDefEmpty =
+                        def &&
+                        Object.values(def.trainers || {}).every((t) => (t.party || []).every((p) => !p)) &&
+                        (def.boxes || []).every((b) => (b.slots || []).every((s) => !s));
+                    if (isDefEmpty) {
+                        delete data.campaigns['default'];
+                    }
+                    if (!data.campaigns[roomId]) {
+                        data.campaigns[roomId] = createDefaultCampaign(roomId, 'Campaign Room');
+                    }
                 }
                 data.activeCampaignId = roomId;
                 await savePcStorage(data);
@@ -55,7 +74,11 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
     setActiveBoxIndex: (index: number) => {
         const { pcData } = get();
         const activeCampaign = pcData.campaigns[pcData.activeCampaignId];
-        if (!activeCampaign || index < 0 || index >= activeCampaign.boxes.length) return;
+        if (!activeCampaign) return;
+        const activeTrainer = activeCampaign.trainers[activeCampaign.activeTrainerId];
+        const boxes =
+            activeTrainer?.boxes && activeTrainer.boxes.length > 0 ? activeTrainer.boxes : activeCampaign.boxes;
+        if (index < 0 || index >= boxes.length) return;
         set({ activeBoxIndex: index });
     },
 

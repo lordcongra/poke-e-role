@@ -60,6 +60,15 @@ export function getAbsolutePokeballUrl(): string {
     }
 }
 
+export function sanitizeImageUrl(url?: string | null): string {
+    if (!url || typeof url !== 'string') return getAbsolutePokeballUrl();
+    const trimmed = url.trim();
+    if (trimmed.startsWith('file:') || trimmed.startsWith('file:///')) {
+        return getAbsolutePokeballUrl();
+    }
+    return trimmed;
+}
+
 export function findMatchingSceneImage(
     targetName: string,
     sceneItems: Item[]

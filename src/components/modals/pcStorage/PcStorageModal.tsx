@@ -9,6 +9,7 @@ import { PcCloudExportModal } from './PcCloudExportModal';
 import { PcDepositDrawerModal } from './PcDepositDrawerModal';
 import { PcSheetModal } from './PcSheetModal';
 import { PcReleaseConfirmModal } from './PcReleaseConfirmModal';
+import { PcGuideModal } from './PcGuideModal';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
 import { buildActiveCharacterSummary, filterTrainerPokemonSummaries } from '../../../utils/pc/pcModalOps';
 import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
@@ -67,6 +68,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     } | null>(null);
 
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+    const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
     const [depositTarget, setDepositTarget] = useState<{
         targetSlot?: { type: 'party' | 'box'; index: number };
     } | null>(null);
@@ -76,7 +78,8 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     // Active Campaign & Trainer resolution
     const campaign = pcData.campaigns[pcData.activeCampaignId] || Object.values(pcData.campaigns)[0];
     const trainer = campaign?.trainers[campaign.activeTrainerId] || Object.values(campaign?.trainers || {})[0];
-    const currentBox = campaign?.boxes[activeBoxIndex] || campaign?.boxes[0];
+    const trainerBoxes = trainer?.boxes && trainer.boxes.length > 0 ? trainer.boxes : campaign?.boxes || [];
+    const currentBox = trainerBoxes[activeBoxIndex] || trainerBoxes[0];
 
     // Current active character summary if loaded in sheet
     const currentActiveSummary = buildActiveCharacterSummary(
@@ -196,6 +199,75 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
 
     const activeSheetSummary = (sheetViewEntityId && pcData.pokemonSummaries[sheetViewEntityId]) || trainerSummary;
 
+    const sheetAvailableSummaries = useMemo(() => {
+        const list: PcPokemonSummary[] = [];
+        if (trainer) {
+            const hpCurr =
+                typeof trainer.fullMetadata?.['hp-curr'] === 'number'
+                    ? (trainer.fullMetadata['hp-curr'] as number)
+                    : 10;
+            const hpMax =
+                typeof trainer.fullMetadata?.['hp-max-display'] === 'number'
+                    ? (trainer.fullMetadata['hp-max-display'] as number)
+                    : 10;
+            const willCurr =
+                typeof trainer.fullMetadata?.['will-curr'] === 'number'
+                    ? (trainer.fullMetadata['will-curr'] as number)
+                    : 5;
+            const willMax =
+                typeof trainer.fullMetadata?.['will-max-display'] === 'number'
+                    ? (trainer.fullMetadata['will-max-display'] as number)
+                    : 5;
+
+            const tSummary: PcPokemonSummary = trainerSummary || {
+                entityId: trainer.id,
+                name: trainer.name,
+                species: trainer.name,
+                rank: 'Trainer',
+                type1: 'Normal',
+                hp: hpCurr,
+                maxHp: hpMax,
+                will: willCurr,
+                maxWill: willMax,
+                tokenImageUrl: trainer.avatarUrl,
+                isOnMap: Boolean(trainer.mapTokenId),
+                mapTokenId: trainer.mapTokenId,
+                savedTokenItem: trainer.savedTokenItem,
+                fullMetadata: {
+                    ...(trainer.fullMetadata || {}),
+                    name: trainer.name,
+                    nickname: trainer.name,
+                    species: trainer.name,
+                    mode: 'Trainer',
+                    'token-image-url': trainer.avatarUrl,
+                    'hp-curr': hpCurr,
+                    'hp-max-display': hpMax,
+                    'will-curr': willCurr,
+                    'will-max-display': willMax
+                },
+                lastModified: 0
+            };
+            list.push(tSummary);
+
+            // Party Pokémon
+            for (const pId of trainer.party || []) {
+                if (pId && pcData.pokemonSummaries[pId] && !list.some((s) => s.entityId === pId)) {
+                    list.push(pcData.pokemonSummaries[pId]);
+                }
+            }
+
+            // Box Pokémon for this trainer
+            for (const b of trainerBoxes) {
+                for (const sId of b.slots || []) {
+                    if (sId && pcData.pokemonSummaries[sId] && !list.some((s) => s.entityId === sId)) {
+                        list.push(pcData.pokemonSummaries[sId]);
+                    }
+                }
+            }
+        }
+        return list;
+    }, [trainer, trainerSummary, pcData.pokemonSummaries, trainerBoxes]);
+
     const trainerRef = useRef(trainer);
     trainerRef.current = trainer;
 
@@ -249,7 +321,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                     trainers={campaign.trainers}
                     onSwitchTrainer={switchTrainer}
                     onAddTrainer={addTrainer}
-                    boxes={campaign.boxes}
+                    boxes={trainerBoxes}
                     activeBoxIndex={activeBoxIndex}
                     onSelectBox={setActiveBoxIndex}
                     onAddBox={() => addBox()}
@@ -257,6 +329,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                     onSetBoxTheme={setBoxTheme}
                     onUploadCloud={() => setIsExportModalOpen(true)}
                     onDownloadCloud={handleDownloadBox}
+                    onOpenGuide={() => setIsGuideModalOpen(true)}
                     onClose={onClose}
                 />
 
@@ -359,6 +432,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                     pokemonSummaries={pcData.pokemonSummaries}
                     partySlots={trainer?.party}
                     trainer={trainer}
+                    allBoxes={trainerBoxes}
                     boxTheme={boxTheme}
                     onConfirm={handleConfirmCloudUpload}
                     onClose={() => setIsExportModalOpen(false)}
@@ -398,7 +472,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
             {activeSheetSummary && (
                 <PcSheetModal
                     currentSummary={activeSheetSummary}
-                    allSummaries={Object.values(pcData.pokemonSummaries)}
+                    allSummaries={sheetAvailableSummaries}
                     onSelectEntity={setSheetViewEntityId}
                     onUpdateSummary={handleUpdateSheetSummary}
                     onClose={() => setSheetViewEntityId(null)}
@@ -414,6 +488,9 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                     onClose={() => setReleaseConfirmPokemon(null)}
                 />
             )}
+
+            {/* Workflow Guide & Help Modal */}
+            {isGuideModalOpen && <PcGuideModal boxTheme={boxTheme} onClose={() => setIsGuideModalOpen(false)} />}
         </div>
     );
 };

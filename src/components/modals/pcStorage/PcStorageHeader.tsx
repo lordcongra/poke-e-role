@@ -13,7 +13,8 @@ import {
     Users,
     FolderKanban,
     X,
-    Check
+    Check,
+    HelpCircle
 } from 'lucide-react';
 
 interface PcStorageHeaderProps {
@@ -33,6 +34,7 @@ interface PcStorageHeaderProps {
     onSetBoxTheme: (index: number, color: string) => void;
     onUploadCloud: () => void;
     onDownloadCloud: () => void;
+    onOpenGuide?: () => void;
     onClose: () => void;
 }
 
@@ -53,6 +55,7 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
     onSetBoxTheme,
     onUploadCloud,
     onDownloadCloud,
+    onOpenGuide,
     onClose
 }) => {
     const [isRenaming, setIsRenaming] = useState(false);
@@ -166,6 +169,16 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                     >
                         <CloudDownload size={14} /> Cloud Import
                     </button>
+                    {onOpenGuide && (
+                        <button
+                            type="button"
+                            className="action-button action-button--dark pc-header__cloud-btn"
+                            onClick={onOpenGuide}
+                            title="Open Pokémon PC & Storage Guide"
+                        >
+                            <HelpCircle size={14} /> Guide
+                        </button>
+                    )}
                     <button
                         type="button"
                         className="pc-header__close-btn"

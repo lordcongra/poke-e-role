@@ -35,6 +35,7 @@ export interface TrainerRoster {
     name: string;
     avatarUrl?: string;
     party: (string | null)[]; // 6 slots, each storing entityId or null
+    boxes?: PcBox[]; // Private PC boxes for this trainer
     isLinked?: boolean;
     mapTokenId?: string;
     savedTokenItem?: Item;

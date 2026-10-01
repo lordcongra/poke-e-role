@@ -261,7 +261,12 @@ export const PcSheetModal: React.FC<PcSheetModalProps> = ({
                         <div className="pc-sheet-modal__titles">
                             <h3 className="pc-sheet-modal__name">{displayName}</h3>
                             <div className="pc-sheet-modal__sub text-subtext">
-                                <span>{currentSummary.species}</span>
+                                <span>
+                                    {currentSummary.rank === 'Trainer' ||
+                                    currentSummary.fullMetadata?.mode === 'Trainer'
+                                        ? (currentSummary.fullMetadata?.trainerClass as string) || 'Trainer'
+                                        : currentSummary.species}
+                                </span>
                                 {currentSummary.isOnMap ? (
                                     <span className="pc-sheet-modal__map-badge">On Map</span>
                                 ) : (
@@ -290,7 +295,9 @@ export const PcSheetModal: React.FC<PcSheetModalProps> = ({
                                 >
                                     {allSummaries.map((s, i) => (
                                         <option key={s.entityId} value={s.entityId}>
-                                            {s.name || s.species || `Pokémon ${i + 1}`}
+                                            {s.rank === 'Trainer' || s.fullMetadata?.mode === 'Trainer'
+                                                ? `★ ${s.name} (Trainer)`
+                                                : s.name || s.species || `Pokémon ${i + 1}`}
                                         </option>
                                     ))}
                                 </select>
