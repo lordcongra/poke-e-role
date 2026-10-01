@@ -244,8 +244,8 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
 
     const handleOrganizeFolders = useCallback(async () => {
         const res = !trainer
-            ? await organizePmdSidebarFolders(partySlots, campaign?.boxes || [])
-            : await organizeTrainerSidebarFolders(trainer, campaign?.boxes || []);
+            ? await organizePmdSidebarFolders(partySlots, trainerBoxes)
+            : await organizeTrainerSidebarFolders(trainer, trainerBoxes);
 
         if (res.success) {
             const label = trainer ? `for ${trainer.name}` : 'for Active Team';
@@ -263,7 +263,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                 `Unable to organize folders for ${trainer.name}. Please ensure this Trainer exists in the Directory.`
             );
         }
-    }, [trainer, partySlots, campaign?.boxes]);
+    }, [trainer, partySlots, trainerBoxes]);
 
     if (!campaign || (!trainer && !isPmdMode) || !currentBox) {
         return null;

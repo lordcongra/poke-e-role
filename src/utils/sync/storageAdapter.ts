@@ -18,6 +18,13 @@ export interface LocalFolder {
     parentId: string | null;
 }
 
+export interface LocalCharacter {
+    id: string;
+    name: string;
+    parentId: string | null;
+    metadata: Record<string, unknown>;
+}
+
 /**
  * Validates whether an update contains permanent sheet changes that warrant a backup prompt.
  * Only base stats, limits, rank, skills, moves, and bag inventory items are tracked.

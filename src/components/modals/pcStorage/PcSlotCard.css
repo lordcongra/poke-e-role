@@ -3,6 +3,7 @@
    ========================================================================== */
 
 .pc-slot-card {
+    position: relative;
     background: color-mix(in srgb, var(--panel-alt, #242424) 82%, transparent);
     border: 1px solid var(--border, rgba(255, 255, 255, 0.15));
     border-radius: 8px;
@@ -16,6 +17,7 @@
     height: 100%;
     min-height: 64px;
     box-sizing: border-box;
+    overflow: hidden;
 }
 
 .pc-slot-card:hover {
@@ -70,6 +72,7 @@
 .pc-slot-card__info {
     flex: 1;
     min-width: 0;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -80,6 +83,8 @@
     align-items: center;
     justify-content: space-between;
     gap: 4px;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .pc-slot-card__name {
@@ -88,11 +93,14 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
 }
 
 .pc-slot-card__rank {
     font-size: 0.68rem;
     opacity: 0.8;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .pc-slot-card__meta-row {
@@ -100,6 +108,8 @@
     align-items: center;
     justify-content: space-between;
     gap: 4px;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .pc-slot-card__species {
@@ -107,12 +117,14 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
 }
 
 .pc-slot-card__types {
     display: flex;
     align-items: center;
     gap: 3px;
+    flex-shrink: 0;
 }
 
 .pc-slot-card__type-pill {
@@ -221,22 +233,50 @@
 }
 
 .pc-slot-card__box-actions {
+    position: absolute;
+    top: 4px;
+    right: 4px;
     display: flex;
     align-items: center;
     gap: 3px;
-    opacity: 0.7;
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    padding: 2px 3px;
+    opacity: 0;
+    pointer-events: none;
     transition: opacity 0.15s ease;
+    z-index: 5;
 }
 
-.pc-slot-card:hover .pc-slot-card__box-actions {
+.pc-slot-card:hover .pc-slot-card__box-actions,
+.pc-slot-card--selected .pc-slot-card__box-actions {
     opacity: 1;
+    pointer-events: auto;
+}
+
+@media (hover: none) {
+    .pc-slot-card__box-actions {
+        opacity: 0.9;
+        pointer-events: auto;
+    }
 }
 
 .pc-slot-card__btn-box-sheet,
 .pc-slot-card__btn-box-action {
-    padding: 3px;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 4px;
+    transition: transform 0.12s ease;
+}
+
+.pc-slot-card__btn-box-sheet:hover,
+.pc-slot-card__btn-box-action:hover {
+    transform: scale(1.08);
 }

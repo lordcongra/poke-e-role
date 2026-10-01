@@ -5,6 +5,7 @@ import { METADATA_ID } from '../../../utils/sync/obr';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
 import { resolveSceneCandidateMatch, scanStandaloneCandidates } from '../../../utils/pc/pcCandidateMatching';
 import { useCharacterStore } from '../../../store/useCharacterStore';
+import { storageAdapter } from '../../../utils/sync/storageAdapter';
 import { PcDepositCandidateCard, type SceneCandidate } from './PcDepositCandidateCard';
 import { PcDepositStoredCard } from './PcDepositStoredCard';
 import { PcDepositActiveCard } from './PcDepositActiveCard';
@@ -128,9 +129,13 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
         if (cand.claimedBy) return;
         if (targetSlot?.type === 'party' && cand.isInParty) return;
 
-        const entityId = cand.matchedEntityId || (cand.metadata.entityId as string) || crypto.randomUUID();
+        const entityId = cand.matchedEntityId || (cand.metadata.entityId as string) || cand.id || crypto.randomUUID();
         let myPlayerId = '';
         let myPlayerName = '';
+
+        if (!OBR.isAvailable && cand.id) {
+            storageAdapter.saveCharacter(cand.id, { entityId }, 'pokerole-pmd-extension/stats').catch(() => {});
+        }
 
         if (OBR.isAvailable) {
             try {

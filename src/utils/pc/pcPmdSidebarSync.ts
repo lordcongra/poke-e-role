@@ -1,6 +1,8 @@
 import { storageAdapter, type LocalFolder, isStandaloneMode } from '../sync/storageAdapter';
 import type { PcBox } from '../../types/pcStorageTypes';
 import { isTrainerMetadata } from './pcSidebarSync';
+import { findAndLinkLocalCharacter } from './pcSidebarFolderMatching';
+import { useCharacterStore } from '../../store/useCharacterStore';
 
 /**
  * Checks if a folder name represents the PMD Active Team folder.
@@ -63,12 +65,15 @@ export async function organizePmdSidebarFolders(
         let movedPokemonCount = 0;
         let createdBoxes = 0;
 
+        const summaries = useCharacterStore.getState().pcData.pokemonSummaries || {};
+
         // Move active team members into the "Active Team" folder
         const partyIds = teamParty.filter(Boolean) as string[];
         for (const pId of partyIds) {
-            const charMatch = localChars.find((c) => c.id === pId || c.metadata?.entityId === pId);
+            const charMatch = await findAndLinkLocalCharacter(pId, localChars, summaries);
             if (charMatch && !isTrainerMetadata(charMatch.metadata) && charMatch.parentId !== teamFolder.id) {
                 await storageAdapter.moveItem(charMatch.id, teamFolder.id);
+                charMatch.parentId = teamFolder.id;
                 movedPokemonCount++;
             }
         }
@@ -93,9 +98,10 @@ export async function organizePmdSidebarFolders(
             }
 
             for (const sId of storedSlotIds) {
-                const charMatch = localChars.find((c) => c.id === sId || c.metadata?.entityId === sId);
+                const charMatch = await findAndLinkLocalCharacter(sId, localChars, summaries);
                 if (charMatch && !isTrainerMetadata(charMatch.metadata) && charMatch.parentId !== boxFolder.id) {
                     await storageAdapter.moveItem(charMatch.id, boxFolder.id);
+                    charMatch.parentId = boxFolder.id;
                     movedPokemonCount++;
                 }
             }
@@ -120,7 +126,8 @@ export async function relocatePmdSidebarPokemon(
 
     try {
         const localChars = await storageAdapter.getLocalCharacters();
-        const charMatch = localChars.find((c) => c.id === pokemonId || c.metadata?.entityId === pokemonId);
+        const summaries = useCharacterStore.getState().pcData.pokemonSummaries || {};
+        const charMatch = await findAndLinkLocalCharacter(pokemonId, localChars, summaries);
         if (!charMatch || isTrainerMetadata(charMatch.metadata)) return;
 
         if (target.type === 'party') {

@@ -488,7 +488,9 @@ export function useSidebarEngine() {
             useCharacterStore.getState().addTrainer(item.name);
         }
 
-        const res = await organizeTrainerSidebarFolders(matchedTrainer, camp.boxes);
+        const activeBoxes =
+            matchedTrainer.boxes && matchedTrainer.boxes.length > 0 ? matchedTrainer.boxes : camp.boxes || [];
+        const res = await organizeTrainerSidebarFolders(matchedTrainer, activeBoxes);
         if (res.success) {
             setExpandedNodes((prev) => ({ ...prev, [item.id]: true }));
             loadData();
@@ -507,13 +509,21 @@ export function useSidebarEngine() {
         setContextMenu(null);
         const camp = pcData.campaigns[pcData.activeCampaignId];
         if (camp) {
-            const matchedTrainer = Object.values(camp.trainers).find(
+            let matchedTrainer = Object.values(camp.trainers).find(
                 (t) =>
                     t.id === item.id ||
                     t.savedTokenItem?.id === item.id ||
                     t.mapTokenId === item.id ||
                     t.name.trim().toLowerCase() === item.name.trim().toLowerCase()
             );
+            if (!matchedTrainer) {
+                useCharacterStore.getState().addTrainer(item.name);
+                const updatedCamp =
+                    useCharacterStore.getState().pcData.campaigns[useCharacterStore.getState().pcData.activeCampaignId];
+                matchedTrainer = Object.values(updatedCamp?.trainers || {}).find(
+                    (t) => t.name.trim().toLowerCase() === item.name.trim().toLowerCase()
+                );
+            }
             if (matchedTrainer) {
                 switchTrainer(matchedTrainer.id);
             }

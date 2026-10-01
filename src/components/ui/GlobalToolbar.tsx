@@ -87,6 +87,9 @@ export function GlobalToolbar() {
     const homebrewAccess = useCharacterStore((state) => state.identity.homebrewAccess) || 'Full';
     const gmOnlyLootGen = useCharacterStore((state) => state.identity.gmOnlyLootGen);
     const gmOnlyGenerators = useCharacterStore((state) => state.identity.gmOnlyGenerators);
+    const isPcModalOpen = useCharacterStore((state) => state.isPcModalOpen);
+    const openPcModal = useCharacterStore((state) => state.openPcModal);
+    const closePcModal = useCharacterStore((state) => state.closePcModal);
 
     const [localRole, setLocalRole] = useState<string>(isStandaloneMode ? 'GM' : storeRole);
     const [isExpanded, setIsExpanded] = useState<boolean>(true);
@@ -96,6 +99,14 @@ export function GlobalToolbar() {
     const [activeModal, setActiveModal] = useState<ActiveModal>(null);
     const [importData, setImportData] = useState<Record<string, unknown> | null>(null);
     const [isPrintingBattleOrganizer, setIsPrintingBattleOrganizer] = useState(false);
+
+    useEffect(() => {
+        if (isPcModalOpen && activeModal !== 'pc') {
+            setActiveModal('pc');
+        } else if (!isPcModalOpen && activeModal === 'pc') {
+            setActiveModal(null);
+        }
+    }, [isPcModalOpen, activeModal]);
 
     const fileInputReference = useRef<HTMLInputElement>(null);
     const handleBattleOrganizerClickRef = useRef<() => void>(() => {});
@@ -454,7 +465,7 @@ export function GlobalToolbar() {
                         <button
                             type="button"
                             className="global-toolbar__btn action-button--primary-hover"
-                            onClick={() => setActiveModal('pc')}
+                            onClick={() => openPcModal()}
                             title="Open Pokémon PC Storage & Party Belt"
                         >
                             <HardDrive size={16} color="var(--primary)" /> Pokémon PC
@@ -664,7 +675,14 @@ export function GlobalToolbar() {
                 />
             )}
             {activeModal === 'bug-report' && <BugReportModal onClose={() => setActiveModal(null)} />}
-            {activeModal === 'pc' && <PcStorageModal onClose={() => setActiveModal(null)} />}
+            {activeModal === 'pc' && (
+                <PcStorageModal
+                    onClose={() => {
+                        setActiveModal(null);
+                        closePcModal();
+                    }}
+                />
+            )}
 
             {isPrintingBattleOrganizer && <PrintBattleOrganizer onDone={() => setIsPrintingBattleOrganizer(false)} />}
         </div>
