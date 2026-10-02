@@ -61,3 +61,13 @@
     justify-content: center;
     flex-wrap: wrap;
 }
+
+.error-boundary-actions .action-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
