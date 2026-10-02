@@ -43,7 +43,7 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
 
     return (
         <div
-            className={`pc-slot-card ${isSelected ? 'pc-slot-card--selected' : ''} ${isPartySlot ? 'pc-slot-card--party' : ''}`}
+            className={`pc-slot-card ${isSelected ? 'pc-slot-card--selected' : ''} ${isPartySlot ? 'pc-slot-card--party' : 'pc-slot-card--box'}`}
             onClick={onClick}
             onDoubleClick={(e) => {
                 e.stopPropagation();
@@ -55,7 +55,7 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
             }}
             draggable={!!onDragStart}
             onDragStart={onDragStart}
-            title={`${summary.name || summary.species} (${summary.species}) - Double-click to open sheet, right-click for options`}
+            title={`${summary.name || summary.species}${summary.species && summary.species !== summary.name ? ` (${summary.species})` : ''} - Double-click to open sheet, right-click for options`}
         >
             <div className="pc-slot-card__avatar-wrapper">
                 <img
@@ -74,28 +74,74 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
             </div>
 
             <div className="pc-slot-card__info">
-                <div className="pc-slot-card__title-row">
-                    <span className="pc-slot-card__name text-label" title={summary.name || summary.species}>
-                        {summary.name || summary.species}
-                    </span>
-                    <span className="pc-slot-card__rank text-subtext">{summary.rank || 'Starter'}</span>
-                </div>
-
-                <div className="pc-slot-card__meta-row">
-                    <span className="pc-slot-card__species text-subtext">{summary.species}</span>
-                    <div className="pc-slot-card__types">
-                        <span className={`pc-slot-card__type-pill pc-slot-card__type--${summary.type1?.toLowerCase()}`}>
-                            {summary.type1 || 'Normal'}
-                        </span>
-                        {summary.type2 && (
-                            <span
-                                className={`pc-slot-card__type-pill pc-slot-card__type--${summary.type2?.toLowerCase()}`}
-                            >
-                                {summary.type2}
+                {isPartySlot ? (
+                    <>
+                        <div className="pc-slot-card__title-row">
+                            <span className="pc-slot-card__name text-label" title={summary.name || summary.species}>
+                                {summary.name || summary.species}
                             </span>
-                        )}
-                    </div>
-                </div>
+                            <span className="pc-slot-card__rank text-subtext">{summary.rank || 'Starter'}</span>
+                        </div>
+
+                        <div className="pc-slot-card__meta-row">
+                            <span className="pc-slot-card__species text-subtext">{summary.species}</span>
+                            <div className="pc-slot-card__types">
+                                <span
+                                    className={`pc-slot-card__type-pill pc-slot-card__type--${summary.type1?.toLowerCase()}`}
+                                >
+                                    {summary.type1 || 'Normal'}
+                                </span>
+                                {summary.type2 && (
+                                    <span
+                                        className={`pc-slot-card__type-pill pc-slot-card__type--${summary.type2?.toLowerCase()}`}
+                                    >
+                                        {summary.type2}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <div className="pc-slot-card__title-row pc-slot-card__title-row--box">
+                            <span
+                                className="pc-slot-card__name pc-slot-card__name--box text-label"
+                                title={
+                                    summary.species && summary.species !== summary.name
+                                        ? `${summary.name} (${summary.species})`
+                                        : summary.name || summary.species
+                                }
+                            >
+                                {summary.name || summary.species}
+                            </span>
+                        </div>
+
+                        <div className="pc-slot-card__meta-row pc-slot-card__meta-row--box">
+                            <div className="pc-slot-card__types pc-slot-card__types--box">
+                                <span
+                                    className={`pc-slot-card__type-pill pc-slot-card__type--${summary.type1?.toLowerCase()}`}
+                                >
+                                    {summary.type1 || 'Normal'}
+                                </span>
+                                {summary.type2 && (
+                                    <span
+                                        className={`pc-slot-card__type-pill pc-slot-card__type--${summary.type2?.toLowerCase()}`}
+                                    >
+                                        {summary.type2}
+                                    </span>
+                                )}
+                            </div>
+                            {summary.rank && summary.rank !== 'Starter' && (
+                                <span
+                                    className="pc-slot-card__rank pc-slot-card__rank--box text-subtext"
+                                    title={`Rank: ${summary.rank}`}
+                                >
+                                    {summary.rank}
+                                </span>
+                            )}
+                        </div>
+                    </>
+                )}
 
                 <div className="pc-slot-card__hp-bar" title={`HP: ${summary.hp} / ${summary.maxHp}`}>
                     <div

@@ -66,26 +66,69 @@ export function buildLinkedTrainer(
  * Builds a PcPokemonSummary representation of a Trainer profile for sheet viewing.
  */
 export function buildTrainerSummary(trainer: TrainerRoster): import('../../types/pcStorageTypes').PcPokemonSummary {
-    const hpCurr =
-        typeof trainer.fullMetadata?.['hp-curr'] === 'number' ? (trainer.fullMetadata['hp-curr'] as number) : 10;
-    const hpMax =
-        typeof trainer.fullMetadata?.['hp-max-display'] === 'number'
-            ? (trainer.fullMetadata['hp-max-display'] as number)
-            : 10;
-    const willCurr =
-        typeof trainer.fullMetadata?.['will-curr'] === 'number' ? (trainer.fullMetadata['will-curr'] as number) : 5;
-    const willMax =
-        typeof trainer.fullMetadata?.['will-max-display'] === 'number'
-            ? (trainer.fullMetadata['will-max-display'] as number)
-            : 5;
-    const trainerType1 = (trainer.fullMetadata?.type1 as string) || '';
-    const trainerType2 = (trainer.fullMetadata?.type2 as string) || undefined;
-    const tokenMeta = (trainer.savedTokenItem?.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
+    let localMeta: Record<string, unknown> | null = null;
+    if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+            const raw = window.localStorage.getItem(`pkr_char_${trainer.id}`);
+            if (raw) localMeta = JSON.parse(raw);
+            if (!localMeta && trainer.savedTokenItem?.id) {
+                const rawTok = window.localStorage.getItem(`pkr_char_${trainer.savedTokenItem.id}`);
+                if (rawTok) localMeta = JSON.parse(rawTok);
+            }
+        } catch {}
+    }
+
     const store = useCharacterStore.getState();
     const isStoreTrainer = store.identity.mode === 'Trainer' || (store.identity.rank as string) === 'Trainer';
     const storeMatchesTrainer =
         isStoreTrainer &&
         (store.identity.nickname === trainer.name || store.identity.species === trainer.name || !trainer.name);
+
+    const hpCurr = storeMatchesTrainer
+        ? store.health.hpCurr
+        : typeof localMeta?.['hp-curr'] === 'number'
+          ? (localMeta['hp-curr'] as number)
+          : typeof trainer.fullMetadata?.['hp-curr'] === 'number'
+            ? (trainer.fullMetadata['hp-curr'] as number)
+            : typeof localMeta?.hp === 'number'
+              ? (localMeta.hp as number)
+              : 10;
+    const hpMax = storeMatchesTrainer
+        ? store.health.hpMax
+        : typeof localMeta?.['hp-max-display'] === 'number'
+          ? (localMeta['hp-max-display'] as number)
+          : typeof trainer.fullMetadata?.['hp-max-display'] === 'number'
+            ? (trainer.fullMetadata['hp-max-display'] as number)
+            : typeof localMeta?.hpMax === 'number'
+              ? (localMeta.hpMax as number)
+              : 10;
+    const willCurr = storeMatchesTrainer
+        ? store.will.willCurr
+        : typeof localMeta?.['will-curr'] === 'number'
+          ? (localMeta['will-curr'] as number)
+          : typeof trainer.fullMetadata?.['will-curr'] === 'number'
+            ? (trainer.fullMetadata['will-curr'] as number)
+            : typeof localMeta?.will === 'number'
+              ? (localMeta.will as number)
+              : 5;
+    const willMax = storeMatchesTrainer
+        ? store.will.willMax
+        : typeof localMeta?.['will-max-display'] === 'number'
+          ? (localMeta['will-max-display'] as number)
+          : typeof trainer.fullMetadata?.['will-max-display'] === 'number'
+            ? (trainer.fullMetadata['will-max-display'] as number)
+            : typeof localMeta?.willMax === 'number'
+              ? (localMeta.willMax as number)
+              : 5;
+
+    const trainerType1 = (localMeta?.type1 as string) || (trainer.fullMetadata?.type1 as string) || '';
+    const trainerType2 = (localMeta?.type2 as string) || (trainer.fullMetadata?.type2 as string) || undefined;
+    const resolvedAvatar =
+        (localMeta?.['token-image-url'] as string) ||
+        (localMeta?.tokenImageUrl as string) ||
+        (trainer.fullMetadata?.['token-image-url'] as string) ||
+        trainer.avatarUrl;
+    const tokenMeta = (trainer.savedTokenItem?.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
 
     const primaryOverride =
         (trainer.fullMetadata?.['theme-primary-override'] as string) ||
@@ -111,7 +154,7 @@ export function buildTrainerSummary(trainer: TrainerRoster): import('../../types
         maxHp: hpMax,
         will: willCurr,
         maxWill: willMax,
-        tokenImageUrl: trainer.avatarUrl,
+        tokenImageUrl: resolvedAvatar,
         isOnMap: Boolean(trainer.mapTokenId),
         mapTokenId: trainer.mapTokenId,
         savedTokenItem: trainer.savedTokenItem,

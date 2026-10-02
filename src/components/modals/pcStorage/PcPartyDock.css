@@ -186,3 +186,149 @@
     align-items: center;
     color: var(--primary, #3b82f6);
 }
+
+/* ==========================================================================
+   Trainer Preview Card Styling
+   ========================================================================== */
+.pc-trainer-card {
+    background: color-mix(in srgb, var(--primary, #3b82f6) 12%, var(--panel-alt, #242424));
+    border: 1.5px solid color-mix(in srgb, var(--primary, #3b82f6) 45%, var(--border, rgba(255, 255, 255, 0.15)));
+    border-radius: 8px;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    user-select: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
+    margin-bottom: 2px;
+}
+
+.pc-trainer-card:hover {
+    background: color-mix(in srgb, var(--primary, #3b82f6) 18%, var(--panel-alt, #242424));
+    border-color: var(--primary, #3b82f6);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--primary, #3b82f6) 25%, transparent);
+}
+
+.pc-trainer-card__avatar-wrapper {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid color-mix(in srgb, var(--primary, #3b82f6) 60%, #fff);
+}
+
+.pc-trainer-card__avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+}
+
+.pc-trainer-card__info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pc-trainer-card__header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+}
+
+.pc-trainer-card__name {
+    font-weight: 700;
+    font-size: 0.88rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pc-trainer-card__badge {
+    display: flex;
+    align-items: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--primary, #3b82f6);
+    background: color-mix(in srgb, var(--primary, #3b82f6) 20%, transparent);
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid color-mix(in srgb, var(--primary, #3b82f6) 35%, transparent);
+}
+
+.pc-trainer-card__bars {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.pc-trainer-card__bar-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.68rem;
+}
+
+.pc-trainer-card__bar-label {
+    width: 24px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    opacity: 0.75;
+}
+
+.pc-trainer-card__bar-track {
+    flex: 1;
+    height: 5px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.pc-trainer-card__bar-fill {
+    height: 100%;
+    transition: width 0.2s ease;
+}
+
+.pc-trainer-card__bar-fill--will {
+    background: #38bdf8;
+}
+
+.pc-trainer-card__bar-val {
+    font-size: 0.65rem;
+    font-weight: 600;
+    min-width: 32px;
+    text-align: right;
+    opacity: 0.85;
+}
+
+.pc-trainer-card__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.pc-trainer-card__btn {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+}
+
+.pc-trainer-card__btn--on-map {
+    background: var(--primary, #3b82f6);
+    color: #fff;
+}

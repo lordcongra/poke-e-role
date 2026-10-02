@@ -23,9 +23,8 @@
     --bg: color-mix(in srgb, var(--primary) 14%, var(--base-bg-dark, #121212));
     --border: color-mix(in srgb, var(--primary) 30%, var(--base-border-dark, #383838));
     width: 100%;
-    max-width: 1100px;
-    height: 90vh;
-    max-height: 820px;
+    max-width: min(1380px, 96vw);
+    height: min(890px, 94vh);
     background: var(--panel-bg);
     border: 1.5px solid var(--border);
     box-shadow:

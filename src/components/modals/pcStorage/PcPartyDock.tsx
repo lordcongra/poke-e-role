@@ -2,6 +2,7 @@ import React from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
 import { PcSlotCard } from './PcSlotCard';
+import { PcTrainerCard } from './PcTrainerCard';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
 import { useResolvedImageUrl } from '../../../utils/graphics/useResolvedImageUrl';
 import { Shield, UserCheck, Plus, Unlink, FileText, MapPin, FolderPlus, Users } from 'lucide-react';
@@ -12,6 +13,7 @@ interface PcPartyDockProps {
     pokemonSummaries: Record<string, PcPokemonSummary>;
     selectedSlot: { type: 'party' | 'box'; index: number } | null;
     trainerName?: string;
+    trainerSummary?: PcPokemonSummary | null;
     isPmdMode?: boolean;
     trainerAvatarUrl?: string;
     isTrainerLinked?: boolean;
@@ -41,6 +43,7 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
     pokemonSummaries,
     selectedSlot,
     trainerName,
+    trainerSummary,
     isPmdMode = false,
     trainerAvatarUrl,
     isTrainerLinked = false,
@@ -216,6 +219,15 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                       ? 'Active Pokémon on your trainer belt. Click "Send Out" to place them on the map.'
                       : 'Active Pokémon carried on your trainer belt.'}
             </p>
+
+            {trainerSummary && !isPmd && (
+                <PcTrainerCard
+                    summary={trainerSummary}
+                    isTrainerOnMap={isTrainerOnMap}
+                    onOpenSheet={onOpenTrainerSheet}
+                    onDropTrainerToken={onDropTrainerToken}
+                />
+            )}
 
             <div className="pc-party-dock__slots">
                 {partySlots.map((entityId, index) => {

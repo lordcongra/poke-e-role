@@ -182,11 +182,13 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     };
 
     const trainerSummary: PcPokemonSummary | null = useMemo(() => {
-        if (!trainer || sheetViewEntityId !== trainer.id) return null;
+        if (!trainer) return null;
         return buildTrainerSummary(trainer);
-    }, [trainer, sheetViewEntityId]);
+    }, [trainer]);
 
-    const activeSheetSummary = (sheetViewEntityId && pcData.pokemonSummaries[sheetViewEntityId]) || trainerSummary;
+    const activeSheetSummary =
+        (sheetViewEntityId && pcData.pokemonSummaries[sheetViewEntityId]) ||
+        (sheetViewEntityId === trainer?.id ? trainerSummary : null);
 
     const sheetAvailableSummaries = useMemo(() => {
         const list: PcPokemonSummary[] = [];
@@ -310,6 +312,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                             pokemonSummaries={pcData.pokemonSummaries}
                             selectedSlot={selectedPcSlot}
                             trainerName={trainer?.name}
+                            trainerSummary={trainerSummary}
                             isPmdMode={isPmdMode}
                             trainerAvatarUrl={trainer?.avatarUrl}
                             activeCharacterName={identity.nickname || identity.species}

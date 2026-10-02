@@ -90,19 +90,25 @@
 
 .pc-box-grid {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    grid-auto-rows: minmax(76px, auto);
+    grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+    grid-auto-rows: minmax(70px, auto);
     gap: 8px;
     min-width: 0;
 }
 
+@media (min-width: 1280px) {
+    .pc-box-grid {
+        grid-template-columns: repeat(6, minmax(138px, 1fr));
+    }
+}
+
 .pc-box-grid__slot-wrapper {
-    min-height: 76px;
+    min-height: 70px;
     min-width: 0;
 }
 
 .pc-box-grid__empty-slot {
-    height: 76px;
+    height: 70px;
     border: 1.5px dashed var(--border, rgba(255, 255, 255, 0.16));
     border-radius: 8px;
     background: color-mix(in srgb, var(--panel-alt, #242424) 40%, transparent);
