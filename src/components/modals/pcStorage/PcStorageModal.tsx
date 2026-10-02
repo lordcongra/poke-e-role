@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
+import { AlertTriangle, X } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { PcStorageHeader } from './PcStorageHeader';
 import { PcPartyDock } from './PcPartyDock';
@@ -18,8 +19,8 @@ import { buildTrainerSummary } from '../../../utils/pc/pcTrainerOps';
 import { savePcStorage } from '../../../utils/pc/pcStorageAdapter';
 import { broadcastPlayerPc, requestPlayerPcSync } from '../../../hooks/owlbearSync/setupOwlbearPcSync';
 import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
-import { organizeTrainerSidebarFolders } from '../../../utils/pc/pcSidebarSync';
-import { organizePmdSidebarFolders } from '../../../utils/pc/pcPmdSidebarSync';
+import { runOrganizeFoldersAction } from '../../../utils/pc/pcSidebarSync';
+import { refreshSummariesFromLocalStorage, buildSheetAvailableSummaries } from '../../../utils/pc/pcCandidateMatching';
 import { usePcModalHandlers } from './usePcModalHandlers';
 import './PcStorageModal.css';
 
@@ -40,27 +41,29 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     const activeTokenId = useCharacterStore((s) => s.tokenId);
 
     // Store Actions
-    const setActiveBoxIndex = useCharacterStore((s) => s.setActiveBoxIndex);
-    const setSelectedPcSlot = useCharacterStore((s) => s.setSelectedPcSlot);
-    const swapPcSlots = useCharacterStore((s) => s.swapPcSlots);
-    const movePokemonToParty = useCharacterStore((s) => s.movePokemonToParty);
-    const depositPokemonToBox = useCharacterStore((s) => s.depositPokemonToBox);
-    const setPartySlot = useCharacterStore((s) => s.setPartySlot);
-    const setBoxSlot = useCharacterStore((s) => s.setBoxSlot);
-    const addBox = useCharacterStore((s) => s.addBox);
-    const renameBox = useCharacterStore((s) => s.renameBox);
-    const setBoxTheme = useCharacterStore((s) => s.setBoxTheme);
-    const switchTrainer = useCharacterStore((s) => s.switchTrainer);
-    const addTrainer = useCharacterStore((s) => s.addTrainer);
-    const deleteTrainer = useCharacterStore((s) => s.deleteTrainer);
-    const switchCampaign = useCharacterStore((s) => s.switchCampaign);
-    const addCampaign = useCharacterStore((s) => s.addCampaign);
-    const deleteCampaign = useCharacterStore((s) => s.deleteCampaign);
-    const updatePokemonSummary = useCharacterStore((s) => s.updatePokemonSummary);
-    const updateTrainerProfile = useCharacterStore((s) => s.updateTrainerProfile);
-    const deletePokemonFromPc = useCharacterStore((s) => s.deletePokemonFromPc);
-    const closeReviewModal = useCharacterStore((s) => s.closeReviewModal);
-    const applyReviewDiffs = useCharacterStore((s) => s.applyReviewDiffs);
+    const {
+        setActiveBoxIndex,
+        setSelectedPcSlot,
+        swapPcSlots,
+        movePokemonToParty,
+        depositPokemonToBox,
+        setPartySlot,
+        setBoxSlot,
+        addBox,
+        renameBox,
+        setBoxTheme,
+        switchTrainer,
+        addTrainer,
+        deleteTrainer,
+        switchCampaign,
+        addCampaign,
+        deleteCampaign,
+        updatePokemonSummary,
+        updateTrainerProfile,
+        deletePokemonFromPc,
+        closeReviewModal,
+        applyReviewDiffs
+    } = useCharacterStore.getState();
 
     // Modal & Popover state
     const [dragSource, setDragSource] = useState<{
@@ -102,7 +105,6 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     const trainerBoxes = trainer?.boxes && trainer.boxes.length > 0 ? trainer.boxes : campaign?.boxes || [];
     const currentBox = trainerBoxes[activeBoxIndex] || trainerBoxes[0];
 
-    // Current active character summary if loaded in sheet
     const currentActiveSummary = buildActiveCharacterSummary(
         identity,
         health,
@@ -112,8 +114,6 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         pcData.pokemonSummaries,
         partySlots
     );
-
-    // All stored Pokémon that either belong to this trainer or are in PC boxes (and not in the active party)
     const trainerPokemonSummaries = filterTrainerPokemonSummaries(pcData.pokemonSummaries, trainer, campaign);
 
     const activeTrainerName = (identity.nickname || identity.species || '').trim();
@@ -190,29 +190,41 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         (sheetViewEntityId && pcData.pokemonSummaries[sheetViewEntityId]) ||
         (sheetViewEntityId === trainer?.id ? trainerSummary : null);
 
-    const sheetAvailableSummaries = useMemo(() => {
-        const list: PcPokemonSummary[] = [];
-        if (trainer) {
-            list.push(trainerSummary || buildTrainerSummary(trainer));
-        }
+    const sheetAvailableSummaries = useMemo(
+        () => buildSheetAvailableSummaries(trainer, trainerSummary, pcData.pokemonSummaries, partySlots, trainerBoxes),
+        [trainer, trainerSummary, pcData.pokemonSummaries, partySlots, trainerBoxes]
+    );
 
-        // Party Pokémon
-        for (const pId of partySlots) {
-            if (pId && pcData.pokemonSummaries[pId] && !list.some((s) => s.entityId === pId)) {
-                list.push(pcData.pokemonSummaries[pId]);
-            }
-        }
-
-        // Box Pokémon
-        for (const b of trainerBoxes) {
-            for (const sId of b.slots || []) {
-                if (sId && pcData.pokemonSummaries[sId] && !list.some((s) => s.entityId === sId)) {
-                    list.push(pcData.pokemonSummaries[sId]);
+    const handleSlotClick = useCallback(
+        (target: { type: 'party' | 'box'; index: number }) => {
+            if (selectedPcSlot) {
+                if (selectedPcSlot.type === target.type && selectedPcSlot.index === target.index) {
+                    setSelectedPcSlot(null);
+                } else {
+                    swapPcSlots(
+                        { ...selectedPcSlot, boxIndex: activeBoxIndex },
+                        { ...target, boxIndex: activeBoxIndex }
+                    );
+                    setSelectedPcSlot(null);
                 }
+            } else {
+                setSelectedPcSlot(target);
             }
-        }
-        return list;
-    }, [trainer, trainerSummary, pcData.pokemonSummaries, partySlots, trainerBoxes]);
+        },
+        [selectedPcSlot, activeBoxIndex, swapPcSlots, setSelectedPcSlot]
+    );
+
+    const handleEmptySlotClick = useCallback(
+        (target: { type: 'party' | 'box'; index: number }) => {
+            if (selectedPcSlot) {
+                swapPcSlots({ ...selectedPcSlot, boxIndex: activeBoxIndex }, { ...target, boxIndex: activeBoxIndex });
+                setSelectedPcSlot(null);
+            } else {
+                setDepositTarget({ targetSlot: target });
+            }
+        },
+        [selectedPcSlot, activeBoxIndex, swapPcSlots, setSelectedPcSlot, setDepositTarget]
+    );
 
     const trainerRef = useRef(trainer);
     trainerRef.current = trainer;
@@ -244,27 +256,21 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         });
     };
 
-    const handleOrganizeFolders = useCallback(async () => {
-        const res = !trainer
-            ? await organizePmdSidebarFolders(partySlots, trainerBoxes)
-            : await organizeTrainerSidebarFolders(trainer, trainerBoxes);
+    const [dismissBackupWarning, setDismissBackupWarning] = useState(() => {
+        return typeof localStorage !== 'undefined' && localStorage.getItem('pkr_pc_backup_warn_dismissed') === 'true';
+    });
 
-        if (res.success) {
-            const label = trainer ? `for ${trainer.name}` : 'for Active Team';
-            const details = [
-                res.createdBelt ? (trainer ? '• Created Belt folder' : '• Created Active Team folder') : '',
-                res.createdBoxes > 0 ? `• Created ${res.createdBoxes} Box folder(s)` : '',
-                `• Moved ${res.movedPokemonCount} Pokémon sheet(s) into their matching folders.`
-            ]
-                .filter(Boolean)
-                .join('\n');
-            alert(`Organized folders ${label}!\n${details}`);
-            window.dispatchEvent(new Event('pkr-local-data-changed'));
-        } else if (trainer) {
-            alert(
-                `Unable to organize folders for ${trainer.name}. Please ensure this Trainer exists in the Directory.`
-            );
+    useEffect(() => {
+        const { updated, hasChanges } = refreshSummariesFromLocalStorage(pcData.pokemonSummaries || {});
+        if (hasChanges) {
+            const nextData = { ...pcData, pokemonSummaries: updated };
+            useCharacterStore.setState({ pcData: nextData });
+            savePcStorage(nextData);
         }
+    }, []);
+
+    const handleOrganizeFolders = useCallback(() => {
+        runOrganizeFoldersAction(trainer, partySlots, trainerBoxes);
     }, [trainer, partySlots, trainerBoxes]);
 
     if (!campaign || (!trainer && !isPmdMode) || !currentBox) {
@@ -306,6 +312,30 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                         onClose={handleModalClose}
                     />
 
+                    {!dismissBackupWarning && (
+                        <div className="pc-modal__backup-warning">
+                            <AlertTriangle size={15} className="pc-modal__warning-icon" />
+                            <span className="pc-modal__warning-text text-subtext">
+                                <strong>Beta Feature:</strong> PC Storage is new. Please back up your character sheets
+                                before moving or storing Pokémon in case an edge case occurs!
+                            </span>
+                            <button
+                                type="button"
+                                className="pc-modal__warning-close"
+                                onClick={() => {
+                                    setDismissBackupWarning(true);
+                                    try {
+                                        localStorage.setItem('pkr_pc_backup_warn_dismissed', 'true');
+                                    } catch {}
+                                }}
+                                title="Dismiss backup reminder"
+                                aria-label="Dismiss backup reminder"
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+                    )}
+
                     <div className="pc-modal__layout">
                         <PcPartyDock
                             partySlots={partySlots}
@@ -319,8 +349,8 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                             activeCharacterAvatarUrl={identity.tokenImageUrl || undefined}
                             canLinkActiveTrainer={canLinkActiveTrainer}
                             otherLinkedTrainerName={otherLinkedTrainer?.name}
-                            onSelectSlot={(index) => setSelectedPcSlot({ type: 'party', index })}
-                            onEmptySlotClick={(index) => setDepositTarget({ targetSlot: { type: 'party', index } })}
+                            onSelectSlot={(index) => handleSlotClick({ type: 'party', index })}
+                            onEmptySlotClick={(index) => handleEmptySlotClick({ type: 'party', index })}
                             onContextMenu={(e, index, id) => handleOpenContextMenu(e, true, index, id)}
                             onOpenSheet={handleOpenCharacterSheet}
                             onRelease={handleReleasePokemon}
@@ -349,8 +379,8 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                             box={currentBox}
                             pokemonSummaries={pcData.pokemonSummaries}
                             selectedSlot={selectedPcSlot}
-                            onSelectSlot={(index) => setSelectedPcSlot({ type: 'box', index })}
-                            onEmptySlotClick={(index) => setDepositTarget({ targetSlot: { type: 'box', index } })}
+                            onSelectSlot={(index) => handleSlotClick({ type: 'box', index })}
+                            onEmptySlotClick={(index) => handleEmptySlotClick({ type: 'box', index })}
                             onOpenDepositDrawer={() => setDepositTarget({})}
                             onContextMenu={(e, index, id) => handleOpenContextMenu(e, false, index, id)}
                             onOpenSheet={handleOpenCharacterSheet}

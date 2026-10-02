@@ -45,9 +45,8 @@ export async function findAndLinkLocalCharacter(
             }
         }
 
-        // 3. Match by name & species (non-trainer only)
+        // 3. Match by name & nickname (non-trainer only)
         const cleanName = (summary.name || summary.species || '').trim().toLowerCase();
-        const cleanSpecies = (summary.species || '').trim().toLowerCase();
         if (cleanName) {
             match = localChars.find((c) => {
                 if (isTrainerMetadata(c.metadata)) return false;
@@ -55,12 +54,7 @@ export async function findAndLinkLocalCharacter(
                 const charNick = String(c.metadata?.nickname || '')
                     .trim()
                     .toLowerCase();
-                const charSpecies = String(c.metadata?.species || '')
-                    .trim()
-                    .toLowerCase();
-                return (
-                    charName === cleanName || charNick === cleanName || (cleanSpecies && charSpecies === cleanSpecies)
-                );
+                return charName === cleanName || charNick === cleanName;
             });
             if (match) {
                 await linkCharacterEntityId(match.id, entityId);

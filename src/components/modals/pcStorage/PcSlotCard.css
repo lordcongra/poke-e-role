@@ -129,6 +129,24 @@
     color: var(--text-main, #f8fafc);
 }
 
+.pc-slot-card:hover .pc-slot-card__name--marquee {
+    display: inline-block;
+    width: max-content;
+    text-overflow: clip;
+    animation: pcMarqueeScroll 4.5s ease-in-out infinite alternate;
+}
+
+@keyframes pcMarqueeScroll {
+    0%,
+    20% {
+        transform: translateX(0);
+    }
+    80%,
+    100% {
+        transform: translateX(calc(-100% + 75px));
+    }
+}
+
 .pc-slot-card__rank {
     font-size: 0.68rem;
     opacity: 0.8;
@@ -183,6 +201,12 @@
     align-items: center;
     gap: 3px;
     flex-shrink: 0;
+}
+
+.pc-slot-card__types--dual .pc-slot-card__type-pill {
+    font-size: 0.58rem;
+    padding: 1px 3px;
+    letter-spacing: -0.02em;
 }
 
 .pc-slot-card__type-pill {
@@ -298,16 +322,11 @@
 
 .pc-slot-card__box-actions {
     position: absolute;
-    top: 4px;
-    right: 4px;
+    top: 5px;
+    right: 5px;
     display: flex;
     align-items: center;
     gap: 3px;
-    background: rgba(15, 23, 42, 0.88);
-    backdrop-filter: blur(4px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 5px;
-    padding: 2px 3px;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.15s ease;
@@ -337,6 +356,7 @@
     align-items: center;
     justify-content: center;
     border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.45);
     transition: transform 0.12s ease;
 }
 

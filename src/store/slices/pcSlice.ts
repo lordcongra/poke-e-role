@@ -293,7 +293,24 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
 
     addTrainer: (name: string) => {
         try {
-            const { nextData } = applyAddTrainer(get().pcData, name);
+            const { nextData, newId } = applyAddTrainer(get().pcData, name);
+            if (!OBR.isAvailable && typeof window !== 'undefined' && window.localStorage) {
+                const cleanName = name.trim();
+                const initialMetadata = {
+                    nickname: cleanName,
+                    name: cleanName,
+                    species: cleanName,
+                    mode: 'Trainer',
+                    rank: 'Trainer',
+                    'hp-curr': 10,
+                    'hp-max-display': 10,
+                    'will-curr': 5,
+                    'will-max-display': 5,
+                    'v2-migrated': true
+                };
+                localStorage.setItem(`pkr_char_${newId}`, JSON.stringify(initialMetadata));
+                window.dispatchEvent(new Event('pkr-local-data-changed'));
+            }
             set({ pcData: nextData });
             savePcStorage(nextData);
         } catch (e) {

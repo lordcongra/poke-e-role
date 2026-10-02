@@ -275,3 +275,77 @@
     align-items: center;
     gap: 5px;
 }
+
+/* --------------------------------------------------------------------------
+   Mobile & Responsive Layouts
+   -------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+    .pc-header__top-row {
+        padding: 6px 8px;
+        gap: 6px;
+    }
+
+    .pc-header__selector-group {
+        gap: 6px;
+    }
+
+    .pc-header__dropdown-item {
+        padding: 2px 4px;
+        gap: 4px;
+    }
+
+    .pc-header__select {
+        max-width: 90px;
+        font-size: 0.75rem;
+    }
+
+    .pc-header__actions {
+        gap: 4px;
+    }
+
+    .pc-header__cloud-btn {
+        padding: 3px 6px;
+        font-size: 0.72rem;
+        gap: 4px;
+    }
+
+    .pc-header__box-nav-row {
+        padding: 6px 8px;
+        gap: 6px;
+    }
+
+    .pc-header__box-nav {
+        gap: 6px;
+    }
+
+    .pc-header__nav-arrow {
+        width: 24px;
+        height: 24px;
+    }
+
+    .pc-header__box-select {
+        font-size: 0.95rem;
+        padding: 2px 4px;
+    }
+
+    .pc-header__box-extra-actions {
+        gap: 4px;
+    }
+
+    .pc-header__theme-picker-label {
+        padding: 3px 6px;
+        font-size: 0.72rem;
+        gap: 4px;
+    }
+
+    .pc-header__color-picker-input {
+        width: 16px;
+        height: 16px;
+    }
+
+    .pc-header__new-box-btn {
+        padding: 3px 6px;
+        font-size: 0.72rem;
+        gap: 4px;
+    }
+}

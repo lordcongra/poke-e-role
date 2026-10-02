@@ -377,6 +377,41 @@ export async function syncSwappedSlotsToSidebar(
             await relocateSidebarPokemon(activeTrainer, entityInTo, { type: 'box', boxIndex: bIdx, boxName: bName });
         }
     }
+
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('pkr-local-data-changed'));
+    }
+}
+
+/**
+ * Runs the folder organization workflow for PMD or Trainer mode and alerts the user.
+ */
+export async function runOrganizeFoldersAction(
+    trainer: TrainerRoster | undefined,
+    partySlots: (string | null)[],
+    trainerBoxes: PcBox[]
+): Promise<void> {
+    const { organizePmdSidebarFolders } = await import('./pcPmdSidebarSync');
+    const res = !trainer
+        ? await organizePmdSidebarFolders(partySlots, trainerBoxes)
+        : await organizeTrainerSidebarFolders(trainer, trainerBoxes);
+
+    if (res.success) {
+        const label = trainer ? `for ${trainer.name}` : 'for Active Team';
+        const details = [
+            res.createdBelt ? (trainer ? '• Created Belt folder' : '• Created Active Team folder') : '',
+            res.createdBoxes > 0 ? `• Created ${res.createdBoxes} Box folder(s)` : '',
+            `• Moved ${res.movedPokemonCount} Pokémon sheet(s) into their matching folders.`
+        ]
+            .filter(Boolean)
+            .join('\n');
+        alert(`Organized folders ${label}!\n${details}`);
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('pkr-local-data-changed'));
+        }
+    } else if (trainer) {
+        alert(`Unable to organize folders for ${trainer.name}. Please ensure this Trainer exists in the Directory.`);
+    }
 }
 
 // Re-export event functions from dedicated module

@@ -105,7 +105,7 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
                     <>
                         <div className="pc-slot-card__title-row pc-slot-card__title-row--box">
                             <span
-                                className="pc-slot-card__name pc-slot-card__name--box text-label"
+                                className={`pc-slot-card__name pc-slot-card__name--box ${(summary.name || summary.species || '').length > 13 ? 'pc-slot-card__name--marquee' : ''} text-label`}
                                 title={
                                     summary.species && summary.species !== summary.name
                                         ? `${summary.name} (${summary.species})`
@@ -117,7 +117,9 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
                         </div>
 
                         <div className="pc-slot-card__meta-row pc-slot-card__meta-row--box">
-                            <div className="pc-slot-card__types pc-slot-card__types--box">
+                            <div
+                                className={`pc-slot-card__types pc-slot-card__types--box ${summary.type2 ? 'pc-slot-card__types--dual' : ''}`}
+                            >
                                 <span
                                     className={`pc-slot-card__type-pill pc-slot-card__type--${summary.type1?.toLowerCase()}`}
                                 >

@@ -285,13 +285,34 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         if (!summary) return;
 
         const clonedId = crypto.randomUUID();
-        const clonedSummary = {
+        const cloneName = `${summary.name || summary.species} (Clone)`;
+        const clonedSummary: PcPokemonSummary = {
             ...summary,
             entityId: clonedId,
-            name: `${summary.name || summary.species} (Clone)`,
+            name: cloneName,
             isOnMap: false,
-            mapTokenId: undefined
+            mapTokenId: undefined,
+            savedTokenItem: undefined
         };
+
+        if (!OBR.isAvailable && typeof window !== 'undefined' && window.localStorage) {
+            try {
+                const origRaw =
+                    localStorage.getItem(`pkr_char_${entityId}`) ||
+                    (summary.savedTokenItem?.id ? localStorage.getItem(`pkr_char_${summary.savedTokenItem.id}`) : null);
+                const cloneMeta = origRaw ? JSON.parse(origRaw) : { ...(summary.fullMetadata || {}) };
+                cloneMeta.nickname = cloneName;
+                cloneMeta.name = cloneName;
+                cloneMeta.entityId = clonedId;
+                delete cloneMeta.parentId;
+                localStorage.setItem(`pkr_char_${clonedId}`, JSON.stringify(cloneMeta));
+                clonedSummary.fullMetadata = cloneMeta;
+                window.dispatchEvent(new Event('pkr-local-data-changed'));
+            } catch (e) {
+                console.warn('[usePcModalHandlers] Failed to create local clone sheet:', e);
+            }
+        }
+
         updatePokemonSummary(clonedSummary);
         depositPokemonToBox(clonedId, activeBoxIndex);
     };

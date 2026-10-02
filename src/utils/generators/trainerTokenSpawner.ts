@@ -4,6 +4,8 @@ import { isStandaloneMode, storageAdapter } from '../sync/storageAdapter';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { buildGraphicsFromMeta, renderTokenGraphics } from '../graphics/graphicsManager';
 import type { GeneratedTrainerResult } from './trainerGeneratorLogic';
+import type { Rank } from '../../store/storeTypes';
+import type { PcPokemonSummary, TrainerRoster, PcStorageData } from '../../types/pcStorageTypes';
 
 export function calculateFormationOffsets(count: number, spacing: number): Array<{ dx: number; dy: number }> {
     switch (count) {
@@ -127,7 +129,8 @@ export interface TrainerSpawnImageOptions {
 export async function spawnTrainerAndTeam(
     result: GeneratedTrainerResult,
     destination: 'new' | 'overwrite' = 'new',
-    imageOptions?: TrainerSpawnImageOptions
+    imageOptions?: TrainerSpawnImageOptions,
+    options?: { generatePcEntry?: boolean }
 ): Promise<void> {
     const store = useCharacterStore.getState();
     const fallbackUrl = getAbsolutePokeballUrl();
@@ -147,7 +150,7 @@ export async function spawnTrainerAndTeam(
                 return;
             }
 
-            // Create new Trainer sheet
+            // 1. Create new Trainer sheet
             const trainerId = await storageAdapter.createLocalCharacter(result.trainerName, null);
             await storageAdapter.saveCharacter(
                 trainerId,
@@ -158,17 +161,99 @@ export async function spawnTrainerAndTeam(
                 METADATA_ID
             );
 
-            // Create nested Pokémon sheets
-            for (const member of result.teamMembers) {
-                const pokeId = await storageAdapter.createLocalCharacter(member.species, trainerId);
-                await storageAdapter.saveCharacter(
-                    pokeId,
-                    {
-                        ...member.metadata,
-                        parentId: trainerId
-                    },
-                    METADATA_ID
-                );
+            let pokemonParentId = trainerId;
+            let beltFolderId: string | null = null;
+            const shouldGeneratePc = options?.generatePcEntry !== false;
+
+            if (shouldGeneratePc && result.teamMembers.length > 0) {
+                beltFolderId = await storageAdapter.createFolder('Belt', trainerId);
+                pokemonParentId = beltFolderId;
+            }
+
+            const generatedPartyIds: string[] = [];
+            const newSummaries: Record<string, PcPokemonSummary> = {};
+
+            // 2. Create nested Pokémon sheets
+            for (let idx = 0; idx < result.teamMembers.length; idx++) {
+                const member = result.teamMembers[idx];
+                const pokeId = await storageAdapter.createLocalCharacter(member.species, pokemonParentId);
+                const pokeMeta = {
+                    ...member.metadata,
+                    entityId: pokeId,
+                    parentId: pokemonParentId
+                };
+                await storageAdapter.saveCharacter(pokeId, pokeMeta, METADATA_ID);
+
+                if (shouldGeneratePc && idx < 6) {
+                    generatedPartyIds.push(pokeId);
+                    const hpMax = Number(member.metadata['hp-max-display']) || 10;
+                    const hpCurr = Number(member.metadata['hp-curr']) || hpMax;
+                    const willMax = Number(member.metadata['will-max-display']) || 5;
+                    const willCurr = Number(member.metadata['will-curr']) || willMax;
+                    newSummaries[pokeId] = {
+                        entityId: pokeId,
+                        name: member.species,
+                        species: member.species,
+                        rank: (member.metadata['rank'] as Rank) || 'Starter',
+                        type1: (member.metadata['type1'] as string) || 'Normal',
+                        type2: (member.metadata['type2'] as string) || undefined,
+                        hp: hpCurr,
+                        maxHp: hpMax,
+                        will: willCurr,
+                        maxWill: willMax,
+                        tokenImageUrl: (member.metadata['token-image-url'] as string) || fallbackUrl,
+                        trainerId,
+                        fullMetadata: pokeMeta,
+                        savedTokenItem: { id: pokeId } as unknown as Item,
+                        lastModified: Date.now()
+                    };
+                }
+            }
+
+            // 3. Register Trainer and team into PC Storage if enabled
+            if (shouldGeneratePc) {
+                const { createDefaultBox, savePcStorage } = await import('../pc/pcStorageAdapter');
+                const pcData = store.pcData;
+                const activeCampId = pcData.activeCampaignId;
+                const camp = pcData.campaigns[activeCampId];
+                if (camp) {
+                    const partySlots = Array(6).fill(null);
+                    generatedPartyIds.forEach((pId, i) => {
+                        partySlots[i] = pId;
+                    });
+
+                    const nextTrainer: TrainerRoster = {
+                        id: trainerId,
+                        name: result.trainerName,
+                        party: partySlots,
+                        boxes: Array.from({ length: 8 }, (_, i) => createDefaultBox(i)),
+                        avatarUrl: (result.trainerMetadata['token-image-url'] as string) || undefined,
+                        fullMetadata: result.trainerMetadata,
+                        savedTokenItem: { id: trainerId } as unknown as Item
+                    };
+
+                    const nextPcData: PcStorageData = {
+                        ...pcData,
+                        pokemonSummaries: {
+                            ...pcData.pokemonSummaries,
+                            ...newSummaries
+                        },
+                        campaigns: {
+                            ...pcData.campaigns,
+                            [activeCampId]: {
+                                ...camp,
+                                activeTrainerId: trainerId,
+                                trainers: {
+                                    ...camp.trainers,
+                                    [trainerId]: nextTrainer
+                                }
+                            }
+                        }
+                    };
+
+                    useCharacterStore.setState({ pcData: nextPcData });
+                    await savePcStorage(nextPcData);
+                }
             }
 
             // Switch to the newly created Trainer
@@ -178,6 +263,10 @@ export async function spawnTrainerAndTeam(
                 ...result.trainerMetadata,
                 parentId: null
             });
+
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new Event('pkr-local-data-changed'));
+            }
         } catch (err) {
             console.error('[trainerTokenSpawner] Failed to spawn in Standalone:', err);
             throw err;

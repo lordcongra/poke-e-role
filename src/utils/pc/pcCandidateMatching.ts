@@ -1,5 +1,5 @@
 import type { Item } from '@owlbear-rodeo/sdk';
-import type { PcPokemonSummary } from '../../types/pcStorageTypes';
+import type { PcPokemonSummary, PcBox, TrainerRoster } from '../../types/pcStorageTypes';
 import { METADATA_ID } from '../sync/obr';
 import { storageAdapter } from '../sync/storageAdapter';
 import { getAbsolutePokeballUrl } from '../generators/trainerTokenSpawner';
@@ -235,4 +235,104 @@ export async function scanStandaloneCandidates(
         console.error('[pcCandidateMatching] Failed to scan standalone candidates:', e);
         return [];
     }
+}
+
+/**
+ * Refreshes pokemon summaries from local storage on Standalone so changes to typing,
+ * nicknames, HP, or artwork made in the main sheet viewer immediately reflect in PC boxes.
+ */
+export function refreshSummariesFromLocalStorage(summaries: Record<string, PcPokemonSummary>): {
+    updated: Record<string, PcPokemonSummary>;
+    hasChanges: boolean;
+} {
+    if (typeof window === 'undefined' || !window.localStorage) {
+        return { updated: summaries, hasChanges: false };
+    }
+
+    let hasChanges = false;
+    const nextSummaries: Record<string, PcPokemonSummary> = { ...summaries };
+
+    for (const [id, summary] of Object.entries(summaries)) {
+        try {
+            const raw = localStorage.getItem(`pkr_char_${id}`);
+            if (!raw) continue;
+            const meta = JSON.parse(raw);
+            if (!meta || typeof meta !== 'object') continue;
+
+            const newType1 = (meta.type1 as string) ?? summary.type1;
+            const newType2 = (meta.type2 as string) ?? summary.type2;
+            const newName = (meta.nickname as string) || (meta.species as string) || summary.name;
+            const newSpecies = (meta.species as string) || summary.species;
+            const newRank = (meta.rank as string) || summary.rank;
+            const newHp = typeof meta['hp-curr'] === 'number' ? (meta['hp-curr'] as number) : summary.hp;
+            const newMaxHp =
+                typeof meta['hp-max-display'] === 'number' ? (meta['hp-max-display'] as number) : summary.maxHp;
+            const newWill = typeof meta['will-curr'] === 'number' ? (meta['will-curr'] as number) : summary.will;
+            const newMaxWill =
+                typeof meta['will-max-display'] === 'number' ? (meta['will-max-display'] as number) : summary.maxWill;
+            const newAvatar = (meta['token-image-url'] as string) || summary.tokenImageUrl;
+
+            if (
+                newType1 !== summary.type1 ||
+                newType2 !== summary.type2 ||
+                newName !== summary.name ||
+                newSpecies !== summary.species ||
+                newRank !== summary.rank ||
+                newHp !== summary.hp ||
+                newMaxHp !== summary.maxHp ||
+                newWill !== summary.will ||
+                newMaxWill !== summary.maxWill ||
+                newAvatar !== summary.tokenImageUrl
+            ) {
+                nextSummaries[id] = {
+                    ...summary,
+                    type1: newType1,
+                    type2: newType2,
+                    name: newName,
+                    species: newSpecies,
+                    rank: newRank,
+                    hp: newHp,
+                    maxHp: newMaxHp,
+                    will: newWill,
+                    maxWill: newMaxWill,
+                    tokenImageUrl: newAvatar,
+                    fullMetadata: { ...(summary.fullMetadata || {}), ...meta }
+                };
+                hasChanges = true;
+            }
+        } catch {
+            // Ignore parse errors on corrupted keys
+        }
+    }
+
+    return { updated: nextSummaries, hasChanges };
+}
+
+/**
+ * Builds the list of candidate Pokémon/Trainer summaries viewable in the PC sheet modal.
+ */
+export function buildSheetAvailableSummaries(
+    trainer: TrainerRoster | undefined,
+    trainerSummary: PcPokemonSummary | null,
+    pokemonSummaries: Record<string, PcPokemonSummary>,
+    partySlots: (string | null)[],
+    trainerBoxes: PcBox[]
+): PcPokemonSummary[] {
+    const list: PcPokemonSummary[] = [];
+    if (trainer && trainerSummary) {
+        list.push(trainerSummary);
+    }
+    for (const pId of partySlots) {
+        if (pId && pokemonSummaries[pId] && !list.some((s) => s.entityId === pId)) {
+            list.push(pokemonSummaries[pId]);
+        }
+    }
+    for (const b of trainerBoxes) {
+        for (const sId of b.slots || []) {
+            if (sId && pokemonSummaries[sId] && !list.some((s) => s.entityId === sId)) {
+                list.push(pokemonSummaries[sId]);
+            }
+        }
+    }
+    return list;
 }

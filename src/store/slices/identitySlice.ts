@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import type { CharacterState, IdentitySlice } from '../storeTypes';
+import type { CharacterState, IdentitySlice, Rank } from '../storeTypes';
 import {
     saveToOwlbear,
     saveRoomSettingsToOwlbear,
@@ -679,7 +679,49 @@ export const createIdentitySlice: StateCreator<CharacterState, [], [], IdentityS
                 }
             }
 
-            return { identity: newIdentity, health: newHealth, will: newWill };
+            let nextPcData = state.pcData;
+            if (
+                state.tokenId &&
+                state.pcData?.pokemonSummaries &&
+                (field === 'type1' ||
+                    field === 'type2' ||
+                    field === 'nickname' ||
+                    field === 'species' ||
+                    field === 'rank' ||
+                    field === 'tokenImageUrl')
+            ) {
+                const summaries = state.pcData.pokemonSummaries;
+                const matchEntry = Object.entries(summaries).find(
+                    ([k, s]) =>
+                        k === state.tokenId || s.mapTokenId === state.tokenId || s.savedTokenItem?.id === state.tokenId
+                );
+                if (matchEntry) {
+                    const [matchedKey, sum] = matchEntry;
+                    const updatedSum = {
+                        ...sum,
+                        type1: field === 'type1' ? (value as string) : sum.type1,
+                        type2: field === 'type2' ? (value as string) : sum.type2,
+                        name: field === 'nickname' ? (value as string) || sum.species : sum.name,
+                        species: field === 'species' ? (value as string) : sum.species,
+                        rank: field === 'rank' ? (value as Rank) : sum.rank,
+                        tokenImageUrl: field === 'tokenImageUrl' ? (value as string) : sum.tokenImageUrl
+                    };
+                    nextPcData = {
+                        ...state.pcData,
+                        pokemonSummaries: {
+                            ...summaries,
+                            [matchedKey]: updatedSum
+                        }
+                    };
+                    import('../../utils/pc/pcStorageAdapter')
+                        .then(({ savePcStorage }) => {
+                            savePcStorage(nextPcData);
+                        })
+                        .catch(() => {});
+                }
+            }
+
+            return { identity: newIdentity, health: newHealth, will: newWill, pcData: nextPcData };
         }),
 
     setPrintConfig: (config) =>

@@ -60,12 +60,22 @@ export function useSidebarEngine() {
     const partyMemberMap = useMemo(() => {
         const map: Record<string, { trainerName: string; slotNumber: number }> = {};
         if (!pcData?.campaigns) return map;
+        const summaries = pcData.pokemonSummaries || {};
         for (const camp of Object.values(pcData.campaigns)) {
             for (const tr of Object.values(camp.trainers)) {
                 if (!tr.party) continue;
                 tr.party.forEach((entityId, idx) => {
                     if (entityId) {
                         map[entityId] = { trainerName: tr.name, slotNumber: idx + 1 };
+                        const sum = summaries[entityId];
+                        if (sum) {
+                            if (sum.savedTokenItem?.id) {
+                                map[sum.savedTokenItem.id] = { trainerName: tr.name, slotNumber: idx + 1 };
+                            }
+                            if (sum.mapTokenId) {
+                                map[sum.mapTokenId] = { trainerName: tr.name, slotNumber: idx + 1 };
+                            }
+                        }
                     }
                 });
             }
@@ -234,7 +244,7 @@ export function useSidebarEngine() {
         const originalSetItem = localStorage.setItem;
         localStorage.setItem = function (key, value) {
             originalSetItem.call(this, key, value);
-            if (key.startsWith('pkr_char_') || key === 'pkr_folders') {
+            if (key.startsWith('pkr_char_') || key === 'pkr_folders' || key.includes('pkr_pc_storage')) {
                 window.dispatchEvent(new Event('pkr-local-data-changed'));
             }
         };

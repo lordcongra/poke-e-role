@@ -19,7 +19,7 @@ import {
     saveStandaloneTokenUrl,
     deleteStandaloneTokenImage
 } from '../../utils/graphics/tokenImageService';
-import { setActiveTokenId } from '../../utils/sync/obr';
+import { setActiveTokenId, getIsPcSheetActive } from '../../utils/sync/obr';
 import { Image as ImageIcon, RefreshCw, Dna, ArrowLeft } from 'lucide-react';
 import './IdentityHeader.css';
 
@@ -125,11 +125,11 @@ export function IdentityHeader() {
                     onClick={handleUpdateTokenImage}
                     title="Change this character's artwork."
                 >
-                    <ImageIcon size={14} /> Update Token Image
+                    <ImageIcon size={14} /> {isStandaloneMode ? 'Update Sheet Image' : 'Update Token Image'}
                 </button>
             )}
 
-            {tokenId && (
+            {!getIsPcSheetActive() && tokenId && (
                 <button
                     type="button"
                     className="action-button action-button--dark identity-header__btn"

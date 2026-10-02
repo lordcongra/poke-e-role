@@ -110,7 +110,7 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                             aria-label="Organize Folders in Directory"
                         >
                             <FolderPlus size={12} />
-                            <span>Folders</span>
+                            <span>Organize</span>
                         </button>
                     )}
                     {!isPmd &&

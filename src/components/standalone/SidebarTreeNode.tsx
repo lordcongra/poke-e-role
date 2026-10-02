@@ -155,35 +155,43 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
                                 )}
 
                                 {/* Active Belt Party Pokéball Badge */}
-                                {props.partyMemberMap?.[item.id] && (
-                                    <span
-                                        className="sidebar__party-badge"
-                                        title={`Active in ${props.partyMemberMap[item.id].trainerName}'s Belt (Slot #${props.partyMemberMap[item.id].slotNumber})`}
-                                        style={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            marginLeft: 4,
-                                            flexShrink: 0
-                                        }}
-                                    >
-                                        <svg
-                                            width={13}
-                                            height={13}
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="2.4"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            style={{ color: 'var(--semantic-danger, #ef4444)' }}
+                                {(() => {
+                                    const badge =
+                                        props.partyMemberMap?.[item.id] ||
+                                        (item.meta?.entityId
+                                            ? props.partyMemberMap?.[item.meta.entityId as string]
+                                            : undefined);
+                                    if (!badge) return null;
+                                    return (
+                                        <span
+                                            className="sidebar__party-badge"
+                                            title={`Active in ${badge.trainerName}'s Belt (Slot #${badge.slotNumber})`}
+                                            style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                marginLeft: 4,
+                                                flexShrink: 0
+                                            }}
                                         >
-                                            <circle cx="12" cy="12" r="10" />
-                                            <line x1="2" y1="12" x2="22" y2="12" />
-                                            <circle cx="12" cy="12" r="3" />
-                                            <circle cx="12" cy="12" r="1" fill="currentColor" />
-                                        </svg>
-                                    </span>
-                                )}
+                                            <svg
+                                                width={13}
+                                                height={13}
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="2.4"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                style={{ color: 'var(--semantic-danger, #ef4444)' }}
+                                            >
+                                                <circle cx="12" cy="12" r="10" />
+                                                <line x1="2" y1="12" x2="22" y2="12" />
+                                                <circle cx="12" cy="12" r="3" />
+                                                <circle cx="12" cy="12" r="1" fill="currentColor" />
+                                            </svg>
+                                        </span>
+                                    );
+                                })()}
                             </div>
                             <div className="sidebar__item-actions">
                                 <button

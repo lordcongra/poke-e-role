@@ -55,7 +55,7 @@ export const PcBoxGrid: React.FC<PcBoxGridProps> = ({
                 } as React.CSSProperties
             }
         >
-            {!dismissBanner && (
+            {!dismissBanner && OBR.isAvailable && (
                 <div className="pc-box-grid__banner">
                     <div className="pc-box-grid__banner-content">
                         <Info size={15} className="pc-box-grid__banner-icon" />

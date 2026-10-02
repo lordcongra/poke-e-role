@@ -15,6 +15,7 @@ import {
 import { spawnTrainerAndTeam, type TrainerSpawnImageOptions } from '../../../utils/generators/trainerTokenSpawner';
 import { buildTokenMetadataFromBuild } from '../../../utils/generators/generatorUtils';
 import { useCharacterStore } from '../../../store/useCharacterStore';
+import { isStandaloneMode } from '../../../utils/sync/storageAdapter';
 import { TrainerSheetPreview } from './TrainerSheetPreview';
 import { PokemonBuildPreview } from '../pokemonGenerator';
 import './TrainerPreviewModal.css';
@@ -38,6 +39,7 @@ export function TrainerPreviewModal({
 }: TrainerPreviewModalProps) {
     // Active tab: 'trainer' or team member index (0..N-1)
     const [activeTab, setActiveTab] = useState<'trainer' | number>('trainer');
+    const [generatePcEntry, setGeneratePcEntry] = useState(true);
 
     // Trainer Form State
     const [trainerName, setTrainerName] = useState<string>(result.trainerName);
@@ -277,7 +279,7 @@ export function TrainerPreviewModal({
                 teamMembers: updatedTeamMembers
             };
 
-            await spawnTrainerAndTeam(finalResult, destination, imageOptions);
+            await spawnTrainerAndTeam(finalResult, destination, imageOptions, { generatePcEntry });
             onClose();
         } catch (err) {
             console.error('[TrainerPreviewModal] Failed to spawn:', err);
@@ -374,6 +376,27 @@ export function TrainerPreviewModal({
 
                 {/* Footer Controls */}
                 <div className="trainer-preview__actions">
+                    {isStandaloneMode && (
+                        <label
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                fontSize: '0.82rem',
+                                color: 'var(--text-main)',
+                                cursor: 'pointer',
+                                marginRight: 'auto'
+                            }}
+                            title="Auto-generates a PC Belt entry and nests your Pokémon into a Belt folder"
+                        >
+                            <input
+                                type="checkbox"
+                                checked={generatePcEntry}
+                                onChange={(e) => setGeneratePcEntry(e.target.checked)}
+                            />
+                            <span>Create PC Entry & Folders</span>
+                        </label>
+                    )}
                     <button
                         type="button"
                         className="action-button action-button--dark"
