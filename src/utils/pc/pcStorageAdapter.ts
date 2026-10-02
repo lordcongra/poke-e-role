@@ -217,6 +217,34 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
                 delete camp.trainers[tid];
                 continue;
             }
+
+            // Prune pseudo "None / PMD" trainer from camp.trainers so it never creates a duplicate profile
+            const isPmdPseudo =
+                tid === '__none__' ||
+                tid.startsWith('__pmd_') ||
+                (t.name && t.name.trim().toLowerCase().startsWith('none (pmd'));
+
+            if (isPmdPseudo) {
+                if (Array.isArray(t.party)) {
+                    for (const pid of t.party) {
+                        if (pid && !camp.teamParty.includes(pid)) {
+                            const emptyIdx = camp.teamParty.findIndex((s) => s === null);
+                            if (emptyIdx !== -1) camp.teamParty[emptyIdx] = pid;
+                            else if (camp.boxes[0]) camp.boxes[0].slots.push(pid);
+                        }
+                    }
+                }
+                if (Array.isArray(t.boxes)) {
+                    for (const b of t.boxes) {
+                        for (const pid of b.slots || []) {
+                            if (pid && camp.boxes[0]) camp.boxes[0].slots.push(pid);
+                        }
+                    }
+                }
+                delete camp.trainers[tid];
+                continue;
+            }
+
             if (!t.name || !t.name.trim()) t.name = 'Trainer';
 
             if (t.avatarUrl && (t.avatarUrl.startsWith('file:') || t.avatarUrl.startsWith('file:///'))) {

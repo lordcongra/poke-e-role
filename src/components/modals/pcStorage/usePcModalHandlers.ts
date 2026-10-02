@@ -50,7 +50,7 @@ interface UsePcModalHandlersParams {
     setSheetViewEntityId: (id: string | null) => void;
     setIsExportModalOpen: (open: boolean) => void;
     updatePokemonSummary: (summary: PcPokemonSummary) => void;
-    deletePokemonFromPc: (entityId: string) => void;
+    deletePokemonFromPc: (entityId: string, options?: { wasUnlinked?: boolean; pokemonName?: string }) => void;
     depositPokemonToBox: (entityId: string, boxIndex?: number) => boolean;
     setPartySlot: (trainerId: string, slotIndex: number, entityId: string | null) => void;
     setBoxSlot: (boxIndex: number, slotIndex: number, entityId: string | null) => void;
@@ -310,26 +310,19 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         depositPokemonToBox(clonedId, activeBoxIndex);
     };
 
-    const handleUnlinkPokemon = async (entityId: string) => {
+    const [releaseModalMode, setReleaseModalMode] = useState<'release' | 'unlink'>('release');
+
+    const handlePromptUnlinkPokemon = (entityId: string) => {
         const summary = pcData.pokemonSummaries[entityId];
         if (!summary) return;
-        await unlinkPokemonFromPcOps(summary, role || 'PLAYER', (s, ownerId, r) =>
-            spawnPokemonToMap(s, ownerId, r, trainer)
-        );
-        deletePokemonFromPc(entityId);
-        if (sheetViewEntityId === entityId) setSheetViewEntityId(null);
-        if (releaseConfirmPokemon?.entityId === entityId) setReleaseConfirmPokemon(null);
-        if (OBR.isAvailable) {
-            OBR.notification.show(
-                `Unlinked "${summary.name || summary.species}" from PC. Placed on battle map.`,
-                'INFO'
-            );
-        }
+        setReleaseModalMode('unlink');
+        setReleaseConfirmPokemon(summary);
     };
 
     const handleReleasePokemon = (entityId: string) => {
         const summary = pcData.pokemonSummaries[entityId];
         if (!summary) return;
+        setReleaseModalMode('release');
         setReleaseConfirmPokemon(summary);
     };
 
@@ -339,11 +332,23 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         if (sheetViewEntityId === releaseConfirmPokemon.entityId) {
             setSheetViewEntityId(null);
         }
-        await clearTokenClaimOps(releaseConfirmPokemon.mapTokenId, releaseConfirmPokemon.entityId);
-        deletePokemonFromPc(releaseConfirmPokemon.entityId);
-        setReleaseConfirmPokemon(null);
-        if (OBR.isAvailable) {
-            OBR.notification.show(`Released "${name}" from storage.`, 'INFO');
+
+        if (releaseModalMode === 'unlink') {
+            await unlinkPokemonFromPcOps(releaseConfirmPokemon, role || 'PLAYER', (s, ownerId, r) =>
+                spawnPokemonToMap(s, ownerId, r, trainer)
+            );
+            deletePokemonFromPc(releaseConfirmPokemon.entityId, { wasUnlinked: true, pokemonName: name });
+            setReleaseConfirmPokemon(null);
+            if (OBR.isAvailable) {
+                OBR.notification.show(`Unlinked "${name}" from PC. Placed on battle map.`, 'INFO');
+            }
+        } else {
+            await clearTokenClaimOps(releaseConfirmPokemon.mapTokenId, releaseConfirmPokemon.entityId);
+            deletePokemonFromPc(releaseConfirmPokemon.entityId, { wasUnlinked: false, pokemonName: name });
+            setReleaseConfirmPokemon(null);
+            if (OBR.isAvailable) {
+                OBR.notification.show(`Released "${name}" from storage.`, 'INFO');
+            }
         }
     };
 
@@ -458,9 +463,11 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         handleRecall,
         handleRelinkArtwork,
         handleClonePokemon,
-        handleUnlinkPokemon,
+        handleUnlinkPokemon: handlePromptUnlinkPokemon,
         handleReleasePokemon,
         handleConfirmRelease,
+        releaseModalMode,
+        setReleaseModalMode,
         handleDropTrainerToken,
         handleConfirmCloudUpload,
         handleDownloadBox,

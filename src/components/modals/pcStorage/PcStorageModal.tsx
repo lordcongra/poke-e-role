@@ -176,6 +176,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         handleUnlinkPokemon,
         handleReleasePokemon,
         handleConfirmRelease,
+        releaseModalMode,
         handleDropTrainerToken,
         handleConfirmCloudUpload,
         handleDownloadBox,
@@ -501,6 +502,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                 handleUpdateSheetSummary={handleUpdateSheetSummary}
                 releaseConfirmPokemon={releaseConfirmPokemon}
                 setReleaseConfirmPokemon={setReleaseConfirmPokemon}
+                releaseModalMode={releaseModalMode}
                 handleConfirmRelease={handleConfirmRelease}
                 handleUnlinkPokemon={handleUnlinkPokemon}
                 isGuideModalOpen={isGuideModalOpen}

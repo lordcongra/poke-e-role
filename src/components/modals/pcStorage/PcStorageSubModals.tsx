@@ -54,6 +54,7 @@ interface PcStorageSubModalsProps {
     handleUpdateSheetSummary: (summary: PcPokemonSummary) => void;
     releaseConfirmPokemon: PcPokemonSummary | null;
     setReleaseConfirmPokemon: (p: PcPokemonSummary | null) => void;
+    releaseModalMode?: 'release' | 'unlink';
     handleConfirmRelease: () => void;
     handleUnlinkPokemon: (id: string) => void;
     isGuideModalOpen: boolean;
@@ -89,6 +90,7 @@ export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
     handleUpdateSheetSummary,
     releaseConfirmPokemon,
     setReleaseConfirmPokemon,
+    releaseModalMode,
     handleConfirmRelease,
     handleUnlinkPokemon,
     isGuideModalOpen,
@@ -185,10 +187,11 @@ export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
                 />
             )}
 
-            {/* Permanent Release Double-Confirmation Modal */}
+            {/* Permanent Release / Unlink Double-Confirmation Modal */}
             {releaseConfirmPokemon && (
                 <PcReleaseConfirmModal
                     pokemon={releaseConfirmPokemon}
+                    mode={releaseModalMode}
                     onConfirm={handleConfirmRelease}
                     onUnlink={() => handleUnlinkPokemon(releaseConfirmPokemon.entityId)}
                     onClose={() => setReleaseConfirmPokemon(null)}

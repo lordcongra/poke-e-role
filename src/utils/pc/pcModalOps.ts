@@ -29,17 +29,18 @@ export {
 import { buildGraphicsFromMeta, renderTokenGraphics } from '../graphics/graphicsManager';
 import { resolveExistingCharacterEntityId } from './pcCandidateMatching';
 import { resolveTokenImageForMap } from './pcTokenImageOps';
-import { resolveSpawnAnchorToken, findOpenGridPosition, getAbsoluteItemPosition } from './pcPlacementUtils';
+import {
+    resolveSpawnAnchorToken,
+    findOpenGridPosition,
+    getAbsoluteItemPosition,
+    setBatchAnchorPos,
+    getBatchAnchorPos,
+    recentlySpawnedTokenIds,
+    markTokenAsRecentlySpawned
+} from './pcPlacementUtils';
 import { useCharacterStore } from '../../store/useCharacterStore';
 
-export const recentlySpawnedTokenIds = new Set<string>();
-
-export function markTokenAsRecentlySpawned(id: string) {
-    recentlySpawnedTokenIds.add(id);
-    setTimeout(() => {
-        recentlySpawnedTokenIds.delete(id);
-    }, 3500);
-}
+export { recentlySpawnedTokenIds, markTokenAsRecentlySpawned };
 
 export async function spawnPokemonToMap(
     summary: PcPokemonSummary,
@@ -92,13 +93,20 @@ export async function spawnPokemonToMap(
 
             if (anchorToken) {
                 anchorPos = getAbsoluteItemPosition(anchorToken, sceneItems);
+                setBatchAnchorPos(anchorPos);
             } else {
-                const vpWidth = (await OBR.viewport.getWidth()) || 800;
-                const vpHeight = (await OBR.viewport.getHeight()) || 600;
-                anchorPos = await OBR.viewport.inverseTransformPoint({
-                    x: vpWidth / 2,
-                    y: vpHeight / 2
-                });
+                const sessionAnchor = getBatchAnchorPos();
+                if (sessionAnchor) {
+                    anchorPos = sessionAnchor;
+                } else {
+                    const vpWidth = (await OBR.viewport.getWidth()) || 800;
+                    const vpHeight = (await OBR.viewport.getHeight()) || 600;
+                    anchorPos = await OBR.viewport.inverseTransformPoint({
+                        x: vpWidth / 2,
+                        y: vpHeight / 2
+                    });
+                    setBatchAnchorPos(anchorPos);
+                }
             }
         } catch {
             anchorPos = { x: 0, y: 0 };
@@ -257,8 +265,6 @@ export async function spawnPokemonToMap(
             await OBR.scene.items.addItems([fallbackItem]);
             (newParent as { id: string }).id = fallbackItem.id;
         }
-
-        await OBR.player.select([newParent.id]);
 
         // 8. Render tracker HUD graphics for the newly spawned Pokémon
         try {

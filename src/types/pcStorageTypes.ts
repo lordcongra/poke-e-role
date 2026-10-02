@@ -119,7 +119,7 @@ export interface PcSlice {
     deleteCampaign: (campaignId: string) => boolean;
     updatePokemonSummary: (summary: PcPokemonSummary) => void;
     updateTrainerProfile: (trainerId: string, updates: Partial<TrainerRoster>) => void;
-    deletePokemonFromPc: (entityId: string) => void;
+    deletePokemonFromPc: (entityId: string, options?: { wasUnlinked?: boolean; pokemonName?: string }) => void;
     openReviewModal: (payload: SheetReviewPayload) => void;
     closeReviewModal: () => void;
     applyReviewDiffs: (entityId: string, diffs: SheetFieldDiff[]) => void;

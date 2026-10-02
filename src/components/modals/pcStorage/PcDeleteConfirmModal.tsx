@@ -99,6 +99,18 @@ export const PcDeleteConfirmModal: React.FC<PcDeleteConfirmModalProps> = ({
                             undone.
                         </div>
                     )}
+                    <div
+                        className="pc-delete-modal__note text-subtext"
+                        style={{
+                            color: 'var(--semantic-danger, #ef4444)',
+                            fontWeight: 500,
+                            marginTop: '10px'
+                        }}
+                    >
+                        ⚠️ <strong>Table Sync Notice:</strong> Deleting this{' '}
+                        {type === 'trainer' ? 'trainer' : 'campaign'} will synchronize across the room and remove it on
+                        both Player and GM ends.
+                    </div>
                 </div>
 
                 <footer className="modal-footer pc-delete-modal__footer">

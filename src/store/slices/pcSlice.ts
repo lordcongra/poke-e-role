@@ -487,11 +487,28 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
         }
     },
 
-    deletePokemonFromPc: (entityId: string) => {
+    deletePokemonFromPc: (entityId: string, options?: { wasUnlinked?: boolean; pokemonName?: string }) => {
         try {
-            const nextData = applyDeleteSummary(get().pcData, entityId);
+            const { pcData } = get();
+            const summary = pcData.pokemonSummaries[entityId];
+            const nextData = applyDeleteSummary(pcData, entityId);
             set({ pcData: nextData, selectedPcSlot: null });
             savePcStorage(nextData);
+
+            if (OBR.isAvailable) {
+                OBR.broadcast
+                    .sendMessage(
+                        `${EXTENSION_ID}/pc-pokemon-delete`,
+                        {
+                            campaignId: pcData.activeCampaignId,
+                            entityId,
+                            pokemonName: options?.pokemonName || summary?.name || summary?.species,
+                            wasUnlinked: options?.wasUnlinked
+                        },
+                        { destination: 'REMOTE' }
+                    )
+                    .catch(() => {});
+            }
         } catch (e) {
             console.error('[PcSlice] Failed to delete pokemon from PC:', e);
         }

@@ -6,6 +6,7 @@ import { resolveEffectiveActiveTrainer } from '../../utils/pc/pcCampaignTrainerO
 import { EXTENSION_ID } from './owlbearSyncConstants';
 import { sendSafeBroadcastPayload, registerSafeBroadcastListener } from './owlbearBroadcastUtils';
 import { computeSheetFieldDiffs } from '../../utils/pc/pcDiffUtils';
+import { applyDeleteSummary } from '../../utils/pc/pcStateMutations';
 
 export interface PlayerPcSyncPayload {
     campaignId: string;
@@ -241,44 +242,81 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
             }
         );
         unsubs.push(unsubPlayerSync);
-
-        // GM listens for player trainer deletion broadcasts
-        const unsubTrainerDelete = OBR.broadcast.onMessage(`${EXTENSION_ID}/pc-trainer-delete`, async (event) => {
-            const { campaignId, trainerId } = (event.data || {}) as {
-                campaignId?: string;
-                trainerId?: string;
-            };
-            if (!trainerId) return;
-
-            try {
-                const state = useCharacterStore.getState();
-                const { pcData } = state;
-                const targetCampId = campaignId && pcData.campaigns[campaignId] ? campaignId : pcData.activeCampaignId;
-                const camp = pcData.campaigns[targetCampId];
-                if (!camp || !camp.trainers[trainerId]) return;
-
-                const nextTrainers = { ...camp.trainers };
-                delete nextTrainers[trainerId];
-
-                const nextData = {
-                    ...pcData,
-                    campaigns: {
-                        ...pcData.campaigns,
-                        [targetCampId]: {
-                            ...camp,
-                            trainers: nextTrainers
-                        }
-                    }
-                };
-
-                useCharacterStore.setState({ pcData: nextData });
-                await savePcStorage(nextData);
-            } catch (e) {
-                console.error('[PcSync] Failed to purge deleted trainer on GM end:', e);
-            }
-        });
-        unsubs.push(unsubTrainerDelete);
     }
+
+    // 2. Both GM and Players listen for trainer deletions across the room
+    const unsubTrainerDelete = OBR.broadcast.onMessage(`${EXTENSION_ID}/pc-trainer-delete`, async (event) => {
+        const { campaignId, trainerId } = (event.data || {}) as {
+            campaignId?: string;
+            trainerId?: string;
+        };
+        if (!trainerId) return;
+
+        try {
+            const state = useCharacterStore.getState();
+            const { pcData } = state;
+            const targetCampId = campaignId && pcData.campaigns[campaignId] ? campaignId : pcData.activeCampaignId;
+            const camp = pcData.campaigns[targetCampId];
+            if (!camp || !camp.trainers[trainerId]) return;
+
+            const deletedName = camp.trainers[trainerId]?.name || 'Trainer';
+            const nextTrainers = { ...camp.trainers };
+            delete nextTrainers[trainerId];
+
+            const remainingKeys = Object.keys(nextTrainers);
+            const nextActiveTrainerId =
+                camp.activeTrainerId === trainerId ? remainingKeys[0] || '__none__' : camp.activeTrainerId;
+
+            const nextData = {
+                ...pcData,
+                campaigns: {
+                    ...pcData.campaigns,
+                    [targetCampId]: {
+                        ...camp,
+                        activeTrainerId: nextActiveTrainerId,
+                        trainers: nextTrainers
+                    }
+                }
+            };
+
+            useCharacterStore.setState({ pcData: nextData });
+            await savePcStorage(nextData);
+            OBR.notification.show(`Trainer "${deletedName}" was removed from the campaign.`, 'INFO');
+        } catch (e) {
+            console.error('[PcSync] Failed to purge deleted trainer:', e);
+        }
+    });
+    unsubs.push(unsubTrainerDelete);
+
+    // 3. Both GM and Players listen for Pokémon release / unlinking across the room
+    const unsubPokemonDelete = OBR.broadcast.onMessage(`${EXTENSION_ID}/pc-pokemon-delete`, async (event) => {
+        const { entityId, pokemonName, wasUnlinked } = (event.data || {}) as {
+            campaignId?: string;
+            entityId?: string;
+            pokemonName?: string;
+            wasUnlinked?: boolean;
+        };
+        if (!entityId) return;
+
+        try {
+            const state = useCharacterStore.getState();
+            const { pcData } = state;
+            if (!pcData.pokemonSummaries[entityId]) return;
+
+            const nextData = applyDeleteSummary(pcData, entityId);
+            useCharacterStore.setState({ pcData: nextData, selectedPcSlot: null });
+            await savePcStorage(nextData);
+
+            if (wasUnlinked) {
+                OBR.notification.show(`"${pokemonName || 'Pokémon'}" was unlinked from PC.`, 'INFO');
+            } else {
+                OBR.notification.show(`"${pokemonName || 'Pokémon'}" was released from PC.`, 'INFO');
+            }
+        } catch (e) {
+            console.error('[PcSync] Failed to process remote pokemon deletion:', e);
+        }
+    });
+    unsubs.push(unsubPokemonDelete);
 
     // 2. Players listen for GM sync request and respond with their active PC data
     const unsubRequestSync = OBR.broadcast.onMessage(`${EXTENSION_ID}/pc-request-sync`, () => {

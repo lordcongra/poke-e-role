@@ -231,6 +231,21 @@ export async function importPcBackupJson(file: File, currentData: PcStorageData)
                 );
 
             if (!existingCamp) {
+                // Check if incomingCamp is an empty stub without any Pokemon or active trainers
+                const hasAnyPokemon =
+                    (incomingCamp.teamParty || []).some(Boolean) ||
+                    (incomingCamp.boxes || []).some((b) => (b.slots || []).some(Boolean)) ||
+                    Object.values(incomingCamp.trainers || {}).some(
+                        (tr) =>
+                            (tr.party || []).some(Boolean) ||
+                            (tr.boxes || []).some((b) => (b.slots || []).some(Boolean))
+                    );
+
+                // If completely empty and we already have existing campaigns, skip creating useless empty campaign
+                if (!hasAnyPokemon && Object.keys(mergedCampaigns).length > 0) {
+                    continue;
+                }
+
                 // Brand new campaign: safe to add directly
                 mergedCampaigns[cId] = incomingCamp;
                 importedCampaignCount++;
@@ -243,6 +258,24 @@ export async function importPcBackupJson(file: File, currentData: PcStorageData)
 
             for (const [tId, inTr] of Object.entries(incomingTrainers)) {
                 if (!inTr) continue;
+
+                // Protect against pseudo "None / PMD" trainer profiles
+                const isPmdPseudo =
+                    tId === '__none__' ||
+                    tId.startsWith('__pmd_') ||
+                    (inTr.name && inTr.name.trim().toLowerCase().startsWith('none (pmd'));
+
+                if (isPmdPseudo) {
+                    for (const s of inTr.party || []) {
+                        if (s) depositEntityIntoBoxes(existingCamp.boxes, s, 'Imported PMD');
+                    }
+                    for (const b of inTr.boxes || []) {
+                        for (const s of b.slots || []) {
+                            if (s) depositEntityIntoBoxes(existingCamp.boxes, s, b.name || 'PMD Box');
+                        }
+                    }
+                    continue;
+                }
 
                 const existingTrKey = currentTrainers[tId]
                     ? tId
