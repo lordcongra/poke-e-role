@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import type { CampaignProfile, TrainerRoster, PcBox } from '../../../types/pcStorageTypes';
+import { hasUnbackedData, storageAdapter, BACKUP_STATUS_EVENT } from '../../../utils/sync/storageAdapter';
 import { PcPromptModal } from './PcPromptModal';
 import { PcDeleteConfirmModal } from './PcDeleteConfirmModal';
 import './PcStorageHeader.css';
@@ -69,6 +70,26 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
     onOpenGuide,
     onClose
 }) => {
+    const [hasUnbackedChanges, setHasUnbackedChanges] = useState(false);
+
+    useEffect(() => {
+        const checkBackupStatus = async () => {
+            try {
+                const chars = await storageAdapter.getLocalCharacters();
+                const flds = await storageAdapter.getFolders();
+                setHasUnbackedChanges(hasUnbackedData(chars.length, flds.length));
+            } catch {}
+        };
+
+        checkBackupStatus();
+        window.addEventListener(BACKUP_STATUS_EVENT, checkBackupStatus);
+        window.addEventListener('pkr-local-data-changed', checkBackupStatus);
+
+        return () => {
+            window.removeEventListener(BACKUP_STATUS_EVENT, checkBackupStatus);
+            window.removeEventListener('pkr-local-data-changed', checkBackupStatus);
+        };
+    }, []);
     const [isRenaming, setIsRenaming] = useState(false);
     const [renameValue, setRenameValue] = useState('');
     const [deleteTarget, setDeleteTarget] = useState<{
@@ -210,18 +231,35 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                 </div>
 
                 <div className="pc-header__actions">
-                    <button
-                        type="button"
-                        className="action-button action-button--dark pc-header__cloud-btn"
-                        onClick={onUploadCloud}
-                        title={
-                            OBR.isAvailable
-                                ? 'Backup PC Storage (Cloud Scene Asset, Open Scene Sync, or JSON)'
-                                : 'Download JSON backup of PC storage'
-                        }
-                    >
-                        {OBR.isAvailable ? <CloudUpload size={14} /> : <Download size={14} />} Backup
-                    </button>
+                    <div className="pc-header__backup-wrapper">
+                        <button
+                            type="button"
+                            className={`action-button action-button--dark pc-header__cloud-btn ${
+                                hasUnbackedChanges ? 'pc-header__cloud-btn--unbacked' : ''
+                            }`}
+                            onClick={onUploadCloud}
+                            title={
+                                hasUnbackedChanges
+                                    ? 'Unbacked changes detected! Backup your PC storage and character sheets now.'
+                                    : OBR.isAvailable
+                                      ? 'Backup PC Storage (Cloud Scene Asset, Open Scene Sync, or JSON)'
+                                      : 'Download JSON backup of PC storage'
+                            }
+                        >
+                            {OBR.isAvailable ? <CloudUpload size={14} /> : <Download size={14} />} Backup
+                            {hasUnbackedChanges && (
+                                <span className="pc-header__backup-badge" title="Unbacked changes" />
+                            )}
+                        </button>
+                        {hasUnbackedChanges && (
+                            <span
+                                className="pc-header__backup-reminder-text text-subtext"
+                                title="New or unbacked Pokémon changes present"
+                            >
+                                Backup recommended
+                            </span>
+                        )}
+                    </div>
                     <button
                         type="button"
                         className="action-button action-button--dark pc-header__cloud-btn"
@@ -237,7 +275,7 @@ export const PcStorageHeader: React.FC<PcStorageHeaderProps> = ({
                             onClick={onSyncPlayers}
                             title="Request connected players in the room to sync their active Belt and PC to the GM"
                         >
-                            <RefreshCw size={14} /> Sync Players
+                            <RefreshCw size={13} /> Sync
                         </button>
                     )}
                     {onOpenGuide && (

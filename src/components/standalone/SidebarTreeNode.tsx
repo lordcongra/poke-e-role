@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { TreeItem } from './useSidebarEngine';
 import { SidebarAvatar } from './SidebarAvatar';
 import { ChevronDown, ChevronRight, Folder, Dna, Trash2, Swords, MoreVertical } from 'lucide-react';
+import { isBeltFolderName } from '../../utils/pc/pcSidebarSync';
 
 interface SidebarTreeNodeProps {
     parentId: string | null;
@@ -53,9 +54,32 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
     const children = items.filter((i) => i.parentId === parentId);
     if (children.length === 0) return null;
 
+    const parentItem = parentId ? items.find((i) => i.id === parentId) : null;
+    const isBeltFolder = parentItem && parentItem.type === 'folder' ? isBeltFolderName(parentItem.name) : false;
+
+    const getSlotNumber = (item: TreeItem): number => {
+        if (!props.partyMemberMap) return 999;
+        const direct = props.partyMemberMap[item.id];
+        if (direct) return direct.slotNumber;
+        const metaEntity = item.meta?.entityId ? props.partyMemberMap[item.meta.entityId as string] : undefined;
+        if (metaEntity) return metaEntity.slotNumber;
+        const byName = props.partyMemberMap[`__name_${item.name.trim().toLowerCase()}`];
+        if (byName) return byName.slotNumber;
+        const bySpecies = item.meta?.species
+            ? props.partyMemberMap[`__species_${String(item.meta.species).trim().toLowerCase()}`]
+            : undefined;
+        if (bySpecies) return bySpecies.slotNumber;
+        return 999;
+    };
+
+    const displayChildren =
+        isBeltFolder && props.partyMemberMap
+            ? [...children].sort((a, b) => getSlotNumber(a) - getSlotNumber(b))
+            : children;
+
     return (
         <>
-            {children.map((item) => {
+            {displayChildren.map((item) => {
                 const hasChildren = items.some((i) => i.parentId === item.id);
                 const isExpanded = expandedNodes[item.id];
                 const initTag = initTags[item.id];
@@ -160,6 +184,12 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
                                         props.partyMemberMap?.[item.id] ||
                                         (item.meta?.entityId
                                             ? props.partyMemberMap?.[item.meta.entityId as string]
+                                            : undefined) ||
+                                        props.partyMemberMap?.[`__name_${item.name.trim().toLowerCase()}`] ||
+                                        (item.meta?.species
+                                            ? props.partyMemberMap?.[
+                                                  `__species_${String(item.meta.species).trim().toLowerCase()}`
+                                              ]
                                             : undefined);
                                     if (!badge) return null;
                                     return (

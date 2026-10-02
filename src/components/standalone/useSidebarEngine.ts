@@ -11,7 +11,8 @@ import {
     syncSidebarFolderRenameToPc,
     syncSidebarCharacterRenameToPc,
     syncSidebarMoveToPc,
-    isTrainerMetadata
+    isTrainerMetadata,
+    autoHealTrainerBeltPokemon
 } from '../../utils/pc/pcSidebarSync';
 import { useSidebarBackup } from './useSidebarBackup';
 
@@ -75,6 +76,18 @@ export function useSidebarEngine() {
                             if (sum.mapTokenId) {
                                 map[sum.mapTokenId] = { trainerName: tr.name, slotNumber: idx + 1 };
                             }
+                            if (sum.name) {
+                                map[`__name_${sum.name.trim().toLowerCase()}`] = {
+                                    trainerName: tr.name,
+                                    slotNumber: idx + 1
+                                };
+                            }
+                            if (sum.species) {
+                                map[`__species_${sum.species.trim().toLowerCase()}`] = {
+                                    trainerName: tr.name,
+                                    slotNumber: idx + 1
+                                };
+                            }
                         }
                     }
                 });
@@ -87,6 +100,7 @@ export function useSidebarEngine() {
         try {
             const chars = await storageAdapter.getLocalCharacters();
             const flds = await storageAdapter.getFolders();
+            await autoHealTrainerBeltPokemon(chars, flds, useCharacterStore.getState().pcData);
 
             const customOrder = JSON.parse(localStorage.getItem('pkr_sidebar_order') || '[]') as string[];
             const orderMap = new Map<string, number>();
@@ -561,8 +575,15 @@ export function useSidebarEngine() {
 
         let pos: 'before' | 'after' | 'inside' = 'inside';
 
-        if (y < rect.height * 0.25) pos = 'before';
-        else if (y > rect.height * 0.75) pos = 'after';
+        if (item.type === 'folder') {
+            // Folders give a generous inside drop target so dropping onto a folder nests items inside
+            if (y < rect.height * 0.15) pos = 'before';
+            else if (y > rect.height * 0.85) pos = 'after';
+            else pos = 'inside';
+        } else {
+            if (y < rect.height * 0.25) pos = 'before';
+            else if (y > rect.height * 0.75) pos = 'after';
+        }
 
         setDragOverInfo({ id: item.id, position: pos });
     };
@@ -589,8 +610,10 @@ export function useSidebarEngine() {
             }
 
             let newParentId = targetItem.parentId;
-            if (position === 'inside') {
+            // Dropping a character onto a folder ALWAYS moves the character inside that folder
+            if (position === 'inside' || (targetItem.type === 'folder' && draggedType === 'character')) {
                 newParentId = targetItem.id;
+                position = 'inside';
             }
 
             if (draggedType === 'folder') await storageAdapter.moveFolder(draggedId, newParentId);

@@ -18,6 +18,7 @@ interface PcSlotCardProps {
     onSendOut?: () => void;
     onRecall?: () => void;
     onDragStart?: (e: React.DragEvent) => void;
+    onDragEnd?: (e: React.DragEvent) => void;
 }
 
 export const PcSlotCard: React.FC<PcSlotCardProps> = ({
@@ -30,7 +31,8 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
     onMoveToParty,
     onSendOut,
     onRecall,
-    onDragStart
+    onDragStart,
+    onDragEnd
 }) => {
     const resolvedAvatar = useResolvedImageUrl(summary.tokenImageUrl, getAbsolutePokeballUrl());
     const hpPercent = summary.maxHp > 0 ? Math.max(0, Math.min(100, (summary.hp / summary.maxHp) * 100)) : 100;
@@ -55,6 +57,7 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
             }}
             draggable={!!onDragStart}
             onDragStart={onDragStart}
+            onDragEnd={onDragEnd}
             title={`${summary.name || summary.species}${summary.species && summary.species !== summary.name ? ` (${summary.species})` : ''} - Double-click to open sheet, right-click for options`}
         >
             <div className="pc-slot-card__avatar-wrapper">
@@ -77,9 +80,14 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
                 {isPartySlot ? (
                     <>
                         <div className="pc-slot-card__title-row">
-                            <span className="pc-slot-card__name text-label" title={summary.name || summary.species}>
-                                {summary.name || summary.species}
-                            </span>
+                            <div className="pc-slot-card__name-wrapper">
+                                <span
+                                    className={`pc-slot-card__name pc-slot-card__name--party ${(summary.name || summary.species || '').length > 12 ? 'pc-slot-card__name--marquee' : ''} text-label`}
+                                    title={summary.name || summary.species}
+                                >
+                                    {summary.name || summary.species}
+                                </span>
+                            </div>
                             <span className="pc-slot-card__rank text-subtext">{summary.rank || 'Starter'}</span>
                         </div>
 

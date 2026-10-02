@@ -5,7 +5,7 @@ import { PcSlotCard } from './PcSlotCard';
 import { PcTrainerCard } from './PcTrainerCard';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
 import { useResolvedImageUrl } from '../../../utils/graphics/useResolvedImageUrl';
-import { Shield, UserCheck, Plus, Unlink, FileText, MapPin, FolderPlus, Users } from 'lucide-react';
+import { Shield, UserCheck, Plus, Unlink, FileText, MapPin, FolderPlus, Users, HelpCircle } from 'lucide-react';
 import './PcPartyDock.css';
 
 interface PcPartyDockProps {
@@ -31,8 +31,9 @@ interface PcPartyDockProps {
     onRelease?: (entityId: string) => void;
     onSendOut: (entityId: string) => void;
     onRecall: (entityId: string) => void;
-    onDropOnSlot: (targetIndex: number) => void;
+    onDropOnSlot: (e: React.DragEvent, targetIndex: number) => void;
     onDragStart: (e: React.DragEvent, index: number) => void;
+    onDragEnd?: (e: React.DragEvent) => void;
     onLinkActiveTrainer?: () => void;
     onUnlinkTrainer?: () => void;
     onOrganizeFolders?: () => void;
@@ -63,6 +64,7 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
     onRecall,
     onDropOnSlot,
     onDragStart,
+    onDragEnd,
     onLinkActiveTrainer,
     onUnlinkTrainer,
     onOrganizeFolders
@@ -73,10 +75,18 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
     const resolvedTrainerAvatar = useResolvedImageUrl(trainerAvatarUrl);
     const resolvedActiveAvatar = useResolvedImageUrl(activeCharacterAvatarUrl);
 
+    const beltHint = isPmd
+        ? OBR.isAvailable
+            ? 'Active Pokémon on your expedition team. Click "Send Out" to place them on the map.'
+            : 'Active Pokémon on your expedition team.'
+        : OBR.isAvailable
+          ? 'Active Pokémon on your trainer belt. Click "Send Out" to place them on the map.'
+          : 'Active Pokémon carried on your trainer belt.';
+
     return (
         <aside className="pc-party-dock">
             <div className="pc-party-dock__header">
-                <div className="pc-party-dock__title-group">
+                <div className="pc-party-dock__title-group" title={beltHint}>
                     {isPmd ? (
                         <Users size={16} className="pc-party-dock__icon" />
                     ) : resolvedTrainerAvatar ? (
@@ -91,9 +101,10 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                     ) : (
                         <Shield size={16} className="pc-party-dock__icon" />
                     )}
-                    <h3 className="pc-party-dock__title text-title-primary" title={displayTitle}>
-                        {displayTitle}
-                    </h3>
+                    <h3 className="pc-party-dock__title text-title-primary">{displayTitle}</h3>
+                    <span className="pc-party-dock__hint-icon" aria-label={beltHint}>
+                        <HelpCircle size={13} />
+                    </span>
                 </div>
                 <div className="pc-party-dock__header-actions">
                     <span className="pc-party-dock__badge text-subtext">{occupiedCount} / 6</span>
@@ -210,16 +221,6 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                 </div>
             </div>
 
-            <p className="pc-party-dock__hint text-subtext">
-                {isPmd
-                    ? OBR.isAvailable
-                        ? 'Active Pokémon on your expedition team. Click "Send Out" to place them on the map.'
-                        : 'Active Pokémon on your expedition team.'
-                    : OBR.isAvailable
-                      ? 'Active Pokémon on your trainer belt. Click "Send Out" to place them on the map.'
-                      : 'Active Pokémon carried on your trainer belt.'}
-            </p>
-
             {trainerSummary && !isPmd && (
                 <PcTrainerCard
                     summary={trainerSummary}
@@ -240,7 +241,7 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                                 key={`party-${index}-${entityId}`}
                                 className="pc-party-dock__slot-wrapper"
                                 onDragOver={(e) => e.preventDefault()}
-                                onDrop={() => onDropOnSlot(index)}
+                                onDrop={(e) => onDropOnSlot(e, index)}
                             >
                                 <PcSlotCard
                                     summary={summary}
@@ -252,6 +253,7 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                                     onSendOut={() => onSendOut(entityId)}
                                     onRecall={() => onRecall(entityId)}
                                     onDragStart={(e) => onDragStart(e, index)}
+                                    onDragEnd={onDragEnd}
                                 />
                             </div>
                         );
@@ -266,7 +268,7 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                                 onEmptySlotClick?.(index);
                             }}
                             onDragOver={(e) => e.preventDefault()}
-                            onDrop={() => onDropOnSlot(index)}
+                            onDrop={(e) => onDropOnSlot(e, index)}
                             title={
                                 isPmd
                                     ? `Empty Team Slot ${index + 1} - Click to deposit a Pokémon here`

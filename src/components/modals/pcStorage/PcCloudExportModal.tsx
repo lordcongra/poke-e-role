@@ -5,6 +5,7 @@ import { CloudUpload, X, RefreshCw, Download } from 'lucide-react';
 import { downloadPcBackupJson } from '../../../utils/pc/pcJsonBackupOps';
 import { isBackupScene, setSceneBackupStatus } from '../../../utils/pc/pcBackupSceneSync';
 import { useCharacterStore } from '../../../store/useCharacterStore';
+import { markBackupComplete } from '../../../utils/sync/storageAdapter';
 import { PcBackupTargetSelector, type PcBackupTargetMode } from './PcBackupTargetSelector';
 import { PcJsonExportOptions } from './PcJsonExportOptions';
 import { PcBackupSceneOptions } from './PcBackupSceneOptions';
@@ -132,6 +133,7 @@ export const PcCloudExportModal: React.FC<PcCloudExportModalProps> = ({
                 trainerIds: jsonScope === 'custom' ? selectedTrainerIds : undefined,
                 boxIndices: jsonScope === 'custom' ? selectedBoxIndices : undefined
             });
+            markBackupComplete();
             if (isObr) {
                 OBR.notification.show('Downloaded PC backup JSON to your computer!', 'SUCCESS');
             }

@@ -30,6 +30,7 @@ import {
     syncBoxRenameToSidebar
 } from '../../utils/pc/pcSidebarSync';
 import { relocatePmdSidebarPokemon } from '../../utils/pc/pcPmdSidebarSync';
+import { markDataChanged } from '../../utils/sync/storageAdapter';
 import OBR from '@owlbear-rodeo/sdk';
 
 export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set, get) => ({
@@ -106,6 +107,7 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             const nextData = applySetPartySlot(get().pcData, trainerId, slotIndex, entityId);
             set({ pcData: nextData });
             savePcStorage(nextData);
+            markDataChanged();
         } catch (e) {
             console.error('[PcSlice] Failed to set party slot:', e);
         }
@@ -116,6 +118,7 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             const nextData = applySetBoxSlot(get().pcData, boxIndex, slotIndex, entityId);
             set({ pcData: nextData });
             savePcStorage(nextData);
+            markDataChanged();
         } catch (e) {
             console.error('[PcSlice] Failed to set box slot:', e);
         }
@@ -127,6 +130,7 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             const nextData = applySwapPcSlots(pcData, from, to, activeBoxIndex);
             set({ pcData: nextData, selectedPcSlot: null });
             savePcStorage(nextData);
+            markDataChanged();
 
             if (!OBR.isAvailable) {
                 const camp = nextData.campaigns[nextData.activeCampaignId];
@@ -151,6 +155,7 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             }
             set({ pcData: nextData });
             savePcStorage(nextData);
+            markDataChanged();
 
             if (!OBR.isAvailable) {
                 const camp = nextData.campaigns[nextData.activeCampaignId];
@@ -183,6 +188,7 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             }
             set({ pcData: nextData });
             savePcStorage(nextData);
+            markDataChanged();
 
             if (!OBR.isAvailable) {
                 const camp = nextData.campaigns[nextData.activeCampaignId];

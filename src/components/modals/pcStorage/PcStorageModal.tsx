@@ -1,18 +1,12 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
-import { AlertTriangle, X } from 'lucide-react';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { PcStorageHeader } from './PcStorageHeader';
 import { PcPartyDock } from './PcPartyDock';
 import { PcBoxGrid } from './PcBoxGrid';
 import { PcSlotContextMenu } from './PcSlotContextMenu';
-import { PcReviewModal } from './PcReviewModal';
-import { PcCloudExportModal } from './PcCloudExportModal';
-import { PcImportModal } from './PcImportModal';
-import { PcDepositDrawerModal } from './PcDepositDrawerModal';
-import { PcSheetModal } from './PcSheetModal';
-import { PcReleaseConfirmModal } from './PcReleaseConfirmModal';
-import { PcGuideModal } from './PcGuideModal';
+import { PcBackupWarningBanner } from './PcBackupWarningBanner';
+import { PcStorageSubModals } from './PcStorageSubModals';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
 import { buildActiveCharacterSummary, filterTrainerPokemonSummaries } from '../../../utils/pc/pcModalOps';
 import { buildTrainerSummary } from '../../../utils/pc/pcTrainerOps';
@@ -197,33 +191,21 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
 
     const handleSlotClick = useCallback(
         (target: { type: 'party' | 'box'; index: number }) => {
-            if (selectedPcSlot) {
-                if (selectedPcSlot.type === target.type && selectedPcSlot.index === target.index) {
-                    setSelectedPcSlot(null);
-                } else {
-                    swapPcSlots(
-                        { ...selectedPcSlot, boxIndex: activeBoxIndex },
-                        { ...target, boxIndex: activeBoxIndex }
-                    );
-                    setSelectedPcSlot(null);
-                }
+            if (selectedPcSlot?.type === target.type && selectedPcSlot?.index === target.index) {
+                setSelectedPcSlot(null);
             } else {
                 setSelectedPcSlot(target);
             }
         },
-        [selectedPcSlot, activeBoxIndex, swapPcSlots, setSelectedPcSlot]
+        [selectedPcSlot, setSelectedPcSlot]
     );
 
     const handleEmptySlotClick = useCallback(
         (target: { type: 'party' | 'box'; index: number }) => {
-            if (selectedPcSlot) {
-                swapPcSlots({ ...selectedPcSlot, boxIndex: activeBoxIndex }, { ...target, boxIndex: activeBoxIndex });
-                setSelectedPcSlot(null);
-            } else {
-                setDepositTarget({ targetSlot: target });
-            }
+            setSelectedPcSlot(null);
+            setDepositTarget({ targetSlot: target });
         },
-        [selectedPcSlot, activeBoxIndex, swapPcSlots, setSelectedPcSlot, setDepositTarget]
+        [setSelectedPcSlot, setDepositTarget]
     );
 
     const trainerRef = useRef(trainer);
@@ -313,27 +295,14 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                     />
 
                     {!dismissBackupWarning && (
-                        <div className="pc-modal__backup-warning">
-                            <AlertTriangle size={15} className="pc-modal__warning-icon" />
-                            <span className="pc-modal__warning-text text-subtext">
-                                <strong>Beta Feature:</strong> PC Storage is new. Please back up your character sheets
-                                before moving or storing Pokémon in case an edge case occurs!
-                            </span>
-                            <button
-                                type="button"
-                                className="pc-modal__warning-close"
-                                onClick={() => {
-                                    setDismissBackupWarning(true);
-                                    try {
-                                        localStorage.setItem('pkr_pc_backup_warn_dismissed', 'true');
-                                    } catch {}
-                                }}
-                                title="Dismiss backup reminder"
-                                aria-label="Dismiss backup reminder"
-                            >
-                                <X size={14} />
-                            </button>
-                        </div>
+                        <PcBackupWarningBanner
+                            onDismiss={() => {
+                                setDismissBackupWarning(true);
+                                try {
+                                    localStorage.setItem('pkr_pc_backup_warn_dismissed', 'true');
+                                } catch {}
+                            }}
+                        />
                     )}
 
                     <div className="pc-modal__layout">
@@ -356,16 +325,30 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                             onRelease={handleReleasePokemon}
                             onSendOut={handleSendOut}
                             onRecall={handleRecall}
-                            onDropOnSlot={(targetIndex) => {
-                                if (dragSource) {
+                            onDropOnSlot={(e, targetIndex) => {
+                                let source = dragSource;
+                                try {
+                                    const raw = e.dataTransfer.getData('application/json');
+                                    if (raw) source = JSON.parse(raw);
+                                } catch {}
+                                if (source) {
                                     swapPcSlots(
-                                        { ...dragSource, boxIndex: activeBoxIndex },
+                                        { ...source, boxIndex: activeBoxIndex },
                                         { type: 'party', index: targetIndex }
                                     );
                                     setDragSource(null);
                                 }
                             }}
-                            onDragStart={(_e, index) => setDragSource({ type: 'party', index })}
+                            onDragStart={(e, index) => {
+                                try {
+                                    e.dataTransfer.setData(
+                                        'application/json',
+                                        JSON.stringify({ type: 'party', index })
+                                    );
+                                } catch {}
+                                setDragSource({ type: 'party', index });
+                            }}
+                            onDragEnd={() => setDragSource(null)}
                             onLinkActiveTrainer={handleLinkActiveTrainer}
                             isTrainerLinked={isTrainerLinked}
                             isTrainerOnMap={isTrainerOnMap}
@@ -387,16 +370,27 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                             onMoveToParty={movePokemonToParty}
                             onSendOut={handleSendOut}
                             onRecall={handleRecall}
-                            onDropOnSlot={(targetIndex) => {
-                                if (dragSource) {
+                            onDropOnSlot={(e, targetIndex) => {
+                                let source = dragSource;
+                                try {
+                                    const raw = e.dataTransfer.getData('application/json');
+                                    if (raw) source = JSON.parse(raw);
+                                } catch {}
+                                if (source) {
                                     swapPcSlots(
-                                        { ...dragSource, boxIndex: activeBoxIndex },
+                                        { ...source, boxIndex: activeBoxIndex },
                                         { type: 'box', index: targetIndex, boxIndex: activeBoxIndex }
                                     );
                                     setDragSource(null);
                                 }
                             }}
-                            onDragStart={(_e, index) => setDragSource({ type: 'box', index })}
+                            onDragStart={(e, index) => {
+                                try {
+                                    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'box', index }));
+                                } catch {}
+                                setDragSource({ type: 'box', index });
+                            }}
+                            onDragEnd={() => setDragSource(null)}
                         />
                     </div>
 
@@ -432,95 +426,40 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                 </div>
             </div>
 
-            {/* Cloud Export Modal with Asset Library Folder Info */}
-            {isExportModalOpen && currentBox && campaign && (
-                <PcCloudExportModal
-                    box={currentBox}
-                    campaign={campaign}
-                    pokemonSummaries={pcData.pokemonSummaries}
-                    partySlots={partySlots}
-                    trainer={trainer}
-                    allBoxes={trainerBoxes}
-                    boxTheme={boxTheme}
-                    onConfirm={handleConfirmCloudUpload}
-                    onClose={() => setIsExportModalOpen(false)}
-                />
-            )}
-
-            {/* Import & Restore Modal (Cloud Scene Asset, Open Scene Sync, and JSON Restore) */}
-            {isImportModalOpen && campaign && (
-                <PcImportModal
-                    isOpen={isImportModalOpen}
-                    onClose={() => setIsImportModalOpen(false)}
-                    pcData={pcData}
-                    activeCampaign={campaign}
-                    currentBoxName={currentBox?.name}
-                    boxTheme={boxTheme}
-                    onImportCloudScene={handleDownloadBox}
-                    onImportJsonSuccess={(nextData, _count, _camps) => {
-                        useCharacterStore.setState({ pcData: nextData });
-                        savePcStorage(nextData);
-                    }}
-                    onScanSceneSuccess={(count) => {
-                        if (OBR.isAvailable) {
-                            OBR.notification.show(`Synced ${count} Pokémon from scene!`, 'SUCCESS');
-                        }
-                    }}
-                />
-            )}
-
-            {/* Deposit Pokémon Drawer / Modal */}
-            {depositTarget && (
-                <PcDepositDrawerModal
-                    targetSlot={depositTarget.targetSlot}
-                    currentActiveSummary={currentActiveSummary}
-                    trainerName={trainer?.name}
-                    trainerPokemonSummaries={trainerPokemonSummaries}
-                    pokemonSummaries={pcData.pokemonSummaries}
-                    partySlots={partySlots}
-                    boxTheme={boxTheme}
-                    onDepositSummary={handleCompleteDeposit}
-                    onClose={() => setDepositTarget(null)}
-                />
-            )}
-
-            {/* Review Modal for GM Sheet Diffs */}
-            {isReviewModalOpen && pendingReview && (
-                <PcReviewModal
-                    payload={pendingReview}
-                    onApply={(diffs, notify) => {
-                        applyReviewDiffs(pendingReview.entityId, diffs);
-                        if (notify) {
-                            console.log(`[PC Storage] Notifying player ${pendingReview.playerName} of sheet updates.`);
-                        }
-                    }}
-                    onClose={closeReviewModal}
-                />
-            )}
-
-            {/* Pokémon / Trainer Character Sheet Modal with Two-Way Sync */}
-            {activeSheetSummary && (
-                <PcSheetModal
-                    currentSummary={activeSheetSummary}
-                    allSummaries={sheetAvailableSummaries}
-                    onSelectEntity={setSheetViewEntityId}
-                    onUpdateSummary={handleUpdateSheetSummary}
-                    onClose={() => setSheetViewEntityId(null)}
-                />
-            )}
-
-            {/* Permanent Release Double-Confirmation Modal */}
-            {releaseConfirmPokemon && (
-                <PcReleaseConfirmModal
-                    pokemon={releaseConfirmPokemon}
-                    onConfirm={handleConfirmRelease}
-                    onUnlink={() => handleUnlinkPokemon(releaseConfirmPokemon.entityId)}
-                    onClose={() => setReleaseConfirmPokemon(null)}
-                />
-            )}
-
-            {/* Workflow Guide & Help Modal */}
-            {isGuideModalOpen && <PcGuideModal boxTheme={boxTheme} onClose={() => setIsGuideModalOpen(false)} />}
+            <PcStorageSubModals
+                isExportModalOpen={isExportModalOpen}
+                setIsExportModalOpen={setIsExportModalOpen}
+                currentBox={currentBox}
+                campaign={campaign}
+                pcData={pcData}
+                partySlots={partySlots}
+                trainer={trainer}
+                trainerBoxes={trainerBoxes}
+                boxTheme={boxTheme}
+                handleConfirmCloudUpload={handleConfirmCloudUpload}
+                isImportModalOpen={isImportModalOpen}
+                setIsImportModalOpen={setIsImportModalOpen}
+                handleDownloadBox={handleDownloadBox}
+                depositTarget={depositTarget}
+                setDepositTarget={setDepositTarget}
+                currentActiveSummary={currentActiveSummary}
+                trainerPokemonSummaries={trainerPokemonSummaries}
+                handleCompleteDeposit={handleCompleteDeposit}
+                isReviewModalOpen={isReviewModalOpen}
+                pendingReview={pendingReview}
+                applyReviewDiffs={applyReviewDiffs}
+                closeReviewModal={closeReviewModal}
+                activeSheetSummary={activeSheetSummary}
+                sheetAvailableSummaries={sheetAvailableSummaries}
+                setSheetViewEntityId={setSheetViewEntityId}
+                handleUpdateSheetSummary={handleUpdateSheetSummary}
+                releaseConfirmPokemon={releaseConfirmPokemon}
+                setReleaseConfirmPokemon={setReleaseConfirmPokemon}
+                handleConfirmRelease={handleConfirmRelease}
+                handleUnlinkPokemon={handleUnlinkPokemon}
+                isGuideModalOpen={isGuideModalOpen}
+                setIsGuideModalOpen={setIsGuideModalOpen}
+            />
         </>
     );
 };

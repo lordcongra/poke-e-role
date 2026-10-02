@@ -1,4 +1,10 @@
-import { storageAdapter, type LocalFolder, isStandaloneMode } from '../sync/storageAdapter';
+import {
+    storageAdapter,
+    type LocalFolder,
+    type LocalCharacter,
+    isStandaloneMode,
+    markDataChanged
+} from '../sync/storageAdapter';
 import type { TrainerRoster, PcBox, PcStorageData } from '../../types/pcStorageTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { savePcStorage } from './pcStorageAdapter';
@@ -202,6 +208,12 @@ export async function relocateSidebarPokemon(
 ): Promise<void> {
     if (!isStandaloneMode || !pokemonId) return;
 
+    // Safety Invariant: If destination is a Box, but this Pokémon is currently on the Trainer's active party,
+    // NEVER move it to a Box folder! It is still carried on the Trainer's belt.
+    if (target.type === 'box' && trainer.party && trainer.party.includes(pokemonId)) {
+        return;
+    }
+
     const trainerSidebarId = await findTrainerSidebarId(trainer);
     if (!trainerSidebarId) return;
 
@@ -380,6 +392,7 @@ export async function syncSwappedSlotsToSidebar(
 
     if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('pkr-local-data-changed'));
+        markDataChanged();
     }
 }
 
@@ -412,6 +425,54 @@ export async function runOrganizeFoldersAction(
     } else if (trainer) {
         alert(`Unable to organize folders for ${trainer.name}. Please ensure this Trainer exists in the Directory.`);
     }
+}
+
+/**
+ * Auto-heals party Pokémon in the Standalone Sidebar:
+ * If a Pokémon is active in a Trainer's Belt and that Trainer has a "Belt" folder,
+ * but the Pokémon sheet is currently sitting directly under the Trainer (parentId === trainerSidebarId),
+ * it is automatically moved into the "Belt" folder so it lines up with party members.
+ */
+export async function autoHealTrainerBeltPokemon(
+    localChars: LocalCharacter[],
+    folders: LocalFolder[],
+    pcData: PcStorageData
+): Promise<boolean> {
+    if (!isStandaloneMode || !pcData?.campaigns) return false;
+    let anyMoved = false;
+
+    const camp = pcData.campaigns[pcData.activeCampaignId];
+    if (!camp) return false;
+
+    for (const tr of Object.values(camp.trainers)) {
+        if (!tr.party || tr.party.length === 0) continue;
+
+        const trainerSidebarId = localChars.find(
+            (c) =>
+                c.id === tr.id ||
+                c.id === tr.savedTokenItem?.id ||
+                c.id === tr.mapTokenId ||
+                (isTrainerMetadata(c.metadata) && c.name.trim().toLowerCase() === tr.name.trim().toLowerCase())
+        )?.id;
+        if (!trainerSidebarId) continue;
+
+        const beltFolder = folders.find((f) => f.parentId === trainerSidebarId && isBeltFolderName(f.name));
+        if (!beltFolder) continue;
+
+        const partyIds = tr.party.filter(Boolean) as string[];
+        for (const pId of partyIds) {
+            const charMatch = await findAndLinkLocalCharacter(pId, localChars, pcData.pokemonSummaries || {});
+            if (charMatch && !isTrainerMetadata(charMatch.metadata)) {
+                if (charMatch.parentId !== beltFolder.id) {
+                    await storageAdapter.moveItem(charMatch.id, beltFolder.id);
+                    charMatch.parentId = beltFolder.id;
+                    anyMoved = true;
+                }
+            }
+        }
+    }
+
+    return anyMoved;
 }
 
 // Re-export event functions from dedicated module

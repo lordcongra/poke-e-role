@@ -17,8 +17,9 @@ interface PcBoxGridProps {
     onMoveToParty?: (entityId: string) => void;
     onSendOut?: (entityId: string) => void;
     onRecall?: (entityId: string) => void;
-    onDropOnSlot: (targetIndex: number) => void;
+    onDropOnSlot: (e: React.DragEvent, targetIndex: number) => void;
     onDragStart: (e: React.DragEvent, index: number) => void;
+    onDragEnd?: (e: React.DragEvent) => void;
 }
 
 export const PcBoxGrid: React.FC<PcBoxGridProps> = ({
@@ -34,7 +35,8 @@ export const PcBoxGrid: React.FC<PcBoxGridProps> = ({
     onSendOut,
     onRecall,
     onDropOnSlot,
-    onDragStart
+    onDragStart,
+    onDragEnd
 }) => {
     const [dismissBanner, setDismissBanner] = useState(false);
 
@@ -116,7 +118,7 @@ export const PcBoxGrid: React.FC<PcBoxGridProps> = ({
                                 key={`box-slot-${index}-${entityId}`}
                                 className="pc-box-grid__slot-wrapper"
                                 onDragOver={(e) => e.preventDefault()}
-                                onDrop={() => onDropOnSlot(index)}
+                                onDrop={(e) => onDropOnSlot(e, index)}
                             >
                                 <PcSlotCard
                                     summary={summary}
@@ -129,6 +131,7 @@ export const PcBoxGrid: React.FC<PcBoxGridProps> = ({
                                     onSendOut={() => onSendOut?.(entityId)}
                                     onRecall={() => onRecall?.(entityId)}
                                     onDragStart={(e) => onDragStart(e, index)}
+                                    onDragEnd={onDragEnd}
                                 />
                             </div>
                         );
@@ -147,7 +150,7 @@ export const PcBoxGrid: React.FC<PcBoxGridProps> = ({
                                 onEmptySlotClick?.(index);
                             }}
                             onDragOver={(e) => e.preventDefault()}
-                            onDrop={() => onDropOnSlot(index)}
+                            onDrop={(e) => onDropOnSlot(e, index)}
                             title={`Empty Slot ${index + 1} - Click to deposit a Pokémon here`}
                         >
                             <span className="pc-box-grid__empty-number text-subtext" style={{ color: `${theme}88` }}>

@@ -193,14 +193,16 @@
 @media (max-width: 860px) {
     .pc-modal__layout {
         flex-direction: column;
+        overflow-y: auto;
     }
 
     .pc-party-dock {
         width: 100%;
-        max-height: 230px;
+        max-height: none;
         border-right: none;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        overflow-x: hidden;
+        overflow: visible;
+        flex-shrink: 0;
     }
 
     .pc-party-dock__slots {
@@ -211,6 +213,7 @@
 
     .pc-box-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+        overflow: visible;
     }
 }
 

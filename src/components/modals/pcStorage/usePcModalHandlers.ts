@@ -21,6 +21,7 @@ import {
 import { checkTrainerOnMap, buildLinkedTrainer } from '../../../utils/pc/pcTrainerOps';
 import { savePcStorage } from '../../../utils/pc/pcStorageAdapter';
 import { prepareDepositSummary } from '../../../utils/pc/pcDepositOps';
+import { markBackupComplete } from '../../../utils/sync/storageAdapter';
 
 interface UsePcModalHandlersParams {
     pcData: PcStorageData;
@@ -398,9 +399,12 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
                 trainerToExport,
                 allBoxesToPass
             );
-            if (success && OBR.isAvailable) {
-                const label = backupAllBoxes ? 'All PC' : currentBox.name;
-                OBR.notification.show(`Updated current scene with ${label} Pokémon!`, 'SUCCESS');
+            if (success) {
+                markBackupComplete();
+                if (OBR.isAvailable) {
+                    const label = backupAllBoxes ? 'All PC' : currentBox.name;
+                    OBR.notification.show(`Updated current scene with ${label} Pokémon!`, 'SUCCESS');
+                }
             }
             return;
         }
@@ -414,8 +418,11 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
             trainerToExport,
             allBoxesToPass
         );
-        if (success && OBR.isAvailable) {
-            OBR.notification.show(`Saved "${customSceneName}" to Owlbear Rodeo Cloud!`, 'SUCCESS');
+        if (success) {
+            markBackupComplete();
+            if (OBR.isAvailable) {
+                OBR.notification.show(`Saved "${customSceneName}" to Owlbear Rodeo Cloud!`, 'SUCCESS');
+            }
         }
     };
 

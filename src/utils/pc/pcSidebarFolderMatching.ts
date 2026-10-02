@@ -3,6 +3,19 @@ import type { PcPokemonSummary } from '../../types/pcStorageTypes';
 import { isTrainerMetadata } from './pcSidebarSync';
 
 /**
+ * Strips parenthetical form/variant tags and extra whitespace.
+ * e.g., "Urshifu (Single Strike Style)" -> "urshifu"
+ * e.g., "Typhlosion (Hisuian Form)" -> "typhlosion"
+ */
+function normalizeBaseName(str?: string): string {
+    if (!str) return '';
+    return str
+        .replace(/\s*\([^)]*\)/g, '')
+        .trim()
+        .toLowerCase();
+}
+
+/**
  * Robustly matches a Pokémon ID (entityId, candidate ID, map token ID, or name)
  * to a local character in the Standalone Sidebar.
  * If matched and missing `entityId`, stamps `entityId` into local storage so future lookups are immediate.
@@ -45,22 +58,75 @@ export async function findAndLinkLocalCharacter(
             }
         }
 
-        // 3. Match by name & nickname (non-trainer only)
+        // 3. Match non-trainer characters by name, nickname, species, and base species variants
         const cleanName = (summary.name || summary.species || '').trim().toLowerCase();
+        const summarySpecies = (summary.species || '').trim().toLowerCase();
+        const baseSummaryName = normalizeBaseName(summary.name);
+        const baseSummarySpecies = normalizeBaseName(summary.species);
+
+        const candidates = localChars.filter((c) => !isTrainerMetadata(c.metadata));
+
+        // 3a. Exact name or nickname match
         if (cleanName) {
-            match = localChars.find((c) => {
-                if (isTrainerMetadata(c.metadata)) return false;
+            match = candidates.find((c) => {
                 const charName = c.name.trim().toLowerCase();
                 const charNick = String(c.metadata?.nickname || '')
                     .trim()
                     .toLowerCase();
                 return charName === cleanName || charNick === cleanName;
             });
-            if (match) {
-                await linkCharacterEntityId(match.id, entityId);
-                match.metadata = { ...(match.metadata || {}), entityId };
-                return match;
+        }
+
+        // 3b. Exact species match
+        if (!match && summarySpecies) {
+            match = candidates.find((c) => {
+                const charSpecies = String(c.metadata?.species || '')
+                    .trim()
+                    .toLowerCase();
+                const charName = c.name.trim().toLowerCase();
+                const charNick = String(c.metadata?.nickname || '')
+                    .trim()
+                    .toLowerCase();
+                return charSpecies === summarySpecies || charName === summarySpecies || charNick === summarySpecies;
+            });
+        }
+
+        // 3c. Base name match (stripping form suffixes like "(Single Strike Style)", "(Hisuian Form)", etc.)
+        if (!match) {
+            const targetBases = new Set([baseSummaryName, baseSummarySpecies].filter((s) => s.length > 0));
+            if (targetBases.size > 0) {
+                match = candidates.find((c) => {
+                    const baseCharName = normalizeBaseName(c.name);
+                    const baseCharNick = normalizeBaseName(String(c.metadata?.nickname || ''));
+                    const baseCharSpecies = normalizeBaseName(String(c.metadata?.species || ''));
+                    return (
+                        targetBases.has(baseCharName) ||
+                        targetBases.has(baseCharNick) ||
+                        targetBases.has(baseCharSpecies)
+                    );
+                });
             }
+        }
+
+        // 3d. Prefix / substring match (minimum 3 chars)
+        if (!match && baseSummaryName.length >= 3) {
+            match = candidates.find((c) => {
+                const baseCharName = normalizeBaseName(c.name);
+                const baseCharSpecies = normalizeBaseName(String(c.metadata?.species || ''));
+                return (
+                    (baseCharName.length >= 3 &&
+                        (baseCharName.startsWith(baseSummaryName) || baseSummaryName.startsWith(baseCharName))) ||
+                    (baseCharSpecies.length >= 3 &&
+                        (baseCharSpecies.startsWith(baseSummarySpecies) ||
+                            baseSummarySpecies.startsWith(baseCharSpecies)))
+                );
+            });
+        }
+
+        if (match) {
+            await linkCharacterEntityId(match.id, entityId);
+            match.metadata = { ...(match.metadata || {}), entityId };
+            return match;
         }
     }
 
