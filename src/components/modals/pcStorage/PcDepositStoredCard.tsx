@@ -10,6 +10,7 @@ interface PcDepositStoredCardProps {
     targetSlotType?: 'party' | 'box';
     partyButtonText?: string;
     isGm?: boolean;
+    claimedBy?: string;
     onSelect: () => void;
 }
 
@@ -18,14 +19,16 @@ export const PcDepositStoredCard: React.FC<PcDepositStoredCardProps> = ({
     targetSlotType,
     partyButtonText = 'Add to Belt',
     isGm = false,
+    claimedBy,
     onSelect
 }) => {
     const resolvedAvatar = useResolvedImageUrl(pokemon.tokenImageUrl, getAbsolutePokeballUrl());
     const isPartySlot = targetSlotType === 'party';
-    const isLocked = !isGm && isEntityLockedByGm(pokemon);
+    const isLocked = !isGm && Boolean(claimedBy?.toLowerCase().includes('locked') || isEntityLockedByGm(pokemon));
+    const hasClaim = Boolean(claimedBy && !isLocked);
 
     return (
-        <div className={`pc-deposit-card ${isLocked ? 'pc-deposit-card--claimed' : ''}`}>
+        <div className={`pc-deposit-card ${isLocked || hasClaim ? 'pc-deposit-card--claimed' : ''}`}>
             <img
                 src={resolvedAvatar}
                 alt={pokemon.name}
@@ -42,20 +45,28 @@ export const PcDepositStoredCard: React.FC<PcDepositStoredCardProps> = ({
                 <span className="text-subtext">
                     {pokemon.species} {isLocked ? '• Locked by GM' : `• ${pokemon.hp}/${pokemon.maxHp} HP`}
                 </span>
-                {isLocked && (
+                {isLocked ? (
                     <span className="pc-deposit-card__claimed-tag text-subtext" title="Locked by GM">
                         <Lock size={10} /> Locked by GM
                     </span>
-                )}
+                ) : hasClaim ? (
+                    <span className="pc-deposit-card__claimed-tag text-subtext" title={`Claimed by ${claimedBy}`}>
+                        <Lock size={10} /> {claimedBy}
+                    </span>
+                ) : null}
             </div>
-            {isLocked ? (
+            {isLocked || hasClaim ? (
                 <button
                     type="button"
                     className="action-button action-button--dark pc-deposit-btn--disabled"
                     disabled
-                    title="This sheet is locked by the GM. Ask your GM to unlock it."
+                    title={
+                        isLocked
+                            ? 'This sheet is locked by the GM. Ask your GM to unlock it.'
+                            : `This Pokémon is already claimed by ${claimedBy}`
+                    }
                 >
-                    <Lock size={14} /> Locked by GM
+                    <Lock size={14} /> {isLocked ? 'Locked by GM' : 'Claimed'}
                 </button>
             ) : (
                 <button type="button" className="action-button action-button--theme" onClick={onSelect}>

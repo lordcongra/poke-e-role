@@ -103,8 +103,17 @@ export const PcSlotContextMenu: React.FC<PcSlotContextMenuProps> = ({
 
                 <button
                     type="button"
-                    className="pc-context-menu__item"
+                    className={`pc-context-menu__item ${isLocked ? 'pc-context-menu__item--disabled' : ''}`}
+                    disabled={isLocked}
+                    title={
+                        isLocked
+                            ? 'This character is locked by the GM. Ask your GM to unlock it.'
+                            : isPartySlot
+                              ? 'Deposit to Box'
+                              : 'Move to Party'
+                    }
                     onClick={() => {
+                        if (isLocked) return;
                         onTogglePartyBox();
                         onClose();
                     }}
@@ -116,8 +125,17 @@ export const PcSlotContextMenu: React.FC<PcSlotContextMenuProps> = ({
                 {onToggleMap && OBR.isAvailable && (
                     <button
                         type="button"
-                        className="pc-context-menu__item"
+                        className={`pc-context-menu__item ${isLocked ? 'pc-context-menu__item--disabled' : ''}`}
+                        disabled={isLocked}
+                        title={
+                            isLocked
+                                ? 'This character is locked by the GM. Ask your GM to unlock it.'
+                                : isOnMap
+                                  ? 'Recall into Pokéball'
+                                  : 'Send Out to Map'
+                        }
                         onClick={() => {
+                            if (isLocked) return;
                             onToggleMap();
                             onClose();
                         }}

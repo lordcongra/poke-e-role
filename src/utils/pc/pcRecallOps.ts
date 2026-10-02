@@ -4,6 +4,8 @@ import { GRAPHICS_META_ID } from '../graphics/graphicsManager';
 import type { PcPokemonSummary } from '../../types/pcStorageTypes';
 import { calculateRelativeAttachment } from './rehomeEngine';
 
+import { isMatchingPokemonItem, isItemTrainer } from './pcItemMatching';
+
 export interface RecallPokemonResult {
     success: boolean;
     attachedItems?: PcPokemonSummary['attachedItems'];
@@ -26,18 +28,11 @@ export async function recallPokemonFromMap(
     try {
         const sceneItems = await OBR.scene.items.getItems();
         let parent = mapTokenId ? sceneItems.find((i) => i.id === mapTokenId) : undefined;
-        if (!parent && summary?.entityId) {
-            parent = sceneItems.find((i) => {
-                if (i.layer !== 'CHARACTER') return false;
-                const meta = (i.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
-                const claimMeta = i.metadata?.['pokerole-pmd-extension/claimed-by'] as
-                    | { entityId?: string }
-                    | undefined;
-                return (
-                    (meta.entityId && meta.entityId === summary.entityId) ||
-                    (claimMeta?.entityId && claimMeta.entityId === summary.entityId)
-                );
-            });
+        if (parent && summary && !isMatchingPokemonItem(parent, summary)) {
+            parent = undefined;
+        }
+        if (!parent && summary) {
+            parent = sceneItems.find((i) => isMatchingPokemonItem(i, summary));
         }
 
         if (!parent) {
@@ -111,6 +106,8 @@ export async function clearTokenClaimOps(mapTokenId?: string, entityId?: string)
     try {
         const sceneItems = await OBR.scene.items.getItems();
         const targets = sceneItems.filter((it) => {
+            if (it.layer !== 'CHARACTER') return false;
+            if (isItemTrainer(it)) return false;
             if (mapTokenId && it.id === mapTokenId) return true;
             if (entityId) {
                 const meta = (it.metadata?.[METADATA_ID] as Record<string, unknown>) || {};

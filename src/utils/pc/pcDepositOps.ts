@@ -5,6 +5,7 @@ import { flattenStateToMetadata } from '../sync/stateMapper';
 import { GRAPHICS_META_ID } from '../graphics/graphicsManager';
 import { calculateRelativeAttachment } from './rehomeEngine';
 import { isEntityLockedByGm } from './pcCandidateMatching';
+import { isItemTrainer } from './pcItemMatching';
 
 /**
  * Resolves ownership status of a Pokémon entityId within the current campaign and across other campaigns.
@@ -262,6 +263,74 @@ export function validateDepositTarget(
 }
 
 /**
+ * Asynchronously validates whether a Pokémon summary can be deposited into a target slot,
+ * actively verifying the live Owlbear Rodeo scene item to prevent stealing claimed or GM-locked tokens.
+ */
+export async function validateDepositTargetAsync(
+    summary: PcPokemonSummary,
+    trainer: TrainerRoster | undefined,
+    campaign: CampaignProfile | undefined,
+    targetSlotType?: 'party' | 'box',
+    allCampaigns?: Record<string, CampaignProfile>,
+    role?: 'PLAYER' | 'GM',
+    myPlayerId?: string
+): Promise<{ allowed: boolean; reason?: string }> {
+    const pokeName = summary.name || summary.species || 'Pokémon';
+
+    // 0. Mode & Role Protections
+    const mode = summary.fullMetadata?.mode;
+    if (mode === 'Trainer' || mode === 'Trainer (Special)' || summary.rank === 'Trainer') {
+        return {
+            allowed: false,
+            reason: 'Trainer tokens cannot be stored into Pokémon slots.'
+        };
+    }
+
+    if (role !== 'GM' && isEntityLockedByGm(summary)) {
+        return {
+            allowed: false,
+            reason: `"${pokeName}" is locked by the GM. Ask your GM to unlock it to add it to your party.`
+        };
+    }
+
+    // 0.1 Deep Scene Token Inspection: check live scene item if on map
+    if (OBR.isAvailable && summary.mapTokenId) {
+        try {
+            const items = await OBR.scene.items.getItems([summary.mapTokenId]);
+            const mapItem = items[0];
+            if (mapItem) {
+                if (role !== 'GM' && (mapItem.locked || isEntityLockedByGm(mapItem))) {
+                    return {
+                        allowed: false,
+                        reason: `"${pokeName}" is locked by the GM. Ask your GM to unlock it to add it to your party.`
+                    };
+                }
+                if (isItemTrainer(mapItem)) {
+                    return {
+                        allowed: false,
+                        reason: 'Trainer tokens cannot be stored into Pokémon slots.'
+                    };
+                }
+                const liveClaim = mapItem.metadata?.['pokerole-pmd-extension/claimed-by'] as
+                    | { playerId?: string; playerName?: string; trainerName?: string }
+                    | undefined;
+                if (liveClaim?.playerId && myPlayerId && liveClaim.playerId !== myPlayerId) {
+                    return {
+                        allowed: false,
+                        reason: `"${pokeName}" is already claimed by ${liveClaim.trainerName || liveClaim.playerName || 'another player'}!`
+                    };
+                }
+            }
+        } catch (e) {
+            console.warn('[pcDepositOps] Error inspecting live map item during validation:', e);
+        }
+    }
+
+    // Run synchronous ownership & duplicate checks
+    return validateDepositTarget(summary, trainer, campaign, targetSlotType, allCampaigns, role, myPlayerId);
+}
+
+/**
  * Prepares and normalizes a Pokémon summary for PC or Belt deposit,
  * ensuring trainer assignment, metadata snapshots, attachments, and saved token items are captured.
  */
@@ -291,9 +360,14 @@ export async function prepareDepositSummary(
             (s) => s.mapTokenId === finalSummary.mapTokenId || s.savedTokenItem?.id === finalSummary.mapTokenId
         );
         if (existingMatch) {
-            finalSummary.entityId = existingMatch.entityId;
-            if (!finalSummary.attachedItems && existingMatch.attachedItems) {
-                finalSummary.attachedItems = existingMatch.attachedItems;
+            const isSameTrainer =
+                (trainer && existingMatch.trainerId === trainer.id) ||
+                (!trainer && !existingMatch.trainerId && existingMatch.campaignId === campaignId);
+            if (isSameTrainer) {
+                finalSummary.entityId = existingMatch.entityId;
+                if (!finalSummary.attachedItems && existingMatch.attachedItems) {
+                    finalSummary.attachedItems = existingMatch.attachedItems;
+                }
             }
         }
     }
@@ -303,7 +377,7 @@ export async function prepareDepositSummary(
         try {
             const sceneItems = await OBR.scene.items.getItems();
             const parent = sceneItems.find((i) => i.id === finalSummary.mapTokenId);
-            if (parent) {
+            if (parent && !isItemTrainer(parent)) {
                 finalSummary.savedTokenItem = parent;
                 if (!finalSummary.attachedItems || finalSummary.attachedItems.length === 0) {
                     const realAttachments = sceneItems.filter(
@@ -317,29 +391,13 @@ export async function prepareDepositSummary(
                         finalSummary.attachedItems = realAttachments.map((c) => calculateRelativeAttachment(parent, c));
                     }
                 }
+            } else if (parent && isItemTrainer(parent)) {
+                // Stale reference to Trainer token: clear to prevent state hijacking
+                finalSummary.mapTokenId = undefined;
+                finalSummary.isOnMap = false;
             }
         } catch (e) {
             console.warn('[pcDepositOps] Failed to get map token or attachments for deposit:', e);
-        }
-    }
-
-    // 3. Stamp claim on map token
-    if (OBR.isAvailable && finalSummary.mapTokenId) {
-        try {
-            const myId = await OBR.player.getId();
-            const myName = await OBR.player.getName();
-            await OBR.scene.items.updateItems([finalSummary.mapTokenId], (items) => {
-                for (const it of items) {
-                    it.metadata['pokerole-pmd-extension/claimed-by'] = {
-                        playerId: myId,
-                        playerName: myName,
-                        entityId: finalSummary.entityId,
-                        trainerName: trainer?.name
-                    };
-                }
-            });
-        } catch (e) {
-            console.warn('[pcDepositOps] Failed to stamp claimed-by on deposit:', e);
         }
     }
 

@@ -19,7 +19,7 @@ import { checkTrainerOnMap, buildLinkedTrainer } from '../../../utils/pc/pcTrain
 import { savePcStorage } from '../../../utils/pc/pcStorageAdapter';
 import {
     prepareDepositSummary,
-    validateDepositTarget,
+    validateDepositTargetAsync,
     clonePokemonSummaryOps,
     stampClaimOnSceneItem
 } from '../../../utils/pc/pcDepositOps';
@@ -234,13 +234,11 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
             if (OBR.isAvailable) {
                 OBR.notification.show(`${summary.name || summary.species} is already on the board!`, 'WARNING');
             }
-            if (result.newMapTokenId && summary.mapTokenId !== result.newMapTokenId) {
-                updatePokemonSummary({
-                    ...summary,
-                    isOnMap: true,
-                    mapTokenId: result.newMapTokenId
-                });
-            }
+            updatePokemonSummary({
+                ...summary,
+                isOnMap: true,
+                mapTokenId: result.newMapTokenId || summary.mapTokenId
+            });
             return;
         }
         if (result.success && result.newMapTokenId) {
@@ -405,17 +403,9 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
     };
 
     const handleCompleteDeposit = async (summary: PcPokemonSummary) => {
-        const finalSummary = await prepareDepositSummary(
-            summary,
-            trainer,
-            pcData.pokemonSummaries,
-            useCharacterStore.getState(),
-            campaign?.id
-        );
-
         const myId = OBR.isAvailable ? await OBR.player.getId().catch(() => undefined) : undefined;
-        const validation = validateDepositTarget(
-            finalSummary,
+        const validation = await validateDepositTargetAsync(
+            summary,
             trainer,
             campaign,
             depositTarget?.targetSlot?.type,
@@ -429,6 +419,14 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
             }
             return;
         }
+
+        const finalSummary = await prepareDepositSummary(
+            summary,
+            trainer,
+            pcData.pokemonSummaries,
+            useCharacterStore.getState(),
+            campaign?.id
+        );
 
         updatePokemonSummary(finalSummary);
         if (depositTarget?.targetSlot?.type === 'party') {

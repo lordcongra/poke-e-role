@@ -286,14 +286,16 @@ export function resolveSceneCandidateMatch(
 
     // Fallback ownership check via claim metadata
     if (!claimedBy) {
-        if (
+        if (claimMeta?.playerId && myPlayerId && claimMeta.playerId !== myPlayerId) {
+            claimedBy = claimMeta.trainerName
+                ? `${claimMeta.trainerName}${claimMeta.playerName ? ` (${claimMeta.playerName})` : ''}`
+                : claimMeta.playerName || 'Another Player';
+        } else if (
             claimMeta?.trainerName &&
             activeTrainerName &&
             claimMeta.trainerName.trim().toLowerCase() !== activeTrainerName.trim().toLowerCase()
         ) {
             claimedBy = claimMeta.trainerName;
-        } else if (claimMeta?.playerId && myPlayerId && claimMeta.playerId !== myPlayerId) {
-            claimedBy = claimMeta.playerName || claimMeta.trainerName || 'Another Player';
         }
     }
 

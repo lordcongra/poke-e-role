@@ -38,6 +38,7 @@ import {
     recentlySpawnedTokenIds,
     markTokenAsRecentlySpawned
 } from './pcPlacementUtils';
+import { isMatchingPokemonItem } from './pcItemMatching';
 import { useCharacterStore } from '../../store/useCharacterStore';
 
 export { recentlySpawnedTokenIds, markTokenAsRecentlySpawned };
@@ -59,7 +60,7 @@ export async function spawnPokemonToMap(
         // 1. Check if this Pokémon is already actively placed on the current scene
         if (summary.mapTokenId) {
             const existing = sceneItems.find((it) => it.id === summary.mapTokenId);
-            if (existing) {
+            if (existing && isMatchingPokemonItem(existing, summary)) {
                 await OBR.player.select([existing.id]);
                 return { success: true, newMapTokenId: existing.id, alreadyOnMap: true };
             }
@@ -67,17 +68,7 @@ export async function spawnPokemonToMap(
 
         // 2. Check if already placed by entityId
         if (summary.entityId) {
-            const existingByEntity = sceneItems.find((it) => {
-                if (it.layer !== 'CHARACTER') return false;
-                const meta = (it.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
-                const claimMeta = it.metadata?.['pokerole-pmd-extension/claimed-by'] as
-                    | { entityId?: string }
-                    | undefined;
-                return (
-                    (meta.entityId && meta.entityId === summary.entityId) ||
-                    (claimMeta?.entityId && claimMeta.entityId === summary.entityId)
-                );
-            });
+            const existingByEntity = sceneItems.find((it) => isMatchingPokemonItem(it, summary));
             if (existingByEntity) {
                 await OBR.player.select([existingByEntity.id]);
                 return { success: true, newMapTokenId: existingByEntity.id, alreadyOnMap: true };
@@ -318,6 +309,25 @@ export function buildActiveCharacterSummary(
     const entityId = matchedEntityId || (fullMetadata.entityId as string) || activeTokenId || crypto.randomUUID();
     const existingSummary = matchedEntityId && existingSummaries ? existingSummaries[matchedEntityId] : undefined;
 
+    let resolvedMapTokenId: string | undefined = undefined;
+    let resolvedIsOnMap = false;
+
+    if (existingSummary) {
+        if (existingSummary.isOnMap && existingSummary.mapTokenId) {
+            resolvedIsOnMap = true;
+            resolvedMapTokenId = existingSummary.mapTokenId;
+        } else if (activeTokenId && existingSummary.mapTokenId === activeTokenId) {
+            resolvedIsOnMap = true;
+            resolvedMapTokenId = activeTokenId;
+        } else {
+            resolvedIsOnMap = false;
+            resolvedMapTokenId = undefined;
+        }
+    } else if (activeTokenId) {
+        resolvedIsOnMap = true;
+        resolvedMapTokenId = activeTokenId;
+    }
+
     return {
         entityId,
         trainerId: existingSummary?.trainerId,
@@ -331,8 +341,8 @@ export function buildActiveCharacterSummary(
         will: will.willCurr ?? existingSummary?.will ?? 5,
         maxWill: will.willMax ?? existingSummary?.maxWill ?? 5,
         tokenImageUrl: identity.tokenImageUrl || existingSummary?.tokenImageUrl || undefined,
-        isOnMap: activeTokenId ? true : (existingSummary?.isOnMap ?? false),
-        mapTokenId: activeTokenId || existingSummary?.mapTokenId || undefined,
+        isOnMap: resolvedIsOnMap,
+        mapTokenId: resolvedMapTokenId,
         savedTokenItem: existingSummary?.savedTokenItem,
         attachedItems: existingSummary?.attachedItems,
         fullMetadata: { ...(existingSummary?.fullMetadata || {}), ...fullMetadata, entityId },
