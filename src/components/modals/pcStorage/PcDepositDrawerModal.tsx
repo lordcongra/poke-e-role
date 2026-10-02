@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import OBR, { type Item } from '@owlbear-rodeo/sdk';
-import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
+import type { PcPokemonSummary, TrainerRoster, AttachmentBundle } from '../../../types/pcStorageTypes';
 import { METADATA_ID } from '../../../utils/sync/obr';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
 import { resolveSceneCandidateMatch, scanStandaloneCandidates } from '../../../utils/pc/pcCandidateMatching';
+import { calculateRelativeAttachment } from '../../../utils/pc/rehomeEngine';
+import { GRAPHICS_META_ID } from '../../../utils/graphics/graphicsManager';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { storageAdapter } from '../../../utils/sync/storageAdapter';
 import { PcDepositCandidateCard, type SceneCandidate } from './PcDepositCandidateCard';
@@ -16,6 +18,8 @@ interface PcDepositDrawerModalProps {
     targetSlot?: { type: 'party' | 'box'; index: number };
     currentActiveSummary?: PcPokemonSummary | null;
     trainerName?: string;
+    activeTrainerId?: string;
+    trainers?: TrainerRoster[];
     trainerPokemonSummaries?: PcPokemonSummary[];
     pokemonSummaries?: Record<string, PcPokemonSummary>;
     partySlots?: (string | null)[];
@@ -29,6 +33,8 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
     targetSlot,
     currentActiveSummary,
     trainerName,
+    activeTrainerId,
+    trainers,
     trainerPokemonSummaries = [],
     pokemonSummaries = {},
     partySlots = [],
@@ -87,11 +93,14 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                         const willMax =
                             Number(meta['will-max-display']) || (typeof meta.willMax === 'number' ? meta.willMax : 5);
 
-                        const { matchedEntityId, isInParty, claimedBy } = resolveSceneCandidateMatch(
+                        const { matchedEntityId, isInParty, isInBoxes, claimedBy } = resolveSceneCandidateMatch(
                             item,
                             pokemonSummaries,
                             partySlots,
-                            myPlayerId
+                            myPlayerId,
+                            activeTrainerId,
+                            trainerName,
+                            trainers
                         );
 
                         found.push({
@@ -110,6 +119,7 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                             metadata: meta,
                             claimedBy,
                             isInParty,
+                            isInBoxes,
                             matchedEntityId
                         });
                     }
@@ -123,11 +133,12 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
         };
 
         scanScene();
-    }, [isGm, partySlots, pokemonSummaries]);
+    }, [isGm, partySlots, pokemonSummaries, trainerName, activeTrainerId, trainers]);
 
     const handleSelectCandidate = async (cand: SceneCandidate) => {
         if (cand.claimedBy) return;
         if (targetSlot?.type === 'party' && cand.isInParty) return;
+        if (targetSlot?.type === 'box' && cand.isInBoxes) return;
 
         const entityId = cand.matchedEntityId || (cand.metadata.entityId as string) || cand.id || crypto.randomUUID();
         let myPlayerId = '';
@@ -155,6 +166,26 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                 }
             } catch (e) {
                 console.warn('[PcDepositDrawer] Error stamping claimed-by on candidate:', e);
+            }
+        }
+
+        // Capture real attachments on canvas for cand.id (excluding HUD graphics)
+        let attachedItems: AttachmentBundle[] | undefined = undefined;
+        if (OBR.isAvailable && cand.id && cand.item) {
+            try {
+                const sceneItems = await OBR.scene.items.getItems();
+                const realAttachments = sceneItems.filter(
+                    (it) =>
+                        it.attachedTo === cand.id &&
+                        !it.metadata[GRAPHICS_META_ID] &&
+                        !it.metadata['pokerole-extension/graphic-v6'] &&
+                        !it.id.startsWith(`${cand.id}-`)
+                );
+                if (realAttachments.length > 0) {
+                    attachedItems = realAttachments.map((c) => calculateRelativeAttachment(cand.item, c));
+                }
+            } catch (e) {
+                console.warn('[PcDepositDrawer] Error capturing candidate attachments:', e);
             }
         }
 
@@ -193,6 +224,7 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                       }
                     : {})
             },
+            attachedItems,
             lastModified: Date.now()
         };
         onDepositSummary(summary);

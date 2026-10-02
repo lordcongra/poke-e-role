@@ -78,10 +78,14 @@ export function resolveSceneCandidateMatch(
     item: Item,
     pokemonSummaries: Record<string, PcPokemonSummary>,
     partySlots: (string | null)[] = [],
-    myPlayerId?: string
+    myPlayerId?: string,
+    activeTrainerId?: string,
+    activeTrainerName?: string,
+    allTrainers?: TrainerRoster[]
 ): {
     matchedEntityId?: string;
     isInParty: boolean;
+    isInBoxes: boolean;
     claimedBy?: string;
 } {
     const meta = (item.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
@@ -89,14 +93,7 @@ export function resolveSceneCandidateMatch(
         | { playerId?: string; playerName?: string; trainerName?: string; entityId?: string }
         | undefined;
 
-    let claimedBy: string | undefined = undefined;
-    if (claimMeta?.playerId && myPlayerId && claimMeta.playerId !== myPlayerId) {
-        claimedBy = claimMeta.playerName || claimMeta.trainerName || 'Another Player';
-    }
-
-    const partyEntityIds = new Set(partySlots.filter(Boolean) as string[]);
     const summariesList = Object.values(pokemonSummaries);
-
     let matchedEntityId: string | undefined = undefined;
 
     // 1. By mapTokenId or saved item id
@@ -131,11 +128,81 @@ export function resolveSceneCandidateMatch(
         }
     }
 
-    const isInParty = Boolean(matchedEntityId && partyEntityIds.has(matchedEntityId));
+    // 4. By any summary name and species if unique match
+    if (!matchedEntityId && species) {
+        const nameMatches = summariesList.filter(
+            (s) =>
+                s.species.toLowerCase() === species.toLowerCase() &&
+                (s.name || s.species).toLowerCase() === name.toLowerCase()
+        );
+        if (nameMatches.length === 1) {
+            matchedEntityId = nameMatches[0].entityId;
+        }
+    }
+
+    let claimedBy: string | undefined = undefined;
+    let isInParty = false;
+    let isInBoxes = false;
+
+    // Check ownership across all trainers in campaign
+    if (allTrainers && allTrainers.length > 0) {
+        for (const tr of allTrainers) {
+            const isCurrentTrainer =
+                (activeTrainerId && tr.id === activeTrainerId) ||
+                (activeTrainerName && tr.name.toLowerCase() === activeTrainerName.toLowerCase());
+
+            const rawParty = tr.party || (tr as { partySlots?: (string | null)[] }).partySlots || [];
+            const trPartyIds = new Set(rawParty.filter(Boolean) as string[]);
+            const trBoxIds = new Set((tr.boxes || []).flatMap((b) => (b.slots || []).filter(Boolean) as string[]));
+
+            const hasMatchedEntity =
+                matchedEntityId && (trPartyIds.has(matchedEntityId) || trBoxIds.has(matchedEntityId));
+            const hasMatchedToken =
+                (tr.savedTokenItem?.id && tr.savedTokenItem.id === item.id) ||
+                (tr.mapTokenId && tr.mapTokenId === item.id);
+            const summaryTrainerMatch = matchedEntityId && pokemonSummaries[matchedEntityId]?.trainerId === tr.id;
+
+            if (hasMatchedEntity || hasMatchedToken || summaryTrainerMatch) {
+                if (isCurrentTrainer) {
+                    if (matchedEntityId && trPartyIds.has(matchedEntityId)) {
+                        isInParty = true;
+                    }
+                    if (matchedEntityId && trBoxIds.has(matchedEntityId)) {
+                        isInBoxes = true;
+                    }
+                } else {
+                    claimedBy = tr.name || 'Another Trainer';
+                    break;
+                }
+            }
+        }
+    }
+
+    // Fallback ownership check via partySlots param
+    if (!isInParty && matchedEntityId) {
+        const partyEntityIds = new Set(partySlots.filter(Boolean) as string[]);
+        if (partyEntityIds.has(matchedEntityId)) {
+            isInParty = true;
+        }
+    }
+
+    // Fallback ownership check via claim metadata
+    if (!claimedBy) {
+        if (
+            claimMeta?.trainerName &&
+            activeTrainerName &&
+            claimMeta.trainerName.trim().toLowerCase() !== activeTrainerName.trim().toLowerCase()
+        ) {
+            claimedBy = claimMeta.trainerName;
+        } else if (claimMeta?.playerId && myPlayerId && claimMeta.playerId !== myPlayerId) {
+            claimedBy = claimMeta.playerName || claimMeta.trainerName || 'Another Player';
+        }
+    }
 
     return {
         matchedEntityId,
         isInParty,
+        isInBoxes,
         claimedBy
     };
 }

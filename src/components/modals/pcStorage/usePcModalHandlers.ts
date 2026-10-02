@@ -17,7 +17,7 @@ import {
 } from '../../../utils/pc/pcModalOps';
 import { checkTrainerOnMap, buildLinkedTrainer } from '../../../utils/pc/pcTrainerOps';
 import { savePcStorage } from '../../../utils/pc/pcStorageAdapter';
-import { prepareDepositSummary } from '../../../utils/pc/pcDepositOps';
+import { prepareDepositSummary, validateDepositTarget, clonePokemonSummaryOps } from '../../../utils/pc/pcDepositOps';
 import { executeCloudExport, executeCloudRestore } from '../../../utils/pc/pcCloudModalOps';
 import { relinkPokemonArtworkOps } from '../../../utils/pc/pcTokenImageOps';
 
@@ -295,35 +295,7 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         const summary = pcData.pokemonSummaries[entityId];
         if (!summary) return;
 
-        const clonedId = crypto.randomUUID();
-        const cloneName = `${summary.name || summary.species} (Clone)`;
-        const clonedSummary: PcPokemonSummary = {
-            ...summary,
-            entityId: clonedId,
-            name: cloneName,
-            isOnMap: false,
-            mapTokenId: undefined,
-            savedTokenItem: undefined
-        };
-
-        if (!OBR.isAvailable && typeof window !== 'undefined' && window.localStorage) {
-            try {
-                const origRaw =
-                    localStorage.getItem(`pkr_char_${entityId}`) ||
-                    (summary.savedTokenItem?.id ? localStorage.getItem(`pkr_char_${summary.savedTokenItem.id}`) : null);
-                const cloneMeta = origRaw ? JSON.parse(origRaw) : { ...(summary.fullMetadata || {}) };
-                cloneMeta.nickname = cloneName;
-                cloneMeta.name = cloneName;
-                cloneMeta.entityId = clonedId;
-                delete cloneMeta.parentId;
-                localStorage.setItem(`pkr_char_${clonedId}`, JSON.stringify(cloneMeta));
-                clonedSummary.fullMetadata = cloneMeta;
-                window.dispatchEvent(new Event('pkr-local-data-changed'));
-            } catch (e) {
-                console.warn('[usePcModalHandlers] Failed to create local clone sheet:', e);
-            }
-        }
-
+        const { clonedSummary, clonedId } = clonePokemonSummaryOps(summary);
         updatePokemonSummary(clonedSummary);
         depositPokemonToBox(clonedId, activeBoxIndex);
     };
@@ -421,14 +393,10 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
             useCharacterStore.getState()
         );
 
-        // Prevent duplicate addition if already in party
-        const currentParty = trainer ? trainer.party : campaign?.teamParty || [];
-        if (depositTarget?.targetSlot?.type === 'party' && currentParty.includes(finalSummary.entityId)) {
-            if (OBR.isAvailable) {
-                OBR.notification.show(
-                    `${finalSummary.name || finalSummary.species} is already in the party!`,
-                    'WARNING'
-                );
+        const validation = validateDepositTarget(finalSummary, trainer, campaign, depositTarget?.targetSlot?.type);
+        if (!validation.allowed) {
+            if (OBR.isAvailable && validation.reason) {
+                OBR.notification.show(validation.reason, 'WARNING');
             }
             return;
         }

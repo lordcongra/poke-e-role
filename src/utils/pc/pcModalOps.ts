@@ -233,7 +233,8 @@ export async function spawnPokemonToMap(
                 'pokerole-pmd-extension/claimed-by': {
                     playerId: myId,
                     playerName: myName,
-                    entityId: validEntityId
+                    entityId: validEntityId,
+                    trainerName: trainer?.name
                 }
             };
         } catch {

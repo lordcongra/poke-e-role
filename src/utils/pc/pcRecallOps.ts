@@ -1,5 +1,6 @@
 import OBR, { type Item } from '@owlbear-rodeo/sdk';
 import { METADATA_ID } from '../sync/obr';
+import { GRAPHICS_META_ID } from '../graphics/graphicsManager';
 import type { PcPokemonSummary } from '../../types/pcStorageTypes';
 import { calculateRelativeAttachment } from './rehomeEngine';
 
@@ -46,8 +47,14 @@ export async function recallPokemonFromMap(
         }
 
         const resolvedParentId = parent.id;
-        const attachedChildren = sceneItems.filter((i) => i.attachedTo === resolvedParentId);
-        const bundles = attachedChildren.map((child) => calculateRelativeAttachment(parent, child));
+        const allAttachedChildren = sceneItems.filter((i) => i.attachedTo === resolvedParentId);
+        const realAttachedChildren = allAttachedChildren.filter(
+            (it) =>
+                !it.metadata[GRAPHICS_META_ID] &&
+                !it.metadata['pokerole-extension/graphic-v6'] &&
+                !it.id.startsWith(`${resolvedParentId}-`)
+        );
+        const bundles = realAttachedChildren.map((child) => calculateRelativeAttachment(parent, child));
 
         const meta = (parent.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
         const currentHp =
@@ -79,13 +86,13 @@ export async function recallPokemonFromMap(
                   ? Number(meta['will-max-display'])
                   : undefined;
 
-        // Delete parent and accessories from active scene
-        const idsToDelete = [parent.id, ...attachedChildren.map((c) => c.id)];
+        // Delete parent and all accessories (including HUD graphics) from active scene
+        const idsToDelete = [parent.id, ...allAttachedChildren.map((c) => c.id)];
         await OBR.scene.items.deleteItems(idsToDelete);
 
         return {
             success: true,
-            attachedItems: bundles,
+            attachedItems: bundles.length > 0 ? bundles : summary?.attachedItems || [],
             savedTokenItem: parent,
             fullMetadata: meta,
             currentHp,

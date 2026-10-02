@@ -20,6 +20,7 @@ export interface SceneCandidate {
     metadata: Record<string, unknown>;
     claimedBy?: string;
     isInParty?: boolean;
+    isInBoxes?: boolean;
     matchedEntityId?: string;
 }
 
@@ -68,6 +69,10 @@ export const PcDepositCandidateCard: React.FC<PcDepositCandidateCardProps> = ({
                     <span className="pc-deposit-card__claimed-tag text-subtext" title="Already on your belt">
                         <Lock size={10} /> In Party
                     </span>
+                ) : candidate.isInBoxes ? (
+                    <span className="pc-deposit-card__claimed-tag text-subtext" title="Already stored in your PC">
+                        <Lock size={10} /> In PC Box
+                    </span>
                 ) : null}
             </div>
 
@@ -88,6 +93,15 @@ export const PcDepositCandidateCard: React.FC<PcDepositCandidateCardProps> = ({
                     title="Already in your party belt"
                 >
                     In Party
+                </button>
+            ) : !isPartySlot && candidate.isInBoxes ? (
+                <button
+                    type="button"
+                    className="action-button action-button--dark pc-deposit-btn--disabled"
+                    disabled
+                    title="Already stored in your PC boxes"
+                >
+                    In Box
                 </button>
             ) : (
                 <button type="button" className="action-button action-button--theme" onClick={onSelect}>

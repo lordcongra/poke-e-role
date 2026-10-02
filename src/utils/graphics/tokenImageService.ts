@@ -155,6 +155,11 @@ export async function updateSceneItemImage(tokenId: string, url: string, width: 
                     imageRecord.url = url;
                     imageRecord.width = width;
                     imageRecord.height = height;
+                    imageRecord.mime = url.endsWith('.svg')
+                        ? 'image/svg+xml'
+                        : url.startsWith('data:image/')
+                          ? url.split(';')[0].replace('data:', '')
+                          : 'image/png';
 
                     const imgGrid = (item as Record<string, unknown>).grid as Record<string, unknown> | undefined;
                     if (imgGrid) {
