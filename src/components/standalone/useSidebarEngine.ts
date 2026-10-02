@@ -581,8 +581,8 @@ export function useSidebarEngine() {
             else if (y > rect.height * 0.85) pos = 'after';
             else pos = 'inside';
         } else {
-            if (y < rect.height * 0.25) pos = 'before';
-            else if (y > rect.height * 0.75) pos = 'after';
+            // Characters can never nest other characters inside them; only allow before or after
+            pos = y < rect.height * 0.5 ? 'before' : 'after';
         }
 
         setDragOverInfo({ id: item.id, position: pos });
@@ -611,9 +611,12 @@ export function useSidebarEngine() {
 
             let newParentId = targetItem.parentId;
             // Dropping a character onto a folder ALWAYS moves the character inside that folder
-            if (position === 'inside' || (targetItem.type === 'folder' && draggedType === 'character')) {
+            if (targetItem.type === 'folder' && (position === 'inside' || draggedType === 'character')) {
                 newParentId = targetItem.id;
                 position = 'inside';
+            } else if (targetItem.type === 'character') {
+                // Characters can NEVER be parent containers for other characters
+                newParentId = targetItem.parentId;
             }
 
             if (draggedType === 'folder') await storageAdapter.moveFolder(draggedId, newParentId);

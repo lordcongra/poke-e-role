@@ -2,7 +2,7 @@ import OBR, { buildImage, type Item } from '@owlbear-rodeo/sdk';
 import { METADATA_ID } from '../sync/obr';
 import type { PcBox, CampaignProfile, PcPokemonSummary, TrainerRoster } from '../../types/pcStorageTypes';
 import { getAbsolutePokeballUrl, resolveImageDimensions, sanitizeImageUrl } from '../generators/trainerTokenSpawner';
-import { uploadBoxToObrCloud, downloadBoxFromObrCloud } from './pcStorageAdapter';
+import { uploadBoxToObrCloud } from './pcStorageAdapter';
 
 /**
  * Builds array of Character tokens for a Box (or all Boxes) and Trainer Belt arranged
@@ -20,7 +20,11 @@ export async function buildBackupSceneItems(
     const spacing = 300;
     const fallbackUrl = getAbsolutePokeballUrl();
 
-    const createPokemonItem = async (summary: PcPokemonSummary, pos: { x: number; y: number }): Promise<Item> => {
+    const createPokemonItem = async (
+        summary: PcPokemonSummary,
+        pos: { x: number; y: number },
+        options?: { isParty?: boolean; beltSlot?: number; boxIndex?: number; boxName?: string }
+    ): Promise<Item> => {
         const metaObj: Record<string, unknown> = {
             ...(summary.fullMetadata || {}),
             entityId: summary.entityId,
@@ -36,6 +40,10 @@ export async function buildBackupSceneItems(
             rank: summary.rank,
             'token-image-url': sanitizeImageUrl(summary.tokenImageUrl || fallbackUrl),
             'is-backup-token': true,
+            'is-party': options?.isParty ?? false,
+            'belt-slot': options?.beltSlot,
+            'box-index': options?.boxIndex,
+            'box-name': options?.boxName,
             lastModified: summary.lastModified || Date.now()
         };
 
@@ -88,7 +96,8 @@ export async function buildBackupSceneItems(
             species: trainer.name,
             mode: 'Trainer',
             'token-image-url': sanitizeImageUrl(trainer.avatarUrl || fallbackUrl),
-            'is-backup-token': true
+            'is-backup-token': true,
+            'is-trainer': true
         };
 
         const rawSaved = trainer.savedTokenItem as
@@ -138,7 +147,7 @@ export async function buildBackupSceneItems(
         const summary = pokemonSummaries[entityId];
         if (summary) {
             const pos = { x: (startBeltCol + idx) * spacing, y: 0 };
-            const item = await createPokemonItem(summary, pos);
+            const item = await createPokemonItem(summary, pos, { isParty: true, beltSlot: idx });
             items.push(item);
         }
     }
@@ -159,7 +168,11 @@ export async function buildBackupSceneItems(
                 const col = idx % 6;
                 const row = gridRowOffset + Math.floor(idx / 6);
                 const pos = { x: col * spacing, y: 350 + row * spacing };
-                const item = await createPokemonItem(summary, pos);
+                const item = await createPokemonItem(summary, pos, {
+                    isParty: false,
+                    boxIndex: targetBoxes.indexOf(b),
+                    boxName: b.name
+                });
                 items.push(item);
             }
         }
@@ -255,42 +268,10 @@ export async function syncToActiveScene(
     }
 }
 
-/**
- * Imports Pokémon from an Owlbear Cloud backup scene into the active PC box.
- */
-export async function importBoxCloud(campaign: CampaignProfile): Promise<PcPokemonSummary[]> {
-    const downloadedScenes = await downloadBoxFromObrCloud(campaign.name);
-    const importedSummaries: PcPokemonSummary[] = [];
-
-    for (const scene of downloadedScenes) {
-        if (!scene.items) continue;
-        for (const item of scene.items) {
-            const meta = (item.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
-            const entityId = (meta.entityId as string) || crypto.randomUUID();
-            const hpCurr = Number(meta['hp-curr']) || (typeof meta.hp === 'number' ? meta.hp : 10);
-            const hpMax = Number(meta['hp-max-display']) || (typeof meta.hpMax === 'number' ? meta.hpMax : 10);
-            const willCurr = Number(meta['will-curr']) || (typeof meta.will === 'number' ? meta.will : 5);
-            const willMax = Number(meta['will-max-display']) || (typeof meta.willMax === 'number' ? meta.willMax : 5);
-
-            importedSummaries.push({
-                entityId,
-                name: (meta.name as string) || (meta.nickname as string) || item.name || 'Imported Pokémon',
-                species: (meta.species as string) || item.name || 'Unknown',
-                rank: (meta.rank as string) || 'Starter',
-                type1: (meta.type1 as string) || 'Normal',
-                type2: meta.type2 as string | undefined,
-                hp: hpCurr,
-                maxHp: hpMax,
-                will: willCurr,
-                maxWill: willMax,
-                tokenImageUrl: (meta['token-image-url'] as string) || (item as { image?: { url?: string } }).image?.url,
-                isOnMap: false,
-                savedTokenItem: item,
-                fullMetadata: meta,
-                lastModified: Date.now()
-            });
-        }
-    }
-
-    return importedSummaries;
-}
+// Re-export cloud and scene restoration utilities from dedicated module
+export {
+    importBoxCloud,
+    restoreTokensIntoPcStorage,
+    downloadAndRestoreCloudScene,
+    type RestoreTokensResult
+} from './pcCloudRestoreOps';

@@ -333,13 +333,12 @@ export async function uploadBoxToObrCloud(
 /**
  * Opens Owlbear Rodeo's native Asset Manager picker pre-filtered to this campaign's boxes.
  */
-export async function downloadBoxFromObrCloud(campaignName: string): Promise<SceneDownload[]> {
+export async function downloadBoxFromObrCloud(_campaignName?: string): Promise<SceneDownload[]> {
     if (!OBR.isAvailable) {
         return [];
     }
     try {
-        const query = `"PKR [${campaignName}]"`;
-        const scenes = await OBR.assets.downloadScenes(false, query);
+        const scenes = await OBR.assets.downloadScenes(false, 'PKR');
         return scenes || [];
     } catch (e) {
         console.error('[PcStorageAdapter] Failed to download Box from Owlbear Cloud:', e);

@@ -28,6 +28,7 @@ export const PcDepositActiveCard: React.FC<PcDepositActiveCardProps> = ({
                 src={resolvedAvatar}
                 alt={summary.name}
                 className="pc-deposit-card__avatar"
+                draggable={false}
                 onError={(e) => {
                     e.currentTarget.src = getAbsolutePokeballUrl();
                 }}

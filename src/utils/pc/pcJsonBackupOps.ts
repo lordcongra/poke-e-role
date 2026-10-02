@@ -1,4 +1,10 @@
-import type { PcStorageData, PcPokemonSummary, CampaignProfile, TrainerRoster } from '../../types/pcStorageTypes';
+import type {
+    PcStorageData,
+    PcPokemonSummary,
+    CampaignProfile,
+    TrainerRoster,
+    PcBox
+} from '../../types/pcStorageTypes';
 import { sanitizePcData } from './pcStorageAdapter';
 
 export interface PcJsonExportConfig {
@@ -118,8 +124,48 @@ export interface ImportPcJsonResult {
     error?: string;
 }
 
+function depositEntityIntoBoxes(boxes: PcBox[], entityId: string, preferredBoxName?: string): void {
+    // Prevent duplicate entries across boxes
+    for (const b of boxes) {
+        if (b.slots.includes(entityId)) return;
+    }
+
+    // Try to find preferred box first
+    if (preferredBoxName) {
+        const pref = boxes.find((b) => b.name.trim().toLowerCase() === preferredBoxName.trim().toLowerCase());
+        if (pref) {
+            const emptyIdx = pref.slots.findIndex((s: string | null) => s === null);
+            if (emptyIdx !== -1) {
+                pref.slots[emptyIdx] = entityId;
+                return;
+            }
+        }
+    }
+
+    // Try any box with an empty slot
+    for (const box of boxes) {
+        const emptyIdx = box.slots.findIndex((s: string | null) => s === null);
+        if (emptyIdx !== -1) {
+            box.slots[emptyIdx] = entityId;
+            return;
+        }
+    }
+
+    // All existing boxes full: create a new box
+    const newBoxNumber = boxes.length + 1;
+    const newBox: PcBox = {
+        id: crypto.randomUUID(),
+        name: preferredBoxName || `Box ${newBoxNumber}`,
+        slots: Array(30).fill(null),
+        themeColor: 'normal'
+    };
+    newBox.slots[0] = entityId;
+    boxes.push(newBox);
+}
+
 /**
- * Parses and merges an uploaded JSON backup file into the active PC storage data.
+ * Parses and merges an uploaded JSON backup file into the active PC storage data non-destructively.
+ * Protects active trainer belt parties and existing campaign boxes from being overwritten.
  */
 export async function importPcBackupJson(file: File, currentData: PcStorageData): Promise<ImportPcJsonResult> {
     try {
@@ -140,39 +186,142 @@ export async function importPcBackupJson(file: File, currentData: PcStorageData)
             };
         }
 
-        // Merge campaigns
-        const mergedCampaigns = { ...currentData.campaigns };
-        let importedCampaignCount = 0;
-        for (const [cId, camp] of Object.entries(rawCampaigns)) {
-            if (!mergedCampaigns[cId]) {
-                mergedCampaigns[cId] = camp;
-                importedCampaignCount++;
-            } else {
-                // Merge trainers within existing campaign
-                const currentTrainers = mergedCampaigns[cId].trainers || {};
-                const incomingTrainers = camp.trainers || {};
-                mergedCampaigns[cId] = {
-                    ...mergedCampaigns[cId],
-                    ...camp,
-                    trainers: { ...currentTrainers, ...incomingTrainers },
-                    boxes: camp.boxes && camp.boxes.length > 0 ? camp.boxes : mergedCampaigns[cId].boxes
-                };
-            }
-        }
+        // Deep clone to avoid mutating active state
+        const mergedCampaigns = JSON.parse(JSON.stringify(currentData.campaigns || {})) as Record<
+            string,
+            CampaignProfile
+        >;
+        const mergedSummaries = JSON.parse(JSON.stringify(currentData.pokemonSummaries || {})) as Record<
+            string,
+            PcPokemonSummary
+        >;
 
-        // Merge Pokémon summaries (prefer incoming or newer lastModified)
-        const mergedSummaries = { ...currentData.pokemonSummaries };
+        let importedCampaignCount = 0;
         let importedPokemonCount = 0;
+
+        // 1. Merge Pokémon summaries safely
         for (const [pId, summary] of Object.entries(rawSummaries)) {
+            if (!summary) continue;
             if (!mergedSummaries[pId]) {
                 mergedSummaries[pId] = summary;
                 importedPokemonCount++;
             } else {
-                const existingTime = mergedSummaries[pId].lastModified || 0;
+                const existing = mergedSummaries[pId];
+                const existingTime = existing.lastModified || 0;
                 const incomingTime = summary.lastModified || 0;
                 if (incomingTime >= existingTime) {
-                    mergedSummaries[pId] = summary;
+                    mergedSummaries[pId] = {
+                        ...summary,
+                        isOnMap: existing.isOnMap || summary.isOnMap,
+                        mapTokenId: existing.mapTokenId || summary.mapTokenId
+                    };
                     importedPokemonCount++;
+                }
+            }
+        }
+
+        // 2. Merge campaigns non-destructively
+        for (const [cId, incomingCamp] of Object.entries(rawCampaigns)) {
+            if (!incomingCamp) continue;
+
+            const existingCamp =
+                mergedCampaigns[cId] ||
+                Object.values(mergedCampaigns).find(
+                    (c) => c.name.trim().toLowerCase() === incomingCamp.name.trim().toLowerCase()
+                );
+
+            if (!existingCamp) {
+                // Brand new campaign: safe to add directly
+                mergedCampaigns[cId] = incomingCamp;
+                importedCampaignCount++;
+                continue;
+            }
+
+            // Existing campaign: safe non-destructive merge
+            const currentTrainers = existingCamp.trainers || {};
+            const incomingTrainers = incomingCamp.trainers || {};
+
+            for (const [tId, inTr] of Object.entries(incomingTrainers)) {
+                if (!inTr) continue;
+
+                const existingTrKey = currentTrainers[tId]
+                    ? tId
+                    : Object.keys(currentTrainers).find(
+                          (k) => currentTrainers[k].name.trim().toLowerCase() === inTr.name.trim().toLowerCase()
+                      );
+
+                if (!existingTrKey) {
+                    // New trainer in this campaign: add directly
+                    currentTrainers[tId] = inTr;
+                } else {
+                    const existingTr = currentTrainers[existingTrKey];
+                    const trainerBoxes = existingTr.boxes || [];
+                    existingTr.boxes = trainerBoxes;
+                    if (trainerBoxes.length === 0) {
+                        trainerBoxes.push({
+                            id: crypto.randomUUID(),
+                            name: 'Box 1',
+                            slots: Array(30).fill(null),
+                            themeColor: 'normal'
+                        });
+                    }
+
+                    const existingPartySet = new Set((existingTr.party || []).filter(Boolean) as string[]);
+
+                    // Any Pokémon in incoming party: deposit into boxes without wiping existing belt!
+                    for (const partyEntityId of inTr.party || []) {
+                        if (partyEntityId && !existingPartySet.has(partyEntityId)) {
+                            depositEntityIntoBoxes(trainerBoxes, partyEntityId, 'Imported Party');
+                        }
+                    }
+
+                    // Any Pokémon in incoming boxes: deposit safely into existing boxes
+                    const incomingBoxes = inTr.boxes || [];
+                    for (let bIdx = 0; bIdx < incomingBoxes.length; bIdx++) {
+                        const inBox = incomingBoxes[bIdx];
+                        for (const sId of inBox.slots || []) {
+                            if (sId && !existingPartySet.has(sId)) {
+                                depositEntityIntoBoxes(trainerBoxes, sId, inBox.name || `Imported Box ${bIdx + 1}`);
+                            }
+                        }
+                    }
+
+                    // Preserve existing avatar / tokens if present
+                    if (!existingTr.avatarUrl && inTr.avatarUrl) {
+                        existingTr.avatarUrl = inTr.avatarUrl;
+                    }
+                    if (!existingTr.savedTokenItem && inTr.savedTokenItem) {
+                        existingTr.savedTokenItem = inTr.savedTokenItem;
+                    }
+                }
+            }
+
+            // Merge campaign-level boxes (shared / PMD)
+            existingCamp.boxes = existingCamp.boxes || [];
+            if (existingCamp.boxes.length === 0 && incomingCamp.boxes && incomingCamp.boxes.length > 0) {
+                existingCamp.boxes = incomingCamp.boxes;
+            } else if (incomingCamp.boxes && incomingCamp.boxes.length > 0) {
+                for (let bIdx = 0; bIdx < incomingCamp.boxes.length; bIdx++) {
+                    const inBox = incomingCamp.boxes[bIdx];
+                    for (const sId of inBox.slots || []) {
+                        if (sId) {
+                            depositEntityIntoBoxes(existingCamp.boxes, sId, inBox.name || `Imported Box ${bIdx + 1}`);
+                        }
+                    }
+                }
+            }
+
+            // PMD teamParty merge
+            if (!existingCamp.teamParty || existingCamp.teamParty.filter(Boolean).length === 0) {
+                if (incomingCamp.teamParty && incomingCamp.teamParty.length > 0) {
+                    existingCamp.teamParty = incomingCamp.teamParty;
+                }
+            } else if (incomingCamp.teamParty) {
+                const teamSet = new Set(existingCamp.teamParty.filter(Boolean) as string[]);
+                for (const tMemberId of incomingCamp.teamParty) {
+                    if (tMemberId && !teamSet.has(tMemberId)) {
+                        depositEntityIntoBoxes(existingCamp.boxes, tMemberId, 'Imported Team');
+                    }
                 }
             }
         }

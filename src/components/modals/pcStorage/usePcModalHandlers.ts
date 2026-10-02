@@ -12,16 +12,14 @@ import {
     spawnPokemonToMap,
     spawnTrainerToMap,
     recallPokemonFromMap,
-    exportBoxCloud,
-    syncToActiveScene,
-    importBoxCloud,
     unlinkPokemonFromPcOps,
     clearTokenClaimOps
 } from '../../../utils/pc/pcModalOps';
 import { checkTrainerOnMap, buildLinkedTrainer } from '../../../utils/pc/pcTrainerOps';
 import { savePcStorage } from '../../../utils/pc/pcStorageAdapter';
 import { prepareDepositSummary } from '../../../utils/pc/pcDepositOps';
-import { markBackupComplete } from '../../../utils/sync/storageAdapter';
+import { executeCloudExport, executeCloudRestore } from '../../../utils/pc/pcCloudModalOps';
+import { relinkPokemonArtworkOps } from '../../../utils/pc/pcTokenImageOps';
 
 interface UsePcModalHandlersParams {
     pcData: PcStorageData;
@@ -229,12 +227,20 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
             }
             return;
         }
-        if (result.success) {
+        if (result.success && result.newMapTokenId) {
             updatePokemonSummary({
                 ...summary,
                 isOnMap: true,
                 mapTokenId: result.newMapTokenId
             });
+            if (OBR.isAvailable) {
+                OBR.notification.show(`Sent out ${summary.name || summary.species} to the map!`, 'SUCCESS');
+            }
+        } else {
+            console.error('[usePcModalHandlers] Failed to send out Pokémon to map:', summary);
+            if (OBR.isAvailable) {
+                OBR.notification.show(`Failed to send out ${summary.name || summary.species} to the map.`, 'ERROR');
+            }
         }
     };
 
@@ -256,6 +262,9 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
                 savedTokenItem: result.savedTokenItem ?? summary.savedTokenItem,
                 fullMetadata: result.fullMetadata ?? summary.fullMetadata
             });
+            if (OBR.isAvailable) {
+                OBR.notification.show(`Recalled ${summary.name || summary.species} from the map!`, 'INFO');
+            }
         }
     };
 
@@ -263,20 +272,21 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         const summary = pcData.pokemonSummaries[entityId];
         if (!summary) return;
 
-        if (OBR.isAvailable) {
-            try {
-                const images = await OBR.assets.downloadImages(false);
-                if (images && images.length > 0) {
-                    const selectedUrl = images[0].image?.url;
-                    if (selectedUrl) {
-                        updatePokemonSummary({
-                            ...summary,
-                            tokenImageUrl: selectedUrl
-                        });
-                    }
+        try {
+            const updated = await relinkPokemonArtworkOps(summary);
+            if (updated) {
+                updatePokemonSummary(updated);
+                if (OBR.isAvailable) {
+                    OBR.notification.show(
+                        `Relinked artwork for ${updated.name || updated.species || 'Pokémon'}!`,
+                        'INFO'
+                    );
                 }
-            } catch (e) {
-                console.error('[PcModalHandlers] Failed to pick image from Owlbear:', e);
+            }
+        } catch (e) {
+            console.error('[PcModalHandlers] Failed to relink artwork:', e);
+            if (OBR.isAvailable) {
+                OBR.notification.show('Failed to relink token artwork.', 'ERROR');
             }
         }
     };
@@ -385,59 +395,22 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
     ) => {
         if (!currentBox || !campaign) return;
         setIsExportModalOpen(false);
-        const partyIds = includeParty && trainer ? trainer.party : undefined;
-        const trainerToExport = includeTrainer && trainer ? trainer : undefined;
-        const currentTrainerBoxes = trainer?.boxes && trainer.boxes.length > 0 ? trainer.boxes : campaign.boxes;
-        const allBoxesToPass = backupAllBoxes ? currentTrainerBoxes : [currentBox];
-
-        if (targetMode === 'activeScene') {
-            const success = await syncToActiveScene(
-                currentBox,
-                campaign,
-                pcData.pokemonSummaries,
-                partyIds,
-                trainerToExport,
-                allBoxesToPass
-            );
-            if (success) {
-                markBackupComplete();
-                if (OBR.isAvailable) {
-                    const label = backupAllBoxes ? 'All PC' : currentBox.name;
-                    OBR.notification.show(`Updated current scene with ${label} Pokémon!`, 'SUCCESS');
-                }
-            }
-            return;
-        }
-
-        const success = await exportBoxCloud(
+        await executeCloudExport(
+            customSceneName,
             currentBox,
             campaign,
-            pcData.pokemonSummaries,
-            customSceneName,
-            partyIds,
-            trainerToExport,
-            allBoxesToPass
+            pcData,
+            trainer,
+            includeParty,
+            includeTrainer,
+            targetMode,
+            backupAllBoxes
         );
-        if (success) {
-            markBackupComplete();
-            if (OBR.isAvailable) {
-                OBR.notification.show(`Saved "${customSceneName}" to Owlbear Rodeo Cloud!`, 'SUCCESS');
-            }
-        }
     };
 
     const handleDownloadBox = async () => {
-        if (!campaign || !currentBox) return;
-        const imported = await importBoxCloud(campaign);
-        if (imported.length > 0) {
-            for (const sum of imported) {
-                updatePokemonSummary(sum);
-                depositPokemonToBox(sum.entityId, activeBoxIndex);
-            }
-            if (OBR.isAvailable) {
-                OBR.notification.show(`Imported ${imported.length} Pokémon into "${currentBox.name}"!`, 'SUCCESS');
-            }
-        }
+        if (!campaign) return;
+        await executeCloudRestore(campaign.name, pcData, activeBoxIndex);
     };
 
     const handleCompleteDeposit = async (summary: PcPokemonSummary) => {

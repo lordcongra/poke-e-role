@@ -1,10 +1,4 @@
-import {
-    storageAdapter,
-    type LocalFolder,
-    type LocalCharacter,
-    isStandaloneMode,
-    markDataChanged
-} from '../sync/storageAdapter';
+import { storageAdapter, type LocalFolder, isStandaloneMode, markDataChanged } from '../sync/storageAdapter';
 import type { TrainerRoster, PcBox, PcStorageData } from '../../types/pcStorageTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { savePcStorage } from './pcStorageAdapter';
@@ -145,9 +139,11 @@ export async function organizeTrainerSidebarFolders(
 
         // 2. Move active belt Pokémon into the "Belt" folder
         const partyIds = (trainer.party || []).filter(Boolean) as string[];
+        const beltCharIds = new Set<string>();
         for (const pId of partyIds) {
-            const charMatch = await findAndLinkLocalCharacter(pId, localChars, summaries);
+            const charMatch = await findAndLinkLocalCharacter(pId, localChars, summaries, beltCharIds);
             if (charMatch) {
+                beltCharIds.add(charMatch.id);
                 // Verify this character is not a Trainer!
                 if (!isTrainerMetadata(charMatch.metadata) && charMatch.parentId !== beltFolder.id) {
                     await storageAdapter.moveItem(charMatch.id, beltFolder.id);
@@ -179,9 +175,13 @@ export async function organizeTrainerSidebarFolders(
             }
 
             for (const sId of storedSlotIds) {
-                const charMatch = await findAndLinkLocalCharacter(sId, localChars, summaries);
+                const charMatch = await findAndLinkLocalCharacter(sId, localChars, summaries, beltCharIds);
                 if (charMatch) {
-                    if (!isTrainerMetadata(charMatch.metadata) && charMatch.parentId !== boxFolder.id) {
+                    if (
+                        !isTrainerMetadata(charMatch.metadata) &&
+                        !beltCharIds.has(charMatch.id) &&
+                        charMatch.parentId !== boxFolder.id
+                    ) {
                         await storageAdapter.moveItem(charMatch.id, boxFolder.id);
                         charMatch.parentId = boxFolder.id;
                         movedPokemonCount++;
@@ -427,53 +427,8 @@ export async function runOrganizeFoldersAction(
     }
 }
 
-/**
- * Auto-heals party Pokémon in the Standalone Sidebar:
- * If a Pokémon is active in a Trainer's Belt and that Trainer has a "Belt" folder,
- * but the Pokémon sheet is currently sitting directly under the Trainer (parentId === trainerSidebarId),
- * it is automatically moved into the "Belt" folder so it lines up with party members.
- */
-export async function autoHealTrainerBeltPokemon(
-    localChars: LocalCharacter[],
-    folders: LocalFolder[],
-    pcData: PcStorageData
-): Promise<boolean> {
-    if (!isStandaloneMode || !pcData?.campaigns) return false;
-    let anyMoved = false;
-
-    const camp = pcData.campaigns[pcData.activeCampaignId];
-    if (!camp) return false;
-
-    for (const tr of Object.values(camp.trainers)) {
-        if (!tr.party || tr.party.length === 0) continue;
-
-        const trainerSidebarId = localChars.find(
-            (c) =>
-                c.id === tr.id ||
-                c.id === tr.savedTokenItem?.id ||
-                c.id === tr.mapTokenId ||
-                (isTrainerMetadata(c.metadata) && c.name.trim().toLowerCase() === tr.name.trim().toLowerCase())
-        )?.id;
-        if (!trainerSidebarId) continue;
-
-        const beltFolder = folders.find((f) => f.parentId === trainerSidebarId && isBeltFolderName(f.name));
-        if (!beltFolder) continue;
-
-        const partyIds = tr.party.filter(Boolean) as string[];
-        for (const pId of partyIds) {
-            const charMatch = await findAndLinkLocalCharacter(pId, localChars, pcData.pokemonSummaries || {});
-            if (charMatch && !isTrainerMetadata(charMatch.metadata)) {
-                if (charMatch.parentId !== beltFolder.id) {
-                    await storageAdapter.moveItem(charMatch.id, beltFolder.id);
-                    charMatch.parentId = beltFolder.id;
-                    anyMoved = true;
-                }
-            }
-        }
-    }
-
-    return anyMoved;
-}
+// Re-export auto-heal utility from dedicated module
+export { autoHealTrainerBeltPokemon } from './pcSidebarAutoHeal';
 
 // Re-export event functions from dedicated module
 export {

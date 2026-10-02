@@ -125,9 +125,17 @@ export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
                         useCharacterStore.setState({ pcData: nextData });
                         savePcStorage(nextData);
                     }}
-                    onScanSceneSuccess={(count) => {
+                    onScanSceneSuccess={(nextData, count, beltCount, boxCount) => {
+                        useCharacterStore.setState({ pcData: nextData });
+                        savePcStorage(nextData);
+                        if (typeof window !== 'undefined') {
+                            window.dispatchEvent(new Event('pkr-local-data-changed'));
+                        }
                         if (OBR.isAvailable) {
-                            OBR.notification.show(`Synced ${count} Pokémon from scene!`, 'SUCCESS');
+                            OBR.notification.show(
+                                `Synced ${count} Pokémon (${beltCount} Belt, ${boxCount} Box) from scene!`,
+                                'SUCCESS'
+                            );
                         }
                     }}
                 />

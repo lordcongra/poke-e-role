@@ -7,7 +7,7 @@ import { isTrainerMetadata } from './pcSidebarSync';
  * e.g., "Urshifu (Single Strike Style)" -> "urshifu"
  * e.g., "Typhlosion (Hisuian Form)" -> "typhlosion"
  */
-function normalizeBaseName(str?: string): string {
+export function normalizeBaseName(str?: string): string {
     if (!str) return '';
     return str
         .replace(/\s*\([^)]*\)/g, '')
@@ -23,12 +23,15 @@ function normalizeBaseName(str?: string): string {
 export async function findAndLinkLocalCharacter(
     entityId: string,
     localChars: LocalCharacter[],
-    pokemonSummaries: Record<string, PcPokemonSummary>
+    pokemonSummaries: Record<string, PcPokemonSummary>,
+    excludeIds?: Set<string>
 ): Promise<LocalCharacter | undefined> {
     if (!isStandaloneMode || !entityId) return undefined;
 
     // 1. Direct match by char id or metadata entityId
-    let match = localChars.find((c) => c.id === entityId || c.metadata?.entityId === entityId);
+    let match = localChars.find(
+        (c) => (!excludeIds || !excludeIds.has(c.id)) && (c.id === entityId || c.metadata?.entityId === entityId)
+    );
     if (match) {
         if (!match.metadata?.entityId) {
             await linkCharacterEntityId(match.id, entityId);
@@ -37,11 +40,12 @@ export async function findAndLinkLocalCharacter(
         return match;
     }
 
-    const summary = pokemonSummaries[entityId];
+    const summary =
+        pokemonSummaries[entityId] || Object.values(pokemonSummaries).find((s) => s && s.entityId === entityId);
     if (summary) {
         // 2. Match by summary mapTokenId or savedTokenItem id
         if (summary.mapTokenId) {
-            match = localChars.find((c) => c.id === summary.mapTokenId);
+            match = localChars.find((c) => (!excludeIds || !excludeIds.has(c.id)) && c.id === summary.mapTokenId);
             if (match) {
                 await linkCharacterEntityId(match.id, entityId);
                 match.metadata = { ...(match.metadata || {}), entityId };
@@ -50,7 +54,7 @@ export async function findAndLinkLocalCharacter(
         }
         if (summary.savedTokenItem && summary.savedTokenItem.id) {
             const savedId = summary.savedTokenItem.id;
-            match = localChars.find((c) => c.id === savedId);
+            match = localChars.find((c) => (!excludeIds || !excludeIds.has(c.id)) && c.id === savedId);
             if (match) {
                 await linkCharacterEntityId(match.id, entityId);
                 match.metadata = { ...(match.metadata || {}), entityId };
@@ -64,7 +68,9 @@ export async function findAndLinkLocalCharacter(
         const baseSummaryName = normalizeBaseName(summary.name);
         const baseSummarySpecies = normalizeBaseName(summary.species);
 
-        const candidates = localChars.filter((c) => !isTrainerMetadata(c.metadata));
+        const candidates = localChars.filter(
+            (c) => !isTrainerMetadata(c.metadata) && (!excludeIds || !excludeIds.has(c.id))
+        );
 
         // 3a. Exact name or nickname match
         if (cleanName) {

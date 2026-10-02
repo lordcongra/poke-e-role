@@ -143,9 +143,10 @@ function measureImageDimensions(url: string): Promise<{ width: number; height: n
 /**
  * Helper to update OBR scene item image properties and re-render token graphics.
  */
-async function updateSceneItemImage(tokenId: string, url: string, width: number, height: number): Promise<void> {
+export async function updateSceneItemImage(tokenId: string, url: string, width: number, height: number): Promise<void> {
     if (!OBR.isAvailable) return;
     try {
+        const maxDim = Math.max(width, height) || 300;
         await OBR.scene.items.updateItems([tokenId], (items) => {
             for (const item of items) {
                 const imgItem = item as Record<string, unknown>;
@@ -157,7 +158,7 @@ async function updateSceneItemImage(tokenId: string, url: string, width: number,
 
                     const imgGrid = (item as Record<string, unknown>).grid as Record<string, unknown> | undefined;
                     if (imgGrid) {
-                        imgGrid.dpi = width;
+                        imgGrid.dpi = maxDim;
                         imgGrid.offset = {
                             x: width / 2,
                             y: height / 2
@@ -168,6 +169,14 @@ async function updateSceneItemImage(tokenId: string, url: string, width: number,
                     const signY = (item.scale.y || 1) < 0 ? -1 : 1;
                     item.scale.x = signX;
                     item.scale.y = signY;
+
+                    if (item.metadata) {
+                        const meta = (item.metadata[METADATA_ID] as Record<string, unknown>) || {};
+                        item.metadata[METADATA_ID] = {
+                            ...meta,
+                            'token-image-url': url
+                        };
+                    }
                 }
             }
         });

@@ -1,13 +1,34 @@
-import OBR, { buildImage, type Item } from '@owlbear-rodeo/sdk';
+import OBR, { buildImage, isImage, type Item } from '@owlbear-rodeo/sdk';
 import type { PcPokemonSummary, PcBox, TrainerRoster } from '../../types/pcStorageTypes';
 import { METADATA_ID } from '../sync/obr';
-import { getAbsolutePokeballUrl, resolveImageDimensions } from '../generators/trainerTokenSpawner';
-import { rehomeTokenSubtree, calculateRelativeAttachment, chunkItems } from './rehomeEngine';
-import { exportBoxCloud, syncToActiveScene, importBoxCloud, buildBackupSceneItems } from './pcCloudBackupOps';
-export { exportBoxCloud, syncToActiveScene, importBoxCloud, buildBackupSceneItems };
+import { rehomeTokenSubtree, chunkItems } from './rehomeEngine';
+import {
+    exportBoxCloud,
+    syncToActiveScene,
+    importBoxCloud,
+    buildBackupSceneItems,
+    downloadAndRestoreCloudScene,
+    restoreTokensIntoPcStorage
+} from './pcCloudBackupOps';
+export {
+    exportBoxCloud,
+    syncToActiveScene,
+    importBoxCloud,
+    buildBackupSceneItems,
+    downloadAndRestoreCloudScene,
+    restoreTokensIntoPcStorage
+};
+
+export {
+    recallPokemonFromMap,
+    clearTokenClaimOps,
+    unlinkPokemonFromPcOps,
+    type RecallPokemonResult
+} from './pcRecallOps';
 
 import { buildGraphicsFromMeta, renderTokenGraphics } from '../graphics/graphicsManager';
 import { resolveExistingCharacterEntityId } from './pcCandidateMatching';
+import { resolveTokenImageForMap } from './pcTokenImageOps';
 
 export const recentlySpawnedTokenIds = new Set<string>();
 
@@ -16,17 +37,6 @@ export function markTokenAsRecentlySpawned(id: string) {
     setTimeout(() => {
         recentlySpawnedTokenIds.delete(id);
     }, 3500);
-}
-
-export interface RecallPokemonResult {
-    success: boolean;
-    attachedItems?: PcPokemonSummary['attachedItems'];
-    savedTokenItem?: Item;
-    fullMetadata?: Record<string, unknown>;
-    currentHp?: number;
-    maxHp?: number;
-    currentWill?: number;
-    maxWill?: number;
 }
 
 export async function spawnPokemonToMap(
@@ -40,10 +50,10 @@ export async function spawnPokemonToMap(
     }
 
     try {
-        const gridDpi = (await OBR.scene.grid.getDpi()) || 150;
+        const gridDpi = (await OBR.scene.grid.getDpi().catch(() => 150)) || 150;
         const sceneItems = await OBR.scene.items.getItems();
 
-        // Check if this Pokémon is already actively placed on the current scene
+        // 1. Check if this Pokémon is already actively placed on the current scene
         if (summary.mapTokenId) {
             const existing = sceneItems.find((it) => it.id === summary.mapTokenId);
             if (existing) {
@@ -51,21 +61,27 @@ export async function spawnPokemonToMap(
                 return { success: true, newMapTokenId: existing.id, alreadyOnMap: true };
             }
         }
-        const existingByEntity = sceneItems.find((it) => {
-            if (it.layer !== 'CHARACTER') return false;
-            const meta = (it.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
-            const claimMeta = it.metadata?.['pokerole-pmd-extension/claimed-by'] as { entityId?: string } | undefined;
-            return (
-                (meta.entityId && meta.entityId === summary.entityId) ||
-                (claimMeta?.entityId && claimMeta.entityId === summary.entityId)
-            );
-        });
-        if (existingByEntity) {
-            await OBR.player.select([existingByEntity.id]);
-            return { success: true, newMapTokenId: existingByEntity.id, alreadyOnMap: true };
+
+        // 2. Check if already placed by entityId
+        if (summary.entityId) {
+            const existingByEntity = sceneItems.find((it) => {
+                if (it.layer !== 'CHARACTER') return false;
+                const meta = (it.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
+                const claimMeta = it.metadata?.['pokerole-pmd-extension/claimed-by'] as
+                    | { entityId?: string }
+                    | undefined;
+                return (
+                    (meta.entityId && meta.entityId === summary.entityId) ||
+                    (claimMeta?.entityId && claimMeta.entityId === summary.entityId)
+                );
+            });
+            if (existingByEntity) {
+                await OBR.player.select([existingByEntity.id]);
+                return { success: true, newMapTokenId: existingByEntity.id, alreadyOnMap: true };
+            }
         }
 
-        // Only drop in front of a trainer if an active linked trainer is provided AND present on scene
+        // 3. Drop in front of trainer if active linked trainer is provided AND present on scene
         let trainerToken: Item | undefined;
         if (trainer && trainer.isLinked) {
             trainerToken = sceneItems.find((it) => {
@@ -83,102 +99,120 @@ export async function spawnPokemonToMap(
             });
         }
 
-        let landingPos: { x: number; y: number };
-        if (trainerToken) {
-            const targetY = trainerToken.position.y + gridDpi * 1.25;
-            const occupiedXs = sceneItems
-                .filter((it) => it.layer === 'CHARACTER' && Math.abs(it.position.y - targetY) < gridDpi * 0.7)
-                .map((it) => it.position.x);
+        let landingPos: { x: number; y: number } = { x: 0, y: 0 };
+        try {
+            if (trainerToken) {
+                const targetY = trainerToken.position.y + gridDpi * 1.25;
+                const occupiedXs = sceneItems
+                    .filter((it) => it.layer === 'CHARACTER' && Math.abs(it.position.y - targetY) < gridDpi * 0.7)
+                    .map((it) => it.position.x);
 
-            let chosenOffset = 0;
-            const offsets = [0, gridDpi, -gridDpi, gridDpi * 2, -gridDpi * 2, gridDpi * 3, -gridDpi * 3];
-            for (const off of offsets) {
-                const candX = trainerToken.position.x + off;
-                const isTaken = occupiedXs.some((ox) => Math.abs(ox - candX) < gridDpi * 0.7);
-                if (!isTaken) {
-                    chosenOffset = off;
-                    break;
+                let chosenOffset = 0;
+                const offsets = [0, gridDpi, -gridDpi, gridDpi * 2, -gridDpi * 2, gridDpi * 3, -gridDpi * 3];
+                for (const off of offsets) {
+                    const candX = trainerToken.position.x + off;
+                    const isTaken = occupiedXs.some((ox) => Math.abs(ox - candX) < gridDpi * 0.7);
+                    if (!isTaken) {
+                        chosenOffset = off;
+                        break;
+                    }
                 }
-            }
 
-            landingPos = {
-                x: trainerToken.position.x + chosenOffset,
-                y: targetY
-            };
-        } else {
-            // Default drop: 35% from left of viewport so it is NOT covered by extension iframe on the right
-            const vpWidth = (await OBR.viewport.getWidth()) || 800;
-            const vpHeight = (await OBR.viewport.getHeight()) || 600;
-            landingPos = await OBR.viewport.inverseTransformPoint({
-                x: vpWidth * 0.35,
-                y: vpHeight * 0.5
-            });
+                landingPos = {
+                    x: trainerToken.position.x + chosenOffset,
+                    y: targetY
+                };
+            } else {
+                const vpWidth = (await OBR.viewport.getWidth()) || 800;
+                const vpHeight = (await OBR.viewport.getHeight()) || 600;
+                landingPos = await OBR.viewport.inverseTransformPoint({
+                    x: vpWidth * 0.35,
+                    y: vpHeight * 0.5
+                });
+            }
+        } catch {
+            landingPos = { x: 0, y: 0 };
         }
 
-        let parentItem: Item;
+        // 4. Resolve safe, valid map artwork (handles local-img, scene match, and pokeball fallback)
+        const resolvedImg = await resolveTokenImageForMap(summary, sceneItems);
 
-        if (summary.savedTokenItem) {
-            // Restore exact token geometry, scale, grid, and image from the recalled token
+        // 5. Construct token item
+        let parentItem: Item;
+        const validEntityId = summary.entityId || crypto.randomUUID();
+
+        const metadataObj: Record<string, unknown> = {
+            ...(summary.fullMetadata || {}),
+            entityId: validEntityId,
+            name: summary.name || summary.species,
+            nickname: summary.name || summary.species,
+            species: summary.species || summary.name,
+            type1: summary.type1 || 'Normal',
+            type2: summary.type2,
+            'hp-curr': summary.hp,
+            'hp-max-display': summary.maxHp,
+            'will-curr': summary.will,
+            'will-max-display': summary.maxWill,
+            rank: summary.rank || 'Starter',
+            'token-image-url': resolvedImg.url
+        };
+
+        if (summary.savedTokenItem && isImage(summary.savedTokenItem)) {
             parentItem = JSON.parse(JSON.stringify(summary.savedTokenItem)) as Item;
             parentItem.position = landingPos;
             if (parentItem.scale) {
                 parentItem.scale = { ...parentItem.scale };
             }
 
-            const existingMeta =
-                (parentItem.metadata?.[METADATA_ID] as Record<string, unknown>) || summary.fullMetadata || {};
-            const mergedMeta: Record<string, unknown> = {
-                ...existingMeta,
-                ...(summary.fullMetadata || {}),
-                entityId: summary.entityId,
-                name: summary.name,
-                nickname: summary.name,
-                species: summary.species,
-                'hp-curr': summary.hp,
-                'hp-max-display': summary.maxHp,
-                'will-curr': summary.will,
-                'will-max-display': summary.maxWill,
-                type1: summary.type1,
-                type2: summary.type2,
-                rank: summary.rank
-            };
-            if (summary.tokenImageUrl) {
-                mergedMeta['token-image-url'] = summary.tokenImageUrl;
+            // Ensure image URL is map-safe and matches resolved artwork
+            const currUrl = isImage(parentItem) ? parentItem.image?.url : undefined;
+            const needsImageUpdate =
+                !currUrl ||
+                currUrl.startsWith('local-img:') ||
+                currUrl.startsWith('file:') ||
+                currUrl.startsWith('file:///') ||
+                (resolvedImg.url &&
+                    !resolvedImg.url.includes('pokeball.svg') &&
+                    (currUrl.includes('pokeball.svg') || currUrl !== resolvedImg.url));
+
+            if (needsImageUpdate && isImage(parentItem)) {
+                parentItem.image = {
+                    url: resolvedImg.url,
+                    mime: resolvedImg.mime,
+                    width: resolvedImg.width,
+                    height: resolvedImg.height
+                };
+                if (parentItem.grid) {
+                    const maxDim = Math.max(resolvedImg.width, resolvedImg.height);
+                    parentItem.grid.dpi = maxDim;
+                    parentItem.grid.offset = {
+                        x: resolvedImg.width / 2,
+                        y: resolvedImg.height / 2
+                    };
+                }
             }
 
+            const existingMeta =
+                (parentItem.metadata?.[METADATA_ID] as Record<string, unknown>) || summary.fullMetadata || {};
             parentItem.metadata = {
                 ...parentItem.metadata,
-                [METADATA_ID]: mergedMeta
+                [METADATA_ID]: {
+                    ...existingMeta,
+                    ...metadataObj,
+                    'token-image-url': resolvedImg.url
+                }
             };
         } else {
-            const pokeUrl = summary.tokenImageUrl || getAbsolutePokeballUrl();
-            const dims = await resolveImageDimensions(pokeUrl);
-            const maxDim = Math.max(dims.width, dims.height);
+            const maxDim = Math.max(resolvedImg.width, resolvedImg.height);
             const pokeImageContent = {
-                url: pokeUrl,
-                mime: pokeUrl.endsWith('.svg') ? 'image/svg+xml' : 'image/png',
-                width: dims.width,
-                height: dims.height
+                url: resolvedImg.url,
+                mime: resolvedImg.mime,
+                width: resolvedImg.width,
+                height: resolvedImg.height
             };
             const pokeGrid = {
                 dpi: maxDim,
-                offset: { x: dims.width / 2, y: dims.height / 2 }
-            };
-
-            const metadataObj: Record<string, unknown> = {
-                ...(summary.fullMetadata || {}),
-                entityId: summary.entityId,
-                name: summary.name,
-                nickname: summary.name,
-                species: summary.species,
-                type1: summary.type1,
-                type2: summary.type2,
-                'hp-curr': summary.hp,
-                'hp-max-display': summary.maxHp,
-                'will-curr': summary.will,
-                'will-max-display': summary.maxWill,
-                rank: summary.rank,
-                'token-image-url': summary.tokenImageUrl
+                offset: { x: resolvedImg.width / 2, y: resolvedImg.height / 2 }
             };
 
             parentItem = buildImage(pokeImageContent, pokeGrid)
@@ -191,42 +225,67 @@ export async function spawnPokemonToMap(
                 .build();
         }
 
-        if (OBR.isAvailable) {
-            try {
-                const myId = await OBR.player.getId();
-                const myName = await OBR.player.getName();
-                parentItem.metadata = {
-                    ...parentItem.metadata,
-                    'pokerole-pmd-extension/claimed-by': {
-                        playerId: myId,
-                        playerName: myName,
-                        entityId: summary.entityId
-                    }
-                };
-            } catch {
-                // Ignore player lookup error
-            }
+        try {
+            const myId = await OBR.player.getId();
+            const myName = await OBR.player.getName();
+            parentItem.metadata = {
+                ...parentItem.metadata,
+                'pokerole-pmd-extension/claimed-by': {
+                    playerId: myId,
+                    playerName: myName,
+                    entityId: validEntityId
+                }
+            };
+        } catch {
+            // Ignore player lookup error
         }
 
-        // Re-home parent token + any attached items with fresh IDs & landing position
+        // 6. Re-home parent token + any attached items with fresh IDs & landing position
         const rehomedItems = rehomeTokenSubtree(parentItem, summary.attachedItems || [], {
             landingPosition: landingPos,
             ownerId
         });
 
-        const newParent = rehomedItems[0];
+        const newParent = rehomedItems[0] || parentItem;
         const newParentId = newParent.id;
         markTokenAsRecentlySpawned(newParentId);
 
-        // Add to scene in chunks
-        const chunks = chunkItems(rehomedItems, 15);
-        for (const chunk of chunks) {
-            await OBR.scene.items.addItems(chunk);
+        // 7. Add to scene with fallback in case savedTokenItem had incompatible metadata
+        try {
+            const chunks = chunkItems(rehomedItems, 15);
+            for (const chunk of chunks) {
+                await OBR.scene.items.addItems(chunk);
+            }
+        } catch (addError) {
+            console.warn('[PcModalOps] Re-homed token add failed, attempting fresh rebuild:', addError);
+            const maxDim = Math.max(resolvedImg.width, resolvedImg.height);
+            const fallbackItem = buildImage(
+                {
+                    url: resolvedImg.url,
+                    mime: resolvedImg.mime,
+                    width: resolvedImg.width,
+                    height: resolvedImg.height
+                },
+                {
+                    dpi: maxDim,
+                    offset: { x: resolvedImg.width / 2, y: resolvedImg.height / 2 }
+                }
+            )
+                .name(summary.name || summary.species)
+                .position(landingPos)
+                .layer('CHARACTER')
+                .metadata({
+                    [METADATA_ID]: metadataObj
+                })
+                .build();
+
+            await OBR.scene.items.addItems([fallbackItem]);
+            (newParent as { id: string }).id = fallbackItem.id;
         }
 
-        await OBR.player.select([newParentId]);
+        await OBR.player.select([newParent.id]);
 
-        // Render tracker HUD graphics for the newly spawned Pokémon
+        // 8. Render tracker HUD graphics for the newly spawned Pokémon
         try {
             const meta = (newParent.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
             const gData = buildGraphicsFromMeta(meta);
@@ -235,7 +294,7 @@ export async function spawnPokemonToMap(
             console.error('[PcModalOps] Failed to render token graphics for spawned Pokémon:', gErr);
         }
 
-        return { success: true, newMapTokenId: newParentId };
+        return { success: true, newMapTokenId: newParent.id };
     } catch (e) {
         console.error('[PcModalOps] Failed to spawn Pokémon to map:', e);
         return { success: false };
@@ -243,91 +302,6 @@ export async function spawnPokemonToMap(
 }
 
 export { spawnTrainerToMap } from './pcTrainerOps';
-
-export async function recallPokemonFromMap(
-    mapTokenId?: string,
-    summary?: PcPokemonSummary
-): Promise<RecallPokemonResult> {
-    if (!OBR.isAvailable || (!mapTokenId && !summary?.entityId)) {
-        return { success: true };
-    }
-
-    try {
-        const sceneItems = await OBR.scene.items.getItems();
-        let parent = mapTokenId ? sceneItems.find((i) => i.id === mapTokenId) : undefined;
-        if (!parent && summary?.entityId) {
-            parent = sceneItems.find((i) => {
-                if (i.layer !== 'CHARACTER') return false;
-                const meta = (i.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
-                const claimMeta = i.metadata?.['pokerole-pmd-extension/claimed-by'] as
-                    | { entityId?: string }
-                    | undefined;
-                return (
-                    (meta.entityId && meta.entityId === summary.entityId) ||
-                    (claimMeta?.entityId && claimMeta.entityId === summary.entityId)
-                );
-            });
-        }
-
-        if (!parent) {
-            // Token not on active scene (e.g. spawned in another scene, or removed).
-            // Do NOT wipe attachments with an empty array!
-            return { success: true };
-        }
-
-        const resolvedParentId = parent.id;
-        const attachedChildren = sceneItems.filter((i) => i.attachedTo === resolvedParentId);
-        const bundles = attachedChildren.map((child) => calculateRelativeAttachment(parent, child));
-
-        const meta = (parent.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
-        const currentHp =
-            typeof meta['hp-curr'] === 'number'
-                ? meta['hp-curr']
-                : !isNaN(Number(meta['hp-curr'])) && meta['hp-curr'] !== '' && meta['hp-curr'] !== undefined
-                  ? Number(meta['hp-curr'])
-                  : undefined;
-        const maxHp =
-            typeof meta['hp-max-display'] === 'number'
-                ? meta['hp-max-display']
-                : !isNaN(Number(meta['hp-max-display'])) &&
-                    meta['hp-max-display'] !== '' &&
-                    meta['hp-max-display'] !== undefined
-                  ? Number(meta['hp-max-display'])
-                  : undefined;
-        const currentWill =
-            typeof meta['will-curr'] === 'number'
-                ? meta['will-curr']
-                : !isNaN(Number(meta['will-curr'])) && meta['will-curr'] !== '' && meta['will-curr'] !== undefined
-                  ? Number(meta['will-curr'])
-                  : undefined;
-        const maxWill =
-            typeof meta['will-max-display'] === 'number'
-                ? meta['will-max-display']
-                : !isNaN(Number(meta['will-max-display'])) &&
-                    meta['will-max-display'] !== '' &&
-                    meta['will-max-display'] !== undefined
-                  ? Number(meta['will-max-display'])
-                  : undefined;
-
-        // Delete parent and accessories from active scene
-        const idsToDelete = [parent.id, ...attachedChildren.map((c) => c.id)];
-        await OBR.scene.items.deleteItems(idsToDelete);
-
-        return {
-            success: true,
-            attachedItems: bundles,
-            savedTokenItem: parent,
-            fullMetadata: meta,
-            currentHp,
-            maxHp,
-            currentWill,
-            maxWill
-        };
-    } catch (e) {
-        console.error('[PcModalOps] Failed to recall Pokémon from map:', e);
-        return { success: false };
-    }
-}
 
 export function buildActiveCharacterSummary(
     identity: {
@@ -422,58 +396,4 @@ export function filterTrainerPokemonSummaries(
         if (!p.trainerId) return true;
         return false;
     });
-}
-
-export async function clearTokenClaimOps(mapTokenId?: string, entityId?: string): Promise<void> {
-    if (!OBR.isAvailable || (!mapTokenId && !entityId)) return;
-    try {
-        const sceneItems = await OBR.scene.items.getItems();
-        const targets = sceneItems.filter((it) => {
-            if (mapTokenId && it.id === mapTokenId) return true;
-            if (entityId) {
-                const meta = (it.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
-                const claimMeta = it.metadata?.['pokerole-pmd-extension/claimed-by'] as
-                    | { entityId?: string }
-                    | undefined;
-                return (
-                    (meta.entityId && meta.entityId === entityId) ||
-                    (claimMeta?.entityId && claimMeta.entityId === entityId)
-                );
-            }
-            return false;
-        });
-        if (targets.length > 0) {
-            await OBR.scene.items.updateItems(
-                targets.map((t) => t.id),
-                (items) => {
-                    for (const it of items) {
-                        delete it.metadata['pokerole-pmd-extension/claimed-by'];
-                    }
-                }
-            );
-        }
-    } catch (e) {
-        console.warn('[PcModalOps] Failed to clear claimed-by on item:', e);
-    }
-}
-
-export async function unlinkPokemonFromPcOps(
-    summary: PcPokemonSummary,
-    role: 'PLAYER' | 'GM' = 'PLAYER'
-): Promise<void> {
-    if (!OBR.isAvailable) return;
-    try {
-        let tokenId = summary.mapTokenId;
-        if (!summary.isOnMap) {
-            const res = await spawnPokemonToMap(summary, undefined, role);
-            if (res.success && res.newMapTokenId) {
-                tokenId = res.newMapTokenId;
-            }
-        }
-        if (tokenId) {
-            await clearTokenClaimOps(tokenId);
-        }
-    } catch (e) {
-        console.warn('[PcModalOps] Failed to unlink Pokémon to map:', e);
-    }
 }

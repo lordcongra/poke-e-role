@@ -55,6 +55,9 @@
     border: 1.5px solid var(--primary, #3b82f6);
     flex-shrink: 0;
     background: rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+    -webkit-user-drag: none;
+    user-select: none;
 }
 
 .pc-party-dock__title {
@@ -115,6 +118,9 @@
     object-position: top center;
     border: 1px solid rgba(255, 255, 255, 0.5);
     flex-shrink: 0;
+    pointer-events: none;
+    -webkit-user-drag: none;
+    user-select: none;
 }
 
 .pc-party-dock__hint {
@@ -163,6 +169,9 @@
     opacity: 0.4;
     filter: grayscale(1);
     transition: opacity 0.15s;
+    pointer-events: none;
+    -webkit-user-drag: none;
+    user-select: none;
 }
 
 .pc-party-dock__pmd-empty-icon {
@@ -241,6 +250,9 @@
     height: 100%;
     object-fit: cover;
     object-position: top center;
+    pointer-events: none;
+    -webkit-user-drag: none;
+    user-select: none;
 }
 
 .pc-trainer-card__info {

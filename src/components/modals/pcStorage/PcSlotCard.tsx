@@ -65,6 +65,7 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
                     src={resolvedAvatar}
                     alt={summary.name || summary.species}
                     className="pc-slot-card__avatar"
+                    draggable={false}
                     onError={(e) => {
                         e.currentTarget.src = getAbsolutePokeballUrl();
                     }}

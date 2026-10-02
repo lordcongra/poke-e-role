@@ -44,36 +44,23 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
     initPcStorage: async () => {
         try {
             const data = await loadPcStorage();
-            if (OBR.isAvailable && OBR.room?.id) {
-                const roomId = OBR.room.id;
-                // If only 'default' exists, migrate it to the room campaign so there are no duplicate default campaigns
-                if (data.campaigns['default'] && Object.keys(data.campaigns).length === 1) {
-                    const existingDefault = data.campaigns['default'];
-                    existingDefault.id = roomId;
-                    if (existingDefault.name === 'Main Adventure') {
-                        existingDefault.name = 'Campaign Room';
-                    }
-                    data.campaigns[roomId] = existingDefault;
-                    delete data.campaigns['default'];
-                } else if (!data.campaigns[roomId]) {
-                    // Check if 'default' is completely empty: if so, purge it
-                    const def = data.campaigns['default'];
-                    const isDefEmpty =
-                        def &&
-                        Object.values(def.trainers || {}).every((t) => (t.party || []).every((p) => !p)) &&
-                        (def.boxes || []).every((b) => (b.slots || []).every((s) => !s));
-                    if (isDefEmpty) {
-                        delete data.campaigns['default'];
-                    }
-                    if (!data.campaigns[roomId]) {
-                        data.campaigns[roomId] = createDefaultCampaign(roomId, 'Campaign Room');
-                    }
-                }
-                data.activeCampaignId = roomId;
-                await savePcStorage(data);
+
+            // Ensure valid campaigns structure
+            if (!data.campaigns || Object.keys(data.campaigns).length === 0) {
+                const def = createDefaultCampaign('default', 'Main Adventure');
+                data.campaigns = { default: def };
+                data.activeCampaignId = 'default';
+            } else if (!data.campaigns[data.activeCampaignId]) {
+                // If active campaign ID is invalid or missing, fallback to the first existing campaign
+                data.activeCampaignId = Object.keys(data.campaigns)[0];
             }
 
             set({ pcData: data });
+
+            // Notify Standalone Sidebar that full PC storage is loaded so belt auto-heal can run
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new Event('pkr-local-data-changed'));
+            }
         } catch (e) {
             console.error('[PcSlice] Failed to initialize PC storage:', e);
         }

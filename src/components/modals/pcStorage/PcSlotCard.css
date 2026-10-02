@@ -62,12 +62,17 @@
     border-radius: 6px;
     overflow: hidden;
     background: rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+    user-select: none;
 }
 
 .pc-slot-card__avatar {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    pointer-events: none;
+    -webkit-user-drag: none;
+    user-select: none;
 }
 
 .pc-slot-card__shiny-badge {
@@ -160,23 +165,23 @@
 
 @keyframes pcBoxMarqueeScroll {
     0%,
-    20% {
+    15% {
         transform: translateX(0);
     }
-    80%,
+    85%,
     100% {
-        transform: translateX(calc(-100% + 105px));
+        transform: translateX(calc(-100% + 55px));
     }
 }
 
 @keyframes pcPartyMarqueeScroll {
     0%,
-    20% {
+    15% {
         transform: translateX(0);
     }
-    80%,
+    85%,
     100% {
-        transform: translateX(calc(-100% + 140px));
+        transform: translateX(calc(-100% + 70px));
     }
 }
 

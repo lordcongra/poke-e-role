@@ -42,6 +42,7 @@ export const PcTrainerCard: React.FC<PcTrainerCardProps> = ({
                     src={resolvedAvatar}
                     alt={summary.name}
                     className="pc-trainer-card__avatar"
+                    draggable={false}
                     onError={(e) => {
                         e.currentTarget.src = getAbsolutePokeballUrl();
                     }}

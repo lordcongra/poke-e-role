@@ -94,6 +94,7 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                             src={resolvedTrainerAvatar}
                             alt={trainerName || 'Trainer'}
                             className="pc-party-dock__trainer-avatar"
+                            draggable={false}
                             onError={(e) => {
                                 e.currentTarget.style.display = 'none';
                             }}
@@ -207,6 +208,7 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                                             src={resolvedActiveAvatar}
                                             alt="Active Trainer"
                                             className="pc-party-dock__link-avatar"
+                                            draggable={false}
                                             onError={(e) => {
                                                 e.currentTarget.style.display = 'none';
                                             }}
@@ -284,6 +286,7 @@ export const PcPartyDock: React.FC<PcPartyDockProps> = ({
                                     src={getAbsolutePokeballUrl()}
                                     alt="Empty Slot"
                                     className="pc-party-dock__empty-icon"
+                                    draggable={false}
                                 />
                             )}
                             <div className="pc-party-dock__empty-text">

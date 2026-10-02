@@ -3,6 +3,8 @@ import OBR from '@owlbear-rodeo/sdk';
 import type { PcStorageData, CampaignProfile } from '../../../types/pcStorageTypes';
 import { importPcBackupJson } from '../../../utils/pc/pcJsonBackupOps';
 import { scanSceneBackupTokens } from '../../../utils/pc/pcBackupSceneSync';
+import { restoreTokensIntoPcStorage } from '../../../utils/pc/pcCloudRestoreOps';
+import { useCharacterStore } from '../../../store/useCharacterStore';
 import { CloudDownload, FileJson, Upload, CheckCircle2, AlertCircle, X, Layers, Sparkles } from 'lucide-react';
 import './PcImportModal.css';
 
@@ -15,7 +17,7 @@ interface PcImportModalProps {
     boxTheme?: string;
     onImportCloudScene: () => Promise<void>;
     onImportJsonSuccess: (nextData: PcStorageData, importedPokemonCount: number, importedCampaignCount: number) => void;
-    onScanSceneSuccess?: (importedCount: number) => void;
+    onScanSceneSuccess?: (nextData: PcStorageData, importedCount: number, beltCount: number, boxCount: number) => void;
 }
 
 export const PcImportModal: React.FC<PcImportModalProps> = ({
@@ -69,13 +71,25 @@ export const PcImportModal: React.FC<PcImportModalProps> = ({
                 return;
             }
 
-            if (onScanSceneSuccess) {
-                onScanSceneSuccess(foundTokens.length);
+            const currentData = useCharacterStore.getState().pcData;
+            const res = restoreTokensIntoPcStorage(foundTokens, currentData);
+
+            if (res.success && res.nextData) {
+                if (onScanSceneSuccess) {
+                    onScanSceneSuccess(res.nextData, res.totalImported, res.partyCount, res.boxCount);
+                }
+                setResultMessage({
+                    type: 'success',
+                    text: `Successfully synced ${res.totalImported} Pokémon (${res.partyCount} Belt, ${res.boxCount} Box)${
+                        res.trainerRestored ? ' & Trainer' : ''
+                    } from the open scene!`
+                });
+            } else {
+                setResultMessage({
+                    type: 'error',
+                    text: res.error || 'Failed to restore tokens from the open scene.'
+                });
             }
-            setResultMessage({
-                type: 'success',
-                text: `Successfully synced ${foundTokens.length} Pokémon token(s) from the open scene!`
-            });
         } catch (e) {
             setResultMessage({
                 type: 'error',

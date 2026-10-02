@@ -147,6 +147,9 @@
     border-radius: 6px;
     object-fit: cover;
     background: rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+    -webkit-user-drag: none;
+    user-select: none;
 }
 
 .pc-deposit-card__info {

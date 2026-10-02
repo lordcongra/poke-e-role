@@ -341,10 +341,12 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                             }}
                             onDragStart={(e, index) => {
                                 try {
+                                    e.dataTransfer.effectAllowed = 'move';
                                     e.dataTransfer.setData(
                                         'application/json',
                                         JSON.stringify({ type: 'party', index })
                                     );
+                                    e.dataTransfer.clearData('text/uri-list');
                                 } catch {}
                                 setDragSource({ type: 'party', index });
                             }}
@@ -386,7 +388,9 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                             }}
                             onDragStart={(e, index) => {
                                 try {
+                                    e.dataTransfer.effectAllowed = 'move';
                                     e.dataTransfer.setData('application/json', JSON.stringify({ type: 'box', index }));
+                                    e.dataTransfer.clearData('text/uri-list');
                                 } catch {}
                                 setDragSource({ type: 'box', index });
                             }}

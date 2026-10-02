@@ -185,11 +185,13 @@ export function SidebarTreeNode(props: SidebarTreeNodeProps) {
                                         (item.meta?.entityId
                                             ? props.partyMemberMap?.[item.meta.entityId as string]
                                             : undefined) ||
-                                        props.partyMemberMap?.[`__name_${item.name.trim().toLowerCase()}`] ||
-                                        (item.meta?.species
-                                            ? props.partyMemberMap?.[
-                                                  `__species_${String(item.meta.species).trim().toLowerCase()}`
-                                              ]
+                                        (isBeltFolder
+                                            ? props.partyMemberMap?.[`__name_${item.name.trim().toLowerCase()}`] ||
+                                              (item.meta?.species
+                                                  ? props.partyMemberMap?.[
+                                                        `__species_${String(item.meta.species).trim().toLowerCase()}`
+                                                    ]
+                                                  : undefined)
                                             : undefined);
                                     if (!badge) return null;
                                     return (

@@ -52,5 +52,13 @@ export function SidebarAvatar({ meta }: SidebarAvatarProps) {
         );
     }
 
-    return <img src={resolvedImage} alt="Character Avatar" className="sidebar__item-avatar" loading="lazy" />;
+    return (
+        <img
+            src={resolvedImage}
+            alt="Character Avatar"
+            className="sidebar__item-avatar"
+            draggable={false}
+            loading="lazy"
+        />
+    );
 }
