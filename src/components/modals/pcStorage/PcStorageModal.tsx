@@ -8,13 +8,23 @@ import { PcSlotContextMenu } from './PcSlotContextMenu';
 import { PcBackupWarningBanner } from './PcBackupWarningBanner';
 import { PcStorageSubModals } from './PcStorageSubModals';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
-import { buildActiveCharacterSummary, filterTrainerPokemonSummaries } from '../../../utils/pc/pcModalOps';
+import {
+    buildActiveCharacterSummary,
+    filterTrainerPokemonSummaries,
+    findOtherLinkedTrainer
+} from '../../../utils/pc/pcModalOps';
 import { buildTrainerSummary } from '../../../utils/pc/pcTrainerOps';
-import { savePcStorage } from '../../../utils/pc/pcStorageAdapter';
+import { savePcStorage, sanitizePcData } from '../../../utils/pc/pcStorageAdapter';
 import { broadcastPlayerPc, requestPlayerPcSync } from '../../../hooks/owlbearSync/setupOwlbearPcSync';
+import {
+    refreshSummariesFromLocalStorage,
+    buildSheetAvailableSummaries,
+    isEntityLockedByGm
+} from '../../../utils/pc/pcCandidateMatching';
 import { flattenStateToMetadata } from '../../../utils/sync/stateMapper';
 import { runOrganizeFoldersAction } from '../../../utils/pc/pcSidebarSync';
-import { refreshSummariesFromLocalStorage, buildSheetAvailableSummaries } from '../../../utils/pc/pcCandidateMatching';
+import { resolveEffectiveActiveTrainer, setCachedObrPlayerId } from '../../../utils/pc/pcCampaignTrainerOps';
+import { handlePcDragStart, handlePcDrop, type PcDragItem } from '../../../utils/pc/pcDragDropUtils';
 import { usePcModalHandlers } from './usePcModalHandlers';
 import './PcStorageModal.css';
 
@@ -59,11 +69,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         applyReviewDiffs
     } = useCharacterStore.getState();
 
-    // Modal & Popover state
-    const [dragSource, setDragSource] = useState<{
-        type: 'party' | 'box';
-        index: number;
-    } | null>(null);
+    const [dragSource, setDragSource] = useState<PcDragItem | null>(null);
 
     const [contextMenu, setContextMenu] = useState<{
         x: number;
@@ -81,6 +87,30 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     } | null>(null);
     const [sheetViewEntityId, setSheetViewEntityId] = useState<string | null>(null);
     const [releaseConfirmPokemon, setReleaseConfirmPokemon] = useState<PcPokemonSummary | null>(null);
+    const [myPlayerId, setMyPlayerId] = useState<string | undefined>();
+
+    useEffect(() => {
+        document.body.classList.add('pc-modal-open');
+        document.documentElement.classList.add('pc-modal-open');
+        const prevBodyOverflow = document.body.style.overflow;
+        const prevHtmlOverflow = document.documentElement.style.overflow;
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+        if (OBR.isAvailable)
+            OBR.player
+                .getId()
+                .then((id) => {
+                    setMyPlayerId(id);
+                    setCachedObrPlayerId(id);
+                })
+                .catch(() => {});
+        return () => {
+            document.body.classList.remove('pc-modal-open');
+            document.documentElement.classList.remove('pc-modal-open');
+            document.body.style.overflow = prevBodyOverflow;
+            document.documentElement.style.overflow = prevHtmlOverflow;
+        };
+    }, []);
 
     const handleModalClose = () => {
         if (OBR.isAvailable && role !== 'GM') {
@@ -94,7 +124,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     const isPmdMode = campaign?.activeTrainerId === '__none__';
     const trainer = isPmdMode
         ? undefined
-        : campaign?.trainers[campaign.activeTrainerId] || Object.values(campaign?.trainers || {})[0];
+        : resolveEffectiveActiveTrainer(campaign, myPlayerId) || Object.values(campaign?.trainers || {})[0];
     const partySlots = trainer ? trainer.party : campaign?.teamParty || Array(6).fill(null);
     const trainerBoxes = trainer?.boxes && trainer.boxes.length > 0 ? trainer.boxes : campaign?.boxes || [];
     const currentBox = trainerBoxes[activeBoxIndex] || trainerBoxes[0];
@@ -110,22 +140,29 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     );
     const trainerPokemonSummaries = filterTrainerPokemonSummaries(pcData.pokemonSummaries, trainer, campaign);
 
-    const activeTrainerName = (identity.nickname || identity.species || '').trim();
-    const isTrainerMode = identity.mode === 'Trainer' || identity.mode === 'Trainer (Special)';
-    const otherLinkedTrainer =
-        isTrainerMode && trainer
-            ? Object.values(campaign?.trainers || {}).find((t) => {
-                  if (t.id === trainer.id) return false;
-                  if (activeTokenId && (t.mapTokenId === activeTokenId || t.savedTokenItem?.id === activeTokenId))
-                      return true;
-                  const meta = identity as Record<string, unknown>;
-                  if (meta?.trainerId && meta.trainerId === t.id) return true;
-                  if (t.isLinked && activeTrainerName && t.name.toLowerCase() === activeTrainerName.toLowerCase())
-                      return true;
-                  return false;
-              })
-            : undefined;
-    const canLinkActiveTrainer = isTrainerMode && !otherLinkedTrainer;
+    const [isActiveTokenLocked, setIsActiveTokenLocked] = useState(false);
+    useEffect(() => {
+        if (!OBR.isAvailable || role === 'GM') {
+            setIsActiveTokenLocked(false);
+            return;
+        }
+        if (activeTokenId) {
+            OBR.scene.items
+                .getItems([activeTokenId])
+                .then((items) => {
+                    setIsActiveTokenLocked(items[0] ? isEntityLockedByGm(items[0]) : false);
+                })
+                .catch(() => setIsActiveTokenLocked(false));
+        } else {
+            setIsActiveTokenLocked(false);
+        }
+    }, [activeTokenId, role]);
+
+    const otherLinkedTrainer = findOtherLinkedTrainer(campaign, trainer?.id, activeTokenId, identity);
+    const canLinkActiveTrainer =
+        (identity.mode === 'Trainer' || identity.mode === 'Trainer (Special)') &&
+        !otherLinkedTrainer &&
+        (role === 'GM' || !isActiveTokenLocked);
 
     const {
         isTrainerLinked,
@@ -171,49 +208,53 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         setBoxSlot
     });
 
-    const handleOpenCharacterSheet = (entityId: string) => {
+    const handleOpenCharacterSheet = async (entityId: string) => {
+        const currentRole = OBR.isAvailable ? await OBR.player.getRole().catch(() => role) : role;
         const sum = pcData.pokemonSummaries[entityId] || (trainer?.id === entityId ? trainerSummary : null);
-        if (
-            role !== 'GM' &&
-            (sum?.savedTokenItem?.locked || (sum?.fullMetadata as Record<string, unknown>)?.locked === true)
-        ) {
+        let isLocked = isEntityLockedByGm(sum);
+        if (!isLocked && currentRole !== 'GM' && OBR.isAvailable && sum?.mapTokenId) {
+            try {
+                const sceneItems = await OBR.scene.items.getItems([sum.mapTokenId]);
+                if (sceneItems[0] && isEntityLockedByGm(sceneItems[0])) isLocked = true;
+            } catch {}
+        }
+        if (currentRole !== 'GM' && isLocked) {
             if (OBR.isAvailable) {
-                OBR.notification.show(
-                    'This character token is locked by the GM. Ask your GM to unlock it to inspect or edit.',
-                    'WARNING'
-                );
+                OBR.notification.show('This character token is locked by the GM. Ask your GM to unlock it.', 'WARNING');
             }
             return;
         }
         setSheetViewEntityId(entityId);
     };
 
-    const trainerSummary: PcPokemonSummary | null = useMemo(() => {
-        if (!trainer) return null;
-        return buildTrainerSummary(trainer);
-    }, [trainer]);
-
+    const trainerSummary: PcPokemonSummary | null = useMemo(
+        () => (trainer ? buildTrainerSummary(trainer) : null),
+        [trainer]
+    );
     const rawActiveSheetSummary =
         (sheetViewEntityId && pcData.pokemonSummaries[sheetViewEntityId]) ||
         (sheetViewEntityId === trainer?.id ? trainerSummary : null);
-    const isLockedActiveSheet = Boolean(
-        rawActiveSheetSummary?.savedTokenItem?.locked ||
-        (rawActiveSheetSummary?.fullMetadata as Record<string, unknown>)?.locked === true
-    );
-    const activeSheetSummary = role !== 'GM' && isLockedActiveSheet ? null : rawActiveSheetSummary;
+    const activeSheetSummary =
+        role !== 'GM' && isEntityLockedByGm(rawActiveSheetSummary) ? null : rawActiveSheetSummary;
 
     const sheetAvailableSummaries = useMemo(
-        () => buildSheetAvailableSummaries(trainer, trainerSummary, pcData.pokemonSummaries, partySlots, trainerBoxes),
-        [trainer, trainerSummary, pcData.pokemonSummaries, partySlots, trainerBoxes]
+        () =>
+            buildSheetAvailableSummaries(
+                trainer,
+                trainerSummary,
+                pcData.pokemonSummaries,
+                partySlots,
+                trainerBoxes,
+                role || 'PLAYER'
+            ),
+        [trainer, trainerSummary, pcData.pokemonSummaries, partySlots, trainerBoxes, role]
     );
 
     const handleSlotClick = useCallback(
         (target: { type: 'party' | 'box'; index: number }) => {
-            if (selectedPcSlot?.type === target.type && selectedPcSlot?.index === target.index) {
-                setSelectedPcSlot(null);
-            } else {
-                setSelectedPcSlot(target);
-            }
+            setSelectedPcSlot(
+                selectedPcSlot?.type === target.type && selectedPcSlot?.index === target.index ? null : target
+            );
         },
         [selectedPcSlot, setSelectedPcSlot]
     );
@@ -261,9 +302,10 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     });
 
     useEffect(() => {
-        const { updated, hasChanges } = refreshSummariesFromLocalStorage(pcData.pokemonSummaries || {});
-        if (hasChanges) {
-            const nextData = { ...pcData, pokemonSummaries: updated };
+        const sanitized = sanitizePcData(pcData);
+        const { updated, hasChanges } = refreshSummariesFromLocalStorage(sanitized.pokemonSummaries || {});
+        if (hasChanges || JSON.stringify(sanitized) !== JSON.stringify(pcData)) {
+            const nextData = { ...sanitized, pokemonSummaries: updated };
             useCharacterStore.setState({ pcData: nextData });
             savePcStorage(nextData);
         }
@@ -273,7 +315,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         runOrganizeFoldersAction(trainer, partySlots, trainerBoxes);
     }, [trainer, partySlots, trainerBoxes]);
 
-    if (!campaign || (!trainer && !isPmdMode) || !currentBox) {
+    if (!campaign || !currentBox) {
         return null;
     }
 
@@ -344,28 +386,17 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                             onSendOut={handleSendOut}
                             onRecall={handleRecall}
                             onDropOnSlot={(e, targetIndex) => {
-                                let source = dragSource;
-                                try {
-                                    const raw = e.dataTransfer.getData('application/json');
-                                    if (raw) source = JSON.parse(raw);
-                                } catch {}
-                                if (source) {
-                                    swapPcSlots(
-                                        { ...source, boxIndex: activeBoxIndex },
-                                        { type: 'party', index: targetIndex }
-                                    );
-                                    setDragSource(null);
-                                }
+                                handlePcDrop(
+                                    e,
+                                    { type: 'party', index: targetIndex },
+                                    activeBoxIndex,
+                                    dragSource,
+                                    swapPcSlots
+                                );
+                                setDragSource(null);
                             }}
                             onDragStart={(e, index) => {
-                                try {
-                                    e.dataTransfer.effectAllowed = 'move';
-                                    e.dataTransfer.setData(
-                                        'application/json',
-                                        JSON.stringify({ type: 'party', index })
-                                    );
-                                    e.dataTransfer.clearData('text/uri-list');
-                                } catch {}
+                                handlePcDragStart(e, { type: 'party', index });
                                 setDragSource({ type: 'party', index });
                             }}
                             onDragEnd={() => setDragSource(null)}
@@ -391,25 +422,17 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                             onSendOut={handleSendOut}
                             onRecall={handleRecall}
                             onDropOnSlot={(e, targetIndex) => {
-                                let source = dragSource;
-                                try {
-                                    const raw = e.dataTransfer.getData('application/json');
-                                    if (raw) source = JSON.parse(raw);
-                                } catch {}
-                                if (source) {
-                                    swapPcSlots(
-                                        { ...source, boxIndex: activeBoxIndex },
-                                        { type: 'box', index: targetIndex, boxIndex: activeBoxIndex }
-                                    );
-                                    setDragSource(null);
-                                }
+                                handlePcDrop(
+                                    e,
+                                    { type: 'box', index: targetIndex },
+                                    activeBoxIndex,
+                                    dragSource,
+                                    swapPcSlots
+                                );
+                                setDragSource(null);
                             }}
                             onDragStart={(e, index) => {
-                                try {
-                                    e.dataTransfer.effectAllowed = 'move';
-                                    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'box', index }));
-                                    e.dataTransfer.clearData('text/uri-list');
-                                } catch {}
+                                handlePcDragStart(e, { type: 'box', index });
                                 setDragSource({ type: 'box', index });
                             }}
                             onDragEnd={() => setDragSource(null)}
@@ -422,6 +445,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                             y={contextMenu.y}
                             isPartySlot={contextMenu.isPartySlot}
                             isOnMap={!!contextSummary.isOnMap}
+                            isLocked={role !== 'GM' && isEntityLockedByGm(contextSummary)}
                             pokemonName={contextSummary.name || contextSummary.species}
                             onClose={() => setContextMenu(null)}
                             onOpenSheet={() => handleOpenCharacterSheet(contextMenu.entityId)}

@@ -3,7 +3,11 @@ import OBR, { type Item } from '@owlbear-rodeo/sdk';
 import type { PcPokemonSummary, TrainerRoster, AttachmentBundle, CampaignProfile } from '../../../types/pcStorageTypes';
 import { METADATA_ID } from '../../../utils/sync/obr';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
-import { resolveSceneCandidateMatch, scanStandaloneCandidates } from '../../../utils/pc/pcCandidateMatching';
+import {
+    resolveSceneCandidateMatch,
+    scanStandaloneCandidates,
+    isEntityLockedByGm
+} from '../../../utils/pc/pcCandidateMatching';
 import { calculateRelativeAttachment } from '../../../utils/pc/rehomeEngine';
 import { GRAPHICS_META_ID } from '../../../utils/graphics/graphicsManager';
 import { useCharacterStore } from '../../../store/useCharacterStore';
@@ -48,12 +52,8 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
     onOpenGenerator,
     onClose
 }) => {
-    const role = useCharacterStore((state) => state.role);
-    const isGm = role === 'GM';
-    const partyEntityIds = new Set(partySlots.filter(Boolean) as string[]);
-
-    const [sceneCandidates, setSceneCandidates] = useState<SceneCandidate[]>([]);
-    const [isLoadingScene, setIsLoadingScene] = useState(false);
+    const storeRole = useCharacterStore((state) => state.role);
+    const [currentRole, setCurrentRole] = useState<'PLAYER' | 'GM'>(storeRole || 'PLAYER');
     const [currentMyPlayerId, setCurrentMyPlayerId] = useState<string | undefined>(undefined);
 
     useEffect(() => {
@@ -62,8 +62,92 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                 .getId()
                 .then(setCurrentMyPlayerId)
                 .catch(() => {});
+            OBR.player
+                .getRole()
+                .then((r) => setCurrentRole(r || 'PLAYER'))
+                .catch(() => {});
         }
     }, []);
+
+    const isGm = currentRole === 'GM';
+    const partyEntityIds = new Set(partySlots.filter(Boolean) as string[]);
+
+    const [sceneCandidates, setSceneCandidates] = useState<SceneCandidate[]>([]);
+    const [isLoadingScene, setIsLoadingScene] = useState(false);
+
+    const scanScene = async (showLoading = false) => {
+        if (showLoading) setIsLoadingScene(true);
+        try {
+            let items: Item[] = [];
+            if (isGm) {
+                items = await OBR.scene.items.getItems();
+            } else {
+                const selection = await OBR.player.getSelection();
+                if (selection && selection.length > 0) {
+                    items = await OBR.scene.items.getItems(selection);
+                }
+            }
+
+            const myPlayerId = await OBR.player.getId().catch(() => currentMyPlayerId);
+            const found: SceneCandidate[] = [];
+
+            for (const item of items) {
+                const meta = (item.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
+                const mode = (meta.mode as string) || '';
+                if (mode === 'Trainer' || mode === 'Trainer (Special)') continue;
+
+                const species = (meta.species as string) || (meta.name as string);
+                if (species) {
+                    const imgUrl =
+                        (meta['token-image-url'] as string) ||
+                        ((item as { image?: { url?: string } }).image?.url ?? getAbsolutePokeballUrl());
+                    const hpCurr = Number(meta['hp-curr']) || (typeof meta.hp === 'number' ? meta.hp : 10);
+                    const hpMax = Number(meta['hp-max-display']) || (typeof meta.hpMax === 'number' ? meta.hpMax : 10);
+                    const willCurr = Number(meta['will-curr']) || (typeof meta.will === 'number' ? meta.will : 5);
+                    const willMax =
+                        Number(meta['will-max-display']) || (typeof meta.willMax === 'number' ? meta.willMax : 5);
+
+                    const { matchedEntityId, isInParty, isInBoxes, claimedBy } = resolveSceneCandidateMatch(
+                        item,
+                        pokemonSummaries,
+                        partySlots,
+                        myPlayerId,
+                        activeTrainerId,
+                        trainerName,
+                        trainers,
+                        campaign,
+                        allCampaigns,
+                        currentRole
+                    );
+
+                    found.push({
+                        id: item.id,
+                        name: (meta.name as string) || (meta.nickname as string) || item.name || species,
+                        species,
+                        imageUrl: imgUrl,
+                        hp: hpCurr,
+                        maxHp: hpMax,
+                        will: willCurr,
+                        maxWill: willMax,
+                        type1: (meta.type1 as string) || 'Normal',
+                        type2: meta.type2 as string | undefined,
+                        rank: (meta.rank as string) || 'Starter',
+                        item,
+                        metadata: meta,
+                        claimedBy: !isGm && item.locked ? 'Locked by GM (Ask GM to unlock)' : claimedBy,
+                        isInParty,
+                        isInBoxes,
+                        matchedEntityId
+                    });
+                }
+            }
+            setSceneCandidates(found);
+        } catch (e) {
+            console.error('[PcDepositDrawer] Error scanning scene:', e);
+        } finally {
+            if (showLoading) setIsLoadingScene(false);
+        }
+    };
 
     useEffect(() => {
         if (!OBR.isAvailable) {
@@ -74,91 +158,32 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
             return;
         }
 
-        const scanScene = async () => {
-            setIsLoadingScene(true);
-            try {
-                let items: Item[] = [];
-                if (isGm) {
-                    items = await OBR.scene.items.getItems();
-                } else {
-                    const selection = await OBR.player.getSelection();
-                    if (selection && selection.length > 0) {
-                        items = await OBR.scene.items.getItems(selection);
-                    }
-                }
+        scanScene(true);
 
-                const myPlayerId = await OBR.player.getId();
-                const found: SceneCandidate[] = [];
+        let debouncedTimer: ReturnType<typeof setTimeout> | null = null;
+        const unsub = OBR.scene.items.onChange(() => {
+            if (debouncedTimer) clearTimeout(debouncedTimer);
+            debouncedTimer = setTimeout(() => {
+                scanScene(false);
+            }, 300);
+        });
 
-                for (const item of items) {
-                    const claimMeta = item.metadata?.['pokerole-pmd-extension/claimed-by'] as
-                        | { playerId?: string; playerName?: string; trainerName?: string; entityId?: string }
-                        | undefined;
-                    if (!isGm && claimMeta?.playerId && myPlayerId && claimMeta.playerId !== myPlayerId) {
-                        continue;
-                    }
-                    const meta = (item.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
-                    const mode = (meta.mode as string) || '';
-                    if (mode === 'Trainer' || mode === 'Trainer (Special)') continue;
-
-                    const species = (meta.species as string) || (meta.name as string);
-                    if (species) {
-                        const imgUrl =
-                            (meta['token-image-url'] as string) ||
-                            ((item as { image?: { url?: string } }).image?.url ?? getAbsolutePokeballUrl());
-                        const hpCurr = Number(meta['hp-curr']) || (typeof meta.hp === 'number' ? meta.hp : 10);
-                        const hpMax =
-                            Number(meta['hp-max-display']) || (typeof meta.hpMax === 'number' ? meta.hpMax : 10);
-                        const willCurr = Number(meta['will-curr']) || (typeof meta.will === 'number' ? meta.will : 5);
-                        const willMax =
-                            Number(meta['will-max-display']) || (typeof meta.willMax === 'number' ? meta.willMax : 5);
-
-                        const { matchedEntityId, isInParty, isInBoxes, claimedBy } = resolveSceneCandidateMatch(
-                            item,
-                            pokemonSummaries,
-                            partySlots,
-                            myPlayerId,
-                            activeTrainerId,
-                            trainerName,
-                            trainers,
-                            campaign,
-                            allCampaigns,
-                            role
-                        );
-
-                        found.push({
-                            id: item.id,
-                            name: (meta.name as string) || (meta.nickname as string) || item.name || species,
-                            species,
-                            imageUrl: imgUrl,
-                            hp: hpCurr,
-                            maxHp: hpMax,
-                            will: willCurr,
-                            maxWill: willMax,
-                            type1: (meta.type1 as string) || 'Normal',
-                            type2: meta.type2 as string | undefined,
-                            rank: (meta.rank as string) || 'Starter',
-                            item,
-                            metadata: meta,
-                            claimedBy,
-                            isInParty,
-                            isInBoxes,
-                            matchedEntityId
-                        });
-                    }
-                }
-                setSceneCandidates(found);
-            } catch (e) {
-                console.error('[PcDepositDrawer] Error scanning scene:', e);
-            } finally {
-                setIsLoadingScene(false);
-            }
+        return () => {
+            if (debouncedTimer) clearTimeout(debouncedTimer);
+            unsub();
         };
-
-        scanScene();
     }, [isGm, partySlots, pokemonSummaries, trainerName, activeTrainerId, trainers, campaign, allCampaigns]);
 
     const handleSelectCandidate = async (cand: SceneCandidate) => {
+        if (!isGm && isEntityLockedByGm(cand.item, cand.metadata)) {
+            if (OBR.isAvailable) {
+                OBR.notification.show(
+                    'This character is locked by the GM. Ask your GM to unlock it to add it to your party.',
+                    'WARNING'
+                );
+            }
+            return;
+        }
         if (cand.claimedBy) return;
         if (targetSlot?.type === 'party' && cand.isInParty) return;
         if (targetSlot?.type === 'box' && cand.isInBoxes) return;
@@ -277,6 +302,26 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
 
     const availableStored = trainerPokemonSummaries.filter((p) => !partyEntityIds.has(p.entityId));
 
+    const [liveActiveTokenLocked, setLiveActiveTokenLocked] = useState(false);
+    useEffect(() => {
+        if (!isGm && OBR.isAvailable && currentActiveSummary?.mapTokenId) {
+            OBR.scene.items
+                .getItems([currentActiveSummary.mapTokenId])
+                .then((items) => {
+                    if (items[0]?.locked) setLiveActiveTokenLocked(true);
+                })
+                .catch(() => {});
+        }
+    }, [isGm, currentActiveSummary?.mapTokenId]);
+
+    const activeSceneItemLocked =
+        !isGm && currentActiveSummary?.mapTokenId
+            ? sceneCandidates.find((c) => c.id === currentActiveSummary.mapTokenId)?.item?.locked
+            : false;
+
+    const isCurrentActiveLocked =
+        !isGm && Boolean(activeSceneItemLocked || liveActiveTokenLocked || isEntityLockedByGm(currentActiveSummary));
+
     const activeOwnership = currentActiveSummary
         ? resolvePokemonOwnership(
               currentActiveSummary.entityId,
@@ -288,9 +333,13 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                   | undefined,
               currentActiveSummary,
               currentMyPlayerId,
-              role
+              currentRole
           )
         : null;
+
+    const effectiveActiveClaimedBy = isCurrentActiveLocked
+        ? 'Locked by GM (Ask GM to unlock)'
+        : activeOwnership?.claimedBy;
 
     return (
         <div className="modal-backdrop pc-deposit-modal-backdrop" style={modalThemeStyle} onClick={onClose}>
@@ -335,9 +384,10 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                                 }
                                 isInParty={activeOwnership?.isInParty}
                                 isInBoxes={activeOwnership?.isInBoxes}
-                                claimedBy={activeOwnership?.claimedBy}
+                                claimedBy={effectiveActiveClaimedBy}
                                 partyButtonText={partyButtonText}
                                 onSelect={() => {
+                                    if (effectiveActiveClaimedBy) return;
                                     onDepositSummary(currentActiveSummary);
                                     onClose();
                                 }}
@@ -360,6 +410,7 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                                         pokemon={p}
                                         targetSlotType={targetSlot?.type}
                                         partyButtonText={partyButtonText}
+                                        isGm={isGm}
                                         onSelect={() => {
                                             onDepositSummary(p);
                                             onClose();

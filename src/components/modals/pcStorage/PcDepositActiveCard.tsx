@@ -3,6 +3,7 @@ import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
 import { useResolvedImageUrl } from '../../../utils/graphics/useResolvedImageUrl';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
 import { Check, Lock } from 'lucide-react';
+import { isEntityLockedByGm } from '../../../utils/pc/pcCandidateMatching';
 
 interface PcDepositActiveCardProps {
     summary: PcPokemonSummary;
@@ -28,10 +29,12 @@ export const PcDepositActiveCard: React.FC<PcDepositActiveCardProps> = ({
     const resolvedAvatar = useResolvedImageUrl(summary.tokenImageUrl, getAbsolutePokeballUrl());
     const isPartySlot = targetSlotType === 'party';
     const isInParty = propIsInParty ?? isAlreadyOnBelt;
-    const isLocked = Boolean(claimedBy?.toLowerCase().includes('locked'));
+    const isLocked = Boolean(claimedBy?.toLowerCase().includes('locked') || isEntityLockedByGm(summary));
 
     return (
-        <div className={`pc-deposit-card pc-deposit-card--active ${claimedBy ? 'pc-deposit-card--claimed' : ''}`}>
+        <div
+            className={`pc-deposit-card pc-deposit-card--active ${claimedBy || isLocked ? 'pc-deposit-card--claimed' : ''}`}
+        >
             <img
                 src={resolvedAvatar}
                 alt={summary.name}
@@ -48,15 +51,15 @@ export const PcDepositActiveCard: React.FC<PcDepositActiveCardProps> = ({
                 <span className="text-subtext">
                     {summary.species} {isLocked ? '• Locked by GM' : `• HP ${summary.hp}/${summary.maxHp}`}
                 </span>
-                {claimedBy ? (
+                {isLocked ? (
                     <span
                         className="pc-deposit-card__claimed-tag text-subtext"
-                        title={
-                            isLocked
-                                ? 'This sheet is locked by the GM. Ask your GM to unlock it to add it to your party.'
-                                : `Claimed by ${claimedBy}`
-                        }
+                        title="This sheet is locked by the GM. Ask your GM to unlock it to add it to your party."
                     >
+                        <Lock size={10} /> Locked by GM
+                    </span>
+                ) : claimedBy ? (
+                    <span className="pc-deposit-card__claimed-tag text-subtext" title={`Claimed by ${claimedBy}`}>
                         <Lock size={10} /> {claimedBy}
                     </span>
                 ) : isInParty ? (
@@ -70,7 +73,7 @@ export const PcDepositActiveCard: React.FC<PcDepositActiveCardProps> = ({
                 ) : null}
             </div>
 
-            {claimedBy ? (
+            {claimedBy || isLocked ? (
                 <button
                     type="button"
                     className="action-button action-button--dark pc-deposit-btn--disabled"

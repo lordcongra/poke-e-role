@@ -26,10 +26,16 @@ import {
     applyAddTrainer,
     applyAddCampaign,
     applyUpdateSummary,
-    applyDeleteSummary,
-    applyReviewDiffsToSummary
+    applyDeleteSummary
 } from '../../utils/pc/pcStateMutations';
-import { applyDeleteCampaign, applyDeleteTrainer } from '../../utils/pc/pcCampaignTrainerOps';
+import { applyReviewDiffsToSummary } from '../../utils/pc/pcDiffUtils';
+import { EXTENSION_ID } from '../../hooks/owlbearSync/owlbearSyncConstants';
+import {
+    applyDeleteCampaign,
+    applyDeleteTrainer,
+    getCachedObrPlayerId,
+    setCachedObrPlayerId
+} from '../../utils/pc/pcCampaignTrainerOps';
 import {
     relocateSidebarPokemon,
     syncSwappedSlotsToSidebar,
@@ -270,16 +276,38 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
         try {
             const { pcData } = get();
             const camp = pcData.campaigns[pcData.activeCampaignId];
-            if (!camp) return;
-            if (trainerId !== '__none__' && !camp.trainers[trainerId]) return;
+            if (!camp || (trainerId !== '__none__' && !camp.trainers[trainerId])) return;
+
+            const campId = pcData.activeCampaignId;
+            const pid = getCachedObrPlayerId();
+            if (typeof window !== 'undefined' && window.localStorage) {
+                try {
+                    localStorage.setItem(`pkr_active_trainer_${campId}`, trainerId);
+                    if (pid) localStorage.setItem(`pkr_active_trainer_${pid}_${campId}`, trainerId);
+                } catch {}
+            }
+            if (OBR.isAvailable && !pid) {
+                OBR.player
+                    .getId()
+                    .then((id) => {
+                        setCachedObrPlayerId(id);
+                        try {
+                            localStorage.setItem(`pkr_active_trainer_${id}_${campId}`, trainerId);
+                        } catch {}
+                    })
+                    .catch(() => {});
+            }
 
             const nextData = {
                 ...pcData,
                 campaigns: {
                     ...pcData.campaigns,
-                    [pcData.activeCampaignId]: {
+                    [campId]: {
                         ...camp,
-                        activeTrainerId: trainerId
+                        activeTrainerId: trainerId,
+                        activeTrainerByPlayer: pid
+                            ? { ...(camp.activeTrainerByPlayer || {}), [pid]: trainerId }
+                            : camp.activeTrainerByPlayer
                     }
                 }
             };
@@ -329,6 +357,15 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             }
             set({ pcData: res.nextData });
             savePcStorage(res.nextData);
+            if (OBR.isAvailable) {
+                OBR.broadcast
+                    .sendMessage(
+                        `${EXTENSION_ID}/pc-trainer-delete`,
+                        { campaignId: pcData.activeCampaignId, trainerId },
+                        { destination: 'REMOTE' }
+                    )
+                    .catch(() => {});
+            }
             return true;
         } catch (e) {
             console.error('[PcSlice] Failed to delete trainer:', e);
@@ -343,6 +380,12 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             if (!targetCamp) return;
 
             let activeTrainerId = targetCamp.activeTrainerId;
+            if (typeof window !== 'undefined' && window.localStorage) {
+                const localTr = localStorage.getItem(`pkr_active_trainer_${campaignId}`);
+                if (localTr && (localTr === '__none__' || targetCamp.trainers?.[localTr])) {
+                    activeTrainerId = localTr;
+                }
+            }
             if (activeTrainerId !== '__none__' && (!targetCamp.trainers || !targetCamp.trainers[activeTrainerId])) {
                 activeTrainerId = Object.keys(targetCamp.trainers || {})[0] || '__none__';
             }
@@ -350,13 +393,7 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
             const nextData: PcStorageData = {
                 ...pcData,
                 activeCampaignId: campaignId,
-                campaigns: {
-                    ...pcData.campaigns,
-                    [campaignId]: {
-                        ...targetCamp,
-                        activeTrainerId
-                    }
-                }
+                campaigns: { ...pcData.campaigns, [campaignId]: { ...targetCamp, activeTrainerId } }
             };
             set({ pcData: nextData, activeBoxIndex: 0, selectedPcSlot: null });
             savePcStorage(nextData);
@@ -461,7 +498,7 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
     },
 
     openReviewModal: (payload: SheetReviewPayload) => {
-        set({ pendingReview: payload, isReviewModalOpen: true });
+        set({ pendingReview: payload, isReviewModalOpen: true, isPcModalOpen: true });
     },
 
     closeReviewModal: () => {
@@ -470,18 +507,14 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
 
     applyReviewDiffs: (entityId: string, diffs: SheetFieldDiff[]) => {
         try {
-            const { pcData } = get();
+            const { pcData, pendingReview } = get();
             const summary = pcData.pokemonSummaries[entityId];
             if (!summary) return;
 
-            const updatedSummary = applyReviewDiffsToSummary(summary, diffs);
+            const updatedSummary = applyReviewDiffsToSummary(summary, diffs, pendingReview?.incomingSummary);
             const nextData = applyUpdateSummary(pcData, updatedSummary);
 
-            set({
-                pcData: nextData,
-                pendingReview: null,
-                isReviewModalOpen: false
-            });
+            set({ pcData: nextData, pendingReview: null, isReviewModalOpen: false });
             savePcStorage(nextData);
         } catch (e) {
             console.error('[PcSlice] Failed to apply review diffs:', e);

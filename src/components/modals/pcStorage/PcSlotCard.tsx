@@ -3,7 +3,9 @@ import OBR from '@owlbear-rodeo/sdk';
 import type { PcPokemonSummary } from '../../../types/pcStorageTypes';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
 import { useResolvedImageUrl } from '../../../utils/graphics/useResolvedImageUrl';
-import { CornerDownLeft, Sparkles, FileText, ArrowRightLeft } from 'lucide-react';
+import { CornerDownLeft, Sparkles, FileText, ArrowRightLeft, Lock } from 'lucide-react';
+import { useCharacterStore } from '../../../store/useCharacterStore';
+import { isEntityLockedByGm } from '../../../utils/pc/pcCandidateMatching';
 import './PcSlotCard.css';
 
 interface PcSlotCardProps {
@@ -34,6 +36,8 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
     onDragStart,
     onDragEnd
 }) => {
+    const role = useCharacterStore((s) => s.role);
+    const isLocked = role !== 'GM' && isEntityLockedByGm(summary);
     const resolvedAvatar = useResolvedImageUrl(summary.tokenImageUrl, getAbsolutePokeballUrl());
     const hpPercent = summary.maxHp > 0 ? Math.max(0, Math.min(100, (summary.hp / summary.maxHp) * 100)) : 100;
     const hpColor =
@@ -49,6 +53,15 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
             onClick={onClick}
             onDoubleClick={(e) => {
                 e.stopPropagation();
+                if (isLocked) {
+                    if (OBR.isAvailable) {
+                        OBR.notification.show(
+                            'This character token is locked by the GM. Ask your GM to unlock it.',
+                            'WARNING'
+                        );
+                    }
+                    return;
+                }
                 onOpenSheet?.();
             }}
             onContextMenu={(e) => {
@@ -73,6 +86,11 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
                 {summary.shiny && (
                     <span className="pc-slot-card__shiny-badge" title="Shiny">
                         <Sparkles size={11} />
+                    </span>
+                )}
+                {isLocked && (
+                    <span className="pc-slot-card__locked-badge" title="Locked by GM">
+                        <Lock size={11} />
                     </span>
                 )}
             </div>
@@ -167,15 +185,25 @@ export const PcSlotCard: React.FC<PcSlotCardProps> = ({
                     {onOpenSheet && (
                         <button
                             type="button"
-                            className="action-button action-button--dark pc-slot-card__btn-sheet"
+                            className={`action-button action-button--dark pc-slot-card__btn-sheet ${isLocked ? 'pc-slot-card__btn-sheet--disabled' : ''}`}
                             onClick={(e) => {
                                 e.stopPropagation();
+                                if (isLocked) {
+                                    if (OBR.isAvailable) {
+                                        OBR.notification.show(
+                                            'This character token is locked by the GM. Ask your GM to unlock it.',
+                                            'WARNING'
+                                        );
+                                    }
+                                    return;
+                                }
                                 onOpenSheet();
                             }}
-                            title="Open Character Sheet"
-                            aria-label="Open Character Sheet"
+                            title={isLocked ? 'Locked by GM' : 'Open Character Sheet'}
+                            aria-label={isLocked ? 'Locked by GM' : 'Open Character Sheet'}
+                            disabled={isLocked}
                         >
-                            <FileText size={13} />
+                            {isLocked ? <Lock size={13} /> : <FileText size={13} />}
                         </button>
                     )}
                     {OBR.isAvailable &&

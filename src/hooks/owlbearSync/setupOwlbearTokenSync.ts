@@ -57,6 +57,7 @@ export async function setupOwlbearTokenSync(params: {
     let isSceneTransitioning = false;
     let sceneFollowupTimeout: ReturnType<typeof setTimeout> | null = null;
     let sceneBadgeRefreshTimeout: ReturnType<typeof setTimeout> | null = null;
+    let ghostCleanupTimeout: ReturnType<typeof setTimeout> | null = null;
 
     const clearKnownTransforms = () => {
         for (const key of Object.keys(knownTransforms)) {
@@ -214,6 +215,7 @@ export async function setupOwlbearTokenSync(params: {
             clearKnownTransforms();
             if (sceneFollowupTimeout) clearTimeout(sceneFollowupTimeout);
             if (sceneBadgeRefreshTimeout) clearTimeout(sceneBadgeRefreshTimeout);
+            if (ghostCleanupTimeout) clearTimeout(ghostCleanupTimeout);
             resetSceneSyncState();
         }
     });
@@ -255,8 +257,12 @@ export async function setupOwlbearTokenSync(params: {
         // Harvest item art from updated scene items
         harvestTokensItemArt(items).catch(() => {});
 
-        // Purge any ghost tokens that were recalled or whose Pokémon is in storage
-        cleanGhostTokens(items).catch(() => {});
+        // Purge any ghost tokens that were recalled or whose Pokémon is in storage (debounced)
+        if (ghostCleanupTimeout) clearTimeout(ghostCleanupTimeout);
+        ghostCleanupTimeout = setTimeout(() => {
+            if (!isMounted()) return;
+            cleanGhostTokens(items).catch(() => {});
+        }, 800);
 
         for (const item of items) {
             const rawMeta = item.metadata[METADATA_ID] || item.metadata['pokerole-pmd-extension/stats'];
@@ -418,6 +424,7 @@ export async function setupOwlbearTokenSync(params: {
         clearKnownTransforms();
         if (sceneFollowupTimeout) clearTimeout(sceneFollowupTimeout);
         if (sceneBadgeRefreshTimeout) clearTimeout(sceneBadgeRefreshTimeout);
+        if (ghostCleanupTimeout) clearTimeout(ghostCleanupTimeout);
         unsubs.forEach((unsub) => unsub());
     };
 

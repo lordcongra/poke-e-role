@@ -7,6 +7,40 @@ import { imageManager } from '../graphics/imageManager';
 import { extractTokenImage } from '../combat/initiativeHelpers';
 
 /**
+ * Determines whether a token item or stored Pokémon summary is locked by the GM,
+ * checking native OBR item locks, NPC sheet lock flags ('is-npc'), and generic locks.
+ */
+export function isEntityLockedByGm(
+    itemOrSummary?: {
+        locked?: boolean;
+        savedTokenItem?: { locked?: boolean };
+        fullMetadata?: Record<string, unknown>;
+        metadata?: Record<string, unknown>;
+    } | null,
+    extraMetadata?: Record<string, unknown> | null
+): boolean {
+    if (!itemOrSummary && !extraMetadata) return false;
+    if (itemOrSummary?.locked === true) return true;
+    if (itemOrSummary?.savedTokenItem?.locked === true) return true;
+
+    const rawMeta =
+        extraMetadata ||
+        itemOrSummary?.fullMetadata ||
+        (itemOrSummary?.metadata?.[METADATA_ID] as Record<string, unknown>) ||
+        itemOrSummary?.metadata;
+
+    if (rawMeta && typeof rawMeta === 'object') {
+        const meta = rawMeta as Record<string, unknown>;
+        if (meta.locked === true || meta.locked === 'true') return true;
+        if (meta['is-npc'] === true || meta['is-npc'] === 'true') return true;
+        if (meta.isNPC === true || meta.isNPC === 'true') return true;
+        if (meta['is-locked'] === true || meta['is-locked'] === 'true') return true;
+    }
+
+    return false;
+}
+
+/**
  * Resolves whether a given active character identity/metadata already corresponds
  * to an existing Pokémon in the trainer's party or stored summaries.
  */
@@ -96,8 +130,8 @@ export function resolveSceneCandidateMatch(
         | { playerId?: string; playerName?: string; trainerName?: string; entityId?: string }
         | undefined;
 
-    // Security check: locked tokens or tokens claimed by another player
-    if (myRole !== 'GM' && item.locked) {
+    // Security check: locked tokens for non-GMs
+    if (myRole !== 'GM' && isEntityLockedByGm(item, meta)) {
         return {
             matchedEntityId: undefined,
             isInParty: false,
@@ -105,12 +139,15 @@ export function resolveSceneCandidateMatch(
             claimedBy: 'Locked by GM (Ask GM to unlock)'
         };
     }
-    if (myRole !== 'GM' && claimMeta?.playerId && myPlayerId && claimMeta.playerId !== myPlayerId) {
+    // Cross-client ownership check (for all roles including GM)
+    if (claimMeta?.playerId && myPlayerId && claimMeta.playerId !== myPlayerId) {
         return {
             matchedEntityId: undefined,
             isInParty: false,
             isInBoxes: false,
-            claimedBy: claimMeta.playerName || claimMeta.trainerName || 'Another Player'
+            claimedBy: claimMeta.trainerName
+                ? `${claimMeta.trainerName}${claimMeta.playerName ? ` (${claimMeta.playerName})` : ''}`
+                : claimMeta.playerName || 'Another Player'
         };
     }
 
@@ -444,21 +481,22 @@ export function buildSheetAvailableSummaries(
     trainerSummary: PcPokemonSummary | null,
     pokemonSummaries: Record<string, PcPokemonSummary>,
     partySlots: (string | null)[],
-    trainerBoxes: PcBox[]
+    trainerBoxes: PcBox[],
+    role: string = 'PLAYER'
 ): PcPokemonSummary[] {
     const list: PcPokemonSummary[] = [];
-    if (trainer && trainerSummary) {
-        list.push(trainerSummary);
-    }
+    if (trainer && trainerSummary) list.push(trainerSummary);
     for (const pId of partySlots) {
-        if (pId && pokemonSummaries[pId] && !list.some((s) => s.entityId === pId)) {
-            list.push(pokemonSummaries[pId]);
+        const sum = pId ? pokemonSummaries[pId] : null;
+        if (sum && !list.some((s) => s.entityId === pId) && (role === 'GM' || !isEntityLockedByGm(sum))) {
+            list.push(sum);
         }
     }
     for (const b of trainerBoxes) {
         for (const sId of b.slots || []) {
-            if (sId && pokemonSummaries[sId] && !list.some((s) => s.entityId === sId)) {
-                list.push(pokemonSummaries[sId]);
+            const sum = sId ? pokemonSummaries[sId] : null;
+            if (sum && !list.some((s) => s.entityId === sId) && (role === 'GM' || !isEntityLockedByGm(sum))) {
+                list.push(sum);
             }
         }
     }

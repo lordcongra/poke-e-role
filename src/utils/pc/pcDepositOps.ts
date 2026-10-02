@@ -4,6 +4,7 @@ import type { CharacterState } from '../../store/storeTypes';
 import { flattenStateToMetadata } from '../sync/stateMapper';
 import { GRAPHICS_META_ID } from '../graphics/graphicsManager';
 import { calculateRelativeAttachment } from './rehomeEngine';
+import { isEntityLockedByGm } from './pcCandidateMatching';
 
 /**
  * Resolves ownership status of a Pokémon entityId within the current campaign and across other campaigns.
@@ -26,21 +27,20 @@ export function resolvePokemonOwnership(
     let isInParty = false;
     let isInBoxes = false;
 
-    // Security check: locked tokens or tokens claimed by another player
-    if (myRole !== 'GM') {
-        const isLocked = Boolean(
-            summary?.savedTokenItem?.locked || (summary?.fullMetadata as Record<string, unknown>)?.locked === true
-        );
-        if (isLocked) {
-            return { claimedBy: 'Locked by GM (Ask GM to unlock)', isInParty: false, isInBoxes: false };
-        }
-        if (metadataClaim?.playerId && myPlayerId && metadataClaim.playerId !== myPlayerId) {
-            return {
-                claimedBy: metadataClaim.playerName || metadataClaim.trainerName || 'Another Player',
-                isInParty: false,
-                isInBoxes: false
-            };
-        }
+    // Security check: locked tokens for non-GMs
+    if (myRole !== 'GM' && isEntityLockedByGm(summary)) {
+        return { claimedBy: 'Locked by GM (Ask GM to unlock)', isInParty: false, isInBoxes: false };
+    }
+
+    // Cross-client / player claim check (applies to all users including GM)
+    if (metadataClaim?.playerId && myPlayerId && metadataClaim.playerId !== myPlayerId) {
+        return {
+            claimedBy: metadataClaim.trainerName
+                ? `${metadataClaim.trainerName}${metadataClaim.playerName ? ` (${metadataClaim.playerName})` : ''}`
+                : metadataClaim.playerName || 'Another Player',
+            isInParty: false,
+            isInBoxes: false
+        };
     }
 
     const isNamedTrainer = Boolean(activeTrainerId && activeTrainerId !== '__none__');
@@ -162,26 +162,23 @@ export function validateDepositTarget(
     }
 
     if (role !== 'GM') {
-        const isLocked = Boolean(
-            summary.savedTokenItem?.locked || (summary.fullMetadata as Record<string, unknown>)?.locked === true
-        );
-        if (isLocked) {
+        if (isEntityLockedByGm(summary)) {
             return {
                 allowed: false,
                 reason: `"${pokeName}" is locked by the GM. Ask your GM to unlock it to add it to your party.`
             };
         }
+    }
 
-        const claimMeta = summary.fullMetadata?.['pokerole-pmd-extension/claimed-by'] as
-            | { playerId?: string; playerName?: string }
-            | undefined;
+    const claimMeta = summary.fullMetadata?.['pokerole-pmd-extension/claimed-by'] as
+        | { playerId?: string; playerName?: string; trainerName?: string }
+        | undefined;
 
-        if (claimMeta?.playerId && myPlayerId && claimMeta.playerId !== myPlayerId) {
-            return {
-                allowed: false,
-                reason: `"${pokeName}" is claimed by ${claimMeta.playerName || 'another player'} and cannot be deposited into your PC.`
-            };
-        }
+    if (claimMeta?.playerId && myPlayerId && claimMeta.playerId !== myPlayerId) {
+        return {
+            allowed: false,
+            reason: `"${pokeName}" is already claimed by ${claimMeta.trainerName || claimMeta.playerName || 'another trainer'}!`
+        };
     }
 
     // 1. Cross-trainer guard within active campaign
@@ -386,4 +383,29 @@ export function clonePokemonSummaryOps(summary: PcPokemonSummary): {
     }
 
     return { clonedSummary, clonedId };
+}
+
+/**
+ * Stamps the active player's claim metadata onto a scene token in Owlbear Rodeo.
+ * Ensures all connected players and the GM immediately see who owns the Pokémon in real-time.
+ */
+export async function stampClaimOnSceneItem(tokenId: string, entityId: string, trainerName?: string): Promise<void> {
+    if (!OBR.isAvailable || !tokenId) return;
+    try {
+        const myId = await OBR.player.getId().catch(() => undefined);
+        const myName = await OBR.player.getName().catch(() => 'Trainer');
+        const effectiveTrainerName = trainerName || myName;
+        await OBR.scene.items.updateItems([tokenId], (items) => {
+            for (const it of items) {
+                it.metadata['pokerole-pmd-extension/claimed-by'] = {
+                    playerId: myId,
+                    playerName: myName,
+                    entityId,
+                    trainerName: effectiveTrainerName
+                };
+            }
+        });
+    } catch (e) {
+        console.warn('[pcDepositOps] Failed to stamp claimed-by on scene token:', e);
+    }
 }

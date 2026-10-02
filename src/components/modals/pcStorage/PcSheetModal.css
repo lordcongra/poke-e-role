@@ -176,11 +176,13 @@
 }
 
 .pc-sheet-modal__body {
-    flex: 1;
-    overflow-y: auto;
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
     padding: 8px 12px 24px;
     display: flex;
     flex-direction: column;
+    min-height: 0 !important;
 }
 
 .pc-sheet-modal__container {
@@ -190,6 +192,9 @@
     box-shadow: none !important;
     border: none !important;
     background: transparent !important;
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
 }
 
 @media (max-width: 768px) {

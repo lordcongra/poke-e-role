@@ -89,6 +89,27 @@
     justify-content: center;
 }
 
+.pc-slot-card__locked-badge {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    color: #ef4444;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(239, 68, 68, 0.6);
+    border-radius: 50%;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pc-slot-card__btn-sheet--disabled {
+    opacity: 0.45;
+    cursor: not-allowed !important;
+    border-color: rgba(239, 68, 68, 0.4) !important;
+    color: #ef4444 !important;
+}
+
 .pc-slot-card__info {
     flex: 1;
     min-width: 0;

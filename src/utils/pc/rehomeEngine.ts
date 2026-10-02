@@ -102,6 +102,7 @@ export function rehomeTokenSubtree(parentToken: Item, attachments: AttachmentBun
 
     (clonedParent as { id: string }).id = freshParentId;
     clonedParent.position = { ...options.landingPosition };
+    delete (clonedParent as { attachedTo?: unknown }).attachedTo;
     if (options.ownerId) {
         clonedParent.createdUserId = options.ownerId;
     }

@@ -70,15 +70,23 @@ export async function setSceneBackupStatus(isBackup: boolean): Promise<boolean> 
     }
 }
 
+let isSyncingBackupScene = false;
+
 /**
  * Synchronizes tokens on a backup scene with current local PC storage data.
  * Updates character tokens with their latest HP, Will, and stats from PC storage.
  * Does NOT delete tokens and does NOT alter party/map states.
  */
 export async function syncBackupSceneTokens(sceneItems: Item[]): Promise<void> {
-    if (!OBR.isAvailable) return;
+    if (!OBR.isAvailable || isSyncingBackupScene) return;
 
     try {
+        const isBackup = await isBackupScene();
+        if (!isBackup) return;
+
+        const role = (await OBR.player.getRole().catch(() => 'PLAYER')) || 'PLAYER';
+        if (role !== 'GM') return;
+
         const store = useCharacterStore.getState();
         const tokensToUpdate: Array<{ id: string; metadata: Item['metadata'] }> = [];
         const characterTokens = sceneItems.filter((it) => it.layer === 'CHARACTER');
@@ -90,6 +98,18 @@ export async function syncBackupSceneTokens(sceneItems: Item[]): Promise<void> {
 
             const summary = store.pcData.pokemonSummaries[entityId];
             if (summary) {
+                // Strict diffing: only update if core fields actually changed
+                const hasChanged =
+                    meta['hp-curr'] !== summary.hp ||
+                    meta['hp-max-display'] !== summary.maxHp ||
+                    meta['will-curr'] !== summary.will ||
+                    meta['will-max-display'] !== summary.maxWill ||
+                    meta.name !== summary.name ||
+                    (summary.tokenImageUrl && meta['token-image-url'] !== summary.tokenImageUrl) ||
+                    meta.species !== summary.species;
+
+                if (!hasChanged) continue;
+
                 const nextMeta = {
                     ...(summary.fullMetadata || {}),
                     ...meta,
@@ -117,6 +137,7 @@ export async function syncBackupSceneTokens(sceneItems: Item[]): Promise<void> {
         }
 
         if (tokensToUpdate.length > 0) {
+            isSyncingBackupScene = true;
             const updateMap = new Map(tokensToUpdate.map((t) => [t.id, t.metadata]));
             await OBR.scene.items.updateItems(
                 tokensToUpdate.map((t) => t.id),
@@ -132,6 +153,10 @@ export async function syncBackupSceneTokens(sceneItems: Item[]): Promise<void> {
         }
     } catch (e) {
         console.warn('[PcBackupSceneSync] Failed to sync backup scene tokens:', e);
+    } finally {
+        setTimeout(() => {
+            isSyncingBackupScene = false;
+        }, 500);
     }
 }
 

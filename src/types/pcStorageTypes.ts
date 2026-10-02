@@ -55,6 +55,7 @@ export interface CampaignProfile {
     id: string;
     name: string;
     activeTrainerId: string;
+    activeTrainerByPlayer?: Record<string, string>; // Maps player ID to their active trainer profile
     trainers: Record<string, TrainerRoster>;
     boxes: PcBox[];
     teamParty?: (string | null)[]; // Active Team party for PMD / no-trainer campaigns
@@ -82,6 +83,7 @@ export interface SheetReviewPayload {
     pokemonName: string;
     playerName: string;
     diffs: SheetFieldDiff[];
+    incomingSummary?: PcPokemonSummary;
 }
 
 export interface PcSlice {

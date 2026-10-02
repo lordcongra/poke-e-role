@@ -29,6 +29,8 @@ export {
 import { buildGraphicsFromMeta, renderTokenGraphics } from '../graphics/graphicsManager';
 import { resolveExistingCharacterEntityId } from './pcCandidateMatching';
 import { resolveTokenImageForMap } from './pcTokenImageOps';
+import { resolveSpawnAnchorToken, findOpenGridPosition, getAbsoluteItemPosition } from './pcPlacementUtils';
+import { useCharacterStore } from '../../store/useCharacterStore';
 
 export const recentlySpawnedTokenIds = new Set<string>();
 
@@ -81,58 +83,29 @@ export async function spawnPokemonToMap(
             }
         }
 
-        // 3. Drop in front of trainer if active linked trainer is provided AND present on scene
-        let trainerToken: Item | undefined;
-        if (trainer && trainer.isLinked) {
-            trainerToken = sceneItems.find((it) => {
-                if (it.layer !== 'CHARACTER') return false;
-                if (trainer.mapTokenId && it.id === trainer.mapTokenId) return true;
-                const meta = (it.metadata?.[METADATA_ID] || it.metadata?.['pokerole-pmd-extension/stats']) as
-                    | Record<string, unknown>
-                    | undefined;
-                if (!meta) return false;
-                const isTrainer = meta.mode === 'Trainer' || meta.mode === 'Trainer (Special)';
-                return (
-                    isTrainer &&
-                    (meta.name === trainer.name || meta.nickname === trainer.name || it.name === trainer.name)
-                );
-            });
-        }
-
-        let landingPos: { x: number; y: number } = { x: 0, y: 0 };
+        // 3. Drop adjacent to trainer (or currently selected token) if present on scene
+        let anchorPos: { x: number; y: number } = { x: 0, y: 0 };
         try {
-            if (trainerToken) {
-                const targetY = trainerToken.position.y + gridDpi * 1.25;
-                const occupiedXs = sceneItems
-                    .filter((it) => it.layer === 'CHARACTER' && Math.abs(it.position.y - targetY) < gridDpi * 0.7)
-                    .map((it) => it.position.x);
+            const activeTokenId = useCharacterStore.getState().tokenId;
+            const selectedTokenIds = await OBR.player.getSelection().catch(() => []);
+            const anchorToken = resolveSpawnAnchorToken(trainer, sceneItems, activeTokenId, selectedTokenIds);
 
-                let chosenOffset = 0;
-                const offsets = [0, gridDpi, -gridDpi, gridDpi * 2, -gridDpi * 2, gridDpi * 3, -gridDpi * 3];
-                for (const off of offsets) {
-                    const candX = trainerToken.position.x + off;
-                    const isTaken = occupiedXs.some((ox) => Math.abs(ox - candX) < gridDpi * 0.7);
-                    if (!isTaken) {
-                        chosenOffset = off;
-                        break;
-                    }
-                }
-
-                landingPos = {
-                    x: trainerToken.position.x + chosenOffset,
-                    y: targetY
-                };
+            if (anchorToken) {
+                anchorPos = getAbsoluteItemPosition(anchorToken, sceneItems);
             } else {
                 const vpWidth = (await OBR.viewport.getWidth()) || 800;
                 const vpHeight = (await OBR.viewport.getHeight()) || 600;
-                landingPos = await OBR.viewport.inverseTransformPoint({
-                    x: vpWidth * 0.35,
-                    y: vpHeight * 0.5
+                anchorPos = await OBR.viewport.inverseTransformPoint({
+                    x: vpWidth / 2,
+                    y: vpHeight / 2
                 });
             }
         } catch {
-            landingPos = { x: 0, y: 0 };
+            anchorPos = { x: 0, y: 0 };
         }
+
+        // Concentric 2D grid search guarantees tokens never stack on top of each other
+        const landingPos = findOpenGridPosition(anchorPos, gridDpi, sceneItems);
 
         // 4. Resolve safe, valid map artwork (handles local-img, scene match, and pokeball fallback)
         const resolvedImg = await resolveTokenImageForMap(summary, sceneItems);
@@ -160,6 +133,7 @@ export async function spawnPokemonToMap(
         if (summary.savedTokenItem && isImage(summary.savedTokenItem)) {
             parentItem = JSON.parse(JSON.stringify(summary.savedTokenItem)) as Item;
             parentItem.position = landingPos;
+            delete (parentItem as { attachedTo?: unknown }).attachedTo;
             if (parentItem.scale) {
                 parentItem.scale = { ...parentItem.scale };
             }
@@ -395,6 +369,25 @@ export function filterTrainerPokemonSummaries(
         if (teamPartyIds.has(p.entityId)) return false;
         if (campaignBoxEntityIds.has(p.entityId)) return true;
         if (!p.trainerId && campaign?.id && p.campaignId === campaign.id) return true;
+        return false;
+    });
+}
+
+export function findOtherLinkedTrainer(
+    campaign: { trainers?: Record<string, TrainerRoster> } | undefined,
+    currentTrainerId: string | undefined,
+    activeTokenId: string | null,
+    identity: { mode?: string; nickname?: string; species?: string; trainerId?: string }
+): TrainerRoster | undefined {
+    const isTrainerMode = identity.mode === 'Trainer' || identity.mode === 'Trainer (Special)';
+    if (!isTrainerMode || !currentTrainerId || !campaign?.trainers) return undefined;
+    const activeTrainerName = (identity.nickname || identity.species || '').trim().toLowerCase();
+
+    return Object.values(campaign.trainers).find((t) => {
+        if (t.id === currentTrainerId) return false;
+        if (activeTokenId && (t.mapTokenId === activeTokenId || t.savedTokenItem?.id === activeTokenId)) return true;
+        if (identity.trainerId && identity.trainerId === t.id) return true;
+        if (t.isLinked && activeTrainerName && t.name.toLowerCase() === activeTrainerName) return true;
         return false;
     });
 }

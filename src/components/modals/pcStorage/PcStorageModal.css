@@ -2,6 +2,28 @@
    Pokémon PC & Party Storage System - Main Orchestrator Styling
    ========================================================================== */
 
+html.pc-modal-open,
+body.pc-modal-open {
+    overflow: hidden !important;
+    height: 100% !important;
+}
+
+body.pc-modal-open #root {
+    overflow: hidden !important;
+    max-height: 100vh !important;
+}
+
+body.pc-modal-open #root > .app-container,
+body.pc-modal-open #root > .app-layout {
+    max-height: 100vh !important;
+    overflow: hidden !important;
+}
+
+body.pc-modal-open .pc-modal-backdrop,
+body.pc-modal-open .pc-sheet-modal__overlay {
+    pointer-events: auto !important;
+}
+
 .pc-modal-backdrop {
     position: fixed;
     inset: 0;

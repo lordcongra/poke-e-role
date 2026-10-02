@@ -11,11 +11,33 @@ import { markTokenAsRecentlySpawned } from './pcModalOps';
 /**
  * Checks if the trainer's token is actively placed on the current scene.
  */
+function parseNumericMeta(
+    keys: string[],
+    sources: (Record<string, unknown> | null | undefined)[],
+    fallback: number
+): number {
+    for (const src of sources) {
+        if (!src) continue;
+        for (const k of keys) {
+            const val = src[k];
+            if (val !== undefined && val !== null && val !== '') {
+                const num = Number(val);
+                if (!isNaN(num)) return num;
+            }
+        }
+    }
+    return fallback;
+}
+
+/**
+ * Checks if the trainer's token is actively placed on the current scene,
+ * and if so, updates the trainer profile with live map references and full metadata.
+ */
 export async function checkTrainerOnMap(trainer?: TrainerRoster): Promise<boolean> {
     if (!OBR.isAvailable || !trainer) return false;
     try {
         const items = await OBR.scene.items.getItems();
-        return items.some((i) => {
+        const found = items.find((i) => {
             if (i.layer !== 'CHARACTER') return false;
             if (trainer.mapTokenId && i.id === trainer.mapTokenId) return true;
             const meta = (i.metadata[METADATA_ID] || i.metadata['pokerole-pmd-extension/stats']) as
@@ -27,6 +49,19 @@ export async function checkTrainerOnMap(trainer?: TrainerRoster): Promise<boolea
                 isTrainer && (meta.name === trainer.name || meta.nickname === trainer.name || i.name === trainer.name)
             );
         });
+
+        if (found) {
+            trainer.mapTokenId = found.id;
+            trainer.savedTokenItem = found;
+            const meta = (found.metadata[METADATA_ID] || found.metadata['pokerole-pmd-extension/stats']) as
+                | Record<string, unknown>
+                | undefined;
+            if (meta) {
+                trainer.fullMetadata = { ...(trainer.fullMetadata || {}), ...meta };
+            }
+            return true;
+        }
+        return false;
     } catch {
         return false;
     }
@@ -42,10 +77,14 @@ export function buildLinkedTrainer(
     avatarUrl?: string
 ): TrainerRoster {
     const fullMeta = flattenStateToMetadata(store);
-    const hpCurr = store.health.hpCurr ?? 10;
-    const hpMax = store.health.hpMax ?? 10;
-    const willCurr = store.will.willCurr ?? 5;
-    const willMax = store.will.willMax ?? 5;
+    const tokenMeta = (trainer.savedTokenItem?.metadata?.[METADATA_ID] as Record<string, unknown>) || null;
+    const sources = [tokenMeta, trainer.fullMetadata];
+
+    const hpCurr = store.health.hpCurr ?? parseNumericMeta(['hp-curr', 'hp', 'currentHp'], sources, 10);
+    const hpMax = store.health.hpMax ?? parseNumericMeta(['hp-max-display', 'hpMax', 'maxHp'], sources, 10);
+    const willCurr = store.will.willCurr ?? parseNumericMeta(['will-curr', 'will', 'currentWill'], sources, 5);
+    const willMax = store.will.willMax ?? parseNumericMeta(['will-max-display', 'willMax', 'maxWill'], sources, 5);
+
     fullMeta['hp-curr'] = hpCurr;
     fullMeta['hp-max-display'] = hpMax;
     fullMeta['will-curr'] = willCurr;
@@ -78,68 +117,62 @@ export function buildTrainerSummary(trainer: TrainerRoster): import('../../types
         } catch {}
     }
 
+    const tokenMeta =
+        (trainer.savedTokenItem?.metadata?.[METADATA_ID] as Record<string, unknown>) ||
+        (trainer.savedTokenItem?.metadata?.['pokerole-pmd-extension/stats'] as Record<string, unknown>) ||
+        null;
+
+    const sources = [tokenMeta, trainer.fullMetadata, localMeta];
+
     const store = useCharacterStore.getState();
     const isStoreTrainer = store.identity.mode === 'Trainer' || (store.identity.rank as string) === 'Trainer';
     const storeMatchesTrainer =
         isStoreTrainer &&
         (store.identity.nickname === trainer.name || store.identity.species === trainer.name || !trainer.name);
 
-    const hpCurr = storeMatchesTrainer
-        ? store.health.hpCurr
-        : typeof localMeta?.['hp-curr'] === 'number'
-          ? (localMeta['hp-curr'] as number)
-          : typeof trainer.fullMetadata?.['hp-curr'] === 'number'
-            ? (trainer.fullMetadata['hp-curr'] as number)
-            : typeof localMeta?.hp === 'number'
-              ? (localMeta.hp as number)
-              : 10;
-    const hpMax = storeMatchesTrainer
-        ? store.health.hpMax
-        : typeof localMeta?.['hp-max-display'] === 'number'
-          ? (localMeta['hp-max-display'] as number)
-          : typeof trainer.fullMetadata?.['hp-max-display'] === 'number'
-            ? (trainer.fullMetadata['hp-max-display'] as number)
-            : typeof localMeta?.hpMax === 'number'
-              ? (localMeta.hpMax as number)
-              : 10;
-    const willCurr = storeMatchesTrainer
-        ? store.will.willCurr
-        : typeof localMeta?.['will-curr'] === 'number'
-          ? (localMeta['will-curr'] as number)
-          : typeof trainer.fullMetadata?.['will-curr'] === 'number'
-            ? (trainer.fullMetadata['will-curr'] as number)
-            : typeof localMeta?.will === 'number'
-              ? (localMeta.will as number)
-              : 5;
-    const willMax = storeMatchesTrainer
-        ? store.will.willMax
-        : typeof localMeta?.['will-max-display'] === 'number'
-          ? (localMeta['will-max-display'] as number)
-          : typeof trainer.fullMetadata?.['will-max-display'] === 'number'
-            ? (trainer.fullMetadata['will-max-display'] as number)
-            : typeof localMeta?.willMax === 'number'
-              ? (localMeta.willMax as number)
-              : 5;
+    const hpCurr =
+        storeMatchesTrainer && store.health.hpCurr !== undefined
+            ? store.health.hpCurr
+            : parseNumericMeta(['hp-curr', 'hp', 'currentHp'], sources, 10);
 
-    const trainerType1 = (localMeta?.type1 as string) || (trainer.fullMetadata?.type1 as string) || '';
-    const trainerType2 = (localMeta?.type2 as string) || (trainer.fullMetadata?.type2 as string) || undefined;
+    const hpMax =
+        storeMatchesTrainer && store.health.hpMax !== undefined
+            ? store.health.hpMax
+            : parseNumericMeta(['hp-max-display', 'hpMax', 'maxHp'], sources, 10);
+
+    const willCurr =
+        storeMatchesTrainer && store.will.willCurr !== undefined
+            ? store.will.willCurr
+            : parseNumericMeta(['will-curr', 'will', 'currentWill'], sources, 5);
+
+    const willMax =
+        storeMatchesTrainer && store.will.willMax !== undefined
+            ? store.will.willMax
+            : parseNumericMeta(['will-max-display', 'willMax', 'maxWill'], sources, 5);
+
+    const trainerType1 =
+        (tokenMeta?.type1 as string) || (localMeta?.type1 as string) || (trainer.fullMetadata?.type1 as string) || '';
+    const trainerType2 =
+        (tokenMeta?.type2 as string) ||
+        (localMeta?.type2 as string) ||
+        (trainer.fullMetadata?.type2 as string) ||
+        undefined;
     const resolvedAvatar =
+        (tokenMeta?.['token-image-url'] as string) ||
         (localMeta?.['token-image-url'] as string) ||
         (localMeta?.tokenImageUrl as string) ||
         (trainer.fullMetadata?.['token-image-url'] as string) ||
         trainer.avatarUrl;
-    const tokenMeta = (trainer.savedTokenItem?.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
-
     const primaryOverride =
         (trainer.fullMetadata?.['theme-primary-override'] as string) ||
         (trainer.fullMetadata?.themePrimaryOverride as string) ||
-        (tokenMeta['theme-primary-override'] as string) ||
+        ((tokenMeta?.['theme-primary-override'] as string) ?? '') ||
         (storeMatchesTrainer ? store.identity.themePrimaryOverride : '') ||
         '';
     const secondaryOverride =
         (trainer.fullMetadata?.['theme-secondary-override'] as string) ||
         (trainer.fullMetadata?.themeSecondaryOverride as string) ||
-        (tokenMeta['theme-secondary-override'] as string) ||
+        ((tokenMeta?.['theme-secondary-override'] as string) ?? '') ||
         (storeMatchesTrainer ? store.identity.themeSecondaryOverride : '') ||
         '';
 

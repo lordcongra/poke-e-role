@@ -3,6 +3,7 @@ import type { Item } from '@owlbear-rodeo/sdk';
 import { useResolvedImageUrl } from '../../../utils/graphics/useResolvedImageUrl';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
 import { Check, Lock } from 'lucide-react';
+import { isEntityLockedByGm } from '../../../utils/pc/pcCandidateMatching';
 
 export interface SceneCandidate {
     id: string;
@@ -39,10 +40,12 @@ export const PcDepositCandidateCard: React.FC<PcDepositCandidateCardProps> = ({
 }) => {
     const resolvedAvatar = useResolvedImageUrl(candidate.imageUrl, getAbsolutePokeballUrl());
     const isPartySlot = targetSlotType === 'party';
-    const isLocked = Boolean(candidate.claimedBy?.toLowerCase().includes('locked'));
+    const isLocked = Boolean(
+        candidate.claimedBy?.toLowerCase().includes('locked') || isEntityLockedByGm(candidate.item, candidate.metadata)
+    );
 
     return (
-        <div className={`pc-deposit-card ${candidate.claimedBy ? 'pc-deposit-card--claimed' : ''}`}>
+        <div className={`pc-deposit-card ${candidate.claimedBy || isLocked ? 'pc-deposit-card--claimed' : ''}`}>
             <img
                 src={resolvedAvatar}
                 alt={candidate.name}
@@ -59,14 +62,17 @@ export const PcDepositCandidateCard: React.FC<PcDepositCandidateCardProps> = ({
                 <span className="text-subtext">
                     {candidate.species} {isLocked ? '• Locked by GM' : `• ${candidate.hp}/${candidate.maxHp} HP`}
                 </span>
-                {candidate.claimedBy ? (
+                {isLocked ? (
                     <span
                         className="pc-deposit-card__claimed-tag text-subtext"
-                        title={
-                            isLocked
-                                ? 'This sheet is locked by the GM. Ask your GM to unlock it to add it to your party.'
-                                : `Claimed by ${candidate.claimedBy}`
-                        }
+                        title="This sheet is locked by the GM. Ask your GM to unlock it to add it to your party."
+                    >
+                        <Lock size={10} /> Locked by GM
+                    </span>
+                ) : candidate.claimedBy ? (
+                    <span
+                        className="pc-deposit-card__claimed-tag text-subtext"
+                        title={`Claimed by ${candidate.claimedBy}`}
                     >
                         <Lock size={10} /> {candidate.claimedBy}
                     </span>
@@ -81,7 +87,7 @@ export const PcDepositCandidateCard: React.FC<PcDepositCandidateCardProps> = ({
                 ) : null}
             </div>
 
-            {candidate.claimedBy ? (
+            {candidate.claimedBy || isLocked ? (
                 <button
                     type="button"
                     className="action-button action-button--dark pc-deposit-btn--disabled"

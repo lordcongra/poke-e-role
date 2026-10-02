@@ -27,6 +27,7 @@
 .pc-deposit-modal {
     width: 100%;
     max-width: 580px;
+    min-height: 340px;
     max-height: 82vh;
     background: var(--panel-bg, #1e293b);
     border: 1px solid var(--primary, #3b82f6);
@@ -102,6 +103,7 @@
     flex-direction: column;
     gap: 14px;
     overflow-y: auto;
+    min-height: 240px;
 }
 
 .pc-deposit-section {

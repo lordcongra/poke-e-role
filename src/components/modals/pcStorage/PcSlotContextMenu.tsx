@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import {
     FileText,
@@ -9,7 +9,8 @@ import {
     Copy,
     Trash2,
     X,
-    Unlink
+    Unlink,
+    Lock
 } from 'lucide-react';
 
 interface PcSlotContextMenuProps {
@@ -17,6 +18,7 @@ interface PcSlotContextMenuProps {
     y: number;
     isPartySlot: boolean;
     isOnMap: boolean;
+    isLocked?: boolean;
     pokemonName: string;
     onClose: () => void;
     onOpenSheet: () => void;
@@ -33,6 +35,7 @@ export const PcSlotContextMenu: React.FC<PcSlotContextMenuProps> = ({
     y,
     isPartySlot,
     isOnMap,
+    isLocked = false,
     pokemonName,
     onClose,
     onOpenSheet,
@@ -81,13 +84,21 @@ export const PcSlotContextMenu: React.FC<PcSlotContextMenuProps> = ({
             <div className="pc-context-menu__list">
                 <button
                     type="button"
-                    className="pc-context-menu__item"
+                    className={`pc-context-menu__item ${isLocked ? 'pc-context-menu__item--disabled' : ''}`}
+                    disabled={isLocked}
+                    title={
+                        isLocked
+                            ? 'This character sheet is locked by the GM. Ask your GM to unlock it to view.'
+                            : 'Open Character Sheet'
+                    }
                     onClick={() => {
+                        if (isLocked) return;
                         onOpenSheet();
                         onClose();
                     }}
                 >
-                    <FileText size={15} /> Open Character Sheet
+                    {isLocked ? <Lock size={15} /> : <FileText size={15} />}
+                    {isLocked ? 'Sheet Locked by GM' : 'Open Character Sheet'}
                 </button>
 
                 <button

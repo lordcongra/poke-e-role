@@ -17,9 +17,16 @@ import {
 } from '../../../utils/pc/pcModalOps';
 import { checkTrainerOnMap, buildLinkedTrainer } from '../../../utils/pc/pcTrainerOps';
 import { savePcStorage } from '../../../utils/pc/pcStorageAdapter';
-import { prepareDepositSummary, validateDepositTarget, clonePokemonSummaryOps } from '../../../utils/pc/pcDepositOps';
+import {
+    prepareDepositSummary,
+    validateDepositTarget,
+    clonePokemonSummaryOps,
+    stampClaimOnSceneItem
+} from '../../../utils/pc/pcDepositOps';
+import { isEntityLockedByGm } from '../../../utils/pc/pcCandidateMatching';
 import { executeCloudExport, executeCloudRestore } from '../../../utils/pc/pcCloudModalOps';
 import { relinkPokemonArtworkOps } from '../../../utils/pc/pcTokenImageOps';
+import { broadcastPlayerPc } from '../../../hooks/owlbearSync/setupOwlbearPcSync';
 
 interface UsePcModalHandlersParams {
     pcData: PcStorageData;
@@ -75,12 +82,34 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
     const isTrainerLinked = !!trainer?.isLinked || !!trainer?.avatarUrl;
     const [isTrainerOnMap, setIsTrainerOnMap] = useState(false);
 
+    const saveTrainerProfile = (nextTrainer: TrainerRoster) => {
+        if (!campaign) return;
+        const nextData = {
+            ...pcData,
+            campaigns: {
+                ...pcData.campaigns,
+                [pcData.activeCampaignId]: {
+                    ...campaign,
+                    trainers: { ...campaign.trainers, [nextTrainer.id]: nextTrainer }
+                }
+            }
+        };
+        useCharacterStore.setState({ pcData: nextData });
+        savePcStorage(nextData);
+    };
+
     // Detect if the trainer token is currently placed on the active battle scene
     useEffect(() => {
         let mounted = true;
         const check = async () => {
+            const prevHp = trainer?.fullMetadata?.['hp-curr'];
             const onMap = await checkTrainerOnMap(trainer);
-            if (mounted) setIsTrainerOnMap(onMap);
+            if (mounted) {
+                setIsTrainerOnMap(onMap);
+                if (onMap && trainer && campaign && trainer.fullMetadata?.['hp-curr'] !== prevHp) {
+                    saveTrainerProfile({ ...trainer });
+                }
+            }
         };
         check();
         if (OBR.isAvailable) {
@@ -105,18 +134,7 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         ) {
             const store = useCharacterStore.getState();
             const nextTrainer = buildLinkedTrainer(trainer, store, currentName, currentAvatar);
-            const nextData = {
-                ...pcData,
-                campaigns: {
-                    ...pcData.campaigns,
-                    [pcData.activeCampaignId]: {
-                        ...campaign,
-                        trainers: { ...campaign.trainers, [trainer.id]: nextTrainer }
-                    }
-                }
-            };
-            useCharacterStore.setState({ pcData: nextData });
-            savePcStorage(nextData);
+            saveTrainerProfile(nextTrainer);
         }
     }, [
         isTrainerLinked,
@@ -166,8 +184,8 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
                 if (items.length > 0) savedItem = items[0];
             } catch {}
         }
-        if (role !== 'GM' && savedItem) {
-            if (savedItem.locked) {
+        if (role !== 'GM') {
+            if (isEntityLockedByGm(savedItem) || isEntityLockedByGm(trainer)) {
                 if (OBR.isAvailable) {
                     OBR.notification.show(
                         'Cannot link: This trainer token is locked by the GM. Ask your GM to unlock it.',
@@ -177,7 +195,7 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
                 return;
             }
             const myId = OBR.isAvailable ? await OBR.player.getId().catch(() => undefined) : undefined;
-            const claim = savedItem.metadata?.['pokerole-pmd-extension/claimed-by'] as
+            const claim = savedItem?.metadata?.['pokerole-pmd-extension/claimed-by'] as
                 | { playerId?: string }
                 | undefined;
             if (claim?.playerId && myId && claim.playerId !== myId) {
@@ -191,18 +209,7 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
             ...buildLinkedTrainer(trainer, store, trainerName, identity.tokenImageUrl || undefined),
             savedTokenItem: savedItem
         };
-        const nextData = {
-            ...pcData,
-            campaigns: {
-                ...pcData.campaigns,
-                [pcData.activeCampaignId]: {
-                    ...campaign,
-                    trainers: { ...campaign.trainers, [trainer.id]: nextTrainer }
-                }
-            }
-        };
-        useCharacterStore.setState({ pcData: nextData });
-        savePcStorage(nextData);
+        saveTrainerProfile(nextTrainer);
 
         if (OBR.isAvailable) {
             OBR.notification.show(`Linked "${trainerName}" to Pokéball Belt!`, 'SUCCESS');
@@ -211,19 +218,7 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
 
     const handleUnlinkTrainer = () => {
         if (!trainer || !campaign) return;
-        const nextTrainer = { ...trainer, isLinked: false, avatarUrl: undefined };
-        const nextData = {
-            ...pcData,
-            campaigns: {
-                ...pcData.campaigns,
-                [pcData.activeCampaignId]: {
-                    ...campaign,
-                    trainers: { ...campaign.trainers, [trainer.id]: nextTrainer }
-                }
-            }
-        };
-        useCharacterStore.setState({ pcData: nextData });
-        savePcStorage(nextData);
+        saveTrainerProfile({ ...trainer, isLinked: false, avatarUrl: undefined });
 
         if (OBR.isAvailable) {
             OBR.notification.show(`Unlinked "${trainer.name}" from Belt.`, 'INFO');
@@ -254,9 +249,6 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
                 isOnMap: true,
                 mapTokenId: result.newMapTokenId
             });
-            if (OBR.isAvailable) {
-                OBR.notification.show(`Sent out ${summary.name || summary.species} to the map!`, 'SUCCESS');
-            }
         } else {
             console.error('[usePcModalHandlers] Failed to send out Pokémon to map:', summary);
             if (OBR.isAvailable) {
@@ -283,9 +275,6 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
                 savedTokenItem: result.savedTokenItem ?? summary.savedTokenItem,
                 fullMetadata: result.fullMetadata ?? summary.fullMetadata
             });
-            if (OBR.isAvailable) {
-                OBR.notification.show(`Recalled ${summary.name || summary.species} from the map!`, 'INFO');
-            }
         }
     };
 
@@ -324,12 +313,17 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
     const handleUnlinkPokemon = async (entityId: string) => {
         const summary = pcData.pokemonSummaries[entityId];
         if (!summary) return;
-        await unlinkPokemonFromPcOps(summary, role || 'PLAYER');
+        await unlinkPokemonFromPcOps(summary, role || 'PLAYER', (s, ownerId, r) =>
+            spawnPokemonToMap(s, ownerId, r, trainer)
+        );
         deletePokemonFromPc(entityId);
         if (sheetViewEntityId === entityId) setSheetViewEntityId(null);
         if (releaseConfirmPokemon?.entityId === entityId) setReleaseConfirmPokemon(null);
         if (OBR.isAvailable) {
-            OBR.notification.show(`Unlinked "${summary.name || summary.species}" from PC. Left on battle map.`, 'INFO');
+            OBR.notification.show(
+                `Unlinked "${summary.name || summary.species}" from PC. Placed on battle map.`,
+                'INFO'
+            );
         }
     };
 
@@ -358,8 +352,6 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         const res = await spawnTrainerToMap(trainer, role);
         if (res.alreadyOnMap && OBR.isAvailable) {
             OBR.notification.show(`${trainer.name} is already on the board!`, 'WARNING');
-        } else if (res.success && res.newMapTokenId && OBR.isAvailable) {
-            OBR.notification.show(`Placed ${trainer.name} on the map!`, 'SUCCESS');
         }
 
         if (res.newMapTokenId && trainer.mapTokenId !== res.newMapTokenId && campaign) {
@@ -444,6 +436,15 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         }
 
         if (OBR.isAvailable) {
+            const mapTokenId = finalSummary.mapTokenId || finalSummary.savedTokenItem?.id;
+            if (mapTokenId) {
+                const claimTrainerName =
+                    trainer?.name || (campaign?.activeTrainerId === '__none__' ? 'Expedition Team' : undefined);
+                stampClaimOnSceneItem(mapTokenId, finalSummary.entityId, claimTrainerName).catch(() => {});
+            }
+            if (role !== 'GM') {
+                broadcastPlayerPc();
+            }
             OBR.notification.show(`Deposited ${finalSummary.name || finalSummary.species} to storage!`, 'INFO');
         }
     };

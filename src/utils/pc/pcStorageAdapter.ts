@@ -170,7 +170,55 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
 
         const claimedByTrainer = new Map<string, string>();
 
-        for (const t of Object.values(camp.trainers)) {
+        // Helper to check and resolve valid Pokémon summary or attempt localStorage restoration
+        const resolveValidPokemonId = (pid: string | null, targetTrainerId?: string): string | null => {
+            if (!pid) return null;
+            const existingTrainer = claimedByTrainer.get(pid);
+            if (existingTrainer && targetTrainerId && existingTrainer !== targetTrainerId) return null;
+
+            let sum = data.pokemonSummaries[pid];
+            if (!sum && typeof window !== 'undefined' && window.localStorage) {
+                try {
+                    const raw = window.localStorage.getItem(`pkr_char_${pid}`);
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        if (parsed && (parsed.nickname || parsed.species || parsed.name)) {
+                            sum = {
+                                entityId: pid,
+                                trainerId: targetTrainerId,
+                                name: parsed.nickname || parsed.species || parsed.name || 'Recovered Pokémon',
+                                species: parsed.species || parsed.name || 'Unknown',
+                                rank: parsed.rank || 'Starter',
+                                type1: parsed.type1 || 'Normal',
+                                type2: parsed.type2,
+                                hp: Number(parsed['hp-curr']) || Number(parsed.hp) || 10,
+                                maxHp: Number(parsed['hp-max-display']) || Number(parsed.hpMax) || 10,
+                                will: Number(parsed['will-curr']) || Number(parsed.will) || 5,
+                                maxWill: Number(parsed['will-max-display']) || Number(parsed.willMax) || 5,
+                                tokenImageUrl: parsed['token-image-url'] || parsed.tokenImageUrl,
+                                isOnMap: false,
+                                fullMetadata: parsed,
+                                lastModified: Date.now()
+                            };
+                            data.pokemonSummaries[pid] = sum;
+                        }
+                    }
+                } catch {}
+            }
+
+            if (!sum) return null; // Prune ghost slot!
+            if (targetTrainerId && sum.trainerId && sum.trainerId !== targetTrainerId) return null;
+            if (targetTrainerId) claimedByTrainer.set(pid, targetTrainerId);
+            return pid;
+        };
+
+        for (const [tid, t] of Object.entries(camp.trainers)) {
+            if (!t || typeof t !== 'object' || !t.id) {
+                delete camp.trainers[tid];
+                continue;
+            }
+            if (!t.name || !t.name.trim()) t.name = 'Trainer';
+
             if (t.avatarUrl && (t.avatarUrl.startsWith('file:') || t.avatarUrl.startsWith('file:///'))) {
                 t.avatarUrl = undefined;
             }
@@ -187,27 +235,11 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
                     : Array.from({ length: 8 }, (_, i) => createDefaultBox(i));
             }
 
-            t.party = t.party.map((pid) => {
-                if (!pid) return null;
-                const existingTrainer = claimedByTrainer.get(pid);
-                if (existingTrainer && existingTrainer !== t.id) return null;
-                const sum = data.pokemonSummaries[pid];
-                if (sum?.trainerId && sum.trainerId !== t.id) return null;
-                claimedByTrainer.set(pid, t.id);
-                return pid;
-            });
+            t.party = t.party.map((pid) => resolveValidPokemonId(pid, t.id));
 
             for (const b of t.boxes || []) {
                 if (Array.isArray(b.slots)) {
-                    b.slots = b.slots.map((pid) => {
-                        if (!pid) return null;
-                        const existingTrainer = claimedByTrainer.get(pid);
-                        if (existingTrainer && existingTrainer !== t.id) return null;
-                        const sum = data.pokemonSummaries[pid];
-                        if (sum?.trainerId && sum.trainerId !== t.id) return null;
-                        claimedByTrainer.set(pid, t.id);
-                        return pid;
-                    });
+                    b.slots = b.slots.map((pid) => resolveValidPokemonId(pid, t.id));
                 }
             }
         }
@@ -215,16 +247,22 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
         if (Object.keys(camp.trainers).length > 0) {
             for (const b of camp.boxes) {
                 if (Array.isArray(b.slots)) {
-                    b.slots = b.slots.map((pid) => {
-                        if (pid && claimedByTrainer.has(pid)) return null;
-                        return pid;
-                    });
+                    b.slots = b.slots.map((pid) =>
+                        pid && claimedByTrainer.has(pid) ? null : resolveValidPokemonId(pid)
+                    );
                 }
             }
-            camp.teamParty = camp.teamParty.map((pid) => {
-                if (pid && claimedByTrainer.has(pid)) return null;
-                return pid;
-            });
+            camp.teamParty = camp.teamParty.map((pid) =>
+                pid && claimedByTrainer.has(pid) ? null : resolveValidPokemonId(pid)
+            );
+        }
+
+        // Active trainer sanity check
+        if (camp.activeTrainerId !== '__none__') {
+            if (!camp.trainers[camp.activeTrainerId]) {
+                const firstId = Object.keys(camp.trainers)[0];
+                camp.activeTrainerId = firstId || '__none__';
+            }
         }
 
         for (const t of Object.values(camp.trainers)) {
@@ -244,6 +282,13 @@ export function sanitizePcData(data: PcStorageData): PcStorageData {
         }
         for (const pid of camp.teamParty) {
             if (pid) referencedIds.add(pid);
+        }
+    }
+
+    // Prune invalid or corrupted Pokémon summaries
+    for (const [id, s] of Object.entries(data.pokemonSummaries)) {
+        if (!s || typeof s !== 'object' || (!s.name && !s.species)) {
+            delete data.pokemonSummaries[id];
         }
     }
 

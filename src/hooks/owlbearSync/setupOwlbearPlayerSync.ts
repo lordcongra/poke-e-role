@@ -139,16 +139,15 @@ export async function setupOwlbearPlayerSync(params: { role: 'PLAYER' | 'GM' }):
 
     const unsubPlayer = OBR.player.onChange(async (player) => {
         const currentRole = player.role || (await OBR.player.getRole());
+        const store = useCharacterStore.getState();
+        if (store.role !== currentRole) {
+            store.setTokenData(store.tokenId || '', currentRole);
+        }
         if (player.selection && player.selection.length > 0) {
             try {
                 await loadTokenAndLearnset(player.selection[0], currentRole);
             } catch (e) {
                 console.error('[SyncEngine] Engine recovered from token click crash:', e);
-            }
-        } else {
-            const store = useCharacterStore.getState();
-            if (store.role !== currentRole) {
-                store.setTokenData(store.tokenId || '', currentRole);
             }
         }
     });

@@ -1,7 +1,6 @@
 import type {
     PcStorageData,
     PcPokemonSummary,
-    SheetFieldDiff,
     TrainerRoster,
     CampaignProfile,
     PcBox
@@ -447,17 +446,4 @@ export function applyDeleteSummary(pcData: PcStorageData, entityId: string): PcS
     };
 }
 
-export function applyReviewDiffsToSummary(summary: PcPokemonSummary, diffs: SheetFieldDiff[]): PcPokemonSummary {
-    const updated = { ...summary };
-    for (const diff of diffs) {
-        if (!diff.accepted) continue;
-        if (diff.id === 'hp') updated.hp = Number(diff.playerValue);
-        else if (diff.id === 'maxHp') updated.maxHp = Number(diff.playerValue);
-        else if (diff.id === 'will') updated.will = Number(diff.playerValue);
-        else if (diff.id === 'maxWill') updated.maxWill = Number(diff.playerValue);
-        else if (diff.id === 'name') updated.name = String(diff.playerValue);
-        else if (diff.id === 'species') updated.species = String(diff.playerValue);
-        else if (diff.id === 'rank') updated.rank = String(diff.playerValue);
-    }
-    return updated;
-}
+export { applyReviewDiffsToSummary } from './pcDiffUtils';
