@@ -72,7 +72,9 @@ export const PcImportModal: React.FC<PcImportModalProps> = ({
             }
 
             const currentData = useCharacterStore.getState().pcData;
-            const res = restoreTokensIntoPcStorage(foundTokens, currentData);
+            const role = useCharacterStore.getState().role;
+            const myPlayerId = OBR.isAvailable ? await OBR.player.getId().catch(() => undefined) : undefined;
+            const res = restoreTokensIntoPcStorage(foundTokens, currentData, 0, role, myPlayerId);
 
             if (res.success && res.nextData) {
                 if (onScanSceneSuccess) {

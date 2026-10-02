@@ -363,7 +363,7 @@ export function buildActiveCharacterSummary(
 export function filterTrainerPokemonSummaries(
     summaries: Record<string, PcPokemonSummary>,
     trainer?: { id: string; party: (string | null)[]; boxes?: PcBox[] },
-    campaign?: { boxes: PcBox[]; teamParty?: (string | null)[] }
+    campaign?: { id?: string; boxes: PcBox[]; teamParty?: (string | null)[] }
 ): PcPokemonSummary[] {
     if (trainer) {
         const partyEntityIds = new Set(trainer.party?.filter(Boolean) || []);
@@ -382,7 +382,7 @@ export function filterTrainerPokemonSummaries(
         });
     }
 
-    // PMD / No-Trainer Mode: Use campaign teamParty and campaign boxes
+    // PMD / No-Trainer Mode: Strictly use campaign teamParty and campaign boxes
     const teamPartyIds = new Set(campaign?.teamParty?.filter(Boolean) || []);
     const campaignBoxEntityIds = new Set<string>();
     for (const b of campaign?.boxes || []) {
@@ -394,7 +394,7 @@ export function filterTrainerPokemonSummaries(
         if (!p) return false;
         if (teamPartyIds.has(p.entityId)) return false;
         if (campaignBoxEntityIds.has(p.entityId)) return true;
-        if (!p.trainerId) return true;
+        if (!p.trainerId && campaign?.id && p.campaignId === campaign.id) return true;
         return false;
     });
 }

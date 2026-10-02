@@ -27,6 +27,7 @@ export interface PcPokemonSummary {
     savedTokenItem?: Item;
     fullMetadata?: Record<string, unknown>;
     trainerId?: string;
+    campaignId?: string;
     lastModified?: number;
 }
 

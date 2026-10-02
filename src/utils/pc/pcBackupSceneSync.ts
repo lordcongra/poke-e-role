@@ -142,8 +142,16 @@ export async function scanSceneBackupTokens(): Promise<Item[]> {
     if (!OBR.isAvailable) return [];
     try {
         const items = await OBR.scene.items.getItems();
+        const role = (await OBR.player.getRole()) || 'PLAYER';
+        const myPlayerId = await OBR.player.getId().catch(() => undefined);
         return items.filter((it) => {
             if (it.layer !== 'CHARACTER') return false;
+            // Security: Locked tokens and tokens claimed by other players are excluded for non-GMs
+            if (role !== 'GM' && it.locked) return false;
+            const claim = it.metadata?.['pokerole-pmd-extension/claimed-by'] as { playerId?: string } | undefined;
+            if (role !== 'GM' && claim?.playerId && myPlayerId && claim.playerId !== myPlayerId) {
+                return false;
+            }
             const meta = (it.metadata?.[METADATA_ID] || it.metadata?.['pokerole-pmd-extension/stats']) as
                 | Record<string, unknown>
                 | undefined;

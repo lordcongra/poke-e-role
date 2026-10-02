@@ -1,5 +1,5 @@
 import type { Item } from '@owlbear-rodeo/sdk';
-import type { PcPokemonSummary, PcBox, TrainerRoster } from '../../types/pcStorageTypes';
+import type { PcPokemonSummary, PcBox, TrainerRoster, CampaignProfile } from '../../types/pcStorageTypes';
 import { METADATA_ID } from '../sync/obr';
 import { storageAdapter } from '../sync/storageAdapter';
 import { getAbsolutePokeballUrl } from '../generators/trainerTokenSpawner';
@@ -81,7 +81,10 @@ export function resolveSceneCandidateMatch(
     myPlayerId?: string,
     activeTrainerId?: string,
     activeTrainerName?: string,
-    allTrainers?: TrainerRoster[]
+    allTrainers?: TrainerRoster[],
+    campaign?: CampaignProfile,
+    allCampaigns?: Record<string, CampaignProfile>,
+    myRole: 'PLAYER' | 'GM' = 'PLAYER'
 ): {
     matchedEntityId?: string;
     isInParty: boolean;
@@ -92,6 +95,24 @@ export function resolveSceneCandidateMatch(
     const claimMeta = item.metadata?.['pokerole-pmd-extension/claimed-by'] as
         | { playerId?: string; playerName?: string; trainerName?: string; entityId?: string }
         | undefined;
+
+    // Security check: locked tokens or tokens claimed by another player
+    if (myRole !== 'GM' && item.locked) {
+        return {
+            matchedEntityId: undefined,
+            isInParty: false,
+            isInBoxes: false,
+            claimedBy: 'Locked by GM (Ask GM to unlock)'
+        };
+    }
+    if (myRole !== 'GM' && claimMeta?.playerId && myPlayerId && claimMeta.playerId !== myPlayerId) {
+        return {
+            matchedEntityId: undefined,
+            isInParty: false,
+            isInBoxes: false,
+            claimedBy: claimMeta.playerName || claimMeta.trainerName || 'Another Player'
+        };
+    }
 
     const summariesList = Object.values(pokemonSummaries);
     let matchedEntityId: string | undefined = undefined;
@@ -143,13 +164,15 @@ export function resolveSceneCandidateMatch(
     let claimedBy: string | undefined = undefined;
     let isInParty = false;
     let isInBoxes = false;
+    const isNamedTrainer = Boolean(activeTrainerId && activeTrainerId !== '__none__');
 
     // Check ownership across all trainers in campaign
     if (allTrainers && allTrainers.length > 0) {
         for (const tr of allTrainers) {
             const isCurrentTrainer =
-                (activeTrainerId && tr.id === activeTrainerId) ||
-                (activeTrainerName && tr.name.toLowerCase() === activeTrainerName.toLowerCase());
+                isNamedTrainer &&
+                ((activeTrainerId && tr.id === activeTrainerId) ||
+                    (activeTrainerName && tr.name.toLowerCase() === activeTrainerName.toLowerCase()));
 
             const rawParty = tr.party || (tr as { partySlots?: (string | null)[] }).partySlots || [];
             const trPartyIds = new Set(rawParty.filter(Boolean) as string[]);
@@ -175,6 +198,44 @@ export function resolveSceneCandidateMatch(
                     break;
                 }
             }
+        }
+    }
+
+    // PMD team & box checks
+    if (campaign && matchedEntityId) {
+        const inPmdParty = (campaign.teamParty || []).includes(matchedEntityId);
+        const inPmdBoxes = (campaign.boxes || []).some((b: PcBox) => (b.slots || []).includes(matchedEntityId));
+        if (isNamedTrainer) {
+            if (!claimedBy && (inPmdParty || inPmdBoxes)) {
+                claimedBy = 'Expedition Team (PMD)';
+            }
+        } else {
+            if (inPmdParty) isInParty = true;
+            if (inPmdBoxes) isInBoxes = true;
+        }
+    }
+
+    // Cross-campaign ownership check
+    if (!claimedBy && allCampaigns && campaign && matchedEntityId) {
+        for (const [cId, otherCamp] of Object.entries(allCampaigns)) {
+            if (cId === campaign.id) continue;
+            const inOtherTeam = (otherCamp.teamParty || []).includes(matchedEntityId);
+            const inOtherBoxes = (otherCamp.boxes || []).some((b: PcBox) => (b.slots || []).includes(matchedEntityId));
+            if (inOtherTeam || inOtherBoxes) {
+                claimedBy = `Expedition Team (${otherCamp.name})`;
+                break;
+            }
+            for (const tr of Object.values(otherCamp.trainers || {}) as TrainerRoster[]) {
+                const trParty = tr.party || (tr as { partySlots?: (string | null)[] }).partySlots || [];
+                if (
+                    trParty.includes(matchedEntityId) ||
+                    (tr.boxes || []).some((b: PcBox) => (b.slots || []).includes(matchedEntityId))
+                ) {
+                    claimedBy = `${tr.name} (${otherCamp.name})`;
+                    break;
+                }
+            }
+            if (claimedBy) break;
         }
     }
 

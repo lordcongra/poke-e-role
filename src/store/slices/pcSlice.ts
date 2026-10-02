@@ -1,6 +1,12 @@
 import type { StateCreator } from 'zustand';
 import type { CharacterState } from '../storeTypes';
-import type { PcSlice, PcPokemonSummary, SheetReviewPayload, SheetFieldDiff } from '../../types/pcStorageTypes';
+import type {
+    PcSlice,
+    PcStorageData,
+    PcPokemonSummary,
+    SheetReviewPayload,
+    SheetFieldDiff
+} from '../../types/pcStorageTypes';
 import {
     createInitialPcStorageData,
     createDefaultCampaign,
@@ -333,14 +339,28 @@ export const createPcSlice: StateCreator<CharacterState, [], [], PcSlice> = (set
     switchCampaign: (campaignId: string) => {
         try {
             const { pcData } = get();
-            if (!pcData.campaigns[campaignId]) return;
+            const targetCamp = pcData.campaigns[campaignId];
+            if (!targetCamp) return;
 
-            const nextData = {
+            let activeTrainerId = targetCamp.activeTrainerId;
+            if (activeTrainerId !== '__none__' && (!targetCamp.trainers || !targetCamp.trainers[activeTrainerId])) {
+                activeTrainerId = Object.keys(targetCamp.trainers || {})[0] || '__none__';
+            }
+
+            const nextData: PcStorageData = {
                 ...pcData,
-                activeCampaignId: campaignId
+                activeCampaignId: campaignId,
+                campaigns: {
+                    ...pcData.campaigns,
+                    [campaignId]: {
+                        ...targetCamp,
+                        activeTrainerId
+                    }
+                }
             };
-            set({ pcData: nextData, activeBoxIndex: 0 });
+            set({ pcData: nextData, activeBoxIndex: 0, selectedPcSlot: null });
             savePcStorage(nextData);
+            markDataChanged();
         } catch (e) {
             console.error('[PcSlice] Failed to switch campaign:', e);
         }

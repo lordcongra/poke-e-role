@@ -166,6 +166,27 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
                 if (items.length > 0) savedItem = items[0];
             } catch {}
         }
+        if (role !== 'GM' && savedItem) {
+            if (savedItem.locked) {
+                if (OBR.isAvailable) {
+                    OBR.notification.show(
+                        'Cannot link: This trainer token is locked by the GM. Ask your GM to unlock it.',
+                        'WARNING'
+                    );
+                }
+                return;
+            }
+            const myId = OBR.isAvailable ? await OBR.player.getId().catch(() => undefined) : undefined;
+            const claim = savedItem.metadata?.['pokerole-pmd-extension/claimed-by'] as
+                | { playerId?: string }
+                | undefined;
+            if (claim?.playerId && myId && claim.playerId !== myId) {
+                if (OBR.isAvailable) {
+                    OBR.notification.show('Cannot link: This trainer token belongs to another player.', 'WARNING');
+                }
+                return;
+            }
+        }
         const nextTrainer = {
             ...buildLinkedTrainer(trainer, store, trainerName, identity.tokenImageUrl || undefined),
             savedTokenItem: savedItem
@@ -382,7 +403,8 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
 
     const handleDownloadBox = async () => {
         if (!campaign) return;
-        await executeCloudRestore(campaign.name, pcData, activeBoxIndex);
+        const myId = OBR.isAvailable ? await OBR.player.getId().catch(() => undefined) : undefined;
+        await executeCloudRestore(campaign.name, pcData, activeBoxIndex, role, myId);
     };
 
     const handleCompleteDeposit = async (summary: PcPokemonSummary) => {
@@ -390,10 +412,20 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
             summary,
             trainer,
             pcData.pokemonSummaries,
-            useCharacterStore.getState()
+            useCharacterStore.getState(),
+            campaign?.id
         );
 
-        const validation = validateDepositTarget(finalSummary, trainer, campaign, depositTarget?.targetSlot?.type);
+        const myId = OBR.isAvailable ? await OBR.player.getId().catch(() => undefined) : undefined;
+        const validation = validateDepositTarget(
+            finalSummary,
+            trainer,
+            campaign,
+            depositTarget?.targetSlot?.type,
+            pcData.campaigns,
+            role,
+            myId
+        );
         if (!validation.allowed) {
             if (OBR.isAvailable && validation.reason) {
                 OBR.notification.show(validation.reason, 'WARNING');

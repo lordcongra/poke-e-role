@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import OBR, { type Item } from '@owlbear-rodeo/sdk';
-import type { PcPokemonSummary, TrainerRoster, AttachmentBundle } from '../../../types/pcStorageTypes';
+import type { PcPokemonSummary, TrainerRoster, AttachmentBundle, CampaignProfile } from '../../../types/pcStorageTypes';
 import { METADATA_ID } from '../../../utils/sync/obr';
 import { getAbsolutePokeballUrl } from '../../../utils/generators/trainerTokenSpawner';
 import { resolveSceneCandidateMatch, scanStandaloneCandidates } from '../../../utils/pc/pcCandidateMatching';
@@ -8,6 +8,7 @@ import { calculateRelativeAttachment } from '../../../utils/pc/rehomeEngine';
 import { GRAPHICS_META_ID } from '../../../utils/graphics/graphicsManager';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { storageAdapter } from '../../../utils/sync/storageAdapter';
+import { resolvePokemonOwnership } from '../../../utils/pc/pcDepositOps';
 import { PcDepositCandidateCard, type SceneCandidate } from './PcDepositCandidateCard';
 import { PcDepositStoredCard } from './PcDepositStoredCard';
 import { PcDepositActiveCard } from './PcDepositActiveCard';
@@ -20,6 +21,8 @@ interface PcDepositDrawerModalProps {
     trainerName?: string;
     activeTrainerId?: string;
     trainers?: TrainerRoster[];
+    campaign?: CampaignProfile;
+    allCampaigns?: Record<string, CampaignProfile>;
     trainerPokemonSummaries?: PcPokemonSummary[];
     pokemonSummaries?: Record<string, PcPokemonSummary>;
     partySlots?: (string | null)[];
@@ -35,6 +38,8 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
     trainerName,
     activeTrainerId,
     trainers,
+    campaign,
+    allCampaigns,
     trainerPokemonSummaries = [],
     pokemonSummaries = {},
     partySlots = [],
@@ -49,6 +54,16 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
 
     const [sceneCandidates, setSceneCandidates] = useState<SceneCandidate[]>([]);
     const [isLoadingScene, setIsLoadingScene] = useState(false);
+    const [currentMyPlayerId, setCurrentMyPlayerId] = useState<string | undefined>(undefined);
+
+    useEffect(() => {
+        if (OBR.isAvailable) {
+            OBR.player
+                .getId()
+                .then(setCurrentMyPlayerId)
+                .catch(() => {});
+        }
+    }, []);
 
     useEffect(() => {
         if (!OBR.isAvailable) {
@@ -76,7 +91,12 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                 const found: SceneCandidate[] = [];
 
                 for (const item of items) {
-                    if (item.attachedTo) continue;
+                    const claimMeta = item.metadata?.['pokerole-pmd-extension/claimed-by'] as
+                        | { playerId?: string; playerName?: string; trainerName?: string; entityId?: string }
+                        | undefined;
+                    if (!isGm && claimMeta?.playerId && myPlayerId && claimMeta.playerId !== myPlayerId) {
+                        continue;
+                    }
                     const meta = (item.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
                     const mode = (meta.mode as string) || '';
                     if (mode === 'Trainer' || mode === 'Trainer (Special)') continue;
@@ -100,7 +120,10 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                             myPlayerId,
                             activeTrainerId,
                             trainerName,
-                            trainers
+                            trainers,
+                            campaign,
+                            allCampaigns,
+                            role
                         );
 
                         found.push({
@@ -133,7 +156,7 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
         };
 
         scanScene();
-    }, [isGm, partySlots, pokemonSummaries, trainerName, activeTrainerId, trainers]);
+    }, [isGm, partySlots, pokemonSummaries, trainerName, activeTrainerId, trainers, campaign, allCampaigns]);
 
     const handleSelectCandidate = async (cand: SceneCandidate) => {
         if (cand.claimedBy) return;
@@ -254,6 +277,21 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
 
     const availableStored = trainerPokemonSummaries.filter((p) => !partyEntityIds.has(p.entityId));
 
+    const activeOwnership = currentActiveSummary
+        ? resolvePokemonOwnership(
+              currentActiveSummary.entityId,
+              activeTrainerId,
+              campaign,
+              allCampaigns,
+              currentActiveSummary.fullMetadata?.['pokerole-pmd-extension/claimed-by'] as
+                  | { trainerName?: string; playerName?: string; playerId?: string; entityId?: string }
+                  | undefined,
+              currentActiveSummary,
+              currentMyPlayerId,
+              role
+          )
+        : null;
+
     return (
         <div className="modal-backdrop pc-deposit-modal-backdrop" style={modalThemeStyle} onClick={onClose}>
             <div
@@ -292,7 +330,12 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                             <PcDepositActiveCard
                                 summary={currentActiveSummary}
                                 targetSlotType={targetSlot?.type}
-                                isAlreadyOnBelt={partyEntityIds.has(currentActiveSummary.entityId)}
+                                isAlreadyOnBelt={
+                                    activeOwnership?.isInParty ?? partyEntityIds.has(currentActiveSummary.entityId)
+                                }
+                                isInParty={activeOwnership?.isInParty}
+                                isInBoxes={activeOwnership?.isInBoxes}
+                                claimedBy={activeOwnership?.claimedBy}
                                 partyButtonText={partyButtonText}
                                 onSelect={() => {
                                     onDepositSummary(currentActiveSummary);

@@ -31,6 +31,21 @@ export async function setupOwlbearPlayerSync(params: { role: 'PLAYER' | 'GM' }):
                 }
 
                 const currentRole = overrideRole || (await OBR.player.getRole()) || role;
+                if (currentRole !== 'GM' && tokenItem.locked) {
+                    const myId = await OBR.player.getId().catch(() => undefined);
+                    const claim = tokenItem.metadata?.['pokerole-pmd-extension/claimed-by'] as
+                        | { playerId?: string }
+                        | undefined;
+                    if (tokenItem.createdUserId !== myId && claim?.playerId !== myId) {
+                        if (OBR.isAvailable) {
+                            OBR.notification.show(
+                                'This character sheet is locked by the GM. Ask your GM to unlock it to view or add it!',
+                                'INFO'
+                            );
+                        }
+                        return;
+                    }
+                }
                 const store = useCharacterStore.getState();
                 setActiveTokenId(targetTokenId);
                 store.setTokenData(targetTokenId, currentRole);

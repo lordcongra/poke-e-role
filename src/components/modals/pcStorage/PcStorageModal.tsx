@@ -172,6 +172,19 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
     });
 
     const handleOpenCharacterSheet = (entityId: string) => {
+        const sum = pcData.pokemonSummaries[entityId] || (trainer?.id === entityId ? trainerSummary : null);
+        if (
+            role !== 'GM' &&
+            (sum?.savedTokenItem?.locked || (sum?.fullMetadata as Record<string, unknown>)?.locked === true)
+        ) {
+            if (OBR.isAvailable) {
+                OBR.notification.show(
+                    'This character token is locked by the GM. Ask your GM to unlock it to inspect or edit.',
+                    'WARNING'
+                );
+            }
+            return;
+        }
         setSheetViewEntityId(entityId);
     };
 
@@ -180,9 +193,14 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         return buildTrainerSummary(trainer);
     }, [trainer]);
 
-    const activeSheetSummary =
+    const rawActiveSheetSummary =
         (sheetViewEntityId && pcData.pokemonSummaries[sheetViewEntityId]) ||
         (sheetViewEntityId === trainer?.id ? trainerSummary : null);
+    const isLockedActiveSheet = Boolean(
+        rawActiveSheetSummary?.savedTokenItem?.locked ||
+        (rawActiveSheetSummary?.fullMetadata as Record<string, unknown>)?.locked === true
+    );
+    const activeSheetSummary = role !== 'GM' && isLockedActiveSheet ? null : rawActiveSheetSummary;
 
     const sheetAvailableSummaries = useMemo(
         () => buildSheetAvailableSummaries(trainer, trainerSummary, pcData.pokemonSummaries, partySlots, trainerBoxes),
@@ -355,7 +373,7 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                             isTrainerLinked={isTrainerLinked}
                             isTrainerOnMap={isTrainerOnMap}
                             onUnlinkTrainer={handleUnlinkTrainer}
-                            onOpenTrainerSheet={trainer ? () => setSheetViewEntityId(trainer.id) : undefined}
+                            onOpenTrainerSheet={trainer ? () => handleOpenCharacterSheet(trainer.id) : undefined}
                             onDropTrainerToken={handleDropTrainerToken}
                             onOrganizeFolders={!OBR.isAvailable ? handleOrganizeFolders : undefined}
                         />

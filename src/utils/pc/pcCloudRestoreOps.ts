@@ -63,7 +63,9 @@ export async function importBoxCloud(campaign: CampaignProfile): Promise<PcPokem
 export function restoreTokensIntoPcStorage(
     items: Item[],
     currentPcData: PcStorageData,
-    activeBoxIndex: number = 0
+    activeBoxIndex: number = 0,
+    role: 'PLAYER' | 'GM' = 'PLAYER',
+    myPlayerId?: string
 ): RestoreTokensResult {
     if (!currentPcData?.campaigns) {
         return {
@@ -115,6 +117,13 @@ export function restoreTokensIntoPcStorage(
     let trainerRestored = false;
 
     for (const item of items) {
+        // Security check: Ignore locked tokens or tokens claimed by other players for non-GMs
+        if (role !== 'GM') {
+            if (item.locked) continue;
+            const claimMeta = item.metadata?.['pokerole-pmd-extension/claimed-by'] as { playerId?: string } | undefined;
+            if (claimMeta?.playerId && myPlayerId && claimMeta.playerId !== myPlayerId) continue;
+        }
+
         const meta = (item.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
 
         // 1. Trainer Token Detection - NEVER deposit into a Pokémon Box!
@@ -126,6 +135,13 @@ export function restoreTokensIntoPcStorage(
 
         if (isTrainer) {
             if (trainer) {
+                if (role !== 'GM') {
+                    if (item.locked) continue;
+                    const claimMeta = item.metadata?.['pokerole-pmd-extension/claimed-by'] as
+                        | { playerId?: string }
+                        | undefined;
+                    if (claimMeta?.playerId && myPlayerId && claimMeta.playerId !== myPlayerId) continue;
+                }
                 const imgUrl = (meta['token-image-url'] as string) || (item as { image?: { url?: string } }).image?.url;
                 if (imgUrl) trainer.avatarUrl = sanitizeImageUrl(imgUrl);
                 trainer.savedTokenItem = item;
@@ -281,7 +297,9 @@ function depositToBoxSlots(boxes: PcBox[], preferredBoxIndex: number, entityId: 
 export async function downloadAndRestoreCloudScene(
     campaignName: string,
     currentPcData: PcStorageData,
-    activeBoxIndex: number
+    activeBoxIndex: number,
+    role: 'PLAYER' | 'GM' = 'PLAYER',
+    myPlayerId?: string
 ): Promise<RestoreTokensResult> {
     const downloadedScenes = await downloadBoxFromObrCloud(campaignName);
     if (!downloadedScenes || downloadedScenes.length === 0) {
@@ -312,5 +330,5 @@ export async function downloadAndRestoreCloudScene(
         };
     }
 
-    return restoreTokensIntoPcStorage(allItems, currentPcData, activeBoxIndex);
+    return restoreTokensIntoPcStorage(allItems, currentPcData, activeBoxIndex, role, myPlayerId);
 }

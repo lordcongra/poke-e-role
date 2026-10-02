@@ -62,9 +62,11 @@ export async function executeCloudExport(
 export async function executeCloudRestore(
     campaignName: string,
     pcData: PcStorageData,
-    activeBoxIndex: number
+    activeBoxIndex: number,
+    role: 'PLAYER' | 'GM' = 'PLAYER',
+    myPlayerId?: string
 ): Promise<boolean> {
-    const res = await downloadAndRestoreCloudScene(campaignName, pcData, activeBoxIndex);
+    const res = await downloadAndRestoreCloudScene(campaignName, pcData, activeBoxIndex, role, myPlayerId);
     if (res.success && res.nextData) {
         useCharacterStore.setState({ pcData: res.nextData });
         await savePcStorage(res.nextData);

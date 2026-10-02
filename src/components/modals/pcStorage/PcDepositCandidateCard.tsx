@@ -39,6 +39,7 @@ export const PcDepositCandidateCard: React.FC<PcDepositCandidateCardProps> = ({
 }) => {
     const resolvedAvatar = useResolvedImageUrl(candidate.imageUrl, getAbsolutePokeballUrl());
     const isPartySlot = targetSlotType === 'party';
+    const isLocked = Boolean(candidate.claimedBy?.toLowerCase().includes('locked'));
 
     return (
         <div className={`pc-deposit-card ${candidate.claimedBy ? 'pc-deposit-card--claimed' : ''}`}>
@@ -56,14 +57,18 @@ export const PcDepositCandidateCard: React.FC<PcDepositCandidateCardProps> = ({
                     {candidate.name}
                 </span>
                 <span className="text-subtext">
-                    {candidate.species} • {candidate.hp}/{candidate.maxHp} HP
+                    {candidate.species} {isLocked ? '• Locked by GM' : `• ${candidate.hp}/${candidate.maxHp} HP`}
                 </span>
                 {candidate.claimedBy ? (
                     <span
                         className="pc-deposit-card__claimed-tag text-subtext"
-                        title={`Claimed by ${candidate.claimedBy}`}
+                        title={
+                            isLocked
+                                ? 'This sheet is locked by the GM. Ask your GM to unlock it to add it to your party.'
+                                : `Claimed by ${candidate.claimedBy}`
+                        }
                     >
-                        <Lock size={10} /> Claimed by {candidate.claimedBy}
+                        <Lock size={10} /> {candidate.claimedBy}
                     </span>
                 ) : candidate.isInParty ? (
                     <span className="pc-deposit-card__claimed-tag text-subtext" title="Already on your belt">
@@ -81,9 +86,13 @@ export const PcDepositCandidateCard: React.FC<PcDepositCandidateCardProps> = ({
                     type="button"
                     className="action-button action-button--dark pc-deposit-btn--disabled"
                     disabled
-                    title={`This Pokémon is already claimed by ${candidate.claimedBy}`}
+                    title={
+                        isLocked
+                            ? 'This sheet is locked by the GM. Ask your GM to unlock it to add it to your party.'
+                            : `This Pokémon is already claimed by ${candidate.claimedBy}`
+                    }
                 >
-                    Claimed
+                    <Lock size={14} /> {isLocked ? 'Locked by GM' : 'Claimed'}
                 </button>
             ) : isPartySlot && candidate.isInParty ? (
                 <button
