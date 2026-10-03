@@ -7,6 +7,7 @@ import type { Item } from '@owlbear-rodeo/sdk';
 import {
     syncHealthAndWill,
     type RestoreConfig,
+    getBase,
     getLimit,
     extractAbilities,
     parseLearnset,
@@ -329,13 +330,48 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             const heightStr = state.identity.height || parseHeight(dataRecord.Height);
             const weightStr = state.identity.weight || parseWeight(dataRecord.Weight);
 
+            // Detect if base stats are at generic uninitialized defaults (2, 2, 2, 2, 1 and hpBase 4)
+            const isDefaultBaseStats =
+                state.stats[CombatStat.STR].base === 2 &&
+                state.stats[CombatStat.DEX].base === 2 &&
+                state.stats[CombatStat.VIT].base === 2 &&
+                state.stats[CombatStat.SPE].base === 2 &&
+                state.stats[CombatStat.INS].base === 1 &&
+                state.health.hpBase === 4;
+
+            const baseStats = dataRecord.BaseStats as Record<string, unknown> | undefined;
+            const speciesHpBase = Number(dataRecord.BaseHP || (baseStats && baseStats.HP)) || 0;
+            const needsBaseRecovery =
+                isDefaultBaseStats &&
+                (speciesHpBase > 0 || dataRecord.Dexterity !== undefined || dataRecord.Strength !== undefined);
+
             const newStats = {
                 ...state.stats,
-                [CombatStat.STR]: { ...state.stats[CombatStat.STR], limit: getLimit(dataRecord, 'Strength') },
-                [CombatStat.DEX]: { ...state.stats[CombatStat.DEX], limit: getLimit(dataRecord, 'Dexterity') },
-                [CombatStat.VIT]: { ...state.stats[CombatStat.VIT], limit: getLimit(dataRecord, 'Vitality') },
-                [CombatStat.SPE]: { ...state.stats[CombatStat.SPE], limit: getLimit(dataRecord, 'Special') },
-                [CombatStat.INS]: { ...state.stats[CombatStat.INS], limit: getLimit(dataRecord, 'Insight') }
+                [CombatStat.STR]: {
+                    ...state.stats[CombatStat.STR],
+                    limit: getLimit(dataRecord, 'Strength'),
+                    ...(needsBaseRecovery ? { base: getBase(dataRecord, 'Strength', 2) } : {})
+                },
+                [CombatStat.DEX]: {
+                    ...state.stats[CombatStat.DEX],
+                    limit: getLimit(dataRecord, 'Dexterity'),
+                    ...(needsBaseRecovery ? { base: getBase(dataRecord, 'Dexterity', 2) } : {})
+                },
+                [CombatStat.VIT]: {
+                    ...state.stats[CombatStat.VIT],
+                    limit: getLimit(dataRecord, 'Vitality'),
+                    ...(needsBaseRecovery ? { base: getBase(dataRecord, 'Vitality', 2) } : {})
+                },
+                [CombatStat.SPE]: {
+                    ...state.stats[CombatStat.SPE],
+                    limit: getLimit(dataRecord, 'Special'),
+                    ...(needsBaseRecovery ? { base: getBase(dataRecord, 'Special', 2) } : {})
+                },
+                [CombatStat.INS]: {
+                    ...state.stats[CombatStat.INS],
+                    limit: getLimit(dataRecord, 'Insight'),
+                    ...(needsBaseRecovery ? { base: getBase(dataRecord, 'Insight', 1) } : {})
+                }
             };
 
             const newIdentity = {
@@ -353,6 +389,9 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
             };
 
             const newHealth = { ...state.health };
+            if (needsBaseRecovery && speciesHpBase > 0) {
+                newHealth.hpBase = speciesHpBase;
+            }
             const newWill = { ...state.will };
 
             const updatesToSave: Record<string, unknown> = {
@@ -372,8 +411,17 @@ export const createMacroSlice: StateCreator<CharacterState, [], [], MacroSlice> 
                 'dex-description': newIdentity.dexDescription
             };
 
+            if (needsBaseRecovery) {
+                updatesToSave['str-base'] = newStats[CombatStat.STR].base;
+                updatesToSave['dex-base'] = newStats[CombatStat.DEX].base;
+                updatesToSave['vit-base'] = newStats[CombatStat.VIT].base;
+                updatesToSave['spe-base'] = newStats[CombatStat.SPE].base;
+                updatesToSave['ins-base'] = newStats[CombatStat.INS].base;
+                if (speciesHpBase > 0) updatesToSave['hp-base'] = newHealth.hpBase;
+            }
+
             // Always run the sync engine to ensure Max HP and Max Will match the latest stat limits (preventing current gain)
-            syncHealthAndWill(state, newStats, newIdentity, newHealth, newWill, updatesToSave, true);
+            syncHealthAndWill(state, newStats, newIdentity, newHealth, newWill, updatesToSave, !needsBaseRecovery);
 
             if (shouldSave) {
                 try {

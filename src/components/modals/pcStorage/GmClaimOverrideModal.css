@@ -1,0 +1,136 @@
+.gm-override-modal__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10005;
+    padding: 16px;
+}
+
+.gm-override-modal__content {
+    background: var(--panel-bg);
+    border: 1px solid var(--primary);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 480px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: gmOverrideFadeIn 0.15s ease-out;
+}
+
+@keyframes gmOverrideFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.gm-override-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 12px;
+}
+
+.gm-override-modal__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 1.15rem;
+    color: var(--semantic-danger, #f87171);
+}
+
+.gm-override-modal__body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.gm-override-modal__conflict-card {
+    background: var(--panel-alt, rgba(0, 0, 0, 0.2));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.gm-override-modal__avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gm-override-modal__pokemon-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.gm-override-modal__pokemon-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gm-override-modal__pokemon-species {
+    font-size: 0.825rem;
+    color: var(--text-muted);
+}
+
+.gm-override-modal__reason-box {
+    background: rgba(239, 68, 68, 0.12);
+    border-left: 3px solid var(--semantic-danger, #f87171);
+    padding: 10px 12px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: var(--text-main);
+}
+
+.gm-override-modal__tip-box {
+    background: rgba(59, 130, 246, 0.1);
+    border-left: 3px solid var(--primary, #60a5fa);
+    padding: 10px 12px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--text-muted);
+}
+
+.gm-override-modal__tip-title {
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 2px;
+}
+
+.gm-override-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}

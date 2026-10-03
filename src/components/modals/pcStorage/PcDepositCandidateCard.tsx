@@ -29,6 +29,7 @@ interface PcDepositCandidateCardProps {
     candidate: SceneCandidate;
     targetSlotType?: 'party' | 'box';
     partyButtonText?: string;
+    isGm?: boolean;
     onSelect: () => void;
 }
 
@@ -36,16 +37,21 @@ export const PcDepositCandidateCard: React.FC<PcDepositCandidateCardProps> = ({
     candidate,
     targetSlotType,
     partyButtonText = 'Add to Belt',
+    isGm = false,
     onSelect
 }) => {
     const resolvedAvatar = useResolvedImageUrl(candidate.imageUrl, getAbsolutePokeballUrl());
     const isPartySlot = targetSlotType === 'party';
-    const isLocked = Boolean(
-        candidate.claimedBy?.toLowerCase().includes('locked') || isEntityLockedByGm(candidate.item, candidate.metadata)
-    );
+    const isLocked =
+        !isGm &&
+        Boolean(
+            candidate.claimedBy?.toLowerCase().includes('locked') ||
+            isEntityLockedByGm(candidate.item, candidate.metadata)
+        );
+    const hasClaim = Boolean(candidate.claimedBy && !isLocked);
 
     return (
-        <div className={`pc-deposit-card ${candidate.claimedBy || isLocked ? 'pc-deposit-card--claimed' : ''}`}>
+        <div className={`pc-deposit-card ${isLocked || hasClaim ? 'pc-deposit-card--claimed' : ''}`}>
             <img
                 src={resolvedAvatar}
                 alt={candidate.name}
@@ -60,7 +66,12 @@ export const PcDepositCandidateCard: React.FC<PcDepositCandidateCardProps> = ({
                     {candidate.name}
                 </span>
                 <span className="text-subtext">
-                    {candidate.species} {isLocked ? '• Locked by GM' : `• ${candidate.hp}/${candidate.maxHp} HP`}
+                    {candidate.species}{' '}
+                    {isLocked
+                        ? '• Locked by GM'
+                        : isGm && isEntityLockedByGm(candidate.item, candidate.metadata)
+                          ? '• Locked NPC (GM Override)'
+                          : `• ${candidate.hp}/${candidate.maxHp} HP`}
                 </span>
                 {isLocked ? (
                     <span
@@ -69,12 +80,19 @@ export const PcDepositCandidateCard: React.FC<PcDepositCandidateCardProps> = ({
                     >
                         <Lock size={10} /> Locked by GM
                     </span>
-                ) : candidate.claimedBy ? (
+                ) : hasClaim ? (
                     <span
                         className="pc-deposit-card__claimed-tag text-subtext"
                         title={`Claimed by ${candidate.claimedBy}`}
                     >
                         <Lock size={10} /> {candidate.claimedBy}
+                    </span>
+                ) : isGm && isEntityLockedByGm(candidate.item, candidate.metadata) ? (
+                    <span
+                        className="pc-deposit-card__claimed-tag text-subtext"
+                        title="GM Locked NPC - you can freely add to party"
+                    >
+                        <Lock size={10} /> NPC (Locked)
                     </span>
                 ) : candidate.isInParty ? (
                     <span className="pc-deposit-card__claimed-tag text-subtext" title="Already on your belt">
@@ -87,7 +105,7 @@ export const PcDepositCandidateCard: React.FC<PcDepositCandidateCardProps> = ({
                 ) : null}
             </div>
 
-            {candidate.claimedBy || isLocked ? (
+            {!isGm && (isLocked || hasClaim) ? (
                 <button
                     type="button"
                     className="action-button action-button--dark pc-deposit-btn--disabled"
@@ -119,7 +137,16 @@ export const PcDepositCandidateCard: React.FC<PcDepositCandidateCardProps> = ({
                     In Box
                 </button>
             ) : (
-                <button type="button" className="action-button action-button--theme" onClick={onSelect}>
+                <button
+                    type="button"
+                    className="action-button action-button--theme"
+                    onClick={onSelect}
+                    title={
+                        isGm && hasClaim
+                            ? `Claimed by ${candidate.claimedBy} - Click to reassign or force transfer`
+                            : undefined
+                    }
+                >
                     <Check size={14} /> {isPartySlot ? partyButtonText : 'Deposit'}
                 </button>
             )}

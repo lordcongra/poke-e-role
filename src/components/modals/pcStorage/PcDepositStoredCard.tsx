@@ -53,9 +53,16 @@ export const PcDepositStoredCard: React.FC<PcDepositStoredCardProps> = ({
                     <span className="pc-deposit-card__claimed-tag text-subtext" title={`Claimed by ${claimedBy}`}>
                         <Lock size={10} /> {claimedBy}
                     </span>
+                ) : isGm && isEntityLockedByGm(pokemon) ? (
+                    <span
+                        className="pc-deposit-card__claimed-tag text-subtext"
+                        title="GM Locked NPC - you can freely add to party"
+                    >
+                        <Lock size={10} /> NPC (Locked)
+                    </span>
                 ) : null}
             </div>
-            {isLocked || hasClaim ? (
+            {!isGm && (isLocked || hasClaim) ? (
                 <button
                     type="button"
                     className="action-button action-button--dark pc-deposit-btn--disabled"
@@ -69,7 +76,14 @@ export const PcDepositStoredCard: React.FC<PcDepositStoredCardProps> = ({
                     <Lock size={14} /> {isLocked ? 'Locked by GM' : 'Claimed'}
                 </button>
             ) : (
-                <button type="button" className="action-button action-button--theme" onClick={onSelect}>
+                <button
+                    type="button"
+                    className="action-button action-button--theme"
+                    onClick={onSelect}
+                    title={
+                        isGm && hasClaim ? `Claimed by ${claimedBy} - Click to reassign or force transfer` : undefined
+                    }
+                >
                     <Check size={14} /> {isPartySlot ? partyButtonText : 'Select'}
                 </button>
             )}

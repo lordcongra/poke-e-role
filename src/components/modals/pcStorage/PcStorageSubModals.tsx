@@ -7,6 +7,8 @@ import { PcSheetModal } from './PcSheetModal';
 import { PcReleaseConfirmModal } from './PcReleaseConfirmModal';
 import { PcGuideModal } from './PcGuideModal';
 import { PcSlotContextMenu } from './PcSlotContextMenu';
+import { GmClaimOverrideModal } from './GmClaimOverrideModal';
+import type { GmClaimConflict } from '../../../utils/pc/pcClaimOverrideOps';
 import { isEntityLockedByGm } from '../../../utils/pc/pcCandidateMatching';
 import type {
     PcBox,
@@ -76,6 +78,9 @@ interface PcStorageSubModalsProps {
     handleRelinkArtwork?: (entityId: string) => void;
     handleClonePokemon?: (entityId: string) => void;
     handleReleasePokemon?: (entityId: string) => void;
+    gmClaimConflict?: GmClaimConflict | null;
+    onCloseGmClaimConflict?: () => void;
+    onConfirmGmClaimOverride?: () => void;
 }
 
 export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
@@ -120,7 +125,10 @@ export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
     handleSendOut,
     handleRelinkArtwork,
     handleClonePokemon,
-    handleReleasePokemon
+    handleReleasePokemon,
+    gmClaimConflict,
+    onCloseGmClaimConflict,
+    onConfirmGmClaimOverride
 }) => {
     return (
         <>
@@ -242,6 +250,15 @@ export const PcStorageSubModals: React.FC<PcStorageSubModalsProps> = ({
                     onClone={() => handleClonePokemon?.(contextMenu.entityId)}
                     onUnlink={() => handleUnlinkPokemon(contextMenu.entityId)}
                     onRelease={() => handleReleasePokemon?.(contextMenu.entityId)}
+                />
+            )}
+
+            {/* GM Ownership Conflict Override Modal */}
+            {gmClaimConflict && (
+                <GmClaimOverrideModal
+                    conflict={gmClaimConflict}
+                    onClose={onCloseGmClaimConflict || (() => {})}
+                    onConfirmForceTransfer={onConfirmGmClaimOverride || (() => {})}
                 />
             )}
         </>

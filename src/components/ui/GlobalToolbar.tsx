@@ -265,6 +265,9 @@ export function GlobalToolbar() {
     const confirmImport = () => {
         if (!importData) return;
         try {
+            const now = Date.now();
+            importData.lastModified = now;
+
             if (
                 importData['moves-data'] !== undefined ||
                 importData['hp-curr'] !== undefined ||
@@ -275,8 +278,21 @@ export function GlobalToolbar() {
             } else {
                 useCharacterStore.setState(importData as Partial<CharacterState>);
                 const fullState = useCharacterStore.getState();
-                const metaToSave = flattenStateToMetadata(fullState);
+                const metaToSave = flattenStateToMetadata(fullState) as Record<string, unknown>;
+                metaToSave.lastModified = now;
                 saveToOwlbear(metaToSave);
+            }
+
+            // Sync with PC Storage summary if this entityId exists in PC storage
+            const entityId = (importData.entityId as string) || (importData['entityId'] as string);
+            const currentPcData = useCharacterStore.getState().pcData;
+            if (entityId && currentPcData?.pokemonSummaries?.[entityId]) {
+                const existing = currentPcData.pokemonSummaries[entityId];
+                useCharacterStore.getState().updatePokemonSummary({
+                    ...existing,
+                    lastModified: now,
+                    fullMetadata: { ...(existing.fullMetadata || {}), ...importData, lastModified: now }
+                });
             }
         } catch (error) {
             console.error('[GlobalToolbar] Failed to import character data:', error);

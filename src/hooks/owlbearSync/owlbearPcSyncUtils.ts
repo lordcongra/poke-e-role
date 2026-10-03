@@ -11,6 +11,7 @@ export interface PlayerPcSyncPayload {
 
 export interface GmPcSyncPayload {
     campaignId: string;
+    campaignName?: string;
     trainer?: TrainerRoster;
     summaries: PcPokemonSummary[];
     chunkIndex?: number;
@@ -61,17 +62,48 @@ export function sanitizeSummaryForSync(s: PcPokemonSummary): PcPokemonSummary {
     };
 }
 
+/**
+ * Ensures that no Pokémon entity ID appears more than once across a trainer's party and boxes,
+ * eliminating slot duplication bugs during two-way synchronization.
+ */
+export function deduplicateTrainerSlots(t: TrainerRoster): TrainerRoster {
+    const seen = new Set<string>();
+    const cleanParty = (t.party || []).map((id) => {
+        if (!id) return null;
+        if (seen.has(id)) return null;
+        seen.add(id);
+        return id;
+    });
+
+    const cleanBoxes = (t.boxes || []).map((b) => ({
+        ...b,
+        slots: (b.slots || []).map((id) => {
+            if (!id) return null;
+            if (seen.has(id)) return null;
+            seen.add(id);
+            return id;
+        })
+    }));
+
+    return {
+        ...t,
+        party: cleanParty,
+        boxes: cleanBoxes
+    };
+}
+
 export function sanitizeTrainerForSync(t: TrainerRoster): TrainerRoster {
     const cleanAvatar =
         t.avatarUrl && t.avatarUrl.startsWith('data:') && t.avatarUrl.length > 2048 ? undefined : t.avatarUrl;
+    const deduped = deduplicateTrainerSlots(t);
     return {
-        id: t.id,
-        name: t.name,
+        id: deduped.id,
+        name: deduped.name,
         avatarUrl: cleanAvatar,
-        party: t.party || [],
-        boxes: t.boxes || [],
-        isLinked: t.isLinked,
-        mapTokenId: t.mapTokenId
+        party: deduped.party,
+        boxes: deduped.boxes,
+        isLinked: deduped.isLinked,
+        mapTokenId: deduped.mapTokenId
     };
 }
 

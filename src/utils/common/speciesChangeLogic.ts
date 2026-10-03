@@ -92,7 +92,6 @@ export function executeSpeciesChange(
         const newSpeciesName = String(data.Name || 'Unknown');
         const newType1 = String(data.Type1 || 'Normal');
         const newType2 = sanitizeType(data.Type2);
-
         const newIdentity: CharacterState['identity'] = {
             ...state.identity,
             nickname: newSpeciesName,

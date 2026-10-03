@@ -388,7 +388,12 @@ function parseIdentity(meta: Record<string, unknown>, state: CharacterState, par
     const abilityListStr = String(meta['ability-list'] || '');
     const loadedAbilities = abilityListStr ? abilityListStr.split(',') : [];
 
-    const loadedRank = (meta['rank'] as Rank) || 'Starter';
+    const loadedRank =
+        (meta['rank'] as Rank) ||
+        (meta['Rank'] as Rank) ||
+        ((meta.identity as { rank?: Rank })?.rank as Rank) ||
+        state.identity.rank ||
+        'Starter';
     const loadedAbility = String(meta['ability'] || '');
     let loadedTags = String(meta['ability-tags'] || '');
     const cleanLoadedAbility = loadedAbility.replace(/\s*\(HA\)$/i, '').trim();

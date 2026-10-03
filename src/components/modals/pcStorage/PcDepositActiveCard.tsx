@@ -13,6 +13,7 @@ interface PcDepositActiveCardProps {
     isInBoxes?: boolean;
     claimedBy?: string;
     partyButtonText?: string;
+    isGm?: boolean;
     onSelect: () => void;
 }
 
@@ -24,16 +25,18 @@ export const PcDepositActiveCard: React.FC<PcDepositActiveCardProps> = ({
     isInBoxes = false,
     claimedBy,
     partyButtonText = 'Add to Belt',
+    isGm = false,
     onSelect
 }) => {
     const resolvedAvatar = useResolvedImageUrl(summary.tokenImageUrl, getAbsolutePokeballUrl());
     const isPartySlot = targetSlotType === 'party';
     const isInParty = propIsInParty ?? isAlreadyOnBelt;
-    const isLocked = Boolean(claimedBy?.toLowerCase().includes('locked') || isEntityLockedByGm(summary));
+    const isLocked = !isGm && Boolean(claimedBy?.toLowerCase().includes('locked') || isEntityLockedByGm(summary));
+    const hasClaim = Boolean(claimedBy && !isLocked);
 
     return (
         <div
-            className={`pc-deposit-card pc-deposit-card--active ${claimedBy || isLocked ? 'pc-deposit-card--claimed' : ''}`}
+            className={`pc-deposit-card pc-deposit-card--active ${isLocked || hasClaim ? 'pc-deposit-card--claimed' : ''}`}
         >
             <img
                 src={resolvedAvatar}
@@ -49,7 +52,12 @@ export const PcDepositActiveCard: React.FC<PcDepositActiveCardProps> = ({
                     {summary.name || summary.species}
                 </span>
                 <span className="text-subtext">
-                    {summary.species} {isLocked ? '• Locked by GM' : `• HP ${summary.hp}/${summary.maxHp}`}
+                    {summary.species}{' '}
+                    {isLocked
+                        ? '• Locked by GM'
+                        : isGm && isEntityLockedByGm(summary)
+                          ? '• Locked NPC (GM Override)'
+                          : `• HP ${summary.hp}/${summary.maxHp}`}
                 </span>
                 {isLocked ? (
                     <span
@@ -58,9 +66,16 @@ export const PcDepositActiveCard: React.FC<PcDepositActiveCardProps> = ({
                     >
                         <Lock size={10} /> Locked by GM
                     </span>
-                ) : claimedBy ? (
+                ) : hasClaim ? (
                     <span className="pc-deposit-card__claimed-tag text-subtext" title={`Claimed by ${claimedBy}`}>
                         <Lock size={10} /> {claimedBy}
+                    </span>
+                ) : isGm && isEntityLockedByGm(summary) ? (
+                    <span
+                        className="pc-deposit-card__claimed-tag text-subtext"
+                        title="GM Locked NPC - you can freely add to party"
+                    >
+                        <Lock size={10} /> NPC (Locked)
                     </span>
                 ) : isInParty ? (
                     <span className="pc-deposit-card__claimed-tag text-subtext" title="Already on your belt">
@@ -73,7 +88,7 @@ export const PcDepositActiveCard: React.FC<PcDepositActiveCardProps> = ({
                 ) : null}
             </div>
 
-            {claimedBy || isLocked ? (
+            {!isGm && (isLocked || hasClaim) ? (
                 <button
                     type="button"
                     className="action-button action-button--dark pc-deposit-btn--disabled"
@@ -105,7 +120,14 @@ export const PcDepositActiveCard: React.FC<PcDepositActiveCardProps> = ({
                     <Lock size={14} /> In Box
                 </button>
             ) : (
-                <button type="button" className="action-button action-button--theme" onClick={onSelect}>
+                <button
+                    type="button"
+                    className="action-button action-button--theme"
+                    onClick={onSelect}
+                    title={
+                        isGm && hasClaim ? `Claimed by ${claimedBy} - Click to reassign or force transfer` : undefined
+                    }
+                >
                     <Check size={14} /> {isPartySlot ? partyButtonText : 'Deposit'}
                 </button>
             )}

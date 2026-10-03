@@ -88,7 +88,12 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
     const summaryMeta =
         existingSum?.fullMetadata || (existingTrainer?.fullMetadata as Record<string, unknown> | undefined);
 
-    if (summaryMeta && pMod > tMod) {
+    const hasValidLiveToken = Boolean(
+        rawMeta && (rawMeta['moves-data'] || rawMeta['species'] || rawMeta['hp-curr'] !== undefined)
+    );
+    const pcIsStrictlyNewer = Boolean(summaryMeta && pMod > tMod && (tMod > 0 || !hasValidLiveToken));
+
+    if (pcIsStrictlyNewer && summaryMeta) {
         finalMeta = summaryMeta;
         source = 'pc_summary';
         finalMod = pMod;
@@ -115,6 +120,9 @@ export async function hydrateActiveSheet(params: HydrateSheetParams): Promise<Hy
         finalMeta = rawMeta;
         source = 'token_or_local';
         finalMod = tMod || Date.now();
+        if (!finalMeta.lastModified) {
+            finalMeta.lastModified = finalMod;
+        }
 
         // If token on canvas is strictly newer than PC storage, update PC summary to reflect live combat stats
         if (existingSum && tMod > pMod) {

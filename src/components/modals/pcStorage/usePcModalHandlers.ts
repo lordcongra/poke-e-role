@@ -15,7 +15,7 @@ import {
     unlinkPokemonFromPcOps,
     clearTokenClaimOps
 } from '../../../utils/pc/pcModalOps';
-import { checkTrainerOnMap, buildLinkedTrainer } from '../../../utils/pc/pcTrainerOps';
+import { checkTrainerOnMap, buildLinkedTrainer, executeLinkActiveTrainer } from '../../../utils/pc/pcTrainerOps';
 import { savePcStorage } from '../../../utils/pc/pcStorageAdapter';
 import {
     prepareDepositSummary,
@@ -23,10 +23,14 @@ import {
     clonePokemonSummaryOps,
     stampClaimOnSceneItem
 } from '../../../utils/pc/pcDepositOps';
-import { isEntityLockedByGm } from '../../../utils/pc/pcCandidateMatching';
 import { executeCloudExport, executeCloudRestore } from '../../../utils/pc/pcCloudModalOps';
 import { relinkPokemonArtworkOps } from '../../../utils/pc/pcTokenImageOps';
 import { broadcastPlayerPc, broadcastGmPc } from '../../../hooks/owlbearSync/setupOwlbearPcSync';
+import {
+    isOwnershipConflict,
+    executeGmClaimOverride,
+    type GmClaimConflict
+} from '../../../utils/pc/pcClaimOverrideOps';
 
 interface UsePcModalHandlersParams {
     pcData: PcStorageData;
@@ -149,71 +153,14 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
     ]);
 
     const handleLinkActiveTrainer = async () => {
-        if (!trainer || !campaign) return;
-        if (!canLinkActiveTrainer) {
-            const store = useCharacterStore.getState();
-            const activeTokenId = store.tokenId;
-            const activeTrainerName = (identity.nickname || identity.species || '').trim();
-            const otherTrainer = Object.values(campaign.trainers).find(
-                (t) =>
-                    t.id !== trainer.id &&
-                    ((activeTokenId && (t.mapTokenId === activeTokenId || t.savedTokenItem?.id === activeTokenId)) ||
-                        (t.isLinked && activeTrainerName && t.name.toLowerCase() === activeTrainerName.toLowerCase()))
-            );
-            if (OBR.isAvailable) {
-                if (otherTrainer) {
-                    OBR.notification.show(
-                        `Cannot link: This token is already linked to Trainer "${otherTrainer.name}".`,
-                        'WARNING'
-                    );
-                } else {
-                    OBR.notification.show(
-                        'Only tokens set to Trainer or Trainer (Special) mode can be linked to the belt.',
-                        'WARNING'
-                    );
-                }
-            }
-            return;
-        }
-        const store = useCharacterStore.getState();
-        const trainerName = identity.nickname || identity.species || 'Trainer';
-        let savedItem = trainer.savedTokenItem;
-        if (OBR.isAvailable && store.tokenId) {
-            try {
-                const items = await OBR.scene.items.getItems([store.tokenId]);
-                if (items.length > 0) savedItem = items[0];
-            } catch {}
-        }
-        if (role !== 'GM') {
-            if (isEntityLockedByGm(savedItem) || isEntityLockedByGm(trainer)) {
-                if (OBR.isAvailable) {
-                    OBR.notification.show(
-                        'Cannot link: This trainer token is locked by the GM. Ask your GM to unlock it.',
-                        'WARNING'
-                    );
-                }
-                return;
-            }
-            const myId = OBR.isAvailable ? await OBR.player.getId().catch(() => undefined) : undefined;
-            const claim = savedItem?.metadata?.['pokerole-pmd-extension/claimed-by'] as
-                | { playerId?: string }
-                | undefined;
-            if (claim?.playerId && myId && claim.playerId !== myId) {
-                if (OBR.isAvailable) {
-                    OBR.notification.show('Cannot link: This trainer token belongs to another player.', 'WARNING');
-                }
-                return;
-            }
-        }
-        const nextTrainer = {
-            ...buildLinkedTrainer(trainer, store, trainerName, identity.tokenImageUrl || undefined),
-            savedTokenItem: savedItem
-        };
-        saveTrainerProfile(nextTrainer);
-
-        if (OBR.isAvailable) {
-            OBR.notification.show(`Linked "${trainerName}" to Pokéball Belt!`, 'SUCCESS');
-        }
+        await executeLinkActiveTrainer({
+            trainer,
+            campaign,
+            canLinkActiveTrainer,
+            identity,
+            role,
+            saveTrainerProfile
+        });
     };
 
     const handleUnlinkTrainer = () => {
@@ -402,6 +349,7 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         await executeCloudRestore(campaign.name, pcData, activeBoxIndex, role, myId);
     };
 
+    const [gmClaimConflict, setGmClaimConflict] = useState<GmClaimConflict | null>(null);
     const isDepositingRef = useRef(false);
 
     const handleCompleteDeposit = async (
@@ -423,6 +371,14 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
                 myId
             );
             if (!validation.allowed) {
+                if (role === 'GM' && isOwnershipConflict(validation.reason)) {
+                    setGmClaimConflict({
+                        summary,
+                        targetSlotOverride: effectiveTargetSlot,
+                        reason: validation.reason || 'Ownership conflict detected.'
+                    });
+                    return;
+                }
                 if (OBR.isAvailable && validation.reason) {
                     OBR.notification.show(validation.reason, 'WARNING');
                 }
@@ -456,14 +412,41 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
                 }
                 if (role !== 'GM') {
                     broadcastPlayerPc();
-                } else if (trainer) {
-                    broadcastGmPc({ trainer, summaries: [finalSummary] });
+                } else {
+                    const latestCamp = useCharacterStore.getState().pcData.campaigns[campaign?.id || ''];
+                    const latestTrainer = trainer && latestCamp?.trainers ? latestCamp.trainers[trainer.id] : undefined;
+                    broadcastGmPc({
+                        campaignId: campaign?.id,
+                        trainer: latestTrainer || trainer,
+                        summaries: [finalSummary]
+                    });
                 }
                 OBR.notification.show(`Deposited ${finalSummary.name || finalSummary.species} to storage!`, 'INFO');
             }
         } finally {
             isDepositingRef.current = false;
         }
+    };
+
+    const handleConfirmGmClaimOverride = async () => {
+        if (!gmClaimConflict || !campaign) return;
+        const conflictToResolve = gmClaimConflict;
+        setGmClaimConflict(null);
+        await executeGmClaimOverride({
+            conflict: conflictToResolve,
+            campaign,
+            trainer,
+            role,
+            activeBoxIndex,
+            updatePokemonSummary,
+            setPartySlot,
+            setBoxSlot,
+            depositPokemonToBox,
+            prepareDepositSummaryFn: prepareDepositSummary,
+            savePcStorageFn: savePcStorage,
+            broadcastPlayerPcFn: broadcastPlayerPc,
+            broadcastGmPcFn: broadcastGmPc
+        });
     };
 
     return {
@@ -483,6 +466,9 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         handleDropTrainerToken,
         handleConfirmCloudUpload,
         handleDownloadBox,
-        handleCompleteDeposit
+        handleCompleteDeposit,
+        gmClaimConflict,
+        setGmClaimConflict,
+        handleConfirmGmClaimOverride
     };
 }

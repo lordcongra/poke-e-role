@@ -1,5 +1,5 @@
 import OBR, { buildImage, type Item } from '@owlbear-rodeo/sdk';
-import type { TrainerRoster } from '../../types/pcStorageTypes';
+import type { TrainerRoster, CampaignProfile } from '../../types/pcStorageTypes';
 import type { CharacterState } from '../../store/storeTypes';
 import { useCharacterStore } from '../../store/useCharacterStore';
 import { flattenStateToMetadata } from '../sync/stateMapper';
@@ -7,6 +7,7 @@ import { METADATA_ID } from '../sync/obr';
 import { getAbsolutePokeballUrl, resolveImageDimensions } from '../generators/trainerTokenSpawner';
 import { buildGraphicsFromMeta, renderTokenGraphics } from '../graphics/graphicsManager';
 import { markTokenAsRecentlySpawned } from './pcModalOps';
+import { isEntityLockedByGm } from './pcCandidateMatching';
 
 /**
  * Checks if the trainer's token is actively placed on the current scene.
@@ -342,5 +343,90 @@ export async function spawnTrainerToMap(
     } catch (e) {
         console.error('[PcTrainerOps] Failed to spawn Trainer token:', e);
         return { success: false };
+    }
+}
+
+/**
+ * Links the active sheet to the selected trainer roster, validating permissions and Gm locks.
+ */
+export async function executeLinkActiveTrainer(params: {
+    trainer?: TrainerRoster;
+    campaign?: CampaignProfile;
+    canLinkActiveTrainer: boolean;
+    identity: {
+        nickname?: string;
+        species?: string;
+        tokenImageUrl?: string | null;
+    };
+    role?: 'PLAYER' | 'GM';
+    saveTrainerProfile: (t: TrainerRoster) => void;
+}): Promise<void> {
+    const { trainer, campaign, canLinkActiveTrainer, identity, role, saveTrainerProfile } = params;
+    if (!trainer || !campaign) return;
+
+    if (!canLinkActiveTrainer) {
+        const store = useCharacterStore.getState();
+        const activeTokenId = store.tokenId;
+        const activeTrainerName = (identity.nickname || identity.species || '').trim();
+        const otherTrainer = Object.values(campaign.trainers).find(
+            (t) =>
+                t.id !== trainer.id &&
+                ((activeTokenId && (t.mapTokenId === activeTokenId || t.savedTokenItem?.id === activeTokenId)) ||
+                    (t.isLinked && activeTrainerName && t.name.toLowerCase() === activeTrainerName.toLowerCase()))
+        );
+        if (OBR.isAvailable) {
+            if (otherTrainer) {
+                OBR.notification.show(
+                    `Cannot link: This token is already linked to Trainer "${otherTrainer.name}".`,
+                    'WARNING'
+                );
+            } else {
+                OBR.notification.show(
+                    'Only tokens set to Trainer or Trainer (Special) mode can be linked to the belt.',
+                    'WARNING'
+                );
+            }
+        }
+        return;
+    }
+
+    const store = useCharacterStore.getState();
+    const trainerName = identity.nickname || identity.species || 'Trainer';
+    let savedItem = trainer.savedTokenItem;
+    if (OBR.isAvailable && store.tokenId) {
+        try {
+            const items = await OBR.scene.items.getItems([store.tokenId]);
+            if (items.length > 0) savedItem = items[0];
+        } catch {}
+    }
+
+    if (role !== 'GM') {
+        if (isEntityLockedByGm(savedItem) || isEntityLockedByGm(trainer)) {
+            if (OBR.isAvailable) {
+                OBR.notification.show(
+                    'Cannot link: This trainer token is locked by the GM. Ask your GM to unlock it.',
+                    'WARNING'
+                );
+            }
+            return;
+        }
+        const myId = OBR.isAvailable ? await OBR.player.getId().catch(() => undefined) : undefined;
+        const claim = savedItem?.metadata?.['pokerole-pmd-extension/claimed-by'] as { playerId?: string } | undefined;
+        if (claim?.playerId && myId && claim.playerId !== myId) {
+            if (OBR.isAvailable) {
+                OBR.notification.show('Cannot link: This trainer token belongs to another player.', 'WARNING');
+            }
+            return;
+        }
+    }
+
+    const nextTrainer = {
+        ...buildLinkedTrainer(trainer, store, trainerName, identity.tokenImageUrl || undefined),
+        savedTokenItem: savedItem
+    };
+    saveTrainerProfile(nextTrainer);
+
+    if (OBR.isAvailable) {
+        OBR.notification.show(`Linked "${trainerName}" to Pokéball Belt!`, 'SUCCESS');
     }
 }

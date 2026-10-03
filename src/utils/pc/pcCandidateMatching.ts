@@ -108,8 +108,8 @@ export function resolveSceneCandidateMatch(
             claimedBy: 'Locked by GM (Ask GM to unlock)'
         };
     }
-    // Cross-client ownership check (for all roles including GM)
-    if (claimMeta?.playerId && myPlayerId && claimMeta.playerId !== myPlayerId) {
+    // Cross-client ownership check: non-GMs are strictly blocked from interacting
+    if (myRole !== 'GM' && claimMeta?.playerId && myPlayerId && claimMeta.playerId !== myPlayerId) {
         return {
             matchedEntityId: undefined,
             isInParty: false,

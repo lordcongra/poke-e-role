@@ -117,8 +117,8 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         if (OBR.isAvailable) {
             if (role !== 'GM') {
                 broadcastPlayerPc();
-            } else if (trainer) {
-                broadcastGmPc({ trainer });
+            } else {
+                broadcastGmPc({ campaignId: campaign?.id, trainer });
             }
         }
         onClose();
@@ -178,7 +178,10 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
         handleDropTrainerToken,
         handleConfirmCloudUpload,
         handleDownloadBox,
-        handleCompleteDeposit
+        handleCompleteDeposit,
+        gmClaimConflict,
+        setGmClaimConflict,
+        handleConfirmGmClaimOverride
     } = usePcModalHandlers({
         pcData,
         campaign,
@@ -487,6 +490,9 @@ export const PcStorageModal: React.FC<PcStorageModalProps> = ({ onClose }) => {
                 handleRelinkArtwork={handleRelinkArtwork}
                 handleClonePokemon={handleClonePokemon}
                 handleReleasePokemon={handleReleasePokemon}
+                gmClaimConflict={gmClaimConflict}
+                onCloseGmClaimConflict={() => setGmClaimConflict(null)}
+                onConfirmGmClaimOverride={handleConfirmGmClaimOverride}
             />
         </>
     );

@@ -431,11 +431,13 @@ export function applyDeleteSummary(pcData: PcStorageData, entityId: string): PcS
             nextTrainers[tId] = stripEntityFromTrainer(tr, entityId);
         }
         const nextBoxes = stripEntityFromBoxes(camp.boxes, entityId) || camp.boxes;
+        const nextTeamParty = (camp.teamParty || []).map((slot) => (slot === entityId ? null : slot));
 
         nextCampaigns[cId] = {
             ...camp,
             trainers: nextTrainers,
-            boxes: nextBoxes
+            boxes: nextBoxes,
+            teamParty: nextTeamParty
         };
     }
 

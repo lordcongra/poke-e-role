@@ -63,7 +63,8 @@ export const exportCharacterData = (state: CharacterState, isStandaloneMode: boo
             }
         }
 
-        const exportData = flattenStateToMetadata(state);
+        const exportData = flattenStateToMetadata(state) as Record<string, unknown>;
+        exportData.lastModified = Date.now();
         const name = state.identity.nickname || state.identity.species || 'character';
         const filename = `${name.replace(/\s+/g, '_')}_pokerole.json`;
 

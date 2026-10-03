@@ -1,186 +1,23 @@
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../store/useCharacterStore';
-import type { TrainerRoster, PcPokemonSummary } from '../../types/pcStorageTypes';
 import { savePcStorage } from '../../utils/pc/pcStorageAdapter';
-import { resolveEffectiveActiveTrainer, resolveGmTargetCampaignId } from '../../utils/pc/pcCampaignTrainerOps';
+import { resolveGmTargetCampaignId } from '../../utils/pc/pcCampaignTrainerOps';
 import { EXTENSION_ID } from './owlbearSyncConstants';
-import { sendSafeBroadcastPayload, registerSafeBroadcastListener } from './owlbearBroadcastUtils';
-import { applyDeleteSummary } from '../../utils/pc/pcStateMutations';
+import { registerSafeBroadcastListener } from './owlbearBroadcastUtils';
+import { applyDeleteSummary, stripEntityFromTrainer } from '../../utils/pc/pcStateMutations';
 import { hasPendingUpdates } from '../../utils/sync/obr';
 import {
     type PlayerPcSyncPayload,
     type GmPcSyncPayload,
-    sanitizeSummaryForSync,
     sanitizeTrainerForSync,
     mergeIncomingPlayerSummaries
 } from './owlbearPcSyncUtils';
 import { reconcileSceneTokens } from './reconcileSceneTokens';
+import { broadcastPlayerPc, broadcastGmPc, requestPlayerPcSync } from './owlbearPcBroadcastOps';
+import type { PcPokemonSummary } from '../../types/pcStorageTypes';
 
+export { broadcastPlayerPc, broadcastGmPc, requestPlayerPcSync };
 export type { PlayerPcSyncPayload, GmPcSyncPayload };
-
-/**
- * Broadcasts the active player's PC trainer, party, and Pokémon summaries to the GM.
- * Automatically slices large packets into safe 16kB chunks.
- */
-export async function broadcastPlayerPc(): Promise<void> {
-    if (!OBR.isAvailable) return;
-    try {
-        const state = useCharacterStore.getState();
-        const { pcData } = state;
-        const campaign = pcData.campaigns[pcData.activeCampaignId];
-        if (!campaign || campaign.isPrivate) return;
-
-        const myPlayerId = await OBR.player.getId().catch(() => undefined);
-        const resolvedTrainer = resolveEffectiveActiveTrainer(campaign, myPlayerId);
-        const isPmd = !resolvedTrainer && campaign.activeTrainerId === '__none__';
-        let rawTrainer: TrainerRoster | undefined = resolvedTrainer;
-
-        if (isPmd) {
-            const myName = (await OBR.player.getName().catch(() => 'Player')) || 'Player';
-            rawTrainer = {
-                id: `__pmd_${myName.toLowerCase().replace(/\s+/g, '_')}__`,
-                name: `${myName}'s Team`,
-                party: campaign.teamParty || [],
-                boxes: campaign.boxes || [],
-                isLinked: false
-            };
-        }
-
-        if (!rawTrainer) return;
-        const trainer = sanitizeTrainerForSync(rawTrainer);
-
-        // Gather all summaries belonging to this trainer (party + trainer boxes)
-        const referencedIds = new Set<string>();
-        for (const s of rawTrainer.party || []) {
-            if (s) referencedIds.add(s);
-        }
-        if (Array.isArray(rawTrainer.boxes)) {
-            for (const b of rawTrainer.boxes) {
-                for (const s of b.slots || []) {
-                    if (s) referencedIds.add(s);
-                }
-            }
-        }
-
-        const cleanSummaries: PcPokemonSummary[] = [];
-        for (const id of referencedIds) {
-            const sum = pcData.pokemonSummaries[id];
-            if (sum) cleanSummaries.push(sanitizeSummaryForSync(sum));
-        }
-
-        const CHUNK_SIZE = 1;
-        const totalChunks = Math.max(1, Math.ceil(cleanSummaries.length / CHUNK_SIZE));
-
-        for (let i = 0; i < totalChunks; i++) {
-            const chunkSlice = cleanSummaries.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-            const payload: PlayerPcSyncPayload = {
-                campaignId: pcData.activeCampaignId,
-                campaignName: campaign.name,
-                trainer,
-                summaries: chunkSlice,
-                chunkIndex: i,
-                totalChunks
-            };
-
-            await sendSafeBroadcastPayload(`${EXTENSION_ID}/pc-player-sync`, payload).catch((err) => {
-                console.warn(`[PcSync] Failed to broadcast PC chunk ${i + 1}/${totalChunks}:`, err);
-            });
-        }
-    } catch (e) {
-        console.warn('[PcSync] Failed to broadcast player PC data:', e);
-    }
-}
-
-/**
- * Broadcasts GM edits to player PC storage (trainer party/boxes or specific Pokémon summaries).
- * Slices into safe 16kB chunks for Owlbear broadcast channel.
- */
-export async function broadcastGmPc(params: {
-    campaignId?: string;
-    trainer?: TrainerRoster;
-    summaries?: PcPokemonSummary[];
-}): Promise<void> {
-    if (!OBR.isAvailable) return;
-    try {
-        const state = useCharacterStore.getState();
-        if (state.role !== 'GM') return;
-
-        const { pcData, identity } = state;
-        let targetCampId = params.campaignId;
-        if (!targetCampId) {
-            const designatedId = identity.activeRoomCampaignId;
-            if (designatedId && pcData.campaigns[designatedId] && !pcData.campaigns[designatedId].isPrivate) {
-                targetCampId = designatedId;
-            } else {
-                targetCampId = pcData.activeCampaignId;
-            }
-        }
-        const campaign = pcData.campaigns[targetCampId];
-        if (!campaign) return;
-
-        const cleanTrainer = params.trainer ? sanitizeTrainerForSync(params.trainer) : undefined;
-        let cleanSummaries: PcPokemonSummary[] = [];
-
-        if (params.summaries && params.summaries.length > 0) {
-            cleanSummaries = params.summaries.map(sanitizeSummaryForSync);
-        } else if (cleanTrainer) {
-            const referencedIds = new Set<string>();
-            for (const s of cleanTrainer.party || []) {
-                if (s) referencedIds.add(s);
-            }
-            if (Array.isArray(cleanTrainer.boxes)) {
-                for (const b of cleanTrainer.boxes) {
-                    for (const s of b.slots || []) {
-                        if (s) referencedIds.add(s);
-                    }
-                }
-            }
-            for (const id of referencedIds) {
-                const sum = pcData.pokemonSummaries[id];
-                if (sum) cleanSummaries.push(sanitizeSummaryForSync(sum));
-            }
-        }
-
-        if (!cleanTrainer && cleanSummaries.length === 0) return;
-
-        const CHUNK_SIZE = 1;
-        const totalChunks = Math.max(1, Math.ceil(cleanSummaries.length / CHUNK_SIZE));
-        const syncTimestamp = Date.now();
-
-        for (let i = 0; i < totalChunks; i++) {
-            const chunkSlice = cleanSummaries.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-            const payload: GmPcSyncPayload = {
-                campaignId: targetCampId,
-                trainer: cleanTrainer,
-                summaries: chunkSlice,
-                chunkIndex: i,
-                totalChunks,
-                timestamp: syncTimestamp
-            };
-
-            await sendSafeBroadcastPayload(`${EXTENSION_ID}/pc-gm-sync`, payload).catch((err) => {
-                console.warn(`[PcSync] Failed to broadcast GM PC chunk ${i + 1}/${totalChunks}:`, err);
-            });
-        }
-    } catch (e) {
-        console.warn('[PcSync] Failed to broadcast GM PC data:', e);
-    }
-}
-
-/**
- * GM action to trigger an on-demand PC sync request to all connected players.
- */
-export function requestPlayerPcSync(): void {
-    if (!OBR.isAvailable) return;
-    try {
-        OBR.broadcast
-            .sendMessage(`${EXTENSION_ID}/pc-request-sync`, {}, { destination: 'REMOTE' })
-            .catch((err) => console.warn('[PcSync] Failed to send PC sync request to players:', err));
-        OBR.notification.show('Requested PC sync from connected players...', 'DEFAULT');
-    } catch (e) {
-        console.warn('[PcSync] Failed to send PC sync request to players:', e);
-    }
-}
 
 export interface OwlbearPcSyncResult {
     unsubs: Array<() => void>;
@@ -209,13 +46,25 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                     const currentCamp = pcData.campaigns[targetCampId];
                     if (!currentCamp) return;
 
-                    const existingTrainer = currentCamp.trainers[payload.trainer.id];
+                    const cleanIncoming = sanitizeTrainerForSync(payload.trainer);
+                    const existingTrainer = currentCamp.trainers[cleanIncoming.id];
                     const updatedTrainers = {
                         ...currentCamp.trainers,
-                        [payload.trainer.id]: existingTrainer
-                            ? { ...existingTrainer, ...payload.trainer }
-                            : payload.trainer
+                        [cleanIncoming.id]: existingTrainer ? { ...existingTrainer, ...cleanIncoming } : cleanIncoming
                     };
+
+                    // Prevent cross-trainer duplication bugs: strip claimed entity IDs from other trainers
+                    const incomingIds = new Set<string>();
+                    for (const s of cleanIncoming.party) if (s) incomingIds.add(s);
+                    for (const b of cleanIncoming.boxes || []) {
+                        for (const s of b.slots) if (s) incomingIds.add(s);
+                    }
+                    for (const otherId of Object.keys(updatedTrainers)) {
+                        if (otherId === cleanIncoming.id) continue;
+                        for (const entityId of incomingIds) {
+                            updatedTrainers[otherId] = stripEntityFromTrainer(updatedTrainers[otherId], entityId);
+                        }
+                    }
 
                     const { updatedSummaries, hasChanges } = mergeIncomingPlayerSummaries(
                         pcData.pokemonSummaries || {},
@@ -223,7 +72,7 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                         targetCampId
                     );
 
-                    if (hasChanges) {
+                    if (hasChanges || JSON.stringify(currentCamp.trainers) !== JSON.stringify(updatedTrainers)) {
                         const nextData = {
                             ...pcData,
                             campaigns: {
@@ -242,7 +91,7 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                             window.dispatchEvent(new Event('pkr-local-data-changed'));
                         }
 
-                        // Reconcile scene tokens so any outdated map tokens instantly adopt the newer player PC info!
+                        // Reconcile scene tokens so any outdated map tokens instantly adopt the newer player PC info
                         if (OBR.isAvailable) {
                             const sceneItems = await OBR.scene.items.getItems((i) => i.layer === 'CHARACTER');
                             await reconcileSceneTokens(sceneItems, 'GM');
@@ -254,6 +103,36 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
             }
         );
         unsubs.push(unsubPlayerSync);
+
+        // GM listens for player connection handshake and responds with campaign PC data
+        const unsubPlayerHandshake = OBR.broadcast.onMessage(`${EXTENSION_ID}/pc-request-gm-sync`, async () => {
+            try {
+                const state = useCharacterStore.getState();
+                const { pcData, identity } = state;
+                const targetCampId =
+                    identity.activeRoomCampaignId && pcData.campaigns[identity.activeRoomCampaignId]
+                        ? identity.activeRoomCampaignId
+                        : pcData.activeCampaignId;
+                const camp = pcData.campaigns[targetCampId];
+                if (!camp || camp.isPrivate) return;
+
+                if (camp.activeTrainerId === '__none__') {
+                    await broadcastGmPc({ campaignId: targetCampId });
+                } else {
+                    for (const tr of Object.values(camp.trainers || {})) {
+                        await broadcastGmPc({ campaignId: targetCampId, trainer: tr });
+                    }
+                }
+            } catch (e) {
+                console.warn('[PcSync] Failed to respond to player handshake:', e);
+            }
+        });
+        unsubs.push(unsubPlayerHandshake);
+
+        // GM triggers request from connected players on mount
+        setTimeout(() => {
+            OBR.broadcast.sendMessage(`${EXTENSION_ID}/pc-request-sync`, {}, { destination: 'REMOTE' }).catch(() => {});
+        }, 500);
     }
 
     // 2. Players listen for GM PC updates with automatic chunk reassembly, timestamp guard & live rehydration
@@ -265,39 +144,56 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
 
                 try {
                     const state = useCharacterStore.getState();
-                    const { pcData } = state;
-                    const targetCampId = pcData.campaigns[payload.campaignId]
-                        ? payload.campaignId
-                        : pcData.activeCampaignId;
+                    const { pcData, identity } = state;
+                    const targetCampId = resolveGmTargetCampaignId(
+                        pcData,
+                        payload.campaignId,
+                        payload.campaignName,
+                        identity.activeRoomCampaignId,
+                        identity.activeRoomCampaignName
+                    );
                     let currentCamp = pcData.campaigns[targetCampId];
                     if (!currentCamp) return;
 
                     let campChanged = false;
-                    let updatedTrainers = currentCamp.trainers;
+                    const updatedTrainers = { ...currentCamp.trainers };
 
                     if (payload.trainer && payload.trainer.id) {
-                        const existingTrainer = currentCamp.trainers[payload.trainer.id];
+                        const cleanIncoming = sanitizeTrainerForSync(payload.trainer);
+                        const existingTrainer = currentCamp.trainers[cleanIncoming.id];
+
                         if (existingTrainer) {
-                            updatedTrainers = {
-                                ...currentCamp.trainers,
-                                [payload.trainer.id]: {
-                                    ...existingTrainer,
-                                    ...payload.trainer,
-                                    party: payload.trainer.party || existingTrainer.party,
-                                    boxes: payload.trainer.boxes || existingTrainer.boxes
-                                }
+                            updatedTrainers[cleanIncoming.id] = {
+                                ...existingTrainer,
+                                ...cleanIncoming,
+                                party: cleanIncoming.party,
+                                boxes: cleanIncoming.boxes
                             };
                             campChanged = true;
-                        } else if (
-                            currentCamp.activeTrainerId === '__none__' &&
-                            payload.trainer.id.startsWith('__pmd_')
-                        ) {
+                        } else if (cleanIncoming.id === '__pmd_team__' || cleanIncoming.id.startsWith('__pmd_')) {
                             currentCamp = {
                                 ...currentCamp,
-                                teamParty: payload.trainer.party || currentCamp.teamParty,
-                                boxes: payload.trainer.boxes || currentCamp.boxes
+                                teamParty: cleanIncoming.party,
+                                boxes: cleanIncoming.boxes || currentCamp.boxes
                             };
                             campChanged = true;
+                        } else {
+                            // New trainer created by GM that the player didn't have yet
+                            updatedTrainers[cleanIncoming.id] = cleanIncoming;
+                            campChanged = true;
+                        }
+
+                        // Prevent cross-trainer duplication bugs: strip claimed entity IDs from other trainers
+                        const incomingIds = new Set<string>();
+                        for (const s of cleanIncoming.party) if (s) incomingIds.add(s);
+                        for (const b of cleanIncoming.boxes || []) {
+                            for (const s of b.slots) if (s) incomingIds.add(s);
+                        }
+                        for (const otherId of Object.keys(updatedTrainers)) {
+                            if (otherId === cleanIncoming.id) continue;
+                            for (const entityId of incomingIds) {
+                                updatedTrainers[otherId] = stripEntityFromTrainer(updatedTrainers[otherId], entityId);
+                            }
                         }
                     }
 
@@ -312,7 +208,7 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                         const existingMod = Number(existing?.lastModified) || 0;
                         const incomingMod = Number(incoming.lastModified) || Number(payload.timestamp) || Date.now();
 
-                        // Anti-Reversion Guard: if local summary is strictly newer than incoming packet, skip!
+                        // Anti-Reversion Guard: if local summary is strictly newer than incoming packet, skip
                         if (existing && existingMod > incomingMod) {
                             continue;
                         }
@@ -343,22 +239,19 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
                     if (campChanged || summariesChanged) {
                         const nextData = {
                             ...pcData,
-                            campaigns: campChanged
-                                ? {
-                                      ...pcData.campaigns,
-                                      [targetCampId]: {
-                                          ...currentCamp,
-                                          trainers: updatedTrainers
-                                      }
-                                  }
-                                : pcData.campaigns,
+                            campaigns: {
+                                ...pcData.campaigns,
+                                [targetCampId]: {
+                                    ...currentCamp,
+                                    trainers: updatedTrainers
+                                }
+                            },
                             pokemonSummaries: updatedSummaries
                         };
 
                         useCharacterStore.setState({ pcData: nextData });
                         await savePcStorage(nextData);
 
-                        // If player currently viewing this Pokémon, reload sheet safely
                         for (const activeSum of rehydratableSummaries) {
                             if (!hasPendingUpdates() && activeSum.fullMetadata) {
                                 useCharacterStore.getState().loadFromOwlbear(activeSum.fullMetadata);
@@ -375,9 +268,21 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
             }
         );
         unsubs.push(unsubGmSync);
+
+        // Player handshake on mount: request latest PC data from GM and broadcast local player PC
+        OBR.broadcast.sendMessage(`${EXTENSION_ID}/pc-request-gm-sync`, {}, { destination: 'REMOTE' }).catch(() => {});
+        setTimeout(() => {
+            broadcastPlayerPc().catch(() => {});
+        }, 300);
+
+        // Player listens for GM sync request and responds with active PC data
+        const unsubRequestSync = OBR.broadcast.onMessage(`${EXTENSION_ID}/pc-request-sync`, () => {
+            broadcastPlayerPc().catch(() => {});
+        });
+        unsubs.push(unsubRequestSync);
     }
 
-    // 2. Both GM and Players listen for trainer deletions across the room
+    // 3. Both GM and Players listen for trainer deletions across the room
     const unsubTrainerDelete = OBR.broadcast.onMessage(`${EXTENSION_ID}/pc-trainer-delete`, async (event) => {
         const { campaignId, trainerId } = (event.data || {}) as {
             campaignId?: string;
@@ -421,7 +326,7 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
     });
     unsubs.push(unsubTrainerDelete);
 
-    // 3. Both GM and Players listen for Pokémon release / unlinking across the room
+    // 4. Both GM and Players listen for Pokémon release / unlinking across the room
     const unsubPokemonDelete = OBR.broadcast.onMessage(`${EXTENSION_ID}/pc-pokemon-delete`, async (event) => {
         const { entityId, pokemonName, wasUnlinked } = (event.data || {}) as {
             campaignId?: string;
@@ -450,14 +355,6 @@ export function setupOwlbearPcSync(role: 'PLAYER' | 'GM'): OwlbearPcSyncResult {
         }
     });
     unsubs.push(unsubPokemonDelete);
-
-    // 2. Players listen for GM sync request and respond with their active PC data
-    const unsubRequestSync = OBR.broadcast.onMessage(`${EXTENSION_ID}/pc-request-sync`, () => {
-        if (role !== 'GM') {
-            broadcastPlayerPc();
-        }
-    });
-    unsubs.push(unsubRequestSync);
 
     return { unsubs };
 }

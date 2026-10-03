@@ -92,7 +92,7 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
             }
             return;
         }
-        if (cand.claimedBy) return;
+        if (!isGm && cand.claimedBy) return;
         if (targetSlot?.type === 'party' && cand.isInParty) return;
         if (targetSlot?.type === 'box' && cand.isInBoxes) return;
 
@@ -275,8 +275,9 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                                 isInBoxes={activeOwnership?.isInBoxes}
                                 claimedBy={effectiveActiveClaimedBy}
                                 partyButtonText={partyButtonText}
+                                isGm={isGm}
                                 onSelect={() => {
-                                    if (effectiveActiveClaimedBy) return;
+                                    if (!isGm && effectiveActiveClaimedBy) return;
                                     onDepositSummary(currentActiveSummary, targetSlot);
                                     onClose();
                                 }}
@@ -320,7 +321,7 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                                             isGm={isGm}
                                             claimedBy={pClaimedBy}
                                             onSelect={() => {
-                                                if (pClaimedBy) return;
+                                                if (!isGm && pClaimedBy) return;
                                                 onDepositSummary(p, targetSlot);
                                                 onClose();
                                             }}
@@ -364,6 +365,7 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                                         candidate={c}
                                         targetSlotType={targetSlot?.type}
                                         partyButtonText={partyButtonText}
+                                        isGm={isGm}
                                         onSelect={() => handleSelectCandidate(c)}
                                     />
                                 ))}
