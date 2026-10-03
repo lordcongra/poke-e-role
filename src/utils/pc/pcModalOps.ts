@@ -165,15 +165,22 @@ export async function spawnPokemonToMap(
                 }
             }
 
+            parentItem.name = summary.name || summary.species;
+
             const existingMeta =
-                (parentItem.metadata?.[METADATA_ID] as Record<string, unknown>) || summary.fullMetadata || {};
+                (parentItem.metadata?.[METADATA_ID] as Record<string, unknown>) ||
+                (parentItem.metadata?.['pokerole-pmd-extension/stats'] as Record<string, unknown>) ||
+                summary.fullMetadata ||
+                {};
+            const fullSpawnMeta = {
+                ...existingMeta,
+                ...metadataObj,
+                'token-image-url': resolvedImg.url
+            };
             parentItem.metadata = {
                 ...parentItem.metadata,
-                [METADATA_ID]: {
-                    ...existingMeta,
-                    ...metadataObj,
-                    'token-image-url': resolvedImg.url
-                }
+                [METADATA_ID]: fullSpawnMeta,
+                'pokerole-pmd-extension/stats': fullSpawnMeta
             };
         } else {
             const maxDim = Math.max(resolvedImg.width, resolvedImg.height);
@@ -193,7 +200,8 @@ export async function spawnPokemonToMap(
                 .position(landingPos)
                 .layer('CHARACTER')
                 .metadata({
-                    [METADATA_ID]: metadataObj
+                    [METADATA_ID]: metadataObj,
+                    'pokerole-pmd-extension/stats': metadataObj
                 })
                 .build();
         }
@@ -249,7 +257,8 @@ export async function spawnPokemonToMap(
                 .position(landingPos)
                 .layer('CHARACTER')
                 .metadata({
-                    [METADATA_ID]: metadataObj
+                    [METADATA_ID]: metadataObj,
+                    'pokerole-pmd-extension/stats': metadataObj
                 })
                 .build();
 
@@ -259,7 +268,11 @@ export async function spawnPokemonToMap(
 
         // 8. Render tracker HUD graphics for the newly spawned Pokémon
         try {
-            const meta = (newParent.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
+            const meta =
+                ((newParent.metadata?.[METADATA_ID] || newParent.metadata?.['pokerole-pmd-extension/stats']) as Record<
+                    string,
+                    unknown
+                >) || {};
             const gData = buildGraphicsFromMeta(meta);
             await renderTokenGraphics(newParent, gData, role, true);
         } catch (gErr) {

@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
-import type { PcPokemonSummary, TrainerRoster, AttachmentBundle, CampaignProfile } from '../../../types/pcStorageTypes';
+import type { PcPokemonSummary, TrainerRoster, CampaignProfile } from '../../../types/pcStorageTypes';
 import { isEntityLockedByGm } from '../../../utils/pc/pcCandidateMatching';
 import { useSceneCandidates } from './useSceneCandidates';
-import { calculateRelativeAttachment } from '../../../utils/pc/rehomeEngine';
-import { GRAPHICS_META_ID } from '../../../utils/graphics/graphicsManager';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import { storageAdapter } from '../../../utils/sync/storageAdapter';
 import { resolvePokemonOwnership } from '../../../utils/pc/pcDepositOps';
@@ -27,7 +25,10 @@ interface PcDepositDrawerModalProps {
     pokemonSummaries?: Record<string, PcPokemonSummary>;
     partySlots?: (string | null)[];
     boxTheme?: string;
-    onDepositSummary: (summary: PcPokemonSummary) => void;
+    onDepositSummary: (
+        summary: PcPokemonSummary,
+        targetSlotOverride?: { type: 'party' | 'box'; index: number }
+    ) => void;
     onOpenGenerator?: () => void;
     onClose: () => void;
 }
@@ -81,7 +82,7 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
         allCampaigns
     });
 
-    const handleSelectCandidate = async (cand: SceneCandidate) => {
+    const handleSelectCandidate = (cand: SceneCandidate) => {
         if (!isGm && isEntityLockedByGm(cand.item, cand.metadata)) {
             if (OBR.isAvailable) {
                 OBR.notification.show(
@@ -96,52 +97,9 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
         if (targetSlot?.type === 'box' && cand.isInBoxes) return;
 
         const entityId = cand.matchedEntityId || (cand.metadata.entityId as string) || cand.id || crypto.randomUUID();
-        let myPlayerId = '';
-        let myPlayerName = '';
 
         if (!OBR.isAvailable && cand.id) {
             storageAdapter.saveCharacter(cand.id, { entityId }, 'pokerole-pmd-extension/stats').catch(() => {});
-        }
-
-        if (OBR.isAvailable) {
-            try {
-                myPlayerId = await OBR.player.getId();
-                myPlayerName = await OBR.player.getName();
-                if (cand.id) {
-                    await OBR.scene.items.updateItems([cand.id], (items) => {
-                        for (const it of items) {
-                            it.metadata['pokerole-pmd-extension/claimed-by'] = {
-                                playerId: myPlayerId,
-                                playerName: myPlayerName,
-                                entityId,
-                                trainerName: trainerName
-                            };
-                        }
-                    });
-                }
-            } catch (e) {
-                console.warn('[PcDepositDrawer] Error stamping claimed-by on candidate:', e);
-            }
-        }
-
-        // Capture real attachments on canvas for cand.id (excluding HUD graphics)
-        let attachedItems: AttachmentBundle[] | undefined = undefined;
-        if (OBR.isAvailable && cand.id && cand.item) {
-            try {
-                const sceneItems = await OBR.scene.items.getItems();
-                const realAttachments = sceneItems.filter(
-                    (it) =>
-                        it.attachedTo === cand.id &&
-                        !it.metadata[GRAPHICS_META_ID] &&
-                        !it.metadata['pokerole-extension/graphic-v6'] &&
-                        !it.id.startsWith(`${cand.id}-`)
-                );
-                if (realAttachments.length > 0) {
-                    attachedItems = realAttachments.map((c) => calculateRelativeAttachment(cand.item, c));
-                }
-            } catch (e) {
-                console.warn('[PcDepositDrawer] Error capturing candidate attachments:', e);
-            }
         }
 
         const isObr = OBR.isAvailable;
@@ -168,21 +126,11 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
             savedTokenItem: cand.item,
             fullMetadata: {
                 ...cand.metadata,
-                ...(isObr && myPlayerId
-                    ? {
-                          'pokerole-pmd-extension/claimed-by': {
-                              playerId: myPlayerId,
-                              playerName: myPlayerName,
-                              entityId,
-                              trainerName: trainerName
-                          }
-                      }
-                    : {})
+                entityId
             },
-            attachedItems,
             lastModified: Date.now()
         };
-        onDepositSummary(summary);
+        onDepositSummary(summary, targetSlot);
         onClose();
     };
 
@@ -213,15 +161,21 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
     const [liveActiveTokenLocked, setLiveActiveTokenLocked] = useState(false);
 
     useEffect(() => {
+        let isCancelled = false;
         if (OBR.isAvailable && currentActiveSummary?.mapTokenId) {
             OBR.scene.items
                 .getItems([currentActiveSummary.mapTokenId])
                 .then((items) => {
+                    if (isCancelled) return;
                     const item = items[0];
-                    if (!item) return;
-                    if (!isGm && (item.locked || isEntityLockedByGm(item))) {
-                        setLiveActiveTokenLocked(true);
+                    if (!item) {
+                        setLiveActiveTokenLocked(false);
+                        setLiveActiveClaim(undefined);
+                        return;
                     }
+                    const isLocked = !isGm && (Boolean(item.locked) || isEntityLockedByGm(item));
+                    setLiveActiveTokenLocked(isLocked);
+
                     const claimMeta = item.metadata?.['pokerole-pmd-extension/claimed-by'] as
                         | { playerId?: string; playerName?: string; trainerName?: string; entityId?: string }
                         | undefined;
@@ -231,11 +185,25 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                                 ? `${claimMeta.trainerName}${claimMeta.playerName ? ` (${claimMeta.playerName})` : ''}`
                                 : claimMeta.playerName || 'Another Player'
                         );
+                    } else {
+                        setLiveActiveClaim(undefined);
                     }
                 })
-                .catch(() => {});
+                .catch(() => {
+                    if (!isCancelled) {
+                        setLiveActiveTokenLocked(false);
+                        setLiveActiveClaim(undefined);
+                    }
+                });
+        } else {
+            setLiveActiveTokenLocked(false);
+            setLiveActiveClaim(undefined);
         }
-    }, [isGm, currentActiveSummary?.mapTokenId, currentMyPlayerId]);
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [isGm, currentActiveSummary?.mapTokenId, currentActiveSummary?.entityId, currentMyPlayerId]);
 
     const matchingActiveCandidate = findMatchingSceneCandidate(sceneCandidates, currentActiveSummary);
     const activeSceneItemLocked = !isGm && Boolean(matchingActiveCandidate?.item?.locked);
@@ -309,7 +277,7 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                                 partyButtonText={partyButtonText}
                                 onSelect={() => {
                                     if (effectiveActiveClaimedBy) return;
-                                    onDepositSummary(currentActiveSummary);
+                                    onDepositSummary(currentActiveSummary, targetSlot);
                                     onClose();
                                 }}
                             />
@@ -353,7 +321,7 @@ export const PcDepositDrawerModal: React.FC<PcDepositDrawerModalProps> = ({
                                             claimedBy={pClaimedBy}
                                             onSelect={() => {
                                                 if (pClaimedBy) return;
-                                                onDepositSummary(p);
+                                                onDepositSummary(p, targetSlot);
                                                 onClose();
                                             }}
                                         />

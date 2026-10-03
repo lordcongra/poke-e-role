@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { useCharacterStore } from '../../../store/useCharacterStore';
 import type {
@@ -402,53 +402,65 @@ export function usePcModalHandlers(params: UsePcModalHandlersParams) {
         await executeCloudRestore(campaign.name, pcData, activeBoxIndex, role, myId);
     };
 
-    const handleCompleteDeposit = async (summary: PcPokemonSummary) => {
-        const myId = OBR.isAvailable ? await OBR.player.getId().catch(() => undefined) : undefined;
-        const validation = await validateDepositTargetAsync(
-            summary,
-            trainer,
-            campaign,
-            depositTarget?.targetSlot?.type,
-            pcData.campaigns,
-            role,
-            myId
-        );
-        if (!validation.allowed) {
-            if (OBR.isAvailable && validation.reason) {
-                OBR.notification.show(validation.reason, 'WARNING');
-            }
-            return;
-        }
+    const isDepositingRef = useRef(false);
 
-        const finalSummary = await prepareDepositSummary(
-            summary,
-            trainer,
-            pcData.pokemonSummaries,
-            useCharacterStore.getState(),
-            campaign?.id
-        );
-
-        updatePokemonSummary(finalSummary);
-        if (depositTarget?.targetSlot?.type === 'party') {
-            const trId = trainer ? trainer.id : '__none__';
-            setPartySlot(trId, depositTarget.targetSlot.index, finalSummary.entityId);
-        } else if (depositTarget?.targetSlot?.type === 'box') {
-            setBoxSlot(activeBoxIndex, depositTarget.targetSlot.index, finalSummary.entityId);
-        } else {
-            depositPokemonToBox(finalSummary.entityId, activeBoxIndex);
-        }
-
-        if (OBR.isAvailable) {
-            const mapTokenId = finalSummary.mapTokenId || finalSummary.savedTokenItem?.id;
-            if (mapTokenId) {
-                const claimTrainerName =
-                    trainer?.name || (campaign?.activeTrainerId === '__none__' ? 'Expedition Team' : undefined);
-                stampClaimOnSceneItem(mapTokenId, finalSummary.entityId, claimTrainerName).catch(() => {});
+    const handleCompleteDeposit = async (
+        summary: PcPokemonSummary,
+        targetSlotOverride?: { type: 'party' | 'box'; index: number }
+    ) => {
+        if (isDepositingRef.current) return;
+        isDepositingRef.current = true;
+        try {
+            const effectiveTargetSlot = targetSlotOverride || depositTarget?.targetSlot;
+            const myId = OBR.isAvailable ? await OBR.player.getId().catch(() => undefined) : undefined;
+            const validation = await validateDepositTargetAsync(
+                summary,
+                trainer,
+                campaign,
+                effectiveTargetSlot?.type,
+                pcData.campaigns,
+                role,
+                myId
+            );
+            if (!validation.allowed) {
+                if (OBR.isAvailable && validation.reason) {
+                    OBR.notification.show(validation.reason, 'WARNING');
+                }
+                return;
             }
-            if (role !== 'GM') {
-                broadcastPlayerPc();
+
+            const finalSummary = await prepareDepositSummary(
+                summary,
+                trainer,
+                pcData.pokemonSummaries,
+                useCharacterStore.getState(),
+                campaign?.id
+            );
+
+            updatePokemonSummary(finalSummary);
+            if (effectiveTargetSlot?.type === 'party') {
+                const trId = trainer ? trainer.id : '__none__';
+                setPartySlot(trId, effectiveTargetSlot.index, finalSummary.entityId);
+            } else if (effectiveTargetSlot?.type === 'box') {
+                setBoxSlot(activeBoxIndex, effectiveTargetSlot.index, finalSummary.entityId);
+            } else {
+                depositPokemonToBox(finalSummary.entityId, activeBoxIndex);
             }
-            OBR.notification.show(`Deposited ${finalSummary.name || finalSummary.species} to storage!`, 'INFO');
+
+            if (OBR.isAvailable) {
+                const mapTokenId = finalSummary.mapTokenId || finalSummary.savedTokenItem?.id;
+                if (mapTokenId) {
+                    const claimTrainerName =
+                        trainer?.name || (campaign?.activeTrainerId === '__none__' ? 'Expedition Team' : undefined);
+                    stampClaimOnSceneItem(mapTokenId, finalSummary.entityId, claimTrainerName).catch(() => {});
+                }
+                if (role !== 'GM') {
+                    broadcastPlayerPc();
+                }
+                OBR.notification.show(`Deposited ${finalSummary.name || finalSummary.species} to storage!`, 'INFO');
+            }
+        } finally {
+            isDepositingRef.current = false;
         }
     };
 

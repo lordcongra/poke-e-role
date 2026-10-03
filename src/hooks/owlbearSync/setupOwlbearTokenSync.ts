@@ -9,8 +9,7 @@ import {
 import { setActiveTokenId, hasPendingUpdates } from '../../utils/sync/obr';
 import { harvestTokensItemArt } from '../../utils/graphics/itemArtCatalog';
 import { METADATA_ID, getEffectiveScaleAndOffsets, type TransformData } from './owlbearSyncConstants';
-import { recentlySpawnedTokenIds } from '../../utils/pc/pcModalOps';
-import { isBackupScene, syncBackupSceneTokens } from '../../utils/pc/pcBackupSceneSync';
+import { reconcileSceneTokens } from './reconcileSceneTokens';
 
 export interface OwlbearTokenSyncResult {
     renderAllTokens: (forceRebuild?: boolean | 'badges-only') => Promise<void>;
@@ -18,7 +17,7 @@ export interface OwlbearTokenSyncResult {
     cleanup: () => void;
 }
 
-function extractEntityId(item: Item): string | undefined {
+export function extractEntityId(item: Item): string | undefined {
     const tMeta = (item.metadata[METADATA_ID] || item.metadata['pokerole-pmd-extension/stats']) as
         | Record<string, unknown>
         | undefined;
@@ -102,38 +101,6 @@ export async function setupOwlbearTokenSync(params: {
         }
     };
 
-    const cleanGhostTokens = async (sceneItems: Item[]) => {
-        try {
-            if (await isBackupScene()) {
-                await syncBackupSceneTokens(sceneItems);
-                return;
-            }
-
-            const freshStore = useCharacterStore.getState();
-            const ghostIdsToDelete: string[] = [];
-            for (const item of sceneItems) {
-                if (item.layer === 'CHARACTER' && !recentlySpawnedTokenIds.has(item.id)) {
-                    const entityId = extractEntityId(item);
-                    if (entityId) {
-                        const sum = freshStore.pcData.pokemonSummaries[entityId];
-                        if (sum && (!sum.isOnMap || (sum.mapTokenId && sum.mapTokenId !== item.id))) {
-                            ghostIdsToDelete.push(item.id);
-                            const attached = sceneItems.filter((a) => a.attachedTo === item.id);
-                            ghostIdsToDelete.push(...attached.map((a) => a.id));
-                        }
-                    }
-                }
-            }
-            if (ghostIdsToDelete.length > 0) {
-                const unique = Array.from(new Set(ghostIdsToDelete));
-                console.log('[SyncEngine] Deleting ghost Pokémon tokens from scene:', unique);
-                await OBR.scene.items.deleteItems(unique);
-            }
-        } catch (e) {
-            console.warn('[SyncEngine] Failed during ghost token cleanup:', e);
-        }
-    };
-
     const handleSceneReady = async () => {
         if (!isMounted()) return;
 
@@ -165,7 +132,7 @@ export async function setupOwlbearTokenSync(params: {
         try {
             const sceneItems = await OBR.scene.items.getItems();
             lastSceneItemIds = new Set(sceneItems.map((i) => i.id));
-            await cleanGhostTokens(sceneItems);
+            await reconcileSceneTokens(sceneItems, role);
         } catch {
             lastSceneItemIds = new Set();
         }
@@ -179,7 +146,7 @@ export async function setupOwlbearTokenSync(params: {
             if (!isMounted()) return;
             try {
                 const lateItems = await OBR.scene.items.getItems();
-                await cleanGhostTokens(lateItems);
+                await reconcileSceneTokens(lateItems, role);
             } catch {}
             await renderAllTokens(false);
         }, 800);
@@ -257,11 +224,11 @@ export async function setupOwlbearTokenSync(params: {
         // Harvest item art from updated scene items
         harvestTokensItemArt(items).catch(() => {});
 
-        // Purge any ghost tokens that were recalled or whose Pokémon is in storage (debounced)
+        // Reconcile cross-scene token sheets and prune duplicates on active scene (debounced)
         if (ghostCleanupTimeout) clearTimeout(ghostCleanupTimeout);
         ghostCleanupTimeout = setTimeout(() => {
             if (!isMounted()) return;
-            cleanGhostTokens(items).catch(() => {});
+            reconcileSceneTokens(items, role).catch(() => {});
         }, 800);
 
         for (const item of items) {

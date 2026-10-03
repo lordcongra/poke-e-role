@@ -43,7 +43,10 @@ interface PcStorageSubModalsProps {
     setDepositTarget: (target: { targetSlot?: { type: 'party' | 'box'; index: number } } | null) => void;
     currentActiveSummary: PcPokemonSummary | null;
     trainerPokemonSummaries: PcPokemonSummary[];
-    handleCompleteDeposit: (summary: PcPokemonSummary) => Promise<void>;
+    handleCompleteDeposit: (
+        summary: PcPokemonSummary,
+        targetSlotOverride?: { type: 'party' | 'box'; index: number }
+    ) => Promise<void>;
     isReviewModalOpen: boolean;
     pendingReview: SheetReviewPayload | null;
     applyReviewDiffs: (entityId: string, diffs: SheetFieldDiff[]) => void;

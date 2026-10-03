@@ -51,7 +51,10 @@ export async function recallPokemonFromMap(
         );
         const bundles = realAttachedChildren.map((child) => calculateRelativeAttachment(parent, child));
 
-        const meta = (parent.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
+        const meta = {
+            ...((parent.metadata?.['pokerole-pmd-extension/stats'] as Record<string, unknown>) || {}),
+            ...((parent.metadata?.[METADATA_ID] as Record<string, unknown>) || {})
+        };
         const currentHp =
             typeof meta['hp-curr'] === 'number'
                 ? meta['hp-curr']

@@ -47,12 +47,14 @@ export function useSceneCandidates({
                         items = await OBR.scene.items.getItems(selection);
                     }
                 }
-
                 const myPlayerId = await OBR.player.getId().catch(() => currentMyPlayerId);
                 const found: SceneCandidate[] = [];
 
                 for (const item of items) {
-                    const meta = (item.metadata?.[METADATA_ID] as Record<string, unknown>) || {};
+                    const meta = {
+                        ...((item.metadata?.['pokerole-pmd-extension/stats'] as Record<string, unknown>) || {}),
+                        ...((item.metadata?.[METADATA_ID] as Record<string, unknown>) || {})
+                    };
                     const mode = (meta.mode as string) || '';
                     if (mode === 'Trainer' || mode === 'Trainer (Special)') continue;
 
@@ -135,16 +137,20 @@ export function useSceneCandidates({
         scanScene(true);
 
         let debouncedTimer: ReturnType<typeof setTimeout> | null = null;
-        const unsub = OBR.scene.items.onChange(() => {
+        const triggerDebouncedScan = () => {
             if (debouncedTimer) clearTimeout(debouncedTimer);
             debouncedTimer = setTimeout(() => {
                 scanScene(false);
-            }, 300);
-        });
+            }, 150);
+        };
+
+        const unsubItems = OBR.scene.items.onChange(triggerDebouncedScan);
+        const unsubPlayer = OBR.player.onChange(triggerDebouncedScan);
 
         return () => {
             if (debouncedTimer) clearTimeout(debouncedTimer);
-            unsub();
+            unsubItems();
+            unsubPlayer();
         };
     }, [scanScene, partySlots, pokemonSummaries]);
 

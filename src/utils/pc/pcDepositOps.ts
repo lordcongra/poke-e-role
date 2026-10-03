@@ -121,9 +121,11 @@ export function resolvePokemonOwnership(
 
     // Metadata claim fallback
     if (!claimedBy && metadataClaim?.trainerName) {
-        const activeName = isNamedTrainer && campaign?.trainers?.[activeTrainerId!]?.name;
-        if (!activeName || metadataClaim.trainerName.trim().toLowerCase() !== activeName.trim().toLowerCase()) {
-            claimedBy = metadataClaim.trainerName;
+        if (!metadataClaim.playerId || !myPlayerId || metadataClaim.playerId !== myPlayerId) {
+            const activeName = isNamedTrainer && campaign?.trainers?.[activeTrainerId!]?.name;
+            if (!activeName || metadataClaim.trainerName.trim().toLowerCase() !== activeName.trim().toLowerCase()) {
+                claimedBy = metadataClaim.trainerName;
+            }
         }
     }
 
